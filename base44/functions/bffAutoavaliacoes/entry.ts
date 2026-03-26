@@ -6,7 +6,7 @@ const withAuthAndTenant = (handler) => async (req) => {
         const base44 = createClientFromRequest(req);
         const user = await base44.auth.me();
         
-        if (!user) {
+        if (!user || !user.id) {
             base44.asServiceRole.entities.SecurityLog.create({
                 endpoint: new URL(req.url).pathname,
                 ip_address: req.headers.get("x-forwarded-for") || "unknown",
@@ -14,7 +14,7 @@ const withAuthAndTenant = (handler) => async (req) => {
                 event_type: "invalid_attempt",
                 details: JSON.stringify({ error: "Missing or invalid token" })
             }).catch(e => console.error("Security log error", e));
-            return Response.json({ error: 'Unauthorized: Autenticação obrigatória.' }, { status: 401 });
+            return Response.json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Autenticação obrigatória.' } }, { status: 401 });
         }
 
         let tenantId = req.headers.get("x-tenant-id");
@@ -28,7 +28,7 @@ const withAuthAndTenant = (handler) => async (req) => {
             } catch (e) {}
         }
 
-        if (!tenantId) {
+        if (!tenantId || typeof tenantId !== 'string') {
             base44.asServiceRole.entities.SecurityLog.create({
                 user_id: user.id,
                 endpoint: new URL(req.url).pathname,
@@ -38,7 +38,11 @@ const withAuthAndTenant = (handler) => async (req) => {
                 details: JSON.stringify({ error: "Missing x-tenant-id" })
             }).catch(e => console.error("Security log error", e));
 
-            return Response.json({ error: 'Bad Request: x-tenant-id header é obrigatório para isolamento de dados.' }, { status: 400 });
+            return Response.json({ success: false, error: { code: 'MISSING_FIELDS', message: 'x-tenant-id header é obrigatório para isolamento de dados.' } }, { status: 400 });
+        }
+
+        if (user.role !== 'admin' && user.data?.workshop_id !== tenantId) {
+            return Response.json({ success: false, error: { code: 'FORBIDDEN', message: 'Acesso cross-tenant negado' } }, { status: 403 });
         }
 
         base44.asServiceRole.entities.SecurityLog.create({
@@ -52,7 +56,7 @@ const withAuthAndTenant = (handler) => async (req) => {
 
         return await handler(req, { base44, user, tenantId });
     } catch (error) {
-        return Response.json({ error: error.message }, { status: 500 });
+        return Response.json({ success: false, error: { code: 'INTERNAL_ERROR', message: error.message } }, { status: 500 });
     }
 };
 
@@ -114,7 +118,7 @@ const handleAutoavaliacoes = async (req, { base44, user, tenantId }) => {
         const service = new AutoavaliacoesService(repository);
         const result = await service.getAutoavaliacoesData(tenantId);
 
-        return new Response(JSON.stringify(result), {
+        return new Response(JSON.stringify({ success: true, data: result }), {
             status: 200,
             headers: {
                 'Content-Type': 'application/json',
@@ -122,7 +126,7 @@ const handleAutoavaliacoes = async (req, { base44, user, tenantId }) => {
             }
         });
     } catch (error) {
-        return Response.json({ error: error.message }, { status: 500 });
+        return Response.json({ success: false, error: { code: 'INTERNAL_ERROR', message: error.message } }, { status: 500 });
     }
 };
 

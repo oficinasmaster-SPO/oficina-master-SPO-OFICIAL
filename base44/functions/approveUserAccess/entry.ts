@@ -4,21 +4,35 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     
-    const admin = await base44.auth.me();
-    if (!admin || admin.role !== 'admin') {
-      return Response.json({ error: 'Apenas administradores podem aprovar' }, { status: 403 });
+    const currentUser = await base44.auth.me();
+    if (!currentUser || !currentUser.id) {
+      return Response.json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Não autenticado' } }, { status: 401 });
+    }
+    if (currentUser.role !== 'admin') {
+      return Response.json({ success: false, error: { code: 'FORBIDDEN', message: 'Apenas administradores podem aprovar' } }, { status: 403 });
     }
 
-    const { employee_id, profile_id } = await req.json();
+    let body;
+    try {
+      body = await req.json();
+    } catch (e) {
+      return Response.json({ success: false, error: { code: 'INVALID_INPUT', message: 'Payload inválido' } }, { status: 400 });
+    }
 
-    if (!employee_id) {
-      return Response.json({ error: 'Employee ID obrigatório' }, { status: 400 });
+    const { employee_id, profile_id } = body;
+
+    if (!employee_id || typeof employee_id !== 'string') {
+      return Response.json({ success: false, error: { code: 'MISSING_FIELDS', message: 'employee_id é obrigatório e deve ser texto' } }, { status: 400 });
     }
 
     const employee = await base44.entities.Employee.get(employee_id);
     
     if (!employee) {
-      return Response.json({ error: 'Colaborador não encontrado' }, { status: 404 });
+      return Response.json({ success: false, error: { code: 'NOT_FOUND', message: 'Colaborador não encontrado' } }, { status: 404 });
+    }
+
+    if (currentUser.data?.workshop_id && employee.workshop_id !== currentUser.data?.workshop_id) {
+      return Response.json({ success: false, error: { code: 'FORBIDDEN', message: 'Acesso cross-tenant negado' } }, { status: 403 });
     }
 
     console.log('📋 Employee:', { id: employee.id, email: employee.email, user_id: employee.user_id });
@@ -34,7 +48,8 @@ Deno.serve(async (req) => {
       
       if (!users || users.length === 0) {
         return Response.json({ 
-          error: 'Usuário precisa fazer o primeiro login antes de ser aprovado. Peça ao usuário para criar a senha primeiro.' 
+          success: false,
+          error: { code: 'NOT_FOUND', message: 'Usuário precisa fazer o primeiro login antes de ser aprovado. Peça ao usuário para criar a senha primeiro.' }
         }, { status: 404 });
       }
 
@@ -97,12 +112,14 @@ Deno.serve(async (req) => {
 
     return Response.json({ 
       success: true,
-      user_id: userId,
-      profile_id: finalProfileId
+      data: {
+        user_id: userId,
+        profile_id: finalProfileId
+      }
     });
 
   } catch (error) {
     console.error('Erro ao aprovar:', error);
-    return Response.json({ error: 'Erro interno no servidor' }, { status: 500 });
+    return Response.json({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Erro interno no servidor' } }, { status: 500 });
   }
 });

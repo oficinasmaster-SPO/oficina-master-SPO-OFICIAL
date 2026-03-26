@@ -48,17 +48,22 @@ Deno.serve(async (req) => {
       console.log("✅ Usuário autenticado:", user?.email);
     } catch (authError) {
       console.error("❌ Erro de autenticação:", authError.message);
-      return Response.json({ error: 'Unauthorized', details: authError.message }, { status: 401 });
+      return Response.json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } }, { status: 401 });
     }
     
-    if (!user) {
+    if (!user || !user.id) {
       console.error("❌ Usuário não autenticado");
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+      return Response.json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } }, { status: 401 });
     }
 
     // Parse do payload
     console.log("📦 Parseando payload...");
-    const payload = await req.json();
+    let payload;
+    try {
+      payload = await req.json();
+    } catch(e) {
+      return Response.json({ success: false, error: { code: 'INVALID_INPUT', message: 'Payload inválido' } }, { status: 400 });
+    }
     const { prompt, response_json_schema = null } = payload;
     console.log("📝 Prompt recebido, tamanho:", prompt?.length || 0);
 
@@ -67,7 +72,7 @@ Deno.serve(async (req) => {
 
     if (!workshop_id) {
       console.error("❌ Usuário sem workshop_id tentando usar IA");
-      return Response.json({ error: 'Forbidden: Usuário não vinculado a um tenant' }, { status: 403 });
+      return Response.json({ success: false, error: { code: 'FORBIDDEN', message: 'Usuário não vinculado a um tenant' } }, { status: 403 });
     }
 
     // Bloquear divergências se o frontend tentar enviar algo diferente
@@ -76,23 +81,23 @@ Deno.serve(async (req) => {
 
     if ((payloadWorkshopId && payloadWorkshopId !== workshop_id) || (headerTenantId && headerTenantId !== workshop_id)) {
        console.error("❌ Tentativa de burla de tenant (divergência entre token e request)");
-       return Response.json({ error: 'Forbidden: Tenant mismatch detectado' }, { status: 403 });
+       return Response.json({ success: false, error: { code: 'FORBIDDEN', message: 'Tenant mismatch detectado' } }, { status: 403 });
     }
 
     // Verificação de Rate Limit (Usuário)
     if (!checkRateLimit(userLimits, user.id, USER_MAX_PER_MINUTE)) {
       console.error(`❌ Rate limit excedido para o usuário: ${user.id}`);
-      return Response.json({ error: 'Too Many Requests: Limite de uso de IA por usuário excedido. Aguarde 1 minuto.' }, { status: 429 });
+      return Response.json({ success: false, error: { code: 'RATE_LIMIT_EXCEEDED', message: 'Limite de uso de IA por usuário excedido. Aguarde 1 minuto.' } }, { status: 429 });
     }
 
     // Verificação de Rate Limit (Tenant) - Usando apenas o valor seguro
     if (!checkRateLimit(tenantLimits, workshop_id, TENANT_MAX_PER_MINUTE)) {
       console.error(`❌ Rate limit excedido para a oficina: ${workshop_id}`);
-      return Response.json({ error: 'Too Many Requests: Limite de uso de IA por oficina excedido. Aguarde 1 minuto.' }, { status: 429 });
+      return Response.json({ success: false, error: { code: 'RATE_LIMIT_EXCEEDED', message: 'Limite de uso de IA por oficina excedido. Aguarde 1 minuto.' } }, { status: 429 });
     }
 
-    if (!prompt) {
-      return Response.json({ error: 'Prompt is required' }, { status: 400 });
+    if (!prompt || typeof prompt !== 'string' || prompt.length > 50000) {
+      return Response.json({ success: false, error: { code: 'MISSING_FIELDS', message: 'Prompt is required and must be a valid string' } }, { status: 400 });
     }
 
     console.log("🤖 Chamando integração Base44 InvokeLLM (ilimitado via service role)...");
@@ -105,12 +110,13 @@ Deno.serve(async (req) => {
 
     console.log("✅ LLM respondeu com sucesso");
 
-    return Response.json({ success: true, result }, { status: 200 });
+    return Response.json({ success: true, data: result }, { status: 200 });
 
   } catch (error) {
     console.error("❌ ERRO CRÍTICO na função:", error);
     return Response.json({ 
-      error: 'Internal server error'
+      success: false,
+      error: { code: 'INTERNAL_ERROR', message: 'Internal server error' }
     }, { status: 500 });
   }
 });

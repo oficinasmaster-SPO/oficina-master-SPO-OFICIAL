@@ -53,27 +53,34 @@ Deno.serve(async (req) => {
         const base44 = createClientFromRequest(req);
         const user = await base44.auth.me();
 
-        if (!user) {
-            return Response.json({ error: 'Unauthorized' }, { status: 401 });
+        if (!user || !user.id) {
+            return Response.json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } }, { status: 401 });
         }
 
         // Rate Limit por Usuário (10 req / min)
         if (!checkRateLimit(userRateLimits, user.id, MAX_REQUESTS_PER_USER)) {
             console.warn(`Rate limit excedido para usuário ${user.id}`);
-            return Response.json({ error: 'Too Many Requests' }, { status: 429 });
+            return Response.json({ success: false, error: { code: 'RATE_LIMIT_EXCEEDED', message: 'Too Many Requests' } }, { status: 429 });
         }
 
         // Rate Limit por Tenant/Oficina (não confia no payload, usa o dado seguro do token)
         const workshopId = user.data?.workshop_id;
         if (workshopId && !checkRateLimit(tenantRateLimits, workshopId, MAX_REQUESTS_PER_TENANT)) {
             console.warn(`Rate limit excedido para tenant ${workshopId}`);
-            return Response.json({ error: 'Too Many Requests' }, { status: 429 });
+            return Response.json({ success: false, error: { code: 'RATE_LIMIT_EXCEEDED', message: 'Too Many Requests' } }, { status: 429 });
         }
 
-        const { message, context, includeWorkshopData } = await req.json();
+        let body;
+        try {
+            body = await req.json();
+        } catch(e) {
+            return Response.json({ success: false, error: { code: 'INVALID_INPUT', message: 'Payload inválido' } }, { status: 400 });
+        }
 
-        if (!message) {
-            return Response.json({ error: 'Message is required' }, { status: 400 });
+        const { message, context, includeWorkshopData } = body;
+
+        if (!message || typeof message !== 'string' || message.length > 5000) {
+            return Response.json({ success: false, error: { code: 'MISSING_FIELDS', message: 'Message is required and must be a valid string' } }, { status: 400 });
         }
 
         // Buscar dados do workshop se solicitado
@@ -314,16 +321,20 @@ ${context || ''}`;
 
         return Response.json({ 
             success: true,
-            response: response.choices[0].message.content,
-            usage: {
-                prompt_tokens: response.usage.prompt_tokens,
-                completion_tokens: response.usage.completion_tokens,
-                total_tokens: response.usage.total_tokens
+            data: {
+                response: response.choices[0].message.content
+            },
+            meta: {
+                usage: {
+                    prompt_tokens: response.usage.prompt_tokens,
+                    completion_tokens: response.usage.completion_tokens,
+                    total_tokens: response.usage.total_tokens
+                }
             }
         });
 
     } catch (error) {
         console.error('Error in chatWithAI:', error);
-        return Response.json({ error: 'Erro interno no servidor' }, { status: 500 });
+        return Response.json({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Erro interno no servidor' } }, { status: 500 });
     }
 });

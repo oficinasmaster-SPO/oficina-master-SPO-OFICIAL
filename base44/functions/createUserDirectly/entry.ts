@@ -9,19 +9,24 @@ Deno.serve(async (req) => {
     try {
       currentUser = await base44.auth.me();
     } catch (e) {
-      return Response.json({ error: 'Não autenticado' }, { status: 401 });
+      return Response.json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Não autenticado' } }, { status: 401 });
     }
     
-    if (!currentUser) {
-      return Response.json({ error: 'Não autenticado' }, { status: 401 });
+    if (!currentUser || !currentUser.id) {
+      return Response.json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Não autenticado' } }, { status: 401 });
     }
 
-    // 2. Verificar permissão de Admin rigorosamente
     if (currentUser.role !== 'admin') {
-       return Response.json({ error: 'Forbidden: Apenas administradores podem convidar usuários' }, { status: 403 });
+       return Response.json({ success: false, error: { code: 'FORBIDDEN', message: 'Apenas administradores podem convidar usuários' } }, { status: 403 });
     }
 
-    const body = await req.json();
+    let body;
+    try {
+      body = await req.json();
+    } catch (e) {
+      return Response.json({ success: false, error: { code: 'INVALID_INPUT', message: 'Payload inválido' } }, { status: 400 });
+    }
+
     const { 
       name, 
       email, 
@@ -35,14 +40,15 @@ Deno.serve(async (req) => {
       data_nascimento 
     } = body;
     
-    if (!name || !email || !workshop_id || !profile_id) {
-      return Response.json({ error: 'Nome, email, workshop_id e profile_id são obrigatórios' }, { status: 400 });
+    if (!name || typeof name !== 'string' || name.length > 255 ||
+        !email || typeof email !== 'string' || email.length > 255 ||
+        !workshop_id || typeof workshop_id !== 'string' ||
+        !profile_id || typeof profile_id !== 'string') {
+      return Response.json({ success: false, error: { code: 'MISSING_FIELDS', message: 'Campos obrigatórios ausentes ou inválidos (name, email, workshop_id, profile_id)' } }, { status: 400 });
     }
 
-    // 3. Validar Isolamento de Tenant (Workshop)
-    // O usuário admin só pode criar usuários dentro da sua própria oficina.
-    if (currentUser.data?.workshop_id !== workshop_id) {
-       return Response.json({ error: 'Forbidden: Você não tem permissão para criar usuários em outra oficina' }, { status: 403 });
+    if (currentUser.data?.workshop_id && currentUser.data?.workshop_id !== workshop_id) {
+       return Response.json({ success: false, error: { code: 'FORBIDDEN', message: 'Acesso cross-tenant negado' } }, { status: 403 });
     }
     
     // 4. Sanitizar payload de role enviada
@@ -303,20 +309,22 @@ Deno.serve(async (req) => {
 
     return Response.json({ 
       success: true,
-      message: 'Usuário criado e E-mail de convite enviado.',
-      user_id: inviteResult.id,
-      email: email,
-      profile_id: finalProfileId,
-      invite_link: inviteLink,
-      invite_id: invite.id,
-      employee_id: employee.id
+      data: {
+        message: 'Usuário criado e E-mail de convite enviado.',
+        user_id: inviteResult.id,
+        email: email,
+        profile_id: finalProfileId,
+        invite_link: inviteLink,
+        invite_id: invite.id,
+        employee_id: employee.id
+      }
     });
 
   } catch (error) {
     console.error("❌ Erro:", error);
     return Response.json({ 
       success: false,
-      error: error.message 
+      error: { code: 'INTERNAL_ERROR', message: 'Erro interno no servidor' }
     }, { status: 500 });
   }
 });
