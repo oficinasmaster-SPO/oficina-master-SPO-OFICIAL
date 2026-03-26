@@ -49,7 +49,7 @@ export default function FiliaisWorkshop({ workshop }) {
         city: newFilial.city,
         state: newFilial.state,
         company_id: workshop.id,
-        owner_id: user.id,
+        owner_id: workshop.owner_id || user.id,
         consulting_firm_id: workshop.consulting_firm_id,
         segment: workshop.segment || "",
         segment_auto: workshop.segment_auto || "",
@@ -64,7 +64,7 @@ export default function FiliaisWorkshop({ workshop }) {
       toast.success("Filial adicionada com sucesso!");
     } catch (error) {
       console.error(error);
-      toast.error("Erro ao adicionar filial");
+      toast.error(error.message ? `Erro: ${error.message}` : "Erro ao adicionar filial");
     } finally {
       setIsAdding(false);
     }
@@ -75,15 +75,16 @@ export default function FiliaisWorkshop({ workshop }) {
     const currentFilial = filiais.find(f => f.id === id);
     if (currentFilial && currentFilial[field] === value) return;
 
-    setAtualizando(prev => ({ ...prev, [id]: true }));
+    const lockKey = `${id}-${field}`;
+    setAtualizando(prev => ({ ...prev, [lockKey]: true }));
     try {
       await base44.entities.Workshop.update(id, { [field]: value });
-      setFiliais(filiais.map(f => f.id === id ? { ...f, [field]: value } : f));
+      setFiliais(prev => prev.map(f => f.id === id ? { ...f, [field]: value } : f));
       toast.success("Filial atualizada!");
     } catch (error) {
       toast.error("Erro ao atualizar filial");
     } finally {
-      setAtualizando(prev => ({ ...prev, [id]: false }));
+      setAtualizando(prev => ({ ...prev, [lockKey]: false }));
     }
   };
 
@@ -163,8 +164,8 @@ export default function FiliaisWorkshop({ workshop }) {
                   <Input 
                     defaultValue={filial.name} 
                     onBlur={(e) => handleUpdateFilial(filial.id, 'name', e.target.value)}
-                    disabled={!!atualizando[filial.id]}
-                    className={atualizando[filial.id] ? "opacity-60 cursor-wait" : ""}
+                    disabled={!!atualizando[`${filial.id}-name`]}
+                    className={atualizando[`${filial.id}-name`] ? "opacity-60 cursor-wait" : ""}
                   />
                 </div>
                 <div>
@@ -172,8 +173,8 @@ export default function FiliaisWorkshop({ workshop }) {
                   <Input 
                     defaultValue={filial.city} 
                     onBlur={(e) => handleUpdateFilial(filial.id, 'city', e.target.value)}
-                    disabled={!!atualizando[filial.id]}
-                    className={atualizando[filial.id] ? "opacity-60 cursor-wait" : ""}
+                    disabled={!!atualizando[`${filial.id}-city`]}
+                    className={atualizando[`${filial.id}-city`] ? "opacity-60 cursor-wait" : ""}
                   />
                 </div>
                 <div>
@@ -181,8 +182,8 @@ export default function FiliaisWorkshop({ workshop }) {
                   <Input 
                     defaultValue={filial.state} 
                     onBlur={(e) => handleUpdateFilial(filial.id, 'state', e.target.value)}
-                    disabled={!!atualizando[filial.id]}
-                    className={atualizando[filial.id] ? "opacity-60 cursor-wait" : ""}
+                    disabled={!!atualizando[`${filial.id}-state`]}
+                    className={atualizando[`${filial.id}-state`] ? "opacity-60 cursor-wait" : ""}
                   />
                 </div>
               </div>
