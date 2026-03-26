@@ -28,8 +28,49 @@ Deno.serve(async (req) => {
 
     // Processar lead recebido (POST)
     if (req.method === 'POST') {
-      const body = await req.json();
-      console.log('📩 Lead recebido do Meta:', JSON.stringify(body));
+      const rawBody = await req.text();
+      const signatureHeader = req.headers.get('x-hub-signature-256') || req.headers.get('x-hub-signature');
+      
+      if (!signatureHeader) {
+        console.error('❌ Assinatura ausente');
+        return Response.json({ error: 'Assinatura ausente' }, { status: 403 });
+      }
+
+      const APP_SECRET = Deno.env.get('META_APP_SECRET');
+      if (!APP_SECRET) {
+        console.error("❌ META_APP_SECRET não configurado no ambiente");
+        return Response.json({ error: 'Configuração interna ausente' }, { status: 500 });
+      }
+
+      const [algorithm, signatureValue] = signatureHeader.split('=');
+      const hashAlgorithm = algorithm === 'sha256' ? 'SHA-256' : 'SHA-1';
+
+      const encoder = new TextEncoder();
+      const key = await crypto.subtle.importKey(
+        'raw',
+        encoder.encode(APP_SECRET),
+        { name: 'HMAC', hash: hashAlgorithm },
+        false,
+        ['sign']
+      );
+
+      const signatureBuffer = await crypto.subtle.sign(
+        'HMAC',
+        key,
+        encoder.encode(rawBody)
+      );
+
+      const expectedSignature = Array.from(new Uint8Array(signatureBuffer))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+
+      if (expectedSignature !== signatureValue) {
+        console.error('❌ Assinatura do Meta inválida. Bloqueando request.');
+        return Response.json({ error: 'Assinatura inválida' }, { status: 403 });
+      }
+
+      const body = JSON.parse(rawBody);
+      console.log('📩 Lead recebido do Meta e validado com sucesso:', JSON.stringify(body));
 
       // Estrutura do Meta Ads Lead
       const entry = body.entry?.[0];
