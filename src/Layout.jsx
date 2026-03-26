@@ -238,7 +238,13 @@ export default function Layout({ children, currentPageName }) {
                                   className="flex items-center justify-between cursor-pointer hover:!bg-[#FF0000] hover:!text-white focus:!bg-[#FF0000] focus:!text-white"
                                   onClick={() => setCurrentWorkshop(ws.id)}
                                 >
-                                  <span className="truncate">{ws.name}</span>
+                                  <div className="flex flex-col min-w-0">
+                                    <span className="truncate text-sm">{ws.name}</span>
+                                    {!ws.company_id
+                                      ? <span className="text-xs opacity-60">Matriz</span>
+                                      : <span className="text-xs opacity-60">Filial · {ws.city || 'Sem cidade'}</span>
+                                    }
+                                  </div>
                                   {workshop?.id === ws.id && <Check className="w-4 h-4 flex-shrink-0" />}
                                 </DropdownMenuItem>
                               ))}

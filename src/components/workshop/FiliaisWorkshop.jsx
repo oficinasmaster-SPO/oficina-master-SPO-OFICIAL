@@ -90,8 +90,8 @@ export default function FiliaisWorkshop({ workshop }) {
   const confirmarDelete = async () => {
     if (!filialParaDeletar) return;
     try {
-      await base44.entities.Workshop.delete(filialParaDeletar);
-      setFiliais(filiais.filter((f) => f.id !== filialParaDeletar));
+      await base44.entities.Workshop.delete(filialParaDeletar.id);
+      setFiliais(filiais.filter((f) => f.id !== filialParaDeletar.id));
       toast.success("Filial removida!");
     } catch (error) {
       console.error(error);
@@ -187,7 +187,7 @@ export default function FiliaisWorkshop({ workshop }) {
                 </div>
               </div>
               <div className="md:mt-5">
-                <Button variant="ghost" size="icon" onClick={() => setFilialParaDeletar(filial.id)} className="text-red-500 hover:text-red-700 hover:bg-red-50" title="Remover filial">
+                <Button variant="ghost" size="icon" onClick={() => setFilialParaDeletar(filial)} className="text-red-500 hover:text-red-700 hover:bg-red-50" title="Remover filial">
                   <Trash2 className="w-5 h-5" />
                 </Button>
               </div>
@@ -206,7 +206,10 @@ export default function FiliaisWorkshop({ workshop }) {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Remover Filial</AlertDialogTitle>
-            <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
+            <AlertDialogDescription>
+              Tem certeza que deseja remover <strong>{filialParaDeletar?.name}</strong>?
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
