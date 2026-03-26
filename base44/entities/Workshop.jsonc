@@ -1,0 +1,1090 @@
+{
+  "name": "Workshop",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Nome fantasia"
+    },
+    "razao_social": {
+      "type": "string",
+      "description": "Raz\u00e3o social"
+    },
+    "company_id": {
+      "type": "string",
+      "description": "ID da empresa matriz a qual esta oficina pertence (Rela\u00e7\u00e3o N-1: Workshop \u2192 Company)"
+    },
+    "consulting_firm_id": {
+      "type": "string",
+      "description": "ID do escrit\u00f3rio de consultoria que gerencia este workshop (duplicado para otimiza\u00e7\u00e3o de consulta)."
+    },
+    "cnpj": {
+      "type": "string"
+    },
+    "telefone": {
+      "type": "string",
+      "description": "Telefone principal da oficina"
+    },
+    "email": {
+      "type": "string",
+      "format": "email",
+      "description": "E-mail principal da oficina"
+    },
+    "cep": {
+      "type": "string",
+      "description": "CEP do endere\u00e7o da oficina"
+    },
+    "city": {
+      "type": "string"
+    },
+    "state": {
+      "type": "string"
+    },
+    "comarca": {
+      "type": "string",
+      "description": "Comarca judicial da oficina"
+    },
+    "endereco_completo": {
+      "type": "string"
+    },
+    "segment": {
+      "type": "string",
+      "description": "Segmento livre definido pelo usu\u00e1rio"
+    },
+    "segment_auto": {
+      "type": "string",
+      "description": "Segmento calculado automaticamente baseado nos servi\u00e7os"
+    },
+    "vehicle_types": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "auto",
+          "motos",
+          "truck",
+          "barcos",
+          "aviao",
+          "bicicletas",
+          "agro_maquina",
+          "trator"
+        ]
+      },
+      "description": "Tipos de ve\u00edculos atendidos"
+    },
+    "fuel_types": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "diesel",
+          "ciclo_otto",
+          "etanol",
+          "eletrico",
+          "hibrido",
+          "flex",
+          "gnv"
+        ]
+      }
+    },
+    "vehicle_categories": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "premium_luxo",
+          "super_carros",
+          "intermediarios",
+          "populares",
+          "utilitarios",
+          "transporte",
+          "frotas",
+          "moto_entregadores",
+          "seguradoras",
+          "locadoras"
+        ]
+      }
+    },
+    "services_offered": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Servi\u00e7os oferecidos"
+    },
+    "tax_regime": {
+      "type": "string",
+      "enum": [
+        "mei",
+        "simples_nacional",
+        "lucro_presumido",
+        "lucro_real"
+      ],
+      "description": "Enquadramento tribut\u00e1rio"
+    },
+    "monthly_revenue": {
+      "type": "string",
+      "enum": [
+        "0_20k",
+        "20k_40k",
+        "40k_60k",
+        "60k_80k",
+        "80k_100k",
+        "100k_130k",
+        "130k_160k",
+        "160k_190k",
+        "190k_200k",
+        "200k_250k",
+        "250k_300k",
+        "300k_350k",
+        "350k_400k",
+        "400k_450k",
+        "450k_500k",
+        "500k_600k",
+        "600k_700k",
+        "700k_800k",
+        "800k_900k",
+        "900k_1m",
+        "acima_1m"
+      ]
+    },
+    "employees_count": {
+      "type": "integer",
+      "default": 1,
+      "description": "Quantidade de funcion\u00e1rios (1 a 100+)"
+    },
+    "years_in_business": {
+      "type": "integer",
+      "default": 1,
+      "description": "Anos de atua\u00e7\u00e3o no mercado (1 a 100+)"
+    },
+    "is_franchisee": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se \u00e9 franqueado"
+    },
+    "franchisor_name": {
+      "type": "string",
+      "description": "Nome da franqueadora"
+    },
+    "operates_franchise": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se atua com franquias (\u00e9 franqueadora)"
+    },
+    "units_count_category": {
+      "type": "string",
+      "enum": [
+        "unidade_solo",
+        "multiunidades",
+        "holding_operacional",
+        "rede_estruturada"
+      ],
+      "description": "Categoria de quantidade de unidades"
+    },
+    "operational_settings": {
+      "type": "object",
+      "properties": {
+        "lunch_start": {
+          "type": "string",
+          "description": "Hor\u00e1rio in\u00edcio almo\u00e7o (HH:MM)"
+        },
+        "lunch_end": {
+          "type": "string",
+          "description": "Hor\u00e1rio fim almo\u00e7o (HH:MM)"
+        },
+        "work_start": {
+          "type": "string",
+          "description": "Hor\u00e1rio in\u00edcio expediente"
+        },
+        "work_end": {
+          "type": "string",
+          "description": "Hor\u00e1rio fim expediente"
+        }
+      },
+      "description": "Configura\u00e7\u00f5es operacionais para c\u00e1lculo de QGP"
+    },
+    "notification_settings": {
+      "type": "object",
+      "properties": {
+        "coex_expiration_days": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          },
+          "default": [
+            30,
+            60,
+            90
+          ]
+        },
+        "email_enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "in_app_enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "inactivity_alert_enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "inactivity_threshold_days": {
+          "type": "integer",
+          "default": 7
+        },
+        "weekly_digest_enabled": {
+          "type": "boolean",
+          "default": true
+        }
+      },
+      "description": "Configura\u00e7\u00f5es de notifica\u00e7\u00e3o da oficina"
+    },
+    "equipment_list": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string",
+            "enum": [
+              "mecanica_autocenter",
+              "auto_eletrica",
+              "funilaria_pintura",
+              "truck_diesel",
+              "ferramentas_especiais"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "integer",
+            "default": 1
+          },
+          "brand": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Lista completa de equipamentos por categoria"
+    },
+    "equipment": {
+      "type": "object",
+      "properties": {
+        "elevators": {
+          "type": "integer",
+          "default": 0
+        },
+        "alignment_ramps": {
+          "type": "integer",
+          "default": 0
+        },
+        "balancing_machines": {
+          "type": "integer",
+          "default": 0
+        },
+        "disc_grinders": {
+          "type": "integer",
+          "default": 0
+        },
+        "shock_tester": {
+          "type": "integer",
+          "default": 0
+        },
+        "welding_machines": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "mig_mag",
+                  "tig",
+                  "eletrodo",
+                  "macarico",
+                  "spotter",
+                  "plasma"
+                ]
+              },
+              "quantity": {
+                "type": "integer"
+              }
+            }
+          }
+        },
+        "pneumatic_wrench": {
+          "type": "integer",
+          "default": 0
+        },
+        "paint_booth": {
+          "type": "integer",
+          "default": 0
+        },
+        "lathe": {
+          "type": "integer",
+          "default": 0
+        },
+        "scanners": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "brand": {
+                "type": "string"
+              },
+              "model": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "third_party_services": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "value": {
+            "type": "number"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "marketing",
+              "software_gestao",
+              "consultoria_financeira",
+              "treinamento_tecnico",
+              "empresa_contratacao",
+              "contabilidade",
+              "advocacia",
+              "seguranca_trabalho",
+              "seguranca_predial",
+              "seguro_incendio",
+              "seguro_percurso",
+              "seguro_batidas",
+              "seguro_roubo_furto",
+              "seguro_vida",
+              "aposentadoria_privada",
+              "maquina_cartao",
+              "bancos",
+              "outros"
+            ]
+          },
+          "phone": {
+            "type": "string",
+            "description": "Telefone do fornecedor"
+          },
+          "contact_person": {
+            "type": "string",
+            "description": "Nome do contato"
+          }
+        }
+      }
+    },
+    "mission": {
+      "type": "string",
+      "description": "Miss\u00e3o da empresa"
+    },
+    "vision": {
+      "type": "string",
+      "description": "Vis\u00e3o da empresa"
+    },
+    "values": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Valores da empresa"
+    },
+    "serves_fleet_insurance": {
+      "type": "boolean",
+      "default": false,
+      "description": "Atende locadora/seguradora"
+    },
+    "best_month_history": {
+      "type": "object",
+      "properties": {
+        "date": {
+          "type": "string",
+          "format": "date",
+          "description": "Data do melhor m\u00eas hist\u00f3rico"
+        },
+        "revenue_total": {
+          "type": "number",
+          "description": "Faturamento total do melhor m\u00eas (calculado)"
+        },
+        "revenue_parts": {
+          "type": "number",
+          "description": "Faturamento de pe\u00e7as do melhor m\u00eas"
+        },
+        "revenue_services": {
+          "type": "number",
+          "description": "Faturamento de servi\u00e7os do melhor m\u00eas"
+        },
+        "profit_percentage": {
+          "type": "number",
+          "description": "Percentual de lucro do melhor m\u00eas"
+        },
+        "rentability_percentage": {
+          "type": "number",
+          "description": "Percentual de rentabilidade do melhor m\u00eas"
+        },
+        "customer_volume": {
+          "type": "integer",
+          "description": "Volume de clientes do melhor m\u00eas"
+        },
+        "average_ticket": {
+          "type": "number",
+          "description": "Ticket m\u00e9dio do melhor m\u00eas (calculado)"
+        },
+        "average_ticket_parts": {
+          "type": "number",
+          "description": "Ticket m\u00e9dio de pe\u00e7as (calculado)"
+        },
+        "average_ticket_services": {
+          "type": "number",
+          "description": "Ticket m\u00e9dio de servi\u00e7os (calculado)"
+        },
+        "r70_i30": {
+          "type": "object",
+          "properties": {
+            "r70": {
+              "type": "number",
+              "default": 70
+            },
+            "i30": {
+              "type": "number",
+              "default": 30
+            }
+          },
+          "description": "Propor\u00e7\u00e3o R70/I30"
+        },
+        "tcmp2": {
+          "type": "number",
+          "description": "TCMP2 (puxado do DRE m\u00e9dio)"
+        },
+        "pave_commercial": {
+          "type": "number",
+          "description": "PAVE - comercial (qtd)"
+        },
+        "kit_master": {
+          "type": "number",
+          "description": "Kit Master (qtd)"
+        },
+        "gps_vendas": {
+          "type": "number",
+          "description": "GPS de Vendas (qtd)"
+        },
+        "clients_scheduled_base": {
+          "type": "integer",
+          "default": 0,
+          "description": "Clientes agendados Base (qtd)"
+        },
+        "clients_delivered_base": {
+          "type": "integer",
+          "default": 0,
+          "description": "Clientes entregues Base (qtd)"
+        },
+        "sales_base": {
+          "type": "number",
+          "description": "Vendas comercial Base R$"
+        },
+        "clients_scheduled_mkt": {
+          "type": "integer",
+          "default": 0,
+          "description": "Clientes agendados Marketing (qtd)"
+        },
+        "clients_delivered_mkt": {
+          "type": "integer",
+          "default": 0,
+          "description": "Clientes entregues Marketing (qtd)"
+        },
+        "sales_marketing": {
+          "type": "number",
+          "description": "Vendas lead Marketing R$"
+        },
+        "clients_scheduled_referral": {
+          "type": "integer",
+          "default": 0,
+          "description": "Clientes agendados Indica\u00e7\u00e3o (qtd)"
+        },
+        "clients_delivered_referral": {
+          "type": "integer",
+          "default": 0,
+          "description": "Clientes entregues Indica\u00e7\u00e3o (qtd)"
+        },
+        "clients_delivered": {
+          "type": "integer",
+          "description": "Clientes entregues total (qtd)"
+        },
+        "marketing": {
+          "type": "object",
+          "properties": {
+            "leads_generated": {
+              "type": "integer",
+              "default": 0,
+              "description": "Leads gerados (qtd)"
+            },
+            "leads_scheduled": {
+              "type": "integer",
+              "default": 0,
+              "description": "Leads agendados (qtd)"
+            },
+            "leads_showed_up": {
+              "type": "integer",
+              "default": 0,
+              "description": "Comparecimentos (qtd)"
+            },
+            "leads_sold": {
+              "type": "integer",
+              "default": 0,
+              "description": "Leads vendidos (qtd)"
+            },
+            "cost_per_sale": {
+              "type": "number",
+              "default": 0,
+              "description": "Custo por venda R$ (calculado)"
+            },
+            "invested_value": {
+              "type": "number",
+              "default": 0,
+              "description": "Valor investido (tr\u00e1fego) R$"
+            },
+            "revenue_from_traffic": {
+              "type": "number",
+              "default": 0,
+              "description": "Valor faturado lead tr\u00e1fego R$"
+            }
+          },
+          "description": "Dados de marketing do melhor m\u00eas"
+        },
+        "physical_person": {
+          "type": "object",
+          "properties": {
+            "revenue_total": {
+              "type": "number"
+            },
+            "revenue_parts": {
+              "type": "number"
+            },
+            "revenue_services": {
+              "type": "number"
+            },
+            "customer_volume": {
+              "type": "integer"
+            },
+            "percentage": {
+              "type": "number"
+            }
+          },
+          "description": "Faturamento pessoa f\u00edsica"
+        },
+        "juridical_person": {
+          "type": "object",
+          "properties": {
+            "revenue_total": {
+              "type": "number"
+            },
+            "revenue_parts": {
+              "type": "number"
+            },
+            "revenue_services": {
+              "type": "number"
+            },
+            "customer_volume": {
+              "type": "integer"
+            },
+            "percentage": {
+              "type": "number"
+            }
+          },
+          "description": "Faturamento pessoa jur\u00eddica (locadora/seguradora)"
+        }
+      },
+      "description": "Registro do melhor m\u00eas hist\u00f3rico para dimensionamento de metas"
+    },
+    "monthly_goals": {
+      "type": "object",
+      "properties": {
+        "month": {
+          "type": "string",
+          "description": "M\u00eas de refer\u00eancia (YYYY-MM)"
+        },
+        "growth_percentage": {
+          "type": "number",
+          "default": 10,
+          "description": "Porcentagem de crescimento geral aplicada \u00e0 meta"
+        },
+        "projected_revenue": {
+          "type": "number",
+          "default": 0,
+          "description": "Valor total projetado no m\u00eas (Melhor M\u00eas + Crescimento)"
+        },
+        "actual_revenue_achieved": {
+          "type": "number",
+          "default": 0,
+          "description": "Valor total faturado no m\u00eas atual (Realizado)"
+        },
+        "revenue_parts": {
+          "type": "number"
+        },
+        "revenue_services": {
+          "type": "number"
+        },
+        "profitability_percentage": {
+          "type": "number"
+        },
+        "profit_percentage": {
+          "type": "number"
+        },
+        "average_ticket": {
+          "type": "number"
+        },
+        "customer_volume": {
+          "type": "integer"
+        },
+        "buy_target": {
+          "type": "number",
+          "description": "Meta de compra mensal (R$)"
+        },
+        "product_cost_applied": {
+          "type": "number",
+          "description": "Custo de produto aplicado mensal (R$)"
+        },
+        "pave_commercial": {
+          "type": "number",
+          "description": "PAVE - comercial (qtd)"
+        },
+        "kit_master": {
+          "type": "number",
+          "description": "Kit Master (qtd)"
+        },
+        "gps_vendas": {
+          "type": "number",
+          "description": "GPS de Vendas (qtd)"
+        },
+        "clients_scheduled_base": {
+          "type": "integer",
+          "default": 0,
+          "description": "Clientes agendados Base (qtd)"
+        },
+        "clients_delivered_base": {
+          "type": "integer",
+          "default": 0,
+          "description": "Clientes entregues Base (qtd)"
+        },
+        "sales_base": {
+          "type": "number",
+          "description": "Vendas comercial Base R$"
+        },
+        "clients_scheduled_mkt": {
+          "type": "integer",
+          "default": 0,
+          "description": "Clientes agendados Marketing (qtd)"
+        },
+        "clients_delivered_mkt": {
+          "type": "integer",
+          "default": 0,
+          "description": "Clientes entregues Marketing (qtd)"
+        },
+        "sales_marketing": {
+          "type": "number",
+          "description": "Vendas lead Marketing R$"
+        },
+        "marketing": {
+          "type": "object",
+          "properties": {
+            "leads_generated": {
+              "type": "integer",
+              "default": 0
+            },
+            "leads_scheduled": {
+              "type": "integer",
+              "default": 0
+            },
+            "leads_showed_up": {
+              "type": "integer",
+              "default": 0
+            },
+            "leads_sold": {
+              "type": "integer",
+              "default": 0
+            },
+            "invested_value": {
+              "type": "number",
+              "default": 0
+            },
+            "revenue_from_traffic": {
+              "type": "number",
+              "default": 0
+            },
+            "cost_per_sale": {
+              "type": "number",
+              "default": 0
+            }
+          }
+        }
+      }
+    },
+    "daily_goals": {
+      "type": "object"
+    },
+    "weekly_goals": {
+      "type": "object"
+    },
+    "annual_goals": {
+      "type": "object"
+    },
+    "engagement_score": {
+      "type": "number",
+      "default": 0
+    },
+    "maturity_level": {
+      "type": "integer",
+      "default": 1,
+      "description": "N\u00edvel de maturidade 1-4"
+    },
+    "company_manual_url": {
+      "type": "string"
+    },
+    "organizational_chart_url": {
+      "type": "string"
+    },
+    "logo_url": {
+      "type": "string"
+    },
+    "custom_css_url": {
+      "type": "string",
+      "description": "URL do arquivo CSS personalizado da oficina"
+    },
+    "google_business_link": {
+      "type": "string",
+      "description": "Link do Google Meu Neg\u00f3cio para avalia\u00e7\u00f5es"
+    },
+    "brand_colors": {
+      "type": "object",
+      "properties": {
+        "primary": {
+          "type": "string"
+        },
+        "secondary": {
+          "type": "string"
+        }
+      }
+    },
+    "owner_id": {
+      "type": "string",
+      "description": "ID do propriet\u00e1rio principal"
+    },
+    "partner_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "IDs dos s\u00f3cios com acesso total \u00e0 empresa"
+    },
+    "planoAtual": {
+      "type": "string",
+      "enum": [
+        "FREE",
+        "START",
+        "BRONZE",
+        "PRATA",
+        "GOLD",
+        "IOM",
+        "MILLIONS"
+      ],
+      "default": "FREE",
+      "description": "Plano atual da oficina"
+    },
+    "planId": {
+      "type": "string",
+      "default": "trial",
+      "description": "ID do plano vinculado"
+    },
+    "planStatus": {
+      "type": "string",
+      "enum": [
+        "active",
+        "trial",
+        "canceled"
+      ],
+      "default": "trial",
+      "description": "Status da assinatura do plano"
+    },
+    "trialEndsAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "billingCycleStart": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "billingCycleEnd": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "dataAssinatura": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data de assinatura do plano atual"
+    },
+    "dataRenovacao": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data de renova\u00e7\u00e3o do plano"
+    },
+    "limitesUtilizados": {
+      "type": "object",
+      "properties": {
+        "diagnosticosMes": {
+          "type": "integer",
+          "default": 0,
+          "description": "Quantidade de diagn\u00f3sticos realizados no m\u00eas"
+        },
+        "colaboradores": {
+          "type": "integer",
+          "default": 0,
+          "description": "Quantidade de colaboradores cadastrados"
+        },
+        "filiais": {
+          "type": "integer",
+          "default": 0,
+          "description": "Quantidade de filiais cadastradas"
+        }
+      },
+      "description": "Contadores de uso dos limites do plano"
+    },
+    "observacoes_gerais": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es gerais sobre a oficina"
+    },
+    "sugestoes_ia": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Sugest\u00f5es geradas pela IA baseadas no perfil"
+    },
+    "notas_manuais": {
+      "type": "string",
+      "description": "Anota\u00e7\u00f5es manuais do propriet\u00e1rio"
+    },
+    "is_autocenter": {
+      "type": "boolean",
+      "default": false,
+      "description": "Identifica se \u00e9 auto center"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ativo",
+        "inativo",
+        "acompanhamento"
+      ],
+      "default": "ativo",
+      "description": "Status da oficina"
+    },
+    "consultorias_vinculos": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "tipo": {
+            "type": "string"
+          },
+          "data_inicio": {
+            "type": "string",
+            "format": "date"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "V\u00ednculos com consultorias e programas"
+    },
+    "certificados": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string"
+          },
+          "data_conclusao": {
+            "type": "string",
+            "format": "date"
+          },
+          "url": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Certificados conquistados"
+    },
+    "avaliacao_participante": {
+      "type": "number",
+      "default": 0,
+      "description": "Nota de avalia\u00e7\u00e3o do participante"
+    },
+    "historico_interacoes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "tipo": {
+            "type": "string"
+          },
+          "descricao": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Hist\u00f3rico de intera\u00e7\u00f5es com a plataforma"
+    },
+    "capacidade_atendimento_dia": {
+      "type": "integer",
+      "default": 0
+    },
+    "tempo_medio_servico": {
+      "type": "number",
+      "default": 0
+    },
+    "horario_funcionamento": {
+      "type": "object",
+      "properties": {
+        "abertura": {
+          "type": "string"
+        },
+        "fechamento": {
+          "type": "string"
+        },
+        "almoco_inicio": {
+          "type": "string",
+          "description": "In\u00edcio do hor\u00e1rio de almo\u00e7o"
+        },
+        "almoco_fim": {
+          "type": "string",
+          "description": "Fim do hor\u00e1rio de almo\u00e7o"
+        },
+        "dias_semana": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "quick_tips": {
+      "type": "string",
+      "description": "Dicas r\u00e1pidas para a opera\u00e7\u00e3o da oficina"
+    },
+    "custom_document_types": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Tipos de documentos customizados pela oficina"
+    }
+  },
+  "required": [
+    "name",
+    "city",
+    "state",
+    "owner_id"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        },
+        {
+          "owner_id": "{{user.id}}"
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        },
+        {
+          "owner_id": "{{user.id}}"
+        },
+        {
+          "partner_ids": "{{user.id}}"
+        },
+        {
+          "id": "{{user.data.workshop_id}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        },
+        {
+          "owner_id": "{{user.id}}"
+        },
+        {
+          "partner_ids": "{{user.id}}"
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        }
+      ]
+    }
+  }
+}
