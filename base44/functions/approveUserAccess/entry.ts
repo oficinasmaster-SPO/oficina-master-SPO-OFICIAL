@@ -1,5 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
+const idempotencyCache = new Map();
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -19,7 +21,12 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, error: { code: 'INVALID_INPUT', message: 'Payload inválido' } }, { status: 400 });
     }
 
-    const { employee_id, profile_id } = body;
+    const { employee_id, profile_id, idempotencyKey, updated_date } = body;
+
+    if (idempotencyKey && idempotencyCache.has(idempotencyKey)) {
+      const cached = idempotencyCache.get(idempotencyKey);
+      return Response.json(cached.body, { status: cached.status });
+    }
 
     if (!employee_id || typeof employee_id !== 'string') {
       return Response.json({ success: false, error: { code: 'MISSING_FIELDS', message: 'employee_id é obrigatório e deve ser texto' } }, { status: 400 });
@@ -33,6 +40,10 @@ Deno.serve(async (req) => {
 
     if (currentUser.data?.workshop_id && employee.workshop_id !== currentUser.data?.workshop_id) {
       return Response.json({ success: false, error: { code: 'FORBIDDEN', message: 'Acesso cross-tenant negado' } }, { status: 403 });
+    }
+
+    if (updated_date && employee.updated_date && new Date(updated_date).getTime() !== new Date(employee.updated_date).getTime()) {
+      return Response.json({ success: false, error: { code: 'CONFLICT_MODIFICATION', message: 'Registro modificado por outro usuário. Recarregue a página.' } }, { status: 409 });
     }
 
     async function validateBusinessRules(data, context) {
@@ -124,13 +135,20 @@ Deno.serve(async (req) => {
       }
     }
 
-    return Response.json({ 
+    const responseBody = { 
       success: true,
       data: {
         user_id: userId,
         profile_id: finalProfileId
       }
-    });
+    };
+
+    if (idempotencyKey) {
+      idempotencyCache.set(idempotencyKey, { body: responseBody, status: 200 });
+      setTimeout(() => idempotencyCache.delete(idempotencyKey), 5 * 60 * 1000);
+    }
+
+    return Response.json(responseBody);
 
   } catch (error) {
     console.error('Erro ao aprovar:', error);

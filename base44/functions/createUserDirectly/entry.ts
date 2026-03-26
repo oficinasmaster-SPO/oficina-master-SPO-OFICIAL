@@ -1,5 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
+const idempotencyCache = new Map();
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -37,8 +39,14 @@ Deno.serve(async (req) => {
       profile_id, 
       workshop_id, 
       role = "user",
-      data_nascimento 
+      data_nascimento,
+      idempotencyKey
     } = body;
+
+    if (idempotencyKey && idempotencyCache.has(idempotencyKey)) {
+      const cached = idempotencyCache.get(idempotencyKey);
+      return Response.json(cached.body, { status: cached.status });
+    }
     
     if (!name || typeof name !== 'string' || name.length > 255 ||
         !email || typeof email !== 'string' || email.length > 255 ||
@@ -333,7 +341,7 @@ Deno.serve(async (req) => {
       console.error("⚠️ Erro ao enviar email HTML customizado:", e);
     }
 
-    return Response.json({ 
+    const responseBody = { 
       success: true,
       data: {
         message: 'Usuário criado e E-mail de convite enviado.',
@@ -344,7 +352,14 @@ Deno.serve(async (req) => {
         invite_id: invite.id,
         employee_id: employee.id
       }
-    });
+    };
+
+    if (idempotencyKey) {
+      idempotencyCache.set(idempotencyKey, { body: responseBody, status: 200 });
+      setTimeout(() => idempotencyCache.delete(idempotencyKey), 5 * 60 * 1000);
+    }
+
+    return Response.json(responseBody);
 
   } catch (error) {
     console.error("❌ Erro:", error);

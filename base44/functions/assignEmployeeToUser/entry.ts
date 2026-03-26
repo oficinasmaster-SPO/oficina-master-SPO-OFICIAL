@@ -1,5 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
+const idempotencyCache = new Map();
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -15,7 +17,12 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, error: { code: 'INVALID_INPUT', message: 'Payload inválido' } }, { status: 400 });
     }
 
-    const { employeeId, email, workshopId } = body;
+    const { employeeId, email, workshopId, idempotencyKey, updated_date } = body;
+
+    if (idempotencyKey && idempotencyCache.has(idempotencyKey)) {
+      const cached = idempotencyCache.get(idempotencyKey);
+      return Response.json(cached.body, { status: cached.status });
+    }
 
     if (!employeeId || typeof employeeId !== 'string' || !email || typeof email !== 'string' || !workshopId || typeof workshopId !== 'string') {
       return Response.json({ success: false, error: { code: 'MISSING_FIELDS', message: 'employeeId, email e workshopId são obrigatórios e devem ser texto' } }, { status: 400 });
@@ -30,6 +37,10 @@ Deno.serve(async (req) => {
     
     if (!employee || employee.workshop_id !== workshopId) {
       return Response.json({ success: false, error: { code: 'NOT_FOUND', message: 'Colaborador não encontrado ou não pertence a esta oficina' } }, { status: 404 });
+    }
+
+    if (updated_date && employee.updated_date && new Date(updated_date).getTime() !== new Date(employee.updated_date).getTime()) {
+      return Response.json({ success: false, error: { code: 'CONFLICT_MODIFICATION', message: 'Registro modificado por outro usuário. Recarregue a página.' } }, { status: 409 });
     }
 
     // 2. Encontrar o registro de User correspondente ao e-mail
@@ -78,12 +89,19 @@ Deno.serve(async (req) => {
         }
     }
 
-    return Response.json({ 
+    const responseBody = { 
       success: true, 
       data: {
         message: 'Colaborador vinculado ao usuário com sucesso!'
       }
-    });
+    };
+
+    if (idempotencyKey) {
+      idempotencyCache.set(idempotencyKey, { body: responseBody, status: 200 });
+      setTimeout(() => idempotencyCache.delete(idempotencyKey), 5 * 60 * 1000);
+    }
+
+    return Response.json(responseBody);
 
   } catch (error) {
     console.error("Erro:", error);

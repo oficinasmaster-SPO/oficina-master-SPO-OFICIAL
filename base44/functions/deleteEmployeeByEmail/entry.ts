@@ -1,5 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
 
+const idempotencyCache = new Map();
+
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
@@ -20,7 +22,12 @@ Deno.serve(async (req) => {
             return Response.json({ success: false, error: { code: 'INVALID_INPUT', message: 'Payload inválido' } }, { status: 400 });
         }
 
-        const { email, keep_id } = body;
+        const { email, keep_id, idempotencyKey } = body;
+
+        if (idempotencyKey && idempotencyCache.has(idempotencyKey)) {
+            const cached = idempotencyCache.get(idempotencyKey);
+            return Response.json(cached.body, { status: cached.status });
+        }
 
         if (!email || typeof email !== 'string') {
             return Response.json({ success: false, error: { code: 'MISSING_FIELDS', message: 'Email é obrigatório e deve ser string' } }, { status: 400 });
@@ -89,7 +96,7 @@ Deno.serve(async (req) => {
             }
         }
 
-        return Response.json({
+        const responseBody = {
             success: true,
             data: {
                 kept_id: keep_id || null,
@@ -98,7 +105,14 @@ Deno.serve(async (req) => {
                     ? `${deleted.length} registro(s) duplicado(s) removido(s)`
                     : `Todos os registros do email ${email} foram removidos (${deleted.length} items)`
             }
-        });
+        };
+
+        if (idempotencyKey) {
+            idempotencyCache.set(idempotencyKey, { body: responseBody, status: 200 });
+            setTimeout(() => idempotencyCache.delete(idempotencyKey), 5 * 60 * 1000);
+        }
+
+        return Response.json(responseBody);
 
     } catch (error) {
         console.error('Erro ao deletar Employee:', error);
