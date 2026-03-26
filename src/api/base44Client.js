@@ -47,7 +47,21 @@ class RequestQueue {
         const { url, options, resolve, reject } = this.queue.shift();
         
         originalFetch(url, options)
-            .then(resolve)
+            .then(async (res) => {
+                // Intercept limit exceeded responses
+                if (res.status === 403 || res.status === 429) {
+                    try {
+                        const clone = res.clone();
+                        const data = await clone.json();
+                        if (data?.error === 'limite_excedido' && data?.upgrade) {
+                            window.dispatchEvent(new CustomEvent('PLAN_LIMIT_EXCEEDED', { detail: data }));
+                        }
+                    } catch (e) {
+                        // ignore parsing errors
+                    }
+                }
+                resolve(res);
+            })
             .catch(reject)
             .finally(() => {
                 this.running--;

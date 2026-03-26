@@ -25,6 +25,7 @@ import { useNavigationHistory } from "@/components/hooks/useNavigationHistory";
 import TenantSelector from "@/components/navigation/TenantSelector";
 import { useAuth } from "@/lib/AuthContext";
 import WheelLoader from "@/components/ui/WheelLoader";
+import PlanLimitModal from "@/components/limits/PlanLimitModal";
 
 export default function Layout({ children, currentPageName }) {
   const location = useLocation();
@@ -140,6 +141,7 @@ export default function Layout({ children, currentPageName }) {
     <PermissionsProvider>
       <OnboardingGate user={user} isAuthenticated={isAuthenticated}>
       <div className="min-h-screen bg-gray-50">
+        <PlanLimitModal />
 
         {shouldShowMenus && (
           <Sidebar 

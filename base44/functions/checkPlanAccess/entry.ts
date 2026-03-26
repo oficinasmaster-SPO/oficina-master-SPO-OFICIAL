@@ -123,25 +123,45 @@ Deno.serve(async (req) => {
         }, { status: 400 });
       }
 
-      const limit = plan.limits ? plan.limits[feature] : null;
-      
-      let finalUsage = currentUsage;
+      // 1) Estrutura Real de Limites por Plano
+      const PLAN_LIMITS = {
+        free: { clientes: 10, usuarios: 1, reports: 5, integrations: 1, whatsappMessages: 100 },
+        pro: { clientes: 100, usuarios: 5, reports: 50, integrations: 5, whatsappMessages: 1000 },
+        elite: { clientes: Infinity, usuarios: Infinity, reports: Infinity, integrations: Infinity, whatsappMessages: Infinity },
+        start: { clientes: 100, usuarios: 5, reports: 20, integrations: 2, whatsappMessages: 500 },
+        bronze: { clientes: Infinity, usuarios: 10, reports: 50, integrations: 5, whatsappMessages: 2000 },
+        prata: { clientes: Infinity, usuarios: 20, reports: 100, integrations: 10, whatsappMessages: 5000 },
+        gold: { clientes: Infinity, usuarios: 50, reports: Infinity, integrations: Infinity, whatsappMessages: 10000 },
+        iom: { clientes: Infinity, usuarios: Infinity, reports: Infinity, integrations: Infinity, whatsappMessages: Infinity },
+        millions: { clientes: Infinity, usuarios: Infinity, reports: Infinity, integrations: Infinity, whatsappMessages: Infinity },
+      };
 
-      // Se não enviou currentUsage (não confiou no frontend), busca a realidade no BD
-      if (finalUsage === undefined || finalUsage === null) {
-          try {
-              const usages = await base44.asServiceRole.entities.TenantUsage.filter({ tenant_id: tenantId, resource: feature });
-              finalUsage = usages && usages.length > 0 ? usages[0].count : 0;
-          } catch(e) {
-              finalUsage = 0;
-          }
+      const normalizedPlanId = String(planId).toLowerCase();
+      // Prioriza limites do banco (PlatformPlan), senão usa a estrutura local
+      let limit = plan.limits ? plan.limits[feature] : null;
+      if (limit === null || limit === undefined) {
+        const fallbackPlan = PLAN_LIMITS[normalizedPlanId] || PLAN_LIMITS['free'];
+        limit = fallbackPlan ? fallbackPlan[feature] : Infinity;
+      }
+      
+      // Busca a realidade no BD SEMPRE, ignorando eventuais payloads do client
+      let finalUsage = 0;
+      try {
+          const usages = await base44.asServiceRole.entities.TenantUsage.filter({ tenant_id: tenantId, resource: feature });
+          finalUsage = usages && usages.length > 0 ? usages[0].count : 0;
+      } catch(e) {
+          finalUsage = 0;
       }
 
       // Se o plano tiver o limite cadastrado e o uso atual for maior ou igual ao limite
       if (limit !== undefined && limit !== null && finalUsage >= limit) {
+        // Formato padrão obrigatório
         return Response.json({ 
           success: false, 
-          error: { code: 'PLAN_LIMIT_REACHED', message: `Você atingiu o limite do plano para a métrica '${feature}' (${finalUsage}/${limit}). Faça um upgrade para continuar.` } 
+          error: "limite_excedido", 
+          message: "Você atingiu o limite do seu plano", 
+          upgrade: true,
+          details: `Limite de ${limit} para '${feature}' atingido.`
         }, { status: 403 });
       }
     }
