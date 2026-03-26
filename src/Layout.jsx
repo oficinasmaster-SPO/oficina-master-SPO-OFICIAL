@@ -303,9 +303,19 @@ export default function Layout({ children, currentPageName }) {
                     </div>
                   ) : (
                     isAuthenticated && workshopId ? (
-                      <SharedDataProvider workshopId={workshopId} userId={user?.id}>
-                        {children}
-                      </SharedDataProvider>
+                      (user?.role !== 'admin' && (!workshop?.planId || workshop?.planStatus === 'canceled')) ? (
+                        <div className="min-h-[60vh] flex flex-col items-center justify-center text-center p-6">
+                          <div className="bg-red-100 p-6 rounded-full w-24 h-24 flex items-center justify-center mb-6">
+                            <AlertCircle className="w-12 h-12 text-red-600" />
+                          </div>
+                          <h2 className="text-2xl font-bold text-gray-900 mb-3">Acesso Suspenso</h2>
+                          <p className="text-gray-600 mb-6 max-w-md">O plano da sua oficina está inativo ou cancelado. Por favor, entre em contato com o suporte ou realize a renovação do seu plano para continuar acessando o sistema.</p>
+                        </div>
+                      ) : (
+                        <SharedDataProvider workshopId={workshopId} userId={user?.id}>
+                          {children}
+                        </SharedDataProvider>
+                      )
                     ) : children
                   )
                 )}

@@ -37,6 +37,8 @@ export default function PageAccessControl({
     return <AccessDenied navigate={navigate} reason="apenas_admin" />;
   }
 
+
+
   // Verificar job_roles bloqueadas baseadas na oficina atual
   const effectiveRole = currentRole || user.job_role;
   
