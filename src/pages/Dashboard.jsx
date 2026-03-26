@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
+import { invokeWithTenant } from "@/api/tenantClient.js";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, DollarSign, TrendingUp, Percent, Target, Users, Award, BarChart3, Clock, Wrench, ShoppingCart, Calendar, CheckCircle, Calculator, UserCheck } from "lucide-react";
@@ -46,127 +47,31 @@ export default function Dashboard() {
 
   const isAuthorized = user?.role === "admin" || user?.role === "user";
 
-  const { data: workshops = [], isLoading: loadingWorkshops } = useQuery({
-    queryKey: ['workshops', tenantId],
+  const { data: bffData, isLoading: loadingDashboard } = useQuery({
+    queryKey: ['bff-dashboard', tenantId],
     queryFn: async () => {
       try {
-        const result = await base44.entities.Workshop.list();
-        return Array.isArray(result) ? result : [];
+        const response = await invokeWithTenant('bffDashboard', { tenantId });
+        return response.data || {};
       } catch (error) {
-        console.log("Error fetching workshops:", error);
-        return [];
+        console.error("Error fetching BFF dashboard:", error);
+        return {};
       }
     },
     enabled: !!tenantId && isAuthorized,
     retry: 1
   });
 
-  const { data: osAssessments = [] } = useQuery({
-    queryKey: ['os-assessments', tenantId],
-    queryFn: async () => {
-      try {
-        const result = await base44.entities.ServiceOrderDiagnostic.list('-created_date');
-        return Array.isArray(result) ? result : [];
-      } catch (error) {
-        console.log("Error fetching OS assessments:", error);
-        return [];
-      }
-    },
-    enabled: !!tenantId && isAuthorized,
-    retry: 1
-  });
+  const workshops = bffData?.workshops || [];
+  const osAssessments = bffData?.osAssessments || [];
+  const gameProfiles = bffData?.gameProfiles || [];
+  const userGameProfiles = bffData?.userGameProfiles || [];
+  const employees = bffData?.employees || [];
+  const areaGoals = bffData?.areaGoals || [];
+  const allUsers = bffData?.allUsers || [];
+  const userProgress = bffData?.userProgress || [];
 
-  const { data: gameProfiles = [] } = useQuery({
-    queryKey: ['game-profiles', tenantId],
-    queryFn: async () => {
-      try {
-        const result = await base44.entities.WorkshopGameProfile.list();
-        return Array.isArray(result) ? result : [];
-      } catch (error) {
-        console.log("Error fetching game profiles:", error);
-        return [];
-      }
-    },
-    enabled: !!tenantId && isAuthorized,
-    retry: 1
-  });
-
-  const { data: userGameProfiles = [] } = useQuery({
-    queryKey: ['user-game-profiles', tenantId],
-    queryFn: async () => {
-      try {
-        const result = await base44.entities.UserGameProfile.list();
-        return Array.isArray(result) ? result : [];
-      } catch (error) {
-        console.log("Error fetching user game profiles:", error);
-        return [];
-      }
-    },
-    enabled: !!tenantId && isAuthorized,
-    retry: 1
-  });
-
-  const { data: employees = [] } = useQuery({
-    queryKey: ['employees', tenantId],
-    queryFn: async () => {
-      try {
-        const result = await base44.entities.Employee.list();
-        return Array.isArray(result) ? result : [];
-      } catch (error) {
-        console.log("Error fetching employees:", error);
-        return [];
-      }
-    },
-    enabled: !!tenantId && isAuthorized,
-    retry: 1
-  });
-
-  const { data: areaGoals = [] } = useQuery({
-    queryKey: ['area-goals', tenantId],
-    queryFn: async () => {
-      try {
-        const result = await base44.entities.AreaGoal.list();
-        return Array.isArray(result) ? result : [];
-      } catch (error) {
-        console.log("Error fetching area goals:", error);
-        return [];
-      }
-    },
-    enabled: !!tenantId && isAuthorized,
-    retry: 1
-  });
-
-  const { data: allUsers = [] } = useQuery({
-    queryKey: ['all-users', tenantId],
-    queryFn: async () => {
-      try {
-        const users = await base44.entities.User.list();
-        return Array.isArray(users) ? users : [];
-      } catch (error) {
-        console.log("Error fetching users:", error);
-        return [];
-      }
-    },
-    enabled: !!tenantId && isAuthorized,
-    retry: 1
-  });
-
-  const { data: userProgress = [] } = useQuery({
-    queryKey: ['user-progress', tenantId],
-    queryFn: async () => {
-      try {
-        const result = await base44.entities.UserProgress.list();
-        return Array.isArray(result) ? result : [];
-      } catch (error) {
-        console.log("Error fetching user progress:", error);
-        return [];
-      }
-    },
-    enabled: !!tenantId && isAuthorized,
-    retry: 1
-  });
-
-  if (!isAuthorized || loadingWorkshops) {
+  if (!isAuthorized || loadingDashboard) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
