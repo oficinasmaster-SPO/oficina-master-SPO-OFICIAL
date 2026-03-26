@@ -53,7 +53,7 @@ export default function Autoavaliacoes() {
       discDiagnostics = []
     } = bffData;
 
-      const normalize = (item, type, label, route) => ({
+    const normalize = (item, type, label, route) => ({
         id: item.id,
         date: item.created_date,
         type: type,
