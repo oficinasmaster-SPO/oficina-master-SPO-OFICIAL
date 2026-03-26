@@ -9,6 +9,7 @@ import { Loader2, Building2, Settings, Target, FileText, Users, TrendingUp, Pack
 import { toast } from "sonner";
 import { formatCurrency } from "../components/utils/formatters";
 import { markModuleCompleted } from "@/components/hooks/useModuleTracking";
+import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 import DadosBasicosOficina from "../components/workshop/DadosBasicosOficina";
 import ServicosEquipamentos from "../components/workshop/ServicosEquipamentos";
 import EquipamentosCompletos from "../components/workshop/EquipamentosCompletos";
@@ -28,6 +29,7 @@ import WorkshopMilestones from "../components/management/WorkshopMilestones";
 export default function GestaoOficina() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { workshop: contextWorkshop, isLoading: isContextLoading } = useWorkshopContext();
   const [loading, setLoading] = useState(true);
   const [workshop, setWorkshop] = useState(null);
   const [workshopGameProfile, setWorkshopGameProfile] = useState(null);
@@ -42,8 +44,36 @@ export default function GestaoOficina() {
   const isMatriz = !workshop?.company_id || workshop?.company_id === workshop?.id || workshop?.company_id === 'null' || workshop?.company_id === '';
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (isContextLoading) return;
+    
+    const initData = async () => {
+      setLoading(true);
+      try {
+        const currentUser = await base44.auth.me();
+        setUser(currentUser);
+        
+        if (contextWorkshop) {
+          setWorkshop(contextWorkshop);
+          
+          const urlParams = new URLSearchParams(window.location.search);
+          if (urlParams.get('workshop_id') && currentUser?.role === 'admin') {
+            setIsAdminViewing(true);
+          } else {
+            setIsAdminViewing(false);
+          }
+
+          loadTcmp2(contextWorkshop.id);
+          loadGameProfile(contextWorkshop.id);
+        }
+      } catch (error) {
+        console.error("Error loading init data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initData();
+  }, [contextWorkshop, isContextLoading]);
 
   // Sincronizar aba com URL ao carregar
   useEffect(() => {
@@ -57,100 +87,22 @@ export default function GestaoOficina() {
     setActiveTab(tabFromUrl);
   }, [location.search, workshop, loading, isMatriz]);
 
-  const loadData = async () => {
-    setLoading(true);
+  const loadGameProfile = async (workshopId) => {
     try {
-      const currentUser = await base44.auth.me();
-      setUser(currentUser);
-
-      let workshopToDisplay = null;
-      
-      // Verifica se há um workshop_id na URL (admin acessando backoffice do cliente)
-      const urlParams = new URLSearchParams(window.location.search);
-      const adminWorkshopId = urlParams.get('workshop_id');
-      
-      if (adminWorkshopId && currentUser.role === 'admin') {
-        // Admin visualizando oficina específica
-        try {
-          workshopToDisplay = await base44.entities.Workshop.get(adminWorkshopId);
-          setIsAdminViewing(true);
-          toast.info(`Visualizando backoffice de: ${workshopToDisplay.name}`);
-        } catch (error) {
-          console.log("Error fetching admin workshop:", error);
-          toast.error("Erro ao carregar oficina");
-        }
+      const profiles = await base44.entities.WorkshopGameProfile.filter({ workshop_id: workshopId });
+      if (profiles && profiles.length > 0) {
+        setWorkshopGameProfile(profiles[0]);
       } else {
-        // Fluxo normal do usuário
-        try {
-          // 1. Buscar oficinas onde o usuário é dono
-          const ownedWorkshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
-
-          if (ownedWorkshops && ownedWorkshops.length > 0) {
-            workshopToDisplay = ownedWorkshops[0];
-          } else {
-            // 2. Se não é dono, verifica se é colaborador
-            const employees = await base44.entities.Employee.filter({ email: currentUser.email, status: 'ativo' });
-            const myEmployeeRecord = employees && employees.length > 0 ? employees[0] : null;
-            
-            if (myEmployeeRecord && myEmployeeRecord.workshop_id) {
-              try {
-                const wsFound = await base44.entities.Workshop.filter({ id: myEmployeeRecord.workshop_id });
-                if (wsFound && wsFound.length > 0) {
-                  workshopToDisplay = wsFound[0];
-                } else {
-                  const response = await base44.functions.invoke('checkWorkshop', { workshop_id: myEmployeeRecord.workshop_id });
-                  if (response.data && response.data.workshopFound) {
-                    workshopToDisplay = response.data.workshopData;
-                  }
-                }
-              } catch(e) {
-                 try {
-                    const response = await base44.functions.invoke('checkWorkshop', { workshop_id: myEmployeeRecord.workshop_id });
-                    if (response.data && response.data.workshopFound) {
-                      workshopToDisplay = response.data.workshopData;
-                    }
-                 } catch (err) {}
-              }
-            }
-          }
-        } catch (workshopError) {
-          console.log("Error fetching workshops:", workshopError);
-        }
+        const newProfile = await base44.entities.WorkshopGameProfile.create({
+          workshop_id: workshopId,
+          level: 1,
+          level_name: 'Iniciante',
+          xp: 0
+        });
+        setWorkshopGameProfile(newProfile);
       }
-
-      if (!workshopToDisplay) {
-        setLoading(false);
-        return;
-      }
-
-      setWorkshop(workshopToDisplay);
-      
-      // Carregar TCMP2
-      loadTcmp2(workshopToDisplay.id);
-      
-      // Carregar Perfil de Jogo da Oficina
-      try {
-        const profiles = await base44.entities.WorkshopGameProfile.filter({ workshop_id: workshopToDisplay.id });
-        if (profiles && profiles.length > 0) {
-          setWorkshopGameProfile(profiles[0]);
-        } else {
-          // Criar perfil padrão se não existir (opcional, mas bom para garantir UI)
-          const newProfile = await base44.entities.WorkshopGameProfile.create({
-            workshop_id: workshopToDisplay.id,
-            level: 1,
-            level_name: 'Iniciante',
-            xp: 0
-          });
-          setWorkshopGameProfile(newProfile);
-        }
-      } catch (e) {
-        console.log("Error loading game profile:", e);
-      }
-      
-    } catch (error) {
-      console.log("Error loading data:", error);
-    } finally {
-      setLoading(false);
+    } catch (e) {
+      console.log("Error loading game profile:", e);
     }
   };
 
