@@ -56,8 +56,36 @@ export default function FiliaisWorkshop({ workshop }) {
         tax_regime: workshop.tax_regime || "",
         employees_count: 1,
         units_count_category: "unidade_solo",
-        horario_funcionamento: workshop.horario_funcionamento || {}
+        horario_funcionamento: workshop.horario_funcionamento || {},
+        planoAtual: workshop.planoAtual || "FREE",
+        status: "ativo",
+        is_autocenter: workshop.is_autocenter || false
       });
+
+      // Criar vínculo de Colaborador (Sócio) para o dono na nova filial
+      // Isso garante permissão de acesso imediato aos painéis baseados em perfis/roles
+      try {
+        await base44.entities.Employee.create({
+          workshop_id: filial.id,
+          user_id: workshop.owner_id || user.id,
+          full_name: user.full_name || "Proprietário",
+          email: user.email,
+          position: "Sócio Proprietário",
+          job_role: "socio",
+          user_status: "ativo",
+          status: "ativo",
+          tipo_vinculo: "interno",
+          area: "gerencia",
+          is_internal: true,
+          is_partner: true,
+          company_id: workshop.id,
+          owner_id: workshop.owner_id || user.id,
+          consulting_firm_id: workshop.consulting_firm_id,
+          hire_date: new Date().toISOString().split('T')[0],
+        });
+      } catch (empError) {
+        console.error("Erro ao criar vínculo de sócio na filial:", empError);
+      }
       
       setFiliais([...filiais, filial]);
       setNewFilial({ name: "", city: "", state: "" });
