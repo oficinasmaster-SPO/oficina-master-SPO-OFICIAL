@@ -12,13 +12,13 @@ Deno.serve(async (req) => {
 
     // Validação de Plano
     try {
-      const workshop_id_check = body.workshop_id;
-      if (workshop_id_check) {
-        const planCheck = await base44.functions.invoke('checkPlanAccess', {
-          tenantId: workshop_id_check,
-          feature: 'reports', // Genérico para relatórios/diagnósticos
-          action: 'check_feature'
-        });
+    const workshop_id_check = body.workshop_id;
+    if (workshop_id_check) {
+    const planCheck = await base44.functions.invoke('checkPlanAccess', {
+      tenantId: workshop_id_check,
+      feature: 'reports', // Genérico para relatórios/diagnósticos
+      action: 'check_both'
+    });
         if (!planCheck.data?.success) {
           return Response.json({
             success: false,
@@ -44,6 +44,9 @@ Deno.serve(async (req) => {
             profile_scores,
             completed: true
         });
+        
+        await base44.functions.invoke('incrementPlanUsage', { tenantId: workshop_id, resource: 'reports', amount: 1 });
+        
         return Response.json({ success: true, id: diagnostic.id, diagnostic });
     }
 
@@ -59,6 +62,8 @@ Deno.serve(async (req) => {
             letter_distribution: letter_distribution || { A: 0, B: 0, C: 0, D: 0 },
             completed: true
         });
+
+        await base44.functions.invoke('incrementPlanUsage', { tenantId: workshop_id, resource: 'reports', amount: 1 });
         
         // Update user progress checklist
         try {
@@ -98,6 +103,9 @@ Deno.serve(async (req) => {
             },
             completed: true
         });
+
+        await base44.functions.invoke('incrementPlanUsage', { tenantId: workshop_id, resource: 'reports', amount: 1 });
+        
         return Response.json({ success: true, id: diagnostic.id, diagnostic });
     }
 
@@ -117,6 +125,9 @@ Deno.serve(async (req) => {
             evaluation_type: 'manager',
             completed: true
         });
+
+        await base44.functions.invoke('incrementPlanUsage', { tenantId: workshop_id, resource: 'reports', amount: 1 });
+
         return Response.json({ success: true, id: diagnostic.id, diagnostic });
     }
 

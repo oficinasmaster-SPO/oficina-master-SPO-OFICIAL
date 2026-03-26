@@ -58,6 +58,9 @@ Deno.serve(async (req) => {
       status: 'completed'
     });
 
+    // Registrar consumo
+    await base44.functions.invoke('incrementPlanUsage', { tenantId: invite.workshop_id, resource: 'reports', amount: 1 });
+
     return Response.json({ success: true });
 
   } catch (error) {

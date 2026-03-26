@@ -119,6 +119,9 @@ Deno.serve(async (req) => {
       ata_enviada_email: true
     });
 
+    // Registrar o consumo
+    await base44.functions.invoke('incrementPlanUsage', { tenantId: workshop.id, resource: 'reports', amount: 1 });
+
     return Response.json({
       success: true,
       message: 'Ata enviada por email com sucesso'

@@ -1,0 +1,46 @@
+{
+  "name": "TenantUsage",
+  "type": "object",
+  "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "ID do tenant (oficina)"
+    },
+    "resource": {
+      "type": "string",
+      "description": "Recurso consumido (users, orders, whatsappMessages, reports, etc)"
+    },
+    "count": {
+      "type": "integer",
+      "default": 0,
+      "description": "Quantidade consumida"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "resource",
+    "count"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

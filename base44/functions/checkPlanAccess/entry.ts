@@ -59,20 +59,32 @@ Deno.serve(async (req) => {
 
     // Validação 3: Limites
     if (action === 'check_limit' || action === 'check_both') {
-      if (!feature || currentUsage === undefined || currentUsage === null) {
+      if (!feature) {
         return Response.json({ 
           success: false, 
-          error: { code: 'MISSING_FIELDS', message: 'Parâmetros "feature" e "currentUsage" são obrigatórios para checar limites.' } 
+          error: { code: 'MISSING_FIELDS', message: 'Parâmetro "feature" é obrigatório para checar limites.' } 
         }, { status: 400 });
       }
 
       const limit = plan.limits ? plan.limits[feature] : null;
       
+      let finalUsage = currentUsage;
+
+      // Se não enviou currentUsage (não confiou no frontend), busca a realidade no BD
+      if (finalUsage === undefined || finalUsage === null) {
+          try {
+              const usages = await base44.asServiceRole.entities.TenantUsage.filter({ tenant_id: tenantId, resource: feature });
+              finalUsage = usages && usages.length > 0 ? usages[0].count : 0;
+          } catch(e) {
+              finalUsage = 0;
+          }
+      }
+
       // Se o plano tiver o limite cadastrado e o uso atual for maior ou igual ao limite
-      if (limit !== undefined && limit !== null && currentUsage >= limit) {
+      if (limit !== undefined && limit !== null && finalUsage >= limit) {
         return Response.json({ 
           success: false, 
-          error: { code: 'PLAN_LIMIT_REACHED', message: `Você atingiu o limite do plano para a métrica '${feature}' (${currentUsage}/${limit}). Faça um upgrade para continuar.` } 
+          error: { code: 'PLAN_LIMIT_REACHED', message: `Você atingiu o limite do plano para a métrica '${feature}' (${finalUsage}/${limit}). Faça um upgrade para continuar.` } 
         }, { status: 403 });
       }
     }

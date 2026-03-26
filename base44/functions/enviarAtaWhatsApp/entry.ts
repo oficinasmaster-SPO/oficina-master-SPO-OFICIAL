@@ -68,6 +68,9 @@ Qualquer dúvida, estamos à disposição!
       ata_enviada_whatsapp: true
     });
 
+    // Registrar o consumo
+    await base44.functions.invoke('incrementPlanUsage', { tenantId: workshop.id, resource: 'whatsappMessages', amount: 1 });
+
     return Response.json({
       success: true,
       message: 'Preparado para WhatsApp',

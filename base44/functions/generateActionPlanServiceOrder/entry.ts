@@ -117,6 +117,9 @@ JSON apenas.`;
       generated_by_ai: true
     });
 
+    // Registrar consumo
+    await base44.functions.invoke('incrementPlanUsage', { tenantId: diagnostic.workshop_id, resource: 'orders', amount: 1 });
+
     return Response.json({ success: true, plan });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
