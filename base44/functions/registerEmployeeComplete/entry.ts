@@ -17,6 +17,16 @@ Deno.serve(async (req) => {
     const workshop = await base44.asServiceRole.entities.Workshop.get(workshop_id);
     const consulting_firm_id = workshop ? workshop.consulting_firm_id : null;
 
+    // 0. Validar se o e-mail já está em uso nesta mesma oficina/filial
+    const existingEmployees = await base44.asServiceRole.entities.Employee.filter({
+      workshop_id: workshop_id,
+      email: email
+    });
+
+    if (existingEmployees && existingEmployees.length > 0) {
+      return Response.json({ success: false, error: 'Este e-mail já está cadastrado para um colaborador nesta unidade.' }, { status: 400 });
+    }
+
     // 1. Criar Employee (RH)
     const newEmployee = await base44.asServiceRole.entities.Employee.create({
       ...formData,
