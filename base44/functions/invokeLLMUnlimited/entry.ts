@@ -1,4 +1,39 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+
+// Controle de Rate Limit em memória para proteção contra loops
+const userLimits = new Map();
+const tenantLimits = new Map();
+
+const USER_MAX_PER_MINUTE = 10;
+const TENANT_MAX_PER_MINUTE = 30;
+
+function checkRateLimit(map, key, maxCount) {
+    if (!key) return true;
+    
+    const now = Date.now();
+    const minute = Math.floor(now / 60000);
+    const windowKey = `${key}:${minute}`;
+
+    const currentCount = map.get(windowKey) || 0;
+    
+    if (currentCount >= maxCount) {
+        return false;
+    }
+
+    map.set(windowKey, currentCount + 1);
+
+    // Limpeza de memória leve (chaves antigas)
+    if (Math.random() < 0.05) {
+        for (const k of map.keys()) {
+            const kMinute = parseInt(k.split(':')[1]);
+            if (kMinute < minute - 1) {
+                map.delete(k);
+            }
+        }
+    }
+
+    return true;
+}
 
 Deno.serve(async (req) => {
   try {
@@ -23,8 +58,23 @@ Deno.serve(async (req) => {
 
     // Parse do payload
     console.log("📦 Parseando payload...");
-    const { prompt, response_json_schema = null } = await req.json();
+    const payload = await req.json();
+    const { prompt, response_json_schema = null } = payload;
     console.log("📝 Prompt recebido, tamanho:", prompt?.length || 0);
+
+    const tenantId = req.headers.get("x-tenant-id") || payload.tenantId || payload.workshop_id || user.data?.workshop_id || "default";
+
+    // Verificação de Rate Limit (Usuário)
+    if (!checkRateLimit(userLimits, user.id, USER_MAX_PER_MINUTE)) {
+      console.error(`❌ Rate limit excedido para o usuário: ${user.id}`);
+      return Response.json({ error: 'Too Many Requests: Limite de uso de IA por usuário excedido. Aguarde 1 minuto.' }, { status: 429 });
+    }
+
+    // Verificação de Rate Limit (Tenant)
+    if (tenantId !== "default" && !checkRateLimit(tenantLimits, tenantId, TENANT_MAX_PER_MINUTE)) {
+      console.error(`❌ Rate limit excedido para a oficina: ${tenantId}`);
+      return Response.json({ error: 'Too Many Requests: Limite de uso de IA por oficina excedido. Aguarde 1 minuto.' }, { status: 429 });
+    }
 
     if (!prompt) {
       return Response.json({ error: 'Prompt is required' }, { status: 400 });
