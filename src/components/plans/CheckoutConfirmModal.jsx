@@ -60,9 +60,12 @@ export default function CheckoutConfirmModal({
           </div>
 
           {/* Aviso */}
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-            <p className="text-sm text-gray-700">
-              <strong>Importante:</strong> Você será redirecionado para a plataforma de pagamento segura Kiwify para finalizar a assinatura.
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
+            <p className="text-sm text-gray-800 font-medium">
+              Você será redirecionado para o checkout seguro da Kiwify.
+            </p>
+            <p className="text-md text-blue-700 font-bold mt-2">
+              Seu plano será atualizado automaticamente após confirmação do pagamento.
             </p>
           </div>
 
