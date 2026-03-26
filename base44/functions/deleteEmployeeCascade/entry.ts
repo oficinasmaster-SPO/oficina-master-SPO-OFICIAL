@@ -5,14 +5,21 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
     
-    if (!user) {
-      return Response.json({ success: false, error: 'Não autenticado' }, { status: 401 });
+    if (!user || !user.id) {
+      return Response.json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Não autenticado' } }, { status: 401 });
     }
 
-    const { employee_id } = await req.json();
+    let body;
+    try {
+      body = await req.json();
+    } catch(e) {
+      return Response.json({ success: false, error: { code: 'INVALID_INPUT', message: 'Payload inválido' } }, { status: 400 });
+    }
 
-    if (!employee_id) {
-      return Response.json({ success: false, error: 'employee_id é obrigatório' }, { status: 400 });
+    const { employee_id } = body;
+
+    if (!employee_id || typeof employee_id !== 'string') {
+      return Response.json({ success: false, error: { code: 'MISSING_FIELDS', message: 'employee_id é obrigatório e deve ser string' } }, { status: 400 });
     }
 
     // --- Verificação de permissão ---
@@ -55,14 +62,36 @@ Deno.serve(async (req) => {
     }
 
     if (!canDelete) {
-      return Response.json({ success: false, error: 'Acesso negado: sem permissão para excluir colaborador' }, { status: 403 });
+      return Response.json({ success: false, error: { code: 'FORBIDDEN', message: 'Acesso negado: sem permissão para excluir colaborador' } }, { status: 403 });
     }
     // --- Fim da verificação ---
 
     // Buscar o employee
     const employee = await base44.entities.Employee.get(employee_id);
     if (!employee) {
-      return Response.json({ success: false, error: 'Colaborador não encontrado' }, { status: 404 });
+      return Response.json({ success: false, error: { code: 'NOT_FOUND', message: 'Colaborador não encontrado' } }, { status: 404 });
+    }
+
+    if (user.role !== 'admin' && user.data?.workshop_id && employee.workshop_id !== user.data?.workshop_id) {
+      return Response.json({ success: false, error: { code: 'FORBIDDEN', message: 'Acesso cross-tenant negado' } }, { status: 403 });
+    }
+
+    async function validateBusinessRules(data, context) {
+      const { employee } = data;
+      const { base44 } = context;
+
+      if (employee.user_id) {
+         const workshops = await base44.asServiceRole.entities.Workshop.filter({ owner_id: employee.user_id });
+         if (workshops && workshops.length > 0) {
+            throw { code: 'BUSINESS_RULE_VIOLATION', message: 'Não é possível excluir o proprietário da oficina. Transfira a posse primeiro.' };
+         }
+      }
+    }
+
+    try {
+      await validateBusinessRules({ employee }, { base44 });
+    } catch (ruleError) {
+      return Response.json({ success: false, error: ruleError }, { status: 400 });
     }
 
     // Deletar o usuário vinculado (se existir)
@@ -92,11 +121,11 @@ Deno.serve(async (req) => {
 
     return Response.json({ 
       success: true, 
-      message: 'Colaborador e usuário excluídos com sucesso' 
+      data: { message: 'Colaborador e usuário excluídos com sucesso' }
     });
 
   } catch (error) {
     console.error("Erro geral:", error);
-    return Response.json({ success: false, error: error.message }, { status: 500 });
+    return Response.json({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Erro interno no servidor' } }, { status: 500 });
   }
 });

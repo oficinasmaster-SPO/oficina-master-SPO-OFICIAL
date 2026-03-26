@@ -50,6 +50,32 @@ Deno.serve(async (req) => {
     if (currentUser.data?.workshop_id && currentUser.data?.workshop_id !== workshop_id) {
        return Response.json({ success: false, error: { code: 'FORBIDDEN', message: 'Acesso cross-tenant negado' } }, { status: 403 });
     }
+
+    async function validateBusinessRules(data, context) {
+      const { email, workshop_id, profile_id } = data;
+      const { base44 } = context;
+      
+      const workshop = await base44.asServiceRole.entities.Workshop.get(workshop_id);
+      if (!workshop) {
+        throw { code: 'INVALID_STATE', message: 'Oficina especificada não existe' };
+      }
+      
+      const profile = await base44.asServiceRole.entities.UserProfile.get(profile_id);
+      if (!profile) {
+        throw { code: 'INVALID_STATE', message: 'Perfil especificado não existe' };
+      }
+
+      const existingEmployees = await base44.asServiceRole.entities.Employee.filter({ email, workshop_id });
+      if (existingEmployees && existingEmployees.length > 0) {
+        throw { code: 'BUSINESS_RULE_VIOLATION', message: 'Já existe um colaborador com este email nesta oficina' };
+      }
+    }
+
+    try {
+      await validateBusinessRules({ email, workshop_id, profile_id }, { base44 });
+    } catch (ruleError) {
+      return Response.json({ success: false, error: ruleError }, { status: 400 });
+    }
     
     // 4. Sanitizar payload de role enviada
     // Se quiser garantir que mesmo admin não crie outros admins inadvertidamente, você pode forçar 'user' aqui,

@@ -41,6 +41,23 @@ Deno.serve(async (req) => {
     
     const user = users[0];
 
+    async function validateBusinessRules(data, context) {
+      const { employee, user } = data;
+      
+      if (employee.user_id && employee.user_id === user.id) {
+        throw { code: 'INVALID_STATE', message: 'Colaborador já está vinculado a este usuário' };
+      }
+      if (user.data?.workshop_id && user.data.workshop_id !== employee.workshop_id) {
+        throw { code: 'ACTION_NOT_ALLOWED', message: 'Usuário e colaborador pertencem a oficinas diferentes' };
+      }
+    }
+
+    try {
+      await validateBusinessRules({ employee, user }, { base44 });
+    } catch (ruleError) {
+      return Response.json({ success: false, error: ruleError }, { status: 400 });
+    }
+
     // 3. Vincular o User ao Employee e atualizar o Employee
     if (employee.user_id !== user.id) {
       await base44.entities.Employee.update(employeeId, {

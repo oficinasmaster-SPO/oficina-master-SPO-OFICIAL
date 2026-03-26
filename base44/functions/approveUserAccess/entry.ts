@@ -35,6 +35,20 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, error: { code: 'FORBIDDEN', message: 'Acesso cross-tenant negado' } }, { status: 403 });
     }
 
+    async function validateBusinessRules(data, context) {
+      const { employee, currentUser } = data;
+      
+      if (employee.user_status === 'active' || employee.user_status === 'ativo') {
+        throw { code: 'INVALID_STATE', message: 'Colaborador já está ativo e aprovado' };
+      }
+    }
+
+    try {
+      await validateBusinessRules({ employee, currentUser }, { base44 });
+    } catch (ruleError) {
+      return Response.json({ success: false, error: ruleError }, { status: 400 });
+    }
+
     console.log('📋 Employee:', { id: employee.id, email: employee.email, user_id: employee.user_id });
 
     // Buscar User por email OU usar user_id do Employee
