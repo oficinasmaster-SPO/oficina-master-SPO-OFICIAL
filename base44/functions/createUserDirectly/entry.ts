@@ -1,10 +1,10 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     
-    // Validar autenticação SEM alterar sessão
+    // 1. Validar autenticação
     let currentUser = null;
     try {
       currentUser = await base44.auth.me();
@@ -14,6 +14,11 @@ Deno.serve(async (req) => {
     
     if (!currentUser) {
       return Response.json({ error: 'Não autenticado' }, { status: 401 });
+    }
+
+    // 2. Verificar permissão de Admin rigorosamente
+    if (currentUser.role !== 'admin') {
+       return Response.json({ error: 'Forbidden: Apenas administradores podem convidar usuários' }, { status: 403 });
     }
 
     const body = await req.json();
@@ -30,14 +35,20 @@ Deno.serve(async (req) => {
       data_nascimento 
     } = body;
     
-    // Validação estrita: profile_id agora é obrigatório para garantir permissões corretas
     if (!name || !email || !workshop_id || !profile_id) {
       return Response.json({ error: 'Nome, email, workshop_id e profile_id são obrigatórios' }, { status: 400 });
     }
-    
-    if (!['user', 'admin'].includes(role)) {
-      return Response.json({ error: 'Role deve ser "user" ou "admin"' }, { status: 400 });
+
+    // 3. Validar Isolamento de Tenant (Workshop)
+    // O usuário admin só pode criar usuários dentro da sua própria oficina.
+    if (currentUser.data?.workshop_id !== workshop_id) {
+       return Response.json({ error: 'Forbidden: Você não tem permissão para criar usuários em outra oficina' }, { status: 403 });
     }
+    
+    // 4. Sanitizar payload de role enviada
+    // Se quiser garantir que mesmo admin não crie outros admins inadvertidamente, você pode forçar 'user' aqui,
+    // mas se for permitido admin criar admin, apenas restrinja aos dois valores.
+    const safeRole = ['user', 'admin'].includes(role) ? role : 'user';
 
     console.log("👤 Convidando usuário:", email);
     
@@ -58,8 +69,8 @@ Deno.serve(async (req) => {
     const finalProfileId = profile_id;
 
     // Convidar usuário via Base44 usando SERVICE ROLE (não afeta sessão do admin)
-    console.log("📧 Convidando usuário via Base44 com role:", role);
-    const inviteResult = await base44.asServiceRole.users.inviteUser(email, role);
+    console.log("📧 Convidando usuário via Base44 com role:", safeRole);
+    const inviteResult = await base44.asServiceRole.users.inviteUser(email, safeRole);
     
     console.log("✅ Convite enviado pelo Base44 (email automático) - sessão do admin mantida");
 
@@ -86,7 +97,7 @@ Deno.serve(async (req) => {
       status: "pendente",
       metadata: { 
         // DADOS SEGUROS: Estes valores prevalecem sobre qualquer parâmetro de URL
-        role: role,
+        role: safeRole,
         company_id: workshop_id, // Alias para workshop_id conforme solicitado
         workshop_id: workshop_id,
         consulting_firm_id: consulting_firm_id,
