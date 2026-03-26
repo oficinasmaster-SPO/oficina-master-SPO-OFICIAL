@@ -1,15 +1,22 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
-Deno.serve(async (req) => {
+const withAuth = (handler) => async (req) => {
     try {
-        // --- MIDDLEWARE: Auth ---
         const base44 = createClientFromRequest(req);
         const user = await base44.auth.me();
         
         if (!user) {
-            return Response.json({ error: 'Unauthorized' }, { status: 401 });
+            return Response.json({ error: 'Unauthorized: Autenticação obrigatória.' }, { status: 401 });
         }
 
+        return await handler(req, { base44, user });
+    } catch (error) {
+        return Response.json({ error: error.message }, { status: 500 });
+    }
+};
+
+Deno.serve(withAuth(async (req, { base44, user }) => {
+    try {
         // --- SERVICE: UserWorkshopsService ---
         // Recupera todas as oficinas vinculadas ao usuário (Dono, Sócio ou Colaborador)
         // em uma única execução no servidor.
@@ -95,4 +102,4 @@ Deno.serve(async (req) => {
         console.error("BFF Error:", error);
         return Response.json({ error: error.message }, { status: 500 });
     }
-});
+}));
