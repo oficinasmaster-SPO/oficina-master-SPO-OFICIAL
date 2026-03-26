@@ -22,6 +22,26 @@ Deno.serve(async (req) => {
     const workshops = await base44.entities.Workshop.filter({ id: atendimento.workshop_id });
     const workshop = workshops[0];
 
+    // Validação de Plano (WhatsApp)
+    try {
+      const planCheck = await base44.functions.invoke('checkPlanAccess', {
+        tenantId: workshop.id,
+        feature: 'whatsappMessages',
+        action: 'check_feature'
+      });
+      if (!planCheck.data?.success) {
+        return Response.json({
+          success: false,
+          error: {
+            code: "PLAN_RESTRICTION",
+            message: "Limite do plano atingido"
+          }
+        }, { status: 403 });
+      }
+    } catch (e) {
+      console.error("Erro na validação do plano:", e);
+    }
+
     // Buscar owner
     const users = await base44.asServiceRole.entities.User.filter({ id: workshop.owner_id });
     const owner = users[0];

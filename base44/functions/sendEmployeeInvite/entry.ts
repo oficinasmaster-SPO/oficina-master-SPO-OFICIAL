@@ -30,6 +30,28 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Oficina não encontrada' }, { status: 404 });
     }
 
+    // Validação de Plano
+    try {
+      const allUsersForPlanCheck = await base44.asServiceRole.entities.User.filter({ workshop_id });
+      const planCheck = await base44.functions.invoke('checkPlanAccess', {
+        tenantId: workshop_id,
+        feature: 'users',
+        action: 'check_limit',
+        currentUsage: allUsersForPlanCheck ? allUsersForPlanCheck.length : 0
+      });
+      if (!planCheck.data?.success) {
+        return Response.json({
+          success: false,
+          error: {
+            code: "PLAN_RESTRICTION",
+            message: "Limite do plano atingido"
+          }
+        }, { status: 403 });
+      }
+    } catch (e) {
+      console.error("Erro na validação do plano:", e);
+    }
+
     // Verificar se User já existe
     let userExists = false;
     const existingUsers = await base44.asServiceRole.entities.User.filter({ email: email });

@@ -10,6 +10,29 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { form_type } = body;
 
+    // Validação de Plano
+    try {
+      const workshop_id_check = body.workshop_id;
+      if (workshop_id_check) {
+        const planCheck = await base44.functions.invoke('checkPlanAccess', {
+          tenantId: workshop_id_check,
+          feature: 'reports', // Genérico para relatórios/diagnósticos
+          action: 'check_feature'
+        });
+        if (!planCheck.data?.success) {
+          return Response.json({
+            success: false,
+            error: {
+              code: "PLAN_RESTRICTION",
+              message: "Limite do plano atingido"
+            }
+          }, { status: 403 });
+        }
+      }
+    } catch (e) {
+      console.error("Erro na validação do plano:", e);
+    }
+
     if (form_type === 'entrepreneur_diagnostic') {
         const { workshop_id, answers, dominant_profile, profile_scores } = body;
         

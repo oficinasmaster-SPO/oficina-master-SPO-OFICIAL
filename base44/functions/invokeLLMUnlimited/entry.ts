@@ -96,6 +96,28 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, error: { code: 'RATE_LIMIT_EXCEEDED', message: 'Limite de uso de IA por oficina excedido. Aguarde 1 minuto.' } }, { status: 429 });
     }
 
+    // Validação de Plano
+    if (workshop_id) {
+        try {
+            const planCheck = await base44.functions.invoke('checkPlanAccess', {
+                tenantId: workshop_id,
+                feature: 'integrations',
+                action: 'check_feature'
+            });
+            if (!planCheck.data?.success) {
+                return Response.json({
+                    success: false,
+                    error: {
+                        code: "PLAN_RESTRICTION",
+                        message: "Limite do plano atingido"
+                    }
+                }, { status: 403 });
+            }
+        } catch (e) {
+            console.error("Erro na validação do plano:", e);
+        }
+    }
+
     if (!prompt || typeof prompt !== 'string' || prompt.length > 50000) {
       return Response.json({ success: false, error: { code: 'MISSING_FIELDS', message: 'Prompt is required and must be a valid string' } }, { status: 400 });
     }

@@ -59,6 +59,28 @@ Deno.serve(async (req) => {
        return Response.json({ success: false, error: { code: 'FORBIDDEN', message: 'Acesso cross-tenant negado' } }, { status: 403 });
     }
 
+    // Validação de Plano
+    try {
+      const existingUsers = await base44.asServiceRole.entities.User.filter({ workshop_id });
+      const planCheck = await base44.functions.invoke('checkPlanAccess', {
+        tenantId: workshop_id,
+        feature: 'users',
+        action: 'check_limit',
+        currentUsage: existingUsers ? existingUsers.length : 0
+      });
+      if (!planCheck.data?.success) {
+        return Response.json({
+          success: false,
+          error: {
+            code: "PLAN_RESTRICTION",
+            message: "Limite do plano atingido"
+          }
+        }, { status: 403 });
+      }
+    } catch (e) {
+      console.error("Erro na validação do plano:", e);
+    }
+
     async function validateBusinessRules(data, context) {
       const { email, workshop_id, profile_id } = data;
       const { base44 } = context;

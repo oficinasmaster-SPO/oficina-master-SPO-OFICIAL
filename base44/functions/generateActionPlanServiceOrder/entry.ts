@@ -10,6 +10,26 @@ Deno.serve(async (req) => {
     const diagnostic = await base44.entities.ServiceOrderDiagnostic.get(diagnostic_id);
     if (!diagnostic) return Response.json({ error: 'Diagnóstico não encontrado' }, { status: 404 });
 
+    // Validação de Plano
+    try {
+      const planCheck = await base44.functions.invoke('checkPlanAccess', {
+        tenantId: diagnostic.workshop_id,
+        feature: 'reports', // Ou 'orders'
+        action: 'check_feature'
+      });
+      if (!planCheck.data?.success) {
+        return Response.json({
+          success: false,
+          error: {
+            code: "PLAN_RESTRICTION",
+            message: "Limite do plano atingido"
+          }
+        }, { status: 403 });
+      }
+    } catch (e) {
+      console.error("Erro na validação do plano:", e);
+    }
+
     const prompt = `Consultor de precificação de serviços automotivos.
 
 Análise de OS:

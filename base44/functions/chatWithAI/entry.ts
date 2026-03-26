@@ -79,6 +79,28 @@ Deno.serve(async (req) => {
 
         const { message, context, includeWorkshopData } = body;
 
+        // Validação de Plano
+        if (workshopId) {
+            try {
+                const planCheck = await base44.functions.invoke('checkPlanAccess', {
+                    tenantId: workshopId,
+                    feature: 'integrations', // AI count as integration or generic check
+                    action: 'check_feature'
+                });
+                if (!planCheck.data?.success) {
+                    return Response.json({
+                        success: false,
+                        error: {
+                            code: "PLAN_RESTRICTION",
+                            message: "Limite do plano atingido"
+                        }
+                    }, { status: 403 });
+                }
+            } catch (e) {
+                console.error("Erro na validação do plano:", e);
+            }
+        }
+
         if (!message || typeof message !== 'string' || message.length > 5000) {
             return Response.json({ success: false, error: { code: 'MISSING_FIELDS', message: 'Message is required and must be a valid string' } }, { status: 400 });
         }
