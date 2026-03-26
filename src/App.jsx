@@ -22,6 +22,7 @@ import MatrizDesempenho from '@/pages/MatrizDesempenho';
 import PublicNPS from '@/pages/PublicNPS';
 import PublicDISC from '@/pages/PublicDISC';
 import WheelLoader from '@/components/ui/WheelLoader';
+import ErrorBoundary from '@/components/shared/ErrorBoundary';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -169,19 +170,21 @@ const AuthenticatedApp = () => {
 function App() {
 
   return (
-    <AuthProvider>
-      <QueryClientProvider client={queryClientInstance}>
-        <TenantProvider>
-          <Router>
-            <NavigationTracker />
-            <AuthenticatedApp />
-          </Router>
-          <Toaster />
-          <SonnerToaster />
-          <VisualEditAgent />
-        </TenantProvider>
-      </QueryClientProvider>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <QueryClientProvider client={queryClientInstance}>
+          <TenantProvider>
+            <Router>
+              <NavigationTracker />
+              <AuthenticatedApp />
+            </Router>
+            <Toaster />
+            <SonnerToaster />
+            <VisualEditAgent />
+          </TenantProvider>
+        </QueryClientProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   )
 }
 
