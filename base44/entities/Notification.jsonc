@@ -1,0 +1,70 @@
+{
+  "name": "Notification",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio destinat\u00e1rio"
+    },
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina relacionada"
+    },
+    "processo_id": {
+      "type": "string",
+      "description": "ID do processo/progresso relacionado"
+    },
+    "subtask_id": {
+      "type": "string",
+      "description": "ID da subtarefa relacionada"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "prazo_proximo",
+        "prazo_hoje",
+        "prazo_semana",
+        "processo_atrasado",
+        "atrasada",
+        "status_alterado",
+        "nova_subtarefa",
+        "processo_concluido",
+        "nova_ata",
+        "meta_batida",
+        "meta_nacional_empresa",
+        "meta_nacional_colaborador",
+        "config_preferencias",
+        "alerta_seguranca"
+      ],
+      "description": "Tipo de notifica\u00e7\u00e3o"
+    },
+    "title": {
+      "type": "string",
+      "description": "T\u00edtulo da notifica\u00e7\u00e3o"
+    },
+    "message": {
+      "type": "string",
+      "description": "Mensagem da notifica\u00e7\u00e3o"
+    },
+    "is_read": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se foi lida"
+    },
+    "email_sent": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se e-mail foi enviado"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Dados adicionais da notifica\u00e7\u00e3o ou prefer\u00eancias do usu\u00e1rio"
+    }
+  },
+  "required": [
+    "user_id",
+    "type",
+    "title",
+    "message"
+  ]
+}

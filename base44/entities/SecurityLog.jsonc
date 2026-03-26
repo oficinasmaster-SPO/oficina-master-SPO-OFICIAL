@@ -1,0 +1,58 @@
+{
+  "name": "SecurityLog",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio"
+    },
+    "tenant_id": {
+      "type": "string",
+      "description": "ID do tenant (workshop ou company)"
+    },
+    "endpoint": {
+      "type": "string",
+      "description": "Endpoint acessado"
+    },
+    "ip_address": {
+      "type": "string",
+      "description": "Endere\u00e7o IP"
+    },
+    "status": {
+      "type": "string",
+      "description": "Status HTTP ou status da opera\u00e7\u00e3o"
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "access",
+        "invalid_attempt",
+        "suspicious_access",
+        "rate_limit_exceeded"
+      ],
+      "default": "access"
+    },
+    "details": {
+      "type": "string",
+      "description": "Detalhes adicionais (JSON stringificado)"
+    }
+  },
+  "required": [
+    "endpoint",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": false,
+    "delete": false
+  }
+}

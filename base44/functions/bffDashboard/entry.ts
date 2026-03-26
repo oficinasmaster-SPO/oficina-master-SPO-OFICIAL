@@ -7,6 +7,13 @@ const withAuthAndTenant = (handler) => async (req) => {
         const user = await base44.auth.me();
         
         if (!user) {
+            base44.asServiceRole.entities.SecurityLog.create({
+                endpoint: new URL(req.url).pathname,
+                ip_address: req.headers.get("x-forwarded-for") || "unknown",
+                status: "401",
+                event_type: "invalid_attempt",
+                details: JSON.stringify({ error: "Missing or invalid token" })
+            }).catch(e => console.error("Security log error", e));
             return Response.json({ error: 'Unauthorized: Autenticação obrigatória.' }, { status: 401 });
         }
 
@@ -22,8 +29,28 @@ const withAuthAndTenant = (handler) => async (req) => {
         }
 
         if (!tenantId) {
+            // Log missing tenant access as suspicious
+            base44.asServiceRole.entities.SecurityLog.create({
+                user_id: user.id,
+                endpoint: new URL(req.url).pathname,
+                ip_address: req.headers.get("x-forwarded-for") || "unknown",
+                status: "400",
+                event_type: "suspicious_access",
+                details: JSON.stringify({ error: "Missing x-tenant-id" })
+            }).catch(e => console.error("Security log error", e));
+
             return Response.json({ error: 'Bad Request: x-tenant-id header é obrigatório para isolamento de dados.' }, { status: 400 });
         }
+
+        // Log successful access
+        base44.asServiceRole.entities.SecurityLog.create({
+            user_id: user.id,
+            tenant_id: tenantId,
+            endpoint: new URL(req.url).pathname,
+            ip_address: req.headers.get("x-forwarded-for") || "unknown",
+            status: "200",
+            event_type: "access"
+        }).catch(e => console.error("Security log error", e));
 
         return await handler(req, { base44, user, tenantId });
     } catch (error) {
