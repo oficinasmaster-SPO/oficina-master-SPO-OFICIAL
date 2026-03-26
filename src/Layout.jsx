@@ -75,7 +75,6 @@ export default function Layout({ children, currentPageName }) {
           ? allNotifications.filter(n => n.user_id === user.id && !n.is_read)
           : [];
       } catch (error) {
-        console.log("Error fetching notifications:", error);
         return [];
       }
     },
