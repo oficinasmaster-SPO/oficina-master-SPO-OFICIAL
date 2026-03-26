@@ -43,6 +43,25 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, error: { code: 'CONFLICT_MODIFICATION', message: 'Registro modificado por outro usuário. Recarregue a página.' } }, { status: 409 });
     }
 
+    // Validação de Plano Global (Fonte de Verdade: Banco/Webhook)
+    try {
+      const existingUsers = await base44.asServiceRole.entities.User.filter({ workshop_id: workshopId });
+      const planCheck = await base44.functions.invoke('checkPlanAccess', {
+        tenantId: workshopId,
+        feature: 'users',
+        action: 'check_limit',
+        currentUsage: existingUsers ? existingUsers.length : 0
+      });
+      if (!planCheck.data?.success) {
+        return Response.json({
+          success: false,
+          error: { code: "PLAN_RESTRICTION", message: planCheck.data?.error?.message || "Limite do plano atingido" }
+        }, { status: 403 });
+      }
+    } catch (e) {
+      console.error("Erro na validação do plano:", e);
+    }
+
     // 2. Encontrar o registro de User correspondente ao e-mail
     const users = await base44.entities.User.filter({ email: email });
     

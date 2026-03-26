@@ -25,6 +25,23 @@ Deno.serve(async (req) => {
     // Buscar dados da oficina
     const workshop = await base44.entities.Workshop.get(atendimento.workshop_id);
 
+    // Validação de Plano Global (Fonte de Verdade: Banco/Webhook)
+    try {
+      const planCheck = await base44.functions.invoke('checkPlanAccess', {
+        tenantId: workshop.id,
+        feature: 'reports',
+        action: 'check_feature'
+      });
+      if (!planCheck.data?.success) {
+        return Response.json({
+          success: false,
+          error: planCheck.data?.error?.message || "Recurso não disponível no seu plano."
+        }, { status: 403 });
+      }
+    } catch (e) {
+      console.error("Erro na validação do plano:", e);
+    }
+
     // Buscar inteligência do cliente vinculada
     let clientIntelligence = [];
     try {

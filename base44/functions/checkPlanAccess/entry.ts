@@ -30,11 +30,13 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, error: { code: 'NOT_FOUND', message: 'Tenant não encontrado' } }, { status: 404 });
     }
 
-    // Validação 1: Plano Inativo
-    if (tenant.planStatus === 'canceled' || !tenant.planId) {
+    // Validação 1: Plano Inativo / Cancelado / Pendente
+    // A fonte da verdade agora é o webhook (Kiwify), que altera o planStatus.
+    // Qualquer status diferente de 'active' ou 'trial' bloqueia o acesso.
+    if (tenant.planStatus !== 'active' && tenant.planStatus !== 'trial') {
       return Response.json({ 
         success: false, 
-        error: { code: 'PLAN_INACTIVE', message: 'Plano inativo ou suspenso.' } 
+        error: { code: 'PLAN_INACTIVE', message: 'Plano inativo, suspenso ou cancelado. Por favor, regularize sua assinatura.' } 
       }, { status: 403 });
     }
 

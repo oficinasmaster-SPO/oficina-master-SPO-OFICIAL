@@ -23,6 +23,22 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Already completed' }, { status: 400 });
     }
 
+    // Validação de Plano Global (Fonte de Verdade: Banco/Webhook)
+    try {
+      const planCheck = await base44.functions.invoke('checkPlanAccess', {
+        tenantId: invite.workshop_id,
+        feature: 'reports',
+        action: 'check_feature'
+      });
+      if (!planCheck.data?.success) {
+        return Response.json({
+          error: planCheck.data?.error?.message || "Recurso não disponível no plano"
+        }, { status: 403 });
+      }
+    } catch (e) {
+      console.error("Erro na validação do plano:", e);
+    }
+
     // Create the diagnostic record
     if (type === 'DISC') {
       await base44.asServiceRole.entities.DISCDiagnostic.create({
