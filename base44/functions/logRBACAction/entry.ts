@@ -116,7 +116,7 @@ Deno.serve(async (req) => {
     }
 
     // Criar log de auditoria
-    const log = await base44.asServiceRole.entities.RBACLog.create({
+    const log = await base44.entities.RBACLog.create({
       action_type,
       performed_by: user.email,
       performed_by_name: user.full_name || user.email,

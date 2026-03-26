@@ -16,14 +16,14 @@ Deno.serve(async (req) => {
     }
 
     // Salvar configurações
-    await base44.asServiceRole.entities.SystemSetting.create({
+    await base44.entities.SystemSetting.create({
       key: 'serasa_api_key',
       value: apiKey,
       encrypted: true,
       updated_by: user.email
     });
 
-    await base44.asServiceRole.entities.SystemSetting.create({
+    await base44.entities.SystemSetting.create({
       key: 'serasa_api_secret',
       value: apiSecret,
       encrypted: true,

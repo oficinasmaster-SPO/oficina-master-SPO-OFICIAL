@@ -13,14 +13,14 @@ Deno.serve(async (req) => {
     console.log("🔍 [getUserProfile] Buscando Employee para:", user.email);
 
     // Buscar Employee pelo email OU user_id do usuário usando service role
-    let employees = await base44.asServiceRole.entities.Employee.filter({ 
+    let employees = await base44.entities.Employee.filter({ 
       email: user.email 
     });
 
     // Se não encontrar por email, buscar por user_id
     if (!employees || employees.length === 0) {
       console.log("⚠️ [getUserProfile] Tentando buscar por user_id:", user.id);
-      employees = await base44.asServiceRole.entities.Employee.filter({ 
+      employees = await base44.entities.Employee.filter({ 
         user_id: user.id 
       });
     }
@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
 
     // Vincular user_id ao Employee se ainda não tiver
     if (!employee.user_id || employee.user_id !== user.id) {
-      await base44.asServiceRole.entities.Employee.update(employee.id, {
+      await base44.entities.Employee.update(employee.id, {
         user_id: user.id
       });
       console.log("🔗 [getUserProfile] User vinculado ao Employee");

@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
     // --- Fim da verificação ---
 
     // Buscar o employee
-    const employee = await base44.asServiceRole.entities.Employee.get(employee_id);
+    const employee = await base44.entities.Employee.get(employee_id);
     if (!employee) {
       return Response.json({ success: false, error: 'Colaborador não encontrado' }, { status: 404 });
     }
@@ -68,7 +68,7 @@ Deno.serve(async (req) => {
     // Deletar o usuário vinculado (se existir)
     if (employee.user_id) {
       try {
-        await base44.asServiceRole.entities.User.delete(employee.user_id);
+        await base44.entities.User.delete(employee.user_id);
         console.log(`User ${employee.user_id} deletado com sucesso`);
       } catch (e) {
         console.error(`Erro ao deletar User ${employee.user_id}:`, e.message);
@@ -78,9 +78,9 @@ Deno.serve(async (req) => {
     // Deletar convites pendentes do mesmo email, para não sujar o sistema
     if (employee.email) {
       try {
-        const invites = await base44.asServiceRole.entities.EmployeeInvite.filter({ email: employee.email });
+        const invites = await base44.entities.EmployeeInvite.filter({ email: employee.email });
         for (const invite of invites) {
-          await base44.asServiceRole.entities.EmployeeInvite.delete(invite.id);
+          await base44.entities.EmployeeInvite.delete(invite.id);
         }
       } catch (e) {
         console.error(`Erro ao deletar convites para ${employee.email}:`, e.message);
@@ -88,7 +88,7 @@ Deno.serve(async (req) => {
     }
 
     // Deletar o employee
-    await base44.asServiceRole.entities.Employee.delete(employee.id);
+    await base44.entities.Employee.delete(employee.id);
 
     return Response.json({ 
       success: true, 

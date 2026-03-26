@@ -17,7 +17,7 @@ Deno.serve(async (req) => {
     }
 
     // Buscar a solicitação
-    const request = await base44.asServiceRole.entities.PermissionChangeRequest.get(request_id);
+    const request = await base44.entities.PermissionChangeRequest.get(request_id);
     
     if (!request) {
       return Response.json({ error: 'Solicitação não encontrada' }, { status: 404 });
@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
     const newStatus = approve ? 'aprovado' : 'rejeitado';
 
     // Atualizar a solicitação
-    await base44.asServiceRole.entities.PermissionChangeRequest.update(request_id, {
+    await base44.entities.PermissionChangeRequest.update(request_id, {
       status: newStatus,
       approved_by: user.email,
       approved_by_name: user.full_name,
@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
 
     // Se aprovado, aplicar as mudanças
     if (approve) {
-      const employee = await base44.asServiceRole.entities.Employee.get(request.employee_id);
+      const employee = await base44.entities.Employee.get(request.employee_id);
       
       if (!employee) {
         return Response.json({ error: 'Colaborador não encontrado' }, { status: 404 });
@@ -63,7 +63,7 @@ Deno.serve(async (req) => {
           changeDescription = `Perfil alterado de "${request.current_profile_name}" para "${request.requested_profile_name}"`;
           
           // Registrar no log RBAC
-          await base44.asServiceRole.entities.RBACLog.create({
+          await base44.entities.RBACLog.create({
             action_type: 'profile_updated',
             performed_by: user.email,
             performed_by_name: user.full_name,
@@ -86,7 +86,7 @@ Deno.serve(async (req) => {
             ? 'Roles customizadas adicionadas'
             : 'Roles customizadas removidas';
           
-          await base44.asServiceRole.entities.RBACLog.create({
+          await base44.entities.RBACLog.create({
             action_type: 'role_updated',
             performed_by: user.email,
             performed_by_name: user.full_name,
@@ -106,7 +106,7 @@ Deno.serve(async (req) => {
           updateData.user_status = request.requested_status;
           changeDescription = `Status alterado de "${request.current_status}" para "${request.requested_status}"`;
           
-          await base44.asServiceRole.entities.RBACLog.create({
+          await base44.entities.RBACLog.create({
             action_type: 'user_permission_changed',
             performed_by: user.email,
             performed_by_name: user.full_name,
@@ -140,11 +140,11 @@ Deno.serve(async (req) => {
       updateData.audit_log = [...(employee.audit_log || []), auditEntry];
 
       // Aplicar as mudanças
-      await base44.asServiceRole.entities.Employee.update(request.employee_id, updateData);
+      await base44.entities.Employee.update(request.employee_id, updateData);
 
       // Enviar notificação ao solicitante
       try {
-        await base44.asServiceRole.entities.Notification.create({
+        await base44.entities.Notification.create({
           user_id: request.requested_by,
           type: 'status_alterado',
           title: 'Solicitação Aprovada',
@@ -160,7 +160,7 @@ Deno.serve(async (req) => {
     } else {
       // Se rejeitado, notificar o solicitante
       try {
-        await base44.asServiceRole.entities.Notification.create({
+        await base44.entities.Notification.create({
           user_id: request.requested_by,
           type: 'status_alterado',
           title: 'Solicitação Rejeitada',

@@ -16,7 +16,7 @@ Deno.serve(async (req) => {
     }
 
     // Buscar perfil
-    const profile = await base44.asServiceRole.entities.UserProfile.get(profile_id);
+    const profile = await base44.entities.UserProfile.get(profile_id);
     
     if (!profile) {
       return Response.json({ error: 'Profile not found' }, { status: 404 });
@@ -26,13 +26,13 @@ Deno.serve(async (req) => {
     const customRoles = profile.custom_role_ids 
       ? await Promise.all(
           profile.custom_role_ids.map(id => 
-            base44.asServiceRole.entities.CustomRole.get(id).catch(() => null)
+            base44.entities.CustomRole.get(id).catch(() => null)
           )
         ).then(roles => roles.filter(r => r !== null))
       : [];
 
     // Buscar usuários vinculados ao perfil
-    const allUsers = await base44.asServiceRole.entities.User.list();
+    const allUsers = await base44.entities.User.list();
     const profileUsers = allUsers.filter(u => u.profile_id === profile_id);
 
     // Coletar todas as system roles

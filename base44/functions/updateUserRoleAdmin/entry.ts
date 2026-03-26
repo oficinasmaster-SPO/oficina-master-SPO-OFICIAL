@@ -9,7 +9,7 @@ Deno.serve(async (req) => {
     console.log(`🔄 Reparando perfil para: ${userEmail}`);
 
     // 1. Buscar Employee
-    let employees = await base44.asServiceRole.entities.Employee.filter({ email: userEmail });
+    let employees = await base44.entities.Employee.filter({ email: userEmail });
     
     if (!employees || employees.length === 0) {
         return Response.json({ error: "Employee não encontrado para este email" }, { status: 404 });
@@ -19,7 +19,7 @@ Deno.serve(async (req) => {
     console.log("✅ Employee encontrado:", employee.id, "Profile ID atual:", employee.profile_id);
 
     // 2. Atualizar com o profile_id correto
-    const updated = await base44.asServiceRole.entities.Employee.update(employee.id, {
+    const updated = await base44.entities.Employee.update(employee.id, {
         job_role: "administrativo",
         area: "administrativo",
         position: "Administrativo",

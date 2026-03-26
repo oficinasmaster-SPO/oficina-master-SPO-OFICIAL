@@ -9,22 +9,27 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Email é obrigatório' }, { status: 400 });
     }
 
+    const me = await base44.auth.me();
+    if (!me || me.role !== 'admin') {
+      return Response.json({ error: 'Unauthorized: Admin access required' }, { status: 403 });
+    }
+
     // Buscar usuário
-    const users = await base44.asServiceRole.entities.User.filter({ email });
+    const users = await base44.entities.User.filter({ email });
     if (!users || users.length === 0) {
       return Response.json({ error: 'Usuário não encontrado' }, { status: 404 });
     }
     const user = users[0];
 
     // Buscar Employee vinculado
-    const employees = await base44.asServiceRole.entities.Employee.filter({ email });
+    const employees = await base44.entities.Employee.filter({ email });
     if (!employees || employees.length === 0) {
       return Response.json({ error: 'Employee não encontrado' }, { status: 404 });
     }
     const employee = employees[0];
 
     // Buscar perfil de Técnico ativo
-    const profiles = await base44.asServiceRole.entities.UserProfile.filter({
+    const profiles = await base44.entities.UserProfile.filter({
       type: 'interno',
       status: 'ativo'
     });
@@ -37,7 +42,7 @@ Deno.serve(async (req) => {
 
     // Se não encontrou, criar perfil básico de técnico
     if (!techProfile) {
-      techProfile = await base44.asServiceRole.entities.UserProfile.create({
+      techProfile = await base44.entities.UserProfile.create({
         name: 'Técnico Operacional',
         type: 'interno',
         status: 'ativo',
@@ -54,14 +59,14 @@ Deno.serve(async (req) => {
     }
 
     // Atualizar Employee com profile_id correto
-    await base44.asServiceRole.entities.Employee.update(employee.id, {
+    await base44.entities.Employee.update(employee.id, {
       profile_id: techProfile.id,
       user_status: 'ativo',
       job_role: 'tecnico'
     });
 
     // Atualizar User
-    await base44.asServiceRole.entities.User.update(user.id, {
+    await base44.entities.User.update(user.id, {
       user_status: 'ativo'
     });
 

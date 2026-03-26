@@ -17,8 +17,8 @@ Deno.serve(async (req) => {
         }
 
         // Buscar todos os registros com o email
-        const employees = await base44.asServiceRole.entities.Employee.filter({ email });
-        const invites = await base44.asServiceRole.entities.EmployeeInvite.filter({ email });
+        const employees = await base44.entities.Employee.filter({ email });
+        const invites = await base44.entities.EmployeeInvite.filter({ email });
 
         if ((!employees || employees.length === 0) && (!invites || invites.length === 0)) {
             return Response.json({ error: 'Nenhum registro encontrado' }, { status: 404 });
@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
         if (keep_id) {
             for (const emp of employees) {
                 if (emp.id !== keep_id) {
-                    await base44.asServiceRole.entities.Employee.delete(emp.id);
+                    await base44.entities.Employee.delete(emp.id);
                     deleted.push({ type: 'Employee', id: emp.id });
                 }
             }
@@ -40,19 +40,19 @@ Deno.serve(async (req) => {
                 // Deletar user vinculado se existir
                 if (emp.user_id) {
                     try {
-                        await base44.asServiceRole.users.delete(emp.user_id);
+                        await base44.entities.User.delete(emp.user_id);
                         deleted.push({ type: 'User', id: emp.user_id });
                     } catch (e) {
                         console.error('Erro ao deletar User:', e);
                     }
                 }
-                await base44.asServiceRole.entities.Employee.delete(emp.id);
+                await base44.entities.Employee.delete(emp.id);
                 deleted.push({ type: 'Employee', id: emp.id });
             }
             
             // Deletar todos os convites
             for (const invite of invites) {
-                await base44.asServiceRole.entities.EmployeeInvite.delete(invite.id);
+                await base44.entities.EmployeeInvite.delete(invite.id);
                 deleted.push({ type: 'EmployeeInvite', id: invite.id });
             }
         }

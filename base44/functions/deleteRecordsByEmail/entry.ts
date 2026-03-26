@@ -25,9 +25,9 @@ Deno.serve(async (req) => {
 
     // 1. Deletar Employee
     try {
-      const employees = await base44.asServiceRole.entities.Employee.filter({ email });
+      const employees = await base44.entities.Employee.filter({ email });
       for (const emp of employees) {
-        await base44.asServiceRole.entities.Employee.delete(emp.id);
+        await base44.entities.Employee.delete(emp.id);
         results.employee++;
       }
       console.log(`✅ ${results.employee} Employee deletados`);
@@ -37,9 +37,9 @@ Deno.serve(async (req) => {
 
     // 2. Deletar EmployeeInvite
     try {
-      const invites = await base44.asServiceRole.entities.EmployeeInvite.filter({ email });
+      const invites = await base44.entities.EmployeeInvite.filter({ email });
       for (const inv of invites) {
-        await base44.asServiceRole.entities.EmployeeInvite.delete(inv.id);
+        await base44.entities.EmployeeInvite.delete(inv.id);
         results.employee_invite++;
       }
       console.log(`✅ ${results.employee_invite} EmployeeInvite deletados`);
@@ -49,9 +49,9 @@ Deno.serve(async (req) => {
 
     // 3. Deletar EmployeeInviteAcceptance
     try {
-      const acceptances = await base44.asServiceRole.entities.EmployeeInviteAcceptance.filter({ email });
+      const acceptances = await base44.entities.EmployeeInviteAcceptance.filter({ email });
       for (const acc of acceptances) {
-        await base44.asServiceRole.entities.EmployeeInviteAcceptance.delete(acc.id);
+        await base44.entities.EmployeeInviteAcceptance.delete(acc.id);
         results.employee_invite_acceptance++;
       }
       console.log(`✅ ${results.employee_invite_acceptance} EmployeeInviteAcceptance deletados`);

@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
 
     const { startDate, endDate } = await req.json();
 
-    const contracts = await base44.asServiceRole.entities.Contract.list();
+    const contracts = await base44.entities.Contract.list();
 
     const filteredContracts = contracts.filter(contract => {
       const createdDate = new Date(contract.created_date);

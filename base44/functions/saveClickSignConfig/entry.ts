@@ -16,7 +16,7 @@ Deno.serve(async (req) => {
     }
 
     // Salvar configuração em SystemSetting
-    await base44.asServiceRole.entities.SystemSetting.create({
+    await base44.entities.SystemSetting.create({
       key: 'clicksign_api_key',
       value: apiKey,
       encrypted: true,

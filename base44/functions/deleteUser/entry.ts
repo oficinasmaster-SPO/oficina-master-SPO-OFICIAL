@@ -16,7 +16,7 @@ Deno.serve(async (req) => {
     }
 
     // Buscar o usuário pelo email
-    const users = await base44.asServiceRole.entities.User.filter({ email });
+    const users = await base44.entities.User.filter({ email });
 
     if (!users || users.length === 0) {
       return Response.json({ error: 'User not found' }, { status: 404 });
@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
     const userToDelete = users[0];
 
     // Deletar o usuário
-    await base44.asServiceRole.entities.User.delete(userToDelete.id);
+    await base44.entities.User.delete(userToDelete.id);
 
     return Response.json({ 
       success: true, 

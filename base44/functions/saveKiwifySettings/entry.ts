@@ -18,12 +18,12 @@ Deno.serve(async (req) => {
     }
 
     // Buscar configurações existentes
-    const existingSettings = await base44.asServiceRole.entities.KiwifySettings.list();
+    const existingSettings = await base44.entities.KiwifySettings.list();
     let settings;
 
     if (existingSettings && existingSettings.length > 0) {
       // Atualizar configurações existentes
-      settings = await base44.asServiceRole.entities.KiwifySettings.update(existingSettings[0].id, {
+      settings = await base44.entities.KiwifySettings.update(existingSettings[0].id, {
         client_id,
         account_id,
         default_success_redirect_url,
@@ -33,7 +33,7 @@ Deno.serve(async (req) => {
       });
     } else {
       // Criar novas configurações
-      settings = await base44.asServiceRole.entities.KiwifySettings.create({
+      settings = await base44.entities.KiwifySettings.create({
         client_id,
         account_id,
         default_success_redirect_url,

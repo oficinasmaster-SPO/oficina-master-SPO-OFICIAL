@@ -15,8 +15,8 @@ Deno.serve(async (req) => {
         
         // Paralelizar as buscas
         const [employees, users] = await Promise.all([
-            base44.asServiceRole.entities.Employee.filter({}, null, limit),
-            base44.asServiceRole.entities.User.filter({}, null, limit)
+            base44.entities.Employee.filter({}, null, limit),
+            base44.entities.User.filter({}, null, limit)
         ]);
 
         const counts = {};

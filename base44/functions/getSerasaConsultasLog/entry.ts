@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
     }
 
     // Buscar logs de consultas (últimas 50)
-    const consultas = await base44.asServiceRole.entities.filter('SerasaConsultaLog', {}, '-data', 50);
+    const consultas = await base44.entities.SerasaConsultaLog.list('-created_date', 50);
 
     return Response.json({ 
       success: true,

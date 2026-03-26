@@ -15,7 +15,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Employee ID obrigatório' }, { status: 400 });
     }
 
-    const employee = await base44.asServiceRole.entities.Employee.get(employee_id);
+    const employee = await base44.entities.Employee.get(employee_id);
     
     if (!employee) {
       return Response.json({ error: 'Colaborador não encontrado' }, { status: 404 });
@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
     
     if (!userId) {
       console.log('🔍 Buscando User por email:', employee.email);
-      const users = await base44.asServiceRole.entities.User.filter({ email: employee.email });
+      const users = await base44.entities.User.filter({ email: employee.email });
       
       console.log('👥 Users encontrados:', users?.length || 0);
       
@@ -43,12 +43,12 @@ Deno.serve(async (req) => {
     }
 
     // Buscar User atualizado para pegar dados corretos
-    const userRecord = await base44.asServiceRole.entities.User.get(userId);
+    const userRecord = await base44.entities.User.get(userId);
     const jobRole = employee.job_role || userRecord?.job_role || 'outros';
     let finalProfileId = profile_id || employee.profile_id || userRecord?.profile_id;
     
     if (!finalProfileId) {
-      const allProfiles = await base44.asServiceRole.entities.UserProfile.list();
+      const allProfiles = await base44.entities.UserProfile.list();
       const match = (allProfiles || []).find(p => 
         p.status === "ativo" && 
         p.job_roles?.includes(jobRole)
@@ -58,7 +58,7 @@ Deno.serve(async (req) => {
 
     const employeeActiveStatus = employee.tipo_vinculo === 'cliente' ? 'ativo' : 'active';
 
-    await base44.asServiceRole.entities.User.update(userId, {
+    await base44.entities.User.update(userId, {
       user_status: 'active',
       approved_at: new Date().toISOString(),
       approved_by: admin.id,
@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
       workshop_id: employee.workshop_id || null
     });
 
-    await base44.asServiceRole.entities.Employee.update(employee.id, {
+    await base44.entities.Employee.update(employee.id, {
       user_id: userId,
       user_status: employeeActiveStatus,
       profile_id: finalProfileId || null
@@ -75,16 +75,16 @@ Deno.serve(async (req) => {
     // Buscar o perfil e vincular as custom_role_ids ao UserProfile
     if (finalProfileId) {
       try {
-        const selectedProfile = await base44.asServiceRole.entities.UserProfile.get(finalProfileId);
+        const selectedProfile = await base44.entities.UserProfile.get(finalProfileId);
         
         if (selectedProfile && selectedProfile.custom_role_ids && selectedProfile.custom_role_ids.length > 0) {
           // Atualizar User com as custom_role_ids do perfil
-          await base44.asServiceRole.entities.User.update(userId, {
+          await base44.entities.User.update(userId, {
             custom_role_ids: selectedProfile.custom_role_ids
           });
 
           // Atualizar Employee também
-          await base44.asServiceRole.entities.Employee.update(employee.id, {
+          await base44.entities.Employee.update(employee.id, {
             custom_role_ids: selectedProfile.custom_role_ids
           });
           
