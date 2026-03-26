@@ -481,58 +481,53 @@ export default function ConvidarColaborador() {
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Formulário Novo */}
-          <Card className="shadow-md h-fit">
-            <CardHeader className="border-b bg-gray-50/50 flex flex-row items-center justify-between">
+          {/* Resumo do Colaborador */}
+          <Card className="shadow-lg h-fit border-0 ring-1 ring-gray-200">
+            <CardHeader className="border-b bg-gray-50/50 flex flex-row items-center justify-between py-4">
               <CardTitle className="text-base flex items-center gap-2">
-                <UserPlus className="w-5 h-5 text-gray-500" />
-                Novo Colaborador
+                <UserPlus className="w-5 h-5 text-blue-600" />
+                Resumo do Colaborador
               </CardTitle>
-              <Button type="button" variant="ghost" size="sm" onClick={() => setShowEmailPreview(true)}>
+              <Button type="button" variant="ghost" size="sm" onClick={() => setShowEmailPreview(true)} className="text-gray-600 hover:text-blue-600">
                 <Mail className="w-4 h-4 mr-2" /> Pré-visualizar Email
               </Button>
             </CardHeader>
             <CardContent className="pt-6">
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <Label>Nome Completo *</Label>
-                  <Input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} required />
+              <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm space-y-4 mb-6">
+                <div className="flex justify-between items-center border-b border-gray-50 pb-3">
+                  <span className="text-sm text-gray-500 font-medium">Nome Completo</span>
+                  <span className="text-sm font-semibold text-gray-900">{formData.name || "-"}</span>
                 </div>
-                <div>
-                  <Label>Email *</Label>
-                  <Input type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} required />
+                <div className="flex justify-between items-center border-b border-gray-50 pb-3">
+                  <span className="text-sm text-gray-500 font-medium">Email</span>
+                  <span className="text-sm font-semibold text-gray-900">{formData.email || "-"}</span>
                 </div>
-                <div>
-                  <Label>Telefone *</Label>
-                  <Input value={formData.telefone} onChange={e => setFormData({...formData, telefone: e.target.value})} required />
+                <div className="flex justify-between items-center border-b border-gray-50 pb-3">
+                  <span className="text-sm text-gray-500 font-medium">Telefone</span>
+                  <span className="text-sm font-semibold text-gray-900">{formData.telefone || "-"}</span>
                 </div>
-                <div>
-                  <Label>Cargo *</Label>
-                  <Select value={formData.job_role} onValueChange={v => setFormData({...formData, job_role: v})}>
-                    <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                    <SelectContent>
-                      {jobRoles.map(role => (
-                        <SelectItem key={role.id || role.value} value={role.id || role.value}>{role.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <div className="flex justify-between items-center border-b border-gray-50 pb-3">
+                  <span className="text-sm text-gray-500 font-medium">Cargo</span>
+                  <span className="text-sm font-semibold text-gray-900">
+                    {jobRoles.find(r => r.id === formData.job_role || r.value === formData.job_role)?.label || formData.job_role || "-"}
+                  </span>
                 </div>
-                <div>
-                  <Label>Perfil de Acesso *</Label>
-                  <Select value={formData.profile_id} onValueChange={v => setFormData({...formData, profile_id: v})}>
-                    <SelectTrigger><SelectValue placeholder="Selecione o perfil..." /></SelectTrigger>
-                    <SelectContent>
-                      {profiles.map(profile => (
-                        <SelectItem key={profile.id} value={profile.id}>{profile.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <div className="flex justify-between items-center pb-1">
+                  <span className="text-sm text-gray-500 font-medium">Perfil de Acesso</span>
+                  <span className="text-sm font-semibold text-gray-900">
+                    {profiles.find(p => p.id === formData.profile_id)?.name || formData.profile_id || "-"}
+                  </span>
                 </div>
-                <Button type="submit" disabled={createUserMutation.isPending} className="w-full bg-blue-600 hover:bg-blue-700 mt-2">
-                  {createUserMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}
-                  Enviar Convite
-                </Button>
-              </form>
+              </div>
+
+              <Button 
+                onClick={handleSubmit} 
+                disabled={createUserMutation.isPending || !formData.email} 
+                className="w-full bg-blue-600 hover:bg-blue-700 h-12 text-base shadow-md transition-all duration-200 hover:scale-[1.02]"
+              >
+                {createUserMutation.isPending ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Mail className="w-5 h-5 mr-2" />}
+                {createdUser ? "Reenviar Convite" : "Gerar e Enviar Convite"}
+              </Button>
             </CardContent>
           </Card>
 
