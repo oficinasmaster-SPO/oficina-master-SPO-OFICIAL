@@ -459,22 +459,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           highlight: true,
           requiredPermission: 'employees.view'
         },
-        { 
-          name: 'Convidar Colaborador', 
-          href: createPageUrl('ConvidarColaborador'), 
-          icon: Users,
-          description: 'Enviar convite por e-mail',
-          highlight: true,
-          requiredPermission: 'employees.create'
-        },
-        { 
-          name: 'Aprovar Colaboradores', 
-          href: createPageUrl('AprovarColaboradores'), 
-          icon: UserCheck,
-          description: 'Aprovar acessos pendentes',
-          highlight: true,
-          requiredPermission: 'employees.create'
-        },
+
         { 
           name: '🅲🅴🆂🅿🅴 - Contratação', 
           href: createPageUrl('CESPECanal'), 
