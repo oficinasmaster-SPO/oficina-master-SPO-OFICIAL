@@ -16,188 +16,98 @@ import QuickTipsBar from "@/components/help/QuickTipsBar";
 import AdminViewBanner from "../components/shared/AdminViewBanner";
 import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 import { getPhaseInfo } from "@/components/lib/phaseConstants";
+import { useQuery } from "@tanstack/react-query";
 
 export default function Home() {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
   const { workshop, isLoading: isLoadingWorkshop, isAdminMode } = useWorkshopContext();
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
-  const [isLoadingProgress, setIsLoadingProgress] = useState(false);
-  const [userProgress, setUserProgress] = useState(null);
-  const [showOnboarding, setShowOnboarding] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { data: isAuthData, isLoading: isCheckingAuth } = useQuery({
+    queryKey: ['is-authenticated'],
+    queryFn: () => base44.auth.isAuthenticated()
+  });
+  
+  const isAuthenticated = isAuthData === true;
+
+  const { data: user, isLoading: isLoadingUser } = useQuery({
+    queryKey: ['current-user', isAuthenticated],
+    queryFn: () => base44.auth.me(),
+    enabled: isAuthenticated
+  });
+
+  const tenant = workshop;
+
+  const { data: userProgress, isLoading: isLoadingProgress, refetch: refetchProgress } = useQuery({
+    queryKey: ['user-progress', tenant?.id, user?.id],
+    queryFn: async () => {
+      const progressList = await base44.entities.UserProgress.list();
+      let progress = (progressList || []).find(p => p.user_id === user.id);
+
+      if (!progress) {
+        progress = await base44.entities.UserProgress.create({
+          user_id: user.id,
+          onboarding_completed: false,
+          tour_completed: false,
+          tour_step: 0,
+          checklist_items: {
+            cadastrou_oficina: false,
+            fez_primeiro_diagnostico: false,
+            visualizou_resultado: false,
+            acessou_plano_acao: false,
+            explorou_dashboard: false
+          },
+          first_login_date: new Date().toISOString(),
+          last_login_date: new Date().toISOString()
+        });
+      } else {
+        await base44.entities.UserProgress.update(progress.id, {
+          last_login_date: new Date().toISOString()
+        });
+
+        // Update checklist
+        const diagList = await base44.entities.Diagnostic.filter({ user_id: user.id });
+        const userDiagnostics = diagList || [];
+        
+        const updatedChecklist = {
+          cadastrou_oficina: !!tenant,
+          fez_primeiro_diagnostico: userDiagnostics.length > 0,
+          visualizou_resultado: userDiagnostics.some(d => d.completed),
+          acessou_plano_acao: progress.checklist_items?.acessou_plano_acao || false,
+          explorou_dashboard: progress.checklist_items?.explorou_dashboard || false
+        };
+
+        const hasChanges = Object.keys(updatedChecklist).some(
+          key => updatedChecklist[key] !== progress.checklist_items?.[key]
+        );
+
+        if (hasChanges) {
+          progress = await base44.entities.UserProgress.update(progress.id, {
+            checklist_items: updatedChecklist
+          });
+        }
+      }
+      return progress;
+    },
+    enabled: !!user?.id && !!tenant?.id
+  });
+
+  const showOnboarding = userProgress ? !userProgress.onboarding_completed : false;
 
   useEffect(() => {
-    if (isAuthenticated && user && !isLoadingWorkshop && !workshop && !isAdminMode) {
+    if (isAuthenticated && user && !isLoadingWorkshop && !tenant && !isAdminMode) {
       if (user.role !== 'admin') {
         navigate(createPageUrl("Cadastro"));
       }
     }
-  }, [isAuthenticated, user, isLoadingWorkshop, workshop, isAdminMode, navigate]);
-
-  useEffect(() => {
-    const init = async () => {
-      setIsCheckingAuth(true);
-      try {
-        const authenticated = await base44.auth.isAuthenticated();
-        setIsAuthenticated(authenticated);
-
-        if (!authenticated) {
-          setIsCheckingAuth(false);
-          return;
-        }
-
-        let currentUser = null;
-        try {
-          currentUser = await base44.auth.me();
-          setUser(currentUser);
-        } catch (userError) {
-          console.error("Error fetching user:", userError);
-          toast.error("Erro ao carregar dados do usuário: " + (userError.message || "Erro desconhecido"));
-          setIsAuthenticated(false);
-          setIsCheckingAuth(false);
-          return;
-        }
-
-        if (!currentUser) {
-          setIsCheckingAuth(false);
-          return;
-        }
-
-        try {
-          await loadUserProgress(currentUser, workshop);
-        } catch (progressError) {
-          console.error("Error loading progress:", progressError);
-        }
-        } catch (error) {
-        console.error("Auth Check Error:", error);
-        // Only toast if it's not just "unauthenticated" which is a valid state
-        if (error.message && !error.message.includes('unauthenticated')) {
-            toast.error("Erro de autenticação: " + error.message);
-        }
-        setIsAuthenticated(false);
-        } finally {
-        setIsCheckingAuth(false);
-        }
-    };
-    init();
-  }, []);
-
-  const loadUserProgress = async (currentUser, userWorkshop) => {
-    if (!currentUser?.id) {
-      setIsLoadingProgress(false);
-      return;
-    }
-    
-    setIsLoadingProgress(true);
-    try {
-      const progressList = await base44.entities.UserProgress.list();
-      const progressArray = Array.isArray(progressList) ? progressList : [];
-      let progress = progressArray.find(p => p.user_id === currentUser.id);
-
-      if (!progress) {
-        try {
-          progress = await base44.entities.UserProgress.create({
-            user_id: currentUser.id,
-            onboarding_completed: false,
-            tour_completed: false,
-            tour_step: 0,
-            checklist_items: {
-              cadastrou_oficina: false,
-              fez_primeiro_diagnostico: false,
-              visualizou_resultado: false,
-              acessou_plano_acao: false,
-              explorou_dashboard: false
-            },
-            first_login_date: new Date().toISOString(),
-            last_login_date: new Date().toISOString()
-          });
-          setShowOnboarding(true);
-        } catch (createError) {
-          console.log("Error creating progress:", createError);
-        }
-      } else {
-        try {
-          await base44.entities.UserProgress.update(progress.id, {
-            last_login_date: new Date().toISOString()
-          });
-        } catch (updateError) {
-          console.log("Error updating progress:", updateError);
-        }
-
-        setShowOnboarding(!progress.onboarding_completed); 
-        try {
-          await updateChecklist(progress, currentUser, userWorkshop);
-        } catch (checklistError) {
-          console.log("Error updating checklist:", checklistError);
-        }
-      }
-
-      setUserProgress(progress);
-    } catch (error) {
-      console.error("Erro ao carregar progresso:", error);
-      setUserProgress(null);
-    } finally {
-      setIsLoadingProgress(false);
-    }
-  };
+  }, [isAuthenticated, user, isLoadingWorkshop, tenant, isAdminMode, navigate]);
 
   const updateProgress = async (updates) => {
-      if (!userProgress) {
-          console.warn("No user progress available for update.");
-          return;
-      }
+      if (!userProgress) return;
       try {
-          const updated = await base44.entities.UserProgress.update(userProgress.id, updates);
-          setUserProgress(updated); // Update local state
-          // If onboarding is completed, hide the onboarding section
-          if (updates.onboarding_completed === true) {
-              setShowOnboarding(false);
-          }
+          await base44.entities.UserProgress.update(userProgress.id, updates);
+          refetchProgress();
       } catch (error) {
           console.error("Failed to update user progress:", error);
       }
-  };
-
-  const updateChecklist = async (progress, currentUser, userWorkshop) => {
-    if (!progress?.id || !currentUser?.id) return;
-    
-    try {
-      let diagnostics = [];
-      try {
-        const diagList = await base44.entities.Diagnostic.list();
-        diagnostics = Array.isArray(diagList) ? diagList : [];
-      } catch (diagError) {
-        console.log("Error fetching diagnostics:", diagError);
-      }
-      
-      const userDiagnostics = diagnostics.filter(d => d.user_id === currentUser.id);
-
-      const updatedChecklist = {
-        cadastrou_oficina: !!userWorkshop,
-        fez_primeiro_diagnostico: userDiagnostics.length > 0,
-        visualizou_resultado: userDiagnostics.some(d => d.completed),
-        acessou_plano_acao: progress.checklist_items?.acessou_plano_acao || false,
-        explorou_dashboard: progress.checklist_items?.explorou_dashboard || false
-      };
-
-      const hasChanges = Object.keys(updatedChecklist).some(
-        key => updatedChecklist[key] !== progress.checklist_items?.[key]
-      );
-
-      if (hasChanges) {
-        try {
-          const updatedProgress = await base44.entities.UserProgress.update(progress.id, {
-            checklist_items: updatedChecklist
-          });
-          setUserProgress(updatedProgress);
-        } catch (updateError) {
-          console.log("Error updating checklist:", updateError);
-        }
-      }
-    } catch (error) {
-      console.error("Erro ao atualizar checklist:", error);
-    }
   };
 
   const handleStartDiagnostic = () => {

@@ -10,33 +10,21 @@ import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { differenceInDays, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 
 export default function Autoavaliacoes() {
   const navigate = useNavigate();
-
-  const { data: user } = useQuery({
-    queryKey: ['current-user'],
-    queryFn: () => base44.auth.me()
-  });
-
-  const { data: workshop } = useQuery({
-    queryKey: ['user-workshop', user?.id],
-    queryFn: async () => {
-      const workshops = await base44.entities.Workshop.list();
-      return workshops.find(w => w.owner_id === user?.id);
-    },
-    enabled: !!user
-  });
+  const { workshop } = useWorkshopContext();
+  const tenantId = workshop?.id;
 
   // Fazemos apenas 1 chamada BFF ao invés de 5 chamadas (incluindo as de check)
   const { data: bffData, isLoading: loadingHistory } = useQuery({
-    queryKey: ['bff-autoavaliacoes', workshop?.id],
+    queryKey: ['bff-autoavaliacoes', tenantId],
     queryFn: async () => {
-      if (!workshop?.id) return null;
-      const response = await base44.functions.invoke('bffAutoavaliacoes', { tenantId: workshop.id });
+      const response = await base44.functions.invoke('bffAutoavaliacoes', { tenantId });
       return response.data;
     },
-    enabled: !!workshop?.id
+    enabled: !!tenantId
   });
 
   // Derivamos process assessments a partir da resposta do BFF

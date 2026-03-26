@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, DollarSign, TrendingUp, Percent, Target, Users, Award, BarChart3, Clock, Wrench, ShoppingCart, Calendar, CheckCircle, Calculator, UserCheck } from "lucide-react";
@@ -20,33 +21,33 @@ import ManagerRanking from "../components/dashboard/ManagerRanking";
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
-  const [isAuthorized, setIsAuthorized] = useState(false);
   const [stateFilter, setStateFilter] = useState("all");
   const [segmentFilter, setSegmentFilter] = useState("all");
   const [showUsageAsPercentage, setShowUsageAsPercentage] = useState(true);
 
-  useEffect(() => {
-    checkAuth();
-  }, []);
+  const { workshop } = useWorkshopContext();
+  const tenantId = workshop?.id;
 
-  const checkAuth = async () => {
-    try {
-      const currentUser = await base44.auth.me();
-      setUser(currentUser);
-      
-      if (currentUser.role === "admin" || currentUser.role === "user") {
-        setIsAuthorized(true);
-      } else {
+  const { data: user, isLoading: loadingAuth } = useQuery({
+    queryKey: ["auth-me"],
+    queryFn: async () => {
+      try {
+        const currentUser = await base44.auth.me();
+        if (currentUser.role !== "admin" && currentUser.role !== "user") {
+          navigate(createPageUrl("Home"));
+        }
+        return currentUser;
+      } catch (error) {
         navigate(createPageUrl("Home"));
+        return null;
       }
-    } catch (error) {
-      navigate(createPageUrl("Home"));
     }
-  };
+  });
+
+  const isAuthorized = user?.role === "admin" || user?.role === "user";
 
   const { data: workshops = [], isLoading: loadingWorkshops } = useQuery({
-    queryKey: ['workshops'],
+    queryKey: ['workshops', tenantId],
     queryFn: async () => {
       try {
         const result = await base44.entities.Workshop.list();
@@ -56,12 +57,12 @@ export default function Dashboard() {
         return [];
       }
     },
-    enabled: isAuthorized,
+    enabled: !!tenantId && isAuthorized,
     retry: 1
   });
 
   const { data: osAssessments = [] } = useQuery({
-    queryKey: ['os-assessments'],
+    queryKey: ['os-assessments', tenantId],
     queryFn: async () => {
       try {
         const result = await base44.entities.ServiceOrderDiagnostic.list('-created_date');
@@ -71,12 +72,12 @@ export default function Dashboard() {
         return [];
       }
     },
-    enabled: isAuthorized,
+    enabled: !!tenantId && isAuthorized,
     retry: 1
   });
 
   const { data: gameProfiles = [] } = useQuery({
-    queryKey: ['game-profiles'],
+    queryKey: ['game-profiles', tenantId],
     queryFn: async () => {
       try {
         const result = await base44.entities.WorkshopGameProfile.list();
@@ -86,12 +87,12 @@ export default function Dashboard() {
         return [];
       }
     },
-    enabled: isAuthorized,
+    enabled: !!tenantId && isAuthorized,
     retry: 1
   });
 
   const { data: userGameProfiles = [] } = useQuery({
-    queryKey: ['user-game-profiles'],
+    queryKey: ['user-game-profiles', tenantId],
     queryFn: async () => {
       try {
         const result = await base44.entities.UserGameProfile.list();
@@ -101,12 +102,12 @@ export default function Dashboard() {
         return [];
       }
     },
-    enabled: isAuthorized,
+    enabled: !!tenantId && isAuthorized,
     retry: 1
   });
 
   const { data: employees = [] } = useQuery({
-    queryKey: ['employees'],
+    queryKey: ['employees', tenantId],
     queryFn: async () => {
       try {
         const result = await base44.entities.Employee.list();
@@ -116,12 +117,12 @@ export default function Dashboard() {
         return [];
       }
     },
-    enabled: isAuthorized,
+    enabled: !!tenantId && isAuthorized,
     retry: 1
   });
 
   const { data: areaGoals = [] } = useQuery({
-    queryKey: ['area-goals'],
+    queryKey: ['area-goals', tenantId],
     queryFn: async () => {
       try {
         const result = await base44.entities.AreaGoal.list();
@@ -131,12 +132,12 @@ export default function Dashboard() {
         return [];
       }
     },
-    enabled: isAuthorized,
+    enabled: !!tenantId && isAuthorized,
     retry: 1
   });
 
   const { data: allUsers = [] } = useQuery({
-    queryKey: ['all-users'],
+    queryKey: ['all-users', tenantId],
     queryFn: async () => {
       try {
         const users = await base44.entities.User.list();
@@ -146,12 +147,12 @@ export default function Dashboard() {
         return [];
       }
     },
-    enabled: isAuthorized,
+    enabled: !!tenantId && isAuthorized,
     retry: 1
   });
 
   const { data: userProgress = [] } = useQuery({
-    queryKey: ['user-progress'],
+    queryKey: ['user-progress', tenantId],
     queryFn: async () => {
       try {
         const result = await base44.entities.UserProgress.list();
@@ -161,7 +162,7 @@ export default function Dashboard() {
         return [];
       }
     },
-    enabled: isAuthorized,
+    enabled: !!tenantId && isAuthorized,
     retry: 1
   });
 

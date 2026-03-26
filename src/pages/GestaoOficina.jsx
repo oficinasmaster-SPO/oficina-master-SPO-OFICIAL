@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,52 +31,70 @@ export default function GestaoOficina() {
   const navigate = useNavigate();
   const location = useLocation();
   const { workshop: contextWorkshop, isLoading: isContextLoading } = useWorkshopContext();
-  const [loading, setLoading] = useState(true);
-  const [workshop, setWorkshop] = useState(null);
-  const [workshopGameProfile, setWorkshopGameProfile] = useState(null);
-  const [user, setUser] = useState(null);
-  const [tcmp2Value, setTcmp2Value] = useState(0);
-  const [loadingTcmp2, setLoadingTcmp2] = useState(true);
-  const [isAdminViewing, setIsAdminViewing] = useState(false);
-  
+  const tenantId = contextWorkshop?.id;
   const [activeTab, setActiveTab] = useState('dados');
 
   // Uma oficina é considerada Matriz se o company_id for vazio, nulo, a string "null", ou for igual ao seu próprio ID
-  const isMatriz = !workshop?.company_id || workshop?.company_id === workshop?.id || workshop?.company_id === 'null' || workshop?.company_id === '';
+  const isMatriz = !contextWorkshop?.company_id || contextWorkshop?.company_id === contextWorkshop?.id || contextWorkshop?.company_id === 'null' || contextWorkshop?.company_id === '';
 
-  useEffect(() => {
-    if (isContextLoading) return;
-    
-    const initData = async () => {
-      setLoading(true);
-      try {
-        const currentUser = await base44.auth.me();
-        setUser(currentUser);
-        
-        if (contextWorkshop) {
-          setWorkshop(contextWorkshop);
-          
-          const urlParams = new URLSearchParams(window.location.search);
-          if (urlParams.get('workshop_id') && currentUser?.role === 'admin') {
-            setIsAdminViewing(true);
-          } else {
-            setIsAdminViewing(false);
-          }
+  const { data: user, isLoading: isLoadingUser } = useQuery({
+    queryKey: ['current-user'],
+    queryFn: () => base44.auth.me()
+  });
 
-          loadTcmp2(contextWorkshop.id);
-          loadGameProfile(contextWorkshop.id);
-        }
-      } catch (error) {
-        console.error("Error loading init data:", error);
-      } finally {
-        setLoading(false);
+  const isAdminViewing = new URLSearchParams(window.location.search).get('workshop_id') && user?.role === 'admin';
+
+  const { data: workshopGameProfile, isLoading: isLoadingGameProfile } = useQuery({
+    queryKey: ['workshop-game-profile', tenantId],
+    queryFn: async () => {
+      const profiles = await base44.entities.WorkshopGameProfile.filter({ workshop_id: tenantId });
+      if (profiles && profiles.length > 0) {
+        return profiles[0];
       }
-    };
+      return await base44.entities.WorkshopGameProfile.create({
+        workshop_id: tenantId,
+        level: 1,
+        level_name: 'Iniciante',
+        xp: 0
+      });
+    },
+    enabled: !!tenantId
+  });
 
-    initData();
-  }, [contextWorkshop, isContextLoading]);
+  const { data: tcmp2Value = 0, isLoading: loadingTcmp2 } = useQuery({
+    queryKey: ['tcmp2-value', tenantId],
+    queryFn: async () => {
+      const currentMonth = new Date().toISOString().substring(0, 7);
+      const dres = await base44.entities.DREMonthly.filter({ 
+        workshop_id: tenantId,
+        month: currentMonth
+      });
 
-  // Sincronizar aba com URL ao carregar
+      if (dres && dres.length > 0 && dres[0].calculated?.tcmp2_value > 0) {
+        return dres[0].calculated.tcmp2_value;
+      }
+
+      const osAssessments = await base44.entities.ServiceOrderDiagnostic.filter(
+        { workshop_id: tenantId },
+        '-created_date',
+        10
+      );
+      
+      const assessmentsArray = Array.isArray(osAssessments) ? osAssessments : [];
+      if (assessmentsArray.length > 0) {
+        const validAssessments = assessmentsArray.filter(os => os?.ideal_hour_value > 0);
+        if (validAssessments.length > 0) {
+          return validAssessments.reduce((sum, os) => sum + os.ideal_hour_value, 0) / validAssessments.length;
+        }
+      }
+      return 0;
+    },
+    enabled: !!tenantId
+  });
+
+  const loading = isContextLoading || isLoadingUser;
+  const workshop = contextWorkshop;
+
   useEffect(() => {
     if (loading) return;
     const tabFromUrl = new URLSearchParams(location.search).get('tab') || 'dados';
@@ -87,70 +106,12 @@ export default function GestaoOficina() {
     setActiveTab(tabFromUrl);
   }, [location.search, workshop, loading, isMatriz]);
 
-  const loadGameProfile = async (workshopId) => {
-    try {
-      const profiles = await base44.entities.WorkshopGameProfile.filter({ workshop_id: workshopId });
-      if (profiles && profiles.length > 0) {
-        setWorkshopGameProfile(profiles[0]);
-      } else {
-        const newProfile = await base44.entities.WorkshopGameProfile.create({
-          workshop_id: workshopId,
-          level: 1,
-          level_name: 'Iniciante',
-          xp: 0
-        });
-        setWorkshopGameProfile(newProfile);
-      }
-    } catch (e) {
-      console.log("Error loading game profile:", e);
-    }
-  };
-
-  const loadTcmp2 = async (workshopId) => {
-    setLoadingTcmp2(true);
-    try {
-      // Primeiro tentar puxar do DRE (prioridade)
-      const currentMonth = new Date().toISOString().substring(0, 7);
-      const dres = await base44.entities.DREMonthly.filter({ 
-        workshop_id: workshopId,
-        month: currentMonth
-      });
-
-      if (dres && dres.length > 0 && dres[0].calculated?.tcmp2_value > 0) {
-        setTcmp2Value(dres[0].calculated.tcmp2_value);
-        setLoadingTcmp2(false);
-        return;
-      }
-
-      // Se não tiver DRE, buscar de diagnósticos de OS (fallback)
-      const osAssessments = await base44.entities.ServiceOrderDiagnostic.filter(
-        { workshop_id: workshopId },
-        '-created_date',
-        10
-      );
-      
-      const assessmentsArray = Array.isArray(osAssessments) ? osAssessments : [];
-      if (assessmentsArray.length > 0) {
-        const validAssessments = assessmentsArray.filter(os => os?.ideal_hour_value > 0);
-        if (validAssessments.length > 0) {
-          const avgTcmp2 = validAssessments.reduce((sum, os) => sum + os.ideal_hour_value, 0) / validAssessments.length;
-          setTcmp2Value(avgTcmp2);
-        }
-      }
-    } catch (error) {
-      console.log("Error loading TCMP2:", error);
-    } finally {
-      setLoadingTcmp2(false);
-    }
-  };
-
   const handleUpdate = async (data) => {
     try {
-      const updatedWorkshop = await base44.entities.Workshop.update(workshop.id, data);
-      setWorkshop(updatedWorkshop);
+      await base44.entities.Workshop.update(workshop.id, data);
       toast.success("Oficina atualizada!");
+      // window.location.reload() would refresh, but we rely on the context updating or triggering a refetch elsewhere.
       
-      // Marcar cadastro como concluído quando dados importantes forem preenchidos
       const camposEssenciais = ['monthly_revenue', 'employees_count', 'services_offered', 'segment', 'cnpj'];
       const campoAtualizado = Object.keys(data)[0];
       if (camposEssenciais.includes(campoAtualizado)) {

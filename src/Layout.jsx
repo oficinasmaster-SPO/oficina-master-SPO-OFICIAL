@@ -296,11 +296,19 @@ export default function Layout({ children, currentPageName }) {
                     {showLoading ? <WheelLoader size="lg" text="Carregando dados..." /> : null}
                   </div>
                 ) : (
-                  isAuthenticated && workshopId ? (
-                    <SharedDataProvider workshopId={workshopId} userId={user?.id}>
-                      {children}
-                    </SharedDataProvider>
-                  ) : children
+                  isAuthenticated && !isPublicPage && !isPendingOnboarding && !workshopId ? (
+                    <div className="min-h-[60vh] flex flex-col items-center justify-center">
+                      <AlertCircle className="w-12 h-12 text-amber-500 mb-4" />
+                      <h2 className="text-xl font-bold text-gray-900">Nenhuma oficina selecionada</h2>
+                      <p className="text-gray-600">Por favor, selecione uma oficina para continuar.</p>
+                    </div>
+                  ) : (
+                    isAuthenticated && workshopId ? (
+                      <SharedDataProvider workshopId={workshopId} userId={user?.id}>
+                        {children}
+                      </SharedDataProvider>
+                    ) : children
+                  )
                 )}
             </div>
             </main>
