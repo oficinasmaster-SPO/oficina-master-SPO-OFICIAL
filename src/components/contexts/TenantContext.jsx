@@ -128,6 +128,12 @@ export function TenantProvider({ children }) {
     } else {
       localStorage.removeItem('selected_company_id');
     }
+    
+    // Limpa o cache global ao trocar de tenant para evitar vazamento visual
+    if (window.__REACT_QUERY_CLIENT__) {
+      window.__REACT_QUERY_CLIENT__.clear();
+    }
+    
     setSelectedCompanyId(compId);
   };
 

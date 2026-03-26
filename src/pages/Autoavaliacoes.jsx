@@ -28,29 +28,30 @@ export default function Autoavaliacoes() {
     enabled: !!user
   });
 
-  const { data: assessmentsHistory = [] } = useQuery({
-    queryKey: ['process-assessments-check', workshop?.id],
-    queryFn: () => base44.entities.ProcessAssessment.filter({ workshop_id: workshop.id }),
-    initialData: [],
-    enabled: !!workshop
+  // Fazemos apenas 1 chamada BFF ao invés de 5 chamadas (incluindo as de check)
+  const { data: bffData, isLoading: loadingHistory } = useQuery({
+    queryKey: ['bff-autoavaliacoes', workshop?.id],
+    queryFn: async () => {
+      if (!workshop?.id) return null;
+      const response = await base44.functions.invoke('bffAutoavaliacoes', { tenantId: workshop.id });
+      return response.data;
+    },
+    enabled: !!workshop?.id
   });
 
-  const { data: fullHistory = [], isLoading: loadingHistory } = useQuery({
-    queryKey: ['full-history', workshop?.id],
-    queryFn: async () => {
-      if (!workshop?.id) return [];
-      
-      const [
-        processAssessments,
-        diagnostics,
-        entrepreneurDiagnostics,
-        discDiagnostics
-      ] = await Promise.all([
-        base44.entities.ProcessAssessment.filter({ workshop_id: workshop.id }),
-        base44.entities.Diagnostic.filter({ workshop_id: workshop.id }),
-        base44.entities.EntrepreneurDiagnostic.filter({ workshop_id: workshop.id }),
-        base44.entities.DISCDiagnostic.filter({ workshop_id: workshop.id })
-      ]);
+  // Derivamos process assessments a partir da resposta do BFF
+  const assessmentsHistory = bffData?.processAssessments || [];
+
+  // Re-mapeamento completo da resposta unificada
+  const fullHistory = useMemo(() => {
+    if (!bffData) return [];
+    
+    const {
+      processAssessments = [],
+      diagnostics = [],
+      entrepreneurDiagnostics = [],
+      discDiagnostics = []
+    } = bffData;
 
       const normalize = (item, type, label, route) => ({
         id: item.id,
@@ -81,9 +82,7 @@ export default function Autoavaliacoes() {
         ...entrepreneurDiagnostics.map(e => normalize(e, 'entrepreneur', 'Diagnóstico Empresarial', `/ResultadoEmpresario?id=${e.id}`)),
         ...discDiagnostics.map(d => normalize(d, 'disc', 'Perfil DISC', `/ResultadoDISC?id=${d.id}`))
       ].sort((a, b) => new Date(b.date) - new Date(a.date));
-    },
-    enabled: !!workshop?.id
-  });
+    }, [bffData]);
 
   const checkAvailability = (typeId) => {
     // Filter assessments of this type

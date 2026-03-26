@@ -22,45 +22,15 @@ export function useWorkshopContext() {
       try {
         const user = tenantUser || await base44.auth.me().catch(() => null);
 
-        // 1. Sempre carrega as oficinas disponíveis para o dropdown
+        // 1. Sempre carrega as oficinas disponíveis para o dropdown VIA BFF (Otimizado)
         if (user) {
           try {
-            const owned = await base44.entities.Workshop.filter({ owner_id: user.id });
-            if (owned && owned.length > 0) {
-              const matrizes = owned.filter(w => !w.company_id);
-              const filiaisOwned = owned.filter(w => !!w.company_id);
-              available = [...matrizes, ...filiaisOwned];
+            const response = await base44.functions.invoke('getUserWorkshops', {});
+            if (response?.data?.workshops) {
+              available = response.data.workshops;
             }
-            
-            const partner = await base44.entities.Workshop.filter({ partner_ids: user.id });
-            if (partner && partner.length > 0) {
-              partner.forEach(p => {
-                if (!available.find(a => a.id === p.id)) available.push(p);
-              });
-            }
-          } catch(err) {
-            console.warn('Erro ao buscar workshops do usuário:', err);
-          }
-          
-          if (available.length === 0) {
-            try {
-              let employees = await base44.entities.Employee.filter({ user_id: user.id });
-              if (!employees || employees.length === 0) {
-                employees = await base44.entities.Employee.filter({ email: user.email });
-              }
-              if (employees && employees.length > 0) {
-                for (const emp of employees) {
-                  if (emp.workshop_id) {
-                    try {
-                      const wsFound = await base44.entities.Workshop.filter({ id: emp.workshop_id });
-                      if (wsFound && wsFound.length > 0 && !available.find(a => a.id === wsFound[0].id)) {
-                        available.push(wsFound[0]);
-                      }
-                    } catch(e) {}
-                  }
-                }
-              }
-            } catch(e) {}
+          } catch (err) {
+            console.warn('Erro ao buscar workshops via BFF:', err);
           }
         }
 
@@ -94,49 +64,12 @@ export function useWorkshopContext() {
           userWorkshop = available.find(w => !w.company_id) || available[0];
         }
 
-        // Fallback para lógica legada via Employee caso available esteja vazio (devido ao RLS)
+        // Fallback: workshop_id do user salvo no perfil
         if (!userWorkshop && user) {
-          try {
-            let employees = await base44.entities.Employee.filter({ user_id: user.id });
-            if (!employees || employees.length === 0) {
-              employees = await base44.entities.Employee.filter({ email: user.email });
-            }
-
-            if (Array.isArray(employees) && employees.length > 0) {
-              const employee = employees[0];
-              if (employee.workshop_id) {
-                try {
-                  const wsFound = await base44.entities.Workshop.filter({ id: employee.workshop_id });
-                  if (wsFound && wsFound.length > 0) {
-                    userWorkshop = wsFound[0];
-                  } else {
-                    const response = await base44.functions.invoke('checkWorkshop', { workshop_id: employee.workshop_id });
-                    if (response.data && response.data.workshopFound) {
-                      userWorkshop = response.data.workshopData;
-                    }
-                  }
-                } catch(e) {
-                   try {
-                      const response = await base44.functions.invoke('checkWorkshop', { workshop_id: employee.workshop_id });
-                      if (response.data && response.data.workshopFound) {
-                        userWorkshop = response.data.workshopData;
-                      }
-                   } catch (err) {}
-                }
-              }
-            }
-          } catch(err) {}
-        }
-
-        // Se não encontrou, tenta por workshop_id (se salvo no usuário)
-        const userWorkshopId = user?.data?.workshop_id || user?.workshop_id;
-        if (!userWorkshop && userWorkshopId) {
-          try {
-            const found = await base44.entities.Workshop.filter({ id: userWorkshopId });
-            if (found && found.length > 0) {
-               userWorkshop = found[0];
-            }
-          } catch (err) {}
+          const userWorkshopId = user?.data?.workshop_id || user?.workshop_id;
+          if (userWorkshopId) {
+            userWorkshop = available.find(w => w.id === userWorkshopId) || null;
+          }
         }
 
         return { workshop: userWorkshop, workshopsDisponiveis: available };

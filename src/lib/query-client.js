@@ -11,3 +11,8 @@ export const queryClientInstance = new QueryClient({
 		},
 	},
 });
+
+// Expondo a instância no window para permitir limpar o cache em mudanças de tenant (multi-filial)
+if (typeof window !== 'undefined') {
+  window.__REACT_QUERY_CLIENT__ = queryClientInstance;
+}
