@@ -130,6 +130,16 @@ Deno.serve(async (req) => {
     // Deletar o employee
     await base44.entities.Employee.delete(employee.id);
 
+    console.log(JSON.stringify({
+      level: 'AUDIT',
+      userId: user.id,
+      action: 'DELETE',
+      entity: 'Employee',
+      before: { employee_id: employee.id, user_id: employee.user_id },
+      after: null,
+      timestamp: new Date().toISOString()
+    }));
+
     const responseBody = { 
       success: true, 
       data: { message: 'Colaborador e usuário excluídos com sucesso' }
@@ -143,7 +153,12 @@ Deno.serve(async (req) => {
     return Response.json(responseBody);
 
   } catch (error) {
-    console.error("Erro geral:", error);
+    console.error(JSON.stringify({
+      level: 'ERROR',
+      action: 'DELETE_EMPLOYEE_CASCADE',
+      message: error.message,
+      timestamp: new Date().toISOString()
+    }));
     return Response.json({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Erro interno no servidor' } }, { status: 500 });
   }
 });

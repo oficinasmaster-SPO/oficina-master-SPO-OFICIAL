@@ -96,6 +96,16 @@ Deno.serve(async (req) => {
             }
         }
 
+        console.log(JSON.stringify({
+            level: 'AUDIT',
+            userId: user.id,
+            action: 'DELETE',
+            entity: 'Employee/User',
+            before: { email, deleted_count: deleted.length },
+            after: null,
+            timestamp: new Date().toISOString()
+        }));
+
         const responseBody = {
             success: true,
             data: {
@@ -115,7 +125,12 @@ Deno.serve(async (req) => {
         return Response.json(responseBody);
 
     } catch (error) {
-        console.error('Erro ao deletar Employee:', error);
+        console.error(JSON.stringify({
+            level: 'ERROR',
+            action: 'DELETE_EMPLOYEE_BY_EMAIL',
+            message: error.message,
+            timestamp: new Date().toISOString()
+        }));
         return Response.json({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Erro interno no servidor' } }, { status: 500 });
     }
 });

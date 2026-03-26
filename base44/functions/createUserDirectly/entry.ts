@@ -341,6 +341,16 @@ Deno.serve(async (req) => {
       console.error("⚠️ Erro ao enviar email HTML customizado:", e);
     }
 
+    console.log(JSON.stringify({
+      level: 'AUDIT',
+      userId: currentUser.id,
+      action: 'CREATE',
+      entity: 'Employee/User',
+      before: null,
+      after: { email, workshop_id, profile_id },
+      timestamp: new Date().toISOString()
+    }));
+
     const responseBody = { 
       success: true,
       data: {
@@ -362,7 +372,12 @@ Deno.serve(async (req) => {
     return Response.json(responseBody);
 
   } catch (error) {
-    console.error("❌ Erro:", error);
+    console.error(JSON.stringify({
+      level: 'ERROR',
+      action: 'CREATE_USER_DIRECTLY',
+      message: error.message,
+      timestamp: new Date().toISOString()
+    }));
     return Response.json({ 
       success: false,
       error: { code: 'INTERNAL_ERROR', message: 'Erro interno no servidor' }

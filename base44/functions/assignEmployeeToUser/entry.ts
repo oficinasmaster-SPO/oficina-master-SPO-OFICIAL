@@ -89,6 +89,16 @@ Deno.serve(async (req) => {
         }
     }
 
+    console.log(JSON.stringify({
+      level: 'AUDIT',
+      userId: currentUser.id,
+      action: 'UPDATE',
+      entity: 'Employee',
+      before: { user_id: employee.user_id },
+      after: { user_id: user.id },
+      timestamp: new Date().toISOString()
+    }));
+
     const responseBody = { 
       success: true, 
       data: {
@@ -104,7 +114,12 @@ Deno.serve(async (req) => {
     return Response.json(responseBody);
 
   } catch (error) {
-    console.error("Erro:", error);
+    console.error(JSON.stringify({
+      level: 'ERROR',
+      action: 'ASSIGN_EMPLOYEE',
+      message: error.message,
+      timestamp: new Date().toISOString()
+    }));
     return Response.json({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Erro interno no servidor' } }, { status: 500 });
   }
 });

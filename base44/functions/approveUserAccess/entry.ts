@@ -135,6 +135,16 @@ Deno.serve(async (req) => {
       }
     }
 
+    console.log(JSON.stringify({
+      level: 'AUDIT',
+      userId: currentUser.id,
+      action: 'UPDATE',
+      entity: 'Employee/User',
+      before: { user_status: employee.user_status, profile_id: employee.profile_id },
+      after: { user_status: employeeActiveStatus, profile_id: finalProfileId },
+      timestamp: new Date().toISOString()
+    }));
+
     const responseBody = { 
       success: true,
       data: {
@@ -151,7 +161,12 @@ Deno.serve(async (req) => {
     return Response.json(responseBody);
 
   } catch (error) {
-    console.error('Erro ao aprovar:', error);
+    console.error(JSON.stringify({
+      level: 'ERROR',
+      action: 'APPROVE_USER_ACCESS',
+      message: error.message,
+      timestamp: new Date().toISOString()
+    }));
     return Response.json({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Erro interno no servidor' } }, { status: 500 });
   }
 });
