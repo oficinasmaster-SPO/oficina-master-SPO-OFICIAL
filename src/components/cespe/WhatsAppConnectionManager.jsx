@@ -8,58 +8,26 @@ import { Smartphone, QrCode, Wifi, WifiOff, RefreshCw, Trash2 } from "lucide-rea
 import { toast } from "sonner";
 
 export default function WhatsAppConnectionManager({ workshopId }) {
-  const [evolutionApiUrl, setEvolutionApiUrl] = useState("");
-  const [apiKey, setApiKey] = useState("");
   const [instanceName, setInstanceName] = useState(`oficina_${workshopId}`);
   const [qrCode, setQrCode] = useState(null);
   const [connectionStatus, setConnectionStatus] = useState("disconnected");
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    // Carregar configurações salvas
-    const savedUrl = localStorage.getItem('evolution_api_url');
-    const savedKey = localStorage.getItem('evolution_api_key');
-    if (savedUrl) setEvolutionApiUrl(savedUrl);
-    if (savedKey) setApiKey(savedKey);
-  }, []);
+  const invokeEvolutionAPI = async (action) => {
+    const { base44 } = await import("@/api/base44Client");
+    const response = await base44.functions.invoke("manageEvolutionAPI", {
+      action,
+      instanceName
+    });
+    return response.data;
+  };
 
   const createInstance = async () => {
-    if (!evolutionApiUrl || !apiKey) {
-      toast.error("Preencha a URL e API Key da Evolution API");
-      return;
-    }
-
     setLoading(true);
     try {
-      // Salvar configurações
-      localStorage.setItem('evolution_api_url', evolutionApiUrl);
-      localStorage.setItem('evolution_api_key', apiKey);
-
-      // Criar instância
-      const response = await fetch(`${evolutionApiUrl}/instance/create`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': apiKey
-        },
-        body: JSON.stringify({
-          instanceName: instanceName,
-          qrcode: true,
-          integration: 'WHATSAPP-BAILEYS'
-        })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Erro ao criar instância');
-      }
-
+      await invokeEvolutionAPI('create');
       toast.success("Instância criada! Aguarde o QR Code...");
-      
-      // Buscar QR Code
       await fetchQRCode();
-
     } catch (error) {
       console.error('Erro:', error);
       toast.error(error.message || "Erro ao conectar");
@@ -69,21 +37,11 @@ export default function WhatsAppConnectionManager({ workshopId }) {
   };
 
   const fetchQRCode = async () => {
-    if (!evolutionApiUrl || !apiKey) return;
-
     try {
-      const response = await fetch(`${evolutionApiUrl}/instance/connect/${instanceName}`, {
-        method: 'GET',
-        headers: { 'apikey': apiKey }
-      });
-
-      const data = await response.json();
-
-      if (data.qrcode?.base64) {
+      const data = await invokeEvolutionAPI('connect');
+      if (data?.qrcode?.base64) {
         setQrCode(data.qrcode.base64);
         setConnectionStatus("waiting_scan");
-        
-        // Verificar status periodicamente
         checkConnection();
       }
     } catch (error) {
@@ -92,24 +50,15 @@ export default function WhatsAppConnectionManager({ workshopId }) {
   };
 
   const checkConnection = async () => {
-    if (!evolutionApiUrl || !apiKey) return;
-
     try {
-      const response = await fetch(`${evolutionApiUrl}/instance/connectionState/${instanceName}`, {
-        method: 'GET',
-        headers: { 'apikey': apiKey }
-      });
-
-      const data = await response.json();
-
-      if (data.state === 'open') {
+      const data = await invokeEvolutionAPI('state');
+      if (data?.state === 'open') {
         setConnectionStatus("connected");
         setQrCode(null);
         toast.success("WhatsApp conectado com sucesso!");
-      } else if (data.state === 'close') {
+      } else if (data?.state === 'close') {
         setConnectionStatus("disconnected");
       } else {
-        // Continuar verificando
         setTimeout(checkConnection, 3000);
       }
     } catch (error) {
@@ -118,15 +67,9 @@ export default function WhatsAppConnectionManager({ workshopId }) {
   };
 
   const disconnectInstance = async () => {
-    if (!evolutionApiUrl || !apiKey) return;
-
     setLoading(true);
     try {
-      await fetch(`${evolutionApiUrl}/instance/logout/${instanceName}`, {
-        method: 'DELETE',
-        headers: { 'apikey': apiKey }
-      });
-
+      await invokeEvolutionAPI('logout');
       setConnectionStatus("disconnected");
       setQrCode(null);
       toast.success("WhatsApp desconectado");
@@ -142,11 +85,7 @@ export default function WhatsAppConnectionManager({ workshopId }) {
 
     setLoading(true);
     try {
-      await fetch(`${evolutionApiUrl}/instance/delete/${instanceName}`, {
-        method: 'DELETE',
-        headers: { 'apikey': apiKey }
-      });
-
+      await invokeEvolutionAPI('delete');
       setConnectionStatus("disconnected");
       setQrCode(null);
       toast.success("Instância deletada");
@@ -186,28 +125,6 @@ export default function WhatsAppConnectionManager({ workshopId }) {
       <CardContent className="space-y-4">
         {connectionStatus === "disconnected" && (
           <>
-            <div>
-              <Label>URL da Evolution API</Label>
-              <Input
-                placeholder="https://sua-evolution-api.com"
-                value={evolutionApiUrl}
-                onChange={(e) => setEvolutionApiUrl(e.target.value)}
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Ex: https://evolution.seudominio.com ou IP do servidor
-              </p>
-            </div>
-
-            <div>
-              <Label>API Key</Label>
-              <Input
-                type="password"
-                placeholder="Sua chave de API"
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-              />
-            </div>
-
             <div>
               <Label>Nome da Instância</Label>
               <Input
