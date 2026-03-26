@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
+import { queryClientInstance } from '@/lib/query-client';
+import WheelLoader from '@/components/ui/WheelLoader';
 
 const TenantContext = createContext();
 
@@ -15,6 +17,7 @@ export function TenantProvider({ children }) {
   const [selectedCompanyId, setSelectedCompanyId] = useState(null);
 
   const [isLoading, setIsLoading] = useState(true);
+  const [isSwitching, setIsSwitching] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -102,7 +105,10 @@ export function TenantProvider({ children }) {
       } catch(err) {
         console.error('Erro ao carregar TenantContext:', err);
       } finally {
-        if (!cancelled) setIsLoading(false);
+        if (!cancelled) {
+          setIsLoading(false);
+          setIsSwitching(false);
+        }
       }
     };
     
@@ -122,7 +128,11 @@ export function TenantProvider({ children }) {
     changeCompany(null);
   };
 
-  const changeCompany = (compId) => {
+  const changeCompany = async (compId) => {
+    if (isSwitching || compId === selectedCompanyId) return;
+
+    setIsSwitching(true);
+
     if (compId) {
       localStorage.setItem('selected_company_id', compId);
     } else {
@@ -130,7 +140,9 @@ export function TenantProvider({ children }) {
     }
     
     // Limpa o cache global ao trocar de tenant para evitar vazamento visual
-    if (window.__REACT_QUERY_CLIENT__) {
+    if (queryClientInstance) {
+      queryClientInstance.clear();
+    } else if (window.__REACT_QUERY_CLIENT__) {
       window.__REACT_QUERY_CLIENT__.clear();
     }
     
@@ -146,8 +158,14 @@ export function TenantProvider({ children }) {
       company,
       selectedCompanyId,
       changeCompany,
-      isLoading
+      isLoading,
+      isSwitching
     }}>
+      {isSwitching && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-50/90 backdrop-blur-sm">
+          <WheelLoader size="xl" text="Trocando de oficina..." />
+        </div>
+      )}
       {children}
     </TenantContext.Provider>
   );
