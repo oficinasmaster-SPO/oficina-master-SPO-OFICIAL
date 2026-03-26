@@ -1,53 +1,99 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+
+const processedWebhooks = new Map();
+
+function isReplay(id) {
+  if (!id) return false;
+  if (processedWebhooks.has(id)) return true;
+  processedWebhooks.set(id, Date.now());
+  
+  if (Math.random() < 0.1) {
+    const now = Date.now();
+    for (const [key, timestamp] of processedWebhooks.entries()) {
+      if (now - timestamp > 3600000) processedWebhooks.delete(key);
+    }
+  }
+  return false;
+}
+
+async function verifyHmacSignature(bodyText, signature, secret) {
+  if (!signature || !secret) return false;
+  
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  
+  const signatureBuffer = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    encoder.encode(bodyText)
+  );
+  
+  const hashHex = Array.from(new Uint8Array(signatureBuffer))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+    
+  return hashHex === signature || hashHex === signature.replace('sha256=', '');
+}
+
+const ALLOWED_EVENTS = [
+  'order_approved', 'compra_aprovada', 'subscription_renewed',
+  'order_refused', 'compra_recusada',
+  'subscription_canceled', 'subscription_late',
+  'order_refunded', 'compra_reembolsada', 'chargeback'
+];
 
 Deno.serve(async (req) => {
-  const base44 = createClientFromRequest(req);
-  let payload;
-  
+  if (req.method !== 'POST') return Response.json({ error: 'Method not allowed' }, { status: 405 });
+
   try {
-    // LOGGING INICIAL - Capturar tudo que chegar
-    console.log("🔔 WEBHOOK KIWIFY ACIONADO!");
-    console.log("URL:", req.url);
-    console.log("Method:", req.method);
-    console.log("Headers:", JSON.stringify(Object.fromEntries(req.headers)));
-    
-    // Parse webhook payload
-    try {
-      const body = await req.text();
-      console.log("📦 Body recebido (raw):", body);
-      payload = JSON.parse(body);
-      console.log("📩 Payload parseado:", JSON.stringify(payload, null, 2));
-    } catch (e) {
-      console.error("❌ Erro ao parsear payload do webhook:", e);
-      // SEMPRE retornar 200 para não marcar erro na Kiwify
-      return Response.json({ 
-        success: true, 
-        message: 'Received but invalid JSON' 
-      }, { status: 200 });
+    const signature = req.headers.get('x-kiwify-signature');
+    const secret = Deno.env.get('KIWIFY_WEBHOOK_SECRET') || Deno.env.get('KIWIFY_CLIENT_SECRET');
+
+    const bodyText = await req.text();
+
+    // 1. Validação obrigatória da assinatura HMAC SHA-256 antes de qualquer processamento
+    if (!await verifyHmacSignature(bodyText, signature, secret)) {
+      console.warn("⚠️ Invalid webhook signature");
+      return Response.json({ error: 'Unauthorized: Invalid signature' }, { status: 401 });
     }
-    
-    // Extrair dados básicos para log (formato real da Kiwify)
+
+    const payload = JSON.parse(bodyText);
+
     const eventType = payload.order?.webhook_event_type || payload.event || payload.trigger;
     const customerEmail = payload.order?.Customer?.email || payload.Customer?.email || payload.customer_email;
     const productId = payload.order?.Product?.product_id || payload.Product?.product_id || payload.product_id;
     const orderId = payload.order?.order_id || payload.order_id || payload.transaction_id || payload.id;
     const eventData = payload.order || payload.data || payload;
+
+    // 2. Validação da estrutura mínima do payload
+    if (!orderId || !eventType || !customerEmail) {
+      return Response.json({ error: 'Bad Request: Missing required fields' }, { status: 400 });
+    }
+
+    // 3. Validação do tipo de evento
+    if (!ALLOWED_EVENTS.includes(eventType)) {
+      return Response.json({ success: true, message: 'Event ignored' }, { status: 200 });
+    }
+
+    // 4. Proteção contra Replay Attacks
+    const eventId = orderId + '_' + eventType;
+    if (isReplay(eventId)) {
+      return Response.json({ success: true, message: 'Webhook already processed' }, { status: 200 });
+    }
+
+    // 5. Instanciar SDK com Service Role SOMENTE após validação de segurança aprovada
+    const base44 = createClientFromRequest(req);
     
-    console.log("📊 Dados extraídos:");
-    console.log("  - Event Type:", eventType);
-    console.log("  - Customer Email:", customerEmail);
-    console.log("  - Product ID:", productId);
-    console.log("  - Order ID:", orderId);
-    
-    // Buscar configurações do Kiwify
-    console.log("🔍 Buscando configurações Kiwify...");
     const kiwifySettings = await base44.asServiceRole.entities.KiwifySettings.list();
     const kiwifyConfig = kiwifySettings[0];
-    console.log("⚙️ Config encontrada:", kiwifyConfig ? "Sim" : "Não");
-    console.log("✅ Integração ativa:", kiwifyConfig?.is_active);
     
     if (!kiwifyConfig || !kiwifyConfig.is_active) {
-      // Registrar log mesmo se integração não estiver ativa
       await base44.asServiceRole.entities.KiwifyWebhookLog.create({
         event_type: eventType,
         payload: payload,
@@ -58,12 +104,7 @@ Deno.serve(async (req) => {
         processing_message: 'Integração Kiwify não está ativa',
         received_at: new Date().toISOString()
       });
-      
-      console.log("⚠️ Integração Kiwify não está ativa");
-      return Response.json({ 
-        success: true,
-        message: 'Webhook received but integration not active' 
-      }, { status: 200 });
+      return Response.json({ success: true, message: 'Integration not active' }, { status: 200 });
     }
     
     let processingStatus = 'success';
@@ -71,7 +112,6 @@ Deno.serve(async (req) => {
     let workshopId = null;
     
     try {
-      // Processar diferentes eventos conforme documentação Kiwify
       switch (eventType) {
         case 'order_approved':
         case 'compra_aprovada':
@@ -97,20 +137,12 @@ Deno.serve(async (req) => {
           await handleRefund(base44, eventData);
           processingMessage = 'Reembolso processado';
           break;
-          
-        default:
-          processingStatus = 'warning';
-          processingMessage = `Evento não tratado: ${eventType}`;
-          console.log(`⚠️ Evento não tratado: ${eventType}`);
       }
     } catch (error) {
       processingStatus = 'error';
       processingMessage = error.message;
-      console.error('Erro ao processar webhook:', error);
     }
     
-    // Registrar log do webhook
-    console.log("💾 Criando log no banco de dados...");
     const logEntry = await base44.asServiceRole.entities.KiwifyWebhookLog.create({
       event_type: eventType,
       payload: payload,
@@ -122,9 +154,7 @@ Deno.serve(async (req) => {
       processing_message: processingMessage,
       received_at: new Date().toISOString()
     });
-    console.log("✅ Log criado com ID:", logEntry.id);
     
-    console.log("🎉 WEBHOOK PROCESSADO COM SUCESSO!");
     return Response.json({ 
       success: true,
       message: 'Webhook processed successfully',
@@ -134,116 +164,65 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error("❌ Erro ao processar webhook:", error);
-    
-    // IMPORTANTE: Sempre retornar 200 para Kiwify não marcar como erro
-    try {
-      await base44.asServiceRole.entities.KiwifyWebhookLog.create({
-        event_type: 'error',
-        payload: payload || {},
-        processing_status: 'error',
-        processing_message: error.message,
-        received_at: new Date().toISOString()
-      });
-    } catch (logError) {
-      console.error("Erro ao criar log:", logError);
-    }
-    
-    return Response.json({ 
-      success: true,
-      message: 'Webhook received with errors',
-      error: 'Erro interno no servidor' 
-    }, { status: 200 });
+    return Response.json({ error: 'Internal server error' }, { status: 500 });
   }
 });
 
 async function handlePaymentApproved(base44, data, kiwifyConfig) {
-  console.log("✅ Pagamento aprovado:", data);
-  
-  // Kiwify API retorna: order { Customer { email }, Product { product_id } }
   const customerEmail = data.Customer?.email || data.customer_email;
   const productId = data.Product?.product_id || data.product_id;
   const orderAmount = data.Commissions?.charge_amount || data.order_amount || data.amount || 0;
   const customData = data.custom_data || data.custom_fields || {};
   
-  // Encontrar mapeamento do produto
-  const mapping = kiwifyConfig.plan_mappings?.find(
-    m => m.kiwify_product_id === productId
-  );
-  
-  if (!mapping) {
-    console.error(`❌ Produto ${productId} não mapeado para nenhum plano`);
-    return;
-  }
+  const mapping = kiwifyConfig.plan_mappings?.find(m => m.kiwify_product_id === productId);
+  if (!mapping) return;
   
   const planId = mapping.internal_plan_id;
   
-  // Buscar workshop por múltiplas estratégias
   let workshop = null;
-  
-  // 1. Tentar por custom_data.workshop_id
   if (customData?.workshop_id) {
-    console.log("🔍 Buscando por custom_data.workshop_id:", customData.workshop_id);
     const workshops = await base44.asServiceRole.entities.Workshop.list();
     workshop = workshops.find(w => w.id === customData.workshop_id);
   }
   
-  // 2. Tentar por email do cliente no workshop.email
   if (!workshop) {
-    console.log("🔍 Buscando por workshop.email:", customerEmail);
     const workshops = await base44.asServiceRole.entities.Workshop.list();
     workshop = workshops.find(w => w.email === customerEmail);
   }
   
-  // 3. Tentar por owner_id (buscar user pelo email e depois workshop)
   if (!workshop) {
-    console.log("🔍 Buscando user pelo email:", customerEmail);
     const users = await base44.asServiceRole.entities.User.list();
     const user = users.find(u => u.email === customerEmail);
-    
     if (user) {
-      console.log("✅ User encontrado, buscando workshop por owner_id:", user.id);
       const workshops = await base44.asServiceRole.entities.Workshop.list();
       workshop = workshops.find(w => w.owner_id === user.id);
     }
   }
   
-  if (!workshop) {
-    console.error(`❌ Workshop não encontrado para email: ${customerEmail}`);
-    return;
-  }
+  if (!workshop) return;
   
-  console.log("✅ Workshop encontrado:", workshop.id, "-", workshop.name);
-  
-  // Atualizar plano do workshop
   await base44.asServiceRole.entities.Workshop.update(workshop.id, {
     planoAtual: planId,
     dataAssinatura: new Date().toISOString(),
-    dataRenovacao: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // +30 dias
+    dataRenovacao: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
   });
   
-  // Registrar histórico de pagamento
   await base44.asServiceRole.entities.PaymentHistory.create({
     workshop_id: workshop.id,
     plan_id: planId,
     payment_provider: 'kiwify',
     payment_status: 'approved',
-    amount: orderAmount / 100, // Kiwify envia em centavos
+    amount: orderAmount / 100,
     transaction_id: data.order_id || data.transaction_id || data.id,
     payment_date: data.approved_date || new Date().toISOString(),
     metadata: data
   });
   
-  console.log(`✅ Plano atualizado: ${workshop.name} -> ${planId}`);
-  
   return workshop.id;
 }
 
 async function handleRefund(base44, data) {
-  console.log("💸 Reembolso/Chargeback:", data);
-  
   const customerEmail = data.Customer?.email || data.customer_email;
-  
-  // Buscar workshop pelo email
   const workshops = await base44.asServiceRole.entities.Workshop.list();
   const workshop = workshops.find(w => w.email === customerEmail);
   
@@ -253,7 +232,6 @@ async function handleRefund(base44, data) {
       dataAssinatura: new Date().toISOString()
     });
     
-    // Registrar no histórico
     await base44.asServiceRole.entities.PaymentHistory.create({
       workshop_id: workshop.id,
       payment_provider: 'kiwify',
@@ -262,18 +240,12 @@ async function handleRefund(base44, data) {
       payment_date: new Date().toISOString(),
       metadata: data
     });
-    
-    console.log(`✅ Workshop ${workshop.name} voltou para plano FREE (reembolso)`);
   }
 }
 
 async function handlePaymentFailed(base44, data) {
-  console.log("❌ Pagamento falhou:", data);
-  
   const customerEmail = data.Customer?.email || data.customer_email;
   const transactionId = data.order_id || data.transaction_id;
-  
-  // Buscar workshop pelo email
   const workshops = await base44.asServiceRole.entities.Workshop.list();
   const workshop = workshops.find(w => w.email === customerEmail);
   
@@ -290,11 +262,7 @@ async function handlePaymentFailed(base44, data) {
 }
 
 async function handleSubscriptionCancelled(base44, data) {
-  console.log("🚫 Assinatura cancelada:", data);
-  
   const customerEmail = data.Customer?.email || data.customer_email;
-  
-  // Buscar workshop pelo email
   const workshops = await base44.asServiceRole.entities.Workshop.list();
   const workshop = workshops.find(w => w.email === customerEmail);
   
@@ -303,7 +271,5 @@ async function handleSubscriptionCancelled(base44, data) {
       planoAtual: 'FREE',
       dataAssinatura: new Date().toISOString()
     });
-    
-    console.log(`✅ Workshop ${workshop.name} voltou para plano FREE`);
   }
 }
