@@ -159,12 +159,12 @@ export default function AITaskManager({ tasks, employees }) {
         };
       }
 
-      const response = await base44.integrations.Core.InvokeLLM({
+      const response = await base44.functions.invoke('invokeLLMUnlimited', {
         prompt,
         response_json_schema: schema
       });
 
-      setAnalysis(response);
+      setAnalysis(response.data.data);
     } catch (error) {
       console.error(error);
       toast.error("Erro ao processar análise com IA");

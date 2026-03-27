@@ -43,7 +43,7 @@ Forneça:
 4. Valor estimado
 `;
 
-      const response = await base44.integrations.Core.InvokeLLM({
+      const apiResponse = await base44.functions.invoke('invokeLLMUnlimited', {
         prompt,
         response_json_schema: {
           type: "object",
@@ -86,6 +86,7 @@ Forneça:
           }
         }
       });
+      const response = apiResponse.data.data;
 
       // Salvar recomendação
       await base44.entities.ServiceRecommendation.create({

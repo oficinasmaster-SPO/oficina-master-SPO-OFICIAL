@@ -39,7 +39,7 @@ Analise tendências e forneça:
 4. Recomendações PRÁTICAS e EXECUTÁVEIS para o dia a dia do chão de oficina (ex: "Verificar estoque de óleo", "Oferecer alinhamento em toda revisão").
 `;
 
-      const response = await base44.integrations.Core.InvokeLLM({
+      const apiResponse = await base44.functions.invoke('invokeLLMUnlimited', {
         prompt,
         response_json_schema: {
           type: "object",
@@ -65,6 +65,7 @@ Analise tendências e forneça:
           }
         }
       });
+      const response = apiResponse.data.data;
 
       // Salvar previsão
       const forecastData = {

@@ -228,7 +228,7 @@ export default function FeedbacksSection({ employee }) {
       
       Retorne um JSON: { "patterns": "string", "recognition_suggestions": ["string"], "improvement_suggestions": ["string"], "summary": "string" }`;
 
-      const response = await base44.integrations.Core.InvokeLLM({
+      const response = await base44.functions.invoke('invokeLLMUnlimited', {
         prompt,
         response_json_schema: {
           type: "object",
@@ -241,7 +241,7 @@ export default function FeedbacksSection({ employee }) {
         }
       });
       
-      setAnalysisResult(response);
+      setAnalysisResult(response.data.data);
     } catch (error) {
       console.error(error);
       toast.error("Erro ao analisar feedbacks");
@@ -266,12 +266,13 @@ export default function FeedbacksSection({ employee }) {
       Gere também uma sugestão curta de Plano de Ação.
       Formato JSON: { "content": "texto...", "action_plan": "plano..." }`;
       
-      const response = await base44.integrations.Core.InvokeLLM({
+      const response = await base44.functions.invoke('invokeLLMUnlimited', {
         prompt: prompt,
         response_json_schema: { type: "object", properties: { content: {type: "string"}, action_plan: {type: "string"} } }
       });
       
-      setFormData({ ...formData, content: response.content, action_plan: response.action_plan });
+      const result = response.data.data;
+      setFormData({ ...formData, content: result.content, action_plan: result.action_plan });
     } catch (error) {
       console.error(error);
       toast.error("Erro ao gerar com IA");
@@ -308,7 +309,7 @@ export default function FeedbacksSection({ employee }) {
         
         Retorne JSON: { "text": "plano de ação..." }`;
 
-      const response = await base44.integrations.Core.InvokeLLM({
+      const response = await base44.functions.invoke('invokeLLMUnlimited', {
         prompt,
         file_urls: [file_url],
         response_json_schema: {
@@ -316,12 +317,14 @@ export default function FeedbacksSection({ employee }) {
           properties: { text: { type: "string" } }
         }
       });
+      
+      const result = response.data.data;
 
       if (targetField === 'content') {
-        setFormData({ ...formData, content: response.text });
+        setFormData({ ...formData, content: result.text });
         setShowContentRecorder(false);
       } else {
-        setFormData({ ...formData, action_plan: response.text });
+        setFormData({ ...formData, action_plan: result.text });
         setShowActionPlanRecorder(false);
       }
 

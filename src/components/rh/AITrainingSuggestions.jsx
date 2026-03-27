@@ -55,7 +55,7 @@ Retorne um JSON com:
 Seja específico para o setor automotivo e foque em resultados práticos.
 `;
 
-      const response = await base44.integrations.Core.InvokeLLM({
+      const response = await base44.functions.invoke('invokeLLMUnlimited', {
         prompt,
         response_json_schema: {
           type: "object",
@@ -81,7 +81,7 @@ Seja específico para o setor automotivo e foque em resultados práticos.
         }
       });
 
-      setSuggestions(response);
+      setSuggestions(response.data.data);
       toast.success("Sugestões geradas!");
     } catch (error) {
       console.error(error);

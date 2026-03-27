@@ -93,7 +93,7 @@ Com base nestes dados, retorne uma análise estruturada do clima organizacional:
 }
       `;
 
-      const response = await base44.integrations.Core.InvokeLLM({
+      const response = await base44.functions.invoke('invokeLLMUnlimited', {
         prompt,
         response_json_schema: {
           type: "object",
@@ -126,7 +126,7 @@ Com base nestes dados, retorne uma análise estruturada do clima organizacional:
         }
       });
 
-      setAnalysis(response);
+      setAnalysis(response.data.data);
       toast.success("Análise de clima concluída!");
     } catch (error) {
       console.error(error);

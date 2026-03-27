@@ -81,7 +81,7 @@ export default function TreinamentoVendas() {
 
       const content = textInput || `Avaliar interação de vendas para o cenário: ${scenarios.find(s => s.value === selectedScenario)?.label}. Áudio disponível em: ${audioUrl}`;
       
-      const evaluation = await base44.integrations.Core.InvokeLLM({
+      const apiResponse = await base44.functions.invoke('invokeLLMUnlimited', {
         prompt: `Você é um coach de vendas. Avalie a seguinte interação de vendas no cenário "${scenarios.find(s => s.value === selectedScenario)?.label}":
 
 ${content}
@@ -103,6 +103,7 @@ Forneça uma avaliação estruturada com:
           }
         }
       });
+      const evaluation = apiResponse.data.data;
 
       await base44.entities.SalesTraining.update(training.id, {
         ai_evaluation: evaluation,

@@ -96,7 +96,7 @@ Forneça:
 2. Ações sugeridas (PASSO A PASSO OPERACIONAL CLARO) com prioridade e impacto
 `;
 
-        const analysis = await base44.integrations.Core.InvokeLLM({
+        const response = await base44.functions.invoke('invokeLLMUnlimited', {
           prompt,
           response_json_schema: {
             type: "object",
@@ -116,6 +116,7 @@ Forneça:
             }
           }
         });
+        const analysis = response.data.data;
 
         bottleneck.root_cause_analysis = analysis.root_cause;
         bottleneck.suggested_actions = analysis.actions;

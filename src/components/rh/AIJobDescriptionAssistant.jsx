@@ -77,7 +77,7 @@ Retorne um JSON estruturado com os seguintes campos:
 Seja detalhado e profissional. Use linguagem do setor automotivo.
 `;
 
-      const response = await base44.integrations.Core.InvokeLLM({
+      const response = await base44.functions.invoke('invokeLLMUnlimited', {
         prompt,
         response_json_schema: {
           type: "object",
@@ -106,8 +106,9 @@ Seja detalhado e profissional. Use linguagem do setor automotivo.
           }
         }
       });
+      const result = response.data.data;
 
-      onGenerated({ ...response, generated_by_ai: true });
+      onGenerated({ ...result, generated_by_ai: true });
       toast.success("Descrição gerada com sucesso!");
     } catch (error) {
       console.error(error);

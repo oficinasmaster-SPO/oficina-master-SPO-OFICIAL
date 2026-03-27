@@ -72,7 +72,7 @@ export default function DiagnosticoComercial() {
 
       const diagnostic = await base44.entities.CommercialDiagnostic.create(diagnosticData);
 
-      const evaluation = await base44.integrations.Core.InvokeLLM({
+      const apiResponse = await base44.functions.invoke('invokeLLMUnlimited', {
         prompt: `Você é um especialista em vendas e diagnóstico comercial. Analise o áudio sobre "${diagnosticTypes.find(t => t.value === selectedType)?.label}" e forneça uma avaliação detalhada com notas de 0 a 10 para: prospecção, qualificação, apresentação, fechamento e pós-venda. Identifique 3-5 pontos fortes, 3-5 pontos fracos e 5-7 recomendações práticas.`,
         response_json_schema: {
           type: "object",
@@ -94,6 +94,7 @@ export default function DiagnosticoComercial() {
           }
         }
       });
+      const evaluation = apiResponse.data.data;
 
       await base44.entities.CommercialDiagnostic.update(diagnostic.id, {
         scores: evaluation.scores,

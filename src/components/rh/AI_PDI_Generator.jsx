@@ -44,7 +44,7 @@ export default function AI_PDI_Generator({ employee }) {
       }
       `;
 
-      const response = await base44.integrations.Core.InvokeLLM({
+      const response = await base44.functions.invoke('invokeLLMUnlimited', {
         prompt,
         response_json_schema: {
           type: "object",
@@ -76,7 +76,7 @@ export default function AI_PDI_Generator({ employee }) {
         }
       });
 
-      setPdi(response);
+      setPdi(response.data.data);
       toast.success("PDI gerado com sucesso!");
     } catch (error) {
       console.error(error);

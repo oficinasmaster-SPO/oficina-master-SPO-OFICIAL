@@ -51,7 +51,7 @@ export default function AIPrioritizationAssistant({ tasks, onApplyChanges }) {
       Apenas sugira mudanças se realmente necessário. Se a prioridade atual estiver boa, não inclua na lista ou mantenha a mesma.
       `;
 
-      const response = await base44.integrations.Core.InvokeLLM({
+      const response = await base44.functions.invoke('invokeLLMUnlimited', {
         prompt,
         response_json_schema: {
           type: "object",
@@ -72,7 +72,7 @@ export default function AIPrioritizationAssistant({ tasks, onApplyChanges }) {
         }
       });
 
-      setSuggestions(response);
+      setSuggestions(response.data.data);
     } catch (error) {
       console.error(error);
       toast.error("Erro ao analisar prioridades");
