@@ -3,11 +3,32 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
-        const { currentMonthData, employeeHistory } = await req.json();
+        const body = await req.json().catch(() => ({}));
+        const { currentMonthData, employeeHistory } = body;
         
         const user = await base44.auth.me();
         if (!user) {
             return Response.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const workshop_id = user.data?.workshop_id || body.workshop_id;
+
+        if (workshop_id) {
+          try {
+            const planCheck = await base44.functions.invoke('checkPlanAccess', {
+              tenantId: workshop_id,
+              feature: 'integrations',
+              action: 'check_feature'
+            });
+            if (!planCheck.data?.success) {
+              return Response.json({
+                success: false,
+                error: { code: 'PLAN_RESTRICTION', message: 'Recurso de IA não disponível no plano atual.' }
+              }, { status: 403 });
+            }
+          } catch (e) {
+            console.warn('Erro na validação do plano, continuando:', e);
+          }
         }
 
         const prompt = `

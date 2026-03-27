@@ -9,7 +9,28 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Acesso negado' }, { status: 403 });
     }
 
-    const { atendimento_id, dados_reuniao } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const { atendimento_id, dados_reuniao } = body;
+
+    const workshop_id_auth = user.data?.workshop_id || body.workshop_id;
+
+    if (workshop_id_auth) {
+      try {
+        const planCheck = await base44.functions.invoke('checkPlanAccess', {
+          tenantId: workshop_id_auth,
+          feature: 'integrations',
+          action: 'check_feature'
+        });
+        if (!planCheck.data?.success) {
+          return Response.json({
+            success: false,
+            error: { code: 'PLAN_RESTRICTION', message: 'Recurso de IA não disponível no plano atual.' }
+          }, { status: 403 });
+        }
+      } catch (e) {
+        console.warn('Erro na validação do plano, continuando:', e);
+      }
+    }
 
     if (!atendimento_id) {
       return Response.json({ error: 'atendimento_id é obrigatório' }, { status: 400 });

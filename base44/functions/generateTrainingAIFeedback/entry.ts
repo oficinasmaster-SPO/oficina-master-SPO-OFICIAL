@@ -3,7 +3,28 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const { lesson_id, assessment_id, user_answers, employee_name } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const { lesson_id, assessment_id, user_answers, employee_name } = body;
+
+    const workshop_id = user.data?.workshop_id || body.workshop_id;
+
+    if (workshop_id) {
+      try {
+        const planCheck = await base44.functions.invoke('checkPlanAccess', {
+          tenantId: workshop_id,
+          feature: 'integrations',
+          action: 'check_feature'
+        });
+        if (!planCheck.data?.success) {
+          return Response.json({
+            success: false,
+            error: { code: 'PLAN_RESTRICTION', message: 'Recurso de IA não disponível no plano atual.' }
+          }, { status: 403 });
+        }
+      } catch (e) {
+        console.warn('Erro na validação do plano, continuando:', e);
+      }
+    }
 
     if (!lesson_id || !assessment_id || !user_answers) {
       return Response.json({ error: 'Missing required data' }, { status: 400 });

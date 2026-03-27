@@ -34,6 +34,27 @@ Deno.serve(async (req) => {
         });
     }
 
+    const body = payload;
+    const workshop_id = user.data?.workshop_id || body.workshop_id;
+
+    if (workshop_id) {
+      try {
+        const planCheck = await base44.functions.invoke('checkPlanAccess', {
+          tenantId: workshop_id,
+          feature: 'integrations',
+          action: 'check_feature'
+        });
+        if (!planCheck.data?.success) {
+          return Response.json({
+            success: false,
+            error: { code: 'PLAN_RESTRICTION', message: 'Recurso de IA não disponível no plano atual.' }
+          }, { status: 403, headers: { 'Access-Control-Allow-Origin': '*' } });
+        }
+      } catch (e) {
+        console.warn('Erro na validação do plano, continuando:', e);
+      }
+    }
+
     const { cdc_record_id, employee_id } = payload;
 
     console.log(`Generating report for CDC: ${cdc_record_id}, Employee: ${employee_id}`);

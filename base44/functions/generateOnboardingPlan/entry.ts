@@ -9,7 +9,28 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { employee_id, role, area, workshop_id } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const { employee_id, role, area, workshop_id } = body;
+
+    const tenantId = user.data?.workshop_id || workshop_id;
+
+    if (tenantId) {
+      try {
+        const planCheck = await base44.functions.invoke('checkPlanAccess', {
+          tenantId: tenantId,
+          feature: 'integrations',
+          action: 'check_feature'
+        });
+        if (!planCheck.data?.success) {
+          return Response.json({
+            success: false,
+            error: { code: 'PLAN_RESTRICTION', message: 'Recurso de IA não disponível no plano atual.' }
+          }, { status: 403 });
+        }
+      } catch (e) {
+        console.warn('Erro na validação do plano, continuando:', e);
+      }
+    }
 
     if (!employee_id || !role || !workshop_id) {
       return Response.json({ error: 'Dados incompletos' }, { status: 400 });
