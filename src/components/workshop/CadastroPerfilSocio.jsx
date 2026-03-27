@@ -403,6 +403,7 @@ const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack, on
                   v = v.replace(/(\d{3})(\d)/, "$1.$2");
                   v = v.replace(/(\d{3})(\d)/, "$1.$2");
                   v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+                  e.target.value = v;
                   setFormData({ ...formData, cpf: v });
                 }}
                 placeholder="000.000.000-00"
@@ -432,6 +433,7 @@ const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack, on
                   if (v.length > 11) v = v.slice(0, 11);
                   v = v.replace(/^(\d{2})(\d)/g, "($1) $2");
                   v = v.replace(/(\d)(\d{4})$/, "$1-$2");
+                  e.target.value = v;
                   setFormData({ ...formData, telefone: v });
                 }}
                 placeholder="(00) 00000-0000"

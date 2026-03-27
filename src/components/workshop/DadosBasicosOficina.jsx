@@ -396,6 +396,7 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
                   v = v.replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3");
                   v = v.replace(/\.(\d{3})(\d)/, ".$1/$2");
                   v = v.replace(/(\d{4})(\d)/, "$1-$2");
+                  e.target.value = v;
                   setFormData({...formData, cnpj: v});
                 }}
                 disabled={!editing}
@@ -411,6 +412,7 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
                   if (v.length > 11) v = v.slice(0, 11);
                   v = v.replace(/^(\d{2})(\d)/g, "($1) $2");
                   v = v.replace(/(\d)(\d{4})$/, "$1-$2");
+                  e.target.value = v;
                   setFormData({...formData, telefone: v});
                 }}
                 disabled={!editing}
@@ -436,6 +438,7 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
                     let v = e.target.value.replace(/\D/g, "");
                     if (v.length > 8) v = v.slice(0, 8);
                     v = v.replace(/^(\d{5})(\d)/, "$1-$2");
+                    e.target.value = v;
                     handleCEPChange(v);
                   }}
                   disabled={!editing}
