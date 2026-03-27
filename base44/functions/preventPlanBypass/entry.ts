@@ -1,9 +1,29 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
+const processedEvents = new Map();
+const CLEANUP_INTERVAL = 5 * 60 * 1000;
+
+setInterval(() => {
+    const now = Date.now();
+    for (const [id, timestamp] of processedEvents.entries()) {
+        if (now - timestamp > CLEANUP_INTERVAL) {
+            processedEvents.delete(id);
+        }
+    }
+}, CLEANUP_INTERVAL);
+
 Deno.serve(async (req) => {
   try {
     const payload = await req.json();
     const { event, data, old_data, changed_fields } = payload;
+
+    const eventId = event?.id;
+    if (eventId) {
+        if (processedEvents.has(eventId)) {
+            return Response.json({ success: true, reason: 'event already processed' });
+        }
+        processedEvents.set(eventId, Date.now());
+    }
 
     // Se for criação, não temos old_data para reverter plano, mas um Workshop novo começa como 'trial' ou 'free'.
     // O foco aqui é previnir *updates* indevidos em campos de faturamento.
@@ -15,6 +35,10 @@ Deno.serve(async (req) => {
     // billing_update_token e billing_secure_hash NÃO devem estar nessa lista — são campos de controle interno
     
     const changedBillingFields = changed_fields.filter(f => billingFields.includes(f));
+
+    if (changedBillingFields.length > 0 && data.billing_update_token === "" && !old_data.billing_update_token) {
+        return Response.json({ success: true, reason: 'token cleanup event, skipping' });
+    }
 
     if (changedBillingFields.length > 0) {
         const webhookToken = Deno.env.get("KIWIFY_CLIENT_SECRET");
