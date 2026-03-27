@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { format, subDays } from 'npm:date-fns@3.6.0';
 import { ptBR } from 'npm:date-fns@3.6.0/locale';
 

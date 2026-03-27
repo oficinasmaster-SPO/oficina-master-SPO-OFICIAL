@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
 // Mapeamento de páginas para códigos de funcionalidade/módulo
 const PAGE_TO_MODULE_MAP = {

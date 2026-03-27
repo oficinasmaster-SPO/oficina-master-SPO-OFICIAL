@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
 /**
  * Resolve discrepâncias entre DRE e Metas, permitindo ao usuário escolher qual valor usar
