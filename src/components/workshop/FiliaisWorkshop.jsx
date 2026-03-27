@@ -57,7 +57,10 @@ export default function FiliaisWorkshop({ workshop }) {
         employees_count: 1,
         units_count_category: "unidade_solo",
         horario_funcionamento: workshop.horario_funcionamento || {},
-        planoAtual: workshop.planoAtual || "FREE",
+        planoAtual: "free",
+        planId: "free",
+        planStatus: "trial",
+        trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
         status: "ativo",
         is_autocenter: workshop.is_autocenter || false
       });
@@ -89,7 +92,7 @@ export default function FiliaisWorkshop({ workshop }) {
       
       setFiliais([...filiais, filial]);
       setNewFilial({ name: "", city: "", state: "" });
-      toast.success("Filial adicionada com sucesso!");
+      toast.success("Filial criada em modo trial por 14 dias. Ative um plano para liberar todos os recursos.");
     } catch (error) {
       console.error(error);
       toast.error(error.message ? `Erro: ${error.message}` : "Erro ao adicionar filial");
