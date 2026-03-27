@@ -1,56 +1,64 @@
 import React from 'react';
 import { cn } from "@/lib/utils";
 
-export default function WheelLoader({ className, size = 'md', text = "Carregando..." }) {
-  // Fixado em um tamanho padrão w-24 h-24 independente da prop para manter a consistência em todas as telas
-  const FIXED_SIZE = "w-24 h-24";
+const IMG_URL = "https://media.base44.com/images/public/69540822472c4a70b54d47aa/dfa20199e_corrida.png";
 
+export default function WheelLoader({ className, text = "Carregando..." }) {
   return (
     <div className={cn("flex flex-col items-center justify-center gap-4", className)}>
-      <style>
-        {`
-          @keyframes speed-wobble {
-            0% { transform: translateX(0px) translateY(0px); }
-            25% { transform: translateX(-2px) translateY(-1px); }
-            50% { transform: translateX(2px) translateY(1px); }
-            75% { transform: translateX(-1px) translateY(1px); }
-            100% { transform: translateX(0px) translateY(0px); }
-          }
-          @keyframes wheel-spin-center {
-            from { transform: translate(-50%, -50%) rotate(0deg); }
-            to { transform: translate(-50%, -50%) rotate(360deg); }
-          }
-          .animate-speed-wobble {
-            animation: speed-wobble 0.15s linear infinite;
-          }
-          .animate-wheel-spin-center {
-            animation: wheel-spin-center 0.6s linear infinite;
-          }
-        `}
-      </style>
-      
-      {/* Container principal com a trepidação de velocidade que leva as duas imagens juntas */}
-      <div className={cn(FIXED_SIZE, "animate-speed-wobble relative flex items-center justify-center opacity-90")}>
-        {/* Círculo externo de velocidade */}
-        <img 
-          src="https://media.base44.com/images/public/69540822472c4a70b54d47aa/b2b751fae_WhatsAppImage2026-03-25at174758-Editadojpg.jpeg" 
-          alt="" 
-          className="w-full h-full object-contain absolute inset-0 mix-blend-multiply"
+      <style>{`
+        @keyframes inner-wheel-spin {
+          from { transform: rotate(0deg); }
+          to   { transform: rotate(360deg); }
+        }
+        @keyframes speed-shake {
+          0%   { transform: translateX(0px)  translateY(0px); }
+          20%  { transform: translateX(-3px) translateY(-1px); }
+          40%  { transform: translateX(3px)  translateY(1px); }
+          60%  { transform: translateX(-2px) translateY(1px); }
+          80%  { transform: translateX(2px)  translateY(-1px); }
+          100% { transform: translateX(0px)  translateY(0px); }
+        }
+        .wheel-speed-shake {
+          animation: speed-shake 0.12s linear infinite;
+        }
+        .wheel-inner-spin {
+          animation: inner-wheel-spin 0.7s linear infinite;
+          transform-origin: center center;
+        }
+      `}</style>
+
+      {/* Tamanho fixo: nunca muda entre telas */}
+      <div className="w-28 h-28 relative wheel-speed-shake flex items-center justify-center">
+        
+        {/* Imagem base — estática (linhas de velocidade + aro externo ficam parados) */}
+        <img
+          src={IMG_URL}
+          alt=""
+          className="w-full h-full object-contain absolute inset-0"
+          style={{ mixBlendMode: 'multiply' }}
         />
-        {/* Roda interna girando (Ajustada a posição para caber exatamente dentro do círculo de velocidade) */}
-        <img 
-          src="https://media.base44.com/images/public/69540822472c4a70b54d47aa/2e665ced6_Designsemnome19.png" 
-          alt="Carregando..." 
-          className="w-[55%] h-[55%] object-contain absolute top-[50%] left-[58%] animate-wheel-spin-center mix-blend-multiply"
+
+        {/* Imagem de cima — apenas a roda interna gira via clipPath circular centralizado */}
+        <img
+          src={IMG_URL}
+          alt="Carregando..."
+          className="w-full h-full object-contain absolute inset-0 wheel-inner-spin"
+          style={{
+            mixBlendMode: 'multiply',
+            /* clip na área da roda interna — ajustado para o centro-direita da imagem */
+            clipPath: 'circle(27% at 64% 50%)',
+          }}
         />
       </div>
+
       {text && (
         <div className="flex items-center gap-1">
           <span className="text-sm font-semibold text-slate-600 uppercase tracking-widest">{text}</span>
           <span className="flex gap-0.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-slate-500 animate-bounce" style={{ animationDelay: "0ms" }}></span>
-            <span className="w-1.5 h-1.5 rounded-full bg-slate-500 animate-bounce" style={{ animationDelay: "150ms" }}></span>
-            <span className="w-1.5 h-1.5 rounded-full bg-slate-500 animate-bounce" style={{ animationDelay: "300ms" }}></span>
+            <span className="w-1.5 h-1.5 rounded-full bg-slate-500 animate-bounce" style={{ animationDelay: "0ms" }} />
+            <span className="w-1.5 h-1.5 rounded-full bg-slate-500 animate-bounce" style={{ animationDelay: "150ms" }} />
+            <span className="w-1.5 h-1.5 rounded-full bg-slate-500 animate-bounce" style={{ animationDelay: "300ms" }} />
           </span>
         </div>
       )}
