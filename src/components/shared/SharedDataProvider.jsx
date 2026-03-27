@@ -4,62 +4,18 @@ import { base44 } from "@/api/base44Client";
 
 const SharedDataContext = createContext(null);
 
-export function SharedDataProvider({ children, workshopId, userId }) {
+export function SharedDataProvider({ children, workshop, workshopId, userId }) {
   const queryClient = useQueryClient();
 
-  // REMOVIDO: invalidar tudo causava loop e rate limit exceeded
-  // O React Query já trata a mudança de chaves (workshopId) automaticamente.
   useEffect(() => {
     if (workshopId) {
-      console.log('🔥 SharedDataProvider: workshopId mudou para:', workshopId);
-      // Apenas invalidamos queries específicas que PODEM ter dados obsoletos de cache global se necessário
-      // mas evitamos invalidar 'workshop-context' ou outras chaves críticas
-      queryClient.invalidateQueries({ queryKey: ['shared-'] }); 
+      console.log('🔥 SharedDataProvider inicializado para:', workshopId);
     }
-  }, [workshopId, queryClient]);
+  }, [workshopId]);
 
-  // Dados da Oficina - fonte principal
-  const { data: workshop, isLoading: loadingWorkshop } = useQuery({
-    queryKey: ['shared-workshop', workshopId],
-    queryFn: async () => {
-      if (!workshopId) return null;
-      try {
-        let ws = null;
-        try {
-          const wsList = await base44.entities.Workshop.filter({ id: workshopId });
-          if (wsList && wsList.length > 0) ws = wsList[0];
-        } catch(err) {
-          console.warn("RLS bloqueou filter no SharedDataProvider, tentando fallback...");
-        }
-        
-        if (!ws) {
-          const response = await base44.functions.invoke('checkWorkshop', { workshop_id: workshopId });
-          if (response.data && response.data.workshopFound) {
-            ws = response.data.workshopData;
-          }
-        }
-        
-        if (!ws) throw new Error("Oficina não encontrada após fallback");
-
-        console.log('📊 SharedDataProvider carregou workshop:', {
-          id: ws.id,
-          name: ws.name,
-          city: ws.city,
-          state: ws.state
-        });
-        return ws;
-      } catch (error) {
-        console.error("Erro ao carregar workshop:", error);
-        return null;
-      }
-    },
-    enabled: !!workshopId,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-    retry: 1,
-  });
+  // O workshop principal agora vem direto do hook useWorkshopContext (passado pelo Layout)
+  // Isso economiza requisições desnecessárias.
+  const loadingWorkshop = !workshop && !!workshopId;
 
   const { data: latestDRE, isLoading: loadingDRE } = useQuery({
     queryKey: ['shared-dre', workshopId],
@@ -80,7 +36,7 @@ export function SharedDataProvider({ children, workshopId, userId }) {
     gcTime: 10 * 60 * 1000,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
-    retry: 1,
+    retry: false, // Previne retries imediatos para não estourar Rate Limit
   });
 
   const { data: latestOSDiagnostic, isLoading: loadingOS } = useQuery({
@@ -102,7 +58,7 @@ export function SharedDataProvider({ children, workshopId, userId }) {
     gcTime: 10 * 60 * 1000,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
-    retry: 1,
+    retry: false, // Previne retries imediatos para não estourar Rate Limit
   });
 
   const { data: employees = [], isLoading: loadingEmployees } = useQuery({
