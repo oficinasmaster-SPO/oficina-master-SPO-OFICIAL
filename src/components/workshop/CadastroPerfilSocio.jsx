@@ -91,9 +91,12 @@ const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack, on
       setProfiles(filtered);
       console.log("📊 profiles filtrados:", filtered.length);
 
+      // Tenta encontrar especificamente o Socio/Proprietário (externo)
       const socioProfile = filtered.find(p => 
-        p.name.toLowerCase().includes('sócio') || 
-        p.name.toLowerCase().includes('socio')
+        p.name.toLowerCase().includes('proprietário') || 
+        p.name.toLowerCase().includes('proprietario') ||
+        (p.name.toLowerCase().includes('socio') && p.type === 'externo') ||
+        (p.name.toLowerCase().includes('sócio') && p.type === 'externo')
       );
 
       // Sempre fixar o perfil de Sócio quando disponível (sobrescreve qualquer valor anterior)
@@ -155,15 +158,6 @@ const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack, on
     if (currentUser?.role !== 'admin' && selectedJobRole?.category === 'consultoria') {
       toast.error("Este perfil é restrito a administradores.");
       return;
-    }
-
-    // VALIDAÇÃO DE SEGURANÇA: Bloquear UserProfile interno para usuários comuns
-    if (formData.profile_id) {
-      const selectedProfile = profiles.find(p => p.id === formData.profile_id);
-      if (currentUser?.role !== 'admin' && selectedProfile?.type === 'interno') {
-        toast.error("Este perfil de acesso é restrito a administradores.");
-        return;
-      }
     }
 
     setSaving(true);
@@ -246,15 +240,6 @@ const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack, on
       if (currentUser?.role !== 'admin' && selectedJobRole?.category === 'consultoria') {
         toast.error("Este perfil é restrito a administradores.");
         return false;
-      }
-
-      // VALIDAÇÃO DE SEGURANÇA: Bloquear UserProfile interno para usuários comuns
-      if (formData.profile_id) {
-        const selectedProfile = profiles.find(p => p.id === formData.profile_id);
-        if (currentUser?.role !== 'admin' && selectedProfile?.type === 'interno') {
-          toast.error("Este perfil de acesso é restrito a administradores.");
-          return false;
-        }
       }
 
       try {
@@ -484,10 +469,7 @@ const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack, on
                   <SelectValue placeholder="Selecione um perfil" />
                 </SelectTrigger>
                 <SelectContent>
-                  {(currentUser?.role === 'admin'
-                    ? profiles
-                    : profiles.filter(p => p.type !== 'interno')
-                  ).map((p) => (
+                  {profiles.map((p) => (
                     <SelectItem key={p.id} value={p.id}>
                       {p.name}
                     </SelectItem>
