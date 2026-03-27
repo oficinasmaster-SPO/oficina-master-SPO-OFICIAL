@@ -19,8 +19,9 @@ export default function FiliaisWorkshop({ workshop }) {
   const [atualizando, setAtualizando] = useState({});
 
   useEffect(() => {
+    if (!workshop?.id) return;
     loadFiliais();
-  }, [workshop.id]);
+  }, [workshop?.id]);
 
   const loadFiliais = async () => {
     try {

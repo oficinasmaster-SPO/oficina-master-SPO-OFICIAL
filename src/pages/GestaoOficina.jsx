@@ -34,8 +34,15 @@ export default function GestaoOficina() {
   const tenantId = contextWorkshop?.id;
   const [activeTab, setActiveTab] = useState('dados');
 
-  // Uma oficina é considerada Matriz se o company_id for vazio, nulo, a string "null", ou for igual ao seu próprio ID
-  const isMatriz = !contextWorkshop?.company_id || contextWorkshop?.company_id === contextWorkshop?.id || contextWorkshop?.company_id === 'null' || contextWorkshop?.company_id === '';
+  // Uma oficina é considerada Matriz se o company_id for vazio, nulo ou for igual ao seu próprio ID
+  const isMatriz = !contextWorkshop?.company_id || contextWorkshop?.company_id === contextWorkshop?.id || contextWorkshop?.company_id === '';
+
+  // Limpeza preventiva de dados inválidos de company_id
+  useEffect(() => {
+    if (contextWorkshop?.id && contextWorkshop.company_id === 'null') {
+      base44.entities.Workshop.update(contextWorkshop.id, { company_id: null }).catch(console.error);
+    }
+  }, [contextWorkshop?.id, contextWorkshop?.company_id]);
 
   const { data: user, isLoading: isLoadingUser } = useQuery({
     queryKey: ['current-user'],
@@ -100,11 +107,11 @@ export default function GestaoOficina() {
     const tabFromUrl = new URLSearchParams(location.search).get('tab') || 'dados';
     if (tabFromUrl === "filiais" && !isMatriz) {
       setActiveTab("dados");
-      navigate("?tab=dados", { replace: true });
+      navigate(location.pathname + "?tab=dados", { replace: true });
       return;
     }
     setActiveTab(tabFromUrl);
-  }, [location.search, workshop, loading, isMatriz]);
+  }, [location.search, location.pathname, workshop, loading, isMatriz, navigate]);
 
   const handleUpdate = async (data) => {
     try {
