@@ -20,7 +20,17 @@ export default function TenantSelector() {
 
   const { data: companies = [], isLoading: isLoadingCompanies } = useQuery({
     queryKey: ['workshops', selectedFirmId],
-    queryFn: () => selectedFirmId && selectedFirmId !== 'none' ? base44.entities.Workshop.filter({ consulting_firm_id: selectedFirmId }) : base44.entities.Workshop.list()
+    queryFn: async () => {
+      // Se tiver firma selecionada, filtra por ela
+      if (selectedFirmId && selectedFirmId !== 'none') {
+        return base44.entities.Workshop.filter({ consulting_firm_id: selectedFirmId });
+      }
+      // Se for admin, list() retorna TUDO (limitado a 50 por padrão). 
+      // Se for "Todas Oficinas", tentamos buscar apenas as ativas ou aumentamos o limite se necessário, 
+      // mas cuidado com performance. 
+      return base44.entities.Workshop.list({ limit: 100 }); 
+    },
+    enabled: !!user && user.role === 'admin' // Só busca se for admin
   });
 
   // Apenas admins podem alternar entre tenants livremente por enquanto

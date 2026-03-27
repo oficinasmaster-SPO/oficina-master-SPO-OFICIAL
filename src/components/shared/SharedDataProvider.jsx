@@ -7,11 +7,14 @@ const SharedDataContext = createContext(null);
 export function SharedDataProvider({ children, workshopId, userId }) {
   const queryClient = useQueryClient();
 
-  // FORÇA INVALIDAR tudo quando workshopId muda
+  // REMOVIDO: invalidar tudo causava loop e rate limit exceeded
+  // O React Query já trata a mudança de chaves (workshopId) automaticamente.
   useEffect(() => {
     if (workshopId) {
       console.log('🔥 SharedDataProvider: workshopId mudou para:', workshopId);
-      queryClient.invalidateQueries();
+      // Apenas invalidamos queries específicas que PODEM ter dados obsoletos de cache global se necessário
+      // mas evitamos invalidar 'workshop-context' ou outras chaves críticas
+      queryClient.invalidateQueries({ queryKey: ['shared-'] }); 
     }
   }, [workshopId, queryClient]);
 
