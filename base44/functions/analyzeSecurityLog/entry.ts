@@ -15,12 +15,21 @@ Deno.serve(async (req) => {
         let alertMessage = '';
 
         if (isSuspicious) {
+            const recentAlert = await base44.asServiceRole.entities.Notification.filter({
+                type: 'alerta_seguranca',
+                created_date: { $gte: new Date(Date.now() - 30 * 60 * 1000).toISOString() }
+            });
+            if (recentAlert && recentAlert.length > 0) {
+                return Response.json({ success: true, reason: 'alert already sent recently' });
+            }
+
             shouldAlert = true;
             alertMessage = `Acesso suspeito detectado! Endpoint: ${logData.endpoint} | IP: ${logData.ip_address} | User: ${logData.user_id || 'N/A'}`;
         } else if (isInvalid) {
             const recentLogs = await base44.asServiceRole.entities.SecurityLog.filter({
                 ip_address: logData.ip_address,
-                event_type: 'invalid_attempt'
+                event_type: 'invalid_attempt',
+                created_date: { $gte: new Date(Date.now() - 60 * 60 * 1000).toISOString() }
             });
             
             if (recentLogs && recentLogs.length >= 5) {
@@ -30,7 +39,8 @@ Deno.serve(async (req) => {
         }
 
         if (shouldAlert) {
-            const admins = await base44.asServiceRole.entities.User.filter({ role: 'admin' });
+            const allAdmins = await base44.asServiceRole.entities.User.filter({ role: 'admin' }) || [];
+            const admins = allAdmins.slice(0, 3);
             
             const alertPromises = admins.map(admin => {
                 return base44.asServiceRole.entities.Notification.create({
