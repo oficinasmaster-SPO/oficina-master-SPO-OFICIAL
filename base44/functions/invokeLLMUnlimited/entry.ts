@@ -37,27 +37,21 @@ function checkRateLimit(map, key, maxCount) {
 
 Deno.serve(async (req) => {
   try {
-    console.log("🔵 Início da função invokeLLMUnlimited");
     const base44 = createClientFromRequest(req);
     
     // Verificar autenticação
-    console.log("🔐 Verificando autenticação...");
     let user;
     try {
       user = await base44.auth.me();
-      console.log("✅ Usuário autenticado:", user?.email);
     } catch (authError) {
-      console.error("❌ Erro de autenticação:", authError.message);
       return Response.json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } }, { status: 401 });
     }
     
     if (!user || !user.id) {
-      console.error("❌ Usuário não autenticado");
       return Response.json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } }, { status: 401 });
     }
 
     // Parse do payload
-    console.log("📦 Parseando payload...");
     let payload;
     try {
       payload = await req.json();
@@ -65,13 +59,11 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, error: { code: 'INVALID_INPUT', message: 'Payload inválido' } }, { status: 400 });
     }
     const { prompt, response_json_schema = null } = payload;
-    console.log("📝 Prompt recebido, tamanho:", prompt?.length || 0);
 
     // Ignorar tenantId ou workshop_id do payload/headers e obter APENAS do usuário autenticado
     const workshop_id = user.data?.workshop_id;
 
     if (!workshop_id) {
-      console.error("❌ Usuário sem workshop_id tentando usar IA");
       return Response.json({ success: false, error: { code: 'FORBIDDEN', message: 'Usuário não vinculado a um tenant' } }, { status: 403 });
     }
 
@@ -80,19 +72,16 @@ Deno.serve(async (req) => {
     const headerTenantId = req.headers.get("x-tenant-id");
 
     if ((payloadWorkshopId && payloadWorkshopId !== workshop_id) || (headerTenantId && headerTenantId !== workshop_id)) {
-       console.error("❌ Tentativa de burla de tenant (divergência entre token e request)");
        return Response.json({ success: false, error: { code: 'FORBIDDEN', message: 'Tenant mismatch detectado' } }, { status: 403 });
     }
 
     // Verificação de Rate Limit (Usuário)
     if (!checkRateLimit(userLimits, user.id, USER_MAX_PER_MINUTE)) {
-      console.error(`❌ Rate limit excedido para o usuário: ${user.id}`);
       return Response.json({ success: false, error: { code: 'RATE_LIMIT_EXCEEDED', message: 'Limite de uso de IA por usuário excedido. Aguarde 1 minuto.' } }, { status: 429 });
     }
 
     // Verificação de Rate Limit (Tenant) - Usando apenas o valor seguro
     if (!checkRateLimit(tenantLimits, workshop_id, TENANT_MAX_PER_MINUTE)) {
-      console.error(`❌ Rate limit excedido para a oficina: ${workshop_id}`);
       return Response.json({ success: false, error: { code: 'RATE_LIMIT_EXCEEDED', message: 'Limite de uso de IA por oficina excedido. Aguarde 1 minuto.' } }, { status: 429 });
     }
 
@@ -122,20 +111,15 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, error: { code: 'MISSING_FIELDS', message: 'Prompt is required and must be a valid string' } }, { status: 400 });
     }
 
-    console.log("🤖 Chamando integração Base44 InvokeLLM (ilimitado via service role)...");
-
     // Usar a integração Base44 com service role para não contar créditos do usuário
     const result = await base44.asServiceRole.integrations.Core.InvokeLLM({
       prompt,
       response_json_schema: response_json_schema || undefined
     });
 
-    console.log("✅ LLM respondeu com sucesso");
-
     return Response.json({ success: true, data: result }, { status: 200 });
 
   } catch (error) {
-    console.error("❌ ERRO CRÍTICO na função:", error);
     return Response.json({ 
       success: false,
       error: { code: 'INTERNAL_ERROR', message: 'Internal server error' }

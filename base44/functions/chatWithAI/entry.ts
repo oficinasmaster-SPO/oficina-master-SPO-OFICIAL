@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import OpenAI from 'npm:openai@4.28.0';
 
 const openai = new OpenAI({
@@ -59,14 +59,12 @@ Deno.serve(async (req) => {
 
         // Rate Limit por Usuário (10 req / min)
         if (!checkRateLimit(userRateLimits, user.id, MAX_REQUESTS_PER_USER)) {
-            console.warn(`Rate limit excedido para usuário ${user.id}`);
             return Response.json({ success: false, error: { code: 'RATE_LIMIT_EXCEEDED', message: 'Too Many Requests' } }, { status: 429 });
         }
 
         // Rate Limit por Tenant/Oficina (não confia no payload, usa o dado seguro do token)
         const workshopId = user.data?.workshop_id;
         if (workshopId && !checkRateLimit(tenantRateLimits, workshopId, MAX_REQUESTS_PER_TENANT)) {
-            console.warn(`Rate limit excedido para tenant ${workshopId}`);
             return Response.json({ success: false, error: { code: 'RATE_LIMIT_EXCEEDED', message: 'Too Many Requests' } }, { status: 429 });
         }
 
@@ -97,7 +95,6 @@ Deno.serve(async (req) => {
                     }, { status: 403 });
                 }
             } catch (e) {
-                console.error("Erro na validação do plano:", e);
             }
         }
 
@@ -110,10 +107,10 @@ Deno.serve(async (req) => {
         if (includeWorkshopData) {
             try {
                 const workshops = await base44.entities.Workshop.filter({ owner_id: user.id });
-                const workshop = workshops?.[0];
+                let workshop = workshops?.[0];
 
                 if (!workshop && user.workshop_id) {
-                    const workshop = await base44.entities.Workshop.get(user.workshop_id);
+                    workshop = await base44.entities.Workshop.get(user.workshop_id);
                 }
 
                 if (workshop) {
@@ -270,7 +267,6 @@ ${goalHistory.length > 0 ? `
 `;
                 }
             } catch (error) {
-                console.error('Erro ao buscar dados do workshop:', error);
             }
         }
 
@@ -356,7 +352,6 @@ ${context || ''}`;
         });
 
     } catch (error) {
-        console.error('Error in chatWithAI:', error);
         return Response.json({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Erro interno no servidor' } }, { status: 500 });
     }
 });

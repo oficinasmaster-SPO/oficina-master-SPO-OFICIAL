@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
 /**
  * Webhook para Evolution API (WhatsApp não-oficial)
@@ -15,7 +15,6 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    console.log('📱 Mensagem WhatsApp recebida:', JSON.stringify(body));
 
     // Estrutura típica da Evolution API
     const { event, instance, data } = body;
@@ -47,7 +46,6 @@ Deno.serve(async (req) => {
     );
 
     if (!isLeadMessage) {
-      console.log('⏭️ Mensagem não é de interesse (sem palavras-chave)');
       return Response.json({ message: 'Não é lead' }, { status: 200 });
     }
 
@@ -56,7 +54,6 @@ Deno.serve(async (req) => {
     const workshop = workshops.find(w => w.whatsapp_instance === instance) || workshops[0];
 
     if (!workshop) {
-      console.error('❌ Workshop não encontrado');
       return Response.json({ error: 'Workshop não encontrado' }, { status: 404 });
     }
 
@@ -67,8 +64,6 @@ Deno.serve(async (req) => {
     });
 
     if (existingCandidates.length > 0) {
-      console.log('⚠️ Candidato já existe com esse telefone');
-      
       // Atualizar timeline
       const candidate = existingCandidates[0];
       const updatedTimeline = [
@@ -111,8 +106,6 @@ Deno.serve(async (req) => {
 
     const newCandidate = await base44.asServiceRole.entities.Candidate.create(candidateData);
 
-    console.log('✅ Candidato criado via WhatsApp:', newCandidate.id);
-
     // Enviar mensagem automática (opcional)
     // Você pode integrar com Evolution API para responder
     /*
@@ -148,7 +141,6 @@ Deno.serve(async (req) => {
         });
       }
     } catch (notifError) {
-      console.error('Erro ao notificar RH:', notifError);
     }
 
     return Response.json({ 
@@ -157,7 +149,6 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('❌ Erro no webhook Evolution:', error);
     return Response.json({ error: 'Erro interno no servidor' }, { status: 500 });
   }
 });
