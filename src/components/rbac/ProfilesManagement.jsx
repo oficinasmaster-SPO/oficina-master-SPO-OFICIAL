@@ -41,6 +41,8 @@ export default function ProfilesManagement() {
 
   const profileCounts = statsData?.counts || {};
   const totalEmployees = statsData?.meta?.total_employees || 0;
+  const totalWithProfile = Object.values(profileCounts).reduce((a, b) => a + b, 0);
+  const totalWithoutProfile = Math.max(0, totalEmployees - totalWithProfile);
   
   // Mantemos a query de employees apenas se necessário para outras lógicas, mas limitamos o uso
   // Se precisarmos da lista completa para edição/detalhes, idealmente deveríamos paginar ou buscar sob demanda.
@@ -156,7 +158,7 @@ export default function ProfilesManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
@@ -172,6 +174,15 @@ export default function ProfilesManagement() {
               <Users className="w-10 h-10 mx-auto text-purple-600 mb-2" />
               <p className="text-3xl font-bold">{totalEmployees}</p>
               <p className="text-sm text-gray-600">Colaboradores no Sistema</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className={totalWithoutProfile > 0 ? "border-amber-400 bg-amber-50" : ""}>
+          <CardContent className="pt-6">
+            <div className="text-center">
+              <AlertCircle className={`w-10 h-10 mx-auto mb-2 ${totalWithoutProfile > 0 ? "text-amber-500" : "text-gray-400"}`} />
+              <p className={`text-3xl font-bold ${totalWithoutProfile > 0 ? "text-amber-700" : "text-gray-900"}`}>{totalWithoutProfile}</p>
+              <p className={`text-sm ${totalWithoutProfile > 0 ? "text-amber-600" : "text-gray-600"}`}>Sem Perfil Atribuído</p>
             </div>
           </CardContent>
         </Card>

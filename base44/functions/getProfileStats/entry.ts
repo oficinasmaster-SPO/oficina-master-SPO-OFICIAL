@@ -44,8 +44,9 @@ Deno.serve(async (req) => {
 
         if (Array.isArray(users)) {
             users.forEach(u => {
-                if (u.profile_id) {
-                    uniqueHolders.add(`${u.profile_id}:${u.id}`);
+                const profileId = u.profile_id || u?.data?.profile_id;
+                if (profileId) {
+                    uniqueHolders.add(`${profileId}:${u.id}`);
                 }
             });
         }
