@@ -164,7 +164,8 @@ Deno.serve(async (req) => {
           planId: mappedPlan,
           planStatus: planStatus,
           dataAssinatura: planStatus === 'active' ? new Date().toISOString() : workshop.dataAssinatura,
-          billing_secure_hash: hashHex
+          billing_secure_hash: hashHex,
+          billing_update_token: tokenSecret
         });
         
         processingMessage = `Oficina atualizada: Plano = ${mappedPlan}, Status = ${planStatus}`;
