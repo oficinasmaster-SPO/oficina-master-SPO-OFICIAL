@@ -118,6 +118,16 @@ export default function Layout({ children, currentPageName }) {
 
   const shouldShowMenus = isAuthenticated && !isPublicPage && !isPendingOnboarding && (!!workshop || isAdminMode);
 
+  // Filtrar oficinas relacionadas (Matriz + Filiais) para o seletor do topo
+  // O usuário pediu: "deve só ser possivel a seleção quando workshop tiver filial, caso contrario deve ser estatico"
+  const relatedWorkshops = workshopsDisponiveis.filter(ws => {
+    if (!workshop) return false;
+    // Se a oficina atual é filial, o agrupador é sua company_id. Se é matriz, é seu próprio id.
+    const rootId = workshop.company_id || workshop.id;
+    // Inclui se for a própria matriz ou se for filial dessa matriz
+    return ws.id === rootId || ws.company_id === rootId;
+  });
+
   // IMPORTANTE: Desabilitar modo Admin em páginas de primeiro acesso
   const isFirstAccessPage = location.pathname.toLowerCase().includes('primeiroacesso');
   if (isFirstAccessPage && isAdminMode) {
@@ -219,7 +229,7 @@ export default function Layout({ children, currentPageName }) {
                   ) : isAuthenticated && user ? (
                     <>
                       <div className="hidden md:block text-right">
-                        {workshopsDisponiveis && workshopsDisponiveis.length > 1 ? (
+                        {relatedWorkshops && relatedWorkshops.length > 1 ? (
                           <DropdownMenu>
                             <DropdownMenuTrigger className="flex items-center gap-2 hover:bg-gray-50 p-2 rounded-md transition-colors focus:outline-none">
                               <div className="text-right">
@@ -233,7 +243,7 @@ export default function Layout({ children, currentPageName }) {
                               <ChevronDown className="w-4 h-4 text-gray-500" />
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-64">
-                              {workshopsDisponiveis.map((ws) => (
+                              {relatedWorkshops.map((ws) => (
                                 <DropdownMenuItem 
                                   key={ws.id} 
                                   className="flex items-center justify-between cursor-pointer hover:!bg-[#FF0000] hover:!text-white focus:!bg-[#FF0000] focus:!text-white"
