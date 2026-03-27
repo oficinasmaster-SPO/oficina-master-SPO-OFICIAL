@@ -84,7 +84,7 @@ Deno.serve(withAuth(async (req, { base44, user }) => {
             // Se a é matriz (!company_id) e b é filial (company_id), a vem primeiro
             if (!a.company_id && b.company_id) return -1;
             if (a.company_id && !b.company_id) return 1;
-            return a.name.localeCompare(b.name);
+            return (a.name || '').localeCompare(b.name || '');
         });
 
         // Cache-Control para o Frontend (TTL 5s conforme solicitado)
