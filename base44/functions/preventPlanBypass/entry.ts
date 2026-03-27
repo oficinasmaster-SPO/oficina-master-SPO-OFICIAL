@@ -12,6 +12,7 @@ Deno.serve(async (req) => {
     }
 
     const billingFields = ['planId', 'planStatus', 'planoAtual', 'trialEndsAt', 'billingCycleStart', 'billingCycleEnd', 'dataAssinatura', 'dataRenovacao', 'limitesUtilizados'];
+    // billing_update_token e billing_secure_hash NÃO devem estar nessa lista — são campos de controle interno
     
     const changedBillingFields = changed_fields.filter(f => billingFields.includes(f));
 
@@ -46,12 +47,9 @@ Deno.serve(async (req) => {
             
             return Response.json({ success: false, reason: 'reverted unauthorized billing update' });
         } else {
-            // Atualização autorizada. Para evitar loops, só limpa o token se ele já não estiver vazio.
-            if (data.billing_update_token !== "") {
-                const base44 = createClientFromRequest(req);
-                await base44.asServiceRole.entities.Workshop.update(data.id, { billing_update_token: "" });
-                return Response.json({ success: true, reason: 'authorized update, cleared token' });
-            }
+            // Atualização autorizada. NÃO executar update aqui para evitar loop de automação.
+            // O token será sobrescrito pelo próximo evento legítimo (ex: próximo webhook do Kiwify).
+            return Response.json({ success: true, reason: 'authorized update - token will expire naturally' });
         }
     }
 
