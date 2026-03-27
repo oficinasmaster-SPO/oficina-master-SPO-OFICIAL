@@ -156,6 +156,13 @@ export default function Cadastro() {
         cadastro_em_andamento: true
       });
       
+      // Buscar o perfil de Sócio para atribuir automaticamente
+      const allProfiles = await base44.entities.UserProfile.list();
+      const socioProfile = allProfiles.find(p => 
+        p.status === 'ativo' && 
+        (p.name.toLowerCase().includes('sócio') || p.name.toLowerCase().includes('socio'))
+      );
+
       // Also create an Employee record for the owner since it wasn't created on signup
       await base44.entities.Employee.create({
         workshop_id: newWorkshop.id,
@@ -171,6 +178,7 @@ export default function Cadastro() {
         is_partner: true,
         status: 'ativo',
         user_status: 'ativo',
+        profile_id: socioProfile ? socioProfile.id : undefined,
         hire_date: new Date().toISOString().split('T')[0]
       });
 
