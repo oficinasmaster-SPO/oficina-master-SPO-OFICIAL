@@ -152,59 +152,59 @@ export default function DetalhesColaborador() {
 
         <Tabs defaultValue="dados" className="space-y-6">
           <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-1 bg-white shadow-md h-auto p-1">
-            <TabsTrigger value="dados" className="hover:bg-[#FF0000] hover:text-white transition-colors">
+            <TabsTrigger value="dados" className="hover:bg-[#FF0000] hover:text-white data-[state=active]:bg-[#FF0000] data-[state=active]:text-white transition-colors">
               <User className="w-4 h-4 mr-2" />
               Dados
             </TabsTrigger>
-            <TabsTrigger value="permissoes" className="hover:bg-[#FF0000] hover:text-white transition-colors data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700">
+            <TabsTrigger value="permissoes" className="hover:bg-[#FF0000] hover:text-white data-[state=active]:bg-[#FF0000] data-[state=active]:text-white transition-colors">
               <Shield className="w-4 h-4 mr-2" />
               Permissões
             </TabsTrigger>
-            <TabsTrigger value="remuneracao" className="hover:bg-[#FF0000] hover:text-white transition-colors">
+            <TabsTrigger value="remuneracao" className="hover:bg-[#FF0000] hover:text-white data-[state=active]:bg-[#FF0000] data-[state=active]:text-white transition-colors">
               <TrendingUp className="w-4 h-4 mr-2" />
               Produção
             </TabsTrigger>
-            <TabsTrigger value="metas" className="hover:bg-[#FF0000] hover:text-white transition-colors data-[state=active]:bg-indigo-100 data-[state=active]:text-indigo-700">
+            <TabsTrigger value="metas" className="hover:bg-[#FF0000] hover:text-white data-[state=active]:bg-[#FF0000] data-[state=active]:text-white transition-colors">
               <Target className="w-4 h-4 mr-2" />
               Metas
             </TabsTrigger>
-            <TabsTrigger value="engajamento" className="hover:bg-[#FF0000] hover:text-white transition-colors">
+            <TabsTrigger value="engajamento" className="hover:bg-[#FF0000] hover:text-white data-[state=active]:bg-[#FF0000] data-[state=active]:text-white transition-colors">
               <GraduationCap className="w-4 h-4 mr-2" />
               Cursos
             </TabsTrigger>
-            <TabsTrigger value="contrato" className="hover:bg-[#FF0000] hover:text-white transition-colors">
+            <TabsTrigger value="contrato" className="hover:bg-[#FF0000] hover:text-white data-[state=active]:bg-[#FF0000] data-[state=active]:text-white transition-colors">
               <FileText className="w-4 h-4 mr-2" />
               Contrato
             </TabsTrigger>
-            <TabsTrigger value="coex-cdc" className="hover:bg-[#FF0000] hover:text-white transition-colors">
+            <TabsTrigger value="coex-cdc" className="hover:bg-[#FF0000] hover:text-white data-[state=active]:bg-[#FF0000] data-[state=active]:text-white transition-colors">
               <Heart className="w-4 h-4 mr-2" />
               CDC/COEX
             </TabsTrigger>
-            <TabsTrigger value="desempenho" className="hover:bg-[#FF0000] hover:text-white transition-colors">
+            <TabsTrigger value="desempenho" className="hover:bg-[#FF0000] hover:text-white data-[state=active]:bg-[#FF0000] data-[state=active]:text-white transition-colors">
               <Activity className="w-4 h-4 mr-2" />
               Desempenho
             </TabsTrigger>
-            <TabsTrigger value="evolucao" className="hover:bg-[#FF0000] hover:text-white transition-colors">
+            <TabsTrigger value="evolucao" className="hover:bg-[#FF0000] hover:text-white data-[state=active]:bg-[#FF0000] data-[state=active]:text-white transition-colors">
               <BarChart3 className="w-4 h-4 mr-2" />
               Evolução
             </TabsTrigger>
-            <TabsTrigger value="feedbacks" className="hover:bg-[#FF0000] hover:text-white transition-colors">
+            <TabsTrigger value="feedbacks" className="hover:bg-[#FF0000] hover:text-white data-[state=active]:bg-[#FF0000] data-[state=active]:text-white transition-colors">
               <MessageSquare className="w-4 h-4 mr-2" />
               Feedbacks
             </TabsTrigger>
-            <TabsTrigger value="advertencias" className="hover:bg-[#FF0000] hover:text-white transition-colors">
+            <TabsTrigger value="advertencias" className="hover:bg-[#FF0000] hover:text-white data-[state=active]:bg-[#FF0000] data-[state=active]:text-white transition-colors">
               <AlertTriangle className="w-4 h-4 mr-2" />
               Alertas
             </TabsTrigger>
-            <TabsTrigger value="diagnosticos" className="hover:bg-[#FF0000] hover:text-white transition-colors">
+            <TabsTrigger value="diagnosticos" className="hover:bg-[#FF0000] hover:text-white data-[state=active]:bg-[#FF0000] data-[state=active]:text-white transition-colors">
               <Award className="w-4 h-4 mr-2" />
               Testes
             </TabsTrigger>
-            <TabsTrigger value="documentos" className="hover:bg-[#FF0000] hover:text-white transition-colors">
+            <TabsTrigger value="documentos" className="hover:bg-[#FF0000] hover:text-white data-[state=active]:bg-[#FF0000] data-[state=active]:text-white transition-colors">
               <FileText className="w-4 h-4 mr-2" />
               Docs
             </TabsTrigger>
-            <TabsTrigger value="pdi" className="hover:bg-[#FF0000] hover:text-white transition-colors data-[state=active]:bg-purple-100 data-[state=active]:text-purple-700">
+            <TabsTrigger value="pdi" className="hover:bg-[#FF0000] hover:text-white data-[state=active]:bg-[#FF0000] data-[state=active]:text-white transition-colors">
               <Rocket className="w-4 h-4 mr-2" />
               PDI (IA)
             </TabsTrigger>
