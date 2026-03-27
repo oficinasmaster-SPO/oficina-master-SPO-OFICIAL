@@ -266,9 +266,11 @@ const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack, on
 
         if (existingEmployee) {
           await base44.entities.Employee.update(existingEmployee.id, employeeData);
+          toast.success("Perfil atualizado!");
         } else {
           const created = await base44.entities.Employee.create(employeeData);
           setExistingEmployee(created);
+          toast.success("Perfil de sócio criado!");
         }
 
         await base44.auth.updateMe({
@@ -276,6 +278,7 @@ const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack, on
           full_name: formData.full_name
         });
 
+        setEditing(false);
         return true;
       } catch (error) {
         console.error("Erro ao salvar perfil:", error);

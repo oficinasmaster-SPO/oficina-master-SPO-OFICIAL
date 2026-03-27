@@ -440,6 +440,9 @@ const MetasObjetivosCompleto = forwardRef(({ workshop, onUpdate, onEditingChange
         };
         
         await onUpdate(dataToSave);
+        toast.success("Metas salvas com sucesso!");
+        setEditing(false);
+        setEditingGrowth(false);
         return true;
       } catch (error) {
         console.error("Erro ao salvar:", error);

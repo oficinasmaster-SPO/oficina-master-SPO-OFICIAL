@@ -188,6 +188,8 @@ const EquipamentosCompletos = forwardRef(({ workshop, onUpdate }, ref) => {
     saveCurrentData: async () => {
       try {
         await onUpdate({ equipment_list: equipmentList });
+        toast.success("Equipamentos salvos!");
+        setEditing(false);
         return true;
       } catch (error) {
         console.error("Erro ao salvar:", error);

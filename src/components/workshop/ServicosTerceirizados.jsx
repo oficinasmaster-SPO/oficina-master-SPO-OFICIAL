@@ -66,6 +66,8 @@ const ServicosTerceirizados = forwardRef(({ workshop, onUpdate, onEditingChange 
     saveCurrentData: async () => {
       try {
         await onUpdate(formData);
+        toast.success("Serviços terceirizados salvos!");
+        setEditing(false);
         return true;
       } catch (error) {
         console.error("Erro ao salvar:", error);

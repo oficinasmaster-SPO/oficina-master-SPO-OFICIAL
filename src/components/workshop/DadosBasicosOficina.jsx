@@ -145,7 +145,16 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
         toast.error("E-mail é obrigatório.");
         return false;
       }
-      return true;
+      try {
+        await onUpdate(formData);
+        toast.success("Dados básicos salvos!");
+        setEditing(false);
+        return true;
+      } catch (error) {
+        console.error("Erro ao salvar:", error);
+        toast.error("Erro ao salvar dados");
+        return false;
+      }
     }
   }));
 
