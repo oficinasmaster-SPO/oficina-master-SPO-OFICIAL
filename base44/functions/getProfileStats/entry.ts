@@ -9,15 +9,23 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        // Buscar todos os registros com paginação para garantir contagem correta
-        const PAGE_SIZE = 500;
+        function ensureArray(data) {
+            if (!data) return [];
+            if (Array.isArray(data)) return data;
+            if (typeof data === 'string') {
+                try { return JSON.parse(data); } catch { return []; }
+            }
+            return [];
+        }
 
         async function fetchAll(entityFn) {
             const results = [];
             let skip = 0;
+            const PAGE_SIZE = 50; // Small page size to avoid string truncation
             while (true) {
-                const page = await entityFn(skip, PAGE_SIZE);
-                if (!page || page.length === 0) break;
+                const pageRaw = await entityFn(skip, PAGE_SIZE);
+                const page = ensureArray(pageRaw);
+                if (page.length === 0) break;
                 results.push(...page);
                 if (page.length < PAGE_SIZE) break;
                 skip += PAGE_SIZE;
@@ -25,31 +33,30 @@ Deno.serve(async (req) => {
             return results;
         }
 
-        const [employees, users] = await Promise.all([
-            fetchAll((skip, limit) => base44.asServiceRole.entities.Employee.list(null, limit, skip)),
-            fetchAll((skip, limit) => base44.asServiceRole.entities.User.list(null, limit, skip)),
+        const [employeesRaw, usersRaw] = await Promise.all([
+            fetchAll((skip, limit) => base44.asServiceRole.entities.Employee.list('-created_date', limit, skip)),
+            fetchAll((skip, limit) => base44.asServiceRole.entities.User.list('-created_date', limit, skip))
         ]);
+
+        const employees = employeesRaw.filter(emp => emp.email && emp.full_name);
+        const users = usersRaw;
 
         const counts = {};
         const uniqueHolders = new Set();
 
-        if (Array.isArray(employees)) {
-            employees.forEach(emp => {
-                if (emp.profile_id) {
-                    const uniqueId = emp.user_id || `emp_${emp.id}`;
-                    uniqueHolders.add(`${emp.profile_id}:${uniqueId}`);
-                }
-            });
-        }
+        employees.forEach(emp => {
+            if (emp.profile_id) {
+                const uniqueId = emp.user_id || `emp_${emp.id}`;
+                uniqueHolders.add(`${emp.profile_id}:${uniqueId}`);
+            }
+        });
 
-        if (Array.isArray(users)) {
-            users.forEach(u => {
-                const profileId = u.profile_id || u?.data?.profile_id;
-                if (profileId) {
-                    uniqueHolders.add(`${profileId}:${u.id}`);
-                }
-            });
-        }
+        users.forEach(u => {
+            const profileId = u.profile_id || u?.data?.profile_id;
+            if (profileId) {
+                uniqueHolders.add(`${profileId}:${u.id}`);
+            }
+        });
 
         uniqueHolders.forEach(item => {
             const [profileId] = item.split(':');
@@ -59,8 +66,8 @@ Deno.serve(async (req) => {
         return Response.json({ 
             counts,
             meta: {
-                total_employees: employees?.length || 0,
-                total_users: users?.length || 0
+                total_employees: employees.length,
+                total_users: users.length
             }
         });
 
