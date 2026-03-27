@@ -96,8 +96,8 @@ const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack, on
         p.name.toLowerCase().includes('socio')
       );
 
-      // Auto-selecionar o perfil "Sócio" no primeiro acesso ou se o employee foi criado sem perfil
-      if (!currentProfileId && socioProfile) {
+      // Sempre fixar o perfil de Sócio quando disponível (sobrescreve qualquer valor anterior)
+      if (socioProfile) {
         setFormData(prev => ({ ...prev, profile_id: socioProfile.id }));
       }
 
