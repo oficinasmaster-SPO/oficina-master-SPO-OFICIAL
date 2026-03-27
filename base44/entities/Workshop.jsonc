@@ -825,6 +825,14 @@
       "default": "trial",
       "description": "Status da assinatura do plano"
     },
+    "plan_source": {
+      "type": "string",
+      "enum": [
+        "kiwify",
+        "admin"
+      ],
+      "default": "kiwify"
+    },
     "billing_secure_hash": {
       "type": "string",
       "description": "HMAC usado para validar a integridade do plano"

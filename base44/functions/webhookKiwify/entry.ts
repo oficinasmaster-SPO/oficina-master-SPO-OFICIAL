@@ -109,6 +109,22 @@ Deno.serve(async (req) => {
 
       if (workshop) {
         workshopId = workshop.id;
+
+        // Se plan_source = 'admin', NÃO sobrescrever
+        if (workshop.plan_source === 'admin') {
+          await base44.asServiceRole.entities.KiwifyWebhookLog.create({
+            event_type: eventType || 'unknown',
+            payload: payload,
+            customer_email: email,
+            product_id: produto || '',
+            order_id: orderId || '',
+            workshop_id: workshopId || '',
+            processing_status: 'ignored',
+            processing_message: 'Webhook ignorado: plano gerenciado manualmente pelo admin',
+            received_at: new Date().toISOString()
+          });
+          return Response.json({ success: true, message: 'Plan is managed by admin, webhook ignored' }, { status: 200 });
+        }
         
         // 5. Mapear produto → plano
         // Se o produto não estiver no mapa, tenta pegar da config dinâmica do banco, se não fallback para 'pro'

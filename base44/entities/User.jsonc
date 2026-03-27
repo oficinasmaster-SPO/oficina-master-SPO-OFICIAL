@@ -1,0 +1,86 @@
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "role": {
+      "type": "string",
+      "enum": [
+        "user",
+        "admin",
+        "super_admin"
+      ],
+      "default": "user"
+    },
+    "consulting_firm_id": {
+      "type": "string",
+      "description": "ID do escrit\u00f3rio de consultoria ao qual este usu\u00e1rio pertence."
+    },
+    "company_id": {
+      "type": "string",
+      "description": "ID da empresa (matriz) a qual este usu\u00e1rio pertence."
+    },
+    "job_role": {
+      "type": "string",
+      "enum": [
+        "socio",
+        "diretor",
+        "supervisor_loja",
+        "gerente",
+        "lider_tecnico",
+        "financeiro",
+        "rh",
+        "tecnico",
+        "funilaria_pintura",
+        "comercial",
+        "consultor_vendas",
+        "marketing",
+        "estoque",
+        "administrativo",
+        "motoboy",
+        "lavador",
+        "acelerador",
+        "consultor",
+        "mentor",
+        "outros"
+      ],
+      "default": "outros",
+      "description": "Fun\u00e7\u00e3o espec\u00edfica no sistema"
+    },
+    "profile_id": {
+      "type": "string",
+      "description": "ID do perfil de acesso (Rela\u00e7\u00e3o 1-1: User \u2192 UserProfile) - Define permiss\u00f5es"
+    },
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina principal do usu\u00e1rio, se aplic\u00e1vel."
+    }
+  },
+  "rls": {
+    "read": true,
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        },
+        {
+          "id": "{{user.id}}"
+        },
+        {
+          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        }
+      ]
+    }
+  },
+  "required": [
+    "consulting_firm_id",
+    "profile_id",
+    "workshop_id"
+  ]
+}

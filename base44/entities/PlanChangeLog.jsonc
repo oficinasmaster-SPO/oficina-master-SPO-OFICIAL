@@ -1,0 +1,40 @@
+{
+  "name": "PlanChangeLog",
+  "type": "object",
+  "properties": {
+    "workshop_id": {
+      "type": "string"
+    },
+    "user_id": {
+      "type": "string"
+    },
+    "admin_id": {
+      "type": "string",
+      "description": "ID do super_admin que fez a altera\u00e7\u00e3o"
+    },
+    "admin_email": {
+      "type": "string"
+    },
+    "old_plan": {
+      "type": "string"
+    },
+    "new_plan": {
+      "type": "string"
+    },
+    "old_status": {
+      "type": "string"
+    },
+    "new_status": {
+      "type": "string"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "workshop_id",
+    "admin_id",
+    "new_plan"
+  ]
+}

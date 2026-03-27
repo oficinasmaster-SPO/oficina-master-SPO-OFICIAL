@@ -5,8 +5,8 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
 
-    if (!user || user.role !== 'admin') {
-      return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
+    if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
+      return Response.json({ error: 'Forbidden: Admin or Super Admin access required' }, { status: 403 });
     }
 
     const payload = await req.json();
@@ -44,11 +44,24 @@ Deno.serve(async (req) => {
       ...data,
       planId,
       planStatus,
+      plan_source: user.role === 'super_admin' ? 'admin' : workshop.plan_source,
       billing_secure_hash: hashHex,
       billing_update_token: tokenSecret // Requisito para passar pela automação preventPlanBypass
     };
 
     const result = await base44.asServiceRole.entities.Workshop.update(workshop_id, updatePayload);
+
+    // Logs obrigatórios
+    await base44.asServiceRole.entities.PlanChangeLog.create({
+      workshop_id: workshop_id,
+      admin_id: user.id,
+      admin_email: user.email,
+      old_plan: workshop.planId,
+      new_plan: planId,
+      old_status: workshop.planStatus,
+      new_status: planStatus,
+      timestamp: new Date().toISOString()
+    });
 
     return Response.json({ success: true, workshop: result });
   } catch (error) {
