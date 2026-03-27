@@ -120,7 +120,9 @@ export default function GestaoUsuariosEmpresas() {
 
   const updateWorkshopMutation = useMutation({
     mutationFn: async ({ id, data }) => {
-      return await base44.entities.Workshop.update(id, data);
+      const response = await base44.functions.invoke("adminUpdateWorkshopPlan", { workshop_id: id, data });
+      if (response.data.error) throw new Error(response.data.error);
+      return response.data.workshop;
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['workshops']);
@@ -196,10 +198,15 @@ export default function GestaoUsuariosEmpresas() {
 
       // Se o plano foi alterado, atualizar a Workshop
       if (workshopId && newPlan && newPlan !== selectedUser.workshopPlan) {
-        await base44.entities.Workshop.update(workshopId, {
-          planoAtual: newPlan,
-          dataAssinatura: new Date().toISOString()
+        const response = await base44.functions.invoke("adminUpdateWorkshopPlan", {
+          workshop_id: workshopId,
+          data: {
+            planoAtual: newPlan,
+            dataAssinatura: new Date().toISOString()
+          }
         });
+        if (response.data.error) throw new Error(response.data.error);
+        
         toast.success("Plano da oficina atualizado!");
         queryClient.invalidateQueries(['workshops']);
       }
