@@ -389,7 +389,15 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
               <Label>CNPJ *</Label>
               <Input
                 value={formData.cnpj || ''}
-                onChange={(e) => setFormData({...formData, cnpj: e.target.value})}
+                onChange={(e) => {
+                  let v = e.target.value.replace(/\D/g, "");
+                  if (v.length > 14) v = v.slice(0, 14);
+                  v = v.replace(/^(\d{2})(\d)/, "$1.$2");
+                  v = v.replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3");
+                  v = v.replace(/\.(\d{3})(\d)/, ".$1/$2");
+                  v = v.replace(/(\d{4})(\d)/, "$1-$2");
+                  setFormData({...formData, cnpj: v});
+                }}
                 disabled={!editing}
                 placeholder="00.000.000/0000-00"
               />
@@ -398,7 +406,13 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
               <Label>Telefone Principal *</Label>
               <Input
                 value={formData.telefone || ''}
-                onChange={(e) => setFormData({...formData, telefone: e.target.value})}
+                onChange={(e) => {
+                  let v = e.target.value.replace(/\D/g, "");
+                  if (v.length > 11) v = v.slice(0, 11);
+                  v = v.replace(/^(\d{2})(\d)/g, "($1) $2");
+                  v = v.replace(/(\d)(\d{4})$/, "$1-$2");
+                  setFormData({...formData, telefone: v});
+                }}
                 disabled={!editing}
                 placeholder="(00) 00000-0000"
               />
@@ -418,7 +432,12 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
               <div className="relative">
                 <Input
                   value={formData.cep}
-                  onChange={(e) => handleCEPChange(e.target.value)}
+                  onChange={(e) => {
+                    let v = e.target.value.replace(/\D/g, "");
+                    if (v.length > 8) v = v.slice(0, 8);
+                    v = v.replace(/^(\d{5})(\d)/, "$1-$2");
+                    handleCEPChange(v);
+                  }}
                   disabled={!editing}
                   placeholder="00000-000"
                   maxLength={9}

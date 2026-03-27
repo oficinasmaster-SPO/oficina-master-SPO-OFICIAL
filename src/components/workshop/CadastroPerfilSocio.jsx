@@ -397,7 +397,14 @@ const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack, on
               <Input
                 id="cpf"
                 value={formData.cpf}
-                onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
+                onChange={(e) => {
+                  let v = e.target.value.replace(/\D/g, "");
+                  if (v.length > 11) v = v.slice(0, 11);
+                  v = v.replace(/(\d{3})(\d)/, "$1.$2");
+                  v = v.replace(/(\d{3})(\d)/, "$1.$2");
+                  v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+                  setFormData({ ...formData, cpf: v });
+                }}
                 placeholder="000.000.000-00"
                 disabled={!editing}
                 className="mt-1"
@@ -420,7 +427,13 @@ const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack, on
               <Input
                 id="telefone"
                 value={formData.telefone}
-                onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
+                onChange={(e) => {
+                  let v = e.target.value.replace(/\D/g, "");
+                  if (v.length > 11) v = v.slice(0, 11);
+                  v = v.replace(/^(\d{2})(\d)/g, "($1) $2");
+                  v = v.replace(/(\d)(\d{4})$/, "$1-$2");
+                  setFormData({ ...formData, telefone: v });
+                }}
                 placeholder="(00) 00000-0000"
                 disabled={!editing}
                 className="mt-1"
