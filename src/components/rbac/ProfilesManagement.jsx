@@ -186,14 +186,28 @@ export default function ProfilesManagement() {
         </Card>
       </div>
 
-      <div className="flex gap-3">
-        <Button onClick={() => setShowCreator(true)} className="gap-2">
-          <Plus className="w-4 h-4" />
-          Novo Perfil
-        </Button>
-        <Button onClick={() => setViewMode("audit")} variant="outline" className="gap-2">
-          <AlertCircle className="w-4 h-4" />
-          Auditoria
+      <div className="flex justify-between items-center">
+        <div className="flex gap-3">
+          <Button onClick={() => setShowCreator(true)} className="gap-2">
+            <Plus className="w-4 h-4" />
+            Novo Perfil
+          </Button>
+          <Button onClick={() => setViewMode("audit")} variant="outline" className="gap-2">
+            <AlertCircle className="w-4 h-4" />
+            Auditoria
+          </Button>
+        </div>
+        <Button 
+          onClick={async () => {
+            await queryClient.invalidateQueries({ queryKey: ["profile-stats"] });
+            await queryClient.invalidateQueries({ queryKey: ["user-profiles"] });
+          }} 
+          variant="ghost" 
+          size="sm" 
+          className="gap-2 text-gray-500"
+        >
+          <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+          Atualizar Dados
         </Button>
       </div>
 
