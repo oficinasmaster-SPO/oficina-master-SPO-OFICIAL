@@ -9,43 +9,47 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        // Buscar dados com limite aumentado para garantir contagem correta
-        // Usando filter vazio para poder passar o limite
-        const limit = 1000;
-        
-        // Paralelizar as buscas
+        // Buscar todos os registros com paginação para garantir contagem correta
+        const PAGE_SIZE = 500;
+
+        async function fetchAll(entityFn) {
+            const results = [];
+            let skip = 0;
+            while (true) {
+                const page = await entityFn(skip, PAGE_SIZE);
+                if (!page || page.length === 0) break;
+                results.push(...page);
+                if (page.length < PAGE_SIZE) break;
+                skip += PAGE_SIZE;
+            }
+            return results;
+        }
+
         const [employees, users] = await Promise.all([
-            base44.entities.Employee.filter({}, null, limit),
-            base44.entities.User.filter({}, null, limit)
+            fetchAll((skip, limit) => base44.asServiceRole.entities.Employee.list(null, limit, skip)),
+            fetchAll((skip, limit) => base44.asServiceRole.entities.User.list(null, limit, skip)),
         ]);
 
         const counts = {};
-        const uniqueHolders = new Set(); // Formato: "profileId:uniqueUserIdentifier"
+        const uniqueHolders = new Set();
 
-        // Processar Employees
-        if (employees && Array.isArray(employees)) {
+        if (Array.isArray(employees)) {
             employees.forEach(emp => {
                 if (emp.profile_id) {
-                    // Se o colaborador tem um usuário vinculado, usamos o ID do usuário como identificador único
-                    // Caso contrário, usamos o ID do colaborador com prefixo
                     const uniqueId = emp.user_id || `emp_${emp.id}`;
                     uniqueHolders.add(`${emp.profile_id}:${uniqueId}`);
                 }
             });
         }
 
-        // Processar Users
-        if (users && Array.isArray(users)) {
+        if (Array.isArray(users)) {
             users.forEach(u => {
                 if (u.profile_id) {
-                    // Se este usuário já foi contado através de um colaborador (porque o colaborador tem user_id == u.id),
-                    // o Set automaticamente lidará com a duplicidade para o mesmo profile_id.
                     uniqueHolders.add(`${u.profile_id}:${u.id}`);
                 }
             });
         }
 
-        // Agregar contagens
         uniqueHolders.forEach(item => {
             const [profileId] = item.split(':');
             counts[profileId] = (counts[profileId] || 0) + 1;
