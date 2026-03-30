@@ -134,9 +134,9 @@ export default function BemVindoPlanos() {
         className="fixed left-1/2 -translate-x-1/2 w-[150vw] md:w-[130vw] aspect-square rounded-full pointer-events-none mix-blend-screen"
         style={{ 
           top: planetY,
-          background: 'radial-gradient(ellipse at 50% 0%, rgba(245, 158, 11, 0.3) 0%, rgba(180, 83, 9, 0.15) 30%, transparent 70%)',
-          boxShadow: '0 -20px 80px -10px rgba(245, 158, 11, 0.5), inset 0 30px 80px -20px rgba(245, 158, 11, 0.7)',
-          borderTop: '3px solid rgba(253, 230, 138, 0.9)'
+          background: 'radial-gradient(ellipse at 50% 0%, rgba(245, 158, 11, 0.4) 0%, rgba(180, 83, 9, 0.2) 30%, transparent 70%)',
+          boxShadow: '0 -30px 100px -10px rgba(245, 158, 11, 0.6), inset 0 40px 100px -20px rgba(245, 158, 11, 0.8)',
+          borderTop: '2px solid rgba(253, 230, 138, 0.3)'
         }}
       />
 
