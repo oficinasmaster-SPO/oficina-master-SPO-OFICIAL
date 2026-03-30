@@ -115,12 +115,13 @@ export default function BemVindoPlanos() {
     },
     {
       id: "pro",
-      plan_name: "Pro",
+      plan_name: "Millions",
       plan_description: "Controle total para multi-unidades e alta performance.",
       price_monthly: 497,
       price_annual: 4770,
       features_highlights: ["Tudo do Growth", "Multi Unidades", "Integrações via API", "Atendimento exclusivo com especialista", "Treinamentos e Academias ilimitados"],
-      is_popular: false
+      is_popular: false,
+      is_millions: true
     }
   ];
 
@@ -193,6 +194,7 @@ export default function BemVindoPlanos() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-7xl w-full px-4 md:px-0">
           {displayPlans.map((plan, index) => {
             const isPopular = plan.is_popular;
+            const isMillions = plan.is_millions || plan.plan_name?.toLowerCase() === 'millions';
             return (
             <motion.div
               key={plan.id}
@@ -201,16 +203,60 @@ export default function BemVindoPlanos() {
               transition={{ duration: 0.6, delay: index * 0.15 + 0.3 }}
               className="flex h-full w-full"
             >
-              <div className={`group relative w-full flex flex-col transition-all duration-500 rounded-3xl bg-white/[0.02] backdrop-blur-xl hover:-translate-y-2
-                ${isPopular 
-                  ? 'border border-amber-500/40 shadow-[0_0_40px_-10px_rgba(245,158,11,0.3)] z-10 md:scale-105 hover:shadow-[0_0_60px_-10px_rgba(245,158,11,0.4)]' 
-                  : 'border border-white/10 shadow-2xl hover:border-white/20 hover:shadow-[0_0_30px_-10px_rgba(255,255,255,0.1)]'
+              {/* Inject keyframes for Millions card */}
+              {isMillions && (
+                <style>{`
+                  @keyframes gold-shimmer {
+                    0% { background-position: -200% center; }
+                    100% { background-position: 200% center; }
+                  }
+                  @keyframes gold-shimmer-btn {
+                    0% { background-position: -300% center; }
+                    100% { background-position: 300% center; }
+                  }
+                  .millions-title {
+                    background: linear-gradient(90deg, #b8860b 0%, #ffd700 30%, #fffacd 50%, #ffd700 70%, #b8860b 100%);
+                    background-size: 200% auto;
+                    -webkit-background-clip: text;
+                    background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                    animation: gold-shimmer 3s linear infinite;
+                  }
+                  .millions-btn-text {
+                    background: linear-gradient(90deg, #7a5800 0%, #ffd700 25%, #fffacd 50%, #ffd700 75%, #7a5800 100%);
+                    background-size: 300% auto;
+                    -webkit-background-clip: text;
+                    background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                    animation: gold-shimmer-btn 2s linear infinite;
+                  }
+                  .millions-btn:hover .millions-btn-text {
+                    animation: gold-shimmer-btn 1s linear infinite;
+                  }
+                `}</style>
+              )}
+
+              <div className={`group relative w-full flex flex-col transition-all duration-500 rounded-3xl backdrop-blur-xl hover:-translate-y-2
+                ${isMillions
+                  ? 'bg-gradient-to-br from-[#1a1200]/80 via-[#2a1f00]/60 to-[#1a1200]/80 border border-yellow-600/40 shadow-[0_0_50px_-10px_rgba(212,175,55,0.35)] hover:shadow-[0_0_80px_-10px_rgba(212,175,55,0.55)] hover:border-yellow-500/60'
+                  : isPopular 
+                    ? 'bg-white/[0.02] border border-amber-500/40 shadow-[0_0_40px_-10px_rgba(245,158,11,0.3)] z-10 md:scale-105 hover:shadow-[0_0_60px_-10px_rgba(245,158,11,0.4)]' 
+                    : 'bg-white/[0.02] border border-white/10 shadow-2xl hover:border-white/20 hover:shadow-[0_0_30px_-10px_rgba(255,255,255,0.1)]'
                 }`}
               >
-                {/* Gradient Stroke Overlay (subtle) */}
-                <div className={`absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none border border-transparent ${isPopular ? 'bg-[linear-gradient(to_bottom,transparent,rgba(245,158,11,0.5),transparent)]' : 'bg-[linear-gradient(to_bottom,transparent,rgba(255,255,255,0.2),transparent)]'} [mask-image:linear-gradient(white,white)] [mask-composite:exclude]`}></div>
+                {/* Millions: subtle gold inner glow overlay */}
+                {isMillions && (
+                  <div className="absolute inset-0 rounded-3xl pointer-events-none"
+                    style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(212,175,55,0.08) 0%, transparent 70%)' }}
+                  />
+                )}
 
-                {isPopular && (
+                {/* Gradient Stroke Overlay (subtle) */}
+                {!isMillions && (
+                  <div className={`absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none border border-transparent ${isPopular ? 'bg-[linear-gradient(to_bottom,transparent,rgba(245,158,11,0.5),transparent)]' : 'bg-[linear-gradient(to_bottom,transparent,rgba(255,255,255,0.2),transparent)]'} [mask-image:linear-gradient(white,white)] [mask-composite:exclude]`}></div>
+                )}
+
+                {isPopular && !isMillions && (
                   <div className="absolute -top-4 left-0 right-0 flex justify-center">
                     <span className="flex items-center gap-1.5 bg-gradient-to-r from-amber-400 to-amber-600 text-black text-xs font-black py-1.5 px-5 rounded-full shadow-[0_0_20px_rgba(245,158,11,0.5)] tracking-widest uppercase">
                       <Sparkles className="w-3.5 h-3.5" />
@@ -218,21 +264,35 @@ export default function BemVindoPlanos() {
                     </span>
                   </div>
                 )}
+
+                {isMillions && (
+                  <div className="absolute -top-4 left-0 right-0 flex justify-center">
+                    <span className="flex items-center gap-1.5 text-xs font-black py-1.5 px-5 rounded-full tracking-widest uppercase"
+                      style={{ background: 'linear-gradient(90deg, #b8860b, #ffd700, #fffacd, #ffd700, #b8860b)', backgroundSize: '200% auto', animation: 'gold-shimmer 3s linear infinite', color: '#1a0f00', boxShadow: '0 0 20px rgba(212,175,55,0.6)' }}>
+                      <Sparkles className="w-3.5 h-3.5" />
+                      Plano Elite
+                    </span>
+                  </div>
+                )}
                 
                 <div className="p-8 md:p-10 flex flex-col h-full relative z-10">
                   <div className="mb-8">
-                    <h3 className={`text-2xl font-bold mb-3 ${isPopular ? 'text-amber-400' : 'text-white'}`}>{plan.plan_name}</h3>
+                    {isMillions ? (
+                      <h3 className="text-2xl font-bold mb-3 millions-title">{plan.plan_name}</h3>
+                    ) : (
+                      <h3 className={`text-2xl font-bold mb-3 ${isPopular ? 'text-amber-400' : 'text-white'}`}>{plan.plan_name}</h3>
+                    )}
                     <p className="text-gray-400 text-sm min-h-[40px] leading-relaxed font-light">{plan.plan_description}</p>
                   </div>
 
-                  <div className="mb-8 pb-8 border-b border-white/10">
+                  <div className={`mb-8 pb-8 border-b ${isMillions ? 'border-yellow-600/20' : 'border-white/10'}`}>
                     <div className="flex items-baseline gap-1">
-                      <span className="text-2xl text-gray-500 font-semibold">R$</span>
-                      <span className="text-5xl md:text-6xl font-extrabold text-white tracking-tight">
+                      <span className={`text-2xl font-semibold ${isMillions ? 'text-yellow-600/70' : 'text-gray-500'}`}>R$</span>
+                      <span className={`text-5xl md:text-6xl font-extrabold tracking-tight ${isMillions ? 'text-yellow-200/90' : 'text-white'} ${isMillions ? 'millions-title' : ''}`}>
                          {isAnnual ? (plan.price_annual || 0) : (plan.price_monthly || 0)}
                       </span>
                     </div>
-                    <span className="text-gray-500 text-sm font-medium mt-2 inline-block">
+                    <span className={`text-sm font-medium mt-2 inline-block ${isMillions ? 'text-yellow-600/70' : 'text-gray-500'}`}>
                       / {isAnnual ? 'ano' : 'mês'} faturado {isAnnual ? 'anualmente' : 'mensalmente'}
                     </span>
                   </div>
@@ -241,10 +301,10 @@ export default function BemVindoPlanos() {
                     <ul className="space-y-4 mb-8">
                       {plan.features_highlights?.slice(0, 5).map((highlight, idx) => (
                         <li key={idx} className="flex items-start gap-4">
-                          <div className={`mt-1 shrink-0 p-1 rounded-full ${isPopular ? 'bg-amber-500/20' : 'bg-white/10'}`}>
-                            <Check className={`w-3.5 h-3.5 ${isPopular ? 'text-amber-400' : 'text-gray-300'}`} strokeWidth={3} />
+                          <div className={`mt-1 shrink-0 p-1 rounded-full ${isMillions ? 'bg-yellow-500/20' : isPopular ? 'bg-amber-500/20' : 'bg-white/10'}`}>
+                            <Check className={`w-3.5 h-3.5 ${isMillions ? 'text-yellow-400' : isPopular ? 'text-amber-400' : 'text-gray-300'}`} strokeWidth={3} />
                           </div>
-                          <span className="text-gray-300 text-sm leading-relaxed">{highlight}</span>
+                          <span className={`text-sm leading-relaxed ${isMillions ? 'text-yellow-100/80' : 'text-gray-300'}`}>{highlight}</span>
                         </li>
                       ))}
                     </ul>
@@ -252,7 +312,7 @@ export default function BemVindoPlanos() {
                     {plan.features_highlights?.length > 5 ? (
                       <Dialog>
                         <DialogTrigger asChild>
-                          <button className={`text-sm font-semibold mb-8 flex items-center transition-colors text-left w-full ${isPopular ? 'text-amber-400 hover:text-amber-300' : 'text-gray-400 hover:text-white'}`}>
+                          <button className={`text-sm font-semibold mb-8 flex items-center transition-colors text-left w-full ${isMillions ? 'text-yellow-500 hover:text-yellow-300' : isPopular ? 'text-amber-400 hover:text-amber-300' : 'text-gray-400 hover:text-white'}`}>
                             Ver todos os {plan.features_highlights.length} recursos <ArrowRight className="w-4 h-4 ml-2" />
                           </button>
                         </DialogTrigger>
@@ -279,19 +339,43 @@ export default function BemVindoPlanos() {
                     )}
                   </div>
 
-                  <Button 
-                    onClick={() => handleSelectPlan(plan)}
-                    className={`w-full py-7 text-base font-bold transition-all duration-300 rounded-full border-none group overflow-hidden relative
-                      ${isPopular 
-                        ? 'bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-black shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:shadow-[0_0_30px_rgba(245,158,11,0.5)]' 
-                        : 'bg-white hover:bg-gray-100 text-black shadow-lg hover:shadow-xl'
-                      }`}
-                  >
-                    <span className="relative z-10 flex items-center justify-center gap-2">
-                      Começar agora
-                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                    </span>
-                  </Button>
+                  {isMillions ? (
+                    <button
+                      onClick={() => handleSelectPlan(plan)}
+                      className="millions-btn w-full py-4 text-base font-black rounded-full relative overflow-hidden transition-all duration-500 group"
+                      style={{ background: 'linear-gradient(to right, #2a1f00, #1a1200)', border: '1px solid rgba(212,175,55,0.4)', boxShadow: '0 0 20px rgba(212,175,55,0.15)' }}
+                      onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 0 40px rgba(212,175,55,0.4)'; e.currentTarget.style.borderColor = 'rgba(212,175,55,0.8)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 0 20px rgba(212,175,55,0.15)'; e.currentTarget.style.borderColor = 'rgba(212,175,55,0.4)'; }}
+                    >
+                      {/* Hover fill layer */}
+                      <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-full"
+                        style={{ background: '#000000' }} />
+                      <div className="relative z-10 h-6 flex items-center justify-center">
+                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-500 gap-2">
+                          <span className="millions-btn-text text-base font-black">Você está pronto?</span>
+                          <Sparkles className="w-4 h-4 text-yellow-400 animate-pulse" />
+                        </div>
+                        <div className="absolute inset-0 flex items-center justify-center opacity-100 group-hover:opacity-0 transition-opacity duration-500 gap-2">
+                          <span className="millions-btn-text text-base font-black">Começar agora</span>
+                          <ArrowRight className="w-4 h-4 text-yellow-500" />
+                        </div>
+                      </div>
+                    </button>
+                  ) : (
+                    <Button 
+                      onClick={() => handleSelectPlan(plan)}
+                      className={`w-full py-7 text-base font-bold transition-all duration-300 rounded-full border-none group overflow-hidden relative
+                        ${isPopular 
+                          ? 'bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-black shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:shadow-[0_0_30px_rgba(245,158,11,0.5)]' 
+                          : 'bg-white hover:bg-gray-100 text-black shadow-lg hover:shadow-xl'
+                        }`}
+                    >
+                      <span className="relative z-10 flex items-center justify-center gap-2">
+                        Começar agora
+                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                      </span>
+                    </Button>
+                  )}
                 </div>
               </div>
             </motion.div>
