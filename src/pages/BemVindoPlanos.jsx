@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Check, Loader2, ArrowRight, Sparkles } from "lucide-react";
 import { createPageUrl } from "@/utils";
-import { motion } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 
 const Particles = () => {
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -50,6 +50,14 @@ const Particles = () => {
 export default function BemVindoPlanos() {
   const [user, setUser] = useState(null);
   const [isAnnual, setIsAnnual] = useState(false);
+  const containerRef = useRef(null);
+
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end end"]
+  });
+
+  const planetY = useTransform(scrollYProgress, [0, 1], ["60%", "10%"]);
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -117,18 +125,26 @@ export default function BemVindoPlanos() {
   ];
 
   return (
-    <div className="relative min-h-screen flex flex-col items-center py-20 px-4 font-sans text-gray-200 overflow-hidden bg-[#020617] selection:bg-amber-500/30 selection:text-amber-200">
+    <div ref={containerRef} className="relative min-h-screen flex flex-col items-center py-20 px-4 font-sans text-gray-200 overflow-hidden bg-[#020617] selection:bg-amber-500/30 selection:text-amber-200">
       {/* Background Animated Gradient & Noise */}
       <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none mix-blend-overlay"></div>
       
       <motion.div 
-        className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[900px] h-[500px] rounded-full pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse at center, rgba(245,158,11,0.18) 0%, rgba(245,158,11,0.06) 50%, transparent 70%)' }}
-        animate={{ 
-          scale: [1, 1.08, 1],
-          opacity: [0.8, 1, 0.8] 
+        className="fixed left-1/2 -translate-x-1/2 w-[200vw] sm:w-[150vw] md:w-[120vw] lg:w-[100vw] aspect-square rounded-full pointer-events-none"
+        style={{ 
+          top: planetY,
+          background: 'radial-gradient(circle at center top, rgba(245,158,11,0.4) 0%, rgba(245,158,11,0.1) 20%, rgba(0,0,0,0.8) 50%, transparent 70%)',
+          boxShadow: 'inset 0 100px 100px -50px rgba(245,158,11,0.2), 0 -20px 80px 10px rgba(245,158,11,0.1)'
         }}
-        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+      />
+      
+      {/* Core line for the sharp planet horizon effect */}
+      <motion.div 
+        className="fixed left-1/2 -translate-x-1/2 w-[200vw] sm:w-[150vw] md:w-[120vw] lg:w-[100vw] aspect-square rounded-full pointer-events-none border-t border-amber-400/50 mix-blend-screen"
+        style={{ 
+          top: planetY,
+          boxShadow: '0 -2px 20px 2px rgba(245,158,11,0.5), inset 0 2px 20px 2px rgba(245,158,11,0.5)'
+        }}
       />
       
       <div className="absolute top-1/4 -left-64 w-[500px] h-[500px] bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none"></div>
