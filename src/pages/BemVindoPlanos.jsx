@@ -228,10 +228,10 @@ export default function BemVindoPlanos() {
                     -webkit-background-clip: text;
                     background-clip: text;
                     -webkit-text-fill-color: transparent;
-                    animation: gold-shimmer-btn 2s linear infinite;
+                    animation: gold-shimmer-btn 6s linear infinite;
                   }
                   .millions-btn:hover .millions-btn-text {
-                    animation: gold-shimmer-btn 1s linear infinite;
+                    animation: gold-shimmer-btn 1.5s linear infinite;
                   }
                 `}</style>
               )}
