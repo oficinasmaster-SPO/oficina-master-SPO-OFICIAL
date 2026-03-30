@@ -129,21 +129,14 @@ export default function BemVindoPlanos() {
       {/* Background Animated Gradient & Noise */}
       <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none mix-blend-overlay"></div>
       
+      {/* Single Planet Horizon Effect */}
       <motion.div 
-        className="fixed left-1/2 -translate-x-1/2 w-[130vw] aspect-square rounded-full pointer-events-none"
+        className="fixed left-1/2 -translate-x-1/2 w-[150vw] md:w-[130vw] aspect-square rounded-full pointer-events-none mix-blend-screen"
         style={{ 
           top: planetY,
-          background: 'radial-gradient(ellipse at 50% 0%, rgba(180,100,0,0.55) 0%, rgba(120,60,0,0.3) 30%, rgba(20,10,0,0.6) 60%, transparent 80%)',
-          boxShadow: 'inset 0 60px 80px -30px rgba(245,158,11,0.25)'
-        }}
-      />
-      
-      {/* Core line for the sharp planet horizon effect */}
-      <motion.div 
-        className="fixed left-1/2 -translate-x-1/2 w-[130vw] aspect-square rounded-full pointer-events-none border-t-[4px] border-amber-400/90 mix-blend-screen"
-        style={{ 
-          top: planetY,
-          boxShadow: '0 -4px 40px 10px rgba(245,158,11,0.6), inset 0 4px 40px 10px rgba(245,158,11,0.6)'
+          background: 'radial-gradient(ellipse at 50% 0%, rgba(245, 158, 11, 0.3) 0%, rgba(180, 83, 9, 0.15) 30%, transparent 70%)',
+          boxShadow: '0 -20px 80px -10px rgba(245, 158, 11, 0.5), inset 0 30px 80px -20px rgba(245, 158, 11, 0.7)',
+          borderTop: '3px solid rgba(253, 230, 138, 0.9)'
         }}
       />
 
