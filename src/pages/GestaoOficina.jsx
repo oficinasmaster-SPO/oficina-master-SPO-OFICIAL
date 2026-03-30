@@ -279,57 +279,57 @@ export default function GestaoOficina() {
           navigate(`?tab=${value}`, { replace: false });
         }}>
           <TabsList className="flex flex-wrap w-full justify-start bg-white shadow-md gap-2 p-2 h-auto rounded-lg">
-            <TabsTrigger value="dados" className="text-xs md:text-sm hover:!bg-[#FF0000] hover:!text-white transition-colors">
+            <TabsTrigger value="dados" className="text-xs md:text-sm hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
               <Building2 className="w-4 h-4 mr-1" />
               <span className="hidden sm:inline">Dados</span>
             </TabsTrigger>
-            <TabsTrigger value="servicos" className="text-xs md:text-sm hover:!bg-[#FF0000] hover:!text-white transition-colors">
+            <TabsTrigger value="servicos" className="text-xs md:text-sm hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
               <Settings className="w-4 h-4 mr-1" />
               <span className="hidden sm:inline">Serviços</span>
             </TabsTrigger>
-            <TabsTrigger value="equipamentos" className="text-xs md:text-sm hover:!bg-[#FF0000] hover:!text-white transition-colors">
+            <TabsTrigger value="equipamentos" className="text-xs md:text-sm hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
               <Package className="w-4 h-4 mr-1" />
               <span className="hidden sm:inline">Equipamentos</span>
             </TabsTrigger>
-            <TabsTrigger value="terceiros" className="text-xs md:text-sm hover:!bg-[#FF0000] hover:!text-white transition-colors">
+            <TabsTrigger value="terceiros" className="text-xs md:text-sm hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
               <DollarSign className="w-4 h-4 mr-1" />
               <span className="hidden sm:inline">Terceiros</span>
             </TabsTrigger>
-            <TabsTrigger value="metas" className="text-xs md:text-sm hover:!bg-[#FF0000] hover:!text-white transition-colors">
+            <TabsTrigger value="metas" className="text-xs md:text-sm hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
               <Target className="w-4 h-4 mr-1" />
               <span className="hidden sm:inline">Metas</span>
             </TabsTrigger>
-            <TabsTrigger value="cultura" className="text-xs md:text-sm hover:!bg-[#FF0000] hover:!text-white transition-colors">
+            <TabsTrigger value="cultura" className="text-xs md:text-sm hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
               <TrendingUp className="w-4 h-4 mr-1" />
               <span className="hidden sm:inline">Cultura</span>
             </TabsTrigger>
-            <TabsTrigger value="processos" className="text-xs md:text-sm hover:!bg-[#FF0000] hover:!text-white transition-colors">
+            <TabsTrigger value="processos" className="text-xs md:text-sm hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
               <FileText className="w-4 h-4 mr-1" />
               <span className="hidden sm:inline">Processos</span>
             </TabsTrigger>
-            <TabsTrigger value="relatorios" className="text-xs md:text-sm hover:!bg-[#FF0000] hover:!text-white transition-colors">
+            <TabsTrigger value="relatorios" className="text-xs md:text-sm hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
               <BarChart3 className="w-4 h-4 mr-1" />
               <span className="hidden sm:inline">Relatórios</span>
             </TabsTrigger>
             {isMatriz && (
-              <TabsTrigger value="filiais" className="text-xs md:text-sm hover:!bg-[#FF0000] hover:!text-white transition-colors">
+              <TabsTrigger value="filiais" className="text-xs md:text-sm hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
                 <Building2 className="w-4 h-4 mr-1" />
                 <span className="hidden sm:inline">Filiais</span>
               </TabsTrigger>
             )}
-            <TabsTrigger value="aceleracao" className="text-xs md:text-sm bg-purple-50 text-purple-700 data-[state=active]:bg-purple-100 data-[state=active]:text-purple-900 hover:!bg-[#FF0000] hover:!text-white transition-colors">
+            <TabsTrigger value="aceleracao" className="text-xs md:text-sm bg-purple-50 text-purple-700 data-[state=active]:bg-purple-100 data-[state=active]:text-purple-900 hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
               <Briefcase className="w-4 h-4 mr-1" />
               <span className="hidden sm:inline">Aceleração</span>
             </TabsTrigger>
-            <TabsTrigger value="crescimento" className="text-xs md:text-sm bg-green-50 text-green-700 data-[state=active]:bg-green-100 data-[state=active]:text-green-900 hover:!bg-[#FF0000] hover:!text-white transition-colors">
+            <TabsTrigger value="crescimento" className="text-xs md:text-sm bg-green-50 text-green-700 data-[state=active]:bg-green-100 data-[state=active]:text-green-900 hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
               <TrendingUp className="w-4 h-4 mr-1" />
               <span className="hidden sm:inline">Crescimento</span>
             </TabsTrigger>
-            <TabsTrigger value="conquistas" className="text-xs md:text-sm bg-yellow-50 text-yellow-700 data-[state=active]:bg-yellow-100 data-[state=active]:text-yellow-900 hover:!bg-[#FF0000] hover:!text-white transition-colors">
+            <TabsTrigger value="conquistas" className="text-xs md:text-sm bg-yellow-50 text-yellow-700 data-[state=active]:bg-yellow-100 data-[state=active]:text-yellow-900 hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
               <Trophy className="w-4 h-4 mr-1" />
               <span className="hidden sm:inline">Conquistas</span>
             </TabsTrigger>
-            <TabsTrigger value="customization" className="text-xs md:text-sm bg-gray-50 text-gray-700 data-[state=active]:bg-gray-100 data-[state=active]:text-gray-900 hover:!bg-[#FF0000] hover:!text-white transition-colors">
+            <TabsTrigger value="customization" className="text-xs md:text-sm bg-gray-50 text-gray-700 data-[state=active]:bg-gray-100 data-[state=active]:text-gray-900 hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
               <Settings className="w-4 h-4 mr-1" />
               <span className="hidden sm:inline">Personalização</span>
             </TabsTrigger>
