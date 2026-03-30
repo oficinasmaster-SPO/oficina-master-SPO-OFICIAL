@@ -122,12 +122,13 @@ export default function BemVindoPlanos() {
       <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none mix-blend-overlay"></div>
       
       <motion.div 
-        className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-amber-600/10 rounded-full blur-[120px] pointer-events-none"
+        className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[900px] h-[500px] rounded-full pointer-events-none"
+        style={{ background: 'radial-gradient(ellipse at center, rgba(245,158,11,0.18) 0%, rgba(245,158,11,0.06) 50%, transparent 70%)' }}
         animate={{ 
-          scale: [1, 1.1, 1],
-          opacity: [0.3, 0.5, 0.3] 
+          scale: [1, 1.08, 1],
+          opacity: [0.8, 1, 0.8] 
         }}
-        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
       />
       
       <div className="absolute top-1/4 -left-64 w-[500px] h-[500px] bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none"></div>
