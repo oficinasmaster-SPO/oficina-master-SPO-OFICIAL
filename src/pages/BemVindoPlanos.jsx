@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Check, Loader2, ArrowRight } from "lucide-react";
 import { createPageUrl } from "@/utils";
 import { motion } from "framer-motion";
@@ -161,9 +162,9 @@ export default function BemVindoPlanos() {
                   </span>
                 </div>
                 
-                <div className="flex-1">
-                  <ul className="space-y-4 mb-10">
-                    {plan.features_highlights?.map((highlight, idx) => (
+                <div className="flex-1 flex flex-col">
+                  <ul className="space-y-4 mb-4">
+                    {plan.features_highlights?.slice(0, 5).map((highlight, idx) => (
                       <li key={idx} className="flex items-start gap-3">
                         <div className="mt-1 shrink-0 bg-red-500/10 p-1 rounded-full">
                           <Check className="w-3.5 h-3.5 text-red-500" strokeWidth={3} />
@@ -172,6 +173,35 @@ export default function BemVindoPlanos() {
                       </li>
                     ))}
                   </ul>
+                  
+                  {plan.features_highlights?.length > 5 ? (
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <button className="text-red-400 hover:text-red-300 text-sm font-semibold mb-6 flex items-center transition-colors text-left w-full">
+                          + {plan.features_highlights.length - 5} recursos inclusos
+                        </button>
+                      </DialogTrigger>
+                      <DialogContent className="bg-[#111827] border border-gray-800 text-white sm:max-w-md">
+                        <DialogHeader>
+                          <DialogTitle className="text-2xl font-bold mb-2">Todos os recursos - {plan.plan_name}</DialogTitle>
+                        </DialogHeader>
+                        <div className="max-h-[60vh] overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
+                          <ul className="space-y-4 py-2">
+                            {plan.features_highlights.map((highlight, idx) => (
+                              <li key={idx} className="flex items-start gap-3">
+                                <div className="mt-1 shrink-0 bg-red-500/10 p-1 rounded-full">
+                                  <Check className="w-3.5 h-3.5 text-red-500" strokeWidth={3} />
+                                </div>
+                                <span className="text-gray-300 text-sm leading-relaxed">{highlight}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  ) : (
+                    <div className="mb-6"></div>
+                  )}
                 </div>
 
                 <Button 
