@@ -115,13 +115,13 @@ export default function TasksTour({ onComplete }) {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="fixed border-4 border-blue-500 rounded-lg pointer-events-none z-[9998]"
+        className="fixed border-2 border-blue-400 rounded-xl pointer-events-none z-[9998]"
         style={{
-          top: position.top - 4,
-          left: position.left - 4,
-          width: position.width + 8,
-          height: position.height + 8,
-          boxShadow: "0 0 0 9999px rgba(0, 0, 0, 0.5)"
+          top: position.top - 8,
+          left: position.left - 8,
+          width: position.width + 16,
+          height: position.height + 16,
+          boxShadow: "0 0 0 9999px rgba(0, 0, 0, 0.4), 0 0 20px rgba(59, 130, 246, 0.3)"
         }}
       />
     );
@@ -148,52 +148,57 @@ export default function TasksTour({ onComplete }) {
             width: 400
           }}
         >
-          <Card className="shadow-2xl border-2 border-blue-500">
+          <Card className="shadow-2xl border border-gray-100 rounded-2xl bg-white overflow-hidden">
             <CardContent className="p-6">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-blue-600" />
+                  <Sparkles className="w-5 h-5 text-indigo-900" />
                   <h3 className="font-bold text-lg text-gray-900">{step.title}</h3>
                 </div>
-                <Button variant="ghost" size="sm" onClick={completeTour}>
+                <Button variant="ghost" size="icon" onClick={completeTour} className="h-8 w-8 text-gray-400 hover:text-gray-600 rounded-full">
                   <X className="w-4 h-4" />
                 </Button>
               </div>
 
-              <p className="text-gray-600 mb-4">{step.description}</p>
+              <p className="text-gray-600 mb-6 text-sm leading-relaxed">{step.description}</p>
 
-              <div className="flex items-center justify-between">
-                <div className="flex gap-1">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex gap-1.5">
                   {steps.map((_, index) => (
                     <div
                       key={index}
-                      className={`h-2 rounded-full transition-all ${
-                        index === currentStep ? "w-8 bg-blue-600" : "w-2 bg-gray-300"
+                      className={`h-1.5 rounded-full transition-all ${
+                        index === currentStep ? "w-6 bg-indigo-900" : "w-1.5 bg-gray-200"
                       }`}
                     />
                   ))}
                 </div>
-
-                <div className="flex gap-2">
-                  {currentStep > 0 && (
-                    <Button variant="outline" size="sm" onClick={handlePrevious}>
-                      <ArrowLeft className="w-4 h-4 mr-1" />
-                      Anterior
-                    </Button>
-                  )}
-                  <Button size="sm" onClick={handleNext} className="bg-blue-600 hover:bg-blue-700">
-                    {currentStep === steps.length - 1 ? "Concluir" : "Próximo"}
-                    {currentStep < steps.length - 1 && <ArrowRight className="w-4 h-4 ml-1" />}
-                  </Button>
+                <div className="text-xs font-medium text-gray-400">
+                  {currentStep + 1} de {steps.length}
                 </div>
               </div>
 
-              <div className="mt-4 text-center">
+              <div className="flex gap-3 mb-4">
+                {currentStep > 0 && (
+                  <Button variant="outline" className="w-full py-5 rounded-xl font-semibold border-gray-200 text-gray-700 hover:bg-gray-50" onClick={handlePrevious}>
+                    Anterior
+                  </Button>
+                )}
+                <Button 
+                  onClick={handleNext} 
+                  className="w-full py-5 rounded-xl font-semibold bg-indigo-900 hover:bg-indigo-950 text-white shadow-md transition-all"
+                >
+                  {currentStep === steps.length - 1 ? "Concluir" : "Próximo"}
+                  {currentStep < steps.length - 1 && <ArrowRight className="w-4 h-4 ml-2" />}
+                </Button>
+              </div>
+
+              <div className="text-center">
                 <button
                   onClick={completeTour}
-                  className="text-xs text-gray-500 hover:text-gray-700 underline"
+                  className="text-xs text-gray-400 hover:text-gray-600 font-medium transition-colors flex items-center justify-center w-full gap-1.5"
                 >
-                  Pular tutorial
+                  <ArrowRight className="w-3 h-3" /> Pular tutorial
                 </button>
               </div>
             </CardContent>
