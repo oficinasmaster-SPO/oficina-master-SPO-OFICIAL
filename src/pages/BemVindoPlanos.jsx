@@ -130,25 +130,22 @@ export default function BemVindoPlanos() {
       <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none mix-blend-overlay"></div>
       
       <motion.div 
-        className="fixed left-1/2 -translate-x-1/2 w-[200vw] sm:w-[150vw] md:w-[120vw] lg:w-[100vw] aspect-square rounded-full pointer-events-none"
+        className="fixed left-1/2 -translate-x-1/2 w-[130vw] aspect-square rounded-full pointer-events-none"
         style={{ 
           top: planetY,
-          background: 'radial-gradient(circle at center top, rgba(245,158,11,0.4) 0%, rgba(245,158,11,0.1) 20%, rgba(0,0,0,0.8) 50%, transparent 70%)',
-          boxShadow: 'inset 0 100px 100px -50px rgba(245,158,11,0.2), 0 -20px 80px 10px rgba(245,158,11,0.1)'
+          background: 'radial-gradient(ellipse at 50% 0%, rgba(180,100,0,0.55) 0%, rgba(120,60,0,0.3) 30%, rgba(20,10,0,0.6) 60%, transparent 80%)',
+          boxShadow: 'inset 0 60px 80px -30px rgba(245,158,11,0.25)'
         }}
       />
       
       {/* Core line for the sharp planet horizon effect */}
       <motion.div 
-        className="fixed left-1/2 -translate-x-1/2 w-[200vw] sm:w-[150vw] md:w-[120vw] lg:w-[100vw] aspect-square rounded-full pointer-events-none border-t border-amber-400/50 mix-blend-screen"
+        className="fixed left-1/2 -translate-x-1/2 w-[130vw] aspect-square rounded-full pointer-events-none border-t-[4px] border-amber-400/90 mix-blend-screen"
         style={{ 
           top: planetY,
-          boxShadow: '0 -2px 20px 2px rgba(245,158,11,0.5), inset 0 2px 20px 2px rgba(245,158,11,0.5)'
+          boxShadow: '0 -4px 40px 10px rgba(245,158,11,0.6), inset 0 4px 40px 10px rgba(245,158,11,0.6)'
         }}
       />
-      
-      <div className="absolute top-1/4 -left-64 w-[500px] h-[500px] bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none"></div>
-      <div className="absolute top-1/3 -right-64 w-[500px] h-[500px] bg-amber-800/10 rounded-full blur-[120px] pointer-events-none"></div>
 
       <Particles />
 
