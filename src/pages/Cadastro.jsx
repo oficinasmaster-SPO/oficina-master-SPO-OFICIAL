@@ -280,8 +280,8 @@ export default function Cadastro() {
     }
 
     toast.success("Cadastro finalizado!");
-    // Recarregar a página e ir para Home (Dashboard) para atualizar todo o contexto do sistema
-    window.location.href = createPageUrl("Home");
+    // Ir para a tela de escolha de planos
+    window.location.href = createPageUrl("BemVindoPlanos");
   };
 
   if (loading) {

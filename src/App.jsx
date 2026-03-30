@@ -21,6 +21,7 @@ import CentralAvaliacoes from '@/pages/CentralAvaliacoes';
 import MatrizDesempenho from '@/pages/MatrizDesempenho';
 import PublicNPS from '@/pages/PublicNPS';
 import PublicDISC from '@/pages/PublicDISC';
+import BemVindoPlanos from '@/pages/BemVindoPlanos';
 import WheelLoader from '@/components/ui/WheelLoader';
 import ErrorBoundary from '@/components/shared/ErrorBoundary';
 
@@ -37,7 +38,7 @@ const AuthenticatedApp = () => {
   const [showLoading, setShowLoading] = useState(false);
   const location = useLocation();
 
-  const publicPaths = ['/PublicNPS', '/PublicDISC', '/PrimeiroAcesso', '/ClientRegistration', '/CadastroSucesso', '/Planos', '/Cadastro'];
+  const publicPaths = ['/PublicNPS', '/PublicDISC', '/PrimeiroAcesso', '/ClientRegistration', '/CadastroSucesso', '/Planos', '/Cadastro', '/BemVindoPlanos'];
   const isPublicPath = publicPaths.some(path => location.pathname.toLowerCase().includes(path.toLowerCase()));
 
   useEffect(() => {
@@ -137,6 +138,7 @@ const AuthenticatedApp = () => {
       } />
       <Route path="/PublicNPS" element={<PublicNPS />} />
       <Route path="/PublicDISC" element={<PublicDISC />} />
+      <Route path="/BemVindoPlanos" element={<BemVindoPlanos />} />
       {Object.entries(Pages).map(([path, Page]) => {
         const reqPerm = pagePermissions[path];
         const isPublic = reqPerm === null;
