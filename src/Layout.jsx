@@ -186,7 +186,7 @@ export default function Layout({ children, currentPageName }) {
               )}
 
               <Link to={createPageUrl("Home")} className={`flex items-center gap-2 ${isAuthenticated ? 'lg:hidden' : ''}`}>
-                <div className="text-lg font-bold text-gray-900">Oficinas Master</div>
+                <img src="https://media.base44.com/images/public/69540822472c4a70b54d47aa/121a4c254_Horizontal_Fundo_Claro.png" alt="Oficinas Master" className="h-16 object-contain" />
               </Link>
 
               {isAuthenticated && user && <TenantSelector />}

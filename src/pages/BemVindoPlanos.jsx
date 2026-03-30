@@ -86,12 +86,11 @@ export default function BemVindoPlanos() {
         className="text-center max-w-4xl mb-12"
       >
         <div className="mb-8 flex justify-center">
-           <div className="text-2xl font-bold text-white tracking-tight flex items-center gap-3">
-              <div className="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center shadow-lg shadow-red-500/20">
-                 <span className="text-white text-xl font-black">O</span>
-              </div>
-              Oficinas Master
-           </div>
+          <img 
+            src="https://media.base44.com/images/public/69540822472c4a70b54d47aa/121a4c254_Horizontal_Fundo_Claro.png" 
+            alt="Oficinas Master" 
+            className="h-24 object-contain brightness-0 invert"
+          />
         </div>
         <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white mb-6 tracking-tight leading-tight">
           Bem-vindo à plataforma que organiza <br className="hidden md:block"/> e faz sua oficina crescer
