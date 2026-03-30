@@ -2,12 +2,8 @@ import React from 'react';
 import { cn } from "@/lib/utils";
 
 export default function WheelLoader({ className, size = 'md', text = "Carregando..." }) {
-  const sizeClasses = {
-    sm: 'w-12 h-12',
-    md: 'w-24 h-24',
-    lg: 'w-32 h-32',
-    xl: 'w-48 h-48'
-  };
+  // Tamanho padronizado para a logo horizontal ignorando a prop "size"
+  const standardSize = "w-48 h-20";
 
   return (
     <div className={cn("flex flex-col items-center justify-center gap-4", className)}>
@@ -23,7 +19,7 @@ export default function WheelLoader({ className, size = 'md', text = "Carregando
           }
         `}
       </style>
-      <div className={cn(sizeClasses[size], "relative perspective-[1000px]")}>
+      <div className={cn(standardSize, "relative perspective-[1000px]")}>
         <img 
           src="https://media.base44.com/images/public/69540822472c4a70b54d47aa/b4c49b931_Horizontal_Fundo_Claro.png" 
           alt="Carregando..." 
