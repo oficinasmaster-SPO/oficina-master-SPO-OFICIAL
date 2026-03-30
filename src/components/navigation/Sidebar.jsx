@@ -184,7 +184,7 @@ function UserProfileSection({ user, collapsed, workshop }) {
                   src="https://media.base44.com/images/public/69540822472c4a70b54d47aa/111d039f9_coroa.png" 
                   alt="Admin" 
                   title={user?.role === 'admin' ? 'Administrador do sistema' : 'Dono de oficina'}
-                  className="w-3.5 h-3.5 object-contain flex-shrink-0 cursor-help"
+                  className="w-3.5 h-3.5 object-contain flex-shrink-0"
                 />
               )}
             </div>
