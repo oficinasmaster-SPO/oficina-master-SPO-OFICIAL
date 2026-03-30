@@ -147,7 +147,9 @@ export default function Home() {
     "A gamificação aumenta o engajamento da equipe em até 40%"
   ];
 
-  if (isCheckingAuth || isLoadingProgress) {
+  const isDataLoading = isCheckingAuth || isLoadingUser || (isAuthenticated && isLoadingWorkshop) || (isAuthenticated && !!user && !!tenant && isLoadingProgress);
+
+  if (isDataLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <WheelLoader size="xl" />
