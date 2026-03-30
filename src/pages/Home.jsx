@@ -17,22 +17,12 @@ import AdminViewBanner from "../components/shared/AdminViewBanner";
 import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 import { getPhaseInfo } from "@/components/lib/phaseConstants";
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/lib/AuthContext";
 
 export default function Home() {
   const navigate = useNavigate();
   const { workshop, isLoading: isLoadingWorkshop, isAdminMode } = useWorkshopContext();
-  const { data: isAuthData, isLoading: isCheckingAuth } = useQuery({
-    queryKey: ['is-authenticated'],
-    queryFn: () => base44.auth.isAuthenticated()
-  });
-  
-  const isAuthenticated = isAuthData === true;
-
-  const { data: user, isLoading: isLoadingUser } = useQuery({
-    queryKey: ['current-user', isAuthenticated],
-    queryFn: () => base44.auth.me(),
-    enabled: isAuthenticated
-  });
+  const { isAuthenticated, isLoadingAuth: isCheckingAuth, user } = useAuth();
 
   const tenant = workshop;
 
@@ -147,7 +137,11 @@ export default function Home() {
     "A gamificação aumenta o engajamento da equipe em até 40%"
   ];
 
-  const isDataLoading = isCheckingAuth || isLoadingUser || (isAuthenticated && isLoadingWorkshop) || (isAuthenticated && !!user && !!tenant && isLoadingProgress);
+  // Mostra loading enquanto: verifica auth, ou está autenticado mas user/workshop ainda não chegaram
+  const isDataLoading = isCheckingAuth 
+    || (isAuthenticated && !user)
+    || (isAuthenticated && isLoadingWorkshop) 
+    || (isAuthenticated && !!user && !!tenant && isLoadingProgress);
 
   if (isDataLoading) {
     return (
