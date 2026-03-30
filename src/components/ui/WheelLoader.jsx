@@ -13,39 +13,21 @@ export default function WheelLoader({ className, size = 'md', text = "Carregando
     <div className={cn("flex flex-col items-center justify-center gap-4", className)}>
       <style>
         {`
-          @keyframes wheel-bounce {
-            0% { transform: translateX(-5px) translateY(0px); }
-            25% { transform: translateX(0px) translateY(-2px); }
-            50% { transform: translateX(5px) translateY(0px); }
-            75% { transform: translateX(0px) translateY(2px); }
-            100% { transform: translateX(-5px) translateY(0px); }
+          @keyframes flip-horizontal {
+            0% { transform: rotateY(0deg); }
+            100% { transform: rotateY(360deg); }
           }
-          @keyframes wheel-spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-          }
-          .animate-wheel-bounce {
-            animation: wheel-bounce 0.4s ease-in-out infinite;
-          }
-          .animate-wheel-spin {
-            animation: wheel-spin 0.6s linear infinite;
+          .animate-flip-horizontal {
+            animation: flip-horizontal 1.5s infinite cubic-bezier(0.4, 0.0, 0.2, 1);
+            transform-style: preserve-3d;
           }
         `}
       </style>
-      {/* Container com trepidação */}
-      <div className={cn(sizeClasses[size], "animate-wheel-bounce opacity-80 relative")}>
-        {/* Camada estática para as linhas ficarem paradas na horizontal */}
+      <div className={cn(sizeClasses[size], "relative perspective-[1000px]")}>
         <img 
-          src="https://media.base44.com/images/public/69540822472c4a70b54d47aa/d6da73d80_corrida.png" 
-          alt="" 
-          className="w-full h-full object-contain absolute inset-0"
-        />
-        {/* Camada que gira, isolada com uma máscara redonda focada na roda central */}
-        <img 
-          src="https://media.base44.com/images/public/69540822472c4a70b54d47aa/d6da73d80_corrida.png" 
+          src="https://media.base44.com/images/public/69540822472c4a70b54d47aa/b4c49b931_Horizontal_Fundo_Claro.png" 
           alt="Carregando..." 
-          className="w-full h-full animate-wheel-spin object-contain absolute inset-0"
-          style={{ clipPath: 'circle(40% at 50% 50%)' }}
+          className="w-full h-full object-contain animate-flip-horizontal drop-shadow-lg"
         />
       </div>
       {text && (
