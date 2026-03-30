@@ -67,7 +67,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-function UserProfileSection({ user, collapsed }) {
+function UserProfileSection({ user, collapsed, workshop }) {
   const { workshopId } = useWorkshopContext();
   const [employee, setEmployee] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -175,9 +175,18 @@ function UserProfileSection({ user, collapsed }) {
         )}
         {!collapsed && (
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-gray-900 truncate">
-              {employee?.full_name || user?.full_name || user?.email}
-            </p>
+            <div className="flex items-center gap-1.5">
+              <p className="text-sm font-semibold text-gray-900 truncate">
+                {employee?.full_name || user?.full_name || user?.email}
+              </p>
+              {(user?.role === 'admin' || workshop?.owner_id === user?.id || employee?.is_partner || employee?.job_role === 'socio') && (
+                <img 
+                  src="https://media.base44.com/images/public/69540822472c4a70b54d47aa/111d039f9_coroa.png" 
+                  alt="Admin" 
+                  className="w-3.5 h-3.5 object-contain flex-shrink-0"
+                />
+              )}
+            </div>
             <p className="text-xs text-gray-600 truncate">
               {employee ? (
                 <>
@@ -1292,7 +1301,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           )}
         </nav>
 
-        {user && <UserProfileSection user={user} collapsed={isCollapsed} />}
+        {user && <UserProfileSection user={user} collapsed={isCollapsed} workshop={userWorkshop} />}
       </aside>
     </>
   );
