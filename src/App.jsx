@@ -17,6 +17,7 @@ import { pagePermissions } from '@/components/lib/pagePermissions';
 import GestaoTenants from '@/pages/GestaoTenants';
 import CompletarPerfil from '@/pages/CompletarPerfil';
 import DescricaoCargos from '@/pages/DescricaoCargos';
+import QADashboard from '@/components/monitoring/QADashboard';
 import CentralAvaliacoes from '@/pages/CentralAvaliacoes';
 import MatrizDesempenho from '@/pages/MatrizDesempenho';
 import PublicNPS from '@/pages/PublicNPS';
@@ -133,6 +134,13 @@ const AuthenticatedApp = () => {
       <Route path="/PublicNPS" element={<PublicNPS />} />
       <Route path="/PublicDISC" element={<PublicDISC />} />
       <Route path="/BemVindoPlanos" element={<BemVindoPlanos />} />
+      <Route path="/AdminQADashboard" element={
+        <PageAccessControl adminOnly={true}>
+          <LayoutWrapper currentPageName="AdminQADashboard">
+            <QADashboard />
+          </LayoutWrapper>
+        </PageAccessControl>
+      } />
       {Object.entries(Pages).map(([path, Page]) => {
         const reqPerm = pagePermissions[path];
         const isPublic = reqPerm === null;
