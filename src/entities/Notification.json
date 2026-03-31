@@ -1,0 +1,118 @@
+{
+  "name": "Notification",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "ID do usuário destinatário"
+    },
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina relacionada"
+    },
+    "processo_id": {
+      "type": "string",
+      "description": "ID do processo/progresso relacionado"
+    },
+    "subtask_id": {
+      "type": "string",
+      "description": "ID da subtarefa relacionada"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "prazo_proximo",
+        "prazo_hoje",
+        "prazo_semana",
+        "processo_atrasado",
+        "atrasada",
+        "status_alterado",
+        "nova_subtarefa",
+        "processo_concluido",
+        "nova_ata",
+        "meta_batida",
+        "meta_nacional_empresa",
+        "meta_nacional_colaborador",
+        "config_preferencias",
+        "alerta_seguranca"
+      ],
+      "description": "Tipo de notificação"
+    },
+    "title": {
+      "type": "string",
+      "description": "Título da notificação"
+    },
+    "message": {
+      "type": "string",
+      "description": "Mensagem da notificação"
+    },
+    "is_read": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se foi lida"
+    },
+    "email_sent": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se e-mail foi enviado"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Dados adicionais da notificação ou preferências do usuário"
+    }
+  },
+  "required": [
+    "user_id",
+    "type",
+    "title",
+    "message"
+  ],
+  "rls": {
+    "create": true,
+    "read": {
+      "$or": [
+        {
+          "user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        }
+      ]
+    }
+  }
+}
