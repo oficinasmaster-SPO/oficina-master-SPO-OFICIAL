@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Bell, AlertTriangle, Clock, CheckCircle2, Trash2, Loader2, FileText, Users } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Bell, AlertTriangle, Clock, CheckCircle2, Trash2, Loader2, FileText, Users, Zap } from "lucide-react";
 import { format, isPast, isToday, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -15,6 +16,7 @@ import { useNotificationPush } from "@/components/notifications/useNotificationP
 export default function Notificacoes() {
   const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
+  const [showClearDialog, setShowClearDialog] = useState(false);
   const { sendNotification, permission } = useNotificationPush();
 
   useEffect(() => {
@@ -122,6 +124,30 @@ export default function Notificacoes() {
     onError: (error) => {
       console.error('Mutation error:', error);
       toast.error('Erro ao remover notificação: ' + (error?.message || 'Desconhecido'));
+    }
+  });
+
+  const clearAllNotificationsMutation = useMutation({
+    mutationFn: async () => {
+      const notificationsToDelete = notifications.filter(n => !n.is_read);
+      if (notificationsToDelete.length === 0) {
+        throw new Error('Nenhuma notificação para remover');
+      }
+      
+      const results = await Promise.allSettled(
+        notificationsToDelete.map(n => base44.entities.Notification.delete(n.id))
+      );
+      
+      return results;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      setShowClearDialog(false);
+      toast.success('Todas as notificações foram removidas');
+    },
+    onError: (error) => {
+      console.error('Clear all error:', error);
+      toast.error('Erro ao limpar notificações: ' + (error?.message || 'Desconhecido'));
     }
   });
 
@@ -331,13 +357,28 @@ export default function Notificacoes() {
                 Acompanhe prazos, atualizações e tarefas pendentes
               </p>
             </div>
-            <Button
-              onClick={testarNotificacoes}
-              variant="outline"
-              className="gap-2"
-            >
-              🧪 Testar Notificações
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => setShowClearDialog(true)}
+                variant="outline"
+                className="gap-2"
+                disabled={notifications.length === 0 || clearAllNotificationsMutation.isPending}
+              >
+                {clearAllNotificationsMutation.isPending ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Zap className="w-4 h-4" />
+                )}
+                Limpar Tudo
+              </Button>
+              <Button
+                onClick={testarNotificacoes}
+                variant="outline"
+                className="gap-2"
+              >
+                🧪 Testar Notificações
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -573,6 +614,36 @@ export default function Notificacoes() {
             <NotificationPreferences user={user} />
           </TabsContent>
         </Tabs>
+
+        <Dialog open={showClearDialog} onOpenChange={setShowClearDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Limpar Todas as Notificações</DialogTitle>
+              <DialogDescription>
+                Tem certeza que deseja remover todas as {notifications.length} notificações? Esta ação não pode ser desfeita.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowClearDialog(false)}>
+                Cancelar
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => clearAllNotificationsMutation.mutate()}
+                disabled={clearAllNotificationsMutation.isPending}
+              >
+                {clearAllNotificationsMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Removendo...
+                  </>
+                ) : (
+                  <>Remover Todas</>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
