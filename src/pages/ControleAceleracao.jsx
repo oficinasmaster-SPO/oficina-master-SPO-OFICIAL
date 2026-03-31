@@ -129,28 +129,28 @@ export default function ControleAceleracao() {
       />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="flex w-full justify-start overflow-x-auto bg-white shadow-md h-auto p-1 gap-2">
-          <TabsTrigger value="visao-geral" className="flex-shrink-0">
+        <TabsList className="flex w-full justify-start overflow-x-auto bg-white shadow-md h-auto p-1 gap-1">
+          <TabsTrigger value="visao-geral" className="flex-shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-colors">
             <BarChart3 className="w-4 h-4 mr-2" />
             Visão Geral
           </TabsTrigger>
-          <TabsTrigger value="atendimentos" className="flex-shrink-0">
+          <TabsTrigger value="atendimentos" className="flex-shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-colors">
             <ClipboardList className="w-4 h-4 mr-2" />
             Atendimentos
           </TabsTrigger>
           <TabsTrigger 
             value="cronograma"
             onClick={() => navigate(createPageUrl('CronogramaGeral'))}
-            className="flex-shrink-0"
+            className="flex-shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-colors"
           >
             <Calendar className="w-4 h-4 mr-2" />
             Cronograma Geral
           </TabsTrigger>
-          <TabsTrigger value="pedidos" className="flex-shrink-0">
+          <TabsTrigger value="pedidos" className="flex-shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-colors">
             <FileText className="w-4 h-4 mr-2" />
             Pedidos & Backlog
           </TabsTrigger>
-          <TabsTrigger value="agenda-visual" className="flex-shrink-0">
+          <TabsTrigger value="agenda-visual" className="flex-shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-colors">
             <Calendar className="w-4 h-4 mr-2" />
             Agenda Visual
           </TabsTrigger>
