@@ -96,11 +96,11 @@ export default function TenantSelector() {
               <div className="relative">
                 {/* Scroll up zone */}
                 <div
-                  className="absolute top-0 left-0 right-0 h-6 z-10 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity bg-gradient-to-b from-white to-transparent cursor-pointer"
+                  className="absolute top-0 left-0 right-0 h-7 z-10 flex items-center justify-center opacity-0 hover:opacity-100 transition-all duration-200 bg-gradient-to-b from-white via-white/80 to-transparent cursor-pointer group"
                   onMouseEnter={() => startScroll('up')}
                   onMouseLeave={stopScroll}
                 >
-                  <ChevronUp className="w-3 h-3 text-gray-400" />
+                  <ChevronUp className="w-3.5 h-3.5 text-gray-300 group-hover:text-gray-500 transition-colors" />
                 </div>
 
                 <CommandList ref={listRef} className="bg-white max-h-[220px] overflow-y-auto">
@@ -112,11 +112,11 @@ export default function TenantSelector() {
                         changeCompany(null);
                         setOpenCompanyPopover(false);
                       }}
-                      className="text-gray-700 text-sm font-normal cursor-pointer rounded px-2 py-1.5 hover:bg-gray-50"
+                      className="text-gray-700 text-sm font-normal cursor-pointer rounded px-2 py-1.5 hover:bg-red-50 hover:text-red-600 group/item"
                     >
                       <Check
                         className={cn(
-                          "mr-2 h-3.5 w-3.5 text-gray-500 shrink-0",
+                          "mr-2 h-3.5 w-3.5 text-gray-500 shrink-0 group-hover/item:text-red-400",
                           (!selectedCompanyId || selectedCompanyId === 'none') ? "opacity-100" : "opacity-0"
                         )}
                       />
@@ -130,11 +130,11 @@ export default function TenantSelector() {
                           changeCompany(c.id);
                           setOpenCompanyPopover(false);
                         }}
-                        className="text-gray-700 text-sm font-normal cursor-pointer rounded px-2 py-1.5 hover:bg-gray-50"
+                        className="text-gray-700 text-sm font-normal cursor-pointer rounded px-2 py-1.5 hover:bg-red-50 hover:text-red-600 group/item"
                       >
                         <Check
                           className={cn(
-                            "mr-2 h-3.5 w-3.5 text-gray-500 shrink-0",
+                            "mr-2 h-3.5 w-3.5 text-gray-500 shrink-0 group-hover/item:text-red-400",
                             selectedCompanyId === c.id ? "opacity-100" : "opacity-0"
                           )}
                         />
@@ -146,11 +146,11 @@ export default function TenantSelector() {
 
                 {/* Scroll down zone */}
                 <div
-                  className="absolute bottom-0 left-0 right-0 h-6 z-10 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity bg-gradient-to-t from-white to-transparent cursor-pointer"
+                  className="absolute bottom-0 left-0 right-0 h-7 z-10 flex items-center justify-center opacity-0 hover:opacity-100 transition-all duration-200 bg-gradient-to-t from-white via-white/80 to-transparent cursor-pointer group"
                   onMouseEnter={() => startScroll('down')}
                   onMouseLeave={stopScroll}
                 >
-                  <ChevronDown className="w-3 h-3 text-gray-400" />
+                  <ChevronDown className="w-3.5 h-3.5 text-gray-300 group-hover:text-gray-500 transition-colors" />
                 </div>
               </div>
             </Command>
