@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useTenant } from '@/components/contexts/TenantContext';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
@@ -7,11 +7,25 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Building2, Briefcase, Search, Check, ChevronsUpDown } from 'lucide-react';
+import { Building2, Briefcase, ChevronUp, ChevronDown, Check, ChevronsUpDown } from 'lucide-react';
 
 export default function TenantSelector() {
   const { user, selectedFirmId, changeConsultingFirm, selectedCompanyId, changeCompany } = useTenant();
   const [openCompanyPopover, setOpenCompanyPopover] = useState(false);
+  const listRef = useRef(null);
+  const scrollIntervalRef = useRef(null);
+
+  const startScroll = (direction) => {
+    scrollIntervalRef.current = setInterval(() => {
+      if (listRef.current) {
+        listRef.current.scrollTop += direction === 'down' ? 30 : -30;
+      }
+    }, 60);
+  };
+
+  const stopScroll = () => {
+    clearInterval(scrollIntervalRef.current);
+  };
 
   const { data: firms = [], isLoading: isLoadingFirms } = useQuery({
     queryKey: ['consultingFirms'],
@@ -76,49 +90,69 @@ export default function TenantSelector() {
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-[200px] p-0 bg-white" align="start">
+          <PopoverContent className="w-[220px] p-0 bg-white" align="start">
             <Command className="bg-white">
-              <CommandInput placeholder="Pesquisar oficina..." className="text-gray-900" />
-              <CommandList className="bg-white">
-                <CommandEmpty className="text-gray-500">Nenhuma oficina encontrada.</CommandEmpty>
-                <CommandGroup className="bg-white">
-                  <CommandItem
-                    value="none-Todas Oficinas"
-                    onSelect={() => {
-                      changeCompany(null);
-                      setOpenCompanyPopover(false);
-                    }}
-                    className="text-gray-900 hover:bg-gray-100 cursor-pointer"
-                  >
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4 text-gray-700",
-                        (!selectedCompanyId || selectedCompanyId === 'none') ? "opacity-100" : "opacity-0"
-                      )}
-                    />
-                    Todas Oficinas
-                  </CommandItem>
-                  {companies.map((c) => (
+              <CommandInput placeholder="Pesquisar oficina..." className="text-gray-800 text-sm font-normal" />
+              <div className="relative">
+                {/* Scroll up zone */}
+                <div
+                  className="absolute top-0 left-0 right-0 h-6 z-10 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity bg-gradient-to-b from-white to-transparent cursor-pointer"
+                  onMouseEnter={() => startScroll('up')}
+                  onMouseLeave={stopScroll}
+                >
+                  <ChevronUp className="w-3 h-3 text-gray-400" />
+                </div>
+
+                <CommandList ref={listRef} className="bg-white max-h-[220px] overflow-y-auto">
+                  <CommandEmpty className="text-gray-500 text-sm font-normal py-4 text-center">Nenhuma oficina encontrada.</CommandEmpty>
+                  <CommandGroup className="bg-white p-1">
                     <CommandItem
-                      key={c.id}
-                      value={`${c.name} ${c.id}`}
+                      value="none-Todas Oficinas"
                       onSelect={() => {
-                        changeCompany(c.id);
+                        changeCompany(null);
                         setOpenCompanyPopover(false);
                       }}
-                      className="text-slate-900 hover:bg-slate-100 cursor-pointer font-medium"
+                      className="text-gray-700 text-sm font-normal cursor-pointer rounded px-2 py-1.5 hover:bg-gray-50"
                     >
                       <Check
                         className={cn(
-                          "mr-2 h-4 w-4 text-slate-700",
-                          selectedCompanyId === c.id ? "opacity-100" : "opacity-0"
+                          "mr-2 h-3.5 w-3.5 text-gray-500 shrink-0",
+                          (!selectedCompanyId || selectedCompanyId === 'none') ? "opacity-100" : "opacity-0"
                         )}
                       />
-                      <span className="text-slate-900 w-full block">{c.name}</span>
+                      Todas Oficinas
                     </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
+                    {[...companies].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')).map((c) => (
+                      <CommandItem
+                        key={c.id}
+                        value={`${c.name} ${c.id}`}
+                        onSelect={() => {
+                          changeCompany(c.id);
+                          setOpenCompanyPopover(false);
+                        }}
+                        className="text-gray-700 text-sm font-normal cursor-pointer rounded px-2 py-1.5 hover:bg-gray-50"
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-3.5 w-3.5 text-gray-500 shrink-0",
+                            selectedCompanyId === c.id ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        <span className="truncate">{c.name}</span>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+
+                {/* Scroll down zone */}
+                <div
+                  className="absolute bottom-0 left-0 right-0 h-6 z-10 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity bg-gradient-to-t from-white to-transparent cursor-pointer"
+                  onMouseEnter={() => startScroll('down')}
+                  onMouseLeave={stopScroll}
+                >
+                  <ChevronDown className="w-3 h-3 text-gray-400" />
+                </div>
+              </div>
             </Command>
           </PopoverContent>
         </Popover>
