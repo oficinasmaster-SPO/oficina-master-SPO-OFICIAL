@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import { useCachedEmployees } from '@/components/hooks/useCachedEmployees';
+import { useOptimizedEmployees } from '@/components/hooks/useOptimizedEmployees';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -70,7 +70,7 @@ export default function Colaboradores() {
 
   const { workshop } = useWorkshopContext();
 
-  const { data: employees = [], isLoading } = useCachedEmployees(workshop?.id);
+  const { employees = [], isLoading } = useOptimizedEmployees(workshop?.id);
 
   const { data: coexContracts = [] } = useQuery({
     queryKey: ['coex-contracts'],
