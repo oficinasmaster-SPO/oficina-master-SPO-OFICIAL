@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import './App.css'
 import { Toaster } from "@/components/ui/toaster"
 import { Toaster as SonnerToaster } from "@/components/ui/sonner"
@@ -95,15 +95,9 @@ const AuthenticatedApp = () => {
 
   // Render the main app
   return (
-    <Routes>
-      <Route path="/" element={
-        <LayoutWrapper currentPageName={mainPageKey}>
-          <PageAccessControl requiredPermissions={pagePermissions[mainPageKey] && pagePermissions[mainPageKey] !== "public_authenticated" ? [pagePermissions[mainPageKey]] : []}>
-            <MainPage />
-          </PageAccessControl>
-        </LayoutWrapper>
-      } />
-      <Route path="/GestaoTenants" element={
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><WheelLoader size="xl" /></div>}>
+      <Routes>
+        <Route path="/" element={
         <LayoutWrapper currentPageName="GestaoTenants">
           <PageAccessControl adminOnly={true}>
             <GestaoTenants />
@@ -164,7 +158,8 @@ const AuthenticatedApp = () => {
         );
       })}
       <Route path="*" element={<PageNotFound />} />
-    </Routes>
+      </Routes>
+    </Suspense>
   );
 };
 

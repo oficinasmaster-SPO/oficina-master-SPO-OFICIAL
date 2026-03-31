@@ -1,231 +1,192 @@
 /**
- * pages.config.js - Page routing configuration
+ * pages.config.js - Page routing configuration with code-splitting
  * 
- * This file is AUTO-GENERATED. Do not add imports or modify PAGES manually.
- * Pages are auto-registered when you create files in the ./pages/ folder.
+ * All pages are loaded via React.lazy() for automatic code-splitting.
+ * The Vite bundler creates separate chunks per page.
  * 
  * THE ONLY EDITABLE VALUE: mainPage
  * This controls which page is the landing page (shown when users visit the app).
- * 
- * Example file structure:
- * 
- *   import HomePage from './pages/HomePage';
- *   import Dashboard from './pages/Dashboard';
- *   import Settings from './pages/Settings';
- *   
- *   export const PAGES = {
- *       "HomePage": HomePage,
- *       "Dashboard": Dashboard,
- *       "Settings": Settings,
- *   }
- *   
- *   export const pagesConfig = {
- *       mainPage: "HomePage",
- *       Pages: PAGES,
- *   };
- * 
- * Example with Layout (wraps all pages):
- *
- *   import Home from './pages/Home';
- *   import Settings from './pages/Settings';
- *   import __Layout from './Layout.jsx';
- *
- *   export const PAGES = {
- *       "Home": Home,
- *       "Settings": Settings,
- *   }
- *
- *   export const pagesConfig = {
- *       mainPage: "Home",
- *       Pages: PAGES,
- *       Layout: __Layout,
- *   };
- *
- * To change the main page from HomePage to Dashboard, use find_replace:
- *   Old: mainPage: "HomePage",
- *   New: mainPage: "Dashboard",
- *
- * The mainPage value must match a key in the PAGES object exactly.
  */
-import AcademiaTreinamento from './pages/AcademiaTreinamento';
-import AcessoAceleracao from './pages/AcessoAceleracao';
-import AcompanhamentoTreinamento from './pages/AcompanhamentoTreinamento';
-import AdminDesafios from './pages/AdminDesafios';
-import AdminMensagens from './pages/AdminMensagens';
-import AdminNotificacoes from './pages/AdminNotificacoes';
-import AdminProdutividade from './pages/AdminProdutividade';
-import AnalisesRH from './pages/AnalisesRH';
+import { lazy } from 'react';
 
-import AssistirAula from './pages/AssistirAula';
-import AssistirCurso from './pages/AssistirCurso';
-import AuditLogs from './pages/AuditLogs';
-import AuditoriaPermissoes from './pages/AuditoriaPermissoes';
-import AutoavaliacaoComercial from './pages/AutoavaliacaoComercial';
-import AutoavaliacaoDISC from './pages/AutoavaliacaoDISC';
-import AutoavaliacaoDesempenho from './pages/AutoavaliacaoDesempenho';
-import AutoavaliacaoEmpresarial from './pages/AutoavaliacaoEmpresarial';
-import AutoavaliacaoFinanceiro from './pages/AutoavaliacaoFinanceiro';
-import AutoavaliacaoMA3 from './pages/AutoavaliacaoMA3';
-import AutoavaliacaoMarketing from './pages/AutoavaliacaoMarketing';
-import AutoavaliacaoMaturidade from './pages/AutoavaliacaoMaturidade';
-import AutoavaliacaoPessoas from './pages/AutoavaliacaoPessoas';
-import AutoavaliacaoVendas from './pages/AutoavaliacaoVendas';
-import Autoavaliacoes from './pages/Autoavaliacoes';
-import AvaliarAtendimento from './pages/AvaliarAtendimento';
-import CDCForm from './pages/CDCForm';
-import CDCList from './pages/CDCList';
-import CESPECanal from './pages/CESPECanal';
-import CESPEEntrevista from './pages/CESPEEntrevista';
-import CESPEIntegracao from './pages/CESPEIntegracao';
-import CESPEProposta from './pages/CESPEProposta';
-import CESPESonho from './pages/CESPESonho';
-import COEXForm from './pages/COEXForm';
-import COEXList from './pages/COEXList';
-import Cadastro from './pages/Cadastro';
-import CadastroColaborador from './pages/CadastroColaborador';
-import CadastroPlanos from './pages/CadastroPlanos';
-import CadastroSucesso from './pages/CadastroSucesso';
-import CadastroUsuarioDireto from './pages/CadastroUsuarioDireto';
-import CalendarioEventos from './pages/CalendarioEventos';
-import ChatGestorOficina from './pages/ChatGestorOficina';
-import ChatQGPTecnico from './pages/ChatQGPTecnico';
-import ClientRegistration from './pages/ClientRegistration';
-import Clientes from './pages/Clientes';
-import Colaboradores from './pages/Colaboradores';
-import ConfiguracaoAcademia from './pages/ConfiguracaoAcademia';
-import ConfiguracaoPermissoesGranulares from './pages/ConfiguracaoPermissoesGranulares';
-import ConfiguracoesKiwify from './pages/ConfiguracoesKiwify';
-import ConfiguracoesNotificacao from './pages/ConfiguracoesNotificacao';
-import ConsolidadoMensal from './pages/ConsolidadoMensal';
-import ControleAceleracao from './pages/ControleAceleracao';
-import ConvidarColaborador from './pages/ConvidarColaborador';
-import CriarDescricaoCargo from './pages/CriarDescricaoCargo';
-import CriarRitualMAP from './pages/CriarRitualMAP';
-import CronogramaAculturacao from './pages/CronogramaAculturacao';
-import CronogramaConsultoria from './pages/CronogramaConsultoria';
-import CronogramaDetalhado from './pages/CronogramaDetalhado';
-import CronogramaGeral from './pages/CronogramaGeral';
-import CronogramaImplementacao from './pages/CronogramaImplementacao';
-import CulturaOrganizacional from './pages/CulturaOrganizacional';
-import DRETCMP2 from './pages/DRETCMP2';
-import Dashboard from './pages/Dashboard';
-import DashboardFinanceiro from './pages/DashboardFinanceiro';
-import DashboardOverview from './pages/DashboardOverview';
-import DescricoesCargo from './pages/DescricoesCargo';
-import DesdobramentoMeta from './pages/DesdobramentoMeta';
-import DesesosCliente from './pages/DesesosCliente';
-import DetalhesColaborador from './pages/DetalhesColaborador';
-import DiagnosticoCarga from './pages/DiagnosticoCarga';
-import DiagnosticoComercial from './pages/DiagnosticoComercial';
-import DiagnosticoDISC from './pages/DiagnosticoDISC';
-import DiagnosticoDesempenho from './pages/DiagnosticoDesempenho';
-import DiagnosticoEmpresario from './pages/DiagnosticoEmpresario';
-import DiagnosticoEndividamento from './pages/DiagnosticoEndividamento';
-import DiagnosticoGerencial from './pages/DiagnosticoGerencial';
-import DiagnosticoMaturidade from './pages/DiagnosticoMaturidade';
-import DiagnosticoOS from './pages/DiagnosticoOS';
-import DiagnosticoPlano from './pages/DiagnosticoPlano';
-import DiagnosticoProducao from './pages/DiagnosticoProducao';
-import DicasOperacao from './pages/DicasOperacao';
-import DocumentacaoCompleta from './pages/DocumentacaoCompleta';
-import DocumentacaoRBAC from './pages/DocumentacaoRBAC';
-import DoresAtivas from './pages/DoresAtivas';
-import DuvidasCliente from './pages/DuvidasCliente';
-import EditarDescricaoCargo from './pages/EditarDescricaoCargo';
-import EvidenceUpload from './pages/EvidenceUpload';
-import EvolucoesCliente from './pages/EvolucoesCliente';
-import Feedbacks from './pages/Feedbacks';
-import Gamificacao from './pages/Gamificacao';
-import GerenciarAula from './pages/GerenciarAula';
-import GerenciarChecklists from './pages/GerenciarChecklists';
-import GerenciarGruposClientes from './pages/GerenciarGruposClientes';
-import GerenciarModulo from './pages/GerenciarModulo';
-import GerenciarModulosCurso from './pages/GerenciarModulosCurso';
-import GerenciarPlanos from './pages/GerenciarPlanos';
-import GerenciarProcessos from './pages/GerenciarProcessos';
-import GerenciarRoles from './pages/GerenciarRoles';
-import GerenciarToursVideos from './pages/GerenciarToursVideos';
-import GerenciarTreinamentos from './pages/GerenciarTreinamentos';
-import GestaoContratos from './pages/GestaoContratos';
-import GestaoDesafios from './pages/GestaoDesafios';
-import GestaoOficina from './pages/GestaoOficina';
-import GestaoRBAC from './pages/GestaoRBAC';
-import GestaoRoles from './pages/GestaoRoles';
-import GestaoUsuariosEmpresas from './pages/GestaoUsuariosEmpresas';
-import GraficosProducao from './pages/GraficosProducao';
-import Historico from './pages/Historico';
-import HistoricoDISC from './pages/HistoricoDISC';
-import HistoricoDesempenho from './pages/HistoricoDesempenho';
-import HistoricoMaturidade from './pages/HistoricoMaturidade';
-import HistoricoMetas from './pages/HistoricoMetas';
-import Home from './pages/Home';
-import IAAnalytics from './pages/IAAnalytics';
-import Integracoes from './pages/Integracoes';
-import IntelligenciaCliente from './pages/IntelligenciaCliente';
-import LogsAuditoriaRBAC from './pages/LogsAuditoriaRBAC';
-import ManualProcessos from './pages/ManualProcessos';
-import MapaChecklists from './pages/MapaChecklists';
-import MeuPerfil from './pages/MeuPerfil';
-import MeuPlano from './pages/MeuPlano';
-import MeusProcessos from './pages/MeusProcessos';
-import MeusTreinamentos from './pages/MeusTreinamentos';
-import MissaoVisaoValores from './pages/MissaoVisaoValores';
-import MonitoramentoRH from './pages/MonitoramentoRH';
-import MonitoramentoUsuarios from './pages/MonitoramentoUsuarios';
-import Notificacoes from './pages/Notificacoes';
-import Organograma from './pages/Organograma';
-import OrganogramaFuncional from './pages/OrganogramaFuncional';
-import PainelAcoes from './pages/PainelAcoes';
-import PainelClienteAceleracao from './pages/PainelClienteAceleracao';
-import PainelMetas from './pages/PainelMetas';
-import PesquisaClima from './pages/PesquisaClima';
-import PlanoAcao from './pages/PlanoAcao';
-import Planos from './pages/Planos';
-import PortalColaborador from './pages/PortalColaborador';
-import PrimeiroAcesso from './pages/PrimeiroAcesso';
-import PublicFeedback from './pages/PublicFeedback';
-import QGPBoard from './pages/QGPBoard';
-import Questionario from './pages/Questionario';
-import RankingBrasil from './pages/RankingBrasil';
-import Regimento from './pages/Regimento';
-import RegistrarAtendimento from './pages/RegistrarAtendimento';
-import RegistroDiario from './pages/RegistroDiario';
-import RelatorioCDC from './pages/RelatorioCDC';
-import RelatorioUsuario from './pages/RelatorioUsuario';
-import RelatoriosAceleracao from './pages/RelatoriosAceleracao';
-import RelatoriosAvancados from './pages/RelatoriosAvancados';
-import RelatoriosInteligencia from './pages/RelatoriosInteligencia';
-import RepositorioDocumentos from './pages/RepositorioDocumentos';
-import ResponderDISC from './pages/ResponderDISC';
-import ResponderMaturidade from './pages/ResponderMaturidade';
-import ResponderPesquisaClima from './pages/ResponderPesquisaClima';
-import Resultado from './pages/Resultado';
-import ResultadoAutoavaliacao from './pages/ResultadoAutoavaliacao';
-import ResultadoCarga from './pages/ResultadoCarga';
-import ResultadoClima from './pages/ResultadoClima';
-import ResultadoDISC from './pages/ResultadoDISC';
-import ResultadoDesempenho from './pages/ResultadoDesempenho';
-import ResultadoEmpresario from './pages/ResultadoEmpresario';
-import ResultadoEndividamento from './pages/ResultadoEndividamento';
-import ResultadoMaturidade from './pages/ResultadoMaturidade';
-import ResultadoOS from './pages/ResultadoOS';
-import ResultadoProducao from './pages/ResultadoProducao';
-import RiscosCliente from './pages/RiscosCliente';
-import Rituais from './pages/Rituais';
-import RituaisAculturamento from './pages/RituaisAculturamento';
-import SelecionarDiagnostico from './pages/SelecionarDiagnostico';
-import SolicitarPermissoes from './pages/SolicitarPermissoes';
-import Tarefas from './pages/Tarefas';
-import TechnicianQGP from './pages/TechnicianQGP';
-import TreinamentoVendas from './pages/TreinamentoVendas';
-import UsuariosAdmin from './pages/UsuariosAdmin';
-import VisualizarProcesso from './pages/VisualizarProcesso';
-import GestaoTenants from './pages/GestaoTenants';
-import GestaoEmpresas from './pages/GestaoEmpresas';
-import PublicNPS from './pages/PublicNPS';
-import PublicDISC from './pages/PublicDISC';
+// Code-split imports: Each page loads only when accessed
+const AcademiaTreinamento = lazy(() => import('./pages/AcademiaTreinamento'));
+const AcessoAceleracao = lazy(() => import('./pages/AcessoAceleracao'));
+const AcompanhamentoTreinamento = lazy(() => import('./pages/AcompanhamentoTreinamento'));
+const AdminDesafios = lazy(() => import('./pages/AdminDesafios'));
+const AdminMensagens = lazy(() => import('./pages/AdminMensagens'));
+const AdminNotificacoes = lazy(() => import('./pages/AdminNotificacoes'));
+const AdminProdutividade = lazy(() => import('./pages/AdminProdutividade'));
+const AnalisesRH = lazy(() => import('./pages/AnalisesRH'));
+const AssistirAula = lazy(() => import('./pages/AssistirAula'));
+const AssistirCurso = lazy(() => import('./pages/AssistirCurso'));
+const AuditLogs = lazy(() => import('./pages/AuditLogs'));
+const AuditoriaPermissoes = lazy(() => import('./pages/AuditoriaPermissoes'));
+const AutoavaliacaoComercial = lazy(() => import('./pages/AutoavaliacaoComercial'));
+const AutoavaliacaoDISC = lazy(() => import('./pages/AutoavaliacaoDISC'));
+const AutoavaliacaoDesempenho = lazy(() => import('./pages/AutoavaliacaoDesempenho'));
+const AutoavaliacaoEmpresarial = lazy(() => import('./pages/AutoavaliacaoEmpresarial'));
+const AutoavaliacaoFinanceiro = lazy(() => import('./pages/AutoavaliacaoFinanceiro'));
+const AutoavaliacaoMA3 = lazy(() => import('./pages/AutoavaliacaoMA3'));
+const AutoavaliacaoMarketing = lazy(() => import('./pages/AutoavaliacaoMarketing'));
+const AutoavaliacaoMaturidade = lazy(() => import('./pages/AutoavaliacaoMaturidade'));
+const AutoavaliacaoPessoas = lazy(() => import('./pages/AutoavaliacaoPessoas'));
+const AutoavaliacaoVendas = lazy(() => import('./pages/AutoavaliacaoVendas'));
+const Autoavaliacoes = lazy(() => import('./pages/Autoavaliacoes'));
+const AvaliarAtendimento = lazy(() => import('./pages/AvaliarAtendimento'));
+const CDCForm = lazy(() => import('./pages/CDCForm'));
+const CDCList = lazy(() => import('./pages/CDCList'));
+const CESPECanal = lazy(() => import('./pages/CESPECanal'));
+const CESPEEntrevista = lazy(() => import('./pages/CESPEEntrevista'));
+const CESPEIntegracao = lazy(() => import('./pages/CESPEIntegracao'));
+const CESPEProposta = lazy(() => import('./pages/CESPEProposta'));
+const CESPESonho = lazy(() => import('./pages/CESPESonho'));
+const COEXForm = lazy(() => import('./pages/COEXForm'));
+const COEXList = lazy(() => import('./pages/COEXList'));
+const Cadastro = lazy(() => import('./pages/Cadastro'));
+const CadastroColaborador = lazy(() => import('./pages/CadastroColaborador'));
+const CadastroPlanos = lazy(() => import('./pages/CadastroPlanos'));
+const CadastroSucesso = lazy(() => import('./pages/CadastroSucesso'));
+const CadastroUsuarioDireto = lazy(() => import('./pages/CadastroUsuarioDireto'));
+const CalendarioEventos = lazy(() => import('./pages/CalendarioEventos'));
+const ChatGestorOficina = lazy(() => import('./pages/ChatGestorOficina'));
+const ChatQGPTecnico = lazy(() => import('./pages/ChatQGPTecnico'));
+const ClientRegistration = lazy(() => import('./pages/ClientRegistration'));
+const Clientes = lazy(() => import('./pages/Clientes'));
+const Colaboradores = lazy(() => import('./pages/Colaboradores'));
+const ConfiguracaoAcademia = lazy(() => import('./pages/ConfiguracaoAcademia'));
+const ConfiguracaoPermissoesGranulares = lazy(() => import('./pages/ConfiguracaoPermissoesGranulares'));
+const ConfiguracoesKiwify = lazy(() => import('./pages/ConfiguracoesKiwify'));
+const ConfiguracoesNotificacao = lazy(() => import('./pages/ConfiguracoesNotificacao'));
+const ConsolidadoMensal = lazy(() => import('./pages/ConsolidadoMensal'));
+const ControleAceleracao = lazy(() => import('./pages/ControleAceleracao'));
+const ConvidarColaborador = lazy(() => import('./pages/ConvidarColaborador'));
+const CriarDescricaoCargo = lazy(() => import('./pages/CriarDescricaoCargo'));
+const CriarRitualMAP = lazy(() => import('./pages/CriarRitualMAP'));
+const CronogramaAculturacao = lazy(() => import('./pages/CronogramaAculturacao'));
+const CronogramaConsultoria = lazy(() => import('./pages/CronogramaConsultoria'));
+const CronogramaDetalhado = lazy(() => import('./pages/CronogramaDetalhado'));
+const CronogramaGeral = lazy(() => import('./pages/CronogramaGeral'));
+const CronogramaImplementacao = lazy(() => import('./pages/CronogramaImplementacao'));
+const CulturaOrganizacional = lazy(() => import('./pages/CulturaOrganizacional'));
+const DRETCMP2 = lazy(() => import('./pages/DRETCMP2'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const DashboardFinanceiro = lazy(() => import('./pages/DashboardFinanceiro'));
+const DashboardOverview = lazy(() => import('./pages/DashboardOverview'));
+const DescricoesCargo = lazy(() => import('./pages/DescricoesCargo'));
+const DesdobramentoMeta = lazy(() => import('./pages/DesdobramentoMeta'));
+const DesesosCliente = lazy(() => import('./pages/DesesosCliente'));
+const DetalhesColaborador = lazy(() => import('./pages/DetalhesColaborador'));
+const DiagnosticoCarga = lazy(() => import('./pages/DiagnosticoCarga'));
+const DiagnosticoComercial = lazy(() => import('./pages/DiagnosticoComercial'));
+const DiagnosticoDISC = lazy(() => import('./pages/DiagnosticoDISC'));
+const DiagnosticoDesempenho = lazy(() => import('./pages/DiagnosticoDesempenho'));
+const DiagnosticoEmpresario = lazy(() => import('./pages/DiagnosticoEmpresario'));
+const DiagnosticoEndividamento = lazy(() => import('./pages/DiagnosticoEndividamento'));
+const DiagnosticoGerencial = lazy(() => import('./pages/DiagnosticoGerencial'));
+const DiagnosticoMaturidade = lazy(() => import('./pages/DiagnosticoMaturidade'));
+const DiagnosticoOS = lazy(() => import('./pages/DiagnosticoOS'));
+const DiagnosticoPlano = lazy(() => import('./pages/DiagnosticoPlano'));
+const DiagnosticoProducao = lazy(() => import('./pages/DiagnosticoProducao'));
+const DicasOperacao = lazy(() => import('./pages/DicasOperacao'));
+const DocumentacaoCompleta = lazy(() => import('./pages/DocumentacaoCompleta'));
+const DocumentacaoRBAC = lazy(() => import('./pages/DocumentacaoRBAC'));
+const DoresAtivas = lazy(() => import('./pages/DoresAtivas'));
+const DuvidasCliente = lazy(() => import('./pages/DuvidasCliente'));
+const EditarDescricaoCargo = lazy(() => import('./pages/EditarDescricaoCargo'));
+const EvidenceUpload = lazy(() => import('./pages/EvidenceUpload'));
+const EvolucoesCliente = lazy(() => import('./pages/EvolucoesCliente'));
+const Feedbacks = lazy(() => import('./pages/Feedbacks'));
+const Gamificacao = lazy(() => import('./pages/Gamificacao'));
+const GerenciarAula = lazy(() => import('./pages/GerenciarAula'));
+const GerenciarChecklists = lazy(() => import('./pages/GerenciarChecklists'));
+const GerenciarGruposClientes = lazy(() => import('./pages/GerenciarGruposClientes'));
+const GerenciarModulo = lazy(() => import('./pages/GerenciarModulo'));
+const GerenciarModulosCurso = lazy(() => import('./pages/GerenciarModulosCurso'));
+const GerenciarPlanos = lazy(() => import('./pages/GerenciarPlanos'));
+const GerenciarProcessos = lazy(() => import('./pages/GerenciarProcessos'));
+const GerenciarRoles = lazy(() => import('./pages/GerenciarRoles'));
+const GerenciarToursVideos = lazy(() => import('./pages/GerenciarToursVideos'));
+const GerenciarTreinamentos = lazy(() => import('./pages/GerenciarTreinamentos'));
+const GestaoContratos = lazy(() => import('./pages/GestaoContratos'));
+const GestaoDesafios = lazy(() => import('./pages/GestaoDesafios'));
+const GestaoOficina = lazy(() => import('./pages/GestaoOficina'));
+const GestaoRBAC = lazy(() => import('./pages/GestaoRBAC'));
+const GestaoRoles = lazy(() => import('./pages/GestaoRoles'));
+const GestaoUsuariosEmpresas = lazy(() => import('./pages/GestaoUsuariosEmpresas'));
+const GraficosProducao = lazy(() => import('./pages/GraficosProducao'));
+const Historico = lazy(() => import('./pages/Historico'));
+const HistoricoDISC = lazy(() => import('./pages/HistoricoDISC'));
+const HistoricoDesempenho = lazy(() => import('./pages/HistoricoDesempenho'));
+const HistoricoMaturidade = lazy(() => import('./pages/HistoricoMaturidade'));
+const HistoricoMetas = lazy(() => import('./pages/HistoricoMetas'));
+const Home = lazy(() => import('./pages/Home'));
+const IAAnalytics = lazy(() => import('./pages/IAAnalytics'));
+const Integracoes = lazy(() => import('./pages/Integracoes'));
+const IntelligenciaCliente = lazy(() => import('./pages/IntelligenciaCliente'));
+const LogsAuditoriaRBAC = lazy(() => import('./pages/LogsAuditoriaRBAC'));
+const ManualProcessos = lazy(() => import('./pages/ManualProcessos'));
+const MapaChecklists = lazy(() => import('./pages/MapaChecklists'));
+const MeuPerfil = lazy(() => import('./pages/MeuPerfil'));
+const MeuPlano = lazy(() => import('./pages/MeuPlano'));
+const MeusProcessos = lazy(() => import('./pages/MeusProcessos'));
+const MeusTreinamentos = lazy(() => import('./pages/MeusTreinamentos'));
+const MissaoVisaoValores = lazy(() => import('./pages/MissaoVisaoValores'));
+const MonitoramentoRH = lazy(() => import('./pages/MonitoramentoRH'));
+const MonitoramentoUsuarios = lazy(() => import('./pages/MonitoramentoUsuarios'));
+const Notificacoes = lazy(() => import('./pages/Notificacoes'));
+const Organograma = lazy(() => import('./pages/Organograma'));
+const OrganogramaFuncional = lazy(() => import('./pages/OrganogramaFuncional'));
+const PainelAcoes = lazy(() => import('./pages/PainelAcoes'));
+const PainelClienteAceleracao = lazy(() => import('./pages/PainelClienteAceleracao'));
+const PainelMetas = lazy(() => import('./pages/PainelMetas'));
+const PesquisaClima = lazy(() => import('./pages/PesquisaClima'));
+const PlanoAcao = lazy(() => import('./pages/PlanoAcao'));
+const Planos = lazy(() => import('./pages/Planos'));
+const PortalColaborador = lazy(() => import('./pages/PortalColaborador'));
+const PrimeiroAcesso = lazy(() => import('./pages/PrimeiroAcesso'));
+const PublicFeedback = lazy(() => import('./pages/PublicFeedback'));
+const QGPBoard = lazy(() => import('./pages/QGPBoard'));
+const Questionario = lazy(() => import('./pages/Questionario'));
+const RankingBrasil = lazy(() => import('./pages/RankingBrasil'));
+const Regimento = lazy(() => import('./pages/Regimento'));
+const RegistrarAtendimento = lazy(() => import('./pages/RegistrarAtendimento'));
+const RegistroDiario = lazy(() => import('./pages/RegistroDiario'));
+const RelatorioCDC = lazy(() => import('./pages/RelatorioCDC'));
+const RelatorioUsuario = lazy(() => import('./pages/RelatorioUsuario'));
+const RelatoriosAceleracao = lazy(() => import('./pages/RelatoriosAceleracao'));
+const RelatoriosAvancados = lazy(() => import('./pages/RelatoriosAvancados'));
+const RelatoriosInteligencia = lazy(() => import('./pages/RelatoriosInteligencia'));
+const RepositorioDocumentos = lazy(() => import('./pages/RepositorioDocumentos'));
+const ResponderDISC = lazy(() => import('./pages/ResponderDISC'));
+const ResponderMaturidade = lazy(() => import('./pages/ResponderMaturidade'));
+const ResponderPesquisaClima = lazy(() => import('./pages/ResponderPesquisaClima'));
+const Resultado = lazy(() => import('./pages/Resultado'));
+const ResultadoAutoavaliacao = lazy(() => import('./pages/ResultadoAutoavaliacao'));
+const ResultadoCarga = lazy(() => import('./pages/ResultadoCarga'));
+const ResultadoClima = lazy(() => import('./pages/ResultadoClima'));
+const ResultadoDISC = lazy(() => import('./pages/ResultadoDISC'));
+const ResultadoDesempenho = lazy(() => import('./pages/ResultadoDesempenho'));
+const ResultadoEmpresario = lazy(() => import('./pages/ResultadoEmpresario'));
+const ResultadoEndividamento = lazy(() => import('./pages/ResultadoEndividamento'));
+const ResultadoMaturidade = lazy(() => import('./pages/ResultadoMaturidade'));
+const ResultadoOS = lazy(() => import('./pages/ResultadoOS'));
+const ResultadoProducao = lazy(() => import('./pages/ResultadoProducao'));
+const RiscosCliente = lazy(() => import('./pages/RiscosCliente'));
+const Rituais = lazy(() => import('./pages/Rituais'));
+const RituaisAculturamento = lazy(() => import('./pages/RituaisAculturamento'));
+const SelecionarDiagnostico = lazy(() => import('./pages/SelecionarDiagnostico'));
+const SolicitarPermissoes = lazy(() => import('./pages/SolicitarPermissoes'));
+const Tarefas = lazy(() => import('./pages/Tarefas'));
+const TechnicianQGP = lazy(() => import('./pages/TechnicianQGP'));
+const TreinamentoVendas = lazy(() => import('./pages/TreinamentoVendas'));
+const UsuariosAdmin = lazy(() => import('./pages/UsuariosAdmin'));
+const VisualizarProcesso = lazy(() => import('./pages/VisualizarProcesso'));
+const GestaoTenants = lazy(() => import('./pages/GestaoTenants'));
+const GestaoEmpresas = lazy(() => import('./pages/GestaoEmpresas'));
+const PublicNPS = lazy(() => import('./pages/PublicNPS'));
+const PublicDISC = lazy(() => import('./pages/PublicDISC'));
 import __Layout from './Layout.jsx';
-
 
 export const PAGES = {
     "AcademiaTreinamento": AcademiaTreinamento,
