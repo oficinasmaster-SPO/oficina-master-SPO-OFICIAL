@@ -71,10 +71,11 @@ export default function Layout({ children, currentPageName }) {
     queryFn: async () => {
       try {
         if (!user?.id) return [];
-        const allNotifications = await base44.entities.Notification.list('-created_date', 50);
-        return Array.isArray(allNotifications) 
-          ? allNotifications.filter(n => n.user_id === user.id && !n.is_read)
-          : [];
+        const notifications = await base44.entities.Notification.filter({
+          user_id: user.id,
+          is_read: false
+        }, '-created_date', 20);
+        return Array.isArray(notifications) ? notifications : [];
       } catch (error) {
         return [];
       }
