@@ -76,22 +76,23 @@ export default function TenantSelector() {
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-[200px] p-0" align="start">
-            <Command>
-              <CommandInput placeholder="Pesquisar oficina..." />
-              <CommandList>
-                <CommandEmpty>Nenhuma oficina encontrada.</CommandEmpty>
-                <CommandGroup>
+          <PopoverContent className="w-[200px] p-0 bg-white" align="start">
+            <Command className="bg-white">
+              <CommandInput placeholder="Pesquisar oficina..." className="text-gray-900" />
+              <CommandList className="bg-white">
+                <CommandEmpty className="text-gray-500">Nenhuma oficina encontrada.</CommandEmpty>
+                <CommandGroup className="bg-white">
                   <CommandItem
                     value="none-Todas Oficinas"
                     onSelect={() => {
                       changeCompany(null);
                       setOpenCompanyPopover(false);
                     }}
+                    className="text-gray-900 hover:bg-gray-100 cursor-pointer"
                   >
                     <Check
                       className={cn(
-                        "mr-2 h-4 w-4",
+                        "mr-2 h-4 w-4 text-gray-700",
                         (!selectedCompanyId || selectedCompanyId === 'none') ? "opacity-100" : "opacity-0"
                       )}
                     />
@@ -105,14 +106,15 @@ export default function TenantSelector() {
                         changeCompany(c.id);
                         setOpenCompanyPopover(false);
                       }}
+                      className="text-slate-900 hover:bg-slate-100 cursor-pointer font-medium"
                     >
                       <Check
                         className={cn(
-                          "mr-2 h-4 w-4",
+                          "mr-2 h-4 w-4 text-slate-700",
                           selectedCompanyId === c.id ? "opacity-100" : "opacity-0"
                         )}
                       />
-                      {c.name}
+                      <span className="text-slate-900 w-full block">{c.name}</span>
                     </CommandItem>
                   ))}
                 </CommandGroup>

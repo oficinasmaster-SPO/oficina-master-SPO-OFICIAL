@@ -15,6 +15,7 @@ import AgendaVisualTab from "@/components/aceleracao/AgendaVisualTab";
 import RegistroAtendimentoMassaModal from "@/components/aceleracao/RegistroAtendimentoMassaModal";
 import FiltrosControleAceleracao from "@/components/aceleracao/FiltrosControleAceleracao";
 import RegistrarAtendimento from "./RegistrarAtendimento";
+import CronogramaGeral from "./CronogramaGeral";
 
 export default function ControleAceleracao() {
   const navigate = useNavigate();
@@ -140,7 +141,6 @@ export default function ControleAceleracao() {
           </TabsTrigger>
           <TabsTrigger 
             value="cronograma"
-            onClick={() => navigate(createPageUrl('CronogramaGeral'))}
             className="flex-shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-colors"
           >
             <Calendar className="w-4 h-4 mr-2" />
@@ -167,6 +167,12 @@ export default function ControleAceleracao() {
 
         <TabsContent value="atendimentos">
           <PainelAtendimentosTab user={user} />
+        </TabsContent>
+
+        <TabsContent value="cronograma">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <CronogramaGeral isTab={true} />
+          </div>
         </TabsContent>
 
         <TabsContent value="pedidos">

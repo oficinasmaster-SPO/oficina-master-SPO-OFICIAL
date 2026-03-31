@@ -10,7 +10,7 @@ import { Calendar, Search, Download, AlertCircle, CheckCircle2, Clock, ChevronRi
 import ClientDetailPanel from "@/components/aceleracao/ClientDetailPanel";
 import AvaliacaoProcessoModal from "@/components/aceleracao/AvaliacaoProcessoModal";
 
-export default function CronogramaGeral() {
+export default function CronogramaGeral({ isTab = false }) {
   const [selectedPlan, setSelectedPlan] = useState("GOLD");
   const [filterStatus, setFilterStatus] = useState("todos");
   const [searchTerm, setSearchTerm] = useState("");
@@ -305,9 +305,9 @@ export default function CronogramaGeral() {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50">
+    <div className={`${isTab ? 'h-[calc(100vh-250px)] rounded-b-lg' : 'h-screen'} flex flex-col bg-gray-50`}>
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className={`bg-white border-b border-gray-200 px-6 py-4 ${isTab ? 'hidden' : ''}`}>
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold text-gray-900">CRONOGRAMA GERAL</h1>
           <div className="flex gap-3">
@@ -433,6 +433,72 @@ export default function CronogramaGeral() {
           </Card>
         </div>
       </div>
+
+      {isTab && (
+        <div className="p-4 bg-white border-b border-gray-200 flex items-center justify-between rounded-t-lg">
+          <div className="flex gap-3">
+            <Select value={selectedPlan} onValueChange={setSelectedPlan}>
+              <SelectTrigger className="w-48">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="TODOS" className="font-bold">TODOS OS CLIENTES</SelectItem>
+                <SelectItem value="FREE" className="font-bold">FREE</SelectItem>
+                <SelectItem value="START" className="font-bold">START</SelectItem>
+                <SelectItem value="BRONZE" className="font-bold">BRONZE</SelectItem>
+                <SelectItem value="PRATA" className="font-bold">PRATA</SelectItem>
+                <SelectItem value="GOLD" className="font-bold">GOLD</SelectItem>
+                <SelectItem value="IOM" className="font-bold">IOM</SelectItem>
+                <SelectItem value="MILLIONS" className="font-bold">MILLIONS</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button variant="outline" onClick={handleExport}>
+              <Download className="w-4 h-4 mr-2" />
+              Exportar
+            </Button>
+          </div>
+          <div className="flex gap-4">
+            <div className="text-center px-4 border-r">
+              <p className="text-xs text-blue-600 font-medium">A Fazer</p>
+              <p className="font-bold text-blue-900">
+                {processos.reduce((acc, p) => {
+                  const contagem = getContagemPorProcesso(p.codigo);
+                  return acc + contagem.a_fazer + contagem.em_andamento;
+                }, 0)}
+              </p>
+            </div>
+            <div className="text-center px-4 border-r">
+              <p className="text-xs text-red-600 font-medium">Atrasado</p>
+              <p className="font-bold text-red-900">
+                {processos.reduce((acc, p) => {
+                  const contagem = getContagemPorProcesso(p.codigo);
+                  return acc + contagem.atrasado;
+                }, 0)}
+              </p>
+            </div>
+            <div className="text-center px-4 border-r">
+              <p className="text-xs text-green-600 font-medium">Concluído</p>
+              <p className="font-bold text-green-900">
+                {processos.reduce((acc, p) => {
+                  const contagem = getContagemPorProcesso(p.codigo);
+                  return acc + contagem.concluido;
+                }, 0)}
+              </p>
+            </div>
+            <div className="text-center px-4">
+              <p className="text-xs text-purple-600 font-medium">Taxa Conclusão</p>
+              <p className="font-bold text-purple-900">
+                {processos.length > 0 ? Math.round(
+                  (processos.reduce((acc, p) => {
+                    const contagem = getContagemPorProcesso(p.codigo);
+                    return acc + contagem.concluido;
+                  }, 0) / (workshopsPorPlano.length * processos.length || 1)) * 100
+                ) : 0}%
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Conteúdo Principal */}
       <div className="flex-1 flex overflow-hidden">
