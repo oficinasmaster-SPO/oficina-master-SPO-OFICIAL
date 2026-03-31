@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { useCachedEmployees } from '@/components/hooks/useCachedEmployees';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -69,22 +70,7 @@ export default function Colaboradores() {
 
   const { workshop } = useWorkshopContext();
 
-  const { data: employees = [], isLoading } = useQuery({
-    queryKey: ['employees', workshop?.id],
-    queryFn: async () => {
-      if (!workshop) return [];
-      try {
-        // Filter employees by the specific workshop ID
-        const result = await base44.entities.Employee.filter({ workshop_id: workshop.id }, '-created_date');
-        return Array.isArray(result) ? result : [];
-      } catch (error) {
-        console.log("Error fetching employees:", error);
-        return [];
-      }
-    },
-    enabled: !!workshop,
-    retry: 1
-  });
+  const { data: employees = [], isLoading } = useCachedEmployees(workshop?.id);
 
   const { data: coexContracts = [] } = useQuery({
     queryKey: ['coex-contracts'],

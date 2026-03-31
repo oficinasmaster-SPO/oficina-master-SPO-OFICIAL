@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
+import { useQueryCache } from '@/hooks/useQueryCache';
+import { useCacheInvalidation } from '@/lib/cacheInvalidationHook';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 import { invokeWithTenant } from "@/api/tenantClient";
@@ -29,9 +31,9 @@ export default function Dashboard() {
   const { workshop } = useWorkshopContext();
   const tenantId = workshop?.id;
 
-  const { data: user, isLoading: loadingAuth } = useQuery({
-    queryKey: ["auth-me"],
-    queryFn: async () => {
+  const { data: user, isLoading: loadingAuth } = useQueryCache(
+    ['auth-me'],
+    async () => {
       try {
         const currentUser = await base44.auth.me();
         if (currentUser.role !== "admin" && currentUser.role !== "user") {
@@ -42,14 +44,17 @@ export default function Dashboard() {
         navigate(createPageUrl("Home"));
         return null;
       }
-    }
-  });
+    },
+    'STABLE'
+  );
+
+  useCacheInvalidation('User', 'auth-me');
 
   const isAuthorized = user?.role === "admin" || user?.role === "user";
 
-  const { data: bffData, isLoading: loadingDashboard } = useQuery({
-    queryKey: ['bff-dashboard', tenantId],
-    queryFn: async () => {
+  const { data: bffData, isLoading: loadingDashboard } = useQueryCache(
+    ['bff-dashboard', tenantId],
+    async () => {
       try {
         const response = await invokeWithTenant('bffDashboard', { tenantId });
         return response.data || {};
@@ -58,9 +63,10 @@ export default function Dashboard() {
         return {};
       }
     },
-    enabled: !!tenantId && isAuthorized,
-    retry: 1
-  });
+    'MODERATE'
+  );
+
+  useCacheInvalidation('Workshop', 'bff-dashboard');
 
   const workshops = bffData?.workshops || [];
   const osAssessments = bffData?.osAssessments || [];
