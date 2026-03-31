@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 
 const SharedDataContext = createContext(null);
@@ -36,7 +36,8 @@ export function SharedDataProvider({ children, workshop, workshopId, userId }) {
     gcTime: 10 * 60 * 1000,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
-    retry: false, // Previne retries imediatos para não estourar Rate Limit
+    retry: false,
+    placeholderData: keepPreviousData,
   });
 
   const { data: latestOSDiagnostic, isLoading: loadingOS } = useQuery({
@@ -58,7 +59,8 @@ export function SharedDataProvider({ children, workshop, workshopId, userId }) {
     gcTime: 10 * 60 * 1000,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
-    retry: false, // Previne retries imediatos para não estourar Rate Limit
+    retry: false,
+    placeholderData: keepPreviousData,
   });
 
   const { data: employees = [], isLoading: loadingEmployees } = useQuery({
@@ -81,6 +83,7 @@ export function SharedDataProvider({ children, workshop, workshopId, userId }) {
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     retry: 1,
+    placeholderData: keepPreviousData,
   });
 
   // Metas mensais da oficina
@@ -103,6 +106,7 @@ export function SharedDataProvider({ children, workshop, workshopId, userId }) {
     gcTime: 10 * 60 * 1000,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
+    placeholderData: keepPreviousData,
   });
 
   // Histórico de metas
@@ -121,6 +125,7 @@ export function SharedDataProvider({ children, workshop, workshopId, userId }) {
     gcTime: 10 * 60 * 1000,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
+    placeholderData: keepPreviousData,
   });
 
   // Função para invalidar e atualizar dados

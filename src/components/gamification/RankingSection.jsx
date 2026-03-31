@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -17,9 +18,9 @@ const STANDARD_AREAS = [
 ];
 
 export default function RankingSection({ internalRankings, nationalRankings, userEmployee, currentWorkshop }) {
-    if (!internalRankings) return null;
-
     const [nationalFilter, setNationalFilter] = useState("geral");
+
+    if (!internalRankings) return null;
 
     // Helper for Engagement Classification
     const getEngagementLevel = (score) => {

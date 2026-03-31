@@ -41,8 +41,6 @@ const proximoNivel = {
 export default function MaturidadeColaboradorCard({ employee, diagnostic }) {
   const navigate = useNavigate();
 
-  if (!employee) return null;
-  
   const nivelAtual = diagnostic?.maturity_level || "bebe";
   const nivelInfo = nivelLabels[nivelAtual] || nivelLabels.bebe;
   const dataAnalise = diagnostic?.created_date 
@@ -54,7 +52,7 @@ export default function MaturidadeColaboradorCard({ employee, diagnostic }) {
 
   // Buscar treinamentos concluídos pelo colaborador
   const { data: trainingProgress } = useQuery({
-    queryKey: ['employee-training-progress', employee.id],
+    queryKey: ['employee-training-progress', employee?.id],
     queryFn: async () => {
       const progress = await base44.entities.EmployeeTrainingProgress.filter({
         employee_id: employee.id
@@ -66,7 +64,7 @@ export default function MaturidadeColaboradorCard({ employee, diagnostic }) {
 
   // Buscar feedbacks e avaliações do colaborador
   const { data: feedbacks } = useQuery({
-    queryKey: ['employee-feedbacks', employee.id],
+    queryKey: ['employee-feedbacks', employee?.id],
     queryFn: async () => {
       const feedbackList = await base44.entities.EmployeeFeedback.filter({
         employee_id: employee.id
@@ -75,6 +73,8 @@ export default function MaturidadeColaboradorCard({ employee, diagnostic }) {
     },
     enabled: !!employee?.id
   });
+
+  if (!employee) return null;
 
   // Calcular progresso de desenvolvimento
   const trainingCompleted = trainingProgress?.filter(t => t.status === 'concluido').length || 0;

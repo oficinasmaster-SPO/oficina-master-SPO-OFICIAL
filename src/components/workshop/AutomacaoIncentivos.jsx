@@ -11,7 +11,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { MessageCircle, Save, Loader2, Smartphone } from "lucide-react";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 
 export default function AutomacaoIncentivos({ workshop }) {
   const queryClient = useQueryClient();

@@ -147,7 +147,7 @@ export default function ConfigurarDestinatarios({
   }, [savedGroups, groupFilters.name]);
 
   const deleteGroup = (id) => {
-    setSavedGroups(savedGroups.filter(g => g.id !== id));
+    deactivateGroupMutation.mutate(id);
     toast.success("Grupo deletado");
   };
 

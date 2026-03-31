@@ -347,7 +347,7 @@ export default function GestaoOficina() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <CustomCSSUpload 
                     workshop={workshop} 
-                    onUpdate={(data) => setWorkshop(prev => ({ ...prev, ...data }))} 
+                    onUpdate={handleUpdate} 
                 />
             </div>
           </TabsContent>
