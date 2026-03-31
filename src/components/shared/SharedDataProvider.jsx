@@ -8,9 +8,7 @@ export function SharedDataProvider({ children, workshop, workshopId, userId }) {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (workshopId) {
-      console.log('🔥 SharedDataProvider inicializado para:', workshopId);
-    }
+    // Provider inicializado
   }, [workshopId]);
 
   // O workshop principal agora vem direto do hook useWorkshopContext (passado pelo Layout)
@@ -21,10 +19,8 @@ export function SharedDataProvider({ children, workshop, workshopId, userId }) {
     queryKey: ['shared-dre', workshopId],
     queryFn: async () => {
       if (!workshopId) return null;
-      console.log('📊 Carregando DRE para:', workshopId);
       try {
         const dres = await base44.entities.DREMonthly.filter({ workshop_id: workshopId }, '-reference_month', 1);
-        console.log('📊 DRE encontrado:', dres?.[0] ? 'sim' : 'não');
         return dres?.[0] || null;
       } catch (error) {
         console.error("Erro ao carregar DRE:", error);
@@ -44,10 +40,8 @@ export function SharedDataProvider({ children, workshop, workshopId, userId }) {
     queryKey: ['shared-os-diagnostic', workshopId],
     queryFn: async () => {
       if (!workshopId) return null;
-      console.log('📊 Carregando OS Diagnostic para:', workshopId);
       try {
         const diagnostics = await base44.entities.ServiceOrderDiagnostic.filter({ workshop_id: workshopId }, '-created_date', 1);
-        console.log('📊 OS encontrada:', diagnostics?.[0] ? 'sim' : 'não');
         return diagnostics?.[0] || null;
       } catch (error) {
         console.error("Erro ao carregar OS:", error);
@@ -67,10 +61,8 @@ export function SharedDataProvider({ children, workshop, workshopId, userId }) {
     queryKey: ['shared-employees', workshopId],
     queryFn: async () => {
       if (!workshopId) return [];
-      console.log('📊 Carregando colaboradores para:', workshopId);
       try {
         const result = await base44.entities.Employee.filter({ workshop_id: workshopId });
-        console.log('📊 Colaboradores encontrados:', result?.length || 0);
         return Array.isArray(result) ? result : [];
       } catch (error) {
         console.error("Erro ao carregar employees:", error);
@@ -91,14 +83,12 @@ export function SharedDataProvider({ children, workshop, workshopId, userId }) {
     queryKey: ['shared-goals', workshopId],
     queryFn: async () => {
       if (!workshopId) return null;
-      console.log('📊 Carregando metas para:', workshopId);
       const goals = await base44.entities.Goal.filter(
         { workshop_id: workshopId },
         '-created_date',
         1
       );
       const result = goals?.[0] || workshop?.monthly_goals || null;
-      console.log('📊 Metas encontradas:', result ? 'sim' : 'não');
       return result;
     },
     enabled: !!workshopId,
