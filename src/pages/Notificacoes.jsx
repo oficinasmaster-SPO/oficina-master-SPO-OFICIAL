@@ -134,9 +134,19 @@ export default function Notificacoes() {
         throw new Error('Nenhuma notificação para remover');
       }
       
-      const results = await Promise.allSettled(
-        notificationsToDelete.map(n => base44.entities.Notification.delete(n.id))
-      );
+      // Deletar com delay para evitar rate limit
+      const results = [];
+      for (const notification of notificationsToDelete) {
+        try {
+          await base44.entities.Notification.delete(notification.id);
+          results.push({ id: notification.id, success: true });
+        } catch (error) {
+          console.error(`Erro ao deletar notificação ${notification.id}:`, error);
+          results.push({ id: notification.id, success: false, error });
+        }
+        // Aguarda 100ms entre requisições
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
       
       return results;
     },
