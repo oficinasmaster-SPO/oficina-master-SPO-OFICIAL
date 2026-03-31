@@ -445,7 +445,7 @@ export default function AudioCaptureField({
       )}
 
       {/* Guia de debug */}
-      {process.env.NODE_ENV === 'development' && (
+      {import.meta.env.DEV && (
         <details className="text-xs text-gray-500 mt-2">
           <summary className="cursor-pointer">Debug Info</summary>
           <div className="mt-1 space-y-1 font-mono">

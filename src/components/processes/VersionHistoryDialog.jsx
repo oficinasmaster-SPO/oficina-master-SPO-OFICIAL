@@ -107,12 +107,34 @@ export default function VersionHistoryDialog({ open, onClose, versionHistory, on
             ) : (
               <div className="space-y-2">
                 {versionHistory.slice().reverse().map((version, idx) => {
-                  const [expanded, setExpanded] = React.useState(false);
-                  
-                  return (
-                    <div key={idx} className="border rounded-lg overflow-hidden hover:shadow-sm transition-shadow">
-                      <button
-                        onClick={() => setExpanded(!expanded)}
+                  return <VersionItem key={idx} version={version} />;
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function VersionItem({ version }) {
+  const [expanded, setExpanded] = React.useState(false);
+  
+  const getOriginColor = (origin) => {
+    switch (origin) {
+      case 'criacao_inicial': return 'bg-blue-100 text-blue-700';
+      case 'melhoria_ia': return 'bg-purple-100 text-purple-700';
+      case 'correcao_auditoria': return 'bg-orange-100 text-orange-700';
+      case 'revisao_periodica': return 'bg-green-100 text-green-700';
+      default: return 'bg-gray-100 text-gray-700';
+    }
+  };
+
+  return (
+    <div className="border rounded-lg overflow-hidden hover:shadow-sm transition-shadow">
+      <button
+        onClick={() => setExpanded(!expanded)}
                         className="w-full flex items-center justify-between p-3 hover:bg-gray-50 text-left"
                       >
                         <div className="flex items-center gap-3 flex-1">
@@ -163,14 +185,6 @@ export default function VersionHistoryDialog({ open, onClose, versionHistory, on
                           </div>
                         </div>
                       )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+    </div>
   );
 }

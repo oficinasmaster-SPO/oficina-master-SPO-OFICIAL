@@ -11,8 +11,6 @@ import { ptBR } from "date-fns/locale";
  * Relatório de acessos e downloads
  */
 export default function AccessReport({ document, logs = [], onClose }) {
-  if (!document) return null;
-
   const stats = React.useMemo(() => {
     const totalDownloads = logs.length;
     const uniqueUsers = new Set(logs.map(l => l.user_email)).size;
@@ -31,6 +29,8 @@ export default function AccessReport({ document, logs = [], onClose }) {
 
     return { totalDownloads, uniqueUsers, lastAccess, topUsers };
   }, [logs]);
+
+  if (!document) return null;
 
   return (
     <Dialog open={!!document} onOpenChange={onClose}>

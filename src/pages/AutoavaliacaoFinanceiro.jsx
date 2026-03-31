@@ -126,7 +126,7 @@ Feedback adicional do usuário para consideração: """${userFeedback}"""
         scores: scores,
         average_score: average,
         strengths: strongPoints,
-        weaknesses: weakPoint,
+        weaknesses: weakPoints,
         bottlenecks: weakPoints,
         ai_recommendations: typeof aiResponse === 'string' ? aiResponse : JSON.stringify(aiResponse),
         user_feedback: userFeedback || "",

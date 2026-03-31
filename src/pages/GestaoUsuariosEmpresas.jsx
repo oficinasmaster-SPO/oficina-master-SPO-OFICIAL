@@ -269,6 +269,8 @@ export default function GestaoUsuariosEmpresas() {
              matchesCidade && matchesStatus && matchesFaturamento && matchesPermission;
     });
 
+    let filtered = [...workshopsWithData];
+
     if (sortConfig.key) {
       filtered.sort((a, b) => {
         let aValue = a[sortConfig.key];
@@ -682,252 +684,252 @@ export default function GestaoUsuariosEmpresas() {
                                   <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("Home")}?workshop_id=${workshop.id}`)}>
                                     <Home className="w-4 h-4 mr-2" />Tela Início
                                   </Button>
-                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("DashboardOverview")}?workshop_id=${user.workshop_id}`)}>
+                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("DashboardOverview")}?workshop_id=${workshop.id}`)}>
                                     <BarChart3 className="w-4 h-4 mr-2" />Visão Geral
                                   </Button>
-                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("Dashboard")}?workshop_id=${user.workshop_id}`)}>
+                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("Dashboard")}?workshop_id=${workshop.id}`)}>
                                     <BarChart3 className="w-4 h-4 mr-2" />Dashboard Nacional
                                   </Button>
-                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("Gamificacao")}?workshop_id=${user.workshop_id}`)}>
+                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("Gamificacao")}?workshop_id=${workshop.id}`)}>
                                     <Target className="w-4 h-4 mr-2" />Desafios
                                   </Button>
-                                </div>
-                              </div>
+                                  </div>
+                                  </div>
 
-                              {/* Cadastros */}
-                              <div className="bg-purple-50 rounded-lg p-4 shadow-sm border border-purple-200">
-                                <h5 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                                  {/* Cadastros */}
+                                  <div className="bg-purple-50 rounded-lg p-4 shadow-sm border border-purple-200">
+                                  <h5 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                                   <Building2 className="w-4 h-4" />
                                   Cadastros (Base de Dados)
-                                </h5>
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("GestaoOficina")}?workshop_id=${user.workshop_id}`)}>
+                                  </h5>
+                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("GestaoOficina")}?workshop_id=${workshop.id}`)}>
                                     <Building2 className="w-4 h-4 mr-2" />Gestão da Oficina
                                   </Button>
-                                </div>
-                              </div>
+                                  </div>
+                                  </div>
 
-                              {/* Pátio Operação */}
-                              <div className="bg-white rounded-lg p-4 shadow-sm">
-                                <h5 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                                  {/* Pátio Operação */}
+                                  <div className="bg-white rounded-lg p-4 shadow-sm">
+                                  <h5 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                                   <Wrench className="w-4 h-4" />
                                   Pátio Operação (QGP)
-                                </h5>
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("Tarefas")}?workshop_id=${user.workshop_id}`)}>
+                                  </h5>
+                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("Tarefas")}?workshop_id=${workshop.id}`)}>
                                     <Wrench className="w-4 h-4 mr-2" />Tarefas Operacionais
                                   </Button>
-                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("Notificacoes")}?workshop_id=${user.workshop_id}`)}>
+                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("Notificacoes")}?workshop_id=${workshop.id}`)}>
                                     <Wrench className="w-4 h-4 mr-2" />Notificações
                                   </Button>
-                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("RegistroDiario")}?workshop_id=${user.workshop_id}`)}>
+                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("RegistroDiario")}?workshop_id=${workshop.id}`)}>
                                     <Wrench className="w-4 h-4 mr-2" />Diário de Produção
                                   </Button>
-                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("QGPBoard")}?workshop_id=${user.workshop_id}`)}>
+                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("QGPBoard")}?workshop_id=${workshop.id}`)}>
                                     <Wrench className="w-4 h-4 mr-2" />Quadro Geral (TV)
                                   </Button>
-                                </div>
-                              </div>
+                                  </div>
+                                  </div>
 
-                              {/* Resultados */}
-                              <div className="bg-white rounded-lg p-4 shadow-sm">
-                                <h5 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                                  {/* Resultados */}
+                                  <div className="bg-white rounded-lg p-4 shadow-sm">
+                                  <h5 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                                   <Calculator className="w-4 h-4" />
                                   Resultados (OS, Metas, Finanças)
-                                </h5>
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("HistoricoMetas")}?workshop_id=${user.workshop_id}`)}>
+                                  </h5>
+                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("HistoricoMetas")}?workshop_id=${workshop.id}`)}>
                                     <Calculator className="w-4 h-4 mr-2" />Histórico de Metas
                                   </Button>
-                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("DesdobramentoMeta")}?workshop_id=${user.workshop_id}`)}>
+                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("DesdobramentoMeta")}?workshop_id=${workshop.id}`)}>
                                     <Calculator className="w-4 h-4 mr-2" />Desdobramento
                                   </Button>
-                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("DRETCMP2")}?workshop_id=${user.workshop_id}`)}>
+                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("DRETCMP2")}?workshop_id=${workshop.id}`)}>
                                     <Calculator className="w-4 h-4 mr-2" />DRE & TCMP²
                                   </Button>
-                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("DiagnosticoOS")}?workshop_id=${user.workshop_id}`)}>
+                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("DiagnosticoOS")}?workshop_id=${workshop.id}`)}>
                                     <Calculator className="w-4 h-4 mr-2" />OS - R70/I30
                                   </Button>
-                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("DiagnosticoProducao")}?workshop_id=${user.workshop_id}`)}>
+                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("DiagnosticoProducao")}?workshop_id=${workshop.id}`)}>
                                     <Calculator className="w-4 h-4 mr-2" />Produção vs Salário
                                   </Button>
-                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("DiagnosticoEndividamento")}?workshop_id=${user.workshop_id}`)}>
+                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("DiagnosticoEndividamento")}?workshop_id=${workshop.id}`)}>
                                     <Calculator className="w-4 h-4 mr-2" />Endividamento
                                   </Button>
-                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("DiagnosticoGerencial")}?workshop_id=${user.workshop_id}`)}>
+                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("DiagnosticoGerencial")}?workshop_id=${workshop.id}`)}>
                                     <Calculator className="w-4 h-4 mr-2" />Diag. Gerencial
                                   </Button>
-                                </div>
-                              </div>
+                                  </div>
+                                  </div>
 
-                              {/* Pessoas & RH */}
-                              <div className="bg-green-50 rounded-lg p-4 shadow-sm border border-green-200">
-                                <h5 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                                  {/* Pessoas & RH */}
+                                  <div className="bg-green-50 rounded-lg p-4 shadow-sm border border-green-200">
+                                  <h5 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                                   <Users className="w-4 h-4" />
                                   Pessoas & RH (Colaboradores)
-                                </h5>
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("Autoavaliacoes")}?workshop_id=${user.workshop_id}`)}>
+                                  </h5>
+                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("Autoavaliacoes")}?workshop_id=${workshop.id}`)}>
                                     <Target className="w-4 h-4 mr-2" />Autoavaliações
                                   </Button>
-                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("Colaboradores")}?workshop_id=${user.workshop_id}`)}>
+                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("Colaboradores")}?workshop_id=${workshop.id}`)}>
                                     <Users className="w-4 h-4 mr-2" />Colaboradores
                                   </Button>
-                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("ConvidarColaborador")}?workshop_id=${user.workshop_id}`)}>
+                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("ConvidarColaborador")}?workshop_id=${workshop.id}`)}>
                                     <Users className="w-4 h-4 mr-2" />Convidar
                                   </Button>
-                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("CDCList")}?workshop_id=${user.workshop_id}`)}>
+                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("CDCList")}?workshop_id=${workshop.id}`)}>
                                     <Target className="w-4 h-4 mr-2" />CDC
                                   </Button>
-                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("COEXList")}?workshop_id=${user.workshop_id}`)}>
+                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("COEXList")}?workshop_id=${workshop.id}`)}>
                                     <Target className="w-4 h-4 mr-2" />COEX
                                   </Button>
-                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("DiagnosticoEmpresario")}?workshop_id=${user.workshop_id}`)}>
+                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("DiagnosticoEmpresario")}?workshop_id=${workshop.id}`)}>
                                     <Target className="w-4 h-4 mr-2" />Perfil Empresário
                                   </Button>
-                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("DiagnosticoDISC")}?workshop_id=${user.workshop_id}`)}>
+                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("DiagnosticoDISC")}?workshop_id=${workshop.id}`)}>
                                     <Target className="w-4 h-4 mr-2" />Teste DISC
                                   </Button>
-                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("DiagnosticoMaturidade")}?workshop_id=${user.workshop_id}`)}>
+                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("DiagnosticoMaturidade")}?workshop_id=${workshop.id}`)}>
                                     <Target className="w-4 h-4 mr-2" />Maturidade
                                   </Button>
-                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("DiagnosticoDesempenho")}?workshop_id=${user.workshop_id}`)}>
+                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("DiagnosticoDesempenho")}?workshop_id=${workshop.id}`)}>
                                     <Target className="w-4 h-4 mr-2" />Matriz Desempenho
                                   </Button>
-                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("DiagnosticoCarga")}?workshop_id=${user.workshop_id}`)}>
+                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("DiagnosticoCarga")}?workshop_id=${workshop.id}`)}>
                                     <Target className="w-4 h-4 mr-2" />Carga de Trabalho
                                   </Button>
-                                </div>
-                              </div>
+                                  </div>
+                                  </div>
 
-                              {/* Diagnósticos & IA */}
-                              <div className="bg-white rounded-lg p-4 shadow-sm">
-                                <h5 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                                  {/* Diagnósticos & IA */}
+                                  <div className="bg-white rounded-lg p-4 shadow-sm">
+                                  <h5 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                                   <Brain className="w-4 h-4" />
                                   Diagnósticos & IA
-                                </h5>
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("IAAnalytics")}?workshop_id=${user.workshop_id}`)}>
+                                  </h5>
+                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("IAAnalytics")}?workshop_id=${workshop.id}`)}>
                                     <Brain className="w-4 h-4 mr-2" />IA Analytics
                                   </Button>
-                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("TreinamentoVendas")}?workshop_id=${user.workshop_id}`)}>
+                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("TreinamentoVendas")}?workshop_id=${workshop.id}`)}>
                                     <Brain className="w-4 h-4 mr-2" />Treinamento Vendas
                                   </Button>
-                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("DiagnosticoComercial")}?workshop_id=${user.workshop_id}`)}>
+                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("DiagnosticoComercial")}?workshop_id=${workshop.id}`)}>
                                     <Brain className="w-4 h-4 mr-2" />Diag. Comercial
                                   </Button>
-                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("SelecionarDiagnostico")}?workshop_id=${user.workshop_id}`)}>
+                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("SelecionarDiagnostico")}?workshop_id=${workshop.id}`)}>
                                     <Brain className="w-4 h-4 mr-2" />Selecionar Diag.
                                   </Button>
-                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("Historico")}?workshop_id=${user.workshop_id}`)}>
+                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("Historico")}?workshop_id=${workshop.id}`)}>
                                     <Brain className="w-4 h-4 mr-2" />Histórico
                                   </Button>
-                                </div>
-                              </div>
+                                  </div>
+                                  </div>
 
-                              {/* Processos */}
-                              <div className="bg-white rounded-lg p-4 shadow-sm">
-                                <h5 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                                  {/* Processos */}
+                                  <div className="bg-white rounded-lg p-4 shadow-sm">
+                                  <h5 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                                   <Package className="w-4 h-4" />
                                   Processos
-                                </h5>
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("MeusProcessos")}?workshop_id=${user.workshop_id}`)}>
+                                  </h5>
+                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("MeusProcessos")}?workshop_id=${workshop.id}`)}>
                                     <Package className="w-4 h-4 mr-2" />Meus Processos (MAPs)
                                   </Button>
-                                </div>
-                              </div>
+                                  </div>
+                                  </div>
 
-                              {/* Documentos */}
-                              <div className="bg-white rounded-lg p-4 shadow-sm">
-                                <h5 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                                  {/* Documentos */}
+                                  <div className="bg-white rounded-lg p-4 shadow-sm">
+                                  <h5 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                                   <FileCheck className="w-4 h-4" />
                                   Documentos
-                                </h5>
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("RepositorioDocumentos")}?workshop_id=${user.workshop_id}`)}>
+                                  </h5>
+                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("RepositorioDocumentos")}?workshop_id=${workshop.id}`)}>
                                     <FileCheck className="w-4 h-4 mr-2" />Repositório
                                   </Button>
-                                </div>
-                              </div>
+                                  </div>
+                                  </div>
 
-                              {/* Cultura */}
-                              <div className="bg-white rounded-lg p-4 shadow-sm">
-                                <h5 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                                  {/* Cultura */}
+                                  <div className="bg-white rounded-lg p-4 shadow-sm">
+                                  <h5 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                                   <Target className="w-4 h-4" />
                                   Cultura
-                                </h5>
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("CulturaOrganizacional")}?workshop_id=${user.workshop_id}`)}>
+                                  </h5>
+                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("CulturaOrganizacional")}?workshop_id=${workshop.id}`)}>
                                     <Target className="w-4 h-4 mr-2" />Manual da Cultura
                                   </Button>
-                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("MissaoVisaoValores")}?workshop_id=${user.workshop_id}`)}>
+                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("MissaoVisaoValores")}?workshop_id=${workshop.id}`)}>
                                     <Target className="w-4 h-4 mr-2" />Missão/Visão
                                   </Button>
-                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("RituaisAculturamento")}?workshop_id=${user.workshop_id}`)}>
+                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("RituaisAculturamento")}?workshop_id=${workshop.id}`)}>
                                     <Target className="w-4 h-4 mr-2" />Rituais
                                   </Button>
-                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("CronogramaAculturacao")}?workshop_id=${user.workshop_id}`)}>
+                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("CronogramaAculturacao")}?workshop_id=${workshop.id}`)}>
                                     <Target className="w-4 h-4 mr-2" />Cronograma
                                   </Button>
-                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("PesquisaClima")}?workshop_id=${user.workshop_id}`)}>
+                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("PesquisaClima")}?workshop_id=${workshop.id}`)}>
                                     <Target className="w-4 h-4 mr-2" />Pesquisa de Clima
                                   </Button>
-                                </div>
-                              </div>
+                                  </div>
+                                  </div>
 
-                              {/* Treinamentos */}
-                              <div className="bg-white rounded-lg p-4 shadow-sm">
-                                <h5 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                                  {/* Treinamentos */}
+                                  <div className="bg-white rounded-lg p-4 shadow-sm">
+                                  <h5 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                                   <GraduationCap className="w-4 h-4" />
                                   Treinamentos
-                                </h5>
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("GerenciarTreinamentos")}?workshop_id=${user.workshop_id}`)}>
+                                  </h5>
+                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("GerenciarTreinamentos")}?workshop_id=${workshop.id}`)}>
                                     <GraduationCap className="w-4 h-4 mr-2" />Gestão Treinamentos
                                   </Button>
-                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("AcompanhamentoTreinamento")}?workshop_id=${user.workshop_id}`)}>
+                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("AcompanhamentoTreinamento")}?workshop_id=${workshop.id}`)}>
                                     <GraduationCap className="w-4 h-4 mr-2" />Acompanhamento
                                   </Button>
-                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("MeusTreinamentos")}?workshop_id=${user.workshop_id}`)}>
+                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("MeusTreinamentos")}?workshop_id=${workshop.id}`)}>
                                     <GraduationCap className="w-4 h-4 mr-2" />Meus Treinamentos
                                   </Button>
-                                </div>
-                              </div>
+                                  </div>
+                                  </div>
 
-                              {/* Gestão da Operação */}
-                              <div className="bg-white rounded-lg p-4 shadow-sm">
-                                <h5 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                                  {/* Gestão da Operação */}
+                                  <div className="bg-white rounded-lg p-4 shadow-sm">
+                                  <h5 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                                   <Lightbulb className="w-4 h-4" />
                                   Gestão da Operação
-                                </h5>
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("DicasOperacao")}?workshop_id=${user.workshop_id}`)}>
+                                  </h5>
+                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("DicasOperacao")}?workshop_id=${workshop.id}`)}>
                                     <Lightbulb className="w-4 h-4 mr-2" />Dicas da Operação
                                   </Button>
-                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("GestaoDesafios")}?workshop_id=${user.workshop_id}`)}>
+                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("GestaoDesafios")}?workshop_id=${workshop.id}`)}>
                                     <Lightbulb className="w-4 h-4 mr-2" />Criar Desafios
                                   </Button>
-                                </div>
-                              </div>
+                                  </div>
+                                  </div>
 
-                              {/* Aceleração */}
-                              <div className="bg-orange-50 rounded-lg p-4 shadow-sm border border-orange-200">
-                                <h5 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                                  {/* Aceleração */}
+                                  <div className="bg-orange-50 rounded-lg p-4 shadow-sm border border-orange-200">
+                                  <h5 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                                   <Briefcase className="w-4 h-4" />
                                   Aceleração
-                                </h5>
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("PainelClienteAceleracao")}?workshop_id=${user.workshop_id}`)}>
+                                  </h5>
+                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("PainelClienteAceleracao")}?workshop_id=${workshop.id}`)}>
                                     <Briefcase className="w-4 h-4 mr-2" />Plano de Aceleração
                                   </Button>
-                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("CronogramaImplementacao")}?workshop_id=${user.workshop_id}`)}>
+                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("CronogramaImplementacao")}?workshop_id=${workshop.id}`)}>
                                     <Briefcase className="w-4 h-4 mr-2" />Cronograma
                                   </Button>
-                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("ControleAceleracao")}?workshop_id=${user.workshop_id}`)}>
+                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("ControleAceleracao")}?workshop_id=${workshop.id}`)}>
                                     <Briefcase className="w-4 h-4 mr-2" />Controle Aceleração
                                   </Button>
-                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("RelatoriosAceleracao")}?workshop_id=${user.workshop_id}`)}>
+                                  <Button size="sm" variant="outline" className="justify-start" onClick={() => navigate(`${createPageUrl("RelatoriosAceleracao")}?workshop_id=${workshop.id}`)}>
                                     <Briefcase className="w-4 h-4 mr-2" />Relatórios
                                   </Button>
                                 </div>

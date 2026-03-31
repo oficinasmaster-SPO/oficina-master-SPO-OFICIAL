@@ -1,134 +1,144 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { systemRoles } from "@/components/lib/systemRoles";
 import { pagePermissions } from "@/components/lib/pagePermissions";
 import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
+import { useAuth } from "@/lib/AuthContext";
+import { useQuery } from "@tanstack/react-query";
 
 const PermissionsContext = createContext(null);
 
 export function PermissionsProvider({ children }) {
-  const { workshopId, isAdminMode } = useWorkshopContext();
-  const [user, setUser] = useState(null);
-  const [profile, setProfile] = useState(null);
-  const [customRole, setCustomRole] = useState(null);
-  const [currentRole, setCurrentRole] = useState(null);
-  const [permissions, setPermissions] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { workshopId, workshop, isAdminMode } = useWorkshopContext();
+  const { user } = useAuth();
 
-  useEffect(() => {
-    let mounted = true;
+  const { data: permissionsData, isLoading: loading } = useQuery({
+    queryKey: ['permissions', user?.id, workshopId, isAdminMode],
+    queryFn: async () => {
+      if (!user) return { permissions: [], profile: null, customRole: null, currentRole: null, isOwnerOrPartner: false, granularConfig: {} };
 
-    const loadPermissions = async () => {
-      try {
-        setLoading(true);
-        const currentUser = await base44.auth.me().catch(() => null);
-        if (!mounted) return;
+      let aggregatedPermissions = [];
+      let activeRole = user.role === 'admin' ? 'admin' : (user.job_role || 'outros');
+      let activeProfileId = user.profile_id;
+      let isOwnerOrPartner = false;
+      let granularConfig = {};
+
+      const queries = [];
+
+      // Carregar configuração granular
+      queries.push(
+        base44.entities.SystemSetting.filter({ key: 'granular_permissions' })
+          .then(settings => {
+            if (settings && settings.length > 0) {
+              granularConfig = JSON.parse(settings[0].value || '{}');
+            }
+          })
+          .catch(() => {})
+      );
+
+      // Admin com acesso total
+      if (user.role === 'admin' && (isAdminMode || !workshopId)) {
+        await Promise.all(queries); // Espera a granularConfig
+        aggregatedPermissions = systemRoles.flatMap(m => m.roles.map(r => r.id));
+        return {
+          permissions: [...new Set(aggregatedPermissions)],
+          profile: null,
+          customRole: null,
+          currentRole: activeRole,
+          isOwnerOrPartner: false,
+          granularConfig
+        };
+      }
+
+      // Se oficina está selecionada, busca dados do colaborador em paralelo
+      if (workshopId) {
+        const wsPromise = workshop ? Promise.resolve(workshop) : base44.entities.Workshop.get(workshopId).catch(() => null);
+        const empPromise = base44.entities.Employee.filter({ user_id: user.id, workshop_id: workshopId }).catch(() => null);
         
-        setUser(currentUser);
-        let aggregatedPermissions = [];
-        let activeRole = currentUser?.role === 'admin' ? 'admin' : (currentUser?.job_role || 'outros');
+        const [ws, employees] = await Promise.all([wsPromise, empPromise]);
 
-        if (currentUser) {
-          if (currentUser.role === 'admin' && isAdminMode) {
-            // Admin mode gives full access
-            aggregatedPermissions = systemRoles.flatMap(m => m.roles.map(r => r.id));
-          } else if (currentUser.role === 'admin' && !workshopId) {
-             // Admin outside workshop
-             aggregatedPermissions = systemRoles.flatMap(m => m.roles.map(r => r.id));
-          } else {
-            // Normal user or admin viewing their own workshop -> check Employee profile
-            let activeProfileId = currentUser.profile_id;
-            
-            // If workshop is selected, find the Employee record for this specific workshop
-            if (workshopId) {
-              const employees = await base44.entities.Employee.filter({ 
-                user_id: currentUser.id,
-                workshop_id: workshopId
-              });
-              if (employees && employees.length > 0) {
-                if (employees[0].profile_id) activeProfileId = employees[0].profile_id;
-                if (employees[0].job_role) activeRole = employees[0].job_role;
-              } else {
-                // Se o owner_id da oficina é este usuário, garantir permissão total na oficina
-                try {
-                  const ws = await base44.entities.Workshop.get(workshopId);
-                  if (ws && (ws.owner_id === currentUser.id || (ws.partner_ids && ws.partner_ids.includes(currentUser.id)))) {
-                    // Owner/Partner gets full access
-                    aggregatedPermissions = systemRoles.flatMap(m => m.roles.map(r => r.id));
-                    activeRole = 'socio';
-                  }
-                } catch(e) {}
-              }
-            }
-            
-            if (activeProfileId) {
-              try {
-                const userProfile = await base44.entities.UserProfile.get(activeProfileId);
-                if (!mounted) return;
-                
-                if (userProfile && userProfile.id) {
-                  setProfile(userProfile);
-                  const profileRoles = userProfile.data?.roles || userProfile.roles || [];
-                  aggregatedPermissions = [...aggregatedPermissions, ...profileRoles];
-                  
-                  const customRoleIds = userProfile.data?.custom_role_ids || userProfile.custom_role_ids || [];
-                  if (customRoleIds && customRoleIds.length > 0) {
-                    for (const roleId of customRoleIds) {
-                      try {
-                        const role = await base44.entities.CustomRole.get(roleId);
-                        const roleSysRoles = role.data?.system_roles || role.system_roles || [];
-                        if (mounted && roleSysRoles.length > 0) {
-                          aggregatedPermissions = [...aggregatedPermissions, ...roleSysRoles];
-                        }
-                      } catch (e) {
-                        console.warn("CustomRole não encontrada:", roleId);
-                      }
-                    }
-                  }
-                }
-              } catch (e) {
-                console.error("Erro ao carregar UserProfile:", e);
-              }
-            }
+        if (employees && employees.length > 0) {
+          if (employees[0].profile_id) activeProfileId = employees[0].profile_id;
+          if (employees[0].job_role) activeRole = employees[0].job_role;
+        } else if (ws && (ws.owner_id === user.id || (ws.partner_ids && ws.partner_ids.includes(user.id)))) {
+          isOwnerOrPartner = true;
+          aggregatedPermissions = systemRoles.flatMap(m => m.roles.map(r => r.id));
+          activeRole = 'socio';
+        }
+      }
 
-            if (currentUser.custom_role_id) {
-              try {
-                const role = await base44.entities.CustomRole.get(currentUser.custom_role_id);
-                if (!mounted) return;
-                setCustomRole(role);
-                const roleSysRoles = role.data?.system_roles || role.system_roles || [];
-                aggregatedPermissions = [...aggregatedPermissions, ...roleSysRoles];
-              } catch (e) {
-                console.error("Erro ao carregar CustomRole:", e);
-              }
+      let userProfile = null;
+      let customRoleObj = null;
+
+      // Carregar UserProfile e CustomRole em paralelo
+      if (activeProfileId) {
+        queries.push(
+          base44.entities.UserProfile.get(activeProfileId)
+            .then(p => { userProfile = p; })
+            .catch(e => console.warn("Erro ao carregar UserProfile", e))
+        );
+      }
+
+      if (user.custom_role_id) {
+        queries.push(
+          base44.entities.CustomRole.get(user.custom_role_id)
+            .then(r => { customRoleObj = r; })
+            .catch(e => console.warn("Erro ao carregar CustomRole", e))
+        );
+      }
+
+      if (queries.length > 0) {
+        await Promise.all(queries);
+      }
+
+      // Consolidar permissões do Profile
+      if (userProfile && userProfile.id) {
+        const profileRoles = userProfile.data?.roles || userProfile.roles || [];
+        aggregatedPermissions = [...aggregatedPermissions, ...profileRoles];
+
+        const customRoleIds = userProfile.data?.custom_role_ids || userProfile.custom_role_ids || [];
+        if (customRoleIds && customRoleIds.length > 0) {
+          const customRolesPromises = customRoleIds.map(roleId => 
+            base44.entities.CustomRole.get(roleId).catch(() => null)
+          );
+          const roles = await Promise.all(customRolesPromises);
+          for (const role of roles) {
+            if (role) {
+              const roleSysRoles = role.data?.system_roles || role.system_roles || [];
+              aggregatedPermissions = [...aggregatedPermissions, ...roleSysRoles];
             }
           }
         }
-
-        if (mounted) {
-          setCurrentRole(activeRole);
-          setPermissions([...new Set(aggregatedPermissions)]);
-          setLoading(false);
-        }
-      } catch (error) {
-        console.error("Erro ao carregar permissões:", error);
-        if (mounted) {
-          setUser(null);
-          setProfile(null);
-          setCustomRole(null);
-          setCurrentRole(null);
-          setPermissions([]);
-          setLoading(false);
-        }
       }
-    };
 
-    loadPermissions();
+      // Consolidar permissões do CustomRole
+      if (customRoleObj && customRoleObj.id) {
+        const roleSysRoles = customRoleObj.data?.system_roles || customRoleObj.system_roles || [];
+        aggregatedPermissions = [...aggregatedPermissions, ...roleSysRoles];
+      }
 
-    return () => {
-      mounted = false;
-    };
-  }, [workshopId, isAdminMode]);
+      return {
+        permissions: [...new Set(aggregatedPermissions)],
+        profile: userProfile,
+        customRole: customRoleObj,
+        currentRole: activeRole,
+        isOwnerOrPartner,
+        granularConfig
+      };
+    },
+    staleTime: 10 * 60 * 1000, // 10 min de cache
+    refetchOnWindowFocus: false,
+    enabled: !!user
+  });
+
+  const { 
+    permissions = [], 
+    profile = null, 
+    customRole = null, 
+    currentRole = null, 
+    isOwnerOrPartner = false, 
+    granularConfig = {} 
+  } = permissionsData || {};
 
   const hasPermission = (permissionId) => {
     if (!user) return false;
@@ -139,23 +149,9 @@ export function PermissionsProvider({ children }) {
   const hasGranularPermission = async (resourceId, actionId) => {
     if (!user) return false;
     if (user.role === 'admin' && isAdminMode) return true;
-    
-    // Se é o dono/sócio da filial, dar acesso total
-    if (workshopId) {
-      try {
-        const ws = await base44.entities.Workshop.get(workshopId);
-        if (ws && (ws.owner_id === user.id || (ws.partner_ids && ws.partner_ids.includes(user.id)))) {
-          return true;
-        }
-      } catch (err) {}
-    }
+    if (isOwnerOrPartner) return true;
 
     try {
-      const settings = await base44.entities.SystemSetting.filter({ key: 'granular_permissions' });
-      if (!settings || settings.length === 0) return false;
-      
-      const granularConfig = JSON.parse(settings[0].value || '{}');
-      
       if (profile?.job_roles && profile.job_roles.length > 0) {
         for (const jobRole of profile.job_roles) {
           const roleConfig = granularConfig[jobRole];
@@ -224,19 +220,19 @@ export function PermissionsProvider({ children }) {
     return user?.is_internal === true || user?.tipo_vinculo === 'interno';
   };
 
-  const value = {
+  const value = useMemo(() => ({
     user: user || null,
-    profile: profile || null,
-    customRole: customRole || null,
-    currentRole: currentRole || null,
-    permissions: permissions || [],
+    profile,
+    customRole,
+    currentRole,
+    permissions,
     loading,
     hasPermission,
     hasGranularPermission,
     canAccessPage,
     canPerform,
     isInternal,
-  };
+  }), [user, profile, customRole, currentRole, permissions, loading, isOwnerOrPartner, granularConfig]);
 
   return (
     <PermissionsContext.Provider value={value}>

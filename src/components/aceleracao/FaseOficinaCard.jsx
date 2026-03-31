@@ -13,17 +13,9 @@ const faseLabels = {
 };
 
 export default function FaseOficinaCard({ workshop, diagnostic }) {
-  if (!workshop) return null;
-  
-  const fase = diagnostic?.phase || workshop?.maturity_level || 1;
-  const faseInfo = faseLabels[fase] || faseLabels[1];
-  const dataAnalise = diagnostic?.created_date 
-    ? new Date(diagnostic.created_date).toLocaleDateString('pt-BR')
-    : 'Não realizada';
-
   const currentMonth = new Date().toISOString().substring(0, 7);
   const { data: monthlyPlan } = useQuery({
-    queryKey: ['plan-evolution', workshop.id, currentMonth],
+    queryKey: ['plan-evolution', workshop?.id, currentMonth],
     queryFn: async () => {
       const plans = await base44.entities.MonthlyAccelerationPlan.filter({
         workshop_id: workshop.id,
@@ -34,6 +26,14 @@ export default function FaseOficinaCard({ workshop, diagnostic }) {
     },
     enabled: !!workshop?.id
   });
+
+  if (!workshop) return null;
+  
+  const fase = diagnostic?.phase || workshop?.maturity_level || 1;
+  const faseInfo = faseLabels[fase] || faseLabels[1];
+  const dataAnalise = diagnostic?.created_date 
+    ? new Date(diagnostic.created_date).toLocaleDateString('pt-BR')
+    : 'Não realizada';
 
   const canEvolve = monthlyPlan?.completion_percentage >= 100;
   const nextPhase = fase < 4 ? fase + 1 : null;

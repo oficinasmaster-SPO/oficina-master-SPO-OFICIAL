@@ -10,7 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { 
   Loader2, User, ListTodo, Target, MessageSquare, BarChart3, 
   FileText, Trophy, Gauge, Calendar, Phone, LogOut, Menu, X,
-  CheckCircle2, Clock, AlertTriangle, TrendingUp, Star, GraduationCap
+  CheckCircle2, Clock, AlertTriangle, TrendingUp, Star, GraduationCap, Users, Package
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
