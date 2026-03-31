@@ -136,7 +136,7 @@ export default function CriarDescricaoCargo() {
       if (currentQuestion.type === "textarea" || currentQuestion.type === "text") {
         setFormData(prev => ({
           ...prev,
-          [field]: suggestion
+          [currentQuestion.id]: suggestion
         }));
       } else {
         // Tentar separar por quebras de linha se for lista

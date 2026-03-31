@@ -332,8 +332,8 @@ export default function DiagnosticoDISC() {
               <History className="w-4 h-4 mr-2" />
               Histórico
             </Button>
-            <Button onClick={generateInviteLink} disabled={isGeneratingLink} className="bg-indigo-600 hover:bg-indigo-700">
-              {isGeneratingLink ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <LinkIcon className="w-4 h-4 mr-2" />}
+            <Button onClick={handleGenerateInvite} disabled={generatingInvite} className="bg-indigo-600 hover:bg-indigo-700">
+              {generatingInvite ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <LinkIcon className="w-4 h-4 mr-2" />}
               Gerar Link Rápido
             </Button>
             <Button onClick={() => setIsInviteModalOpen(true)} variant="secondary">

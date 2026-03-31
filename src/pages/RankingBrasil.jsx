@@ -3,9 +3,10 @@ import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trophy, Medal, Award, TrendingUp, Users, Building2, BarChart3, Target, DollarSign, Percent } from "lucide-react";
+import { Trophy, Medal, Award, TrendingUp, Users, Building2, BarChart3, Target, DollarSign, Percent, AlertTriangle } from "lucide-react";
 import { formatCurrency, formatPercent } from "@/components/utils/formatters";
 import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function RankingBrasil() {
   const [selectedArea, setSelectedArea] = useState("all");
