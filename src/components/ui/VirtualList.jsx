@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useVirtualScroll } from '@/hooks/useVirtualScroll';
 
 /**
@@ -34,7 +34,11 @@ export default function VirtualList({
   overscan = 3,
   gap = 0,
 }) {
-  // Hook SEMPRE chamado antes de qualquer early return
+  if (!itemHeight || !height) {
+    console.warn('VirtualList: itemHeight e height são obrigatórios');
+    return null;
+  }
+
   const {
     ref,
     visibleItems,
@@ -44,19 +48,14 @@ export default function VirtualList({
     handleScroll,
   } = useVirtualScroll({
     items,
-    itemHeight: itemHeight || 1,
-    containerHeight: height || 1,
+    itemHeight,
+    containerHeight: height,
     overscan,
   });
 
-  if (!itemHeight || !height) {
-    console.warn('VirtualList: itemHeight e height são obrigatórios');
-    return null;
-  }
-
   // Adjust total height se houver gap
   const adjustedItemHeight = itemHeight + gap;
-  const adjustedTotalHeight = items.length * adjustedItemHeight;
+  const adjustedTotalHeight = items?.length * adjustedItemHeight || 0;
 
   return (
     <div
@@ -108,7 +107,11 @@ export function VirtualGrid({
   gap = 8,
   overscan = 1,
 }) {
-  // Hook SEMPRE chamado antes de qualquer conditional
+  // Calcula altura de uma linha
+  const rowHeight = itemHeight + gap;
+  const itemsPerRow = columns || Math.floor((height - gap) / (itemWidth + gap));
+  const rows = Math.ceil(items.length / itemsPerRow);
+
   const {
     ref,
     visibleItems,
@@ -118,14 +121,10 @@ export function VirtualGrid({
     handleScroll,
   } = useVirtualScroll({
     items,
-    itemHeight: itemHeight + gap || 1,
-    containerHeight: height || 1,
+    itemHeight: rowHeight,
+    containerHeight: height,
     overscan,
   });
-
-  // Calcula altura de uma linha
-  const rowHeight = itemHeight + gap;
-  const itemsPerRow = columns || Math.floor((height - gap) / (itemWidth + gap));
 
   return (
     <div
