@@ -151,7 +151,7 @@ export default function Notificacoes() {
       return results;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications', user?.id] });
       setShowClearDialog(false);
       toast.success('Todas as notificações foram removidas');
     },
