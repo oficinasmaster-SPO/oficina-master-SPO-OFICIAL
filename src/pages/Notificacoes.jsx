@@ -39,10 +39,16 @@ export default function Notificacoes() {
         const urlParams = new URLSearchParams(window.location.search);
         const adminWorkshopId = urlParams.get('workshop_id');
         let result;
-        if (adminWorkshopId && user.role === 'admin') {
-          result = await base44.entities.Notification.filter({ workshop_id: adminWorkshopId }, '-created_date', 100);
-        } else {
-          result = await base44.entities.Notification.filter({ user_id: user.id }, '-created_date', 100);
+        try {
+          if (adminWorkshopId && user.role === 'admin') {
+            result = await base44.entities.Notification.filter({ workshop_id: adminWorkshopId }, '-created_date', 100);
+          } else {
+            result = await base44.entities.Notification.filter({ user_id: user.id }, '-created_date', 100);
+          }
+        } catch (filterError) {
+          // Se falhar filter, tenta list como fallback
+          console.log('Filter failed, trying list:', filterError);
+          result = await base44.entities.Notification.list('-created_date', 100);
         }
         return Array.isArray(result) ? result : [];
       } catch (error) {
@@ -51,7 +57,7 @@ export default function Notificacoes() {
       }
     },
     enabled: !!user?.id,
-    retry: 1
+    retry: 2
   });
 
   const { data: tasks = [] } = useQuery({
@@ -96,22 +102,26 @@ export default function Notificacoes() {
     mutationFn: async (notificationId) => {
       try {
         await base44.entities.Notification.delete(notificationId);
+        return { success: true, id: notificationId };
       } catch (error) {
-        if (error.response?.status === 404) {
-          // Notificação já foi deletada, apenas invalida o cache
-          return;
+        console.error('Delete error:', error);
+        if (error?.response?.status === 404 || error?.message?.includes('404')) {
+          // Notificação já foi deletada
+          return { success: true, id: notificationId, alreadyDeleted: true };
         }
         throw error;
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries(['notifications']);
-      toast.success('Notificação removida');
+    onSuccess: (data) => {
+      // Invalida a query de notificações
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      if (!data?.alreadyDeleted) {
+        toast.success('Notificação removida');
+      }
     },
     onError: (error) => {
-      if (error.response?.status !== 404) {
-        toast.error('Erro ao remover notificação');
-      }
+      console.error('Mutation error:', error);
+      toast.error('Erro ao remover notificação: ' + (error?.message || 'Desconhecido'));
     }
   });
 
