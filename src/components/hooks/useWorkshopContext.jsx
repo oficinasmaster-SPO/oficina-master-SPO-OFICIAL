@@ -31,41 +31,62 @@ export function useWorkshopContext() {
             }
           } catch (err) {
             console.warn('Erro ao buscar workshops via BFF:', err);
+            // Fallback robusto: tenta buscar apenas o workshop do usuário diretamente
             const fallbackWorkshopId = user?.data?.workshop_id || user?.workshop_id || selectedCompanyId;
             if (fallbackWorkshopId) {
               try {
-                const fallbackWorkshop = await base44.entities.Workshop.get(fallbackWorkshopId);
-                if (fallbackWorkshop) {
-                  available = [fallbackWorkshop];
+                const fallbackWorkshops = await base44.entities.Workshop.filter({ id: fallbackWorkshopId });
+                if (fallbackWorkshops && fallbackWorkshops.length > 0) {
+                  available = fallbackWorkshops;
                 }
-              } catch (_) {}
+              } catch (fallbackErr) {
+                console.warn('Fallback de workshop também falhou (possível rate limit):', fallbackErr);
+                // Fallback final: montar objeto mínimo a partir do ID para não ficar sem workshop
+                available = [{ id: fallbackWorkshopId, name: 'Carregando...', _partial: true }];
+              }
             }
           }
         }
 
         // PRIORIDADE 0: TenantContext - Se selecionou uma Empresa específica via seletor
         if (selectedCompanyId) {
-          try {
-            const wsList = await base44.entities.Workshop.filter({ id: selectedCompanyId });
-            if (wsList && wsList.length > 0) {
-               userWorkshop = wsList[0];
-            } else {
-               const workshops = await base44.entities.Workshop.filter({ company_id: selectedCompanyId });
-               if (workshops.length > 0) {
-                 userWorkshop = workshops[0];
-               }
+          // Tentar encontrar nos workshops já carregados primeiro (evita chamada extra)
+          const fromAvailable = available.find(w => w.id === selectedCompanyId);
+          if (fromAvailable) {
+            userWorkshop = fromAvailable;
+          } else {
+            try {
+              const wsList = await base44.entities.Workshop.filter({ id: selectedCompanyId });
+              if (wsList && wsList.length > 0) {
+                 userWorkshop = wsList[0];
+              } else {
+                 const workshops = await base44.entities.Workshop.filter({ company_id: selectedCompanyId });
+                 if (workshops.length > 0) {
+                   userWorkshop = workshops[0];
+                 }
+              }
+            } catch (e) {
+              // Se falhou por rate limit, usar dados parciais
+              userWorkshop = available.find(w => w.id === selectedCompanyId) || null;
             }
-          } catch (e) {}
+          }
         }
         
         // PRIORIDADE 1: Modo Admin
         if (isAdminMode && adminWorkshopId) {
-          try {
-             const ws = await base44.entities.Workshop.get(adminWorkshopId);
-             if (ws) {
-               userWorkshop = ws;
-             }
-          } catch(e) {}
+          const fromAvailable = available.find(w => w.id === adminWorkshopId);
+          if (fromAvailable) {
+            userWorkshop = fromAvailable;
+          } else {
+            try {
+               const ws = await base44.entities.Workshop.get(adminWorkshopId);
+               if (ws) {
+                 userWorkshop = ws;
+               }
+            } catch(e) {
+              userWorkshop = available.find(w => w.id === adminWorkshopId) || null;
+            }
+          }
         }
 
         // PRIORIDADE 2: Oficina do usuário logado (caso não tenha escolhido nenhuma no TenantContext)
@@ -90,7 +111,9 @@ export function useWorkshopContext() {
     },
     enabled: !isTenantLoading,
     staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000
+    gcTime: 10 * 60 * 1000,
+    retry: 2,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10000)
   });
 
   const setCurrentWorkshop = (id) => {
