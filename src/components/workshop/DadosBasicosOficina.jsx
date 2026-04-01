@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Save, Building2, Info, Store, Loader2, Check, ChevronsUpDown, Minus, Plus } from "lucide-react";
+import { Save, Building2, Info, Store, Loader2, Check, ChevronsUpDown, Minus, Plus, MapPin } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
@@ -106,6 +106,10 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
     city: "",
     state: "",
     comarca: "",
+    endereco_rua: "",
+    endereco_numero: "",
+    endereco_bairro: "",
+    endereco_complemento: "",
     endereco_completo: "",
     segment: "",
     tax_regime: "",
@@ -171,6 +175,10 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
         city: workshop.city || "",
         state: workshop.state || "",
         comarca: workshop.comarca || "",
+        endereco_rua: workshop.endereco_rua || "",
+        endereco_numero: workshop.endereco_numero || "",
+        endereco_bairro: workshop.endereco_bairro || "",
+        endereco_complemento: workshop.endereco_complemento || "",
         endereco_completo: workshop.endereco_completo || "",
         segment: workshop.segment || "",
         tax_regime: workshop.tax_regime || "",
@@ -235,14 +243,16 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
       try {
         const response = await base44.functions.invoke('consultarCEP', { cep: cleanCEP });
         if (response.data && !response.data.error) {
-          setFormData(prev => ({
-            ...prev,
-            city: response.data.city,
-            state: response.data.state,
-            endereco_completo: `${response.data.street}, ${response.data.neighborhood}`
-          }));
-          // Buscar cidades do estado retornado
-          if (response.data.state) {
+        setFormData(prev => ({
+          ...prev,
+          city: response.data.city,
+          state: response.data.state,
+          endereco_rua: response.data.street || '',
+          endereco_bairro: response.data.neighborhood || '',
+          endereco_completo: `${response.data.street || ''}, ${response.data.neighborhood || ''}`
+        }));
+        // Buscar cidades do estado retornado
+        if (response.data.state) {
           await loadCities(response.data.state);
           }
 
@@ -423,73 +433,80 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
                 placeholder="contato@oficina.com.br"
               />
             </div>
-            <div>
-              <Label>CEP</Label>
-              <div className="relative">
-                <Input
-                  value={formData.cep}
-                  onChange={(e) => {
-                    let v = e.target.value.replace(/\D/g, "");
-                    if (v.length > 8) v = v.slice(0, 8);
-                    v = v.replace(/^(\d{5})(\d)/, "$1-$2");
-                    e.target.value = v;
-                    handleCEPChange(v);
-                  }}
-                  disabled={!editing}
-                  placeholder="00000-000"
-                  maxLength={9}
-                />
-                {loadingCEP && (
-                  <Loader2 className="w-4 h-4 animate-spin absolute right-3 top-3 text-blue-600" />
+          </div>
+
+          {/* Seção de Endereço */}
+          <div className="border-2 border-slate-200 rounded-xl p-5 bg-slate-50/30 space-y-4">
+            <div className="flex items-center gap-2 mb-1">
+              <MapPin className="w-5 h-5 text-blue-600" />
+              <h3 className="text-sm font-semibold text-slate-800">Endereço</h3>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <Label>CEP</Label>
+                <div className="relative">
+                  <Input
+                    value={formData.cep}
+                    onChange={(e) => {
+                      let v = e.target.value.replace(/\D/g, "");
+                      if (v.length > 8) v = v.slice(0, 8);
+                      v = v.replace(/^(\d{5})(\d)/, "$1-$2");
+                      e.target.value = v;
+                      handleCEPChange(v);
+                    }}
+                    disabled={!editing}
+                    placeholder="00000-000"
+                    maxLength={9}
+                  />
+                  {loadingCEP && (
+                    <Loader2 className="w-4 h-4 animate-spin absolute right-3 top-3 text-blue-600" />
+                  )}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Preenche automaticamente</p>
+              </div>
+              <div>
+                <Label>Estado (UF) *</Label>
+                {!editing ? (
+                  <Input value={formData.state} disabled />
+                ) : (
+                  <Select value={formData.state} onValueChange={handleStateChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="UF..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {estadosBrasileiros.map(estado => (
+                        <SelectItem key={estado.value} value={estado.value}>
+                          {estado.value} - {estado.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 )}
               </div>
-              <p className="text-xs text-gray-500 mt-1">
-                Digite o CEP para preencher cidade e estado automaticamente
-              </p>
-            </div>
-            <div>
-              <Label>Estado (UF) *</Label>
-              {!editing ? (
-                <Input value={formData.state} disabled />
-              ) : (
-                <Select value={formData.state} onValueChange={handleStateChange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o estado..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {estadosBrasileiros.map(estado => (
-                      <SelectItem key={estado.value} value={estado.value}>
-                        {estado.value} - {estado.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            </div>
-            <div>
-              <Label>Cidade *</Label>
-              {!editing ? (
-                <Input value={formData.city} disabled />
-              ) : showCityInput ? (
-                <div className="space-y-2">
-                  <Input
-                    value={formData.city}
-                    onChange={(e) => setFormData({...formData, city: e.target.value})}
-                    placeholder="Digite a cidade..."
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowCityInput(false)}
-                    className="w-full"
-                  >
-                    Voltar para lista de cidades
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <div className="relative">
+              <div>
+                <Label>Cidade *</Label>
+                {!editing ? (
+                  <Input value={formData.city} disabled />
+                ) : showCityInput ? (
+                  <div className="space-y-2">
+                    <Input
+                      value={formData.city}
+                      onChange={(e) => setFormData({...formData, city: e.target.value})}
+                      placeholder="Digite a cidade..."
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowCityInput(false)}
+                      className="w-full text-xs"
+                    >
+                      Voltar para lista
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
                     <Popover open={openCityPopover} onOpenChange={setOpenCityPopover}>
                       <PopoverTrigger asChild>
                         <Button
@@ -500,8 +517,8 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
                           className="w-full justify-between font-normal"
                         >
                           <span className="truncate">
-                            {loadingCities ? "Carregando cidades..." :
-                             !formData.state ? "Selecione um estado primeiro" :
+                            {loadingCities ? "Carregando..." :
+                             !formData.state ? "Selecione UF primeiro" :
                              formData.city ? formData.city : "Selecione a cidade..."}
                           </span>
                           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -540,45 +557,77 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
                     {loadingCities && (
                       <Loader2 className="w-4 h-4 animate-spin absolute right-10 top-3 text-blue-600" />
                     )}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowCityInput(true)}
+                      className="w-full text-xs"
+                      disabled={!formData.state}
+                    >
+                      Cidade não está na lista
+                    </Button>
                   </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowCityInput(true)}
-                    className="w-full"
-                    disabled={!formData.state}
-                  >
-                    Minha cidade não está na lista - Digitar manualmente
-                  </Button>
-                </div>
-              )}
-              <p className="text-xs text-gray-500 mt-1">
-                Selecione o estado primeiro para ver as cidades disponíveis
-              </p>
+                )}
+              </div>
             </div>
-            <div className="md:col-span-2">
-              <Label>Endereço Completo</Label>
-              <Textarea
-                value={formData.endereco_completo}
-                onChange={(e) => setFormData({...formData, endereco_completo: e.target.value})}
-                disabled={!editing}
-                placeholder="Rua, número, bairro, CEP..."
-                rows={2}
-              />
+
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+              <div className="md:col-span-6">
+                <Label>Rua / Logradouro</Label>
+                <Input
+                  value={formData.endereco_rua || ''}
+                  onChange={(e) => setFormData({...formData, endereco_rua: e.target.value})}
+                  disabled={!editing}
+                  placeholder="Rua, Avenida, Travessa..."
+                />
+              </div>
+              <div className="md:col-span-2">
+                <Label>Número</Label>
+                <Input
+                  value={formData.endereco_numero || ''}
+                  onChange={(e) => setFormData({...formData, endereco_numero: e.target.value})}
+                  disabled={!editing}
+                  placeholder="Nº"
+                />
+              </div>
+              <div className="md:col-span-4">
+                <Label>Bairro</Label>
+                <Input
+                  value={formData.endereco_bairro || ''}
+                  onChange={(e) => setFormData({...formData, endereco_bairro: e.target.value})}
+                  disabled={!editing}
+                  placeholder="Bairro"
+                />
+              </div>
             </div>
-            <div>
-              <Label>Comarca</Label>
-              <Input
-                value={formData.comarca || ''}
-                onChange={(e) => setFormData({...formData, comarca: e.target.value})}
-                disabled={!editing}
-                placeholder="Comarca Judicial (Geralmente a mesma cidade)"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Usado para contratos (foro eleito). Se vazio, usará a cidade.
-              </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label>Complemento</Label>
+                <Input
+                  value={formData.endereco_complemento || ''}
+                  onChange={(e) => setFormData({...formData, endereco_complemento: e.target.value})}
+                  disabled={!editing}
+                  placeholder="Sala, Galpão, Bloco..."
+                />
+              </div>
+              <div>
+                <Label>Comarca</Label>
+                <Input
+                  value={formData.comarca || ''}
+                  onChange={(e) => setFormData({...formData, comarca: e.target.value})}
+                  disabled={!editing}
+                  placeholder="Geralmente a mesma cidade"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Foro eleito para contratos. Se vazio, usará a cidade.
+                </p>
+              </div>
             </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="md:col-span-2">
             <Label>Segmento</Label>
             <Select 
