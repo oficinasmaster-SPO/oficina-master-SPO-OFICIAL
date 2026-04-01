@@ -24,8 +24,11 @@ Deno.serve(withAuth(async (req, { base44, user }) => {
         let availableWorkshops = [];
         const seenIds = new Set();
 
-        // 1. Oficinas onde é Dono
-        const owned = await base44.entities.Workshop.filter({ owner_id: user.id });
+        const [owned, partnered] = await Promise.all([
+            base44.entities.Workshop.filter({ owner_id: user.id }),
+            base44.entities.Workshop.filter({ partner_ids: user.id })
+        ]);
+
         if (owned?.length > 0) {
             for (const ws of owned) {
                 if (!seenIds.has(ws.id)) {
@@ -35,8 +38,6 @@ Deno.serve(withAuth(async (req, { base44, user }) => {
             }
         }
 
-        // 2. Oficinas onde é Sócio
-        const partnered = await base44.entities.Workshop.filter({ partner_ids: user.id });
         if (partnered?.length > 0) {
             for (const ws of partnered) {
                 if (!seenIds.has(ws.id)) {
@@ -46,8 +47,6 @@ Deno.serve(withAuth(async (req, { base44, user }) => {
             }
         }
 
-        // 3. Oficinas onde é Colaborador (apenas se não for dono/sócio de nenhuma, ou para complementar)
-        // Otimização: Buscar employees e workshops em paralelo se possível, ou sequencial rápido
         let employees = await base44.entities.Employee.filter({ user_id: user.id });
         
         // Fallback email

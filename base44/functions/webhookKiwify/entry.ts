@@ -162,7 +162,8 @@ Deno.serve(async (req) => {
         // Atualizar usuário/oficina de forma segura
         await base44.asServiceRole.entities.Workshop.update(workshop.id, {
           planId: mappedPlan,
-          planStatus: planStatus,
+          planoAtual: String(mappedPlan).toUpperCase(),
+          planStatus: planStatus === 'inactive' ? 'canceled' : planStatus,
           dataAssinatura: planStatus === 'active' ? new Date().toISOString() : workshop.dataAssinatura,
           billing_secure_hash: hashHex,
           billing_update_token: tokenSecret
