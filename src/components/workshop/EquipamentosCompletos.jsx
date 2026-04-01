@@ -158,7 +158,7 @@ const EQUIPMENT_CATALOG = {
   }
 };
 
-const EquipamentosCompletos = forwardRef(({ workshop, onUpdate }, ref) => {
+const EquipamentosCompletos = forwardRef(({ workshop, onUpdate, onEditingChange }, ref) => {
   const [editing, setEditing] = useState(false);
   const [equipmentList, setEquipmentList] = useState([]);
   const [activeCategory, setActiveCategory] = useState("mecanica_autocenter");
@@ -179,6 +179,10 @@ const EquipamentosCompletos = forwardRef(({ workshop, onUpdate }, ref) => {
       scanners: workshop?.equipment?.scanners || []
     });
   }, [workshop]);
+
+  useEffect(() => {
+    onEditingChange?.(editing);
+  }, [editing, onEditingChange]);
 
 
   // Expor função saveCurrentData para componente pai
@@ -309,9 +313,16 @@ const EquipamentosCompletos = forwardRef(({ workshop, onUpdate }, ref) => {
               </CardDescription>
             </div>
           </div>
-          <Button onClick={() => setEditing(!editing)}>
-            {editing ? "Concluir edição" : "Editar"}
-          </Button>
+          <div className="flex items-center gap-2">
+            {editing && (
+              <Button variant="outline" onClick={() => setEditing(false)}>
+                Cancelar
+              </Button>
+            )}
+            <Button onClick={() => setEditing((prev) => !prev)}>
+              Editar
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
