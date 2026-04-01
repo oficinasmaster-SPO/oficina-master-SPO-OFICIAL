@@ -204,21 +204,47 @@ export default function RegistrarAtendimento({ isModal = false, onClose }) {
   });
 
   // Carregar tipos de atendimento customizados do banco
-  const { data: tiposCustomizados = [] } = useQuery({
+  const { data: tiposCustomizados = [], refetch: refetchTipos } = useQuery({
     queryKey: ['tipos-atendimento-consultoria'],
     queryFn: async () => {
       const tipos = await base44.entities.TipoAtendimentoConsultoria.filter({ ativo: true });
       return tipos || [];
-    }
+    },
+    staleTime: 0,
+    refetchOnMount: 'stale'
   });
 
-  // Carregar tipos de atendimento padrão
-  const { data: tiposAtendimento = [] } = useQuery({
-    queryKey: ['attendance-types'],
-    queryFn: async () => {
-      return await base44.entities.AttendanceType.filter({ is_active: true }, null, 500);
+  // Combinar tipos customizados + padrões com useMemo
+  const todosOsTipos = React.useMemo(() => {
+    try {
+      // Tipos customizados já vêm de TipoAtendimentoConsultoria
+      const customFormatted = (tiposCustomizados || []).map(t => ({
+        id: t.value || t.id,
+        value: t.value,
+        label: t.label,
+        duracao: t.duracao_minutos || 45
+      }));
+      
+      // Tipos padrão do sistema (se houver)
+      const padrao = [
+        { id: 'acompanhamento_mensal', value: 'acompanhamento_mensal', label: 'Acompanhamento Mensal', duracao: 60 },
+        { id: 'diagnostico', value: 'diagnostico', label: 'Diagnóstico', duracao: 90 },
+        { id: 'workshop', value: 'workshop', label: 'Workshop', duracao: 120 },
+        { id: 'mentoria', value: 'mentoria', label: 'Mentoria', duracao: 45 }
+      ];
+      
+      // Evitar duplicatas
+      const customIds = new Set(customFormatted.map(c => c.value));
+      const padraoFiltered = padrao.filter(p => !customIds.has(p.value));
+      
+      const combined = [...customFormatted, ...padraoFiltered];
+      console.log('Todos os tipos combinados:', combined.length, combined);
+      return combined;
+    } catch (error) {
+      console.error('Erro ao combinar tipos:', error);
+      return [];
     }
-  });
+  }, [tiposCustomizados]);
 
   // Carregar cursos de treinamento
   const { data: cursos } = useQuery({
@@ -600,9 +626,8 @@ export default function RegistrarAtendimento({ isModal = false, onClose }) {
                  value={formData.tipo_atendimento}
                  onValueChange={(value) => {
                    // Buscar duração do tipo selecionado
-                   const tipoAtendimento = tiposAtendimento.find(t => t.code === value);
-                   const tipoCustom = tiposCustomizados.find(t => t.value === value);
-                   const duracao = tipoAtendimento?.default_duration_minutes || tipoCustom?.duracao_minutos || 60;
+                   const tipo = todosOsTipos.find(t => t.value === value || t.id === value);
+                   const duracao = tipo?.duracao || 60;
 
                    setFormData({ 
                      ...formData, 
@@ -615,16 +640,15 @@ export default function RegistrarAtendimento({ isModal = false, onClose }) {
                    <SelectValue placeholder="Selecione o tipo..." />
                  </SelectTrigger>
                  <SelectContent>
-                   {tiposAtendimento.map(tipo => (
-                     <SelectItem key={tipo.id} value={tipo.code}>
-                       {tipo.name} ({tipo.default_duration_minutes}min)
-                     </SelectItem>
-                   ))}
-                   {tiposCustomizados.map(tipo => (
-                     <SelectItem key={tipo.value} value={tipo.value}>
-                       {tipo.label} ({tipo.duracao_minutos}min)
-                     </SelectItem>
-                   ))}
+                   {todosOsTipos && todosOsTipos.length > 0 ? (
+                     todosOsTipos.map(tipo => (
+                       <SelectItem key={tipo.id} value={tipo.value || tipo.id}>
+                         {tipo.label} ({tipo.duracao}min)
+                       </SelectItem>
+                     ))
+                   ) : (
+                     <div className="p-2 text-sm text-gray-500">Carregando tipos...</div>
+                   )}
                  </SelectContent>
                 </Select>
               </div>
