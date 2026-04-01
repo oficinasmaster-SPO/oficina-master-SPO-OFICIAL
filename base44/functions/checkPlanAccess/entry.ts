@@ -56,10 +56,7 @@ Deno.serve(async (req) => {
     // 1. Buscar a oficina (tenant)
     let tenant = null;
     try {
-      const workshops = await base44.asServiceRole.entities.Workshop.filter({ id: tenantId });
-      if (workshops && workshops.length > 0) {
-        tenant = workshops[0];
-      }
+      tenant = await base44.asServiceRole.entities.Workshop.get(tenantId);
     } catch(e) {}
 
     if (!tenant) {
@@ -113,11 +110,16 @@ Deno.serve(async (req) => {
     }
 
     // Buscar as definições do plano
-    const plans = await base44.asServiceRole.entities.PlatformPlan.filter({ internal_id: planId });
-    if (!plans || plans.length === 0) {
-      return Response.json({ success: false, error: { code: 'NOT_FOUND', message: 'Configuração do plano não encontrada.' } }, { status: 404 });
+    let plan = null;
+    try {
+      const plans = await base44.asServiceRole.entities.PlatformPlan.filter({ internal_id: planId }, undefined, 1);
+      if (plans && plans.length > 0) plan = plans[0];
+    } catch(e) {}
+
+    // Fallback: se plano não cadastrado no banco, usa limites locais
+    if (!plan) {
+      plan = { limits: null, features: null };
     }
-    const plan = plans[0];
 
     // Validação 2: Funcionalidade (Feature)
     if (action === 'check_feature' || action === 'check_both') {
