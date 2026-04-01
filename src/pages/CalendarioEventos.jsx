@@ -17,6 +17,13 @@ export default function CalendarioEventos() {
   const [editingEvent, setEditingEvent] = useState(null);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
+  // Forçar reload dos tipos quando abre o dialog
+  const handleDialogOpen = () => {
+    queryClient.invalidateQueries({ queryKey: ['tipos-atendimento-consultoria'] });
+    resetForm();
+    setDialogOpen(true);
+  };
+
   const [formData, setFormData] = useState({
     attendance_type_id: "",
     event_name: "",
@@ -38,30 +45,43 @@ export default function CalendarioEventos() {
   ];
 
   // Carregar tipos de atendimento do banco
-  const { data: tiposCustomizados = [] } = useQuery({
+  const { data: tiposCustomizados = [], refetch: refetchTipos } = useQuery({
     queryKey: ['tipos-atendimento-consultoria'],
     queryFn: async () => {
       try {
         const tipos = await base44.entities.TipoAtendimentoConsultoria.filter({ ativo: true });
-        return tipos || [];
+        const result = tipos || [];
+        console.log('Tipos customizados carregados:', result.length, result);
+        return result;
       } catch (error) {
-        console.warn('Erro ao buscar tipos customizados:', error);
+        console.error('Erro ao buscar tipos customizados:', error);
         return [];
       }
     },
     staleTime: 0,
-    refetchOnMount: true,
-    refetchOnWindowFocus: true
+    refetchOnMount: 'stale',
+    refetchOnWindowFocus: true,
+    enabled: true
   });
 
   // Combinar tipos customizados com padrões
   const attendanceTypes = useMemo(() => {
-    const customFormatted = tiposCustomizados.map(t => ({ id: t.value, name: t.label }));
-    const customIds = new Set(customFormatted.map(c => c.id));
-    const padraoFiltered = defaultAttendanceTypes.filter(d => !customIds.has(d.id));
-    const combined = [...customFormatted, ...padraoFiltered];
-    console.log('Tipos carregados:', combined);
-    return combined;
+    try {
+      const customFormatted = (tiposCustomizados || []).map(t => ({
+        id: t.value || t.id,
+        name: t.label || t.name
+      }));
+      
+      const customIds = new Set(customFormatted.map(c => c.id));
+      const padraoFiltered = defaultAttendanceTypes.filter(d => !customIds.has(d.id));
+      const combined = [...customFormatted, ...padraoFiltered];
+      
+      console.log('Tipos combinados:', combined.length, combined);
+      return combined;
+    } catch (error) {
+      console.error('Erro ao combinar tipos:', error);
+      return defaultAttendanceTypes;
+    }
   }, [tiposCustomizados]);
 
   // Carregar eventos do ano
@@ -186,10 +206,7 @@ export default function CalendarioEventos() {
 
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => {
-              resetForm();
-              setDialogOpen(true);
-            }}>
+            <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleDialogOpen}>
               <Plus className="w-4 h-4 mr-2" />
               Novo Evento
             </Button>
@@ -212,12 +229,16 @@ export default function CalendarioEventos() {
                     <SelectValue placeholder="Selecione..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {attendanceTypes.map((type) => (
-                      <SelectItem key={type.id} value={type.id}>
-                        {type.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
+                     {attendanceTypes && attendanceTypes.length > 0 ? (
+                       attendanceTypes.map((type) => (
+                         <SelectItem key={type.id} value={type.id}>
+                           {type.name}
+                         </SelectItem>
+                       ))
+                     ) : (
+                       <div className="p-2 text-sm text-gray-500">Carregando tipos...</div>
+                     )}
+                   </SelectContent>
                 </Select>
               </div>
 
