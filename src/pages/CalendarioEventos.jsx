@@ -44,7 +44,12 @@ export default function CalendarioEventos() {
       try {
         const tipos = await base44.entities.TipoAtendimentoConsultoria.filter({ ativo: true });
         if (tipos && tipos.length > 0) {
-          return tipos.map(t => ({ id: t.value, name: t.label }));
+          const customTypes = tipos.map(t => ({ id: t.value, name: t.label }));
+          // Combina tipos padrão com customizados, removendo duplicatas
+          const allTypes = [...customTypes];
+          const customIds = customTypes.map(c => c.id);
+          allTypes.push(...defaultAttendanceTypes.filter(d => !customIds.includes(d.id)));
+          return allTypes;
         }
       } catch (error) {
         console.warn('Erro ao buscar tipos:', error);
