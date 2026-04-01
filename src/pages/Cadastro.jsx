@@ -424,12 +424,6 @@ export default function Cadastro() {
               onEditingChange={setIsEditing}
             />
             <div className="mt-6 flex justify-end gap-3">
-              {isEditing && (
-                <Button onClick={() => handleSaveOnly(perfilSocioRef)} disabled={saving} className="bg-green-600 hover:bg-green-700">
-                  {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
-                  Salvar
-                </Button>
-              )}
               <Button onClick={() => handleNextTab(perfilSocioRef, "dados")} disabled={saving || isEditing} className="bg-blue-600 hover:bg-blue-700">
                 {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                 Próximo: Dados <ArrowRight className="ml-2 w-4 h-4" />
@@ -450,12 +444,6 @@ export default function Cadastro() {
                 window.history.replaceState(null, '', `${location.pathname}?step=perfil-socio`);
               }}>Voltar</Button>
               <div className="flex gap-3">
-                {isEditing && (
-                  <Button onClick={() => handleSaveOnly(dadosBasicosRef)} disabled={saving} className="bg-green-600 hover:bg-green-700">
-                    {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
-                    Salvar
-                  </Button>
-                )}
                 <Button onClick={() => handleNextTab(dadosBasicosRef, "servicos")} disabled={saving || isEditing} className="bg-blue-600 hover:bg-blue-700">
                 {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                 Próximo: Serviços <ArrowRight className="ml-2 w-4 h-4" />
@@ -478,12 +466,6 @@ export default function Cadastro() {
                 window.history.replaceState(null, '', `${location.pathname}?step=dados`);
               }}>Voltar</Button>
               <div className="flex gap-3">
-                {isEditing && (
-                  <Button onClick={() => handleSaveOnly(servicosRef)} disabled={saving} className="bg-green-600 hover:bg-green-700">
-                    {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
-                    Salvar
-                  </Button>
-                )}
                 <Button onClick={() => handleNextTab(servicosRef, "equipamentos")} disabled={saving || isEditing} className="bg-blue-600 hover:bg-blue-700">
                 {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                 Próximo: Equipamentos <ArrowRight className="ml-2 w-4 h-4" />
@@ -514,27 +496,18 @@ export default function Cadastro() {
                 window.history.replaceState(null, '', `${location.pathname}?step=servicos`);
               }}>Voltar</Button>
               <div className="flex gap-3">
-                {isEditing && (
-                  <Button onClick={() => handleSaveOnly(null, true)} disabled={saving} className="bg-green-600 hover:bg-green-700">
-                    {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
-                    Salvar
-                  </Button>
-                )}
                 <Button onClick={async () => {
                 setSaving(true);
                 try {
                   let success = true;
-                  // Salvar ServicosEquipamentos
                   if (equipamentosRef.current?.saveCurrentData) {
                     const s1 = await equipamentosRef.current.saveCurrentData();
                     if (!s1) success = false;
                   }
-                  // Salvar EquipamentosCompletos
                   if (success && equipamentosCompletosRef.current?.saveCurrentData) {
                     const s2 = await equipamentosCompletosRef.current.saveCurrentData();
                     if (!s2) success = false;
                   }
-                  
                   if (success) {
                     handleNextTab(null, "terceirizados");
                   } else {
@@ -565,12 +538,6 @@ export default function Cadastro() {
                 window.history.replaceState(null, '', `${location.pathname}?step=equipamentos`);
               }}>Voltar</Button>
               <div className="flex gap-3">
-                {isEditing && (
-                  <Button onClick={() => handleSaveOnly(terceirizadosRef)} disabled={saving} className="bg-green-600 hover:bg-green-700">
-                    {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
-                    Salvar
-                  </Button>
-                )}
                 <Button onClick={() => handleNextTab(terceirizadosRef, "metas")} disabled={saving || isEditing} className="bg-blue-600 hover:bg-blue-700">
                 {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                 Próximo: Metas <ArrowRight className="ml-2 w-4 h-4" />
@@ -592,17 +559,11 @@ export default function Cadastro() {
                 window.history.replaceState(null, '', `${location.pathname}?step=terceirizados`);
               }}>Voltar</Button>
               <div className="flex flex-col items-end gap-2">
-                {isEditing ? (
-                  <Button onClick={() => handleSaveOnly(metasRef)} disabled={saving} className="bg-green-600 hover:bg-green-700 w-full mb-2">
-                    {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
-                    Salvar Alterações
-                  </Button>
-                ) : <p className="text-sm text-slate-500">Tudo preenchido?</p>}
+                {!isEditing && <p className="text-sm text-slate-500">Tudo preenchido?</p>}
                 <Button 
                   onClick={async () => {
                     setSaving(true);
                     try {
-                      // Salvar dados da aba atual antes de finalizar
                       if (metasRef?.current?.saveCurrentData) {
                         const success = await metasRef.current.saveCurrentData();
                         if (!success) {
