@@ -32,7 +32,7 @@ export default function WorkshopSearchSelect({ workshops, value, onValueChange, 
         <Command>
           <CommandInput placeholder="Buscar oficina..." />
           <CommandEmpty>Nenhuma oficina encontrada.</CommandEmpty>
-          <CommandGroup className="max-h-64 overflow-auto">
+          <CommandGroup className="max-h-64 overflow-auto pb-2">
             {workshops?.map((workshop) => (
               <CommandItem
                 key={workshop.id}
@@ -41,6 +41,7 @@ export default function WorkshopSearchSelect({ workshops, value, onValueChange, 
                   onValueChange(workshop.id);
                   setOpen(false);
                 }}
+                className="hover:bg-red-50 data-[highlighted]:bg-red-600 cursor-pointer"
               >
                 <Check
                   className={cn(
@@ -57,8 +58,9 @@ export default function WorkshopSearchSelect({ workshops, value, onValueChange, 
               </CommandItem>
             ))}
           </CommandGroup>
-        </Command>
-      </PopoverContent>
+          <div className="border-t px-2 py-1.5 text-xs text-gray-400 bg-gray-50">Oficinas</div>
+          </Command>
+          </PopoverContent>
     </Popover>
   );
 }
