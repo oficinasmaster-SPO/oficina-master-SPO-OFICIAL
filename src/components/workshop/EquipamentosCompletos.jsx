@@ -7,7 +7,7 @@ import QuantityStepper from "@/components/workshop/QuantityStepper";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Package, Plus, Trash2, Save, Wrench, Zap, Car, Truck } from "lucide-react";
+import { Package, Plus, Trash2, Wrench, Zap, Car, Truck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
@@ -180,24 +180,6 @@ const EquipamentosCompletos = forwardRef(({ workshop, onUpdate }, ref) => {
     });
   }, [workshop]);
 
-  const handleSave = async () => {
-    try {
-      await onUpdate({
-        equipment_list: equipmentList,
-        equipment: {
-          ...(workshop?.equipment || {}),
-          welding_machines: extraEquipment.welding_machines,
-          scanners: extraEquipment.scanners
-        }
-      });
-      toast.success("Equipamentos salvos!");
-    } catch (error) {
-      console.error("Erro ao salvar:", error);
-      toast.error("Erro ao salvar equipamentos");
-    } finally {
-      setEditing(false);
-    }
-  };
 
   // Expor função saveCurrentData para componente pai
   useImperativeHandle(ref, () => ({
@@ -327,24 +309,9 @@ const EquipamentosCompletos = forwardRef(({ workshop, onUpdate }, ref) => {
               </CardDescription>
             </div>
           </div>
-          {!editing ? (
-            <Button onClick={() => setEditing(true)}>Editar</Button>
-          ) : (
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => {
-                setEditing(false);
-                setEquipmentList(workshop.equipment_list || []);
-                setExtraEquipment({
-                  welding_machines: workshop?.equipment?.welding_machines || [],
-                  scanners: workshop?.equipment?.scanners || []
-                });
-              }}>Cancelar</Button>
-              <Button onClick={handleSave} className="bg-purple-600 hover:bg-purple-700">
-                <Save className="w-4 h-4 mr-2" />
-                Salvar
-              </Button>
-            </div>
-          )}
+          <Button onClick={() => setEditing(!editing)}>
+            {editing ? "Concluir edição" : "Editar"}
+          </Button>
         </div>
       </CardHeader>
       <CardContent>

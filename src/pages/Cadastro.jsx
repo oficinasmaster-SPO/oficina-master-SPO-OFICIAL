@@ -451,6 +451,7 @@ export default function Cadastro() {
                 ref={equipamentosCompletosRef}
                 workshop={workshop}
                 onUpdate={handleWorkshopUpdate}
+                onEditingChange={setIsEditing}
               />
             </div>
           </TabsContent>
