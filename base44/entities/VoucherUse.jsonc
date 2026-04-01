@@ -1,0 +1,172 @@
+{
+  "name": "VoucherUse",
+  "type": "object",
+  "properties": {
+    "voucher_id": {
+      "type": "string",
+      "description": "ID do voucher utilizado"
+    },
+    "voucher_code": {
+      "type": "string",
+      "description": "C\u00f3digo do voucher (cache)"
+    },
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "company_id": {
+      "type": "string",
+      "description": "ID da empresa"
+    },
+    "consulting_firm_id": {
+      "type": "string",
+      "description": "ID da consultoria"
+    },
+    "client_name": {
+      "type": "string",
+      "description": "Nome do cliente que usou"
+    },
+    "client_document": {
+      "type": "string",
+      "description": "CPF/CNPJ do cliente"
+    },
+    "client_phone": {
+      "type": "string",
+      "description": "Telefone do cliente"
+    },
+    "sale_value": {
+      "type": "number",
+      "description": "Valor total da venda"
+    },
+    "discount_applied": {
+      "type": "number",
+      "description": "Valor do desconto aplicado"
+    },
+    "final_value": {
+      "type": "number",
+      "description": "Valor final ap\u00f3s desconto"
+    },
+    "used_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora de utiliza\u00e7\u00e3o"
+    },
+    "used_by_seller_id": {
+      "type": "string",
+      "description": "ID do vendedor que registrou o uso"
+    },
+    "used_by_seller_name": {
+      "type": "string",
+      "description": "Nome do vendedor que registrou"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected"
+      ],
+      "default": "pending",
+      "description": "Status de aprova\u00e7\u00e3o do uso"
+    },
+    "approved_by": {
+      "type": "string",
+      "description": "ID do admin que aprovou/rejeitou"
+    },
+    "approved_by_name": {
+      "type": "string",
+      "description": "Nome do admin"
+    },
+    "approved_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora da aprova\u00e7\u00e3o"
+    },
+    "approval_notes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es da aprova\u00e7\u00e3o"
+    },
+    "rejection_reason": {
+      "type": "string",
+      "description": "Motivo da rejei\u00e7\u00e3o"
+    },
+    "negotiation_notes": {
+      "type": "string",
+      "description": "Registro da negocia\u00e7\u00e3o com o cliente"
+    },
+    "approval_deadline": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Prazo de 48h para aprova\u00e7\u00e3o"
+    }
+  },
+  "required": [
+    "voucher_id",
+    "workshop_id",
+    "client_name",
+    "sale_value",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        },
+        {
+          "company_id": "{{user.data.company_id}}"
+        },
+        {
+          "used_by_seller_id": "{{user.id}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        }
+      ]
+    }
+  }
+}

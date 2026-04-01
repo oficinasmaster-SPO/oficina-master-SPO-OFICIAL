@@ -1,0 +1,121 @@
+{
+  "name": "VoucherFile",
+  "type": "object",
+  "properties": {
+    "voucher_use_id": {
+      "type": "string",
+      "description": "ID do uso do voucher"
+    },
+    "voucher_id": {
+      "type": "string",
+      "description": "ID do voucher"
+    },
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "company_id": {
+      "type": "string",
+      "description": "ID da empresa"
+    },
+    "consulting_firm_id": {
+      "type": "string",
+      "description": "ID da consultoria"
+    },
+    "file_type": {
+      "type": "string",
+      "enum": [
+        "payment_receipt",
+        "contract",
+        "invoice",
+        "other"
+      ],
+      "description": "Tipo do arquivo"
+    },
+    "file_url": {
+      "type": "string",
+      "description": "URL do arquivo"
+    },
+    "file_name": {
+      "type": "string",
+      "description": "Nome original do arquivo"
+    },
+    "uploaded_by": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio que fez upload"
+    },
+    "uploaded_by_name": {
+      "type": "string",
+      "description": "Nome do usu\u00e1rio"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es sobre o arquivo"
+    }
+  },
+  "required": [
+    "voucher_use_id",
+    "voucher_id",
+    "file_type",
+    "file_url"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        },
+        {
+          "company_id": "{{user.data.company_id}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        }
+      ]
+    }
+  }
+}

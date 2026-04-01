@@ -1,0 +1,158 @@
+{
+  "name": "Voucher",
+  "type": "object",
+  "properties": {
+    "code": {
+      "type": "string",
+      "description": "C\u00f3digo \u00fanico do voucher"
+    },
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina (multi-tenant)"
+    },
+    "company_id": {
+      "type": "string",
+      "description": "ID da empresa"
+    },
+    "consulting_firm_id": {
+      "type": "string",
+      "description": "ID da consultoria"
+    },
+    "seller_id": {
+      "type": "string",
+      "description": "ID do vendedor que gerou o voucher"
+    },
+    "seller_name": {
+      "type": "string",
+      "description": "Nome do vendedor (cache para exibi\u00e7\u00e3o)"
+    },
+    "discount_percent": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Percentual de desconto"
+    },
+    "discount_value": {
+      "type": "number",
+      "description": "Valor fixo de desconto (alternativa ao percentual)"
+    },
+    "discount_type": {
+      "type": "string",
+      "enum": [
+        "percent",
+        "fixed"
+      ],
+      "default": "percent",
+      "description": "Tipo de desconto: percentual ou valor fixo"
+    },
+    "max_uses": {
+      "type": "integer",
+      "default": 1,
+      "description": "Quantidade m\u00e1xima de usos permitidos"
+    },
+    "uses_count": {
+      "type": "integer",
+      "default": 0,
+      "description": "Quantidade de vezes utilizado"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "used",
+        "pending_approval",
+        "approved",
+        "rejected",
+        "expired"
+      ],
+      "default": "active",
+      "description": "Status atual do voucher"
+    },
+    "expiration_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data de expira\u00e7\u00e3o do voucher"
+    },
+    "description": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o ou motivo do voucher"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es internas"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Dados adicionais flex\u00edveis"
+    }
+  },
+  "required": [
+    "code",
+    "workshop_id",
+    "seller_id",
+    "discount_type",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        },
+        {
+          "company_id": "{{user.data.company_id}}"
+        },
+        {
+          "seller_id": "{{user.id}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        }
+      ]
+    }
+  }
+}

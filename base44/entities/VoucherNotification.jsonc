@@ -1,0 +1,128 @@
+{
+  "name": "VoucherNotification",
+  "type": "object",
+  "properties": {
+    "voucher_id": {
+      "type": "string",
+      "description": "ID do voucher relacionado"
+    },
+    "voucher_use_id": {
+      "type": "string",
+      "description": "ID do uso do voucher (se aplic\u00e1vel)"
+    },
+    "voucher_code": {
+      "type": "string",
+      "description": "C\u00f3digo do voucher (cache)"
+    },
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "company_id": {
+      "type": "string",
+      "description": "ID da empresa"
+    },
+    "consulting_firm_id": {
+      "type": "string",
+      "description": "ID da consultoria"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "voucher_created",
+        "voucher_used",
+        "pending_approval",
+        "approved",
+        "rejected",
+        "expired",
+        "approval_deadline_warning"
+      ],
+      "description": "Tipo da notifica\u00e7\u00e3o"
+    },
+    "title": {
+      "type": "string",
+      "description": "T\u00edtulo da notifica\u00e7\u00e3o"
+    },
+    "message": {
+      "type": "string",
+      "description": "Mensagem da notifica\u00e7\u00e3o"
+    },
+    "sent_to_user_id": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio destinat\u00e1rio"
+    },
+    "triggered_by_user_id": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio que disparou a a\u00e7\u00e3o"
+    },
+    "is_read": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se foi lida"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Dados adicionais"
+    }
+  },
+  "required": [
+    "voucher_id",
+    "type",
+    "title",
+    "message",
+    "sent_to_user_id"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "sent_to_user_id": "{{user.id}}"
+        },
+        {
+          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "sent_to_user_id": "{{user.id}}"
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

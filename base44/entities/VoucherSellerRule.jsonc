@@ -1,0 +1,123 @@
+{
+  "name": "VoucherSellerRule",
+  "type": "object",
+  "properties": {
+    "seller_id": {
+      "type": "string",
+      "description": "ID do vendedor"
+    },
+    "seller_name": {
+      "type": "string",
+      "description": "Nome do vendedor (cache)"
+    },
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "company_id": {
+      "type": "string",
+      "description": "ID da empresa"
+    },
+    "consulting_firm_id": {
+      "type": "string",
+      "description": "ID da consultoria"
+    },
+    "max_vouchers_per_month": {
+      "type": "integer",
+      "default": 5,
+      "description": "M\u00e1ximo de vouchers que pode gerar por m\u00eas"
+    },
+    "max_discount_percent": {
+      "type": "number",
+      "default": 20,
+      "maximum": 100,
+      "description": "Desconto m\u00e1ximo permitido (%)"
+    },
+    "max_discount_value": {
+      "type": "number",
+      "description": "Valor m\u00e1ximo de desconto fixo permitido (R$)"
+    },
+    "vouchers_used_this_month": {
+      "type": "integer",
+      "default": 0,
+      "description": "Vouchers gerados no m\u00eas atual"
+    },
+    "current_month": {
+      "type": "string",
+      "description": "M\u00eas atual de refer\u00eancia (YYYY-MM)"
+    },
+    "active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se o vendedor est\u00e1 autorizado a gerar vouchers"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es sobre as regras"
+    }
+  },
+  "required": [
+    "seller_id",
+    "workshop_id",
+    "active"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        },
+        {
+          "company_id": "{{user.data.company_id}}"
+        },
+        {
+          "seller_id": "{{user.id}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        }
+      ]
+    }
+  }
+}
