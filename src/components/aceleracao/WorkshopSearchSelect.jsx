@@ -32,35 +32,40 @@ export default function WorkshopSearchSelect({ workshops, value, onValueChange, 
         <Command>
           <CommandInput placeholder="Buscar oficina..." />
           <CommandEmpty>Nenhuma oficina encontrada.</CommandEmpty>
-          <CommandGroup className="max-h-64 overflow-auto">
-            {workshops?.map((workshop) => (
-              <CommandItem
-                key={workshop.id}
-                value={`${workshop.name} ${workshop.city} ${workshop.state} ${workshop.cnpj || ''}`}
-                onSelect={() => {
-                  onValueChange(workshop.id);
-                  setOpen(false);
-                }}
-                className="hover:!bg-red-600 hover:!text-white cursor-pointer aria-selected:!bg-red-600 aria-selected:!text-white"
-              >
-                <Check
-                  className={cn(
-                    "mr-2 h-4 w-4",
-                    value === workshop.id ? "opacity-100" : "opacity-0"
-                  )}
-                />
-                <div className="flex flex-col">
-                  <span className="font-medium">{workshop.name}</span>
-                  <span className="text-xs text-gray-500">
-                    {workshop.city}/{workshop.state} • {workshop.planoAtual}
-                  </span>
-                </div>
-              </CommandItem>
-            ))}
+          <div className="max-h-64 overflow-auto">
+            <CommandGroup>
+              {workshops?.map((workshop) => (
+                <CommandItem
+                  key={workshop.id}
+                  value={`${workshop.name} ${workshop.city} ${workshop.state} ${workshop.cnpj || ''}`}
+                  onSelect={() => {
+                    onValueChange(workshop.id);
+                    setOpen(false);
+                  }}
+                  style={{
+                    cursor: 'pointer'
+                  }}
+                  className="hover:bg-red-600 hover:text-white"
+                >
+                  <Check
+                    className={cn(
+                      "mr-2 h-4 w-4",
+                      value === workshop.id ? "opacity-100" : "opacity-0"
+                    )}
+                  />
+                  <div className="flex flex-col">
+                    <span className="font-medium">{workshop.name}</span>
+                    <span className="text-xs text-gray-500">
+                      {workshop.city}/{workshop.state} • {workshop.planoAtual}
+                    </span>
+                  </div>
+                </CommandItem>
+              ))}
             </CommandGroup>
-            </Command>
-            <div className="border-t px-2 py-1.5 text-xs text-gray-400 bg-gray-50">Oficinas</div>
-            </PopoverContent>
+          </div>
+          <div className="border-t px-2 py-1.5 text-xs text-gray-400 bg-gray-50">Oficinas</div>
+        </Command>
+      </PopoverContent>
     </Popover>
   );
 }
