@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Command, CommandEmpty, CommandInput } from "@/components/ui/command";
+import { CommandInput } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Check, ChevronsUpDown } from "lucide-react";
@@ -34,18 +34,26 @@ export default function WorkshopSearchSelect({ workshops, value, onValueChange, 
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[500px] p-0 overflow-hidden">
-        <Command shouldFilter={false}>
+      <PopoverContent className="w-[500px] p-0">
+        <div className="border-b">
           <CommandInput 
-            placeholder="Buscar oficina..." 
+            placeholder="Pesquisar oficina..." 
             value={searchTerm}
             onValueChange={setSearchTerm}
-            className="border-b"
           />
-          {filtered.length === 0 && <CommandEmpty>Nenhuma oficina encontrada.</CommandEmpty>}
-          
-          <div className="max-h-64 overflow-y-auto pr-2" style={{ scrollbarGutter: 'stable' }}>
-            {filtered.map((workshop) => (
+        </div>
+        
+        <div className="border-b px-3 py-2 text-xs text-gray-600 bg-gray-50 font-medium">
+          Todas Oficinas
+        </div>
+
+        <div className="max-h-64 overflow-y-auto pr-2" style={{ scrollbarGutter: 'stable' }}>
+          {filtered.length === 0 ? (
+            <div className="px-3 py-4 text-center text-sm text-gray-500">
+              Nenhuma oficina encontrada
+            </div>
+          ) : (
+            filtered.map((workshop) => (
               <div
                 key={workshop.id}
                 onClick={() => {
@@ -60,9 +68,8 @@ export default function WorkshopSearchSelect({ workshops, value, onValueChange, 
                   color: hoveredId === workshop.id ? 'white' : 'black',
                   cursor: 'pointer',
                   padding: '8px 12px',
-                  transition: 'background-color 0.15s'
+                  transition: 'background-color 0.15s ease-out'
                 }}
-                className="py-2"
               >
                 <div className="flex items-start gap-2">
                   <Check
@@ -73,19 +80,15 @@ export default function WorkshopSearchSelect({ workshops, value, onValueChange, 
                   />
                   <div className="flex flex-col flex-1 min-w-0">
                     <span className="font-medium text-sm">{workshop.name}</span>
-                    <span className="text-xs" style={{color: hoveredId === workshop.id ? 'rgba(255,255,255,0.7)' : '#9ca3af'}}>
+                    <span className="text-xs" style={{opacity: hoveredId === workshop.id ? 0.7 : 1, color: hoveredId === workshop.id ? 'white' : '#9ca3af'}}>
                       {workshop.city}/{workshop.state} • {workshop.planoAtual}
                     </span>
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
-          
-          <div className="border-t border-gray-200 px-3 py-2 text-xs text-gray-600 bg-gray-50 font-medium">
-            Todas Oficinas
-          </div>
-        </Command>
+            ))
+          )}
+        </div>
       </PopoverContent>
     </Popover>
   );
