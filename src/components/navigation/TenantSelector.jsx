@@ -94,7 +94,7 @@ export default function TenantSelector() {
               <CommandInput placeholder="Pesquisar oficina..." className="text-gray-800 text-sm font-normal" />
               <div className="relative">
                 {/* Scroll up zone */}
-                <div className="bg-gradient-to-b mx-8 pb-2 opacity-0 absolute top-0 left-0 right-0 h-7 z-10 flex items-center justify-center hover:opacity-100 transition-all duration-200 from-white via-white/80 to-transparent cursor-pointer group"
+                <div className="bg-gradient-to-b mx-8 pb-2 opacity-0 rounded-none absolute top-0 left-0 right-0 h-7 z-10 flex items-center justify-center hover:opacity-100 transition-all duration-200 from-white via-white/80 to-transparent cursor-pointer group"
 
                 onMouseEnter={() => startScroll('up')}
                 onMouseLeave={stopScroll}>
