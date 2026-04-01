@@ -31,6 +31,15 @@ export function useWorkshopContext() {
             }
           } catch (err) {
             console.warn('Erro ao buscar workshops via BFF:', err);
+            const fallbackWorkshopId = user?.data?.workshop_id || user?.workshop_id || selectedCompanyId;
+            if (fallbackWorkshopId) {
+              try {
+                const fallbackWorkshop = await base44.entities.Workshop.get(fallbackWorkshopId);
+                if (fallbackWorkshop) {
+                  available = [fallbackWorkshop];
+                }
+              } catch (_) {}
+            }
           }
         }
 

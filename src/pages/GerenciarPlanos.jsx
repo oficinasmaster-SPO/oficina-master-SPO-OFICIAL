@@ -296,7 +296,7 @@ export default function GerenciarPlanos() {
   const togglePlanActiveMutation = useMutation({
     mutationFn: async ({ id, active }) => base44.entities.PlanFeature.update(id, { active }),
     onSuccess: () => {
-      queryClient.invalidateQueries(['planFeatures']);
+      queryClient.invalidateQueries({ queryKey: ['planFeatures'] });
       toast.success("Disponibilidade do plano atualizada!");
     },
     onError: () => {

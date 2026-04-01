@@ -32,12 +32,18 @@ Deno.serve(async (req) => {
     }
 
     const billingFields = ['planId', 'planStatus', 'planoAtual', 'trialEndsAt', 'billingCycleStart', 'billingCycleEnd', 'dataAssinatura', 'dataRenovacao', 'limitesUtilizados'];
+    const allowedAdminOnlyFields = ['planoDisponivel', 'plan_visible', 'available_for_signup'];
     // billing_update_token e billing_secure_hash NÃO devem estar nessa lista — são campos de controle interno
     
     const changedBillingFields = changed_fields.filter(f => billingFields.includes(f));
+    const changedAllowedAdminOnlyFields = changed_fields.filter(f => allowedAdminOnlyFields.includes(f));
 
     if (changedBillingFields.length > 0 && data.billing_update_token === "" && !old_data.billing_update_token) {
         return Response.json({ success: true, reason: 'token cleanup event, skipping' });
+    }
+
+    if (changedAllowedAdminOnlyFields.length > 0 && changedBillingFields.length === 0) {
+        return Response.json({ success: true, reason: 'allowed admin visibility update' });
     }
 
     if (changedBillingFields.length > 0) {
