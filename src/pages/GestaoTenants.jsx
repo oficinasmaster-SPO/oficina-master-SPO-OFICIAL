@@ -71,7 +71,12 @@ export default function GestaoTenants() {
 
   const { data: integrationUsageLogs = [], isLoading: loadingIntegrationUsage } = useQuery({
     queryKey: ['admin-integration-usage'],
-    queryFn: () => base44.entities.IntegrationUsageLog.list('-created_date', 200),
+    queryFn: () => base44.entities.IntegrationUsageLog.list('-created_date', 500),
+  });
+
+  const { data: integrationCreditAlerts = [], isLoading: loadingIntegrationAlerts } = useQuery({
+    queryKey: ['admin-integration-credit-alerts'],
+    queryFn: () => base44.entities.IntegrationCreditAlert.list('-created_date', 500),
   });
 
   const usageByFunction = Object.values(
@@ -92,6 +97,8 @@ export default function GestaoTenants() {
       return acc;
     }, {})
   ).sort((a, b) => b.calls - a.calls);
+
+  const latestCreditSnapshot = integrationCreditAlerts.length > 0 ? integrationCreditAlerts[0] : null;
 
   const filteredUsers = users?.filter(u => 
     u.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -570,13 +577,34 @@ export default function GestaoTenants() {
             <Badge variant="secondary">{usageByFunction.length}</Badge>
           </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardDescription>Último snapshot de consumo</CardDescription>
+                <CardTitle className="text-2xl">{latestCreditSnapshot?.credits_used ?? '-'}</CardTitle>
+              </CardHeader>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardDescription>Limite do plano</CardDescription>
+                <CardTitle className="text-2xl">{latestCreditSnapshot?.credits_limit ?? '-'}</CardTitle>
+              </CardHeader>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardDescription>Plano / percentual</CardDescription>
+                <CardTitle className="text-2xl">{latestCreditSnapshot ? `${latestCreditSnapshot.user_tier || '-'} · ${latestCreditSnapshot.percentage || 0}%` : '-'}</CardTitle>
+              </CardHeader>
+            </Card>
+          </div>
+
           <Card>
             <CardHeader>
               <CardTitle>Funções com mais consumo</CardTitle>
-              <CardDescription>Resumo das últimas chamadas registradas de IA e integrações.</CardDescription>
+              <CardDescription>Esta tabela mostra apenas o consumo que foi gravado no log interno; o painel acima mostra o último snapshot real detectado pelo sistema.</CardDescription>
             </CardHeader>
             <CardContent className="p-0">
-              {loadingIntegrationUsage ? (
+              {loadingIntegrationUsage || loadingIntegrationAlerts ? (
                 <div className="flex justify-center p-8"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
               ) : (
                 <div className="overflow-x-auto">
@@ -603,7 +631,7 @@ export default function GestaoTenants() {
                       {usageByFunction.length === 0 && (
                         <TableRow>
                           <TableCell colSpan={5} className="text-center py-6 text-gray-500">
-                            Ainda não há registros de consumo.
+                            Ainda não há registros de log interno; isso não significa ausência de consumo no painel Base44.
                           </TableCell>
                         </TableRow>
                       )}
