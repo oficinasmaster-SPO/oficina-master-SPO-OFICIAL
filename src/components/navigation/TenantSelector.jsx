@@ -137,7 +137,7 @@ export default function TenantSelector() {
                           selectedCompanyId === c.id ? "opacity-100" : "opacity-0"
                         )} />
                       
-                        <span className="truncate">{c.name}</span>
+                        <span className="bg-[#ca9696] truncate">{c.name}</span>
                       </CommandItem>
                     )}
                   </CommandGroup>
