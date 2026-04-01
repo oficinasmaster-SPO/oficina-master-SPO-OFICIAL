@@ -37,6 +37,10 @@
       "type": "number",
       "description": "Valor m\u00e1ximo de desconto fixo permitido (R$)"
     },
+    "max_sale_value": {
+      "type": "number",
+      "description": "Valor m\u00e1ximo de venda permitido com voucher (R$)"
+    },
     "vouchers_used_this_month": {
       "type": "integer",
       "default": 0,

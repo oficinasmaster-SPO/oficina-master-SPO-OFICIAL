@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Ticket, PlusCircle, List, ShoppingCart, ClipboardList, ShieldCheck, BarChart3 } from "lucide-react";
+import { Ticket, PlusCircle, List, ShoppingCart, ClipboardList, ShieldCheck, BarChart3, Settings } from "lucide-react";
 import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 import VoucherGenerateForm from "./VoucherGenerateForm";
 import VoucherMyList from "./VoucherMyList";
 import VoucherUseForm from "./VoucherUseForm";
 import VoucherUsesList from "./VoucherUsesList";
 import VoucherAdminPanel from "./VoucherAdminPanel";
+import VoucherSellerRulesPanel from "./VoucherSellerRulesPanel";
 
 export default function VouchersTab() {
   const [user, setUser] = useState(null);
@@ -55,6 +56,10 @@ export default function VouchersTab() {
                 <ShieldCheck className="w-4 h-4" />
                 Administração
               </TabsTrigger>
+              <TabsTrigger value="seller-rules" className="gap-2">
+                <Settings className="w-4 h-4" />
+                Regras Vendedores
+              </TabsTrigger>
               <TabsTrigger value="reports" className="gap-2">
                 <BarChart3 className="w-4 h-4" />
                 Relatórios
@@ -83,6 +88,9 @@ export default function VouchersTab() {
           <>
             <TabsContent value="admin">
               <VoucherAdminPanel user={user} />
+            </TabsContent>
+            <TabsContent value="seller-rules">
+              <VoucherSellerRulesPanel user={user} />
             </TabsContent>
             <TabsContent value="reports">
               <div className="text-center py-12 text-gray-400">
