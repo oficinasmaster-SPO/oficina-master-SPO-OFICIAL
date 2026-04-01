@@ -14,6 +14,7 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { TenantProvider } from '@/components/contexts/TenantContext';
 import PageAccessControl from '@/components/auth/PageAccessControl';
 import { pagePermissions } from '@/components/lib/pagePermissions';
+import Home from '@/pages/Home';
 import GestaoTenants from '@/pages/GestaoTenants';
 import CompletarPerfil from '@/pages/CompletarPerfil';
 import DescricaoCargos from '@/pages/DescricaoCargos';
@@ -99,10 +100,8 @@ const AuthenticatedApp = () => {
     <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><WheelLoader size="xl" /></div>}>
       <Routes>
         <Route path="/" element={
-        <LayoutWrapper currentPageName="GestaoTenants">
-          <PageAccessControl adminOnly={true}>
-            <GestaoTenants />
-          </PageAccessControl>
+        <LayoutWrapper currentPageName="Home">
+          <Home />
         </LayoutWrapper>
       } />
       <Route path="/CompletarPerfil" element={
