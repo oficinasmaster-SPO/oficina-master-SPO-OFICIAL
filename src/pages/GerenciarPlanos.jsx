@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { createPageUrl } from "@/utils";
 import { useNavigate } from "react-router-dom";
 import AttendanceRulesTab from "@/components/plans/AttendanceRulesTab";
+import VouchersTab from "@/components/vouchers/VouchersTab";
 
 export default function GerenciarPlanos() {
   const navigate = useNavigate();
@@ -443,6 +444,17 @@ export default function GerenciarPlanos() {
           </div>
         </div>
 
+        <Tabs defaultValue="plans" className="space-y-6">
+          <TabsList className="bg-white shadow-md">
+            <TabsTrigger value="plans">Planos</TabsTrigger>
+            <TabsTrigger value="vouchers">🎟️ Vouchers e Promoções</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="vouchers">
+            <VouchersTab />
+          </TabsContent>
+
+          <TabsContent value="plans">
         {!selectedPlan ? (
           <>
             <div className="flex justify-end mb-6">
@@ -816,6 +828,8 @@ export default function GerenciarPlanos() {
             </CardContent>
           </Card>
         )}
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
