@@ -148,10 +148,11 @@ export function PermissionsProvider({ children }) {
 
   const hasGranularPermission = async (resourceId, actionId) => {
     if (!user) return false;
-    if (user.role === 'admin' && isAdminMode) return true;
+    if (user.role === 'admin') return true;
     if (isOwnerOrPartner) return true;
 
     try {
+      // 1. Verificar granular config por job_role do perfil
       if (profile?.job_roles && profile.job_roles.length > 0) {
         for (const jobRole of profile.job_roles) {
           const roleConfig = granularConfig[jobRole];
@@ -162,15 +163,35 @@ export function PermissionsProvider({ children }) {
         }
       }
       
+      // 2. Atalhos por cargo
       if (profile?.job_roles?.includes('socio') && resourceId === 'employees') return true;
       if ((profile?.job_roles?.includes('diretor') || profile?.job_roles?.includes('gerente')) && resourceId === 'employees') {
         if (actionId === 'read' || actionId === 'create' || actionId === 'update') return true;
       }
       
+      // 3. Verificar module_permissions do perfil
       if (profile?.module_permissions) {
         const moduleAccess = profile.module_permissions[resourceId];
         if (moduleAccess === 'total') return true;
         if (moduleAccess === 'visualizacao' && actionId === 'read') return true;
+      }
+      
+      // 4. Fallback: se nenhuma configuração granular existe, verificar permissão de página
+      // Isso permite que usuários com permissão de nível de página acessem os recursos
+      const resourceToPagePermMap = {
+        employees: { read: 'employees.view', create: 'employees.create', update: 'employees.edit', delete: 'employees.delete' },
+        workshop: { read: 'workshop.view', update: 'workshop.manage_goals' },
+        diagnostics: { read: 'diagnostics.view', create: 'diagnostics.create' },
+        processes: { read: 'processes.view', create: 'processes.create' },
+        documents: { read: 'documents.upload', create: 'documents.upload' },
+        training: { read: 'training.view', create: 'training.create', update: 'training.manage' },
+        culture: { read: 'culture.view', create: 'culture.edit', update: 'culture.manage_rituals' },
+        operations: { read: 'operations.view_qgp', create: 'operations.manage_tasks' },
+        dashboard: { read: 'dashboard.view' },
+      };
+      const permMap = resourceToPagePermMap[resourceId];
+      if (permMap && permMap[actionId]) {
+        if (permissions.includes(permMap[actionId])) return true;
       }
       
       return false;
