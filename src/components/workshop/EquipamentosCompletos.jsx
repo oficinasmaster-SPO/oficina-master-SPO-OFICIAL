@@ -161,19 +161,34 @@ const EquipamentosCompletos = forwardRef(({ workshop, onUpdate }, ref) => {
   const [editing, setEditing] = useState(false);
   const [equipmentList, setEquipmentList] = useState([]);
   const [activeCategory, setActiveCategory] = useState("mecanica_autocenter");
+  const [extraEquipment, setExtraEquipment] = useState({
+    welding_machines: [],
+    scanners: []
+  });
 
   useEffect(() => {
     if (workshop?.equipment_list) {
       setEquipmentList(workshop.equipment_list);
     } else {
-      // Inicializar lista vazia se não existir
       setEquipmentList([]);
     }
+
+    setExtraEquipment({
+      welding_machines: workshop?.equipment?.welding_machines || [],
+      scanners: workshop?.equipment?.scanners || []
+    });
   }, [workshop]);
 
   const handleSave = async () => {
     try {
-      await onUpdate({ equipment_list: equipmentList });
+      await onUpdate({
+        equipment_list: equipmentList,
+        equipment: {
+          ...(workshop?.equipment || {}),
+          welding_machines: extraEquipment.welding_machines,
+          scanners: extraEquipment.scanners
+        }
+      });
       toast.success("Equipamentos salvos!");
     } catch (error) {
       console.error("Erro ao salvar:", error);
@@ -187,7 +202,14 @@ const EquipamentosCompletos = forwardRef(({ workshop, onUpdate }, ref) => {
   useImperativeHandle(ref, () => ({
     saveCurrentData: async () => {
       try {
-        await onUpdate({ equipment_list: equipmentList });
+        await onUpdate({
+          equipment_list: equipmentList,
+          equipment: {
+            ...(workshop?.equipment || {}),
+            welding_machines: extraEquipment.welding_machines,
+            scanners: extraEquipment.scanners
+          }
+        });
         toast.success("Equipamentos salvos!");
         setEditing(false);
         return true;
@@ -237,6 +259,56 @@ const EquipamentosCompletos = forwardRef(({ workshop, onUpdate }, ref) => {
     return equipmentList.filter(e => e.category === category).length;
   };
 
+  const addWeldingMachine = () => {
+    setExtraEquipment((prev) => ({
+      ...prev,
+      welding_machines: [...prev.welding_machines, { type: 'mig_mag', quantity: 1 }]
+    }));
+  };
+
+  const removeWeldingMachine = (index) => {
+    setExtraEquipment((prev) => ({
+      ...prev,
+      welding_machines: prev.welding_machines.filter((_, i) => i !== index)
+    }));
+  };
+
+  const updateWeldingMachine = (index, field, value) => {
+    setExtraEquipment((prev) => {
+      const welding_machines = [...prev.welding_machines];
+      welding_machines[index] = {
+        ...welding_machines[index],
+        [field]: field === 'quantity' ? parseInt(value) || 0 : value
+      };
+      return { ...prev, welding_machines };
+    });
+  };
+
+  const addScanner = () => {
+    setExtraEquipment((prev) => ({
+      ...prev,
+      scanners: [...prev.scanners, { brand: '', model: '' }]
+    }));
+  };
+
+  const removeScanner = (index) => {
+    setExtraEquipment((prev) => ({
+      ...prev,
+      scanners: prev.scanners.filter((_, i) => i !== index)
+    }));
+  };
+
+  const updateScanner = (index, field, value) => {
+    setExtraEquipment((prev) => {
+      const scanners = [...prev.scanners];
+      scanners[index] = {
+        ...scanners[index],
+        [field]: value
+      };
+      return { ...prev, scanners };
+    });
+  };
+
   if (!workshop) {
     return <div className="p-8 text-center text-gray-500">Carregando...</div>;
   }
@@ -261,6 +333,10 @@ const EquipamentosCompletos = forwardRef(({ workshop, onUpdate }, ref) => {
               <Button variant="outline" onClick={() => {
                 setEditing(false);
                 setEquipmentList(workshop.equipment_list || []);
+                setExtraEquipment({
+                  welding_machines: workshop?.equipment?.welding_machines || [],
+                  scanners: workshop?.equipment?.scanners || []
+                });
               }}>Cancelar</Button>
               <Button onClick={handleSave} className="bg-purple-600 hover:bg-purple-700">
                 <Save className="w-4 h-4 mr-2" />
@@ -428,6 +504,118 @@ const EquipamentosCompletos = forwardRef(({ workshop, onUpdate }, ref) => {
                       </div>
                     );
                   })}
+                </div>
+              </div>
+
+              <div className="border-t pt-6 space-y-6">
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <Label className="text-base font-semibold">Máquinas de Solda</Label>
+                    {editing && (
+                      <Button size="sm" onClick={addWeldingMachine}>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Adicionar
+                      </Button>
+                    )}
+                  </div>
+                  <div className="space-y-3">
+                    {editing ? (
+                      extraEquipment.welding_machines.map((machine, index) => (
+                        <div key={index} className="flex gap-3 items-end">
+                          <div className="flex-1">
+                            <Label>Tipo</Label>
+                            <Select
+                              value={machine.type}
+                              onValueChange={(value) => updateWeldingMachine(index, 'type', value)}
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="mig_mag">MIG/MAG</SelectItem>
+                                <SelectItem value="tig">TIG</SelectItem>
+                                <SelectItem value="eletrodo">Eletrodo</SelectItem>
+                                <SelectItem value="macarico">Maçarico</SelectItem>
+                                <SelectItem value="spotter">Spotter</SelectItem>
+                                <SelectItem value="plasma">Plasma</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="w-24">
+                            <Label>Qtd</Label>
+                            <Input
+                              type="number"
+                              min="1"
+                              value={machine.quantity}
+                              onChange={(e) => updateWeldingMachine(index, 'quantity', e.target.value)}
+                            />
+                          </div>
+                          <Button size="icon" variant="destructive" onClick={() => removeWeldingMachine(index)}>
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ))
+                    ) : (
+                      extraEquipment.welding_machines.length === 0 ? (
+                        <p className="text-sm text-gray-500">Nenhuma máquina de solda cadastrada.</p>
+                      ) : (
+                        extraEquipment.welding_machines.map((machine, index) => (
+                          <div key={index} className="flex items-center gap-2">
+                            <Badge variant="secondary">{machine.type} ({machine.quantity})</Badge>
+                          </div>
+                        ))
+                      )
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <Label className="text-base font-semibold">Scanners</Label>
+                    {editing && (
+                      <Button size="sm" onClick={addScanner}>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Adicionar
+                      </Button>
+                    )}
+                  </div>
+                  <div className="space-y-3">
+                    {editing ? (
+                      extraEquipment.scanners.map((scanner, index) => (
+                        <div key={index} className="flex gap-3 items-end">
+                          <div className="flex-1">
+                            <Label>Marca</Label>
+                            <Input
+                              value={scanner.brand}
+                              onChange={(e) => updateScanner(index, 'brand', e.target.value)}
+                              placeholder="Ex: Bosch"
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <Label>Modelo</Label>
+                            <Input
+                              value={scanner.model}
+                              onChange={(e) => updateScanner(index, 'model', e.target.value)}
+                              placeholder="Ex: KTS 590"
+                            />
+                          </div>
+                          <Button size="icon" variant="destructive" onClick={() => removeScanner(index)}>
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ))
+                    ) : (
+                      extraEquipment.scanners.length === 0 ? (
+                        <p className="text-sm text-gray-500">Nenhum scanner cadastrado.</p>
+                      ) : (
+                        extraEquipment.scanners.map((scanner, index) => (
+                          <div key={index} className="flex items-center gap-2">
+                            <Badge variant="secondary">{scanner.brand} {scanner.model}</Badge>
+                          </div>
+                        ))
+                      )
+                    )}
+                  </div>
                 </div>
               </div>
             </TabsContent>
