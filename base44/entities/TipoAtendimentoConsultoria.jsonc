@@ -1,0 +1,50 @@
+{
+  "name": "TipoAtendimentoConsultoria",
+  "type": "object",
+  "properties": {
+    "value": {
+      "type": "string",
+      "description": "Identificador \u00fanico do tipo (ex: diagnostico_inicial)"
+    },
+    "label": {
+      "type": "string",
+      "description": "Nome exibido do tipo de atendimento"
+    },
+    "duracao_minutos": {
+      "type": "integer",
+      "description": "Dura\u00e7\u00e3o padr\u00e3o em minutos"
+    },
+    "descricao": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o do tipo de atendimento"
+    },
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina (null = tipo global)"
+    },
+    "is_default": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se \u00e9 um tipo padr\u00e3o do sistema"
+    },
+    "ativo": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se est\u00e1 ativo para uso"
+    }
+  },
+  "required": [
+    "value",
+    "label"
+  ],
+  "rls": {
+    "create": true,
+    "read": true,
+    "update": true,
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
