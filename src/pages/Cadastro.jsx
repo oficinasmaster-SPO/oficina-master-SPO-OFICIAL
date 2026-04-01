@@ -415,7 +415,7 @@ export default function Cadastro() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="perfil-socio" className="animate-in fade-in-50 duration-300">
+          <TabsContent value="perfil-socio" className="animate-in fade-in-50 duration-300 pb-28">
             <CadastroPerfilSocio 
               ref={perfilSocioRef}
               workshop={workshop}
@@ -424,48 +424,18 @@ export default function Cadastro() {
               onBack={() => {}}
               onEditingChange={setIsEditing}
             />
-            <div className="mt-6 flex justify-end gap-3">
-              {isEditing && (
-                <Button onClick={() => handleSaveOnly(perfilSocioRef)} disabled={saving} className="bg-green-600 hover:bg-green-700">
-                  {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
-                  Salvar
-                </Button>
-              )}
-              <Button onClick={() => handleNextTab(perfilSocioRef, "dados")} disabled={saving || isEditing} className="bg-blue-600 hover:bg-blue-700">
-                {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                Próximo: Dados <ArrowRight className="ml-2 w-4 h-4" />
-              </Button>
-            </div>
           </TabsContent>
 
-          <TabsContent value="dados" className="animate-in fade-in-50 duration-300">
+          <TabsContent value="dados" className="animate-in fade-in-50 duration-300 pb-28">
             <DadosBasicosOficina 
               ref={dadosBasicosRef}
               workshop={workshop} 
               onUpdate={handleWorkshopUpdate}
               onEditingChange={setIsEditing}
             />
-            <div className="mt-6 flex justify-between items-center">
-              <Button variant="outline" onClick={() => {
-                setActiveTab("perfil-socio");
-                window.history.replaceState(null, '', `${location.pathname}?step=perfil-socio`);
-              }}>Voltar</Button>
-              <div className="flex gap-3">
-                {isEditing && (
-                  <Button onClick={() => handleSaveOnly(dadosBasicosRef)} disabled={saving} className="bg-green-600 hover:bg-green-700">
-                    {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
-                    Salvar
-                  </Button>
-                )}
-                <Button onClick={() => handleNextTab(dadosBasicosRef, "servicos")} disabled={saving || isEditing} className="bg-blue-600 hover:bg-blue-700">
-                {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                Próximo: Serviços <ArrowRight className="ml-2 w-4 h-4" />
-                </Button>
-              </div>
-            </div>
           </TabsContent>
 
-          <TabsContent value="servicos" className="animate-in fade-in-50 duration-300">
+          <TabsContent value="servicos" className="animate-in fade-in-50 duration-300 pb-28">
             <ServicosEquipamentos 
               ref={servicosRef}
               workshop={workshop} 
@@ -473,27 +443,9 @@ export default function Cadastro() {
               showServicesOnly={true}
               onEditingChange={setIsEditing}
             />
-            <div className="mt-6 flex justify-between items-center">
-              <Button variant="outline" onClick={() => {
-                setActiveTab("dados");
-                window.history.replaceState(null, '', `${location.pathname}?step=dados`);
-              }}>Voltar</Button>
-              <div className="flex gap-3">
-                {isEditing && (
-                  <Button onClick={() => handleSaveOnly(servicosRef)} disabled={saving} className="bg-green-600 hover:bg-green-700">
-                    {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
-                    Salvar
-                  </Button>
-                )}
-                <Button onClick={() => handleNextTab(servicosRef, "equipamentos")} disabled={saving || isEditing} className="bg-blue-600 hover:bg-blue-700">
-                {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                Próximo: Equipamentos <ArrowRight className="ml-2 w-4 h-4" />
-                </Button>
-              </div>
-            </div>
           </TabsContent>
 
-          <TabsContent value="equipamentos" className="animate-in fade-in-50 duration-300">
+          <TabsContent value="equipamentos" className="animate-in fade-in-50 duration-300 pb-28">
             <div className="space-y-6">
               <EquipamentosCompletos
                 ref={equipamentosCompletosRef}
@@ -501,120 +453,190 @@ export default function Cadastro() {
                 onUpdate={handleWorkshopUpdate}
               />
             </div>
-            <div className="mt-6 flex justify-between items-center">
-              <Button variant="outline" onClick={() => {
-                setActiveTab("servicos");
-                window.history.replaceState(null, '', `${location.pathname}?step=servicos`);
-              }}>Voltar</Button>
-              <div className="flex gap-3">
-                {isEditing && (
-                  <Button onClick={() => handleSaveOnly(null, true)} disabled={saving} className="bg-green-600 hover:bg-green-700">
-                    {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
-                    Salvar
-                  </Button>
-                )}
-                <Button onClick={async () => {
-                setSaving(true);
-                try {
-                  let success = true;
-                  if (equipamentosRef.current?.saveCurrentData) {
-                    const s1 = await equipamentosRef.current.saveCurrentData();
-                    if (!s1) success = false;
-                  }
-                  if (success && equipamentosCompletosRef.current?.saveCurrentData) {
-                    const s2 = await equipamentosCompletosRef.current.saveCurrentData();
-                    if (!s2) success = false;
-                  }
-                  if (success) {
-                    handleNextTab(null, "terceirizados");
-                  } else {
-                    setSaving(false);
-                  }
-                } catch (e) {
-                  console.error(e);
-                  setSaving(false);
-                }
-              }} disabled={saving || isEditing} className="bg-blue-600 hover:bg-blue-700">
-                {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                Próximo: Terceirizados <ArrowRight className="ml-2 w-4 h-4" />
-                </Button>
-              </div>
-            </div>
           </TabsContent>
 
-          <TabsContent value="terceirizados" className="animate-in fade-in-50 duration-300">
+          <TabsContent value="terceirizados" className="animate-in fade-in-50 duration-300 pb-28">
             <ServicosTerceirizados 
               ref={terceirizadosRef}
               workshop={workshop} 
               onUpdate={handleWorkshopUpdate}
               onEditingChange={setIsEditing}
             />
-            <div className="mt-6 flex justify-between items-center">
-              <Button variant="outline" onClick={() => {
-                setActiveTab("equipamentos");
-                window.history.replaceState(null, '', `${location.pathname}?step=equipamentos`);
-              }}>Voltar</Button>
-              <div className="flex gap-3">
-                {isEditing && (
-                  <Button onClick={() => handleSaveOnly(terceirizadosRef)} disabled={saving} className="bg-green-600 hover:bg-green-700">
-                    {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
-                    Salvar
-                  </Button>
-                )}
-                <Button onClick={() => handleNextTab(terceirizadosRef, "metas")} disabled={saving || isEditing} className="bg-blue-600 hover:bg-blue-700">
-                {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                Próximo: Metas <ArrowRight className="ml-2 w-4 h-4" />
-                </Button>
-              </div>
-            </div>
           </TabsContent>
 
-          <TabsContent value="metas" className="animate-in fade-in-50 duration-300">
+          <TabsContent value="metas" className="animate-in fade-in-50 duration-300 pb-28">
             <MetasObjetivosCompleto 
               ref={metasRef}
               workshop={workshop} 
               onUpdate={handleWorkshopUpdate}
               onEditingChange={setIsEditing}
             />
-            <div className="mt-8 pt-6 border-t border-slate-200 flex justify-between items-center">
-              <Button variant="outline" onClick={() => {
-                setActiveTab("terceirizados");
-                window.history.replaceState(null, '', `${location.pathname}?step=terceirizados`);
-              }}>Voltar</Button>
-              <div className="flex flex-col items-end gap-2">
-                {isEditing ? (
-                  <Button onClick={() => handleSaveOnly(metasRef)} disabled={saving} className="bg-green-600 hover:bg-green-700 w-full mb-2">
-                    {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
-                    Salvar Alterações
-                  </Button>
-                ) : <p className="text-sm text-slate-500">Tudo preenchido?</p>}
-                <Button 
-                  onClick={async () => {
-                    setSaving(true);
-                    try {
-                      if (metasRef?.current?.saveCurrentData) {
-                        const success = await metasRef.current.saveCurrentData();
-                        if (!success) {
-                          setSaving(false);
-                          return;
-                        }
-                      }
-                      handleFinish();
-                    } finally {
-                      setSaving(false);
-                    }
-                  }}
-                  disabled={saving || isEditing}
-                  className="bg-green-600 hover:bg-green-700 shadow-lg"
-                >
-                  {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                  <CheckCircle2 className="w-5 h-5 mr-2" />
-                  Finalizar Cadastro
-                </Button>
-              </div>
-            </div>
           </TabsContent>
         </Tabs>
+
+        <div className="fixed bottom-0 left-0 right-0 z-40 border-t bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/85">
+          <div className="max-w-7xl mx-auto px-4 py-4">
+            {activeTab === "perfil-socio" && (
+              <div className="flex flex-col sm:flex-row justify-end gap-3">
+                {isEditing && (
+                  <Button onClick={() => handleSaveOnly(perfilSocioRef)} disabled={saving} className="bg-green-600 hover:bg-green-700">
+                    {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
+                    Salvar
+                  </Button>
+                )}
+                <Button onClick={() => handleNextTab(perfilSocioRef, "dados")} disabled={saving || isEditing} className="bg-blue-600 hover:bg-blue-700">
+                  {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                  Próximo: Dados <ArrowRight className="ml-2 w-4 h-4" />
+                </Button>
+              </div>
+            )}
+
+            {activeTab === "dados" && (
+              <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
+                <Button variant="outline" onClick={() => {
+                  setActiveTab("perfil-socio");
+                  window.history.replaceState(null, '', `${location.pathname}?step=perfil-socio`);
+                }}>Voltar</Button>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  {isEditing && (
+                    <Button onClick={() => handleSaveOnly(dadosBasicosRef)} disabled={saving} className="bg-green-600 hover:bg-green-700">
+                      {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
+                      Salvar
+                    </Button>
+                  )}
+                  <Button onClick={() => handleNextTab(dadosBasicosRef, "servicos")} disabled={saving || isEditing} className="bg-blue-600 hover:bg-blue-700">
+                    {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                    Próximo: Serviços <ArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "servicos" && (
+              <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
+                <Button variant="outline" onClick={() => {
+                  setActiveTab("dados");
+                  window.history.replaceState(null, '', `${location.pathname}?step=dados`);
+                }}>Voltar</Button>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  {isEditing && (
+                    <Button onClick={() => handleSaveOnly(servicosRef)} disabled={saving} className="bg-green-600 hover:bg-green-700">
+                      {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
+                      Salvar
+                    </Button>
+                  )}
+                  <Button onClick={() => handleNextTab(servicosRef, "equipamentos")} disabled={saving || isEditing} className="bg-blue-600 hover:bg-blue-700">
+                    {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                    Próximo: Equipamentos <ArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "equipamentos" && (
+              <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
+                <Button variant="outline" onClick={() => {
+                  setActiveTab("servicos");
+                  window.history.replaceState(null, '', `${location.pathname}?step=servicos`);
+                }}>Voltar</Button>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  {isEditing && (
+                    <Button onClick={() => handleSaveOnly(null, true)} disabled={saving} className="bg-green-600 hover:bg-green-700">
+                      {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
+                      Salvar
+                    </Button>
+                  )}
+                  <Button onClick={async () => {
+                    setSaving(true);
+                    try {
+                      let success = true;
+                      if (equipamentosRef.current?.saveCurrentData) {
+                        const s1 = await equipamentosRef.current.saveCurrentData();
+                        if (!s1) success = false;
+                      }
+                      if (success && equipamentosCompletosRef.current?.saveCurrentData) {
+                        const s2 = await equipamentosCompletosRef.current.saveCurrentData();
+                        if (!s2) success = false;
+                      }
+                      if (success) {
+                        handleNextTab(null, "terceirizados");
+                      } else {
+                        setSaving(false);
+                      }
+                    } catch (e) {
+                      console.error(e);
+                      setSaving(false);
+                    }
+                  }} disabled={saving || isEditing} className="bg-blue-600 hover:bg-blue-700">
+                    {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                    Próximo: Terceirizados <ArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "terceirizados" && (
+              <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
+                <Button variant="outline" onClick={() => {
+                  setActiveTab("equipamentos");
+                  window.history.replaceState(null, '', `${location.pathname}?step=equipamentos`);
+                }}>Voltar</Button>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  {isEditing && (
+                    <Button onClick={() => handleSaveOnly(terceirizadosRef)} disabled={saving} className="bg-green-600 hover:bg-green-700">
+                      {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
+                      Salvar
+                    </Button>
+                  )}
+                  <Button onClick={() => handleNextTab(terceirizadosRef, "metas")} disabled={saving || isEditing} className="bg-blue-600 hover:bg-blue-700">
+                    {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                    Próximo: Metas <ArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "metas" && (
+              <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
+                <Button variant="outline" onClick={() => {
+                  setActiveTab("terceirizados");
+                  window.history.replaceState(null, '', `${location.pathname}?step=terceirizados`);
+                }}>Voltar</Button>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                  {isEditing ? (
+                    <Button onClick={() => handleSaveOnly(metasRef)} disabled={saving} className="bg-green-600 hover:bg-green-700">
+                      {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
+                      Salvar Alterações
+                    </Button>
+                  ) : <p className="text-sm text-slate-500 hidden sm:block">Tudo preenchido?</p>}
+                  <Button 
+                    onClick={async () => {
+                      setSaving(true);
+                      try {
+                        if (metasRef?.current?.saveCurrentData) {
+                          const success = await metasRef.current.saveCurrentData();
+                          if (!success) {
+                            setSaving(false);
+                            return;
+                          }
+                        }
+                        handleFinish();
+                      } finally {
+                        setSaving(false);
+                      }
+                    }}
+                    disabled={saving || isEditing}
+                    className="bg-green-600 hover:bg-green-700 shadow-lg"
+                  >
+                    {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                    <CheckCircle2 className="w-5 h-5 mr-2" />
+                    Finalizar Cadastro
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
