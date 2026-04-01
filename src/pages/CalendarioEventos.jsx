@@ -26,10 +26,13 @@ export default function CalendarioEventos() {
     description: ""
   });
 
-  // Carregar tipos de atendimento
+  // Carregar tipos de atendimento do banco centralizado
   const { data: attendanceTypes = [] } = useQuery({
-    queryKey: ['attendance-types'],
-    queryFn: () => base44.entities.AttendanceType.filter({ is_active: true })
+    queryKey: ['tipos-atendimento-consultoria'],
+    queryFn: async () => {
+      const tipos = await base44.entities.TipoAtendimentoConsultoria.filter({ ativo: true });
+      return tipos.map(t => ({ id: t.id, name: t.label }));
+    }
   });
 
   // Carregar eventos do ano
@@ -180,11 +183,15 @@ export default function CalendarioEventos() {
                     <SelectValue placeholder="Selecione..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {attendanceTypes.map((type) => (
-                      <SelectItem key={type.id} value={type.id}>
-                        {type.name}
-                      </SelectItem>
-                    ))}
+                    {attendanceTypes.length > 0 ? (
+                      attendanceTypes.map((type) => (
+                        <SelectItem key={type.id} value={type.id}>
+                          {type.name}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <div className="p-2 text-sm text-gray-500">Nenhum tipo disponível</div>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
