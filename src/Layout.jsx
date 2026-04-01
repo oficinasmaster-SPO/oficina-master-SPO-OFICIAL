@@ -308,7 +308,16 @@ export default function Layout({ children, currentPageName }) {
                     </div>
                   ) : (
                     isAuthenticated && workshopId ? (
-                      (user?.role !== 'admin' && !location.pathname.toLowerCase().includes('meuplano') && (workshop?.planStatus !== 'active' && workshop?.planStatus !== 'trial')) ? (
+                      (user?.role !== 'admin' && workshop?.status === 'inativo') ? (
+                        <div className="min-h-[60vh] flex flex-col items-center justify-center text-center p-6">
+                          <div className="bg-red-100 p-6 rounded-full w-24 h-24 flex items-center justify-center mb-6">
+                            <AlertCircle className="w-12 h-12 text-red-600" />
+                          </div>
+                          <h2 className="text-2xl font-bold text-gray-900 mb-3">Acesso Inválido</h2>
+                          <p className="text-gray-600 mb-6 max-w-md">Sua oficina está inativa. Por favor, procure um administrador do sistema para reativar o acesso.</p>
+                          <Button variant="outline" onClick={handleLogout}>Sair</Button>
+                        </div>
+                      ) : (user?.role !== 'admin' && !location.pathname.toLowerCase().includes('meuplano') && (workshop?.planStatus !== 'active' && workshop?.planStatus !== 'trial')) ? (
                         <div className="min-h-[60vh] flex flex-col items-center justify-center text-center p-6">
                           <div className="bg-red-100 p-6 rounded-full w-24 h-24 flex items-center justify-center mb-6">
                             <AlertCircle className="w-12 h-12 text-red-600" />

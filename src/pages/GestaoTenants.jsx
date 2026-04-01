@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
 import { Building2, Briefcase, Plus, Pencil, Trash2, Loader2, ShieldAlert, Search, Users, User as UserIcon, Zap } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 
 export default function GestaoTenants() {
@@ -414,6 +415,7 @@ export default function GestaoTenants() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Nome da Oficina</TableHead>
+                        <TableHead>Ativo</TableHead>
                         <TableHead>Consultoria Vinculada</TableHead>
                         <TableHead>CNPJ</TableHead>
                         <TableHead>Admin (Owner ID)</TableHead>
@@ -429,6 +431,17 @@ export default function GestaoTenants() {
                         return (
                           <TableRow key={company.id}>
                             <TableCell className="font-medium">{company.name}</TableCell>
+                            <TableCell>
+                              <Switch
+                                checked={company.status !== 'inativo'}
+                                onCheckedChange={async (checked) => {
+                                  const newStatus = checked ? 'ativo' : 'inativo';
+                                  await base44.entities.Workshop.update(company.id, { status: newStatus });
+                                  queryClient.invalidateQueries({ queryKey: ['admin-companies'] });
+                                  toast.success(`Oficina ${checked ? 'ativada' : 'inativada'} com sucesso!`);
+                                }}
+                              />
+                            </TableCell>
                             <TableCell>{linkedFirm?.name || <span className="text-gray-400 italic">Desconhecida/Sem Vínculo</span>}</TableCell>
                             <TableCell>{company.cnpj || '-'}</TableCell>
                             <TableCell className="text-xs text-gray-500 font-mono">{company.owner_id}</TableCell>
@@ -451,7 +464,7 @@ export default function GestaoTenants() {
                       })}
                       {filteredCompanies.length === 0 && (
                         <TableRow>
-                          <TableCell colSpan={6} className="text-center py-6 text-gray-500">
+                          <TableCell colSpan={8} className="text-center py-6 text-gray-500">
                             Nenhuma oficina encontrada.
                           </TableCell>
                         </TableRow>
