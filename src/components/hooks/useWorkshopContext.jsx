@@ -110,10 +110,12 @@ export function useWorkshopContext() {
       }
     },
     enabled: !isTenantLoading,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
+    staleTime: 10 * 60 * 1000,  // 10 min - dados ficam "frescos" por mais tempo
+    gcTime: 15 * 60 * 1000,     // 15 min - mantém em memória por mais tempo
     retry: 2,
-    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10000)
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10000),
+    refetchOnWindowFocus: false, // Não refaz ao voltar à aba
+    refetchOnMount: false,       // Não refaz ao remontar componente
   });
 
   const setCurrentWorkshop = (id) => {
