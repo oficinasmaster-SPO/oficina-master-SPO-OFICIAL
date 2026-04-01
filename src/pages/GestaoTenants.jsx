@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
-import { Building2, Briefcase, Plus, Pencil, Trash2, Loader2, ShieldAlert, Search, Users, User as UserIcon } from 'lucide-react';
+import { Building2, Briefcase, Plus, Pencil, Trash2, Loader2, ShieldAlert, Search, Users, User as UserIcon, Zap } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 export default function GestaoTenants() {
@@ -68,6 +68,30 @@ export default function GestaoTenants() {
     queryKey: ['admin-employees'],
     queryFn: () => base44.entities.Employee.list(),
   });
+
+  const { data: integrationUsageLogs = [], isLoading: loadingIntegrationUsage } = useQuery({
+    queryKey: ['admin-integration-usage'],
+    queryFn: () => base44.entities.IntegrationUsageLog.list('-created_date', 200),
+  });
+
+  const usageByFunction = Object.values(
+    integrationUsageLogs.reduce((acc, log) => {
+      const key = log.function_name || 'desconhecida';
+      if (!acc[key]) {
+        acc[key] = {
+          function_name: key,
+          calls: 0,
+          total_tokens: 0,
+          last_used: log.created_date,
+          provider: log.provider || '-'
+        };
+      }
+      acc[key].calls += 1;
+      acc[key].total_tokens += log.total_tokens || 0;
+      if (log.created_date > acc[key].last_used) acc[key].last_used = log.created_date;
+      return acc;
+    }, {})
+  ).sort((a, b) => b.calls - a.calls);
 
   const filteredUsers = users?.filter(u => 
     u.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -266,7 +290,7 @@ export default function GestaoTenants() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 md:w-[500px]">
+        <TabsList className="grid w-full grid-cols-4 md:w-[700px]">
           <TabsTrigger value="consulting-firms" className="flex items-center gap-2">
             <Briefcase className="w-4 h-4" />
             Consultorias
@@ -278,6 +302,10 @@ export default function GestaoTenants() {
           <TabsTrigger value="users" className="flex items-center gap-2">
             <Users className="w-4 h-4" />
             Usuários
+          </TabsTrigger>
+          <TabsTrigger value="integration-usage" className="flex items-center gap-2">
+            <Zap className="w-4 h-4" />
+            Créditos
           </TabsTrigger>
         </TabsList>
 
@@ -525,6 +553,57 @@ export default function GestaoTenants() {
                         <TableRow>
                           <TableCell colSpan={7} className="text-center py-6 text-gray-500">
                             Nenhum usuário encontrado.
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="integration-usage" className="mt-6 space-y-4">
+          <div className="flex items-center gap-3">
+            <h2 className="text-xl font-semibold text-gray-800">Uso de Créditos de Integração</h2>
+            <Badge variant="secondary">{usageByFunction.length}</Badge>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Funções com mais consumo</CardTitle>
+              <CardDescription>Resumo das últimas chamadas registradas de IA e integrações.</CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              {loadingIntegrationUsage ? (
+                <div className="flex justify-center p-8"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Função</TableHead>
+                        <TableHead>Provedor</TableHead>
+                        <TableHead>Chamadas</TableHead>
+                        <TableHead>Total Tokens</TableHead>
+                        <TableHead>Último Uso</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {usageByFunction.map((item) => (
+                        <TableRow key={item.function_name}>
+                          <TableCell className="font-medium">{item.function_name}</TableCell>
+                          <TableCell>{item.provider}</TableCell>
+                          <TableCell>{item.calls}</TableCell>
+                          <TableCell>{item.total_tokens || '-'}</TableCell>
+                          <TableCell>{item.last_used ? new Date(item.last_used).toLocaleString('pt-BR') : '-'}</TableCell>
+                        </TableRow>
+                      ))}
+                      {usageByFunction.length === 0 && (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center py-6 text-gray-500">
+                            Ainda não há registros de consumo.
                           </TableCell>
                         </TableRow>
                       )}

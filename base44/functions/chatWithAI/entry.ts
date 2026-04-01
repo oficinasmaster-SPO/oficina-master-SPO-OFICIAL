@@ -337,6 +337,19 @@ ${context || ''}`;
             max_tokens: 2000
         });
 
+        await base44.asServiceRole.functions.invoke('logIntegrationUsage', {
+            function_name: 'chatWithAI',
+            provider: 'openai',
+            workshop_id: workshopId || null,
+            user_id: user.id,
+            request_kind: includeWorkshopData ? 'chat_with_context' : 'chat_simple',
+            estimated_units: 1,
+            prompt_tokens: response.usage.prompt_tokens,
+            completion_tokens: response.usage.completion_tokens,
+            total_tokens: response.usage.total_tokens,
+            success: true
+        }).catch(() => {});
+
         return Response.json({ 
             success: true,
             data: {

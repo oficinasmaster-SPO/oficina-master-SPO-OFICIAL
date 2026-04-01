@@ -68,6 +68,16 @@ Deno.serve(async (req) => {
             }
         });
 
+        await base44.asServiceRole.functions.invoke('logIntegrationUsage', {
+            function_name: 'monitorGoalsAI',
+            provider: 'base44_llm',
+            workshop_id: workshop_id || null,
+            user_id: user.id,
+            request_kind: 'goal_monitoring',
+            estimated_units: 1,
+            success: true
+        }).catch(() => {});
+
         return Response.json(response);
     } catch (error) {
         return Response.json({ error: error.message }, { status: 500 });

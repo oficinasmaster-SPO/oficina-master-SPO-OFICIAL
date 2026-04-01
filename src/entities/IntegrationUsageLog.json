@@ -1,0 +1,49 @@
+{
+  "name": "IntegrationUsageLog",
+  "type": "object",
+  "properties": {
+    "function_name": {
+      "type": "string",
+      "description": "Nome da função que consumiu integração"
+    },
+    "provider": {
+      "type": "string",
+      "description": "Provedor usado (base44_llm, openai, email, etc)"
+    },
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina relacionada"
+    },
+    "user_id": {
+      "type": "string",
+      "description": "ID do usuário que acionou"
+    },
+    "request_kind": {
+      "type": "string",
+      "description": "Tipo resumido da chamada"
+    },
+    "estimated_units": {
+      "type": "number",
+      "default": 1,
+      "description": "Unidade estimada de consumo"
+    },
+    "prompt_tokens": {
+      "type": "integer",
+      "description": "Tokens de entrada quando disponível"
+    },
+    "completion_tokens": {
+      "type": "integer",
+      "description": "Tokens de saída quando disponível"
+    },
+    "total_tokens": {
+      "type": "integer",
+      "description": "Total de tokens quando disponível"
+    },
+    "success": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se a chamada concluiu com sucesso"
+    }
+  },
+  "required": ["function_name", "provider"]
+}

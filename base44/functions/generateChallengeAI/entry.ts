@@ -132,6 +132,16 @@ Deno.serve(async (req) => {
             }
         });
 
+        await base44.asServiceRole.functions.invoke('logIntegrationUsage', {
+            function_name: 'generateChallengeAI',
+            provider: 'base44_llm',
+            workshop_id: tenantId || null,
+            user_id: user.id,
+            request_kind: scope || 'challenge_generation',
+            estimated_units: 1,
+            success: true
+        }).catch(() => {});
+
         return Response.json(llmResponse);
 
     } catch (error) {

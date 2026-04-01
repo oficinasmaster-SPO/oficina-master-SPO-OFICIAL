@@ -117,6 +117,16 @@ Deno.serve(async (req) => {
       response_json_schema: response_json_schema || undefined
     });
 
+    await base44.asServiceRole.functions.invoke('logIntegrationUsage', {
+      function_name: 'invokeLLMUnlimited',
+      provider: 'base44_llm',
+      workshop_id,
+      user_id: user.id,
+      request_kind: response_json_schema ? 'structured_llm' : 'text_llm',
+      estimated_units: 1,
+      success: true
+    }).catch(() => {});
+
     return Response.json({ success: true, data: result }, { status: 200 });
 
   } catch (error) {
