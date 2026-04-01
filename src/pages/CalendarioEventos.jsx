@@ -44,7 +44,7 @@ export default function CalendarioEventos() {
       try {
         const tipos = await base44.entities.TipoAtendimentoConsultoria.filter({ ativo: true });
         if (tipos && tipos.length > 0) {
-          return tipos.map(t => ({ id: t.id, name: t.label }));
+          return tipos.map(t => ({ id: t.value, name: t.label }));
         }
       } catch (error) {
         console.warn('Erro ao buscar tipos:', error);
@@ -204,15 +204,11 @@ export default function CalendarioEventos() {
                     <SelectValue placeholder="Selecione..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {attendanceTypes.length > 0 ? (
-                      attendanceTypes.map((type) => (
-                        <SelectItem key={type.id} value={type.id}>
-                          {type.name}
-                        </SelectItem>
-                      ))
-                    ) : (
-                      <div className="p-2 text-sm text-gray-500">Nenhum tipo disponível</div>
-                    )}
+                    {attendanceTypes.map((type) => (
+                      <SelectItem key={type.id} value={type.id}>
+                        {type.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

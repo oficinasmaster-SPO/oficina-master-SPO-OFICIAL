@@ -203,7 +203,16 @@ export default function RegistrarAtendimento({ isModal = false, onClose }) {
     }
   });
 
-  // Carregar tipos de atendimento
+  // Carregar tipos de atendimento customizados do banco
+  const { data: tiposCustomizados = [] } = useQuery({
+    queryKey: ['tipos-atendimento-consultoria'],
+    queryFn: async () => {
+      const tipos = await base44.entities.TipoAtendimentoConsultoria.filter({ ativo: true });
+      return tipos || [];
+    }
+  });
+
+  // Carregar tipos de atendimento padrão
   const { data: tiposAtendimento = [] } = useQuery({
     queryKey: ['attendance-types'],
     queryFn: async () => {
@@ -588,35 +597,35 @@ export default function RegistrarAtendimento({ isModal = false, onClose }) {
                   />
                 </div>
                 <Select
-                  value={formData.tipo_atendimento}
-                  onValueChange={(value) => {
-                    // Buscar duração do tipo selecionado
-                    const tipoAtendimento = tiposAtendimento.find(t => t.code === value);
-                    const tipoCustom = customTipos.find(t => t.value === value);
-                    const duracao = tipoAtendimento?.default_duration_minutes || tipoCustom?.duracao_minutos || 60;
+                 value={formData.tipo_atendimento}
+                 onValueChange={(value) => {
+                   // Buscar duração do tipo selecionado
+                   const tipoAtendimento = tiposAtendimento.find(t => t.code === value);
+                   const tipoCustom = tiposCustomizados.find(t => t.value === value);
+                   const duracao = tipoAtendimento?.default_duration_minutes || tipoCustom?.duracao_minutos || 60;
 
-                    setFormData({ 
-                      ...formData, 
-                      tipo_atendimento: value,
-                      duracao_minutos: duracao
-                    });
-                  }}
+                   setFormData({ 
+                     ...formData, 
+                     tipo_atendimento: value,
+                     duracao_minutos: duracao
+                   });
+                 }}
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o tipo..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {tiposAtendimento.map(tipo => (
-                      <SelectItem key={tipo.id} value={tipo.code}>
-                        {tipo.name} ({tipo.default_duration_minutes}min)
-                      </SelectItem>
-                    ))}
-                    {customTipos.map(tipo => (
-                      <SelectItem key={tipo.value} value={tipo.value}>
-                        {tipo.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
+                 <SelectTrigger>
+                   <SelectValue placeholder="Selecione o tipo..." />
+                 </SelectTrigger>
+                 <SelectContent>
+                   {tiposAtendimento.map(tipo => (
+                     <SelectItem key={tipo.id} value={tipo.code}>
+                       {tipo.name} ({tipo.default_duration_minutes}min)
+                     </SelectItem>
+                   ))}
+                   {tiposCustomizados.map(tipo => (
+                     <SelectItem key={tipo.value} value={tipo.value}>
+                       {tipo.label} ({tipo.duracao_minutos}min)
+                     </SelectItem>
+                   ))}
+                 </SelectContent>
                 </Select>
               </div>
 
