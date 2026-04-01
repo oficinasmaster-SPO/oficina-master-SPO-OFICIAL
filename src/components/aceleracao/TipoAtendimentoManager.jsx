@@ -1,9 +1,11 @@
 import React, { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 const TIPOS_PADRAO = [
@@ -17,12 +19,42 @@ const TIPOS_PADRAO = [
 ];
 
 export default function TipoAtendimentoManager({ customTipos = [], onSave }) {
+  const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
   const [tipos, setTipos] = useState(customTipos);
   const [novoTipo, setNovoTipo] = useState("");
   const [duracaoHoras, setDuracaoHoras] = useState("");
 
-  const addTipo = () => {
+  // Mutation para salvar tipo no banco
+  const createTipoMutation = useMutation({
+    mutationFn: (novoTipoData) => base44.entities.TipoAtendimentoConsultoria.create(novoTipoData),
+    onSuccess: (novoTipoCriado) => {
+      setTipos([...tipos, novoTipoCriado]);
+      setNovoTipo("");
+      setDuracaoHoras("");
+      toast.success("Tipo criado e sincronizado!");
+      // Invalidar cache de todas as telas
+      queryClient.invalidateQueries(['tipos-atendimento-consultoria']);
+      queryClient.invalidateQueries(['attendance-types']);
+    },
+    onError: (error) => {
+      toast.error("Erro ao salvar tipo: " + error.message);
+    }
+  });
+
+  const deleteTipoMutation = useMutation({
+    mutationFn: (tipoId) => base44.entities.TipoAtendimentoConsultoria.delete(tipoId),
+    onSuccess: () => {
+      toast.success("Tipo removido e sincronizado!");
+      queryClient.invalidateQueries(['tipos-atendimento-consultoria']);
+      queryClient.invalidateQueries(['attendance-types']);
+    },
+    onError: (error) => {
+      toast.error("Erro ao remover tipo: " + error.message);
+    }
+  });
+
+  const addTipo = async () => {
     if (!novoTipo.trim()) {
       toast.error("Digite um nome para o tipo");
       return;
@@ -34,7 +66,7 @@ export default function TipoAtendimentoManager({ customTipos = [], onSave }) {
     }
 
     const value = novoTipo.toLowerCase().replace(/\s+/g, '_');
-    const exists = [...TIPOS_PADRAO, ...tipos].some(t => t.value === value);
+    const exists = [...TIPOS_PADRAO, ...tipos].some(t => t.value === value || t.id === value);
     
     if (exists) {
       toast.error("Tipo já existe");
@@ -42,21 +74,33 @@ export default function TipoAtendimentoManager({ customTipos = [], onSave }) {
     }
 
     const duracaoMinutos = Math.round(parseFloat(duracaoHoras) * 60);
-    setTipos([...tipos, { value, label: novoTipo.trim(), duracao_minutos: duracaoMinutos }]);
-    setNovoTipo("");
-    setDuracaoHoras("");
-    toast.success("Tipo adicionado!");
+    
+    // Salvar no banco
+    createTipoMutation.mutate({
+      value,
+      label: novoTipo.trim(),
+      duracao_minutos: duracaoMinutos,
+      ativo: true
+    });
   };
 
   const removeTipo = (index) => {
-    setTipos(tipos.filter((_, i) => i !== index));
-    toast.success("Tipo removido!");
+    const tipoParaRemover = tipos[index];
+    if (tipoParaRemover.id) {
+      // Se tem ID, vem do banco - deletar de lá
+      deleteTipoMutation.mutate(tipoParaRemover.id);
+      setTipos(tipos.filter((_, i) => i !== index));
+    } else {
+      // Apenas local
+      setTipos(tipos.filter((_, i) => i !== index));
+      toast.success("Tipo removido!");
+    }
   };
 
   const handleSave = () => {
     onSave(tipos);
     setIsOpen(false);
-    toast.success("Tipos de atendimento salvos!");
+    toast.success("Tipos de atendimento atualizados!");
   };
 
   return (
@@ -108,9 +152,18 @@ export default function TipoAtendimentoManager({ customTipos = [], onSave }) {
                         onKeyDown={(e) => e.key === 'Enter' && addTipo()}
                       />
                     </div>
-                    <Button size="sm" onClick={addTipo}>
-                      <Plus className="w-4 h-4 mr-2" />
-                      Adicionar
+                    <Button size="sm" onClick={addTipo} disabled={createTipoMutation.isPending}>
+                      {createTipoMutation.isPending ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Salvando...
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="w-4 h-4 mr-2" />
+                          Adicionar
+                        </>
+                      )}
                     </Button>
                   </div>
                 </div>
@@ -129,8 +182,13 @@ export default function TipoAtendimentoManager({ customTipos = [], onSave }) {
                           size="sm"
                           variant="ghost"
                           onClick={() => removeTipo(idx)}
+                          disabled={deleteTipoMutation.isPending}
                         >
-                          <Trash2 className="w-4 h-4 text-red-500" />
+                          {deleteTipoMutation.isPending ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="w-4 h-4 text-red-500" />
+                          )}
                         </Button>
                       </div>
                     ))}
