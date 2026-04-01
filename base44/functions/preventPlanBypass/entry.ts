@@ -71,9 +71,11 @@ Deno.serve(async (req) => {
             
             return Response.json({ success: false, reason: 'reverted unauthorized billing update' });
         } else {
-            // Atualização autorizada. NÃO executar update aqui para evitar loop de automação.
-            // O token será sobrescrito pelo próximo evento legítimo (ex: próximo webhook do Kiwify).
-            return Response.json({ success: true, reason: 'authorized update - token will expire naturally' });
+            // Atualização autorizada. Limpar o token do banco para não ficar persistido.
+            // Fazemos isso de forma assíncrona sem await para não bloquear a resposta.
+            const base44 = createClientFromRequest(req);
+            base44.asServiceRole.entities.Workshop.update(data.id, { billing_update_token: "" }).catch(() => {});
+            return Response.json({ success: true, reason: 'authorized update - token cleared' });
         }
     }
 

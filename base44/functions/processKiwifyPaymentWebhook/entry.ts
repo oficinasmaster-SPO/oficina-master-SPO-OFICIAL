@@ -3,7 +3,23 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const payload = await req.json();
+    const rawBody = await req.text();
+
+    // Validar assinatura HMAC do Kiwify
+    const signature = req.headers.get('X-Kiwify-Signature') || req.headers.get('x-kiwify-signature');
+    if (signature) {
+      const secret = Deno.env.get("KIWIFY_CLIENT_SECRET") || "";
+      const encoder = new TextEncoder();
+      const key = await crypto.subtle.importKey("raw", encoder.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+      const hashBuffer = await crypto.subtle.sign("HMAC", key, encoder.encode(rawBody));
+      const expectedSig = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+      if (signature !== expectedSig) {
+        console.warn('[SECURITY] Kiwify webhook signature mismatch — rejecting request');
+        return Response.json({ error: 'Invalid signature' }, { status: 401 });
+      }
+    }
+
+    const payload = JSON.parse(rawBody);
     
     console.log('Kiwify Webhook received:', payload);
 

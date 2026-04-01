@@ -13,11 +13,23 @@ Deno.serve(async (req) => {
       if (!data || !data.trialEndsAt) {
           const trialEndsAt = new Date();
           trialEndsAt.setDate(trialEndsAt.getDate() + 14); // 14 dias de trial
+
+          const tokenSecret = Deno.env.get("KIWIFY_CLIENT_SECRET") || "fallback_token_for_tests";
+          const planId = 'free';
+          const planStatus = 'trial';
+
+          // Gerar HMAC para proteger integridade do plano
+          const encoder = new TextEncoder();
+          const key = await crypto.subtle.importKey("raw", encoder.encode(tokenSecret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+          const hashBuffer = await crypto.subtle.sign("HMAC", key, encoder.encode(planId + workshopId + planStatus));
+          const billing_secure_hash = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
           
           await base44.asServiceRole.entities.Workshop.update(workshopId, {
-            planStatus: 'trial',
+            planStatus,
             trialEndsAt: trialEndsAt.toISOString(),
-            planId: 'free'
+            planId,
+            billing_secure_hash,
+            billing_update_token: tokenSecret // necessário para passar pelo preventPlanBypass
           });
       }
     }
