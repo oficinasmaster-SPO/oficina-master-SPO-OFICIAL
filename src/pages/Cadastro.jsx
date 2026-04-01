@@ -495,14 +495,6 @@ export default function Cadastro() {
 
           <TabsContent value="equipamentos" className="animate-in fade-in-50 duration-300">
             <div className="space-y-6">
-              <ServicosEquipamentos 
-                ref={equipamentosRef}
-                workshop={workshop} 
-                onUpdate={handleWorkshopUpdate}
-                showEquipmentOnly={true}
-                onEditingChange={setIsEditing}
-              />
-              
               <EquipamentosCompletos
                 ref={equipamentosCompletosRef}
                 workshop={workshop}
