@@ -56,15 +56,15 @@ Deno.serve(async (req) => {
             const base44 = createClientFromRequest(req);
             await base44.asServiceRole.entities.Workshop.update(data.id, revertPayload);
             
-            // Registrar auditoria
+            // Registrar auditoria (usar event_type 'billing_revert' para não disparar Security Alerts)
             await base44.asServiceRole.entities.SecurityLog.create({
                 user_id: "system",
                 tenant_id: data.id,
                 endpoint: "EntityAutomation: revertPlanBypass",
                 status: "403",
-                event_type: "suspicious_access",
+                event_type: "billing_revert",
                 details: JSON.stringify({ 
-                    message: "Bypass attempt on billing fields",
+                    message: "Bypass attempt on billing fields - reverted",
                     changed_fields: changedBillingFields 
                 })
             });
