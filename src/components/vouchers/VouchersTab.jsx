@@ -7,6 +7,7 @@ import VoucherGenerateForm from "./VoucherGenerateForm";
 import VoucherMyList from "./VoucherMyList";
 import VoucherUseForm from "./VoucherUseForm";
 import VoucherUsesList from "./VoucherUsesList";
+import VoucherAdminPanel from "./VoucherAdminPanel";
 
 export default function VouchersTab() {
   const [user, setUser] = useState(null);
@@ -81,9 +82,7 @@ export default function VouchersTab() {
         {isAdmin && (
           <>
             <TabsContent value="admin">
-              <div className="text-center py-12 text-gray-400">
-                Administração de Vouchers — em construção
-              </div>
+              <VoucherAdminPanel user={user} />
             </TabsContent>
             <TabsContent value="reports">
               <div className="text-center py-12 text-gray-400">
