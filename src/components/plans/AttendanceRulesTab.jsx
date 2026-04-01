@@ -11,11 +11,13 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, Trash2, Clock, Calendar, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import TipoAtendimentoManager from "@/components/aceleracao/TipoAtendimentoManager";
 
 export default function AttendanceRulesTab({ planId, planName }) {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingRule, setEditingRule] = useState(null);
+  const [showCreateTipo, setShowCreateTipo] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -25,6 +27,15 @@ export default function AttendanceRulesTab({ planId, planName }) {
     frequency_days: 30,
     start_from_contract_date: true,
     allow_anticipation: true
+  });
+
+  // Carregar tipos de atendimento customizados do banco
+  const { data: tiposCustomizados = [] } = useQuery({
+    queryKey: ['tipos-atendimento-consultoria'],
+    queryFn: async () => {
+      const tipos = await base44.entities.TipoAtendimentoConsultoria.filter({ ativo: true });
+      return tipos || [];
+    }
   });
 
   // Carregar tipos de atendimento disponíveis
@@ -173,16 +184,17 @@ export default function AttendanceRulesTab({ planId, planName }) {
           </p>
         </div>
 
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => {
-              resetForm();
-              setDialogOpen(true);
-            }}>
-              <Plus className="w-4 h-4 mr-2" />
-              Adicionar Tipo
-            </Button>
-          </DialogTrigger>
+        <div className="flex gap-2">
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => {
+                resetForm();
+                setDialogOpen(true);
+              }}>
+                <Plus className="w-4 h-4 mr-2" />
+                Adicionar Tipo
+              </Button>
+            </DialogTrigger>
           <DialogContent className="max-w-lg">
             <DialogHeader>
               <DialogTitle>
@@ -192,7 +204,13 @@ export default function AttendanceRulesTab({ planId, planName }) {
 
             <form onSubmit={handleSubmit} className="space-y-4 mt-4">
               <div>
-                <Label>Tipo de Atendimento *</Label>
+                <div className="flex justify-between items-center mb-2">
+                  <Label>Tipo de Atendimento *</Label>
+                  <TipoAtendimentoManager customTipos={tiposCustomizados} onSave={() => {
+                    queryClient.invalidateQueries(['tipos-atendimento-consultoria']);
+                    queryClient.invalidateQueries(['attendance-types']);
+                  }} />
+                </div>
                 <Select
                   value={formData.attendance_type_id}
                   onValueChange={(value) => setFormData({ ...formData, attendance_type_id: value })}
@@ -347,9 +365,10 @@ export default function AttendanceRulesTab({ planId, planName }) {
                 </Button>
               </div>
             </form>
-          </DialogContent>
-        </Dialog>
-      </div>
+            </DialogContent>
+            </Dialog>
+            </div>
+            </div>
 
       {/* Lista de Regras */}
       {planRules.length === 0 ? (
