@@ -308,7 +308,7 @@ export default function Layout({ children, currentPageName }) {
                     </div>
                   ) : (
                     isAuthenticated && workshopId ? (
-                      (user?.role !== 'admin' && workshop?.status === 'inativo') ? (
+                      (workshop?.status === 'inativo' && !isAdminMode) ? (
                         <div className="min-h-[60vh] flex flex-col items-center justify-center text-center p-6">
                           <div className="bg-red-100 p-6 rounded-full w-24 h-24 flex items-center justify-center mb-6">
                             <AlertCircle className="w-12 h-12 text-red-600" />
