@@ -193,12 +193,12 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
             
             <div className="p-4">
               {Array.isArray(ataAtualizada.participantes) && ataAtualizada.participantes.map((p, i) => (
-                <p key={i} className="mb-1">• {p.name} - {p.role}</p>
+                <p key={i} className="mb-1">• {typeof p === 'string' ? p : `${p.name || ''} - ${p.role || ''}`}</p>
               ))}
             </div>
             <div className="p-4">
-              <p><strong>{ataAtualizada.responsavel?.name}</strong></p>
-              <p className="text-sm text-gray-600">{ataAtualizada.responsavel?.role}</p>
+              <p><strong>{typeof ataAtualizada.responsavel === 'string' ? ataAtualizada.responsavel : ataAtualizada.responsavel?.name}</strong></p>
+              <p className="text-sm text-gray-600">{typeof ataAtualizada.responsavel === 'string' ? '' : ataAtualizada.responsavel?.role}</p>
             </div>
             <div className="p-4">
               <p>{ataAtualizada.plano_nome}</p>
@@ -231,18 +231,30 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
               <h3 className="font-bold text-lg mb-3">4. PRÓXIMOS PASSOS</h3>
               {Array.isArray(ataAtualizada.proximos_passos_list) && ataAtualizada.proximos_passos_list.length > 0 ? (
                 <div className="space-y-2">
-                  {ataAtualizada.proximos_passos_list.map((passo, i) => (
-                    <div key={i} className="border-l-4 border-blue-600 pl-3">
-                      <p className="font-medium">{passo.descricao}</p>
-                      <p className="text-sm text-gray-600">
-                        Responsável: {passo.responsavel} | 
-                        Prazo: {passo.prazo ? new Date(passo.prazo).toLocaleDateString('pt-BR') : 'Não definido'}
-                      </p>
-                    </div>
-                  ))}
+                  {ataAtualizada.proximos_passos_list.map((passo, i) => {
+                    if (typeof passo === 'string') return <p key={i} className="border-l-4 border-blue-600 pl-3 font-medium">{passo}</p>;
+                    const desc = typeof passo.descricao === 'object' ? JSON.stringify(passo.descricao) : (passo.descricao || '');
+                    const resp = typeof passo.responsavel === 'object' ? JSON.stringify(passo.responsavel) : (passo.responsavel || '');
+                    const prazoStr = passo.prazo ? (() => { try { return new Date(passo.prazo).toLocaleDateString('pt-BR'); } catch { return String(passo.prazo); } })() : 'Não definido';
+                    return (
+                      <div key={i} className="border-l-4 border-blue-600 pl-3">
+                        <p className="font-medium">{desc}</p>
+                        <p className="text-sm text-gray-600">
+                          Responsável: {resp} | Prazo: {prazoStr}
+                        </p>
+                      </div>
+                    );
+                  })}
                 </div>
               ) : ataAtualizada.proximos_passos ? (
-                <p className="whitespace-pre-wrap">{ataAtualizada.proximos_passos}</p>
+                <p className="whitespace-pre-wrap">
+                  {typeof ataAtualizada.proximos_passos === 'string' 
+                    ? ataAtualizada.proximos_passos 
+                    : Array.isArray(ataAtualizada.proximos_passos)
+                      ? ataAtualizada.proximos_passos.map(p => typeof p === 'string' ? p : (p.descricao || JSON.stringify(p))).join('\n')
+                      : JSON.stringify(ataAtualizada.proximos_passos)
+                  }
+                </p>
               ) : (
                 <p>Nenhum próximo passo definido</p>
               )}
