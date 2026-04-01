@@ -169,6 +169,37 @@ Deno.serve(async (req) => {
         await base44.asServiceRole.entities.User.update(invitation.user_id, userUpdateData);
         console.log(`✅ User atualizado com Profile: ${targetProfileId} e Workshop: ${invitation.workshop_id}`);
 
+        // Promover para admin se for sócio/proprietário ou owner do workshop
+        const shouldBeAdmin = 
+          (inviteData.job_role === 'socio' || inviteData.job_role === 'socio_interno') ||
+          (employeeData.job_role === 'socio' || employeeData.job_role === 'socio_interno');
+        
+        if (shouldBeAdmin) {
+          try {
+            const currentUser = await base44.asServiceRole.entities.User.get(invitation.user_id);
+            if (currentUser && currentUser.role !== 'admin') {
+              await base44.asServiceRole.entities.User.update(invitation.user_id, { role: 'admin' });
+              console.log(`🔑 Usuário ${invitation.user_id} promovido para ADMIN (sócio/proprietário)`);
+            }
+          } catch (e) {
+            console.error('⚠️ Erro ao promover sócio para admin:', e);
+          }
+        }
+
+        // Verificar se é owner do workshop
+        try {
+          const ws = await base44.asServiceRole.entities.Workshop.get(invitation.workshop_id);
+          if (ws && (ws.owner_id === invitation.user_id || (ws.partner_ids && ws.partner_ids.includes(invitation.user_id)))) {
+            const currentUser = await base44.asServiceRole.entities.User.get(invitation.user_id);
+            if (currentUser && currentUser.role !== 'admin') {
+              await base44.asServiceRole.entities.User.update(invitation.user_id, { role: 'admin' });
+              console.log(`🔑 Usuário ${invitation.user_id} promovido para ADMIN (owner/partner do workshop)`);
+            }
+          }
+        } catch (e) {
+          console.error('⚠️ Erro ao verificar ownership do workshop:', e);
+        }
+
         // Marcar convite como processado
         await base44.asServiceRole.entities.EmployeeInviteAcceptance.update(invitation.id, {
             processed: true

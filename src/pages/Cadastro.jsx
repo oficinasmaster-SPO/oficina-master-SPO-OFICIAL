@@ -155,6 +155,14 @@ export default function Cadastro() {
         workshop_id: newWorkshop.id,
         cadastro_em_andamento: true
       });
+
+      // Promover owner para admin automaticamente
+      try {
+        await base44.functions.invoke('setUserRole', { userId: user.id, role: 'admin' });
+        console.log('✅ Usuário promovido para admin como owner do workshop');
+      } catch (e) {
+        console.error('⚠️ Erro ao promover para admin:', e);
+      }
       
       // Buscar o perfil de Sócio para atribuir automaticamente
       const allProfiles = await base44.entities.UserProfile.list();
