@@ -226,6 +226,7 @@ export default function Cadastro() {
       } else if (currentTabRef?.current?.saveCurrentData) {
         await currentTabRef.current.saveCurrentData();
       }
+      setIsEditing(false);
     } catch (error) {
       console.error(error);
       toast.error("Erro ao salvar.");
