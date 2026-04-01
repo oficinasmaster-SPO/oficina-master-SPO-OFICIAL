@@ -26,12 +26,30 @@ export default function CalendarioEventos() {
     description: ""
   });
 
+  // Tipos padrão de atendimento
+  const defaultAttendanceTypes = [
+    { id: 'diagnostico_inicial', name: 'Diagnóstico Inicial' },
+    { id: 'acompanhamento_mensal', name: 'Acompanhamento Mensal' },
+    { id: 'reuniao_estrategica', name: 'Reunião Estratégica' },
+    { id: 'treinamento', name: 'Treinamento' },
+    { id: 'auditoria', name: 'Auditoria' },
+    { id: 'revisao_metas', name: 'Revisão de Metas' },
+    { id: 'outros', name: 'Outros' }
+  ];
+
   // Carregar tipos de atendimento do banco centralizado
-  const { data: attendanceTypes = [] } = useQuery({
+  const { data: attendanceTypes = defaultAttendanceTypes } = useQuery({
     queryKey: ['tipos-atendimento-consultoria'],
     queryFn: async () => {
-      const tipos = await base44.entities.TipoAtendimentoConsultoria.filter({ ativo: true });
-      return tipos.map(t => ({ id: t.id, name: t.label }));
+      try {
+        const tipos = await base44.entities.TipoAtendimentoConsultoria.filter({ ativo: true });
+        if (tipos && tipos.length > 0) {
+          return tipos.map(t => ({ id: t.id, name: t.label }));
+        }
+      } catch (error) {
+        console.warn('Erro ao buscar tipos:', error);
+      }
+      return defaultAttendanceTypes;
     }
   });
 
