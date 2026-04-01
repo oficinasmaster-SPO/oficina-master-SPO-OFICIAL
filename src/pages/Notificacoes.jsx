@@ -27,7 +27,8 @@ export default function Notificacoes() {
     try {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
-      checkOverdueTasks(currentUser);
+      // checkOverdueTasks removido - gerava notificações em loop
+      // Use automações de backend para checar prazos
     } catch (error) {
       console.error(error);
     }
@@ -127,35 +128,41 @@ export default function Notificacoes() {
     }
   });
 
+  const [clearProgress, setClearProgress] = useState(null);
+
   const clearAllNotificationsMutation = useMutation({
     mutationFn: async () => {
-      const notificationsToDelete = notifications.filter(n => !n.is_read);
-      if (notificationsToDelete.length === 0) {
+      if (notifications.length === 0) {
         throw new Error('Nenhuma notificação para remover');
       }
-      
-      // Deletar com delay para evitar rate limit
-      const results = [];
-      for (const notification of notificationsToDelete) {
-        try {
-          await base44.entities.Notification.delete(notification.id);
-          results.push({ id: notification.id, success: true });
-        } catch (error) {
-          console.error(`Erro ao deletar notificação ${notification.id}:`, error);
-          results.push({ id: notification.id, success: false, error });
+
+      let totalDeleted = 0;
+      let remaining = 1; // start > 0 to enter loop
+
+      while (remaining > 0) {
+        const response = await base44.functions.invoke('clearNotifications', { mode: 'all' });
+        const data = response.data;
+        totalDeleted += data.deleted || 0;
+        remaining = data.remaining || 0;
+        setClearProgress(`${totalDeleted} removidas...`);
+
+        if (remaining > 0) {
+          // Pequeno delay antes da próxima chamada
+          await new Promise(r => setTimeout(r, 1000));
         }
-        // Aguarda 100ms entre requisições
-        await new Promise(resolve => setTimeout(resolve, 100));
       }
-      
-      return results;
+
+      return { deleted: totalDeleted };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      setClearProgress(null);
       queryClient.invalidateQueries({ queryKey: ['notifications', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
       setShowClearDialog(false);
-      toast.success('Todas as notificações foram removidas');
+      toast.success(`${data?.deleted || 0} notificações removidas`);
     },
     onError: (error) => {
+      setClearProgress(null);
       console.error('Clear all error:', error);
       toast.error('Erro ao limpar notificações: ' + (error?.message || 'Desconhecido'));
     }
@@ -645,7 +652,7 @@ export default function Notificacoes() {
                 {clearAllNotificationsMutation.isPending ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Removendo...
+                    {clearProgress || 'Removendo...'}
                   </>
                 ) : (
                   <>Remover Todas</>
