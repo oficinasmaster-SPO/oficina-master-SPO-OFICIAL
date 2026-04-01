@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import QuantityStepper from "@/components/workshop/QuantityStepper";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -402,14 +403,11 @@ const EquipamentosCompletos = forwardRef(({ workshop, onUpdate }, ref) => {
                               {equip}
                             </p>
                             {isSelected && editing && (
-                              <div className="grid grid-cols-3 gap-2 mt-2" onClick={(e) => e.stopPropagation()}>
-                                <Input
-                                  type="number"
-                                  min="1"
-                                  placeholder="Qtd"
+                              <div className="grid grid-cols-1 md:grid-cols-[140px_1fr_1fr] gap-2 mt-2" onClick={(e) => e.stopPropagation()}>
+                                <QuantityStepper
                                   value={equipData?.quantity || 1}
-                                  onChange={(e) => updateEquipment(categoryKey, equip, 'quantity', e.target.value)}
-                                  className="h-8 text-xs"
+                                  min={1}
+                                  onChange={(value) => updateEquipment(categoryKey, equip, 'quantity', value)}
                                 />
                                 <Input
                                   placeholder="Marca"
@@ -469,14 +467,11 @@ const EquipamentosCompletos = forwardRef(({ workshop, onUpdate }, ref) => {
                               {equip}
                             </p>
                             {isSelected && editing && (
-                              <div className="grid grid-cols-3 gap-2 mt-2" onClick={(e) => e.stopPropagation()}>
-                                <Input
-                                  type="number"
-                                  min="1"
-                                  placeholder="Qtd"
+                              <div className="grid grid-cols-1 md:grid-cols-[140px_1fr_1fr] gap-2 mt-2" onClick={(e) => e.stopPropagation()}>
+                                <QuantityStepper
                                   value={equipData?.quantity || 1}
-                                  onChange={(e) => updateEquipment(categoryKey, equip, 'quantity', e.target.value)}
-                                  className="h-8 text-xs"
+                                  min={1}
+                                  onChange={(value) => updateEquipment(categoryKey, equip, 'quantity', value)}
                                 />
                                 <Input
                                   placeholder="Marca"
@@ -541,13 +536,12 @@ const EquipamentosCompletos = forwardRef(({ workshop, onUpdate }, ref) => {
                               </SelectContent>
                             </Select>
                           </div>
-                          <div className="w-24">
+                          <div className="w-[140px]">
                             <Label>Qtd</Label>
-                            <Input
-                              type="number"
-                              min="1"
+                            <QuantityStepper
                               value={machine.quantity}
-                              onChange={(e) => updateWeldingMachine(index, 'quantity', e.target.value)}
+                              min={1}
+                              onChange={(value) => updateWeldingMachine(index, 'quantity', value)}
                             />
                           </div>
                           <Button size="icon" variant="destructive" onClick={() => removeWeldingMachine(index)}>
