@@ -836,6 +836,7 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
               <Label>Horário de Abertura</Label>
               <TimePicker
                 value={formData.horario_funcionamento.abertura}
+                defaultOpenValue="08:00"
                 onChange={(val) => setFormData({
                   ...formData,
                   horario_funcionamento: { ...formData.horario_funcionamento, abertura: val }
@@ -847,6 +848,7 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
               <Label>Horário de Fechamento</Label>
               <TimePicker
                 value={formData.horario_funcionamento.fechamento}
+                defaultOpenValue="18:00"
                 onChange={(val) => setFormData({
                   ...formData,
                   horario_funcionamento: { ...formData.horario_funcionamento, fechamento: val }
@@ -858,6 +860,7 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
               <Label>Início do Almoço</Label>
               <TimePicker
                 value={formData.horario_funcionamento.almoco_inicio || ""}
+                defaultOpenValue="12:00"
                 onChange={(val) => setFormData({
                   ...formData,
                   horario_funcionamento: { ...formData.horario_funcionamento, almoco_inicio: val }
@@ -869,6 +872,7 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
               <Label>Fim do Almoço</Label>
               <TimePicker
                 value={formData.horario_funcionamento.almoco_fim || ""}
+                defaultOpenValue="13:30"
                 onChange={(val) => setFormData({
                   ...formData,
                   horario_funcionamento: { ...formData.horario_funcionamento, almoco_fim: val }
@@ -947,6 +951,7 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
                     <Label className="text-xs">Abertura Sábado</Label>
                     <TimePicker
                       value={formData.horario_funcionamento.sabado_abertura || ''}
+                      defaultOpenValue="08:00"
                       onChange={(val) => setFormData({
                         ...formData,
                         horario_funcionamento: { ...formData.horario_funcionamento, sabado_abertura: val }
@@ -958,6 +963,7 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
                     <Label className="text-xs">Fechamento Sábado</Label>
                     <TimePicker
                       value={formData.horario_funcionamento.sabado_fechamento || ''}
+                      defaultOpenValue="12:00"
                       onChange={(val) => setFormData({
                         ...formData,
                         horario_funcionamento: { ...formData.horario_funcionamento, sabado_fechamento: val }

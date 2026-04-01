@@ -145,22 +145,27 @@ const Wheel = ({ options, value, onChange }) => {
   );
 };
 
-export const TimePicker = React.forwardRef(({ value, onChange, disabled, placeholder = "Selecione o horário", className }, ref) => {
+export const TimePicker = React.forwardRef(({ value, onChange, disabled, placeholder = "Selecione o horário", className, defaultOpenValue = "00:00" }, ref) => {
   const [open, setOpen] = useState(false);
   
   const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
   const minutes = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'));
+  const [defaultHour = '00', defaultMinute = '00'] = defaultOpenValue.split(':');
 
-  const [hour, setHour] = useState(value ? value.split(':')[0] : '00');
-  const [minute, setMinute] = useState(value ? value.split(':')[1] : '00');
+  const [hour, setHour] = useState(value ? value.split(':')[0] : defaultHour);
+  const [minute, setMinute] = useState(value ? value.split(':')[1] : defaultMinute);
 
   useEffect(() => {
     if (value) {
       const [h, m] = value.split(':');
       if (h) setHour(h);
       if (m) setMinute(m);
+      return;
     }
-  }, [value]);
+
+    setHour(defaultHour);
+    setMinute(defaultMinute);
+  }, [value, defaultHour, defaultMinute]);
 
   const handleHourChange = (h) => {
     setHour(h);
