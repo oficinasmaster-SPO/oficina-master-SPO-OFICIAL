@@ -311,6 +311,7 @@ const ServicosEquipamentos = forwardRef(({ workshop, onUpdate, showServicesOnly,
     saveCurrentData: async () => {
       try {
         await onUpdate(formData);
+        setEditing(false);
         return true;
       } catch (error) {
         console.error("Erro ao salvar:", error);
