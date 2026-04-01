@@ -128,45 +128,43 @@ export default function Notificacoes() {
     }
   });
 
-  const [clearProgress, setClearProgress] = useState(null);
+  const [isClearingInBackground, setIsClearingInBackground] = useState(false);
 
-  const clearAllNotificationsMutation = useMutation({
-    mutationFn: async () => {
-      if (notifications.length === 0) {
-        throw new Error('Nenhuma notificação para remover');
-      }
+  const clearAllInBackground = async () => {
+    const total = notifications.length;
+    setShowClearDialog(false);
+    setIsClearingInBackground(true);
+    
+    const toastId = toast.loading(`Limpando ${total} notificações em segundo plano...`, {
+      duration: Infinity
+    });
 
+    try {
       let totalDeleted = 0;
-      let remaining = 1; // start > 0 to enter loop
+      let remaining = 1;
 
       while (remaining > 0) {
         const response = await base44.functions.invoke('clearNotifications', { mode: 'all' });
         const data = response.data;
         totalDeleted += data.deleted || 0;
         remaining = data.remaining || 0;
-        setClearProgress(`${totalDeleted} removidas...`);
+        toast.loading(`Limpando notificações... ${totalDeleted} removidas`, { id: toastId });
 
         if (remaining > 0) {
-          // Pequeno delay antes da próxima chamada
           await new Promise(r => setTimeout(r, 1000));
         }
       }
 
-      return { deleted: totalDeleted };
-    },
-    onSuccess: (data) => {
-      setClearProgress(null);
+      toast.success(`${totalDeleted} notificações removidas com sucesso!`, { id: toastId });
       queryClient.invalidateQueries({ queryKey: ['notifications', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      setShowClearDialog(false);
-      toast.success(`${data?.deleted || 0} notificações removidas`);
-    },
-    onError: (error) => {
-      setClearProgress(null);
+    } catch (error) {
       console.error('Clear all error:', error);
-      toast.error('Erro ao limpar notificações: ' + (error?.message || 'Desconhecido'));
+      toast.error('Erro ao limpar notificações: ' + (error?.message || 'Desconhecido'), { id: toastId });
+    } finally {
+      setIsClearingInBackground(false);
     }
-  });
+  };
 
   const checkOverdueTasks = async (currentUser) => {
     if (!currentUser?.id) return;
@@ -379,14 +377,14 @@ export default function Notificacoes() {
                 onClick={() => setShowClearDialog(true)}
                 variant="outline"
                 className="gap-2"
-                disabled={notifications.length === 0 || clearAllNotificationsMutation.isPending}
+                disabled={notifications.length === 0 || isClearingInBackground}
               >
-                {clearAllNotificationsMutation.isPending ? (
+                {isClearingInBackground ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   <Zap className="w-4 h-4" />
                 )}
-                Limpar Tudo
+                {isClearingInBackground ? 'Limpando...' : 'Limpar Tudo'}
               </Button>
               <Button
                 onClick={testarNotificacoes}
@@ -646,17 +644,9 @@ export default function Notificacoes() {
               </Button>
               <Button
                 variant="destructive"
-                onClick={() => clearAllNotificationsMutation.mutate()}
-                disabled={clearAllNotificationsMutation.isPending}
+                onClick={clearAllInBackground}
               >
-                {clearAllNotificationsMutation.isPending ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    {clearProgress || 'Removendo...'}
-                  </>
-                ) : (
-                  <>Remover Todas</>
-                )}
+                Remover Todas
               </Button>
             </DialogFooter>
           </DialogContent>
