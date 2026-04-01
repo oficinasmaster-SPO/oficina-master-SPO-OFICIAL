@@ -348,26 +348,20 @@ const ServicosEquipamentos = forwardRef(({ workshop, onUpdate, showServicesOnly,
                 {!editing ? (
                   <Button onClick={() => setEditing(true)} size="sm">Editar</Button>
                 ) : (
-                  <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => {
-                      setEditing(false);
-                      setFormData({
-                        vehicle_types: workshop.vehicle_types || [],
-                        fuel_types: workshop.fuel_types || [],
-                        vehicle_categories: workshop.vehicle_categories || [],
-                        services_offered: workshop.services_offered || [],
-                        equipment: workshop.equipment || {
-                            elevators: 0, alignment_ramps: 0, balancing_machines: 0,
-                            disc_grinders: 0, shock_tester: 0, welding_machines: [],
-                            pneumatic_wrench: 0, paint_booth: 0, lathe: 0, scanners: []
-                        }
-                      });
-                    }} disabled={saving}>Cancelar</Button>
-                    <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700" disabled={saving}>
-                      {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-                      {saving ? 'Salvando...' : 'Salvar'}
-                    </Button>
-                  </div>
+                  <Button variant="outline" onClick={() => {
+                    setEditing(false);
+                    setFormData({
+                      vehicle_types: workshop.vehicle_types || [],
+                      fuel_types: workshop.fuel_types || [],
+                      vehicle_categories: workshop.vehicle_categories || [],
+                      services_offered: workshop.services_offered || [],
+                      equipment: workshop.equipment || {
+                          elevators: 0, alignment_ramps: 0, balancing_machines: 0,
+                          disc_grinders: 0, shock_tester: 0, welding_machines: [],
+                          pneumatic_wrench: 0, paint_booth: 0, lathe: 0, scanners: []
+                      }
+                    });
+                  }} disabled={saving}>Cancelar</Button>
                 )}
               </div>
             </CardHeader>

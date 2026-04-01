@@ -473,14 +473,7 @@ const MetasObjetivosCompleto = forwardRef(({ workshop, onUpdate, onEditingChange
         </div>
         {!editing ?
         <Button onClick={() => setEditing(true)}>Editar</Button> :
-
-        <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setEditing(false)} disabled={saving}>Cancelar</Button>
-            <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700" disabled={saving}>
-              {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-              {saving ? 'Salvando...' : 'Salvar'}
-            </Button>
-          </div>
+        <Button variant="outline" onClick={() => setEditing(false)} disabled={saving}>Cancelar</Button>
         }
       </div>
 

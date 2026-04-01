@@ -346,13 +346,7 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
             {!editing ? (
               <Button onClick={() => setEditing(true)}>Editar</Button>
             ) : (
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setEditing(false)} disabled={saving}>Cancelar</Button>
-                <Button onClick={handleSave} disabled={saving}>
-                  {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-                  {saving ? 'Salvando...' : 'Salvar'}
-                </Button>
-              </div>
+              <Button variant="outline" onClick={() => setEditing(false)} disabled={saving}>Cancelar</Button>
             )}
           </div>
         </CardHeader>
