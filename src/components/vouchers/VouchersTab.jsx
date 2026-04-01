@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Ticket, PlusCircle, List, ShieldCheck, BarChart3 } from "lucide-react";
+import { Ticket, PlusCircle, List, ShoppingCart, ClipboardList, ShieldCheck, BarChart3 } from "lucide-react";
 import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 import VoucherGenerateForm from "./VoucherGenerateForm";
 import VoucherMyList from "./VoucherMyList";
+import VoucherUseForm from "./VoucherUseForm";
+import VoucherUsesList from "./VoucherUsesList";
 
 export default function VouchersTab() {
   const [user, setUser] = useState(null);
@@ -29,14 +31,22 @@ export default function VouchersTab() {
       </div>
 
       <Tabs defaultValue="generate" className="space-y-4">
-        <TabsList>
+        <TabsList className="flex-wrap h-auto gap-1">
           <TabsTrigger value="generate" className="gap-2">
             <PlusCircle className="w-4 h-4" />
             Gerar Voucher
           </TabsTrigger>
+          <TabsTrigger value="use-voucher" className="gap-2">
+            <ShoppingCart className="w-4 h-4" />
+            Usar Voucher
+          </TabsTrigger>
           <TabsTrigger value="my-vouchers" className="gap-2">
             <List className="w-4 h-4" />
             Meus Vouchers
+          </TabsTrigger>
+          <TabsTrigger value="my-uses" className="gap-2">
+            <ClipboardList className="w-4 h-4" />
+            Minhas Utilizações
           </TabsTrigger>
           {isAdmin && (
             <>
@@ -56,8 +66,16 @@ export default function VouchersTab() {
           <VoucherGenerateForm user={user} workshop={workshop} />
         </TabsContent>
 
+        <TabsContent value="use-voucher">
+          <VoucherUseForm user={user} workshop={workshop} />
+        </TabsContent>
+
         <TabsContent value="my-vouchers">
           <VoucherMyList user={user} workshop={workshop} />
+        </TabsContent>
+
+        <TabsContent value="my-uses">
+          <VoucherUsesList user={user} workshop={workshop} />
         </TabsContent>
 
         {isAdmin && (
