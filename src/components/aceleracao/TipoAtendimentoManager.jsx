@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import React, { useState, useEffect } from "react";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,22 @@ export default function TipoAtendimentoManager({ customTipos = [], onSave }) {
   const [tipos, setTipos] = useState(customTipos);
   const [novoTipo, setNovoTipo] = useState("");
   const [duracaoHoras, setDuracaoHoras] = useState("");
+
+  // Carregar tipos customizados do banco quando abre o modal
+  const { data: tiposDoBank = [] } = useQuery({
+    queryKey: ['tipos-atendimento-consultoria'],
+    queryFn: async () => {
+      const tipos = await base44.entities.TipoAtendimentoConsultoria.filter({ ativo: true });
+      return tipos || [];
+    },
+    enabled: isOpen
+  });
+
+  useEffect(() => {
+    if (isOpen && tiposDoBank.length > 0) {
+      setTipos(tiposDoBank);
+    }
+  }, [isOpen, tiposDoBank]);
 
   // Mutation para salvar tipo no banco
   const createTipoMutation = useMutation({
