@@ -16,6 +16,7 @@ import { createPageUrl } from "@/utils";
 import { useNavigate } from "react-router-dom";
 import AttendanceRulesTab from "@/components/plans/AttendanceRulesTab";
 import VouchersTab from "@/components/vouchers/VouchersTab";
+import TipoAtendimentoManager from "@/components/aceleracao/TipoAtendimentoManager";
 
 export default function GerenciarPlanos() {
   const navigate = useNavigate();
@@ -470,10 +471,30 @@ export default function GerenciarPlanos() {
           <TabsList className="bg-white shadow-md">
             <TabsTrigger value="plans">Planos</TabsTrigger>
             <TabsTrigger value="vouchers">🎟️ Vouchers e Promoções</TabsTrigger>
+            <TabsTrigger value="attendance-types">📋 Tipos de Atendimento</TabsTrigger>
           </TabsList>
 
           <TabsContent value="vouchers">
             <VouchersTab />
+          </TabsContent>
+
+          <TabsContent value="attendance-types">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>Gerenciar Tipos de Atendimento</span>
+                  <TipoAtendimentoManager customTipos={[]} onSave={() => {}} />
+                </CardTitle>
+                <CardDescription>
+                  Crie e gerencie os tipos de atendimento que serão usados em Calendário de Eventos e Registro de Atendimentos
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-gray-600 mb-4">
+                  Clique em "Gerenciar Tipos" acima para adicionar, editar ou remover tipos de atendimento. As mudanças serão sincronizadas em tempo real com todas as telas do sistema.
+                </p>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="plans">
