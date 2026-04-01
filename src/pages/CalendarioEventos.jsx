@@ -232,7 +232,7 @@ export default function CalendarioEventos() {
                      {attendanceTypes && attendanceTypes.length > 0 ? (
                        attendanceTypes.map((type) => (
                          <SelectItem key={type.id} value={type.id}>
-                           {type.name}
+                           {type.name} ({type.duracao || 45}min)
                          </SelectItem>
                        ))
                      ) : (
