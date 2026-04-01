@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 
 export default function WorkshopSearchSelect({ workshops, value, onValueChange, disabled }) {
   const [open, setOpen] = useState(false);
+  const [hoveredId, setHoveredId] = useState(null);
   
   const selectedWorkshop = workshops?.find(w => w.id === value);
 
@@ -42,7 +43,14 @@ export default function WorkshopSearchSelect({ workshops, value, onValueChange, 
                     onValueChange(workshop.id);
                     setOpen(false);
                   }}
-                  className="!text-black hover:!bg-red-600 hover:!text-white !cursor-pointer"
+                  onMouseEnter={() => setHoveredId(workshop.id)}
+                  onMouseLeave={() => setHoveredId(null)}
+                  style={{
+                    backgroundColor: hoveredId === workshop.id ? '#dc2626' : 'transparent',
+                    color: hoveredId === workshop.id ? 'white' : 'black',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
                 >
                   <Check
                     className={cn(
@@ -52,7 +60,7 @@ export default function WorkshopSearchSelect({ workshops, value, onValueChange, 
                   />
                   <div className="flex flex-col">
                     <span className="font-medium">{workshop.name}</span>
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs" style={{color: hoveredId === workshop.id ? 'rgba(255,255,255,0.7)' : '#9ca3af'}}>
                       {workshop.city}/{workshop.state} • {workshop.planoAtual}
                     </span>
                   </div>
