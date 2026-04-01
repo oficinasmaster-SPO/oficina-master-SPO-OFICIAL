@@ -10,6 +10,7 @@ import VoucherUsesList from "./VoucherUsesList";
 import VoucherAdminPanel from "./VoucherAdminPanel";
 import VoucherSellerRulesPanel from "./VoucherSellerRulesPanel";
 import VoucherAuditHistory from "./VoucherAuditHistory";
+import VoucherReportsPanel from "./VoucherReportsPanel";
 
 export default function VouchersTab() {
   const [user, setUser] = useState(null);
@@ -101,9 +102,7 @@ export default function VouchersTab() {
               <VoucherAuditHistory user={user} />
             </TabsContent>
             <TabsContent value="reports">
-              <div className="text-center py-12 text-gray-400">
-                Relatórios — em construção
-              </div>
+              <VoucherReportsPanel user={user} />
             </TabsContent>
           </>
         )}

@@ -1,7 +1,7 @@
 import React from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { PlusCircle, ShoppingCart, CheckCircle2, XCircle, Clock, AlertTriangle, Bell } from "lucide-react";
+import { PlusCircle, ShoppingCart, CheckCircle2, XCircle, Clock, AlertTriangle, Ban } from "lucide-react";
 
 const EVENT_CONFIG = {
   created: {
@@ -45,6 +45,13 @@ const EVENT_CONFIG = {
     bg: "bg-yellow-100",
     line: "border-yellow-200",
     label: "Alerta",
+  },
+  cancelled: {
+    icon: Ban,
+    color: "text-gray-600",
+    bg: "bg-gray-200",
+    line: "border-gray-300",
+    label: "Cancelamento",
   },
 };
 

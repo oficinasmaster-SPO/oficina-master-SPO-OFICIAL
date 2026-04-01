@@ -83,6 +83,7 @@ export default function VoucherAuditHistory({ user }) {
     used: vouchers.filter((v) => ["used", "pending_approval", "approved"].includes(v.status)).length,
     expired: vouchers.filter((v) => v.status === "expired").length,
     rejected: vouchers.filter((v) => v.status === "rejected").length,
+    cancelled: vouchers.filter((v) => v.status === "cancelled").length,
   }), [vouchers]);
 
   return (
@@ -94,6 +95,7 @@ export default function VoucherAuditHistory({ user }) {
         <StatCard label="Utilizados" value={stats.used} color="blue" />
         <StatCard label="Expirados" value={stats.expired} color="yellow" />
         <StatCard label="Rejeitados" value={stats.rejected} color="red" />
+        <StatCard label="Cancelados" value={stats.cancelled} color="gray" />
       </div>
 
       {/* Filters */}
@@ -120,6 +122,7 @@ export default function VoucherAuditHistory({ user }) {
             <SelectItem value="approved">Aprovados</SelectItem>
             <SelectItem value="rejected">Rejeitados</SelectItem>
             <SelectItem value="expired">Expirados</SelectItem>
+            <SelectItem value="cancelled">Cancelados</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -167,6 +170,7 @@ const STATUS_MAP = {
   approved: { label: "Aprovado", color: "bg-emerald-100 text-emerald-800" },
   rejected: { label: "Rejeitado", color: "bg-red-100 text-red-800" },
   expired: { label: "Expirado", color: "bg-gray-100 text-gray-600" },
+  cancelled: { label: "Cancelado", color: "bg-gray-200 text-gray-600" },
 };
 
 function StatCard({ label, value, color }) {
@@ -394,6 +398,16 @@ function buildTimeline(voucher) {
       date: voucher.updated_date,
       actor: "Sistema",
       description: "Voucher expirado automaticamente",
+    });
+  }
+
+  // 6. Cancelamento
+  if (voucher.status === "cancelled") {
+    events.push({
+      type: "cancelled",
+      date: voucher.cancelled_at || voucher.updated_date,
+      actor: voucher.cancelled_by_name || "Usuário",
+      description: `Voucher cancelado${voucher.cancellation_reason ? ": " + voucher.cancellation_reason : ""}`,
     });
   }
 

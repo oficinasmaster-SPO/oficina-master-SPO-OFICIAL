@@ -45,7 +45,8 @@ Deno.serve(async (req) => {
         pending_approval: 'Este voucher está aguardando aprovação de uso anterior.',
         approved: 'Este voucher já foi aprovado e encerrado.',
         rejected: 'Este voucher foi rejeitado.',
-        expired: 'Este voucher expirou.'
+        expired: 'Este voucher expirou.',
+        cancelled: 'Este voucher foi cancelado.'
       };
       return Response.json({ 
         error: statusMsg[voucher.status] || 'Voucher não está ativo.' 
@@ -63,6 +64,19 @@ Deno.serve(async (req) => {
     if (voucher.uses_count >= voucher.max_uses) {
       await base44.asServiceRole.entities.Voucher.update(voucher.id, { status: 'used' });
       return Response.json({ error: 'Este voucher atingiu o limite máximo de usos.' }, { status: 400 });
+    }
+
+    // 4b. Validar limite de valor de venda (regra do vendedor)
+    const sellerRules = await base44.asServiceRole.entities.VoucherSellerRule.filter({
+      seller_id: user.id,
+      workshop_id: voucher.workshop_id,
+      active: true
+    });
+    const sellerRule = sellerRules?.[0];
+    if (sellerRule?.max_sale_value && sale_value > sellerRule.max_sale_value) {
+      return Response.json({ 
+        error: `Valor de venda (R$ ${sale_value.toFixed(2)}) excede o limite permitido de R$ ${sellerRule.max_sale_value.toFixed(2)}.` 
+      }, { status: 400 });
     }
 
     // 5. Calcular desconto

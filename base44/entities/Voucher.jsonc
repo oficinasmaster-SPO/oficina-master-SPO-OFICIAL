@@ -63,7 +63,8 @@
         "pending_approval",
         "approved",
         "rejected",
-        "expired"
+        "expired",
+        "cancelled"
       ],
       "default": "active",
       "description": "Status atual do voucher"
@@ -80,6 +81,23 @@
     "notes": {
       "type": "string",
       "description": "Observa\u00e7\u00f5es internas"
+    },
+    "cancelled_by": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio que cancelou"
+    },
+    "cancelled_by_name": {
+      "type": "string",
+      "description": "Nome do usu\u00e1rio que cancelou"
+    },
+    "cancelled_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora do cancelamento"
+    },
+    "cancellation_reason": {
+      "type": "string",
+      "description": "Motivo do cancelamento"
     },
     "metadata": {
       "type": "object",
