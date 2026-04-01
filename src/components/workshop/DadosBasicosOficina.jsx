@@ -124,7 +124,7 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
     notas_manuais: "",
     capacidade_atendimento_dia: 0,
     tempo_medio_servico: 0,
-    horario_funcionamento: { abertura: "", fechamento: "", almoco_inicio: "", almoco_fim: "", dias_semana: [] }
+    horario_funcionamento: { abertura: "", fechamento: "", almoco_inicio: "", almoco_fim: "", sabado_abertura: "", sabado_fechamento: "", dias_semana: [] }
   });
 
   useImperativeHandle(ref, () => ({
@@ -193,7 +193,10 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
         notas_manuais: workshop.notas_manuais || "",
         capacidade_atendimento_dia: workshop.capacidade_atendimento_dia || 0,
         tempo_medio_servico: workshop.tempo_medio_servico || 0,
-        horario_funcionamento: workshop.horario_funcionamento || { abertura: "", fechamento: "", almoco_inicio: "", almoco_fim: "", dias_semana: [] }
+        horario_funcionamento: {
+          abertura: "", fechamento: "", almoco_inicio: "", almoco_fim: "", sabado_abertura: "", sabado_fechamento: "", dias_semana: [],
+          ...(workshop.horario_funcionamento || {})
+        }
       });
     }
   }, [workshop]);
@@ -880,6 +883,20 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
               <div className="flex flex-wrap gap-2">
                 {diasSemana.map((dia) => {
                   const isSelected = (formData.horario_funcionamento.dias_semana || []).includes(dia);
+                  const isSabado = dia === 'Sábado';
+                  
+                  // Determinar se sábado é meio-período (fechamento entre 11h e 14h)
+                  let isSabadoMeioPeriodo = false;
+                  if (isSabado && isSelected) {
+                    const sabFech = formData.horario_funcionamento.sabado_fechamento || '';
+                    if (sabFech) {
+                      const hour = parseInt(sabFech.split(':')[0], 10);
+                      if (!isNaN(hour) && hour >= 11 && hour <= 14) {
+                        isSabadoMeioPeriodo = true;
+                      }
+                    }
+                  }
+
                   return (
                     <button
                       key={dia}
@@ -897,12 +914,19 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
                         });
                       }}
                       className={cn(
-                        "px-4 py-2 rounded-full text-sm font-medium transition-all duration-200",
-                        isSelected 
+                        "relative overflow-hidden px-4 py-2 rounded-full text-sm font-medium transition-all duration-200",
+                        isSelected && !isSabadoMeioPeriodo
                           ? "bg-slate-900 text-white shadow-md" 
+                          : isSelected && isSabadoMeioPeriodo
+                          ? "text-white shadow-md border-0"
                           : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-100 hover:border-slate-300",
                         !editing && "opacity-60 cursor-not-allowed"
                       )}
+                      style={isSabadoMeioPeriodo ? {
+                        background: 'linear-gradient(90deg, #0f172a 0%, #0f172a 50%, #e2e8f0 50%, #e2e8f0 100%)',
+                        color: 'white',
+                        textShadow: '0 0 4px rgba(0,0,0,0.5)'
+                      } : undefined}
                     >
                       {dia}
                     </button>
@@ -910,6 +934,54 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
                 })}
               </div>
             </div>
+
+            {/* Horários específicos do Sábado */}
+            {(formData.horario_funcionamento.dias_semana || []).includes('Sábado') && (
+              <div className="pt-3 border-t border-slate-200 mt-2">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-sm font-semibold text-slate-700">⏰ Horário do Sábado</span>
+                  <span className="text-xs text-slate-500">(diferente dos demais dias)</span>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-xs">Abertura Sábado</Label>
+                    <TimePicker
+                      value={formData.horario_funcionamento.sabado_abertura || ''}
+                      onChange={(val) => setFormData({
+                        ...formData,
+                        horario_funcionamento: { ...formData.horario_funcionamento, sabado_abertura: val }
+                      })}
+                      disabled={!editing}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Fechamento Sábado</Label>
+                    <TimePicker
+                      value={formData.horario_funcionamento.sabado_fechamento || ''}
+                      onChange={(val) => setFormData({
+                        ...formData,
+                        horario_funcionamento: { ...formData.horario_funcionamento, sabado_fechamento: val }
+                      })}
+                      disabled={!editing}
+                    />
+                  </div>
+                </div>
+                {(() => {
+                  const sabFech = formData.horario_funcionamento.sabado_fechamento || '';
+                  if (sabFech) {
+                    const hour = parseInt(sabFech.split(':')[0], 10);
+                    if (!isNaN(hour) && hour >= 11 && hour <= 14) {
+                      return (
+                        <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mt-2">
+                          ☀️ Sábado configurado como <strong>meio-período</strong> (fechamento às {sabFech})
+                        </p>
+                      );
+                    }
+                  }
+                  return null;
+                })()}
+              </div>
+            )}
             
             {editing && (
               <div className="flex flex-wrap gap-3 pt-3 border-t border-slate-200 mt-2">
