@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,29 +37,32 @@ export default function CalendarioEventos() {
     { id: 'outros', name: 'Outros' }
   ];
 
-  // Carregar tipos de atendimento do banco centralizado
-  const { data: attendanceTypes = defaultAttendanceTypes } = useQuery({
+  // Carregar tipos de atendimento do banco
+  const { data: tiposCustomizados = [] } = useQuery({
     queryKey: ['tipos-atendimento-consultoria'],
     queryFn: async () => {
       try {
         const tipos = await base44.entities.TipoAtendimentoConsultoria.filter({ ativo: true });
-        if (tipos && tipos.length > 0) {
-          const customTypes = tipos.map(t => ({ id: t.value, name: t.label }));
-          // Combina tipos padrão com customizados, removendo duplicatas
-          const allTypes = [...customTypes];
-          const customIds = customTypes.map(c => c.id);
-          allTypes.push(...defaultAttendanceTypes.filter(d => !customIds.includes(d.id)));
-          return allTypes;
-        }
+        return tipos || [];
       } catch (error) {
-        console.warn('Erro ao buscar tipos:', error);
+        console.warn('Erro ao buscar tipos customizados:', error);
+        return [];
       }
-      return defaultAttendanceTypes;
     },
     staleTime: 0,
     refetchOnMount: true,
     refetchOnWindowFocus: true
   });
+
+  // Combinar tipos customizados com padrões
+  const attendanceTypes = useMemo(() => {
+    const customFormatted = tiposCustomizados.map(t => ({ id: t.value, name: t.label }));
+    const customIds = new Set(customFormatted.map(c => c.id));
+    const padraoFiltered = defaultAttendanceTypes.filter(d => !customIds.has(d.id));
+    const combined = [...customFormatted, ...padraoFiltered];
+    console.log('Tipos carregados:', combined);
+    return combined;
+  }, [tiposCustomizados]);
 
   // Carregar eventos do ano
   const { data: events = [], isLoading } = useQuery({
