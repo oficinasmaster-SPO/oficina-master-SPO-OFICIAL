@@ -50,7 +50,10 @@ export default function CalendarioEventos() {
         console.warn('Erro ao buscar tipos:', error);
       }
       return defaultAttendanceTypes;
-    }
+    },
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true
   });
 
   // Carregar eventos do ano
