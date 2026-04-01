@@ -63,10 +63,10 @@ Deno.serve(withAuth(async (req, { base44, user }) => {
             const uniqueWorkshopIds = [...new Set(workshopIds)];
 
             if (uniqueWorkshopIds.length > 0) {
-                // Fetch workshops individualmente é mais seguro aqui pois filter com OR array não é padrão
-                // Mas idealmente o SDK suportaria 'in'. Vamos fazer Promise.all controlado
+                // Usa service role para buscar workshops vinculados via Employee
+                // pois o RLS do Workshop pode não permitir get() direto pelo colaborador
                 const employeeWorkshops = await Promise.all(
-                    uniqueWorkshopIds.map(id => base44.entities.Workshop.get(id).catch(() => null))
+                    uniqueWorkshopIds.map(id => base44.asServiceRole.entities.Workshop.get(id).catch(() => null))
                 );
 
                 for (const ws of employeeWorkshops) {
