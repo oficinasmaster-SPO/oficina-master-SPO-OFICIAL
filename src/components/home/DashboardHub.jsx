@@ -63,9 +63,10 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
 
   // Queries para Avisos e Configurações
   const { data: notices = [], refetch: refetchNotices } = useQuery({
-    queryKey: ['internal-notices'],
+    queryKey: ['internal-notices', workshop?.id],
     queryFn: () => base44.entities.InternalNotice.filter({ active: true }),
-    retry: 1
+    retry: 1,
+    enabled: !!workshop?.id
   });
 
   const { data: tipsSetting, refetch: refetchTips } = useQuery({
@@ -90,19 +91,17 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
 
   // Busca dados do colaborador atual para saber o cargo (se não for dono)
   const { data: currentEmployee } = useQuery({
-    queryKey: ['current-employee', user?.email],
+    queryKey: ['current-employee', user?.email, workshop?.id],
     queryFn: async () => {
-      if (!user?.email) return null;
+      if (!user?.email || !workshop?.id) return null;
       try {
-        const result = await base44.entities.Employee.list(); // Listar e filtrar no client por segurança ou usar filter se suportado
-        const employees = Array.isArray(result) ? result : [];
-        // Encontrar employee com mesmo email e da mesma oficina (se workshop existir)
-        return employees.find(e => e.email === user.email && (!workshop || e.workshop_id === workshop.id)) || null;
+        const employees = await base44.entities.Employee.filter({ email: user.email, workshop_id: workshop.id });
+        return Array.isArray(employees) && employees.length > 0 ? employees[0] : null;
       } catch (e) {
         return null;
       }
     },
-    enabled: !!user?.email && !!workshop && user.id !== workshop.owner_id
+    enabled: !!user?.email && !!workshop?.id && user.id !== workshop?.owner_id
   });
 
   const getUserRole = () => {
@@ -193,25 +192,27 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
   });
 
   const { data: tasks = [] } = useQuery({
-    queryKey: ['user-tasks', user?.id],
+    queryKey: ['user-tasks', user?.id, workshop?.id],
     queryFn: async () => {
       try {
-        const result = await base44.entities.Task.list();
+        if (!workshop?.id) return [];
+        const result = await base44.entities.Task.filter({ workshop_id: workshop.id });
         return Array.isArray(result) ? result : [];
       } catch (error) {
         console.log("Error fetching tasks:", error);
         return [];
       }
     },
-    enabled: !!user?.id,
+    enabled: !!user?.id && !!workshop?.id,
     retry: 1
   });
 
   const { data: notifications = [] } = useQuery({
-    queryKey: ['user-notifications', user?.id],
+    queryKey: ['user-notifications', user?.id, workshop?.id],
     queryFn: async () => {
       try {
-        const result = await base44.entities.Notification.list();
+        if (!user?.id) return [];
+        const result = await base44.entities.Notification.filter({ user_id: user.id }, '-created_date', 50);
         return Array.isArray(result) ? result : [];
       } catch (error) {
         console.log("Error fetching notifications:", error);
@@ -223,12 +224,13 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
   });
 
   const { data: gameProfile } = useQuery({
-    queryKey: ['user-game-profile', user?.id],
+    queryKey: ['user-game-profile', user?.id, workshop?.id],
     queryFn: async () => {
       try {
-        const profiles = await base44.entities.UserGameProfile.list();
+        if (!user?.id) return null;
+        const profiles = await base44.entities.UserGameProfile.filter({ user_id: user.id });
         const profilesArray = Array.isArray(profiles) ? profiles : [];
-        return profilesArray.find(p => p.user_id === user?.id) || null;
+        return profilesArray[0] || null;
       } catch (error) {
         console.log("Error fetching game profile:", error);
         return null;
