@@ -1013,6 +1013,14 @@
           "type": "string",
           "description": "Fim do hor\u00e1rio de almo\u00e7o"
         },
+        "sabado_abertura": {
+          "type": "string",
+          "description": "Hor\u00e1rio de abertura no s\u00e1bado"
+        },
+        "sabado_fechamento": {
+          "type": "string",
+          "description": "Hor\u00e1rio de fechamento no s\u00e1bado"
+        },
         "dias_semana": {
           "type": "array",
           "items": {
