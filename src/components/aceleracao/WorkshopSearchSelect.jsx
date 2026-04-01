@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { Check, ChevronsUpDown, Search } from "lucide-react";
+import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function WorkshopSearchSelect({ workshops, value, onValueChange, disabled }) {
@@ -32,7 +32,7 @@ export default function WorkshopSearchSelect({ workshops, value, onValueChange, 
         <Command>
           <CommandInput placeholder="Buscar oficina..." />
           <CommandEmpty>Nenhuma oficina encontrada.</CommandEmpty>
-          <div className="max-h-64 overflow-auto">
+          <div className="max-h-64 overflow-auto border-b">
             <CommandGroup>
               {workshops?.map((workshop) => (
                 <CommandItem
@@ -42,10 +42,7 @@ export default function WorkshopSearchSelect({ workshops, value, onValueChange, 
                     onValueChange(workshop.id);
                     setOpen(false);
                   }}
-                  style={{
-                    cursor: 'pointer'
-                  }}
-                  className="hover:bg-red-600 hover:text-white"
+                  className="!text-black hover:!bg-red-600 hover:!text-white !cursor-pointer"
                 >
                   <Check
                     className={cn(
@@ -63,7 +60,7 @@ export default function WorkshopSearchSelect({ workshops, value, onValueChange, 
               ))}
             </CommandGroup>
           </div>
-          <div className="border-t px-2 py-1.5 text-xs text-gray-400 bg-gray-50">Oficinas</div>
+          <div className="px-2 py-1.5 text-xs text-gray-500 bg-gray-50">Todas Oficinas</div>
         </Command>
       </PopoverContent>
     </Popover>
