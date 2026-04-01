@@ -26,6 +26,7 @@ import TenantSelector from "@/components/navigation/TenantSelector";
 import { useAuth } from "@/lib/AuthContext";
 import WheelLoader from "@/components/ui/WheelLoader";
 import PlanLimitModal from "@/components/limits/PlanLimitModal";
+import VoucherPendingDialog from "@/components/vouchers/VoucherPendingDialog";
 
 export default function Layout({ children, currentPageName }) {
   const location = useLocation();
@@ -143,6 +144,7 @@ export default function Layout({ children, currentPageName }) {
       <OnboardingGate user={user} isAuthenticated={isAuthenticated}>
       <div className="min-h-screen bg-gray-50">
         <PlanLimitModal />
+        {isAuthenticated && user && <VoucherPendingDialog user={user} />}
 
         {shouldShowMenus && (
           <Sidebar 
