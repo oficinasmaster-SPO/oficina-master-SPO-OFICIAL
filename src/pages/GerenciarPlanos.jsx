@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Save, Shield, Lock, Unlock, Settings, Calendar, Plus, Trash2 } from "lucide-react";
@@ -257,6 +258,12 @@ export default function GerenciarPlanos() {
     enabled: !loading
   });
 
+  const { data: usersByPlan = [] } = useQuery({
+    queryKey: ['users-by-plan'],
+    queryFn: () => base44.entities.Workshop.list('-created_date', 1000),
+    enabled: !loading
+  });
+
   const createPlanMutation = useMutation({
     mutationFn: (data) => base44.entities.PlanFeature.create(data),
     onSuccess: (createdPlan) => {
@@ -283,6 +290,17 @@ export default function GerenciarPlanos() {
       queryClient.invalidateQueries(['planFeatures']);
       queryClient.invalidateQueries(['plans']);
       toast.success("Plano deletado com sucesso!");
+    }
+  });
+
+  const togglePlanActiveMutation = useMutation({
+    mutationFn: async ({ id, active }) => base44.entities.PlanFeature.update(id, { active }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['planFeatures']);
+      toast.success("Disponibilidade do plano atualizada!");
+    },
+    onError: () => {
+      toast.error("Erro ao atualizar disponibilidade do plano.");
     }
   });
 
@@ -374,6 +392,10 @@ export default function GerenciarPlanos() {
       return;
     }
     deletePlanMutation.mutate(planId);
+  };
+
+  const getUsersCountByPlan = (planId) => {
+    return usersByPlan.filter(workshop => workshop.planoAtual === planId).length;
   };
 
   const handleSavePlan = () => {
@@ -472,16 +494,28 @@ export default function GerenciarPlanos() {
               {planFeatures.map(plan => (
                 <Card key={plan.id} className="border-2 hover:shadow-lg transition-all bg-white">
                   <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
-                      {plan.plan_name}
-                      <Badge className="bg-green-600 text-white">
-                        <Settings className="w-3 h-3 mr-1" />
-                        Configurado
-                      </Badge>
-                    </CardTitle>
-                    <CardDescription>
-                      {plan.plan_description || "Sem descrição"}
-                    </CardDescription>
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <CardTitle className="flex items-center gap-2">
+                          {plan.plan_name}
+                          <Badge className="bg-green-600 text-white">
+                            <Settings className="w-3 h-3 mr-1" />
+                            Configurado
+                          </Badge>
+                        </CardTitle>
+                        <CardDescription className="mt-2">
+                          {plan.plan_description || "Sem descrição"}
+                        </CardDescription>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-500">Disponível</span>
+                        <Switch
+                          checked={plan.active !== false}
+                          onCheckedChange={(checked) => togglePlanActiveMutation.mutate({ id: plan.id, active: checked })}
+                          disabled={togglePlanActiveMutation.isPending}
+                        />
+                      </div>
+                    </div>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <div className="space-y-2 text-sm">
@@ -492,6 +526,9 @@ export default function GerenciarPlanos() {
                       <p className="text-gray-700">
                         <Unlock className="w-4 h-4 inline mr-1" />
                         {plan.modules_allowed?.length || 0} módulos
+                      </p>
+                      <p className="text-gray-700 font-medium">
+                        Usuários cadastrados: {getUsersCountByPlan(plan.plan_id)}
                       </p>
                     </div>
                     <div className="flex gap-2">
@@ -529,7 +566,10 @@ export default function GerenciarPlanos() {
                         Clique para configurar
                       </CardDescription>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="space-y-3">
+                      <p className="text-sm text-gray-700 font-medium">
+                        Usuários cadastrados: {getUsersCountByPlan(plan.id)}
+                      </p>
                       <Button onClick={() => handleEditPlan(plan.id)} className="w-full" variant="outline">
                         Configurar Plano
                       </Button>
