@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Edit, AlertTriangle, FilePlus, Play, StopCircle, CalendarClock, FileText, CheckCircle, Trash2 } from "lucide-react";
+import { Edit, AlertTriangle, FilePlus, Play, StopCircle, CalendarClock, FileText, CheckCircle, Trash2, Clock } from "lucide-react";
 import GerarAtaModal from "./GerarAtaModal";
 import VisualizarAtaModal from "./VisualizarAtaModal";
 import ReagendarAtendimentoModal from "./ReagendarAtendimentoModal";
@@ -269,11 +269,14 @@ export default function PainelAtendimentosTab({ user }) {
                     <tr key={atendimento.id} className="hover:bg-gray-50 transition-colors">
                       <td className="py-4 px-6 text-sm text-gray-600 border-r border-gray-100 last:border-r-0">
                         {ataVinculada?.code ? (
-                          <span className="font-mono text-xs bg-blue-50 px-2 py-1 rounded border border-blue-200">
+                          <span className="font-mono text-xs bg-blue-50 px-2 py-1 rounded border border-blue-200 whitespace-nowrap">
                             {ataVinculada.code.replace('IT.', 'AT.')}
                           </span>
                         ) : (
-                          <span className="text-gray-400 text-xs">-</span>
+                          <span className="inline-flex items-center gap-1.5 text-amber-600 bg-amber-50 px-2 py-1 rounded-md border border-amber-200 text-xs font-medium whitespace-nowrap" title="Aguardando geração da ATA">
+                            <Clock className="w-3 h-3" />
+                            Pendente
+                          </span>
                         )}
                       </td>
                       <td className="py-4 px-6 text-sm text-gray-600 border-r border-gray-100 last:border-r-0 whitespace-nowrap">
