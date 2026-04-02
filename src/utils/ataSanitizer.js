@@ -60,7 +60,7 @@ function normalizeResponsavel(resp) {
  * Formata prazo de forma segura
  */
 export function formatPrazoSafe(prazo) {
-  if (!prazo) return 'Não definido';
+  if (!prazo) return 'Nao definido';
   const str = toSafeString(prazo);
   try {
     const date = new Date(str);

@@ -45,7 +45,7 @@ export const generateAtaPDF = (rawAta, workshop) => {
   // Metadados em linha
   doc.setFontSize(10);
   doc.setFont(undefined, 'bold');
-  doc.text('Código:', margin, y);
+  doc.text('Codigo:', margin, y);
   doc.setFont(undefined, 'normal');
   doc.text(ata.code || 'ATA-' + format(new Date(ata.meeting_date || new Date()), 'yyyyMMdd'), margin + 18, y);
 
@@ -88,9 +88,9 @@ export const generateAtaPDF = (rawAta, workshop) => {
   // Preparar dados das células (já sanitizados)
   let participantesText = '';
   if (ata.participantes && ata.participantes.length > 0) {
-    participantesText = ata.participantes.map(p => `• ${safeText(p.name)} - ${safeText(p.role)}`).join('\n');
+    participantesText = ata.participantes.map(p => `- ${safeText(p.name)} - ${safeText(p.role)}`).join('\n');
   } else {
-    participantesText = '• Aceleradora Oficinas Master - Consultor/Acelerador';
+    participantesText = '- Aceleradora Oficinas Master - Consultor/Acelerador';
   }
 
   const responsavelText = `${safeText(ata.responsavel?.name) || workshop?.name || 'OFICINA CLIENTE'}\n${safeText(ata.responsavel?.role) || 'Proprietário'}`;
@@ -100,7 +100,7 @@ export const generateAtaPDF = (rawAta, workshop) => {
 
   doc.autoTable({
     startY: y,
-    head: [['PARTICIPANTES', 'RESPONSÁVEL', 'PLANO']],
+    head: [['PARTICIPANTES', 'RESPONSAVEL', 'PLANO']],
     body: tableData,
     theme: 'grid',
     styles: {
@@ -181,7 +181,7 @@ export const generateAtaPDF = (rawAta, workshop) => {
       } else {
         doc.setFontSize(10);
         doc.setFont(undefined, 'normal');
-        doc.text(`• ${item}`, margin + 2, y + 2);
+        doc.text(`- ${safeText(item)}`, margin + 2, y + 2);
       }
 
       y += boxHeight + 3;
@@ -248,7 +248,7 @@ export const generateAtaPDF = (rawAta, workshop) => {
       checkPageBreak(8);
       doc.setFontSize(10);
       doc.setFont(undefined, 'normal');
-      doc.text(`• ${obj}`, margin, y);
+      doc.text(`- ${safeText(obj)}`, margin, y);
       y += 6;
     });
     y += 5;
@@ -283,7 +283,7 @@ export const generateAtaPDF = (rawAta, workshop) => {
       doc.setTextColor(0, 0, 0);
       
       const descText = safeText(passo.descricao);
-      const descLines = doc.splitTextToSize(`• ${descText}`, contentWidth);
+      const descLines = doc.splitTextToSize(`- ${descText}`, contentWidth);
       descLines.forEach((line) => {
         doc.text(line, margin, y);
         y += 5;
@@ -314,7 +314,7 @@ export const generateAtaPDF = (rawAta, workshop) => {
         y += 5;
         doc.setFontSize(10);
         doc.setFont(undefined, 'normal');
-        const legacyLines = doc.splitTextToSize(ata.proximos_passos, contentWidth);
+        const legacyLines = doc.splitTextToSize(safeText(ata.proximos_passos), contentWidth);
         legacyLines.forEach(line => {
             checkPageBreak(8);
             doc.text(line, margin, y);
@@ -476,7 +476,7 @@ export const generateAtaPDF = (rawAta, workshop) => {
     doc.setFont(undefined, 'italic');
     doc.setTextColor(100, 100, 100);
     const instrucao = doc.splitTextToSize(
-      'Os processos abaixo foram discutidos e estao disponiveis para consulta no modulo "Processos" da plataforma.',
+      'Os processos abaixo foram discutidos e estao disponiveis para consulta no modulo Processos da plataforma.',
       contentWidth
     );
     instrucao.forEach(line => {
@@ -497,12 +497,12 @@ export const generateAtaPDF = (rawAta, workshop) => {
       
       doc.setFontSize(10);
       doc.setFont(undefined, 'bold');
-      doc.text(`• ${proc.titulo}`, margin + 2, y + 2);
+      doc.text(`- ${safeText(proc.titulo)}`, margin + 2, y + 2);
       
       y += 6;
       doc.setFontSize(9);
       doc.setFont(undefined, 'normal');
-      doc.text(`Categoria: ${proc.categoria}`, margin + 2, y);
+      doc.text(`Categoria: ${safeText(proc.categoria)}`, margin + 2, y);
       
       y += 5;
       doc.setFontSize(8);
@@ -530,7 +530,7 @@ export const generateAtaPDF = (rawAta, workshop) => {
     doc.setFont(undefined, 'italic');
     doc.setTextColor(100, 100, 100);
     const instrucaoVideo = doc.splitTextToSize(
-      'As videoaulas abaixo foram indicadas e estao disponiveis no modulo "Academia de Treinamento" da plataforma.',
+      'As videoaulas abaixo foram indicadas e estao disponiveis no modulo Academia de Treinamento da plataforma.',
       contentWidth
     );
     instrucaoVideo.forEach(line => {
@@ -551,12 +551,12 @@ export const generateAtaPDF = (rawAta, workshop) => {
       
       doc.setFontSize(10);
       doc.setFont(undefined, 'bold');
-      doc.text(`• ${video.titulo}`, margin + 2, y + 2);
+      doc.text(`- ${safeText(video.titulo)}`, margin + 2, y + 2);
       
       y += 6;
       doc.setFontSize(9);
       doc.setFont(undefined, 'normal');
-      doc.text(`Curso: ${video.descricao}`, margin + 2, y);
+      doc.text(`Curso: ${safeText(video.descricao)}`, margin + 2, y);
       
       y += 5;
       doc.setFontSize(8);
@@ -605,7 +605,7 @@ export const generateAtaPDF = (rawAta, workshop) => {
       doc.setFontSize(9);
       doc.setFont(undefined, 'normal');
       doc.setTextColor(100, 100, 100);
-      const urlLines = doc.splitTextToSize(midia.url, contentWidth - 5);
+      const urlLines = doc.splitTextToSize(safeText(midia.url), contentWidth - 5);
       urlLines.forEach(line => {
         checkPageBreak(5);
         doc.text(line, margin + 3, y);
