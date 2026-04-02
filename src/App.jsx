@@ -12,6 +12,7 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { TenantProvider } from '@/components/contexts/TenantContext';
+import { AttendanceTypeProvider } from '@/components/contexts/AttendanceTypeContext';
 import PageAccessControl from '@/components/auth/PageAccessControl';
 import { pagePermissions } from '@/components/lib/pagePermissions';
 import Home from '@/pages/Home';
@@ -178,13 +179,15 @@ function App() {
       <AuthProvider>
         <QueryClientProvider client={queryClientInstance}>
           <TenantProvider>
-            <Router>
-              <NavigationTracker />
-              <AuthenticatedApp />
-            </Router>
-            <Toaster />
-            <SonnerToaster />
-            <VisualEditAgent />
+            <AttendanceTypeProvider>
+              <Router>
+                <NavigationTracker />
+                <AuthenticatedApp />
+              </Router>
+              <Toaster />
+              <SonnerToaster />
+              <VisualEditAgent />
+            </AttendanceTypeProvider>
           </TenantProvider>
         </QueryClientProvider>
       </AuthProvider>
