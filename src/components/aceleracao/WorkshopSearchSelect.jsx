@@ -33,7 +33,7 @@ export default function WorkshopSearchSelect({ workshops, value, onValueChange, 
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[500px] p-0">
+      <PopoverContent className="w-[250px] p-0">
         <div className="flex items-center border-b px-3">
           <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
           <input 
@@ -48,7 +48,7 @@ export default function WorkshopSearchSelect({ workshops, value, onValueChange, 
           Todas Oficinas
         </div>
 
-        <div className="max-h-64 overflow-y-auto pr-2" style={{ scrollbarGutter: 'stable' }}>
+        <div className="max-h-32 overflow-y-auto pr-2" style={{ scrollbarGutter: 'stable' }}>
           {filtered.length === 0 ? (
             <div className="px-3 py-4 text-center text-sm text-gray-500">
               Nenhuma oficina encontrada
