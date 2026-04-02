@@ -126,15 +126,22 @@ Por favor, gere uma ata de reunião profissional e bem estruturada com os seguin
 8. **PRÓXIMOS PASSOS:** Agenda e expectativas para próximo encontro
 9. **OBSERVAÇÕES FINAIS:** Comentários relevantes do consultor
 
-Formate em Markdown para fácil leitura. Seja profissional, objetivo e completo.
+Formate em Markdown para fácil leitura. Seja profissional, objetivo e completo. NÃO adicione saudações finais, despedidas ou coisas como "[Seu Nome]". Termine no último parágrafo de conteúdo.
     `;
 
     console.log("🤖 Gerando ata com IA...");
 
     // Chamar IA para gerar ata
-    const ataGerada = await base44.integrations.Core.InvokeLLM({
+    let ataGerada = await base44.integrations.Core.InvokeLLM({
       prompt: prompt
     });
+
+    if (typeof ataGerada === 'string') {
+        ataGerada = ataGerada.replace(/Atenciosamente,?\s*\[.*?\]/gi, '')
+                             .replace(/\[Seu Nome\]/gi, atendimento.consultor_nome || 'Consultor')
+                             .replace(/\[Nome do Consultor\]/gi, atendimento.consultor_nome || 'Consultor')
+                             .trim();
+    }
 
     console.log("✅ Ata gerada com sucesso!");
 

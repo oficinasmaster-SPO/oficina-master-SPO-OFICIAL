@@ -330,13 +330,6 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className="pt-6">
-              <h3 className="font-bold text-lg mb-3">5. VISÃO GERAL DO PROJETO DE ACELERAÇÃO</h3>
-              <p className="whitespace-pre-wrap">{ataAtualizada.visao_geral_projeto || "Não informado"}</p>
-            </CardContent>
-          </Card>
-
           {Array.isArray(ataAtualizada.processos_vinculados) && ataAtualizada.processos_vinculados.length > 0 && (
             <Card>
               <CardContent className="pt-6">
@@ -425,12 +418,14 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
             </Card>
           )}
 
-          <Card>
-            <CardContent className="pt-6">
-              <h3 className="font-bold text-lg mb-3">11. VISÃO GERAL DO PROJETO DE ACELERAÇÃO</h3>
-              <p className="whitespace-pre-wrap">{ataAtualizada.visao_geral_projeto || "Não informado"}</p>
-            </CardContent>
-          </Card>
+          {ataAtualizada.visao_geral_projeto && (
+            <Card>
+              <CardContent className="pt-6">
+                <h3 className="font-bold text-lg mb-3">10. VISÃO GERAL DO PROJETO DE ACELERAÇÃO</h3>
+                <p className="whitespace-pre-wrap">{ataAtualizada.visao_geral_projeto || "Não informado"}</p>
+              </CardContent>
+            </Card>
+          )}
 
           {workshop && (
             <Card className="print:break-before-page">

@@ -364,9 +364,9 @@ export const generateAtaPDF = (rawAta, workshop) => {
     
     y += 8;
 
-    // Usar o parser de markdown e remover assinatura da IA se houver
+    // Usar o parser de markdown e inserir assinatura correta do consultor
     const textoIaLimpo = typeof ata.ata_ia === 'string' 
-      ? ata.ata_ia.replace(/\[Seu Nome\]/gi, '').replace(/\[Nome do Consultor\]/gi, '').trim() 
+      ? ata.ata_ia.replace(/\[Seu Nome\]/gi, ata.consultor_name || 'Consultor').replace(/\[Nome do Consultor\]/gi, ata.consultor_name || 'Consultor').trim() 
       : ata.ata_ia;
     const parsedContent = parseMarkdownToPdf(textoIaLimpo);
     

@@ -339,7 +339,9 @@ export default function AtaPrintLayout({ atendimento, workshop }) {
           </p>
           <div style={styles.content}>
             <ReactMarkdown>
-              {typeof atendimento.ata_ia === 'string' ? atendimento.ata_ia.replace(/\[Seu Nome\]/gi, '').replace(/\[Nome do Consultor\]/gi, '').trim() : atendimento.ata_ia}
+              {typeof atendimento.ata_ia === 'string' 
+                ? atendimento.ata_ia.replace(/\[Seu Nome\]/gi, atendimento.consultor_name || 'Consultor').replace(/\[Nome do Consultor\]/gi, atendimento.consultor_name || 'Consultor').trim() 
+                : atendimento.ata_ia}
             </ReactMarkdown>
           </div>
         </div>
