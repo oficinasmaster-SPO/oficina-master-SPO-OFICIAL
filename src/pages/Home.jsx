@@ -18,6 +18,7 @@ import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 import { getPhaseInfo } from "@/components/lib/phaseConstants";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/lib/AuthContext";
+import { nowBrazilISO } from "@/utils/timezone";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -45,12 +46,12 @@ export default function Home() {
             acessou_plano_acao: false,
             explorou_dashboard: false
           },
-          first_login_date: new Date().toISOString(),
-          last_login_date: new Date().toISOString()
+          first_login_date: nowBrazilISO(),
+          last_login_date: nowBrazilISO()
         });
       } else {
         await base44.entities.UserProgress.update(progress.id, {
-          last_login_date: new Date().toISOString()
+          last_login_date: nowBrazilISO()
         });
 
         // Update checklist

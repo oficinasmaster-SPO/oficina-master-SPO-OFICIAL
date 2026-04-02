@@ -26,6 +26,7 @@ import GoogleMeetIntegration from "@/components/aceleracao/GoogleMeetIntegration
 import { useGoogleMeet } from "@/components/hooks/useGoogleMeet";
 import NextSteps from "@/components/aceleracao/NextSteps";
 import { TimePicker } from "@/components/ui/time-picker";
+import { toBrazilDate } from "@/utils/timezone";
 
 // RegistrarAtendimento v2
 export default function RegistrarAtendimento({ isModal = false, onClose }) {
@@ -121,11 +122,16 @@ export default function RegistrarAtendimento({ isModal = false, onClose }) {
           const atendimento = await base44.entities.ConsultoriaAtendimento.get(atendimentoId);
           
           if (atendimento) {
-            const dataAgendada = new Date(atendimento.data_agendada);
+            const dataAgendada = toBrazilDate(atendimento.data_agendada);
+            const yr = dataAgendada.getFullYear();
+            const mo = String(dataAgendada.getMonth() + 1).padStart(2, '0');
+            const dy = String(dataAgendada.getDate()).padStart(2, '0');
+            const hr = String(dataAgendada.getHours()).padStart(2, '0');
+            const mn = String(dataAgendada.getMinutes()).padStart(2, '0');
             setFormData({
             ...atendimento,
-            data_agendada: dataAgendada.toISOString().split('T')[0],
-            hora_agendada: dataAgendada.toTimeString().slice(0, 5),
+            data_agendada: `${yr}-${mo}-${dy}`,
+            hora_agendada: `${hr}:${mn}`,
             participantes: atendimento.participantes || [{ nome: "", cargo: "", email: "" }],
             pauta: atendimento.pauta || [{ titulo: "", descricao: "", tempo_estimado: 15 }],
             objetivos: atendimento.objetivos || [""],

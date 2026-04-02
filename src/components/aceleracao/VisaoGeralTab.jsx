@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Users, Calendar, TrendingUp, CheckCircle, Clock, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toBrazilDate, formatDateTimeBR } from "@/utils/timezone";
 import AgendaVisual from "./AgendaVisual";
 import GraficoAtendimentos from "./GraficoAtendimentos";
 import StatusClientesCard from "./StatusClientesCard";
@@ -82,6 +83,8 @@ export default function VisaoGeralTab({ user, filtros = {} }) {
   const reunioesFuturas = atendimentosPeriodo.filter(a => 
     ['agendado', 'confirmado'].includes(a.status)
   ).length || 0;
+
+  const agora = toBrazilDate(new Date());
   
   // Calcular horas: Total Contratado - Total Realizado
   const totalHorasContratadas = planos?.reduce((acc, plan) => acc + (plan.hours_contracted || 0), 0) || 0;
@@ -90,12 +93,12 @@ export default function VisaoGeralTab({ user, filtros = {} }) {
   const horasDisponiveis = totalHorasContratadas - Math.round(totalHorasRealizadas / 60);
   
   const tarefasPendentes = atendimentosPeriodo.filter(a => 
-    a.status !== 'realizado' && new Date(a.data_agendada) < new Date()
+    a.status !== 'realizado' && toBrazilDate(a.data_agendada) < agora
   ) || [];
 
   const proximosAtendimentos = atendimentos?.filter(a => 
     ['agendado', 'confirmado'].includes(a.status) && 
-    new Date(a.data_agendada) >= new Date()
+    toBrazilDate(a.data_agendada) >= agora
   ).slice(0, 5) || [];
 
   const handleClientesClick = () => {
@@ -211,7 +214,7 @@ export default function VisaoGeralTab({ user, filtros = {} }) {
                   <div key={atendimento.id} className="border-l-4 border-blue-500 pl-3 py-2">
                     <p className="font-medium text-sm">{atendimento.tipo_atendimento}</p>
                     <p className="text-xs text-gray-600">
-                      {format(new Date(atendimento.data_agendada), "dd/MM 'às' HH:mm", { locale: ptBR })}
+                      {formatDateTimeBR(atendimento.data_agendada)}
                     </p>
                   </div>
                 ))}
@@ -240,7 +243,7 @@ export default function VisaoGeralTab({ user, filtros = {} }) {
                   <div key={atendimento.id} className="border-l-4 border-red-500 pl-3 py-2">
                     <p className="font-medium text-sm">{atendimento.tipo_atendimento}</p>
                     <p className="text-xs text-red-600">
-                      Previsto: {format(new Date(atendimento.data_agendada), "dd/MM/yyyy", { locale: ptBR })}
+                      Previsto: {formatDateTimeBR(atendimento.data_agendada)}
                     </p>
                   </div>
                 ))}

@@ -13,6 +13,7 @@ import FiltrosAtendimentos from "./FiltrosAtendimentos";
 import DashboardAtendimentos from "./DashboardAtendimentos";
 import { ATENDIMENTO_STATUS, ATENDIMENTO_STATUS_COLORS, ATENDIMENTO_STATUS_LABELS } from "@/components/lib/ataConstants";
 import { format, subDays, subMonths, addMonths } from "date-fns";
+import { toBrazilDate, formatDateTimeBR } from "@/utils/timezone";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { toast } from "sonner";
@@ -72,12 +73,12 @@ export default function PainelAtendimentosTab({ user }) {
   useEffect(() => {
     if (!atendimentos) return;
     
-    const now = new Date();
+    const now = toBrazilDate(new Date());
 
     atendimentos.forEach(atendimento => {
       if (processedIdsRef.current.has(atendimento.id)) return;
       
-      const dataAtendimento = new Date(atendimento.data_agendada);
+      const dataAtendimento = toBrazilDate(atendimento.data_agendada);
       
       if (now > dataAtendimento && 
           ![ATENDIMENTO_STATUS.REALIZADO, ATENDIMENTO_STATUS.PARTICIPANDO, ATENDIMENTO_STATUS.ATRASADO].includes(atendimento.status)) {
@@ -284,7 +285,7 @@ export default function PainelAtendimentosTab({ user }) {
                         )}
                       </td>
                       <td className="py-3 px-4">
-                        {format(new Date(atendimento.data_agendada), "dd/MM/yyyy HH:mm")}
+                        {formatDateTimeBR(atendimento.data_agendada)}
                       </td>
                       <td className="py-3 px-4 font-medium">{workshop?.name || '-'}</td>
                       <td className="py-3 px-4 text-sm">

@@ -45,6 +45,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from "@/lib/utils";
 import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 import { useAdminMode } from "@/components/hooks/useAdminMode";
+import { toBrazilDate, formatDateBR } from "@/utils/timezone";
 
 export default function DashboardHub({ user, workshop: propWorkshop }) {
   const { workshop: contextWorkshop, isAdminMode } = useWorkshopContext();
@@ -261,7 +262,7 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
     : [];
   const overdueTasks = pendingTasks.filter(t => {
     if (!t.due_date) return false;
-    return new Date(t.due_date) < new Date();
+    return toBrazilDate(t.due_date) < toBrazilDate(new Date());
   });
   const unreadNotifications = Array.isArray(notifications)
     ? notifications.filter(n => n.user_id === user.id && !n.is_read)
@@ -574,7 +575,7 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
                     Pontuação: <strong>{lastDiagnostic.score}/48</strong>
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
-                    Realizado em {new Date(lastDiagnostic.created_date).toLocaleDateString('pt-BR')}
+                    Realizado em {formatDateBR(lastDiagnostic.created_date)}
                   </p>
                 </div>
               </div>
