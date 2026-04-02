@@ -27,6 +27,7 @@ import { useGoogleMeet } from "@/components/hooks/useGoogleMeet";
 import NextSteps from "@/components/aceleracao/NextSteps";
 import { TimePicker } from "@/components/ui/time-picker";
 
+// RegistrarAtendimento v2
 export default function RegistrarAtendimento({ isModal = false, onClose }) {
   const navigate = useNavigate();
   const location = window.location;

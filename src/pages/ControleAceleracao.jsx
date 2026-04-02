@@ -17,6 +17,7 @@ import FiltrosControleAceleracao from "@/components/aceleracao/FiltrosControleAc
 import RegistrarAtendimento from "./RegistrarAtendimento";
 import CronogramaGeral from "./CronogramaGeral";
 
+// ControleAceleracao v2
 export default function ControleAceleracao() {
   const navigate = useNavigate();
   const urlParams = new URLSearchParams(window.location.search);
