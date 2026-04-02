@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Edit, AlertTriangle, FilePlus, Play, StopCircle, CalendarClock, FileText, CheckCircle, Trash2 } from "lucide-react";
@@ -30,6 +31,7 @@ export default function PainelAtendimentosTab({ user }) {
   const [atendimentoFinalizar, setAtendimentoFinalizar] = useState(null);
   const [selectedAta, setSelectedAta] = useState(null);
   const processedIdsRef = useRef(new Set());
+  const [activeTab, setActiveTab] = useState("todos");
   const [filtrosAtas, setFiltrosAtas] = useState({
     searchTerm: "",
     workshop_id: "",
@@ -119,6 +121,7 @@ export default function PainelAtendimentosTab({ user }) {
 
   const atendimentosFiltrados = (atendimentos || [])
     .filter(atendimento => {
+      if (activeTab !== "todos" && atendimento.status !== activeTab) return false;
       // Aplicar filtros
       if (filtrosAtas.workshop_id && atendimento.workshop_id !== filtrosAtas.workshop_id) return false;
       if (filtrosAtas.consultor_id && atendimento.consultor_id !== filtrosAtas.consultor_id) return false;
@@ -152,26 +155,7 @@ export default function PainelAtendimentosTab({ user }) {
       return true;
     })
     .sort((a, b) => {
-      // Definir ordem de prioridade dos status
-      const ordemStatus = {
-        [ATENDIMENTO_STATUS.ATRASADO]: 1,
-        [ATENDIMENTO_STATUS.CONFIRMADO]: 2,
-        [ATENDIMENTO_STATUS.AGENDADO]: 3,
-        [ATENDIMENTO_STATUS.REAGENDADO]: 3,
-        [ATENDIMENTO_STATUS.PARTICIPANDO]: 4,
-        [ATENDIMENTO_STATUS.REALIZADO]: 5
-      };
-      
-      const prioridadeA = ordemStatus[a.status] || 99;
-      const prioridadeB = ordemStatus[b.status] || 99;
-      
-      // Se status diferente, ordenar por prioridade
-      if (prioridadeA !== prioridadeB) {
-        return prioridadeA - prioridadeB;
-      }
-      
-      // Mesmo status: ordenar por data (mais antigos primeiro)
-      return new Date(a.data_agendada) - new Date(b.data_agendada);
+      return new Date(b.data_agendada) - new Date(a.data_agendada);
     });
 
   const handleAtaSaved = () => {
@@ -254,9 +238,17 @@ export default function PainelAtendimentosTab({ user }) {
 
 
       {/* Tabela de Atendimentos */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="overflow-x-auto">
+      <Tabs defaultValue="todos" value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="mb-4">
+          <TabsTrigger value="todos">Todos</TabsTrigger>
+          <TabsTrigger value={ATENDIMENTO_STATUS.ATRASADO}>Atrasados</TabsTrigger>
+          <TabsTrigger value={ATENDIMENTO_STATUS.CONFIRMADO}>Confirmados</TabsTrigger>
+          <TabsTrigger value={ATENDIMENTO_STATUS.REALIZADO}>Realizados</TabsTrigger>
+        </TabsList>
+        <TabsContent value={activeTab} className="mt-0">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b">
@@ -441,9 +433,11 @@ export default function PainelAtendimentosTab({ user }) {
                 })}
               </tbody>
             </table>
-          </div>
-        </CardContent>
-      </Card>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
