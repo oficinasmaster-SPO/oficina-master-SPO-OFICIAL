@@ -55,18 +55,18 @@ export default function TenantSelector() {
     <div className="hidden md:flex items-center gap-3 ml-4">
       <div className="flex items-center gap-2 bg-gray-50 p-1 rounded-lg border border-gray-200">
         <Building2 className="w-4 h-4 text-gray-500 ml-2" />
-        <Select
-          value={selectedFirmId || 'none'}
-          onValueChange={(val) => changeConsultingFirm(val === 'none' ? null : val)}>
-          
+        <Select 
+          value={selectedFirmId || 'none'} 
+          onValueChange={(val) => changeConsultingFirm(val === 'none' ? null : val)}
+        >
           <SelectTrigger className="w-[180px] h-8 text-xs bg-white border-0 shadow-sm">
             <SelectValue placeholder="Selecione Consultoria" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="none">Todas Consultorias</SelectItem>
-            {firms.map((f) =>
-            <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
-            )}
+            {firms.map(f => (
+              <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
@@ -79,12 +79,12 @@ export default function TenantSelector() {
               variant="outline"
               role="combobox"
               aria-expanded={openCompanyPopover}
-              className="w-[180px] h-8 text-xs bg-white border-0 shadow-sm justify-between px-3 font-normal">
-              
+              className="w-[180px] h-8 text-xs bg-white border-0 shadow-sm justify-between px-3 font-normal"
+            >
               <span className="truncate">
-                {selectedCompanyId && selectedCompanyId !== 'none' ?
-                companies.find((c) => c.id === selectedCompanyId)?.name || "Todas Oficinas" :
-                "Todas Oficinas"}
+                {selectedCompanyId && selectedCompanyId !== 'none'
+                  ? companies.find((c) => c.id === selectedCompanyId)?.name || "Todas Oficinas"
+                  : "Todas Oficinas"}
               </span>
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
@@ -94,11 +94,11 @@ export default function TenantSelector() {
               <CommandInput placeholder="Pesquisar oficina..." className="text-gray-800 text-sm font-normal" />
               <div className="relative">
                 {/* Scroll up zone */}
-                <div className="bg-gradient-to-b mx-8 pb-2 opacity-0 rounded-none absolute top-0 left-0 right-0 h-7 z-10 flex items-center justify-center hover:opacity-100 transition-all duration-200 from-white via-white/80 to-transparent cursor-pointer group"
-
-                onMouseEnter={() => startScroll('up')}
-                onMouseLeave={stopScroll}>
-                  
+                <div
+                  className="absolute top-0 left-0 right-0 h-7 z-10 flex items-center justify-center opacity-0 hover:opacity-100 transition-all duration-200 bg-gradient-to-b from-white via-white/80 to-transparent cursor-pointer group"
+                  onMouseEnter={() => startScroll('up')}
+                  onMouseLeave={stopScroll}
+                >
                   <ChevronUp className="w-3.5 h-3.5 text-gray-300 group-hover:text-gray-500 transition-colors" />
                 </div>
 
@@ -111,35 +111,35 @@ export default function TenantSelector() {
                         changeCompany(null);
                         setOpenCompanyPopover(false);
                       }}
-                      className="text-gray-700 text-sm font-normal cursor-pointer rounded px-2 py-1.5 hover:bg-red-50 hover:text-red-600 group/item">
-                      
+                      className="text-gray-700 text-sm font-normal cursor-pointer rounded px-2 py-1.5 hover:bg-red-50 hover:text-red-600 group/item"
+                    >
                       <Check
                         className={cn(
                           "mr-2 h-3.5 w-3.5 text-gray-500 shrink-0 group-hover/item:text-red-400",
-                          !selectedCompanyId || selectedCompanyId === 'none' ? "opacity-100" : "opacity-0"
-                        )} />
-                      
+                          (!selectedCompanyId || selectedCompanyId === 'none') ? "opacity-100" : "opacity-0"
+                        )}
+                      />
                       Todas Oficinas
                     </CommandItem>
-                    {[...companies].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')).map((c) =>
-                    <CommandItem
-                      key={c.id}
-                      value={`${c.name} ${c.id}`}
-                      onSelect={() => {
-                        changeCompany(c.id);
-                        setOpenCompanyPopover(false);
-                      }}
-                      className="text-gray-700 text-sm font-normal cursor-pointer rounded px-2 py-1.5 hover:bg-red-50 hover:text-red-600 group/item">
-                      
+                    {[...companies].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')).map((c) => (
+                      <CommandItem
+                        key={c.id}
+                        value={`${c.name} ${c.id}`}
+                        onSelect={() => {
+                          changeCompany(c.id);
+                          setOpenCompanyPopover(false);
+                        }}
+                        className="text-gray-700 text-sm font-normal cursor-pointer rounded px-2 py-1.5 hover:bg-red-50 hover:text-red-600 group/item"
+                      >
                         <Check
-                        className={cn(
-                          "mr-2 h-3.5 w-3.5 text-gray-500 shrink-0 group-hover/item:text-red-400",
-                          selectedCompanyId === c.id ? "opacity-100" : "opacity-0"
-                        )} />
-                      
-                        <span className="bg-[#ca9696] truncate">{c.name}</span>
+                          className={cn(
+                            "mr-2 h-3.5 w-3.5 text-gray-500 shrink-0 group-hover/item:text-red-400",
+                            selectedCompanyId === c.id ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        <span className="truncate">{c.name}</span>
                       </CommandItem>
-                    )}
+                    ))}
                   </CommandGroup>
                 </CommandList>
 
@@ -147,8 +147,8 @@ export default function TenantSelector() {
                 <div
                   className="absolute bottom-0 left-0 right-0 h-7 z-10 flex items-center justify-center opacity-0 hover:opacity-100 transition-all duration-200 bg-gradient-to-t from-white via-white/80 to-transparent cursor-pointer group"
                   onMouseEnter={() => startScroll('down')}
-                  onMouseLeave={stopScroll}>
-                  
+                  onMouseLeave={stopScroll}
+                >
                   <ChevronDown className="w-3.5 h-3.5 text-gray-300 group-hover:text-gray-500 transition-colors" />
                 </div>
               </div>
@@ -156,6 +156,6 @@ export default function TenantSelector() {
           </PopoverContent>
         </Popover>
       </div>
-    </div>);
-
+    </div>
+  );
 }
