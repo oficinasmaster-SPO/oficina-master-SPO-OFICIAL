@@ -22,7 +22,6 @@ import TipoAtendimentoManager from "@/components/aceleracao/TipoAtendimentoManag
 import MediaUploadField from "@/components/aceleracao/MediaUploadField";
 import ConflitosHorarioModal from "@/components/aceleracao/ConflitosHorarioModal";
 import ClientIntelligenceCapturePanel from "@/components/inteligencia/ClientIntelligenceCapturePanel";
-import GoogleMeetIntegration from "@/components/aceleracao/GoogleMeetIntegration";
 import { useGoogleMeet } from "@/components/hooks/useGoogleMeet";
 import NextSteps from "@/components/aceleracao/NextSteps";
 import { TimePicker } from "@/components/ui/time-picker";
