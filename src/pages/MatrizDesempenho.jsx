@@ -19,12 +19,8 @@ export default function MatrizDesempenho() {
   const { data, isLoading } = useQuery({
     queryKey: ['matriz-desempenho', workshopId],
     queryFn: async () => {
-      const [employees, perfDiags, discDiags] = await Promise.all([
-        base44.entities.Employee.filter({ workshop_id: workshopId, status: 'ativo' }),
-        base44.entities.PerformanceMatrixDiagnostic.filter({ workshop_id: workshopId }),
-        base44.entities.DISCDiagnostic.filter({ workshop_id: workshopId })
-      ]);
-      return { employees, perfDiags, discDiags };
+      const response = await base44.functions.invoke('getPerformanceMatrixData', { workshop_id: workshopId });
+      return response.data || { employees: [], perfDiags: [], discDiags: [] };
     },
     enabled: !!workshopId
   });

@@ -58,8 +58,12 @@ export default function OptimizedImage({
       {/* Imagem principal */}
       {shouldLoad && (
         <>
-          {/* WebP com fallback */}
+          {/* AVIF e WebP com fallback para compressão moderna */}
           <picture>
+            <source 
+              srcSet={optimizedUrl.replace(/\.[^/.]+$/, '.avif')}
+              type="image/avif"
+            />
             <source 
               srcSet={optimizedUrl.replace(/\.[^/.]+$/, '.webp')}
               type="image/webp"

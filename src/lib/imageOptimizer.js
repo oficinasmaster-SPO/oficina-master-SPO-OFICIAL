@@ -2,14 +2,17 @@
  * Converte URL de imagem para WebP com fallback
  * Ex: "image.jpg" → "image.webp" (se suportado)
  */
-export function getOptimizedImageUrl(url, format = 'webp') {
+export function getOptimizedImageUrl(url, format = 'avif') {
   if (!url) return url;
   
-  // Se já é WebP, retorna direto
-  if (url.includes('.webp')) return url;
+  // Se já é WebP/AVIF, retorna direto
+  if (url.includes('.webp') || url.includes('.avif')) return url;
   
-  // Não otimizar URLs externas ou base64
-  if (url.startsWith('http') || url.startsWith('data:')) {
+  // Não otimizar URLs externas que não sejam do nosso storage ou base64
+  if (url.startsWith('http') && !url.includes('storage.base44')) {
+    return url;
+  }
+  if (url.startsWith('data:')) {
     return url;
   }
   

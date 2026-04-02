@@ -14,32 +14,12 @@ export function AttendanceTypeProvider({ children }) {
     try {
       setIsLoading(true);
       
-      // 1. Busca tipos globais (workshop_id = null)
-      const globalTypes = await base44.entities.TipoAtendimentoConsultoria.filter({
-        workshop_id: null,
-        ativo: true
-      }, '-updated_date', 100);
-
-      // 2. Se tem oficina selecionada, busca tipos específicos da oficina
-      let customTypes = [];
-      if (selectedCompanyId) {
-        try {
-          customTypes = await base44.entities.TipoAtendimentoConsultoria.filter({
-            workshop_id: selectedCompanyId,
-            ativo: true
-          }, '-updated_date', 100);
-        } catch (err) {
-          console.warn('Erro ao carregar tipos customizados da oficina:', err);
-        }
-      }
-
-      // 3. Mescla global + customizados, removendo duplicatas (customizados têm prioridade)
-      const merged = [
-        ...customTypes,
-        ...globalTypes.filter(g => !customTypes.some(c => c.value === g.value))
-      ];
-
-      setAttendanceTypes(merged);
+      // 1. Busca tipos globais e da oficina usando cache server-side
+      const response = await base44.functions.invoke('getAttendanceTypes', { 
+        workshop_id: selectedCompanyId || null 
+      });
+      
+      setAttendanceTypes(response.data?.types || []);
     } catch (err) {
       console.error('Erro ao carregar tipos de atendimento:', err);
       setAttendanceTypes([]);

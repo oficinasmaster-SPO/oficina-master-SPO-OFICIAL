@@ -107,12 +107,8 @@ export default function DRETCMP2() {
     queryFn: async () => {
       if (!workshop?.id) return [];
       try {
-        const result = await base44.entities.DREMonthly.filter(
-          { workshop_id: workshop.id },
-          '-month',
-          50
-        );
-        return Array.isArray(result) ? result : [];
+        const response = await base44.functions.invoke('getDREData', { workshop_id: workshop.id });
+        return response.data?.data || [];
       } catch (error) {
         return [];
       }
