@@ -258,32 +258,38 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
             </div>
           </div>
 
-          <Card>
-            <CardContent className="pt-6">
-              <h3 className="font-bold text-lg mb-3 flex items-center gap-2 flex-wrap">
-                1. PAUTAS <Badge variant="outline" className="bg-gray-50 text-gray-500 font-normal">Anotações do Consultor</Badge>
-              </h3>
-              <p className="whitespace-pre-wrap">{ataAtualizada.pautas || "Não informado"}</p>
-            </CardContent>
-          </Card>
+          {ataAtualizada.pautas && (
+            <Card>
+              <CardContent className="pt-6">
+                <h3 className="font-bold text-lg mb-3 flex items-center gap-2 flex-wrap">
+                  1. PAUTAS <Badge variant="outline" className="bg-gray-50 text-gray-500 font-normal">Anotações do Consultor</Badge>
+                </h3>
+                <p className="whitespace-pre-wrap">{ataAtualizada.pautas}</p>
+              </CardContent>
+            </Card>
+          )}
 
-          <Card>
-            <CardContent className="pt-6">
-              <h3 className="font-bold text-lg mb-3 flex items-center gap-2 flex-wrap">
-                2. OBJETIVOS DO ATENDIMENTO <Badge variant="outline" className="bg-gray-50 text-gray-500 font-normal">Anotações do Consultor</Badge>
-              </h3>
-              <p className="whitespace-pre-wrap">{ataAtualizada.objetivos_atendimento || "Não informado"}</p>
-            </CardContent>
-          </Card>
+          {ataAtualizada.objetivos_atendimento && (
+            <Card>
+              <CardContent className="pt-6">
+                <h3 className="font-bold text-lg mb-3 flex items-center gap-2 flex-wrap">
+                  2. OBJETIVOS DO ATENDIMENTO <Badge variant="outline" className="bg-gray-50 text-gray-500 font-normal">Anotações do Consultor</Badge>
+                </h3>
+                <p className="whitespace-pre-wrap">{ataAtualizada.objetivos_atendimento}</p>
+              </CardContent>
+            </Card>
+          )}
 
-          <Card>
-            <CardContent className="pt-6">
-              <h3 className="font-bold text-lg mb-3 flex items-center gap-2 flex-wrap">
-                3. OBJETIVOS DO CONSULTOR <Badge variant="outline" className="bg-gray-50 text-gray-500 font-normal">Anotações do Consultor</Badge>
-              </h3>
-              <p className="whitespace-pre-wrap">{ataAtualizada.objetivos_consultor || "Não informado"}</p>
-            </CardContent>
-          </Card>
+          {ataAtualizada.objetivos_consultor && (
+            <Card>
+              <CardContent className="pt-6">
+                <h3 className="font-bold text-lg mb-3 flex items-center gap-2 flex-wrap">
+                  3. OBJETIVOS DO CONSULTOR <Badge variant="outline" className="bg-gray-50 text-gray-500 font-normal">Anotações do Consultor</Badge>
+                </h3>
+                <p className="whitespace-pre-wrap">{ataAtualizada.objetivos_consultor}</p>
+              </CardContent>
+            </Card>
+          )}
 
           {ataAtualizada.ata_ia && (
             <Card className="border-purple-200 shadow-sm bg-purple-50/30">
@@ -301,34 +307,34 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
             </Card>
           )}
 
-          <Card>
-            <CardContent className="pt-6">
-              <h3 className="font-bold text-lg mb-3 flex items-center gap-2 flex-wrap">
-                4. PRÓXIMOS PASSOS <Badge variant="outline" className="bg-gray-50 text-gray-500 font-normal">Anotações do Consultor</Badge>
-              </h3>
-              {Array.isArray(ataAtualizada.proximos_passos_list) && ataAtualizada.proximos_passos_list.length > 0 ? (
-                <div className="space-y-2">
-                  {ataAtualizada.proximos_passos_list.map((passo, i) => {
-                    const desc = passo.descricao || '';
-                    const resp = passo.responsavel || '';
-                    const prazoStr = formatPrazoSafe(passo.prazo);
-                    return (
-                      <div key={i} className="border-l-4 border-blue-600 pl-3">
-                        <p className="font-medium">{desc}</p>
-                        <p className="text-sm text-gray-600">
-                          Responsável: {resp} | Prazo: {prazoStr}
-                        </p>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : ataAtualizada.proximos_passos ? (
-                <p className="whitespace-pre-wrap">{ataAtualizada.proximos_passos}</p>
-              ) : (
-                <p>Nenhum próximo passo definido</p>
-              )}
-            </CardContent>
-          </Card>
+          {((Array.isArray(ataAtualizada.proximos_passos_list) && ataAtualizada.proximos_passos_list.length > 0) || ataAtualizada.proximos_passos) && (
+            <Card>
+              <CardContent className="pt-6">
+                <h3 className="font-bold text-lg mb-3 flex items-center gap-2 flex-wrap">
+                  4. PRÓXIMOS PASSOS <Badge variant="outline" className="bg-gray-50 text-gray-500 font-normal">Anotações do Consultor</Badge>
+                </h3>
+                {Array.isArray(ataAtualizada.proximos_passos_list) && ataAtualizada.proximos_passos_list.length > 0 ? (
+                  <div className="space-y-2">
+                    {ataAtualizada.proximos_passos_list.map((passo, i) => {
+                      const desc = passo.descricao || '';
+                      const resp = passo.responsavel || '';
+                      const prazoStr = formatPrazoSafe(passo.prazo);
+                      return (
+                        <div key={i} className="border-l-4 border-blue-600 pl-3">
+                          <p className="font-medium">{desc}</p>
+                          <p className="text-sm text-gray-600">
+                            Responsável: {resp} | Prazo: {prazoStr}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="whitespace-pre-wrap">{ataAtualizada.proximos_passos}</p>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           {Array.isArray(ataAtualizada.processos_vinculados) && ataAtualizada.processos_vinculados.length > 0 && (
             <Card>
@@ -422,7 +428,7 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
             <Card>
               <CardContent className="pt-6">
                 <h3 className="font-bold text-lg mb-3">10. VISÃO GERAL DO PROJETO DE ACELERAÇÃO</h3>
-                <p className="whitespace-pre-wrap">{ataAtualizada.visao_geral_projeto || "Não informado"}</p>
+                <p className="whitespace-pre-wrap">{ataAtualizada.visao_geral_projeto}</p>
               </CardContent>
             </Card>
           )}
