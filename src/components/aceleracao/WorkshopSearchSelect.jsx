@@ -1,8 +1,7 @@
 import React, { useState } from "react";
-import { CommandInput } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Search, Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function WorkshopSearchSelect({ workshops, value, onValueChange, disabled }) {
@@ -35,11 +34,13 @@ export default function WorkshopSearchSelect({ workshops, value, onValueChange, 
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[500px] p-0">
-        <div className="border-b">
-          <CommandInput 
+        <div className="flex items-center border-b px-3">
+          <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+          <input 
+            className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
             placeholder="Pesquisar oficina..." 
             value={searchTerm}
-            onValueChange={setSearchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
         
