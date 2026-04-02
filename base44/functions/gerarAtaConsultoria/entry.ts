@@ -10,27 +10,7 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json().catch(() => ({}));
-    const { atendimento_id, dados_reuniao } = body;
-
-    const workshop_id_auth = user.data?.workshop_id || body.workshop_id;
-
-    if (workshop_id_auth) {
-      try {
-        const planCheck = await base44.functions.invoke('checkPlanAccess', {
-          tenantId: workshop_id_auth,
-          feature: 'integrations',
-          action: 'check_feature'
-        });
-        if (!planCheck.data?.success) {
-          return Response.json({
-            success: false,
-            error: { code: 'PLAN_RESTRICTION', message: 'Recurso de IA não disponível no plano atual.' }
-          }, { status: 403 });
-        }
-      } catch (e) {
-        console.warn('Erro na validação do plano, continuando:', e);
-      }
-    }
+    const { atendimento_id, dados_reuniao, usar_ia } = body;
 
     if (!atendimento_id) {
       return Response.json({ error: 'atendimento_id é obrigatório' }, { status: 400 });
@@ -46,21 +26,24 @@ Deno.serve(async (req) => {
     // Buscar dados da oficina
     const workshop = await base44.entities.Workshop.get(atendimento.workshop_id);
 
-    // Validação de Plano Global (Fonte de Verdade: Banco/Webhook)
-    try {
-      const planCheck = await base44.functions.invoke('checkPlanAccess', {
-        tenantId: workshop.id,
-        feature: 'reports',
-        action: 'check_feature'
-      });
-      if (!planCheck.data?.success) {
+    // Validar se o usuário pediu para usar IA e se o plano permite
+    let podeUsarIA = false;
+    if (usar_ia) {
+      try {
+        const planFeatures = await base44.asServiceRole.entities.PlanFeature.filter({ plan_id: workshop.planoAtual || 'FREE' });
+        if (planFeatures && planFeatures.length > 0) {
+          podeUsarIA = planFeatures[0].features_allowed?.includes('redigir_ata_ai');
+        }
+      } catch (e) {
+        console.error("Erro ao validar plano da oficina:", e);
+      }
+
+      if (!podeUsarIA) {
         return Response.json({
           success: false,
-          error: planCheck.data?.error?.message || "Recurso não disponível no seu plano."
+          error: { code: 'PLAN_RESTRICTION', message: 'Funcionalidade "Redigir Ata com IA" não disponível no plano atual.' }
         }, { status: 403 });
       }
-    } catch (e) {
-      console.error("Erro na validação do plano:", e);
     }
 
     // Buscar inteligência do cliente vinculada
@@ -73,8 +56,11 @@ Deno.serve(async (req) => {
         console.error("Erro ao buscar inteligência:", e);
     }
 
-    // Preparar prompt para IA
-    const prompt = `
+    let ataGerada = '';
+
+    if (usar_ia && podeUsarIA) {
+      // Preparar prompt para IA
+      const prompt = `
 Você é um consultor especializado em gestão de oficinas automotivas. Gere uma ata de reunião profissional e detalhada.
 
 **INFORMAÇÕES DO ATENDIMENTO:**
@@ -127,16 +113,38 @@ Por favor, gere uma ata de reunião profissional e bem estruturada com os seguin
 9. **OBSERVAÇÕES FINAIS:** Comentários relevantes do consultor
 
 Formate em Markdown para fácil leitura. Seja profissional, objetivo e completo.
-    `;
+      `;
 
-    console.log("🤖 Gerando ata com IA...");
+      console.log("🤖 Gerando ata com IA...");
+      ataGerada = await base44.integrations.Core.InvokeLLM({ prompt });
+      console.log("✅ Ata gerada com IA com sucesso!");
+    } else {
+      console.log("📝 Gerando ata estrita baseada nos inputs...");
+      // Formatação direta estrita usando apenas o que foi preenchido
+      ataGerada = `
+# Ata de Reunião
+**Data:** ${atendimento.data_realizada ? atendimento.data_realizada.split('T')[0] : atendimento.data_agendada?.split('T')[0]}  
+**Oficina:** ${workshop?.name || 'N/A'}  
+**Tipo de Atendimento:** ${atendimento.tipo_atendimento || 'N/A'}  
 
-    // Chamar IA para gerar ata
-    const ataGerada = await base44.integrations.Core.InvokeLLM({
-      prompt: prompt
-    });
+---
 
-    console.log("✅ Ata gerada com sucesso!");
+### Observações do Consultor
+${atendimento.observacoes_consultor || 'Nenhuma observação registrada.'}
+
+### Tópicos Discutidos
+${atendimento.topicos_discutidos?.length > 0 ? atendimento.topicos_discutidos.map(t => `- ${t}`).join('\n') : 'Nenhum tópico registrado.'}
+
+### Decisões Tomadas
+${atendimento.decisoes_tomadas?.length > 0 ? atendimento.decisoes_tomadas.map(d => `- **${d.decisao}** (Responsável: ${d.responsavel} | Prazo: ${d.prazo})`).join('\n') : 'Nenhuma decisão registrada.'}
+
+### Ações Geradas
+${atendimento.acoes_geradas?.length > 0 ? atendimento.acoes_geradas.map(a => `- **${a.acao}** (Responsável: ${a.responsavel} | Prazo: ${a.prazo})`).join('\n') : 'Nenhuma ação registrada.'}
+
+### Próximos Passos
+${atendimento.proximos_passos || 'Nenhum passo definido.'}
+      `.trim();
+    }
 
     // CRIAR REGISTRO NA ENTIDADE MeetingMinutes
     // Isso garante que todos os dados estruturados estejam disponíveis para o PDF
