@@ -54,7 +54,46 @@ export function safeText(value) {
   // Normalizar para NFC primeiro (combina caracteres decompostos)
   text = text.normalize('NFC');
   
-  // Remover TODOS os emojis silenciosamente (sem substituir por [texto])
+  // Mapeamento de emojis comuns para equivalentes ASCII
+  const emojiReplacements = [
+    [/\u{1F4CA}/gu, '[Grafico]'], [/\u{1F4C8}/gu, '[+]'], [/\u{1F4C9}/gu, '[-]'], [/\u{1F4CC}/gu, '[*]'],
+    [/\u{1F4CD}/gu, '[Local]'], [/\u{1F4DD}/gu, '[Nota]'], [/\u{1F4CB}/gu, '[Lista]'],
+    [/\u{1F4B0}/gu, '[$]'], [/\u{1F4B2}/gu, '[$]'], [/\u{1F4B5}/gu, '[$]'], [/\u{1F4B9}/gu, '[ROI]'],
+    [/\u{1F4E7}/gu, '[Email]'], [/\u{1F4DE}/gu, '[Tel]'], [/\u{1F4F1}/gu, '[Cel]'],
+    [/\u{1F4A1}/gu, '[Ideia]'], [/\u{1F4A5}/gu, '[!]'], [/\u{1F525}/gu, '[!]'],
+    [/\u{1F6A8}/gu, '[Alerta]'], [/\u{1F6AB}/gu, '[X]'], [/\u{1F512}/gu, '[Bloq]'], [/\u{1F513}/gu, '[Aberto]'],
+    [/\u{1F3AF}/gu, '[Alvo]'], [/\u{1F3C6}/gu, '[Trofeu]'],
+    [/\u{1F44D}/gu, '[OK]'], [/\u{1F44E}/gu, '[NOK]'], [/\u{1F44B}/gu, '[Ola]'],
+    [/\u{1F44F}/gu, '[Parabens]'], [/\u{1F64F}/gu, '[Obrigado]'],
+    [/\u{1F449}/gu, '>'], [/\u{1F448}/gu, '<'], [/\u{1F446}/gu, '^'], [/\u{1F447}/gu, 'v'],
+    [/\u{261D}/gu, '^'],
+    [/\u{2705}/gu, '[OK]'], [/\u{274C}/gu, '[X]'], [/\u{274E}/gu, '[X]'],
+    [/\u{2714}/gu, '[OK]'], [/\u{2716}/gu, '[X]'],
+    [/\u{26A0}/gu, '[Atencao]'], [/\u{2757}/gu, '[!]'], [/\u{2753}/gu, '[?]'], [/\u{2755}/gu, '[!]'],
+    [/\u{2B50}/gu, '[*]'], [/\u{1F31F}/gu, '[*]'], [/\u{2728}/gu, '[*]'],
+    [/\u{27A1}/gu, '->'], [/\u{2B05}/gu, '<-'], [/\u{2B06}/gu, '^'], [/\u{2B07}/gu, 'v'],
+    [/\u{1F504}/gu, '[Ciclo]'], [/\u{1F503}/gu, '[Ciclo]'],
+    [/\u{1F4AF}/gu, '[100%]'], [/\u{1F4AA}/gu, '[Forca]'],
+    [/\u{1F680}/gu, '[Lancamento]'], [/\u{1F389}/gu, '[Parabens]'], [/\u{1F388}/gu, '[Festa]'],
+    [/\u{1F4C5}/gu, '[Data]'], [/\u{1F4C6}/gu, '[Data]'], [/\u{23F0}/gu, '[Hora]'], [/\u{231A}/gu, '[Hora]'],
+    [/\u{1F4CE}/gu, '[Anexo]'], [/\u{1F4C1}/gu, '[Pasta]'], [/\u{1F4C2}/gu, '[Pasta]'],
+    [/\u{1F4E2}/gu, '[Aviso]'], [/\u{1F4E3}/gu, '[Aviso]'],
+    [/\u{1F6E0}/gu, '[Ferramenta]'], [/\u{2699}/gu, '[Config]'], [/\u{1F527}/gu, '[Ferramenta]'], [/\u{1F529}/gu, '[Ferramenta]'],
+    [/\u{2764}/gu, '[<3]'], [/\u{1F494}/gu, '[</3]'], [/\u{1F499}/gu, '[<3]'], [/\u{1F49A}/gu, '[<3]'],
+    [/\u{1F4AC}/gu, '[Chat]'], [/\u{1F4AD}/gu, '[Pensamento]'],
+    [/\u{1F4BC}/gu, '[Negocio]'],
+    [/\u{1F914}/gu, '[Hmm]'], [/\u{1F937}/gu, '[?]'],
+    [/\u{1F44A}/gu, '[Bora]'], [/\u{270C}/gu, '[V]'], [/\u{1F91D}/gu, '[Acordo]'],
+    [/\u{1F4F0}/gu, '[Noticia]'], [/\u{1F4DA}/gu, '[Livros]'], [/\u{1F4D6}/gu, '[Livro]'],
+    [/\u{1F3E2}/gu, '[Empresa]'], [/\u{1F3ED}/gu, '[Fabrica]'], [/\u{1F3E0}/gu, '[Casa]'],
+    [/\u{1F6D2}/gu, '[Carrinho]'], [/\u{1F4B3}/gu, '[Cartao]'],
+    [/\u{1F465}/gu, '[Equipe]'], [/\u{1F464}/gu, '[Pessoa]'],
+  ];
+  for (const [regex, replacement] of emojiReplacements) {
+    text = text.replace(regex, replacement);
+  }
+
+  // Remover emojis restantes que nao tem mapeamento
   text = text.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F900}-\u{1F9FF}\u{200D}\u{20E3}\u{E0020}-\u{E007F}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2702}-\u{27B0}\u{231A}-\u{231B}\u{23E9}-\u{23F3}\u{23F8}-\u{23FA}\u{25AA}-\u{25AB}\u{25B6}\u{25C0}\u{25FB}-\u{25FE}\u{2614}-\u{2615}\u{2648}-\u{2653}\u{267F}\u{2693}\u{2694}\u{2696}-\u{2697}\u{2699}\u{269B}-\u{269C}\u{26A1}\u{26AA}-\u{26AB}\u{26B0}-\u{26B1}\u{26BD}-\u{26BE}\u{26C4}-\u{26C5}\u{26CE}\u{26CF}\u{26D1}\u{26D3}-\u{26D4}\u{26E9}-\u{26EA}\u{26F0}-\u{26F5}\u{26F7}-\u{26FA}\u{26FD}\u{2702}\u{2705}\u{2708}-\u{270D}\u{270F}\u{2712}\u{2714}\u{2716}\u{271D}\u{2721}\u{2728}\u{2733}-\u{2734}\u{2744}\u{2747}\u{274C}\u{274E}\u{2753}-\u{2755}\u{2757}\u{2763}-\u{2764}\u{2795}-\u{2797}\u{27A1}\u{27B0}\u{27BF}\u{2934}-\u{2935}\u{2B05}-\u{2B07}\u{2B1B}-\u{2B1C}\u{2B50}\u{2B55}\u{3030}\u{303D}\u{3297}\u{3299}]/gu, '');
   
   // Substituir caracteres tipograficos problemticos por equivalentes ASCII
