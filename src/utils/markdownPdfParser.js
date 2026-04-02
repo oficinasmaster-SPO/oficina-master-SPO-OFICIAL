@@ -55,42 +55,42 @@ export function safeText(value) {
   text = text.normalize('NFC');
   
   // Mapeamento de emojis comuns para equivalentes ASCII
-  const emojiReplacements = [
-    [/\u{1F4CA}/gu, '[Grafico]'], [/\u{1F4C8}/gu, '[+]'], [/\u{1F4C9}/gu, '[-]'], [/\u{1F4CC}/gu, '[*]'],
-    [/\u{1F4CD}/gu, '[Local]'], [/\u{1F4DD}/gu, '[Nota]'], [/\u{1F4CB}/gu, '[Lista]'],
-    [/\u{1F4B0}/gu, '[$]'], [/\u{1F4B2}/gu, '[$]'], [/\u{1F4B5}/gu, '[$]'], [/\u{1F4B9}/gu, '[ROI]'],
-    [/\u{1F4E7}/gu, '[Email]'], [/\u{1F4DE}/gu, '[Tel]'], [/\u{1F4F1}/gu, '[Cel]'],
-    [/\u{1F4A1}/gu, '[Ideia]'], [/\u{1F4A5}/gu, '[!]'], [/\u{1F525}/gu, '[!]'],
-    [/\u{1F6A8}/gu, '[Alerta]'], [/\u{1F6AB}/gu, '[X]'], [/\u{1F512}/gu, '[Bloq]'], [/\u{1F513}/gu, '[Aberto]'],
-    [/\u{1F3AF}/gu, '[Alvo]'], [/\u{1F3C6}/gu, '[Trofeu]'],
-    [/\u{1F44D}/gu, '[OK]'], [/\u{1F44E}/gu, '[NOK]'], [/\u{1F44B}/gu, '[Ola]'],
-    [/\u{1F44F}/gu, '[Parabens]'], [/\u{1F64F}/gu, '[Obrigado]'],
-    [/\u{1F449}/gu, '>'], [/\u{1F448}/gu, '<'], [/\u{1F446}/gu, '^'], [/\u{1F447}/gu, 'v'],
-    [/\u{261D}/gu, '^'],
-    [/\u{2705}/gu, '[OK]'], [/\u{274C}/gu, '[X]'], [/\u{274E}/gu, '[X]'],
-    [/\u{2714}/gu, '[OK]'], [/\u{2716}/gu, '[X]'],
-    [/\u{26A0}/gu, '[Atencao]'], [/\u{2757}/gu, '[!]'], [/\u{2753}/gu, '[?]'], [/\u{2755}/gu, '[!]'],
-    [/\u{2B50}/gu, '[*]'], [/\u{1F31F}/gu, '[*]'], [/\u{2728}/gu, '[*]'],
-    [/\u{27A1}/gu, '->'], [/\u{2B05}/gu, '<-'], [/\u{2B06}/gu, '^'], [/\u{2B07}/gu, 'v'],
-    [/\u{1F504}/gu, '[Ciclo]'], [/\u{1F503}/gu, '[Ciclo]'],
-    [/\u{1F4AF}/gu, '[100%]'], [/\u{1F4AA}/gu, '[Forca]'],
-    [/\u{1F680}/gu, '[Lancamento]'], [/\u{1F389}/gu, '[Parabens]'], [/\u{1F388}/gu, '[Festa]'],
-    [/\u{1F4C5}/gu, '[Data]'], [/\u{1F4C6}/gu, '[Data]'], [/\u{23F0}/gu, '[Hora]'], [/\u{231A}/gu, '[Hora]'],
-    [/\u{1F4CE}/gu, '[Anexo]'], [/\u{1F4C1}/gu, '[Pasta]'], [/\u{1F4C2}/gu, '[Pasta]'],
-    [/\u{1F4E2}/gu, '[Aviso]'], [/\u{1F4E3}/gu, '[Aviso]'],
-    [/\u{1F6E0}/gu, '[Ferramenta]'], [/\u{2699}/gu, '[Config]'], [/\u{1F527}/gu, '[Ferramenta]'], [/\u{1F529}/gu, '[Ferramenta]'],
-    [/\u{2764}/gu, '[<3]'], [/\u{1F494}/gu, '[</3]'], [/\u{1F499}/gu, '[<3]'], [/\u{1F49A}/gu, '[<3]'],
-    [/\u{1F4AC}/gu, '[Chat]'], [/\u{1F4AD}/gu, '[Pensamento]'],
-    [/\u{1F4BC}/gu, '[Negocio]'],
-    [/\u{1F914}/gu, '[Hmm]'], [/\u{1F937}/gu, '[?]'],
-    [/\u{1F44A}/gu, '[Bora]'], [/\u{270C}/gu, '[V]'], [/\u{1F91D}/gu, '[Acordo]'],
-    [/\u{1F4F0}/gu, '[Noticia]'], [/\u{1F4DA}/gu, '[Livros]'], [/\u{1F4D6}/gu, '[Livro]'],
-    [/\u{1F3E2}/gu, '[Empresa]'], [/\u{1F3ED}/gu, '[Fabrica]'], [/\u{1F3E0}/gu, '[Casa]'],
-    [/\u{1F6D2}/gu, '[Carrinho]'], [/\u{1F4B3}/gu, '[Cartao]'],
-    [/\u{1F465}/gu, '[Equipe]'], [/\u{1F464}/gu, '[Pessoa]'],
-  ];
-  for (const [regex, replacement] of emojiReplacements) {
-    text = text.replace(regex, replacement);
+  const emojiMap = {
+    '\uD83D\uDCCA': '[Grafico]', '\uD83D\uDCC8': '[+]', '\uD83D\uDCC9': '[-]', '\uD83D\uDCCC': '[*]',
+    '\uD83D\uDCCD': '[Local]', '\uD83D\uDCDD': '[Nota]', '\uD83D\uDCCB': '[Lista]',
+    '\uD83D\uDCB0': '[$]', '\uD83D\uDCB2': '[$]', '\uD83D\uDCB5': '[$]', '\uD83D\uDCB9': '[ROI]',
+    '\uD83D\uDCE7': '[Email]', '\uD83D\uDCDE': '[Tel]', '\uD83D\uDCF1': '[Cel]',
+    '\uD83D\uDCA1': '[Ideia]', '\uD83D\uDCA5': '[!]', '\uD83D\uDD25': '[!]',
+    '\uD83D\uDEA8': '[Alerta]', '\uD83D\uDEAB': '[X]', '\uD83D\uDD12': '[Bloq]', '\uD83D\uDD13': '[Aberto]',
+    '\uD83C\uDFAF': '[Alvo]', '\uD83C\uDFC6': '[Trofeu]',
+    '\uD83D\uDC4D': '[OK]', '\uD83D\uDC4E': '[NOK]', '\uD83D\uDC4B': '[Ola]',
+    '\uD83D\uDC4F': '[Parabens]', '\uD83D\uDE4F': '[Obrigado]',
+    '\uD83D\uDC49': '>', '\uD83D\uDC48': '<', '\uD83D\uDC46': '^', '\uD83D\uDC47': 'v',
+    '\u261D': '^',
+    '\u2705': '[OK]', '\u274C': '[X]', '\u274E': '[X]',
+    '\u2714': '[OK]', '\u2716': '[X]',
+    '\u26A0': '[Atencao]', '\u2757': '[!]', '\u2753': '[?]', '\u2755': '[!]',
+    '\u2B50': '[*]', '\uD83C\uDF1F': '[*]', '\u2728': '[*]',
+    '\u27A1': '->', '\u2B05': '<-', '\u2B06': '^', '\u2B07': 'v',
+    '\uD83D\uDD04': '[Ciclo]', '\uD83D\uDD03': '[Ciclo]',
+    '\uD83D\uDCAF': '[100%]', '\uD83D\uDCAA': '[Forca]',
+    '\uD83D\uDE80': '[Lancamento]', '\uD83C\uDF89': '[Parabens]', '\uD83C\uDF88': '[Festa]',
+    '\uD83D\uDCC5': '[Data]', '\uD83D\uDCC6': '[Data]', '\u23F0': '[Hora]', '\u231A': '[Hora]',
+    '\uD83D\uDCCE': '[Anexo]', '\uD83D\uDCC1': '[Pasta]', '\uD83D\uDCC2': '[Pasta]',
+    '\uD83D\uDCE2': '[Aviso]', '\uD83D\uDCE3': '[Aviso]',
+    '\uD83D\uDEE0': '[Ferramenta]', '\u2699': '[Config]', '\uD83D\uDD27': '[Ferramenta]', '\uD83D\uDD29': '[Ferramenta]',
+    '\u2764': '[<3]', '\uD83D\uDC94': '[</3]', '\uD83D\uDC99': '[<3]', '\uD83D\uDC9A': '[<3]',
+    '\uD83D\uDCAC': '[Chat]', '\uD83D\uDCAD': '[Pensamento]',
+    '\uD83D\uDCBC': '[Negocio]',
+    '\uD83E\uDD14': '[Hmm]', '\uD83E\uDD37': '[?]',
+    '\uD83D\uDC4A': '[Bora]', '\u270C': '[V]', '\uD83E\uDD1D': '[Acordo]',
+    '\uD83D\uDCF0': '[Noticia]', '\uD83D\uDCDA': '[Livros]', '\uD83D\uDCD6': '[Livro]',
+    '\uD83C\uDFE2': '[Empresa]', '\uD83C\uDFED': '[Fabrica]', '\uD83C\uDFE0': '[Casa]',
+    '\uD83D\uDED2': '[Carrinho]', '\uD83D\uDCB3': '[Cartao]',
+    '\uD83D\uDC65': '[Equipe]', '\uD83D\uDC64': '[Pessoa]',
+  };
+  for (const [emoji, replacement] of Object.entries(emojiMap)) {
+    text = text.split(emoji).join(replacement);
   }
 
   // Remover emojis restantes que nao tem mapeamento
