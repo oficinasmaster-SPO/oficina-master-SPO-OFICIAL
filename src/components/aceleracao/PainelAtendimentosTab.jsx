@@ -251,23 +251,23 @@ export default function PainelAtendimentosTab({ user }) {
               <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b">
-                  <th className="text-left py-3 px-4">ID ATA</th>
-                  <th className="text-left py-3 px-4">Data</th>
-                  <th className="text-left py-3 px-4">Cliente</th>
-                  <th className="text-left py-3 px-4">Tipo</th>
-                  <th className="text-left py-3 px-4">Status</th>
-                  <th className="text-left py-3 px-4">Consultor</th>
-                  <th className="text-right py-3 px-4">Ações</th>
+                <tr className="border-b border-gray-200 bg-gray-50/50">
+                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">ID ATA</th>
+                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Data</th>
+                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Cliente</th>
+                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Tipo</th>
+                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Status</th>
+                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Consultor</th>
+                  <th className="text-right py-4 px-6 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Ações</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-gray-100">
                 {atendimentosFiltrados.map((atendimento) => {
                   const workshop = workshops?.find(w => w.id === atendimento.workshop_id);
                   const ataVinculada = atas?.find(a => a.id === atendimento.ata_id);
                   return (
-                    <tr key={atendimento.id} className="border-b hover:bg-gray-50">
-                      <td className="py-3 px-4">
+                    <tr key={atendimento.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="py-4 px-6 text-sm text-gray-600 border-r border-gray-100 last:border-r-0">
                         {ataVinculada?.code ? (
                           <span className="font-mono text-xs bg-blue-50 px-2 py-1 rounded border border-blue-200">
                             {ataVinculada.code.replace('IT.', 'AT.')}
@@ -276,21 +276,25 @@ export default function PainelAtendimentosTab({ user }) {
                           <span className="text-gray-400 text-xs">-</span>
                         )}
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="py-4 px-6 text-sm text-gray-600 border-r border-gray-100 last:border-r-0 whitespace-nowrap">
                         {formatDateTimeBR(atendimento.data_agendada)}
                       </td>
-                      <td className="py-3 px-4 font-medium">{workshop?.name || '-'}</td>
-                      <td className="py-3 px-4 text-sm">
+                      <td className="py-4 px-6 text-sm text-gray-600 border-r border-gray-100 last:border-r-0 font-medium">
+                        {workshop?.name || '-'}
+                      </td>
+                      <td className="py-4 px-6 text-sm text-gray-600 border-r border-gray-100 last:border-r-0 capitalize">
                         {atendimento.tipo_atendimento.replace(/_/g, ' ')}
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="py-4 px-6 text-sm text-gray-600 border-r border-gray-100 last:border-r-0">
                         <Badge className={ATENDIMENTO_STATUS_COLORS[atendimento.status]}>
                           {atendimento.status === ATENDIMENTO_STATUS.ATRASADO && <AlertTriangle className="w-3 h-3 mr-1" />}
                           {ATENDIMENTO_STATUS_LABELS[atendimento.status]}
                         </Badge>
                       </td>
-                      <td className="py-3 px-4 text-sm">{atendimento.consultor_nome}</td>
-                      <td className="py-3 px-4">
+                      <td className="py-4 px-6 text-sm text-gray-600 border-r border-gray-100 last:border-r-0">
+                        {atendimento.consultor_nome}
+                      </td>
+                      <td className="py-4 px-6 border-r border-gray-100 last:border-r-0">
                         <div className="flex items-center justify-end gap-1">
                           {(atendimento.status === ATENDIMENTO_STATUS.AGENDADO || 
                             atendimento.status === ATENDIMENTO_STATUS.CONFIRMADO || 
