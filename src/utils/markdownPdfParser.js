@@ -2,7 +2,7 @@ import { marked } from "marked";
 
 /**
  * Sanitiza texto removendo markdown inline (bold, italic, links, etc.)
- * para uso em jsPDF que não suporta formatação rich text.
+ * para uso em jsPDF que nao suporta formatacao rich text.
  */
 function stripInlineMarkdown(text) {
   if (!text) return '';
@@ -91,8 +91,8 @@ export function safeText(value) {
   // Isso inclui: a-z, A-Z, 0-9, acentos PT-BR (a, e, i, o, u, c, A, etc.)
   text = text.replace(/[^\x20-\x7E\xA0-\xFF\n\r\t]/g, '');
   
-  // Limpar espacos multiplos resultantes
-  text = text.replace(/  +/g, ' ').trim();
+  // Limpar espacos multiplos resultantes (preserva \n)
+  text = text.replace(/ {2,}/g, ' ').replace(/^ +| +$/gm, '').replace(/^\n+|\n+$/g, '');
   
   return text;
 }
