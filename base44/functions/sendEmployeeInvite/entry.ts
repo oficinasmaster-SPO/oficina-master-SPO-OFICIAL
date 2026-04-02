@@ -64,47 +64,10 @@ Deno.serve(async (req) => {
     if (!userExists) {
       console.log("🆕 Criando User completo para:", email);
       
-      // Criar usuário Base44
+      // Criar usuário Base44 (A criação no banco será consolidada quando o usuário aceitar o convite no fluxo PrimeiroAcesso / EmployeeInviteAcceptance)
       await base44.users.inviteUser(email, role);
       
-      // Polling inteligente (espera até 2s pela trigger do Auth)
-      let createdUser = null;
-      for (let i = 0; i < 10; i++) {
-        await new Promise(resolve => setTimeout(resolve, 200));
-        const users = await base44.asServiceRole.entities.User.filter({ email: email }, '-created_date', 1);
-        if (users && users.length > 0) {
-          createdUser = users[0];
-          break;
-        }
-      }
-      
-      if (createdUser) {
-        // Gerar Profile ID automático
-        const workshopIdentifier = workshop?.identificador || workshop_id;
-        const allUsers = await base44.asServiceRole.entities.User.filter({ workshop_id: workshop_id });
-        const userCount = Array.isArray(allUsers) ? allUsers.length + 1 : 1;
-        const generatedProfileId = `${workshopIdentifier}.${String(userCount).padStart(2, '0')}`;
-        const finalProfileId = profile_id || generatedProfileId;
-
-        // Atualizar User com todos os dados
-        const currentUser = await base44.auth.me();
-        await base44.asServiceRole.entities.User.update(createdUser.id, {
-          full_name: name,
-          workshop_id: workshop_id,
-          profile_id: finalProfileId,
-          position: position || 'Colaborador',
-          job_role: job_role || 'outros',
-          area: area || 'tecnico',
-          telefone: telefone || '',
-          hire_date: new Date().toISOString().split('T')[0],
-          user_status: 'pending',
-          is_internal: true,
-          admin_responsavel_id: currentUser?.id,
-          profile_picture_url: null
-        });
-        
-        console.log("✅ User atualizado com dados completos");
-      }
+      console.log("✅ Comando de inviteUser enviado. O webhook de EmployeeInviteAcceptance fará o merge dos dados do Employee e User.");
     }
 
     // Buscar convite criado

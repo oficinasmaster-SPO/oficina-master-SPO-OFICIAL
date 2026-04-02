@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useTenant } from '@/components/contexts/TenantContext';
+import { useWorkshopContext } from '@/components/hooks/useWorkshopContext';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -9,6 +10,7 @@ import { Building2, Briefcase, Search, Check, ChevronsUpDown } from 'lucide-reac
 
 export default function TenantSelector() {
   const { user, selectedFirmId, changeConsultingFirm, selectedCompanyId, changeCompany } = useTenant();
+  const { workshop, workshopsDisponiveis } = useWorkshopContext();
   const [openFirmPopover, setOpenFirmPopover] = useState(false);
   const [openCompanyPopover, setOpenCompanyPopover] = useState(false);
   const [firmSearchTerm, setFirmSearchTerm] = useState('');
@@ -35,24 +37,27 @@ export default function TenantSelector() {
     refetchOnMount: false
   });
 
+  const companiesToDisplay = user?.role === 'admin' ? companies : workshopsDisponiveis;
+
   const selectedFirm = firms?.find(f => f.id === selectedFirmId);
-  const selectedCompany = companies?.find(c => c.id === selectedCompanyId);
+  const selectedCompany = companiesToDisplay?.find(c => c.id === selectedCompanyId) || workshop;
   
   const filteredFirms = firms?.filter(f => 
     f.name.toLowerCase().includes(firmSearchTerm.toLowerCase())
   ) || [];
   
-  const filteredCompanies = companies?.filter(c => 
-    `${c.name} ${c.city} ${c.state}`.toLowerCase().includes(companySearchTerm.toLowerCase())
+  const filteredCompanies = companiesToDisplay?.filter(c => 
+    `${c.name} ${c.city || ''} ${c.state || ''}`.toLowerCase().includes(companySearchTerm.toLowerCase())
   ) || [];
 
-  if (user?.role !== 'admin') {
+  if (user?.role !== 'admin' && (!workshopsDisponiveis || workshopsDisponiveis.length <= 1)) {
     return null;
   }
 
   return (
     <div className="hidden md:flex items-center gap-3 ml-4">
-      <Popover open={openFirmPopover} onOpenChange={setOpenFirmPopover}>
+      {user?.role === 'admin' && (
+        <Popover open={openFirmPopover} onOpenChange={setOpenFirmPopover}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
@@ -136,6 +141,7 @@ export default function TenantSelector() {
           </div>
         </PopoverContent>
       </Popover>
+      )}
 
       <Popover open={openCompanyPopover} onOpenChange={setOpenCompanyPopover}>
         <PopoverTrigger asChild>

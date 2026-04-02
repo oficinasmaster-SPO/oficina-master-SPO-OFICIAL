@@ -3,6 +3,20 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="google" content="notranslate" />
+    <script>
+      const originalWarn = console.warn;
+      console.warn = function(...args) {
+        if (args.length > 0 && typeof args[0] === 'string' && args[0].includes('Datadog Browser SDK')) {
+          if (args.length > 1 && typeof args[1] === 'string' && args[1].includes('No storage available')) {
+            return;
+          }
+          if (args[0].includes('No storage available')) {
+            return;
+          }
+        }
+        originalWarn.apply(console, args);
+      };
+    </script>
     <link rel="icon" type="image/png" href="https://i.imgur.com/AYi86bZ.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="manifest" href="/manifest.json" />
