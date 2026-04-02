@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Edit, AlertTriangle, FilePlus, Play, StopCircle, CalendarClock, FileText, CheckCircle, Trash2 } from "lucide-react";
+import { Edit, AlertTriangle, FilePlus, Play, StopCircle, CalendarClock, FileText, CheckCircle, Trash2, ClipboardList } from "lucide-react";
 import GerarAtaModal from "./GerarAtaModal";
 import VisualizarAtaModal from "./VisualizarAtaModal";
 import ReagendarAtendimentoModal from "./ReagendarAtendimentoModal";
@@ -254,18 +254,22 @@ export default function PainelAtendimentosTab({ user }) {
 
       {/* Tabela de Atendimentos */}
       <Card>
-        <CardContent className="pt-6">
+        <CardContent className="p-0">
+          <div className="px-6 py-4 border-b">
+            <h2 className="text-lg font-semibold text-gray-900">Lista de Atendimentos</h2>
+            <p className="text-sm text-gray-500 mt-0.5">{atendimentosFiltrados.length} registro(s) encontrado(s)</p>
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b">
-                  <th className="text-left py-3 px-4">ID ATA</th>
-                  <th className="text-left py-3 px-4">Data</th>
-                  <th className="text-left py-3 px-4">Cliente</th>
-                  <th className="text-left py-3 px-4">Tipo</th>
-                  <th className="text-left py-3 px-4">Status</th>
-                  <th className="text-left py-3 px-4">Consultor</th>
-                  <th className="text-right py-3 px-4">Ações</th>
+                <tr className="bg-gray-50 border-b">
+                  <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">ID ATA</th>
+                  <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Data</th>
+                  <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Cliente</th>
+                  <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Tipo</th>
+                  <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Consultor</th>
+                  <th className="text-center py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider w-20">Ações</th>
                 </tr>
               </thead>
               <tbody>
@@ -273,7 +277,7 @@ export default function PainelAtendimentosTab({ user }) {
                   const workshop = workshops?.find(w => w.id === atendimento.workshop_id);
                   const ataVinculada = atas?.find(a => a.id === atendimento.ata_id);
                   return (
-                    <tr key={atendimento.id} className="border-b hover:bg-gray-50">
+                    <tr key={atendimento.id} className="border-b hover:bg-gray-50 transition-colors">
                       <td className="py-3 px-4">
                         {ataVinculada?.code ? (
                           <span className="font-mono text-xs bg-blue-50 px-2 py-1 rounded border border-blue-200">
@@ -283,11 +287,11 @@ export default function PainelAtendimentosTab({ user }) {
                           <span className="text-gray-400 text-xs">-</span>
                         )}
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="py-3 px-4 text-sm text-gray-700">
                         {format(new Date(atendimento.data_agendada), "dd/MM/yyyy HH:mm")}
                       </td>
-                      <td className="py-3 px-4 font-medium">{workshop?.name || '-'}</td>
-                      <td className="py-3 px-4 text-sm">
+                      <td className="py-3 px-4 font-medium text-gray-900">{workshop?.name || '-'}</td>
+                      <td className="py-3 px-4 text-sm text-gray-600">
                         {atendimento.tipo_atendimento.replace(/_/g, ' ')}
                       </td>
                       <td className="py-3 px-4">
@@ -296,122 +300,67 @@ export default function PainelAtendimentosTab({ user }) {
                           {ATENDIMENTO_STATUS_LABELS[atendimento.status]}
                         </Badge>
                       </td>
-                      <td className="py-3 px-4 text-sm">{atendimento.consultor_nome}</td>
+                      <td className="py-3 px-4 text-sm text-gray-600">{atendimento.consultor_nome}</td>
                       <td className="py-3 px-4">
-                        <div className="flex items-center justify-end gap-1">
+                        <div className="flex flex-col items-center gap-0.5">
                           {(atendimento.status === ATENDIMENTO_STATUS.AGENDADO || 
                             atendimento.status === ATENDIMENTO_STATUS.CONFIRMADO || 
                             atendimento.status === ATENDIMENTO_STATUS.REAGENDADO || 
-                            atendimento.status === ATENDIMENTO_STATUS.ATRASADO) && (
-                            <>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => iniciarMutation.mutate(atendimento.id)}
-                                title="Iniciar"
-                              >
-                                <Play className="w-4 h-4 text-blue-600" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  setSelectedAtendimento(atendimento);
-                                  setShowReagendar(true);
-                                }}
-                                title="Reagendar"
-                              >
-                                <CalendarClock className="w-4 h-4 text-purple-600" />
-                              </Button>
-                            </>
-                          )}
+                            atendimento.status === ATENDIMENTO_STATUS.ATRASADO) ? (
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => iniciarMutation.mutate(atendimento.id)} title="Iniciar">
+                              <Play className="w-4 h-4 text-blue-600" />
+                            </Button>
+                          ) : <div className="h-7 w-7" />}
 
-                          {atendimento.status === ATENDIMENTO_STATUS.PARTICIPANDO && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => finalizarMutation.mutate(atendimento.id)}
-                              title="Finalizar Rápido"
-                            >
+                          {(atendimento.status === ATENDIMENTO_STATUS.AGENDADO || 
+                            atendimento.status === ATENDIMENTO_STATUS.CONFIRMADO || 
+                            atendimento.status === ATENDIMENTO_STATUS.REAGENDADO || 
+                            atendimento.status === ATENDIMENTO_STATUS.ATRASADO) ? (
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setSelectedAtendimento(atendimento); setShowReagendar(true); }} title="Reagendar">
+                              <CalendarClock className="w-4 h-4 text-purple-600" />
+                            </Button>
+                          ) : <div className="h-7 w-7" />}
+
+                          {atendimento.status === ATENDIMENTO_STATUS.PARTICIPANDO ? (
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => finalizarMutation.mutate(atendimento.id)} title="Finalizar Rápido">
                               <StopCircle className="w-4 h-4 text-green-600" />
                             </Button>
-                          )}
+                          ) : <div className="h-7 w-7" />}
 
                           {(atendimento.status === ATENDIMENTO_STATUS.PARTICIPANDO || 
                             atendimento.status === ATENDIMENTO_STATUS.AGENDADO || 
                             atendimento.status === ATENDIMENTO_STATUS.CONFIRMADO || 
                             atendimento.status === ATENDIMENTO_STATUS.REAGENDADO || 
-                            atendimento.status === ATENDIMENTO_STATUS.ATRASADO) && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                setAtendimentoFinalizar(atendimento);
-                                setShowFinalizar(true);
-                              }}
-                              title="Finalizar Atendimento"
-                            >
+                            atendimento.status === ATENDIMENTO_STATUS.ATRASADO) ? (
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setAtendimentoFinalizar(atendimento); setShowFinalizar(true); }} title="Finalizar Atendimento">
                               <CheckCircle className="w-4 h-4 text-green-600" />
                             </Button>
-                          )}
+                          ) : <div className="h-7 w-7" />}
 
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => navigate(createPageUrl('RegistrarAtendimento') + `?atendimento_id=${atendimento.id}`)}
-                            title="Editar"
-                          >
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => navigate(createPageUrl('RegistrarAtendimento') + `?atendimento_id=${atendimento.id}`)} title="Editar">
                             <Edit className="w-4 h-4 text-gray-600" />
                           </Button>
 
-                          {atendimento.ata_id && (
-                            <>
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={async () => {
-                                  try {
-                                    const ata = await base44.entities.MeetingMinutes.get(atendimento.ata_id);
-                                    if (ata) {
-                                      setSelectedAta(ata);
-                                      setShowVisualizarAta(true);
-                                    } else {
-                                      toast.error("ATA não encontrada");
-                                    }
-                                  } catch (error) {
-                                    toast.error("Erro ao carregar ATA");
-                                  }
-                                }}
-                                title="Ver/Finalizar ATA"
-                              >
-                                <FileText className="w-4 h-4 text-green-600" />
-                              </Button>
-
-                            </>
-                          )}
-
-                          {!atendimento.ata_id && atendimento.status === ATENDIMENTO_STATUS.REALIZADO && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedAtendimento(atendimento);
-                                setShowGerarAta(true);
-                              }}
-                              title="Gerar ATA"
-                            >
+                          {atendimento.ata_id ? (
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={async () => {
+                              try {
+                                const ata = await base44.entities.MeetingMinutes.get(atendimento.ata_id);
+                                if (ata) { setSelectedAta(ata); setShowVisualizarAta(true); } else { toast.error("ATA não encontrada"); }
+                              } catch { toast.error("Erro ao carregar ATA"); }
+                            }} title="Ver/Finalizar ATA">
+                              <FileText className="w-4 h-4 text-green-600" />
+                            </Button>
+                          ) : !atendimento.ata_id && atendimento.status === ATENDIMENTO_STATUS.REALIZADO ? (
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setSelectedAtendimento(atendimento); setShowGerarAta(true); }} title="Gerar ATA">
                               <FilePlus className="w-4 h-4 text-blue-600" />
                             </Button>
-                          )}
+                          ) : <div className="h-7 w-7" />}
 
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
+                          <Button variant="ghost" size="icon" className="h-7 w-7"
                             onClick={async () => {
                               const confirmMessage = atendimento.ata_id 
                                 ? "Tem certeza que deseja excluir esta ATA? Esta ação não pode ser desfeita."
                                 : "Tem certeza que deseja excluir este registro de atendimento?";
-
                               if (confirm(confirmMessage)) {
                                 try {
                                   if (atendimento.ata_id) {
@@ -424,7 +373,6 @@ export default function PainelAtendimentosTab({ user }) {
                                   }
                                   queryClient.invalidateQueries(['todos-atendimentos']);
                                 } catch (error) {
-                                  console.error(error);
                                   toast.error("Erro ao excluir: " + error.message);
                                 }
                               }
@@ -441,6 +389,13 @@ export default function PainelAtendimentosTab({ user }) {
               </tbody>
             </table>
           </div>
+          {atendimentosFiltrados.length === 0 && (
+            <div className="text-center py-12 text-gray-500">
+              <ClipboardList className="w-10 h-10 mx-auto mb-3 text-gray-300" />
+              <p className="font-medium">Nenhum atendimento encontrado</p>
+              <p className="text-sm mt-1">Ajuste os filtros para ver mais resultados</p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
