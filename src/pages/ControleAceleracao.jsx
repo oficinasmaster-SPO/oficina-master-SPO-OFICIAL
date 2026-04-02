@@ -19,7 +19,7 @@ import CronogramaGeral from "./CronogramaGeral";
 
 export default function ControleAceleracao() {
   const navigate = useNavigate();
-  const urlParams = new URLSearchParams(window.location.search);
+  const urlParams = new URLSearchParams(window.location.search); // force rebuild
   const initialTab = urlParams.get('tab') || "visao-geral";
   const [activeTab, setActiveTab] = useState(initialTab);
   const [showMassRegistration, setShowMassRegistration] = useState(false);
