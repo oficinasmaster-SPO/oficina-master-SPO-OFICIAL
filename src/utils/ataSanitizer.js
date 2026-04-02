@@ -84,14 +84,14 @@ export function sanitizeAtaData(ata) {
   
   // Normalizar participantes
   if (Array.isArray(sanitized.participantes)) {
-    sanitized.participantes = sanitized.participantes.map(normalizeParticipante);
+    sanitized.participantes = sanitized.participantes.map(normalizeParticipante).filter(p => p.name);
   } else {
     sanitized.participantes = [];
   }
   
   // Normalizar responsável
   sanitized.responsavel = normalizeResponsavel(sanitized.responsavel);
-  
+
   // Normalizar próximos passos
   if (Array.isArray(sanitized.proximos_passos_list)) {
     sanitized.proximos_passos_list = sanitized.proximos_passos_list.map(normalizeProximoPasso);

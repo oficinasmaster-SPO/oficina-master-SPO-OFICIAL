@@ -78,6 +78,36 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
             dados.visao_geral_projeto = atendimentoRef.visao_geral_projeto;
         }
 
+        // Fallback: preencher participantes se vazios
+        if (!dados.participantes || (Array.isArray(dados.participantes) && dados.participantes.length === 0)) {
+          if (atendimentoRef?.participantes && atendimentoRef.participantes.length > 0) {
+            dados.participantes = atendimentoRef.participantes.map(p => ({
+              name: p.nome || p.name || '',
+              role: p.cargo || p.role || ''
+            }));
+          } else {
+            dados.participantes = [{ name: 'Aceleradora Oficinas Master', role: 'Consultor/Acelerador' }];
+          }
+        }
+
+        // Fallback: preencher responsável se vazio
+        if (!dados.responsavel || (typeof dados.responsavel === 'object' && !dados.responsavel.name)) {
+          // Buscar workshop se necessário
+          let ws = workshop;
+          if (!ws && dados.workshop_id) {
+            try { ws = await base44.entities.Workshop.get(dados.workshop_id); } catch {}
+          }
+          dados.responsavel = {
+            name: ws?.name || 'Oficina Cliente',
+            role: 'Proprietario'
+          };
+        }
+
+        // Fallback: preencher plano_nome se vazio
+        if (!dados.plano_nome) {
+          dados.plano_nome = atendimentoRef?.plano_cliente || 'Plano de Aceleracao';
+        }
+
         setAtaAtualizada(sanitizeAtaData(dados));
       } catch (error) {
         console.error("Erro ao carregar ATA:", error);

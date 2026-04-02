@@ -140,8 +140,26 @@ Formate em Markdown para fácil leitura. Seja profissional, objetivo e completo.
 
     // CRIAR REGISTRO NA ENTIDADE MeetingMinutes
     // Isso garante que todos os dados estruturados estejam disponíveis para o PDF
+    // Preparar participantes com fallback
+    let participantesAta = [];
+    if (atendimento.participantes && atendimento.participantes.length > 0) {
+      participantesAta = atendimento.participantes.map(p => ({
+        name: p.nome || p.name || '',
+        role: p.cargo || p.role || ''
+      })).filter(p => p.name);
+    }
+    if (participantesAta.length === 0) {
+      participantesAta = [{ name: 'Aceleradora Oficinas Master', role: 'Consultor/Acelerador' }];
+    }
+
+    // Preparar responsavel com fallback
+    const responsavelName = workshop?.owner_name || workshop?.name || 'Oficina Cliente';
+
+    // Preparar plano_nome com fallback
+    const planoNome = atendimento.plano_cliente || 'Plano de Aceleracao';
+
     const dataAta = {
-        code: `ATA${Math.floor(1000 + Math.random() * 9000)}`, // Gerar código simples por enquanto
+        code: `ATA${Math.floor(1000 + Math.random() * 9000)}`,
         workshop_id: atendimento.workshop_id,
         atendimento_id: atendimento.id,
         meeting_date: atendimento.data_realizada ? atendimento.data_realizada.split('T')[0] : atendimento.data_agendada.split('T')[0],
@@ -149,9 +167,9 @@ Formate em Markdown para fácil leitura. Seja profissional, objetivo e completo.
         tipo_aceleracao: atendimento.tipo_atendimento,
         consultor_name: atendimento.consultor_nome,
         consultor_id: atendimento.consultor_id,
-        participantes: atendimento.participantes?.map(p => ({ name: p.nome, role: p.cargo })) || [],
-        responsavel: { name: workshop.owner_name || workshop.name, role: 'Proprietário' },
-        plano_nome: atendimento.plano_cliente,
+        participantes: participantesAta,
+        responsavel: { name: responsavelName, role: 'Proprietario' },
+        plano_nome: planoNome,
         pauta: atendimento.pauta,
         objetivos: atendimento.objetivos,
         objetivos_consultor: atendimento.objetivos_consultor || '', // Se tiver campo específico mapear aqui
