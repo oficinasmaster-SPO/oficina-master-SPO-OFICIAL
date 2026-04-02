@@ -2,7 +2,7 @@ import { marked } from "marked";
 
 /**
  * Sanitiza texto removendo markdown inline (bold, italic, links, etc.)
- * para uso em jsPDF que nao suporta formatacao rich text.
+ * para uso em jsPDF que não suporta formatação rich text.
  */
 function stripInlineMarkdown(text) {
   if (!text) return '';
@@ -21,75 +21,26 @@ function stripInlineMarkdown(text) {
     .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
     // Remove images ![alt](url) -> alt
     .replace(/!\[([^\]]*)\]\([^)]+\)/g, '$1')
-    // Remove heading markers no inicio
+    // Remove heading markers no início
     .replace(/^#{1,6}\s+/gm, '')
     // Remove HTML tags residuais
     .replace(/<[^>]*>/g, '')
-    // Remove multiplos espacos horizontais (preserva \n)
+    // Remove múltiplos espaços horizontais (preserva \n)
     .replace(/[^\S\n]+/g, ' ')
-    // Remove espacos no inicio/fim de cada linha
+    // Remove espaços no início/fim de cada linha
     .replace(/^ +| +$/gm, '');
 }
 
 /**
- * Mapeamento de emojis comuns para equivalentes ASCII.
- * Usa codepoints para construir as strings em runtime, evitando problemas de parse.
- */
-function buildEmojiMap() {
-  // Helper: converte codepoint(s) para string
-  var cp = function() {
-    return String.fromCodePoint.apply(null, arguments);
-  };
-  
-  return [
-    [cp(0x1F4CA), '[Grafico]'], [cp(0x1F4C8), '[+]'], [cp(0x1F4C9), '[-]'], [cp(0x1F4CC), '[*]'],
-    [cp(0x1F4CD), '[Local]'], [cp(0x1F4DD), '[Nota]'], [cp(0x1F4CB), '[Lista]'],
-    [cp(0x1F4B0), '[$]'], [cp(0x1F4B2), '[$]'], [cp(0x1F4B5), '[$]'], [cp(0x1F4B9), '[ROI]'],
-    [cp(0x1F4E7), '[Email]'], [cp(0x1F4DE), '[Tel]'], [cp(0x1F4F1), '[Cel]'],
-    [cp(0x1F4A1), '[Ideia]'], [cp(0x1F4A5), '[!]'], [cp(0x1F525), '[!]'],
-    [cp(0x1F6A8), '[Alerta]'], [cp(0x1F6AB), '[X]'], [cp(0x1F512), '[Bloq]'], [cp(0x1F513), '[Aberto]'],
-    [cp(0x1F3AF), '[Alvo]'], [cp(0x1F3C6), '[Trofeu]'],
-    [cp(0x1F44D), '[OK]'], [cp(0x1F44E), '[NOK]'], [cp(0x1F44B), '[Ola]'],
-    [cp(0x1F44F), '[Parabens]'], [cp(0x1F64F), '[Obrigado]'],
-    [cp(0x1F449), '>'], [cp(0x1F448), '<'], [cp(0x1F446), '^'], [cp(0x1F447), 'v'],
-    [cp(0x261D), '^'],
-    [cp(0x2705), '[OK]'], [cp(0x274C), '[X]'], [cp(0x274E), '[X]'],
-    [cp(0x2714), '[OK]'], [cp(0x2716), '[X]'],
-    [cp(0x26A0), '[Atencao]'], [cp(0x2757), '[!]'], [cp(0x2753), '[?]'], [cp(0x2755), '[!]'],
-    [cp(0x2B50), '[*]'], [cp(0x1F31F), '[*]'], [cp(0x2728), '[*]'],
-    [cp(0x27A1), '->'], [cp(0x2B05), '<-'], [cp(0x2B06), '^'], [cp(0x2B07), 'v'],
-    [cp(0x1F504), '[Ciclo]'], [cp(0x1F503), '[Ciclo]'],
-    [cp(0x1F4AF), '[100%]'], [cp(0x1F4AA), '[Forca]'],
-    [cp(0x1F680), '[Lancamento]'], [cp(0x1F389), '[Parabens]'], [cp(0x1F388), '[Festa]'],
-    [cp(0x1F4C5), '[Data]'], [cp(0x1F4C6), '[Data]'], [cp(0x23F0), '[Hora]'], [cp(0x231A), '[Hora]'],
-    [cp(0x1F4CE), '[Anexo]'], [cp(0x1F4C1), '[Pasta]'], [cp(0x1F4C2), '[Pasta]'],
-    [cp(0x1F4E2), '[Aviso]'], [cp(0x1F4E3), '[Aviso]'],
-    [cp(0x1F6E0), '[Ferramenta]'], [cp(0x2699), '[Config]'], [cp(0x1F527), '[Ferramenta]'], [cp(0x1F529), '[Ferramenta]'],
-    [cp(0x2764), '[<3]'], [cp(0x1F494), '[</3]'], [cp(0x1F499), '[<3]'], [cp(0x1F49A), '[<3]'],
-    [cp(0x1F4AC), '[Chat]'], [cp(0x1F4AD), '[Pensamento]'],
-    [cp(0x1F4BC), '[Negocio]'],
-    [cp(0x1F914), '[Hmm]'], [cp(0x1F937), '[?]'],
-    [cp(0x1F44A), '[Bora]'], [cp(0x270C), '[V]'], [cp(0x1F91D), '[Acordo]'],
-    [cp(0x1F4F0), '[Noticia]'], [cp(0x1F4DA), '[Livros]'], [cp(0x1F4D6), '[Livro]'],
-    [cp(0x1F3E2), '[Empresa]'], [cp(0x1F3ED), '[Fabrica]'], [cp(0x1F3E0), '[Casa]'],
-    [cp(0x1F6D2), '[Carrinho]'], [cp(0x1F4B3), '[Cartao]'],
-    [cp(0x1F465), '[Equipe]'], [cp(0x1F464), '[Pessoa]'],
-  ];
-}
-
-// Build once at module load
-var EMOJI_MAP = buildEmojiMap();
-
-/**
  * Converte string para texto seguro para jsPDF
  * Trata objetos, arrays, null, undefined
- * Tambem normaliza caracteres UTF-8 problematicos para a fonte padrao do jsPDF
+ * Também normaliza caracteres UTF-8 problemáticos para a fonte padrão do jsPDF
  */
 export function safeText(value) {
   if (value === null || value === undefined) return '';
   if (typeof value === 'object') {
     if (Array.isArray(value)) {
-      return value.map(function(v) { return safeText(v); }).join(', ');
+      return value.map(v => safeText(v)).join(', ');
     }
     // Tenta extrair campos comuns
     if (value.descricao) return safeText(value.descricao);
@@ -98,17 +49,15 @@ export function safeText(value) {
     if (value.text) return safeText(value.text);
     return JSON.stringify(value);
   }
-  var text = stripInlineMarkdown(String(value));
+  let text = stripInlineMarkdown(String(value));
   
   // Normalizar para NFC primeiro (combina caracteres decompostos)
   text = text.normalize('NFC');
   
-  // Substituir emojis conhecidos por equivalentes ASCII
-  for (var i = 0; i < EMOJI_MAP.length; i++) {
-    text = text.split(EMOJI_MAP[i][0]).join(EMOJI_MAP[i][1]);
-  }
+  // Remover TODOS os emojis silenciosamente (sem substituir por [texto])
+  text = text.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F900}-\u{1F9FF}\u{200D}\u{20E3}\u{E0020}-\u{E007F}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2702}-\u{27B0}\u{231A}-\u{231B}\u{23E9}-\u{23F3}\u{23F8}-\u{23FA}\u{25AA}-\u{25AB}\u{25B6}\u{25C0}\u{25FB}-\u{25FE}\u{2614}-\u{2615}\u{2648}-\u{2653}\u{267F}\u{2693}\u{2694}\u{2696}-\u{2697}\u{2699}\u{269B}-\u{269C}\u{26A1}\u{26AA}-\u{26AB}\u{26B0}-\u{26B1}\u{26BD}-\u{26BE}\u{26C4}-\u{26C5}\u{26CE}\u{26CF}\u{26D1}\u{26D3}-\u{26D4}\u{26E9}-\u{26EA}\u{26F0}-\u{26F5}\u{26F7}-\u{26FA}\u{26FD}\u{2702}\u{2705}\u{2708}-\u{270D}\u{270F}\u{2712}\u{2714}\u{2716}\u{271D}\u{2721}\u{2728}\u{2733}-\u{2734}\u{2744}\u{2747}\u{274C}\u{274E}\u{2753}-\u{2755}\u{2757}\u{2763}-\u{2764}\u{2795}-\u{2797}\u{27A1}\u{27B0}\u{27BF}\u{2934}-\u{2935}\u{2B05}-\u{2B07}\u{2B1B}-\u{2B1C}\u{2B50}\u{2B55}\u{3030}\u{303D}\u{3297}\u{3299}]/gu, '');
   
-  // Substituir caracteres tipograficos problematicos por equivalentes ASCII
+  // Substituir caracteres tipograficos problemticos por equivalentes ASCII
   // Aspas curvas -> aspas retas
   text = text.replace(/[\u2018\u2019\u201A\u201B]/g, "'");
   text = text.replace(/[\u201C\u201D\u201E\u201F]/g, '"');
@@ -152,12 +101,12 @@ export function parseMarkdownToPdf(content) {
   if (!content) return [];
   
   // Sanitizar o conteudo inteiro antes de parsear
-  var safeContent = safeText(String(content));
+  const safeContent = safeText(String(content));
   
-  var tokens;
+  let tokens;
   try {
     tokens = marked.lexer(safeContent);
-  } catch (e) {
+  } catch {
     // Fallback: retorna como texto simples
     return [{
       text: safeContent,
@@ -167,9 +116,9 @@ export function parseMarkdownToPdf(content) {
     }];
   }
   
-  var pdfContent = [];
+  const pdfContent = [];
 
-  tokens.forEach(function(token) {
+  tokens.forEach((token) => {
     if (token.type === 'heading') {
       pdfContent.push({
         text: stripInlineMarkdown(token.text),
@@ -181,8 +130,8 @@ export function parseMarkdownToPdf(content) {
     }
 
     if (token.type === 'list') {
-      token.items.forEach(function(item) {
-        var cleanText = stripInlineMarkdown(item.text);
+      token.items.forEach((item) => {
+        const cleanText = stripInlineMarkdown(item.text);
         if (cleanText.trim()) {
           pdfContent.push({
             text: '- ' + cleanText,
@@ -195,7 +144,7 @@ export function parseMarkdownToPdf(content) {
     }
 
     if (token.type === 'paragraph') {
-      var cleanText = stripInlineMarkdown(token.text);
+      const cleanText = stripInlineMarkdown(token.text);
       if (cleanText.trim()) {
         pdfContent.push({
           text: cleanText,
@@ -208,7 +157,7 @@ export function parseMarkdownToPdf(content) {
     
     if (token.type === 'table') {
       if (token.header && token.header.length > 0) {
-        var headerText = token.header.map(function(h) { return stripInlineMarkdown(h.text); }).join(' | ');
+        const headerText = token.header.map(h => stripInlineMarkdown(h.text)).join(' | ');
         pdfContent.push({
           text: headerText,
           style: 'subheader',
@@ -218,8 +167,8 @@ export function parseMarkdownToPdf(content) {
         });
       }
       if (token.rows) {
-        token.rows.forEach(function(row) {
-          var rowText = row.map(function(cell) { return stripInlineMarkdown(cell.text); }).join(' | ');
+        token.rows.forEach(row => {
+          const rowText = row.map(cell => stripInlineMarkdown(cell.text)).join(' | ');
           if (rowText.trim()) {
             pdfContent.push({
               text: rowText,
@@ -233,10 +182,10 @@ export function parseMarkdownToPdf(content) {
     }
     
     if (token.type === 'code') {
-      var codeText = stripInlineMarkdown(token.text);
-      if (codeText.trim()) {
+      const cleanText = stripInlineMarkdown(token.text);
+      if (cleanText.trim()) {
         pdfContent.push({
-          text: codeText,
+          text: cleanText,
           marginTop: 2,
           marginBottom: 3,
           marginLeft: 3
