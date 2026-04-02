@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useTenant } from '@/components/contexts/TenantContext';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -10,9 +9,12 @@ import { Building2, Briefcase, Search, Check, ChevronsUpDown } from 'lucide-reac
 
 export default function TenantSelector() {
   const { user, selectedFirmId, changeConsultingFirm, selectedCompanyId, changeCompany } = useTenant();
+  const [openFirmPopover, setOpenFirmPopover] = useState(false);
   const [openCompanyPopover, setOpenCompanyPopover] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [hoveredId, setHoveredId] = useState(null);
+  const [firmSearchTerm, setFirmSearchTerm] = useState('');
+  const [companySearchTerm, setCompanySearchTerm] = useState('');
+  const [hoveredFirmId, setHoveredFirmId] = useState(null);
+  const [hoveredCompanyId, setHoveredCompanyId] = useState(null);
 
   const { data: firms = [], isLoading: isLoadingFirms } = useQuery({
     queryKey: ['consultingFirms'],
@@ -33,9 +35,15 @@ export default function TenantSelector() {
     refetchOnMount: false
   });
 
+  const selectedFirm = firms?.find(f => f.id === selectedFirmId);
   const selectedCompany = companies?.find(c => c.id === selectedCompanyId);
-  const filtered = companies?.filter(c => 
-    `${c.name} ${c.city} ${c.state}`.toLowerCase().includes(searchTerm.toLowerCase())
+  
+  const filteredFirms = firms?.filter(f => 
+    f.name.toLowerCase().includes(firmSearchTerm.toLowerCase())
+  ) || [];
+  
+  const filteredCompanies = companies?.filter(c => 
+    `${c.name} ${c.city} ${c.state}`.toLowerCase().includes(companySearchTerm.toLowerCase())
   ) || [];
 
   // Apenas admins podem alternar entre tenants livremente
@@ -47,20 +55,105 @@ export default function TenantSelector() {
     <div className="hidden md:flex items-center gap-3 ml-4">
       <div className="flex items-center gap-2 bg-gray-50 p-1 rounded-lg border border-gray-200">
         <Building2 className="w-4 h-4 text-gray-500 ml-2" />
-        <Select 
-          value={selectedFirmId || 'none'} 
-          onValueChange={(val) => changeConsultingFirm(val === 'none' ? null : val)}
-        >
-          <SelectTrigger className="w-[180px] h-8 text-xs bg-white border-0 shadow-sm">
-            <SelectValue placeholder="Selecione Consultoria" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="none">Todas Consultorias</SelectItem>
-            {firms.map(f => (
-              <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Popover open={openFirmPopover} onOpenChange={setOpenFirmPopover}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-expanded={openFirmPopover}
+              className="w-[180px] h-8 text-xs bg-white border-0 shadow-sm justify-between px-3 font-normal"
+            >
+              <span className="truncate">
+                {selectedFirm 
+                  ? `${selectedFirm.name}`
+                  : "Todas Consultorias"}
+              </span>
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[220px] p-0" align="start">
+            <div className="flex items-center border-b px-3">
+              <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+              <input 
+                className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                placeholder="Pesquisar consultoria..." 
+                value={firmSearchTerm}
+                onChange={(e) => setFirmSearchTerm(e.target.value)}
+              />
+            </div>
+            
+            <div className="border-b px-3 py-2 text-xs text-gray-600 bg-gray-50 font-medium">
+              Todas Consultorias
+            </div>
+
+            <div className="max-h-64 overflow-y-auto pr-2" style={{ scrollbarGutter: 'stable' }}>
+              {filteredFirms.length === 0 ? (
+                <div className="px-3 py-4 text-center text-sm text-gray-500">
+                  Nenhuma consultoria encontrada
+                </div>
+              ) : (
+                <>
+                  <div
+                    onClick={() => {
+                      changeConsultingFirm(null);
+                      setOpenFirmPopover(false);
+                      setFirmSearchTerm('');
+                    }}
+                    onMouseEnter={() => setHoveredFirmId('all')}
+                    onMouseLeave={() => setHoveredFirmId(null)}
+                    style={{
+                      backgroundColor: hoveredFirmId === 'all' ? '#dc2626' : 'transparent',
+                      color: hoveredFirmId === 'all' ? 'white' : 'black',
+                      cursor: 'pointer',
+                      padding: '8px 12px',
+                      transition: 'background-color 0.15s ease-out'
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Check
+                        className={cn(
+                          "h-4 w-4 flex-shrink-0",
+                          !selectedFirmId ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      <span className="font-medium text-sm">Todas Consultorias</span>
+                    </div>
+                  </div>
+                  
+                  {filteredFirms.map((firm) => (
+                    <div
+                      key={firm.id}
+                      onClick={() => {
+                        changeConsultingFirm(firm.id);
+                        setOpenFirmPopover(false);
+                        setFirmSearchTerm('');
+                      }}
+                      onMouseEnter={() => setHoveredFirmId(firm.id)}
+                      onMouseLeave={() => setHoveredFirmId(null)}
+                      style={{
+                        backgroundColor: hoveredFirmId === firm.id ? '#dc2626' : 'transparent',
+                        color: hoveredFirmId === firm.id ? 'white' : 'black',
+                        cursor: 'pointer',
+                        padding: '8px 12px',
+                        transition: 'background-color 0.15s ease-out'
+                      }}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Check
+                          className={cn(
+                            "h-4 w-4 flex-shrink-0",
+                            selectedFirmId === firm.id ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        <span className="font-medium text-sm">{firm.name}</span>
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>
 
       <div className="flex items-center gap-2 bg-gray-50 p-1 rounded-lg border border-gray-200">
@@ -87,8 +180,8 @@ export default function TenantSelector() {
               <input 
                 className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
                 placeholder="Pesquisar oficina..." 
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                value={companySearchTerm}
+                onChange={(e) => setCompanySearchTerm(e.target.value)}
               />
             </div>
             
@@ -97,7 +190,7 @@ export default function TenantSelector() {
             </div>
 
             <div className="max-h-64 overflow-y-auto pr-2" style={{ scrollbarGutter: 'stable' }}>
-              {filtered.length === 0 ? (
+              {filteredCompanies.length === 0 ? (
                 <div className="px-3 py-4 text-center text-sm text-gray-500">
                   Nenhuma oficina encontrada
                 </div>
@@ -107,13 +200,13 @@ export default function TenantSelector() {
                     onClick={() => {
                       changeCompany(null);
                       setOpenCompanyPopover(false);
-                      setSearchTerm('');
+                      setCompanySearchTerm('');
                     }}
-                    onMouseEnter={() => setHoveredId('all')}
-                    onMouseLeave={() => setHoveredId(null)}
+                    onMouseEnter={() => setHoveredCompanyId('all')}
+                    onMouseLeave={() => setHoveredCompanyId(null)}
                     style={{
-                      backgroundColor: hoveredId === 'all' ? '#dc2626' : 'transparent',
-                      color: hoveredId === 'all' ? 'white' : 'black',
+                      backgroundColor: hoveredCompanyId === 'all' ? '#dc2626' : 'transparent',
+                      color: hoveredCompanyId === 'all' ? 'white' : 'black',
                       cursor: 'pointer',
                       padding: '8px 12px',
                       transition: 'background-color 0.15s ease-out'
@@ -130,19 +223,19 @@ export default function TenantSelector() {
                     </div>
                   </div>
                   
-                  {filtered.map((company) => (
+                  {filteredCompanies.map((company) => (
                     <div
                       key={company.id}
                       onClick={() => {
                         changeCompany(company.id);
                         setOpenCompanyPopover(false);
-                        setSearchTerm('');
+                        setCompanySearchTerm('');
                       }}
-                      onMouseEnter={() => setHoveredId(company.id)}
-                      onMouseLeave={() => setHoveredId(null)}
+                      onMouseEnter={() => setHoveredCompanyId(company.id)}
+                      onMouseLeave={() => setHoveredCompanyId(null)}
                       style={{
-                        backgroundColor: hoveredId === company.id ? '#dc2626' : 'transparent',
-                        color: hoveredId === company.id ? 'white' : 'black',
+                        backgroundColor: hoveredCompanyId === company.id ? '#dc2626' : 'transparent',
+                        color: hoveredCompanyId === company.id ? 'white' : 'black',
                         cursor: 'pointer',
                         padding: '8px 12px',
                         transition: 'background-color 0.15s ease-out'
@@ -157,7 +250,7 @@ export default function TenantSelector() {
                         />
                         <div className="flex flex-col flex-1 min-w-0">
                           <span className="font-medium text-sm">{company.name}</span>
-                          <span className="text-xs" style={{opacity: hoveredId === company.id ? 0.7 : 1, color: hoveredId === company.id ? 'white' : '#9ca3af'}}>
+                          <span className="text-xs" style={{opacity: hoveredCompanyId === company.id ? 0.7 : 1, color: hoveredCompanyId === company.id ? 'white' : '#9ca3af'}}>
                             {company.city}/{company.state}
                           </span>
                         </div>
