@@ -2,9 +2,13 @@ import jsPDF from "jspdf";
 import "jspdf-autotable";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { parseMarkdownToPdf } from "@/utils/markdownPdfParser";
+import { parseMarkdownToPdf, safeText } from "@/utils/markdownPdfParser";
+import { sanitizeAtaData, formatPrazoSafe } from "@/utils/ataSanitizer";
 
-export const generateAtaPDF = (ata, workshop) => {
+export const generateAtaPDF = (rawAta, workshop) => {
+  // Sanitizar todos os dados antes de gerar o PDF
+  const ata = sanitizeAtaData(rawAta) || {};
+  
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
@@ -81,16 +85,16 @@ export const generateAtaPDF = (ata, workshop) => {
   // Tabela de Participantes, Responsável, Plano
   const tableData = [];
   
-  // Preparar dados das células
+  // Preparar dados das células (já sanitizados)
   let participantesText = '';
   if (ata.participantes && ata.participantes.length > 0) {
-    participantesText = ata.participantes.map(p => `• ${p.name} - ${p.role}`).join('\n');
+    participantesText = ata.participantes.map(p => `• ${safeText(p.name)} - ${safeText(p.role)}`).join('\n');
   } else {
     participantesText = '• Aceleradora Oficinas Master - Consultor/Acelerador';
   }
 
-  const responsavelText = `${ata.responsavel?.name || workshop?.name || 'OFICINA CLIENTE'}\n${ata.responsavel?.role || 'Proprietário'}`;
-  const planoText = ata.plano_nome || 'Plano de Aceleração';
+  const responsavelText = `${safeText(ata.responsavel?.name) || workshop?.name || 'OFICINA CLIENTE'}\n${safeText(ata.responsavel?.role) || 'Proprietário'}`;
+  const planoText = safeText(ata.plano_nome) || 'Plano de Aceleração';
 
   tableData.push([participantesText, responsavelText, planoText]);
 
@@ -276,7 +280,8 @@ export const generateAtaPDF = (ata, workshop) => {
       doc.setFont(undefined, 'bold');
       doc.setTextColor(0, 0, 0);
       
-      const descLines = doc.splitTextToSize(`• ${passo.descricao}`, contentWidth);
+      const descText = safeText(passo.descricao);
+      const descLines = doc.splitTextToSize(`• ${descText}`, contentWidth);
       descLines.forEach((line) => {
         doc.text(line, margin, y);
         y += 5;
@@ -287,13 +292,10 @@ export const generateAtaPDF = (ata, workshop) => {
       doc.setTextColor(80, 80, 80);
       
       let details = [];
-      if (passo.responsavel) details.push(`Responsável: ${passo.responsavel}`);
+      const respText = safeText(passo.responsavel);
+      if (respText) details.push(`Responsável: ${respText}`);
       if (passo.prazo) {
-        try {
-          details.push(`Prazo: ${format(new Date(passo.prazo), 'dd/MM/yyyy')}`);
-        } catch(e) {
-          details.push(`Prazo: ${passo.prazo}`);
-        }
+        details.push(`Prazo: ${formatPrazoSafe(passo.prazo)}`);
       }
       
       if (details.length > 0) {
@@ -396,15 +398,15 @@ export const generateAtaPDF = (ata, workshop) => {
       doc.setFontSize(10);
       doc.setFont(undefined, 'bold');
       doc.setTextColor(0, 0, 0);
-      doc.text(decisao.decisao || '', margin + 2, y + 2);
+      doc.text(safeText(decisao.decisao), margin + 2, y + 2);
       
       y += 7;
       doc.setFont(undefined, 'normal');
       doc.setFontSize(9);
       
       let detalhes = [];
-      if (decisao.responsavel) detalhes.push(`Responsável: ${decisao.responsavel}`);
-      if (decisao.prazo) detalhes.push(`Prazo: ${format(new Date(decisao.prazo), 'dd/MM/yyyy')}`);
+      if (decisao.responsavel) detalhes.push(`Responsável: ${safeText(decisao.responsavel)}`);
+      if (decisao.prazo) detalhes.push(`Prazo: ${formatPrazoSafe(decisao.prazo)}`);
       
       if (detalhes.length > 0) {
         doc.text(detalhes.join(' | '), margin + 2, y);
@@ -438,17 +440,17 @@ export const generateAtaPDF = (ata, workshop) => {
       doc.setFontSize(10);
       doc.setFont(undefined, 'bold');
       doc.setTextColor(0, 0, 0);
-      doc.text(acao.acao, margin + 2, y + 2);
+      doc.text(safeText(acao.acao), margin + 2, y + 2);
       
       y += 7;
       doc.setFont(undefined, 'normal');
       doc.setFontSize(9);
-      doc.text(`Responsável: ${acao.responsavel}`, margin + 2, y);
+      doc.text(`Responsável: ${safeText(acao.responsavel)}`, margin + 2, y);
       
       if (acao.prazo) {
         y += 5;
         doc.setTextColor(100, 100, 100);
-        doc.text(`Prazo: ${format(new Date(acao.prazo), 'dd/MM/yyyy')}`, margin + 2, y);
+        doc.text(`Prazo: ${formatPrazoSafe(acao.prazo)}`, margin + 2, y);
         doc.setTextColor(0, 0, 0);
       }
 
@@ -698,6 +700,13 @@ export const generateAtaPDF = (ata, workshop) => {
 
 export const downloadAtaPDF = (ata, workshop) => {
   const doc = generateAtaPDF(ata, workshop);
-  const fileName = `ATA_${ata.code || 'sem-codigo'}_${format(new Date(ata.meeting_date || new Date()), 'ddMMyyyy')}.pdf`;
+  const safeCode = safeText(ata?.code) || 'sem-codigo';
+  let dateStr = 'sem-data';
+  try {
+    dateStr = format(new Date(ata?.meeting_date || new Date()), 'ddMMyyyy');
+  } catch {
+    dateStr = format(new Date(), 'ddMMyyyy');
+  }
+  const fileName = `ATA_${safeCode}_${dateStr}.pdf`;
   doc.save(fileName);
 };

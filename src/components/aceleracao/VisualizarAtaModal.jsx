@@ -2,19 +2,22 @@ import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { FileText, Printer, Download, Building2, MapPin, Award } from "lucide-react";
+import { FileText, Printer, Download, Building2, MapPin, Award, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { downloadAtaPDF } from "./AtasPDFGenerator";
 import { toast } from "sonner";
 import { base44 } from "@/api/base44Client";
 import AtaSendOptionsBar from "./AtaSendOptionsBar";
 import ClientIntelligenceCapturePanel from "@/components/inteligencia/ClientIntelligenceCapturePanel";
+import { sanitizeAtaData, formatPrazoSafe } from "@/utils/ataSanitizer";
 
 export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose }) {
-  const [ataAtualizada, setAtaAtualizada] = React.useState(ata);
+  const [ataAtualizada, setAtaAtualizada] = React.useState(sanitizeAtaData(ata));
+  const [isLoading, setIsLoading] = React.useState(true);
 
   React.useEffect(() => {
     const carregarAtaAtualizada = async () => {
+      setIsLoading(true);
       try {
         const dados = await base44.entities.MeetingMinutes.get(ata.id);
         
@@ -22,11 +25,11 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
         if (!dados.pautas && atendimento?.pauta && Array.isArray(atendimento.pauta)) {
             let pautasTexto = atendimento.pauta
               .filter(p => p.titulo)
-              .map(p => `• ${p.titulo}${p.descricao ? ': ' + p.descricao : ''}`)
+              .map(p => `${p.titulo}${p.descricao ? ': ' + p.descricao : ''}`)
               .join('\n');
               
             if (atendimento.topicos_discutidos?.length > 0) {
-              pautasTexto += (pautasTexto ? '\n\n' : '') + '**Tópicos Discutidos:**\n' + 
+              pautasTexto += (pautasTexto ? '\n\n' : '') + 'Tópicos Discutidos:\n' + 
                 atendimento.topicos_discutidos.map(t => `• ${t}`).join('\n');
             }
             dados.pautas = pautasTexto;
@@ -42,9 +45,9 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
         if (!dados.objetivos_consultor && (atendimento?.observacoes_consultor || atendimento?.decisoes_tomadas?.length > 0)) {
             let objetivosConsultorTexto = atendimento.observacoes_consultor || "";
             if (atendimento.decisoes_tomadas && atendimento.decisoes_tomadas.length > 0) {
-              objetivosConsultorTexto += (objetivosConsultorTexto ? '\n\n' : '') + '**Decisões Tomadas:**\n' + 
+              objetivosConsultorTexto += (objetivosConsultorTexto ? '\n\n' : '') + 'Decisões Tomadas:\n' + 
                 atendimento.decisoes_tomadas
-                  .map(d => `• ${d.decisao}${d.responsavel ? ' (Responsável: ' + d.responsavel + ')' : ''}${d.prazo ? ' - Prazo: ' + d.prazo : ''}`)
+                  .map(d => `• ${d.decisao || ''}${d.responsavel ? ' (Responsável: ' + d.responsavel + ')' : ''}${d.prazo ? ' - Prazo: ' + d.prazo : ''}`)
                   .join('\n');
             }
             dados.objetivos_consultor = objetivosConsultorTexto;
@@ -65,15 +68,19 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
             dados.visao_geral_projeto = atendimento.visao_geral_projeto;
         }
 
-        setAtaAtualizada(dados);
+        setAtaAtualizada(sanitizeAtaData(dados));
       } catch (error) {
         console.error("Erro ao carregar ATA:", error);
-        setAtaAtualizada(ata);
+        setAtaAtualizada(sanitizeAtaData(ata));
+      } finally {
+        setIsLoading(false);
       }
     };
     
     if (ata?.id) {
       carregarAtaAtualizada();
+    } else {
+      setIsLoading(false);
     }
   }, [ata?.id, atendimento]);
 
@@ -82,8 +89,12 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
   };
 
   const handleDownload = async () => {
+    if (isLoading) {
+      toast.warning("Aguarde o carregamento completo dos dados");
+      return;
+    }
     try {
-      let ataParaDownload = { ...ataAtualizada };
+      let ataParaDownload = sanitizeAtaData({ ...ataAtualizada });
       
       // Tentar encontrar o atendimento se não fornecido
       let atendimentoId = atendimento?.id;
@@ -157,6 +168,12 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
           </div>
         </DialogHeader>
 
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-16 gap-3">
+            <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+            <p className="text-gray-500">Carregando dados da ATA...</p>
+          </div>
+        ) : (
         <div className="space-y-6 py-4 print:py-8">
           <div className="text-center print:mb-8">
             <div className="flex items-center justify-center mb-4">
@@ -232,10 +249,9 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
               {Array.isArray(ataAtualizada.proximos_passos_list) && ataAtualizada.proximos_passos_list.length > 0 ? (
                 <div className="space-y-2">
                   {ataAtualizada.proximos_passos_list.map((passo, i) => {
-                    if (typeof passo === 'string') return <p key={i} className="border-l-4 border-blue-600 pl-3 font-medium">{passo}</p>;
-                    const desc = typeof passo.descricao === 'object' ? JSON.stringify(passo.descricao) : (passo.descricao || '');
-                    const resp = typeof passo.responsavel === 'object' ? JSON.stringify(passo.responsavel) : (passo.responsavel || '');
-                    const prazoStr = passo.prazo ? (() => { try { return new Date(passo.prazo).toLocaleDateString('pt-BR'); } catch { return String(passo.prazo); } })() : 'Não definido';
+                    const desc = passo.descricao || '';
+                    const resp = passo.responsavel || '';
+                    const prazoStr = formatPrazoSafe(passo.prazo);
                     return (
                       <div key={i} className="border-l-4 border-blue-600 pl-3">
                         <p className="font-medium">{desc}</p>
@@ -247,14 +263,7 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
                   })}
                 </div>
               ) : ataAtualizada.proximos_passos ? (
-                <p className="whitespace-pre-wrap">
-                  {typeof ataAtualizada.proximos_passos === 'string' 
-                    ? ataAtualizada.proximos_passos 
-                    : Array.isArray(ataAtualizada.proximos_passos)
-                      ? ataAtualizada.proximos_passos.map(p => typeof p === 'string' ? p : (p.descricao || JSON.stringify(p))).join('\n')
-                      : JSON.stringify(ataAtualizada.proximos_passos)
-                  }
-                </p>
+                <p className="whitespace-pre-wrap">{ataAtualizada.proximos_passos}</p>
               ) : (
                 <p>Nenhum próximo passo definido</p>
               )}
@@ -440,9 +449,10 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
 
           <div className="text-sm text-gray-500 text-center pt-6 border-t print:hidden">
             <p>Gerado por: {ataAtualizada.created_by}</p>
-            <p>Data de criação: {new Date(ataAtualizada.created_date).toLocaleString('pt-BR')}</p>
+            <p>Data de criação: {ataAtualizada.created_date ? new Date(ataAtualizada.created_date).toLocaleString('pt-BR') : '-'}</p>
           </div>
         </div>
+        )}
 
         <div className="flex justify-end pt-4 border-t print:hidden">
            <Button onClick={onClose}>Fechar</Button>
