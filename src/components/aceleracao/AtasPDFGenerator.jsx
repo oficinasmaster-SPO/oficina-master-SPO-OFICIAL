@@ -130,6 +130,31 @@ export const generateAtaPDF = (rawAta, workshop) => {
 
   y = doc.lastAutoTable.finalY + 15;
 
+  // Funcao auxiliar para renderizar texto preservando quebras de linha
+  const renderMultilineText = (text, fontSize = 11, lineHeight = 6) => {
+    doc.setFontSize(fontSize);
+    doc.setFont(undefined, 'normal');
+    
+    // Dividir por quebras de linha para respeitar formatacao original
+    const paragraphs = text.split(/\n/);
+    
+    paragraphs.forEach((paragraph) => {
+      // Linha vazia = espacamento extra (preserva paragrafos)
+      if (paragraph.trim() === '') {
+        y += 4;
+        return;
+      }
+      
+      // Quebrar paragrafo por largura da pagina
+      const wrappedLines = doc.splitTextToSize(paragraph, contentWidth);
+      wrappedLines.forEach(line => {
+        checkPageBreak(lineHeight + 2);
+        doc.text(line, margin, y);
+        y += lineHeight;
+      });
+    });
+  };
+
   // Funcao auxiliar para adicionar secao com titulo
   const addSection = (numero, titulo, conteudo) => {
     checkPageBreak(25);
@@ -149,16 +174,8 @@ export const generateAtaPDF = (rawAta, workshop) => {
     y += 8;
 
     if (conteudo) {
-      doc.setFontSize(11);
-      doc.setFont(undefined, 'normal');
-      
       const conteudoSafe = safeText(conteudo);
-      const lines = doc.splitTextToSize(conteudoSafe, contentWidth);
-      lines.forEach(line => {
-        checkPageBreak(8);
-        doc.text(line, margin, y);
-        y += 6;
-      });
+      renderMultilineText(conteudoSafe);
     }
 
     y += 8;
@@ -312,14 +329,7 @@ export const generateAtaPDF = (rawAta, workshop) => {
     
     if (ata.proximos_passos) {
         y += 5;
-        doc.setFontSize(10);
-        doc.setFont(undefined, 'normal');
-        const legacyLines = doc.splitTextToSize(safeText(ata.proximos_passos), contentWidth);
-        legacyLines.forEach(line => {
-            checkPageBreak(8);
-            doc.text(line, margin, y);
-            y += 5;
-        });
+        renderMultilineText(safeText(ata.proximos_passos), 10, 5);
     }
     
     y += 5;
