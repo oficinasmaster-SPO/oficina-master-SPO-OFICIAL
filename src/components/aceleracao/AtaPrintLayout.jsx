@@ -294,10 +294,10 @@ export default function AtaPrintLayout({ atendimento, workshop }) {
         )}
       </div>
 
-      {/* Seção 3: OBJETIVOS DO CONSULTOR */}
+      {/* Seção 3: OBSERVAÇÕES E OBJETIVOS DO CONSULTOR */}
       <div style={styles.section}>
-        <h3 style={styles.h3}>3. OBJETIVOS DO CONSULTOR <span style={{fontSize: '9pt', fontWeight: 'normal', color: '#666', textTransform: 'none'}}>(Anotações do Consultor)</span></h3>
-        <p style={styles.content}>{atendimento.objetivos_consultor || 'Não informado'}</p>
+        <h3 style={styles.h3}>3. OBSERVAÇÕES E OBJETIVOS DO CONSULTOR <span style={{fontSize: '9pt', fontWeight: 'normal', color: '#666', textTransform: 'none'}}>(Anotações do Consultor)</span></h3>
+        <p style={styles.content}>{atendimento.objetivos_consultor || atendimento.observacoes_consultor || 'Não informado'}</p>
       </div>
 
       {/* Seção 4: PRÓXIMOS PASSOS */}
@@ -338,7 +338,9 @@ export default function AtaPrintLayout({ atendimento, workshop }) {
             As informações abaixo foram organizadas e geradas automaticamente pela IA baseadas nas anotações da reunião.
           </p>
           <div style={styles.content}>
-            <ReactMarkdown>{atendimento.ata_ia}</ReactMarkdown>
+            <ReactMarkdown>
+              {typeof atendimento.ata_ia === 'string' ? atendimento.ata_ia.replace(/\[Seu Nome\]/gi, '').replace(/\[Nome do Consultor\]/gi, '').trim() : atendimento.ata_ia}
+            </ReactMarkdown>
           </div>
         </div>
       )}
@@ -417,18 +419,10 @@ export default function AtaPrintLayout({ atendimento, workshop }) {
         </div>
       )}
 
-      {/* Seção 10: OBSERVAÇÕES DO CONSULTOR */}
-      {atendimento.observacoes_consultor && (
-        <div style={styles.section}>
-          <h3 style={styles.h3}>10. OBSERVAÇÕES DO CONSULTOR <span style={{fontSize: '9pt', fontWeight: 'normal', color: '#666', textTransform: 'none'}}>(Anotações)</span></h3>
-          <p style={styles.content}>{atendimento.observacoes_consultor}</p>
-        </div>
-      )}
-
-      {/* Seção 11: VISÃO GERAL DO PROJETO */}
+      {/* Seção 10: VISÃO GERAL DO PROJETO */}
       {atendimento.visao_geral_projeto && (
         <div style={styles.section}>
-          <h3 style={styles.h3}>11. VISÃO GERAL DO PROJETO DE ACELERAÇÃO</h3>
+          <h3 style={styles.h3}>10. VISÃO GERAL DO PROJETO DE ACELERAÇÃO</h3>
           <p style={styles.content}>{atendimento.visao_geral_projeto}</p>
         </div>
       )}

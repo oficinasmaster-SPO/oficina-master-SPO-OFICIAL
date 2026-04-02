@@ -52,15 +52,11 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
               .join('\n');
         }
 
-        if (!dados.objetivos_consultor && (atendimentoRef?.observacoes_consultor || atendimentoRef?.decisoes_tomadas?.length > 0)) {
-            let objetivosConsultorTexto = atendimentoRef.observacoes_consultor || "";
-            if (atendimentoRef.decisoes_tomadas && atendimentoRef.decisoes_tomadas.length > 0) {
-              objetivosConsultorTexto += (objetivosConsultorTexto ? '\n\n' : '') + 'Decis\u00f5es Tomadas:\n' + 
-                atendimentoRef.decisoes_tomadas
-                  .map(d => `\u2022 ${d.decisao || ''}${d.responsavel ? ' (Respons\u00e1vel: ' + d.responsavel + ')' : ''}${d.prazo ? ' - Prazo: ' + d.prazo : ''}`)
-                  .join('\n');
-            }
-            dados.objetivos_consultor = objetivosConsultorTexto;
+        if (!dados.objetivos_consultor && atendimentoRef?.observacoes_consultor) {
+            dados.objetivos_consultor = atendimentoRef.observacoes_consultor;
+        }
+        if (!dados.decisoes_tomadas && atendimentoRef?.decisoes_tomadas) {
+            dados.decisoes_tomadas = atendimentoRef.decisoes_tomadas;
         }
 
         if ((!dados.proximos_passos_list || dados.proximos_passos_list.length === 0) && atendimentoRef) {
@@ -428,6 +424,13 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
               </CardContent>
             </Card>
           )}
+
+          <Card>
+            <CardContent className="pt-6">
+              <h3 className="font-bold text-lg mb-3">11. VISÃO GERAL DO PROJETO DE ACELERAÇÃO</h3>
+              <p className="whitespace-pre-wrap">{ataAtualizada.visao_geral_projeto || "Não informado"}</p>
+            </CardContent>
+          </Card>
 
           {workshop && (
             <Card className="print:break-before-page">

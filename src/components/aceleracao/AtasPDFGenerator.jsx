@@ -271,9 +271,10 @@ export const generateAtaPDF = (rawAta, workshop) => {
     y += 5;
   }
 
-  // 3. OBJETIVOS DO CONSULTOR
-  if (ata.objetivos_consultor) {
-    addSection('3', 'OBJETIVOS DO CONSULTOR (Anotacoes)', safeText(ata.objetivos_consultor));
+  // 3. OBSERVAÇÕES E OBJETIVOS DO CONSULTOR
+  const obsObjConsultor = ata.objetivos_consultor || ata.observacoes_consultor;
+  if (obsObjConsultor) {
+    addSection('3', 'OBSERVAÇÕES E OBJETIVOS DO CONSULTOR (Anotações)', safeText(obsObjConsultor));
   }
 
   // 4. PRÓXIMOS PASSOS
@@ -363,8 +364,11 @@ export const generateAtaPDF = (rawAta, workshop) => {
     
     y += 8;
 
-    // Usar o parser de markdown
-    const parsedContent = parseMarkdownToPdf(ata.ata_ia);
+    // Usar o parser de markdown e remover assinatura da IA se houver
+    const textoIaLimpo = typeof ata.ata_ia === 'string' 
+      ? ata.ata_ia.replace(/\[Seu Nome\]/gi, '').replace(/\[Nome do Consultor\]/gi, '').trim() 
+      : ata.ata_ia;
+    const parsedContent = parseMarkdownToPdf(textoIaLimpo);
     
     parsedContent.forEach(block => {
       // Ajustar fonte baseado no estilo
@@ -637,22 +641,17 @@ export const generateAtaPDF = (rawAta, workshop) => {
     y += 5;
   }
 
-  // 11. OBSERVACOES DO CONSULTOR
-  if (ata.observacoes_consultor) {
-    addSection('11', 'OBSERVACOES DO CONSULTOR (Anotacoes)', safeText(ata.observacoes_consultor));
-  }
-
-  // 12. VISAO GERAL DO PROJETO
+  // 11. VISAO GERAL DO PROJETO
   if (ata.visao_geral_projeto) {
-    addSection('12', 'VISAO GERAL DO PROJETO DE ACELERACAO', safeText(ata.visao_geral_projeto));
+    addSection('11', 'VISAO GERAL DO PROJETO DE ACELERACAO', safeText(ata.visao_geral_projeto));
   }
 
-  // 13. INTELIGÊNCIA DO CLIENTE
+  // 12. INTELIGÊNCIA DO CLIENTE
   if (ata.client_intelligence && ata.client_intelligence.length > 0) {
     checkPageBreak(30);
     doc.setFontSize(13);
     doc.setFont(undefined, 'bold');
-    doc.text('13. INTELIGENCIA DO CLIENTE (DORES E OPORTUNIDADES)', margin, y);
+    doc.text('12. INTELIGENCIA DO CLIENTE (DORES E OPORTUNIDADES)', margin, y);
     y += 2;
     doc.setLineWidth(0.5);
     doc.line(margin, y, pageWidth - margin, y);
