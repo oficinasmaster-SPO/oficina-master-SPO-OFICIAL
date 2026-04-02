@@ -1,30 +1,15 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
-import { X, Loader2, Send, Sparkles, Lock } from "lucide-react";
+import { X, Loader2, Send } from "lucide-react";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
-import { createPageUrl } from "@/utils";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
 export default function FinalizarAtendimentoModal({ atendimento, onClose }) {
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
-  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const [formData, setFormData] = useState({
     topicos_discutidos: [],
     decisoes_tomadas: [],
@@ -32,26 +17,8 @@ export default function FinalizarAtendimentoModal({ atendimento, onClose }) {
     observacoes_consultor: atendimento.observacoes_consultor || "",
     proximos_passos: atendimento.proximos_passos || "",
     enviar_notificacao: true,
-    gerar_ata: true,
-    usar_ia: false
+    gerar_ata: true
   });
-
-  const { data: workshop } = useQuery({
-    queryKey: ['workshop', atendimento.workshop_id],
-    queryFn: () => base44.entities.Workshop.get(atendimento.workshop_id)
-  });
-
-  const { data: planFeature } = useQuery({
-    queryKey: ['planFeature', workshop?.planoAtual],
-    queryFn: async () => {
-      if (!workshop?.planoAtual) return null;
-      const features = await base44.entities.PlanFeature.filter({ plan_id: workshop.planoAtual });
-      return features?.[0] || null;
-    },
-    enabled: !!workshop?.planoAtual
-  });
-
-  const hasAIAccess = planFeature?.features_allowed?.includes('redigir_ata_ai');
 
   const finalizarMutation = useMutation({
     mutationFn: async (data) => {
@@ -70,8 +37,7 @@ export default function FinalizarAtendimentoModal({ atendimento, onClose }) {
       if (data.gerar_ata) {
         try {
           await base44.functions.invoke('gerarAtaConsultoria', {
-            atendimento_id: atendimento.id,
-            usar_ia: data.usar_ia
+            atendimento_id: atendimento.id
           });
         } catch (error) {
           console.error('Erro ao gerar ata:', error);
@@ -148,53 +114,14 @@ export default function FinalizarAtendimentoModal({ atendimento, onClose }) {
               <div className="flex items-center gap-2">
                 <Checkbox
                   checked={formData.gerar_ata}
-                  onCheckedChange={(checked) => setFormData({ ...formData, gerar_ata: checked, usar_ia: checked && formData.usar_ia })}
+                  onCheckedChange={(checked) => setFormData({ ...formData, gerar_ata: checked })}
                 />
-                <label className="text-sm font-medium text-gray-800">
-                  Gerar documento de Ata automaticamente
+                <label className="text-sm text-gray-700">
+                  Gerar Ata automaticamente (IA)
                 </label>
               </div>
 
-              {formData.gerar_ata && (
-                <div className="pl-6 flex items-center justify-between bg-blue-50/50 p-3 rounded-lg border border-blue-100">
-                  <div className="flex items-center gap-2">
-                    <Checkbox
-                      checked={formData.usar_ia}
-                      onCheckedChange={(checked) => {
-                        if (checked && !hasAIAccess) {
-                          setShowUpgradeDialog(true);
-                          return;
-                        }
-                        setFormData({ ...formData, usar_ia: checked });
-                      }}
-                    />
-                    <div className="flex flex-col">
-                      <label 
-                        className="text-sm font-medium flex items-center gap-1 text-blue-900 cursor-pointer"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          if (!hasAIAccess) {
-                            setShowUpgradeDialog(true);
-                          } else {
-                            setFormData({ ...formData, usar_ia: !formData.usar_ia });
-                          }
-                        }}
-                      >
-                        <Sparkles className="w-4 h-4 text-blue-500" />
-                        Redigir Ata Profissional com IA
-                      </label>
-                      <span className="text-xs text-gray-500">Expande as anotações gerando um texto detalhado e executivo.</span>
-                    </div>
-                  </div>
-                  {!hasAIAccess && (
-                    <Badge variant="outline" className="bg-gray-100 text-gray-500 gap-1">
-                      <Lock className="w-3 h-3" /> Plano
-                    </Badge>
-                  )}
-                </div>
-              )}
-
-              <div className="flex items-center gap-2 mt-2">
+              <div className="flex items-center gap-2">
                 <Checkbox
                   checked={formData.enviar_notificacao}
                   onCheckedChange={(checked) => setFormData({ ...formData, enviar_notificacao: checked })}
@@ -235,34 +162,6 @@ export default function FinalizarAtendimentoModal({ atendimento, onClose }) {
           </form>
         </CardContent>
       </Card>
-
-      <AlertDialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-blue-900">
-              <Sparkles className="w-5 h-5" />
-              Recurso Premium
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-base text-gray-600">
-              A funcionalidade de <strong>Redigir Ata Profissional com Inteligência Artificial</strong> não está disponível no seu plano atual. <br/><br/>
-              Faça um upgrade para gerar automaticamente atas completas, ricas em detalhes e mais profissionais para seus clientes!
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Voltar</AlertDialogCancel>
-            <AlertDialogAction 
-              className="bg-blue-600 hover:bg-blue-700"
-              onClick={() => {
-                setShowUpgradeDialog(false);
-                onClose();
-                navigate(createPageUrl("Planos"));
-              }}
-            >
-              Conhecer Outros Planos
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

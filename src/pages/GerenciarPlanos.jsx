@@ -75,7 +75,6 @@ export default function GerenciarPlanos() {
       { id: "programa_aceleracao", label: "Programa de Aceleração" },
       { id: "cronograma_consultoria", label: "Cronograma de Consultoria" },
       { id: "registro_atendimentos", label: "Registro de Atendimentos" },
-      { id: "redigir_ata_ai", label: "Redigir Ata Profissional com IA" },
       { id: "atas_ia", label: "Atas de Reunião com IA" },
       { id: "painel_aceleracao", label: "Painel do Cliente Aceleração" },
       { id: "controle_aceleracao", label: "Controle da Aceleração (Consultor)" }
