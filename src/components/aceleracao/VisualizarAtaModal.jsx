@@ -264,28 +264,52 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
 
           <Card>
             <CardContent className="pt-6">
-              <h3 className="font-bold text-lg mb-3">1. PAUTAS</h3>
+              <h3 className="font-bold text-lg mb-3 flex items-center gap-2 flex-wrap">
+                1. PAUTAS <Badge variant="outline" className="bg-gray-50 text-gray-500 font-normal">Anotações do Consultor</Badge>
+              </h3>
               <p className="whitespace-pre-wrap">{ataAtualizada.pautas || "Não informado"}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardContent className="pt-6">
-              <h3 className="font-bold text-lg mb-3">2. OBJETIVOS DO ATENDIMENTO</h3>
+              <h3 className="font-bold text-lg mb-3 flex items-center gap-2 flex-wrap">
+                2. OBJETIVOS DO ATENDIMENTO <Badge variant="outline" className="bg-gray-50 text-gray-500 font-normal">Anotações do Consultor</Badge>
+              </h3>
               <p className="whitespace-pre-wrap">{ataAtualizada.objetivos_atendimento || "Não informado"}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardContent className="pt-6">
-              <h3 className="font-bold text-lg mb-3">3. OBJETIVOS DO CONSULTOR</h3>
+              <h3 className="font-bold text-lg mb-3 flex items-center gap-2 flex-wrap">
+                3. OBJETIVOS DO CONSULTOR <Badge variant="outline" className="bg-gray-50 text-gray-500 font-normal">Anotações do Consultor</Badge>
+              </h3>
               <p className="whitespace-pre-wrap">{ataAtualizada.objetivos_consultor || "Não informado"}</p>
             </CardContent>
           </Card>
 
+          {ataAtualizada.ata_ia && (
+            <Card className="border-purple-200 shadow-sm bg-purple-50/30">
+              <CardContent className="pt-6">
+                <h3 className="font-bold text-lg mb-1 flex items-center gap-2 flex-wrap text-purple-800">
+                  RESUMO EXECUTIVO DA REUNIÃO <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-200 border-purple-200">Gerado por Inteligência Artificial</Badge>
+                </h3>
+                <p className="text-sm text-purple-600/80 mb-4 italic">
+                  As informações abaixo foram organizadas e geradas automaticamente pela IA baseadas nas anotações da reunião.
+                </p>
+                <div className="whitespace-pre-wrap text-gray-800 text-sm">
+                  {ataAtualizada.ata_ia}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           <Card>
             <CardContent className="pt-6">
-              <h3 className="font-bold text-lg mb-3">4. PRÓXIMOS PASSOS</h3>
+              <h3 className="font-bold text-lg mb-3 flex items-center gap-2 flex-wrap">
+                4. PRÓXIMOS PASSOS <Badge variant="outline" className="bg-gray-50 text-gray-500 font-normal">Anotações do Consultor</Badge>
+              </h3>
               {Array.isArray(ataAtualizada.proximos_passos_list) && ataAtualizada.proximos_passos_list.length > 0 ? (
                 <div className="space-y-2">
                   {ataAtualizada.proximos_passos_list.map((passo, i) => {

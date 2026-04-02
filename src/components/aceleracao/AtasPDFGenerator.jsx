@@ -207,12 +207,12 @@ export const generateAtaPDF = (rawAta, workshop) => {
 
   // 1. PAUTAS
   if (ata.pautas) {
-    addSection('1', 'PAUTAS', safeText(ata.pautas));
+    addSection('1', 'PAUTAS (Anotacoes do Consultor)', safeText(ata.pautas));
   } else if (ata.pauta && ata.pauta.length > 0) {
     checkPageBreak(25);
     doc.setFontSize(13);
     doc.setFont(undefined, 'bold');
-    doc.text('1. PAUTAS', margin, y);
+    doc.text('1. PAUTAS (Anotacoes do Consultor)', margin, y);
     y += 2;
     doc.setLineWidth(0.5);
     doc.line(margin, y, pageWidth - margin, y);
@@ -250,12 +250,12 @@ export const generateAtaPDF = (rawAta, workshop) => {
 
   // 2. OBJETIVOS DO ATENDIMENTO
   if (ata.objetivos_atendimento) {
-    addSection('2', 'OBJETIVOS DO ATENDIMENTO', safeText(ata.objetivos_atendimento));
+    addSection('2', 'OBJETIVOS DO ATENDIMENTO (Anotacoes do Consultor)', safeText(ata.objetivos_atendimento));
   } else if (ata.objetivos && ata.objetivos.length > 0) {
     checkPageBreak(25);
     doc.setFontSize(13);
     doc.setFont(undefined, 'bold');
-    doc.text('2. OBJETIVOS DO ATENDIMENTO', margin, y);
+    doc.text('2. OBJETIVOS DO ATENDIMENTO (Anotacoes do Consultor)', margin, y);
     y += 2;
     doc.setLineWidth(0.5);
     doc.line(margin, y, pageWidth - margin, y);
@@ -273,7 +273,7 @@ export const generateAtaPDF = (rawAta, workshop) => {
 
   // 3. OBJETIVOS DO CONSULTOR
   if (ata.objetivos_consultor) {
-    addSection('3', 'OBJETIVOS DO CONSULTOR', safeText(ata.objetivos_consultor));
+    addSection('3', 'OBJETIVOS DO CONSULTOR (Anotacoes)', safeText(ata.objetivos_consultor));
   }
 
   // 4. PRÓXIMOS PASSOS
@@ -281,7 +281,7 @@ export const generateAtaPDF = (rawAta, workshop) => {
     checkPageBreak(25);
     doc.setFontSize(13);
     doc.setFont(undefined, 'bold');
-    doc.text('4. PROXIMOS PASSOS', margin, y);
+    doc.text('4. PROXIMOS PASSOS (Anotacoes do Consultor)', margin, y);
     y += 2;
     doc.setLineWidth(0.5);
     doc.line(margin, y, pageWidth - margin, y);
@@ -334,23 +334,32 @@ export const generateAtaPDF = (rawAta, workshop) => {
     
     y += 5;
   } else if (ata.proximos_passos) {
-    addSection('4', 'PROXIMOS PASSOS', safeText(ata.proximos_passos));
+    addSection('4', 'PROXIMOS PASSOS (Anotacoes do Consultor)', safeText(ata.proximos_passos));
   }
 
   // 5. RESUMO DA REUNIAO (COM PARSER MARKDOWN)
   if (ata.ata_ia) {
-    checkPageBreak(25);
+    checkPageBreak(30);
     
     // Titulo da secao
     doc.setFontSize(13);
     doc.setFont(undefined, 'bold');
-    doc.text('5. RESUMO DA REUNIAO', margin, y);
+    doc.setTextColor(147, 51, 234); // Purple for AI
+    doc.text('5. RESUMO EXECUTIVO (Gerado por Inteligencia Artificial)', margin, y);
+    doc.setTextColor(0, 0, 0);
     
     // Linha abaixo do título
     y += 2;
     doc.setLineWidth(0.5);
-    doc.setDrawColor(0, 0, 0);
+    doc.setDrawColor(147, 51, 234);
     doc.line(margin, y, pageWidth - margin, y);
+    
+    y += 6;
+    doc.setFontSize(9);
+    doc.setFont(undefined, 'italic');
+    doc.setTextColor(100, 100, 100);
+    doc.text('As informacoes abaixo foram organizadas e geradas pela IA baseadas nas anotacoes da reuniao.', margin, y);
+    doc.setTextColor(0, 0, 0);
     
     y += 8;
 
@@ -392,7 +401,7 @@ export const generateAtaPDF = (rawAta, workshop) => {
     checkPageBreak(25);
     doc.setFontSize(13);
     doc.setFont(undefined, 'bold');
-    doc.text('6. DECISOES TOMADAS', margin, y);
+    doc.text('6. DECISOES TOMADAS (Anotacoes do Consultor)', margin, y);
     y += 2;
     doc.setLineWidth(0.5);
     doc.line(margin, y, pageWidth - margin, y);
@@ -434,7 +443,7 @@ export const generateAtaPDF = (rawAta, workshop) => {
     checkPageBreak(25);
     doc.setFontSize(13);
     doc.setFont(undefined, 'bold');
-    doc.text('7. ACOES DE ACOMPANHAMENTO', margin, y);
+    doc.text('7. ACOES DE ACOMPANHAMENTO (Anotacoes do Consultor)', margin, y);
     y += 2;
     doc.setLineWidth(0.5);
     doc.line(margin, y, pageWidth - margin, y);
@@ -630,7 +639,7 @@ export const generateAtaPDF = (rawAta, workshop) => {
 
   // 11. OBSERVACOES DO CONSULTOR
   if (ata.observacoes_consultor) {
-    addSection('11', 'OBSERVACOES DO CONSULTOR', safeText(ata.observacoes_consultor));
+    addSection('11', 'OBSERVACOES DO CONSULTOR (Anotacoes)', safeText(ata.observacoes_consultor));
   }
 
   // 12. VISAO GERAL DO PROJETO

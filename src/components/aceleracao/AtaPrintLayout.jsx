@@ -254,7 +254,7 @@ export default function AtaPrintLayout({ atendimento, workshop }) {
 
       {/* Seção 1: PAUTAS */}
       <div style={styles.section}>
-        <h3 style={styles.h3}>{atendimento.inteligencias_capturadas?.length > 0 ? '1' : '1'}. PAUTAS</h3>
+        <h3 style={styles.h3}>{atendimento.inteligencias_capturadas?.length > 0 ? '1' : '1'}. PAUTAS <span style={{fontSize: '9pt', fontWeight: 'normal', color: '#666', textTransform: 'none'}}>(Anotações do Consultor)</span></h3>
         {atendimento.pauta && atendimento.pauta.length > 0 ? (
           <div>
             {atendimento.pauta.map((item, idx) => (
@@ -282,7 +282,7 @@ export default function AtaPrintLayout({ atendimento, workshop }) {
 
       {/* Seção 2: OBJETIVOS DO ATENDIMENTO */}
       <div style={styles.section}>
-        <h3 style={styles.h3}>2. OBJETIVOS DO ATENDIMENTO</h3>
+        <h3 style={styles.h3}>2. OBJETIVOS DO ATENDIMENTO <span style={{fontSize: '9pt', fontWeight: 'normal', color: '#666', textTransform: 'none'}}>(Anotações do Consultor)</span></h3>
         {atendimento.objetivos && atendimento.objetivos.length > 0 ? (
           <ul style={styles.list}>
             {atendimento.objetivos.map((obj, idx) => (
@@ -296,13 +296,13 @@ export default function AtaPrintLayout({ atendimento, workshop }) {
 
       {/* Seção 3: OBJETIVOS DO CONSULTOR */}
       <div style={styles.section}>
-        <h3 style={styles.h3}>3. OBJETIVOS DO CONSULTOR</h3>
+        <h3 style={styles.h3}>3. OBJETIVOS DO CONSULTOR <span style={{fontSize: '9pt', fontWeight: 'normal', color: '#666', textTransform: 'none'}}>(Anotações do Consultor)</span></h3>
         <p style={styles.content}>{atendimento.objetivos_consultor || 'Não informado'}</p>
       </div>
 
       {/* Seção 4: PRÓXIMOS PASSOS */}
       <div style={styles.section}>
-        <h3 style={styles.h3}>4. PRÓXIMOS PASSOS</h3>
+        <h3 style={styles.h3}>4. PRÓXIMOS PASSOS <span style={{fontSize: '9pt', fontWeight: 'normal', color: '#666', textTransform: 'none'}}>(Anotações do Consultor)</span></h3>
         {atendimento.proximos_passos_list && atendimento.proximos_passos_list.length > 0 ? (
           <div>
             {atendimento.proximos_passos_list.map((passo, idx) => (
@@ -331,7 +331,12 @@ export default function AtaPrintLayout({ atendimento, workshop }) {
       {/* Seção 5: RESUMO DA REUNIÃO */}
       {atendimento.ata_ia && (
         <div style={styles.section}>
-          <h3 style={styles.h3}>5. RESUMO DA REUNIÃO</h3>
+          <h3 style={{...styles.h3, color: '#9333ea', borderBottomColor: '#9333ea'}}>
+            5. RESUMO EXECUTIVO DA REUNIÃO <span style={{fontSize: '9pt', fontWeight: 'normal', color: '#9333ea', textTransform: 'none'}}>(Gerado por Inteligência Artificial)</span>
+          </h3>
+          <p style={{fontSize: '9pt', fontStyle: 'italic', color: '#666', marginBottom: '10px'}}>
+            As informações abaixo foram organizadas e geradas automaticamente pela IA baseadas nas anotações da reunião.
+          </p>
           <div style={styles.content}>
             <ReactMarkdown>{atendimento.ata_ia}</ReactMarkdown>
           </div>
@@ -341,7 +346,7 @@ export default function AtaPrintLayout({ atendimento, workshop }) {
       {/* Seção 6: DECISÕES TOMADAS */}
       {atendimento.decisoes_tomadas && atendimento.decisoes_tomadas.length > 0 && (
         <div style={styles.section}>
-          <h3 style={styles.h3}>6. DECISÕES TOMADAS</h3>
+          <h3 style={styles.h3}>6. DECISÕES TOMADAS <span style={{fontSize: '9pt', fontWeight: 'normal', color: '#666', textTransform: 'none'}}>(Anotações do Consultor)</span></h3>
           <div>
             {atendimento.decisoes_tomadas.map((decisao, idx) => (
               <div key={idx} style={styles.decisaoBox}>
@@ -365,7 +370,7 @@ export default function AtaPrintLayout({ atendimento, workshop }) {
       {/* Seção 7: AÇÕES GERADAS */}
       {atendimento.acoes_geradas && atendimento.acoes_geradas.length > 0 && (
         <div style={styles.section}>
-          <h3 style={styles.h3}>7. AÇÕES DE ACOMPANHAMENTO</h3>
+          <h3 style={styles.h3}>7. AÇÕES DE ACOMPANHAMENTO <span style={{fontSize: '9pt', fontWeight: 'normal', color: '#666', textTransform: 'none'}}>(Anotações do Consultor)</span></h3>
           <div>
             {atendimento.acoes_geradas.map((acao, idx) => (
               <div key={idx} style={styles.acaoBox}>
@@ -415,7 +420,7 @@ export default function AtaPrintLayout({ atendimento, workshop }) {
       {/* Seção 10: OBSERVAÇÕES DO CONSULTOR */}
       {atendimento.observacoes_consultor && (
         <div style={styles.section}>
-          <h3 style={styles.h3}>10. OBSERVAÇÕES DO CONSULTOR</h3>
+          <h3 style={styles.h3}>10. OBSERVAÇÕES DO CONSULTOR <span style={{fontSize: '9pt', fontWeight: 'normal', color: '#666', textTransform: 'none'}}>(Anotações)</span></h3>
           <p style={styles.content}>{atendimento.observacoes_consultor}</p>
         </div>
       )}
