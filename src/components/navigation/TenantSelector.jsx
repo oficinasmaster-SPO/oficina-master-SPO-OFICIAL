@@ -46,223 +46,184 @@ export default function TenantSelector() {
     `${c.name} ${c.city} ${c.state}`.toLowerCase().includes(companySearchTerm.toLowerCase())
   ) || [];
 
-  // Apenas admins podem alternar entre tenants livremente
   if (user?.role !== 'admin') {
     return null;
   }
 
   return (
     <div className="hidden md:flex items-center gap-3 ml-4">
-      <div className="flex items-center gap-2 bg-gray-50 p-1 rounded-lg border border-gray-200">
-        <Building2 className="w-4 h-4 text-gray-500 ml-2" />
-        <Popover open={openFirmPopover} onOpenChange={setOpenFirmPopover}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              role="combobox"
-              aria-expanded={openFirmPopover}
-              className="w-[180px] h-8 text-xs bg-white border-0 shadow-sm justify-between px-3 font-normal"
-            >
+      <Popover open={openFirmPopover} onOpenChange={setOpenFirmPopover}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={openFirmPopover}
+            className="w-[180px] justify-between text-gray-600"
+          >
+            <span className="flex items-center gap-2 truncate">
+              <Building2 className="w-4 h-4 shrink-0 text-gray-500" />
               <span className="truncate">
-                {selectedFirm 
-                  ? `${selectedFirm.name}`
-                  : "Todas Consultorias"}
+                {selectedFirm ? selectedFirm.name : "Todas Consultorias"}
               </span>
-              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-[220px] p-0" align="start">
-            <div className="flex items-center border-b px-3">
-              <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-              <input 
-                className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
-                placeholder="Pesquisar consultoria..." 
-                value={firmSearchTerm}
-                onChange={(e) => setFirmSearchTerm(e.target.value)}
-              />
-            </div>
-            
-            <div className="border-b px-3 py-2 text-xs text-gray-600 bg-gray-50 font-medium">
+            </span>
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[250px] p-0" align="start">
+          <div className="flex items-center border-b px-3">
+            <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+            <input 
+              className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+              placeholder="Pesquisar consultoria..." 
+              value={firmSearchTerm}
+              onChange={(e) => setFirmSearchTerm(e.target.value)}
+            />
+          </div>
+
+          <div className="p-1.5 border-b">
+            <div 
+              onClick={() => {
+                changeConsultingFirm(null);
+                setOpenFirmPopover(false);
+                setFirmSearchTerm('');
+              }}
+              className="flex w-full items-center justify-center rounded-sm bg-slate-100/80 px-2 py-1.5 text-sm font-medium text-slate-700 cursor-pointer hover:bg-slate-200 transition-colors"
+            >
               Todas Consultorias
             </div>
+          </div>
 
-            <div className="max-h-64 overflow-y-auto pr-2" style={{ scrollbarGutter: 'stable' }}>
-              {filteredFirms.length === 0 ? (
-                <div className="px-3 py-4 text-center text-sm text-gray-500">
-                  Nenhuma consultoria encontrada
-                </div>
-              ) : (
-                <>
+          <div className="max-h-32 overflow-y-auto pr-2" style={{ scrollbarGutter: 'stable' }}>
+            {filteredFirms.length === 0 ? (
+              <div className="px-3 py-4 text-center text-sm text-gray-500">
+                Nenhuma consultoria encontrada
+              </div>
+            ) : (
+              <>
+                {filteredFirms.map((firm) => (
                   <div
+                    key={firm.id}
                     onClick={() => {
-                      changeConsultingFirm(null);
+                      changeConsultingFirm(firm.id);
                       setOpenFirmPopover(false);
                       setFirmSearchTerm('');
                     }}
-                    onMouseEnter={() => setHoveredFirmId('all')}
+                    onMouseEnter={() => setHoveredFirmId(firm.id)}
                     onMouseLeave={() => setHoveredFirmId(null)}
                     style={{
-                      backgroundColor: hoveredFirmId === 'all' ? '#dc2626' : 'transparent',
-                      color: hoveredFirmId === 'all' ? 'white' : 'black',
+                      backgroundColor: hoveredFirmId === firm.id ? '#dc2626' : 'transparent',
+                      color: hoveredFirmId === firm.id ? 'white' : 'black',
                       cursor: 'pointer',
                       padding: '8px 12px',
                       transition: 'background-color 0.15s ease-out'
                     }}
                   >
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-start gap-2">
                       <Check
                         className={cn(
-                          "h-4 w-4 flex-shrink-0",
-                          !selectedFirmId ? "opacity-100" : "opacity-0"
+                          "h-4 w-4 mt-0.5 flex-shrink-0",
+                          selectedFirmId === firm.id ? "opacity-100" : "opacity-0"
                         )}
                       />
-                      <span className="font-medium text-sm">Todas Consultorias</span>
-                    </div>
-                  </div>
-                  
-                  {filteredFirms.map((firm) => (
-                    <div
-                      key={firm.id}
-                      onClick={() => {
-                        changeConsultingFirm(firm.id);
-                        setOpenFirmPopover(false);
-                        setFirmSearchTerm('');
-                      }}
-                      onMouseEnter={() => setHoveredFirmId(firm.id)}
-                      onMouseLeave={() => setHoveredFirmId(null)}
-                      style={{
-                        backgroundColor: hoveredFirmId === firm.id ? '#dc2626' : 'transparent',
-                        color: hoveredFirmId === firm.id ? 'white' : 'black',
-                        cursor: 'pointer',
-                        padding: '8px 12px',
-                        transition: 'background-color 0.15s ease-out'
-                      }}
-                    >
-                      <div className="flex items-center gap-2">
-                        <Check
-                          className={cn(
-                            "h-4 w-4 flex-shrink-0",
-                            selectedFirmId === firm.id ? "opacity-100" : "opacity-0"
-                          )}
-                        />
+                      <div className="flex flex-col flex-1 min-w-0">
                         <span className="font-medium text-sm">{firm.name}</span>
                       </div>
                     </div>
-                  ))}
-                </>
-              )}
-            </div>
-          </PopoverContent>
-        </Popover>
-      </div>
+                  </div>
+                ))}
+              </>
+            )}
+          </div>
+        </PopoverContent>
+      </Popover>
 
-      <div className="flex items-center gap-2 bg-gray-50 p-1 rounded-lg border border-gray-200">
-        <Briefcase className="w-4 h-4 text-gray-500 ml-2" />
-        <Popover open={openCompanyPopover} onOpenChange={setOpenCompanyPopover}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              role="combobox"
-              aria-expanded={openCompanyPopover}
-              className="w-[180px] h-8 text-xs bg-white border-0 shadow-sm justify-between px-3 font-normal"
-            >
+      <Popover open={openCompanyPopover} onOpenChange={setOpenCompanyPopover}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={openCompanyPopover}
+            className="w-[180px] justify-between text-gray-600"
+          >
+            <span className="flex items-center gap-2 truncate">
+              <Briefcase className="w-4 h-4 shrink-0 text-gray-500" />
               <span className="truncate">
-                {selectedCompany 
-                  ? `${selectedCompany.name}`
-                  : "Todas Oficinas"}
+                {selectedCompany ? selectedCompany.name : "Todas Oficinas"}
               </span>
-              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-[220px] p-0" align="start">
-            <div className="flex items-center border-b px-3">
-              <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-              <input 
-                className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
-                placeholder="Pesquisar oficina..." 
-                value={companySearchTerm}
-                onChange={(e) => setCompanySearchTerm(e.target.value)}
-              />
-            </div>
-            
-            <div className="border-b px-3 py-2 text-xs text-gray-600 bg-gray-50 font-medium">
+            </span>
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[250px] p-0" align="start">
+          <div className="flex items-center border-b px-3">
+            <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+            <input 
+              className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+              placeholder="Pesquisar oficina..." 
+              value={companySearchTerm}
+              onChange={(e) => setCompanySearchTerm(e.target.value)}
+            />
+          </div>
+
+          <div className="p-1.5 border-b">
+            <div 
+              onClick={() => {
+                changeCompany(null);
+                setOpenCompanyPopover(false);
+                setCompanySearchTerm('');
+              }}
+              className="flex w-full items-center justify-center rounded-sm bg-slate-100/80 px-2 py-1.5 text-sm font-medium text-slate-700 cursor-pointer hover:bg-slate-200 transition-colors"
+            >
               Todas Oficinas
             </div>
+          </div>
 
-            <div className="max-h-64 overflow-y-auto pr-2" style={{ scrollbarGutter: 'stable' }}>
-              {filteredCompanies.length === 0 ? (
-                <div className="px-3 py-4 text-center text-sm text-gray-500">
-                  Nenhuma oficina encontrada
-                </div>
-              ) : (
-                <>
+          <div className="max-h-32 overflow-y-auto pr-2" style={{ scrollbarGutter: 'stable' }}>
+            {filteredCompanies.length === 0 ? (
+              <div className="px-3 py-4 text-center text-sm text-gray-500">
+                Nenhuma oficina encontrada
+              </div>
+            ) : (
+              <>
+                {filteredCompanies.map((company) => (
                   <div
+                    key={company.id}
                     onClick={() => {
-                      changeCompany(null);
+                      changeCompany(company.id);
                       setOpenCompanyPopover(false);
                       setCompanySearchTerm('');
                     }}
-                    onMouseEnter={() => setHoveredCompanyId('all')}
+                    onMouseEnter={() => setHoveredCompanyId(company.id)}
                     onMouseLeave={() => setHoveredCompanyId(null)}
                     style={{
-                      backgroundColor: hoveredCompanyId === 'all' ? '#dc2626' : 'transparent',
-                      color: hoveredCompanyId === 'all' ? 'white' : 'black',
+                      backgroundColor: hoveredCompanyId === company.id ? '#dc2626' : 'transparent',
+                      color: hoveredCompanyId === company.id ? 'white' : 'black',
                       cursor: 'pointer',
                       padding: '8px 12px',
                       transition: 'background-color 0.15s ease-out'
                     }}
                   >
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-start gap-2">
                       <Check
                         className={cn(
-                          "h-4 w-4 flex-shrink-0",
-                          !selectedCompanyId ? "opacity-100" : "opacity-0"
+                          "h-4 w-4 mt-0.5 flex-shrink-0",
+                          selectedCompanyId === company.id ? "opacity-100" : "opacity-0"
                         )}
                       />
-                      <span className="font-medium text-sm">Todas Oficinas</span>
-                    </div>
-                  </div>
-                  
-                  {filteredCompanies.map((company) => (
-                    <div
-                      key={company.id}
-                      onClick={() => {
-                        changeCompany(company.id);
-                        setOpenCompanyPopover(false);
-                        setCompanySearchTerm('');
-                      }}
-                      onMouseEnter={() => setHoveredCompanyId(company.id)}
-                      onMouseLeave={() => setHoveredCompanyId(null)}
-                      style={{
-                        backgroundColor: hoveredCompanyId === company.id ? '#dc2626' : 'transparent',
-                        color: hoveredCompanyId === company.id ? 'white' : 'black',
-                        cursor: 'pointer',
-                        padding: '8px 12px',
-                        transition: 'background-color 0.15s ease-out'
-                      }}
-                    >
-                      <div className="flex items-start gap-2">
-                        <Check
-                          className={cn(
-                            "h-4 w-4 mt-0.5 flex-shrink-0",
-                            selectedCompanyId === company.id ? "opacity-100" : "opacity-0"
-                          )}
-                        />
-                        <div className="flex flex-col flex-1 min-w-0">
-                          <span className="font-medium text-sm">{company.name}</span>
-                          <span className="text-xs" style={{opacity: hoveredCompanyId === company.id ? 0.7 : 1, color: hoveredCompanyId === company.id ? 'white' : '#9ca3af'}}>
-                            {company.city}/{company.state}
-                          </span>
-                        </div>
+                      <div className="flex flex-col flex-1 min-w-0">
+                        <span className="font-medium text-sm">{company.name}</span>
+                        <span className="text-xs" style={{opacity: hoveredCompanyId === company.id ? 0.7 : 1, color: hoveredCompanyId === company.id ? 'white' : '#9ca3af'}}>
+                          {company.city}/{company.state}
+                        </span>
                       </div>
                     </div>
-                  ))}
-                </>
-              )}
-            </div>
-          </PopoverContent>
-        </Popover>
-      </div>
+                  </div>
+                ))}
+              </>
+            )}
+          </div>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }

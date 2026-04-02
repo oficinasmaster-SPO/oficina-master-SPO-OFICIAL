@@ -29,6 +29,7 @@ import PlanLimitModal from "@/components/limits/PlanLimitModal";
 import VoucherPendingDialog from "@/components/vouchers/VoucherPendingDialog";
 
 export default function Layout({ children, currentPageName }) {
+  // Layout cache bust
   const location = useLocation();
   const { user, isAuthenticated, isLoadingAuth: isCheckingAuth } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);

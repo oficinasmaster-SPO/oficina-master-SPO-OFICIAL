@@ -17,7 +17,7 @@ import FiltrosControleAceleracao from "@/components/aceleracao/FiltrosControleAc
 import RegistrarAtendimento from "./RegistrarAtendimento";
 import CronogramaGeral from "./CronogramaGeral";
 
-// ControleAceleracao v2
+// ControleAceleracao v4 - cache bust
 export default function ControleAceleracao() {
   const navigate = useNavigate();
   const urlParams = new URLSearchParams(window.location.search);
