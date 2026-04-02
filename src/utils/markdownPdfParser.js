@@ -33,6 +33,7 @@ function stripInlineMarkdown(text) {
 /**
  * Converte string para texto seguro para jsPDF
  * Trata objetos, arrays, null, undefined
+ * Também normaliza caracteres UTF-8 problemáticos para a fonte padrão do jsPDF
  */
 export function safeText(value) {
   if (value === null || value === undefined) return '';
@@ -47,7 +48,31 @@ export function safeText(value) {
     if (value.text) return safeText(value.text);
     return JSON.stringify(value);
   }
-  return stripInlineMarkdown(String(value));
+  let text = stripInlineMarkdown(String(value));
+  // Substituir emojis comuns por equivalentes texto
+  text = text
+    .replace(/\u{1F4CB}/gu, '[Lista]')
+    .replace(/\u{1F4CD}/gu, '[Local]')
+    .replace(/\u{1F3AC}/gu, '[Video]')
+    .replace(/\u{1F4CE}/gu, '[Anexo]')
+    .replace(/\u{1F4C4}/gu, '[Doc]')
+    .replace(/\u{1F517}/gu, '[Link]')
+    .replace(/\u{1F5BC}/gu, '[Img]')
+    .replace(/\u{2705}/gu, '[OK]')
+    .replace(/\u{274C}/gu, '[X]')
+    .replace(/\u{26A0}/gu, '[!]')
+    .replace(/\u{1F534}/gu, '[!]')
+    .replace(/\u{1F7E2}/gu, '[OK]')
+    .replace(/\u{1F4C8}/gu, '[Grafico]')
+    .replace(/\u{1F4DD}/gu, '[Nota]')
+    .replace(/\u{1F916}/gu, '[IA]')
+    .replace(/\u{2B50}/gu, '[*]')
+    .replace(/\u{1F4A1}/gu, '[Ideia]');
+  // Remover emojis restantes que a fonte não suporta
+  text = text.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F900}-\u{1F9FF}\u{200D}\u{20E3}\u{E0020}-\u{E007F}]/gu, '');
+  // Normalizar acentos problemáticos para jsPDF (substituir compostos)
+  text = text.normalize('NFC');
+  return text;
 }
 
 export function parseMarkdownToPdf(content) {

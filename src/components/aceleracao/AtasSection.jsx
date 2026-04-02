@@ -255,6 +255,7 @@ export default function AtasSection({ atas, workshop }) {
         <VisualizarAtaModal
           ata={selectedAta}
           workshop={workshop}
+          atendimento={null}
           onClose={() => {
             setShowAta(false);
             setSelectedAta(null);

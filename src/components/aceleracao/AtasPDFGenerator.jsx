@@ -31,10 +31,10 @@ export const generateAtaPDF = (rawAta, workshop) => {
     return false;
   };
 
-  // Cabeçalho Centralizado
+  // Cabecalho Centralizado
   doc.setFontSize(18);
   doc.setFont(undefined, 'bold');
-  doc.text('GESTÃO DE PROCESSOS', pageWidth / 2, y, { align: 'center' });
+  doc.text('GESTAO DE PROCESSOS', pageWidth / 2, y, { align: 'center' });
   
   y += 8;
   doc.setFontSize(13);
@@ -75,9 +75,9 @@ export const generateAtaPDF = (rawAta, workshop) => {
   doc.setTextColor(0, 0, 0);
   doc.setFontSize(12);
   doc.setFont(undefined, 'bold');
-  doc.text('Tipo de Aceleração:', margin, y);
+  doc.text('Tipo de Aceleracao:', margin, y);
   doc.setTextColor(220, 38, 38);
-  doc.text((ata.tipo_aceleracao || 'MENSAL').toUpperCase(), margin + 50, y);
+  doc.text(safeText((ata.tipo_aceleracao || 'MENSAL').toUpperCase()), margin + 50, y);
   doc.setTextColor(0, 0, 0);
 
   y += 12;
@@ -130,16 +130,17 @@ export const generateAtaPDF = (rawAta, workshop) => {
 
   y = doc.lastAutoTable.finalY + 15;
 
-  // Função para adicionar seção com título
+  // Funcao auxiliar para adicionar secao com titulo
   const addSection = (numero, titulo, conteudo) => {
     checkPageBreak(25);
 
-    // Título da seção
+    // Titulo da secao (sanitizado para fonte jsPDF)
+    const tituloSafe = safeText(titulo);
     doc.setFontSize(13);
     doc.setFont(undefined, 'bold');
-    doc.text(`${numero}. ${titulo}`, margin, y);
+    doc.text(`${numero}. ${tituloSafe}`, margin, y);
     
-    // Linha abaixo do título
+    // Linha abaixo do titulo
     y += 2;
     doc.setLineWidth(0.5);
     doc.setDrawColor(0, 0, 0);
@@ -151,7 +152,8 @@ export const generateAtaPDF = (rawAta, workshop) => {
       doc.setFontSize(11);
       doc.setFont(undefined, 'normal');
       
-      const lines = doc.splitTextToSize(conteudo, contentWidth);
+      const conteudoSafe = safeText(conteudo);
+      const lines = doc.splitTextToSize(conteudoSafe, contentWidth);
       lines.forEach(line => {
         checkPageBreak(8);
         doc.text(line, margin, y);
@@ -188,7 +190,7 @@ export const generateAtaPDF = (rawAta, workshop) => {
 
   // 1. PAUTAS
   if (ata.pautas) {
-    addSection('1', 'PAUTAS', ata.pautas);
+    addSection('1', 'PAUTAS', safeText(ata.pautas));
   } else if (ata.pauta && ata.pauta.length > 0) {
     checkPageBreak(25);
     doc.setFontSize(13);
@@ -203,12 +205,12 @@ export const generateAtaPDF = (rawAta, workshop) => {
       checkPageBreak(15);
       doc.setFontSize(10);
       doc.setFont(undefined, 'bold');
-      doc.text(`${idx + 1}. ${item.titulo}`, margin, y);
+      doc.text(`${idx + 1}. ${safeText(item.titulo)}`, margin, y);
       y += 6;
       
       if (item.descricao) {
         doc.setFont(undefined, 'normal');
-        const descLines = doc.splitTextToSize(item.descricao, contentWidth - 10);
+        const descLines = doc.splitTextToSize(safeText(item.descricao), contentWidth - 10);
         descLines.forEach(line => {
           checkPageBreak(6);
           doc.text(line, margin + 5, y);
@@ -231,7 +233,7 @@ export const generateAtaPDF = (rawAta, workshop) => {
 
   // 2. OBJETIVOS DO ATENDIMENTO
   if (ata.objetivos_atendimento) {
-    addSection('2', 'OBJETIVOS DO ATENDIMENTO', ata.objetivos_atendimento);
+    addSection('2', 'OBJETIVOS DO ATENDIMENTO', safeText(ata.objetivos_atendimento));
   } else if (ata.objetivos && ata.objetivos.length > 0) {
     checkPageBreak(25);
     doc.setFontSize(13);
@@ -254,7 +256,7 @@ export const generateAtaPDF = (rawAta, workshop) => {
 
   // 3. OBJETIVOS DO CONSULTOR
   if (ata.objetivos_consultor) {
-    addSection('3', 'OBJETIVOS DO CONSULTOR', ata.objetivos_consultor);
+    addSection('3', 'OBJETIVOS DO CONSULTOR', safeText(ata.objetivos_consultor));
   }
 
   // 4. PRÓXIMOS PASSOS
@@ -262,7 +264,7 @@ export const generateAtaPDF = (rawAta, workshop) => {
     checkPageBreak(25);
     doc.setFontSize(13);
     doc.setFont(undefined, 'bold');
-    doc.text('4. PRÓXIMOS PASSOS', margin, y);
+    doc.text('4. PROXIMOS PASSOS', margin, y);
     y += 2;
     doc.setLineWidth(0.5);
     doc.line(margin, y, pageWidth - margin, y);
@@ -270,7 +272,7 @@ export const generateAtaPDF = (rawAta, workshop) => {
 
     doc.setFontSize(11);
     doc.setFont(undefined, 'normal');
-    doc.text('Por fim, ficaram definidos como próximos passos:', margin, y);
+    doc.text('Por fim, ficaram definidos como proximos passos:', margin, y);
     y += 10;
 
     ata.proximos_passos_list.forEach((passo, idx) => {
@@ -293,7 +295,7 @@ export const generateAtaPDF = (rawAta, workshop) => {
       
       let details = [];
       const respText = safeText(passo.responsavel);
-      if (respText) details.push(`Responsável: ${respText}`);
+      if (respText) details.push(`Responsavel: ${respText}`);
       if (passo.prazo) {
         details.push(`Prazo: ${formatPrazoSafe(passo.prazo)}`);
       }
@@ -322,17 +324,17 @@ export const generateAtaPDF = (rawAta, workshop) => {
     
     y += 5;
   } else if (ata.proximos_passos) {
-    addSection('4', 'PRÓXIMOS PASSOS', ata.proximos_passos);
+    addSection('4', 'PROXIMOS PASSOS', safeText(ata.proximos_passos));
   }
 
-  // 5. RESUMO DA REUNIÃO (COM PARSER MARKDOWN)
+  // 5. RESUMO DA REUNIAO (COM PARSER MARKDOWN)
   if (ata.ata_ia) {
     checkPageBreak(25);
     
-    // Título da seção
+    // Titulo da secao
     doc.setFontSize(13);
     doc.setFont(undefined, 'bold');
-    doc.text('5. RESUMO DA REUNIÃO', margin, y);
+    doc.text('5. RESUMO DA REUNIAO', margin, y);
     
     // Linha abaixo do título
     y += 2;
@@ -380,7 +382,7 @@ export const generateAtaPDF = (rawAta, workshop) => {
     checkPageBreak(25);
     doc.setFontSize(13);
     doc.setFont(undefined, 'bold');
-    doc.text('6. DECISÕES TOMADAS', margin, y);
+    doc.text('6. DECISOES TOMADAS', margin, y);
     y += 2;
     doc.setLineWidth(0.5);
     doc.line(margin, y, pageWidth - margin, y);
@@ -405,7 +407,7 @@ export const generateAtaPDF = (rawAta, workshop) => {
       doc.setFontSize(9);
       
       let detalhes = [];
-      if (decisao.responsavel) detalhes.push(`Responsável: ${safeText(decisao.responsavel)}`);
+      if (decisao.responsavel) detalhes.push(`Responsavel: ${safeText(decisao.responsavel)}`);
       if (decisao.prazo) detalhes.push(`Prazo: ${formatPrazoSafe(decisao.prazo)}`);
       
       if (detalhes.length > 0) {
@@ -422,7 +424,7 @@ export const generateAtaPDF = (rawAta, workshop) => {
     checkPageBreak(25);
     doc.setFontSize(13);
     doc.setFont(undefined, 'bold');
-    doc.text('7. AÇÕES DE ACOMPANHAMENTO', margin, y);
+    doc.text('7. ACOES DE ACOMPANHAMENTO', margin, y);
     y += 2;
     doc.setLineWidth(0.5);
     doc.line(margin, y, pageWidth - margin, y);
@@ -445,7 +447,7 @@ export const generateAtaPDF = (rawAta, workshop) => {
       y += 7;
       doc.setFont(undefined, 'normal');
       doc.setFontSize(9);
-      doc.text(`Responsável: ${safeText(acao.responsavel)}`, margin + 2, y);
+      doc.text(`Responsavel: ${safeText(acao.responsavel)}`, margin + 2, y);
       
       if (acao.prazo) {
         y += 5;
@@ -474,7 +476,7 @@ export const generateAtaPDF = (rawAta, workshop) => {
     doc.setFont(undefined, 'italic');
     doc.setTextColor(100, 100, 100);
     const instrucao = doc.splitTextToSize(
-      'Os processos abaixo foram discutidos e estão disponíveis para consulta no módulo "Processos" da plataforma.',
+      'Os processos abaixo foram discutidos e estao disponiveis para consulta no modulo "Processos" da plataforma.',
       contentWidth
     );
     instrucao.forEach(line => {
@@ -505,7 +507,7 @@ export const generateAtaPDF = (rawAta, workshop) => {
       y += 5;
       doc.setFontSize(8);
       doc.setTextColor(37, 99, 235);
-      doc.text(`📍 Acesse em: Menu → Processos → Buscar "${proc.titulo}"`, margin + 2, y);
+      doc.text(`Acesse em: Menu > Processos > Buscar "${safeText(proc.titulo)}"`, margin + 2, y);
       doc.setTextColor(0, 0, 0);
       
       y += 7;
@@ -528,7 +530,7 @@ export const generateAtaPDF = (rawAta, workshop) => {
     doc.setFont(undefined, 'italic');
     doc.setTextColor(100, 100, 100);
     const instrucaoVideo = doc.splitTextToSize(
-      'As videoaulas abaixo foram indicadas e estão disponíveis no módulo "Academia de Treinamento" da plataforma.',
+      'As videoaulas abaixo foram indicadas e estao disponiveis no modulo "Academia de Treinamento" da plataforma.',
       contentWidth
     );
     instrucaoVideo.forEach(line => {
@@ -560,7 +562,7 @@ export const generateAtaPDF = (rawAta, workshop) => {
       doc.setFontSize(8);
       doc.setTextColor(147, 51, 234);
       const caminhoVideo = doc.splitTextToSize(
-        `📍 Acesse em: Menu → Academia de Treinamento → ${video.descricao} → ${video.titulo}`,
+        `Acesse em: Menu > Academia de Treinamento > ${safeText(video.descricao)} > ${safeText(video.titulo)}`,
         contentWidth - 5
       );
       caminhoVideo.forEach(linha => {
@@ -579,7 +581,7 @@ export const generateAtaPDF = (rawAta, workshop) => {
     checkPageBreak(25);
     doc.setFontSize(13);
     doc.setFont(undefined, 'bold');
-    doc.text('10. MÍDIAS E ANEXOS', margin, y);
+    doc.text('10. MIDIAS E ANEXOS', margin, y);
     y += 2;
     doc.setLineWidth(0.5);
     doc.line(margin, y, pageWidth - margin, y);
@@ -591,13 +593,13 @@ export const generateAtaPDF = (rawAta, workshop) => {
       doc.setFontSize(10);
       doc.setFont(undefined, 'bold');
       
-      let icone = '📎';
-      if (midia.tipo === 'imagem') icone = '🖼️';
-      else if (midia.tipo === 'video') icone = '🎬';
-      else if (midia.tipo === 'link') icone = '🔗';
-      else if (midia.tipo === 'documento') icone = '📄';
+      let icone = '[Anexo]';
+      if (midia.tipo === 'imagem') icone = '[Img]';
+      else if (midia.tipo === 'video') icone = '[Video]';
+      else if (midia.tipo === 'link') icone = '[Link]';
+      else if (midia.tipo === 'documento') icone = '[Doc]';
       
-      doc.text(`${icone} ${midia.titulo || `${midia.tipo} ${idx + 1}`}`, margin, y);
+      doc.text(`${icone} ${safeText(midia.titulo) || `${midia.tipo} ${idx + 1}`}`, margin, y);
       y += 6;
       
       doc.setFontSize(9);
@@ -616,14 +618,14 @@ export const generateAtaPDF = (rawAta, workshop) => {
     y += 5;
   }
 
-  // 11. OBSERVAÇÕES DO CONSULTOR
+  // 11. OBSERVACOES DO CONSULTOR
   if (ata.observacoes_consultor) {
-    addSection('11', 'OBSERVAÇÕES DO CONSULTOR', ata.observacoes_consultor);
+    addSection('11', 'OBSERVACOES DO CONSULTOR', safeText(ata.observacoes_consultor));
   }
 
-  // 12. VISÃO GERAL DO PROJETO
+  // 12. VISAO GERAL DO PROJETO
   if (ata.visao_geral_projeto) {
-    addSection('12', 'VISÃO GERAL DO PROJETO DE ACELERAÇÃO', ata.visao_geral_projeto);
+    addSection('12', 'VISAO GERAL DO PROJETO DE ACELERACAO', safeText(ata.visao_geral_projeto));
   }
 
   // 13. INTELIGÊNCIA DO CLIENTE
@@ -631,47 +633,55 @@ export const generateAtaPDF = (rawAta, workshop) => {
     checkPageBreak(30);
     doc.setFontSize(13);
     doc.setFont(undefined, 'bold');
-    doc.text('13. INTELIGÊNCIA DO CLIENTE (DORES E OPORTUNIDADES)', margin, y);
+    doc.text('13. INTELIGENCIA DO CLIENTE (DORES E OPORTUNIDADES)', margin, y);
     y += 2;
     doc.setLineWidth(0.5);
     doc.line(margin, y, pageWidth - margin, y);
     y += 10;
 
     ata.client_intelligence.forEach((item, idx) => {
-      checkPageBreak(25);
+      // Calcular altura dinâmica baseada no conteúdo
+      const areaText = safeText(item.area) + ' - ' + safeText(item.type);
+      const subcatText = safeText(item.subcategory || item.title);
+      const descText = safeText(item.description);
+      const descLines = descText ? doc.splitTextToSize(descText, contentWidth - 5) : [];
       
-      // Box laranja claro para inteligência
+      // Altura = título(6) + subcategoria(6) + descrição(linhas*4) + padding(8)
+      const dynamicHeight = 14 + (descLines.length * 4) + 8;
+      checkPageBreak(dynamicHeight + 5);
+      
+      // Box laranja com altura dinâmica
       doc.setFillColor(255, 247, 237);
       doc.setDrawColor(249, 115, 22);
       doc.setLineWidth(0.5);
-      doc.rect(margin, y - 3, contentWidth, 22, 'FD');
+      doc.rect(margin, y - 3, contentWidth, dynamicHeight, 'FD');
 
-      // Título: Área - Tipo
+      // Area - Tipo
       doc.setFontSize(10);
       doc.setFont(undefined, 'bold');
-      doc.setTextColor(194, 65, 12); // Laranja escuro
-      doc.text(`${item.area} - ${item.type}`, margin + 2, y + 2);
+      doc.setTextColor(194, 65, 12);
+      doc.text(areaText, margin + 2, y + 2);
       
       // Gravidade
       doc.setFontSize(8);
       doc.setTextColor(0, 0, 0);
-      const gravidade = item.gravityLabel || item.gravity || 'Média';
-      doc.text(`Gravidade: ${gravidade}`, pageWidth - margin - 30, y + 2);
+      const gravidade = safeText(item.gravityLabel || item.gravity || 'Media');
+      doc.text('Gravidade: ' + gravidade, pageWidth - margin - 30, y + 2);
 
       y += 6;
       
-      // Subcategoria / Problema
+      // Subcategoria
       doc.setFontSize(10);
       doc.setFont(undefined, 'bold');
-      doc.text(item.subcategory || item.title, margin + 2, y);
+      doc.setTextColor(0, 0, 0);
+      doc.text(subcatText, margin + 2, y);
       
       y += 5;
       
       // Descrição
-      if (item.description) {
+      if (descLines.length > 0) {
         doc.setFontSize(9);
         doc.setFont(undefined, 'normal');
-        const descLines = doc.splitTextToSize(item.description, contentWidth - 5);
         descLines.forEach(line => {
           doc.text(line, margin + 2, y);
           y += 4;
@@ -689,8 +699,8 @@ export const generateAtaPDF = (rawAta, workshop) => {
   doc.setFont(undefined, 'normal');
   doc.setTextColor(100, 100, 100);
   
-  const footerLine1 = `Documento Controlado - Status: ${ata.status || 'finalizada'}`;
-  const footerLine2 = `Oficinas Master - Impresso em ${format(new Date(), "dd/MM/yyyy 'às' HH:mm")}`;
+  const footerLine1 = `Documento Controlado - Status: ${safeText(ata.status) || 'finalizada'}`;
+  const footerLine2 = `Oficinas Master - Impresso em ${format(new Date(), "dd/MM/yyyy 'as' HH:mm")}`;
   
   doc.text(footerLine1, pageWidth / 2, finalY, { align: 'center' });
   doc.text(footerLine2, pageWidth / 2, finalY + 5, { align: 'center' });

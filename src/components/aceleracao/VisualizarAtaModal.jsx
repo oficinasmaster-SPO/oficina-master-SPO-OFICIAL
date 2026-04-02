@@ -21,42 +21,52 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
       try {
         const dados = await base44.entities.MeetingMinutes.get(ata.id);
         
-        // Se ainda faltam dados estruturados mas temos o atendimento, carregar fallback convertido
-        if (!dados.pautas && atendimento?.pauta && Array.isArray(atendimento.pauta)) {
-            let pautasTexto = atendimento.pauta
+        // Se os campos textuais estão vazios, buscar o atendimento vinculado para preencher
+        let atendimentoRef = atendimento;
+        if (!atendimentoRef && dados.atendimento_id) {
+          try {
+            atendimentoRef = await base44.entities.ConsultoriaAtendimento.get(dados.atendimento_id);
+          } catch (e) {
+            console.warn("Não foi possível buscar atendimento vinculado:", e);
+          }
+        }
+        
+        // Se ainda faltam dados estruturados, carregar fallback do atendimento
+        if (!dados.pautas && atendimentoRef?.pauta && Array.isArray(atendimentoRef.pauta)) {
+            let pautasTexto = atendimentoRef.pauta
               .filter(p => p.titulo)
-              .map(p => `${p.titulo}${p.descricao ? ': ' + p.descricao : ''}`)
+              .map(p => `\u2022 ${p.titulo}${p.descricao ? ': ' + p.descricao : ''}`)
               .join('\n');
               
-            if (atendimento.topicos_discutidos?.length > 0) {
-              pautasTexto += (pautasTexto ? '\n\n' : '') + 'Tópicos Discutidos:\n' + 
-                atendimento.topicos_discutidos.map(t => `• ${t}`).join('\n');
+            if (atendimentoRef.topicos_discutidos?.length > 0) {
+              pautasTexto += (pautasTexto ? '\n\n' : '') + 'T\u00f3picos Discutidos:\n' + 
+                atendimentoRef.topicos_discutidos.map(t => `\u2022 ${t}`).join('\n');
             }
             dados.pautas = pautasTexto;
         }
         
-        if (!dados.objetivos_atendimento && atendimento?.objetivos && Array.isArray(atendimento.objetivos)) {
-            dados.objetivos_atendimento = atendimento.objetivos
+        if (!dados.objetivos_atendimento && atendimentoRef?.objetivos && Array.isArray(atendimentoRef.objetivos)) {
+            dados.objetivos_atendimento = atendimentoRef.objetivos
               .filter(o => o)
-              .map(o => `• ${o}`)
+              .map(o => `\u2022 ${o}`)
               .join('\n');
         }
 
-        if (!dados.objetivos_consultor && (atendimento?.observacoes_consultor || atendimento?.decisoes_tomadas?.length > 0)) {
-            let objetivosConsultorTexto = atendimento.observacoes_consultor || "";
-            if (atendimento.decisoes_tomadas && atendimento.decisoes_tomadas.length > 0) {
-              objetivosConsultorTexto += (objetivosConsultorTexto ? '\n\n' : '') + 'Decisões Tomadas:\n' + 
-                atendimento.decisoes_tomadas
-                  .map(d => `• ${d.decisao || ''}${d.responsavel ? ' (Responsável: ' + d.responsavel + ')' : ''}${d.prazo ? ' - Prazo: ' + d.prazo : ''}`)
+        if (!dados.objetivos_consultor && (atendimentoRef?.observacoes_consultor || atendimentoRef?.decisoes_tomadas?.length > 0)) {
+            let objetivosConsultorTexto = atendimentoRef.observacoes_consultor || "";
+            if (atendimentoRef.decisoes_tomadas && atendimentoRef.decisoes_tomadas.length > 0) {
+              objetivosConsultorTexto += (objetivosConsultorTexto ? '\n\n' : '') + 'Decis\u00f5es Tomadas:\n' + 
+                atendimentoRef.decisoes_tomadas
+                  .map(d => `\u2022 ${d.decisao || ''}${d.responsavel ? ' (Respons\u00e1vel: ' + d.responsavel + ')' : ''}${d.prazo ? ' - Prazo: ' + d.prazo : ''}`)
                   .join('\n');
             }
             dados.objetivos_consultor = objetivosConsultorTexto;
         }
 
-        if ((!dados.proximos_passos_list || dados.proximos_passos_list.length === 0) && atendimento) {
-             dados.proximos_passos_list = atendimento.proximos_passos_list || [];
-             if (dados.proximos_passos_list.length === 0 && atendimento.acoes_geradas) {
-                 dados.proximos_passos_list = atendimento.acoes_geradas.filter(a => a.acao).map(a => ({
+        if ((!dados.proximos_passos_list || dados.proximos_passos_list.length === 0) && atendimentoRef) {
+             dados.proximos_passos_list = atendimentoRef.proximos_passos_list || [];
+             if (dados.proximos_passos_list.length === 0 && atendimentoRef.acoes_geradas) {
+                 dados.proximos_passos_list = atendimentoRef.acoes_geradas.filter(a => a.acao).map(a => ({
                      descricao: a.acao,
                      responsavel: a.responsavel || "",
                      prazo: a.prazo || ""
@@ -64,8 +74,8 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
              }
         }
         
-        if (!dados.visao_geral_projeto && atendimento?.visao_geral_projeto) {
-            dados.visao_geral_projeto = atendimento.visao_geral_projeto;
+        if (!dados.visao_geral_projeto && atendimentoRef?.visao_geral_projeto) {
+            dados.visao_geral_projeto = atendimentoRef.visao_geral_projeto;
         }
 
         setAtaAtualizada(sanitizeAtaData(dados));
