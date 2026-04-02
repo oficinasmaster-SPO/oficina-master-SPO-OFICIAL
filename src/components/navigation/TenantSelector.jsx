@@ -1,31 +1,18 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { useTenant } from '@/components/contexts/TenantContext';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Building2, Briefcase, ChevronUp, ChevronDown, Check, ChevronsUpDown } from 'lucide-react';
+import { Building2, Briefcase, Search, Check, ChevronsUpDown } from 'lucide-react';
 
 export default function TenantSelector() {
   const { user, selectedFirmId, changeConsultingFirm, selectedCompanyId, changeCompany } = useTenant();
   const [openCompanyPopover, setOpenCompanyPopover] = useState(false);
-  const listRef = useRef(null);
-  const scrollIntervalRef = useRef(null);
-
-  const startScroll = (direction) => {
-    scrollIntervalRef.current = setInterval(() => {
-      if (listRef.current) {
-        listRef.current.scrollTop += direction === 'down' ? 30 : -30;
-      }
-    }, 60);
-  };
-
-  const stopScroll = () => {
-    clearInterval(scrollIntervalRef.current);
-  };
+  const [searchTerm, setSearchTerm] = useState('');
+  const [hoveredId, setHoveredId] = useState(null);
 
   const { data: firms = [], isLoading: isLoadingFirms } = useQuery({
     queryKey: ['consultingFirms'],
@@ -46,7 +33,12 @@ export default function TenantSelector() {
     refetchOnMount: false
   });
 
-  // Apenas admins podem alternar entre tenants livremente por enquanto
+  const selectedCompany = companies?.find(c => c.id === selectedCompanyId);
+  const filtered = companies?.filter(c => 
+    `${c.name} ${c.city} ${c.state}`.toLowerCase().includes(searchTerm.toLowerCase())
+  ) || [];
+
+  // Apenas admins podem alternar entre tenants livremente
   if (user?.role !== 'admin') {
     return null;
   }
@@ -82,77 +74,99 @@ export default function TenantSelector() {
               className="w-[180px] h-8 text-xs bg-white border-0 shadow-sm justify-between px-3 font-normal"
             >
               <span className="truncate">
-                {selectedCompanyId && selectedCompanyId !== 'none'
-                  ? companies.find((c) => c.id === selectedCompanyId)?.name || "Todas Oficinas"
+                {selectedCompany 
+                  ? `${selectedCompany.name}`
                   : "Todas Oficinas"}
               </span>
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-[220px] p-0 bg-white" align="start">
-            <Command className="bg-white">
-              <CommandInput placeholder="Pesquisar oficina..." className="text-gray-800 text-sm font-normal" />
-              <div className="relative">
-                {/* Scroll up zone */}
-                <div
-                  className="absolute top-0 left-0 right-0 h-7 z-10 flex items-center justify-center opacity-0 hover:opacity-100 transition-all duration-200 bg-gradient-to-b from-white via-white/80 to-transparent cursor-pointer group"
-                  onMouseEnter={() => startScroll('up')}
-                  onMouseLeave={stopScroll}
-                >
-                  <ChevronUp className="w-3.5 h-3.5 text-gray-300 group-hover:text-gray-500 transition-colors" />
-                </div>
+          <PopoverContent className="w-[220px] p-0" align="start">
+            <div className="flex items-center border-b px-3">
+              <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+              <input 
+                className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                placeholder="Pesquisar oficina..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            
+            <div className="border-b px-3 py-2 text-xs text-gray-600 bg-gray-50 font-medium">
+              Todas Oficinas
+            </div>
 
-                <CommandList ref={listRef} className="bg-white max-h-[220px] overflow-y-auto">
-                  <CommandEmpty className="text-gray-500 text-sm font-normal py-4 text-center">Nenhuma oficina encontrada.</CommandEmpty>
-                  <CommandGroup className="bg-white p-1">
-                    <CommandItem
-                      value="none-Todas Oficinas"
-                      onSelect={() => {
-                        changeCompany(null);
-                        setOpenCompanyPopover(false);
-                      }}
-                      className="text-gray-700 text-sm font-normal cursor-pointer rounded px-2 py-1.5 hover:bg-red-50 hover:text-red-600 group/item"
-                    >
+            <div className="max-h-64 overflow-y-auto pr-2" style={{ scrollbarGutter: 'stable' }}>
+              {filtered.length === 0 ? (
+                <div className="px-3 py-4 text-center text-sm text-gray-500">
+                  Nenhuma oficina encontrada
+                </div>
+              ) : (
+                <>
+                  <div
+                    onClick={() => {
+                      changeCompany(null);
+                      setOpenCompanyPopover(false);
+                      setSearchTerm('');
+                    }}
+                    onMouseEnter={() => setHoveredId('all')}
+                    onMouseLeave={() => setHoveredId(null)}
+                    style={{
+                      backgroundColor: hoveredId === 'all' ? '#dc2626' : 'transparent',
+                      color: hoveredId === 'all' ? 'white' : 'black',
+                      cursor: 'pointer',
+                      padding: '8px 12px',
+                      transition: 'background-color 0.15s ease-out'
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
                       <Check
                         className={cn(
-                          "mr-2 h-3.5 w-3.5 text-gray-500 shrink-0 group-hover/item:text-red-400",
-                          (!selectedCompanyId || selectedCompanyId === 'none') ? "opacity-100" : "opacity-0"
+                          "h-4 w-4 flex-shrink-0",
+                          !selectedCompanyId ? "opacity-100" : "opacity-0"
                         )}
                       />
-                      Todas Oficinas
-                    </CommandItem>
-                    {[...companies].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')).map((c) => (
-                      <CommandItem
-                        key={c.id}
-                        value={`${c.name} ${c.id}`}
-                        onSelect={() => {
-                          changeCompany(c.id);
-                          setOpenCompanyPopover(false);
-                        }}
-                        className="text-gray-700 text-sm font-normal cursor-pointer rounded px-2 py-1.5 hover:bg-red-50 hover:text-red-600 group/item"
-                      >
+                      <span className="font-medium text-sm">Todas Oficinas</span>
+                    </div>
+                  </div>
+                  
+                  {filtered.map((company) => (
+                    <div
+                      key={company.id}
+                      onClick={() => {
+                        changeCompany(company.id);
+                        setOpenCompanyPopover(false);
+                        setSearchTerm('');
+                      }}
+                      onMouseEnter={() => setHoveredId(company.id)}
+                      onMouseLeave={() => setHoveredId(null)}
+                      style={{
+                        backgroundColor: hoveredId === company.id ? '#dc2626' : 'transparent',
+                        color: hoveredId === company.id ? 'white' : 'black',
+                        cursor: 'pointer',
+                        padding: '8px 12px',
+                        transition: 'background-color 0.15s ease-out'
+                      }}
+                    >
+                      <div className="flex items-start gap-2">
                         <Check
                           className={cn(
-                            "mr-2 h-3.5 w-3.5 text-gray-500 shrink-0 group-hover/item:text-red-400",
-                            selectedCompanyId === c.id ? "opacity-100" : "opacity-0"
+                            "h-4 w-4 mt-0.5 flex-shrink-0",
+                            selectedCompanyId === company.id ? "opacity-100" : "opacity-0"
                           )}
                         />
-                        <span className="truncate">{c.name}</span>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-
-                {/* Scroll down zone */}
-                <div
-                  className="absolute bottom-0 left-0 right-0 h-7 z-10 flex items-center justify-center opacity-0 hover:opacity-100 transition-all duration-200 bg-gradient-to-t from-white via-white/80 to-transparent cursor-pointer group"
-                  onMouseEnter={() => startScroll('down')}
-                  onMouseLeave={stopScroll}
-                >
-                  <ChevronDown className="w-3.5 h-3.5 text-gray-300 group-hover:text-gray-500 transition-colors" />
-                </div>
-              </div>
-            </Command>
+                        <div className="flex flex-col flex-1 min-w-0">
+                          <span className="font-medium text-sm">{company.name}</span>
+                          <span className="text-xs" style={{opacity: hoveredId === company.id ? 0.7 : 1, color: hoveredId === company.id ? 'white' : '#9ca3af'}}>
+                            {company.city}/{company.state}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
+            </div>
           </PopoverContent>
         </Popover>
       </div>
