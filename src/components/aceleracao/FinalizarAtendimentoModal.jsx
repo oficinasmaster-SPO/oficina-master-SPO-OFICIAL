@@ -8,9 +8,23 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { X, Loader2, Send, Sparkles, Lock } from "lucide-react";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
+import { createPageUrl } from "@/utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function FinalizarAtendimentoModal({ atendimento, onClose }) {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const [formData, setFormData] = useState({
     topicos_discutidos: [],
     decisoes_tomadas: [],
@@ -146,11 +160,26 @@ export default function FinalizarAtendimentoModal({ atendimento, onClose }) {
                   <div className="flex items-center gap-2">
                     <Checkbox
                       checked={formData.usar_ia}
-                      disabled={!hasAIAccess}
-                      onCheckedChange={(checked) => setFormData({ ...formData, usar_ia: checked })}
+                      onCheckedChange={(checked) => {
+                        if (checked && !hasAIAccess) {
+                          setShowUpgradeDialog(true);
+                          return;
+                        }
+                        setFormData({ ...formData, usar_ia: checked });
+                      }}
                     />
                     <div className="flex flex-col">
-                      <label className={`text-sm font-medium flex items-center gap-1 ${!hasAIAccess ? 'text-gray-400' : 'text-blue-900 cursor-pointer'}`}>
+                      <label 
+                        className="text-sm font-medium flex items-center gap-1 text-blue-900 cursor-pointer"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (!hasAIAccess) {
+                            setShowUpgradeDialog(true);
+                          } else {
+                            setFormData({ ...formData, usar_ia: !formData.usar_ia });
+                          }
+                        }}
+                      >
                         <Sparkles className="w-4 h-4 text-blue-500" />
                         Redigir Ata Profissional com IA
                       </label>
@@ -206,6 +235,34 @@ export default function FinalizarAtendimentoModal({ atendimento, onClose }) {
           </form>
         </CardContent>
       </Card>
+
+      <AlertDialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-blue-900">
+              <Sparkles className="w-5 h-5" />
+              Recurso Premium
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-base text-gray-600">
+              A funcionalidade de <strong>Redigir Ata Profissional com Inteligência Artificial</strong> não está disponível no seu plano atual. <br/><br/>
+              Faça um upgrade para gerar automaticamente atas completas, ricas em detalhes e mais profissionais para seus clientes!
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Voltar</AlertDialogCancel>
+            <AlertDialogAction 
+              className="bg-blue-600 hover:bg-blue-700"
+              onClick={() => {
+                setShowUpgradeDialog(false);
+                onClose();
+                navigate(createPageUrl("Planos"));
+              }}
+            >
+              Conhecer Outros Planos
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
