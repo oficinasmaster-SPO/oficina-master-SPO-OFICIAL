@@ -268,16 +268,18 @@ export default function PainelAtendimentosTab({ user }) {
                   return (
                     <tr key={atendimento.id} className="hover:bg-gray-50 transition-colors">
                       <td className="py-4 px-6 text-sm text-gray-600 border-r border-gray-100 last:border-r-0">
-                        {ataVinculada?.code ? (
-                          <span className="font-mono text-xs bg-blue-50 px-2 py-1 rounded border border-blue-200 whitespace-nowrap">
-                            {ataVinculada.code.replace('IT.', 'AT.')}
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 text-amber-600 bg-amber-50 px-2 py-1 rounded-md border border-amber-200 text-xs font-medium whitespace-nowrap" title="Aguardando geração da ATA">
-                            <Clock className="w-3 h-3" />
-                            Pendente
-                          </span>
-                        )}
+                        <div className="flex items-center justify-center">
+                          {ataVinculada?.code ? (
+                            <span className="font-mono text-xs bg-blue-50 px-3 py-2 rounded border border-blue-200 whitespace-nowrap inline-block">
+                              {ataVinculada.code.replace('IT.', 'AT.')}
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center justify-center gap-1.5 text-amber-600 bg-amber-50 px-3 py-2 rounded border border-amber-200 text-xs font-medium whitespace-nowrap" title="Aguardando geração da ATA">
+                              <Clock className="w-3 h-3" />
+                              Pendente
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="py-4 px-6 text-sm text-gray-600 border-r border-gray-100 last:border-r-0 whitespace-nowrap">
                         {formatDateTimeBR(atendimento.data_agendada)}
