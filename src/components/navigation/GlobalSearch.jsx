@@ -107,14 +107,11 @@ export default function GlobalSearch({ workshopId }) {
       </Button>
 
       <CommandDialog open={open} onOpenChange={setOpen}>
-        <div className="flex items-center border-b px-3">
-          <CommandInput
-            placeholder="Busque por processos, documentos, treinamentos..."
-            value={query}
-            onValueChange={setQuery}
-          />
-          {loading && <Loader2 className="h-4 w-4 animate-spin opacity-50 ml-2" />}
-        </div>
+        <CommandInput
+          placeholder="Busque por processos, documentos, treinamentos..."
+          value={query}
+          onValueChange={setQuery}
+        />
 
         <div className="border-b px-3 py-2 bg-gray-50">
           <div className="flex items-center gap-2 mb-2">
