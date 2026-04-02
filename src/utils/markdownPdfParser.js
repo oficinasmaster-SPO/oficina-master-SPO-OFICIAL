@@ -25,9 +25,10 @@ function stripInlineMarkdown(text) {
     .replace(/^#{1,6}\s+/gm, '')
     // Remove HTML tags residuais
     .replace(/<[^>]*>/g, '')
-    // Remove múltiplos espaços
-    .replace(/\s+/g, ' ')
-    .trim();
+    // Remove múltiplos espaços horizontais (preserva \n)
+    .replace(/[^\S\n]+/g, ' ')
+    // Remove espaços no início/fim de cada linha
+    .replace(/^ +| +$/gm, '');
 }
 
 /**
