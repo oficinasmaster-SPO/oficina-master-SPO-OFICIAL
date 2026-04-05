@@ -22,6 +22,7 @@ import DescricaoCargos from '@/pages/DescricaoCargos';
 import QADashboard from '@/components/monitoring/QADashboard';
 import CentralAvaliacoes from '@/pages/CentralAvaliacoes';
 import MatrizDesempenho from '@/pages/MatrizDesempenho';
+import SprintDetalhes from '@/pages/SprintDetalhes';
 import PublicNPS from '@/pages/PublicNPS';
 import PublicDISC from '@/pages/PublicDISC';
 import BemVindoPlanos from '@/pages/BemVindoPlanos';
@@ -129,6 +130,11 @@ const AuthenticatedApp = () => {
           <PageAccessControl requiredPermissions={pagePermissions['MatrizDesempenho'] ? [pagePermissions['MatrizDesempenho']] : []}>
             <MatrizDesempenho />
           </PageAccessControl>
+        </LayoutWrapper>
+      } />
+      <Route path="/SprintDetalhes" element={
+        <LayoutWrapper currentPageName="SprintDetalhes">
+          <SprintDetalhes />
         </LayoutWrapper>
       } />
       <Route path="/PublicNPS" element={<PublicNPS />} />
