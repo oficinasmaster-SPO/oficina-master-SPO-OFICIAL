@@ -28,10 +28,9 @@ Deno.serve(async (req) => {
     return Response.json({ status: 'skip', reason: 'sem workshop_id' });
   }
 
-  // Buscar dados do workshop e do responsável
-  const [workshop] = await Promise.all([
-    base44.asServiceRole.entities.Workshop.filter({ id: workshopId }),
-  ]).then(([ws]) => ws);
+  // Buscar dados do workshop
+  const workshops = await base44.asServiceRole.entities.Workshop.filter({ id: workshopId });
+  const workshop = workshops?.[0];
 
   if (!workshop) {
     console.warn(`[NPS] Workshop ${workshopId} não encontrado.`);
@@ -87,13 +86,17 @@ Deno.serve(async (req) => {
     </div>
   </div>`;
 
-  await base44.asServiceRole.integrations.Core.SendEmail({
-    to: emailDestino,
-    subject: `⭐ Como foi seu atendimento de consultoria? — ${workshop.name}`,
-    body: html,
-  });
-
-  console.log(`[NPS] Pesquisa enviada para ${emailDestino} | Workshop: ${workshop.name} | Atendimento: ${atendimento.id}`);
+  try {
+    await base44.asServiceRole.integrations.Core.SendEmail({
+      to: emailDestino,
+      subject: `⭐ Como foi seu atendimento de consultoria? — ${workshop.name}`,
+      body: html,
+    });
+    console.log(`[NPS] Pesquisa enviada para ${emailDestino} | Workshop: ${workshop.name} | Atendimento: ${atendimento.id}`);
+  } catch (err) {
+    console.error(`[NPS] Falha ao enviar e-mail para ${emailDestino}:`, err.message);
+    return Response.json({ status: 'error', reason: err.message }, { status: 500 });
+  }
 
   return Response.json({ status: 'ok', sent_to: emailDestino, workshop: workshop.name });
 });
