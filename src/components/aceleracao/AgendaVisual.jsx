@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Maximize2, Clock, MapPin, User, Filter, Video, Users, ExternalLink, Phone, MessageCircle, Mail } from "lucide-react";
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Maximize2, Clock, MapPin, User, Filter, Video, Users, ExternalLink, Phone, MessageCircle, Mail, CalendarCheck } from "lucide-react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, startOfWeek, endOfWeek, addMonths, subMonths, addDays, startOfDay, endOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -379,8 +379,8 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
                     const workshop = workshops.find(w => w.id === atendimento.workshop_id);
                     return (
                       <div
-                        key={atendimento.id}
-                        className={`text-xs p-2 rounded border ${getStatusColor(atendimento.status)} hover:opacity-80 transition-opacity`}
+                          key={atendimento.id}
+                        className={`text-xs p-2 rounded border ${getStatusColor(atendimento.status)} hover:opacity-80 transition-opacity relative`}
                         onClick={(e) => {
                           e.stopPropagation();
                           const params = new URLSearchParams({ 
@@ -391,7 +391,12 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
                           navigate(createPageUrl('RegistrarAtendimento') + '?' + params.toString());
                         }}
                       >
-                        <div className="font-semibold">{format(new Date(atendimento.data_agendada), 'HH:mm')}</div>
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold">{format(new Date(atendimento.data_agendada), 'HH:mm')}</span>
+                          {atendimento.google_event_id && (
+                            <CalendarCheck className="w-3 h-3 text-blue-500 flex-shrink-0" title="Sincronizado com Google Calendar" />
+                          )}
+                        </div>
                         {viewMode !== 'month' && (
                           <>
                             <div className="text-[10px] mt-1 truncate">{workshop?.name || 'Cliente não identificado'}</div>
@@ -572,14 +577,29 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
                     {atendimento.google_meet_link && (
                       <div className="flex items-center gap-2 mt-2 p-2 bg-blue-50 rounded border border-blue-200">
                         <Video className="w-4 h-4 text-blue-600" />
-                        <a 
-                          href={atendimento.google_meet_link} 
-                          target="_blank" 
+                        <a
+                          href={atendimento.google_meet_link}
+                          target="_blank"
                           rel="noopener noreferrer"
                           className="text-xs text-blue-600 hover:underline flex items-center gap-1"
                           onClick={(e) => e.stopPropagation()}
                         >
                           Link do Meet
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      </div>
+                    )}
+                    {atendimento.google_calendar_link && (
+                      <div className="flex items-center gap-2 mt-1 p-2 bg-green-50 rounded border border-green-200">
+                        <CalendarCheck className="w-4 h-4 text-green-600" />
+                        <a
+                          href={atendimento.google_calendar_link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-green-600 hover:underline flex items-center gap-1"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          Ver no Google Calendar
                           <ExternalLink className="w-3 h-3" />
                         </a>
                       </div>
