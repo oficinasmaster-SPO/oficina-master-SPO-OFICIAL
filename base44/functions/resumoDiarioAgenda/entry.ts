@@ -18,16 +18,8 @@ Deno.serve(async (req) => {
     // automação sem sessão — permitido
   }
 
-  // Janela do dia de hoje (BRT → UTC-3)
+  // Dia atual em BRT para comparação de datas
   const agora = new Date();
-  // Início do dia em BRT (UTC-3)
-  const inicioDia = new Date(agora);
-  inicioDia.setUTCHours(3, 0, 0, 0); // 00:00 BRT = 03:00 UTC
-  // Se já passou das 03:00 UTC de amanhã, não ajustar (execução às ~10:30 UTC = 07:30 BRT)
-  const fimDia = new Date(inicioDia);
-  fimDia.setUTCHours(26, 59, 59, 999); // 23:59 BRT = 02:59+1 UTC → simplificar: +24h
-
-  // Abordagem simples: pegar atendimentos onde data_agendada é hoje (em BRT)
   const hojeStr = agora.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }); // DD/MM/YYYY
 
   const [todosAtendimentos, todosUsuarios, todosWorkshops] = await Promise.all([

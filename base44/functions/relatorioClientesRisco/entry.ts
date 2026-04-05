@@ -47,6 +47,7 @@ Deno.serve(async (req) => {
   });
 
   // Agrupar por workshop
+  const porWorkshop = {};
   for (const a of atendimentosRecentes) {
     if (!a.workshop_id) continue;
     if (!porWorkshop[a.workshop_id]) {
@@ -236,16 +237,25 @@ Deno.serve(async (req) => {
     </div>
   </div>`;
 
-  // Envio paralelo a todos os admins
-  await Promise.all(admins.map(admin =>
-    base44.asServiceRole.integrations.Core.SendEmail({
-      to: admin.email,
-      subject: `⚠️ Relatório de Clientes em Risco — ${criticos} crítico(s), ${altos} alto(s) · ${dataRelatorio}`,
-      body: html,
-    })
-  ));
+  // Envio paralelo a todos os admins com isolamento de falha
+  let emailsSent = 0;
+  const errosEmail = [];
+  await Promise.all(admins.map(async (admin) => {
+    try {
+      await base44.asServiceRole.integrations.Core.SendEmail({
+        to: admin.email,
+        subject: `⚠️ Relatório de Clientes em Risco — ${criticos} crítico(s), ${altos} alto(s) · ${dataRelatorio}`,
+        body: html,
+      });
+      emailsSent++;
+    } catch (err) {
+      errosEmail.push(`Falha ao enviar para ${admin.email}: ${err.message}`);
+      console.error(`[relatorioRisco] Erro admin ${admin.email}:`, err.message);
+    }
+  }));
+  if (errosEmail.length > 0) console.warn('[relatorioRisco] Erros de envio:', errosEmail);
 
-  console.log(`[relatorioRisco] Relatório enviado: ${clientesRisco.length} clientes em risco (${criticos} críticos, ${altos} altos, ${medios} médios). ${admins.length} admin(s) notificado(s).`);
+  console.log(`[relatorioRisco] Relatório enviado: ${clientesRisco.length} clientes em risco (${criticos} críticos, ${altos} altos, ${medios} médios). ${emailsSent}/${admins.length} admin(s) notificado(s).`);
 
   return Response.json({
     status: 'ok',
@@ -253,6 +263,6 @@ Deno.serve(async (req) => {
     criticos,
     altos,
     medios,
-    emails_sent: admins.length,
+    emails_sent: emailsSent,
   });
 });
