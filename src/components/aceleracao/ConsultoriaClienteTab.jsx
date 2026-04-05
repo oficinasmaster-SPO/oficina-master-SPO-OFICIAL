@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -504,14 +504,17 @@ function CamadaSprints({ workshopId, missoesSelecionadas }) {
   const [sprints, setSprints] = useState([]);
   const [loadingCreate, setLoadingCreate] = useState(null);
 
-  useEffect(() => {
-    if (workshopId) loadSprints();
-  }, [workshopId, missoesSelecionadas]);
-
-  const loadSprints = async () => {
+  const loadSprints = useCallback(async () => {
+    if (!workshopId) return;
     const data = await base44.entities.ConsultoriaSprint.filter({ workshop_id: workshopId });
     setSprints(data || []);
-  };
+  }, [workshopId]);
+
+  useEffect(() => {
+    loadSprints();
+  }, [workshopId, missoesSelecionadas, loadSprints]);
+
+
 
   const getSprintForMission = (missionId, number) =>
     sprints.find(s => s.mission_id === missionId && s.sprint_number === number);
