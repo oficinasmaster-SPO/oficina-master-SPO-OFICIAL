@@ -23,13 +23,41 @@ const MISSOES = [
     cor: "border-green-400 bg-green-50 text-green-800"
   },
   {
-    id: "ticket_premium",
-    nome: "Ticket Premium",
-    emoji: "💎",
-    descricao: "Aumentar ticket médio através de venda consultiva",
-    cor: "border-amber-400 bg-amber-50 text-amber-800"
+    id: "caixa_forte",
+    nome: "Caixa Forte",
+    emoji: "💰",
+    descricao: "Fortalecer fluxo de caixa e gestão financeira",
+    cor: "border-yellow-400 bg-yellow-50 text-yellow-800"
   },
-];
+  {
+    id: "empresa_organizada",
+    nome: "Empresa Organizada",
+    emoji: "📊",
+    descricao: "Estruturar processos e operações da empresa",
+    cor: "border-purple-400 bg-purple-50 text-purple-800"
+  },
+  {
+    id: "funcoes_claras",
+    nome: "Funções Claras",
+    emoji: "👥",
+    descricao: "Definir papéis, responsabilidades e organograma",
+    cor: "border-pink-400 bg-pink-50 text-pink-800"
+  },
+  {
+    id: "contratacao_certa",
+    nome: "Contratação Certa",
+    emoji: "🎓",
+    descricao: "Otimizar processo de seleção e onboarding",
+    cor: "border-indigo-400 bg-indigo-50 text-indigo-800"
+  },
+  {
+    id: "cultura_forte",
+    nome: "Cultura Forte",
+    emoji: "🌟",
+    descricao: "Desenvolver cultura organizacional e engajamento",
+    cor: "border-red-400 bg-red-50 text-red-800"
+  },
+]
 
 function CamadaTrilhaCliente({ workshopId, missoesSelecionadas, setMissoesSelecionadas }) {
   const [mostrarSeletor, setMostrarSeletor] = useState(false);
