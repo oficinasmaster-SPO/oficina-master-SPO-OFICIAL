@@ -6,7 +6,9 @@ import { createPageUrl } from "@/utils";
 import {
   Settings2, Map, Zap, BookOpen, ChevronRight, ExternalLink,
   CheckCircle2, Circle, Clock, Target, Users, Lightbulb, 
-  ListChecks, Route, PlayCircle, Plus, X, Star, Lock
+  ListChecks, Route, PlayCircle, Plus, X, Star, Lock,
+  ChevronDown, ChevronUp, RotateCcw, TrendingUp, ClipboardList,
+  PlaySquare, BarChart2, MessageSquare
 } from "lucide-react";
 
 // Camada 1 - Interno/Estratégico
@@ -86,8 +88,7 @@ const MISSOES = [
 ];
 
 // Camada 2 - Trilha do Cliente
-function CamadaTrilhaCliente({ workshopId }) {
-  const [missoesSelecionadas, setMissoesSelecionadas] = useState([]);
+function CamadaTrilhaCliente({ workshopId, missoesSelecionadas, setMissoesSelecionadas }) {
   const [mostrarSeletor, setMostrarSeletor] = useState(false);
 
   const toggleMissao = (missaoId) => {
@@ -233,20 +234,189 @@ function CamadaTrilhaCliente({ workshopId }) {
   );
 }
 
-// Camada 3 - Sprints
-function CamadaSprints({ workshopId }) {
-  const sprints = [
-    { semana: "Semana 1", foco: "Diagnóstico e alinhamento", tarefas: ["Levantar DRE", "Mapear fluxo de atendimento", "Identificar gargalos"], status: "concluido" },
-    { semana: "Semana 2", foco: "Precificação e margem", tarefas: ["Calcular TCMP²", "Revisar tabela de preços", "Treinar consultor de vendas"], status: "em_andamento" },
-    { semana: "Semana 3", foco: "Processos de vendas", tarefas: ["Implementar checklist de OS", "Definir script de venda"], status: "a_fazer" },
-    { semana: "Semana 4", foco: "Revisão e próximos passos", tarefas: ["Consolidar resultados", "Planejar próximo ciclo"], status: "a_fazer" },
-  ];
+// Fases de um Sprint
+const FASES_SPRINT = [
+  {
+    id: "planning",
+    nome: "Sprint Planning",
+    subtitulo: "Planejamento",
+    icon: ClipboardList,
+    cor: "text-blue-600",
+    bg: "bg-blue-50",
+    descricao: "Definir o que será feito nas próximas semanas",
+    itens: [
+      "Revisar diagnóstico e prioridades",
+      "Definir objetivo claro do sprint",
+      "Listar entregáveis mensuráveis",
+      "Distribuir tarefas e prazos",
+    ]
+  },
+  {
+    id: "execucao",
+    nome: "Execução",
+    subtitulo: "Implementação",
+    icon: PlaySquare,
+    cor: "text-green-600",
+    bg: "bg-green-50",
+    descricao: "Assistir treinamentos, implementar ferramentas, executar tarefas",
+    itens: [
+      "Assistir treinamentos da missão",
+      "Implementar ferramentas e processos",
+      "Executar tarefas priorizadas",
+      "Registrar progresso na plataforma",
+    ]
+  },
+  {
+    id: "checkpoint",
+    nome: "Checkpoint Semanal",
+    subtitulo: "Acompanhamento",
+    icon: BarChart2,
+    cor: "text-purple-600",
+    bg: "bg-purple-50",
+    descricao: "Reunião de alinhamento e verificação do progresso",
+    itens: [
+      "Check-in: o que foi feito",
+      "Medir resultados parciais",
+      "Identificar bloqueios",
+      "Ajustar tarefas se necessário",
+    ]
+  },
+  {
+    id: "review",
+    nome: "Sprint Review",
+    subtitulo: "Revisão",
+    icon: TrendingUp,
+    cor: "text-orange-600",
+    bg: "bg-orange-50",
+    descricao: "Apresentação dos resultados alcançados no sprint",
+    itens: [
+      "Apresentar entregáveis concluídos",
+      "Medir KPIs vs meta do sprint",
+      "Validar com o cliente os resultados",
+      "Documentar conquistas",
+    ]
+  },
+  {
+    id: "retrospectiva",
+    nome: "Sprint Retrospective",
+    subtitulo: "Melhoria",
+    icon: MessageSquare,
+    cor: "text-red-600",
+    bg: "bg-red-50",
+    descricao: "Reflexão sobre o processo para melhorar o próximo sprint",
+    itens: [
+      "O que funcionou bem?",
+      "O que precisa melhorar?",
+      "Quais ajustes fazer no processo?",
+      "Planejar próximo sprint",
+    ]
+  },
+];
 
-  const statusConfig = {
-    concluido: { label: "Concluído", color: "bg-green-100 text-green-700", icon: CheckCircle2 },
-    em_andamento: { label: "Em Andamento", color: "bg-blue-100 text-blue-700", icon: Clock },
-    a_fazer: { label: "A Fazer", color: "bg-gray-100 text-gray-600", icon: Circle },
-  };
+function SprintCard({ numero, titulo, emoji, descricao, cor, isFixed }) {
+  const [expandido, setExpandido] = useState(false);
+  const [faseAtiva, setFaseAtiva] = useState(null);
+
+  return (
+    <div className={`border-2 rounded-xl overflow-hidden ${cor}`}>
+      {/* Header do Sprint */}
+      <button
+        onClick={() => setExpandido(!expandido)}
+        className="w-full p-4 flex items-center justify-between hover:opacity-90 transition-opacity text-left"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-white/80 flex items-center justify-center text-sm font-bold border-2 border-current">
+            {numero}
+          </div>
+          <div>
+            <p className="font-semibold text-sm">{emoji} {titulo}</p>
+            <p className="text-xs opacity-70">{descricao}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {isFixed && (
+            <div className="flex items-center gap-1 text-xs opacity-60">
+              <Lock className="w-3 h-3" />
+              Padrão
+            </div>
+          )}
+          {expandido
+            ? <ChevronUp className="w-4 h-4 opacity-70" />
+            : <ChevronDown className="w-4 h-4 opacity-70" />}
+        </div>
+      </button>
+
+      {/* Fases do Sprint */}
+      {expandido && (
+        <div className="border-t border-current/20 bg-white p-4 space-y-3">
+          {/* Ciclo visual */}
+          <div className="flex items-center gap-1 overflow-x-auto pb-2">
+            {FASES_SPRINT.map((fase, idx) => {
+              const Icon = fase.icon;
+              return (
+                <React.Fragment key={fase.id}>
+                  <button
+                    onClick={() => setFaseAtiva(faseAtiva === fase.id ? null : fase.id)}
+                    className={`flex flex-col items-center gap-1 p-2 rounded-lg min-w-[60px] transition-all border ${
+                      faseAtiva === fase.id
+                        ? `${fase.bg} border-current shadow-sm`
+                        : 'border-transparent hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className={`w-8 h-8 rounded-full ${fase.bg} flex items-center justify-center`}>
+                      <Icon className={`w-4 h-4 ${fase.cor}`} />
+                    </div>
+                    <span className="text-xs text-center leading-tight text-gray-600 font-medium">{fase.subtitulo}</span>
+                  </button>
+                  {idx < FASES_SPRINT.length - 1 && (
+                    <ChevronRight className="w-3 h-3 text-gray-300 flex-shrink-0" />
+                  )}
+                </React.Fragment>
+              );
+            })}
+          </div>
+
+          {/* Detalhe da fase selecionada */}
+          {faseAtiva && (() => {
+            const fase = FASES_SPRINT.find(f => f.id === faseAtiva);
+            const Icon = fase.icon;
+            return (
+              <div className={`rounded-xl p-4 ${fase.bg} border border-current/20`}>
+                <div className="flex items-center gap-2 mb-2">
+                  <Icon className={`w-4 h-4 ${fase.cor}`} />
+                  <p className={`font-semibold text-sm ${fase.cor}`}>{fase.nome}</p>
+                </div>
+                <p className="text-xs text-gray-600 mb-3">{fase.descricao}</p>
+                <div className="space-y-1.5">
+                  {fase.itens.map((item, idx) => (
+                    <div key={idx} className="flex items-start gap-2 text-sm text-gray-700">
+                      <div className={`w-5 h-5 rounded-full bg-white border flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5 ${fase.cor}`}>
+                        {idx + 1}
+                      </div>
+                      {item}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Indicador do ciclo */}
+          {!faseAtiva && (
+            <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+              <RotateCcw className="w-4 h-4 text-gray-400 flex-shrink-0" />
+              <p className="text-xs text-gray-500">Clique em uma fase acima para ver os detalhes do ciclo <strong>Planejar → Executar → Medir → Ajustar</strong></p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Camada 3 - Sprints
+function CamadaSprints({ workshopId, missoesSelecionadas }) {
+  const missoesSelecionadasData = MISSOES.filter(m => missoesSelecionadas.includes(m.id));
 
   return (
     <div className="space-y-6">
@@ -255,42 +425,51 @@ function CamadaSprints({ workshopId }) {
           <Zap className="w-5 h-5 text-green-200" />
           <span className="text-xs font-semibold uppercase tracking-wider text-green-200">Camada 3 — Sprints</span>
         </div>
-        <h3 className="text-lg font-bold">Execução Semanal</h3>
-        <p className="text-sm text-green-100 mt-1">Tarefas semanais de implementação para o cliente.</p>
+        <h3 className="text-lg font-bold">Execução por Sprint</h3>
+        <p className="text-sm text-green-100 mt-1">Cada missão vira um sprint com ciclo completo: Planejar → Executar → Medir → Ajustar.</p>
       </div>
 
-      <div className="space-y-4">
-        {sprints.map((sprint, idx) => {
-          const cfg = statusConfig[sprint.status];
-          const Icon = cfg.icon;
-          return (
-            <div key={idx} className="border rounded-xl p-4 hover:shadow-sm transition-shadow">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center">
-                    <span className="text-xs font-bold text-green-700">{idx + 1}</span>
-                  </div>
-                  <div>
-                    <p className="font-semibold text-sm text-gray-900">{sprint.semana}</p>
-                    <p className="text-xs text-gray-500">{sprint.foco}</p>
-                  </div>
-                </div>
-                <Badge className={cfg.color}>
-                  <Icon className="w-3 h-3 mr-1" />
-                  {cfg.label}
-                </Badge>
-              </div>
-              <div className="space-y-1 pl-10">
-                {sprint.tarefas.map((tarefa, tidx) => (
-                  <div key={tidx} className="flex items-center gap-2 text-sm text-gray-600">
-                    <ChevronRight className="w-3 h-3 text-gray-400 flex-shrink-0" />
-                    {tarefa}
-                  </div>
-                ))}
-              </div>
-            </div>
-          );
-        })}
+      {/* Ciclo visual explicativo */}
+      <div className="grid grid-cols-5 gap-1 text-center">
+        {[{ emoji: "📋", label: "Planejar" }, { emoji: "⚙️", label: "Executar" }, { emoji: "📊", label: "Medir" }, { emoji: "🔄", label: "Ajustar" }, { emoji: "🚀", label: "Próximo" }].map((item, idx) => (
+          <div key={idx} className="flex flex-col items-center gap-1">
+            <div className="w-9 h-9 rounded-full bg-green-50 border-2 border-green-200 flex items-center justify-center text-base">{item.emoji}</div>
+            <span className="text-xs text-gray-500 font-medium">{item.label}</span>
+          </div>
+        ))}
+      </div>
+
+      {missoesSelecionadasData.length === 0 && (
+        <div className="text-center py-8 text-gray-500 border-2 border-dashed border-gray-200 rounded-xl">
+          <Zap className="w-10 h-10 mx-auto mb-3 text-gray-300" />
+          <p className="text-sm font-medium">Nenhuma missão selecionada</p>
+          <p className="text-xs mt-1">Vá à aba <strong>Trilha</strong> e adicione missões para gerar os sprints.</p>
+        </div>
+      )}
+
+      <div className="space-y-3">
+        {/* Sprint 0 - sempre fixo */}
+        <SprintCard
+          numero={0}
+          titulo="Sprint 0 — Diagnóstico & Alinhamento"
+          emoji="🔍"
+          descricao="Sprint inicial fixo para todos os clientes"
+          cor="border-gray-400 bg-gray-50 text-gray-800"
+          isFixed={true}
+        />
+
+        {/* Sprints gerados pelas missões */}
+        {missoesSelecionadasData.map((missao, idx) => (
+          <SprintCard
+            key={missao.id}
+            numero={idx + 1}
+            titulo={`Sprint ${idx + 1} — ${missao.nome}`}
+            emoji={missao.emoji}
+            descricao={missao.descricao}
+            cor={`${missao.cor}`}
+            isFixed={false}
+          />
+        ))}
       </div>
     </div>
   );
@@ -370,6 +549,7 @@ function CamadaConsultor({ workshopId }) {
 
 export default function ConsultoriaClienteTab({ client }) {
   const workshopId = client?.id;
+  const [missoesSelecionadas, setMissoesSelecionadas] = useState([]);
 
   return (
     <div className="space-y-4">
@@ -403,10 +583,14 @@ export default function ConsultoriaClienteTab({ client }) {
           <CamadaEstrategica workshopId={workshopId} />
         </TabsContent>
         <TabsContent value="trilha" className="mt-4">
-          <CamadaTrilhaCliente workshopId={workshopId} />
+          <CamadaTrilhaCliente
+            workshopId={workshopId}
+            missoesSelecionadas={missoesSelecionadas}
+            setMissoesSelecionadas={setMissoesSelecionadas}
+          />
         </TabsContent>
         <TabsContent value="sprints" className="mt-4">
-          <CamadaSprints workshopId={workshopId} />
+          <CamadaSprints workshopId={workshopId} missoesSelecionadas={missoesSelecionadas} />
         </TabsContent>
         <TabsContent value="consultor" className="mt-4">
           <CamadaConsultor workshopId={workshopId} />
