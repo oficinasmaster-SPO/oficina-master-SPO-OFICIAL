@@ -59,7 +59,7 @@ const MISSOES = [
   },
 ]
 
-function CamadaTrilhaCliente({ workshopId, missoesSelecionadas, setMissoesSelecionadas }) {
+function CamadaTrilhaCliente({ workshopId, missoesSelecionadas, setMissoesSelecionadas, handleSetMissoesSelecionadas }) {
   const [mostrarSeletor, setMostrarSeletor] = useState(false);
   const [salvando, setSalvando] = useState(false);
   const [salvoRecentemente, setSalvoRecentemente] = useState(false);
@@ -77,13 +77,12 @@ function CamadaTrilhaCliente({ workshopId, missoesSelecionadas, setMissoesSeleci
     }
   };
 
-  const toggleMissao = async (missaoId) => {
+  const toggleMissao = (missaoId) => {
     const novasSelecionadas = missoesSelecionadas.includes(missaoId)
       ? missoesSelecionadas.filter(id => id !== missaoId)
       : [...missoesSelecionadas, missaoId];
     setMissoesSelecionadas(novasSelecionadas);
-    // Salva imediatamente ao selecionar/desselecionar
-    await setMissoesSelecionadas(novasSelecionadas);
+    handleSetMissoesSelecionadas(novasSelecionadas);
   };
 
   const missoesSelecionadasData = MISSOES.filter(m => missoesSelecionadas.includes(m.id));
@@ -841,7 +840,8 @@ export default function ConsultoriaClienteTab({ client }) {
            <CamadaTrilhaCliente
              workshopId={workshopId}
              missoesSelecionadas={missoesSelecionadas}
-             setMissoesSelecionadas={handleSetMissoesSelecionadas}
+             setMissoesSelecionadas={setMissoesSelecionadas}
+             handleSetMissoesSelecionadas={handleSetMissoesSelecionadas}
            />
           )}
           {loading && <div className="text-center py-4 text-gray-500">Carregando trilhas...</div>}
