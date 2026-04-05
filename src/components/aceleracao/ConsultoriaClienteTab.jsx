@@ -729,9 +729,7 @@ export default function ConsultoriaClienteTab({ client }) {
     const loadSelectedMissions = async () => {
       try {
         const cronograma = await base44.entities.CronogramaTemplate.filter(
-          { workshop_id: workshopId },
-          null,
-          1
+          { workshop_id: workshopId }
         );
         if (cronograma?.length > 0) {
           setMissoesSelecionadas(cronograma[0].missoes_selecionadas || []);
