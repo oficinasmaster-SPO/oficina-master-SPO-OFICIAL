@@ -15,7 +15,7 @@ const STATUS_FASE = {
   completed: { label: "Concluída", color: "bg-green-100 text-green-700" },
 };
 
-const DEFAULT_TASKS_AGENDA_CHEIA = [
+const DEFAULT_TASKS_PLANNING_AGENDA_CHEIA = [
   { description: "Levantar a base de clientes dos últimos 12 meses", status: "to_do" },
   { description: "Filtrar clientes com mais de 90 dias sem retorno", status: "to_do" },
   { description: "Classificar clientes por recorrência (recorrentes vs não-recorrentes)", status: "to_do" },
@@ -24,10 +24,30 @@ const DEFAULT_TASKS_AGENDA_CHEIA = [
   { description: "Validar capacitação dos treinamentos", status: "to_do" },
 ];
 
-const DEFAULT_KPIS_AGENDA_CHEIA = [
+const DEFAULT_KPIS_PLANNING_AGENDA_CHEIA = [
   { name: "Clientes da base em trabalho", value: 0, unit: "qtd" },
   { name: "Clientes com +90 dias sem retorno", value: 0, unit: "qtd" },
   { name: "Capacidade de atendimento disponível", value: 0, unit: "horas" },
+];
+
+const DEFAULT_TASKS_EXECUTION_AGENDA_CHEIA = [
+  { description: "Criar a lista de clientes com mais de 90 dias", status: "to_do" },
+  { description: "Criar a lista de clientes com menos de 90 dias", status: "to_do" },
+  { description: "Criar a lista com clientes de 7 dias para geração de indicação", status: "to_do" },
+  { description: "Implementação do checklist treinamento e desenvolvimento", status: "to_do" },
+  { description: "Liberação do map do pavê", status: "to_do" },
+  { description: "Treinamento do responsável e simulação prática", status: "to_do" },
+  { description: "Iniciar contatos via ligação telefônica", status: "to_do" },
+  { description: "Controlar uma planilha ou implementar CRM", status: "to_do" },
+];
+
+const DEFAULT_KPIS_EXECUTION_AGENDA_CHEIA = [
+  { name: "Número de ligações realizadas", value: 0, unit: "qtd" },
+  { name: "Número de conversas efetivadas", value: 0, unit: "qtd" },
+  { name: "Número de agendamentos", value: 0, unit: "qtd" },
+  { name: "Número de comparecimentos", value: 0, unit: "qtd" },
+  { name: "Número de faturamento realizado", value: 0, unit: "R$" },
+  { name: "Tempo iniciado da implementação de prospecção", value: 0, unit: "dias" },
 ];
 
 export default function SprintPhaseDetailModal({ sprint, phaseIndex, onClose, onSaved }) {
@@ -37,13 +57,20 @@ export default function SprintPhaseDetailModal({ sprint, phaseIndex, onClose, on
   const [dueDate, setDueDate] = useState(phase?.due_date || "");
   const [saving, setSaving] = useState(false);
 
-  // Inicializa tarefas com padrão se for Planning de Agenda Cheia
-  const isAgendaCheia = sprint?.mission_id === 'agenda_cheia' && phase?.name === 'Planning';
-  const initTasks = phase?.tasks && phase.tasks.length > 0 ? phase.tasks : (isAgendaCheia ? DEFAULT_TASKS_AGENDA_CHEIA : []);
+  // Inicializa tarefas com padrão se for Planning ou Execution de Agenda Cheia
+  const isAgendaCheia = sprint?.mission_id === 'agenda_cheia';
+  const isPlanning = phase?.name === 'Planning';
+  const isExecution = phase?.name === 'Execution';
+  
+  const initTasks = phase?.tasks && phase.tasks.length > 0 
+    ? phase.tasks 
+    : (isAgendaCheia && isPlanning ? DEFAULT_TASKS_PLANNING_AGENDA_CHEIA : isAgendaCheia && isExecution ? DEFAULT_TASKS_EXECUTION_AGENDA_CHEIA : []);
   const [tasks, setTasks] = useState(initTasks);
 
-  // Inicializa KPIs com padrão se for Planning de Agenda Cheia
-  const initMetrics = phase?.metrics && phase.metrics.length > 0 ? phase.metrics : (isAgendaCheia ? DEFAULT_KPIS_AGENDA_CHEIA : []);
+  // Inicializa KPIs com padrão se for Planning ou Execution de Agenda Cheia
+  const initMetrics = phase?.metrics && phase.metrics.length > 0 
+    ? phase.metrics 
+    : (isAgendaCheia && isPlanning ? DEFAULT_KPIS_PLANNING_AGENDA_CHEIA : isAgendaCheia && isExecution ? DEFAULT_KPIS_EXECUTION_AGENDA_CHEIA : []);
   const [metrics, setMetrics] = useState(initMetrics);
 
   if (!sprint || !phase) return null;
