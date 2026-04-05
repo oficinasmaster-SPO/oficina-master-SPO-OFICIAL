@@ -6,7 +6,7 @@ import { createPageUrl } from "@/utils";
 import {
   Settings2, Map, Zap, BookOpen, ChevronRight, ExternalLink,
   CheckCircle2, Circle, Clock, Target, Users, Lightbulb, 
-  ListChecks, Route, PlayCircle
+  ListChecks, Route, PlayCircle, Plus, X, Star, Lock
 } from "lucide-react";
 
 // Camada 1 - Interno/Estratégico
@@ -74,8 +74,32 @@ function CamadaEstrategica({ workshopId }) {
   );
 }
 
+// Missões disponíveis
+const MISSOES = [
+  { id: "agenda_cheia", nome: "Missão Agenda Cheia", emoji: "📅", descricao: "Para clientes com baixo volume de clientes", cor: "bg-blue-50 border-blue-300 text-blue-800" },
+  { id: "fechamento_imbativel", nome: "Missão Fechamento Imbatível", emoji: "🎯", descricao: "Para clientes que não convertem vendas", cor: "bg-green-50 border-green-300 text-green-800" },
+  { id: "caixa_forte", nome: "Missão Caixa Forte", emoji: "💰", descricao: "Para clientes sem lucro ou com caixa negativo", cor: "bg-yellow-50 border-yellow-300 text-yellow-800" },
+  { id: "equipe_elite", nome: "Missão Equipe de Elite", emoji: "👥", descricao: "Para clientes com problemas de equipe", cor: "bg-purple-50 border-purple-300 text-purple-800" },
+  { id: "contratacao_certa", nome: "Missão Contratação Certa", emoji: "🤝", descricao: "Para clientes que precisam contratar bem", cor: "bg-pink-50 border-pink-300 text-pink-800" },
+  { id: "estrutura_produtiva", nome: "Missão Estrutura Produtiva", emoji: "⚙️", descricao: "Para clientes com gargalos operacionais", cor: "bg-orange-50 border-orange-300 text-orange-800" },
+  { id: "oficina_sistematizada", nome: "Missão Oficina Sistematizada", emoji: "📋", descricao: "Para clientes que precisam de processos e sistemas", cor: "bg-indigo-50 border-indigo-300 text-indigo-800" },
+];
+
 // Camada 2 - Trilha do Cliente
 function CamadaTrilhaCliente({ workshopId }) {
+  const [missoesSelecionadas, setMissoesSelecionadas] = useState([]);
+  const [mostrarSeletor, setMostrarSeletor] = useState(false);
+
+  const toggleMissao = (missaoId) => {
+    setMissoesSelecionadas(prev =>
+      prev.includes(missaoId)
+        ? prev.filter(id => id !== missaoId)
+        : [...prev, missaoId]
+    );
+  };
+
+  const missoesSelecionadasData = MISSOES.filter(m => missoesSelecionadas.includes(m.id));
+
   return (
     <div className="space-y-6">
       <div className="bg-gradient-to-r from-blue-700 to-blue-600 rounded-xl p-5 text-white">
@@ -83,10 +107,11 @@ function CamadaTrilhaCliente({ workshopId }) {
           <Map className="w-5 h-5 text-blue-200" />
           <span className="text-xs font-semibold uppercase tracking-wider text-blue-200">Camada 2 — Trilha do Cliente</span>
         </div>
-        <h3 className="text-lg font-bold">Jornada de Implementação</h3>
-        <p className="text-sm text-blue-100 mt-1">O que o cliente visualiza no Cronograma de Consultoria.</p>
+        <h3 className="text-lg font-bold">Jornada de Implementação Personalizada</h3>
+        <p className="text-sm text-blue-100 mt-1">Trilha montada após diagnóstico. O cliente visualiza no Cronograma de Consultoria.</p>
       </div>
 
+      {/* Link ao cronograma */}
       <div className="flex items-center gap-3 p-4 bg-blue-50 border border-blue-200 rounded-xl">
         <Map className="w-6 h-6 text-blue-600 flex-shrink-0" />
         <div className="flex-1">
@@ -104,22 +129,106 @@ function CamadaTrilhaCliente({ workshopId }) {
         </Button>
       </div>
 
+      {/* Semana 1 - Fixo */}
       <div>
         <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
           <ListChecks className="w-4 h-4 text-blue-600" />
-          Etapas da Trilha
+          Trilha de Implementação
         </h4>
-        <div className="space-y-2">
-          {["Onboarding e Diagnóstico Inicial", "Definição de Metas e Prioridades", "Implementação de Processos Fase 1", "Revisão e Ajustes", "Implementação Fase 2 — Escala", "Consolidação e Autonomia"].map((etapa, idx) => (
-            <div key={idx} className="flex items-center gap-3 p-3 border rounded-lg">
-              <div className="w-7 h-7 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold flex-shrink-0">
-                {idx + 1}
+
+        <div className="space-y-3">
+          {/* Semana 1 - sempre fixa */}
+          <div className="border-2 border-gray-300 rounded-xl p-4 bg-gray-50">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-full bg-gray-700 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">1</div>
+                <div>
+                  <p className="font-semibold text-sm text-gray-900">Semana 1 — Padrão</p>
+                  <p className="text-xs text-gray-500">Todas as trilhas começam aqui</p>
+                </div>
               </div>
-              <span className="text-sm text-gray-700">{etapa}</span>
+              <div className="flex items-center gap-1 text-xs text-gray-500">
+                <Lock className="w-3 h-3" />
+                Fixo
+              </div>
+            </div>
+            <div className="pl-9 space-y-1.5">
+              <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                <span className="text-base">🔍</span> Diagnóstico Inicial
+              </div>
+              <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                <span className="text-base">🗂️</span> Organização e Alinhamento
+              </div>
+            </div>
+          </div>
+
+          {/* Semanas personalizadas selecionadas */}
+          {missoesSelecionadasData.map((missao, idx) => (
+            <div key={missao.id} className={`border-2 rounded-xl p-4 ${missao.cor}`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-full bg-white border-2 border-current flex items-center justify-center text-xs font-bold flex-shrink-0">{idx + 2}</div>
+                  <div>
+                    <p className="font-semibold text-sm">{missao.emoji} {missao.nome}</p>
+                    <p className="text-xs opacity-70">{missao.descricao}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => toggleMissao(missao.id)}
+                  className="p-1 rounded-full hover:bg-white/50 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           ))}
+
+          {/* Botão adicionar missão */}
+          <button
+            onClick={() => setMostrarSeletor(!mostrarSeletor)}
+            className="w-full border-2 border-dashed border-blue-300 rounded-xl p-4 text-blue-600 hover:bg-blue-50 transition-colors flex items-center justify-center gap-2 text-sm font-medium"
+          >
+            <Plus className="w-4 h-4" />
+            {mostrarSeletor ? 'Fechar seletor' : 'Adicionar Missão à Trilha'}
+          </button>
         </div>
       </div>
+
+      {/* Seletor de missões */}
+      {mostrarSeletor && (
+        <div className="border rounded-xl p-4 bg-white shadow-md">
+          <div className="flex items-center gap-2 mb-3">
+            <Star className="w-4 h-4 text-amber-500" />
+            <p className="font-semibold text-sm text-gray-900">Selecionar Missões</p>
+            <p className="text-xs text-gray-500 ml-auto">Personalize conforme o diagnóstico do cliente</p>
+          </div>
+          <div className="space-y-2">
+            {MISSOES.map((missao) => {
+              const selecionada = missoesSelecionadas.includes(missao.id);
+              return (
+                <button
+                  key={missao.id}
+                  onClick={() => toggleMissao(missao.id)}
+                  className={`w-full text-left p-3 rounded-lg border-2 transition-all flex items-center justify-between ${
+                    selecionada
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-xl">{missao.emoji}</span>
+                    <div>
+                      <p className="font-medium text-sm text-gray-900">{missao.nome}</p>
+                      <p className="text-xs text-gray-500">{missao.descricao}</p>
+                    </div>
+                  </div>
+                  {selecionada && <CheckCircle2 className="w-5 h-5 text-blue-600 flex-shrink-0" />}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
