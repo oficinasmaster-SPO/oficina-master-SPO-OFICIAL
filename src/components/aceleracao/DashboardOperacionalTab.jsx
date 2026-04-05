@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
@@ -89,7 +89,7 @@ export default function DashboardOperacionalTab({ user }) {
   const workshopMap = Object.fromEntries(workshops.map(w => [w.id, w]));
 
   const handleSprintClick = (sprint) => {
-    navigate(`/ControleAceleracao?tab=consultoria&sprint_id=${sprint.id}`);
+    navigate(`/ControleAceleracao?tab=dashboard-operacional&sprint_id=${sprint.id}`);
   };
 
   // Métricas

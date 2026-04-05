@@ -22,7 +22,7 @@ import DashboardOperacionalTab from "@/components/aceleracao/DashboardOperaciona
 export default function ControleAceleracao() {
   const navigate = useNavigate();
   const urlParams = new URLSearchParams(window.location.search);
-  const initialTab = urlParams.get('tab') || "visao-geral";
+  const initialTab = urlParams.get('tab') === 'consultoria' ? 'dashboard-operacional' : (urlParams.get('tab') || "visao-geral");
   const [activeTab, setActiveTab] = useState(initialTab);
   const [showMassRegistration, setShowMassRegistration] = useState(false);
   const [filtros, setFiltros] = useState({
@@ -160,6 +160,9 @@ export default function ControleAceleracao() {
             <Activity className="w-4 h-4 mr-2" />
             Dashboard Sprints
           </TabsTrigger>
+          <TabsTrigger value="consultoria" className="flex-shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-colors hidden">
+            Consultoria
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="visao-geral">
@@ -195,9 +198,13 @@ export default function ControleAceleracao() {
         </TabsContent>
 
         <TabsContent value="dashboard-operacional">
-          <DashboardOperacionalTab user={user} />
-        </TabsContent>
-      </Tabs>
+           <DashboardOperacionalTab user={user} />
+         </TabsContent>
+
+         <TabsContent value="consultoria" className="hidden">
+           {/* Fallback redirection - consultoria tab é mapeado para dashboard-operacional */}
+         </TabsContent>
+        </Tabs>
     </div>
   );
 }
