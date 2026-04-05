@@ -121,11 +121,10 @@ export default function Layout({ children, currentPageName }) {
 
   const shouldShowMenus = isAuthenticated && !isPublicPage && !isPendingOnboarding && (!!workshop || isAdminMode);
 
-  // IMPORTANTE: Desabilitar modo Admin em páginas de primeiro acesso e Controle de Aceleração
+  // IMPORTANTE: Desabilitar modo Admin em páginas de primeiro acesso
   const isFirstAccessPage = location.pathname.toLowerCase().includes('primeiroacesso');
-  const isControleAceleracaoPage = location.pathname.toLowerCase().includes('controleaceleracao');
-  if ((isFirstAccessPage || isControleAceleracaoPage) && isAdminMode) {
-    // Forçar saída do modo admin em páginas de primeiro acesso e Controle de Aceleração
+  if (isFirstAccessPage && isAdminMode) {
+    // Forçar saída do modo admin em páginas de primeiro acesso
     localStorage.removeItem('admin_workshop_id');
     window.location.search = '';
   }
