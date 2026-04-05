@@ -15,14 +15,36 @@ const STATUS_FASE = {
   completed: { label: "Concluída", color: "bg-green-100 text-green-700" },
 };
 
+const DEFAULT_TASKS_AGENDA_CHEIA = [
+  { description: "Levantar a base de clientes dos últimos 12 meses", status: "to_do" },
+  { description: "Filtrar clientes com mais de 90 dias sem retorno", status: "to_do" },
+  { description: "Classificar clientes por recorrência (recorrentes vs não-recorrentes)", status: "to_do" },
+  { description: "Definir oferta de reativação (Kit Master ou equivalente)", status: "to_do" },
+  { description: "Definir responsável pela execução (SDR/Vendedor)", status: "to_do" },
+  { description: "Validar capacitação dos treinamentos", status: "to_do" },
+];
+
+const DEFAULT_KPIS_AGENDA_CHEIA = [
+  { name: "Clientes da base em trabalho", value: 0, unit: "qtd" },
+  { name: "Clientes com +90 dias sem retorno", value: 0, unit: "qtd" },
+  { name: "Capacidade de atendimento disponível", value: 0, unit: "horas" },
+];
+
 export default function SprintPhaseDetailModal({ sprint, phaseIndex, onClose, onSaved }) {
   const phase = sprint?.phases?.[phaseIndex];
   const [status, setStatus] = useState(phase?.status || "not_started");
   const [notes, setNotes] = useState(phase?.notes || "");
   const [dueDate, setDueDate] = useState(phase?.due_date || "");
-  const [metrics, setMetrics] = useState(phase?.metrics || []);
-  const [tasks, setTasks] = useState(phase?.tasks || []);
   const [saving, setSaving] = useState(false);
+
+  // Inicializa tarefas com padrão se for Planning de Agenda Cheia
+  const isAgendaCheia = sprint?.mission_id === 'agenda_cheia' && phase?.name === 'Planning';
+  const initTasks = phase?.tasks && phase.tasks.length > 0 ? phase.tasks : (isAgendaCheia ? DEFAULT_TASKS_AGENDA_CHEIA : []);
+  const [tasks, setTasks] = useState(initTasks);
+
+  // Inicializa KPIs com padrão se for Planning de Agenda Cheia
+  const initMetrics = phase?.metrics && phase.metrics.length > 0 ? phase.metrics : (isAgendaCheia ? DEFAULT_KPIS_AGENDA_CHEIA : []);
+  const [metrics, setMetrics] = useState(initMetrics);
 
   if (!sprint || !phase) return null;
 
