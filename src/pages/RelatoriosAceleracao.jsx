@@ -9,6 +9,9 @@ import { FileText, Download, TrendingUp, Users, ClipboardCheck, Loader2, BarChar
 import RelatoriosTab from "@/components/aceleracao/RelatoriosTab";
 import GargalosConsultores from "@/components/aceleracao/GargalosConsultores";
 import GargalosConsultoresRealtime from "@/components/aceleracao/GargalosConsultoresRealtime";
+import ClientesRiscoPanel from "@/components/aceleracao/ClientesRiscoPanel";
+import NPSPanel from "@/components/aceleracao/NPSPanel";
+import DesempenhoConsultoresPanel from "@/components/aceleracao/DesempenhoConsultoresPanel";
 
 export default function RelatoriosAceleracao() {
   const [periodo, setPeriodo] = useState("mes_atual");
@@ -87,6 +90,118 @@ export default function RelatoriosAceleracao() {
     }
   });
 
+  const { data: clientesRisco = [] } = useQuery({
+    queryKey: ['clientes-risco'],
+    queryFn: async () => {
+      const atendimentos = await base44.entities.ConsultoriaAtendimento.list();
+      const workshops = await base44.entities.Workshop.list();
+      const workshopMap = Object.fromEntries(workshops.map(w => [w.id, w]));
+      
+      const trintaDiasAtras = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      const atendimentosRecentes = atendimentos.filter(a => {
+        if (!a.data_agendada) return false;
+        return new Date(a.data_agendada) >= trintaDiasAtras;
+      });
+
+      const porWorkshop = {};
+      for (const a of atendimentosRecentes) {
+        if (!a.workshop_id) continue;
+        if (!porWorkshop[a.workshop_id]) {
+          porWorkshop[a.workshop_id] = {
+            workshop: workshopMap[a.workshop_id],
+            consultor: a.consultor_nome || 'N/A',
+            atendimentos30d: [],
+          };
+        }
+        porWorkshop[a.workshop_id].atendimentos30d.push(a);
+      }
+
+      const clientesRiscoList = [];
+      for (const [wsId, dados] of Object.entries(porWorkshop)) {
+        const ws = dados.workshop;
+        if (!ws || ws.status === 'inativo') continue;
+
+        const ats = dados.atendimentos30d;
+        const faltas = ats.filter(a => a.status === 'faltou').length;
+        const cancelados = ats.filter(a => ['cancelado', 'desmarcou'].includes(a.status)).length;
+        const realizados = ats.filter(a => a.status === 'realizado').length;
+        const statusCliente = ats[ats.length - 1]?.status_cliente;
+
+        let nivel = null;
+        if (statusCliente === 'nao_responde' || faltas + cancelados >= 2) {
+          nivel = 'CRÍTICO';
+        } else if (statusCliente === 'decrescente' || (faltas >= 1 && realizados === 0)) {
+          nivel = 'ALTO';
+        } else if (ats.length === 0) {
+          nivel = 'MÉDIO';
+        }
+
+        if (nivel) {
+          clientesRiscoList.push({
+            nome: ws.name || wsId,
+            consultor: dados.consultor,
+            nivel,
+            faltas30: faltas,
+            cancelados30: cancelados,
+            realizados30: realizados,
+          });
+        }
+      }
+      return clientesRiscoList;
+    }
+  });
+
+  const { data: npsData = [] } = useQuery({
+    queryKey: ['nps-responses'],
+    queryFn: async () => {
+      return await base44.entities.NPSResponse.list();
+    }
+  });
+
+  const { data: consultoresDesempenho = [] } = useQuery({
+    queryKey: ['consultores-desempenho'],
+    queryFn: async () => {
+      const atendimentos = await base44.entities.ConsultoriaAtendimento.list();
+      const trintaDiasAtras = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      
+      const atendimentosRecentes = atendimentos.filter(a => {
+        if (!a.data_agendada) return false;
+        return new Date(a.data_agendada) >= trintaDiasAtras;
+      });
+
+      const porConsultor = {};
+      for (const a of atendimentosRecentes) {
+        const cId = a.consultor_id;
+        if (!cId) continue;
+        if (!porConsultor[cId]) {
+          porConsultor[cId] = {
+            nome: a.consultor_nome || 'Consultor',
+            total: 0,
+            realizados: 0,
+            faltaram: 0,
+            cancelados: 0,
+            clientes: new Set(),
+          };
+        }
+        porConsultor[cId].total++;
+        if (a.status === 'realizado') porConsultor[cId].realizados++;
+        if (a.status === 'faltou') porConsultor[cId].faltaram++;
+        if (['cancelado', 'desmarcou'].includes(a.status)) porConsultor[cId].cancelados++;
+        if (a.workshop_id) porConsultor[cId].clientes.add(a.workshop_id);
+      }
+
+      return Object.entries(porConsultor).map(([, c]) => ({
+        nome: c.nome,
+        total: c.total,
+        realizados: c.realizados,
+        faltaram: c.faltaram,
+        cancelados: c.cancelados,
+        clientes: c.clientes.size,
+        taxa: c.total > 0 ? Math.round((c.realizados / c.total) * 100) : 0,
+      }));
+    }
+  });
+
   const gerarRelatorio = async (tipo) => {
     setGerandoRelatorio(tipo);
     try {
@@ -138,17 +253,27 @@ export default function RelatoriosAceleracao() {
         </Select>
       </div>
 
-      <Tabs defaultValue="geral" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 bg-white shadow-md">
-          <TabsTrigger value="geral">
+      <Tabs defaultValue="painel" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-3 bg-white shadow-md">
+          <TabsTrigger value="painel">
             <BarChart3 className="w-4 h-4 mr-2" />
-            Relatórios Gerais
+            Painel de Relatórios
+          </TabsTrigger>
+          <TabsTrigger value="geral">
+            <TrendingUp className="w-4 h-4 mr-2" />
+            Análises Avançadas
           </TabsTrigger>
           <TabsTrigger value="atendimentos">
             <FileText className="w-4 h-4 mr-2" />
-            Atendimentos (da tela Controle)
+            Atendimentos
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="painel" className="space-y-6">
+          <ClientesRiscoPanel clientes={clientesRisco} />
+          <NPSPanel respostas={npsData} />
+          <DesempenhoConsultoresPanel consultores={consultoresDesempenho} />
+        </TabsContent>
 
         <TabsContent value="geral" className="space-y-6">
 
