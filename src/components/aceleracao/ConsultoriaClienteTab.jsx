@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { toast } from 'sonner';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -69,11 +70,13 @@ function CamadaTrilhaCliente({ workshopId, missoesSelecionadas, setMissoesSeleci
     setSalvando(true);
     try {
       await setMissoesSelecionadas(missoesSelecionadas);
+      toast.success('✓ Trilha salva com sucesso!');
       setSalvoRecentemente(true);
       setMudancasNaoSalvas(false);
       setTimeout(() => setSalvoRecentemente(false), 3000);
     } catch (error) {
       console.error('Erro ao salvar trilha:', error);
+      toast.error('✗ Erro ao salvar trilha');
     } finally {
       setSalvando(false);
     }
@@ -576,7 +579,10 @@ function CamadaSprints({ workshopId, missoesSelecionadas }) {
         phases: defaultPhases,
         last_activity_date: new Date().toISOString(),
       });
+      toast.success(`✓ Sprint ${numero} iniciado!`);
       await loadSprints();
+    } catch (error) {
+      toast.error('✗ Erro ao iniciar sprint');
     } finally {
       setLoadingCreate(null);
     }

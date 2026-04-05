@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -69,12 +70,18 @@ export default function SprintPhaseDetailModal({ sprint, phaseIndex, onClose, on
         ? "in_progress"
         : sprint.status === "overdue" ? "overdue" : "pending";
 
-    await base44.entities.ConsultoriaSprint.update(sprint.id, {
-      phases: updatedPhases,
-      progress_percentage: progress,
-      status: newSprintStatus,
-      last_activity_date: new Date().toISOString(),
-    });
+    try {
+      await base44.entities.ConsultoriaSprint.update(sprint.id, {
+        phases: updatedPhases,
+        progress_percentage: progress,
+        status: newSprintStatus,
+        last_activity_date: new Date().toISOString(),
+      });
+      toast.success('✓ Fase salva com sucesso!');
+    } catch (error) {
+      toast.error('✗ Erro ao salvar fase');
+      console.error('Erro ao salvar fase:', error);
+    }
 
     setSaving(false);
     onSaved();
