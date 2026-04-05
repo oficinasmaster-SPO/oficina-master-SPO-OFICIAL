@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -34,7 +35,7 @@ function MetricCard({ icon: Icon, label, value, sub, color = "text-gray-900", bg
   );
 }
 
-function SprintRow({ sprint, workshop }) {
+function SprintRow({ sprint, workshop, onSprintClick }) {
   const daysRemaining = sprint.end_date
     ? differenceInDays(new Date(sprint.end_date), new Date())
     : null;
@@ -42,7 +43,10 @@ function SprintRow({ sprint, workshop }) {
   const statusCfg = STATUS_CONFIG[sprint.status] || STATUS_CONFIG.pending;
 
   return (
-    <div className="flex items-center gap-3 py-3 border-b last:border-0 hover:bg-gray-50 px-4 transition-colors">
+    <div
+      onClick={() => onSprintClick(sprint)}
+      className="flex items-center gap-3 py-3 border-b last:border-0 hover:bg-blue-50 px-4 transition-colors cursor-pointer"
+    >
       <div className={`w-2 h-2 rounded-full flex-shrink-0 ${statusCfg.dot}`} />
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-gray-900 truncate">{sprint.title}</p>
@@ -67,6 +71,7 @@ function SprintRow({ sprint, workshop }) {
 }
 
 export default function DashboardOperacionalTab({ user }) {
+  const navigate = useNavigate();
   const [filterStatus, setFilterStatus] = useState("all");
 
   const { data: sprints = [], isLoading, refetch } = useQuery({
@@ -82,6 +87,10 @@ export default function DashboardOperacionalTab({ user }) {
   });
 
   const workshopMap = Object.fromEntries(workshops.map(w => [w.id, w]));
+
+  const handleSprintClick = (sprint) => {
+    navigate(`/ControleAceleracao?tab=consultoria&sprint_id=${sprint.id}&workshop_id=${sprint.workshop_id}`);
+  };
 
   // Métricas
   const total = sprints.length;
@@ -156,7 +165,7 @@ export default function DashboardOperacionalTab({ user }) {
           </CardHeader>
           <CardContent className="px-0 pb-2">
             {sprintsAtrasados.map(sprint => (
-              <SprintRow key={sprint.id} sprint={sprint} workshop={workshopMap[sprint.workshop_id]} />
+              <SprintRow key={sprint.id} sprint={sprint} workshop={workshopMap[sprint.workshop_id]} onSprintClick={handleSprintClick} />
             ))}
           </CardContent>
         </Card>
@@ -200,7 +209,7 @@ export default function DashboardOperacionalTab({ user }) {
               </div>
             ) : (
               sprintsFiltrados.map(sprint => (
-                <SprintRow key={sprint.id} sprint={sprint} workshop={workshopMap[sprint.workshop_id]} />
+                <SprintRow key={sprint.id} sprint={sprint} workshop={workshopMap[sprint.workshop_id]} onSprintClick={handleSprintClick} />
               ))
             )}
           </CardContent>
