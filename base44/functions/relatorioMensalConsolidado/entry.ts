@@ -171,16 +171,23 @@ Deno.serve(async (req) => {
   // Buscar admins para envio
   const admins = todosUsuarios.filter(u => u.role === 'admin' && u.email);
   let emailsSent = 0;
+  const erros = [];
 
-  for (const admin of admins) {
-    await base44.asServiceRole.integrations.Core.SendEmail({
-      to: admin.email,
-      subject: `📊 Relatório Mensal Consolidado — ${nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1)}`,
-      body: html,
-    });
-    emailsSent++;
-  }
+  await Promise.all(admins.map(async (admin) => {
+    try {
+      await base44.asServiceRole.integrations.Core.SendEmail({
+        to: admin.email,
+        subject: `📊 Relatório Mensal Consolidado — ${nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1)}`,
+        body: html,
+      });
+      emailsSent++;
+    } catch (err) {
+      erros.push(`Falha ao enviar para ${admin.email}: ${err.message}`);
+      console.error(`[relatorioMensal] Erro admin ${admin.email}:`, err.message);
+    }
+  }));
 
+  if (erros.length > 0) console.warn('[relatorioMensal] Erros:', erros);
   console.log(`Relatório mensal enviado para ${emailsSent} gestor(es). Mês: ${nomeMes}. Total atendimentos: ${total}`);
 
   return Response.json({

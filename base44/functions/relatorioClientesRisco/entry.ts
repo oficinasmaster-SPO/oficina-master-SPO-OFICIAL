@@ -37,6 +37,9 @@ Deno.serve(async (req) => {
   const workshopMap = Object.fromEntries(todosWorkshops.map(w => [w.id, w]));
   const admins = todosUsuarios.filter(u => u.role === 'admin' && u.email);
 
+  // Índice de workshops que tiveram atendimento algum dia (para detectar abandonados)
+  const workshopsComHistorico = new Set(todosAtendimentos.map(a => a.workshop_id).filter(Boolean));
+
   // Apenas atendimentos dos últimos 60 dias
   const atendimentosRecentes = todosAtendimentos.filter(a => {
     if (!a.data_agendada) return false;
@@ -44,7 +47,6 @@ Deno.serve(async (req) => {
   });
 
   // Agrupar por workshop
-  const porWorkshop = {};
   for (const a of atendimentosRecentes) {
     if (!a.workshop_id) continue;
     if (!porWorkshop[a.workshop_id]) {
@@ -71,12 +73,28 @@ Deno.serve(async (req) => {
     }
   }
 
+  // Detectar workshops com histórico mas ZERO atendimentos nos últimos 60 dias (risco MÉDIO: abandono)
+  for (const wsId of workshopsComHistorico) {
+    if (!porWorkshop[wsId]) {
+      const ws = workshopMap[wsId];
+      if (!ws || ws.status === 'inativo') continue;
+      porWorkshop[wsId] = {
+        workshop: ws,
+        consultorNome: 'Não atribuído',
+        atendimentos60d: [],
+        atendimentos30d: [],
+        ultimoStatus: null,
+        _abandonado: true,
+      };
+    }
+  }
+
   // Avaliar risco de cada cliente
   const clientesRisco = [];
 
   for (const [workshopId, dados] of Object.entries(porWorkshop)) {
     const ws = dados.workshop;
-    if (!ws) continue;
+    if (!ws || ws.status === 'inativo') continue;
 
     const ats30 = dados.atendimentos30d;
     const faltas30 = ats30.filter(a => a.status === 'faltou').length;
@@ -106,7 +124,10 @@ Deno.serve(async (req) => {
 
     // Nível MÉDIO
     if (!nivel) {
-      if (faltas30 + cancelados30 >= 1 && realizados30 === 0) {
+      if (dados._abandonado) {
+        nivel = 'MÉDIO';
+        motivos.push('Sem nenhum atendimento nos últimos 60 dias');
+      } else if (faltas30 + cancelados30 >= 1 && realizados30 === 0) {
         nivel = 'MÉDIO';
         motivos.push(`Sem realizações nos últimos 30 dias (${faltas30} falta(s), ${cancelados30} cancelamento(s))`);
       } else if (ats30.length === 0 && dados.atendimentos60d.length > 0) {

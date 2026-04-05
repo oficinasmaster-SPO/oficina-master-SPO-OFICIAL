@@ -63,8 +63,10 @@ Deno.serve(async (req) => {
   });
 
   let emailsSent = 0;
+  const erros = [];
 
-  for (const [, consultor] of Object.entries(porConsultor)) {
+  await Promise.all(Object.entries(porConsultor).map(async ([, consultor]) => {
+    try {
     const ats = consultor.atendimentos;
     const realizados  = ats.filter(a => a.status === 'realizado').length;
     const agendados   = ats.filter(a => ['agendado', 'confirmado'].includes(a.status)).length;
@@ -143,7 +145,13 @@ Deno.serve(async (req) => {
 
     emailsSent++;
     console.log(`Relatório enviado para ${consultor.nome} (${consultor.email}): ${realizados}/${ats.length} realizados`);
-  }
+    } catch (err) {
+      erros.push(`Erro ao enviar para ${consultor.email}: ${err.message}`);
+      console.error(`[relatorioSemanal] Falha no consultor ${consultor.email}:`, err.message);
+    }
+  }));
 
-  return Response.json({ status: 'ok', emails_sent: emailsSent, period: `${formatDate(inicioSemanaPassada)} - ${formatDate(fimSemanaPassada)}` });
+  if (erros.length > 0) console.warn('[relatorioSemanal] Erros:', erros);
+
+  return Response.json({ status: 'ok', emails_sent: emailsSent, erros: erros.length, period: `${formatDate(inicioSemanaPassada)} - ${formatDate(fimSemanaPassada)}` });
 });
