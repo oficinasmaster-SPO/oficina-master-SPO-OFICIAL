@@ -1,0 +1,44 @@
+{
+  "name": "SyncState",
+  "type": "object",
+  "properties": {
+    "key": {
+      "type": "string",
+      "description": "Identificador \u00fanico do estado de sync (ex: googlecalendar_primary)"
+    },
+    "sync_token": {
+      "type": "string",
+      "description": "Token incremental de sincroniza\u00e7\u00e3o do Google Calendar"
+    },
+    "last_synced_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora da \u00faltima sincroniza\u00e7\u00e3o bem-sucedida"
+    }
+  },
+  "required": [
+    "key"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
