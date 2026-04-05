@@ -2,8 +2,9 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
 /**
  * Relatório de Clientes em Risco
- * Scheduled: toda segunda-feira às 8h (BRT)
- * Analisa padrões de risco nos últimos 60 dias e envia relatório aos admins.
+ * Scheduled: toda sexta-feira às 8h (BRT)
+ * Analisa padrões de risco nos últimos 60 dias.
+ * Envia relatório completo aos admins E e-mail individual a cada consultor com seus clientes em risco + sugestão de ação.
  *
  * Critérios de risco:
  * - CRÍTICO: status_cliente = 'nao_responde'
@@ -35,6 +36,8 @@ Deno.serve(async (req) => {
   ]);
 
   const workshopMap = Object.fromEntries(todosWorkshops.map(w => [w.id, w]));
+  const userEmailMap = Object.fromEntries(todosUsuarios.map(u => [u.id, u.email]));
+  const userNomeMap  = Object.fromEntries(todosUsuarios.map(u => [u.id, u.full_name || u.email]));
   const admins = todosUsuarios.filter(u => u.role === 'admin' && u.email);
 
   // Índice de workshops que tiveram atendimento algum dia (para detectar abandonados)
@@ -53,7 +56,8 @@ Deno.serve(async (req) => {
     if (!porWorkshop[a.workshop_id]) {
       porWorkshop[a.workshop_id] = {
         workshop: workshopMap[a.workshop_id],
-        consultorNome: a.consultor_nome || 'Não atribuído',
+        consultorId: a.consultor_id || null,
+        consultorNome: a.consultor_nome || userNomeMap[a.consultor_id] || 'Não atribuído',
         atendimentos60d: [],
         atendimentos30d: [],
         ultimoStatus: null,
@@ -139,14 +143,23 @@ Deno.serve(async (req) => {
 
     if (!nivel) continue;
 
+    // Sugestão de ação por nível
+    const sugestaoAcao = nivel === 'CRÍTICO'
+      ? 'Ligação imediata + contato por WhatsApp. Se sem resposta em 24h, escalar para gestor.'
+      : nivel === 'ALTO'
+      ? 'Entrar em contato esta semana para reagendamento. Verificar causa das faltas/cancelamentos.'
+      : 'Enviar mensagem de check-in pelo WhatsApp e propor nova data de atendimento.';
+
     clientesRisco.push({
       nome: ws.name || workshopId,
       city: ws.city || '',
       state: ws.state || '',
       plano: ws.planoAtual || '-',
+      consultorId: dados.consultorId,
       consultor: dados.consultorNome,
       nivel,
       motivos,
+      sugestaoAcao,
       faltas30,
       cancelados30,
       realizados30,
@@ -182,6 +195,7 @@ Deno.serve(async (req) => {
       <td style="padding:10px 12px;border:1px solid #e5e7eb;text-align:center;color:#16a34a;font-weight:600">${c.realizados30}</td>
       <td style="padding:10px 12px;border:1px solid #e5e7eb;font-size:12px;color:#6b7280">${c.consultor}</td>
       <td style="padding:10px 12px;border:1px solid #e5e7eb;text-align:center;font-size:12px">${c.plano}</td>
+      <td style="padding:10px 12px;border:1px solid #e5e7eb;font-size:12px;color:#1d4ed8;font-style:italic">${c.sugestaoAcao}</td>
     </tr>`).join('');
 
   const dataRelatorio = agora.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
@@ -226,6 +240,7 @@ Deno.serve(async (req) => {
             <th style="padding:10px 12px;text-align:center;border:1px solid #991b1b">Realizados</th>
             <th style="padding:10px 12px;text-align:left;border:1px solid #991b1b">Consultor</th>
             <th style="padding:10px 12px;text-align:center;border:1px solid #991b1b">Plano</th>
+            <th style="padding:10px 12px;text-align:left;border:1px solid #991b1b">Sugestão de Ação</th>
           </tr>
         </thead>
         <tbody>${linhasTabela}</tbody>
@@ -237,9 +252,72 @@ Deno.serve(async (req) => {
     </div>
   </div>`;
 
-  // Envio paralelo a todos os admins com isolamento de falha
+  // ── Envio por consultor: lista personalizada dos SEUS clientes em risco ──
+  const porConsultorRisco = {};
+  for (const c of clientesRisco) {
+    if (!c.consultorId) continue;
+    const cEmail = userEmailMap[c.consultorId];
+    if (!cEmail) continue;
+    if (!porConsultorRisco[c.consultorId]) {
+      porConsultorRisco[c.consultorId] = { nome: c.consultor, email: cEmail, clientes: [] };
+    }
+    porConsultorRisco[c.consultorId].clientes.push(c);
+  }
+
   let emailsSent = 0;
   const errosEmail = [];
+
+  await Promise.all(Object.values(porConsultorRisco).map(async (consultor) => {
+    try {
+      const linhasConsultor = consultor.clientes.map(c => `
+        <tr>
+          <td style="padding:10px 12px;border:1px solid #e5e7eb;font-weight:600">${c.nome}</td>
+          <td style="padding:10px 12px;border:1px solid #e5e7eb;text-align:center">
+            <span style="background:${bgNivel[c.nivel]};color:${corNivel[c.nivel]};padding:3px 10px;border-radius:12px;font-size:12px;font-weight:700">${c.nivel}</span>
+          </td>
+          <td style="padding:10px 12px;border:1px solid #e5e7eb;font-size:13px;color:#555">${c.motivos.join('<br>')}</td>
+          <td style="padding:10px 12px;border:1px solid #e5e7eb;font-size:12px;color:#1d4ed8;font-style:italic">${c.sugestaoAcao}</td>
+        </tr>`).join('');
+
+      const htmlConsultor = `
+      <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;background:#fff">
+        <div style="background:linear-gradient(135deg,#7f1d1d,#dc2626);padding:28px 24px;text-align:center;border-radius:8px 8px 0 0">
+          <h1 style="color:#fff;margin:0;font-size:20px">⚠️ Seus Clientes em Risco</h1>
+          <p style="color:#fecaca;margin:8px 0 0;font-size:14px">${dataRelatorio} &middot; ${consultor.clientes.length} cliente(s)</p>
+        </div>
+        <div style="padding:24px">
+          <p style="color:#374151;font-size:15px">Olá, <strong>${consultor.nome.split(' ')[0]}</strong>! Os clientes abaixo precisam de atenção prioritária hoje:</p>
+          <table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:16px">
+            <thead>
+              <tr style="background:#7f1d1d;color:#fff">
+                <th style="padding:10px 12px;text-align:left;border:1px solid #991b1b">Cliente</th>
+                <th style="padding:10px 12px;text-align:center;border:1px solid #991b1b">Risco</th>
+                <th style="padding:10px 12px;text-align:left;border:1px solid #991b1b">Motivo</th>
+                <th style="padding:10px 12px;text-align:left;border:1px solid #991b1b">💡 Sugestão de Ação</th>
+              </tr>
+            </thead>
+            <tbody>${linhasConsultor}</tbody>
+          </table>
+          <p style="font-size:11px;color:#9ca3af;text-align:center;margin-top:20px;border-top:1px solid #f3f4f6;padding-top:12px">
+            Oficinas Master · Gerado automaticamente
+          </p>
+        </div>
+      </div>`;
+
+      await base44.asServiceRole.integrations.Core.SendEmail({
+        to: consultor.email,
+        subject: `⚠️ ${consultor.clientes.length} cliente(s) em risco para você agir hoje · ${dataRelatorio}`,
+        body: htmlConsultor,
+      });
+      emailsSent++;
+      console.log(`[relatorioRisco] E-mail consultor enviado: ${consultor.nome} (${consultor.clientes.length} clientes)`);
+    } catch (err) {
+      errosEmail.push(`Falha ao enviar para consultor ${consultor.email}: ${err.message}`);
+      console.error(`[relatorioRisco] Erro consultor ${consultor.email}:`, err.message);
+    }
+  }));
+
+  // ── Envio para admins: relatório completo ──
   await Promise.all(admins.map(async (admin) => {
     try {
       await base44.asServiceRole.integrations.Core.SendEmail({
@@ -253,9 +331,9 @@ Deno.serve(async (req) => {
       console.error(`[relatorioRisco] Erro admin ${admin.email}:`, err.message);
     }
   }));
-  if (errosEmail.length > 0) console.warn('[relatorioRisco] Erros de envio:', errosEmail);
 
-  console.log(`[relatorioRisco] Relatório enviado: ${clientesRisco.length} clientes em risco (${criticos} críticos, ${altos} altos, ${medios} médios). ${emailsSent}/${admins.length} admin(s) notificado(s).`);
+  if (errosEmail.length > 0) console.warn('[relatorioRisco] Erros de envio:', errosEmail);
+  console.log(`[relatorioRisco] ${clientesRisco.length} clientes em risco (${criticos} críticos, ${altos} altos, ${medios} médios). ${emailsSent} e-mail(s) enviado(s).`);
 
   return Response.json({
     status: 'ok',

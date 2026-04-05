@@ -21,7 +21,7 @@ Deno.serve(async (req) => {
   }
 
   const agora = new Date();
-  const quinzeMinAtras = new Date(agora.getTime() - 15 * 60 * 1000);
+  const trintaMinAtras = new Date(agora.getTime() - 30 * 60 * 1000); // spec: 30+ min
   // Janela de 3h: evita varredura histórica completa e cobre atrasos recentes
   const tresBufAtras = new Date(agora.getTime() - 3 * 60 * 60 * 1000);
 
@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
     if (!['agendado', 'confirmado'].includes(a.status)) return false;
     if (!a.data_agendada) return false;
     const d = new Date(a.data_agendada);
-    return d <= quinzeMinAtras && d >= tresBufAtras;
+    return d <= trintaMinAtras && d >= tresBufAtras;
   });
 
   if (atrasados.length === 0) {
