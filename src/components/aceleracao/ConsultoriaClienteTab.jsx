@@ -721,6 +721,54 @@ function CamadaConsultor({ workshopId }) {
 export default function ConsultoriaClienteTab({ client }) {
   const workshopId = client?.id;
   const [missoesSelecionadas, setMissoesSelecionadas] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Carrega trilhas selecionadas do banco de dados
+  useEffect(() => {
+    if (!workshopId) return;
+    const loadSelectedMissions = async () => {
+      try {
+        const cronograma = await base44.entities.CronogramaTemplate.filter(
+          { workshop_id: workshopId },
+          null,
+          1
+        );
+        if (cronograma?.length > 0) {
+          setMissoesSelecionadas(cronograma[0].missoes_selecionadas || []);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar trilhas selecionadas:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadSelectedMissions();
+  }, [workshopId]);
+
+  // Salva trilhas selecionadas no banco de dados
+  const handleSetMissoesSelecionadas = async (novasSelecionadas) => {
+    setMissoesSelecionadas(novasSelecionadas);
+    if (!workshopId) return;
+    try {
+      const existing = await base44.entities.CronogramaTemplate.filter(
+        { workshop_id: workshopId },
+        null,
+        1
+      );
+      if (existing?.length > 0) {
+        await base44.entities.CronogramaTemplate.update(existing[0].id, {
+          missoes_selecionadas: novasSelecionadas
+        });
+      } else {
+        await base44.entities.CronogramaTemplate.create({
+          workshop_id: workshopId,
+          missoes_selecionadas: novasSelecionadas
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao salvar trilhas:', error);
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -754,11 +802,14 @@ export default function ConsultoriaClienteTab({ client }) {
           <CamadaEstrategica workshopId={workshopId} />
         </TabsContent>
         <TabsContent value="trilha" className="mt-4">
-          <CamadaTrilhaCliente
-            workshopId={workshopId}
-            missoesSelecionadas={missoesSelecionadas}
-            setMissoesSelecionadas={setMissoesSelecionadas}
-          />
+          {!loading && (
+           <CamadaTrilhaCliente
+             workshopId={workshopId}
+             missoesSelecionadas={missoesSelecionadas}
+             setMissoesSelecionadas={handleSetMissoesSelecionadas}
+           />
+          )}
+          {loading && <div className="text-center py-4 text-gray-500">Carregando trilhas...</div>}
         </TabsContent>
         <TabsContent value="sprints" className="mt-4">
           <CamadaSprints workshopId={workshopId} missoesSelecionadas={missoesSelecionadas} />
