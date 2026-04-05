@@ -562,11 +562,23 @@ function CamadaSprints({ workshopId, missoesSelecionadas }) {
     sprints.find(s => s.mission_id === missionId && s.sprint_number === number);
 
   const initializeSprint = async (mission, numero) => {
-    // Verificar se já existe sprint dessa missão em progresso
-    const sprintExistente = sprints.find(s => s.mission_id === mission.id && s.status !== 'completed');
-    if (sprintExistente) {
-      toast.error(`⚠️ Sprint de "${mission.nome}" já existe em andamento! Finalize antes de criar outro.`);
-      return;
+    // Regra: só pode ter 2 sprints se o primeiro foi CONCLUÍDO
+    const sprintDaMissao = sprints.filter(s => s.mission_id === mission.id);
+    
+    if (sprintDaMissao.length > 0) {
+      const primeiro = sprintDaMissao.sort((a, b) => new Date(a.created_date) - new Date(b.created_date))[0];
+      
+      // Se tem sprint em andamento e o primeiro não foi concluído
+      if (primeiro.status !== 'completed') {
+        toast.error(`⚠️ Sprint de "${mission.nome}" ainda está em andamento! Conclua antes de criar outro.`);
+        return;
+      }
+      
+      // Se já tem 2 sprints dessa missão
+      if (sprintDaMissao.length >= 2) {
+        toast.error(`⚠️ Já existe uma repetição dessa missão. Máximo 2 sprints permitidos.`);
+        return;
+      }
     }
     
     setLoadingCreate(mission.id);

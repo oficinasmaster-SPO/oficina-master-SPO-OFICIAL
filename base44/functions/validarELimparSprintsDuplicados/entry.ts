@@ -31,28 +31,44 @@ Deno.serve(async (req) => {
       sprintsPorMissao[sprint.mission_id].push(sprint);
     });
 
-    // Encontrar e deletar duplicados (manter apenas o primeiro, remover os não-finalizados)
+    // Regra: Só pode ter 2 sprints da mesma missão se o primeiro foi CONCLUÍDO
     let deletados = 0;
     const duplicadosEncontrados = [];
 
     for (const [missaoId, sprintsList] of Object.entries(sprintsPorMissao)) {
       if (sprintsList.length > 1) {
-        // Ordenar por data de criação (mais antigo primeiro)
+        // Ordenar por data de criação
         const ordenados = sprintsList.sort(
           (a, b) => new Date(a.created_date) - new Date(b.created_date)
         );
 
-        // Manter o primeiro, deletar os demais se não estiverem concluídos
-        for (let i = 1; i < ordenados.length; i++) {
-          const sprint = ordenados[i];
-          if (sprint.status !== 'completed') {
+        // Verificar: o primeiro precisa estar CONCLUÍDO para ter um segundo
+        const primeiro = ordenados[0];
+        
+        // Se o primeiro NÃO está concluído, deletar TODOS os outros
+        if (primeiro.status !== 'completed') {
+          for (let i = 1; i < ordenados.length; i++) {
+            const sprint = ordenados[i];
             await base44.entities.ConsultoriaSprint.delete(sprint.id);
             deletados++;
             duplicadosEncontrados.push({
               missao_id: missaoId,
               sprint_id: sprint.id,
               titulo: sprint.title,
-              motivo: 'Duplicado não finalizado'
+              motivo: 'Primeiro sprint não foi concluído'
+            });
+          }
+        } else {
+          // Se primeiro foi concluído, manter apenas o segundo mais recente
+          for (let i = 2; i < ordenados.length; i++) {
+            const sprint = ordenados[i];
+            await base44.entities.ConsultoriaSprint.delete(sprint.id);
+            deletados++;
+            duplicadosEncontrados.push({
+              missao_id: missaoId,
+              sprint_id: sprint.id,
+              titulo: sprint.title,
+              motivo: 'Mais de 2 sprints da mesma missão'
             });
           }
         }
