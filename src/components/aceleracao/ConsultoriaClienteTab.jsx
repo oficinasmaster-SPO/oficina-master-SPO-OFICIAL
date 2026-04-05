@@ -155,14 +155,14 @@ function CamadaTrilhaCliente({ workshopId, missoesSelecionadas, setMissoesSeleci
             </button>
           )}
 
-          {/* Semana 1 - sempre fixa */}
-          <div className="border-2 border-gray-300 rounded-xl p-4 bg-gray-50">
-            <div className="flex items-center justify-between mb-2">
+          {/* Sprint 0 - Semana 1 Padrão */}
+          <div className="border-2 border-gray-300 rounded-xl overflow-hidden bg-gray-50">
+            <div className="p-4 flex items-center justify-between border-b">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full bg-gray-700 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">1</div>
+                <div className="w-7 h-7 rounded-full bg-gray-700 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">0</div>
                 <div>
-                  <p className="font-semibold text-sm text-gray-900">Semana 1 — Padrão</p>
-                  <p className="text-xs text-gray-500">Todas as trilhas começam aqui</p>
+                  <p className="font-semibold text-sm text-gray-900">Sprint 0 — Diagnóstico & Alinhamento</p>
+                  <p className="text-xs text-gray-500">Semana 1 (Padrão)</p>
                 </div>
               </div>
               <div className="flex items-center gap-1 text-xs text-gray-500">
@@ -170,36 +170,58 @@ function CamadaTrilhaCliente({ workshopId, missoesSelecionadas, setMissoesSeleci
                 Fixo
               </div>
             </div>
-            <div className="pl-9 space-y-1.5">
+            <div className="bg-white/30 p-3 space-y-1.5">
+              <div className="text-xs font-semibold text-gray-700">Objetivo: Diagnóstico Inicial e Alinhamento</div>
               <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                <span className="text-base">🔍</span> Diagnóstico Inicial
+                <span className="text-base">🔍</span> Levantamento de informações
               </div>
               <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                <span className="text-base">🗂️</span> Organização e Alinhamento
+                <span className="text-base">🗂️</span> Organização e priorização de dores
               </div>
             </div>
           </div>
 
-          {/* Semanas personalizadas selecionadas */}
-          {missoesSelecionadasData.map((missao, idx) => (
-            <div key={missao.id} className={`border-2 rounded-xl p-4 ${missao.cor}`}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-full bg-white border-2 border-current flex items-center justify-center text-xs font-bold flex-shrink-0">{idx + 2}</div>
-                  <div>
-                    <p className="font-semibold text-sm">{missao.emoji} {missao.nome}</p>
-                    <p className="text-xs opacity-70">{missao.descricao}</p>
+          {/* Missões selecionadas com semanas */}
+          {missoesSelecionadasData.map((missao, idx) => {
+            const semanaInicio = idx + 2;
+            const weeksStructure = [
+              { num: semanaInicio, titulo: 'Implementação', descricao: 'Ensinar, configurar e primeira execução', emoji: '🎓' },
+              { num: semanaInicio + 1, titulo: 'Execução', descricao: 'Rodar forte, corrigir erros e ajustar', emoji: '⚙️' },
+              { num: semanaInicio + 2, titulo: 'Padronização', descricao: 'Melhorar resultado, padronizar e validar', emoji: '✅' },
+              { num: semanaInicio + 3, titulo: 'Continuação', descricao: 'Pode continuar ou partir para próxima missão', emoji: '🚀', optional: true }
+            ];
+            return (
+              <div key={missao.id} className={`border-2 rounded-xl overflow-hidden ${missao.cor}`}>
+                <div className="p-4 flex items-center justify-between border-b">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-full bg-white border-2 border-current flex items-center justify-center text-xs font-bold flex-shrink-0">{idx + 1}</div>
+                    <div>
+                      <p className="font-semibold text-sm">{missao.emoji} {missao.nome}</p>
+                      <p className="text-xs opacity-70">{missao.descricao}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => toggleMissao(missao.id)}
+                    className="p-1 rounded-full hover:bg-white/50 transition-colors flex-shrink-0"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="bg-white/30 p-3 space-y-2">
+                  <div className="text-xs font-semibold text-gray-700 uppercase mb-2">⏱️ Prazo: 3-4 Semanas</div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {weeksStructure.map((week, wIdx) => (
+                      <div key={wIdx} className={`rounded-lg p-2.5 text-xs border ${week.optional ? 'border-dashed opacity-60' : 'border-solid border-current'} bg-white/50`}>
+                        <div className="font-bold text-sm mb-1">{week.emoji} S{week.num}</div>
+                        <div className="font-semibold text-gray-800">{week.titulo}</div>
+                        <div className="text-gray-600 mt-1 leading-tight text-xs">{week.descricao}</div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-                <button
-                  onClick={() => toggleMissao(missao.id)}
-                  className="p-1 rounded-full hover:bg-white/50 transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
               </div>
-            </div>
-          ))}
+            );
+          })}
 
           {/* Botão adicionar missão */}
           <button
@@ -592,7 +614,7 @@ function CamadaSprints({ workshopId, missoesSelecionadas }) {
       }));
       const today = new Date();
       const endDate = new Date(today);
-      endDate.setDate(endDate.getDate() + 30);
+      endDate.setDate(endDate.getDate() + 21); // 3 semanas padrão
       await base44.entities.ConsultoriaSprint.create({
         workshop_id: workshopId,
         mission_id: mission.id,
@@ -606,7 +628,7 @@ function CamadaSprints({ workshopId, missoesSelecionadas }) {
         phases: defaultPhases,
         last_activity_date: new Date().toISOString(),
       });
-      toast.success(`✓ Sprint ${numero} iniciado!`);
+      toast.success(`✓ Sprint ${numero} iniciado! (3 semanas)`);
       await loadSprints();
     } catch (error) {
       toast.error('✗ Erro ao iniciar sprint');
@@ -623,7 +645,7 @@ function CamadaSprints({ workshopId, missoesSelecionadas }) {
           <span className="text-xs font-semibold uppercase tracking-wider text-green-200">Camada 3 — Sprints</span>
         </div>
         <h3 className="text-lg font-bold">Execução por Sprint</h3>
-        <p className="text-sm text-green-100 mt-1">Cada missão vira um sprint com ciclo completo.</p>
+        <p className="text-sm text-green-100 mt-1">Cada missão vira um sprint com ciclo de 3-4 semanas definidas.</p>
       </div>
 
       <div className="grid grid-cols-5 gap-1 text-center">
@@ -653,7 +675,7 @@ function CamadaSprints({ workshopId, missoesSelecionadas }) {
                 numero={0}
                 titulo="Sprint 0 — Diagnóstico & Alinhamento"
                 emoji="🔍"
-                descricao="Sprint inicial fixo para todos os clientes"
+                descricao="Sprint inicial fixo para todos os clientes (Semana 1)"
                 cor="border-gray-400 bg-gray-50 text-gray-800"
                 isFixed={true}
                 sprint={sprint0}
@@ -680,13 +702,14 @@ function CamadaSprints({ workshopId, missoesSelecionadas }) {
           const numero = idx + 1;
           const sprint = getSprintForMission(missao.id, numero);
           const shouldExpandSprint = sprint?.id === sprintIdFromUrl;
+          const semanaInicio = idx + 2;
           return (
             <div key={missao.id} className="space-y-2">
               <SprintCard
                 numero={numero}
                 titulo={`Sprint ${numero} — ${missao.nome}`}
                 emoji={missao.emoji}
-                descricao={missao.descricao}
+                descricao={`Semanas ${semanaInicio}-${semanaInicio + 3} (3-4 semanas)`}
                 cor={`${missao.cor}`}
                 isFixed={false}
                 sprint={sprint}
