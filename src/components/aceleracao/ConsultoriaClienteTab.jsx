@@ -1,95 +1,36 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
+import React, { useState, useEffect, useCallback } from 'react';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { createPageUrl } from "@/utils";
-import {
-  Settings2, Map, Zap, BookOpen, ChevronRight, ExternalLink,
-  CheckCircle2, Circle, Clock, Target, Users, Lightbulb, 
-  ListChecks, Route, PlayCircle, Plus, X, Star, Lock,
-  ChevronDown, ChevronUp, RotateCcw, TrendingUp, ClipboardList,
-  PlaySquare, BarChart2, MessageSquare, AlertTriangle
-} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { base44 } from "@/api/base44Client";
-import SprintPhaseDetailModal from "./SprintPhaseDetailModal";
+import { CheckCircle2, X, Plus, Star, Map, Lock, ListChecks, Settings2, Zap, BookOpen, ExternalLink, PlayCircle, ChevronDown, ChevronUp, ChevronRight, RotateCcw, AlertTriangle, Lightbulb, PlaySquare, BarChart2, TrendingUp, MessageSquare, Circle, Clock } from "lucide-react";
+import CamadaEstrategica from './CamadaEstrategica';
+import SprintPhaseDetailModal from './SprintPhaseDetailModal';
 
-// Camada 1 - Interno/Estratégico
-function CamadaEstrategica({ workshopId }) {
-  const metodo = [
-    { fase: "1. Diagnóstico", descricao: "Avaliar maturidade, processos e gaps do negócio", icon: "🔍" },
-    { fase: "2. Planejamento", descricao: "Definir prioridades, metas e cronograma de implementação", icon: "📋" },
-    { fase: "3. Implementação", descricao: "Executar processos com acompanhamento semanal (sprints)", icon: "⚙️" },
-    { fase: "4. Consolidação", descricao: "Garantir a sustentabilidade das melhorias implantadas", icon: "🏆" },
-    { fase: "5. Expansão", descricao: "Escalar processos e estrutura para crescimento", icon: "🚀" },
-  ];
-
-  const pilares = [
-    { nome: "Vendas & Comercial", cor: "bg-blue-50 border-blue-200 text-blue-700" },
-    { nome: "Processos Operacionais", cor: "bg-green-50 border-green-200 text-green-700" },
-    { nome: "Gestão Financeira", cor: "bg-yellow-50 border-yellow-200 text-yellow-700" },
-    { nome: "Pessoas & Cultura", cor: "bg-purple-50 border-purple-200 text-purple-700" },
-    { nome: "Marketing & Captação", cor: "bg-pink-50 border-pink-200 text-pink-700" },
-    { nome: "Estratégia & Escala", cor: "bg-orange-50 border-orange-200 text-orange-700" },
-  ];
-
-  return (
-    <div className="space-y-6">
-      <div className="bg-gradient-to-r from-slate-800 to-slate-700 rounded-xl p-5 text-white">
-        <div className="flex items-center gap-2 mb-1">
-          <Settings2 className="w-5 h-5 text-yellow-400" />
-          <span className="text-xs font-semibold uppercase tracking-wider text-yellow-400">Camada 1 — Interno</span>
-        </div>
-        <h3 className="text-lg font-bold">Plano Estratégico de Consultoria</h3>
-        <p className="text-sm text-slate-300 mt-1">Metodologia interna de condução do projeto. Visível apenas para o consultor.</p>
-      </div>
-
-      <div>
-        <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
-          <Route className="w-4 h-4 text-slate-600" />
-          Método de Aceleração
-        </h4>
-        <div className="space-y-2">
-          {metodo.map((item, idx) => (
-            <div key={idx} className="flex items-start gap-3 p-3 border rounded-lg hover:bg-gray-50">
-              <span className="text-xl">{item.icon}</span>
-              <div>
-                <p className="font-medium text-sm text-gray-900">{item.fase}</p>
-                <p className="text-xs text-gray-500 mt-0.5">{item.descricao}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
-          <Target className="w-4 h-4 text-slate-600" />
-          Pilares do Projeto
-        </h4>
-        <div className="grid grid-cols-2 gap-2">
-          {pilares.map((pilar, idx) => (
-            <div key={idx} className={`border rounded-lg p-3 text-sm font-medium ${pilar.cor}`}>
-              {pilar.nome}
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Missões disponíveis
 const MISSOES = [
-  { id: "agenda_cheia", nome: "Missão Agenda Cheia", emoji: "📅", descricao: "Para clientes com baixo volume de clientes", cor: "bg-blue-50 border-blue-300 text-blue-800" },
-  { id: "fechamento_imbativel", nome: "Missão Fechamento Imbatível", emoji: "🎯", descricao: "Para clientes que não convertem vendas", cor: "bg-green-50 border-green-300 text-green-800" },
-  { id: "caixa_forte", nome: "Missão Caixa Forte", emoji: "💰", descricao: "Para clientes sem lucro ou com caixa negativo", cor: "bg-yellow-50 border-yellow-300 text-yellow-800" },
-  { id: "equipe_elite", nome: "Missão Equipe de Elite", emoji: "👥", descricao: "Para clientes com problemas de equipe", cor: "bg-purple-50 border-purple-300 text-purple-800" },
-  { id: "contratacao_certa", nome: "Missão Contratação Certa", emoji: "🤝", descricao: "Para clientes que precisam contratar bem", cor: "bg-pink-50 border-pink-300 text-pink-800" },
-  { id: "estrutura_produtiva", nome: "Missão Estrutura Produtiva", emoji: "⚙️", descricao: "Para clientes com gargalos operacionais", cor: "bg-orange-50 border-orange-300 text-orange-800" },
-  { id: "oficina_sistematizada", nome: "Missão Oficina Sistematizada", emoji: "📋", descricao: "Para clientes que precisam de processos e sistemas", cor: "bg-indigo-50 border-indigo-300 text-indigo-800" },
+  {
+    id: "agenda_cheia",
+    nome: "Agenda Cheia",
+    emoji: "📅",
+    descricao: "Preencher a agenda semanal com 100% de ocupação de vendas",
+    cor: "border-blue-400 bg-blue-50 text-blue-800"
+  },
+  {
+    id: "fechamento_imbativel",
+    nome: "Fechamento Imbatível",
+    emoji: "🎯",
+    descricao: "Aumentar taxa de conversão de propostas para vendas",
+    cor: "border-green-400 bg-green-50 text-green-800"
+  },
+  {
+    id: "ticket_premium",
+    nome: "Ticket Premium",
+    emoji: "💎",
+    descricao: "Aumentar ticket médio através de venda consultiva",
+    cor: "border-amber-400 bg-amber-50 text-amber-800"
+  },
 ];
 
-// Camada 2 - Trilha do Cliente
 function CamadaTrilhaCliente({ workshopId, missoesSelecionadas, setMissoesSelecionadas }) {
   const [mostrarSeletor, setMostrarSeletor] = useState(false);
   const [salvando, setSalvando] = useState(false);
@@ -106,6 +47,13 @@ function CamadaTrilhaCliente({ workshopId, missoesSelecionadas, setMissoesSeleci
     } finally {
       setSalvando(false);
     }
+  };
+
+  const toggleMissao = (missaoId) => {
+    const novasSelecionadas = missoesSelecionadas.includes(missaoId)
+      ? missoesSelecionadas.filter(id => id !== missaoId)
+      : [...missoesSelecionadas, missaoId];
+    setMissoesSelecionadas(novasSelecionadas);
   };
 
   const missoesSelecionadasData = MISSOES.filter(m => missoesSelecionadas.includes(m.id));
@@ -139,7 +87,7 @@ function CamadaTrilhaCliente({ workshopId, missoesSelecionadas, setMissoesSeleci
         </Button>
       </div>
 
-      {/* Semana 1 - Fixo */}
+      {/* Trilha de Implementação */}
       <div>
         <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
           <ListChecks className="w-4 h-4 text-blue-600" />
@@ -237,51 +185,51 @@ function CamadaTrilhaCliente({ workshopId, missoesSelecionadas, setMissoesSeleci
               );
             })}
           </div>
-          </div>
-          )}
+        </div>
+      )}
 
-          {/* Botão Salvar Trilha */}
-          {missoesSelecionadas.length > 0 && (
-          <div className="flex items-center gap-3 mt-6 p-4 border rounded-xl bg-blue-50 border-blue-200">
+      {/* Botão Salvar Trilha */}
+      {missoesSelecionadas.length > 0 && (
+        <div className="flex items-center gap-3 mt-6 p-4 border rounded-xl bg-blue-50 border-blue-200">
           <Button
-           onClick={handleSalvarTrilha}
-           disabled={salvando}
-           className="bg-blue-600 hover:bg-blue-700 text-white flex-1 gap-2"
+            onClick={handleSalvarTrilha}
+            disabled={salvando}
+            className="bg-blue-600 hover:bg-blue-700 text-white flex-1 gap-2"
           >
-           {salvando ? (
-             <>
-               <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-               Salvando...
-             </>
-           ) : salvoRecentemente ? (
-             <>
-               <CheckCircle2 className="w-4 h-4" />
-               Trilha salva com sucesso!
-             </>
-           ) : (
-             <>
-               <CheckCircle2 className="w-4 h-4" />
-               Salvar Trilha
-             </>
-           )}
+            {salvando ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Salvando...
+              </>
+            ) : salvoRecentemente ? (
+              <>
+                <CheckCircle2 className="w-4 h-4" />
+                Trilha salva com sucesso!
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="w-4 h-4" />
+                Salvar Trilha
+              </>
+            )}
           </Button>
           {salvoRecentemente && (
-           <div className="text-xs text-green-600 font-medium">✓ Persistido</div>
+            <div className="text-xs text-green-600 font-medium">✓ Persistido</div>
           )}
-          </div>
-          )}
-          </div>
-          );
-          }
+        </div>
+      )}
+    </div>
+  );
+}
 
-          // Fases de um Sprint
+// Fases de um Sprint
 const FASES_SPRINT = [
   {
     id: "planning",
     nome_key: "Planning",
     nome: "Sprint Planning",
     subtitulo: "Planejamento",
-    icon: ClipboardList,
+    icon: ListChecks,
     cor: "text-blue-600",
     bg: "bg-blue-50",
     descricao: "Definir o que será feito nas próximas semanas",
@@ -551,8 +499,6 @@ function CamadaSprints({ workshopId, missoesSelecionadas }) {
   useEffect(() => {
     loadSprints();
   }, [workshopId, missoesSelecionadas, loadSprints]);
-
-
 
   const getSprintForMission = (missionId, number) =>
     sprints.find(s => s.mission_id === missionId && s.sprint_number === number);
