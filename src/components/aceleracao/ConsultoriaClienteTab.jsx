@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,8 +8,10 @@ import {
   CheckCircle2, Circle, Clock, Target, Users, Lightbulb, 
   ListChecks, Route, PlayCircle, Plus, X, Star, Lock,
   ChevronDown, ChevronUp, RotateCcw, TrendingUp, ClipboardList,
-  PlaySquare, BarChart2, MessageSquare
+  PlaySquare, BarChart2, MessageSquare, AlertTriangle, Calendar
 } from "lucide-react";
+import { base44 } from "@/api/base44Client";
+import SprintPhaseDetailModal from "./SprintPhaseDetailModal";
 
 // Camada 1 - Interno/Estratégico
 function CamadaEstrategica({ workshopId }) {
@@ -238,6 +240,7 @@ function CamadaTrilhaCliente({ workshopId, missoesSelecionadas, setMissoesSeleci
 const FASES_SPRINT = [
   {
     id: "planning",
+    nome_key: "Planning",
     nome: "Sprint Planning",
     subtitulo: "Planejamento",
     icon: ClipboardList,
@@ -253,6 +256,7 @@ const FASES_SPRINT = [
   },
   {
     id: "execucao",
+    nome_key: "Execution",
     nome: "Execução",
     subtitulo: "Implementação",
     icon: PlaySquare,
@@ -268,6 +272,7 @@ const FASES_SPRINT = [
   },
   {
     id: "checkpoint",
+    nome_key: "Monitoring",
     nome: "Checkpoint Semanal",
     subtitulo: "Acompanhamento",
     icon: BarChart2,
@@ -283,6 +288,7 @@ const FASES_SPRINT = [
   },
   {
     id: "review",
+    nome_key: "Review",
     nome: "Sprint Review",
     subtitulo: "Revisão",
     icon: TrendingUp,
@@ -298,6 +304,7 @@ const FASES_SPRINT = [
   },
   {
     id: "retrospectiva",
+    nome_key: "Retrospective",
     nome: "Sprint Retrospective",
     subtitulo: "Melhoria",
     icon: MessageSquare,
@@ -313,9 +320,28 @@ const FASES_SPRINT = [
   },
 ];
 
-function SprintCard({ numero, titulo, emoji, descricao, cor, isFixed }) {
+const STATUS_SPRINT_BADGE = {
+  pending: { label: "Pendente", color: "bg-gray-100 text-gray-600" },
+  in_progress: { label: "Em andamento", color: "bg-blue-100 text-blue-700" },
+  completed: { label: "Concluído", color: "bg-green-100 text-green-700" },
+  overdue: { label: "Atrasado", color: "bg-red-100 text-red-700" },
+};
+
+const PHASE_STATUS_ICON = {
+  not_started: <Circle className="w-4 h-4 text-gray-300" />,
+  in_progress: <Clock className="w-4 h-4 text-blue-500" />,
+  completed: <CheckCircle2 className="w-4 h-4 text-green-500" />,
+};
+
+function SprintCard({ numero, titulo, emoji, descricao, cor, isFixed, sprint, onSprintUpdated }) {
   const [expandido, setExpandido] = useState(false);
   const [faseAtiva, setFaseAtiva] = useState(null);
+  const [modalPhaseIndex, setModalPhaseIndex] = useState(null);
+
+  // Usar dados do sprint salvo se disponível, senão mostrar visualização estática
+  const phases = sprint?.phases || [];
+  const progress = sprint?.progress_percentage || 0;
+  const sprintStatus = sprint?.status || "pending";
 
   return (
     <div className={`border-2 rounded-xl overflow-hidden ${cor}`}>
@@ -334,6 +360,11 @@ function SprintCard({ numero, titulo, emoji, descricao, cor, isFixed }) {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {sprint && (
+            <Badge className={`text-xs ${STATUS_SPRINT_BADGE[sprintStatus]?.color}`}>
+              {STATUS_SPRINT_BADGE[sprintStatus]?.label}
+            </Badge>
+          )}
           {isFixed && (
             <div className="flex items-center gap-1 text-xs opacity-60">
               <Lock className="w-3 h-3" />
@@ -349,24 +380,59 @@ function SprintCard({ numero, titulo, emoji, descricao, cor, isFixed }) {
       {/* Fases do Sprint */}
       {expandido && (
         <div className="border-t border-current/20 bg-white p-4 space-y-3">
+
+          {/* Barra de progresso se tiver sprint salvo */}
+          {sprint && (
+            <div>
+              <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
+                <span>Progresso geral</span>
+                <span className="font-semibold">{progress}%</span>
+              </div>
+              <div className="w-full h-2 bg-gray-200 rounded-full">
+                <div
+                  className="h-2 bg-green-500 rounded-full transition-all"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+            </div>
+          )}
+
           {/* Ciclo visual */}
           <div className="flex items-center gap-1 overflow-x-auto pb-2">
             {FASES_SPRINT.map((fase, idx) => {
               const Icon = fase.icon;
+              const savedPhase = phases.find(p => p.name === fase.nome_key);
+              const phaseStatus = savedPhase?.status || "not_started";
               return (
                 <React.Fragment key={fase.id}>
                   <button
-                    onClick={() => setFaseAtiva(faseAtiva === fase.id ? null : fase.id)}
+                    onClick={() => {
+                      if (sprint) {
+                        // Se tiver sprint salvo, abrir modal de edição
+                        const phaseIdx = sprint.phases?.findIndex(p => p.name === fase.nome_key);
+                        if (phaseIdx !== undefined && phaseIdx >= 0) setModalPhaseIndex(phaseIdx);
+                      } else {
+                        setFaseAtiva(faseAtiva === fase.id ? null : fase.id);
+                      }
+                    }}
                     className={`flex flex-col items-center gap-1 p-2 rounded-lg min-w-[60px] transition-all border ${
                       faseAtiva === fase.id
                         ? `${fase.bg} border-current shadow-sm`
                         : 'border-transparent hover:bg-gray-50'
                     }`}
                   >
-                    <div className={`w-8 h-8 rounded-full ${fase.bg} flex items-center justify-center`}>
+                    <div className={`w-8 h-8 rounded-full ${fase.bg} flex items-center justify-center relative`}>
                       <Icon className={`w-4 h-4 ${fase.cor}`} />
+                      {sprint && (
+                        <span className="absolute -top-1 -right-1">
+                          {PHASE_STATUS_ICON[phaseStatus]}
+                        </span>
+                      )}
                     </div>
                     <span className="text-xs text-center leading-tight text-gray-600 font-medium">{fase.subtitulo}</span>
+                    {sprint && savedPhase?.due_date && (
+                      <span className="text-xs text-gray-400">{new Date(savedPhase.due_date).toLocaleDateString('pt-BR')}</span>
+                    )}
                   </button>
                   {idx < FASES_SPRINT.length - 1 && (
                     <ChevronRight className="w-3 h-3 text-gray-300 flex-shrink-0" />
@@ -376,8 +442,8 @@ function SprintCard({ numero, titulo, emoji, descricao, cor, isFixed }) {
             })}
           </div>
 
-          {/* Detalhe da fase selecionada */}
-          {faseAtiva && (() => {
+          {/* Detalhe da fase estática (sem sprint salvo) */}
+          {!sprint && faseAtiva && (() => {
             const fase = FASES_SPRINT.find(f => f.id === faseAtiva);
             const Icon = fase.icon;
             return (
@@ -401,14 +467,32 @@ function SprintCard({ numero, titulo, emoji, descricao, cor, isFixed }) {
             );
           })()}
 
-          {/* Indicador do ciclo */}
-          {!faseAtiva && (
+          {/* Indicador do ciclo (sem sprint salvo) */}
+          {!sprint && !faseAtiva && (
             <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-dashed border-gray-300">
               <RotateCcw className="w-4 h-4 text-gray-400 flex-shrink-0" />
               <p className="text-xs text-gray-500">Clique em uma fase acima para ver os detalhes do ciclo <strong>Planejar → Executar → Medir → Ajustar</strong></p>
             </div>
           )}
+
+          {/* Hint para sprint salvo */}
+          {sprint && (
+            <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <AlertTriangle className="w-4 h-4 text-blue-500 flex-shrink-0" />
+              <p className="text-xs text-blue-700">Clique em cada fase para registrar progresso, tarefas e indicadores.</p>
+            </div>
+          )}
         </div>
+      )}
+
+      {/* Modal de edição de fase */}
+      {modalPhaseIndex !== null && sprint && (
+        <SprintPhaseDetailModal
+          sprint={sprint}
+          phaseIndex={modalPhaseIndex}
+          onClose={() => setModalPhaseIndex(null)}
+          onSaved={onSprintUpdated}
+        />
       )}
     </div>
   );
@@ -417,6 +501,49 @@ function SprintCard({ numero, titulo, emoji, descricao, cor, isFixed }) {
 // Camada 3 - Sprints
 function CamadaSprints({ workshopId, missoesSelecionadas }) {
   const missoesSelecionadasData = MISSOES.filter(m => missoesSelecionadas.includes(m.id));
+  const [sprints, setSprints] = useState([]);
+  const [loadingCreate, setLoadingCreate] = useState(null);
+
+  useEffect(() => {
+    if (workshopId) loadSprints();
+  }, [workshopId]);
+
+  const loadSprints = async () => {
+    const data = await base44.entities.ConsultoriaSprint.filter({ workshop_id: workshopId });
+    setSprints(data || []);
+  };
+
+  const getSprintForMission = (missionId, number) =>
+    sprints.find(s => s.mission_id === missionId && s.sprint_number === number);
+
+  const initializeSprint = async (mission, numero) => {
+    setLoadingCreate(mission.id);
+    const defaultPhases = ["Planning", "Execution", "Monitoring", "Review", "Retrospective"].map(name => ({
+      name,
+      status: "not_started",
+      notes: "",
+      metrics: [],
+      tasks: [],
+    }));
+    const today = new Date();
+    const endDate = new Date(today);
+    endDate.setDate(endDate.getDate() + 30);
+    await base44.entities.ConsultoriaSprint.create({
+      workshop_id: workshopId,
+      mission_id: mission.id,
+      sprint_number: numero,
+      title: mission.id === "sprint0" ? "Sprint 0 — Diagnóstico & Alinhamento" : `Sprint ${numero} — ${mission.nome}`,
+      objective: mission.descricao,
+      start_date: today.toISOString().split('T')[0],
+      end_date: endDate.toISOString().split('T')[0],
+      status: "in_progress",
+      progress_percentage: 0,
+      phases: defaultPhases,
+      last_activity_date: new Date().toISOString(),
+    });
+    await loadSprints();
+    setLoadingCreate(null);
+  };
 
   return (
     <div className="space-y-6">
@@ -449,27 +576,65 @@ function CamadaSprints({ workshopId, missoesSelecionadas }) {
 
       <div className="space-y-3">
         {/* Sprint 0 - sempre fixo */}
-        <SprintCard
-          numero={0}
-          titulo="Sprint 0 — Diagnóstico & Alinhamento"
-          emoji="🔍"
-          descricao="Sprint inicial fixo para todos os clientes"
-          cor="border-gray-400 bg-gray-50 text-gray-800"
-          isFixed={true}
-        />
+        {(() => {
+          const sprint0 = getSprintForMission("sprint0", 0);
+          return (
+            <div className="space-y-2">
+              <SprintCard
+                numero={0}
+                titulo="Sprint 0 — Diagnóstico & Alinhamento"
+                emoji="🔍"
+                descricao="Sprint inicial fixo para todos os clientes"
+                cor="border-gray-400 bg-gray-50 text-gray-800"
+                isFixed={true}
+                sprint={sprint0}
+                onSprintUpdated={loadSprints}
+              />
+              {!sprint0 && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-full text-xs"
+                  disabled={loadingCreate === "sprint0"}
+                  onClick={() => initializeSprint({ id: "sprint0", nome: "Sprint 0", descricao: "Diagnóstico e alinhamento inicial" }, 0)}
+                >
+                  {loadingCreate === "sprint0" ? "Iniciando..." : "▶ Iniciar Sprint 0"}
+                </Button>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Sprints gerados pelas missões */}
-        {missoesSelecionadasData.map((missao, idx) => (
-          <SprintCard
-            key={missao.id}
-            numero={idx + 1}
-            titulo={`Sprint ${idx + 1} — ${missao.nome}`}
-            emoji={missao.emoji}
-            descricao={missao.descricao}
-            cor={`${missao.cor}`}
-            isFixed={false}
-          />
-        ))}
+        {missoesSelecionadasData.map((missao, idx) => {
+          const numero = idx + 1;
+          const sprint = getSprintForMission(missao.id, numero);
+          return (
+            <div key={missao.id} className="space-y-2">
+              <SprintCard
+                numero={numero}
+                titulo={`Sprint ${numero} — ${missao.nome}`}
+                emoji={missao.emoji}
+                descricao={missao.descricao}
+                cor={`${missao.cor}`}
+                isFixed={false}
+                sprint={sprint}
+                onSprintUpdated={loadSprints}
+              />
+              {!sprint && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-full text-xs"
+                  disabled={loadingCreate === missao.id}
+                  onClick={() => initializeSprint(missao, numero)}
+                >
+                  {loadingCreate === missao.id ? "Iniciando..." : `▶ Iniciar Sprint ${numero}`}
+                </Button>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
