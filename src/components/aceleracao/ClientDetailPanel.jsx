@@ -9,8 +9,9 @@ import { ptBR } from "date-fns/locale";
 import { 
   Building2, MapPin, DollarSign, Users, Phone, Mail, 
   Briefcase, Clock, Target, ExternalLink, Calendar,
-  TrendingUp, Award, Package, FileText, Heart
+  TrendingUp, Award, Package, FileText, Heart, Lightbulb
 } from "lucide-react";
+import ConsultoriaClienteTab from "./ConsultoriaClienteTab";
 
 export default function ClientDetailPanel({ client, isOpen, onClose, atendimentos = [], processos = [] }) {
   const atendimentosCliente = client ? atendimentos.filter(a => a.workshop_id === client.id)
@@ -54,12 +55,16 @@ export default function ClientDetailPanel({ client, isOpen, onClose, atendimento
             </DialogHeader>
 
         <Tabs defaultValue="geral" className="mt-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="geral">Dados Gerais</TabsTrigger>
             <TabsTrigger value="operacional">Operacional</TabsTrigger>
             <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
             <TabsTrigger value="processos">Processos</TabsTrigger>
             <TabsTrigger value="historico">Histórico</TabsTrigger>
+            <TabsTrigger value="consultoria" className="flex items-center gap-1">
+              <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
+              Consultoria
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="geral" className="space-y-6 mt-6">
@@ -415,6 +420,10 @@ export default function ClientDetailPanel({ client, isOpen, onClose, atendimento
                 ))}
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="consultoria" className="mt-6">
+            <ConsultoriaClienteTab client={client} />
           </TabsContent>
         </Tabs>
           </>
