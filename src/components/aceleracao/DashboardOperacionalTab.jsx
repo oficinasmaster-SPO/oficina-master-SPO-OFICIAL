@@ -5,11 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import {
-  Zap, AlertTriangle, CheckCircle2, Clock, TrendingUp,
-  Users, BarChart2, RefreshCw, ChevronRight, Calendar
+  Zap, AlertTriangle, CheckCircle2, Clock,
+  Users, BarChart2, RefreshCw
 } from "lucide-react";
-import { format, differenceInDays } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { differenceInDays } from "date-fns";
 
 const STATUS_CONFIG = {
   pending:     { label: "Pendente",      color: "bg-gray-100 text-gray-600",   dot: "bg-gray-400" },
@@ -78,7 +77,7 @@ export default function DashboardOperacionalTab({ user }) {
 
   const { data: workshops = [] } = useQuery({
     queryKey: ['dashboard-workshops'],
-    queryFn: () => base44.entities.Workshop.list(null, 500),
+    queryFn: () => base44.entities.Workshop.list('-created_date', 500),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -98,7 +97,7 @@ export default function DashboardOperacionalTab({ user }) {
     ? sprints
     : sprints.filter(s => s.status === filterStatus);
 
-  // Sprints atrasados para alerta
+  // Sprints atrasados (reutiliza cálculo já feito acima)
   const sprintsAtrasados = sprints.filter(s => s.status === "overdue");
 
   // Top workshops por progresso

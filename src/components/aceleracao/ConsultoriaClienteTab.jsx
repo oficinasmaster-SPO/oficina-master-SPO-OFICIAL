@@ -8,7 +8,7 @@ import {
   CheckCircle2, Circle, Clock, Target, Users, Lightbulb, 
   ListChecks, Route, PlayCircle, Plus, X, Star, Lock,
   ChevronDown, ChevronUp, RotateCcw, TrendingUp, ClipboardList,
-  PlaySquare, BarChart2, MessageSquare, AlertTriangle, Calendar
+  PlaySquare, BarChart2, MessageSquare, AlertTriangle
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import SprintPhaseDetailModal from "./SprintPhaseDetailModal";
