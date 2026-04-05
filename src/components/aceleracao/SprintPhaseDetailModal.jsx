@@ -38,6 +38,7 @@ const DEFAULT_TASKS_EXECUTION_AGENDA_CHEIA = [
   { description: "Liberação do map do pavê", status: "to_do" },
   { description: "Treinamento do responsável e simulação prática", status: "to_do" },
   { description: "Iniciar contatos via ligação telefônica", status: "to_do" },
+  { description: "Solicitar as gravações das abordagens via telefone e via ligação", status: "to_do" },
   { description: "Controlar uma planilha ou implementar CRM", status: "to_do" },
 ];
 
