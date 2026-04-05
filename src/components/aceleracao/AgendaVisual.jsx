@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Maximize2, Clock, MapPin, User, Filter, Video, Users, ExternalLink, Phone, MessageCircle, Mail, CalendarCheck } from "lucide-react";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, startOfWeek, endOfWeek, addMonths, subMonths, addDays, startOfDay, endOfDay } from "date-fns";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, startOfWeek, endOfWeek, addMonths, subMonths, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 
@@ -31,7 +31,6 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [detailsModal, setDetailsModal] = useState({ open: false, date: null, atendimentos: [] });
   const [consultorFiltro, setConsultorFiltro] = useState('todos');
-  const [workshopsFrescos, setWorkshopsFrescos] = useState(workshops);
 
   const getDateRange = () => {
     if (viewMode === 'day') {
@@ -98,24 +97,13 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
           base44.entities.Workshop.list(),
           base44.entities.Employee.list()
         ]);
-        setWorkshopsFrescos(workshopsAtualizados);
-        
+
         // Enriquecer atendimentos com dados atualizados da oficina e sócio
         const atendimentosComWorkshop = atendimentosDia.map(a => {
           const workshopEncontrado = workshopsAtualizados.find(w => w.id === a.workshop_id);
-          const socio = workshopEncontrado?.owner_id 
+          const socio = workshopEncontrado?.owner_id
             ? todosColaboradores.find(c => c.user_id === workshopEncontrado.owner_id)
             : null;
-          
-          console.log('Dados completos:', {
-            workshop: workshopEncontrado,
-            workshop_telefone: workshopEncontrado?.telefone,
-            workshop_email: workshopEncontrado?.email,
-            socio: socio,
-            socio_telefone: socio?.telefone,
-            socio_email: socio?.email
-          });
-          
           return {
             ...a,
             workshop: workshopEncontrado,
@@ -155,7 +143,7 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
       });
       navigate(createPageUrl('RegistrarAtendimento') + '?' + params.toString());
       
-      setDetailsModal({ ...detailsModal, open: false });
+      setDetailsModal(prev => ({ ...prev, open: false }));
     } catch (error) {
       toast.error('Erro ao iniciar atendimento: ' + error.message);
     }

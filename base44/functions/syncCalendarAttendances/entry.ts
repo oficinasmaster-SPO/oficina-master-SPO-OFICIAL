@@ -56,8 +56,10 @@ Deno.serve(async (req) => {
     if (pageData.nextSyncToken) newSyncToken = pageData.nextSyncToken;
     if (!pageData.nextPageToken) break;
 
+    // Build pagination URL from base without syncToken to avoid conflicting params
+    const baseUrl = url.split('&syncToken')[0].split('&timeMin')[0];
     const nextRes = await fetch(
-      url + `&pageToken=${pageData.nextPageToken}`,
+      baseUrl + `&pageToken=${pageData.nextPageToken}`,
       { headers: authHeader }
     );
     if (!nextRes.ok) break;
