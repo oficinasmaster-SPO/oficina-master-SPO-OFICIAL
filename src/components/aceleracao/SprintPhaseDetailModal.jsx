@@ -51,6 +51,54 @@ const DEFAULT_KPIS_EXECUTION_AGENDA_CHEIA = [
   { name: "Tempo iniciado da implementação de prospecção", value: 0, unit: "dias" },
 ];
 
+const DEFAULT_TASKS_MONITORING_AGENDA_CHEIA = [
+  { description: "Checar no meio da semana o progresso", status: "to_do" },
+  { description: "Ouvir ligações ou ler mensagens do WhatsApp", status: "to_do" },
+  { description: "Ajustar a abordagem do script", status: "to_do" },
+  { description: "Cobrar volume mínimo diário", status: "to_do" },
+  { description: "Corrigir falhas na execução", status: "to_do" },
+];
+
+const DEFAULT_KPIS_MONITORING_AGENDA_CHEIA = [
+  { name: "Taxa de contato (ligações realizadas vs clientes abordados)", value: 0, unit: "%" },
+  { name: "Taxa de agendamento (conversas efetivas vs agendamentos)", value: 0, unit: "%" },
+  { name: "Taxa de comparecimento (agendados vs comparecimentos)", value: 0, unit: "%" },
+  { name: "Taxa comparecimento vs vendas (comparecimentos vs vendas)", value: 0, unit: "%" },
+  { name: "Ticket médio", value: 0, unit: "R$" },
+  { name: "Faturamento realizado", value: 0, unit: "R$" },
+];
+
+const DEFAULT_TASKS_REVIEW_AGENDA_CHEIA = [
+  { description: "Levantar os números da semana com precisão", status: "to_do" },
+  { description: "Comparar com a meta de agendamento", status: "to_do" },
+  { description: "Identificar gargalos e listas de objeção", status: "to_do" },
+  { description: "Registrar abordagens ruins para correção", status: "to_do" },
+  { description: "Registrar ofertas fracas para melhoria", status: "to_do" },
+  { description: "Validar se a agenda encheu de fato", status: "to_do" },
+];
+
+const DEFAULT_KPIS_REVIEW_AGENDA_CHEIA = [
+  { name: "Número de agendamentos da semana", value: 0, unit: "qtd" },
+  { name: "Número de conversão de agendamento", value: 0, unit: "qtd" },
+  { name: "Número de comparecimento", value: 0, unit: "qtd" },
+  { name: "Número de faturamento", value: 0, unit: "R$" },
+];
+
+const DEFAULT_TASKS_RETROSPECTIVE_AGENDA_CHEIA = [
+  { description: "Ajustar o script para melhorar a conversão", status: "to_do" },
+  { description: "Melhorar a oferta de reativação", status: "to_do" },
+  { description: "Organizar o follow-up para quem não respondeu", status: "to_do" },
+  { description: "Implementar o CRM para funcionar e ter gestão", status: "to_do" },
+  { description: "Definir uma rotina de contato do dia", status: "to_do" },
+  { description: "Definir uma rotina de treinamento", status: "to_do" },
+];
+
+const DEFAULT_KPIS_RETROSPECTIVE_AGENDA_CHEIA = [
+  { name: "Crescimento semanal de engajamento", value: 0, unit: "%" },
+  { name: "Crescimento no aumento das conversões", value: 0, unit: "%" },
+  { name: "Taxa de retorno dos clientes", value: 0, unit: "%" },
+];
+
 export default function SprintPhaseDetailModal({ sprint, phaseIndex, onClose, onSaved }) {
   const phase = sprint?.phases?.[phaseIndex];
   const [status, setStatus] = useState(phase?.status || "not_started");
@@ -58,20 +106,33 @@ export default function SprintPhaseDetailModal({ sprint, phaseIndex, onClose, on
   const [dueDate, setDueDate] = useState(phase?.due_date || "");
   const [saving, setSaving] = useState(false);
 
-  // Inicializa tarefas com padrão se for Planning ou Execution de Agenda Cheia
+  // Inicializa tarefas com padrão se for alguma fase de Agenda Cheia
   const isAgendaCheia = sprint?.mission_id === 'agenda_cheia';
   const isPlanning = phase?.name === 'Planning';
   const isExecution = phase?.name === 'Execution';
+  const isMonitoring = phase?.name === 'Monitoring';
+  const isReview = phase?.name === 'Review';
+  const isRetrospective = phase?.name === 'Retrospective';
   
   const initTasks = phase?.tasks && phase.tasks.length > 0 
     ? phase.tasks 
-    : (isAgendaCheia && isPlanning ? DEFAULT_TASKS_PLANNING_AGENDA_CHEIA : isAgendaCheia && isExecution ? DEFAULT_TASKS_EXECUTION_AGENDA_CHEIA : []);
+    : (isAgendaCheia && isPlanning ? DEFAULT_TASKS_PLANNING_AGENDA_CHEIA 
+       : isAgendaCheia && isExecution ? DEFAULT_TASKS_EXECUTION_AGENDA_CHEIA
+       : isAgendaCheia && isMonitoring ? DEFAULT_TASKS_MONITORING_AGENDA_CHEIA
+       : isAgendaCheia && isReview ? DEFAULT_TASKS_REVIEW_AGENDA_CHEIA
+       : isAgendaCheia && isRetrospective ? DEFAULT_TASKS_RETROSPECTIVE_AGENDA_CHEIA
+       : []);
   const [tasks, setTasks] = useState(initTasks);
 
-  // Inicializa KPIs com padrão se for Planning ou Execution de Agenda Cheia
+  // Inicializa KPIs com padrão se for alguma fase de Agenda Cheia
   const initMetrics = phase?.metrics && phase.metrics.length > 0 
     ? phase.metrics 
-    : (isAgendaCheia && isPlanning ? DEFAULT_KPIS_PLANNING_AGENDA_CHEIA : isAgendaCheia && isExecution ? DEFAULT_KPIS_EXECUTION_AGENDA_CHEIA : []);
+    : (isAgendaCheia && isPlanning ? DEFAULT_KPIS_PLANNING_AGENDA_CHEIA
+       : isAgendaCheia && isExecution ? DEFAULT_KPIS_EXECUTION_AGENDA_CHEIA
+       : isAgendaCheia && isMonitoring ? DEFAULT_KPIS_MONITORING_AGENDA_CHEIA
+       : isAgendaCheia && isReview ? DEFAULT_KPIS_REVIEW_AGENDA_CHEIA
+       : isAgendaCheia && isRetrospective ? DEFAULT_KPIS_RETROSPECTIVE_AGENDA_CHEIA
+       : []);
   const [metrics, setMetrics] = useState(initMetrics);
 
   if (!sprint || !phase) return null;
