@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
@@ -16,7 +16,7 @@ import RegistroAtendimentoMassaModal from "@/components/aceleracao/RegistroAtend
 import FiltrosControleAceleracao from "@/components/aceleracao/FiltrosControleAceleracao";
 import RegistrarAtendimento from "./RegistrarAtendimento";
 import CronogramaGeral from "./CronogramaGeral";
-import DashboardOperacionalTab from "@/components/aceleracao/DashboardOperacionalTab";
+import DashboardOperacionalTabRedesigned from "@/components/aceleracao/DashboardOperacionalTabRedesigned";
 
 // ControleAceleracao v4 - cache bust
 export default function ControleAceleracao() {
@@ -198,13 +198,13 @@ export default function ControleAceleracao() {
         </TabsContent>
 
         <TabsContent value="dashboard-operacional">
-           <DashboardOperacionalTab user={user} />
-         </TabsContent>
+          <DashboardOperacionalTabRedesigned user={user} />
+        </TabsContent>
 
-         <TabsContent value="consultoria" className="hidden">
-           {/* Fallback redirection - consultoria tab é mapeado para dashboard-operacional */}
-         </TabsContent>
-        </Tabs>
+        <TabsContent value="consultoria" className="hidden">
+          {/* Fallback redirection - consultoria tab é mapeado para dashboard-operacional */}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
