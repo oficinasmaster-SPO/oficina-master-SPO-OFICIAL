@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -10,13 +9,55 @@ import CamadaEstrategica from './CamadaEstrategica';
 import SprintPhaseDetailModal from './SprintPhaseDetailModal';
 
 const MISSOES = [
-  { id: "agenda_cheia", nome: "Agenda Cheia", emoji: "📅", descricao: "Preencher a agenda semanal com 100% de ocupação de vendas", cor: "border-blue-400 bg-blue-50 text-blue-800" },
-  { id: "fechamento_imbativel", nome: "Fechamento Imbatível", emoji: "🎯", descricao: "Aumentar taxa de conversão de propostas para vendas", cor: "border-green-400 bg-green-50 text-green-800" },
-  { id: "caixa_forte", nome: "Caixa Forte", emoji: "💰", descricao: "Fortalecer fluxo de caixa e gestão financeira", cor: "border-yellow-400 bg-yellow-50 text-yellow-800" },
-  { id: "empresa_organizada", nome: "Empresa Organizada", emoji: "📊", descricao: "Estruturar processos e operações da empresa", cor: "border-purple-400 bg-purple-50 text-purple-800" },
-  { id: "funcoes_claras", nome: "Funções Claras", emoji: "👥", descricao: "Definir papéis, responsabilidades e organograma", cor: "border-pink-400 bg-pink-50 text-pink-800" },
-  { id: "contratacao_certa", nome: "Contratação Certa", emoji: "🎓", descricao: "Otimizar processo de seleção e onboarding", cor: "border-indigo-400 bg-indigo-50 text-indigo-800" },
-  { id: "cultura_forte", nome: "Cultura Forte", emoji: "🌟", descricao: "Desenvolver cultura organizacional e engajamento", cor: "border-red-400 bg-red-50 text-red-800" },
+  {
+    id: "agenda_cheia",
+    nome: "Agenda Cheia",
+    emoji: "📅",
+    descricao: "Preencher a agenda semanal com 100% de ocupação de vendas",
+    cor: "border-blue-400 bg-blue-50 text-blue-800"
+  },
+  {
+    id: "fechamento_imbativel",
+    nome: "Fechamento Imbatível",
+    emoji: "🎯",
+    descricao: "Aumentar taxa de conversão de propostas para vendas",
+    cor: "border-green-400 bg-green-50 text-green-800"
+  },
+  {
+    id: "caixa_forte",
+    nome: "Caixa Forte",
+    emoji: "💰",
+    descricao: "Fortalecer fluxo de caixa e gestão financeira",
+    cor: "border-yellow-400 bg-yellow-50 text-yellow-800"
+  },
+  {
+    id: "empresa_organizada",
+    nome: "Empresa Organizada",
+    emoji: "📊",
+    descricao: "Estruturar processos e operações da empresa",
+    cor: "border-purple-400 bg-purple-50 text-purple-800"
+  },
+  {
+    id: "funcoes_claras",
+    nome: "Funções Claras",
+    emoji: "👥",
+    descricao: "Definir papéis, responsabilidades e organograma",
+    cor: "border-pink-400 bg-pink-50 text-pink-800"
+  },
+  {
+    id: "contratacao_certa",
+    nome: "Contratação Certa",
+    emoji: "🎓",
+    descricao: "Otimizar processo de seleção e onboarding",
+    cor: "border-indigo-400 bg-indigo-50 text-indigo-800"
+  },
+  {
+    id: "cultura_forte",
+    nome: "Cultura Forte",
+    emoji: "🌟",
+    descricao: "Desenvolver cultura organizacional e engajamento",
+    cor: "border-red-400 bg-red-50 text-red-800"
+  },
 ]
 
 function CamadaTrilhaCliente({ workshopId, missoesSelecionadas, setMissoesSelecionadas, handleSetMissoesSelecionadas, onRefresh }) {
@@ -77,6 +118,7 @@ function CamadaTrilhaCliente({ workshopId, missoesSelecionadas, setMissoesSeleci
         <p className="text-sm text-blue-100 mt-1">Trilha montada após diagnóstico. O cliente visualiza no Cronograma de Consultoria.</p>
       </div>
 
+      {/* Link ao cronograma */}
       <div className="flex items-center gap-3 p-4 bg-blue-50 border border-blue-200 rounded-xl">
         <Map className="w-6 h-6 text-blue-600 flex-shrink-0" />
         <div className="flex-1">
@@ -94,6 +136,7 @@ function CamadaTrilhaCliente({ workshopId, missoesSelecionadas, setMissoesSeleci
         </Button>
       </div>
 
+      {/* Trilha de Implementação */}
       <div>
         <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
           <ListChecks className="w-4 h-4 text-blue-600" />
@@ -101,6 +144,7 @@ function CamadaTrilhaCliente({ workshopId, missoesSelecionadas, setMissoesSeleci
         </h4>
 
         <div className="space-y-3">
+          {/* Botão Sincronizar */}
           {missoesSelecionadas.length === 0 && (
             <button
               onClick={sincronizarTrilhas}
@@ -111,6 +155,7 @@ function CamadaTrilhaCliente({ workshopId, missoesSelecionadas, setMissoesSeleci
             </button>
           )}
 
+          {/* Semana 1 - sempre fixa */}
           <div className="border-2 border-gray-300 rounded-xl p-4 bg-gray-50">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
@@ -135,6 +180,7 @@ function CamadaTrilhaCliente({ workshopId, missoesSelecionadas, setMissoesSeleci
             </div>
           </div>
 
+          {/* Semanas personalizadas selecionadas */}
           {missoesSelecionadasData.map((missao, idx) => (
             <div key={missao.id} className={`border-2 rounded-xl p-4 ${missao.cor}`}>
               <div className="flex items-center justify-between">
@@ -155,6 +201,7 @@ function CamadaTrilhaCliente({ workshopId, missoesSelecionadas, setMissoesSeleci
             </div>
           ))}
 
+          {/* Botão adicionar missão */}
           <button
             onClick={() => setMostrarSeletor(!mostrarSeletor)}
             className="w-full border-2 border-dashed border-blue-300 rounded-xl p-4 text-blue-600 hover:bg-blue-50 transition-colors flex items-center justify-center gap-2 text-sm font-medium"
@@ -165,6 +212,7 @@ function CamadaTrilhaCliente({ workshopId, missoesSelecionadas, setMissoesSeleci
         </div>
       </div>
 
+      {/* Seletor de missões */}
       {mostrarSeletor && (
         <div className="border rounded-xl p-4 bg-white shadow-md">
           <div className="flex items-center gap-2 mb-3">
@@ -200,6 +248,7 @@ function CamadaTrilhaCliente({ workshopId, missoesSelecionadas, setMissoesSeleci
         </div>
       )}
 
+      {/* Botão Salvar Trilha */}
       {missoesSelecionadas.length > 0 && (
         <div className="flex items-center gap-3 mt-6 p-4 border rounded-xl bg-blue-50 border-blue-200">
           <Button
@@ -237,12 +286,88 @@ function CamadaTrilhaCliente({ workshopId, missoesSelecionadas, setMissoesSeleci
   );
 }
 
+// Fases de um Sprint
 const FASES_SPRINT = [
-  { id: "planning", nome_key: "Planning", nome: "Sprint Planning", subtitulo: "Planejamento", icon: ListChecks, cor: "text-blue-600", bg: "bg-blue-50", descricao: "Definir o que será feito nas próximas semanas", itens: ["Revisar diagnóstico e prioridades", "Definir objetivo claro do sprint", "Listar entregáveis mensuráveis", "Distribuir tarefas e prazos"] },
-  { id: "execucao", nome_key: "Execution", nome: "Execução", subtitulo: "Implementação", icon: PlaySquare, cor: "text-green-600", bg: "bg-green-50", descricao: "Assistir treinamentos, implementar ferramentas, executar tarefas", itens: ["Assistir treinamentos da missão", "Implementar ferramentas e processos", "Executar tarefas priorizadas", "Registrar progresso na plataforma"] },
-  { id: "checkpoint", nome_key: "Monitoring", nome: "Checkpoint Semanal", subtitulo: "Acompanhamento", icon: BarChart2, cor: "text-purple-600", bg: "bg-purple-50", descricao: "Reunião de alinhamento e verificação do progresso", itens: ["Check-in: o que foi feito", "Medir resultados parciais", "Identificar bloqueios", "Ajustar tarefas se necessário"] },
-  { id: "review", nome_key: "Review", nome: "Sprint Review", subtitulo: "Revisão", icon: TrendingUp, cor: "text-orange-600", bg: "bg-orange-50", descricao: "Apresentação dos resultados alcançados no sprint", itens: ["Apresentar entregáveis concluídos", "Medir KPIs vs meta do sprint", "Validar com o cliente os resultados", "Documentar conquistas"] },
-  { id: "retrospectiva", nome_key: "Retrospective", nome: "Sprint Retrospective", subtitulo: "Melhoria", icon: MessageSquare, cor: "text-red-600", bg: "bg-red-50", descricao: "Reflexão sobre o processo para melhorar o próximo sprint", itens: ["O que funcionou bem?", "O que precisa melhorar?", "Quais ajustes fazer no processo?", "Planejar próximo sprint"] },
+  {
+    id: "planning",
+    nome_key: "Planning",
+    nome: "Sprint Planning",
+    subtitulo: "Planejamento",
+    icon: ListChecks,
+    cor: "text-blue-600",
+    bg: "bg-blue-50",
+    descricao: "Definir o que será feito nas próximas semanas",
+    itens: [
+      "Revisar diagnóstico e prioridades",
+      "Definir objetivo claro do sprint",
+      "Listar entregáveis mensuráveis",
+      "Distribuir tarefas e prazos",
+    ]
+  },
+  {
+    id: "execucao",
+    nome_key: "Execution",
+    nome: "Execução",
+    subtitulo: "Implementação",
+    icon: PlaySquare,
+    cor: "text-green-600",
+    bg: "bg-green-50",
+    descricao: "Assistir treinamentos, implementar ferramentas, executar tarefas",
+    itens: [
+      "Assistir treinamentos da missão",
+      "Implementar ferramentas e processos",
+      "Executar tarefas priorizadas",
+      "Registrar progresso na plataforma",
+    ]
+  },
+  {
+    id: "checkpoint",
+    nome_key: "Monitoring",
+    nome: "Checkpoint Semanal",
+    subtitulo: "Acompanhamento",
+    icon: BarChart2,
+    cor: "text-purple-600",
+    bg: "bg-purple-50",
+    descricao: "Reunião de alinhamento e verificação do progresso",
+    itens: [
+      "Check-in: o que foi feito",
+      "Medir resultados parciais",
+      "Identificar bloqueios",
+      "Ajustar tarefas se necessário",
+    ]
+  },
+  {
+    id: "review",
+    nome_key: "Review",
+    nome: "Sprint Review",
+    subtitulo: "Revisão",
+    icon: TrendingUp,
+    cor: "text-orange-600",
+    bg: "bg-orange-50",
+    descricao: "Apresentação dos resultados alcançados no sprint",
+    itens: [
+      "Apresentar entregáveis concluídos",
+      "Medir KPIs vs meta do sprint",
+      "Validar com o cliente os resultados",
+      "Documentar conquistas",
+    ]
+  },
+  {
+    id: "retrospectiva",
+    nome_key: "Retrospective",
+    nome: "Sprint Retrospective",
+    subtitulo: "Melhoria",
+    icon: MessageSquare,
+    cor: "text-red-600",
+    bg: "bg-red-50",
+    descricao: "Reflexão sobre o processo para melhorar o próximo sprint",
+    itens: [
+      "O que funcionou bem?",
+      "O que precisa melhorar?",
+      "Quais ajustes fazer no processo?",
+      "Planejar próximo sprint",
+    ]
+  },
 ];
 
 const STATUS_SPRINT_BADGE = {
@@ -262,27 +387,21 @@ function SprintCard({ numero, titulo, emoji, descricao, cor, isFixed, sprint, on
   const [expandido, setExpandido] = useState(shouldExpand);
   const [faseAtiva, setFaseAtiva] = useState(null);
   const [modalPhaseIndex, setModalPhaseIndex] = useState(initialPhaseIndex);
-  const navigate = useNavigate();
 
   const phases = sprint?.phases || [];
   const progress = sprint?.progress_percentage || 0;
   const sprintStatus = sprint?.status || "pending";
 
-  const handleSprintClick = () => {
-    if (sprint?.id) {
-      navigate(`/SprintDetalhes?sprint_id=${sprint.id}`);
-    }
-  };
-
   return (
-    <div className={`border-2 rounded-xl overflow-hidden ${cor} cursor-pointer hover:shadow-md transition-shadow`}>
+    <div className={`border-2 rounded-xl overflow-hidden ${cor}`}>
       <button
-        onClick={sprint ? handleSprintClick : () => setExpandido(!expandido)}
+        onClick={() => setExpandido(!expandido)}
         className="w-full p-4 flex items-center justify-between hover:opacity-90 transition-opacity text-left"
-        title={sprint ? 'Clique para ver detalhes do sprint' : 'Clique para expandir'}
       >
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-white/80 flex items-center justify-center text-sm font-bold border-2 border-current">{numero}</div>
+          <div className="w-8 h-8 rounded-full bg-white/80 flex items-center justify-center text-sm font-bold border-2 border-current">
+            {numero}
+          </div>
           <div>
             <p className="font-semibold text-sm">{emoji} {titulo}</p>
             <p className="text-xs opacity-70">{descricao}</p>
@@ -443,16 +562,19 @@ function CamadaSprints({ workshopId, missoesSelecionadas }) {
     sprints.find(s => s.mission_id === missionId && s.sprint_number === number);
 
   const initializeSprint = async (mission, numero) => {
+    // Regra: só pode ter 2 sprints se o primeiro foi CONCLUÍDO
     const sprintDaMissao = sprints.filter(s => s.mission_id === mission.id);
     
     if (sprintDaMissao.length > 0) {
       const primeiro = sprintDaMissao.sort((a, b) => new Date(a.created_date) - new Date(b.created_date))[0];
       
+      // Se tem sprint em andamento e o primeiro não foi concluído
       if (primeiro.status !== 'completed') {
         toast.error(`⚠️ Sprint de "${mission.nome}" ainda está em andamento! Conclua antes de criar outro.`);
         return;
       }
       
+      // Se já tem 2 sprints dessa missão
       if (sprintDaMissao.length >= 2) {
         toast.error(`⚠️ Já existe uma repetição dessa missão. Máximo 2 sprints permitidos.`);
         return;
@@ -593,10 +715,34 @@ function CamadaSprints({ workshopId, missoesSelecionadas }) {
 
 function CamadaConsultor({ workshopId }) {
   const guias = [
-    { titulo: "Como Conduzir o Diagnóstico Inicial", descricao: "Passo a passo para levantar informações, identificar dores e priorizar ações.", passos: ["Apresente-se e contextualize o programa", "Aplique o checklist de diagnóstico", "Escute ativamente as dores do proprietário", "Priorize os 3 maiores gargalos"], cor: "border-l-4 border-l-purple-500 bg-purple-50", badge: "Onboarding" },
-    { titulo: "Como Conduzir Atendimentos Semanais", descricao: "Estrutura padrão para reuniões de acompanhamento de 60-90 minutos.", passos: ["Check-in: resultado da semana anterior", "Revisão das metas e KPIs", "Resolução de bloqueios", "Definição de tarefas para próxima semana", "Registro na plataforma"], cor: "border-l-4 border-l-blue-500 bg-blue-50", badge: "Reunião Semanal" },
-    { titulo: "Como Fechar um Ciclo de Sprint", descricao: "Consolidar aprendizados e planejar o próximo ciclo com o cliente.", passos: ["Revise todas as tarefas do sprint", "Calcule os resultados alcançados", "Celebre as conquistas com o cliente", "Apresente o plano do próximo ciclo"], cor: "border-l-4 border-l-green-500 bg-green-50", badge: "Fechamento" },
-    { titulo: "Como Escalar o Projeto", descricao: "Quando e como avançar para etapas de crescimento e autonomia.", passos: ["Verifique consolidação dos processos base", "Avalie prontidão da equipe", "Introduza ferramentas de escala", "Reduza dependência gradualmente"], cor: "border-l-4 border-l-orange-500 bg-orange-50", badge: "Escala" },
+    {
+      titulo: "Como Conduzir o Diagnóstico Inicial",
+      descricao: "Passo a passo para levantar informações, identificar dores e priorizar ações.",
+      passos: ["Apresente-se e contextualize o programa", "Aplique o checklist de diagnóstico", "Escute ativamente as dores do proprietário", "Priorize os 3 maiores gargalos"],
+      cor: "border-l-4 border-l-purple-500 bg-purple-50",
+      badge: "Onboarding"
+    },
+    {
+      titulo: "Como Conduzir Atendimentos Semanais",
+      descricao: "Estrutura padrão para reuniões de acompanhamento de 60-90 minutos.",
+      passos: ["Check-in: resultado da semana anterior", "Revisão das metas e KPIs", "Resolução de bloqueios", "Definição de tarefas para próxima semana", "Registro na plataforma"],
+      cor: "border-l-4 border-l-blue-500 bg-blue-50",
+      badge: "Reunião Semanal"
+    },
+    {
+      titulo: "Como Fechar um Ciclo de Sprint",
+      descricao: "Consolidar aprendizados e planejar o próximo ciclo com o cliente.",
+      passos: ["Revise todas as tarefas do sprint", "Calcule os resultados alcançados", "Celebre as conquistas com o cliente", "Apresente o plano do próximo ciclo"],
+      cor: "border-l-4 border-l-green-500 bg-green-50",
+      badge: "Fechamento"
+    },
+    {
+      titulo: "Como Escalar o Projeto",
+      descricao: "Quando e como avançar para etapas de crescimento e autonomia.",
+      passos: ["Verifique consolidação dos processos base", "Avalie prontidão da equipe", "Introduza ferramentas de escala", "Reduza dependência gradualmente"],
+      cor: "border-l-4 border-l-orange-500 bg-orange-50",
+      badge: "Escala"
+    },
   ];
 
   return (
