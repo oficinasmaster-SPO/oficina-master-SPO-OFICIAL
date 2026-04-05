@@ -107,7 +107,16 @@ export default function CronogramaImplementacao() {
       if (isNew) {
         const created = await base44.entities.CronogramaImplementacao.create({
           workshop_id: workshop.id,
-          ...data,
+          consulting_firm_id: workshop.consulting_firm_id,
+          item_id: data.item_id,
+          item_nome: data.item_nome,
+          item_tipo: data.item_tipo,
+          status: data.status || 'a_fazer',
+          data_inicio_real: data.data_inicio_real || new Date().toISOString(),
+          data_termino_previsto: data.data_termino_previsto,
+          progresso_percentual: data.progresso_percentual || 0,
+          observacoes: data.observacoes || '',
+          dependencias: data.dependencias || [],
           historico_alteracoes: [{
             data_alteracao: new Date().toISOString(),
             campo_alterado: 'criacao',
@@ -117,22 +126,6 @@ export default function CronogramaImplementacao() {
             usuario_nome: user.full_name
           }]
         });
-        
-        // Sincronizar com CronogramaProgresso
-        try {
-          await base44.functions.invoke('syncCronogramaProgress', {
-            workshop_id: workshop.id,
-            item_id: data.item_id,
-            item_nome: data.item_nome,
-            status: data.status,
-            data_termino_real: data.data_termino_real,
-            data_termino_previsto: data.data_termino_previsto,
-            progresso_percentual: data.progresso_percentual
-          });
-        } catch (syncError) {
-          console.error('Erro ao sincronizar com CronogramaProgresso:', syncError);
-        }
-
         return created;
       }
 
@@ -177,9 +170,12 @@ export default function CronogramaImplementacao() {
       return updated;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cronograma-implementacao'] });
-      queryClient.invalidateQueries({ queryKey: ['cronograma-progressos'] });
-      queryClient.invalidateQueries({ queryKey: ['cronograma-implementacao', workshop?.id] });
+      // Aguardar um tick para garantir que queries antigas foram limpas
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['cronograma-implementacao'] });
+        queryClient.invalidateQueries({ queryKey: ['cronograma-implementacao', workshop?.id] });
+        queryClient.invalidateQueries({ queryKey: ['cronograma-progressos'] });
+      }, 100);
       toast.success('Item atualizado com sucesso!');
       setEditingItem(null);
     }
@@ -265,16 +261,18 @@ export default function CronogramaImplementacao() {
     
     // Item não iniciado - criar com todos os campos necessários para navegação
     return {
-      id: planItem.codigo,
+      id: `virtual-${planItem.codigo}-${Date.now()}`, // ID virtual único para renderização
       item_nome: planItem.nome,
       item_tipo: planItem.tipo,
       item_id: planItem.codigo,
       status: 'a_fazer',
       workshop_id: workshop?.id,
       data_inicio_real: new Date().toISOString(),
-      data_termino_previsto: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 dias a partir de hoje
+      data_termino_previsto: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       progresso_percentual: 0,
-      not_started: true // Flag para identificar itens não iniciados
+      observacoes: '',
+      dependencias: [],
+      not_started: true
     };
   });
 
