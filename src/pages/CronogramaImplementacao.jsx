@@ -63,9 +63,10 @@ export default function CronogramaImplementacao() {
   const { data: cronograma = [], isLoading } = useQuery({
     queryKey: ['cronograma-implementacao', workshop?.id],
     queryFn: async () => {
-      return await base44.entities.CronogramaImplementacao.filter(
+      // Buscar sprints (trilhas de implementação)
+      return await base44.entities.ConsultoriaSprint.filter(
         { workshop_id: workshop.id },
-        '-data_inicio_real'
+        '-start_date'
       );
     },
     enabled: !!workshop?.id
