@@ -1,0 +1,87 @@
+{
+  "name": "NPSResponse",
+  "type": "object",
+  "properties": {
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "context_type": {
+      "type": "string",
+      "enum": [
+        "cliente",
+        "imersao",
+        "treinamento",
+        "mentoria",
+        "monitoria",
+        "consultoria"
+      ]
+    },
+    "context_id": {
+      "type": "string",
+      "description": "ID do evento/atendimento espec\u00edfico (opcional)"
+    },
+    "respondent_name": {
+      "type": "string"
+    },
+    "respondent_phone": {
+      "type": "string"
+    },
+    "respondent_email": {
+      "type": "string"
+    },
+    "score": {
+      "type": "integer"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "submitted_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "workshop_id",
+    "score"
+  ],
+  "rls": {
+    "create": true,
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        }
+      ]
+    }
+  }
+}

@@ -125,7 +125,8 @@ export default function PublicNPS() {
     imersao: "nossa imersão",
     treinamento: "o treinamento",
     mentoria: "a mentoria",
-    monitoria: "a monitoria"
+    monitoria: "a monitoria",
+    consultoria: "nossa consultoria"
   };
 
   return (
