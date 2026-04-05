@@ -714,15 +714,42 @@ export default function ConsultoriaClienteTab({ client }) {
   const [missoesSelecionadas, setMissoesSelecionadas] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Carrega trilhas selecionadas do banco de dados
+  // Carrega e sincroniza trilhas selecionadas do banco de dados
   useEffect(() => {
     if (!workshopId) return;
     const loadSelectedMissions = async () => {
       try {
+        // Carrega sprints existentes
+        const sprints = await base44.entities.ConsultoriaSprint.filter(
+          { workshop_id: workshopId }
+        );
+        
+        // Extrai missões únicas dos sprints salvos
+        const missionsFromSprints = [...new Set(sprints.map(s => s.mission_id).filter(Boolean))];
+        
+        // Carrega cronograma existente
         const cronograma = await base44.entities.CronogramaTemplate.filter(
           { workshop_id: workshopId }
         );
-        if (cronograma?.length > 0) {
+        
+        // Se há sprints, sincroniza com cronograma
+        if (missionsFromSprints.length > 0) {
+          if (cronograma?.length > 0) {
+            // Atualiza se já existe
+            await base44.entities.CronogramaTemplate.update(cronograma[0].id, {
+              missoes_selecionadas: missionsFromSprints
+            });
+          } else {
+            // Cria se não existe
+            await base44.entities.CronogramaTemplate.create({
+              workshop_id: workshopId,
+              missoes_selecionadas: missionsFromSprints,
+              nome: `Trilhas - ${workshopId}`
+            });
+          }
+          setMissoesSelecionadas(missionsFromSprints);
+        } else if (cronograma?.length > 0) {
+          // Se não há sprints, usa o que está salvo
           setMissoesSelecionadas(cronograma[0].missoes_selecionadas || []);
         }
       } catch (error) {
