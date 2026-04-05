@@ -7,7 +7,7 @@ import { format, subDays } from "date-fns";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, BarChart3, Calendar, FileText, Settings, ClipboardList, Users } from "lucide-react";
+import { Loader2, BarChart3, Calendar, FileText, Settings, ClipboardList, Users, Activity } from "lucide-react";
 import VisaoGeralTab from "@/components/aceleracao/VisaoGeralTab";
 import PainelAtendimentosTab from "@/components/aceleracao/PainelAtendimentosTab";
 import PedidosInternosTab from "@/components/aceleracao/PedidosInternosTab";
@@ -16,6 +16,7 @@ import RegistroAtendimentoMassaModal from "@/components/aceleracao/RegistroAtend
 import FiltrosControleAceleracao from "@/components/aceleracao/FiltrosControleAceleracao";
 import RegistrarAtendimento from "./RegistrarAtendimento";
 import CronogramaGeral from "./CronogramaGeral";
+import DashboardOperacionalTab from "@/components/aceleracao/DashboardOperacionalTab";
 
 // ControleAceleracao v4 - cache bust
 export default function ControleAceleracao() {
@@ -155,6 +156,10 @@ export default function ControleAceleracao() {
             <Calendar className="w-4 h-4 mr-2" />
             Agenda Visual
           </TabsTrigger>
+          <TabsTrigger value="dashboard-operacional" className="flex-shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-colors">
+            <Activity className="w-4 h-4 mr-2" />
+            Dashboard Sprints
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="visao-geral">
@@ -187,6 +192,10 @@ export default function ControleAceleracao() {
             onFiltrosChange={setFiltros}
           />
           <AgendaVisualTab user={user} filtros={filtros} />
+        </TabsContent>
+
+        <TabsContent value="dashboard-operacional">
+          <DashboardOperacionalTab user={user} />
         </TabsContent>
       </Tabs>
     </div>
