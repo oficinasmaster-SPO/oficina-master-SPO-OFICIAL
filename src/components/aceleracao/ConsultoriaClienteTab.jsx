@@ -356,10 +356,10 @@ const PHASE_STATUS_ICON = {
   completed: <CheckCircle2 className="w-4 h-4 text-green-500" />,
 };
 
-function SprintCard({ numero, titulo, emoji, descricao, cor, isFixed, sprint, onSprintUpdated }) {
-  const [expandido, setExpandido] = useState(false);
+function SprintCard({ numero, titulo, emoji, descricao, cor, isFixed, sprint, onSprintUpdated, shouldExpand = false, initialPhaseIndex = null }) {
+  const [expandido, setExpandido] = useState(shouldExpand);
   const [faseAtiva, setFaseAtiva] = useState(null);
-  const [modalPhaseIndex, setModalPhaseIndex] = useState(null);
+  const [modalPhaseIndex, setModalPhaseIndex] = useState(initialPhaseIndex);
 
   // Usar dados do sprint salvo se disponível, senão mostrar visualização estática
   const phases = sprint?.phases || [];
@@ -526,6 +526,9 @@ function CamadaSprints({ workshopId, missoesSelecionadas }) {
   const missoesSelecionadasData = MISSOES.filter(m => missoesSelecionadas.includes(m.id));
   const [sprints, setSprints] = useState([]);
   const [loadingCreate, setLoadingCreate] = useState(null);
+  const urlParams = new URLSearchParams(window.location.search);
+  const sprintIdFromUrl = urlParams.get('sprint_id');
+  const phaseIndexFromUrl = urlParams.get('phase_index') ? parseInt(urlParams.get('phase_index')) : null;
 
   const loadSprints = useCallback(async () => {
     if (!workshopId) return;
@@ -612,6 +615,7 @@ function CamadaSprints({ workshopId, missoesSelecionadas }) {
         {/* Sprint 0 - sempre fixo */}
         {(() => {
           const sprint0 = getSprintForMission("sprint0", 0);
+          const shouldExpandSprint0 = sprint0?.id === sprintIdFromUrl;
           return (
             <div className="space-y-2">
               <SprintCard
@@ -623,6 +627,8 @@ function CamadaSprints({ workshopId, missoesSelecionadas }) {
                 isFixed={true}
                 sprint={sprint0}
                 onSprintUpdated={loadSprints}
+                shouldExpand={shouldExpandSprint0}
+                initialPhaseIndex={shouldExpandSprint0 ? phaseIndexFromUrl : null}
               />
               {!sprint0 && (
                 <Button
@@ -643,6 +649,7 @@ function CamadaSprints({ workshopId, missoesSelecionadas }) {
         {missoesSelecionadasData.map((missao, idx) => {
           const numero = idx + 1;
           const sprint = getSprintForMission(missao.id, numero);
+          const shouldExpandSprint = sprint?.id === sprintIdFromUrl;
           return (
             <div key={missao.id} className="space-y-2">
               <SprintCard
@@ -654,6 +661,8 @@ function CamadaSprints({ workshopId, missoesSelecionadas }) {
                 isFixed={false}
                 sprint={sprint}
                 onSprintUpdated={loadSprints}
+                shouldExpand={shouldExpandSprint}
+                initialPhaseIndex={shouldExpandSprint ? phaseIndexFromUrl : null}
               />
               {!sprint && (
                 <Button
