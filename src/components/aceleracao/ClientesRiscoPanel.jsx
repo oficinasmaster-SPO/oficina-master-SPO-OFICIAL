@@ -1,6 +1,6 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle, TrendingDown, Zap } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 export default function ClientesRiscoPanel({ clientes = [] }) {
@@ -50,7 +50,7 @@ export default function ClientesRiscoPanel({ clientes = [] }) {
               </thead>
               <tbody className="divide-y">
                 {clientes.slice(0, 5).map((c, idx) => (
-                  <tr key={idx} className="hover:bg-gray-50">
+                  <tr key={`${c.nome}-${idx}`} className="hover:bg-gray-50">
                     <td className="px-3 py-2 font-medium text-gray-900">{c.nome}</td>
                     <td className="px-3 py-2 text-center">
                       <Badge

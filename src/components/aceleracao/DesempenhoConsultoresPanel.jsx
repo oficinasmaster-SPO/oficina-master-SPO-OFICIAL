@@ -83,13 +83,12 @@ export default function DesempenhoConsultoresPanel({ consultores = [] }) {
             <div className="text-center">
               <p className="text-sm text-gray-600">Taxa Geral Realização</p>
               <p className="text-2xl font-bold text-purple-600">
-                {consultoresOrdenados.length > 0
-                  ? Math.round(
-                      (consultoresOrdenados.reduce((sum, c) => sum + (c.realizados || 0), 0) /
-                        consultoresOrdenados.reduce((sum, c) => sum + (c.total || 0), 0)) *
-                        100
-                    )
-                  : 0}%
+                {(() => {
+                  const totalAtendimentos = consultoresOrdenados.reduce((sum, c) => sum + (c.total || 0), 0);
+                  return totalAtendimentos > 0
+                    ? Math.round((consultoresOrdenados.reduce((sum, c) => sum + (c.realizados || 0), 0) / totalAtendimentos) * 100)
+                    : 0
+                })()}%
               </p>
             </div>
           </div>
