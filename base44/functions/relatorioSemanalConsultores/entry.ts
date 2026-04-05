@@ -41,6 +41,10 @@ Deno.serve(async (req) => {
     return Response.json({ status: 'ok', message: 'Sem atendimentos na semana', emails_sent: 0 });
   }
 
+  // Buscar usuários para resolver e-mail dos consultores (consultor_email não existe na entidade)
+  const todosUsuarios = await base44.asServiceRole.entities.User.list();
+  const userEmailMap = Object.fromEntries(todosUsuarios.map(u => [u.id, u.email]));
+
   // Buscar workshops para resolver nomes
   const workshops = await base44.asServiceRole.entities.Workshop.list();
   const workshopMap = Object.fromEntries(workshops.map(w => [w.id, w.name]));
@@ -49,7 +53,7 @@ Deno.serve(async (req) => {
   const porConsultor = {};
   atendimentosSemana.forEach(a => {
     const cId = a.consultor_id;
-    const cEmail = a.consultor_email;
+    const cEmail = userEmailMap[cId]; // resolvido via User entity
     const cNome = a.consultor_nome || 'Consultor';
     if (!cId || !cEmail) return;
     if (!porConsultor[cId]) {
