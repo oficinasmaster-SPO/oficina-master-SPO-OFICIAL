@@ -22,6 +22,7 @@ import TipoAtendimentoManager from "@/components/aceleracao/TipoAtendimentoManag
 import MediaUploadField from "@/components/aceleracao/MediaUploadField";
 import ConflitosHorarioModal from "@/components/aceleracao/ConflitosHorarioModal";
 import ClientIntelligenceCapturePanel from "@/components/inteligencia/ClientIntelligenceCapturePanel";
+import ChecklistConsultoria from "@/components/aceleracao/ChecklistConsultoria";
 import { useGoogleMeet } from "@/components/hooks/useGoogleMeet";
 import NextSteps from "@/components/aceleracao/NextSteps";
 import { TimePicker } from "@/components/ui/time-picker";
@@ -90,7 +91,8 @@ export default function RegistrarAtendimento({ isModal = false, onClose }) {
     observacoes_consultor: "",
     proximos_passos: "",
     proximos_passos_list: [],
-    notificacoes_programadas: []
+    notificacoes_programadas: [],
+    checklist_respostas: []
   });
 
   const [showNotificationModal, setShowNotificationModal] = useState(false);
@@ -141,7 +143,8 @@ export default function RegistrarAtendimento({ isModal = false, onClose }) {
             topicos_discutidos: atendimento.topicos_discutidos || [],
             decisoes_tomadas: atendimento.decisoes_tomadas || [],
             acoes_geradas: atendimento.acoes_geradas || [],
-            proximos_passos_list: atendimento.proximos_passos_list || []
+            proximos_passos_list: atendimento.proximos_passos_list || [],
+            checklist_respostas: atendimento.checklist_respostas || []
             });
             setShowMeetingTimer(atendimento.status === 'participando');
             console.log("Atendimento carregado para edição:", atendimento);
@@ -306,6 +309,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose }) {
         observacoes_consultor: data.observacoes_consultor,
         proximos_passos: data.proximos_passos,
         proximos_passos_list: (data.proximos_passos_list || []).filter(p => p.descricao),
+        checklist_respostas: data.checklist_respostas || [],
         notificacoes_programadas: data.notificacoes_programadas || []
       };
 
@@ -1145,6 +1149,21 @@ export default function RegistrarAtendimento({ isModal = false, onClose }) {
                 )}
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Checklist Temático */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <span>📋</span> Checklist de Diagnóstico
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ChecklistConsultoria
+              respostas={formData.checklist_respostas || []}
+              onChange={(respostas) => setFormData({ ...formData, checklist_respostas: respostas })}
+            />
           </CardContent>
         </Card>
 
