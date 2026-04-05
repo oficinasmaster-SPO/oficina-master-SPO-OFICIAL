@@ -766,19 +766,25 @@ export default function ConsultoriaClienteTab({ client }) {
     setMissoesSelecionadas(novasSelecionadas);
     if (!workshopId) return;
     try {
-      // Busca sprints existentes para atualizar apenas a seleção de missões
-      const sprints = await base44.entities.ConsultoriaSprint.filter(
+      const existing = await base44.entities.CronogramaTemplate.filter(
         { workshop_id: workshopId }
       );
-      if (sprints && sprints.length > 0) {
-        // Atualiza sprints com as missões selecionadas
-        for (const sprint of sprints) {
-          await base44.entities.ConsultoriaSprint.update(sprint.id, {
-            mission_id: novasSelecionadas.includes(sprint.mission_id) ? sprint.mission_id : sprint.mission_id
-          });
-        }
+      if (existing && existing.length > 0) {
+        // Atualiza registro existente
+        await base44.entities.CronogramaTemplate.update(existing[0].id, {
+          missoes_selecionadas: novasSelecionadas
+        });
+        console.log('✅ Trilhas atualizadas:', novasSelecionadas);
+      } else {
+        // Cria novo registro com campos obrigatórios
+        await base44.entities.CronogramaTemplate.create({
+          workshop_id: workshopId,
+          fase_oficina: 1,
+          nome_fase: 'Trilhas Selecionadas',
+          missoes_selecionadas: novasSelecionadas
+        });
+        console.log('✅ Trilhas criadas:', novasSelecionadas);
       }
-      console.log('✅ Trilhas atualizadas:', novasSelecionadas);
     } catch (error) {
       console.error('❌ Erro ao salvar trilhas:', error);
     }
