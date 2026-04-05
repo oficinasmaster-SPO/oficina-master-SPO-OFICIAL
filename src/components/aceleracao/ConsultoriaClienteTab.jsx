@@ -92,13 +92,20 @@ const MISSOES = [
 // Camada 2 - Trilha do Cliente
 function CamadaTrilhaCliente({ workshopId, missoesSelecionadas, setMissoesSelecionadas }) {
   const [mostrarSeletor, setMostrarSeletor] = useState(false);
+  const [salvando, setSalvando] = useState(false);
+  const [salvoRecentemente, setSalvoRecentemente] = useState(false);
 
-  const toggleMissao = (missaoId) => {
-    setMissoesSelecionadas(prev =>
-      prev.includes(missaoId)
-        ? prev.filter(id => id !== missaoId)
-        : [...prev, missaoId]
-    );
+  const handleSalvarTrilha = async () => {
+    setSalvando(true);
+    try {
+      await setMissoesSelecionadas(missoesSelecionadas);
+      setSalvoRecentemente(true);
+      setTimeout(() => setSalvoRecentemente(false), 3000);
+    } catch (error) {
+      console.error('Erro ao salvar trilha:', error);
+    } finally {
+      setSalvando(false);
+    }
   };
 
   const missoesSelecionadasData = MISSOES.filter(m => missoesSelecionadas.includes(m.id));
@@ -230,13 +237,44 @@ function CamadaTrilhaCliente({ workshopId, missoesSelecionadas, setMissoesSeleci
               );
             })}
           </div>
-        </div>
-      )}
-    </div>
-  );
-}
+          </div>
+          )}
 
-// Fases de um Sprint
+          {/* Botão Salvar Trilha */}
+          {missoesSelecionadas.length > 0 && (
+          <div className="flex items-center gap-3 mt-6 p-4 border rounded-xl bg-blue-50 border-blue-200">
+          <Button
+           onClick={handleSalvarTrilha}
+           disabled={salvando}
+           className="bg-blue-600 hover:bg-blue-700 text-white flex-1 gap-2"
+          >
+           {salvando ? (
+             <>
+               <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+               Salvando...
+             </>
+           ) : salvoRecentemente ? (
+             <>
+               <CheckCircle2 className="w-4 h-4" />
+               Trilha salva com sucesso!
+             </>
+           ) : (
+             <>
+               <CheckCircle2 className="w-4 h-4" />
+               Salvar Trilha
+             </>
+           )}
+          </Button>
+          {salvoRecentemente && (
+           <div className="text-xs text-green-600 font-medium">✓ Persistido</div>
+          )}
+          </div>
+          )}
+          </div>
+          );
+          }
+
+          // Fases de um Sprint
 const FASES_SPRINT = [
   {
     id: "planning",
