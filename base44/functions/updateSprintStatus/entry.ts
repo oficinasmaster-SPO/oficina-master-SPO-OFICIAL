@@ -29,13 +29,13 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Verificar inatividade: sem atividade há 7+ dias
-    if (sprint.last_activity_date) {
+    // Verificar inatividade: sem atividade há 7+ dias - marcar como overdue se aplicável
+    if (sprint.last_activity_date && sprint.status === 'in_progress') {
       const lastActivity = new Date(sprint.last_activity_date);
       const diffDays = Math.floor((today - lastActivity) / (1000 * 60 * 60 * 24));
-      if (diffDays >= 7 && sprint.status === 'in_progress') {
-        // Registrar no próprio campo para alert
-        updates.inactivity_days = diffDays;
+      if (diffDays >= 7) {
+        // Não sobrescrever overdue já definido por end_date
+        if (!updates.status) updates.status = 'overdue';
       }
     }
 

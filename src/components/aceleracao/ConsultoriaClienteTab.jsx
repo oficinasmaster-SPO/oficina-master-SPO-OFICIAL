@@ -506,7 +506,7 @@ function CamadaSprints({ workshopId, missoesSelecionadas }) {
 
   useEffect(() => {
     if (workshopId) loadSprints();
-  }, [workshopId]);
+  }, [workshopId, missoesSelecionadas]);
 
   const loadSprints = async () => {
     const data = await base44.entities.ConsultoriaSprint.filter({ workshop_id: workshopId });
@@ -518,31 +518,34 @@ function CamadaSprints({ workshopId, missoesSelecionadas }) {
 
   const initializeSprint = async (mission, numero) => {
     setLoadingCreate(mission.id);
-    const defaultPhases = ["Planning", "Execution", "Monitoring", "Review", "Retrospective"].map(name => ({
-      name,
-      status: "not_started",
-      notes: "",
-      metrics: [],
-      tasks: [],
-    }));
-    const today = new Date();
-    const endDate = new Date(today);
-    endDate.setDate(endDate.getDate() + 30);
-    await base44.entities.ConsultoriaSprint.create({
-      workshop_id: workshopId,
-      mission_id: mission.id,
-      sprint_number: numero,
-      title: mission.id === "sprint0" ? "Sprint 0 — Diagnóstico & Alinhamento" : `Sprint ${numero} — ${mission.nome}`,
-      objective: mission.descricao,
-      start_date: today.toISOString().split('T')[0],
-      end_date: endDate.toISOString().split('T')[0],
-      status: "in_progress",
-      progress_percentage: 0,
-      phases: defaultPhases,
-      last_activity_date: new Date().toISOString(),
-    });
-    await loadSprints();
-    setLoadingCreate(null);
+    try {
+      const defaultPhases = ["Planning", "Execution", "Monitoring", "Review", "Retrospective"].map(name => ({
+        name,
+        status: "not_started",
+        notes: "",
+        metrics: [],
+        tasks: [],
+      }));
+      const today = new Date();
+      const endDate = new Date(today);
+      endDate.setDate(endDate.getDate() + 30);
+      await base44.entities.ConsultoriaSprint.create({
+        workshop_id: workshopId,
+        mission_id: mission.id,
+        sprint_number: numero,
+        title: mission.id === "sprint0" ? "Sprint 0 — Diagnóstico & Alinhamento" : `Sprint ${numero} — ${mission.nome}`,
+        objective: mission.descricao,
+        start_date: today.toISOString().split('T')[0],
+        end_date: endDate.toISOString().split('T')[0],
+        status: "in_progress",
+        progress_percentage: 0,
+        phases: defaultPhases,
+        last_activity_date: new Date().toISOString(),
+      });
+      await loadSprints();
+    } finally {
+      setLoadingCreate(null);
+    }
   };
 
   return (

@@ -42,17 +42,27 @@ export default function SprintPhaseDetailModal({ sprint, phaseIndex, onClose, on
       status,
       notes,
       due_date: dueDate || null,
-      completion_date: status === "completed" ? new Date().toISOString() : (phase.completion_date || null),
+      completion_date: status === "completed" ? (phase.completion_date || new Date().toISOString()) : null,
       metrics,
       tasks,
     };
 
-    // Calcular progresso
+    // Calcular progresso: combina conclusão de fases + tarefas
     const totalTasks = updatedPhases.reduce((acc, p) => acc + (p.tasks?.length || 0), 0);
     const doneTasks = updatedPhases.reduce((acc, p) => acc + (p.tasks?.filter(t => t.status === "done").length || 0), 0);
-    const progress = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
-
     const phasesCompleted = updatedPhases.filter(p => p.status === "completed").length;
+
+    let progress;
+    if (totalTasks > 0) {
+      // Combina: 50% peso fases + 50% peso tarefas
+      const phaseProgress = Math.round((phasesCompleted / updatedPhases.length) * 50);
+      const taskProgress = Math.round((doneTasks / totalTasks) * 50);
+      progress = phaseProgress + taskProgress;
+    } else {
+      // Só fases
+      progress = Math.round((phasesCompleted / updatedPhases.length) * 100);
+    }
+
     const newSprintStatus = phasesCompleted === updatedPhases.length
       ? "completed"
       : phasesCompleted > 0 || doneTasks > 0
