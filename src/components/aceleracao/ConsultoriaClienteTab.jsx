@@ -60,16 +60,17 @@ const MISSOES = [
   },
 ]
 
-function CamadaTrilhaCliente({ workshopId, missoesSelecionadas, setMissoesSelecionadas, handleSetMissoesSelecionadas }) {
+function CamadaTrilhaCliente({ workshopId, missoesSelecionadas, setMissoesSelecionadas, handleSetMissoesSelecionadas, onRefresh }) {
   const [mostrarSeletor, setMostrarSeletor] = useState(false);
   const [salvando, setSalvando] = useState(false);
   const [salvoRecentemente, setSalvoRecentemente] = useState(false);
   const [mudancasNaoSalvas, setMudancasNaoSalvas] = useState(false);
+  const [sincronizando, setSincronizando] = useState(false);
 
   const handleSalvarTrilha = async () => {
     setSalvando(true);
     try {
-      await setMissoesSelecionadas(missoesSelecionadas);
+      await handleSetMissoesSelecionadas(missoesSelecionadas);
       toast.success('✓ Trilha salva com sucesso!');
       setSalvoRecentemente(true);
       setMudancasNaoSalvas(false);
@@ -79,6 +80,18 @@ function CamadaTrilhaCliente({ workshopId, missoesSelecionadas, setMissoesSeleci
       toast.error('✗ Erro ao salvar trilha');
     } finally {
       setSalvando(false);
+    }
+  };
+
+  const sincronizarTrilhas = async () => {
+    setSincronizando(true);
+    try {
+      if (onRefresh) await onRefresh();
+      toast.success('✓ Trilhas sincronizadas!');
+    } catch (error) {
+      toast.error('✗ Erro ao sincronizar');
+    } finally {
+      setSincronizando(false);
     }
   };
 
@@ -131,6 +144,17 @@ function CamadaTrilhaCliente({ workshopId, missoesSelecionadas, setMissoesSeleci
         </h4>
 
         <div className="space-y-3">
+          {/* Botão Sincronizar */}
+          {missoesSelecionadas.length === 0 && (
+            <button
+              onClick={sincronizarTrilhas}
+              disabled={sincronizando}
+              className="w-full p-3 border-2 border-dashed border-blue-300 rounded-xl text-blue-600 hover:bg-blue-50 transition-colors text-sm font-medium"
+            >
+              {sincronizando ? '⟳ Sincronizando...' : '⟳ Sincronizar Trilhas'}
+            </button>
+          )}
+
           {/* Semana 1 - sempre fixa */}
           <div className="border-2 border-gray-300 rounded-xl p-4 bg-gray-50">
             <div className="flex items-center justify-between mb-2">
@@ -364,14 +388,12 @@ function SprintCard({ numero, titulo, emoji, descricao, cor, isFixed, sprint, on
   const [faseAtiva, setFaseAtiva] = useState(null);
   const [modalPhaseIndex, setModalPhaseIndex] = useState(initialPhaseIndex);
 
-  // Usar dados do sprint salvo se disponível, senão mostrar visualização estática
   const phases = sprint?.phases || [];
   const progress = sprint?.progress_percentage || 0;
   const sprintStatus = sprint?.status || "pending";
 
   return (
     <div className={`border-2 rounded-xl overflow-hidden ${cor}`}>
-      {/* Header do Sprint */}
       <button
         onClick={() => setExpandido(!expandido)}
         className="w-full p-4 flex items-center justify-between hover:opacity-90 transition-opacity text-left"
@@ -403,11 +425,8 @@ function SprintCard({ numero, titulo, emoji, descricao, cor, isFixed, sprint, on
         </div>
       </button>
 
-      {/* Fases do Sprint */}
       {expandido && (
         <div className="border-t border-current/20 bg-white p-4 space-y-3">
-
-          {/* Barra de progresso se tiver sprint salvo */}
           {sprint && (
             <div>
               <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
@@ -423,7 +442,6 @@ function SprintCard({ numero, titulo, emoji, descricao, cor, isFixed, sprint, on
             </div>
           )}
 
-          {/* Ciclo visual */}
           <div className="flex items-center gap-1 overflow-x-auto pb-2">
             {FASES_SPRINT.map((fase, idx) => {
               const Icon = fase.icon;
@@ -434,7 +452,6 @@ function SprintCard({ numero, titulo, emoji, descricao, cor, isFixed, sprint, on
                   <button
                     onClick={() => {
                       if (sprint) {
-                        // Se tiver sprint salvo, abrir modal de edição
                         const phaseIdx = sprint.phases?.findIndex(p => p.name === fase.nome_key);
                         if (phaseIdx !== undefined && phaseIdx >= 0) setModalPhaseIndex(phaseIdx);
                       } else {
@@ -456,9 +473,6 @@ function SprintCard({ numero, titulo, emoji, descricao, cor, isFixed, sprint, on
                       )}
                     </div>
                     <span className="text-xs text-center leading-tight text-gray-600 font-medium">{fase.subtitulo}</span>
-                    {sprint && savedPhase?.due_date && (
-                      <span className="text-xs text-gray-400">{new Date(savedPhase.due_date).toLocaleDateString('pt-BR')}</span>
-                    )}
                   </button>
                   {idx < FASES_SPRINT.length - 1 && (
                     <ChevronRight className="w-3 h-3 text-gray-300 flex-shrink-0" />
@@ -468,7 +482,6 @@ function SprintCard({ numero, titulo, emoji, descricao, cor, isFixed, sprint, on
             })}
           </div>
 
-          {/* Detalhe da fase estática (sem sprint salvo) */}
           {!sprint && faseAtiva && (() => {
             const fase = FASES_SPRINT.find(f => f.id === faseAtiva);
             const Icon = fase.icon;
@@ -493,15 +506,13 @@ function SprintCard({ numero, titulo, emoji, descricao, cor, isFixed, sprint, on
             );
           })()}
 
-          {/* Indicador do ciclo (sem sprint salvo) */}
           {!sprint && !faseAtiva && (
             <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-dashed border-gray-300">
               <RotateCcw className="w-4 h-4 text-gray-400 flex-shrink-0" />
-              <p className="text-xs text-gray-500">Clique em uma fase acima para ver os detalhes do ciclo <strong>Planejar → Executar → Medir → Ajustar</strong></p>
+              <p className="text-xs text-gray-500">Clique em uma fase acima para ver os detalhes do ciclo</p>
             </div>
           )}
 
-          {/* Hint para sprint salvo */}
           {sprint && (
             <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
               <AlertTriangle className="w-4 h-4 text-blue-500 flex-shrink-0" />
@@ -511,7 +522,6 @@ function SprintCard({ numero, titulo, emoji, descricao, cor, isFixed, sprint, on
         </div>
       )}
 
-      {/* Modal de edição de fase */}
       {modalPhaseIndex !== null && sprint && (
         <SprintPhaseDetailModal
           sprint={sprint}
@@ -524,7 +534,6 @@ function SprintCard({ numero, titulo, emoji, descricao, cor, isFixed, sprint, on
   );
 }
 
-// Camada 3 - Sprints
 function CamadaSprints({ workshopId, missoesSelecionadas }) {
   const missoesSelecionadasData = MISSOES.filter(m => missoesSelecionadas.includes(m.id));
   const [sprints, setSprints] = useState([]);
@@ -543,7 +552,6 @@ function CamadaSprints({ workshopId, missoesSelecionadas }) {
     loadSprints();
   }, [loadSprints]);
 
-  // Recarregar sprints quando workshop ou missões mudam
   useEffect(() => {
     if (workshopId) {
       loadSprints();
@@ -596,10 +604,9 @@ function CamadaSprints({ workshopId, missoesSelecionadas }) {
           <span className="text-xs font-semibold uppercase tracking-wider text-green-200">Camada 3 — Sprints</span>
         </div>
         <h3 className="text-lg font-bold">Execução por Sprint</h3>
-        <p className="text-sm text-green-100 mt-1">Cada missão vira um sprint com ciclo completo: Planejar → Executar → Medir → Ajustar.</p>
+        <p className="text-sm text-green-100 mt-1">Cada missão vira um sprint com ciclo completo.</p>
       </div>
 
-      {/* Ciclo visual explicativo */}
       <div className="grid grid-cols-5 gap-1 text-center">
         {[{ emoji: "📋", label: "Planejar" }, { emoji: "⚙️", label: "Executar" }, { emoji: "📊", label: "Medir" }, { emoji: "🔄", label: "Ajustar" }, { emoji: "🚀", label: "Próximo" }].map((item, idx) => (
           <div key={idx} className="flex flex-col items-center gap-1">
@@ -618,7 +625,6 @@ function CamadaSprints({ workshopId, missoesSelecionadas }) {
       )}
 
       <div className="space-y-3">
-        {/* Sprint 0 - sempre fixo */}
         {(() => {
           const sprint0 = getSprintForMission("sprint0", 0);
           const shouldExpandSprint0 = sprint0?.id === sprintIdFromUrl;
@@ -651,7 +657,6 @@ function CamadaSprints({ workshopId, missoesSelecionadas }) {
           );
         })()}
 
-        {/* Sprints gerados pelas missões */}
         {missoesSelecionadasData.map((missao, idx) => {
           const numero = idx + 1;
           const sprint = getSprintForMission(missao.id, numero);
@@ -689,7 +694,6 @@ function CamadaSprints({ workshopId, missoesSelecionadas }) {
   );
 }
 
-// Camada 4 - Trilha do Consultor
 function CamadaConsultor({ workshopId }) {
   const guias = [
     {
@@ -766,12 +770,10 @@ export default function ConsultoriaClienteTab({ client }) {
   const [missoesSelecionadas, setMissoesSelecionadas] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Carrega missões selecionadas do banco
   useEffect(() => {
     if (!workshopId) return;
     const loadSelectedMissions = async () => {
       try {
-        // Tenta carregar de CronogramaTemplate (fonte de verdade)
         const cronogramas = await base44.entities.CronogramaTemplate.filter(
           { workshop_id: workshopId }
         );
@@ -789,11 +791,9 @@ export default function ConsultoriaClienteTab({ client }) {
     loadSelectedMissions();
   }, [workshopId]);
 
-  // Salva trilhas selecionadas no banco de dados
   const handleSetMissoesSelecionadas = useCallback(async (novasSelecionadas) => {
     if (!workshopId) return;
     try {
-      // Salva em CronogramaTemplate (fonte de verdade)
       const existing = await base44.entities.CronogramaTemplate.filter(
         { workshop_id: workshopId }
       );
@@ -811,7 +811,6 @@ export default function ConsultoriaClienteTab({ client }) {
         });
       }
       
-      // Remove sprints de missões deselecionadas
       const existingSprints = await base44.entities.ConsultoriaSprint.filter(
         { workshop_id: workshopId }
       );
@@ -860,12 +859,18 @@ export default function ConsultoriaClienteTab({ client }) {
         </TabsContent>
         <TabsContent value="trilha" className="mt-4">
           {!loading && (
-           <CamadaTrilhaCliente
-             workshopId={workshopId}
-             missoesSelecionadas={missoesSelecionadas}
-             setMissoesSelecionadas={setMissoesSelecionadas}
-             handleSetMissoesSelecionadas={handleSetMissoesSelecionadas}
-           />
+            <CamadaTrilhaCliente
+              workshopId={workshopId}
+              missoesSelecionadas={missoesSelecionadas}
+              setMissoesSelecionadas={setMissoesSelecionadas}
+              handleSetMissoesSelecionadas={handleSetMissoesSelecionadas}
+              onRefresh={async () => {
+                const cronogramas = await base44.entities.CronogramaTemplate.filter({ workshop_id: workshopId });
+                if (cronogramas?.length > 0) {
+                  setMissoesSelecionadas(cronogramas[0].missoes_selecionadas || []);
+                }
+              }}
+            />
           )}
           {loading && <div className="text-center py-4 text-gray-500">Carregando trilhas...</div>}
         </TabsContent>
