@@ -562,6 +562,13 @@ function CamadaSprints({ workshopId, missoesSelecionadas }) {
     sprints.find(s => s.mission_id === missionId && s.sprint_number === number);
 
   const initializeSprint = async (mission, numero) => {
+    // Verificar se já existe sprint dessa missão em progresso
+    const sprintExistente = sprints.find(s => s.mission_id === mission.id && s.status !== 'completed');
+    if (sprintExistente) {
+      toast.error(`⚠️ Sprint de "${mission.nome}" já existe em andamento! Finalize antes de criar outro.`);
+      return;
+    }
+    
     setLoadingCreate(mission.id);
     try {
       const defaultPhases = ["Planning", "Execution", "Monitoring", "Review", "Retrospective"].map(name => ({
