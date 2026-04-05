@@ -498,7 +498,14 @@ function CamadaSprints({ workshopId, missoesSelecionadas }) {
 
   useEffect(() => {
     loadSprints();
-  }, [workshopId, missoesSelecionadas, loadSprints]);
+  }, [loadSprints]);
+
+  // Recarregar sprints quando workshop ou missões mudam
+  useEffect(() => {
+    if (workshopId) {
+      loadSprints();
+    }
+  }, [workshopId, missoesSelecionadas]);
 
   const getSprintForMission = (missionId, number) =>
     sprints.find(s => s.mission_id === missionId && s.sprint_number === number);
