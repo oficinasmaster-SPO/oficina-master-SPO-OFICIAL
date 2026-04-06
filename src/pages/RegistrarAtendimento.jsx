@@ -885,9 +885,9 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
               <p className="text-sm text-gray-500 text-center py-4">
                 Selecione uma oficina para capturar inteligência
               </p>
-            )}
-          </CardContent>
-        </Card>
+              )}
+              </CardContent>
+              </Card>
 
         {/* Pauta */}
         <MeetingAgendaCard
@@ -1346,7 +1346,6 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
                   <FileText className="w-4 h-4 mr-2" />
                   Plataforma
                 </Button>
-              </div>
               </div>
             </CardContent>
           </Card>
