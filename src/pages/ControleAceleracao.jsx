@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
@@ -18,6 +18,7 @@ import RegistrarAtendimento from "./RegistrarAtendimento";
 import CronogramaGeral from "./CronogramaGeral";
 import DashboardOperacionalTabRedesigned from "@/components/aceleracao/DashboardOperacionalTabRedesigned";
 
+// ControleAceleracao v4 - cache bust
 export default function ControleAceleracao() {
   const navigate = useNavigate();
   const urlParams = new URLSearchParams(window.location.search);
