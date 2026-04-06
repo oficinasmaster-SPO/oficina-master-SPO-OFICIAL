@@ -88,7 +88,14 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
     'bg-yellow-100 text-yellow-700 border-yellow-300',
     'bg-indigo-100 text-indigo-700 border-indigo-300',
   ];
-  const getChipColor = (idx) => CHIP_COLORS[idx % CHIP_COLORS.length];
+  // Cor baseada no ID do atendimento para ser consistente entre dias
+  const getChipColor = (atendimentoId) => {
+    let hash = 0;
+    for (let i = 0; i < atendimentoId.length; i++) {
+      hash = atendimentoId.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return CHIP_COLORS[Math.abs(hash) % CHIP_COLORS.length];
+  };
 
   const getStatusColor = (status) => {
     const colors = {
@@ -378,11 +385,11 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
                     : format(day, 'd')}
                 </div>
                 <div className="flex flex-wrap gap-1">
-                  {atendimentosDia.slice(0, maxVisible).map((atendimento, chipIdx) => {
+                  {atendimentosDia.slice(0, maxVisible).map((atendimento) => {
                     return (
                       <span
                         key={atendimento.id}
-                        className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border ${getChipColor(chipIdx)} cursor-pointer hover:opacity-80 transition-opacity`}
+                        className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border ${getChipColor(atendimento.id)} cursor-pointer hover:opacity-80 transition-opacity`}
                         onClick={(e) => e.stopPropagation()}
                       >
                         {atendimento.google_event_id && <CalendarCheck className="w-2.5 h-2.5" />}
