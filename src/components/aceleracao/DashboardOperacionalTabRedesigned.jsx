@@ -52,7 +52,7 @@ function SprintRow({ sprint, workshop, onSprintClick }) {
         <p className="text-sm font-medium text-gray-900 truncate">{sprint.title}</p>
         <p className="text-xs text-gray-500 truncate">{workshop?.name || sprint.workshop_id}</p>
       </div>
-      <div className="flex items-center gap-3 flex-shrink-0">
+      <div className="flex items-center gap-3 flex-shrink-0 self-center">
         <Badge className={`text-xs ${statusCfg.color}`}>{statusCfg.label}</Badge>
         <div className="hidden sm:flex flex-col items-end justify-center">
           <div className="flex items-center gap-1.5">
