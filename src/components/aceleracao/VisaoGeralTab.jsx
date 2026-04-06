@@ -35,8 +35,8 @@ function getMouseEnterSide(e) {
 
 export default function VisaoGeralTab({ user, filtros = {} }) {
   const consultorFiltrado = filtros.consultorId && filtros.consultorId !== "todos" ? filtros.consultorId : null;
-  const dataInicio = filtros.dataInicio ? new Date(filtros.dataInicio) : null;
-  const dataFim = filtros.dataFim ? new Date(filtros.dataFim) : null;
+  const dataInicioStr = filtros.dataInicio || null;
+  const dataFimStr = filtros.dataFim || null;
   const [modalClientes, setModalClientes] = useState({ isOpen: false, tipo: null, clientes: [] });
   const [modalReunioes, setModalReunioes] = useState({ isOpen: false, tipo: null, reunioes: [] });
   const [hoverSides, setHoverSides] = useState({});
@@ -86,20 +86,13 @@ export default function VisaoGeralTab({ user, filtros = {} }) {
   const clientesAtivos = workshops?.length || 0;
   // Aplica filtro de período apenas para os cards de stats (reuniões realizadas/futuras no período)
   const atendimentosPeriodo = (atendimentos || []).filter(a => {
-    if (!dataInicio || !dataFim) return true;
-    const d = new Date(a.data_agendada);
-    return d >= dataInicio && d <= new Date(dataFim.getTime() + 86400000); // inclui o dia fim
+    if (!dataInicioStr || !dataFimStr) return true;
+    const dataAtendBR = new Date(a.data_agendada).toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+    return dataAtendBR >= dataInicioStr && dataAtendBR <= dataFimStr;
   });
 
   const reunioesRealizadas = atendimentosPeriodo.filter(a => a.status === 'realizado').length || 0;
-  const reunioesFuturas = (atendimentos || []).filter(a => {
-    if (!['agendado', 'confirmado'].includes(a.status)) return false;
-    if (!dataInicio || !dataFim) return true;
-    const dataAtendBR = new Date(a.data_agendada).toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
-    const dataInicioBR = dataInicio.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
-    const dataFimBR = dataFim.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
-    return dataAtendBR >= dataInicioBR && dataAtendBR <= dataFimBR;
-  }).length || 0;
+  const reunioesFuturas = atendimentosPeriodo.filter(a => ['agendado', 'confirmado'].includes(a.status)).length || 0;
 
   // Data atual no fuso de Brasília como string "YYYY-MM-DD" para comparação segura
   const hoje = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
