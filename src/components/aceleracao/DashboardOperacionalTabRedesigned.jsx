@@ -54,9 +54,9 @@ function SprintRow({ sprint, workshop, onSprintClick }) {
       </div>
       <div className="flex items-center gap-3 flex-shrink-0">
         <Badge className={`text-xs ${statusCfg.color}`}>{statusCfg.label}</Badge>
-        <div className="hidden sm:flex flex-col items-end">
+        <div className="hidden sm:flex flex-col items-end justify-center">
           <div className="flex items-center gap-1.5">
-            <Progress value={sprint.progress_percentage || 0} className="w-20 h-1.5" />
+            <Progress value={sprint.progress_percentage || 0} className="w-24 h-5 rounded-full" />
             <span className="text-xs text-gray-500 w-8">{sprint.progress_percentage || 0}%</span>
           </div>
           {daysRemaining !== null && (
