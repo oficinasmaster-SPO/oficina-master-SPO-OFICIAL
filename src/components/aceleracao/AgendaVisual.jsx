@@ -111,40 +111,43 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
     return colors[status] || 'bg-gray-100 text-gray-700';
   };
 
-  const handleDayClick = async (day) => {
-    const atendimentosDia = getAtendimentosForDay(day);
-    if (atendimentosDia.length > 0) {
-      try {
-        // Recarregar workshops e colaboradores frescos do banco
-        const [workshopsAtualizados, todosColaboradores] = await Promise.all([
-          base44.entities.Workshop.list(),
-          base44.entities.Employee.list()
-        ]);
+  // Dias com atendimentos no range atual (para navegação no modal)
+  const diasComAtendimentos = useMemo(() => {
+    return dateRange.filter(d => getAtendimentosForDay(d).length > 0);
+  }, [dateRange, atendimentosFiltrados]);
 
-        // Enriquecer atendimentos com dados atualizados da oficina e sócio
-        const atendimentosComWorkshop = atendimentosDia.map(a => {
-          const workshopEncontrado = workshopsAtualizados.find(w => w.id === a.workshop_id);
-          const socio = workshopEncontrado?.owner_id
-            ? todosColaboradores.find(c => c.user_id === workshopEncontrado.owner_id)
-            : null;
-          return {
-            ...a,
-            workshop: workshopEncontrado,
-            socio: socio
-          };
-        });
-        
-        setDetailsModal({
-          open: true,
-          date: day,
-          atendimentos: atendimentosComWorkshop
-        });
-        setModalIdx(0);
-      } catch (error) {
-        console.error('Erro ao recarregar dados:', error);
-        toast.error('Erro ao carregar dados atualizados');
-      }
+  const loadDayModal = async (day) => {
+    const atendimentosDia = getAtendimentosForDay(day);
+    if (atendimentosDia.length === 0) return;
+    try {
+      const [workshopsAtualizados, todosColaboradores] = await Promise.all([
+        base44.entities.Workshop.list(),
+        base44.entities.Employee.list()
+      ]);
+      const atendimentosComWorkshop = atendimentosDia.map(a => {
+        const workshopEncontrado = workshopsAtualizados.find(w => w.id === a.workshop_id);
+        const socio = workshopEncontrado?.owner_id
+          ? todosColaboradores.find(c => c.user_id === workshopEncontrado.owner_id)
+          : null;
+        return { ...a, workshop: workshopEncontrado, socio };
+      });
+      const dayIdx = diasComAtendimentos.findIndex(d => isSameDay(d, day));
+      setDetailsModal({ open: true, date: day, atendimentos: atendimentosComWorkshop, dayIdx: dayIdx >= 0 ? dayIdx : 0 });
+    } catch (error) {
+      console.error('Erro ao recarregar dados:', error);
+      toast.error('Erro ao carregar dados atualizados');
     }
+  };
+
+  const handleDayClick = (day) => {
+    if (getAtendimentosForDay(day).length > 0) loadDayModal(day);
+  };
+
+  const navigateModalDay = (direction) => {
+    const total = diasComAtendimentos.length;
+    if (total === 0) return;
+    const newIdx = Math.min(Math.max(detailsModal.dayIdx + direction, 0), total - 1);
+    loadDayModal(diasComAtendimentos[newIdx]);
   };
 
   const iniciarAtendimento = async (atendimento) => {
@@ -409,13 +412,13 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
             </DialogTitle>
             <DialogDescription className="flex items-center justify-between">
               <span>{detailsModal.atendimentos.length} atendimento{detailsModal.atendimentos.length !== 1 ? 's' : ''} neste dia</span>
-              {detailsModal.atendimentos.length > 1 && (
+              {diasComAtendimentos.length > 1 && (
                 <div className="flex items-center gap-2">
-                  <button onClick={() => setModalIdx(i => Math.max(0, i - 1))} disabled={modalIdx === 0} className="p-1 rounded hover:bg-gray-100 disabled:opacity-30">
+                  <button onClick={() => navigateModalDay(-1)} disabled={detailsModal.dayIdx === 0} className="p-1 rounded hover:bg-gray-100 disabled:opacity-30">
                     <ChevronLeft className="w-4 h-4" />
                   </button>
-                  <span className="text-xs font-medium">{modalIdx + 1} / {detailsModal.atendimentos.length}</span>
-                  <button onClick={() => setModalIdx(i => Math.min(detailsModal.atendimentos.length - 1, i + 1))} disabled={modalIdx === detailsModal.atendimentos.length - 1} className="p-1 rounded hover:bg-gray-100 disabled:opacity-30">
+                  <span className="text-xs font-medium">{(detailsModal.dayIdx ?? 0) + 1} / {diasComAtendimentos.length}</span>
+                  <button onClick={() => navigateModalDay(1)} disabled={detailsModal.dayIdx === diasComAtendimentos.length - 1} className="p-1 rounded hover:bg-gray-100 disabled:opacity-30">
                     <ChevronRight className="w-4 h-4" />
                   </button>
                 </div>
@@ -423,10 +426,8 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="mt-4">
-            {detailsModal.atendimentos.length > 0 && (() => {
-              const atendimento = detailsModal.atendimentos[modalIdx];
-              const idx = modalIdx;
+          <div className="mt-4 space-y-3">
+            {detailsModal.atendimentos.map((atendimento, idx) => {
               const workshop = atendimento.workshop;
               const podeIniciar = ['agendado', 'confirmado', 'reagendado'].includes(atendimento.status);
               const workshopIdAmigavel = gerarIdAmigavel('workshop', workshop?.id, idx + 1);
@@ -470,13 +471,13 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
                         </div>
                       )}
                       <div className="flex gap-2">
-                        <Button size="sm" variant="outline" className="flex-1 text-green-600 border-green-300 hover:bg-green-50" onClick={(e) => { e.stopPropagation(); if (!telefoneOficina) { toast.error('Telefone não cadastrado'); return; } enviarLembreteWhatsApp(atendimento, telefoneOficina); }} disabled={!telefoneOficina}>
+                        <Button size="sm" variant="outline" className="flex-1 text-green-600 border-green-300 hover:bg-green-50" onClick={() => { if (!telefoneOficina) { toast.error('Telefone não cadastrado'); return; } enviarLembreteWhatsApp(atendimento, telefoneOficina); }} disabled={!telefoneOficina}>
                           <MessageCircle className="w-3 h-3 mr-1" />WhatsApp
                         </Button>
-                        <Button size="sm" variant="outline" className="flex-1 text-blue-600 border-blue-300 hover:bg-blue-50" onClick={(e) => { e.stopPropagation(); if (!telefoneOficina) { toast.error('Telefone não cadastrado'); return; } fazerLigacao(telefoneOficina); }} disabled={!telefoneOficina}>
+                        <Button size="sm" variant="outline" className="flex-1 text-blue-600 border-blue-300 hover:bg-blue-50" onClick={() => { if (!telefoneOficina) { toast.error('Telefone não cadastrado'); return; } fazerLigacao(telefoneOficina); }} disabled={!telefoneOficina}>
                           <Phone className="w-3 h-3 mr-1" />Ligar
                         </Button>
-                        <Button size="sm" variant="outline" className="flex-1 text-purple-600 border-purple-300 hover:bg-purple-50" onClick={(e) => { e.stopPropagation(); if (!emailContato) { toast.error('E-mail não cadastrado'); return; } enviarLembreteEmail(atendimento, emailContato); }} disabled={!emailContato}>
+                        <Button size="sm" variant="outline" className="flex-1 text-purple-600 border-purple-300 hover:bg-purple-50" onClick={() => { if (!emailContato) { toast.error('E-mail não cadastrado'); return; } enviarLembreteEmail(atendimento, emailContato); }} disabled={!emailContato}>
                           <Mail className="w-3 h-3 mr-1" />E-mail
                         </Button>
                       </div>
@@ -500,30 +501,30 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
                     {atendimento.google_meet_link && (
                       <div className="flex items-center gap-2 mt-2 p-2 bg-blue-50 rounded border border-blue-200">
                         <Video className="w-4 h-4 text-blue-600" />
-                        <a href={atendimento.google_meet_link} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline flex items-center gap-1" onClick={(e) => e.stopPropagation()}>Link do Meet <ExternalLink className="w-3 h-3" /></a>
+                        <a href={atendimento.google_meet_link} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline flex items-center gap-1">Link do Meet <ExternalLink className="w-3 h-3" /></a>
                       </div>
                     )}
                     {atendimento.google_calendar_link && (
                       <div className="flex items-center gap-2 mt-1 p-2 bg-green-50 rounded border border-green-200">
                         <CalendarCheck className="w-4 h-4 text-green-600" />
-                        <a href={atendimento.google_calendar_link} target="_blank" rel="noopener noreferrer" className="text-xs text-green-600 hover:underline flex items-center gap-1" onClick={(e) => e.stopPropagation()}>Ver no Google Calendar <ExternalLink className="w-3 h-3" /></a>
+                        <a href={atendimento.google_calendar_link} target="_blank" rel="noopener noreferrer" className="text-xs text-green-600 hover:underline flex items-center gap-1">Ver no Google Calendar <ExternalLink className="w-3 h-3" /></a>
                       </div>
                     )}
                   </div>
 
                   <div className="flex gap-2 pt-2 border-t border-white/50">
                     {podeIniciar && atendimento.google_meet_link && (
-                      <Button size="sm" className="flex-1 bg-green-600 hover:bg-green-700" onClick={async (e) => { e.stopPropagation(); await iniciarAtendimento(atendimento); setDetailsModal({ ...detailsModal, open: false }); setEditModal(atendimento.id); }}>
+                      <Button size="sm" className="flex-1 bg-green-600 hover:bg-green-700" onClick={async () => { await iniciarAtendimento(atendimento); setDetailsModal({ ...detailsModal, open: false }); setEditModal(atendimento.id); }}>
                         <Video className="w-4 h-4 mr-2" />Iniciar Atendimento
                       </Button>
                     )}
-                    <Button size="sm" variant="outline" className="flex-1" onClick={(e) => { e.stopPropagation(); setDetailsModal({ ...detailsModal, open: false }); setEditModal(atendimento.id); }}>
+                    <Button size="sm" variant="outline" className="flex-1" onClick={() => { setDetailsModal({ ...detailsModal, open: false }); setEditModal(atendimento.id); }}>
                       Ver / Editar
                     </Button>
                   </div>
                 </div>
               );
-            })()}
+            })}
           </div>
         </DialogContent>
       </Dialog>
