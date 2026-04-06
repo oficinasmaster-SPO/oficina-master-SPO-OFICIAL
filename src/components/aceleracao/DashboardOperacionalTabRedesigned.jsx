@@ -45,26 +45,26 @@ function SprintRow({ sprint, workshop, onSprintClick }) {
   return (
     <div
       onClick={() => onSprintClick(sprint)}
-      className="flex items-center gap-3 py-3 border-b last:border-0 hover:bg-blue-50 px-4 transition-colors cursor-pointer"
+      className="grid grid-cols-[16px_1fr_120px_160px] items-center gap-3 py-3 border-b last:border-0 hover:bg-blue-50 px-4 transition-colors cursor-pointer"
     >
-      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${statusCfg.dot}`} />
-      <div className="flex-1 min-w-0">
+      <div className={`w-2 h-2 rounded-full justify-self-center ${statusCfg.dot}`} />
+      <div className="min-w-0">
         <p className="text-sm font-medium text-gray-900 truncate">{sprint.title}</p>
         <p className="text-xs text-gray-500 truncate">{workshop?.name || sprint.workshop_id}</p>
       </div>
-      <div className="flex items-center gap-3 flex-shrink-0 self-center">
+      <div className="flex justify-center">
         <Badge className={`text-xs ${statusCfg.color}`}>{statusCfg.label}</Badge>
-        <div className="hidden sm:flex flex-col items-end justify-center">
-          <div className="flex items-center gap-1.5">
-            <Progress value={sprint.progress_percentage || 0} className="w-24 h-5 rounded-full" />
-            <span className="text-xs text-gray-500 w-8">{sprint.progress_percentage || 0}%</span>
-          </div>
-          {daysRemaining !== null && (
-            <span className={`text-xs mt-0.5 ${daysRemaining < 0 ? 'text-red-500 font-semibold' : daysRemaining <= 7 ? 'text-orange-500' : 'text-gray-400'}`}>
-              {daysRemaining < 0 ? `${Math.abs(daysRemaining)}d atrasado` : `${daysRemaining}d restantes`}
-            </span>
-          )}
+      </div>
+      <div className="hidden sm:flex flex-col items-start justify-center">
+        <div className="flex items-center gap-1.5">
+          <Progress value={sprint.progress_percentage || 0} className="w-24 h-5 rounded-full" />
+          <span className="text-xs text-gray-500 w-8">{sprint.progress_percentage || 0}%</span>
         </div>
+        {daysRemaining !== null && (
+          <span className={`text-xs mt-0.5 ${daysRemaining < 0 ? 'text-red-500 font-semibold' : daysRemaining <= 7 ? 'text-orange-500' : 'text-gray-400'}`}>
+            {daysRemaining < 0 ? `${Math.abs(daysRemaining)}d atrasado` : `${daysRemaining}d restantes`}
+          </span>
+        )}
       </div>
     </div>
   );
