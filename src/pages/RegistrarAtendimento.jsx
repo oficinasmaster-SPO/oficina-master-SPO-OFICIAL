@@ -29,7 +29,7 @@ import { TimePicker } from "@/components/ui/time-picker";
 import { toBrazilDate } from "@/utils/timezone";
 
 // RegistrarAtendimento v2
-export default function RegistrarAtendimento({ isModal = false, onClose }) {
+export default function RegistrarAtendimento({ isModal = false, onClose, atendimentoId: atendimentoIdProp }) {
   const navigate = useNavigate();
   const location = window.location;
   const queryClient = useQueryClient();
@@ -112,10 +112,10 @@ export default function RegistrarAtendimento({ isModal = false, onClose }) {
     queryFn: () => base44.auth.me()
   });
 
-  // Carregar atendimento se vier da URL
+  // Carregar atendimento se vier da URL ou da prop
   React.useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const atendimentoId = urlParams.get('atendimento_id') || urlParams.get('edit');
+    const atendimentoId = atendimentoIdProp || urlParams.get('atendimento_id') || urlParams.get('edit');
     
     if (atendimentoId && user) {
       const loadAtendimento = async () => {

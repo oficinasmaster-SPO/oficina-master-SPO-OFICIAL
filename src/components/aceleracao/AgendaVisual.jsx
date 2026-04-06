@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import AtendimentoModal from "@/components/aceleracao/AtendimentoModal";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +33,7 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
   const [detailsModal, setDetailsModal] = useState({ open: false, date: null, atendimentos: [] });
   const [consultorFiltro, setConsultorFiltro] = useState('todos');
   const [modalIdx, setModalIdx] = useState(0);
+  const [editModal, setEditModal] = useState(null); // atendimentoId sendo editado
 
   const getDateRange = () => {
     if (viewMode === 'day') {
@@ -151,21 +153,10 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
         status: 'participando',
         hora_inicio_real: new Date().toISOString()
       });
-
       toast.success('Atendimento iniciado!');
-
       if (atendimento.google_meet_link) {
         window.open(atendimento.google_meet_link, '_blank');
       }
-
-      const params = new URLSearchParams({ 
-        atendimento_id: atendimento.id,
-        fromAgenda: 'true',
-        fullscreen: isFullScreen ? 'true' : 'false'
-      });
-      navigate(createPageUrl('RegistrarAtendimento') + '?' + params.toString());
-      
-      setDetailsModal(prev => ({ ...prev, open: false }));
     } catch (error) {
       toast.error('Erro ao iniciar atendimento: ' + error.message);
     }
@@ -390,7 +381,7 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
                       <span
                         key={atendimento.id}
                         className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border ${getChipColor(atendimento.id)} cursor-pointer hover:opacity-80 transition-opacity`}
-                        onClick={(e) => e.stopPropagation()}
+                        onClick={(e) => { e.stopPropagation(); setEditModal(atendimento.id); }}
                       >
                         {atendimento.google_event_id && <CalendarCheck className="w-2.5 h-2.5" />}
                         {format(new Date(atendimento.data_agendada), 'HH:mm')}
@@ -523,12 +514,12 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
 
                   <div className="flex gap-2 pt-2 border-t border-white/50">
                     {podeIniciar && atendimento.google_meet_link && (
-                      <Button size="sm" className="flex-1 bg-green-600 hover:bg-green-700" onClick={(e) => { e.stopPropagation(); iniciarAtendimento(atendimento); }}>
+                      <Button size="sm" className="flex-1 bg-green-600 hover:bg-green-700" onClick={async (e) => { e.stopPropagation(); await iniciarAtendimento(atendimento); setDetailsModal({ ...detailsModal, open: false }); setEditModal(atendimento.id); }}>
                         <Video className="w-4 h-4 mr-2" />Iniciar Atendimento
                       </Button>
                     )}
-                    <Button size="sm" variant="outline" className="flex-1" onClick={(e) => { e.stopPropagation(); const params = new URLSearchParams({ atendimento_id: atendimento.id, fromAgenda: 'true', fullscreen: isFullScreen ? 'true' : 'false' }); navigate(createPageUrl('RegistrarAtendimento') + '?' + params.toString()); }}>
-                      Ver Detalhes
+                    <Button size="sm" variant="outline" className="flex-1" onClick={(e) => { e.stopPropagation(); setDetailsModal({ ...detailsModal, open: false }); setEditModal(atendimento.id); }}>
+                      Ver / Editar
                     </Button>
                   </div>
                 </div>
@@ -537,6 +528,14 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Modal de edição de atendimento */}
+      {editModal && (
+        <AtendimentoModal
+          atendimentoId={editModal}
+          onClose={() => setEditModal(null)}
+        />
+      )}
     </>
   );
 
