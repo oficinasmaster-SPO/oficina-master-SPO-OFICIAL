@@ -886,10 +886,10 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
                 Selecione uma oficina para capturar inteligência
               </p>
             )}
-          </CardContent>
-          </Card>
+            </CardContent>
+            </Card>
 
-        {/* Pauta */}
+            {/* Pauta */}
         <MeetingAgendaCard
           formData={formData}
           setFormData={setFormData}
