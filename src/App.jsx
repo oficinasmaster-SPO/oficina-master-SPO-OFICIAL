@@ -29,7 +29,9 @@ import ControleAceleracao from '@/pages/ControleAceleracao';
 import WheelLoader from '@/components/ui/WheelLoader';
 import ErrorBoundary from '@/components/shared/ErrorBoundary';
 
-const { Pages = {}, Layout = null, mainPage } = pagesConfig || {};
+const Pages = pagesConfig?.Pages || {};
+const Layout = pagesConfig?.Layout || null;
+const mainPage = pagesConfig?.mainPage;
 
 const LayoutWrapper = ({ children, currentPageName }) => Layout ?
   <Layout currentPageName={currentPageName}>{children}</Layout>
