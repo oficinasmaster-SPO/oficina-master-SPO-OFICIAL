@@ -45,7 +45,7 @@ function SprintRow({ sprint, workshop, onSprintClick }) {
   return (
     <div
       onClick={() => onSprintClick(sprint)}
-      className="grid grid-cols-[16px_1fr_120px_160px] items-center gap-3 py-3 border-b last:border-0 hover:bg-blue-50 px-4 transition-colors cursor-pointer"
+      className="grid grid-cols-[16px_1fr_120px_200px] items-center gap-3 py-3 border-b last:border-0 hover:bg-blue-50 px-4 transition-colors cursor-pointer"
     >
       <div className={`w-2 h-2 rounded-full justify-self-center ${statusCfg.dot}`} />
       <div className="min-w-0">
@@ -55,16 +55,18 @@ function SprintRow({ sprint, workshop, onSprintClick }) {
       <div className="flex justify-center">
         <Badge className={`text-xs ${statusCfg.color}`}>{statusCfg.label}</Badge>
       </div>
-      <div className="hidden sm:flex flex-col items-start justify-center">
-        <div className="flex items-center gap-1.5">
-          <Progress value={sprint.progress_percentage || 0} className="w-24 h-5 rounded-full" />
-          <span className="text-xs text-gray-500 w-8">{sprint.progress_percentage || 0}%</span>
+      <div className="hidden sm:flex flex-row items-center gap-2">
+        <div className="flex flex-col">
+          <div className="flex items-center gap-1.5">
+            <Progress value={sprint.progress_percentage || 0} className="w-24 h-5 rounded-full" />
+            <span className="text-xs text-gray-500 w-8">{sprint.progress_percentage || 0}%</span>
+          </div>
+          {daysRemaining !== null && (
+            <span className={`text-xs mt-0.5 ${daysRemaining < 0 ? 'text-red-500 font-semibold' : daysRemaining <= 7 ? 'text-orange-500' : 'text-gray-400'}`}>
+              {daysRemaining < 0 ? `${Math.abs(daysRemaining)}d atrasado` : `${daysRemaining}d restantes`}
+            </span>
+          )}
         </div>
-        {daysRemaining !== null && (
-          <span className={`text-xs mt-0.5 ${daysRemaining < 0 ? 'text-red-500 font-semibold' : daysRemaining <= 7 ? 'text-orange-500' : 'text-gray-400'}`}>
-            {daysRemaining < 0 ? `${Math.abs(daysRemaining)}d atrasado` : `${daysRemaining}d restantes`}
-          </span>
-        )}
       </div>
     </div>
   );
