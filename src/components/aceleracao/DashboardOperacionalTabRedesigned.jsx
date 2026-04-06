@@ -56,8 +56,8 @@ function SprintRow({ sprint, workshop, onSprintClick }) {
         <Badge className={`text-xs ${statusCfg.color}`}>{statusCfg.label}</Badge>
         <div className="hidden sm:flex flex-col items-end">
           <div className="flex items-center gap-1.5">
-            <span className="text-xs text-gray-500 w-8 text-right">{sprint.progress_percentage || 0}%</span>
             <Progress value={sprint.progress_percentage || 0} className="w-20 h-1.5" />
+            <span className="text-xs text-gray-500 w-8">{sprint.progress_percentage || 0}%</span>
           </div>
           {daysRemaining !== null && (
             <span className={`text-xs mt-0.5 ${daysRemaining < 0 ? 'text-red-500 font-semibold' : daysRemaining <= 7 ? 'text-orange-500' : 'text-gray-400'}`}>
