@@ -53,6 +53,7 @@ function SprintRow({ sprint, workshop, onSprintClick }) {
         <p className="text-xs text-gray-500 truncate">{workshop?.name || sprint.workshop_id}</p>
       </div>
       <div className="flex items-center gap-3 flex-shrink-0">
+        <Badge className={`text-xs ${statusCfg.color}`}>{statusCfg.label}</Badge>
         <div className="hidden sm:flex flex-col items-end">
           <div className="flex items-center gap-1.5">
             <span className="text-xs text-gray-500 w-8 text-right">{sprint.progress_percentage || 0}%</span>
@@ -64,7 +65,6 @@ function SprintRow({ sprint, workshop, onSprintClick }) {
             </span>
           )}
         </div>
-        <Badge className={`text-xs ${statusCfg.color}`}>{statusCfg.label}</Badge>
       </div>
     </div>
   );
