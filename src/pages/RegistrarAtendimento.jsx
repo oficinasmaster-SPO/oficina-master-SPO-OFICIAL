@@ -27,31 +27,6 @@ import { useGoogleMeet } from "@/components/hooks/useGoogleMeet";
 import NextSteps from "@/components/aceleracao/NextSteps";
 import { TimePicker } from "@/components/ui/time-picker";
 import { toBrazilDate } from "@/utils/timezone";
-import BasicInfoCard from "@/components/aceleracao/RegistrarAtendimento/BasicInfoCard";
-import MeetingAgendaCard from "@/components/aceleracao/RegistrarAtendimento/MeetingAgendaCard";
-import ParticipantsCard from "@/components/aceleracao/RegistrarAtendimento/ParticipantsCard";
-
-// Sanitization utilities
-const sanitizeInput = (text) => {
-  if (!text) return "";
-  return String(text)
-    .trim()
-    .replace(/[<>"']/g, '');
-};
-
-const isValidEmail = (email) => {
-  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return regex.test(email);
-};
-
-const isValidUrl = (url) => {
-  try {
-    new URL(url);
-    return true;
-  } catch {
-    return false;
-  }
-};
 
 // RegistrarAtendimento v2
 export default function RegistrarAtendimento({ isModal = false, onClose, atendimentoId: atendimentoIdProp }) {
@@ -313,49 +288,27 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
       
       const atendimentoData = {
         workshop_id: data.workshop_id,
-        tipo_atendimento: sanitizeInput(data.tipo_atendimento),
+        tipo_atendimento: data.tipo_atendimento,
         status: data.status,
-        status_cliente: sanitizeInput(data.status_cliente),
+        status_cliente: data.status_cliente,
         consultor_id: data.consultor_id || user.id,
         consultor_nome: data.consultor_nome || user.full_name,
         data_agendada: dataHora,
         duracao_minutos: data.duracao_minutos,
-        google_meet_link: isValidUrl(data.google_meet_link) ? data.google_meet_link : "",
-        participantes: (data.participantes || [])
-          .filter(p => p.nome && isValidEmail(p.email || ""))
-          .map(p => ({
-            nome: sanitizeInput(p.nome),
-            cargo: sanitizeInput(p.cargo),
-            email: p.email
-          })),
-        pauta: (data.pauta || [])
-          .filter(p => p.titulo)
-          .map(p => ({
-            titulo: sanitizeInput(p.titulo),
-            descricao: sanitizeInput(p.descricao),
-            tempo_estimado: p.tempo_estimado
-          })),
-        objetivos: (data.objetivos || []).filter(o => o).map(o => sanitizeInput(o)),
-        topicos_discutidos: (data.topicos_discutidos || []).map(t => sanitizeInput(t)),
+        google_meet_link: data.google_meet_link,
+        participantes: (data.participantes || []).filter(p => p.nome),
+        pauta: (data.pauta || []).filter(p => p.titulo),
+        objetivos: (data.objetivos || []).filter(o => o),
+        topicos_discutidos: data.topicos_discutidos || [],
         decisoes_tomadas: data.decisoes_tomadas || [],
         acoes_geradas: data.acoes_geradas || [],
-        midias_anexas: (data.midias_anexas || [])
-          .filter(m => m.url && isValidUrl(m.url))
-          .map(m => ({
-            tipo: m.tipo,
-            url: m.url,
-            titulo: sanitizeInput(m.titulo)
-          })),
+        midias_anexas: (data.midias_anexas || []).filter(m => m.url),
         processos_vinculados: data.processos_vinculados || [],
         videoaulas_vinculadas: data.videoaulas_vinculadas || [],
         documentos_vinculados: data.documentos_vinculados || [],
-        observacoes_consultor: sanitizeInput(data.observacoes_consultor),
-        proximos_passos: sanitizeInput(data.proximos_passos),
-        proximos_passos_list: (data.proximos_passos_list || []).filter(p => p.descricao).map(p => ({
-          descricao: sanitizeInput(p.descricao),
-          responsavel: sanitizeInput(p.responsavel),
-          prazo: p.prazo
-        })),
+        observacoes_consultor: data.observacoes_consultor,
+        proximos_passos: data.proximos_passos,
+        proximos_passos_list: (data.proximos_passos_list || []).filter(p => p.descricao),
         checklist_respostas: data.checklist_respostas || [],
         notificacoes_programadas: data.notificacoes_programadas || []
       };
@@ -479,25 +432,33 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
       return;
     }
 
-    // Validar emails de participantes
-    const invalidEmails = formData.participantes.filter(p => p.email && !isValidEmail(p.email));
-    if (invalidEmails.length > 0) {
-      toast.error("Emails inválidos encontrados nos participantes");
+    // Verificar conflitos de horário
+    try {
+      const dataHoraCompleta = `${formData.data_agendada}T${formData.hora_agendada}:00`;
+      const consultorId = formData.consultor_id || user.id;
+
+      const response = await base44.functions.invoke('verificarConflitoHorario', {
+        consultor_id: consultorId,
+        data_agendada: dataHoraCompleta,
+        atendimento_id_editando: formData.id // Ignora o próprio atendimento se estiver editando
+      });
+
+      if (response.data.conflito) {
+        setConflitosModal({
+          open: true,
+          conflitos: response.data.atendimentos,
+          dataHorario: dataHoraCompleta
+        });
+        return;
+      }
+    } catch (error) {
+      console.error('Erro ao verificar conflitos:', error);
+      toast.error("Erro ao verificar conflitos de horário");
       return;
     }
 
-    // Validar Google Meet URL se fornecido
-    if (formData.google_meet_link && !isValidUrl(formData.google_meet_link)) {
-      toast.error("URL do Google Meet inválida");
-      return;
-    }
-
-    // Validar URLs de mídias
-    const invalidUrls = formData.midias_anexas.filter(m => m.url && !isValidUrl(m.url));
-    if (invalidUrls.length > 0) {
-      toast.error("URLs de mídias inválidas encontradas");
-      return;
-    }
+    // Mesclar dados do timer se estiver ativo
+    const dadosParaSalvar = timerData ? { ...formData, ...timerData } : formData;
     
     console.log("Submetendo formulário:", dadosParaSalvar);
     createMutation.mutate(dadosParaSalvar);
@@ -841,14 +802,117 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
         </Card>
 
         {/* Participantes */}
-        <ParticipantsCard
-          formData={formData}
-          setFormData={setFormData}
-          colaboradores={colaboradores}
-          colaboradoresInternos={colaboradoresInternos}
-        />
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+            <CardTitle>Participantes</CardTitle>
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" size="sm" onClick={addParticipante}>
+                <Plus className="w-4 h-4 mr-2" />
+                Manual
+              </Button>
+              {colaboradores && colaboradores.length > 0 && (
+                <Select onValueChange={(value) => {
+                  const colab = colaboradores.find(c => c.id === value);
+                  if (colab) {
+                    setFormData({
+                      ...formData,
+                      participantes: [...formData.participantes, {
+                        nome: colab.full_name,
+                        cargo: colab.position,
+                        email: colab.email
+                      }]
+                    });
+                  }
+                }}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Da oficina" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {colaboradores.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.full_name} - {c.position}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              {colaboradoresInternos && colaboradoresInternos.length > 0 && (
+                <Select onValueChange={(value) => {
+                  const colab = colaboradoresInternos.find(c => c.id === value);
+                  if (colab) {
+                    setFormData({
+                      ...formData,
+                      participantes: [...formData.participantes, {
+                        nome: colab.full_name,
+                        cargo: colab.position + " (Interno)",
+                        email: colab.email
+                      }]
+                    });
+                  }
+                }}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Interno" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {colaboradoresInternos.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.full_name} - {c.position}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {formData.participantes.map((p, idx) => (
+              <div key={idx} className="flex gap-3 items-start">
+                <div className="flex-1 grid grid-cols-3 gap-3">
+                  <Input
+                    placeholder="Nome"
+                    value={p.nome}
+                    onChange={(e) => {
+                      const newP = [...formData.participantes];
+                      newP[idx].nome = e.target.value;
+                      setFormData({ ...formData, participantes: newP });
+                    }}
+                  />
+                  <Input
+                    placeholder="Cargo"
+                    value={p.cargo}
+                    onChange={(e) => {
+                      const newP = [...formData.participantes];
+                      newP[idx].cargo = e.target.value;
+                      setFormData({ ...formData, participantes: newP });
+                    }}
+                  />
+                  <Input
+                    placeholder="Email"
+                    type="email"
+                    value={p.email}
+                    onChange={(e) => {
+                      const newP = [...formData.participantes];
+                      newP[idx].email = e.target.value;
+                      setFormData({ ...formData, participantes: newP });
+                    }}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => removeParticipante(idx)}
+                >
+                  <Trash2 className="w-4 h-4 text-red-500" />
+                </Button>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
 
-        {/* Captura Inteligente */
+        {/* Captura Inteligente */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -886,15 +950,69 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
                 Selecione uma oficina para capturar inteligência
               </p>
             )}
-            </CardContent>
-            </Card>
+          </CardContent>
+        </Card>
 
-            {/* Pauta */}
-        <MeetingAgendaCard
-          formData={formData}
-          setFormData={setFormData}
-          pautaRef={pautaRef}
-        />
+        {/* Pauta */}
+        <Card ref={pautaRef}>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Pauta da Reunião</CardTitle>
+              <Button type="button" variant="outline" size="sm" onClick={addPauta}>
+                <Plus className="w-4 h-4 mr-2" />
+                Adicionar Tópico
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {formData.pauta.map((p, idx) => (
+              <div key={idx} className="space-y-2 border-b pb-4">
+                <div className="flex gap-3 items-start">
+                  <div className="flex-1 space-y-2">
+                    <Input
+                      placeholder="Título do tópico"
+                      value={p.titulo}
+                      onChange={(e) => {
+                        const newP = [...formData.pauta];
+                        newP[idx].titulo = e.target.value;
+                        setFormData({ ...formData, pauta: newP });
+                      }}
+                    />
+                    <Textarea
+                      placeholder="Descrição"
+                      value={p.descricao}
+                      onChange={(e) => {
+                        const newP = [...formData.pauta];
+                        newP[idx].descricao = e.target.value;
+                        setFormData({ ...formData, pauta: newP });
+                      }}
+                      rows={2}
+                    />
+                  </div>
+                  <Input
+                    type="number"
+                    placeholder="Tempo (min)"
+                    className="w-24"
+                    value={p.tempo_estimado}
+                    onChange={(e) => {
+                      const newP = [...formData.pauta];
+                      newP[idx].tempo_estimado = parseInt(e.target.value);
+                      setFormData({ ...formData, pauta: newP });
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removePauta(idx)}
+                  >
+                    <Trash2 className="w-4 h-4 text-red-500" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
 
         {/* Objetivos */}
         <Card>
@@ -1290,16 +1408,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
                         atendimento_id: formData.id
                       });
                       const phone = response.data.phone?.replace(/\D/g, '') || '';
-                      // Validar telefone: deve ter 10 ou 11 dígitos
-                      if (!phone || phone.length < 10 || phone.length > 11) {
-                        toast.error("Número de telefone inválido");
-                        return;
-                      }
-                      const message = encodeURIComponent(response.data.whatsapp_message || '');
-                      if (!message) {
-                        toast.error("Mensagem do WhatsApp vazia");
-                        return;
-                      }
+                      const message = encodeURIComponent(response.data.whatsapp_message);
                       window.open(`https://wa.me/55${phone}?text=${message}`, '_blank');
                       toast.success("WhatsApp aberto!");
                     } catch (error) {
@@ -1346,6 +1455,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
                   <FileText className="w-4 h-4 mr-2" />
                   Plataforma
                 </Button>
+              </div>
               </div>
             </CardContent>
           </Card>

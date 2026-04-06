@@ -77,13 +77,13 @@ export default function DashboardOperacionalTabRedesigned({ user }) {
   const { data: sprints = [], isLoading, refetch } = useQuery({
     queryKey: ['dashboard-sprints'],
     queryFn: () => base44.entities.ConsultoriaSprint.filter({}),
-    staleTime: 5 * 60 * 1000
+    staleTime: 2 * 60 * 1000
   });
 
   const { data: workshops = [] } = useQuery({
     queryKey: ['dashboard-workshops'],
     queryFn: () => base44.entities.Workshop.list('-created_date', 500),
-    staleTime: 10 * 60 * 1000
+    staleTime: 5 * 60 * 1000
   });
 
   const workshopMap = Object.fromEntries(workshops.map((w) => [w.id, w]));

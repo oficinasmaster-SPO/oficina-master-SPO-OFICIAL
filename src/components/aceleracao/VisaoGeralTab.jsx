@@ -46,8 +46,7 @@ export default function VisaoGeralTab({ user, filtros = {} }) {
     queryFn: async () => {
       const all = await base44.entities.Workshop.list();
       return all.filter(w => w.planoAtual && w.planoAtual !== 'FREE');
-    },
-    staleTime: 10 * 60 * 1000
+    }
   });
 
   const { data: atendimentos } = useQuery({
@@ -59,10 +58,10 @@ export default function VisaoGeralTab({ user, filtros = {} }) {
       } else if (user?.role !== 'admin') {
         query.consultor_id = user.id;
       }
+      // admin sem filtro de consultor = busca todos
       return await base44.entities.ConsultoriaAtendimento.filter(query);
     },
-    enabled: !!user?.id,
-    staleTime: 5 * 60 * 1000
+    enabled: !!user?.id
   });
 
   const { data: planos } = useQuery({
@@ -71,8 +70,7 @@ export default function VisaoGeralTab({ user, filtros = {} }) {
       const plans = await base44.entities.Plan.filter({ consultant_id: user.id });
       return plans;
     },
-    enabled: !!user?.id,
-    staleTime: 10 * 60 * 1000
+    enabled: !!user?.id
   });
 
   const { data: gargalos } = useQuery({
@@ -80,9 +78,7 @@ export default function VisaoGeralTab({ user, filtros = {} }) {
     queryFn: async () => {
       const response = await base44.functions.invoke('calcularGargalosConsultores');
       return response.data;
-    },
-    enabled: !!workshops?.length,
-    staleTime: 10 * 60 * 1000
+    }
   });
 
   const clientesAtivos = workshops?.length || 0;
