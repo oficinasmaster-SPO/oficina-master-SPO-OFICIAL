@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
@@ -14,9 +14,10 @@ import PedidosInternosTab from "@/components/aceleracao/PedidosInternosTab";
 import AgendaVisualTab from "@/components/aceleracao/AgendaVisualTab";
 import RegistroAtendimentoMassaModal from "@/components/aceleracao/RegistroAtendimentoMassaModal";
 import FiltrosControleAceleracao from "@/components/aceleracao/FiltrosControleAceleracao";
-import RegistrarAtendimento from "./RegistrarAtendimento";
-import CronogramaGeral from "./CronogramaGeral";
 import DashboardOperacionalTabRedesigned from "@/components/aceleracao/DashboardOperacionalTabRedesigned";
+
+const RegistrarAtendimento = lazy(() => import('./RegistrarAtendimento'));
+const CronogramaGeral = lazy(() => import('./CronogramaGeral'));
 
 // ControleAceleracao v4 - cache bust
 export default function ControleAceleracao() {
@@ -89,16 +90,18 @@ export default function ControleAceleracao() {
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       {isModalOpen && (
-        <RegistrarAtendimento 
-          isModal={true} 
-          onClose={() => {
-            const newUrl = new URL(window.location);
-            newUrl.searchParams.delete('modal');
-            newUrl.searchParams.delete('edit');
-            newUrl.searchParams.delete('atendimento_id');
-            navigate(newUrl.pathname + newUrl.search, { replace: true });
-          }} 
-        />
+        <Suspense fallback={null}>
+          <RegistrarAtendimento 
+            isModal={true} 
+            onClose={() => {
+              const newUrl = new URL(window.location);
+              newUrl.searchParams.delete('modal');
+              newUrl.searchParams.delete('edit');
+              newUrl.searchParams.delete('atendimento_id');
+              navigate(newUrl.pathname + newUrl.search, { replace: true });
+            }} 
+          />
+        </Suspense>
       )}
       <div className="flex items-center justify-between">
         <div>
@@ -180,7 +183,9 @@ export default function ControleAceleracao() {
 
         <TabsContent value="cronograma">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            <CronogramaGeral isTab={true} />
+            <Suspense fallback={<div className="flex items-center justify-center h-64"><Loader2 className="w-6 h-6 animate-spin text-blue-500" /></div>}>
+              <CronogramaGeral isTab={true} />
+            </Suspense>
           </div>
         </TabsContent>
 
