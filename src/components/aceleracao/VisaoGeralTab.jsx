@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Users, Calendar, TrendingUp, CheckCircle, Clock, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { toBrazilDate, formatDateTimeBR } from "@/utils/timezone";
+import { formatDateTimeBR } from "@/utils/timezone";
 import AgendaVisual from "./AgendaVisual";
 import GraficoAtendimentos from "./GraficoAtendimentos";
 import StatusClientesCard from "./StatusClientesCard";
@@ -21,6 +21,7 @@ export default function VisaoGeralTab({ user, filtros = {} }) {
   const dataFim = filtros.dataFim ? new Date(filtros.dataFim) : null;
   const [modalClientes, setModalClientes] = useState({ isOpen: false, tipo: null, clientes: [] });
   const [modalReunioes, setModalReunioes] = useState({ isOpen: false, tipo: null, reunioes: [] });
+
   const { data: workshops } = useQuery({
     queryKey: ['workshops-ativos'],
     queryFn: async () => {
@@ -33,23 +34,18 @@ export default function VisaoGeralTab({ user, filtros = {} }) {
     queryKey: ['atendimentos-acelerador', user?.id, consultorFiltrado, dataInicio, dataFim],
     queryFn: async () => {
       let query = {};
-      
       if (consultorFiltrado) {
         query.consultor_id = consultorFiltrado;
       } else {
         query.consultor_id = user.id;
       }
-      
       const all = await base44.entities.ConsultoriaAtendimento.filter(query);
-      
-      // Filtrar por período
       if (dataInicio && dataFim) {
         return all.filter(a => {
           const dataAtendimento = new Date(a.data_agendada);
           return dataAtendimento >= dataInicio && dataAtendimento <= dataFim;
         });
       }
-      
       return all;
     },
     enabled: !!user?.id
@@ -58,9 +54,7 @@ export default function VisaoGeralTab({ user, filtros = {} }) {
   const { data: planos } = useQuery({
     queryKey: ['planos-acelerador'],
     queryFn: async () => {
-      const plans = await base44.entities.Plan.filter({
-        consultant_id: user.id
-      });
+      const plans = await base44.entities.Plan.filter({ consultant_id: user.id });
       return plans;
     },
     enabled: !!user?.id
@@ -75,65 +69,69 @@ export default function VisaoGeralTab({ user, filtros = {} }) {
   });
 
   const clientesAtivos = workshops?.length || 0;
-  
-  // Usar atendimentos filtrados para os KPIs
   const atendimentosPeriodo = atendimentos || [];
-  
+
   const reunioesRealizadas = atendimentosPeriodo.filter(a => a.status === 'realizado').length || 0;
-  const reunioesFuturas = atendimentosPeriodo.filter(a => 
+  const reunioesFuturas = atendimentosPeriodo.filter(a =>
     ['agendado', 'confirmado'].includes(a.status)
   ).length || 0;
 
-  const agora = toBrazilDate(new Date());
-  
+  // Data atual no fuso de Brasília como string "YYYY-MM-DD" para comparação segura
+  const hoje = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+
   // Calcular horas: Total Contratado - Total Realizado
   const totalHorasContratadas = planos?.reduce((acc, plan) => acc + (plan.hours_contracted || 0), 0) || 0;
   const totalHorasRealizadas = atendimentos?.filter(a => a.status === 'realizado')
     .reduce((acc, a) => acc + (a.duracao_real_minutos || a.duracao_minutos || 0), 0) || 0;
   const horasDisponiveis = totalHorasContratadas - Math.round(totalHorasRealizadas / 60);
-  
-  const tarefasPendentes = atendimentosPeriodo.filter(a => 
-    a.status !== 'realizado' && toBrazilDate(a.data_agendada) < agora
-  ) || [];
 
-  const proximosAtendimentos = atendimentos?.filter(a => 
-    ['agendado', 'confirmado'].includes(a.status) && 
-    toBrazilDate(a.data_agendada) >= agora
-  ).slice(0, 5) || [];
+  const tarefasPendentes = atendimentosPeriodo.filter(a => {
+    if (a.status === 'realizado') return false;
+    const dataAtendBR = new Date(a.data_agendada).toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+    return dataAtendBR < hoje;
+  }) || [];
+
+  // Filtra atendimentos futuros comparando apenas a data (sem hora) no fuso Brasil
+  // Evita bug de timezone onde meia-noite UTC vira dia anterior no Brasil
+  const proximosAtendimentos = atendimentos?.filter(a => {
+    if (!['agendado', 'confirmado'].includes(a.status)) return false;
+    const dataAtendBR = new Date(a.data_agendada).toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+    return dataAtendBR >= hoje;
+  }).slice(0, 5) || [];
 
   const handleClientesClick = () => {
-    setModalClientes({ 
-      isOpen: true, 
-      tipo: 'ativos', 
-      clientes: workshops || [] 
+    setModalClientes({
+      isOpen: true,
+      tipo: 'ativos',
+      clientes: workshops || []
     });
   };
 
   const handleReunioesRealizadasClick = () => {
     const realizadas = atendimentosPeriodo.filter(a => a.status === 'realizado') || [];
-    setModalReunioes({ 
-      isOpen: true, 
-      tipo: 'realizadas', 
-      reunioes: realizadas 
+    setModalReunioes({
+      isOpen: true,
+      tipo: 'realizadas',
+      reunioes: realizadas
     });
   };
 
   const handleReunioesFuturasClick = () => {
-    const futuras = atendimentosPeriodo.filter(a => 
+    const futuras = atendimentosPeriodo.filter(a =>
       ['agendado', 'confirmado'].includes(a.status)
     ) || [];
-    setModalReunioes({ 
-      isOpen: true, 
-      tipo: 'futuras', 
-      reunioes: futuras 
+    setModalReunioes({
+      isOpen: true,
+      tipo: 'futuras',
+      reunioes: futuras
     });
   };
 
   const handleAtrasadosClick = () => {
-    setModalReunioes({ 
-      isOpen: true, 
-      tipo: 'atrasadas', 
-      reunioes: tarefasPendentes 
+    setModalReunioes({
+      isOpen: true,
+      tipo: 'atrasadas',
+      reunioes: tarefasPendentes
     });
   };
 
@@ -189,9 +187,9 @@ export default function VisaoGeralTab({ user, filtros = {} }) {
 
       <div className="grid md:grid-cols-3 gap-6">
         {/* Status dos Clientes */}
-        <StatusClientesCard 
-          workshops={workshops} 
-          atendimentos={atendimentos || []} 
+        <StatusClientesCard
+          workshops={workshops}
+          atendimentos={atendimentos || []}
           onStatusClick={(tipo, clientes) => {
             setModalClientes({ isOpen: true, tipo, clientes });
           }}
@@ -223,7 +221,7 @@ export default function VisaoGeralTab({ user, filtros = {} }) {
           </CardContent>
         </Card>
 
-        {/* Tarefas Atrasadas */}
+        {/* Atendimentos Atrasados */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -248,9 +246,9 @@ export default function VisaoGeralTab({ user, filtros = {} }) {
                   </div>
                 ))}
                 {tarefasPendentes.length > 0 && (
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     className="w-full mt-2"
                     onClick={handleAtrasadosClick}
                   >
@@ -285,8 +283,8 @@ export default function VisaoGeralTab({ user, filtros = {} }) {
         <GraficoAtendimentos atendimentos={atendimentosPeriodo} />
 
         {/* Agenda Visual */}
-        <AgendaVisual 
-          atendimentos={atendimentos || []} 
+        <AgendaVisual
+          atendimentos={atendimentos || []}
           workshops={workshops || []}
         />
       </div>
