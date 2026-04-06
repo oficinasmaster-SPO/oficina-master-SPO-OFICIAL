@@ -27,6 +27,9 @@ import { useGoogleMeet } from "@/components/hooks/useGoogleMeet";
 import NextSteps from "@/components/aceleracao/NextSteps";
 import { TimePicker } from "@/components/ui/time-picker";
 import { toBrazilDate } from "@/utils/timezone";
+import BasicInfoCard from "@/components/aceleracao/RegistrarAtendimento/BasicInfoCard";
+import MeetingAgendaCard from "@/components/aceleracao/RegistrarAtendimento/MeetingAgendaCard";
+import ParticipantsCard from "@/components/aceleracao/RegistrarAtendimento/ParticipantsCard";
 
 // Sanitization utilities
 const sanitizeInput = (text) => {
@@ -838,117 +841,14 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
         </Card>
 
         {/* Participantes */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-            <CardTitle>Participantes</CardTitle>
-            <div className="flex gap-2">
-              <Button type="button" variant="outline" size="sm" onClick={addParticipante}>
-                <Plus className="w-4 h-4 mr-2" />
-                Manual
-              </Button>
-              {colaboradores && colaboradores.length > 0 && (
-                <Select onValueChange={(value) => {
-                  const colab = colaboradores.find(c => c.id === value);
-                  if (colab) {
-                    setFormData({
-                      ...formData,
-                      participantes: [...formData.participantes, {
-                        nome: colab.full_name,
-                        cargo: colab.position,
-                        email: colab.email
-                      }]
-                    });
-                  }
-                }}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="Da oficina" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {colaboradores.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.full_name} - {c.position}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-              {colaboradoresInternos && colaboradoresInternos.length > 0 && (
-                <Select onValueChange={(value) => {
-                  const colab = colaboradoresInternos.find(c => c.id === value);
-                  if (colab) {
-                    setFormData({
-                      ...formData,
-                      participantes: [...formData.participantes, {
-                        nome: colab.full_name,
-                        cargo: colab.position + " (Interno)",
-                        email: colab.email
-                      }]
-                    });
-                  }
-                }}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="Interno" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {colaboradoresInternos.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.full_name} - {c.position}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {formData.participantes.map((p, idx) => (
-              <div key={idx} className="flex gap-3 items-start">
-                <div className="flex-1 grid grid-cols-3 gap-3">
-                  <Input
-                    placeholder="Nome"
-                    value={p.nome}
-                    onChange={(e) => {
-                      const newP = [...formData.participantes];
-                      newP[idx].nome = e.target.value;
-                      setFormData({ ...formData, participantes: newP });
-                    }}
-                  />
-                  <Input
-                    placeholder="Cargo"
-                    value={p.cargo}
-                    onChange={(e) => {
-                      const newP = [...formData.participantes];
-                      newP[idx].cargo = e.target.value;
-                      setFormData({ ...formData, participantes: newP });
-                    }}
-                  />
-                  <Input
-                    placeholder="Email"
-                    type="email"
-                    value={p.email}
-                    onChange={(e) => {
-                      const newP = [...formData.participantes];
-                      newP[idx].email = e.target.value;
-                      setFormData({ ...formData, participantes: newP });
-                    }}
-                  />
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => removeParticipante(idx)}
-                >
-                  <Trash2 className="w-4 h-4 text-red-500" />
-                </Button>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+        <ParticipantsCard
+          formData={formData}
+          setFormData={setFormData}
+          colaboradores={colaboradores}
+          colaboradoresInternos={colaboradoresInternos}
+        />
 
-        {/* Captura Inteligente */}
+        {/* Captura Inteligente */
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -990,65 +890,11 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
         </Card>
 
         {/* Pauta */}
-        <Card ref={pautaRef}>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Pauta da Reunião</CardTitle>
-              <Button type="button" variant="outline" size="sm" onClick={addPauta}>
-                <Plus className="w-4 h-4 mr-2" />
-                Adicionar Tópico
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {formData.pauta.map((p, idx) => (
-              <div key={idx} className="space-y-2 border-b pb-4">
-                <div className="flex gap-3 items-start">
-                  <div className="flex-1 space-y-2">
-                    <Input
-                      placeholder="Título do tópico"
-                      value={p.titulo}
-                      onChange={(e) => {
-                        const newP = [...formData.pauta];
-                        newP[idx].titulo = e.target.value;
-                        setFormData({ ...formData, pauta: newP });
-                      }}
-                    />
-                    <Textarea
-                      placeholder="Descrição"
-                      value={p.descricao}
-                      onChange={(e) => {
-                        const newP = [...formData.pauta];
-                        newP[idx].descricao = e.target.value;
-                        setFormData({ ...formData, pauta: newP });
-                      }}
-                      rows={2}
-                    />
-                  </div>
-                  <Input
-                    type="number"
-                    placeholder="Tempo (min)"
-                    className="w-24"
-                    value={p.tempo_estimado}
-                    onChange={(e) => {
-                      const newP = [...formData.pauta];
-                      newP[idx].tempo_estimado = parseInt(e.target.value);
-                      setFormData({ ...formData, pauta: newP });
-                    }}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => removePauta(idx)}
-                  >
-                    <Trash2 className="w-4 h-4 text-red-500" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+        <MeetingAgendaCard
+          formData={formData}
+          setFormData={setFormData}
+          pautaRef={pautaRef}
+        />
 
         {/* Objetivos */}
         <Card>
@@ -1456,11 +1302,11 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
                       }
                       window.open(`https://wa.me/55${phone}?text=${message}`, '_blank');
                       toast.success("WhatsApp aberto!");
-                      } catch (error) {
+                    } catch (error) {
                       toast.error("Erro: " + error.message);
-                      }
-                      }
-                      >
+                    }
+                  }}
+                >
                   <MessageSquare className="w-4 h-4 mr-2" />
                   WhatsApp
                 </Button>
