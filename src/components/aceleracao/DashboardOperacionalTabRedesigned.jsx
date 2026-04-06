@@ -53,7 +53,7 @@ function SprintRow({ sprint, workshop, onSprintClick }) {
         <p className="text-xs text-gray-500 truncate">{workshop?.name || sprint.workshop_id}</p>
       </div>
       <div className="flex items-center gap-3 flex-shrink-0">
-        <div className="bg-blue-100 text-blue-700 my-5 text-xs font-semibold rounded-full inline-flex items-center border transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent hover:bg-primary/80">
+        <div className="bg-blue-100 text-blue-700 my-3 py-2 text-xs font-semibold rounded-full inline-flex items-center border transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent hover:bg-primary/80">
           <div className="flex items-center gap-1.5">
             <span className="text-xs text-gray-500 w-8 text-right">{sprint.progress_percentage || 0}%</span>
             <Progress value={sprint.progress_percentage || 0} className="w-20 h-1.5" />
