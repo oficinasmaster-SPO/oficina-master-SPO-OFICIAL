@@ -84,7 +84,10 @@ export default function VisaoGeralTab({ user, filtros = {} }) {
   });
 
   const clientesAtivos = workshops?.length || 0;
-  // Aplica filtro de período apenas para os cards de stats (reuniões realizadas/futuras no período)
+  // Data atual no fuso de Brasília como string "YYYY-MM-DD" para comparação segura
+  const hoje = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+
+  // Aplica filtro de período apenas para os cards de stats de reuniões realizadas e pendentes
   const atendimentosPeriodo = (atendimentos || []).filter(a => {
     if (!dataInicioStr || !dataFimStr) return true;
     const dataAtendBR = new Date(a.data_agendada).toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
@@ -92,10 +95,13 @@ export default function VisaoGeralTab({ user, filtros = {} }) {
   });
 
   const reunioesRealizadas = atendimentosPeriodo.filter(a => a.status === 'realizado').length || 0;
-  const reunioesFuturas = atendimentosPeriodo.filter(a => ['agendado', 'confirmado'].includes(a.status)).length || 0;
-
-  // Data atual no fuso de Brasília como string "YYYY-MM-DD" para comparação segura
-  const hoje = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+  
+  const futurasList = (atendimentos || []).filter(a => {
+    if (!['agendado', 'confirmado'].includes(a.status)) return false;
+    const dataAtendBR = new Date(a.data_agendada).toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+    return dataAtendBR >= hoje;
+  });
+  const reunioesFuturas = futurasList.length;
 
   // Calcular horas: Total Contratado - Total Realizado
   const totalHorasContratadas = planos?.reduce((acc, plan) => acc + (plan.hours_contracted || 0), 0) || 0;
@@ -135,13 +141,10 @@ export default function VisaoGeralTab({ user, filtros = {} }) {
   };
 
   const handleReunioesFuturasClick = () => {
-    const futuras = atendimentosPeriodo.filter(a =>
-      ['agendado', 'confirmado'].includes(a.status)
-    ) || [];
     setModalReunioes({
       isOpen: true,
       tipo: 'futuras',
-      reunioes: futuras
+      reunioes: futurasList
     });
   };
 
@@ -185,7 +188,7 @@ export default function VisaoGeralTab({ user, filtros = {} }) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-purple-600 hover:text-purple-700">{reunioesFuturas}</div>
-            <p className="text-xs text-gray-600">No período</p>
+            <p className="text-xs text-gray-600">A partir de hoje</p>
           </CardContent>
         </Card>
 
