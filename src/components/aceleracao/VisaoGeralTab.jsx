@@ -90,9 +90,14 @@ export default function VisaoGeralTab({ user, filtros = {} }) {
   });
 
   const reunioesRealizadas = atendimentosPeriodo.filter(a => a.status === 'realizado').length || 0;
-  const reunioesFuturas = atendimentosPeriodo.filter(a =>
-    ['agendado', 'confirmado'].includes(a.status)
-  ).length || 0;
+  const reunioesFuturas = (atendimentos || []).filter(a => {
+    if (!['agendado', 'confirmado'].includes(a.status)) return false;
+    if (!dataInicio || !dataFim) return true;
+    const dataAtendBR = new Date(a.data_agendada).toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+    const dataInicioBR = dataInicio.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+    const dataFimBR = dataFim.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+    return dataAtendBR >= dataInicioBR && dataAtendBR <= dataFimBR;
+  }).length || 0;
 
   // Data atual no fuso de Brasília como string "YYYY-MM-DD" para comparação segura
   const hoje = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
