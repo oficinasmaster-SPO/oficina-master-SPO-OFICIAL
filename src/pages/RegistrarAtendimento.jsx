@@ -28,6 +28,28 @@ import NextSteps from "@/components/aceleracao/NextSteps";
 import { TimePicker } from "@/components/ui/time-picker";
 import { toBrazilDate } from "@/utils/timezone";
 
+// Sanitization utilities
+const sanitizeInput = (text) => {
+  if (!text) return "";
+  return String(text)
+    .trim()
+    .replace(/[<>"']/g, '');
+};
+
+const isValidEmail = (email) => {
+  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return regex.test(email);
+};
+
+const isValidUrl = (url) => {
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 // RegistrarAtendimento v2
 export default function RegistrarAtendimento({ isModal = false, onClose, atendimentoId: atendimentoIdProp }) {
   const navigate = useNavigate();
@@ -288,27 +310,49 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
       
       const atendimentoData = {
         workshop_id: data.workshop_id,
-        tipo_atendimento: data.tipo_atendimento,
+        tipo_atendimento: sanitizeInput(data.tipo_atendimento),
         status: data.status,
-        status_cliente: data.status_cliente,
+        status_cliente: sanitizeInput(data.status_cliente),
         consultor_id: data.consultor_id || user.id,
         consultor_nome: data.consultor_nome || user.full_name,
         data_agendada: dataHora,
         duracao_minutos: data.duracao_minutos,
-        google_meet_link: data.google_meet_link,
-        participantes: (data.participantes || []).filter(p => p.nome),
-        pauta: (data.pauta || []).filter(p => p.titulo),
-        objetivos: (data.objetivos || []).filter(o => o),
-        topicos_discutidos: data.topicos_discutidos || [],
+        google_meet_link: isValidUrl(data.google_meet_link) ? data.google_meet_link : "",
+        participantes: (data.participantes || [])
+          .filter(p => p.nome && isValidEmail(p.email || ""))
+          .map(p => ({
+            nome: sanitizeInput(p.nome),
+            cargo: sanitizeInput(p.cargo),
+            email: p.email
+          })),
+        pauta: (data.pauta || [])
+          .filter(p => p.titulo)
+          .map(p => ({
+            titulo: sanitizeInput(p.titulo),
+            descricao: sanitizeInput(p.descricao),
+            tempo_estimado: p.tempo_estimado
+          })),
+        objetivos: (data.objetivos || []).filter(o => o).map(o => sanitizeInput(o)),
+        topicos_discutidos: (data.topicos_discutidos || []).map(t => sanitizeInput(t)),
         decisoes_tomadas: data.decisoes_tomadas || [],
         acoes_geradas: data.acoes_geradas || [],
-        midias_anexas: (data.midias_anexas || []).filter(m => m.url),
+        midias_anexas: (data.midias_anexas || [])
+          .filter(m => m.url && isValidUrl(m.url))
+          .map(m => ({
+            tipo: m.tipo,
+            url: m.url,
+            titulo: sanitizeInput(m.titulo)
+          })),
         processos_vinculados: data.processos_vinculados || [],
         videoaulas_vinculadas: data.videoaulas_vinculadas || [],
         documentos_vinculados: data.documentos_vinculados || [],
-        observacoes_consultor: data.observacoes_consultor,
-        proximos_passos: data.proximos_passos,
-        proximos_passos_list: (data.proximos_passos_list || []).filter(p => p.descricao),
+        observacoes_consultor: sanitizeInput(data.observacoes_consultor),
+        proximos_passos: sanitizeInput(data.proximos_passos),
+        proximos_passos_list: (data.proximos_passos_list || []).filter(p => p.descricao).map(p => ({
+          descricao: sanitizeInput(p.descricao),
+          responsavel: sanitizeInput(p.responsavel),
+          prazo: p.prazo
+        })),
         checklist_respostas: data.checklist_respostas || [],
         notificacoes_programadas: data.notificacoes_programadas || []
       };
@@ -432,33 +476,25 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
       return;
     }
 
-    // Verificar conflitos de horário
-    try {
-      const dataHoraCompleta = `${formData.data_agendada}T${formData.hora_agendada}:00`;
-      const consultorId = formData.consultor_id || user.id;
-
-      const response = await base44.functions.invoke('verificarConflitoHorario', {
-        consultor_id: consultorId,
-        data_agendada: dataHoraCompleta,
-        atendimento_id_editando: formData.id // Ignora o próprio atendimento se estiver editando
-      });
-
-      if (response.data.conflito) {
-        setConflitosModal({
-          open: true,
-          conflitos: response.data.atendimentos,
-          dataHorario: dataHoraCompleta
-        });
-        return;
-      }
-    } catch (error) {
-      console.error('Erro ao verificar conflitos:', error);
-      toast.error("Erro ao verificar conflitos de horário");
+    // Validar emails de participantes
+    const invalidEmails = formData.participantes.filter(p => p.email && !isValidEmail(p.email));
+    if (invalidEmails.length > 0) {
+      toast.error("Emails inválidos encontrados nos participantes");
       return;
     }
 
-    // Mesclar dados do timer se estiver ativo
-    const dadosParaSalvar = timerData ? { ...formData, ...timerData } : formData;
+    // Validar Google Meet URL se fornecido
+    if (formData.google_meet_link && !isValidUrl(formData.google_meet_link)) {
+      toast.error("URL do Google Meet inválida");
+      return;
+    }
+
+    // Validar URLs de mídias
+    const invalidUrls = formData.midias_anexas.filter(m => m.url && !isValidUrl(m.url));
+    if (invalidUrls.length > 0) {
+      toast.error("URLs de mídias inválidas encontradas");
+      return;
+    }
     
     console.log("Submetendo formulário:", dadosParaSalvar);
     createMutation.mutate(dadosParaSalvar);
@@ -1408,14 +1444,23 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
                         atendimento_id: formData.id
                       });
                       const phone = response.data.phone?.replace(/\D/g, '') || '';
-                      const message = encodeURIComponent(response.data.whatsapp_message);
+                      // Validar telefone: deve ter 10 ou 11 dígitos
+                      if (!phone || phone.length < 10 || phone.length > 11) {
+                        toast.error("Número de telefone inválido");
+                        return;
+                      }
+                      const message = encodeURIComponent(response.data.whatsapp_message || '');
+                      if (!message) {
+                        toast.error("Mensagem do WhatsApp vazia");
+                        return;
+                      }
                       window.open(`https://wa.me/55${phone}?text=${message}`, '_blank');
                       toast.success("WhatsApp aberto!");
-                    } catch (error) {
+                      } catch (error) {
                       toast.error("Erro: " + error.message);
-                    }
-                  }}
-                >
+                      }
+                      }
+                      >
                   <MessageSquare className="w-4 h-4 mr-2" />
                   WhatsApp
                 </Button>
