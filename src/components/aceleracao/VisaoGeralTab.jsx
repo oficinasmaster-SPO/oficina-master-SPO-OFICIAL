@@ -50,14 +50,15 @@ export default function VisaoGeralTab({ user, filtros = {} }) {
   });
 
   const { data: atendimentos } = useQuery({
-    queryKey: ['atendimentos-acelerador', user?.id, consultorFiltrado],
+    queryKey: ['atendimentos-acelerador', user?.id, consultorFiltrado, user?.role],
     queryFn: async () => {
       let query = {};
       if (consultorFiltrado) {
         query.consultor_id = consultorFiltrado;
-      } else {
+      } else if (user?.role !== 'admin') {
         query.consultor_id = user.id;
       }
+      // admin sem filtro de consultor = busca todos
       return await base44.entities.ConsultoriaAtendimento.filter(query);
     },
     enabled: !!user?.id
