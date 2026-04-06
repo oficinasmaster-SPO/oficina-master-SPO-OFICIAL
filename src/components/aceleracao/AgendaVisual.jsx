@@ -124,13 +124,15 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
         base44.entities.Workshop.list(),
         base44.entities.Employee.list()
       ]);
-      const atendimentosComWorkshop = atendimentosDia.map(a => {
-        const workshopEncontrado = workshopsAtualizados.find(w => w.id === a.workshop_id);
-        const socio = workshopEncontrado?.owner_id
-          ? todosColaboradores.find(c => c.user_id === workshopEncontrado.owner_id)
-          : null;
-        return { ...a, workshop: workshopEncontrado, socio };
-      });
+      const atendimentosComWorkshop = atendimentosDia
+        .map(a => {
+          const workshopEncontrado = workshopsAtualizados.find(w => w.id === a.workshop_id);
+          const socio = workshopEncontrado?.owner_id
+            ? todosColaboradores.find(c => c.user_id === workshopEncontrado.owner_id)
+            : null;
+          return { ...a, workshop: workshopEncontrado, socio };
+        })
+        .sort((a, b) => new Date(a.data_agendada) - new Date(b.data_agendada));
       const dayIdx = diasComAtendimentos.findIndex(d => isSameDay(d, day));
       setDetailsModal({ open: true, date: day, atendimentos: atendimentosComWorkshop, dayIdx: dayIdx >= 0 ? dayIdx : 0 });
     } catch (error) {
