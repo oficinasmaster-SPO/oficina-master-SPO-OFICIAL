@@ -31,7 +31,7 @@ export default function VisaoGeralTab({ user, filtros = {} }) {
   });
 
   const { data: atendimentos } = useQuery({
-    queryKey: ['atendimentos-acelerador', user?.id, consultorFiltrado, dataInicio, dataFim],
+    queryKey: ['atendimentos-acelerador', user?.id, consultorFiltrado],
     queryFn: async () => {
       let query = {};
       if (consultorFiltrado) {
@@ -39,14 +39,7 @@ export default function VisaoGeralTab({ user, filtros = {} }) {
       } else {
         query.consultor_id = user.id;
       }
-      const all = await base44.entities.ConsultoriaAtendimento.filter(query);
-      if (dataInicio && dataFim) {
-        return all.filter(a => {
-          const dataAtendimento = new Date(a.data_agendada);
-          return dataAtendimento >= dataInicio && dataAtendimento <= dataFim;
-        });
-      }
-      return all;
+      return await base44.entities.ConsultoriaAtendimento.filter(query);
     },
     enabled: !!user?.id
   });
@@ -69,7 +62,12 @@ export default function VisaoGeralTab({ user, filtros = {} }) {
   });
 
   const clientesAtivos = workshops?.length || 0;
-  const atendimentosPeriodo = atendimentos || [];
+  // Aplica filtro de período apenas para os cards de stats (reuniões realizadas/futuras no período)
+  const atendimentosPeriodo = (atendimentos || []).filter(a => {
+    if (!dataInicio || !dataFim) return true;
+    const d = new Date(a.data_agendada);
+    return d >= dataInicio && d <= new Date(dataFim.getTime() + 86400000); // inclui o dia fim
+  });
 
   const reunioesRealizadas = atendimentosPeriodo.filter(a => a.status === 'realizado').length || 0;
   const reunioesFuturas = atendimentosPeriodo.filter(a =>
