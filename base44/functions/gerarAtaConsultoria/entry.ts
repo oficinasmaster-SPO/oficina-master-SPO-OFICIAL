@@ -186,6 +186,7 @@ Formate em Markdown para fácil leitura. Seja profissional, objetivo e completo.
         decisoes_tomadas: atendimento.decisoes_tomadas || [], // IMPORTANTE: Copiar decisões
         acoes_geradas: atendimento.acoes_geradas || [], // IMPORTANTE: Copiar ações
         client_intelligence: clientIntelligence || [], // IMPORTANTE: Copiar inteligência
+        checklist_respostas: atendimento.checklist_respostas || [], // IMPORTANTE: Copiar checklist
         processos_vinculados: atendimento.processos_vinculados,
         videoaulas_vinculadas: atendimento.videoaulas_vinculadas,
         midias_anexas: atendimento.midias_anexas,

@@ -1360,9 +1360,10 @@ export default function RegistrarAtendimento({ isModal = false, onClose }) {
                                 
                                 // Adicionar inteligência ao objeto ata para o PDF
                                 const ataComInteligencia = {
-                                  ...ata,
-                                  client_intelligence: intelligence || []
-                                };
+                                   ...ata,
+                                   client_intelligence: intelligence || [],
+                                   checklist_respostas: ata.checklist_respostas || formData.checklist_respostas || []
+                                 };
 
                                 const { downloadAtaPDF } = await import("@/components/aceleracao/AtasPDFGenerator");
                                 const workshop = workshops?.find(w => w.id === formData.workshop_id);
