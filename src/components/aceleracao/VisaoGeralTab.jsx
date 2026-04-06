@@ -16,12 +16,30 @@ import ClientesDetalhesModal from "./ClientesDetalhesModal";
 import ReunioesDetalhesModal from "./ReunioesDetalhesModal";
 import GargalosConsultoresRealtime from "./GargalosConsultoresRealtime";
 
+function getMouseEnterSide(e) {
+  const rect = e.currentTarget.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  const w = rect.width;
+  const h = rect.height;
+  const fromTop = y;
+  const fromBottom = h - y;
+  const fromLeft = x;
+  const fromRight = w - x;
+  const min = Math.min(fromTop, fromBottom, fromLeft, fromRight);
+  if (min === fromRight) return "left";
+  if (min === fromLeft) return "right";
+  if (min === fromTop) return "bottom";
+  return "top";
+}
+
 export default function VisaoGeralTab({ user, filtros = {} }) {
   const consultorFiltrado = filtros.consultorId && filtros.consultorId !== "todos" ? filtros.consultorId : null;
   const dataInicio = filtros.dataInicio ? new Date(filtros.dataInicio) : null;
   const dataFim = filtros.dataFim ? new Date(filtros.dataFim) : null;
   const [modalClientes, setModalClientes] = useState({ isOpen: false, tipo: null, clientes: [] });
   const [modalReunioes, setModalReunioes] = useState({ isOpen: false, tipo: null, reunioes: [] });
+  const [hoverSides, setHoverSides] = useState({});
 
   const { data: workshops } = useQuery({
     queryKey: ['workshops-ativos'],
@@ -208,85 +226,73 @@ export default function VisaoGeralTab({ user, filtros = {} }) {
             ) : (
               <div className="space-y-3">
                 {proximosAtendimentos.map((atendimento) => (
-                  <HoverCard key={atendimento.id} openDelay={100} closeDelay={100}>
+                  <HoverCard key={atendimento.id} openDelay={80} closeDelay={80}>
                     <HoverCardTrigger asChild>
-                      <div className="border-l-4 border-blue-500 pl-3 py-2 rounded-r cursor-pointer hover:bg-blue-50 transition-colors">
+                      <div
+                        className="border-l-4 border-blue-500 pl-3 py-2 rounded-r cursor-pointer hover:bg-blue-50 transition-colors"
+                        onMouseEnter={(e) => {
+                          const side = getMouseEnterSide(e);
+                          setHoverSides(prev => ({ ...prev, [atendimento.id]: side }));
+                        }}
+                      >
                         <p className="font-medium text-sm">{atendimento.tipo_atendimento}</p>
-                        <p className="text-xs text-gray-600">
-                          {formatDateTimeBR(atendimento.data_agendada)}
-                        </p>
+                        <p className="text-xs text-gray-600">{formatDateTimeBR(atendimento.data_agendada)}</p>
                       </div>
                     </HoverCardTrigger>
-                    <HoverCardContent className="w-56 p-3" side="right" align="start">
-                      <div className="space-y-3">
+                    <HoverCardContent className="w-52 p-3" side={hoverSides[atendimento.id] || "right"} align="center">
+                      <div className="space-y-2">
                         <div>
                           <p className="font-semibold text-sm text-gray-900">{atendimento.tipo_atendimento}</p>
                           <p className="text-xs text-blue-600 font-medium mt-0.5">{formatDateTimeBR(atendimento.data_agendada)}</p>
                         </div>
-
                         {atendimento.duracao_minutos && (
                           <div className="flex items-center gap-1.5 text-xs text-gray-600">
                             <Clock className="w-3 h-3" />
-                            <span>{atendimento.duracao_minutos} minutos</span>
+                            <span>{atendimento.duracao_minutos} min</span>
                           </div>
                         )}
-
                         {atendimento.participantes?.length > 0 && (
                           <div>
-                            <p className="text-xs font-medium text-gray-700 mb-1">Participantes</p>
-                            <div className="space-y-0.5">
-                              {atendimento.participantes.slice(0, 3).map((p, i) => (
-                                <p key={i} className="text-xs text-gray-600">• {p.nome}{p.cargo ? ` (${p.cargo})` : ''}</p>
-                              ))}
-                              {atendimento.participantes.length > 3 && (
-                                <p className="text-xs text-gray-400">+{atendimento.participantes.length - 3} mais</p>
-                              )}
-                            </div>
+                            <p className="text-xs font-medium text-gray-700 mb-0.5">Participantes</p>
+                            {atendimento.participantes.slice(0, 2).map((p, i) => (
+                              <p key={i} className="text-xs text-gray-600 truncate">• {p.nome}</p>
+                            ))}
+                            {atendimento.participantes.length > 2 && (
+                              <p className="text-xs text-gray-400">+{atendimento.participantes.length - 2} mais</p>
+                            )}
                           </div>
                         )}
-
                         {atendimento.objetivos?.length > 0 && (
                           <div>
-                            <p className="text-xs font-medium text-gray-700 mb-1">Objetivos</p>
-                            <div className="space-y-0.5">
-                              {atendimento.objetivos.slice(0, 2).map((o, i) => (
-                                <p key={i} className="text-xs text-gray-600">• {o}</p>
-                              ))}
-                            </div>
+                            <p className="text-xs font-medium text-gray-700 mb-0.5">Objetivos</p>
+                            {atendimento.objetivos.slice(0, 1).map((o, i) => (
+                              <p key={i} className="text-xs text-gray-600 line-clamp-2">• {o}</p>
+                            ))}
                           </div>
                         )}
-
                         {atendimento.pauta?.length > 0 && (
                           <div>
-                            <p className="text-xs font-medium text-gray-700 mb-1">Pauta</p>
-                            <div className="space-y-0.5">
-                              {atendimento.pauta.slice(0, 2).map((p, i) => (
-                                <p key={i} className="text-xs text-gray-600">• {p.titulo}</p>
-                              ))}
-                            </div>
+                            <p className="text-xs font-medium text-gray-700 mb-0.5">Pauta</p>
+                            {atendimento.pauta.slice(0, 1).map((p, i) => (
+                              <p key={i} className="text-xs text-gray-600 line-clamp-2">• {p.titulo}</p>
+                            ))}
                           </div>
                         )}
-
                         {atendimento.google_meet_link && (
-                          <a
-                            href={atendimento.google_meet_link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="block text-xs text-blue-500 hover:underline truncate"
-                          >
-                            🎥 Entrar no Google Meet
+                          <a href={atendimento.google_meet_link} target="_blank" rel="noopener noreferrer" className="block text-xs text-blue-500 hover:underline truncate">
+                            🎥 Google Meet
                           </a>
                         )}
                       </div>
                     </HoverCardContent>
                   </HoverCard>
                 ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                </div>
+                )}
+                </CardContent>
+                </Card>
 
-        {/* Atendimentos Atrasados */}
+                {/* Atendimentos Atrasados */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
