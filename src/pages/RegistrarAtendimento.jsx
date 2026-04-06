@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar as CalendarIcon, Plus, Trash2, Upload, Sparkles, Loader2, Video, Link as LinkIcon, Image, Film, Send, FileText, MessageSquare, Package, Clock, FilePlus, X } from "lucide-react";
+import { Calendar as CalendarIcon, Plus, Trash2, Upload, Sparkles, Loader2, Video, Link as LinkIcon, Image, Film, Send, FileText, MessageSquare, Package, Clock, FilePlus, X, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import NotificationSchedulerModal from "@/components/aceleracao/NotificationSchedulerModal";
@@ -103,6 +103,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
   const [showAISummary, setShowAISummary] = useState(false);
   const [aiSummary, setAISummary] = useState(null);
   const [conflitosModal, setConflitosModal] = useState({ open: false, conflitos: [], dataHorario: null });
+  const [showConsultoriasPanel, setShowConsultoriasPanel] = useState(false);
   const pautaRef = React.useRef(null);
   const { createMeeting, isCreating } = useGoogleMeet();
 
@@ -1278,6 +1279,16 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
               </Button>
             )}
 
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full justify-start"
+              onClick={() => setShowConsultoriasPanel(true)}
+            >
+              <ExternalLink className="w-4 h-4 mr-2" />
+              📋 Ver Consultorias Agendadas
+            </Button>
+
             {formData.workshop_id && (
               <Button
                 type="button"
@@ -1289,8 +1300,6 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
                     const response = await base44.functions.invoke('gerarRelatorioCliente', {
                       workshop_id: formData.workshop_id
                     });
-
-                    // Download do PDF
                     const blob = new Blob([response.data], { type: 'application/pdf' });
                     const url = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');
@@ -1300,14 +1309,13 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
                     a.click();
                     window.URL.revokeObjectURL(url);
                     a.remove();
-
                     toast.success('Relatório gerado com sucesso!');
                   } catch (error) {
                     toast.error('Erro ao gerar relatório: ' + error.message);
                   }
                 }}
               >
-                📊 Gerar Relatório Completo do Cliente
+                Gerar Relatório Completo do Cliente
               </Button>
             )}
           </CardContent>
@@ -1350,20 +1358,12 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
                           size="sm"
                           onClick={async () => {
                             try {
-                              // Buscar ata para visualizar/finalizar
                               const ata = await base44.entities.MeetingMinutes.get(formData.ata_id);
                               if (ata) {
-                                // Buscar inteligência do cliente vinculada ao atendimento
                                 const intelligence = await base44.entities.ClientIntelligence.filter({ 
                                   attendance_id: formData.id 
                                 });
-                                
-                                // Adicionar inteligência ao objeto ata para o PDF
-                                const ataComInteligencia = {
-                                  ...ata,
-                                  client_intelligence: intelligence || []
-                                };
-
+                                const ataComInteligencia = { ...ata, client_intelligence: intelligence || [] };
                                 const { downloadAtaPDF } = await import("@/components/aceleracao/AtasPDFGenerator");
                                 const workshop = workshops?.find(w => w.id === formData.workshop_id);
                                 downloadAtaPDF(ataComInteligencia, workshop);
@@ -1513,6 +1513,28 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
               toast.success('Template aplicado!');
             }}
           />
+        )}
+
+        {showConsultoriasPanel && (
+          <div className="fixed inset-0 z-50 flex flex-col" style={{ backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}>
+            <div className="flex items-center justify-between bg-white px-4 py-3 border-b shadow">
+              <h2 className="font-semibold text-gray-900">Consultorias Agendadas</h2>
+              <button
+                type="button"
+                onClick={() => setShowConsultoriasPanel(false)}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+            <div className="flex-1 bg-white overflow-hidden">
+              <iframe
+                src="/ControleAceleracao?tab=atendimentos"
+                className="w-full h-full border-0"
+                title="Consultorias Agendadas"
+              />
+            </div>
+          </div>
         )}
 
         <ConflitosHorarioModal
