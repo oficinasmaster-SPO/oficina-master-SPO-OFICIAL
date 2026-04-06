@@ -31,6 +31,7 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [detailsModal, setDetailsModal] = useState({ open: false, date: null, atendimentos: [] });
   const [consultorFiltro, setConsultorFiltro] = useState('todos');
+  const [modalIdx, setModalIdx] = useState(0);
 
   const getDateRange = () => {
     if (viewMode === 'day') {
@@ -76,6 +77,19 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
     );
   };
 
+  // Paleta de cores para chips por índice (independente de status)
+  const CHIP_COLORS = [
+    'bg-blue-100 text-blue-700 border-blue-300',
+    'bg-purple-100 text-purple-700 border-purple-300',
+    'bg-green-100 text-green-700 border-green-300',
+    'bg-orange-100 text-orange-700 border-orange-300',
+    'bg-pink-100 text-pink-700 border-pink-300',
+    'bg-teal-100 text-teal-700 border-teal-300',
+    'bg-yellow-100 text-yellow-700 border-yellow-300',
+    'bg-indigo-100 text-indigo-700 border-indigo-300',
+  ];
+  const getChipColor = (idx) => CHIP_COLORS[idx % CHIP_COLORS.length];
+
   const getStatusColor = (status) => {
     const colors = {
       agendado: 'bg-blue-100 text-blue-700 border-blue-300',
@@ -116,6 +130,7 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
           date: day,
           atendimentos: atendimentosComWorkshop
         });
+        setModalIdx(0);
       } catch (error) {
         console.error('Erro ao recarregar dados:', error);
         toast.error('Erro ao carregar dados atualizados');
@@ -362,36 +377,17 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
                     ? format(day, "EEEE, dd 'de' MMMM", { locale: ptBR })
                     : format(day, 'd')}
                 </div>
-                <div className="space-y-1">
-                  {atendimentosDia.slice(0, maxVisible).map((atendimento) => {
-                    const workshop = workshops.find(w => w.id === atendimento.workshop_id);
+                <div className="flex flex-wrap gap-1">
+                  {atendimentosDia.slice(0, maxVisible).map((atendimento, chipIdx) => {
                     return (
-                      <div
-                          key={atendimento.id}
-                        className={`text-xs p-2 rounded border ${getStatusColor(atendimento.status)} hover:opacity-80 transition-opacity relative`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const params = new URLSearchParams({ 
-                            atendimento_id: atendimento.id,
-                            fromAgenda: 'true',
-                            fullscreen: isFullScreen ? 'true' : 'false'
-                          });
-                          navigate(createPageUrl('RegistrarAtendimento') + '?' + params.toString());
-                        }}
+                      <span
+                        key={atendimento.id}
+                        className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border ${getChipColor(chipIdx)} cursor-pointer hover:opacity-80 transition-opacity`}
+                        onClick={(e) => e.stopPropagation()}
                       >
-                        <div className="flex items-center justify-between">
-                          <span className="font-semibold">{format(new Date(atendimento.data_agendada), 'HH:mm')}</span>
-                          {atendimento.google_event_id && (
-                            <CalendarCheck className="w-3 h-3 text-blue-500 flex-shrink-0" title="Sincronizado com Google Calendar" />
-                          )}
-                        </div>
-                        {viewMode !== 'month' && (
-                          <>
-                            <div className="text-[10px] mt-1 truncate">{workshop?.name || 'Cliente não identificado'}</div>
-                            <div className="text-[10px] text-gray-600">{atendimento.tipo_atendimento}</div>
-                          </>
-                        )}
-                      </div>
+                        {atendimento.google_event_id && <CalendarCheck className="w-2.5 h-2.5" />}
+                        {format(new Date(atendimento.data_agendada), 'HH:mm')}
+                      </span>
                     );
                   })}
                   {atendimentosDia.length > maxVisible && (
@@ -408,226 +404,129 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
 
       {/* Modal de Detalhes do Dia */}
       <Dialog open={detailsModal.open} onOpenChange={(open) => setDetailsModal({ ...detailsModal, open })}>
-        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CalendarIcon className="w-5 h-5 text-blue-600" />
               {detailsModal.date && format(detailsModal.date, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
             </DialogTitle>
-            <DialogDescription>
-              {detailsModal.atendimentos.length} atendimento{detailsModal.atendimentos.length !== 1 ? 's' : ''} agendado{detailsModal.atendimentos.length !== 1 ? 's' : ''} para este dia
+            <DialogDescription className="flex items-center justify-between">
+              <span>{detailsModal.atendimentos.length} atendimento{detailsModal.atendimentos.length !== 1 ? 's' : ''} neste dia</span>
+              {detailsModal.atendimentos.length > 1 && (
+                <div className="flex items-center gap-2">
+                  <button onClick={() => setModalIdx(i => Math.max(0, i - 1))} disabled={modalIdx === 0} className="p-1 rounded hover:bg-gray-100 disabled:opacity-30">
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <span className="text-xs font-medium">{modalIdx + 1} / {detailsModal.atendimentos.length}</span>
+                  <button onClick={() => setModalIdx(i => Math.min(detailsModal.atendimentos.length - 1, i + 1))} disabled={modalIdx === detailsModal.atendimentos.length - 1} className="p-1 rounded hover:bg-gray-100 disabled:opacity-30">
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-3 mt-4">
-            {detailsModal.atendimentos.map((atendimento, idx) => {
+          <div className="mt-4">
+            {detailsModal.atendimentos.length > 0 && (() => {
+              const atendimento = detailsModal.atendimentos[modalIdx];
+              const idx = modalIdx;
               const workshop = atendimento.workshop;
               const podeIniciar = ['agendado', 'confirmado', 'reagendado'].includes(atendimento.status);
               const workshopIdAmigavel = gerarIdAmigavel('workshop', workshop?.id, idx + 1);
               const socio = atendimento.socio;
-              
-              // Buscar telefone: prioriza oficina, depois sócio
               const telefoneOficina = workshop?.telefone || socio?.telefone;
-              
-              // Buscar e-mail: prioriza participante, depois oficina, depois sócio
               const participantePrincipal = atendimento.participantes?.[0];
               const emailContato = participantePrincipal?.email || workshop?.email || socio?.email;
-              
+              const cardBg = CHIP_COLORS[idx % CHIP_COLORS.length];
+
               return (
-                <div
-                  key={atendimento.id}
-                  className={`p-4 rounded-lg border-2 ${getStatusColor(atendimento.status)} hover:shadow-md transition-shadow`}
-                >
+                <div key={atendimento.id} className={`p-4 rounded-lg border-2 ${cardBg} hover:shadow-md transition-shadow`}>
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
                       <Clock className="w-4 h-4" />
                       <span className="font-semibold">{format(new Date(atendimento.data_agendada), 'HH:mm')}</span>
-                      <span className="text-xs text-gray-500 font-mono bg-gray-100 px-2 py-1 rounded">
-                        {workshopIdAmigavel}
-                      </span>
+                      <span className="text-xs text-gray-500 font-mono bg-white/60 px-2 py-0.5 rounded">{workshopIdAmigavel}</span>
                     </div>
-                    <Badge className={getStatusColor(atendimento.status)}>
-                      {atendimento.status}
-                    </Badge>
+                    <Badge className={getStatusColor(atendimento.status)}>{atendimento.status}</Badge>
                   </div>
-                  
+
                   <div className="space-y-2 text-sm mb-3">
                     <div className="flex items-center gap-2">
                       <MapPin className="w-4 h-4 text-gray-500" />
                       <span className="font-medium">{workshop?.name || 'Cliente não identificado'}</span>
                     </div>
-
                     {workshop?.owner_id && (
                       <div className="flex items-center gap-2 ml-6 text-gray-600">
                         <Users className="w-3 h-3" />
-                        <span className="text-xs">
-                          Proprietário: {gerarIdAmigavel('colaborador', workshop.owner_id, 1)}
-                          {workshop.partner_ids?.length > 0 && ` + ${workshop.partner_ids.length} sócio(s)`}
-                        </span>
+                        <span className="text-xs">Proprietário: {gerarIdAmigavel('colaborador', workshop.owner_id, 1)}{workshop.partner_ids?.length > 0 && ` + ${workshop.partner_ids.length} sócio(s)`}</span>
                       </div>
                     )}
-
-                    {/* Seção de Contato - Sempre visível */}
-                    <div className="ml-6 space-y-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <Phone className="w-4 h-4 text-gray-500" />
-                          <span className="text-sm font-medium text-gray-700">
-                            {telefoneOficina || 'Sem telefone cadastrado'}
-                          </span>
-                        </div>
+                    <div className="ml-6 space-y-2 p-3 bg-white/60 rounded-lg border border-white/80">
+                      <div className="flex items-center gap-2">
+                        <Phone className="w-4 h-4 text-gray-500" />
+                        <span className="text-sm font-medium text-gray-700">{telefoneOficina || 'Sem telefone cadastrado'}</span>
                       </div>
-                      
                       {emailContato && (
-                        <div className="flex items-center gap-2 text-xs text-gray-600 mb-2">
+                        <div className="flex items-center gap-2 text-xs text-gray-600">
                           <Mail className="w-3 h-3" />
                           <span>{emailContato}</span>
                         </div>
                       )}
-
                       <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="flex-1 text-green-600 border-green-300 hover:bg-green-50"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (!telefoneOficina) {
-                              toast.error('Telefone não cadastrado');
-                              return;
-                            }
-                            enviarLembreteWhatsApp(atendimento, telefoneOficina);
-                          }}
-                          disabled={!telefoneOficina}
-                        >
-                          <MessageCircle className="w-3 h-3 mr-1" />
-                          WhatsApp
+                        <Button size="sm" variant="outline" className="flex-1 text-green-600 border-green-300 hover:bg-green-50" onClick={(e) => { e.stopPropagation(); if (!telefoneOficina) { toast.error('Telefone não cadastrado'); return; } enviarLembreteWhatsApp(atendimento, telefoneOficina); }} disabled={!telefoneOficina}>
+                          <MessageCircle className="w-3 h-3 mr-1" />WhatsApp
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="flex-1 text-blue-600 border-blue-300 hover:bg-blue-50"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (!telefoneOficina) {
-                              toast.error('Telefone não cadastrado');
-                              return;
-                            }
-                            fazerLigacao(telefoneOficina);
-                          }}
-                          disabled={!telefoneOficina}
-                        >
-                          <Phone className="w-3 h-3 mr-1" />
-                          Ligar
+                        <Button size="sm" variant="outline" className="flex-1 text-blue-600 border-blue-300 hover:bg-blue-50" onClick={(e) => { e.stopPropagation(); if (!telefoneOficina) { toast.error('Telefone não cadastrado'); return; } fazerLigacao(telefoneOficina); }} disabled={!telefoneOficina}>
+                          <Phone className="w-3 h-3 mr-1" />Ligar
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="flex-1 text-purple-600 border-purple-300 hover:bg-purple-50"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (!emailContato) {
-                              toast.error('E-mail não cadastrado');
-                              return;
-                            }
-                            enviarLembreteEmail(atendimento, emailContato);
-                          }}
-                          disabled={!emailContato}
-                        >
-                          <Mail className="w-3 h-3 mr-1" />
-                          E-mail
+                        <Button size="sm" variant="outline" className="flex-1 text-purple-600 border-purple-300 hover:bg-purple-50" onClick={(e) => { e.stopPropagation(); if (!emailContato) { toast.error('E-mail não cadastrado'); return; } enviarLembreteEmail(atendimento, emailContato); }} disabled={!emailContato}>
+                          <Mail className="w-3 h-3 mr-1" />E-mail
                         </Button>
                       </div>
                     </div>
-
                     {participantePrincipal && (
                       <div className="flex items-center gap-2 ml-6 text-gray-600">
                         <User className="w-3 h-3" />
-                        <span className="text-xs">{participantePrincipal.nome}</span>
-                        {participantePrincipal.cargo && (
-                          <span className="text-xs">({participantePrincipal.cargo})</span>
-                        )}
+                        <span className="text-xs">{participantePrincipal.nome}{participantePrincipal.cargo && ` (${participantePrincipal.cargo})`}</span>
                       </div>
                     )}
-
                     <div className="flex items-center gap-2">
                       <User className="w-4 h-4 text-gray-500" />
                       <span className="text-gray-600">{atendimento.tipo_atendimento.replace(/_/g, ' ')}</span>
                     </div>
-
                     {atendimento.duracao_minutos && (
                       <div className="flex items-center gap-2 text-gray-600">
                         <Clock className="w-4 h-4 text-gray-500" />
                         <span>Duração: {atendimento.duracao_minutos} min</span>
                       </div>
                     )}
-
                     {atendimento.google_meet_link && (
                       <div className="flex items-center gap-2 mt-2 p-2 bg-blue-50 rounded border border-blue-200">
                         <Video className="w-4 h-4 text-blue-600" />
-                        <a
-                          href={atendimento.google_meet_link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs text-blue-600 hover:underline flex items-center gap-1"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          Link do Meet
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
+                        <a href={atendimento.google_meet_link} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline flex items-center gap-1" onClick={(e) => e.stopPropagation()}>Link do Meet <ExternalLink className="w-3 h-3" /></a>
                       </div>
                     )}
                     {atendimento.google_calendar_link && (
                       <div className="flex items-center gap-2 mt-1 p-2 bg-green-50 rounded border border-green-200">
                         <CalendarCheck className="w-4 h-4 text-green-600" />
-                        <a
-                          href={atendimento.google_calendar_link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs text-green-600 hover:underline flex items-center gap-1"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          Ver no Google Calendar
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
+                        <a href={atendimento.google_calendar_link} target="_blank" rel="noopener noreferrer" className="text-xs text-green-600 hover:underline flex items-center gap-1" onClick={(e) => e.stopPropagation()}>Ver no Google Calendar <ExternalLink className="w-3 h-3" /></a>
                       </div>
                     )}
                   </div>
 
-                  <div className="flex gap-2 pt-2 border-t">
+                  <div className="flex gap-2 pt-2 border-t border-white/50">
                     {podeIniciar && atendimento.google_meet_link && (
-                      <Button
-                        size="sm"
-                        className="flex-1 bg-green-600 hover:bg-green-700"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          iniciarAtendimento(atendimento);
-                        }}
-                      >
-                        <Video className="w-4 h-4 mr-2" />
-                        Iniciar Atendimento
+                      <Button size="sm" className="flex-1 bg-green-600 hover:bg-green-700" onClick={(e) => { e.stopPropagation(); iniciarAtendimento(atendimento); }}>
+                        <Video className="w-4 h-4 mr-2" />Iniciar Atendimento
                       </Button>
                     )}
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="flex-1"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const params = new URLSearchParams({ 
-                          atendimento_id: atendimento.id,
-                          fromAgenda: 'true',
-                          fullscreen: isFullScreen ? 'true' : 'false'
-                        });
-                        navigate(createPageUrl('RegistrarAtendimento') + '?' + params.toString());
-                      }}
-                    >
+                    <Button size="sm" variant="outline" className="flex-1" onClick={(e) => { e.stopPropagation(); const params = new URLSearchParams({ atendimento_id: atendimento.id, fromAgenda: 'true', fullscreen: isFullScreen ? 'true' : 'false' }); navigate(createPageUrl('RegistrarAtendimento') + '?' + params.toString()); }}>
                       Ver Detalhes
                     </Button>
                   </div>
                 </div>
               );
-            })}
+            })()}
           </div>
         </DialogContent>
       </Dialog>
