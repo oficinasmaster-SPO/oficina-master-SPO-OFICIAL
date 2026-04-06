@@ -25,12 +25,11 @@ import MatrizDesempenho from '@/pages/MatrizDesempenho';
 import PublicNPS from '@/pages/PublicNPS';
 import PublicDISC from '@/pages/PublicDISC';
 import BemVindoPlanos from '@/pages/BemVindoPlanos';
+import ControleAceleracao from '@/pages/ControleAceleracao';
 import WheelLoader from '@/components/ui/WheelLoader';
 import ErrorBoundary from '@/components/shared/ErrorBoundary';
 
-const { Pages, Layout, mainPage } = pagesConfig;
-const mainPageKey = mainPage ?? Object.keys(Pages)[0];
-const MainPage = mainPageKey ? Pages[mainPageKey] : <></>;
+const { Pages = {}, Layout = null, mainPage } = pagesConfig || {};
 
 const LayoutWrapper = ({ children, currentPageName }) => Layout ?
   <Layout currentPageName={currentPageName}>{children}</Layout>
@@ -140,6 +139,11 @@ const AuthenticatedApp = () => {
             <QADashboard />
           </LayoutWrapper>
         </PageAccessControl>
+      } />
+      <Route path="/ControleAceleracao" element={
+        <LayoutWrapper currentPageName="ControleAceleracao">
+          <ControleAceleracao />
+        </LayoutWrapper>
       } />
       {Object.entries(Pages).map(([path, Page]) => {
         const reqPerm = pagePermissions[path];
