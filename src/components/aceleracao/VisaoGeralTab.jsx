@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -207,12 +208,78 @@ export default function VisaoGeralTab({ user, filtros = {} }) {
             ) : (
               <div className="space-y-3">
                 {proximosAtendimentos.map((atendimento) => (
-                  <div key={atendimento.id} className="border-l-4 border-blue-500 pl-3 py-2">
-                    <p className="font-medium text-sm">{atendimento.tipo_atendimento}</p>
-                    <p className="text-xs text-gray-600">
-                      {formatDateTimeBR(atendimento.data_agendada)}
-                    </p>
-                  </div>
+                  <HoverCard key={atendimento.id} openDelay={100} closeDelay={100}>
+                    <HoverCardTrigger asChild>
+                      <div className="border-l-4 border-blue-500 pl-3 py-2 rounded-r cursor-pointer hover:bg-blue-50 transition-colors">
+                        <p className="font-medium text-sm">{atendimento.tipo_atendimento}</p>
+                        <p className="text-xs text-gray-600">
+                          {formatDateTimeBR(atendimento.data_agendada)}
+                        </p>
+                      </div>
+                    </HoverCardTrigger>
+                    <HoverCardContent className="w-72 p-4" side="left" align="start">
+                      <div className="space-y-3">
+                        <div>
+                          <p className="font-semibold text-sm text-gray-900">{atendimento.tipo_atendimento}</p>
+                          <p className="text-xs text-blue-600 font-medium mt-0.5">{formatDateTimeBR(atendimento.data_agendada)}</p>
+                        </div>
+
+                        {atendimento.duracao_minutos && (
+                          <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                            <Clock className="w-3 h-3" />
+                            <span>{atendimento.duracao_minutos} minutos</span>
+                          </div>
+                        )}
+
+                        {atendimento.participantes?.length > 0 && (
+                          <div>
+                            <p className="text-xs font-medium text-gray-700 mb-1">Participantes</p>
+                            <div className="space-y-0.5">
+                              {atendimento.participantes.slice(0, 3).map((p, i) => (
+                                <p key={i} className="text-xs text-gray-600">• {p.nome}{p.cargo ? ` (${p.cargo})` : ''}</p>
+                              ))}
+                              {atendimento.participantes.length > 3 && (
+                                <p className="text-xs text-gray-400">+{atendimento.participantes.length - 3} mais</p>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {atendimento.objetivos?.length > 0 && (
+                          <div>
+                            <p className="text-xs font-medium text-gray-700 mb-1">Objetivos</p>
+                            <div className="space-y-0.5">
+                              {atendimento.objetivos.slice(0, 2).map((o, i) => (
+                                <p key={i} className="text-xs text-gray-600">• {o}</p>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {atendimento.pauta?.length > 0 && (
+                          <div>
+                            <p className="text-xs font-medium text-gray-700 mb-1">Pauta</p>
+                            <div className="space-y-0.5">
+                              {atendimento.pauta.slice(0, 2).map((p, i) => (
+                                <p key={i} className="text-xs text-gray-600">• {p.titulo}</p>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {atendimento.google_meet_link && (
+                          <a
+                            href={atendimento.google_meet_link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block text-xs text-blue-500 hover:underline truncate"
+                          >
+                            🎥 Entrar no Google Meet
+                          </a>
+                        )}
+                      </div>
+                    </HoverCardContent>
+                  </HoverCard>
                 ))}
               </div>
             )}
