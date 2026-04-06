@@ -380,8 +380,7 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
                     return (
                       <span
                         key={atendimento.id}
-                        className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border ${getChipColor(atendimento.id)} cursor-pointer hover:opacity-80 transition-opacity`}
-                        onClick={(e) => { e.stopPropagation(); setEditModal(atendimento.id); }}
+                        className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border ${getChipColor(atendimento.id)} cursor-default pointer-events-none select-none`}
                       >
                         {atendimento.google_event_id && <CalendarCheck className="w-2.5 h-2.5" />}
                         {format(new Date(atendimento.data_agendada), 'HH:mm')}
