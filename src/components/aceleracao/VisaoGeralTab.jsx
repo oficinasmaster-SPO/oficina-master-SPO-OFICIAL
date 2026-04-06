@@ -217,7 +217,7 @@ export default function VisaoGeralTab({ user, filtros = {} }) {
                         </p>
                       </div>
                     </HoverCardTrigger>
-                    <HoverCardContent className="w-72 p-4" side="left" align="start">
+                    <HoverCardContent className="w-56 p-3" side="right" align="start">
                       <div className="space-y-3">
                         <div>
                           <p className="font-semibold text-sm text-gray-900">{atendimento.tipo_atendimento}</p>
