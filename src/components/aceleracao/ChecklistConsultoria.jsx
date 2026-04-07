@@ -306,31 +306,33 @@ export default function ChecklistConsultoria({ respostas, onChange }) {
             return (
               <div className="mt-4 pt-3 border-t border-gray-100">
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-2">Adicionar Checklist ao Atendimento</p>
-                <div className="flex flex-wrap gap-x-6 gap-y-1">
+                <div className="space-y-1.5">
                   {sortedKeys.map(key => {
                     const tema = temaInfo(key);
                     return (
-                      <div key={key} className="flex items-center gap-1.5 flex-wrap">
-                        <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${tema.iconBg || 'bg-gray-100'} ${tema.iconColor || 'text-gray-500'}`}>{tema.label}</span>
-                        {grouped[key].map(t => {
-                          const jaAdicionado = (respostas || []).find(r => r.template_id === t.id);
-                          return (
-                            <button
-                              key={t.id}
-                              type="button"
-                              onClick={() => adicionarTemplate(t)}
-                              disabled={!!jaAdicionado}
-                              className={`inline-flex items-center gap-1 px-2 py-1 rounded-md border text-xs font-medium transition-all ${
-                                jaAdicionado
-                                  ? "opacity-40 cursor-not-allowed bg-gray-50 border-gray-100 text-gray-400"
-                                  : "hover:shadow-sm cursor-pointer bg-white border-gray-200 hover:border-blue-300 hover:bg-blue-50/30"
-                              }`}
-                            >
-                              {jaAdicionado ? <CheckCircle2 className="w-3 h-3 text-green-500" /> : <Plus className="w-3 h-3 text-blue-500" />}
-                              <span className="text-gray-700">{t.nome}</span>
-                            </button>
-                          );
-                        })}
+                      <div key={key} className="flex items-center gap-2">
+                        <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded w-20 text-center flex-shrink-0 ${tema.iconBg || 'bg-gray-100'} ${tema.iconColor || 'text-gray-500'}`}>{tema.label}</span>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {grouped[key].map(t => {
+                            const jaAdicionado = (respostas || []).find(r => r.template_id === t.id);
+                            return (
+                              <button
+                                key={t.id}
+                                type="button"
+                                onClick={() => adicionarTemplate(t)}
+                                disabled={!!jaAdicionado}
+                                className={`inline-flex items-center gap-1 px-2 py-1 rounded-md border text-xs font-medium transition-all ${
+                                  jaAdicionado
+                                    ? "opacity-40 cursor-not-allowed bg-gray-50 border-gray-100 text-gray-400"
+                                    : "hover:shadow-sm cursor-pointer bg-white border-gray-200 hover:border-blue-300 hover:bg-blue-50/30"
+                                }`}
+                              >
+                                {jaAdicionado ? <CheckCircle2 className="w-3 h-3 text-green-500" /> : <Plus className="w-3 h-3 text-blue-500" />}
+                                <span className="text-gray-700">{t.nome}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
                     );
                   })}
