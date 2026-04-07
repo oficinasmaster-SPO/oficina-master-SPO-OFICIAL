@@ -218,54 +218,69 @@ export default function ClientDetailPanel({ client, isOpen, onClose, atendimento
           </TabsContent>
 
           <TabsContent value="operacional" className="space-y-6 mt-6">
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Horários */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-lg flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-orange-600" />
-                  Horário de Funcionamento
-                </h3>
+              <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-4">
+                <div className="flex items-center gap-2.5 pb-3 border-b border-gray-100">
+                  <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center">
+                    <Clock className="w-4.5 h-4.5 text-orange-600" />
+                  </div>
+                  <h3 className="font-semibold text-base text-gray-900">Horário de Funcionamento</h3>
+                </div>
                 {client.horario_funcionamento ? (
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Abertura:</span>
-                      <span className="font-medium">{client.horario_funcionamento.abertura || 'Não definido'}</span>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium uppercase tracking-wider text-gray-400">Abertura</span>
+                      <span className="text-sm font-semibold text-gray-800">{client.horario_funcionamento.abertura || 'Não definido'}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Fechamento:</span>
-                      <span className="font-medium">{client.horario_funcionamento.fechamento || 'Não definido'}</span>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium uppercase tracking-wider text-gray-400">Fechamento</span>
+                      <span className="text-sm font-semibold text-gray-800">{client.horario_funcionamento.fechamento || 'Não definido'}</span>
                     </div>
                     {client.horario_funcionamento.almoco_inicio && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Almoço:</span>
-                        <span className="font-medium">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium uppercase tracking-wider text-gray-400">Almoço</span>
+                        <span className="text-sm font-semibold text-gray-800">
                           {client.horario_funcionamento.almoco_inicio} - {client.horario_funcionamento.almoco_fim}
+                        </span>
+                      </div>
+                    )}
+                    {client.horario_funcionamento.sabado_abertura && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium uppercase tracking-wider text-gray-400">Sábado</span>
+                        <span className="text-sm font-semibold text-gray-800">
+                          {client.horario_funcionamento.sabado_abertura} - {client.horario_funcionamento.sabado_fechamento}
                         </span>
                       </div>
                     )}
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-500">Horários não configurados</p>
+                  <p className="text-sm text-gray-400 italic">Horários não configurados</p>
                 )}
               </div>
 
               {/* Equipamentos */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-lg flex items-center gap-2">
-                  <Package className="w-5 h-5 text-indigo-600" />
-                  Equipamentos
-                </h3>
+              <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-4">
+                <div className="flex items-center gap-2.5 pb-3 border-b border-gray-100">
+                  <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center">
+                    <Package className="w-4.5 h-4.5 text-indigo-600" />
+                  </div>
+                  <h3 className="font-semibold text-base text-gray-900">Equipamentos</h3>
+                  {client.equipment_list && client.equipment_list.length > 0 && (
+                    <Badge variant="secondary" className="text-xs ml-auto">{client.equipment_list.length} itens</Badge>
+                  )}
+                </div>
                 {client.equipment_list && client.equipment_list.length > 0 ? (
-                  <div className="space-y-2 text-sm max-h-48 overflow-y-auto">
+                  <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
                     {client.equipment_list.map((eq, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                        <span className="font-medium">{eq.name}</span>
-                        <Badge variant="outline" className="text-xs">{eq.quantity}x</Badge>
+                      <div key={idx} className="flex items-center justify-between p-2.5 bg-gray-50/80 rounded-lg hover:bg-gray-100/80 transition-colors">
+                        <span className="text-sm font-medium text-gray-700">{eq.name}</span>
+                        <Badge variant="outline" className="text-xs font-semibold bg-white">{eq.quantity}x</Badge>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-500">Nenhum equipamento cadastrado</p>
+                  <p className="text-sm text-gray-400 italic">Nenhum equipamento cadastrado</p>
                 )}
               </div>
             </div>
