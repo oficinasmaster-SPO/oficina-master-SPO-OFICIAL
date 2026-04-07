@@ -174,23 +174,16 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
   const { data: consultores } = useQuery({
     queryKey: ['consultores-list'],
     queryFn: async () => {
-      // Buscar usuários
       const users = await base44.entities.User.list(null, 1000);
       
-      // Buscar colaboradores com perfil de consultor
-      const filterOptions = {
-        job_role: { $in: ['consultor', 'acelerador', 'socio', 'diretor'] }
-      };
-      
-      if (user?.data?.workshop_id) {
-        filterOptions.workshop_id = user.data.workshop_id;
-      }
-      
-      const employees = await base44.entities.Employee.filter(filterOptions, null, 1000);
+      // Buscar colaboradores internos (Oficinas Master)
+      const employees = await base44.entities.Employee.filter({
+        tipo_vinculo: 'interno',
+        status: 'ativo'
+      }, null, 1000);
       
       const employeeUserIds = employees.map(e => e.user_id).filter(Boolean);
       
-      // Filtrar APENAS usuários que possuem employee vinculado com cargo de consultor
       return users.filter(u => employeeUserIds.includes(u.id));
     },
     enabled: !!user
