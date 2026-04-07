@@ -618,6 +618,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
           midias_anexas: (formData.midias_anexas || []).filter(m => m.url),
           processos_vinculados: formData.processos_vinculados || [],
           videoaulas_vinculadas: formData.videoaulas_vinculadas || [],
+          documentos_vinculados: formData.documentos_vinculados || [],
         });
         setAutoSaveStatus('saved');
         setTimeout(() => setAutoSaveStatus(null), 3000);
@@ -641,6 +642,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
     formData.midias_anexas,
     formData.processos_vinculados,
     formData.videoaulas_vinculadas,
+    formData.documentos_vinculados,
     formData.id,
   ]);
 

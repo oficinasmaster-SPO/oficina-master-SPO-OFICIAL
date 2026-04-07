@@ -105,7 +105,9 @@ Deno.serve(async (req) => {
       sectionBlocks.push(`**AÇÕES DE ACOMPANHAMENTO:**\n${atendimento.acoes_geradas?.map(a => `- ${a.acao} (Responsável: ${a.responsavel}, Prazo: ${a.prazo})`).join('\n') || 'Nenhuma ação registrada'}`);
     }
     if (selectedSections.includes('proximos_passos')) {
-      sectionBlocks.push(`**PRÓXIMOS PASSOS:**\n${atendimento.proximos_passos || 'A definir'}`);
+      const passosTexto = atendimento.proximos_passos || '';
+      const passosLista = (atendimento.proximos_passos_list || []).filter(p => p.descricao).map((p, i) => `${i + 1}. ${p.descricao} (Responsável: ${p.responsavel || 'N/A'}, Prazo: ${p.prazo || 'N/A'})`).join('\n');
+      sectionBlocks.push(`**PRÓXIMOS PASSOS:**\n${passosLista || passosTexto || 'A definir'}`);
     }
     if (selectedSections.includes('checklist') && atendimento.checklist_respostas?.length > 0) {
       const checklistText = atendimento.checklist_respostas.map(bloco => {

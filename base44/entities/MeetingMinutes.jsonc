@@ -1,0 +1,384 @@
+{
+  "name": "MeetingMinutes",
+  "type": "object",
+  "properties": {
+    "code": {
+      "type": "string",
+      "description": "C\u00f3digo da ATA (IT.XXXX)"
+    },
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina (cliente)"
+    },
+    "atendimento_id": {
+      "type": "string",
+      "description": "ID do atendimento vinculado"
+    },
+    "plano_aceleracao_id": {
+      "type": "string",
+      "description": "ID do plano de acelera\u00e7\u00e3o vinculado"
+    },
+    "meeting_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data da reuni\u00e3o"
+    },
+    "meeting_time": {
+      "type": "string",
+      "description": "Hora da reuni\u00e3o (HH:MM)"
+    },
+    "tipo_aceleracao": {
+      "type": "string",
+      "description": "Tipo de acelera\u00e7\u00e3o/atendimento (aceita valores customizados)"
+    },
+    "consultor_name": {
+      "type": "string",
+      "description": "Nome do consultor/acelerador"
+    },
+    "consultor_id": {
+      "type": "string",
+      "description": "ID do consultor/acelerador"
+    },
+    "participantes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Lista de participantes da reuni\u00e3o"
+    },
+    "responsavel": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        }
+      },
+      "description": "Respons\u00e1vel principal do cliente"
+    },
+    "plano_nome": {
+      "type": "string",
+      "description": "Nome do plano de acelera\u00e7\u00e3o"
+    },
+    "pautas": {
+      "type": "string",
+      "description": "Temas tratados, pontos discutidos, demandas levantadas"
+    },
+    "pauta": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "titulo": {
+            "type": "string"
+          },
+          "descricao": {
+            "type": "string"
+          },
+          "tempo_estimado": {
+            "type": "integer"
+          }
+        }
+      },
+      "description": "Pauta estruturada"
+    },
+    "objetivos_atendimento": {
+      "type": "string",
+      "description": "Objetivo principal e resultados esperados"
+    },
+    "objetivos": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Lista de objetivos"
+    },
+    "objetivos_consultor": {
+      "type": "string",
+      "description": "Direcionamento estrat\u00e9gico do acelerador"
+    },
+    "proximos_passos": {
+      "type": "string",
+      "description": "Texto descritivo dos pr\u00f3ximos passos"
+    },
+    "proximos_passos_list": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "descricao": {
+            "type": "string"
+          },
+          "responsavel": {
+            "type": "string"
+          },
+          "prazo": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
+      "description": "Lista estruturada de pr\u00f3ximos passos"
+    },
+    "visao_geral_projeto": {
+      "type": "string",
+      "description": "Vis\u00e3o geral do projeto de acelera\u00e7\u00e3o"
+    },
+    "processos_vinculados": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "titulo": {
+            "type": "string"
+          },
+          "categoria": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Processos (MAPs) discutidos na reuni\u00e3o"
+    },
+    "videoaulas_vinculadas": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "titulo": {
+            "type": "string"
+          },
+          "descricao": {
+            "type": "string"
+          },
+          "video_url": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Videoaulas vinculadas ao atendimento"
+    },
+    "midias_anexas": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "link",
+              "imagem",
+              "video",
+              "documento"
+            ]
+          },
+          "url": {
+            "type": "string"
+          },
+          "titulo": {
+            "type": "string"
+          },
+          "document_id": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "M\u00eddias e documentos anexados"
+    },
+    "decisoes_tomadas": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "decisao": {
+            "type": "string"
+          },
+          "responsavel": {
+            "type": "string"
+          },
+          "prazo": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
+      "description": "Decis\u00f5es e encaminhamentos tomados na reuni\u00e3o"
+    },
+    "acoes_geradas": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "acao": {
+            "type": "string"
+          },
+          "responsavel": {
+            "type": "string"
+          },
+          "prazo": {
+            "type": "string",
+            "format": "date"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "A\u00e7\u00f5es geradas para acompanhamento"
+    },
+    "client_intelligence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "area": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "subcategory": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "gravity": {
+            "type": "string"
+          },
+          "gravityLabel": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Intelig\u00eancia do cliente capturada (Dores/Oportunidades)"
+    },
+    "checklist_respostas": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "template_id": {
+            "type": "string"
+          },
+          "template_nome": {
+            "type": "string"
+          },
+          "template_tema": {
+            "type": "string"
+          },
+          "incluir_na_ata": {
+            "type": "boolean",
+            "default": true
+          },
+          "perguntas": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "pergunta_id": {
+                  "type": "string"
+                },
+                "pergunta_texto": {
+                  "type": "string"
+                },
+                "resposta_atual": {
+                  "type": "string"
+                },
+                "resposta_meta": {
+                  "type": "string"
+                },
+                "atingimento_descritivo": {
+                  "type": "string"
+                },
+                "pct_atingimento": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "description": "Respostas dos checklists de diagn\u00f3stico vinculados ao atendimento"
+    },
+    "ai_summary": {
+      "type": "object",
+      "properties": {
+        "resumo_executivo": {
+          "type": "string"
+        },
+        "problemas_recorrentes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "evolucao_cliente": {
+          "type": "string"
+        },
+        "recomendacoes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "pontos_atencao": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Resumo e an\u00e1lise gerados por IA com contexto hist\u00f3rico"
+    },
+    "ata_ia": {
+      "type": "string",
+      "description": "Texto completo da ATA gerado por IA (Markdown)"
+    },
+    "observacoes_consultor": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es manuais do consultor"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "rascunho",
+        "finalizada"
+      ],
+      "default": "rascunho",
+      "description": "Status da ATA"
+    }
+  },
+  "required": [
+    "workshop_id",
+    "meeting_date",
+    "meeting_time"
+  ],
+  "rls": {
+    "create": true,
+    "read": true,
+    "update": {
+      "created_by": "{{user.email}}"
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
