@@ -31,23 +31,49 @@ export default function ClientDetailPanel({ client, isOpen, onClose, atendimento
         {client && (
           <>
             <DialogHeader>
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <Building2 className="w-6 h-6 text-blue-600" />
-                  <div>
-                    <DialogTitle className="text-2xl">{client.name}</DialogTitle>
-                    <p className="text-sm text-gray-600 flex items-center gap-2 mt-1">
-                      <MapPin className="w-4 h-4" />
-                      {client.city} - {client.state}
-                    </p>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4 pb-4 border-b">
+                {/* Logo + Nome + Localização */}
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  {client.logo_url ? (
+                    <img src={client.logo_url} alt={client.name} className="w-12 h-12 rounded-lg object-cover border border-gray-200 shrink-0" />
+                  ) : (
+                    <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shrink-0">
+                      <Building2 className="w-6 h-6 text-white" />
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <DialogTitle className="text-xl font-bold truncate">{client.name}</DialogTitle>
+                    <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
+                      <span className="flex items-center gap-1">
+                        <MapPin className="w-3.5 h-3.5" />
+                        {client.city} - {client.state}
+                      </span>
+                      {client.cnpj && (
+                        <span className="hidden sm:inline text-gray-400">CNPJ: {client.cnpj}</span>
+                      )}
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Badge className="bg-blue-600 text-white text-sm px-3 py-1">
+
+                {/* Badges + Ação */}
+                <div className="flex items-center gap-2 shrink-0">
+                  {client.status && client.status !== 'ativo' && (
+                    <Badge variant="outline" className="text-xs border-amber-300 text-amber-700 bg-amber-50">
+                      {client.status}
+                    </Badge>
+                  )}
+                  <Badge className={`text-xs font-semibold px-3 py-1 ${
+                    client.planoAtual === 'GOLD' ? 'bg-yellow-500 text-white' :
+                    client.planoAtual === 'PRATA' ? 'bg-gray-400 text-white' :
+                    client.planoAtual === 'BRONZE' ? 'bg-amber-700 text-white' :
+                    client.planoAtual === 'IOM' ? 'bg-purple-600 text-white' :
+                    client.planoAtual === 'MILLIONS' ? 'bg-gradient-to-r from-purple-600 to-pink-500 text-white' :
+                    'bg-blue-600 text-white'
+                  }`}>
                     {client.planoAtual || 'FREE'}
                   </Badge>
-                  <Button size="sm" onClick={handleAcessarOficina}>
-                    <ExternalLink className="w-4 h-4 mr-2" />
+                  <Button size="sm" variant="outline" onClick={handleAcessarOficina} className="gap-1.5">
+                    <ExternalLink className="w-3.5 h-3.5" />
                     Acessar Oficina
                   </Button>
                 </div>
