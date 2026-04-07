@@ -29,12 +29,12 @@ export default function GraficoAtendimentos({ atendimentos = [], workshops = [] 
 
   const data = contarPorStatus();
 
-  // Últimas reuniões realizadas (até 6)
+  // Últimas reuniões realizadas (até 8)
   const reunioesRecentes = React.useMemo(() => {
     return atendimentos
       .filter(a => a.status === 'realizado')
       .sort((a, b) => new Date(b.data_realizada || b.data_agendada) - new Date(a.data_realizada || a.data_agendada))
-      .slice(0, 6);
+      .slice(0, 8);
   }, [atendimentos]);
 
   const formatarTipo = (tipo) => {
@@ -70,26 +70,26 @@ export default function GraficoAtendimentos({ atendimentos = [], workshops = [] 
 
         {/* Histórico de reuniões recentes */}
         {reunioesRecentes.length > 0 && (
-          <div className="border-t pt-3">
-            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+          <div className="border-t pt-4 flex-1">
+            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
               <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
               Últimas Realizadas
             </h4>
-            <div className="space-y-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {reunioesRecentes.map(r => (
                 <div
                   key={r.id}
-                  className="flex items-center justify-between py-1.5 px-2 rounded-md cursor-default transition-colors hover:bg-green-50 group"
+                  className="flex items-center justify-between py-2.5 px-3 rounded-lg cursor-default transition-all hover:bg-green-50 hover:shadow-sm group border border-transparent hover:border-green-200"
                 >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div className="w-1.5 h-1.5 rounded-full bg-green-400 shrink-0 group-hover:bg-green-600 transition-colors" />
-                    <span className="text-sm text-gray-700 truncate group-hover:text-gray-900 transition-colors">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-2 h-2 rounded-full bg-green-400 shrink-0 group-hover:bg-green-600 transition-colors" />
+                    <span className="text-sm text-gray-700 truncate group-hover:text-gray-900 font-medium transition-colors">
                       {workshops.find(w => w.id === r.workshop_id)?.name || r.workshop_nome || formatarTipo(r.tipo_atendimento)}
                     </span>
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0 ml-2">
                     <Calendar className="w-3 h-3 text-gray-400 group-hover:text-green-600 transition-colors" />
-                    <span className="text-xs text-gray-400 group-hover:text-gray-600 transition-colors">
+                    <span className="text-xs text-gray-400 group-hover:text-gray-600 transition-colors whitespace-nowrap">
                       {formatarData(r.data_realizada || r.data_agendada)}
                     </span>
                   </div>
