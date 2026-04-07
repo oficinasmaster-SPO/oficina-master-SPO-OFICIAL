@@ -150,24 +150,24 @@ export default function ClientIntelligenceDetailForm({ open, onOpenChange, intel
             ) : checklist && checklist.items?.length > 0 ? (
               <div className="grid grid-cols-2 gap-3 bg-gray-50 p-3 rounded-lg">
                 {checklist.items.map((item) => (
-                  <div key={item.id} className="flex items-center gap-2">
+                  <div key={item.id} className="flex items-center gap-2 cursor-pointer" onClick={() => handleToggleCause(item.label)}>
                     <Checkbox
                       checked={causesSelected.includes(item.label)}
                       onCheckedChange={() => handleToggleCause(item.label)}
                     />
-                    <label className="text-sm text-gray-700 cursor-pointer">{item.label}</label>
+                    <span className="text-sm text-gray-700 select-none">{item.label}</span>
                   </div>
                 ))}
               </div>
             ) : (
               <div className="space-y-2 bg-gray-50 p-3 rounded-lg">
                 {COMMON_CAUSES.map((cause) => (
-                  <div key={cause} className="flex items-center gap-2">
+                  <div key={cause} className="flex items-center gap-2 cursor-pointer" onClick={() => handleToggleCause(cause)}>
                     <Checkbox
                       checked={causesSelected.includes(cause)}
                       onCheckedChange={() => handleToggleCause(cause)}
                     />
-                    <label className="text-sm text-gray-700 cursor-pointer">{cause}</label>
+                    <span className="text-sm text-gray-700 select-none">{cause}</span>
                   </div>
                 ))}
               </div>
