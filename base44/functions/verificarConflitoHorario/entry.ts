@@ -7,7 +7,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const { consultor_id, data_agendada, atendimento_id_editando } = await req.json();
+    const { consultor_id, data_agendada, duracao_minutos = 60, atendimento_id_editando } = await req.json();
 
     if (!consultor_id || !data_agendada) {
       return Response.json({
@@ -15,15 +15,31 @@ Deno.serve(async (req) => {
       }, { status: 400 });
     }
 
-    // Buscar atendimentos no mesmo horário para o mesmo consultor
+    const dataInicio = new Date(data_agendada);
+    const dataFim = new Date(dataInicio.getTime() + (duracao_minutos * 60000));
+
+    const startOfDay = new Date(dataInicio);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(dataInicio);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    // Buscar atendimentos no mesmo dia para o mesmo consultor
     const atendimentos = await base44.asServiceRole.entities.ConsultoriaAtendimento.filter({
       consultor_id,
-      data_agendada,
+      data_agendada: { $gte: startOfDay.toISOString(), $lte: endOfDay.toISOString() },
       status: { $in: ['agendado', 'confirmado', 'participando', 'realizado'] }
     });
 
     // Se está editando, remover o próprio atendimento da lista
-    const conflitos = atendimentos.filter(a => a.id !== atendimento_id_editando);
+    const conflitos = atendimentos.filter(a => {
+      if (a.id === atendimento_id_editando) return false;
+      
+      const existingStart = new Date(a.data_agendada);
+      const existingEnd = new Date(existingStart.getTime() + (a.duracao_minutos || 60) * 60000);
+
+      // Conflito: novo início é antes do fim existente E novo fim é depois do início existente
+      return dataInicio < existingEnd && dataFim > existingStart;
+    });
 
     if (conflitos.length === 0) {
       return Response.json({

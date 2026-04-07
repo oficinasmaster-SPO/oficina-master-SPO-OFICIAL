@@ -20,6 +20,7 @@ export default function ConflitosHorarioModal({
   conflitos, 
   dataHorario,
   consultorId,
+  duracaoMinutos = 60,
   onSelectHorario
 }) {
   const [horariosSugeridos, setHorariosSugeridos] = useState([]);
@@ -60,7 +61,8 @@ export default function ConflitosHorarioModal({
         try {
           const response = await base44.functions.invoke('verificarConflitoHorario', {
             consultor_id: consultorId,
-            data_agendada: dataHoraStr
+            data_agendada: dataHoraStr,
+            duracao_minutos: duracaoMinutos
           });
 
           if (!response.data.conflito) {

@@ -449,6 +449,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
       const response = await base44.functions.invoke('verificarConflitoHorario', {
         consultor_id: consultorId,
         data_agendada: dataHoraCompleta,
+        duracao_minutos: formData.duracao_minutos,
         atendimento_id_editando: formData.id // Ignora o próprio atendimento se estiver editando
       });
 
@@ -1551,6 +1552,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
           conflitos={conflitosModal.conflitos}
           dataHorario={conflitosModal.dataHorario}
           consultorId={formData.consultor_id || user?.id}
+          duracaoMinutos={formData.duracao_minutos}
           onSelectHorario={({ data, hora }) => {
             setFormData({
               ...formData,

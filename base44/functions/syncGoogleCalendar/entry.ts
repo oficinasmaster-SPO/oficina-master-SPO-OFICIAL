@@ -145,7 +145,7 @@ Deno.serve(async (req) => {
           const calendarEvents = calendarData.items || [];
 
           // Buscar todos atendimentos com google_event_id
-          const allAtendimentos = await base44.asServiceRole.entities.ConsultoriaAtendimento.list();
+          const allAtendimentos = await base44.asServiceRole.entities.ConsultoriaAtendimento.list(null, 10000);
           const atendimentosMap = new Map(
             allAtendimentos
               .filter(a => a.google_event_id)
