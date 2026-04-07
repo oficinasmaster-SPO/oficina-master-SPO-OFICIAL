@@ -66,7 +66,8 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
   const { data: notices = [], refetch: refetchNotices } = useQuery({
     queryKey: ['internal-notices', workshop?.id],
     queryFn: () => base44.entities.InternalNotice.filter({ active: true }),
-    retry: 1,
+    staleTime: 5 * 60 * 1000,
+    retry: false,
     enabled: !!workshop?.id
   });
 
@@ -75,7 +76,9 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
     queryFn: async () => {
         const settings = await base44.entities.SystemSetting.filter({ key: 'home_quick_tips' });
         return settings[0] || null;
-    }
+    },
+    staleTime: 5 * 60 * 1000,
+    retry: false
   });
 
   // Se a oficina tiver dicas personalizadas, use-as prioritariamente
@@ -87,7 +90,9 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
     queryFn: async () => {
         const settings = await base44.entities.SystemSetting.filter({ key: 'permissions_config' });
         return settings[0] ? JSON.parse(settings[0].value) : null;
-    }
+    },
+    staleTime: 5 * 60 * 1000,
+    retry: false
   });
 
   // Busca dados do colaborador atual para saber o cargo (se não for dono)
@@ -102,7 +107,9 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
         return null;
       }
     },
-    enabled: !!user?.email && !!workshop?.id && user.id !== workshop?.owner_id
+    enabled: !!user?.email && !!workshop?.id && user.id !== workshop?.owner_id,
+    staleTime: 5 * 60 * 1000,
+    retry: false
   });
 
   const getUserRole = () => {
@@ -189,7 +196,8 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
       }
     },
     enabled: !!user?.id && !!workshop?.id,
-    retry: 1
+    staleTime: 5 * 60 * 1000,
+    retry: false
   });
 
   const { data: tasks = [] } = useQuery({
@@ -205,7 +213,8 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
       }
     },
     enabled: !!user?.id && !!workshop?.id,
-    retry: 1
+    staleTime: 5 * 60 * 1000,
+    retry: false
   });
 
   const { data: notifications = [] } = useQuery({
@@ -221,7 +230,8 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
       }
     },
     enabled: !!user?.id,
-    retry: 1
+    staleTime: 5 * 60 * 1000,
+    retry: false
   });
 
   const { data: gameProfile } = useQuery({
@@ -238,7 +248,8 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
       }
     },
     enabled: !!user?.id,
-    retry: 1
+    staleTime: 5 * 60 * 1000,
+    retry: false
   });
 
   // Buscar métricas reais do histórico de produção

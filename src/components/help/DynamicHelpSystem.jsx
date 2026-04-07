@@ -21,6 +21,7 @@ export default function DynamicHelpSystem({ pageName, autoStartTour = false }) {
       }
     },
     enabled: !!pageName,
+    staleTime: 5 * 60 * 1000,
     retry: false
   });
 
@@ -40,6 +41,7 @@ export default function DynamicHelpSystem({ pageName, autoStartTour = false }) {
       }
     },
     enabled: !!pageName,
+    staleTime: 5 * 60 * 1000,
     retry: false
   });
 

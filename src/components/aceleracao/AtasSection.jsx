@@ -226,25 +226,33 @@ export default function AtasSection({ atas, workshop }) {
                   </div>
                 </div>
 
-                {Array.isArray(ata.proximos_passos) && ata.proximos_passos.length > 0 && (
-                  <div className="mt-3 pt-3 border-t">
-                    <p className="text-xs font-semibold text-gray-700 mb-2">
-                      Próximos Passos ({ata.proximos_passos.length}):
-                    </p>
-                    <ul className="space-y-1">
-                      {ata.proximos_passos.slice(0, 2).map((passo, idx) => (
-                        <li key={idx} className="text-xs text-gray-600">
-                          • {passo.descricao} - {passo.responsavel}
-                        </li>
-                      ))}
-                      {ata.proximos_passos.length > 2 && (
-                        <li className="text-xs text-blue-600">
-                          + {ata.proximos_passos.length - 2} mais...
-                        </li>
-                      )}
-                    </ul>
-                  </div>
-                )}
+                {(() => {
+                  const listaPassos = Array.isArray(ata.proximos_passos_list) 
+                    ? ata.proximos_passos_list 
+                    : (Array.isArray(ata.proximos_passos) ? ata.proximos_passos : []);
+                  
+                  if (listaPassos.length === 0) return null;
+
+                  return (
+                    <div className="mt-3 pt-3 border-t">
+                      <p className="text-xs font-semibold text-gray-700 mb-2">
+                        Próximos Passos ({listaPassos.length}):
+                      </p>
+                      <ul className="space-y-1">
+                        {listaPassos.slice(0, 2).map((passo, idx) => (
+                          <li key={idx} className="text-xs text-gray-600">
+                            • {passo.descricao || passo} {passo.responsavel ? `- ${passo.responsavel}` : ''}
+                          </li>
+                        ))}
+                        {listaPassos.length > 2 && (
+                          <li className="text-xs text-blue-600">
+                            + {listaPassos.length - 2} mais...
+                          </li>
+                        )}
+                      </ul>
+                    </div>
+                  );
+                })()}
               </div>
             ))}
           </div>

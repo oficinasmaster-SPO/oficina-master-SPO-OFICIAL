@@ -53,6 +53,7 @@ export function useDashboardMetrics(workshopId, userId) {
     },
     enabled: !!workshopId,
     staleTime: 1000 * 60 * 5, // 5 minutos
+    retry: false,
   });
 }
 

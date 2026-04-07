@@ -24,7 +24,9 @@ export default function PainelClienteAceleracao() {
   
   const { data: user, isLoading: loadingUser } = useQuery({
     queryKey: ['current-user'],
-    queryFn: () => base44.auth.me()
+    queryFn: () => base44.auth.me(),
+    staleTime: 5 * 60 * 1000,
+    retry: false
   });
 
   const { data: workshop } = useQuery({
@@ -40,7 +42,9 @@ export default function PainelClienteAceleracao() {
       
       return await base44.entities.Workshop.get(user.workshop_id);
     },
-    enabled: !!user?.workshop_id
+    enabled: !!user?.workshop_id,
+    staleTime: 5 * 60 * 1000,
+    retry: false
   });
 
   const { data: atendimentos, isLoading: loadingAtendimentos } = useQuery({
@@ -51,7 +55,9 @@ export default function PainelClienteAceleracao() {
         '-data_agendada'
       );
     },
-    enabled: !!workshop?.id
+    enabled: !!workshop?.id,
+    staleTime: 5 * 60 * 1000,
+    retry: false
   });
 
   // Buscar progresso do cronograma de implementação (nova fonte única de verdade)
@@ -62,7 +68,9 @@ export default function PainelClienteAceleracao() {
         workshop_id: workshop.id
       });
     },
-    enabled: !!workshop?.id
+    enabled: !!workshop?.id,
+    staleTime: 5 * 60 * 1000,
+    retry: false
   });
 
   // Buscar atividades do Cronograma de Implementação
@@ -74,7 +82,9 @@ export default function PainelClienteAceleracao() {
         '-created_date'
       );
     },
-    enabled: !!workshop?.id
+    enabled: !!workshop?.id,
+    staleTime: 5 * 60 * 1000,
+    retry: false
   });
 
   // Buscar último diagnóstico para mostrar a fase
@@ -88,7 +98,9 @@ export default function PainelClienteAceleracao() {
       );
       return diagnostics?.[0] || null;
     },
-    enabled: !!workshop?.id
+    enabled: !!workshop?.id,
+    staleTime: 5 * 60 * 1000,
+    retry: false
   });
 
   const { data: atas = [] } = useQuery({
@@ -97,7 +109,9 @@ export default function PainelClienteAceleracao() {
       { workshop_id: workshop.id, status: 'finalizada' },
       '-meeting_date'
     ),
-    enabled: !!workshop?.id
+    enabled: !!workshop?.id,
+    staleTime: 5 * 60 * 1000,
+    retry: false
   });
 
   // Buscar Plano de Aceleração do Mês Atual
@@ -116,7 +130,9 @@ export default function PainelClienteAceleracao() {
       );
       return plans?.[0] || null;
     },
-    enabled: !!workshop?.id
+    enabled: !!workshop?.id,
+    staleTime: 5 * 60 * 1000,
+    retry: false
   });
 
   // Mutation para gerar plano
