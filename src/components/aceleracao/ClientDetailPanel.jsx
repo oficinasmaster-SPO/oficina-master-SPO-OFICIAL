@@ -9,7 +9,7 @@ import { ptBR } from "date-fns/locale";
 import { 
   Building2, MapPin, DollarSign, Users, Phone, Mail, 
   Briefcase, Clock, Target, ExternalLink, Calendar,
-  TrendingUp, Award, Package, FileText, Heart, Lightbulb
+  TrendingUp, Award, Package, FileText, Heart, Lightbulb, X
 } from "lucide-react";
 import ConsultoriaClienteTab from "./ConsultoriaClienteTab";
 
@@ -27,7 +27,7 @@ export default function ClientDetailPanel({ client, isOpen, onClose, atendimento
 
   return (
     <Dialog open={isOpen && !!client} onOpenChange={onClose}>
-      <DialogContent className="max-w-7xl h-[90vh] overflow-auto">
+      <DialogContent className="max-w-7xl h-[90vh] overflow-auto [&>button[class*='absolute']]:hidden">
         {client && (
           <>
             <DialogHeader>
@@ -56,7 +56,7 @@ export default function ClientDetailPanel({ client, isOpen, onClose, atendimento
                 </div>
 
                 {/* Badges + Ação */}
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-2 shrink-0 ml-auto">
                   {client.status && client.status !== 'ativo' && (
                     <Badge variant="outline" className="text-xs border-amber-300 text-amber-700 bg-amber-50">
                       {client.status}
@@ -76,6 +76,15 @@ export default function ClientDetailPanel({ client, isOpen, onClose, atendimento
                     <ExternalLink className="w-3.5 h-3.5" />
                     Acessar Oficina
                   </Button>
+                  <button
+                    type="button"
+                    onClick={() => onClose(false)}
+                    className="relative ml-1 p-2 rounded-full transition-colors duration-200 hover:bg-red-100 hover:text-red-600 text-gray-400 overflow-hidden group active:animate-ping"
+                    style={{ WebkitTapHighlightColor: 'transparent' }}
+                  >
+                    <span className="absolute inset-0 rounded-full bg-red-500 opacity-0 group-active:opacity-20 group-active:animate-ping" />
+                    <X className="w-5 h-5 relative z-10" />
+                  </button>
                 </div>
               </div>
             </DialogHeader>
