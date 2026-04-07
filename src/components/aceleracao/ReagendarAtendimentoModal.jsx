@@ -51,6 +51,19 @@ export default function ReagendarAtendimentoModal({ atendimento, workshop, onClo
         updateData.motivo_cancelamento_empresa = motivoSelecionado;
       }
 
+      // Remover evento antigo do google calendar para liberar a agenda e forçar a criação de um novo na nova data
+      if (atendimento.google_event_id) {
+        try {
+          await base44.functions.invoke('deleteGoogleMeetEvent', { eventId: atendimento.google_event_id });
+          updateData.google_event_id = null;
+          updateData.google_meet_link = null;
+          updateData.google_calendar_link = null;
+          toast.success("Evento antigo removido do Google Calendar, a vaga foi liberada.");
+        } catch (e) {
+          console.error("Erro ao deletar evento do google:", e);
+        }
+      }
+
       await base44.entities.ConsultoriaAtendimento.update(atendimento.id, updateData);
 
       // Criar ata de reagendamento

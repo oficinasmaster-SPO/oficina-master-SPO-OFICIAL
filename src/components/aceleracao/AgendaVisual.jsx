@@ -2,13 +2,17 @@ import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import AtendimentoModal from "@/components/aceleracao/AtendimentoModal";
+import ReagendarAtendimentoModal from "@/components/aceleracao/ReagendarAtendimentoModal";
+import CancelarAtendimentoModal from "@/components/aceleracao/CancelarAtendimentoModal";
 import { base44 } from "@/api/base44Client";
+import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Maximize2, Clock, MapPin, User, Filter, Video, Users, ExternalLink, Phone, MessageCircle, Mail, CalendarCheck } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Maximize2, Clock, MapPin, User, Filter, Video, Users, ExternalLink, Phone, MessageCircle, Mail, CalendarCheck, MoreVertical, XCircle } from "lucide-react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, startOfWeek, endOfWeek, addMonths, subMonths, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -26,6 +30,7 @@ const gerarIdAmigavel = (tipo, id, indice) => {
 
 export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [viewMode, setViewMode] = useState('month'); // 'day', 'week', 'month'
   const [selectedDate, setSelectedDate] = useState(null);
@@ -34,6 +39,8 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
   const [consultorFiltro, setConsultorFiltro] = useState('todos');
   const [modalIdx, setModalIdx] = useState(0);
   const [editModal, setEditModal] = useState(null); // atendimentoId sendo editado
+  const [reagendarModal, setReagendarModal] = useState(null); // atendimento sendo reagendado
+  const [cancelarModal, setCancelarModal] = useState(null); // atendimento sendo cancelado
 
   const getDateRange = () => {
     if (viewMode === 'day') {
@@ -523,6 +530,23 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
                     <Button size="sm" variant="outline" className="flex-1" onClick={() => { setDetailsModal({ ...detailsModal, open: false }); setEditModal(atendimento.id); }}>
                       Ver / Editar
                     </Button>
+                    {['agendado', 'confirmado', 'reagendado', 'atrasado'].includes(atendimento.status) && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button size="sm" variant="outline" className="flex-none px-2">
+                            <MoreVertical className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => setReagendarModal(atendimento)}>
+                            <CalendarIcon className="w-4 h-4 mr-2" /> Reagendar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setCancelarModal(atendimento)} className="text-red-600">
+                            <XCircle className="w-4 h-4 mr-2" /> Cancelar
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
                   </div>
                 </div>
               );
@@ -536,6 +560,32 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
         <AtendimentoModal
           atendimentoId={editModal}
           onClose={() => setEditModal(null)}
+        />
+      )}
+
+      {/* Modal de Reagendamento */}
+      {reagendarModal && (
+        <ReagendarAtendimentoModal
+          atendimento={reagendarModal}
+          workshop={reagendarModal.workshop}
+          onClose={() => setReagendarModal(null)}
+          onSaved={() => {
+            queryClient.invalidateQueries({ queryKey: ['atendimentos-acelerador'] });
+            if (detailsModal.open && detailsModal.date) loadDayModal(detailsModal.date);
+          }}
+        />
+      )}
+
+      {/* Modal de Cancelamento */}
+      {cancelarModal && (
+        <CancelarAtendimentoModal
+          atendimento={cancelarModal}
+          workshop={cancelarModal.workshop}
+          onClose={() => setCancelarModal(null)}
+          onSaved={() => {
+            queryClient.invalidateQueries({ queryKey: ['atendimentos-acelerador'] });
+            if (detailsModal.open && detailsModal.date) loadDayModal(detailsModal.date);
+          }}
         />
       )}
     </>
