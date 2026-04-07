@@ -304,9 +304,9 @@ export default function VisaoGeralTab({ user, filtros = {} }) {
               Atendimentos Atrasados
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex flex-col items-center justify-center h-full">
             {tarefasPendentes.length === 0 ? (
-              <div className="text-center py-4">
+              <div className="text-center py-8 flex flex-col items-center justify-center flex-1">
                 <CheckCircle className="w-12 h-12 mx-auto text-green-500 mb-2" />
                 <p className="text-gray-500">Tudo em dia!</p>
               </div>
