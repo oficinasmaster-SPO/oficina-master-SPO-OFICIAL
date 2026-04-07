@@ -1,9 +1,10 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { ClipboardList } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { ClipboardList, CheckCircle2, Calendar } from "lucide-react";
+import { format } from "date-fns";
 
-export default function GraficoAtendimentos({ atendimentos = [] }) {
+export default function GraficoAtendimentos({ atendimentos = [], workshops = [] }) {
   const contarPorStatus = () => {
     const counts = {
       realizado: 0,
@@ -28,6 +29,26 @@ export default function GraficoAtendimentos({ atendimentos = [] }) {
 
   const data = contarPorStatus();
 
+  // Últimas reuniões realizadas (até 6)
+  const reunioesRecentes = React.useMemo(() => {
+    return atendimentos
+      .filter(a => a.status === 'realizado')
+      .sort((a, b) => new Date(b.data_realizada || b.data_agendada) - new Date(a.data_realizada || a.data_agendada))
+      .slice(0, 6);
+  }, [atendimentos]);
+
+  const formatarTipo = (tipo) => {
+    if (!tipo) return '';
+    return tipo.replace(/_/g, ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+  };
+
+  const formatarData = (dateStr) => {
+    if (!dateStr) return '';
+    try {
+      return format(new Date(dateStr), 'dd/MM/yy');
+    } catch { return ''; }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -36,7 +57,7 @@ export default function GraficoAtendimentos({ atendimentos = [] }) {
           Status dos Atendimentos
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
         <ResponsiveContainer width="100%" height={250}>
           <BarChart data={data}>
             <CartesianGrid strokeDasharray="3 3" />
@@ -46,6 +67,37 @@ export default function GraficoAtendimentos({ atendimentos = [] }) {
             <Bar dataKey="value" fill="#8884d8" />
           </BarChart>
         </ResponsiveContainer>
+
+        {/* Histórico de reuniões recentes */}
+        {reunioesRecentes.length > 0 && (
+          <div className="border-t pt-3">
+            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
+              Últimas Realizadas
+            </h4>
+            <div className="space-y-1">
+              {reunioesRecentes.map(r => (
+                <div
+                  key={r.id}
+                  className="flex items-center justify-between py-1.5 px-2 rounded-md cursor-default transition-colors hover:bg-green-50 group"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-1.5 h-1.5 rounded-full bg-green-400 shrink-0 group-hover:bg-green-600 transition-colors" />
+                    <span className="text-sm text-gray-700 truncate group-hover:text-gray-900 transition-colors">
+                      {workshops.find(w => w.id === r.workshop_id)?.name || r.workshop_nome || formatarTipo(r.tipo_atendimento)}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                    <Calendar className="w-3 h-3 text-gray-400 group-hover:text-green-600 transition-colors" />
+                    <span className="text-xs text-gray-400 group-hover:text-gray-600 transition-colors">
+                      {formatarData(r.data_realizada || r.data_agendada)}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

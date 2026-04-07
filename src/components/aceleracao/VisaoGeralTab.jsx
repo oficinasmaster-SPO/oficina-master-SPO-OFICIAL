@@ -355,7 +355,7 @@ export default function VisaoGeralTab({ user, filtros = {} }) {
 
       <div className="grid md:grid-cols-2 gap-6">
         {/* Gráfico de Atendimentos */}
-        <GraficoAtendimentos atendimentos={atendimentosPeriodo} />
+        <GraficoAtendimentos atendimentos={atendimentosPeriodo} workshops={workshops || []} />
 
         {/* Agenda Visual */}
         <AgendaVisual
