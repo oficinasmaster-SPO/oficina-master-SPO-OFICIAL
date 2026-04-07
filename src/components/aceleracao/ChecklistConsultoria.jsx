@@ -142,43 +142,41 @@ function PerguntaCard({ pergunta, resposta, onChange }) {
   const pct = Math.min(100, Math.max(0, Number(resposta?.pct_atingimento) || 0));
 
   return (
-    <div className="border border-gray-100 rounded-xl p-4 space-y-3 bg-white hover:border-gray-200 transition-colors">
-      <p className="font-medium text-sm text-gray-900">{pergunta.texto}</p>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+    <div className="border border-gray-100 rounded-lg p-3 bg-white hover:border-gray-200 transition-colors">
+      <p className="font-medium text-sm text-gray-900 mb-2">{pergunta.texto}</p>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
         <div>
-          <Label className="text-xs font-medium uppercase tracking-wider text-gray-400">Resposta Atual</Label>
+          <Label className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Resposta Atual</Label>
           <Textarea
             value={resposta?.resposta_atual || ""}
             onChange={e => onChange({ ...resposta, resposta_atual: e.target.value })}
-            placeholder="Descreva a situação atual..."
-            rows={2}
-            className="mt-1 text-sm"
+            placeholder="Situação atual..."
+            rows={1}
+            className="mt-0.5 text-xs min-h-[32px] resize-none"
           />
         </div>
         <div>
-          <Label className="text-xs font-medium uppercase tracking-wider text-gray-400">Resposta Meta</Label>
+          <Label className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Resposta Meta</Label>
           <Textarea
             value={resposta?.resposta_meta || ""}
             onChange={e => onChange({ ...resposta, resposta_meta: e.target.value })}
-            placeholder="Descreva o objetivo..."
-            rows={2}
-            className="mt-1 text-sm"
+            placeholder="Objetivo..."
+            rows={1}
+            className="mt-0.5 text-xs min-h-[32px] resize-none"
           />
         </div>
-      </div>
-      <div className="grid grid-cols-2 gap-3">
         <div>
-          <Label className="text-xs font-medium uppercase tracking-wider text-gray-400">Atingimento (descritivo)</Label>
+          <Label className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Atingimento (descritivo)</Label>
           <Input
             value={resposta?.atingimento_descritivo || ""}
             onChange={e => onChange({ ...resposta, atingimento_descritivo: e.target.value })}
-            placeholder="Ex: R$ 48.000 / 80% concluído"
-            className="mt-1 text-sm"
+            placeholder="Ex: R$ 48.000"
+            className="mt-0.5 text-xs h-8"
           />
         </div>
         <div>
-          <Label className="text-xs font-medium uppercase tracking-wider text-gray-400">Atingimento (%)</Label>
-          <div className="mt-1 space-y-1">
+          <Label className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Atingimento (%)</Label>
+          <div className="flex items-center gap-2 mt-0.5">
             <Input
               type="number"
               min="0"
@@ -186,18 +184,20 @@ function PerguntaCard({ pergunta, resposta, onChange }) {
               value={resposta?.pct_atingimento || ""}
               onChange={e => onChange({ ...resposta, pct_atingimento: e.target.value })}
               placeholder="0–100"
-              className="text-sm"
+              className="text-xs h-8 w-20 flex-shrink-0"
             />
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div
-                className="h-2 rounded-full transition-all duration-300"
-                style={{
-                  width: `${pct}%`,
-                  backgroundColor: pct >= 80 ? "#16a34a" : pct >= 50 ? "#d97706" : "#dc2626",
-                }}
-              />
+            <div className="flex-1 flex items-center gap-1.5">
+              <div className="flex-1 bg-gray-200 rounded-full h-1.5">
+                <div
+                  className="h-1.5 rounded-full transition-all duration-300"
+                  style={{
+                    width: `${pct}%`,
+                    backgroundColor: pct >= 80 ? "#16a34a" : pct >= 50 ? "#d97706" : "#dc2626",
+                  }}
+                />
+              </div>
+              <span className="text-[10px] text-gray-400 w-7 text-right flex-shrink-0">{pct}%</span>
             </div>
-            <p className="text-xs text-right text-gray-500">{pct}%</p>
           </div>
         </div>
       </div>
