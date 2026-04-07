@@ -700,7 +700,7 @@ export const generateAtaPDF = (rawAta, workshop) => {
     checkPageBreak(30);
     doc.setFontSize(13);
     doc.setFont(undefined, 'bold');
-    doc.text('12. INTELIGENCIA DO CLIENTE (DORES E OPORTUNIDADES)', margin, y);
+    doc.text('13. INTELIGENCIA DO CLIENTE (DORES E OPORTUNIDADES)', margin, y);
     y += 2;
     doc.setLineWidth(0.5);
     doc.line(margin, y, pageWidth - margin, y);
