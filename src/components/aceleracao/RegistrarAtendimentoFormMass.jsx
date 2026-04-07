@@ -21,8 +21,8 @@ export default function RegistrarAtendimentoFormMass({ formData, onFormChange, o
     queryKey: ['consultores-massa'],
     queryFn: async () => {
       try {
-        const employees = await base44.entities.Employee.list();
-        return employees.filter(e => e.job_role === 'acelerador' || e.job_role === 'consultor');
+        const users = await base44.entities.User.list(null, 1000);
+        return users.filter(u => u.role === 'interno');
       } catch {
         return [];
       }

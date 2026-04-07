@@ -175,16 +175,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
     queryKey: ['consultores-list'],
     queryFn: async () => {
       const users = await base44.entities.User.list(null, 1000);
-      
-      // Buscar colaboradores internos (Oficinas Master)
-      const employees = await base44.entities.Employee.filter({
-        tipo_vinculo: 'interno',
-        status: 'ativo'
-      }, null, 1000);
-      
-      const employeeUserIds = employees.map(e => e.user_id).filter(Boolean);
-      
-      return users.filter(u => employeeUserIds.includes(u.id));
+      return users.filter(u => u.role === 'interno');
     },
     enabled: !!user
   });
