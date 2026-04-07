@@ -26,6 +26,7 @@ import ChecklistConsultoria from "@/components/aceleracao/ChecklistConsultoria";
 import { useGoogleMeet } from "@/components/hooks/useGoogleMeet";
 import NextSteps from "@/components/aceleracao/NextSteps";
 import AtendimentoProgressIndicator from "@/components/aceleracao/AtendimentoProgressIndicator";
+import AtaAIConfigPanel from "@/components/aceleracao/AtaAIConfigPanel";
 import AutoSaveIndicator from "@/components/aceleracao/AutoSaveIndicator";
 import { TimePicker } from "@/components/ui/time-picker";
 import { toBrazilDate } from "@/utils/timezone";
@@ -390,14 +391,38 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
 
   // Gerar ata com IA
   const gerarAtaMutation = useMutation({
-    mutationFn: async (atendimento_id) => {
-      return await base44.functions.invoke('gerarAtaConsultoria', {
-        atendimento_id: atendimento_id
-      });
+    mutationFn: async (params) => {
+      // params pode ser string (legacy) ou objeto com config
+      const payload = typeof params === 'string'
+        ? { atendimento_id: params }
+        : {
+            atendimento_id: params.atendimento_id,
+            ai_config: {
+              selectedSections: params.selectedSections,
+              tone: params.tone,
+              suggestNextSteps: params.suggestNextSteps,
+            }
+          };
+      return await base44.functions.invoke('gerarAtaConsultoria', payload);
     },
-    onSuccess: () => {
+    onSuccess: (response) => {
       toast.success('Ata gerada com sucesso!');
       queryClient.invalidateQueries(['consultoria-atendimentos']);
+      // Se a IA sugeriu próximos passos, adicionar ao form
+      const sugestoes = response?.data?.suggested_next_steps;
+      if (sugestoes && sugestoes.length > 0) {
+        setFormData(prev => ({
+          ...prev,
+          ata_id: response.data.ata_id || prev.ata_id,
+          proximos_passos_list: [
+            ...(prev.proximos_passos_list || []),
+            ...sugestoes.map(s => ({ descricao: s.descricao, responsavel: s.responsavel || '', prazo: s.prazo || '' }))
+          ]
+        }));
+        toast.info(`${sugestoes.length} próximos passos sugeridos pela IA foram adicionados!`);
+      } else if (response?.data?.ata_id) {
+        setFormData(prev => ({ ...prev, ata_id: response.data.ata_id }));
+      }
     },
     onError: (error) => {
       toast.error('Erro ao gerar ata: ' + error.message);
@@ -1391,20 +1416,12 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
               <div className="flex flex-col gap-4">
                 <div className="flex gap-3">
                   {!formData.ata_id ? (
-                    <Button 
-                      type="button" 
-                      variant="default" 
-                      className="flex-1 bg-green-600 hover:bg-green-700"
-                      onClick={() => gerarAtaMutation.mutate(formData.id)}
-                      disabled={gerarAtaMutation.isPending}
-                    >
-                      {gerarAtaMutation.isPending ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
-                        <FilePlus className="w-4 h-4 mr-2" />
-                      )}
-                      Gerar ATA Agora
-                    </Button>
+                    <div className="flex-1 space-y-3">
+                      <AtaAIConfigPanel
+                        onGenerate={(config) => gerarAtaMutation.mutate({ atendimento_id: formData.id, ...config })}
+                        isGenerating={gerarAtaMutation.isPending}
+                      />
+                    </div>
                   ) : (
                     <div className="flex-1 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center justify-between">
                       <span className="text-green-800 font-medium flex items-center gap-2">

@@ -10,7 +10,12 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json().catch(() => ({}));
-    const { atendimento_id, dados_reuniao } = body;
+    const { atendimento_id, dados_reuniao, ai_config } = body;
+
+    // AI config defaults
+    const selectedSections = ai_config?.selectedSections || ['pauta','objetivos','observacoes','decisoes','acoes','proximos_passos','metricas'];
+    const tone = ai_config?.tone || 'formal';
+    const suggestNextSteps = ai_config?.suggestNextSteps !== undefined ? ai_config.suggestNextSteps : false;
 
     const workshop_id_auth = user.data?.workshop_id || body.workshop_id;
 
@@ -73,9 +78,61 @@ Deno.serve(async (req) => {
         console.error("Erro ao buscar inteligência:", e);
     }
 
+    // Mapear tom para instrução
+    const toneInstructions = {
+      formal: 'Use linguagem corporativa, técnica e profissional.',
+      direto: 'Seja extremamente objetivo e direto, sem rodeios. Frases curtas e assertivas.',
+      informal: 'Use linguagem conversacional e acessível, mas mantendo profissionalismo.',
+      motivacional: 'Use tom encorajador e positivo, destacando conquistas e oportunidades.'
+    };
+    const toneText = toneInstructions[tone] || toneInstructions.formal;
+
+    // Montar blocos de dados condicionais
+    const sectionBlocks = [];
+    if (selectedSections.includes('pauta')) {
+      sectionBlocks.push(`**PAUTA/TÓPICOS DISCUTIDOS:**\n${atendimento.pauta?.map((p, i) => `${i + 1}. ${p.titulo}: ${p.descricao}`).join('\n') || 'Não especificado'}\n${atendimento.topicos_discutidos?.map(t => `- ${t}`).join('\n') || ''}`);
+    }
+    if (selectedSections.includes('objetivos')) {
+      sectionBlocks.push(`**OBJETIVOS:**\n${atendimento.objetivos?.map(o => `- ${o}`).join('\n') || 'Não especificado'}`);
+    }
+    if (selectedSections.includes('observacoes')) {
+      sectionBlocks.push(`**OBSERVAÇÕES DO CONSULTOR:**\n${atendimento.observacoes_consultor || 'Nenhuma observação'}`);
+    }
+    if (selectedSections.includes('decisoes')) {
+      sectionBlocks.push(`**DECISÕES TOMADAS:**\n${atendimento.decisoes_tomadas?.map(d => `- ${d.decisao} (Responsável: ${d.responsavel}, Prazo: ${d.prazo})`).join('\n') || 'Nenhuma decisão registrada'}`);
+    }
+    if (selectedSections.includes('acoes')) {
+      sectionBlocks.push(`**AÇÕES DE ACOMPANHAMENTO:**\n${atendimento.acoes_geradas?.map(a => `- ${a.acao} (Responsável: ${a.responsavel}, Prazo: ${a.prazo})`).join('\n') || 'Nenhuma ação registrada'}`);
+    }
+    if (selectedSections.includes('proximos_passos')) {
+      sectionBlocks.push(`**PRÓXIMOS PASSOS:**\n${atendimento.proximos_passos || 'A definir'}`);
+    }
+    if (selectedSections.includes('checklist') && atendimento.checklist_respostas?.length > 0) {
+      const checklistText = atendimento.checklist_respostas.map(bloco => {
+        const perguntas = (bloco.perguntas || []).filter(p => p.resposta_atual || p.resposta_meta).map(p => `  - ${p.pergunta_texto}: Atual=${p.resposta_atual || 'N/A'}, Meta=${p.resposta_meta || 'N/A'}, Atingimento=${p.pct_atingimento || 0}%`).join('\n');
+        return `Checklist: ${bloco.template_nome}\n${perguntas}`;
+      }).join('\n');
+      sectionBlocks.push(`**CHECKLIST DE DIAGNÓSTICO:**\n${checklistText}`);
+    }
+    if (selectedSections.includes('processos') && atendimento.processos_vinculados?.length > 0) {
+      sectionBlocks.push(`**PROCESSOS (MAPs) VINCULADOS:**\n${atendimento.processos_vinculados.map(p => `- ${p.titulo} (${p.categoria})`).join('\n')}`);
+    }
+    if (selectedSections.includes('videoaulas') && atendimento.videoaulas_vinculadas?.length > 0) {
+      sectionBlocks.push(`**VIDEOAULAS VINCULADAS:**\n${atendimento.videoaulas_vinculadas.map(v => `- ${v.titulo} (${v.descricao})`).join('\n')}`);
+    }
+    if (selectedSections.includes('metricas')) {
+      sectionBlocks.push(`**MÉTRICAS E INDICADORES:** Mencione KPIs ou metas relevantes discutidas, se aplicável.`);
+    }
+
+    const nextStepsInstruction = suggestNextSteps
+      ? `\n\n10. **SUGESTÕES DE PRÓXIMOS PASSOS ADICIONAIS:** Com base em TODO o conteúdo da reunião, sugira de 3 a 5 próximos passos concretos e acionáveis que não foram explicitamente mencionados mas que seriam valiosos para o cliente. Formato: lista com descrição, responsável sugerido e prazo sugerido.`
+      : '';
+
     // Preparar prompt para IA
     const prompt = `
-Você é um consultor especializado em gestão de oficinas automotivas. Gere uma ata de reunião profissional e detalhada.
+Você é um consultor especializado em gestão de oficinas automotivas. Gere uma ata de reunião.
+
+**TOM:** ${toneText}
 
 **INFORMAÇÕES DO ATENDIMENTO:**
 - Data: ${atendimento.data_realizada || atendimento.data_agendada}
@@ -89,44 +146,20 @@ Você é um consultor especializado em gestão de oficinas automotivas. Gere uma
 **PARTICIPANTES:**
 ${atendimento.participantes?.map(p => `- ${p.nome} (${p.cargo})`).join('\n') || 'Não especificado'}
 
-**PAUTA:**
-${atendimento.pauta?.map((p, i) => `${i + 1}. ${p.titulo}: ${p.descricao}`).join('\n') || 'Não especificado'}
-
-**OBJETIVOS:**
-${atendimento.objetivos?.map(o => `- ${o}`).join('\n') || 'Não especificado'}
-
-**TÓPICOS DISCUTIDOS:**
-${atendimento.topicos_discutidos?.map(t => `- ${t}`).join('\n') || 'Não especificado'}
-
-**DECISÕES TOMADAS:**
-${atendimento.decisoes_tomadas?.map(d => `- ${d.decisao} (Responsável: ${d.responsavel}, Prazo: ${d.prazo})`).join('\n') || 'Nenhuma decisão registrada'}
-
-**AÇÕES DE ACOMPANHAMENTO:**
-${atendimento.acoes_geradas?.map(a => `- ${a.acao} (Responsável: ${a.responsavel}, Prazo: ${a.prazo})`).join('\n') || 'Nenhuma ação registrada'}
-
-**OBSERVAÇÕES DO CONSULTOR:**
-${atendimento.observacoes_consultor || 'Nenhuma observação'}
-
-**PRÓXIMOS PASSOS:**
-${atendimento.proximos_passos || 'A definir'}
+${sectionBlocks.join('\n\n')}
 
 ${dados_reuniao ? `\n**DADOS ADICIONAIS DA REUNIÃO:**\n${JSON.stringify(dados_reuniao, null, 2)}` : ''}
 
 ---
 
-Por favor, gere uma ata de reunião profissional e bem estruturada com os seguintes elementos:
+Gere uma ata de reunião bem estruturada APENAS com as seções correspondentes aos dados fornecidos acima. Inclua:
 
 1. **CABEÇALHO:** Data, horário, participantes e tipo de atendimento
-2. **CONTEXTUALIZAÇÃO:** Breve contexto sobre a fase da oficina e objetivos do atendimento
-3. **RESUMO EXECUTIVO:** Principais pontos discutidos (máximo 3-4 parágrafos)
-4. **TÓPICOS ABORDADOS:** Lista detalhada dos assuntos tratados
-5. **DECISÕES E ENCAMINHAMENTOS:** Tabela com decisão, responsável e prazo
-6. **PLANO DE AÇÃO:** Ações específicas a serem executadas até próxima reunião
-7. **MÉTRICAS E INDICADORES:** Se aplicável, mencione KPIs ou metas discutidas
-8. **PRÓXIMOS PASSOS:** Agenda e expectativas para próximo encontro
-9. **OBSERVAÇÕES FINAIS:** Comentários relevantes do consultor
+2. **CONTEXTUALIZAÇÃO:** Breve contexto sobre a fase da oficina
+3. **RESUMO EXECUTIVO:** Principais pontos (máximo 3-4 parágrafos)
+4-9. As demais seções relevantes conforme os dados fornecidos${nextStepsInstruction}
 
-Formate em Markdown para fácil leitura. Seja profissional, objetivo e completo. NÃO adicione saudações finais, despedidas ou coisas como "[Seu Nome]". Termine no último parágrafo de conteúdo.
+Formate em Markdown para fácil leitura. ${toneText} NÃO adicione saudações finais, despedidas ou coisas como "[Seu Nome]". Termine no último parágrafo de conteúdo.
     `;
 
     console.log("🤖 Gerando ata com IA...");
@@ -205,10 +238,41 @@ Formate em Markdown para fácil leitura. Seja profissional, objetivo e completo.
       ata_gerada_em: new Date().toISOString()
     });
 
+    // Se suggestNextSteps, extrair sugestões da IA
+    let suggestedNextSteps = [];
+    if (suggestNextSteps && typeof ataGerada === 'string') {
+      try {
+        const extractPrompt = `Analise esta ata de reunião e extraia APENAS os "Próximos Passos Adicionais" sugeridos pela IA (se existirem na seção 10 ou similar). Retorne um JSON com a estrutura especificada. Se não houver sugestões adicionais, retorne steps vazio.\n\nATA:\n${ataGerada.substring(0, 3000)}`;
+        const extracted = await base44.integrations.Core.InvokeLLM({
+          prompt: extractPrompt,
+          response_json_schema: {
+            type: 'object',
+            properties: {
+              steps: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    descricao: { type: 'string' },
+                    responsavel: { type: 'string' },
+                    prazo: { type: 'string' }
+                  }
+                }
+              }
+            }
+          }
+        });
+        suggestedNextSteps = extracted?.steps || [];
+      } catch (e) {
+        console.warn('Erro ao extrair sugestões de próximos passos:', e);
+      }
+    }
+
     return Response.json({ 
       success: true, 
       ata_id: novaAta.id,
-      ata: novaAta
+      ata: novaAta,
+      suggested_next_steps: suggestedNextSteps
     });
 
   } catch (error) {
