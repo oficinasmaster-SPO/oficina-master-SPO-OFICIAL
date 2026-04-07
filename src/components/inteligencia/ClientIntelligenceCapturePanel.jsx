@@ -31,7 +31,9 @@ export default function ClientIntelligenceCapturePanel({ workshopId, ataId, onSu
     const loadIntelligence = async () => {
       if (ataId) {
         try {
+          console.log('[ClientIntelligence] Carregando itens para ataId:', ataId);
           const items = await base44.entities.ClientIntelligence.filter({ attendance_id: ataId });
+          console.log('[ClientIntelligence] Itens encontrados:', items.length, items);
           const formattedItems = items.map(item => {
             const typeObj = INTELLIGENCE_TYPES[item.type];
             const gravityLabel = { baixa: "Baixa", media: "Média", alta: "Alta", critica: "Crítica" }[item.gravity || "media"];
@@ -41,7 +43,6 @@ export default function ClientIntelligenceCapturePanel({ workshopId, ataId, onSu
               gravityLabel,
               typeIcon: typeObj?.icon,
               typeColor: typeObj?.color,
-              // Ensure labels are present if stored as codes
               area: INTELLIGENCE_AREAS[item.area]?.label || item.area,
               type: INTELLIGENCE_TYPES[item.type]?.label || item.type,
             };
@@ -50,10 +51,13 @@ export default function ClientIntelligenceCapturePanel({ workshopId, ataId, onSu
         } catch (error) {
           console.error("Erro ao carregar inteligência:", error);
         }
+      } else if (workshopId) {
+        // For new attendances, also try loading by workshopId with no attendance_id
+        console.log('[ClientIntelligence] Sem ataId, nada para carregar');
       }
     };
     loadIntelligence();
-  }, [ataId]);
+  }, [ataId, workshopId]);
 
   const handleAddItem = async () => {
     if (!selectedArea || !selectedType || !selectedSubcategory) {

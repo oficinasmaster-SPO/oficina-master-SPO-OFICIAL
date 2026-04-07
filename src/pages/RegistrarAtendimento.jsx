@@ -1027,6 +1027,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
           <CardContent>
             {formData.workshop_id ? (
               <ClientIntelligenceCapturePanel
+                key={`intel-${formData.id || 'new'}-${formData.workshop_id}`}
                 workshopId={formData.workshop_id}
                 ataId={formData.id}
                 onPendingIdsChange={(ids) => { pendingIntelligenceIdsRef.current = ids; }}
