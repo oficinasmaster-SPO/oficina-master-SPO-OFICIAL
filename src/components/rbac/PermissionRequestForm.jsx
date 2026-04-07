@@ -1,161 +1,126 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, ShieldAlert } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
-export default function PermissionRequestForm({ onClose, onSuccess }) {
-  const [formData, setFormData] = useState({
-    employee_id: '',
-    change_type: 'profile_change',
-    requested_profile_id: '',
-    justification: ''
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const { data: employees = [] } = useQuery({
-    queryKey: ['employees-for-request'],
-    queryFn: async () => {
-      const result = await base44.entities.Employee.list();
-      return Array.isArray(result) ? result : [];
-    }
-  });
-  
-  const { data: profiles = [] } = useQuery({
-    queryKey: ['profiles-for-request'],
-    queryFn: async () => {
-      const result = await base44.entities.UserProfile.list();
-      return Array.isArray(result) ? result : [];
-    }
-  });
-  
-  const handleSubmit = async (e) => {
+export default function PermissionRequestForm({ 
+  open,
+  onClose,
+  employee,
+  changeType,
+  newProfileName,
+  currentProfileName,
+  newStatus,
+  currentStatus,
+  onSubmit,
+  isLoading
+}) {
+  const [justification, setJustification] = useState('');
+
+  const handleSubmit = (e) => {
     e.preventDefault();
-    
-    if (!formData.employee_id || !formData.justification) {
-      toast.error('Preencha todos os campos obrigatórios');
-      return;
-    }
-    
-    setIsSubmitting(true);
-    
-    try {
-      const employee = employees.find(e => e.id === formData.employee_id);
-      const user = await base44.auth.me();
-      
-      await base44.entities.PermissionChangeRequest.create({
-        employee_id: formData.employee_id,
-        employee_name: employee?.full_name || '',
-        requested_by: user.email,
-        requested_by_name: user.full_name,
-        change_type: formData.change_type,
-        current_profile_id: employee?.profile_id || null,
-        requested_profile_id: formData.requested_profile_id || null,
-        justification: formData.justification,
-        status: 'pendente'
-      });
-      
-      toast.success('Solicitação enviada para aprovação');
-      onSuccess();
-    } catch (error) {
-      toast.error('Erro ao criar solicitação: ' + error.message);
-    } finally {
-      setIsSubmitting(false);
+    if (!justification.trim()) return;
+    onSubmit(justification);
+  };
+
+  const getChangeTypeLabel = () => {
+    switch(changeType) {
+      case 'profile_change': return 'Mudança de Perfil de Acesso';
+      case 'custom_roles': return 'Alteração de Roles Customizadas';
+      case 'custom_roles_add': return 'Alteração de Roles Customizadas';
+      case 'status_change': return 'Mudança de Status do Usuário';
+      default: return 'Alteração de Permissões';
     }
   };
-  
+
   return (
-    <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-xl">
         <DialogHeader>
-          <DialogTitle>Nova Solicitação de Mudança de Permissões</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <ShieldAlert className="w-5 h-5 text-amber-500" />
+            Aprovação Necessária
+          </DialogTitle>
+          <DialogDescription>
+            Esta alteração de acessos é sensível e precisa ser justificada para aprovação.
+          </DialogDescription>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-          <div>
-            <Label>Colaborador *</Label>
-            <Select 
-              value={formData.employee_id} 
-              onValueChange={(value) => setFormData({...formData, employee_id: value})}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o colaborador" />
-              </SelectTrigger>
-              <SelectContent>
-                {employees.map(emp => (
-                  <SelectItem key={emp.id} value={emp.id}>
-                    {emp.full_name} - {emp.position}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div>
-            <Label>Tipo de Mudança *</Label>
-            <Select 
-              value={formData.change_type} 
-              onValueChange={(value) => setFormData({...formData, change_type: value})}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="profile_change">Mudança de Perfil</SelectItem>
-                <SelectItem value="custom_roles_add">Adicionar Roles Customizadas</SelectItem>
-                <SelectItem value="status_change">Mudança de Status</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          {formData.change_type === 'profile_change' && (
+        <form onSubmit={handleSubmit} className="space-y-4 mt-2">
+          <div className="bg-gray-50 p-4 rounded-lg space-y-4 border border-gray-100">
             <div>
-              <Label>Novo Perfil *</Label>
-              <Select 
-                value={formData.requested_profile_id} 
-                onValueChange={(value) => setFormData({...formData, requested_profile_id: value})}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o perfil" />
-                </SelectTrigger>
-                <SelectContent>
-                  {profiles.map(profile => (
-                    <SelectItem key={profile.id} value={profile.id}>
-                      {profile.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Colaborador</p>
+              <p className="text-sm font-medium text-gray-900 mt-1">{employee?.full_name}</p>
+              <p className="text-xs text-gray-600">{employee?.email}</p>
             </div>
-          )}
+            
+            <div>
+              <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Tipo de Alteração</p>
+              <p className="text-sm text-gray-900 mt-1">{getChangeTypeLabel()}</p>
+            </div>
+
+            {changeType === 'profile_change' && (
+              <div>
+                <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-2">Mudança Solicitada</p>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="text-gray-500 line-through bg-white">
+                    {currentProfileName || 'Nenhum'}
+                  </Badge>
+                  <span className="text-gray-400">➔</span>
+                  <Badge className="bg-indigo-100 text-indigo-700 hover:bg-indigo-100 border-indigo-200">
+                    {newProfileName || 'Nenhum'}
+                  </Badge>
+                </div>
+              </div>
+            )}
+
+            {changeType === 'status_change' && (
+              <div>
+                <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-2">Mudança Solicitada</p>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="text-gray-500 line-through bg-white">
+                    {currentStatus}
+                  </Badge>
+                  <span className="text-gray-400">➔</span>
+                  <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-amber-200">
+                    {newStatus}
+                  </Badge>
+                </div>
+              </div>
+            )}
+          </div>
           
           <div>
-            <Label>Justificativa *</Label>
+            <Label htmlFor="justification">Justificativa da Mudança *</Label>
             <Textarea
-              value={formData.justification}
-              onChange={(e) => setFormData({...formData, justification: e.target.value})}
-              placeholder="Explique o motivo da mudança..."
-              className="h-24"
+              id="justification"
+              value={justification}
+              onChange={(e) => setJustification(e.target.value)}
+              placeholder="Explique o motivo desta alteração de acesso para avaliação dos administradores..."
+              className="h-24 mt-2"
+              required
             />
           </div>
           
-          <div className="flex gap-3 justify-end pt-4">
-            <Button type="button" variant="outline" onClick={onClose}>
+          <div className="flex gap-3 justify-end pt-4 border-t">
+            <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? (
+            <Button 
+              type="submit" 
+              disabled={isLoading || !justification.trim()} 
+              className="bg-indigo-600 hover:bg-indigo-700 text-white"
+            >
+              {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Enviando...
                 </>
               ) : (
-                'Enviar Solicitação'
+                'Solicitar Aprovação'
               )}
             </Button>
           </div>
