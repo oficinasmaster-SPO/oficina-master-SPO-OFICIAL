@@ -111,6 +111,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
   const [autoSaveStatus, setAutoSaveStatus] = useState(null);
   const autoSaveTimerRef = useRef(null);
   const pautaRef = React.useRef(null);
+  const pendingIntelligenceIdsRef = useRef([]);
   const { createMeeting, isCreating } = useGoogleMeet();
 
   // Carregar usuário
@@ -327,6 +328,21 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
         : await base44.entities.ConsultoriaAtendimento.create(atendimentoData);
 
       console.log("Atendimento salvo:", atendimento);
+
+      // Vincular inteligências capturadas durante criação (sem ataId)
+      if (!data.id && pendingIntelligenceIdsRef.current.length > 0) {
+        try {
+          await Promise.all(
+            pendingIntelligenceIdsRef.current.map(id =>
+              base44.entities.ClientIntelligence.update(id, { attendance_id: atendimento.id })
+            )
+          );
+          console.log(`${pendingIntelligenceIdsRef.current.length} inteligências vinculadas ao atendimento`);
+          pendingIntelligenceIdsRef.current = [];
+        } catch (e) {
+          console.error('Erro ao vincular inteligências:', e);
+        }
+      }
 
       // Se status é "realizado" e não tem ATA, gerar automaticamente
       if (atendimentoData.status === 'realizado' && !atendimento.ata_id) {
@@ -1013,6 +1029,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
               <ClientIntelligenceCapturePanel
                 workshopId={formData.workshop_id}
                 ataId={formData.id}
+                onPendingIdsChange={(ids) => { pendingIntelligenceIdsRef.current = ids; }}
                 onSuccess={() => {
                   toast.success('Inteligência capturada!');
                 }}

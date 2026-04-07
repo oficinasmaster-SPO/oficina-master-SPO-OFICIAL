@@ -14,7 +14,7 @@ import { INTELLIGENCE_AREAS, INTELLIGENCE_TYPES, SUBCATEGORIES } from "@/compone
 import ClientIntelligenceDetailForm from "./ClientIntelligenceDetailForm";
 import ClientIntelligenceViewer from "./ClientIntelligenceViewer";
 
-export default function ClientIntelligenceCapturePanel({ workshopId, ataId, onSuccess, onIntelligenceAdded }) {
+export default function ClientIntelligenceCapturePanel({ workshopId, ataId, onSuccess, onIntelligenceAdded, onPendingIdsChange }) {
   const [selectedArea, setSelectedArea] = useState("");
   const [selectedType, setSelectedType] = useState("");
   const [selectedSubcategory, setSelectedSubcategory] = useState("");
@@ -25,6 +25,7 @@ export default function ClientIntelligenceCapturePanel({ workshopId, ataId, onSu
   const [pendingIntelligence, setPendingIntelligence] = useState(null);
   const [viewerOpen, setViewerOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [pendingIds, setPendingIds] = useState([]);
 
   useEffect(() => {
     const loadIntelligence = async () => {
@@ -68,7 +69,7 @@ export default function ClientIntelligenceCapturePanel({ workshopId, ataId, onSu
 
       const result = await base44.entities.ClientIntelligence.create({
         workshop_id: workshopId,
-        attendance_id: ataId,
+        attendance_id: ataId || null,
         area: selectedArea,
         type: selectedType,
         subcategory: selectedSubcategory,
@@ -77,6 +78,13 @@ export default function ClientIntelligenceCapturePanel({ workshopId, ataId, onSu
         status: "ativo",
         gravity: "media",
       });
+
+      // Track pending IDs for new attendances (no ataId yet)
+      if (!ataId && result.id) {
+        const newIds = [...pendingIds, result.id];
+        setPendingIds(newIds);
+        if (onPendingIdsChange) onPendingIdsChange(newIds);
+      }
 
       const typeObj = INTELLIGENCE_TYPES[selectedType];
       const gravityLabel = { baixa: "Baixa", media: "Média", alta: "Alta", critica: "Crítica" }["media"];
