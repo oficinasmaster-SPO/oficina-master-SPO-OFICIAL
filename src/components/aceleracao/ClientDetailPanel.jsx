@@ -287,80 +287,101 @@ export default function ClientDetailPanel({ client, isOpen, onClose, atendimento
           </TabsContent>
 
           <TabsContent value="financeiro" className="space-y-6 mt-6">
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Faturamento */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-lg flex items-center gap-2">
-                  <DollarSign className="w-5 h-5 text-green-600" />
-                  Faturamento
-                </h3>
-                <div className="space-y-3 text-sm">
+              <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-4">
+                <div className="flex items-center gap-2.5 pb-3 border-b border-gray-100">
+                  <div className="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center">
+                    <DollarSign className="w-4.5 h-4.5 text-green-600" />
+                  </div>
+                  <h3 className="font-semibold text-base text-gray-900">Faturamento</h3>
+                </div>
+                <div className="space-y-3.5">
                   <div>
-                    <span className="text-gray-600">Faixa Mensal:</span>
-                    <p className="font-medium text-lg text-green-600">
+                    <span className="text-xs font-medium uppercase tracking-wider text-gray-400">Faixa Mensal</span>
+                    <p className="text-lg font-bold text-green-600 mt-0.5">
                       {client.monthly_revenue || 'Não informado'}
                     </p>
                   </div>
                   {client.tax_regime && (
                     <div>
-                      <span className="text-gray-600">Regime Tributário:</span>
-                      <p className="font-medium">{client.tax_regime}</p>
+                      <span className="text-xs font-medium uppercase tracking-wider text-gray-400">Regime Tributário</span>
+                      <p className="text-sm font-medium text-gray-800 mt-0.5 capitalize">{client.tax_regime.replace(/_/g, ' ')}</p>
                     </div>
                   )}
                 </div>
               </div>
 
               {/* Metas */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-lg flex items-center gap-2">
-                  <Target className="w-5 h-5 text-blue-600" />
-                  Metas Mensais
-                </h3>
+              <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-4">
+                <div className="flex items-center gap-2.5 pb-3 border-b border-gray-100">
+                  <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
+                    <Target className="w-4.5 h-4.5 text-blue-600" />
+                  </div>
+                  <h3 className="font-semibold text-base text-gray-900">Metas Mensais</h3>
+                </div>
                 {client.monthly_goals ? (
-                  <div className="space-y-3 text-sm">
+                  <div className="space-y-3.5">
                     <div>
-                      <span className="text-gray-600">Projeção:</span>
-                      <p className="font-medium text-lg">
-                        R$ {client.monthly_goals.projected_revenue?.toFixed(2) || '0,00'}
+                      <span className="text-xs font-medium uppercase tracking-wider text-gray-400">Projeção</span>
+                      <p className="text-lg font-bold text-gray-800 mt-0.5">
+                        R$ {client.monthly_goals.projected_revenue?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00'}
                       </p>
                     </div>
                     <div>
-                      <span className="text-gray-600">Realizado:</span>
-                      <p className="font-medium text-lg text-green-600">
-                        R$ {client.monthly_goals.actual_revenue_achieved?.toFixed(2) || '0,00'}
+                      <span className="text-xs font-medium uppercase tracking-wider text-gray-400">Realizado</span>
+                      <p className="text-lg font-bold text-green-600 mt-0.5">
+                        R$ {client.monthly_goals.actual_revenue_achieved?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00'}
                       </p>
                     </div>
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-500">Metas não configuradas</p>
+                  <p className="text-sm text-gray-400 italic">Metas não configuradas</p>
                 )}
               </div>
             </div>
 
             {/* Melhor Mês Histórico */}
             {client.best_month_history && (
-              <div className="border-t pt-6">
-                <h3 className="font-semibold text-lg flex items-center gap-2 mb-4">
-                  <TrendingUp className="w-5 h-5 text-green-600" />
-                  Melhor Mês Histórico
-                </h3>
+              <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-4">
+                <div className="flex items-center gap-2.5 pb-3 border-b border-gray-100">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
+                    <TrendingUp className="w-4.5 h-4.5 text-emerald-600" />
+                  </div>
+                  <h3 className="font-semibold text-base text-gray-900">Melhor Mês Histórico</h3>
+                </div>
                 <div className="grid grid-cols-3 gap-4">
-                  <div className="bg-green-50 p-4 rounded-lg">
-                    <p className="text-sm text-gray-600">Faturamento Total</p>
-                    <p className="text-xl font-bold text-green-600">
-                      R$ {client.best_month_history.revenue_total?.toFixed(2) || '0,00'}
+                  <div className="border border-green-200 rounded-xl p-4 bg-gradient-to-br from-green-50/80 to-green-100/50">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-7 h-7 rounded-lg bg-green-100 flex items-center justify-center">
+                        <DollarSign className="w-4 h-4 text-green-600" />
+                      </div>
+                      <span className="text-xs font-medium uppercase tracking-wider text-green-500">Faturamento Total</span>
+                    </div>
+                    <p className="text-xl font-bold text-green-700">
+                      R$ {client.best_month_history.revenue_total?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00'}
                     </p>
                   </div>
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <p className="text-sm text-gray-600">Clientes Atendidos</p>
-                    <p className="text-xl font-bold text-blue-600">
+                  <div className="border border-blue-200 rounded-xl p-4 bg-gradient-to-br from-blue-50/80 to-blue-100/50">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
+                        <Users className="w-4 h-4 text-blue-600" />
+                      </div>
+                      <span className="text-xs font-medium uppercase tracking-wider text-blue-500">Clientes Atendidos</span>
+                    </div>
+                    <p className="text-xl font-bold text-blue-700">
                       {client.best_month_history.customer_volume || 0}
                     </p>
                   </div>
-                  <div className="bg-purple-50 p-4 rounded-lg">
-                    <p className="text-sm text-gray-600">Ticket Médio</p>
-                    <p className="text-xl font-bold text-purple-600">
-                      R$ {client.best_month_history.average_ticket?.toFixed(2) || '0,00'}
+                  <div className="border border-purple-200 rounded-xl p-4 bg-gradient-to-br from-purple-50/80 to-purple-100/50">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-7 h-7 rounded-lg bg-purple-100 flex items-center justify-center">
+                        <Target className="w-4 h-4 text-purple-600" />
+                      </div>
+                      <span className="text-xs font-medium uppercase tracking-wider text-purple-500">Ticket Médio</span>
+                    </div>
+                    <p className="text-xl font-bold text-purple-700">
+                      R$ {client.best_month_history.average_ticket?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00'}
                     </p>
                   </div>
                 </div>
