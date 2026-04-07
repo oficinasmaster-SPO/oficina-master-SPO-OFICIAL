@@ -58,7 +58,9 @@ export default function FinalizarAtendimentoModal({ atendimento, onClose }) {
       return updated;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['aceleracao-atendimentos']);
+      queryClient.invalidateQueries(['todos-atendimentos']);
+      queryClient.invalidateQueries(['consultoria-atendimentos']);
+      queryClient.invalidateQueries(['meeting-minutes']);
       toast.success('Atendimento finalizado com sucesso!');
       onClose();
     },

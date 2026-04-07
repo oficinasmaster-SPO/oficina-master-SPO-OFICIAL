@@ -646,7 +646,56 @@ export const generateAtaPDF = (rawAta, workshop) => {
     addSection('11', 'VISAO GERAL DO PROJETO DE ACELERACAO', safeText(ata.visao_geral_projeto));
   }
 
-  // 12. INTELIGÊNCIA DO CLIENTE
+  // 12. CHECKLIST DE DIAGNÓSTICO
+  if (ata.checklist_respostas && ata.checklist_respostas.length > 0) {
+    checkPageBreak(30);
+    doc.setFontSize(13);
+    doc.setFont(undefined, 'bold');
+    doc.text('12. CHECKLIST DE DIAGNOSTICO', margin, y);
+    y += 2;
+    doc.setLineWidth(0.5);
+    doc.line(margin, y, pageWidth - margin, y);
+    y += 10;
+
+    ata.checklist_respostas.forEach((bloco) => {
+      checkPageBreak(20);
+      doc.setFontSize(11);
+      doc.setFont(undefined, 'bold');
+      doc.setTextColor(0, 0, 0);
+      doc.text(safeText(bloco.template_nome || 'Checklist'), margin, y);
+      y += 7;
+
+      (bloco.perguntas || []).forEach((p) => {
+        if (!p.resposta_atual && !p.resposta_meta) return;
+        checkPageBreak(25);
+
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'bold');
+        doc.text(safeText(p.pergunta_texto), margin + 2, y);
+        y += 5;
+
+        doc.setFont(undefined, 'normal');
+        doc.setFontSize(9);
+        if (p.resposta_atual) {
+          const lines = doc.splitTextToSize('Atual: ' + safeText(p.resposta_atual), contentWidth - 5);
+          lines.forEach(line => { checkPageBreak(5); doc.text(line, margin + 4, y); y += 4; });
+        }
+        if (p.resposta_meta) {
+          const lines = doc.splitTextToSize('Meta: ' + safeText(p.resposta_meta), contentWidth - 5);
+          lines.forEach(line => { checkPageBreak(5); doc.text(line, margin + 4, y); y += 4; });
+        }
+        if (p.pct_atingimento) {
+          doc.text('Atingimento: ' + safeText(String(p.pct_atingimento)) + '%', margin + 4, y);
+          y += 5;
+        }
+        y += 3;
+      });
+      y += 5;
+    });
+    y += 5;
+  }
+
+  // 13. INTELIGENCIA DO CLIENTE
   if (ata.client_intelligence && ata.client_intelligence.length > 0) {
     checkPageBreak(30);
     doc.setFontSize(13);

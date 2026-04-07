@@ -72,8 +72,10 @@ export default function PainelAtendimentosTab({ user }) {
     }
   });
 
+  const processedOnceRef = useRef(false);
   useEffect(() => {
-    if (!atendimentos) return;
+    if (!atendimentos || processedOnceRef.current) return;
+    processedOnceRef.current = true;
     
     const now = toBrazilDate(new Date());
 

@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
 Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
@@ -179,13 +179,14 @@ Formate em Markdown para fácil leitura. Seja profissional, objetivo e completo.
         plano_nome: planoNome,
         pauta: atendimento.pauta,
         objetivos: atendimento.objetivos,
-        objetivos_consultor: atendimento.objetivos_consultor || '', // Se tiver campo específico mapear aqui
+        objetivos_consultor: atendimento.objetivos_consultor || '',
         observacoes_consultor: atendimento.observacoes_consultor,
-        proximos_passos: atendimento.proximos_passos, // Texto
-        proximos_passos_list: atendimento.proximos_passos_list || [], // Passos estruturados
-        decisoes_tomadas: atendimento.decisoes_tomadas || [], // IMPORTANTE: Copiar decisões
-        acoes_geradas: atendimento.acoes_geradas || [], // IMPORTANTE: Copiar ações
-        client_intelligence: clientIntelligence || [], // IMPORTANTE: Copiar inteligência
+        proximos_passos: atendimento.proximos_passos,
+        proximos_passos_list: atendimento.proximos_passos_list || [],
+        decisoes_tomadas: atendimento.decisoes_tomadas || [],
+        acoes_geradas: atendimento.acoes_geradas || [],
+        client_intelligence: clientIntelligence || [],
+        checklist_respostas: atendimento.checklist_respostas || [],
         processos_vinculados: atendimento.processos_vinculados,
         videoaulas_vinculadas: atendimento.videoaulas_vinculadas,
         midias_anexas: atendimento.midias_anexas,

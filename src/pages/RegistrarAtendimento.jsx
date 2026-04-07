@@ -25,10 +25,12 @@ import ClientIntelligenceCapturePanel from "@/components/inteligencia/ClientInte
 import ChecklistConsultoria from "@/components/aceleracao/ChecklistConsultoria";
 import { useGoogleMeet } from "@/components/hooks/useGoogleMeet";
 import NextSteps from "@/components/aceleracao/NextSteps";
+import AtendimentoProgressIndicator from "@/components/aceleracao/AtendimentoProgressIndicator";
+import AutoSaveIndicator from "@/components/aceleracao/AutoSaveIndicator";
 import { TimePicker } from "@/components/ui/time-picker";
 import { toBrazilDate } from "@/utils/timezone";
 
-// RegistrarAtendimento v2
+// RegistrarAtendimento v3 - auto-save + progress
 export default function RegistrarAtendimento({ isModal = false, onClose, atendimentoId: atendimentoIdProp }) {
   const navigate = useNavigate();
   const location = window.location;
@@ -104,6 +106,8 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
   const [aiSummary, setAISummary] = useState(null);
   const [conflitosModal, setConflitosModal] = useState({ open: false, conflitos: [], dataHorario: null });
   const [showConsultoriasPanel, setShowConsultoriasPanel] = useState(false);
+  const [autoSaveStatus, setAutoSaveStatus] = useState(null);
+  const autoSaveTimerRef = useRef(null);
   const pautaRef = React.useRef(null);
   const { createMeeting, isCreating } = useGoogleMeet();
 
@@ -568,6 +572,52 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
     setFormData({ ...formData, proximos_passos_list: newPassos });
   };
 
+  // Auto-save: debounce 3s after any formData change, only if editing existing record
+  useEffect(() => {
+    if (!formData.id) return;
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    
+    autoSaveTimerRef.current = setTimeout(async () => {
+      if (!formData.workshop_id || !formData.data_agendada || !formData.hora_agendada) return;
+      setAutoSaveStatus('saving');
+      try {
+        await base44.entities.ConsultoriaAtendimento.update(formData.id, {
+          observacoes_consultor: formData.observacoes_consultor,
+          proximos_passos: formData.proximos_passos,
+          proximos_passos_list: (formData.proximos_passos_list || []).filter(p => p.descricao),
+          checklist_respostas: formData.checklist_respostas || [],
+          topicos_discutidos: formData.topicos_discutidos || [],
+          decisoes_tomadas: formData.decisoes_tomadas || [],
+          acoes_geradas: formData.acoes_geradas || [],
+          midias_anexas: (formData.midias_anexas || []).filter(m => m.url),
+          processos_vinculados: formData.processos_vinculados || [],
+          videoaulas_vinculadas: formData.videoaulas_vinculadas || [],
+        });
+        setAutoSaveStatus('saved');
+        setTimeout(() => setAutoSaveStatus(null), 3000);
+      } catch (e) {
+        console.error('Auto-save error:', e);
+        setAutoSaveStatus('error');
+      }
+    }, 3000);
+
+    return () => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    };
+  }, [
+    formData.observacoes_consultor,
+    formData.proximos_passos,
+    formData.proximos_passos_list,
+    formData.checklist_respostas,
+    formData.topicos_discutidos,
+    formData.decisoes_tomadas,
+    formData.acoes_geradas,
+    formData.midias_anexas,
+    formData.processos_vinculados,
+    formData.videoaulas_vinculadas,
+    formData.id,
+  ]);
+
   if (!user || user.role !== 'admin') {
     return (
       <div className="text-center py-12">
@@ -578,6 +628,16 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
 
   const content = (
     <>
+        {/* Progress Indicator */}
+        <AtendimentoProgressIndicator formData={formData} />
+
+        {/* Auto-save status */}
+        {formData.id && autoSaveStatus && (
+          <div className="flex justify-end">
+            <AutoSaveIndicator status={autoSaveStatus} />
+          </div>
+        )}
+
         {/* Dados Básicos */}
         <Card>
           <CardHeader>
@@ -1363,7 +1423,11 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
                                 const intelligence = await base44.entities.ClientIntelligence.filter({ 
                                   attendance_id: formData.id 
                                 });
-                                const ataComInteligencia = { ...ata, client_intelligence: intelligence || [] };
+                                const ataComInteligencia = {
+                                  ...ata,
+                                  client_intelligence: intelligence || [],
+                                  checklist_respostas: ata.checklist_respostas || formData.checklist_respostas || []
+                                };
                                 const { downloadAtaPDF } = await import("@/components/aceleracao/AtasPDFGenerator");
                                 const workshop = workshops?.find(w => w.id === formData.workshop_id);
                                 downloadAtaPDF(ataComInteligencia, workshop);
