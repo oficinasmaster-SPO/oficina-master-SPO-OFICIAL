@@ -297,14 +297,14 @@ export default function VisaoGeralTab({ user, filtros = {} }) {
                 </Card>
 
                 {/* Atendimentos Atrasados */}
-        <Card>
+        <Card className="flex flex-col">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 text-red-500" />
               Atendimentos Atrasados
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-col items-center justify-center h-full">
+          <CardContent className="flex flex-col items-center justify-center flex-1">
             {tarefasPendentes.length === 0 ? (
               <div className="text-center py-8 flex flex-col items-center justify-center flex-1">
                 <CheckCircle className="w-12 h-12 mx-auto text-green-500 mb-2" />
