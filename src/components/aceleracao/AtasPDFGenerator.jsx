@@ -510,30 +510,55 @@ export const generateAtaPDF = (rawAta, workshop) => {
     y += 5;
 
     ata.processos_vinculados.forEach(proc => {
-      checkPageBreak(15);
-      
+      const tituloProc = safeText(proc.titulo);
+      const categoriaProc = safeText(proc.categoria);
+      const acessoText = `Acesse em: Menu > Processos > Buscar "${tituloProc}"`;
+
+      // Calcular linhas de cada texto
+      doc.setFontSize(10);
+      const tituloLines = doc.splitTextToSize(`- ${tituloProc}`, contentWidth - 6);
+      doc.setFontSize(9);
+      const catLines = doc.splitTextToSize(`Categoria: ${categoriaProc}`, contentWidth - 6);
+      doc.setFontSize(8);
+      const acessoLines = doc.splitTextToSize(acessoText, contentWidth - 6);
+
+      // Altura dinâmica: titulo(5*n) + cat(4*n) + acesso(4*n) + padding(10)
+      const boxHeight = (tituloLines.length * 5) + (catLines.length * 4) + (acessoLines.length * 4) + 10;
+      checkPageBreak(boxHeight + 5);
+
       // Box azul para processos
       doc.setFillColor(239, 246, 255);
       doc.setDrawColor(37, 99, 235);
       doc.setLineWidth(0.5);
-      doc.rect(margin, y - 2, contentWidth, 12, 'FD');
-      
+      doc.rect(margin, y - 2, contentWidth, boxHeight, 'FD');
+
+      // Título
       doc.setFontSize(10);
       doc.setFont(undefined, 'bold');
-      doc.text(`- ${safeText(proc.titulo)}`, margin + 2, y + 2);
-      
-      y += 6;
+      doc.setTextColor(0, 0, 0);
+      tituloLines.forEach(line => {
+        doc.text(line, margin + 3, y + 2);
+        y += 5;
+      });
+
+      // Categoria
       doc.setFontSize(9);
       doc.setFont(undefined, 'normal');
-      doc.text(`Categoria: ${safeText(proc.categoria)}`, margin + 2, y);
-      
-      y += 5;
+      catLines.forEach(line => {
+        doc.text(line, margin + 3, y);
+        y += 4;
+      });
+
+      // Instrução de acesso
       doc.setFontSize(8);
       doc.setTextColor(37, 99, 235);
-      doc.text(`Acesse em: Menu > Processos > Buscar "${safeText(proc.titulo)}"`, margin + 2, y);
+      acessoLines.forEach(line => {
+        doc.text(line, margin + 3, y);
+        y += 4;
+      });
       doc.setTextColor(0, 0, 0);
-      
-      y += 7;
+
+      y += 4;
     });
     y += 5;
   }
