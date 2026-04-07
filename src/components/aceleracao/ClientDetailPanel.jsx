@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import ConsultoriaClienteTab from "./ConsultoriaClienteTab";
 
-export default function ClientDetailPanel({ client, isOpen, onClose, atendimentos = [], processos = [] }) {
+export default function ClientDetailPanel({ client, isOpen, onClose, atendimentos = [], processos = [], defaultTab = "geral" }) {
   const atendimentosCliente = client ? atendimentos.filter(a => a.workshop_id === client.id)
     .sort((a, b) => new Date(b.data_realizada || b.data_agendada) - new Date(a.data_realizada || a.data_agendada)) : [];
 
@@ -54,7 +54,7 @@ export default function ClientDetailPanel({ client, isOpen, onClose, atendimento
               </div>
             </DialogHeader>
 
-        <Tabs defaultValue="geral" className="mt-6">
+        <Tabs defaultValue={defaultTab} className="mt-6">
           <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="geral">Dados Gerais</TabsTrigger>
             <TabsTrigger value="operacional">Operacional</TabsTrigger>

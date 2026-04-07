@@ -20,6 +20,7 @@ import ProcessSearchSelect from "@/components/aceleracao/ProcessSearchSelect";
 import AudioTranscriptionField from "@/components/aceleracao/AudioTranscriptionField";
 import TipoAtendimentoManager from "@/components/aceleracao/TipoAtendimentoManager";
 import MediaUploadField from "@/components/aceleracao/MediaUploadField";
+import ClientDetailPanel from "@/components/aceleracao/ClientDetailPanel";
 import ConflitosHorarioModal from "@/components/aceleracao/ConflitosHorarioModal";
 import ClientIntelligenceCapturePanel from "@/components/inteligencia/ClientIntelligenceCapturePanel";
 import ChecklistConsultoria from "@/components/aceleracao/ChecklistConsultoria";
@@ -1368,10 +1369,16 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
               type="button"
               variant="outline"
               className="w-full justify-start"
-              onClick={() => setShowConsultoriasPanel(true)}
+              onClick={() => {
+                if (!formData.workshop_id) {
+                  toast.error("Selecione uma oficina primeiro");
+                  return;
+                }
+                setShowConsultoriasPanel(true);
+              }}
             >
               <ExternalLink className="w-4 h-4 mr-2" />
-              📋 Ver Consultorias Agendadas
+              📋 Ver Detalhes da Oficina
             </Button>
 
             {formData.workshop_id && (
@@ -1596,30 +1603,15 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
           />
         )}
 
-        {showConsultoriasPanel && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-8" style={{ backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}>
-            <div className="absolute inset-0" onClick={() => setShowConsultoriasPanel(false)} />
-            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col z-10 animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
-              <div className="flex items-center justify-between px-6 py-4 border-b shrink-0">
-                <h2 className="text-lg font-semibold text-gray-900">Consultorias Agendadas</h2>
-                <button
-                  type="button"
-                  onClick={() => setShowConsultoriasPanel(false)}
-                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                >
-                  <X className="w-5 h-5 text-gray-500" />
-                </button>
-              </div>
-              <div className="flex-1 overflow-hidden">
-                <iframe
-                  src="/ControleAceleracao?tab=atendimentos"
-                  className="w-full h-full border-0"
-                  style={{ minHeight: '70vh' }}
-                  title="Consultorias Agendadas"
-                />
-              </div>
-            </div>
-          </div>
+        {showConsultoriasPanel && formData.workshop_id && (
+          <ClientDetailPanel
+            client={workshops?.find(w => w.id === formData.workshop_id) || null}
+            isOpen={true}
+            onClose={() => setShowConsultoriasPanel(false)}
+            atendimentos={[]}
+            processos={[]}
+            defaultTab="consultoria"
+          />
         )}
 
         <ConflitosHorarioModal
