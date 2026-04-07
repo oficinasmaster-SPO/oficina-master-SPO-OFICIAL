@@ -96,67 +96,87 @@ export default function ClientDetailPanel({ client, isOpen, onClose, atendimento
           </TabsList>
 
           <TabsContent value="geral" className="space-y-6 mt-6">
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Informações Básicas */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-lg flex items-center gap-2">
-                  <Building2 className="w-5 h-5 text-blue-600" />
-                  Informações Básicas
-                </h3>
-                <div className="space-y-3 text-sm">
+              <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-4">
+                <div className="flex items-center gap-2.5 pb-3 border-b border-gray-100">
+                  <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
+                    <Building2 className="w-4.5 h-4.5 text-blue-600" />
+                  </div>
+                  <h3 className="font-semibold text-base text-gray-900">Informações Básicas</h3>
+                </div>
+                <div className="space-y-3.5">
                   {client.razao_social && (
                     <div>
-                      <span className="text-gray-600">Razão Social:</span>
-                      <p className="font-medium">{client.razao_social}</p>
+                      <span className="text-xs font-medium uppercase tracking-wider text-gray-400">Razão Social</span>
+                      <p className="text-sm font-medium text-gray-800 mt-0.5">{client.razao_social}</p>
                     </div>
                   )}
                   {client.cnpj && (
                     <div>
-                      <span className="text-gray-600">CNPJ:</span>
-                      <p className="font-medium">{client.cnpj}</p>
+                      <span className="text-xs font-medium uppercase tracking-wider text-gray-400">CNPJ</span>
+                      <p className="text-sm font-medium text-gray-800 mt-0.5 font-mono">{client.cnpj}</p>
                     </div>
                   )}
                   {client.endereco_completo && (
                     <div>
-                      <span className="text-gray-600">Endereço:</span>
-                      <p className="font-medium">{client.endereco_completo}</p>
+                      <span className="text-xs font-medium uppercase tracking-wider text-gray-400">Endereço</span>
+                      <p className="text-sm font-medium text-gray-800 mt-0.5">{client.endereco_completo}</p>
+                    </div>
+                  )}
+                  {(client.telefone || client.email) && (
+                    <div className="flex flex-wrap gap-4 pt-1">
+                      {client.telefone && (
+                        <div className="flex items-center gap-1.5 text-sm text-gray-600">
+                          <Phone className="w-3.5 h-3.5 text-gray-400" />
+                          {client.telefone}
+                        </div>
+                      )}
+                      {client.email && (
+                        <div className="flex items-center gap-1.5 text-sm text-gray-600">
+                          <Mail className="w-3.5 h-3.5 text-gray-400" />
+                          {client.email}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
               </div>
 
               {/* Segmentação */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-lg flex items-center gap-2">
-                  <Briefcase className="w-5 h-5 text-purple-600" />
-                  Segmentação
-                </h3>
-                <div className="space-y-3 text-sm">
+              <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-4">
+                <div className="flex items-center gap-2.5 pb-3 border-b border-gray-100">
+                  <div className="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center">
+                    <Briefcase className="w-4.5 h-4.5 text-purple-600" />
+                  </div>
+                  <h3 className="font-semibold text-base text-gray-900">Segmentação</h3>
+                </div>
+                <div className="space-y-3.5">
                   {client.segment && (
                     <div>
-                      <span className="text-gray-600">Segmento:</span>
-                      <p className="font-medium">{client.segment}</p>
+                      <span className="text-xs font-medium uppercase tracking-wider text-gray-400">Segmento</span>
+                      <p className="text-sm font-semibold text-gray-800 mt-0.5">{client.segment}</p>
                     </div>
                   )}
                   {client.vehicle_types && client.vehicle_types.length > 0 && (
                     <div>
-                      <span className="text-gray-600">Veículos:</span>
-                      <div className="flex flex-wrap gap-1 mt-1">
+                      <span className="text-xs font-medium uppercase tracking-wider text-gray-400">Veículos</span>
+                      <div className="flex flex-wrap gap-1.5 mt-1.5">
                         {client.vehicle_types.map(v => (
-                          <Badge key={v} variant="outline" className="text-xs">{v}</Badge>
+                          <Badge key={v} variant="outline" className="text-xs bg-gray-50 border-gray-200 text-gray-700 capitalize">{v}</Badge>
                         ))}
                       </div>
                     </div>
                   )}
                   {client.services_offered && client.services_offered.length > 0 && (
                     <div>
-                      <span className="text-gray-600">Serviços:</span>
-                      <div className="flex flex-wrap gap-1 mt-1">
+                      <span className="text-xs font-medium uppercase tracking-wider text-gray-400">Serviços</span>
+                      <div className="flex flex-wrap gap-1.5 mt-1.5">
                         {client.services_offered.slice(0, 5).map(s => (
-                          <Badge key={s} variant="outline" className="text-xs">{s}</Badge>
+                          <Badge key={s} variant="outline" className="text-xs bg-gray-50 border-gray-200 text-gray-700">{s.replace(/_/g, ' ')}</Badge>
                         ))}
                         {client.services_offered.length > 5 && (
-                          <Badge variant="outline" className="text-xs">+{client.services_offered.length - 5}</Badge>
+                          <Badge variant="secondary" className="text-xs">+{client.services_offered.length - 5}</Badge>
                         )}
                       </div>
                     </div>
@@ -165,22 +185,34 @@ export default function ClientDetailPanel({ client, isOpen, onClose, atendimento
               </div>
             </div>
 
-            {/* Maturidade e Fase */}
+            {/* Indicadores Chave */}
             <div className="grid grid-cols-3 gap-4">
-              <div className="border rounded-lg p-4 bg-gradient-to-br from-blue-50 to-blue-100">
-                <Award className="w-6 h-6 text-blue-600 mb-2" />
-                <p className="text-sm text-gray-600">Nível de Maturidade</p>
-                <p className="text-2xl font-bold text-blue-600">Fase {client.maturity_level || 1}</p>
+              <div className="border border-blue-200 rounded-xl p-4 bg-gradient-to-br from-blue-50/80 to-blue-100/50">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
+                    <Award className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <span className="text-xs font-medium uppercase tracking-wider text-blue-500">Nível de Maturidade</span>
+                </div>
+                <p className="text-2xl font-bold text-blue-700">Fase {client.maturity_level || 1}</p>
               </div>
-              <div className="border rounded-lg p-4 bg-gradient-to-br from-green-50 to-green-100">
-                <Users className="w-6 h-6 text-green-600 mb-2" />
-                <p className="text-sm text-gray-600">Colaboradores</p>
-                <p className="text-2xl font-bold text-green-600">{client.employees_count || 0}</p>
+              <div className="border border-green-200 rounded-xl p-4 bg-gradient-to-br from-green-50/80 to-green-100/50">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-7 h-7 rounded-lg bg-green-100 flex items-center justify-center">
+                    <Users className="w-4 h-4 text-green-600" />
+                  </div>
+                  <span className="text-xs font-medium uppercase tracking-wider text-green-500">Colaboradores</span>
+                </div>
+                <p className="text-2xl font-bold text-green-700">{client.employees_count || 0}</p>
               </div>
-              <div className="border rounded-lg p-4 bg-gradient-to-br from-purple-50 to-purple-100">
-                <Clock className="w-6 h-6 text-purple-600 mb-2" />
-                <p className="text-sm text-gray-600">Anos de Operação</p>
-                <p className="text-2xl font-bold text-purple-600">{client.years_in_business || 0}</p>
+              <div className="border border-purple-200 rounded-xl p-4 bg-gradient-to-br from-purple-50/80 to-purple-100/50">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-7 h-7 rounded-lg bg-purple-100 flex items-center justify-center">
+                    <Clock className="w-4 h-4 text-purple-600" />
+                  </div>
+                  <span className="text-xs font-medium uppercase tracking-wider text-purple-500">Anos de Operação</span>
+                </div>
+                <p className="text-2xl font-bold text-purple-700">{client.years_in_business || 0}</p>
               </div>
             </div>
           </TabsContent>
