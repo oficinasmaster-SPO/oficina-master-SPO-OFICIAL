@@ -1,0 +1,559 @@
+{
+  "name": "ConsultoriaAtendimento",
+  "type": "object",
+  "properties": {
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina atendida"
+    },
+    "consultor_id": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio consultor (admin)"
+    },
+    "consultor_nome": {
+      "type": "string",
+      "description": "Nome do consultor"
+    },
+    "tipo_atendimento": {
+      "type": "string",
+      "description": "Tipo de atendimento (permite valores personalizados)"
+    },
+    "data_agendada": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data e hora agendada para o atendimento"
+    },
+    "data_realizada": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data e hora efetiva da realiza\u00e7\u00e3o"
+    },
+    "duracao_minutos": {
+      "type": "integer",
+      "default": 60,
+      "description": "Dura\u00e7\u00e3o prevista/realizada em minutos"
+    },
+    "duracao_real_minutos": {
+      "type": "integer",
+      "description": "Dura\u00e7\u00e3o real em minutos (calculada pelo timer)"
+    },
+    "hora_inicio_real": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Hora de in\u00edcio real da reuni\u00e3o (timer)"
+    },
+    "hora_fim_real": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Hora de fim real da reuni\u00e3o (timer)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "agendado",
+        "confirmado",
+        "realizado",
+        "cancelado",
+        "remarcado",
+        "faltou",
+        "desmarcou",
+        "participando",
+        "atrasado",
+        "reagendado"
+      ],
+      "default": "agendado",
+      "description": "Status do atendimento"
+    },
+    "google_meet_link": {
+      "type": "string",
+      "description": "Link da reuni\u00e3o no Google Meet"
+    },
+    "google_event_id": {
+      "type": "string",
+      "description": "ID do evento no Google Calendar"
+    },
+    "google_calendar_link": {
+      "type": "string",
+      "description": "Link do evento no Google Calendar"
+    },
+    "status_posta_venda": {
+      "type": "string",
+      "enum": [
+        "cancelada_cliente_reagendada",
+        "cancelada_cliente_sem_reagendar",
+        "cancelada_empresa_reagendada",
+        "cancelada_empresa_sem_reagendar",
+        "no_show_cliente",
+        "no_show_empresa",
+        "reagendada_confirmada",
+        "reagendada_pendente_confirmacao",
+        "suspensa_impedimento_cliente",
+        "pausada_risco_conflito"
+      ],
+      "description": "Status p\u00f3s-venda detalhado para reuni\u00f5es que n\u00e3o aconteceram"
+    },
+    "motivo_cancelamento_cliente": {
+      "type": "string",
+      "enum": [
+        "impedimento_decisor",
+        "time_nao_disponivel",
+        "sem_preparo_entregaveis",
+        "perda_senso_urgencia",
+        "ficcao_com_entrega",
+        "problema_financeiro_administrativo",
+        "mudanca_estrategia"
+      ],
+      "description": "Motivos de cancelamento do lado do cliente"
+    },
+    "motivo_cancelamento_empresa": {
+      "type": "string",
+      "enum": [
+        "falha_confirmacao_cs",
+        "falha_agenda_conflito",
+        "entrega_nao_pronta",
+        "problema_tecnico",
+        "mudanca_escopo_roteiro"
+      ],
+      "description": "Motivos de cancelamento do lado da empresa"
+    },
+    "responsabilidade": {
+      "type": "string",
+      "enum": [
+        "cliente",
+        "empresa",
+        "compartilhada"
+      ],
+      "description": "Responsabilidade pelo cancelamento/adiamento"
+    },
+    "motivo_reagendamento": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o manual do motivo do reagendamento"
+    },
+    "status_cliente": {
+      "type": "string",
+      "enum": [
+        "crescente",
+        "decrescente",
+        "estagnado",
+        "nao_responde"
+      ],
+      "description": "Status de engajamento do cliente"
+    },
+    "fase_oficina": {
+      "type": "integer",
+      "enum": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "description": "Fase atual da oficina (do diagn\u00f3stico)"
+    },
+    "diagnostic_id": {
+      "type": "string",
+      "description": "ID do diagn\u00f3stico vinculado"
+    },
+    "plano_cliente": {
+      "type": "string",
+      "enum": [
+        "FREE",
+        "START",
+        "BRONZE",
+        "PRATA",
+        "GOLD",
+        "IOM",
+        "MILLIONS"
+      ],
+      "description": "Plano contratado pelo cliente"
+    },
+    "participantes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string"
+          },
+          "cargo": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Lista de participantes da reuni\u00e3o"
+    },
+    "pauta": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "titulo": {
+            "type": "string"
+          },
+          "descricao": {
+            "type": "string"
+          },
+          "tempo_estimado": {
+            "type": "integer"
+          }
+        }
+      },
+      "description": "Pauta da reuni\u00e3o"
+    },
+    "objetivos": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Objetivos do atendimento"
+    },
+    "topicos_discutidos": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "T\u00f3picos discutidos durante a reuni\u00e3o"
+    },
+    "decisoes_tomadas": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "decisao": {
+            "type": "string"
+          },
+          "responsavel": {
+            "type": "string"
+          },
+          "prazo": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
+      "description": "Decis\u00f5es e encaminhamentos"
+    },
+    "acoes_geradas": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "acao": {
+            "type": "string"
+          },
+          "responsavel": {
+            "type": "string"
+          },
+          "prazo": {
+            "type": "string",
+            "format": "date"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pendente",
+              "em_andamento",
+              "concluida"
+            ],
+            "default": "pendente"
+          }
+        }
+      },
+      "description": "A\u00e7\u00f5es de acompanhamento"
+    },
+    "midias_anexas": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "link",
+              "imagem",
+              "video",
+              "documento"
+            ]
+          },
+          "url": {
+            "type": "string"
+          },
+          "titulo": {
+            "type": "string"
+          },
+          "document_id": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Links, imagens, v\u00eddeos e documentos anexados"
+    },
+    "processos_vinculados": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "titulo": {
+            "type": "string"
+          },
+          "categoria": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Processos (MAPs) vinculados ao atendimento"
+    },
+    "videoaulas_vinculadas": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "titulo": {
+            "type": "string"
+          },
+          "descricao": {
+            "type": "string"
+          },
+          "video_url": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Videoaulas vinculadas ao atendimento"
+    },
+    "documentos_vinculados": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "titulo": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Documentos vinculados ao atendimento"
+    },
+    "checklist_respostas": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "template_id": {
+            "type": "string"
+          },
+          "template_nome": {
+            "type": "string"
+          },
+          "template_tema": {
+            "type": "string"
+          },
+          "incluir_na_ata": {
+            "type": "boolean",
+            "default": true
+          },
+          "perguntas": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "pergunta_id": {
+                  "type": "string"
+                },
+                "pergunta_texto": {
+                  "type": "string"
+                },
+                "resposta_atual": {
+                  "type": "string"
+                },
+                "resposta_meta": {
+                  "type": "string"
+                },
+                "atingimento_descritivo": {
+                  "type": "string"
+                },
+                "pct_atingimento": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "description": "Respostas dos checklists de diagn\u00f3stico vinculados ao atendimento"
+    },
+    "ata_id": {
+      "type": "string",
+      "description": "ID da ata gerada para este atendimento"
+    },
+    "ata_gerada": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se ATA foi gerada"
+    },
+    "ata_ia": {
+      "type": "string",
+      "description": "Ata completa gerada por IA"
+    },
+    "ata_gerada_em": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data de gera\u00e7\u00e3o da ata"
+    },
+    "observacoes_consultor": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es do consultor"
+    },
+    "proximos_passos": {
+      "type": "string",
+      "description": "Texto livre de pr\u00f3ximos passos (legado)"
+    },
+    "proximos_passos_list": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "descricao": {
+            "type": "string"
+          },
+          "responsavel": {
+            "type": "string"
+          },
+          "prazo": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
+      "description": "Pr\u00f3ximos passos estruturados para a ATA"
+    },
+    "arquivos_anexos": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "tipo": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Arquivos anexados (apresenta\u00e7\u00f5es, relat\u00f3rios, etc)"
+    },
+    "avaliacao_cliente": {
+      "type": "object",
+      "properties": {
+        "nota": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "comentario": {
+          "type": "string"
+        },
+        "data": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "description": "Avalia\u00e7\u00e3o do atendimento pelo cliente"
+    },
+    "compartilhado_com": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "IDs dos colaboradores com acesso"
+    },
+    "notificacao_enviada": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se notifica\u00e7\u00e3o foi enviada"
+    },
+    "notificacoes_programadas": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "description": "Notifica\u00e7\u00f5es programadas"
+    },
+    "ata_enviada_whatsapp": {
+      "type": "boolean",
+      "default": false
+    },
+    "ata_enviada_email": {
+      "type": "boolean",
+      "default": false
+    },
+    "ata_disponivel_plataforma": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "workshop_id",
+    "consultor_id",
+    "tipo_atendimento",
+    "data_agendada"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
