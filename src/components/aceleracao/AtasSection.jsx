@@ -226,7 +226,7 @@ export default function AtasSection({ atas, workshop }) {
                   </div>
                 </div>
 
-                {ata.proximos_passos?.length > 0 && (
+                {Array.isArray(ata.proximos_passos) && ata.proximos_passos.length > 0 && (
                   <div className="mt-3 pt-3 border-t">
                     <p className="text-xs font-semibold text-gray-700 mb-2">
                       Próximos Passos ({ata.proximos_passos.length}):
