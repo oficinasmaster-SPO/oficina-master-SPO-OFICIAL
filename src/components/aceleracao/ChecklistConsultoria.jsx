@@ -304,19 +304,14 @@ export default function ChecklistConsultoria({ respostas, onChange }) {
               return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
             });
             return (
-              <div className="mt-5 pt-4 border-t border-gray-100">
-                <p className="text-xs font-medium uppercase tracking-wider text-gray-400 mb-4">Adicionar Checklist ao Atendimento</p>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+              <div className="mt-4 pt-3 border-t border-gray-100">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-2">Adicionar Checklist ao Atendimento</p>
+                <div className="flex flex-wrap gap-x-6 gap-y-1">
                   {sortedKeys.map(key => {
                     const tema = temaInfo(key);
                     return (
-                      <div key={key} className="space-y-2">
-                        <div className="flex items-center gap-2 mb-1">
-                          <div className={`w-5 h-5 rounded ${tema.iconBg || 'bg-gray-100'} flex items-center justify-center`}>
-                            <ClipboardList className={`w-3 h-3 ${tema.iconColor || 'text-gray-500'}`} />
-                          </div>
-                          <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">{tema.label}</span>
-                        </div>
+                      <div key={key} className="flex items-center gap-1.5 flex-wrap">
+                        <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${tema.iconBg || 'bg-gray-100'} ${tema.iconColor || 'text-gray-500'}`}>{tema.label}</span>
                         {grouped[key].map(t => {
                           const jaAdicionado = (respostas || []).find(r => r.template_id === t.id);
                           return (
@@ -325,14 +320,14 @@ export default function ChecklistConsultoria({ respostas, onChange }) {
                               type="button"
                               onClick={() => adicionarTemplate(t)}
                               disabled={!!jaAdicionado}
-                              className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-all text-left ${
+                              className={`inline-flex items-center gap-1 px-2 py-1 rounded-md border text-xs font-medium transition-all ${
                                 jaAdicionado
-                                  ? "opacity-40 cursor-not-allowed bg-gray-50 border-gray-200 text-gray-400"
+                                  ? "opacity-40 cursor-not-allowed bg-gray-50 border-gray-100 text-gray-400"
                                   : "hover:shadow-sm cursor-pointer bg-white border-gray-200 hover:border-blue-300 hover:bg-blue-50/30"
                               }`}
                             >
-                              {jaAdicionado ? <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" /> : <Plus className="w-4 h-4 text-blue-500 flex-shrink-0" />}
-                              <span className="text-gray-700 truncate">{t.nome}</span>
+                              {jaAdicionado ? <CheckCircle2 className="w-3 h-3 text-green-500" /> : <Plus className="w-3 h-3 text-blue-500" />}
+                              <span className="text-gray-700">{t.nome}</span>
                             </button>
                           );
                         })}
