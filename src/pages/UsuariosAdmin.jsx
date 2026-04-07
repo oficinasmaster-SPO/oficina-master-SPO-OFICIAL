@@ -75,23 +75,20 @@ export default function UsuariosAdmin() {
     queryFn: () => base44.entities.CustomRole.list(),
   });
 
-  const { data: allUsers = [] } = useQuery({
-    queryKey: ['all-admin-users'],
-    queryFn: async () => {
-      // Busca usuários admin reais do sistema
-      const users = await base44.entities.User.list();
-      return users.filter(u => u.role === 'admin');
-    }
-  });
-
   const { data: adminUsers = [], isLoading } = useQuery({
     queryKey: ['admin-users'],
     queryFn: async () => {
-      // Buscar usuários internos da entidade Employee (criados no convite)
-      const allEmployees = await base44.entities.Employee.list();
-      return allEmployees.filter(e => e.tipo_vinculo === 'interno' || e.is_internal === true);
+      // Buscar APENAS colaboradores marcados como 'interno' no banco
+      // Evita trazer sócios de clientes que possam estar marcados com is_internal = true
+      const internalEmployees = await base44.entities.Employee.filter({
+        tipo_vinculo: 'interno'
+      }, null, 1000);
+      return internalEmployees || [];
     }
   });
+
+  // Reutiliza os mesmos usuários internos para os filtros (ex: Todos os Admins)
+  const allUsers = adminUsers;
 
   const createUserMutation = useMutation({
     mutationFn: async (data) => {
