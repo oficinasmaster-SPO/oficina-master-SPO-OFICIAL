@@ -34,7 +34,7 @@ export default function GraficoAtendimentos({ atendimentos = [], workshops = [] 
     return atendimentos
       .filter(a => a.status === 'realizado')
       .sort((a, b) => new Date(b.data_realizada || b.data_agendada) - new Date(a.data_realizada || a.data_agendada))
-      .slice(0, 8);
+      .slice(0, 6);
   }, [atendimentos]);
 
   const formatarTipo = (tipo) => {
