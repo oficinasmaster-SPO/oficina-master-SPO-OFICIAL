@@ -191,7 +191,7 @@ export default function PlanoAceleracaoMensal({ plan, workshop, onRefine, onUpda
           <div>
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Direcionamentos Estratégicos</h3>
             <div className="space-y-4">
-              {data.pillar_directions?.map((pillar, index) => (
+              {(Array.isArray(data.pillar_directions) ? data.pillar_directions : []).map((pillar, index) => (
                 <Card key={index} className="border-2 hover:shadow-lg transition-shadow">
                   <CardHeader>
                     <div className="flex items-center justify-between">
@@ -216,7 +216,7 @@ export default function PlanoAceleracaoMensal({ plan, workshop, onRefine, onUpda
         {/* Cronograma de Implementação */}
         <TabsContent value="cronograma" className="space-y-4">
           <div className="grid gap-4">
-            {data.implementation_schedule?.map((activity, index) => (
+            {(Array.isArray(data.implementation_schedule) ? data.implementation_schedule : []).map((activity, index) => (
               <Card key={index} className="border-2">
                 <CardContent className="pt-6">
                   <div className="flex items-start justify-between gap-4">
@@ -253,7 +253,7 @@ export default function PlanoAceleracaoMensal({ plan, workshop, onRefine, onUpda
         {/* Indicadores */}
         <TabsContent value="indicadores" className="space-y-4">
           <div className="grid md:grid-cols-2 gap-4">
-            {data.key_indicators?.map((indicator, index) => (
+            {(Array.isArray(data.key_indicators) ? data.key_indicators : []).map((indicator, index) => (
               <Card key={index} className="border-2">
                 <CardHeader>
                   <CardTitle className="text-lg">{indicator.indicator_name}</CardTitle>
@@ -290,7 +290,7 @@ export default function PlanoAceleracaoMensal({ plan, workshop, onRefine, onUpda
             </CardHeader>
             <CardContent>
               <ul className="space-y-3">
-                {data.next_steps_week?.map((step, index) => (
+                {(Array.isArray(data.next_steps_week) ? data.next_steps_week : []).map((step, index) => (
                   <li key={index} className="flex items-start gap-3">
                     <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
                     <span className="text-gray-800">{step}</span>

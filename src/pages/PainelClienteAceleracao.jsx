@@ -437,7 +437,7 @@ export default function PainelClienteAceleracao() {
               <p className="text-gray-500 text-center py-4">Nenhum atendimento agendado</p>
             ) : (
               <div className="space-y-3">
-                {proximosAtendimentos.map((atendimento) => (
+                {(Array.isArray(proximosAtendimentos) ? proximosAtendimentos : []).map((atendimento) => (
                   <div key={atendimento.id} className="border rounded-lg p-3">
                     <div className="flex items-start justify-between">
                       <div>
@@ -478,7 +478,7 @@ export default function PainelClienteAceleracao() {
               </div>
             ) : (
               <div className="space-y-3">
-                {tarefasPendentes.slice(0, 5).map((tarefa) => (
+                {(Array.isArray(tarefasPendentes) ? tarefasPendentes : []).slice(0, 5).map((tarefa) => (
                   <div key={tarefa.id} className="flex items-start gap-3 p-3 border rounded-lg">
                     <AlertCircle className="w-5 h-5 text-orange-500 flex-shrink-0 mt-0.5" />
                     <div className="flex-1">
