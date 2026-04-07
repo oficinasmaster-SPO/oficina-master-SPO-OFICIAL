@@ -289,35 +289,60 @@ export default function ChecklistConsultoria({ respostas, onChange }) {
             </Button>
           </div>
 
-          {/* Seletor de templates disponíveis */}
-          {templates.length > 0 && (
-            <div className="mt-5 pt-4 border-t border-gray-100">
-              <p className="text-xs font-medium uppercase tracking-wider text-gray-400 mb-3">Adicionar Checklist ao Atendimento</p>
-              <div className="flex flex-wrap gap-2">
-                {templates.map(t => {
-                  const tema = temaInfo(t.tema);
-                  const jaAdicionado = (respostas || []).find(r => r.template_id === t.id);
-                  return (
-                    <button
-                      key={t.id}
-                      type="button"
-                      onClick={() => adicionarTemplate(t)}
-                      disabled={!!jaAdicionado}
-                      className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-all ${
-                        jaAdicionado
-                          ? "opacity-40 cursor-not-allowed bg-gray-50 border-gray-200 text-gray-400"
-                          : "hover:shadow-sm cursor-pointer bg-white border-gray-200 hover:border-blue-300 hover:bg-blue-50/30"
-                      }`}
-                    >
-                      {jaAdicionado ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <Plus className="w-4 h-4 text-blue-500" />}
-                      <span className="text-gray-700">{t.nome}</span>
-                      <Badge className={`text-xs border ${tema.color} font-medium`}>{tema.label}</Badge>
-                    </button>
-                  );
-                })}
+          {/* Seletor de templates disponíveis agrupados por tema */}
+          {templates.length > 0 && (() => {
+            const grouped = {};
+            templates.forEach(t => {
+              const key = t.tema || 'outros';
+              if (!grouped[key]) grouped[key] = [];
+              grouped[key].push(t);
+            });
+            const temaOrder = TEMAS.map(t => t.value);
+            const sortedKeys = Object.keys(grouped).sort((a, b) => {
+              const ia = temaOrder.indexOf(a);
+              const ib = temaOrder.indexOf(b);
+              return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+            });
+            return (
+              <div className="mt-5 pt-4 border-t border-gray-100">
+                <p className="text-xs font-medium uppercase tracking-wider text-gray-400 mb-4">Adicionar Checklist ao Atendimento</p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {sortedKeys.map(key => {
+                    const tema = temaInfo(key);
+                    return (
+                      <div key={key} className="space-y-2">
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className={`w-5 h-5 rounded ${tema.iconBg || 'bg-gray-100'} flex items-center justify-center`}>
+                            <ClipboardList className={`w-3 h-3 ${tema.iconColor || 'text-gray-500'}`} />
+                          </div>
+                          <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">{tema.label}</span>
+                        </div>
+                        {grouped[key].map(t => {
+                          const jaAdicionado = (respostas || []).find(r => r.template_id === t.id);
+                          return (
+                            <button
+                              key={t.id}
+                              type="button"
+                              onClick={() => adicionarTemplate(t)}
+                              disabled={!!jaAdicionado}
+                              className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-all text-left ${
+                                jaAdicionado
+                                  ? "opacity-40 cursor-not-allowed bg-gray-50 border-gray-200 text-gray-400"
+                                  : "hover:shadow-sm cursor-pointer bg-white border-gray-200 hover:border-blue-300 hover:bg-blue-50/30"
+                              }`}
+                            >
+                              {jaAdicionado ? <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" /> : <Plus className="w-4 h-4 text-blue-500 flex-shrink-0" />}
+                              <span className="text-gray-700 truncate">{t.nome}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
         </div>
 
         {templates.length === 0 && (respostas || []).length === 0 && (
