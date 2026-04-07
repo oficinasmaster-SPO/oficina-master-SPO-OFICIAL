@@ -82,7 +82,7 @@ export default function UsuariosAdmin() {
       // Evita trazer sócios de clientes que possam estar marcados com is_internal = true
       const internalEmployees = await base44.entities.Employee.filter({
         tipo_vinculo: 'interno'
-      }, null, 1000);
+      }, '-created_date', 1000);
       return internalEmployees || [];
     }
   });
