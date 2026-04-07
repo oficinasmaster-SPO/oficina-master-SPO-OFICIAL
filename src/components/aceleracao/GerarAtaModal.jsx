@@ -12,11 +12,14 @@ import { toast } from "sonner";
 import ProcessSearchSelect from "@/components/aceleracao/ProcessSearchSelect";
 import AudioTranscriptionField from "@/components/aceleracao/AudioTranscriptionField";
 import NextSteps from "@/components/aceleracao/NextSteps";
+import AtaSaveConfirmDialog from "@/components/aceleracao/AtaSaveConfirmDialog";
 
 export default function GerarAtaModal({ atendimento, workshop, planoAceleracao, onClose, onSaved }) {
   const [loading, setLoading] = useState(false);
   const [showAISummary, setShowAISummary] = useState(false);
   const [aiSummary, setAISummary] = useState(null);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [pendingSaveStatus, setPendingSaveStatus] = useState(null);
   const [formData, setFormData] = useState({
     meeting_date: new Date().toISOString().split('T')[0],
     meeting_time: new Date().toTimeString().slice(0, 5),
@@ -180,11 +183,17 @@ export default function GerarAtaModal({ atendimento, workshop, planoAceleracao, 
     setFormData(prev => ({ ...prev, participantes: updated }));
   };
 
-  const handleSave = async (status = "rascunho") => {
+  const handleRequestSave = (status) => {
     if (!formData.meeting_date || !formData.meeting_time) {
       toast.error("Preencha data e hora da reunião");
       return;
     }
+    setPendingSaveStatus(status);
+    setShowConfirmDialog(true);
+  };
+
+  const handleSave = async (status = "rascunho") => {
+    setShowConfirmDialog(false);
 
     setLoading(true);
     try {
@@ -557,14 +566,14 @@ export default function GerarAtaModal({ atendimento, workshop, planoAceleracao, 
             Cancelar
           </Button>
           <Button
-            onClick={() => handleSave("rascunho")}
+            onClick={() => handleRequestSave("rascunho")}
             disabled={loading}
             variant="outline"
           >
             Salvar Rascunho
           </Button>
           <Button
-            onClick={() => handleSave("finalizada")}
+            onClick={() => handleRequestSave("finalizada")}
             disabled={loading}
             className="bg-blue-600 hover:bg-blue-700"
           >
@@ -572,6 +581,16 @@ export default function GerarAtaModal({ atendimento, workshop, planoAceleracao, 
             {loading ? "Gerando..." : "Finalizar ATA"}
           </Button>
         </div>
+
+        <AtaSaveConfirmDialog
+          open={showConfirmDialog}
+          onOpenChange={setShowConfirmDialog}
+          formData={formData}
+          workshop={workshop}
+          status={pendingSaveStatus}
+          loading={loading}
+          onConfirm={() => handleSave(pendingSaveStatus)}
+        />
       </DialogContent>
     </Dialog>
   );
