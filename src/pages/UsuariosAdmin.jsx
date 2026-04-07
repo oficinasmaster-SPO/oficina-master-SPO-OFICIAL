@@ -401,11 +401,12 @@ export default function UsuariosAdmin() {
 
       // Filtro por último login
       if (filters.lastLogin !== "todos") {
-        if (filters.lastLogin === "nunca" && user?.last_login_at) return false;
-        if (filters.lastLogin !== "nunca" && !user?.last_login_at) return false;
+        const loginDate = user?.last_login_at || user?.first_login_at;
+        if (filters.lastLogin === "nunca" && loginDate) return false;
+        if (filters.lastLogin !== "nunca" && !loginDate) return false;
         
-        if (user?.last_login_at) {
-          const diasAtras = differenceInDays(new Date(), new Date(user.last_login_at));
+        if (loginDate) {
+          const diasAtras = differenceInDays(new Date(), new Date(loginDate));
           if (filters.lastLogin === "hoje" && diasAtras !== 0) return false;
           if (filters.lastLogin === "7dias" && diasAtras > 7) return false;
           if (filters.lastLogin === "30dias" && diasAtras > 30) return false;
@@ -414,10 +415,11 @@ export default function UsuariosAdmin() {
 
       // Filtro por alerta
       if (filters.alert !== "todos") {
-        if (filters.alert === "primeiro_acesso" && user?.first_login_at) return false;
+        const loginDate = user?.last_login_at || user?.first_login_at;
+        if (filters.alert === "primeiro_acesso" && loginDate) return false;
         if (filters.alert === "inatividade_30") {
-          if (!user?.last_login_at) return false;
-          const diasSemLogin = differenceInDays(new Date(), new Date(user.last_login_at));
+          if (!loginDate) return false;
+          const diasSemLogin = differenceInDays(new Date(), new Date(loginDate));
           if (diasSemLogin <= 30) return false;
         }
       }

@@ -37,21 +37,23 @@ export default function UserTable({
   };
 
   const getLastLoginDisplay = (user) => {
-    if (!user.last_login_at) return "Nunca acessou";
-    const diasAtras = differenceInDays(new Date(), new Date(user.last_login_at));
+    const loginDate = user.last_login_at || user.first_login_at;
+    if (!loginDate) return "Nunca acessou";
+    const diasAtras = differenceInDays(new Date(), new Date(loginDate));
     if (diasAtras === 0) return "Hoje";
     if (diasAtras === 1) return "Ontem";
     if (diasAtras <= 7) return `${diasAtras} dias atrás`;
-    return format(new Date(user.last_login_at), "dd/MM/yyyy", { locale: ptBR });
+    return format(new Date(loginDate), "dd/MM/yyyy", { locale: ptBR });
   };
 
   const getAlerts = (user) => {
     const alerts = [];
-    if (!user.first_login_at) {
+    if (!user.first_login_at && !user.last_login_at) {
       alerts.push({ type: "primeiro_acesso", label: "Aguardando 1º acesso", color: "bg-orange-100 text-orange-700" });
     }
-    if (user.last_login_at) {
-      const diasSemLogin = differenceInDays(new Date(), new Date(user.last_login_at));
+    const loginDate = user.last_login_at || user.first_login_at;
+    if (loginDate) {
+      const diasSemLogin = differenceInDays(new Date(), new Date(loginDate));
       if (diasSemLogin > 30) {
         alerts.push({ type: "inatividade", label: `${diasSemLogin}d sem login`, color: "bg-purple-100 text-purple-700" });
       }

@@ -8,10 +8,11 @@ export default function UserStatsCards({ users, onCardClick }) {
     pending: users.filter(u => u.user_status === 'pending').length,
     active: users.filter(u => u.user_status === 'active').length,
     inactive: users.filter(u => u.user_status === 'inactive' || u.user_status === 'blocked').length,
-    aguardandoPrimeiroAcesso: users.filter(u => !u.first_login_at && u.user_status === 'active').length,
+    aguardandoPrimeiroAcesso: users.filter(u => !u.first_login_at && !u.last_login_at && u.user_status === 'active').length,
     inativos30dias: users.filter(u => {
-      if (!u.last_login_at || u.user_status !== 'active') return false;
-      const diasSemLogin = Math.floor((Date.now() - new Date(u.last_login_at).getTime()) / (1000 * 60 * 60 * 24));
+      const loginDate = u.last_login_at || u.first_login_at;
+      if (!loginDate || u.user_status !== 'active') return false;
+      const diasSemLogin = Math.floor((Date.now() - new Date(loginDate).getTime()) / (1000 * 60 * 60 * 24));
       return diasSemLogin > 30;
     }).length
   };
