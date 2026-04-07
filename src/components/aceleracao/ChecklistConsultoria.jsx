@@ -12,13 +12,14 @@ import { Plus, Trash2, ChevronDown, ChevronUp, Settings, ClipboardList, CheckCir
 import { toast } from "sonner";
 
 const TEMAS = [
-  { value: "vendas", label: "Vendas", color: "bg-green-100 text-green-800 border-green-200" },
-  { value: "comercial", label: "Comercial", color: "bg-blue-100 text-blue-800 border-blue-200" },
-  { value: "patio", label: "Pátio", color: "bg-yellow-100 text-yellow-800 border-yellow-200" },
-  { value: "financeiro", label: "Financeiro", color: "bg-purple-100 text-purple-800 border-purple-200" },
-  { value: "pessoas", label: "Pessoas", color: "bg-pink-100 text-pink-800 border-pink-200" },
-  { value: "marketing", label: "Marketing", color: "bg-orange-100 text-orange-800 border-orange-200" },
-  { value: "operacional", label: "Operacional", color: "bg-gray-100 text-gray-800 border-gray-200" },
+  { value: "vendas", label: "Vendas", color: "bg-green-50 text-green-700 border-green-200", iconBg: "bg-green-100", iconColor: "text-green-600" },
+  { value: "comercial", label: "Comercial", color: "bg-blue-50 text-blue-700 border-blue-200", iconBg: "bg-blue-100", iconColor: "text-blue-600" },
+  { value: "patio", label: "Pátio", color: "bg-yellow-50 text-yellow-700 border-yellow-200", iconBg: "bg-yellow-100", iconColor: "text-yellow-600" },
+  { value: "financeiro", label: "Financeiro", color: "bg-purple-50 text-purple-700 border-purple-200", iconBg: "bg-purple-100", iconColor: "text-purple-600" },
+  { value: "pessoas", label: "Pessoas", color: "bg-pink-50 text-pink-700 border-pink-200", iconBg: "bg-pink-100", iconColor: "text-pink-600" },
+  { value: "marketing", label: "Marketing", color: "bg-orange-50 text-orange-700 border-orange-200", iconBg: "bg-orange-100", iconColor: "text-orange-600" },
+  { value: "operacional", label: "Operacional", color: "bg-slate-50 text-slate-700 border-slate-200", iconBg: "bg-slate-100", iconColor: "text-slate-600" },
+  { value: "estrategico", label: "Estratégico", color: "bg-indigo-50 text-indigo-700 border-indigo-200", iconBg: "bg-indigo-100", iconColor: "text-indigo-600" },
 ];
 
 // ─── Gerenciador de Templates (Modal simples inline) ──────────────────────────
@@ -141,11 +142,11 @@ function PerguntaCard({ pergunta, resposta, onChange }) {
   const pct = Math.min(100, Math.max(0, Number(resposta?.pct_atingimento) || 0));
 
   return (
-    <div className="border rounded-xl p-4 space-y-3 bg-white">
-      <p className="font-medium text-gray-900">{pergunta.texto}</p>
+    <div className="border border-gray-100 rounded-xl p-4 space-y-3 bg-white hover:border-gray-200 transition-colors">
+      <p className="font-medium text-sm text-gray-900">{pergunta.texto}</p>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
-          <Label className="text-xs text-gray-500">Resposta Atual (como está o cliente)</Label>
+          <Label className="text-xs font-medium uppercase tracking-wider text-gray-400">Resposta Atual</Label>
           <Textarea
             value={resposta?.resposta_atual || ""}
             onChange={e => onChange({ ...resposta, resposta_atual: e.target.value })}
@@ -155,7 +156,7 @@ function PerguntaCard({ pergunta, resposta, onChange }) {
           />
         </div>
         <div>
-          <Label className="text-xs text-gray-500">Resposta Meta (onde quer chegar)</Label>
+          <Label className="text-xs font-medium uppercase tracking-wider text-gray-400">Resposta Meta</Label>
           <Textarea
             value={resposta?.resposta_meta || ""}
             onChange={e => onChange({ ...resposta, resposta_meta: e.target.value })}
@@ -167,7 +168,7 @@ function PerguntaCard({ pergunta, resposta, onChange }) {
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <Label className="text-xs text-gray-500">Atingimento da Meta (descritivo / número)</Label>
+          <Label className="text-xs font-medium uppercase tracking-wider text-gray-400">Atingimento (descritivo)</Label>
           <Input
             value={resposta?.atingimento_descritivo || ""}
             onChange={e => onChange({ ...resposta, atingimento_descritivo: e.target.value })}
@@ -176,7 +177,7 @@ function PerguntaCard({ pergunta, resposta, onChange }) {
           />
         </div>
         <div>
-          <Label className="text-xs text-gray-500">Atingimento da Meta (%)</Label>
+          <Label className="text-xs font-medium uppercase tracking-wider text-gray-400">Atingimento (%)</Label>
           <div className="mt-1 space-y-1">
             <Input
               type="number"
@@ -269,52 +270,61 @@ export default function ChecklistConsultoria({ respostas, onChange }) {
     <>
       {showGerenciar && <GerenciarTemplates onClose={() => setShowGerenciar(false)} />}
 
-      <div className="space-y-4">
+      <div className="space-y-5">
         {/* Header com ações */}
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-gray-500">Adicione checklists temáticos e registre respostas do cliente.</p>
+        <div className="bg-white border border-gray-200 rounded-xl p-5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-amber-50 flex items-center justify-center">
+                <ClipboardList className="w-5 h-5 text-amber-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-base text-gray-900">Checklist de Diagnóstico</h3>
+                <p className="text-xs text-gray-400 mt-0.5">Adicione checklists temáticos e registre respostas do cliente.</p>
+              </div>
+            </div>
+            <Button type="button" variant="outline" size="sm" onClick={() => setShowGerenciar(true)} className="gap-1.5">
+              <Settings className="w-4 h-4" />
+              Gerenciar Templates
+            </Button>
           </div>
-          <Button type="button" variant="outline" size="sm" onClick={() => setShowGerenciar(true)}>
-            <Settings className="w-4 h-4 mr-2" />
-            Gerenciar Templates
-          </Button>
+
+          {/* Seletor de templates disponíveis */}
+          {templates.length > 0 && (
+            <div className="mt-5 pt-4 border-t border-gray-100">
+              <p className="text-xs font-medium uppercase tracking-wider text-gray-400 mb-3">Adicionar Checklist ao Atendimento</p>
+              <div className="flex flex-wrap gap-2">
+                {templates.map(t => {
+                  const tema = temaInfo(t.tema);
+                  const jaAdicionado = (respostas || []).find(r => r.template_id === t.id);
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => adicionarTemplate(t)}
+                      disabled={!!jaAdicionado}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-all ${
+                        jaAdicionado
+                          ? "opacity-40 cursor-not-allowed bg-gray-50 border-gray-200 text-gray-400"
+                          : "hover:shadow-sm cursor-pointer bg-white border-gray-200 hover:border-blue-300 hover:bg-blue-50/30"
+                      }`}
+                    >
+                      {jaAdicionado ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <Plus className="w-4 h-4 text-blue-500" />}
+                      <span className="text-gray-700">{t.nome}</span>
+                      <Badge className={`text-xs border ${tema.color} font-medium`}>{tema.label}</Badge>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Seletor de templates disponíveis */}
-        {templates.length > 0 && (
-          <div className="border rounded-xl p-4 bg-gray-50">
-            <p className="text-sm font-medium text-gray-700 mb-3">Adicionar Checklist ao Atendimento</p>
-            <div className="flex flex-wrap gap-2">
-              {templates.map(t => {
-                const tema = temaInfo(t.tema);
-                const jaAdicionado = (respostas || []).find(r => r.template_id === t.id);
-                return (
-                  <button
-                    key={t.id}
-                    type="button"
-                    onClick={() => adicionarTemplate(t)}
-                    disabled={!!jaAdicionado}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-all ${
-                      jaAdicionado
-                        ? "opacity-50 cursor-not-allowed bg-white border-gray-200 text-gray-400"
-                        : "hover:shadow-md cursor-pointer bg-white border-gray-200 hover:border-blue-400"
-                    }`}
-                  >
-                    {jaAdicionado ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <Plus className="w-4 h-4 text-blue-500" />}
-                    <span>{t.nome}</span>
-                    <Badge className={`text-xs border ${tema.color}`}>{tema.label}</Badge>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
         {templates.length === 0 && (respostas || []).length === 0 && (
-          <div className="text-center py-8 border-2 border-dashed rounded-xl text-gray-400">
-            <ClipboardList className="w-10 h-10 mx-auto mb-2 opacity-40" />
-            <p className="text-sm">Nenhum template criado. Clique em "Gerenciar Templates" para criar.</p>
+          <div className="text-center py-10 border-2 border-dashed rounded-xl text-gray-400 bg-gray-50/50">
+            <ClipboardList className="w-10 h-10 mx-auto mb-2 opacity-30" />
+            <p className="text-sm font-medium">Nenhum template criado</p>
+            <p className="text-xs mt-1">Clique em "Gerenciar Templates" para criar.</p>
           </div>
         )}
 
@@ -325,32 +335,34 @@ export default function ChecklistConsultoria({ respostas, onChange }) {
           const totalPreenchidas = bloco.perguntas.filter(p => p.resposta_atual || p.resposta_meta).length;
 
           return (
-            <div key={bloco.template_id} className="border rounded-xl overflow-hidden">
+            <div key={bloco.template_id} className="bg-white border border-gray-200 rounded-xl overflow-hidden">
               {/* Header do bloco */}
-              <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b">
+              <div className="flex items-center justify-between px-5 py-3.5 bg-gray-50/80 border-b border-gray-100">
                 <div className="flex items-center gap-3">
-                  <button type="button" onClick={() => toggleExpand(bloco.template_id)} className="hover:bg-gray-200 rounded p-1">
-                    {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  <button type="button" onClick={() => toggleExpand(bloco.template_id)} className="hover:bg-gray-200 rounded-lg p-1.5 transition-colors">
+                    {isOpen ? <ChevronUp className="w-4 h-4 text-gray-500" /> : <ChevronDown className="w-4 h-4 text-gray-500" />}
                   </button>
-                  <span className="font-semibold text-gray-800">{bloco.template_nome}</span>
-                  <Badge className={`text-xs border ${tema.color}`}>{tema.label}</Badge>
-                  <span className="text-xs text-gray-400">{totalPreenchidas}/{bloco.perguntas.length} respondidas</span>
+                  <div className={`w-7 h-7 rounded-lg ${tema.iconBg || 'bg-gray-100'} flex items-center justify-center`}>
+                    <ClipboardList className={`w-3.5 h-3.5 ${tema.iconColor || 'text-gray-600'}`} />
+                  </div>
+                  <span className="font-semibold text-gray-900 text-sm">{bloco.template_nome}</span>
+                  <Badge className={`text-xs border ${tema.color} font-medium`}>{tema.label}</Badge>
+                  <span className="text-xs text-gray-400 font-medium">{totalPreenchidas}/{bloco.perguntas.length} respondidas</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  {/* Toggle incluir na ATA */}
                   <button
                     type="button"
                     onClick={() => toggleIncluirAta(bloco.template_id)}
-                    title={bloco.incluir_na_ata ? "Incluído na ATA - clique para excluir" : "Não incluído na ATA - clique para incluir"}
-                    className={`text-xs px-3 py-1 rounded-full border font-medium transition-colors ${
+                    title={bloco.incluir_na_ata ? "Incluído na ATA" : "Não incluído na ATA"}
+                    className={`text-xs px-3 py-1.5 rounded-full border font-medium transition-colors ${
                       bloco.incluir_na_ata
-                        ? "bg-green-100 text-green-700 border-green-300 hover:bg-green-200"
-                        : "bg-gray-100 text-gray-500 border-gray-300 hover:bg-gray-200"
+                        ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
+                        : "bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100"
                     }`}
                   >
                     {bloco.incluir_na_ata ? "✓ Na ATA" : "Fora da ATA"}
                   </button>
-                  <button type="button" onClick={() => removerBloco(bloco.template_id)} className="hover:bg-red-50 rounded p-1">
+                  <button type="button" onClick={() => removerBloco(bloco.template_id)} className="hover:bg-red-50 rounded-lg p-1.5 transition-colors">
                     <Trash2 className="w-4 h-4 text-red-400" />
                   </button>
                 </div>
