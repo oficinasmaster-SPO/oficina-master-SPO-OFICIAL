@@ -1,217 +1,159 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
-import { Clock, ChevronUp, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const ITEM_HEIGHT = 32; // Reduzido em ~70% do tamanho anterior
-const VISIBLE_ITEMS = 5; // Total de itens visíveis
-const CONTAINER_HEIGHT = ITEM_HEIGHT * VISIBLE_ITEMS;
-const OFFSET = ITEM_HEIGHT * Math.floor(VISIBLE_ITEMS / 2);
-
-const Wheel = ({ options, value, onChange }) => {
-  const containerRef = useRef(null);
-  const [isScrolling, setIsScrolling] = useState(false);
-  const scrollTimeout = useRef(null);
-
-  // Set initial scroll position
-  useEffect(() => {
-    if (containerRef.current && !isScrolling) {
-      const index = options.indexOf(value);
-      if (index !== -1) {
-        containerRef.current.scrollTop = index * ITEM_HEIGHT;
-      }
-    }
-  }, [value, options, isScrolling]);
-
-  const handleScroll = (e) => {
-    setIsScrolling(true);
-    if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
-    
-    scrollTimeout.current = setTimeout(() => {
-      setIsScrolling(false);
-      const y = e.target.scrollTop;
-      const index = Math.max(0, Math.min(options.length - 1, Math.round(y / ITEM_HEIGHT)));
-      if (options[index] !== value) {
-        onChange(options[index]);
-      }
-      // Snap exactly
-      e.target.scrollTo({ top: index * ITEM_HEIGHT, behavior: 'smooth' });
-    }, 150);
-  };
-
-  const handleUp = () => {
-    const currentIndex = options.indexOf(value);
-    if (currentIndex > 0) {
-      const newIndex = currentIndex - 1;
-      onChange(options[newIndex]);
-      if (containerRef.current) {
-        containerRef.current.scrollTo({ top: newIndex * ITEM_HEIGHT, behavior: 'smooth' });
-      }
-    }
-  };
-
-  const handleDown = () => {
-    const currentIndex = options.indexOf(value);
-    if (currentIndex < options.length - 1) {
-      const newIndex = currentIndex + 1;
-      onChange(options[newIndex]);
-      if (containerRef.current) {
-        containerRef.current.scrollTo({ top: newIndex * ITEM_HEIGHT, behavior: 'smooth' });
-      }
-    }
-  };
-
-  return (
-    <div className="flex flex-col items-center">
-      <button 
-        type="button" 
-        onClick={handleUp} 
-        disabled={options.indexOf(value) === 0}
-        className="p-1 text-gray-400 hover:text-gray-900 disabled:opacity-30 disabled:cursor-not-allowed mb-1"
-      >
-        <ChevronUp className="w-4 h-4" />
-      </button>
-      <div 
-        className="relative overflow-hidden bg-white"
-        style={{ height: `${CONTAINER_HEIGHT}px`, width: '45px' }}
-      >
-        {/* Top fade */}
-        <div 
-          className="absolute top-0 left-0 w-full bg-gradient-to-b from-white via-white/90 to-transparent z-10 pointer-events-none" 
-          style={{ height: `${OFFSET}px` }} 
-        />
-        {/* Bottom fade */}
-        <div 
-          className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-white via-white/90 to-transparent z-10 pointer-events-none" 
-          style={{ height: `${OFFSET}px` }} 
-        />
-        
-        {/* Active selection band */}
-        <div 
-          className="absolute left-0 w-full z-10 pointer-events-none border-y border-[#FF0000]" 
-          style={{ top: `${OFFSET}px`, height: `${ITEM_HEIGHT}px`, backgroundColor: 'rgba(255, 0, 0, 0.05)' }} 
-        />
-      
-      <div 
-        ref={containerRef}
-        className="h-full w-full overflow-y-auto snap-y snap-mandatory scroll-smooth"
-        style={{ 
-          paddingBottom: `${OFFSET}px`, 
-          paddingTop: `${OFFSET}px`, 
-          scrollbarWidth: 'none', 
-          msOverflowStyle: 'none' 
-        }}
-        onScroll={handleScroll}
-      >
-        <style dangerouslySetInnerHTML={{__html: `::-webkit-scrollbar { display: none; }`}} />
-        {options.map((opt) => {
-          const isSelected = opt === value;
-          return (
-            <div 
-              key={opt}
-              style={{ height: `${ITEM_HEIGHT}px` }}
-              className={cn(
-                "flex items-center justify-center snap-center cursor-pointer transition-all duration-300 select-none",
-                isSelected 
-                  ? "text-xl font-bold text-gray-900 opacity-100 tracking-tight" 
-                  : "text-sm font-medium text-gray-400 opacity-30 hover:opacity-60"
-              )}
-              onClick={() => {
-                onChange(opt);
-                if (containerRef.current) {
-                  containerRef.current.scrollTo({
-                    top: options.indexOf(opt) * ITEM_HEIGHT,
-                    behavior: 'smooth'
-                  });
-                }
-              }}
-            >
-              {opt}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-      <button 
-        type="button" 
-        onClick={handleDown} 
-        disabled={options.indexOf(value) === options.length - 1}
-        className="p-1 text-gray-400 hover:text-gray-900 disabled:opacity-30 disabled:cursor-not-allowed mt-1"
-      >
-        <ChevronDown className="w-4 h-4" />
-      </button>
-    </div>
-  );
-};
-
-export const TimePicker = React.forwardRef(({ value, onChange, disabled, placeholder = "Selecione o horário", className, defaultOpenValue = "00:00" }, ref) => {
-  const [open, setOpen] = useState(false);
-  
-  const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
-  const minutes = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'));
-  const [defaultHour = '00', defaultMinute = '00'] = defaultOpenValue.split(':');
-
-  const [hour, setHour] = useState(value ? value.split(':')[0] : defaultHour);
-  const [minute, setMinute] = useState(value ? value.split(':')[1] : defaultMinute);
+export const TimePicker = React.forwardRef(({ value, onChange, disabled, placeholder, className }, ref) => {
+  const [hour, setHour] = useState("");
+  const [minute, setMinute] = useState("");
+  const hourRef = useRef(null);
+  const minuteRef = useRef(null);
 
   useEffect(() => {
     if (value) {
-      const [h, m] = value.split(':');
-      if (h) setHour(h);
-      if (m) setMinute(m);
-      return;
+      const parts = value.split(":");
+      setHour(parts[0] || "");
+      setMinute(parts[1] || "");
+    } else {
+      setHour("");
+      setMinute("");
     }
+  }, [value]);
 
-    setHour(defaultHour);
-    setMinute(defaultMinute);
-  }, [value, defaultHour, defaultMinute]);
-
-  const handleHourChange = (h) => {
-    setHour(h);
-    const newValue = `${h}:${minute}`;
-    if (onChange) onChange(newValue);
+  const emitChange = (h, m) => {
+    if (h !== "" && m !== "") {
+      onChange?.(`${h.padStart(2, "0")}:${m.padStart(2, "0")}`);
+    }
   };
 
-  const handleMinuteChange = (m) => {
-    setMinute(m);
-    const newValue = `${hour}:${m}`;
-    if (onChange) onChange(newValue);
+  const clamp = (val, max) => {
+    const num = parseInt(val, 10);
+    if (isNaN(num)) return "";
+    return String(Math.min(Math.max(num, 0), max)).padStart(2, "0");
   };
+
+  const handleHourChange = (e) => {
+    const raw = e.target.value.replace(/\D/g, "").slice(0, 2);
+    setHour(raw);
+    if (raw.length === 2) {
+      const clamped = clamp(raw, 23);
+      setHour(clamped);
+      emitChange(clamped, minute);
+      minuteRef.current?.focus();
+      minuteRef.current?.select();
+    }
+  };
+
+  const handleMinuteChange = (e) => {
+    const raw = e.target.value.replace(/\D/g, "").slice(0, 2);
+    setMinute(raw);
+    if (raw.length === 2) {
+      const clamped = clamp(raw, 59);
+      setMinute(clamped);
+      emitChange(hour, clamped);
+    }
+  };
+
+  const handleHourBlur = () => {
+    if (hour !== "") {
+      const clamped = clamp(hour, 23);
+      setHour(clamped);
+      emitChange(clamped, minute);
+    }
+  };
+
+  const handleMinuteBlur = () => {
+    if (minute !== "") {
+      const clamped = clamp(minute, 59);
+      setMinute(clamped);
+      emitChange(hour, clamped);
+    }
+  };
+
+  const handleHourKeyDown = (e) => {
+    if (e.key === ":" || e.key === "Tab" || e.key === "ArrowRight") {
+      if (e.key !== "Tab") e.preventDefault();
+      minuteRef.current?.focus();
+      minuteRef.current?.select();
+    }
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      const num = parseInt(hour || "0", 10);
+      const next = String((num + 1) % 24).padStart(2, "0");
+      setHour(next);
+      emitChange(next, minute);
+    }
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      const num = parseInt(hour || "0", 10);
+      const next = String((num - 1 + 24) % 24).padStart(2, "0");
+      setHour(next);
+      emitChange(next, minute);
+    }
+  };
+
+  const handleMinuteKeyDown = (e) => {
+    if (e.key === "Backspace" && minute === "") {
+      hourRef.current?.focus();
+    }
+    if (e.key === "ArrowLeft" && e.target.selectionStart === 0) {
+      hourRef.current?.focus();
+    }
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      const num = parseInt(minute || "0", 10);
+      const next = String((num + 1) % 60).padStart(2, "0");
+      setMinute(next);
+      emitChange(hour, next);
+    }
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      const num = parseInt(minute || "0", 10);
+      const next = String((num - 1 + 60) % 60).padStart(2, "0");
+      setMinute(next);
+      emitChange(hour, next);
+    }
+  };
+
+  const inputClass = "w-12 h-10 text-center text-base font-semibold bg-transparent outline-none border-0 focus:ring-0 placeholder:text-gray-400 placeholder:font-normal [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none";
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          ref={ref}
-          variant={"outline"}
-          className={cn(
-            "w-full justify-start text-left font-normal h-10 px-3 py-2 bg-white",
-            !value && "text-muted-foreground",
-            className
-          )}
-          disabled={disabled}
-        >
-          <Clock className="mr-2 h-4 w-4" />
-          {value || placeholder}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-auto p-3 bg-white shadow-2xl rounded-2xl border-gray-100" align="center">
-        <div className="flex items-center justify-center gap-2 relative">
-          <div className="flex flex-col items-center">
-            <span className="text-[10px] font-semibold text-gray-400 mb-2 uppercase tracking-widest">Horas</span>
-            <Wheel options={hours} value={hour} onChange={handleHourChange} />
-          </div>
-          
-          <div className="text-xl font-bold text-[#FF0000] pb-1 mt-6 select-none opacity-70">:</div>
-          
-          <div className="flex flex-col items-center">
-            <span className="text-[10px] font-semibold text-gray-400 mb-2 uppercase tracking-widest">Minutos</span>
-            <Wheel options={minutes} value={minute} onChange={handleMinuteChange} />
-          </div>
-        </div>
-      </PopoverContent>
-    </Popover>
+    <div
+      ref={ref}
+      className={cn(
+        "inline-flex items-center border border-input rounded-md bg-white px-1 h-10 focus-within:ring-1 focus-within:ring-ring transition-colors",
+        disabled && "opacity-50 pointer-events-none",
+        className
+      )}
+    >
+      <input
+        ref={hourRef}
+        type="text"
+        inputMode="numeric"
+        maxLength={2}
+        value={hour}
+        onChange={handleHourChange}
+        onBlur={handleHourBlur}
+        onKeyDown={handleHourKeyDown}
+        onFocus={(e) => e.target.select()}
+        placeholder="HH"
+        disabled={disabled}
+        className={inputClass}
+      />
+      <span className="text-base font-bold text-gray-400 select-none">:</span>
+      <input
+        ref={minuteRef}
+        type="text"
+        inputMode="numeric"
+        maxLength={2}
+        value={minute}
+        onChange={handleMinuteChange}
+        onBlur={handleMinuteBlur}
+        onKeyDown={handleMinuteKeyDown}
+        onFocus={(e) => e.target.select()}
+        placeholder="MM"
+        disabled={disabled}
+        className={inputClass}
+      />
+    </div>
   );
 });
 
