@@ -16,6 +16,17 @@ export default function ClientIntelligenceEvolutionForm({ open, onOpenChange, in
   const [evolutionDate, setEvolutionDate] = useState(new Date().toISOString().split('T')[0]);
   const [isLoading, setIsLoading] = useState(false);
 
+  React.useEffect(() => {
+    if (open) {
+      setSolutionApplied("");
+      setImpactBefore("");
+      setImpactAfter("");
+      setLearnings("");
+      setStatus("");
+      setEvolutionDate(new Date().toISOString().split('T')[0]);
+    }
+  }, [open]);
+
   const handleSubmit = async () => {
     if (!solutionApplied.trim()) {
       toast.error("Descrição da solução é obrigatória");
@@ -24,11 +35,14 @@ export default function ClientIntelligenceEvolutionForm({ open, onOpenChange, in
 
     setIsLoading(true);
     try {
+      const currentIntel = await base44.entities.ClientIntelligence.get(intelligenceId);
+      
       await base44.entities.ClientIntelligence.update(intelligenceId, {
         action_description: solutionApplied,
         status: status || "em_progresso",
         resolution_date: evolutionDate,
         metadata: {
+          ...currentIntel.metadata,
           evolution: {
             impactBefore,
             impactAfter,

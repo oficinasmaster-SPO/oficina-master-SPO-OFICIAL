@@ -7,6 +7,7 @@ import { base44 } from "@/api/base44Client";
 import { AlertCircle, Calendar, User, TrendingDown, Repeat2, FileText, Zap, Clock, CheckCircle2 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
 import ClientIntelligenceEvolutionForm from "./ClientIntelligenceEvolutionForm";
 import ClientIntelligenceChecklistSection from "./ClientIntelligenceChecklistSection";
 
@@ -30,17 +31,18 @@ export default function ClientIntelligenceViewer({ open, onOpenChange, item, wor
       setFullData(completeData);
 
       // Buscar histórico de inteligências similares
-      if (workshopId && item) {
+      if ((workshopId || item.workshop_id) && item) {
         const historyData = await base44.entities.ClientIntelligence.filter({
-          workshop_id: workshopId,
+          workshop_id: workshopId || item.workshop_id,
           area: item.area,
           subcategory: item.subcategory,
-        });
+        }, '-created_date', 50);
         
         setHistory(historyData || []);
       }
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
+      toast.error("Erro ao carregar dados detalhados");
       setFullData(item);
     } finally {
       setIsLoading(false);
@@ -65,6 +67,20 @@ export default function ClientIntelligenceViewer({ open, onOpenChange, item, wor
     recorrente: "Recorrente"
   };
 
+  const statusLabel = {
+    ativo: "Ativo",
+    em_progresso: "Em Progresso",
+    resolvido: "Resolvido",
+    arquivado: "Arquivado"
+  };
+
+  const gravityLabel = {
+    baixa: "Baixa",
+    media: "Média",
+    alta: "Alta",
+    critica: "Crítica"
+  };
+
   const renderIntelligenceDetails = (intel) => (
     <div className="space-y-6">
       {/* Cabeçalho com Classificação */}
@@ -75,7 +91,7 @@ export default function ClientIntelligenceViewer({ open, onOpenChange, item, wor
             <p className="text-sm text-gray-600 mt-1">{intel.description}</p>
           </div>
           <Badge className={`${gravityColors[intel.gravity || 'media']} border`}>
-            {({ baixa: 'Baixa', media: 'Média', alta: 'Alta', critica: 'Crítica' }[intel.gravity] || 'Média')}
+            {gravityLabel[intel.gravity] || 'Média'}
           </Badge>
         </div>
       </div>
@@ -131,7 +147,7 @@ export default function ClientIntelligenceViewer({ open, onOpenChange, item, wor
           intelligenceId={intel.id}
           area={intel.area}
           type={intel.type}
-          workshopId={intel.workshop_id}
+          workshopId={workshopId || intel.workshop_id}
           onChecklistUpdated={() => {}}
         />
       )}
@@ -194,7 +210,7 @@ export default function ClientIntelligenceViewer({ open, onOpenChange, item, wor
         <span className="text-xs font-semibold text-gray-600 uppercase">Status</span>
         <p className="font-semibold text-gray-900 mt-1">
           <Badge className="bg-blue-100 text-blue-900">
-            {({ ativo: 'Ativo', em_progresso: 'Em Progresso', resolvido: 'Resolvido', arquivado: 'Arquivado' }[intel.status] || 'Ativo')}
+            {statusLabel[intel.status] || 'Ativo'}
           </Badge>
         </p>
       </div>
@@ -231,7 +247,7 @@ export default function ClientIntelligenceViewer({ open, onOpenChange, item, wor
     </div>
   );
 
-  const historySimilar = history.filter(h => h.id !== item.id && h.status !== 'ativo');
+  const historySimilar = history.filter(h => h.id !== item.id);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

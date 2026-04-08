@@ -200,7 +200,12 @@ export default function ClientIntelligenceChecklistManager({
               <Input
                 value={newItemLabel}
                 onChange={(e) => setNewItemLabel(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && handleAddItem()}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleAddItem();
+                  }
+                }}
                 placeholder="Digite o item e pressione Enter"
               />
               <Button

@@ -46,7 +46,7 @@ export default function ClientIntelligenceChecklistSection({
 
         if (progressData && progressData.length > 0) {
           setProgress(progressData[0]);
-        } else {
+        } else if (checklists[0].items && checklists[0].items.length > 0) {
           // Criar progresso inicial
           const newProgress = await base44.entities.ClientIntelligenceChecklistProgress.create({
             intelligence_id: intelligenceId,
@@ -60,9 +60,11 @@ export default function ClientIntelligenceChecklistSection({
             completion_percentage: 0
           });
           setProgress(newProgress);
+        } else {
+           setProgress(null);
         }
-      }
-    } catch (error) {
+        }
+        } catch (error) {
       console.error("Erro ao carregar checklist:", error);
     } finally {
       setIsLoading(false);
@@ -80,7 +82,7 @@ export default function ClientIntelligenceChecklistSection({
       );
 
       const completedCount = updatedItems.filter(i => i.checked).length;
-      const percentage = Math.round((completedCount / updatedItems.length) * 100);
+      const percentage = updatedItems.length > 0 ? Math.round((completedCount / updatedItems.length) * 100) : 0;
 
       await base44.entities.ClientIntelligenceChecklistProgress.update(progress.id, {
         checked_items: updatedItems,
@@ -180,7 +182,7 @@ export default function ClientIntelligenceChecklistSection({
                   >
                     <Checkbox
                       checked={item.checked}
-                      onChange={() => handleToggleItem(item.item_id)}
+                      onCheckedChange={() => handleToggleItem(item.item_id)}
                     />
                     <span
                       className={`text-sm ${
