@@ -182,7 +182,7 @@ export default function ClientIntelligenceViewer({ open, onOpenChange, item, wor
             </div>
             <div className="bg-teal-50 border border-teal-200 rounded-lg p-3">
               <p className="text-sm font-semibold text-teal-900">
-                {format(parseISO(intel.resolution_date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                {(() => { try { const d = parseISO(intel.resolution_date); return isNaN(d.getTime()) ? intel.resolution_date : format(d, "dd 'de' MMMM 'de' yyyy", { locale: ptBR }); } catch { return intel.resolution_date; } })()}
               </p>
             </div>
           </div>
@@ -275,7 +275,7 @@ export default function ClientIntelligenceViewer({ open, onOpenChange, item, wor
                       <div className="flex items-center gap-2 mb-4">
                         <Clock className="w-4 h-4 text-gray-600" />
                         <span className="text-sm font-semibold text-gray-600">
-                          Registrado em {format(parseISO(hist.created_date), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                          Registrado em {(() => { try { const d = parseISO(hist.created_date); return isNaN(d.getTime()) ? hist.created_date : format(d, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }); } catch { return hist.created_date; } })()}
                         </span>
                       </div>
                       {renderIntelligenceDetails(hist)}
