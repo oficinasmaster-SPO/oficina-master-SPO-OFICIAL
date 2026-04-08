@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
@@ -231,7 +231,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
   });
 
   // Combinar tipos customizados + padrões com useMemo
-  const todosOsTipos = React.useMemo(() => {
+  const todosOsTipos = useMemo(() => {
     try {
       // Tipos customizados já vêm de TipoAtendimentoConsultoria
       const customFormatted = (tiposCustomizados || []).map(t => ({
@@ -511,12 +511,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
     createMutation.mutate(dadosParaSalvar);
   };
 
-  const gerarLinkGoogleMeet = () => {
-    const randomId = Math.random().toString(36).substring(7);
-    const meetLink = `https://meet.google.com/${randomId}`;
-    setFormData({ ...formData, google_meet_link: meetLink });
-    toast.success("Link gerado! Você pode editá-lo se necessário.");
-  };
+
 
   const addMidia = () => {
     setFormData({
@@ -786,24 +781,22 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Data *</Label>
-                  <Input
-                    type="date"
-                    value={formData.data_agendada}
-                    onChange={(e) => setFormData({ ...formData, data_agendada: e.target.value })}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label>Horário *</Label>
-                  <TimePicker
-                    value={formData.hora_agendada}
-                    onChange={(val) => setFormData({ ...formData, hora_agendada: val })}
-                  />
-                </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <Label>Data *</Label>
+                <Input
+                  type="date"
+                  value={formData.data_agendada}
+                  onChange={(e) => setFormData({ ...formData, data_agendada: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <Label>Horário *</Label>
+                <TimePicker
+                  value={formData.hora_agendada}
+                  onChange={(val) => setFormData({ ...formData, hora_agendada: val })}
+                />
               </div>
               <div>
                 <Label>Duração (min)</Label>
