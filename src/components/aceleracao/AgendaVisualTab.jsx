@@ -85,6 +85,7 @@ export default function AgendaVisualTab({ user, filtros }) {
       <AgendaVisual
           atendimentos={atendimentos || []}
           workshops={workshops || []}
+          user={user}
         />
     </div>
   );

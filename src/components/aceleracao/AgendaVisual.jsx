@@ -2,10 +2,11 @@ import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import AtendimentoModal from "@/components/aceleracao/AtendimentoModal";
+import FollowUpPostIt from "@/components/aceleracao/FollowUpPostIt";
 import ReagendarAtendimentoModal from "@/components/aceleracao/ReagendarAtendimentoModal";
 import CancelarAtendimentoModal from "@/components/aceleracao/CancelarAtendimentoModal";
 import { base44 } from "@/api/base44Client";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,7 +29,7 @@ const gerarIdAmigavel = (tipo, id, indice) => {
   return `${prefixo}${numero}`;
 };
 
-export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
+export default function AgendaVisual({ atendimentos = [], workshops = [], user }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -41,6 +42,22 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
   const [editModal, setEditModal] = useState(null); // atendimentoId sendo editado
   const [reagendarModal, setReagendarModal] = useState(null); // atendimento sendo reagendado
   const [cancelarModal, setCancelarModal] = useState(null); // atendimento sendo cancelado
+
+  // Follow-up reminders
+  const { data: followUpReminders = [] } = useQuery({
+    queryKey: ['follow-up-reminders', user?.id],
+    queryFn: async () => {
+      const query = user?.role === 'admin' ? {} : { consultor_id: user?.id };
+      return base44.entities.FollowUpReminder.filter(query, 'reminder_date', 5000);
+    },
+    enabled: !!user?.id,
+    staleTime: 60000
+  });
+
+  const getFollowUpsForDay = (day) => {
+    const dayStr = format(day, 'yyyy-MM-dd');
+    return followUpReminders.filter(r => r.reminder_date === dayStr && !r.is_completed);
+  };
 
   const getDateRange = () => {
     if (viewMode === 'day') {
@@ -157,7 +174,14 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
   };
 
   const handleDayClick = (day) => {
-    if (getAtendimentosForDay(day).length > 0) loadDayModal(day);
+    const hasAtendimentos = getAtendimentosForDay(day).length > 0;
+    const hasFollowUps = getFollowUpsForDay(day).length > 0;
+    if (hasAtendimentos) {
+      loadDayModal(day);
+    } else if (hasFollowUps) {
+      // Open modal with empty atendimentos but show follow-ups
+      setDetailsModal({ open: true, date: day, atendimentos: [], dayIdx: 0 });
+    }
   };
 
   const navigateModalDay = (direction) => {
@@ -396,6 +420,11 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
                     : format(day, 'd')}
                 </div>
                 <div className="flex flex-wrap gap-1">
+                  {getFollowUpsForDay(day).length > 0 && (
+                    <span className="inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 border border-amber-300" title={`${getFollowUpsForDay(day).length} follow-up(s) pendente(s)`}>
+                      📌 {getFollowUpsForDay(day).length}
+                    </span>
+                  )}
                   {atendimentosDia.slice(0, maxVisible).map((atendimento) => {
                     return (
                       <span
@@ -421,7 +450,7 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
 
       {/* Modal de Detalhes do Dia */}
       <Dialog open={detailsModal.open} onOpenChange={(open) => setDetailsModal({ ...detailsModal, open })}>
-        <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto scrollbar-hide rounded-2xl" style={{scrollbarWidth: 'none', msOverflowStyle: 'none'}}>
+        <DialogContent className={`${detailsModal.date && getFollowUpsForDay(detailsModal.date).length > 0 ? 'max-w-3xl' : 'max-w-xl'} max-h-[85vh] overflow-y-auto scrollbar-hide rounded-2xl`} style={{scrollbarWidth: 'none', msOverflowStyle: 'none'}}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CalendarIcon className="w-5 h-5 text-blue-600" />
@@ -443,8 +472,9 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="mt-4 space-y-3">
-            {detailsModal.atendimentos.map((atendimento, idx) => {
+          <div className="mt-4 flex gap-4">
+          <div className="flex-1 space-y-3">
+          {detailsModal.atendimentos.map((atendimento, idx) => {
               const workshop = atendimento.workshop;
               const podeIniciar = ['agendado', 'confirmado', 'reagendado'].includes(atendimento.status);
               const workshopIdAmigavel = gerarIdAmigavel('workshop', workshop?.id, idx + 1);
@@ -559,6 +589,16 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
                 </div>
               );
             })}
+            </div>
+            {/* Follow-Up Post-It Panel */}
+            {detailsModal.date && getFollowUpsForDay(detailsModal.date).length > 0 && (
+              <div className="w-64 shrink-0">
+                <FollowUpPostIt
+                  reminders={getFollowUpsForDay(detailsModal.date)}
+                  onUpdate={() => loadDayModal(detailsModal.date)}
+                />
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
