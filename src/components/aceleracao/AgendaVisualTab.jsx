@@ -33,30 +33,17 @@ export default function AgendaVisualTab({ user, filtros }) {
   };
 
   const { data: atendimentos, isFetching } = useQuery({
-    queryKey: ['atendimentos-acelerador', user?.id, consultorFiltrado, dataInicio, dataFim],
+    queryKey: ['atendimentos-acelerador', user?.id, consultorFiltrado],
     queryFn: async () => {
       let query = {};
       
       if (consultorFiltrado) {
         query.consultor_id = consultorFiltrado;
       } else if (user?.role !== 'admin') {
-        // Apenas não-admin filtra por seu próprio ID
         query.consultor_id = user.id;
       }
-      // Admin sem filtro = mostra todos (consistente com VisaoGeralTab)
       
-      const all = await base44.entities.ConsultoriaAtendimento.filter(query, null, 5000);
-      
-      if (dataInicio && dataFim) {
-        return all.filter(a => {
-          const dataAtendBR = new Date(a.data_agendada).toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
-          const inicioStr = dataInicio.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
-          const fimStr = dataFim.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
-          return dataAtendBR >= inicioStr && dataAtendBR <= fimStr;
-        });
-      }
-      
-      return all;
+      return await base44.entities.ConsultoriaAtendimento.filter(query, null, 5000);
     },
     enabled: !!user?.id
   });
