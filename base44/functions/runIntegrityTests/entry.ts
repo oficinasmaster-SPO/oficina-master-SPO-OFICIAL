@@ -4,58 +4,43 @@ Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
         
-        const allItems = await base44.asServiceRole.entities.ClientIntelligence.list();
-        
-        // Query 1.1: Campos obrigatórios
-        const problematic = allItems.filter(item => 
-            !item.id || 
-            !item.area || 
-            !item.type || 
-            !item.subcategory
+        // Query 2.1: Identificar checklists órfãos
+        const checklists = await base44.asServiceRole.entities.ClientIntelligenceChecklist.filter({ status: "ativo" });
+        const orphans = checklists.filter(checklist => 
+            !checklist.items || 
+            !Array.isArray(checklist.items) || 
+            checklist.items.length === 0
         );
-        
-        // Query 1.2: Datas inválidas
-        const invalidDates = allItems.filter(item => {
-            if (item.resolution_date) {
-                try {
-                    new Date(item.resolution_date).toISOString();
-                } catch (e) {
-                    return true;
-                }
-            }
-            if (item.created_date) {
-                try {
-                    new Date(item.created_date).toISOString();
-                } catch (e) {
-                    return true;
-                }
-            }
-            return false;
-        });
 
-        // Query 1.3: Metadata corrompida
-        const corruptedMetadata = allItems.filter(item => {
-            if (item.metadata && typeof item.metadata !== 'object') {
+        // Query 2.2: Encontrar progresso de checklist com dados inconsistentes
+        const allProgress = await base44.asServiceRole.entities.ClientIntelligenceChecklistProgress.list();
+        const inconsistent = allProgress.filter(progress => {
+            if (!progress.checked_items || !Array.isArray(progress.checked_items)) {
                 return true;
             }
-            if (item.metadata?.evolution) {
-                const evolution = item.metadata.evolution;
-                if (!evolution.impactBefore && !evolution.impactAfter && !evolution.learnings) {
-                    return true;
-                }
+            const checkedCount = progress.checked_items.filter(i => i.checked).length;
+            const calculatedPercentage = progress.checked_items.length > 0 
+                ? Math.round((checkedCount / progress.checked_items.length) * 100)
+                : 0;
+            
+            if (progress.completion_percentage !== undefined && Math.abs(progress.completion_percentage - calculatedPercentage) > 1) {
+                return true;
             }
             return false;
         });
 
+        // Query 2.3: Encontrar registros sem gravity definida
+        const intelligenceItems = await base44.asServiceRole.entities.ClientIntelligence.list();
+        const missingGravity = intelligenceItems.filter(item => !item.gravity);
+
         return Response.json({
-            total_records: allItems.length,
-            q1_problematic: problematic.length,
-            q2_invalid_dates: invalidDates.length,
-            q3_corrupted_metadata: corruptedMetadata.length,
+            q2_1_orphan_checklists: orphans.length,
+            q2_2_inconsistent_progress: inconsistent.length,
+            q2_3_missing_gravity: missingGravity.length,
             details: {
-                problematic: problematic.map(p => p.id),
-                invalidDates: invalidDates.map(d => d.id),
-                corruptedMetadata: corruptedMetadata.map(c => c.id)
+                orphanChecklists: orphans.map(c => c.id),
+                inconsistentProgress: inconsistent.map(p => p.id),
+                missingGravity: missingGravity.map(i => i.id)
             }
         });
 
