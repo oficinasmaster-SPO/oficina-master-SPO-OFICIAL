@@ -78,22 +78,19 @@ export default function GraficoAtendimentos({ atendimentos = [], workshops = [] 
         {/* Histórico de reuniões recentes */}
         {reunioesRecentes.length > 0 && (
           <div className="border-t pt-4 flex-1">
-            <div className="flex items-center justify-between mb-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            <div className="grid grid-cols-[1fr_auto_auto] gap-x-4 items-center mb-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
               <div className="flex items-center gap-1.5">
                 <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
                 Últimas Realizadas
               </div>
-              <div className="flex items-center gap-3">
-                <span>Data</span>
-                <span className="text-gray-300">|</span>
-                <span>Encerramento</span>
-              </div>
+              <span className="w-20 text-center">Data</span>
+              <span className="w-20 text-center">Encerram.</span>
             </div>
             <div className="grid grid-cols-1 gap-2">
               {reunioesRecentes.map(r => (
                 <div
                   key={r.id}
-                  className="flex items-center justify-between py-2.5 px-3 rounded-lg cursor-default transition-all hover:bg-green-50 hover:shadow-sm group border border-transparent hover:border-green-200"
+                  className="grid grid-cols-[1fr_auto_auto] gap-x-4 items-center py-2.5 px-3 rounded-lg cursor-default transition-all hover:bg-green-50 hover:shadow-sm group border border-transparent hover:border-green-200"
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
                     <div className="w-2 h-2 rounded-full bg-green-400 shrink-0 group-hover:bg-green-600 transition-colors" />
@@ -101,19 +98,12 @@ export default function GraficoAtendimentos({ atendimentos = [], workshops = [] 
                       {workshops.find(w => w.id === r.workshop_id)?.name || r.workshop_nome || formatarTipo(r.tipo_atendimento)}
                     </span>
                   </div>
-                  <div className="flex items-center gap-3 shrink-0 ml-2">
-                    <div className="flex items-center gap-1.5">
-                      <Calendar className="w-3 h-3 text-gray-400 group-hover:text-green-600 transition-colors" />
-                      <span className="text-xs text-gray-400 group-hover:text-gray-600 transition-colors whitespace-nowrap">
-                        {formatarData(r.data_realizada || r.data_agendada)}
-                      </span>
-                    </div>
-                    {r.hora_fim_real && (
-                      <span className="text-xs text-gray-400 group-hover:text-gray-600 transition-colors whitespace-nowrap">
-                        🕐 {formatarHora(r.hora_fim_real)}
-                      </span>
-                    )}
-                  </div>
+                  <span className="text-xs text-gray-400 group-hover:text-gray-600 transition-colors w-20 text-center whitespace-nowrap">
+                    {formatarData(r.data_realizada || r.data_agendada)}
+                  </span>
+                  <span className="text-xs text-gray-400 group-hover:text-gray-600 transition-colors w-20 text-center whitespace-nowrap">
+                    {r.hora_fim_real ? formatarHora(r.hora_fim_real) : '—'}
+                  </span>
                 </div>
               ))}
             </div>
