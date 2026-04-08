@@ -127,15 +127,23 @@ export default function AgendaVisual({ atendimentos = [], workshops = [] }) {
     const atendimentosDia = getAtendimentosForDay(day);
     if (atendimentosDia.length === 0) return;
     try {
-      const [workshopsAtualizados, todosColaboradores] = await Promise.all([
-        base44.entities.Workshop.list(),
-        base44.entities.Employee.list()
-      ]);
+      // Usar workshops já recebidos via props e buscar apenas colaboradores necessários
+      const ownerIds = workshops
+        .filter(w => atendimentosDia.some(a => a.workshop_id === w.id) && w.owner_id)
+        .map(w => w.owner_id);
+      
+      let colaboradoresRelevantes = [];
+      if (ownerIds.length > 0) {
+        colaboradoresRelevantes = await base44.entities.Employee.filter(
+          { status: 'ativo' }, null, 1000
+        );
+      }
+
       const atendimentosComWorkshop = atendimentosDia
         .map(a => {
-          const workshopEncontrado = workshopsAtualizados.find(w => w.id === a.workshop_id);
+          const workshopEncontrado = workshops.find(w => w.id === a.workshop_id);
           const socio = workshopEncontrado?.owner_id
-            ? todosColaboradores.find(c => c.user_id === workshopEncontrado.owner_id)
+            ? colaboradoresRelevantes.find(c => c.user_id === workshopEncontrado.owner_id)
             : null;
           return { ...a, workshop: workshopEncontrado, socio };
         })

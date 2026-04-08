@@ -39,9 +39,11 @@ export default function AgendaVisualTab({ user, filtros }) {
       
       if (consultorFiltrado) {
         query.consultor_id = consultorFiltrado;
-      } else if (user?.id) {
+      } else if (user?.role !== 'admin') {
+        // Apenas não-admin filtra por seu próprio ID
         query.consultor_id = user.id;
       }
+      // Admin sem filtro = mostra todos (consistente com VisaoGeralTab)
       
       const all = await base44.entities.ConsultoriaAtendimento.filter(query, null, 5000);
       
