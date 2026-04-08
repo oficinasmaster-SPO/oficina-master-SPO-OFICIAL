@@ -316,9 +316,9 @@ export default function PainelAtendimentosTab({ user }) {
                       </td>
                       <td className="py-4 px-6 text-sm text-gray-600 border-r border-gray-100 last:border-r-0">
                         {atendimento.status === ATENDIMENTO_STATUS.REALIZADO && !atendimento.ata_id ? (
-                          <Badge className="bg-orange-100 text-orange-700 border-orange-400 animate-pulse">
-                            <AlertTriangle className="w-3 h-3 mr-1" />
-                            Pendente
+                          <Badge className="bg-orange-100 text-orange-700 border-orange-300 animate-pulse flex items-center gap-1">
+                            <AlertTriangle className="w-3 h-3 shrink-0" />
+                            Realizado
                           </Badge>
                         ) : (
                           <Badge className={ATENDIMENTO_STATUS_COLORS[atendimento.status]}>
