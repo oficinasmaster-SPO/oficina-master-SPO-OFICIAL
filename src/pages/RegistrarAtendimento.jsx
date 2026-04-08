@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar as CalendarIcon, Plus, Trash2, Upload, Sparkles, Loader2, Video, Link as LinkIcon, Image, Film, Send, FileText, MessageSquare, Package, Clock, FilePlus, X, ExternalLink } from "lucide-react";
+import { Calendar as CalendarIcon, Plus, Trash2, Upload, Sparkles, Loader2, Video, Link as LinkIcon, Image, Film, Send, FileText, MessageSquare, Package, Clock, FilePlus, X, ExternalLink, Copy, Check, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import NotificationSchedulerModal from "@/components/aceleracao/NotificationSchedulerModal";
@@ -845,6 +845,12 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
                         google_event_id: meetData.eventId,
                         google_calendar_link: meetData.htmlLink
                       });
+                      
+                      // Auto-copiar mensagem ao criar o link
+                      const dateStr = formData.data_agendada.split('-').reverse().join('/');
+                      const msg = `Olá! Tudo bem?\nSua reunião de ${formData.tipo_atendimento?.replace(/_/g, ' ')} com ${formData.consultor_nome || user?.full_name || 'o consultor'} está agendada.\n\n🗓 Data: ${dateStr}\n⏰ Horário: ${formData.hora_agendada}\n\nPara participar, acesse o link abaixo no horário combinado:\n🔗 ${meetData.meetLink}`;
+                      navigator.clipboard.writeText(msg);
+                      toast.success("Reunião criada e convite copiado para a área de transferência!");
                     }
                   }}
                 >
@@ -862,19 +868,50 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
                 </Button>
               )}
 
-              {/* Link manual ou existente */}
-              <div className="flex gap-2">
+              {/* Link manual ou existente com Mensagem de Convite */}
+              <div className="space-y-3">
                 <Input
                   placeholder="Ou cole o link manualmente"
                   value={formData.google_meet_link}
                   onChange={(e) => setFormData({ ...formData, google_meet_link: e.target.value })}
                 />
+
+                {formData.google_meet_link && (
+                  <div className="mt-4 p-4 border rounded-lg bg-gray-50 space-y-2">
+                    <Label className="text-sm font-semibold flex items-center gap-2">
+                      <MessageSquare className="w-4 h-4 text-blue-600" />
+                      Mensagem de Convite
+                    </Label>
+                    <p className="text-xs text-gray-500 mb-2">Envie esta mensagem de boas-vindas ao cliente pelo WhatsApp ou E-mail.</p>
+                    <div className="relative">
+                      <Textarea
+                        readOnly
+                        className="text-sm text-gray-700 bg-white min-h-[140px] pr-12 focus-visible:ring-1"
+                        value={`Olá! Tudo bem?\nSua reunião de ${formData.tipo_atendimento?.replace(/_/g, ' ')} com ${formData.consultor_nome || user?.full_name || 'o consultor'} está agendada.\n\n🗓 Data: ${formData.data_agendada?.split('-').reverse().join('/') || ''}\n⏰ Horário: ${formData.hora_agendada || ''}\n\nPara participar, acesse o link abaixo no horário combinado:\n🔗 ${formData.google_meet_link}`}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute top-2 right-2 h-8 w-8 hover:bg-blue-100 hover:text-blue-600 transition-colors"
+                        onClick={() => {
+                          const msg = `Olá! Tudo bem?\nSua reunião de ${formData.tipo_atendimento?.replace(/_/g, ' ')} com ${formData.consultor_nome || user?.full_name || 'o consultor'} está agendada.\n\n🗓 Data: ${formData.data_agendada?.split('-').reverse().join('/') || ''}\n⏰ Horário: ${formData.hora_agendada || ''}\n\nPara participar, acesse o link abaixo no horário combinado:\n🔗 ${formData.google_meet_link}`;
+                          navigator.clipboard.writeText(msg);
+                          toast.success("Mensagem copiada para a área de transferência!");
+                        }}
+                        title="Copiar mensagem"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {formData.google_event_id && (
-                <p className="text-xs text-green-600 flex items-center gap-1">
-                  <CalendarIcon className="w-3 h-3" />
-                  Evento criado no Google Calendar
+                <p className="text-xs text-green-600 flex items-center gap-1 mt-2">
+                  <CheckCircle2 className="w-3 h-3" />
+                  Evento criado e sincronizado com o Google Calendar
                 </p>
               )}
             </div>
