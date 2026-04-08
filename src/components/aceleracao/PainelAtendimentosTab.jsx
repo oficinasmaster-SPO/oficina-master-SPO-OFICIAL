@@ -315,10 +315,17 @@ export default function PainelAtendimentosTab({ user }) {
                         {atendimento.tipo_atendimento.replace(/_/g, ' ')}
                       </td>
                       <td className="py-4 px-6 text-sm text-gray-600 border-r border-gray-100 last:border-r-0">
-                        <Badge className={ATENDIMENTO_STATUS_COLORS[atendimento.status]}>
-                          {atendimento.status === ATENDIMENTO_STATUS.ATRASADO && <AlertTriangle className="w-3 h-3 mr-1" />}
-                          {ATENDIMENTO_STATUS_LABELS[atendimento.status]}
-                        </Badge>
+                        {atendimento.status === ATENDIMENTO_STATUS.REALIZADO && !atendimento.ata_id ? (
+                          <Badge className="bg-orange-100 text-orange-700 border-orange-400 animate-pulse shadow-sm shadow-orange-200">
+                            <AlertTriangle className="w-3 h-3 mr-1" />
+                            ATA Pendente
+                          </Badge>
+                        ) : (
+                          <Badge className={ATENDIMENTO_STATUS_COLORS[atendimento.status]}>
+                            {atendimento.status === ATENDIMENTO_STATUS.ATRASADO && <AlertTriangle className="w-3 h-3 mr-1" />}
+                            {ATENDIMENTO_STATUS_LABELS[atendimento.status]}
+                          </Badge>
+                        )}
                       </td>
                       <td className="py-4 px-6 text-sm text-gray-600 border-r border-gray-100 last:border-r-0">
                         {atendimento.consultor_nome}
