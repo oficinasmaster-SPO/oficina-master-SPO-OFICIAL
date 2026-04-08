@@ -873,12 +873,6 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
                   value={formData.google_meet_link}
                   onChange={(e) => setFormData({ ...formData, google_meet_link: e.target.value })}
                 />
-                {!formData.google_meet_link && (
-                  <Button type="button" variant="outline" onClick={gerarLinkGoogleMeet}>
-                    <LinkIcon className="w-4 h-4 mr-2" />
-                    Gerar
-                  </Button>
-                )}
               </div>
 
               {formData.google_event_id && (
