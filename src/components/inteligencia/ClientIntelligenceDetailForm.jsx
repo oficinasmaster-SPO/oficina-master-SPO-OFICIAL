@@ -87,7 +87,10 @@ export default function ClientIntelligenceDetailForm({ open, onOpenChange, intel
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent 
+        className="max-w-2xl max-h-[90vh] overflow-y-auto"
+        onInteractOutside={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle>Aprofundar Inteligência</DialogTitle>
         </DialogHeader>
