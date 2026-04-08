@@ -393,7 +393,7 @@ export default function AgendaVisual({ atendimentos = [], workshops = [], user }
       <CardContent>
         <div className={`grid gap-1 ${viewMode === 'month' ? 'grid-cols-7' : viewMode === 'week' ? 'grid-cols-7' : 'grid-cols-1'}`}>
           {viewMode !== 'day' && ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day) => (
-            <div key={day} className="text-center text-xs font-semibold text-gray-600 p-2">
+            <div key={day} className="text-center text-xs font-semibold text-gray-600 py-2 px-1 bg-gray-50 border-b-2 border-gray-300 shadow-sm">
               {day}
             </div>
           ))}
