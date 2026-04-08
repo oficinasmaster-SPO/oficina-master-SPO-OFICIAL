@@ -48,18 +48,21 @@ export default function PainelAtendimentosTab({ user }) {
 
   const { data: atendimentos, isLoading } = useQuery({
     queryKey: ['todos-atendimentos'],
-    queryFn: () => base44.entities.ConsultoriaAtendimento.list('-data_agendada'),
+    queryFn: () => base44.entities.ConsultoriaAtendimento.list('-data_agendada', 5000),
     refetchInterval: 30000
   });
 
   const { data: workshops } = useQuery({
-    queryKey: ['workshops-lista'],
-    queryFn: () => base44.entities.Workshop.list()
+    queryKey: ['workshops-ativos'],
+    queryFn: async () => {
+      const all = await base44.entities.Workshop.list(null, 5000);
+      return all.filter(w => w.planoAtual && w.planoAtual !== 'FREE');
+    }
   });
 
   const { data: atas } = useQuery({
     queryKey: ['meeting-minutes'],
-    queryFn: () => base44.entities.MeetingMinutes.list('-created_date')
+    queryFn: () => base44.entities.MeetingMinutes.list('-created_date', 5000)
   });
 
   const { data: planos } = useQuery({
@@ -70,8 +73,11 @@ export default function PainelAtendimentosTab({ user }) {
   const { data: consultores } = useQuery({
     queryKey: ['consultores-list'],
     queryFn: async () => {
-      const employees = await base44.entities.Employee.list();
-      return employees.filter(e => e.job_role === 'acelerador' || e.position?.toLowerCase().includes('consultor'));
+      const employees = await base44.entities.Employee.filter({
+        tipo_vinculo: 'interno',
+        status: 'ativo'
+      }, null, 1000);
+      return employees;
     }
   });
 

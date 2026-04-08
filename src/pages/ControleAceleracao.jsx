@@ -153,10 +153,7 @@ export default function ControleAceleracao() {
             <Activity className="w-4 h-4 mr-2" />
             Dashboard Sprints
           </TabsTrigger>
-          <TabsTrigger value="consultoria" className="flex-shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-colors hidden">
-            Consultoria
-          </TabsTrigger>
-        </TabsList>
+            </TabsList>
 
         <TabsContent value="visao-geral">
           <FiltrosControleAceleracao
@@ -192,10 +189,6 @@ export default function ControleAceleracao() {
 
         <TabsContent value="dashboard-operacional">
           <DashboardOperacionalTabRedesigned user={user} />
-        </TabsContent>
-
-        <TabsContent value="consultoria" className="hidden">
-          {/* Fallback redirection - consultoria tab é mapeado para dashboard-operacional */}
         </TabsContent>
       </Tabs>
     </div>

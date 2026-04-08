@@ -40,6 +40,10 @@ export default function FiltrosControleAceleracao({
         dataInicio = format(startOfMonth(hoje), "yyyy-MM-dd");
         dataFim = format(endOfMonth(hoje), "yyyy-MM-dd");
         break;
+      case "custom":
+        // Manter datas atuais ao selecionar personalizado
+        onFiltrosChange({ ...filtros, preset: "custom" });
+        return;
       default:
         return;
     }

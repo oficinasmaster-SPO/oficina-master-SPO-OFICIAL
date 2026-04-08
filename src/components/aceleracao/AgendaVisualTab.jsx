@@ -15,7 +15,7 @@ export default function AgendaVisualTab({ user, filtros }) {
   const { data: workshops } = useQuery({
     queryKey: ['workshops-ativos'],
     queryFn: async () => {
-      const all = await base44.entities.Workshop.list();
+      const all = await base44.entities.Workshop.list(null, 5000);
       return all.filter(w => w.planoAtual && w.planoAtual !== 'FREE');
     }
   });
@@ -43,12 +43,14 @@ export default function AgendaVisualTab({ user, filtros }) {
         query.consultor_id = user.id;
       }
       
-      const all = await base44.entities.ConsultoriaAtendimento.filter(query);
+      const all = await base44.entities.ConsultoriaAtendimento.filter(query, null, 5000);
       
       if (dataInicio && dataFim) {
         return all.filter(a => {
-          const dataAtendimento = new Date(a.data_agendada);
-          return dataAtendimento >= dataInicio && dataAtendimento <= dataFim;
+          const dataAtendBR = new Date(a.data_agendada).toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+          const inicioStr = dataInicio.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+          const fimStr = dataFim.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+          return dataAtendBR >= inicioStr && dataAtendBR <= fimStr;
         });
       }
       
