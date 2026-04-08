@@ -18,6 +18,7 @@ import { toBrazilDate, formatDateTimeBR } from "@/utils/timezone";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { toast } from "sonner";
+import RegistrarAtendimento from "@/pages/RegistrarAtendimento";
 
 
 export default function PainelAtendimentosTab({ user }) {
@@ -27,6 +28,8 @@ export default function PainelAtendimentosTab({ user }) {
   const [showVisualizarAta, setShowVisualizarAta] = useState(false);
   const [showReagendar, setShowReagendar] = useState(false);
   const [showFinalizar, setShowFinalizar] = useState(false);
+  const [showEditarAtendimento, setShowEditarAtendimento] = useState(false);
+  const [editarAtendimentoId, setEditarAtendimentoId] = useState(null);
   const [selectedAtendimento, setSelectedAtendimento] = useState(null);
   const [atendimentoFinalizar, setAtendimentoFinalizar] = useState(null);
   const [selectedAta, setSelectedAta] = useState(null);
@@ -215,6 +218,19 @@ export default function PainelAtendimentosTab({ user }) {
         />
       )}
 
+      {showEditarAtendimento && editarAtendimentoId && (
+        <RegistrarAtendimento
+          isModal={true}
+          atendimentoId={editarAtendimentoId}
+          onClose={() => {
+            setShowEditarAtendimento(false);
+            setEditarAtendimentoId(null);
+            queryClient.invalidateQueries(['todos-atendimentos']);
+            queryClient.invalidateQueries(['meeting-minutes']);
+          }}
+        />
+      )}
+
       {/* Filtros de Atendimentos */}
       <FiltrosAtendimentos
         filters={filtrosAtas}
@@ -362,7 +378,10 @@ export default function PainelAtendimentosTab({ user }) {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => navigate(createPageUrl('RegistrarAtendimento') + `?atendimento_id=${atendimento.id}`)}
+                            onClick={() => {
+                              setEditarAtendimentoId(atendimento.id);
+                              setShowEditarAtendimento(true);
+                            }}
                             title="Editar"
                           >
                             <Edit className="w-4 h-4 text-gray-600" />
