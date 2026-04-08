@@ -20,7 +20,7 @@ export default function GraficoAtendimentos({ atendimentos = [], workshops = [] 
     });
 
     return [
-      { name: 'Realizados', value: counts.realizado, fill: '#10b981' },
+      { name: 'Concluídos', value: counts.realizado, fill: '#10b981' },
       { name: 'Faltou', value: counts.faltou, fill: '#ef4444' },
       { name: 'Desmarcou', value: counts.desmarcou, fill: '#f59e0b' },
       { name: 'Participando', value: counts.participando, fill: '#8b5cf6' }
@@ -81,7 +81,7 @@ export default function GraficoAtendimentos({ atendimentos = [], workshops = [] 
             <div className="grid grid-cols-[1fr_auto_auto] gap-x-4 items-center mb-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
               <div className="flex items-center gap-1.5">
                 <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
-                Últimas Realizadas
+                Últimos Concluídos
               </div>
               <span className="w-20 text-left">Data</span>
               <span className="w-20 text-left">Encerram.</span>
