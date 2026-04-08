@@ -235,7 +235,10 @@ export default function ClientIntelligenceViewer({ open, onOpenChange, item, wor
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent 
+        className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col"
+        onInteractOutside={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <AlertCircle className="w-5 h-5 text-indigo-600" />
