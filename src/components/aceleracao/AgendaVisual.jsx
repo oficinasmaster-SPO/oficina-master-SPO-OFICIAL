@@ -407,8 +407,8 @@ export default function AgendaVisual({ atendimentos = [], workshops = [], user }
               <div
                 key={idx}
                 className={`
-                  ${viewMode === 'day' ? 'min-h-[400px]' : viewMode === 'week' ? 'min-h-[100px]' : 'aspect-square'} 
-                  p-1.5 border rounded cursor-pointer hover:bg-gray-50 transition-colors overflow-hidden
+                  ${viewMode === 'day' ? 'min-h-[400px]' : viewMode === 'week' ? 'min-h-[100px]' : 'min-h-[85px]'} 
+                  p-1.5 border rounded cursor-pointer hover:bg-gray-50 transition-colors
                   ${isCurrentMonth ? 'bg-white' : 'bg-gray-50'}
                   ${isToday ? 'border-blue-500 border-2' : 'border-gray-200'}
                 `}
@@ -435,8 +435,8 @@ export default function AgendaVisual({ atendimentos = [], workshops = [], user }
                     </span>
                   ))}
                   {atendimentosDia.length > maxVisible && (
-                    <span className="text-[9px] text-gray-500 font-medium">
-                      +{atendimentosDia.length - maxVisible}
+                    <span className="text-[9px] text-gray-500 font-medium cursor-pointer hover:text-blue-600">
+                      +{atendimentosDia.length - maxVisible} mais
                     </span>
                   )}
                 </div>
