@@ -40,17 +40,20 @@ export default function ControleAceleracao() {
   const { data: consultores } = useQuery({
     queryKey: ['consultores-list'],
     queryFn: async () => {
-      const users = await base44.entities.User.list(null, 1000);
-      
       // Buscar colaboradores internos (Oficinas Master)
       const employees = await base44.entities.Employee.filter({
         tipo_vinculo: 'interno',
         status: 'ativo'
       }, null, 1000);
       
-      const employeeUserIds = employees.map(e => e.user_id).filter(Boolean);
-      
-      return users.filter(u => employeeUserIds.includes(u.id));
+      // Retornar os dados formatados usando os registros de Employee, 
+      // evitando falha de permissão (RLS) ao tentar listar todos os Users sem ser admin
+      return employees
+        .filter(e => e.user_id)
+        .map(e => ({
+          id: e.user_id,
+          full_name: e.full_name
+        }));
     },
     enabled: !!user
   });
