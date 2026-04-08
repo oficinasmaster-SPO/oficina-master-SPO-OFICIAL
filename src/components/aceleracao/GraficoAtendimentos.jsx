@@ -83,8 +83,8 @@ export default function GraficoAtendimentos({ atendimentos = [], workshops = [] 
                 <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
                 Últimas Realizadas
               </div>
-              <span className="w-20 text-center">Data</span>
-              <span className="w-20 text-center">Encerram.</span>
+              <span className="w-20 text-left">Data</span>
+              <span className="w-20 text-left">Encerram.</span>
             </div>
             <div className="grid grid-cols-1 gap-2">
               {reunioesRecentes.map(r => (
@@ -98,10 +98,10 @@ export default function GraficoAtendimentos({ atendimentos = [], workshops = [] 
                       {workshops.find(w => w.id === r.workshop_id)?.name || r.workshop_nome || formatarTipo(r.tipo_atendimento)}
                     </span>
                   </div>
-                  <span className="text-xs text-gray-400 group-hover:text-gray-600 transition-colors w-20 text-center whitespace-nowrap">
+                  <span className="text-xs text-gray-400 group-hover:text-gray-600 transition-colors w-20 text-left whitespace-nowrap">
                     {formatarData(r.data_realizada || r.data_agendada)}
                   </span>
-                  <span className="text-xs text-gray-400 group-hover:text-gray-600 transition-colors w-20 text-center whitespace-nowrap">
+                  <span className="text-xs text-gray-400 group-hover:text-gray-600 transition-colors w-20 text-left whitespace-nowrap">
                     {r.hora_fim_real ? formatarHora(r.hora_fim_real) : '—'}
                   </span>
                 </div>
