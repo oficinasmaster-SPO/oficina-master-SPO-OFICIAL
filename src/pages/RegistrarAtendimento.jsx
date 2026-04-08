@@ -29,7 +29,7 @@ import NextSteps from "@/components/aceleracao/NextSteps";
 import AtendimentoProgressIndicator from "@/components/aceleracao/AtendimentoProgressIndicator";
 import AtaAIConfigPanel from "@/components/aceleracao/AtaAIConfigPanel";
 import AutoSaveIndicator from "@/components/aceleracao/AutoSaveIndicator";
-import { TimePicker } from "@/components/ui/time-picker";
+// import { TimePicker } from "@/components/ui/time-picker";
 import { toBrazilDate } from "@/utils/timezone";
 
 // RegistrarAtendimento v3 - auto-save + progress
@@ -793,9 +793,11 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
               </div>
               <div>
                 <Label>Horário *</Label>
-                <TimePicker
+                <Input
+                  type="time"
                   value={formData.hora_agendada}
-                  onChange={(val) => setFormData({ ...formData, hora_agendada: val })}
+                  onChange={(e) => setFormData({ ...formData, hora_agendada: e.target.value })}
+                  required
                 />
               </div>
               <div>

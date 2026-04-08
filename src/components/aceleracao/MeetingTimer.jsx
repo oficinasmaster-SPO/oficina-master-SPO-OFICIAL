@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Play, Pause, Square, Clock } from "lucide-react";
 import { toast } from "sonner";
+import { format } from "date-fns";
 
 export default function MeetingTimer({ onTimerData }) {
   const [isRunning, setIsRunning] = useState(false);
@@ -124,11 +125,11 @@ export default function MeetingTimer({ onTimerData }) {
         {startTime && (
           <div className="space-y-2 border-t pt-4">
             <div className="text-sm text-gray-600">
-              <strong>Início:</strong> {startTime.toLocaleTimeString('pt-BR')}
+              <strong>Início:</strong> {format(startTime, 'HH:mm:ss')}
             </div>
             {endTime && (
               <div className="text-sm text-gray-600">
-                <strong>Fim:</strong> {endTime.toLocaleTimeString('pt-BR')}
+                <strong>Fim:</strong> {format(endTime, 'HH:mm:ss')}
               </div>
             )}
             <div className="flex gap-2">
