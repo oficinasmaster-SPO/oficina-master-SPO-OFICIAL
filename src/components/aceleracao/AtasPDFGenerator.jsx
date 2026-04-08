@@ -879,7 +879,7 @@ export const downloadAtaPDF = async (ata, workshop) => {
   let dateStr = 'sem-data';
   try {
     dateStr = format(new Date(ata?.meeting_date || new Date()), 'ddMMyyyy');
-  } catch {
+  } catch (_) {
     dateStr = format(new Date(), 'ddMMyyyy');
   }
   const fileName = `ATA_${safeCode}_${dateStr}.pdf`;
