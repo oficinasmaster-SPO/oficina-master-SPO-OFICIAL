@@ -113,13 +113,13 @@ export const TimePicker = React.forwardRef(({ value, onChange, disabled, placeho
     }
   };
 
-  const inputClass = "w-12 h-10 text-center text-base font-semibold bg-transparent outline-none border-0 focus:ring-0 placeholder:text-gray-400 placeholder:font-normal [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none";
+  const segmentClass = "flex-1 h-full text-center text-sm font-medium bg-transparent outline-none border border-input rounded-md focus:ring-2 focus:ring-ring focus:border-ring placeholder:text-muted-foreground placeholder:font-normal transition-shadow [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none";
 
   return (
     <div
       ref={ref}
       className={cn(
-        "inline-flex items-center border border-input rounded-md bg-white px-1 h-10 focus-within:ring-1 focus-within:ring-ring transition-colors",
+        "flex items-center gap-1.5 w-full h-10",
         disabled && "opacity-50 pointer-events-none",
         className
       )}
@@ -136,9 +136,9 @@ export const TimePicker = React.forwardRef(({ value, onChange, disabled, placeho
         onFocus={(e) => e.target.select()}
         placeholder="HH"
         disabled={disabled}
-        className={inputClass}
+        className={segmentClass}
       />
-      <span className="text-base font-bold text-gray-400 select-none">:</span>
+      <span className="text-sm font-bold text-muted-foreground select-none shrink-0">:</span>
       <input
         ref={minuteRef}
         type="text"
@@ -151,7 +151,7 @@ export const TimePicker = React.forwardRef(({ value, onChange, disabled, placeho
         onFocus={(e) => e.target.select()}
         placeholder="MM"
         disabled={disabled}
-        className={inputClass}
+        className={segmentClass}
       />
     </div>
   );
