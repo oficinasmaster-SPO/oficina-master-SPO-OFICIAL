@@ -1,16 +1,22 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { ClipboardList, CheckCircle2, Calendar } from "lucide-react";
 import { format } from "date-fns";
 
 export default function GraficoAtendimentos({ atendimentos = [], workshops = [] }) {
   const contarPorStatus = () => {
     const counts = {
+      agendado: 0,
+      confirmado: 0,
+      participando: 0,
       realizado: 0,
+      atrasado: 0,
+      reagendado: 0,
+      remarcado: 0,
       faltou: 0,
       desmarcou: 0,
-      participando: 0
+      cancelado: 0
     };
 
     atendimentos.forEach(a => {
@@ -20,10 +26,16 @@ export default function GraficoAtendimentos({ atendimentos = [], workshops = [] 
     });
 
     return [
-      { name: 'Realizados', value: counts.realizado, fill: '#10b981' },
+      { name: 'Agendado', value: counts.agendado, fill: '#9ca3af' },
+      { name: 'Confirmado', value: counts.confirmado, fill: '#3b82f6' },
+      { name: 'Participando', value: counts.participando, fill: '#8b5cf6' },
+      { name: 'Realizado', value: counts.realizado, fill: '#10b981' },
+      { name: 'Atrasado', value: counts.atrasado, fill: '#f43f5e' },
+      { name: 'Reagendado', value: counts.reagendado, fill: '#0ea5e9' },
+      { name: 'Remarcado', value: counts.remarcado, fill: '#0284c7' },
       { name: 'Faltou', value: counts.faltou, fill: '#ef4444' },
       { name: 'Desmarcou', value: counts.desmarcou, fill: '#f59e0b' },
-      { name: 'Participando', value: counts.participando, fill: '#8b5cf6' }
+      { name: 'Cancelado', value: counts.cancelado, fill: '#6b7280' }
     ];
   };
 
@@ -71,7 +83,11 @@ export default function GraficoAtendimentos({ atendimentos = [], workshops = [] 
             <XAxis dataKey="name" />
             <YAxis />
             <Tooltip />
-            <Bar dataKey="value" fill="#8884d8" />
+            <Bar dataKey="value">
+              {data.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.fill} />
+              ))}
+            </Bar>
           </BarChart>
         </ResponsiveContainer>
 
