@@ -98,9 +98,9 @@ export default function AgendaVisual({ atendimentos = [], workshops = [], user }
   }, [atendimentos, consultorFiltro]);
 
   const getAtendimentosForDay = (day) => {
-    return atendimentosFiltrados.filter(a => 
-      isSameDay(new Date(a.data_agendada), day)
-    );
+    return atendimentosFiltrados
+      .filter(a => isSameDay(new Date(a.data_agendada), day))
+      .sort((a, b) => new Date(a.data_agendada) - new Date(b.data_agendada));
   };
 
   // Paleta de cores para chips por índice (independente de status)
