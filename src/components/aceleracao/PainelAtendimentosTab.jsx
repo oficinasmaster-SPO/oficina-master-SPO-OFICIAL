@@ -321,9 +321,9 @@ export default function PainelAtendimentosTab({ user }) {
                             Realizado
                           </Badge>
                         ) : (
-                          <Badge className={ATENDIMENTO_STATUS_COLORS[atendimento.status]}>
+                          <Badge className={ATENDIMENTO_STATUS_COLORS[atendimento.status] || 'bg-gray-100 text-gray-800 border-gray-300'}>
                             {atendimento.status === ATENDIMENTO_STATUS.ATRASADO && <AlertTriangle className="w-3 h-3 mr-1" />}
-                            {ATENDIMENTO_STATUS_LABELS[atendimento.status]}
+                            {ATENDIMENTO_STATUS_LABELS[atendimento.status] || atendimento.status || 'Indefinido'}
                           </Badge>
                         )}
                       </td>
@@ -335,7 +335,8 @@ export default function PainelAtendimentosTab({ user }) {
                           {(atendimento.status === ATENDIMENTO_STATUS.AGENDADO || 
                             atendimento.status === ATENDIMENTO_STATUS.CONFIRMADO || 
                             atendimento.status === ATENDIMENTO_STATUS.REAGENDADO || 
-                            atendimento.status === ATENDIMENTO_STATUS.ATRASADO) && (
+                            atendimento.status === ATENDIMENTO_STATUS.ATRASADO ||
+                            !atendimento.status) && (
                             <>
                               <Button
                                 variant="ghost"
@@ -359,7 +360,7 @@ export default function PainelAtendimentosTab({ user }) {
                             </>
                           )}
 
-                          {atendimento.status === ATENDIMENTO_STATUS.PARTICIPANDO && (
+                          {(atendimento.status === ATENDIMENTO_STATUS.PARTICIPANDO || !atendimento.status) && (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -374,7 +375,8 @@ export default function PainelAtendimentosTab({ user }) {
                             atendimento.status === ATENDIMENTO_STATUS.AGENDADO || 
                             atendimento.status === ATENDIMENTO_STATUS.CONFIRMADO || 
                             atendimento.status === ATENDIMENTO_STATUS.REAGENDADO || 
-                            atendimento.status === ATENDIMENTO_STATUS.ATRASADO) && (
+                            atendimento.status === ATENDIMENTO_STATUS.ATRASADO ||
+                            !atendimento.status) && (
                             <Button
                               variant="ghost"
                               size="sm"

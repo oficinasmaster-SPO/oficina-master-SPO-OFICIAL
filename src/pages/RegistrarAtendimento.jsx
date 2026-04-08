@@ -775,7 +775,10 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
                   <SelectContent>
                     <SelectItem value="agendado">Agendado</SelectItem>
                     <SelectItem value="confirmado">Confirmado</SelectItem>
+                    <SelectItem value="participando">Participando</SelectItem>
                     <SelectItem value="realizado">Realizado</SelectItem>
+                    <SelectItem value="atrasado">Atrasado</SelectItem>
+                    <SelectItem value="reagendado">Reagendado</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
