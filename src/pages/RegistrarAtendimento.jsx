@@ -768,8 +768,9 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
                 <Select
                   value={formData.status}
                   onValueChange={(value) => setFormData({ ...formData, status: value })}
+                  disabled={formData.status === 'participando'}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className={formData.status === 'participando' ? 'opacity-70 cursor-not-allowed bg-gray-50' : ''}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -781,6 +782,9 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
                     <SelectItem value="reagendado">Reagendado</SelectItem>
                   </SelectContent>
                 </Select>
+                {formData.status === 'participando' && (
+                  <p className="text-xs text-blue-600 mt-1">Status bloqueado. Finalize a reunião usando os botões da listagem ou o timer.</p>
+                )}
               </div>
             </div>
 
