@@ -786,23 +786,24 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Label>Data *</Label>
-                <Input
-                  type="date"
-                  value={formData.data_agendada}
-                  onChange={(e) => setFormData({ ...formData, data_agendada: e.target.value })}
-                  required
-                />
-              </div>
-              <div>
-                <Label>Horário *</Label>
-                <TimePicker
-                  value={formData.hora_agendada}
-                  onChange={(val) => setFormData({ ...formData, hora_agendada: val })}
-                  required
-                />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Data *</Label>
+                  <Input
+                    type="date"
+                    value={formData.data_agendada}
+                    onChange={(e) => setFormData({ ...formData, data_agendada: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label>Horário *</Label>
+                  <TimePicker
+                    value={formData.hora_agendada}
+                    onChange={(val) => setFormData({ ...formData, hora_agendada: val })}
+                  />
+                </div>
               </div>
               <div>
                 <Label>Duração (min)</Label>

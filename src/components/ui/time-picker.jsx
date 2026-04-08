@@ -113,7 +113,7 @@ export const TimePicker = React.forwardRef(({ value, onChange, disabled, placeho
     }
   };
 
-  const segmentClass = "w-12 h-full text-center text-sm font-medium bg-transparent outline-none border border-input rounded-md focus:ring-2 focus:ring-ring focus:border-ring placeholder:text-muted-foreground placeholder:font-normal transition-shadow [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none";
+  const segmentClass = "flex-1 min-w-0 h-full text-center text-sm font-medium bg-transparent outline-none border border-input rounded-md focus:ring-2 focus:ring-ring focus:border-ring placeholder:text-muted-foreground placeholder:font-normal transition-shadow [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none";
 
   return (
     <div
