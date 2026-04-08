@@ -711,7 +711,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value={user.id}>{user.full_name} (Eu)</SelectItem>
+                      <SelectItem value={user.id}>{user.full_name}</SelectItem>
                       {consultores?.filter(c => c.id !== user.id).map((c) => (
                         <SelectItem key={c.id} value={c.id}>
                           {c.full_name}
