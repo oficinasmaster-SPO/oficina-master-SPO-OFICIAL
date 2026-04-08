@@ -98,9 +98,9 @@ export default function AgendaVisual({ atendimentos = [], workshops = [], user }
   }, [atendimentos, consultorFiltro]);
 
   const getAtendimentosForDay = (day) => {
-    return atendimentosFiltrados
-      .filter(a => isSameDay(new Date(a.data_agendada), day))
-      .sort((a, b) => new Date(a.data_agendada) - new Date(b.data_agendada));
+    return atendimentosFiltrados.filter(a => 
+      isSameDay(new Date(a.data_agendada), day)
+    );
   };
 
   // Paleta de cores para chips por índice (independente de status)
@@ -393,7 +393,7 @@ export default function AgendaVisual({ atendimentos = [], workshops = [], user }
       <CardContent>
         <div className={`grid gap-1 ${viewMode === 'month' ? 'grid-cols-7' : viewMode === 'week' ? 'grid-cols-7' : 'grid-cols-1'}`}>
           {viewMode !== 'day' && ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day) => (
-            <div key={day} className="text-center text-xs font-semibold text-gray-600 py-2 px-1 bg-gray-50 border-b-2 border-gray-300 shadow-sm">
+            <div key={day} className="text-center text-xs font-semibold text-gray-600 p-2">
               {day}
             </div>
           ))}
@@ -407,37 +407,39 @@ export default function AgendaVisual({ atendimentos = [], workshops = [], user }
               <div
                 key={idx}
                 className={`
-                  ${viewMode === 'day' ? 'min-h-[400px]' : viewMode === 'week' ? 'min-h-[100px]' : 'min-h-[85px]'} 
-                  p-1.5 border rounded cursor-pointer hover:bg-gray-50 transition-colors
+                  ${viewMode === 'day' ? 'min-h-[500px]' : viewMode === 'week' ? 'min-h-[120px]' : 'min-h-[80px]'} 
+                  p-2 border rounded cursor-pointer hover:bg-gray-50 transition-colors
                   ${isCurrentMonth ? 'bg-white' : 'bg-gray-50'}
                   ${isToday ? 'border-blue-500 border-2' : 'border-gray-200'}
                 `}
                 onClick={() => handleDayClick(day)}
               >
-                <div className={`text-xs font-medium mb-1 ${isCurrentMonth ? 'text-gray-900' : 'text-gray-400'}`}>
+                <div className={`text-sm font-medium mb-2 ${isCurrentMonth ? 'text-gray-900' : 'text-gray-400'}`}>
                   {viewMode === 'day' 
                     ? format(day, "EEEE, dd 'de' MMMM", { locale: ptBR })
                     : format(day, 'd')}
                 </div>
-                <div className="flex flex-col gap-0.5">
+                <div className="flex flex-wrap gap-1">
                   {getFollowUpsForDay(day).length > 0 && (
-                    <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1 py-0 rounded-full bg-amber-100 text-amber-700 border border-amber-300 w-fit" title={`${getFollowUpsForDay(day).length} follow-up(s) pendente(s)`}>
+                    <span className="inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 border border-amber-300" title={`${getFollowUpsForDay(day).length} follow-up(s) pendente(s)`}>
                       📌 {getFollowUpsForDay(day).length}
                     </span>
                   )}
-                  {atendimentosDia.slice(0, maxVisible).map((atendimento) => (
-                    <span
-                      key={atendimento.id}
-                      className={`inline-flex items-center gap-0.5 text-[9px] font-semibold px-1.5 py-0 rounded-full border ${getChipColor(atendimento.id)} w-fit leading-4`}
-                    >
-                      {atendimento.google_event_id && <CalendarCheck className="w-2 h-2" />}
-                      {format(new Date(atendimento.data_agendada), 'HH:mm')}
-                    </span>
-                  ))}
+                  {atendimentosDia.slice(0, maxVisible).map((atendimento) => {
+                    return (
+                      <span
+                        key={atendimento.id}
+                        className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border ${getChipColor(atendimento.id)} cursor-default pointer-events-none select-none`}
+                      >
+                        {atendimento.google_event_id && <CalendarCheck className="w-2.5 h-2.5" />}
+                        {format(new Date(atendimento.data_agendada), 'HH:mm')}
+                      </span>
+                    );
+                  })}
                   {atendimentosDia.length > maxVisible && (
-                    <span className="text-[9px] text-gray-500 font-medium cursor-pointer hover:text-blue-600">
+                    <div className="text-xs text-gray-500 text-center font-medium cursor-pointer hover:text-blue-600">
                       +{atendimentosDia.length - maxVisible} mais
-                    </span>
+                    </div>
                   )}
                 </div>
               </div>
