@@ -112,7 +112,10 @@ export default function ClientIntelligenceChecklistManager({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent 
+        className="max-w-2xl"
+        onInteractOutside={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle>{checklistId ? "Editar Checklist" : "Criar Checklist"}</DialogTitle>
         </DialogHeader>
