@@ -78,10 +78,17 @@ export default function GraficoAtendimentos({ atendimentos = [], workshops = [] 
         {/* Histórico de reuniões recentes */}
         {reunioesRecentes.length > 0 && (
           <div className="border-t pt-4 flex-1">
-            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-              <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
-              Últimas Realizadas
-            </h4>
+            <div className="flex items-center justify-between mb-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              <div className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
+                Últimas Realizadas
+              </div>
+              <div className="flex items-center gap-3">
+                <span>Data</span>
+                <span className="text-gray-300">|</span>
+                <span>Encerramento</span>
+              </div>
+            </div>
             <div className="grid grid-cols-1 gap-2">
               {reunioesRecentes.map(r => (
                 <div
