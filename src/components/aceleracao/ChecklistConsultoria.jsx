@@ -359,19 +359,19 @@ export default function ChecklistConsultoria({ respostas, onChange }) {
           return (
             <div key={bloco.template_id} className="bg-white border border-gray-200 rounded-xl overflow-hidden">
               {/* Header do bloco */}
-              <div className="flex items-center justify-between px-5 py-3.5 bg-gray-50/80 border-b border-gray-100">
-                <div className="flex items-center gap-3">
-                  <button type="button" onClick={() => toggleExpand(bloco.template_id)} className="hover:bg-gray-200 rounded-lg p-1.5 transition-colors">
+              <div className="flex items-center justify-between px-4 py-3 bg-gray-50/80 border-b border-gray-100 flex-wrap gap-2">
+                <div className="flex items-center gap-2 min-w-0 flex-wrap">
+                  <button type="button" onClick={() => toggleExpand(bloco.template_id)} className="hover:bg-gray-200 rounded-lg p-1 transition-colors flex-shrink-0">
                     {isOpen ? <ChevronUp className="w-4 h-4 text-gray-500" /> : <ChevronDown className="w-4 h-4 text-gray-500" />}
                   </button>
-                  <div className={`w-7 h-7 rounded-lg ${tema.iconBg || 'bg-gray-100'} flex items-center justify-center`}>
+                  <div className={`w-7 h-7 rounded-lg ${tema.iconBg || 'bg-gray-100'} flex items-center justify-center flex-shrink-0`}>
                     <ClipboardList className={`w-3.5 h-3.5 ${tema.iconColor || 'text-gray-600'}`} />
                   </div>
-                  <span className="font-semibold text-gray-900 text-sm">{bloco.template_nome}</span>
-                  <Badge className={`text-xs border ${tema.color} font-medium`}>{tema.label}</Badge>
-                  <span className="text-xs text-gray-400 font-medium">{totalPreenchidas}/{bloco.perguntas.length} respondidas</span>
+                  <span className="font-semibold text-gray-900 text-sm truncate">{bloco.template_nome}</span>
+                  <Badge className={`text-xs border ${tema.color} font-medium flex-shrink-0`}>{tema.label}</Badge>
+                  <span className="text-xs text-gray-400 font-medium flex-shrink-0 whitespace-nowrap">{totalPreenchidas}/{bloco.perguntas.length} respondidas</span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-shrink-0">
                   <button
                     type="button"
                     onClick={() => toggleIncluirAta(bloco.template_id)}
