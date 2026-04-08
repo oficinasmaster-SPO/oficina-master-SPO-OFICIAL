@@ -1570,28 +1570,31 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
         )}
 
         {/* Ações */}
-        <div className="flex gap-3 justify-end sticky bottom-0 bg-white pt-4 pb-2 border-t mt-6 z-20">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleClose}
-          >
-            Cancelar
-          </Button>
-          <Button
-            type="submit"
-            disabled={createMutation.isPending}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            {createMutation.isPending ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Salvando...
-              </>
-            ) : (
-              formData.id ? 'Atualizar Atendimento' : 'Salvar Atendimento'
-            )}
+        <div className="sticky bottom-0 z-20 -mx-6 px-6 mt-6">
+          <div className="flex gap-3 justify-end bg-white/95 backdrop-blur-sm border-t border-gray-200 shadow-[0_-4px_12px_rgba(0,0,0,0.06)] rounded-t-xl py-4 px-6">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleClose}
+              className="px-6"
+            >
+              Cancelar
             </Button>
+            <Button
+              type="submit"
+              disabled={createMutation.isPending}
+              className="bg-blue-600 hover:bg-blue-700 px-6 shadow-md"
+            >
+              {createMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Salvando...
+                </>
+              ) : (
+                formData.id ? 'Atualizar Atendimento' : 'Salvar Atendimento'
+              )}
+            </Button>
+          </div>
         </div>
 
         {/* Modais */}
