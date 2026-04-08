@@ -53,7 +53,7 @@ export default function AtasSection({ atas, workshop }) {
         ataParaDownload.client_intelligence = intelligence || [];
       }
 
-      downloadAtaPDF(ataParaDownload, workshop);
+      await downloadAtaPDF(ataParaDownload, workshop);
       toast.success("PDF baixado com sucesso!");
     } catch (error) {
       console.error("Erro ao gerar PDF:", error);

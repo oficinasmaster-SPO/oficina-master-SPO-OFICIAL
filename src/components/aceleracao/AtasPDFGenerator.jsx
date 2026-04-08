@@ -5,7 +5,7 @@ import { ptBR } from "date-fns/locale";
 import { parseMarkdownToPdf, safeText } from "@/utils/markdownPdfParser";
 import { sanitizeAtaData, formatPrazoSafe } from "@/utils/ataSanitizer";
 
-export const generateAtaPDF = (rawAta, workshop) => {
+export const generateAtaPDF = async (rawAta, workshop) => {
   // Sanitizar todos os dados antes de gerar o PDF
   const ata = sanitizeAtaData(rawAta) || {};
   
@@ -624,7 +624,7 @@ export const generateAtaPDF = (rawAta, workshop) => {
     y += 5;
   }
 
-  // 10. MÍDIAS E ANEXOS
+  // 10. MIDIAS E ANEXOS
   if (ata.midias_anexas && ata.midias_anexas.length > 0) {
     checkPageBreak(25);
     doc.setFontSize(13);
@@ -635,9 +635,40 @@ export const generateAtaPDF = (rawAta, workshop) => {
     doc.line(margin, y, pageWidth - margin, y);
     y += 10;
 
-    ata.midias_anexas.forEach((midia, idx) => {
+    for (let idx = 0; idx < ata.midias_anexas.length; idx++) {
+      const midia = ata.midias_anexas[idx];
+      const isImage = midia.tipo === 'imagem' || /\.(png|jpe?g|gif|webp|bmp)(\?.*)?$/i.test(midia.url || '');
+
+      if (isImage && midia.url) {
+        // Tentar embutir a imagem no PDF
+        try {
+          const imgData = await loadImageAsDataUrl(midia.url);
+          if (imgData) {
+            const titulo = safeText(midia.titulo) || `Imagem ${idx + 1}`;
+            checkPageBreak(15);
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'bold');
+            doc.setTextColor(0, 0, 0);
+            doc.text(`[Img] ${titulo}`, margin, y);
+            y += 6;
+
+            // Calcular dimensoes proporcionais (max largura = contentWidth, max altura = 100mm)
+            const maxW = contentWidth;
+            const maxH = 100;
+            const dims = getImageDimensions(imgData, maxW, maxH);
+            
+            checkPageBreak(dims.h + 8);
+            doc.addImage(imgData, 'JPEG', margin, y, dims.w, dims.h);
+            y += dims.h + 6;
+            continue;
+          }
+        } catch (e) {
+          console.warn('Falha ao embutir imagem no PDF:', e);
+        }
+      }
+
+      // Renderizacao padrao (links, videos, documentos, ou fallback de imagem)
       checkPageBreak(15);
-      
       doc.setFontSize(10);
       doc.setFont(undefined, 'bold');
       
@@ -662,7 +693,7 @@ export const generateAtaPDF = (rawAta, workshop) => {
       doc.setTextColor(0, 0, 0);
       
       y += 3;
-    });
+    }
     y += 5;
   }
 
@@ -800,8 +831,50 @@ export const generateAtaPDF = (rawAta, workshop) => {
   return doc;
 };
 
-export const downloadAtaPDF = (ata, workshop) => {
-  const doc = generateAtaPDF(ata, workshop);
+// Helper: carregar imagem de URL como data URL
+const loadImageAsDataUrl = (url) => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      resolve(canvas.toDataURL('image/jpeg', 0.85));
+    };
+    img.onerror = () => resolve(null);
+    // Timeout de 8s para nao travar o PDF
+    setTimeout(() => resolve(null), 8000);
+    img.src = url;
+  });
+};
+
+// Helper: calcular dimensoes proporcionais da imagem em mm
+const getImageDimensions = (dataUrl, maxW, maxH) => {
+  // Extrair dimensoes do canvas original via o header do data URL nao eh possivel
+  // Usar proporcao fixa baseada em A4: se nao tiver info, usar 4:3
+  const img = new Image();
+  img.src = dataUrl;
+  const natW = img.naturalWidth || 800;
+  const natH = img.naturalHeight || 600;
+  const ratio = natW / natH;
+  
+  let w = maxW;
+  let h = w / ratio;
+  
+  if (h > maxH) {
+    h = maxH;
+    w = h * ratio;
+  }
+  
+  // Centralizar se menor que contentWidth
+  return { w: Math.min(w, maxW), h };
+};
+
+export const downloadAtaPDF = async (ata, workshop) => {
+  const doc = await generateAtaPDF(ata, workshop);
   const safeCode = safeText(ata?.code) || 'sem-codigo';
   let dateStr = 'sem-data';
   try {

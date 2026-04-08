@@ -1474,7 +1474,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
                                 };
                                 const { downloadAtaPDF } = await import("@/components/aceleracao/AtasPDFGenerator");
                                 const workshop = workshops?.find(w => w.id === formData.workshop_id);
-                                downloadAtaPDF(ataComInteligencia, workshop);
+                                await downloadAtaPDF(ataComInteligencia, workshop);
                                 toast.success("Download iniciado!");
                               }
                             } catch (error) {
