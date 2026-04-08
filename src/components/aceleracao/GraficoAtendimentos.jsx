@@ -49,6 +49,13 @@ export default function GraficoAtendimentos({ atendimentos = [], workshops = [] 
     } catch { return ''; }
   };
 
+  const formatarHora = (dateStr) => {
+    if (!dateStr) return '';
+    try {
+      return format(new Date(dateStr), 'HH:mm');
+    } catch { return ''; }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -87,11 +94,18 @@ export default function GraficoAtendimentos({ atendimentos = [], workshops = [] 
                       {workshops.find(w => w.id === r.workshop_id)?.name || r.workshop_nome || formatarTipo(r.tipo_atendimento)}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                    <Calendar className="w-3 h-3 text-gray-400 group-hover:text-green-600 transition-colors" />
-                    <span className="text-xs text-gray-400 group-hover:text-gray-600 transition-colors whitespace-nowrap">
-                      {formatarData(r.data_realizada || r.data_agendada)}
-                    </span>
+                  <div className="flex items-center gap-3 shrink-0 ml-2">
+                    <div className="flex items-center gap-1.5">
+                      <Calendar className="w-3 h-3 text-gray-400 group-hover:text-green-600 transition-colors" />
+                      <span className="text-xs text-gray-400 group-hover:text-gray-600 transition-colors whitespace-nowrap">
+                        {formatarData(r.data_realizada || r.data_agendada)}
+                      </span>
+                    </div>
+                    {r.hora_fim_real && (
+                      <span className="text-xs text-gray-400 group-hover:text-gray-600 transition-colors whitespace-nowrap">
+                        🕐 {formatarHora(r.hora_fim_real)}
+                      </span>
+                    )}
                   </div>
                 </div>
               ))}
