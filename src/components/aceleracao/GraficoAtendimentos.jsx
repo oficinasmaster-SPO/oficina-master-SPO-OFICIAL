@@ -20,7 +20,7 @@ export default function GraficoAtendimentos({ atendimentos = [], workshops = [] 
     });
 
     return [
-      { name: 'Concluídos', value: counts.realizado, fill: '#10b981' },
+      { name: 'Realizados', value: counts.realizado, fill: '#10b981' },
       { name: 'Faltou', value: counts.faltou, fill: '#ef4444' },
       { name: 'Desmarcou', value: counts.desmarcou, fill: '#f59e0b' },
       { name: 'Participando', value: counts.participando, fill: '#8b5cf6' }
