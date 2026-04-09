@@ -86,7 +86,8 @@ export default function ControleAceleracao() {
     <div className="max-w-7xl mx-auto space-y-6">
       {isModalOpen && (
         <RegistrarAtendimento 
-          isModal={true} 
+          isModal={true}
+          consultoresExternos={consultores}
           onClose={() => {
             const newUrl = new URL(window.location);
             newUrl.searchParams.delete('modal');

@@ -33,7 +33,7 @@ import AutoSaveIndicator from "@/components/aceleracao/AutoSaveIndicator";
 import { toBrazilDate } from "@/utils/timezone";
 
 // RegistrarAtendimento v3 - auto-save + progress
-export default function RegistrarAtendimento({ isModal = false, onClose, atendimentoId: atendimentoIdProp }) {
+export default function RegistrarAtendimento({ isModal = false, onClose, atendimentoId: atendimentoIdProp, consultoresExternos }) {
   const navigate = useNavigate();
   const location = window.location;
   const queryClient = useQueryClient();
@@ -177,23 +177,34 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
     enabled: user?.role === 'admin' || user?.job_role === 'acelerador'
   });
 
-  // Carregar consultores/aceleradores (baseado em Employee interno com user_id)
-  const { data: consultores } = useQuery({
+  // Carregar consultores/aceleradores (Employee interno + Users admin como fallback)
+  const { data: consultoresFetched } = useQuery({
     queryKey: ['consultores-list'],
     queryFn: async () => {
       const employees = await base44.entities.Employee.filter({
         tipo_vinculo: 'interno',
         status: 'ativo'
       }, null, 1000);
-      return employees
+      const fromEmployees = employees
         .filter(e => e.user_id)
         .map(e => ({
           id: e.user_id,
           full_name: e.full_name
         }));
+      if (fromEmployees.length > 0) return fromEmployees;
+      
+      const users = await base44.entities.User.list(null, 500);
+      return users
+        .filter(u => u.role === 'admin')
+        .map(u => ({
+          id: u.id,
+          full_name: u.full_name
+        }));
     },
-    enabled: !!user
+    enabled: !!user && !consultoresExternos
   });
+  // Priorizar consultores passados via prop (já carregados pelo ControleAceleracao)
+  const consultores = consultoresExternos || consultoresFetched;
 
   // Carregar colaboradores da oficina selecionada
   const { data: colaboradores } = useQuery({
