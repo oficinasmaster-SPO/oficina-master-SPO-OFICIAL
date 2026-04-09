@@ -24,6 +24,7 @@ import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { toast } from "sonner";
 import RegistrarAtendimento from "@/pages/RegistrarAtendimento";
+// Forçar rebuild do Vite
 
 
 export default function PainelAtendimentosTab({ user }) {
@@ -434,7 +435,7 @@ export default function PainelAtendimentosTab({ user }) {
                           {workshop?.name || '-'}
                         </td>
                         <td className="py-4 px-6 text-sm text-gray-600 border-r border-gray-100 last:border-r-0 capitalize">
-                          {atendimento.tipo_atendimento.replace(/_/g, ' ')}
+                          {atendimento.tipo_atendimento?.replace(/_/g, ' ') || '-'}
                         </td>
                         <td className="py-4 px-6 text-sm text-gray-600 border-r border-gray-100 last:border-r-0">
                           {atendimento.status === ATENDIMENTO_STATUS.REALIZADO && !atendimento.ata_id ? (

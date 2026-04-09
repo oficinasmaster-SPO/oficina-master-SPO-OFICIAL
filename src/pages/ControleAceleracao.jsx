@@ -18,7 +18,7 @@ import RegistrarAtendimento from "./RegistrarAtendimento";
 import CronogramaGeral from "./CronogramaGeral";
 import DashboardOperacionalTabRedesigned from "@/components/aceleracao/DashboardOperacionalTabRedesigned";
 
-// ControleAceleracao v4 - cache bust
+// ControleAceleracao v5 - cache bust
 export default function ControleAceleracao() {
   const navigate = useNavigate();
   const urlParams = new URLSearchParams(window.location.search);
