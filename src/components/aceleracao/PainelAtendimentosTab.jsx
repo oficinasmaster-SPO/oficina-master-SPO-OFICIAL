@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Edit, AlertTriangle, FilePlus, Play, StopCircle, CalendarClock, FileText, CheckCircle, Trash2, Clock } from "lucide-react";
@@ -273,8 +273,8 @@ export default function PainelAtendimentosTab({ user }) {
 
 
       {/* Tabela de Atendimentos */}
-      <Tabs defaultValue="todos" value={activeTab} onValueChange={(val) => { setActiveTab(val); }} className="w-full">
-        <TabsList className="mb-4">
+      <div className="w-full">
+        <div className="inline-flex items-center rounded-lg bg-gray-100 p-1 mb-4 gap-1">
           {[
             { value: 'todos', label: 'Todos' },
             { value: ATENDIMENTO_STATUS.AGENDADO, label: 'Agendados' },
@@ -286,7 +286,7 @@ export default function PainelAtendimentosTab({ user }) {
             <button
               key={tab.value}
               type="button"
-              onClick={(e) => { e.preventDefault(); setActiveTab(tab.value); }}
+              onClick={() => setActiveTab(tab.value)}
               className={`inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none
                 ${activeTab === tab.value 
                   ? 'bg-red-600 text-white shadow-sm' 
@@ -295,142 +295,140 @@ export default function PainelAtendimentosTab({ user }) {
               {tab.label}
             </button>
           ))}
-        </TabsList>
-        <TabsContent value={activeTab} className="mt-0">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-200 bg-gray-50/50">
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">ID ATA</th>
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Data</th>
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Cliente</th>
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Tipo</th>
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Status</th>
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Consultor</th>
-                  <th className="text-right py-4 px-6 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Ações</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {atendimentosFiltrados.map((atendimento) => {
-                  const workshop = workshops?.find(w => w.id === atendimento.workshop_id);
-                  const ataVinculada = atas?.find(a => a.id === atendimento.ata_id);
-                  return (
-                    <tr key={atendimento.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="py-4 px-6 text-sm text-gray-600 border-r border-gray-100 last:border-r-0">
-                        <div className="flex items-center justify-center">
-                          {ataVinculada?.code ? (
-                            <span className="font-mono text-xs bg-blue-50 px-3 py-2.5 rounded border border-blue-200 whitespace-nowrap inline-flex items-center justify-center min-h-[2.5rem]">
-                              {ataVinculada.code.replace('IT.', 'AT.')}
-                            </span>
+        </div>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-200 bg-gray-50/50">
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">ID ATA</th>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Data</th>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Cliente</th>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Tipo</th>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Status</th>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Consultor</th>
+                    <th className="text-right py-4 px-6 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Ações</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {atendimentosFiltrados.map((atendimento) => {
+                    const workshop = workshops?.find(w => w.id === atendimento.workshop_id);
+                    const ataVinculada = atas?.find(a => a.id === atendimento.ata_id);
+                    return (
+                      <tr key={atendimento.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="py-4 px-6 text-sm text-gray-600 border-r border-gray-100 last:border-r-0">
+                          <div className="flex items-center justify-center">
+                            {ataVinculada?.code ? (
+                              <span className="font-mono text-xs bg-blue-50 px-3 py-2.5 rounded border border-blue-200 whitespace-nowrap inline-flex items-center justify-center min-h-[2.5rem]">
+                                {ataVinculada.code.replace('IT.', 'AT.')}
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center justify-center gap-1.5 text-amber-600 bg-amber-50 px-3 py-2 rounded border border-amber-200 text-xs font-medium whitespace-nowrap" title="Aguardando geração da ATA">
+                                <Clock className="w-3 h-3" />
+                                Pendente
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-4 px-6 text-sm text-gray-600 border-r border-gray-100 last:border-r-0 whitespace-nowrap">
+                          {formatDateTimeBR(atendimento.data_agendada)}
+                        </td>
+                        <td className="py-4 px-6 text-sm text-gray-600 border-r border-gray-100 last:border-r-0 font-medium">
+                          {workshop?.name || '-'}
+                        </td>
+                        <td className="py-4 px-6 text-sm text-gray-600 border-r border-gray-100 last:border-r-0 capitalize">
+                          {atendimento.tipo_atendimento.replace(/_/g, ' ')}
+                        </td>
+                        <td className="py-4 px-6 text-sm text-gray-600 border-r border-gray-100 last:border-r-0">
+                          {atendimento.status === ATENDIMENTO_STATUS.REALIZADO && !atendimento.ata_id ? (
+                            <Badge className="bg-orange-100 text-orange-700 border-orange-300 animate-pulse flex items-center gap-1">
+                              <AlertTriangle className="w-3 h-3 shrink-0" />
+                              Realizado
+                            </Badge>
                           ) : (
-                            <span className="inline-flex items-center justify-center gap-1.5 text-amber-600 bg-amber-50 px-3 py-2 rounded border border-amber-200 text-xs font-medium whitespace-nowrap" title="Aguardando geração da ATA">
-                              <Clock className="w-3 h-3" />
-                              Pendente
-                            </span>
+                            <Badge className={ATENDIMENTO_STATUS_COLORS[atendimento.status] || 'bg-gray-100 text-gray-800 border-gray-300'}>
+                              {atendimento.status === ATENDIMENTO_STATUS.ATRASADO && <AlertTriangle className="w-3 h-3 mr-1" />}
+                              {ATENDIMENTO_STATUS_LABELS[atendimento.status] || atendimento.status || 'Indefinido'}
+                            </Badge>
                           )}
-                        </div>
-                      </td>
-                      <td className="py-4 px-6 text-sm text-gray-600 border-r border-gray-100 last:border-r-0 whitespace-nowrap">
-                        {formatDateTimeBR(atendimento.data_agendada)}
-                      </td>
-                      <td className="py-4 px-6 text-sm text-gray-600 border-r border-gray-100 last:border-r-0 font-medium">
-                        {workshop?.name || '-'}
-                      </td>
-                      <td className="py-4 px-6 text-sm text-gray-600 border-r border-gray-100 last:border-r-0 capitalize">
-                        {atendimento.tipo_atendimento.replace(/_/g, ' ')}
-                      </td>
-                      <td className="py-4 px-6 text-sm text-gray-600 border-r border-gray-100 last:border-r-0">
-                        {atendimento.status === ATENDIMENTO_STATUS.REALIZADO && !atendimento.ata_id ? (
-                          <Badge className="bg-orange-100 text-orange-700 border-orange-300 animate-pulse flex items-center gap-1">
-                            <AlertTriangle className="w-3 h-3 shrink-0" />
-                            Realizado
-                          </Badge>
-                        ) : (
-                          <Badge className={ATENDIMENTO_STATUS_COLORS[atendimento.status] || 'bg-gray-100 text-gray-800 border-gray-300'}>
-                            {atendimento.status === ATENDIMENTO_STATUS.ATRASADO && <AlertTriangle className="w-3 h-3 mr-1" />}
-                            {ATENDIMENTO_STATUS_LABELS[atendimento.status] || atendimento.status || 'Indefinido'}
-                          </Badge>
-                        )}
-                      </td>
-                      <td className="py-4 px-6 text-sm text-gray-600 border-r border-gray-100 last:border-r-0">
-                        {atendimento.consultor_nome}
-                      </td>
-                      <td className="py-4 px-6 border-r border-gray-100 last:border-r-0">
-                        <div className="flex items-center justify-end gap-1">
-                          {(atendimento.status === ATENDIMENTO_STATUS.AGENDADO || 
-                            atendimento.status === ATENDIMENTO_STATUS.CONFIRMADO || 
-                            atendimento.status === ATENDIMENTO_STATUS.REAGENDADO || 
-                            atendimento.status === ATENDIMENTO_STATUS.ATRASADO ||
-                            !atendimento.status) && (
-                            <>
+                        </td>
+                        <td className="py-4 px-6 text-sm text-gray-600 border-r border-gray-100 last:border-r-0">
+                          {atendimento.consultor_nome}
+                        </td>
+                        <td className="py-4 px-6 border-r border-gray-100 last:border-r-0">
+                          <div className="flex items-center justify-end gap-1">
+                            {(atendimento.status === ATENDIMENTO_STATUS.AGENDADO || 
+                              atendimento.status === ATENDIMENTO_STATUS.CONFIRMADO || 
+                              atendimento.status === ATENDIMENTO_STATUS.REAGENDADO || 
+                              atendimento.status === ATENDIMENTO_STATUS.ATRASADO ||
+                              !atendimento.status) && (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => iniciarMutation.mutate(atendimento.id)}
+                                  title="Iniciar"
+                                >
+                                  <Play className="w-4 h-4 text-blue-600" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    setSelectedAtendimento(atendimento);
+                                    setShowReagendar(true);
+                                  }}
+                                  title="Reagendar"
+                                >
+                                  <CalendarClock className="w-4 h-4 text-purple-600" />
+                                </Button>
+                              </>
+                            )}
+
+                            {(atendimento.status === ATENDIMENTO_STATUS.PARTICIPANDO || !atendimento.status) && (
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => iniciarMutation.mutate(atendimento.id)}
-                                title="Iniciar"
+                                onClick={() => finalizarMutation.mutate(atendimento.id)}
+                                title="Finalizar Rápido"
                               >
-                                <Play className="w-4 h-4 text-blue-600" />
+                                <StopCircle className="w-4 h-4 text-green-600" />
                               </Button>
+                            )}
+
+                            {(atendimento.status === ATENDIMENTO_STATUS.PARTICIPANDO || 
+                              atendimento.status === ATENDIMENTO_STATUS.AGENDADO || 
+                              atendimento.status === ATENDIMENTO_STATUS.CONFIRMADO || 
+                              atendimento.status === ATENDIMENTO_STATUS.REAGENDADO || 
+                              atendimento.status === ATENDIMENTO_STATUS.ATRASADO ||
+                              !atendimento.status) && (
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => {
-                                  setSelectedAtendimento(atendimento);
-                                  setShowReagendar(true);
+                                  setAtendimentoFinalizar(atendimento);
+                                  setShowFinalizar(true);
                                 }}
-                                title="Reagendar"
+                                title="Finalizar Atendimento"
                               >
-                                <CalendarClock className="w-4 h-4 text-purple-600" />
+                                <CheckCircle className="w-4 h-4 text-green-600" />
                               </Button>
-                            </>
-                          )}
+                            )}
 
-                          {(atendimento.status === ATENDIMENTO_STATUS.PARTICIPANDO || !atendimento.status) && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => finalizarMutation.mutate(atendimento.id)}
-                              title="Finalizar Rápido"
-                            >
-                              <StopCircle className="w-4 h-4 text-green-600" />
-                            </Button>
-                          )}
-
-                          {(atendimento.status === ATENDIMENTO_STATUS.PARTICIPANDO || 
-                            atendimento.status === ATENDIMENTO_STATUS.AGENDADO || 
-                            atendimento.status === ATENDIMENTO_STATUS.CONFIRMADO || 
-                            atendimento.status === ATENDIMENTO_STATUS.REAGENDADO || 
-                            atendimento.status === ATENDIMENTO_STATUS.ATRASADO ||
-                            !atendimento.status) && (
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={() => {
-                                setAtendimentoFinalizar(atendimento);
-                                setShowFinalizar(true);
+                                setEditarAtendimentoId(atendimento.id);
+                                setShowEditarAtendimento(true);
                               }}
-                              title="Finalizar Atendimento"
+                              title="Editar"
                             >
-                              <CheckCircle className="w-4 h-4 text-green-600" />
+                              <Edit className="w-4 h-4 text-gray-600" />
                             </Button>
-                          )}
 
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setEditarAtendimentoId(atendimento.id);
-                              setShowEditarAtendimento(true);
-                            }}
-                            title="Editar"
-                          >
-                            <Edit className="w-4 h-4 text-gray-600" />
-                          </Button>
-
-                          {atendimento.ata_id && (
-                            <>
+                            {atendimento.ata_id && (
                               <Button 
                                 variant="ghost" 
                                 size="sm"
@@ -451,44 +449,41 @@ export default function PainelAtendimentosTab({ user }) {
                               >
                                 <FileText className="w-4 h-4 text-green-600" />
                               </Button>
+                            )}
 
-                            </>
-                          )}
+                            {!atendimento.ata_id && atendimento.status === ATENDIMENTO_STATUS.REALIZADO && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedAtendimento(atendimento);
+                                  setShowGerarAta(true);
+                                }}
+                                title="Gerar ATA"
+                              >
+                                <FilePlus className="w-4 h-4 text-blue-600" />
+                              </Button>
+                            )}
 
-                          {!atendimento.ata_id && atendimento.status === ATENDIMENTO_STATUS.REALIZADO && (
-                            <Button
-                              variant="ghost"
+                            <Button 
+                              variant="ghost" 
                               size="sm"
-                              onClick={() => {
-                                setSelectedAtendimento(atendimento);
-                                setShowGerarAta(true);
-                              }}
-                              title="Gerar ATA"
+                              onClick={() => setDeleteConfirm(atendimento)}
+                              title={atendimento.ata_id ? "Excluir ATA" : "Excluir Atendimento"}
                             >
-                              <FilePlus className="w-4 h-4 text-blue-600" />
+                              <Trash2 className="w-4 h-4 text-red-600" />
                             </Button>
-                          )}
-
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => setDeleteConfirm(atendimento)}
-                            title={atendimento.ata_id ? "Excluir ATA" : "Excluir Atendimento"}
-                          >
-                            <Trash2 className="w-4 h-4 text-red-600" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Dialog de Confirmação de Exclusão */}
       <AlertDialog open={!!deleteConfirm} onOpenChange={(open) => !open && setDeleteConfirm(null)}>
