@@ -45,7 +45,7 @@ export default function PedidosInternosTab({ user }) {
       return await base44.entities.PedidoInterno.update(id, data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['pedidos-internos']);
+      queryClient.invalidateQueries({ queryKey: ['pedidos-internos'] });
     }
   });
 
@@ -137,7 +137,7 @@ export default function PedidosInternosTab({ user }) {
         onSuccess={() => {
           setShowForm(false);
           setEditingPedido(null);
-          queryClient.invalidateQueries(['pedidos-internos']);
+          queryClient.invalidateQueries({ queryKey: ['pedidos-internos'] });
         }}
       />
     );
@@ -215,8 +215,8 @@ export default function PedidosInternosTab({ user }) {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-orange-600">
-                  {pedidos.filter(p => 
-                    p.status !== 'concluido' && 
+                  {filteredPedidos.filter(p => 
+                    p.status !== 'concluido' && p.prazo &&
                     new Date(p.prazo) < new Date()
                   ).length}
                 </div>
@@ -231,7 +231,7 @@ export default function PedidosInternosTab({ user }) {
             <CardContent>
               {isLoading ? (
                 <p className="text-center text-gray-500 py-8">Carregando...</p>
-              ) : pedidos.length === 0 ? (
+              ) : filteredPedidos.length === 0 ? (
                 <p className="text-center text-gray-500 py-8">Nenhum pedido cadastrado</p>
               ) : (
                 <div className="overflow-x-auto">

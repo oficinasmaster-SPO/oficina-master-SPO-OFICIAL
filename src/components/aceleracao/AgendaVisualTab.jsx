@@ -10,8 +10,6 @@ import useWorkshopsAtivos from "@/components/hooks/useWorkshopsAtivos";
 export default function AgendaVisualTab({ user, filtros }) {
   const queryClient = useQueryClient();
   const consultorFiltrado = filtros?.consultorId && filtros.consultorId !== "todos" ? filtros.consultorId : null;
-  const dataInicio = filtros?.dataInicio ? new Date(filtros.dataInicio) : null;
-  const dataFim = filtros?.dataFim ? new Date(filtros.dataFim) : null;
 
   const { data: workshops } = useWorkshopsAtivos();
 
@@ -38,9 +36,17 @@ export default function AgendaVisualTab({ user, filtros }) {
         query.consultor_id = user.id;
       }
       
-      return await base44.entities.ConsultoriaAtendimento.filter(query, null, 500);
+      return await base44.entities.ConsultoriaAtendimento.filter(query, '-data_agendada', 500);
     },
-    enabled: !!user?.id
+    enabled: !!user?.id,
+    staleTime: 2 * 60 * 1000
+  });
+
+  // Aplicar filtro de período localmente
+  const atendimentosFiltrados = (atendimentos || []).filter(a => {
+    if (!filtros?.dataInicio || !filtros?.dataFim) return true;
+    const dataAtendBR = new Date(a.data_agendada).toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+    return dataAtendBR >= filtros.dataInicio && dataAtendBR <= filtros.dataFim;
   });
 
   return (
@@ -65,7 +71,7 @@ export default function AgendaVisualTab({ user, filtros }) {
         </button>
       </div>
       <AgendaVisual
-          atendimentos={atendimentos || []}
+          atendimentos={atendimentosFiltrados}
           workshops={workshops || []}
           user={user}
         />

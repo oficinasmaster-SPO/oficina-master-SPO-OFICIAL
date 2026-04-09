@@ -23,6 +23,9 @@ export const ATENDIMENTO_STATUS = {
   CONFIRMADO: 'confirmado',
   PARTICIPANDO: 'participando',
   REALIZADO: 'realizado',
+  CANCELADO: 'cancelado',
+  FALTOU: 'faltou',
+  DESMARCOU: 'desmarcou',
   ATRASADO: 'atrasado',
   REAGENDADO: 'reagendado'
 };
@@ -32,6 +35,9 @@ export const ATENDIMENTO_STATUS_LABELS = {
   [ATENDIMENTO_STATUS.CONFIRMADO]: 'Confirmado',
   [ATENDIMENTO_STATUS.PARTICIPANDO]: 'Participando',
   [ATENDIMENTO_STATUS.REALIZADO]: 'Realizado',
+  [ATENDIMENTO_STATUS.CANCELADO]: 'Cancelado',
+  [ATENDIMENTO_STATUS.FALTOU]: 'Faltou',
+  [ATENDIMENTO_STATUS.DESMARCOU]: 'Desmarcou',
   [ATENDIMENTO_STATUS.ATRASADO]: 'Atrasado',
   [ATENDIMENTO_STATUS.REAGENDADO]: 'Reagendado'
 };
@@ -41,6 +47,9 @@ export const ATENDIMENTO_STATUS_COLORS = {
   [ATENDIMENTO_STATUS.CONFIRMADO]: 'bg-yellow-100 text-yellow-800 border-yellow-300',
   [ATENDIMENTO_STATUS.PARTICIPANDO]: 'bg-blue-100 text-blue-800 border-blue-300 animate-pulse',
   [ATENDIMENTO_STATUS.REALIZADO]: 'bg-green-100 text-green-800 border-green-300',
+  [ATENDIMENTO_STATUS.CANCELADO]: 'bg-gray-200 text-gray-700 border-gray-400',
+  [ATENDIMENTO_STATUS.FALTOU]: 'bg-orange-100 text-orange-800 border-orange-300',
+  [ATENDIMENTO_STATUS.DESMARCOU]: 'bg-pink-100 text-pink-800 border-pink-300',
   [ATENDIMENTO_STATUS.ATRASADO]: 'bg-red-500 text-white border-red-700 animate-pulse',
   [ATENDIMENTO_STATUS.REAGENDADO]: 'bg-purple-100 text-purple-800 border-purple-300'
 };

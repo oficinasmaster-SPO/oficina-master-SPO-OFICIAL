@@ -48,8 +48,6 @@ export default function PainelAtendimentosTab({ user, filtrosGlobais }) {
   const [filtrosAtas, setFiltrosAtas] = useState({
     searchTerm: "",
     workshop_id: "",
-    consultor_id: filtrosGlobais?.consultorId !== "todos" ? filtrosGlobais?.consultorId || "" : "",
-    status: "",
     tipo_atendimento: "",
     preset: filtrosGlobais?.preset || "mes_atual",
     dateFrom: filtrosGlobais?.dataInicio || format(startOfMonth(new Date()), "yyyy-MM-dd"),
@@ -70,19 +68,26 @@ export default function PainelAtendimentosTab({ user, filtrosGlobais }) {
 
   const { data: consultores } = useConsultoresList(user);
 
-  // Sincronizar filtros globais quando mudam
+  // Sincronizar filtros globais de data quando mudam
   useEffect(() => {
     if (!filtrosGlobais) return;
     setFiltrosAtas(prev => ({
       ...prev,
-      consultor_id: filtrosGlobais.consultorId !== "todos" ? filtrosGlobais.consultorId || "" : "",
       dateFrom: filtrosGlobais.dataInicio || prev.dateFrom,
       dateTo: filtrosGlobais.dataFim || prev.dateTo,
       preset: filtrosGlobais.preset || prev.preset
     }));
-  }, [filtrosGlobais?.consultorId, filtrosGlobais?.dataInicio, filtrosGlobais?.dataFim]);
+  }, [filtrosGlobais?.dataInicio, filtrosGlobais?.dataFim]);
 
-  const consultorFiltrado = filtrosAtas.consultor_id || (user?.role !== 'admin' ? user?.id : null);
+  // Consultor: filtro global tem prioridade, senão filtro local, senão user (se não admin)
+  const [consultorLocal, setConsultorLocal] = useState("");
+  const consultorFiltrado = (() => {
+    const fromGlobal = filtrosGlobais?.consultorId && filtrosGlobais.consultorId !== "todos" ? filtrosGlobais.consultorId : null;
+    if (fromGlobal) return fromGlobal;
+    if (consultorLocal) return consultorLocal;
+    if (user?.role !== 'admin') return user?.id;
+    return null;
+  })();
 
   const { data: atendimentos, isLoading } = useQuery({
     queryKey: ['atendimentos-acelerador', user?.id, consultorFiltrado],
@@ -156,11 +161,10 @@ export default function PainelAtendimentosTab({ user, filtrosGlobais }) {
 
   const atendimentosFiltrados = (atendimentos || [])
     .filter(atendimento => {
+      // Status via tabs (activeTab) — única fonte de verdade para status
       if (activeTab !== "todos" && atendimento.status !== activeTab) return false;
-      // Aplicar filtros
+      // Filtros locais da aba
       if (filtrosAtas.workshop_id && atendimento.workshop_id !== filtrosAtas.workshop_id) return false;
-      if (filtrosAtas.consultor_id && atendimento.consultor_id !== filtrosAtas.consultor_id) return false;
-      if (filtrosAtas.status && atendimento.status !== filtrosAtas.status) return false;
       if (filtrosAtas.tipo_atendimento && atendimento.tipo_atendimento !== filtrosAtas.tipo_atendimento) return false;
       
       // Filtro de data
@@ -372,8 +376,8 @@ export default function PainelAtendimentosTab({ user, filtrosGlobais }) {
             </div>
           </div>
           <Select
-            value={filtrosAtas.consultor_id || "all"}
-            onValueChange={(v) => setFiltrosAtas(prev => ({ ...prev, consultor_id: v === "all" ? "" : v }))}
+            value={consultorLocal || "all"}
+            onValueChange={(v) => setConsultorLocal(v === "all" ? "" : v)}
           >
             <SelectTrigger className="h-9 w-[180px] text-sm bg-white border-gray-200 shadow-sm">
               <SelectValue placeholder="Consultor" />
@@ -381,7 +385,7 @@ export default function PainelAtendimentosTab({ user, filtrosGlobais }) {
             <SelectContent>
               <SelectItem value="all">Todos Consultores</SelectItem>
               {consultores?.map((c) => (
-                <SelectItem key={c.id} value={c.user_id || c.id}>
+                <SelectItem key={c.id} value={c.id}>
                   {c.full_name}
                 </SelectItem>
               ))}

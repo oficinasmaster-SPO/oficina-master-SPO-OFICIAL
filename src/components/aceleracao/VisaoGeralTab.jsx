@@ -62,14 +62,7 @@ export default function VisaoGeralTab({ user, filtros = {} }) {
     staleTime: 2 * 60 * 1000
   });
 
-  const { data: planos } = useQuery({
-    queryKey: ['planos-acelerador'],
-    queryFn: async () => {
-      const plans = await base44.entities.Plan.filter({ consultant_id: user.id });
-      return plans;
-    },
-    enabled: !!user?.id
-  });
+  // Query de planos removida — campo consultant_id não existe na entidade Plan
 
   const { data: gargalos } = useQuery({
     queryKey: ['gargalos-consultores'],
@@ -99,11 +92,9 @@ export default function VisaoGeralTab({ user, filtros = {} }) {
   });
   const reunioesFuturas = futurasList.length;
 
-  // Calcular horas: Total Contratado - Total Realizado
-  const totalHorasContratadas = planos?.reduce((acc, plan) => acc + (plan.hours_contracted || 0), 0) || 0;
-  const totalHorasRealizadas = atendimentos?.filter(a => a.status === 'realizado')
+  // Calcular horas realizadas
+  const totalHorasRealizadas = atendimentosPeriodo.filter(a => a.status === 'realizado')
     .reduce((acc, a) => acc + (a.duracao_real_minutos || a.duracao_minutos || 0), 0) || 0;
-  const horasDisponiveis = totalHorasContratadas - Math.round(totalHorasRealizadas / 60);
 
   const tarefasPendentes = atendimentosPeriodo.filter(a => {
     if (a.status === 'realizado') return false;
@@ -190,13 +181,13 @@ export default function VisaoGeralTab({ user, filtros = {} }) {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Horas Disponíveis</CardTitle>
+            <CardTitle className="text-sm font-medium">Horas Realizadas</CardTitle>
             <Clock className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{horasDisponiveis}h</div>
+            <div className="text-2xl font-bold">{Math.round(totalHorasRealizadas / 60)}h</div>
             <p className="text-xs text-gray-600">
-              Contratadas: {totalHorasContratadas}h | Realizadas: {Math.round(totalHorasRealizadas / 60)}h
+              {totalHorasRealizadas} minutos no período
             </p>
           </CardContent>
         </Card>
