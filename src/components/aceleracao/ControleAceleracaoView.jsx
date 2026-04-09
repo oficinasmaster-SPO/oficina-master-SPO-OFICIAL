@@ -139,8 +139,8 @@ export default function ControleAceleracaoView({ state }) {
         user={user}
       />
 
-      {/* Filtros — hidden on visao-geral and atendimentos tabs */}
-      <div className={activeTab === "atendimentos" || activeTab === "visao-geral" ? "hidden" : ""}>
+      {/* Filtros — hidden on all current tabs */}
+      <div className="hidden">
         <FiltrosControleAceleracao
           consultores={consultores}
           filtros={filtros}
