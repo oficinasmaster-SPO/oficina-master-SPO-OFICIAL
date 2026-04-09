@@ -14,7 +14,7 @@ import FinalizarAtendimentoModal from "./FinalizarAtendimentoModal";
 import FiltrosAtendimentos from "./FiltrosAtendimentos";
 import DashboardAtendimentos from "./DashboardAtendimentos";
 import { ATENDIMENTO_STATUS, ATENDIMENTO_STATUS_COLORS, ATENDIMENTO_STATUS_LABELS } from "@/components/lib/ataConstants";
-import { format, subDays, addDays } from "date-fns";
+import { format, startOfMonth, endOfMonth } from "date-fns";
 import { toBrazilDate, formatDateTimeBR } from "@/utils/timezone";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -44,9 +44,9 @@ export default function PainelAtendimentosTab({ user }) {
     consultor_id: "",
     status: "",
     tipo_atendimento: "",
-    preset: "custom",
-    dateFrom: format(subDays(new Date(), 30), "yyyy-MM-dd"),
-    dateTo: format(addDays(new Date(), 30), "yyyy-MM-dd")
+    preset: "mes_atual",
+    dateFrom: format(startOfMonth(new Date()), "yyyy-MM-dd"),
+    dateTo: format(endOfMonth(new Date()), "yyyy-MM-dd")
   });
 
   const { data: atendimentos, isLoading } = useQuery({
@@ -261,9 +261,9 @@ export default function PainelAtendimentosTab({ user }) {
           consultor_id: "",
           status: "",
           tipo_atendimento: "",
-          preset: "custom",
-          dateFrom: format(subDays(new Date(), 30), "yyyy-MM-dd"),
-          dateTo: format(addDays(new Date(), 30), "yyyy-MM-dd")
+          preset: "mes_atual",
+          dateFrom: format(startOfMonth(new Date()), "yyyy-MM-dd"),
+          dateTo: format(endOfMonth(new Date()), "yyyy-MM-dd")
         })}
       />
 
