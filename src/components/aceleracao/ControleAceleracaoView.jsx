@@ -25,18 +25,15 @@ const TAB_TRIGGER_CLASS = "flex-shrink-0 data-[state=active]:bg-[#FF0000] data-[
 
 /**
  * View pura — sem lógica de negócio.
- * Recebe state (do container) + permissões RBAC validadas no backend.
+ * Permissões já validadas pelo PageAccessControl no container.
  */
-export default function ControleAceleracaoView({ state, permissions = {}, hasPermission, effectiveRole }) {
+export default function ControleAceleracaoView({ state }) {
   const {
     user,
     activeTab, setActiveTab,
     isModalOpen, atendimentoId, openModal, closeModal,
     filtros, setFiltros, consultores
   } = state;
-
-  // Helper local para check rápido
-  const can = (perm) => hasPermission ? hasPermission(perm) : permissions[perm] === true;
 
   const [showMassRegistration, setShowMassRegistration] = useState(false);
 
@@ -59,21 +56,17 @@ export default function ControleAceleracaoView({ state, permissions = {}, hasPer
           <p className="text-gray-600 mt-2">Gestão completa de clientes, atendimentos e cronogramas</p>
         </div>
         <div className="flex gap-3">
-          {can("aceleracao.mass_register") && (
-            <Button
-              onClick={() => setShowMassRegistration(true)}
-              variant="outline"
-              className="border-blue-600 text-blue-600 hover:bg-blue-50"
-            >
-              <Users className="w-4 h-4 mr-2" />
-              Registro em Massa
-            </Button>
-          )}
-          {can("aceleracao.create") && (
-            <Button onClick={() => openModal()} className="bg-blue-600 hover:bg-blue-700">
-              + Novo Atendimento
-            </Button>
-          )}
+          <Button
+            onClick={() => setShowMassRegistration(true)}
+            variant="outline"
+            className="border-blue-600 text-blue-600 hover:bg-blue-50"
+          >
+            <Users className="w-4 h-4 mr-2" />
+            Registro em Massa
+          </Button>
+          <Button onClick={() => openModal()} className="bg-blue-600 hover:bg-blue-700">
+            + Novo Atendimento
+          </Button>
         </div>
       </div>
 
@@ -98,31 +91,21 @@ export default function ControleAceleracaoView({ state, permissions = {}, hasPer
           <TabsTrigger value="visao-geral" className={TAB_TRIGGER_CLASS}>
             <BarChart3 className="w-4 h-4 mr-2" />Visão Geral
           </TabsTrigger>
-          {can("aceleracao.atendimentos") && (
-            <TabsTrigger value="atendimentos" className={TAB_TRIGGER_CLASS}>
-              <ClipboardList className="w-4 h-4 mr-2" />Atendimentos
-            </TabsTrigger>
-          )}
-          {can("aceleracao.cronograma") && (
-            <TabsTrigger value="cronograma" className={TAB_TRIGGER_CLASS}>
-              <Calendar className="w-4 h-4 mr-2" />Cronograma Geral
-            </TabsTrigger>
-          )}
-          {can("aceleracao.pedidos") && (
-            <TabsTrigger value="pedidos" className={TAB_TRIGGER_CLASS}>
-              <FileText className="w-4 h-4 mr-2" />Pedidos & Backlog
-            </TabsTrigger>
-          )}
-          {can("aceleracao.agenda") && (
-            <TabsTrigger value="agenda-visual" className={TAB_TRIGGER_CLASS}>
-              <Calendar className="w-4 h-4 mr-2" />Agenda Visual
-            </TabsTrigger>
-          )}
-          {can("aceleracao.sprints") && (
-            <TabsTrigger value="dashboard-operacional" className={TAB_TRIGGER_CLASS}>
-              <Activity className="w-4 h-4 mr-2" />Dashboard Sprints
-            </TabsTrigger>
-          )}
+          <TabsTrigger value="atendimentos" className={TAB_TRIGGER_CLASS}>
+            <ClipboardList className="w-4 h-4 mr-2" />Atendimentos
+          </TabsTrigger>
+          <TabsTrigger value="cronograma" className={TAB_TRIGGER_CLASS}>
+            <Calendar className="w-4 h-4 mr-2" />Cronograma Geral
+          </TabsTrigger>
+          <TabsTrigger value="pedidos" className={TAB_TRIGGER_CLASS}>
+            <FileText className="w-4 h-4 mr-2" />Pedidos & Backlog
+          </TabsTrigger>
+          <TabsTrigger value="agenda-visual" className={TAB_TRIGGER_CLASS}>
+            <Calendar className="w-4 h-4 mr-2" />Agenda Visual
+          </TabsTrigger>
+          <TabsTrigger value="dashboard-operacional" className={TAB_TRIGGER_CLASS}>
+            <Activity className="w-4 h-4 mr-2" />Dashboard Sprints
+          </TabsTrigger>
         </TabsList>
 
         <Suspense fallback={<TabFallback />}>
