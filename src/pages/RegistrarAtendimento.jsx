@@ -25,6 +25,7 @@ import ConflitosHorarioModal from "@/components/aceleracao/ConflitosHorarioModal
 import ClientIntelligenceCapturePanel from "@/components/inteligencia/ClientIntelligenceCapturePanel";
 import ChecklistConsultoria from "@/components/aceleracao/ChecklistConsultoria";
 import { useGoogleMeet } from "@/components/hooks/useGoogleMeet";
+import useConsultoresList from "@/components/hooks/useConsultoresList";
 import NextSteps from "@/components/aceleracao/NextSteps";
 import AtendimentoProgressIndicator from "@/components/aceleracao/AtendimentoProgressIndicator";
 import AtaAIConfigPanel from "@/components/aceleracao/AtaAIConfigPanel";
@@ -177,28 +178,8 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
     enabled: user?.role === 'admin' || user?.job_role === 'acelerador'
   });
 
-  // Usar consultores passados via prop OU buscar independente
-  const { data: consultoresFetched } = useQuery({
-    queryKey: ['consultores-list'],
-    queryFn: async () => {
-      const consultoresMap = new Map();
-      const employees = await base44.entities.Employee.filter({
-        tipo_vinculo: 'interno',
-        status: 'ativo'
-      }, null, 1000);
-      employees
-        .filter(e => e.user_id && ['consultor', 'mentor', 'acelerador'].includes(e.job_role))
-        .forEach(e => {
-          consultoresMap.set(e.user_id, e.full_name);
-        });
-      if (user?.id) {
-        consultoresMap.set(user.id, user.full_name);
-      }
-      return Array.from(consultoresMap.entries()).map(([id, full_name]) => ({ id, full_name }));
-    },
-    enabled: !!user && !(consultoresExternos?.length > 0),
-    staleTime: 5 * 60 * 1000
-  });
+  // Usar consultores passados via prop OU buscar via hook compartilhado
+  const { data: consultoresFetched } = useConsultoresList(user);
   const consultores = (consultoresExternos?.length > 0) ? consultoresExternos : consultoresFetched;
 
   // Carregar colaboradores da oficina selecionada
@@ -214,16 +195,8 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
     enabled: !!formData.workshop_id
   });
 
-  // Carregar colaboradores internos (aceleradores/consultores)
-  const { data: colaboradoresInternos } = useQuery({
-    queryKey: ['colaboradores-internos'],
-    queryFn: async () => {
-      return await base44.entities.Employee.filter({ 
-        tipo_vinculo: 'interno',
-        status: 'ativo'
-      }, null, 500);
-    }
-  });
+  // Derivar colaboradores internos dos consultores já carregados (evita query duplicada)
+  const colaboradoresInternos = consultores;
 
   // Carregar processos disponíveis
   const { data: processos } = useQuery({
@@ -240,8 +213,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
       const tipos = await base44.entities.TipoAtendimentoConsultoria.filter({ ativo: true });
       return tipos || [];
     },
-    staleTime: 0,
-    refetchOnMount: 'stale'
+    staleTime: 5 * 60 * 1000
   });
 
   // Combinar tipos customizados + padrões com useMemo
@@ -281,7 +253,8 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
     queryKey: ['cursos-treinamento'],
     queryFn: async () => {
       return await base44.entities.TrainingCourse.list('-created_date', 1000);
-    }
+    },
+    staleTime: 10 * 60 * 1000
   });
 
   // Carregar aulas de cursos publicados
@@ -292,7 +265,8 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
       const cursosPublicados = cursos?.filter(c => c.status === 'published').map(c => c.id) || [];
       return aulas.filter(a => cursosPublicados.includes(a.course_id));
     },
-    enabled: !!cursos
+    enabled: !!cursos,
+    staleTime: 10 * 60 * 1000
   });
 
   // Mutation para criar ou atualizar atendimento
@@ -997,8 +971,8 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
                       ...formData,
                       participantes: [...formData.participantes, {
                         nome: colab.full_name,
-                        cargo: colab.position + " (Interno)",
-                        email: colab.email
+                        cargo: "Consultor (Interno)",
+                        email: ""
                       }]
                     });
                   }
@@ -1009,7 +983,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
                   <SelectContent>
                     {colaboradoresInternos.map((c) => (
                       <SelectItem key={c.id} value={c.id}>
-                        {c.full_name} - {c.position}
+                        {c.full_name}
                       </SelectItem>
                     ))}
                   </SelectContent>
