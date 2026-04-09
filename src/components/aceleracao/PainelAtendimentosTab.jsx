@@ -5,7 +5,8 @@ import { Card, CardContent } from "@/components/ui/card";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Edit, AlertTriangle, FilePlus, Play, StopCircle, CalendarClock, FileText, CheckCircle, Trash2, Clock, ChevronDown } from "lucide-react";
+import { Edit, AlertTriangle, FilePlus, Play, StopCircle, CalendarClock, FileText, CheckCircle, Trash2, Clock, ChevronDown, Search, Filter, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import GerarAtaModal from "./GerarAtaModal";
@@ -249,24 +250,7 @@ export default function PainelAtendimentosTab({ user }) {
         />
       )}
 
-      {/* Filtros de Atendimentos */}
-      <FiltrosAtendimentos
-        filters={filtrosAtas}
-        onFiltersChange={setFiltrosAtas}
-        workshops={workshops || []}
-        consultores={consultores || []}
-        isLoading={isLoading}
-        onClearFilters={() => setFiltrosAtas({
-          searchTerm: "",
-          workshop_id: "",
-          consultor_id: "",
-          status: "",
-          tipo_atendimento: "",
-          preset: "mes_atual",
-          dateFrom: format(startOfMonth(new Date()), "yyyy-MM-dd"),
-          dateTo: format(endOfMonth(new Date()), "yyyy-MM-dd")
-        })}
-      />
+
 
       {/* Dashboard de Estatísticas */}
       <DashboardAtendimentos atendimentos={atendimentosFiltrados} />
@@ -275,7 +259,7 @@ export default function PainelAtendimentosTab({ user }) {
 
       {/* Tabela de Atendimentos */}
       <div className="w-full">
-        <div className="flex items-center gap-3 mb-4 flex-wrap">
+        <div className="flex items-center gap-2 mb-4 flex-wrap">
           <div className="inline-flex items-center rounded-lg bg-gray-100 p-1 gap-1">
           {[
             { value: 'todos', label: 'Todos' },
@@ -297,6 +281,23 @@ export default function PainelAtendimentosTab({ user }) {
               {tab.label}
             </button>
           ))}
+          </div>
+          <div className="relative flex-1 min-w-[180px] max-w-xs">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+            <Input
+              placeholder="Buscar cliente, tipo, consultor..."
+              value={filtrosAtas.searchTerm || ""}
+              onChange={(e) => setFiltrosAtas(prev => ({ ...prev, searchTerm: e.target.value }))}
+              className="h-9 pl-8 text-sm bg-white border-gray-200 shadow-sm"
+            />
+            {filtrosAtas.searchTerm && (
+              <button
+                onClick={() => setFiltrosAtas(prev => ({ ...prev, searchTerm: "" }))}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
           <Select
             value={filtrosAtas.consultor_id || "all"}
