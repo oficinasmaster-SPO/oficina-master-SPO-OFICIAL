@@ -380,19 +380,19 @@ export default function PainelAtendimentosTab({ user }) {
           </Select>
         </div>
         <Card>
-          <CardContent className="pt-4 px-3 sm:px-4 lg:px-5">
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[1180px]">
+          <CardContent className="pt-4 px-2 sm:px-3 lg:px-4 xl:px-5">
+            <div className="w-full">
+              <table className="w-full table-fixed">
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50/50">
-                    <th className="text-left py-4 px-3 text-sm font-semibold text-gray-700 border-r border-gray-100">Consultor</th>
-                    <th className="text-left py-4 px-4 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">ID ATA</th>
-                    <th className="text-left py-4 px-4 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Criado em</th>
-                    <th className="text-left py-4 px-4 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Data</th>
-                    <th className="text-left py-4 px-4 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Cliente</th>
-                    <th className="text-left py-4 px-4 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Tipo</th>
-                    <th className="text-left py-4 px-4 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Status</th>
-                    <th className="text-right py-4 px-4 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Ações</th>
+                    <th className="w-[11%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100">Consultor</th>
+                    <th className="w-[13%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">ID ATA</th>
+                    <th className="w-[14%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Criado em</th>
+                    <th className="w-[14%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Data</th>
+                    <th className="w-[18%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Cliente</th>
+                    <th className="w-[10%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Tipo</th>
+                    <th className="w-[10%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Status</th>
+                    <th className="w-[10%] text-right py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Ações</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -407,50 +407,50 @@ export default function PainelAtendimentosTab({ user }) {
                     const ataVinculada = atas?.find(a => a.id === atendimento.ata_id);
                     return (
                       <tr key={atendimento.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="py-4 px-3 text-sm text-gray-600 border-r border-gray-100 font-medium">
+                        <td className="py-4 px-2 text-sm text-gray-600 border-r border-gray-100 font-medium break-words">
                           {atendimento.consultor_nome || '-'}
                         </td>
-                        <td className="py-4 px-4 text-sm text-gray-600 border-r border-gray-100 last:border-r-0">
+                        <td className="py-4 px-2 text-sm text-gray-600 border-r border-gray-100 last:border-r-0">
                           <div className="flex items-center justify-center">
                             {ataVinculada?.code ? (
-                              <span className="font-mono text-xs bg-blue-50 px-3 py-2.5 rounded border border-blue-200 whitespace-nowrap inline-flex items-center justify-center min-h-[2.5rem]">
+                              <span className="font-mono text-[11px] bg-blue-50 px-2 py-2 rounded border border-blue-200 whitespace-nowrap inline-flex items-center justify-center min-h-[2.25rem] max-w-full">
                                 {ataVinculada.code.replace('IT.', 'AT.')}
                               </span>
                             ) : (
-                              <span className="inline-flex items-center justify-center gap-1.5 text-amber-600 bg-amber-50 px-3 py-2 rounded border border-amber-200 text-xs font-medium whitespace-nowrap" title="Aguardando geração da ATA">
+                              <span className="inline-flex items-center justify-center gap-1 text-amber-600 bg-amber-50 px-2 py-2 rounded border border-amber-200 text-[11px] font-medium whitespace-nowrap" title="Aguardando geração da ATA">
                                 <Clock className="w-3 h-3" />
                                 Pendente
                               </span>
                             )}
                           </div>
                         </td>
-                        <td className="py-4 px-4 text-sm text-gray-500 border-r border-gray-100 last:border-r-0 whitespace-nowrap">
+                        <td className="py-4 px-2 text-sm text-gray-500 border-r border-gray-100 last:border-r-0 whitespace-nowrap">
                           {atendimento.created_date ? formatDateTimeBR(atendimento.created_date) : '-'}
                         </td>
-                        <td className="py-4 px-4 text-sm text-gray-600 border-r border-gray-100 last:border-r-0 whitespace-nowrap">
+                        <td className="py-4 px-2 text-sm text-gray-600 border-r border-gray-100 last:border-r-0 whitespace-nowrap">
                           {formatDateTimeBR(atendimento.data_agendada)}
                         </td>
-                        <td className="py-4 px-4 text-sm text-gray-600 border-r border-gray-100 last:border-r-0 font-medium">
+                        <td className="py-4 px-2 text-sm text-gray-600 border-r border-gray-100 last:border-r-0 font-medium break-words">
                           {workshop?.name || '-'}
                         </td>
-                        <td className="py-4 px-4 text-sm text-gray-600 border-r border-gray-100 last:border-r-0 capitalize">
+                        <td className="py-4 px-2 text-sm text-gray-600 border-r border-gray-100 last:border-r-0 capitalize break-words">
                           {atendimento.tipo_atendimento?.replace(/_/g, ' ') || '-'}
                         </td>
-                        <td className="py-4 px-4 text-sm text-gray-600 border-r border-gray-100 last:border-r-0">
+                        <td className="py-4 px-2 text-sm text-gray-600 border-r border-gray-100 last:border-r-0">
                           {atendimento.status === ATENDIMENTO_STATUS.REALIZADO && !atendimento.ata_id ? (
-                            <Badge className="bg-orange-100 text-orange-700 border-orange-300 animate-pulse flex items-center gap-1">
+                            <Badge className="bg-orange-100 text-orange-700 border-orange-300 animate-pulse inline-flex items-center gap-1 text-[11px] px-2 py-1">
                               <AlertTriangle className="w-3 h-3 shrink-0" />
                               Realizado
                             </Badge>
                           ) : (
-                            <Badge className={ATENDIMENTO_STATUS_COLORS[atendimento.status] || 'bg-gray-100 text-gray-800 border-gray-300'}>
+                            <Badge className={`${ATENDIMENTO_STATUS_COLORS[atendimento.status] || 'bg-gray-100 text-gray-800 border-gray-300'} text-[11px] px-2 py-1 inline-flex items-center`}>
                               {atendimento.status === ATENDIMENTO_STATUS.ATRASADO && <AlertTriangle className="w-3 h-3 mr-1" />}
                               {ATENDIMENTO_STATUS_LABELS[atendimento.status] || atendimento.status || 'Indefinido'}
                             </Badge>
                           )}
                         </td>
-                        <td className="py-4 px-4 border-r border-gray-100 last:border-r-0">
-                          <div className="flex items-center justify-end gap-1 whitespace-nowrap">
+                        <td className="py-4 px-2 border-r border-gray-100 last:border-r-0">
+                          <div className="flex items-center justify-end gap-0.5 whitespace-nowrap">
                             {(atendimento.status === ATENDIMENTO_STATUS.AGENDADO || 
                               atendimento.status === ATENDIMENTO_STATUS.CONFIRMADO || 
                               atendimento.status === ATENDIMENTO_STATUS.REAGENDADO || 
