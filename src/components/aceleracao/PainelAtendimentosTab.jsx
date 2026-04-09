@@ -158,30 +158,30 @@ export default function PainelAtendimentosTab({ user }) {
     
     const now = toBrazilDate(new Date());
 
-    // Collect IDs to update, then batch with small delay to avoid rate limit
-    const idsToUpdate = [];
-    atendimentos.forEach(atendimento => {
-      if (processedIdsRef.current.has(atendimento.id)) return;
-      
-      const dataAtendimento = toBrazilDate(atendimento.data_agendada);
-      
-      if (now > dataAtendimento && 
-          ![ATENDIMENTO_STATUS.REALIZADO, ATENDIMENTO_STATUS.PARTICIPANDO, ATENDIMENTO_STATUS.ATRASADO, ATENDIMENTO_STATUS.REAGENDADO].includes(atendimento.status)) {
-        idsToUpdate.push(atendimento.id);
-        processedIdsRef.current.add(atendimento.id);
-      }
-    });
+    const idsToUpdate = atendimentos
+      .filter(a => {
+        if (processedIdsRef.current.has(a.id)) return false;
+        const dataAtendimento = toBrazilDate(a.data_agendada);
+        return now > dataAtendimento && 
+          ![ATENDIMENTO_STATUS.REALIZADO, ATENDIMENTO_STATUS.PARTICIPANDO, ATENDIMENTO_STATUS.ATRASADO, ATENDIMENTO_STATUS.REAGENDADO].includes(a.status);
+      })
+      .map(a => a.id);
 
-    // Batch updates with staggered timing to avoid rate limit
-    idsToUpdate.slice(0, 10).forEach((id, idx) => {
-      setTimeout(() => marcarAtrasadoMutation.mutate(id), idx * 500);
+    if (idsToUpdate.length === 0) return;
+
+    idsToUpdate.forEach(id => processedIdsRef.current.add(id));
+    
+    // Um único Promise.all + uma única invalidação no final
+    Promise.all(
+      idsToUpdate.slice(0, 20).map(id =>
+        base44.entities.ConsultoriaAtendimento.update(id, { status: ATENDIMENTO_STATUS.ATRASADO }).catch(() => {})
+      )
+    ).then(() => {
+      queryClient.invalidateQueries(['todos-atendimentos']);
     });
   }, [atendimentos]);
 
-  const marcarAtrasadoMutation = useMutation({
-    mutationFn: (id) => base44.entities.ConsultoriaAtendimento.update(id, { status: ATENDIMENTO_STATUS.ATRASADO }),
-    onSuccess: () => queryClient.invalidateQueries(['todos-atendimentos'])
-  });
+
 
   const iniciarMutation = useMutation({
     mutationFn: (id) => base44.entities.ConsultoriaAtendimento.update(id, { 
