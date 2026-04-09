@@ -5,7 +5,8 @@ import { Card, CardContent } from "@/components/ui/card";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Edit, AlertTriangle, FilePlus, Play, StopCircle, CalendarClock, FileText, CheckCircle, Trash2, Clock } from "lucide-react";
+import { Edit, AlertTriangle, FilePlus, Play, StopCircle, CalendarClock, FileText, CheckCircle, Trash2, Clock, ChevronDown } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import GerarAtaModal from "./GerarAtaModal";
 import VisualizarAtaModal from "./VisualizarAtaModal";
@@ -302,12 +303,32 @@ export default function PainelAtendimentosTab({ user }) {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50/50">
+                     <th className="text-left py-4 px-3 text-sm font-semibold text-gray-700 border-r border-gray-100 min-w-[200px]">
+                      <div className="space-y-1">
+                        <span>Consultor</span>
+                        <Select
+                          value={filtrosAtas.consultor_id || "all"}
+                          onValueChange={(v) => setFiltrosAtas(prev => ({ ...prev, consultor_id: v === "all" ? "" : v }))}
+                        >
+                          <SelectTrigger className="h-7 text-xs bg-white w-full">
+                            <SelectValue placeholder="Todos" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Todos</SelectItem>
+                            {consultores?.map((c) => (
+                              <SelectItem key={c.id} value={c.user_id || c.id}>
+                                {c.full_name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </th>
                     <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">ID ATA</th>
                     <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Data</th>
                     <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Cliente</th>
                     <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Tipo</th>
                     <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Status</th>
-                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Consultor</th>
                     <th className="text-right py-4 px-6 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Ações</th>
                   </tr>
                 </thead>
@@ -323,6 +344,9 @@ export default function PainelAtendimentosTab({ user }) {
                     const ataVinculada = atas?.find(a => a.id === atendimento.ata_id);
                     return (
                       <tr key={atendimento.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="py-4 px-3 text-sm text-gray-600 border-r border-gray-100 font-medium">
+                          {atendimento.consultor_nome || '-'}
+                        </td>
                         <td className="py-4 px-6 text-sm text-gray-600 border-r border-gray-100 last:border-r-0">
                           <div className="flex items-center justify-center">
                             {ataVinculada?.code ? (
@@ -358,9 +382,6 @@ export default function PainelAtendimentosTab({ user }) {
                               {ATENDIMENTO_STATUS_LABELS[atendimento.status] || atendimento.status || 'Indefinido'}
                             </Badge>
                           )}
-                        </td>
-                        <td className="py-4 px-6 text-sm text-gray-600 border-r border-gray-100 last:border-r-0">
-                          {atendimento.consultor_nome}
                         </td>
                         <td className="py-4 px-6 border-r border-gray-100 last:border-r-0">
                           <div className="flex items-center justify-end gap-1">
