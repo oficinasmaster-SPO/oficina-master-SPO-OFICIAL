@@ -1,11 +1,13 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useTenant } from './TenantContext';
+import { useAuth } from '@/lib/AuthContext';
 
 const AttendanceTypeContext = createContext();
 
 export function AttendanceTypeProvider({ children }) {
   const { selectedCompanyId, selectedFirmId } = useTenant();
+  const { isAuthenticated, isLoadingAuth } = useAuth();
   const [attendanceTypes, setAttendanceTypes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -28,10 +30,14 @@ export function AttendanceTypeProvider({ children }) {
     }
   }, [selectedCompanyId]);
 
-  // Recarrega quando muda a oficina selecionada
+  // Recarrega quando muda a oficina selecionada, mas só se autenticado
   useEffect(() => {
+    if (isLoadingAuth || !isAuthenticated) {
+      setIsLoading(false);
+      return;
+    }
     loadAttendanceTypes();
-  }, [loadAttendanceTypes, selectedCompanyId, selectedFirmId]);
+  }, [loadAttendanceTypes, selectedCompanyId, selectedFirmId, isAuthenticated, isLoadingAuth]);
 
   const addType = useCallback((newType) => {
     setAttendanceTypes(prev => {

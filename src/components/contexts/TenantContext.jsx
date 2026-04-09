@@ -1,11 +1,13 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { queryClientInstance } from '@/lib/query-client';
+import { useAuth } from '@/lib/AuthContext';
 import WheelLoader from '@/components/ui/WheelLoader';
 
 const TenantContext = createContext();
 
 export function TenantProvider({ children }) {
+  const { user: authUser, isAuthenticated, isLoadingAuth } = useAuth();
   const [user, setUser] = useState(null);
   
   // Consulting Firm State
@@ -18,16 +20,29 @@ export function TenantProvider({ children }) {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSwitching, setIsSwitching] = useState(false);
+  const loadAttemptRef = useRef(0);
 
+  // Wait for auth to be ready before loading tenant data
   useEffect(() => {
+    if (isLoadingAuth) return; // Wait for auth to finish
+    if (!isAuthenticated || !authUser) {
+      setIsLoading(false);
+      setUser(null);
+      setConsultingFirm(null);
+      setCompany(null);
+      return;
+    }
+
     let cancelled = false;
+    const currentAttempt = ++loadAttemptRef.current;
     
     const loadTenantData = async () => {
       try {
         setIsLoading(true);
-        const currentUser = await base44.auth.me().catch(() => null);
-        if (currentUser && !cancelled) {
-          setUser(currentUser);
+        const currentUser = authUser; // Use user from AuthContext instead of calling me() again
+        if (cancelled || currentAttempt !== loadAttemptRef.current) return;
+        
+        setUser(currentUser);
           
           let firmIdToLoad = selectedFirmId;
           
@@ -95,17 +110,14 @@ export function TenantProvider({ children }) {
                  setCompany(compOrWorkshop);
              } else if (!compOrWorkshop && !cancelled) {
                  setCompany(null);
-                 // Não removemos do localStorage nem setamos null no state
-                 // para evitar loop infinito caso o Workshop não seja retornado (ex: RLS, falha de rede)
              }
           } else {
              if (!cancelled) setCompany(null);
           }
-        }
       } catch(err) {
         console.error('Erro ao carregar TenantContext:', err);
       } finally {
-        if (!cancelled) {
+        if (!cancelled && currentAttempt === loadAttemptRef.current) {
           setIsLoading(false);
           setIsSwitching(false);
         }
@@ -115,7 +127,7 @@ export function TenantProvider({ children }) {
     loadTenantData();
     
     return () => { cancelled = true; };
-  }, [selectedFirmId, selectedCompanyId]);
+  }, [isLoadingAuth, isAuthenticated, authUser?.id, selectedFirmId, selectedCompanyId]);
 
   const changeConsultingFirm = (firmId) => {
     if (firmId) {
