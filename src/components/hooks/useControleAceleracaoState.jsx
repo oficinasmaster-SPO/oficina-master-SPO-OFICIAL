@@ -1,35 +1,31 @@
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { format, startOfMonth, endOfMonth } from "date-fns";
 import useWorkshopsAtivos from "./useWorkshopsAtivos";
 import useConsultoresList from "./useConsultoresList";
+import useControleAceleracaoURLState from "./useControleAceleracaoURLState";
 
 /**
  * Hook central de estado para /controleaceleracao.
- * Fonte única de verdade para: user, filtros, consultor, período, atendimentos, workshops, consultores.
- * Todas as abas consomem os dados deste hook via props — sem queries duplicadas.
+ * A URL é a fonte de verdade para: tab, filtros, modal.
+ * Dados compartilhados: user, workshops, atendimentos, atas, planos.
  */
 export default function useControleAceleracaoState() {
+  // ── URL state (fonte de verdade) ──
+  const urlState = useControleAceleracaoURLState();
+  const { filtros, setFiltros, activeTab, setActiveTab, isModalOpen, atendimentoId, openModal, closeModal } = urlState;
+
   // ── User ──
   const { data: user, isLoading: loadingUser } = useQuery({
     queryKey: ['current-user'],
     queryFn: () => base44.auth.me()
   });
 
-  // ── Filtros centrais ──
-  const [filtros, setFiltros] = useState({
-    consultorId: "todos",
-    preset: "mes_atual",
-    dataInicio: format(startOfMonth(new Date()), "yyyy-MM-dd"),
-    dataFim: format(endOfMonth(new Date()), "yyyy-MM-dd")
-  });
-
-  // ── Dados derivados dos filtros ──
+  // ── Consultor efetivo (derivado dos filtros URL) ──
   const consultorEfetivo = useMemo(() => {
     if (filtros.consultorId && filtros.consultorId !== "todos") return filtros.consultorId;
     if (user?.role !== 'admin') return user?.id || null;
-    return null; // admin sem filtro = todos
+    return null;
   }, [filtros.consultorId, user?.id, user?.role]);
 
   // ── Shared data queries ──
@@ -62,14 +58,14 @@ export default function useControleAceleracaoState() {
     });
   }, [atendimentos, filtros.dataInicio, filtros.dataFim]);
 
-  // ── Meeting minutes (shared between tabs that need it) ──
+  // ── Meeting minutes ──
   const { data: atas } = useQuery({
     queryKey: ['meeting-minutes'],
     queryFn: () => base44.entities.MeetingMinutes.list('-created_date', 5000),
     staleTime: 2 * 60 * 1000
   });
 
-  // ── Monthly plans (shared) ──
+  // ── Monthly plans ──
   const { data: planos } = useQuery({
     queryKey: ['planos-aceleracao'],
     queryFn: () => base44.entities.MonthlyAccelerationPlan.list('-created_date'),
@@ -80,7 +76,14 @@ export default function useControleAceleracaoState() {
     // Auth
     user,
     loadingUser,
-    // Filtros
+    // URL-synced state
+    activeTab,
+    setActiveTab,
+    isModalOpen,
+    atendimentoId,
+    openModal,
+    closeModal,
+    // Filtros (URL-synced)
     filtros,
     setFiltros,
     consultorEfetivo,

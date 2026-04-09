@@ -1,6 +1,4 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { createPageUrl } from "@/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Loader2, BarChart3, Calendar, FileText, ClipboardList, Users, Activity } from "lucide-react";
@@ -16,15 +14,16 @@ import DashboardOperacionalTabRedesigned from "@/components/aceleracao/Dashboard
 import useControleAceleracaoState from "@/components/hooks/useControleAceleracaoState";
 
 export default function ControleAceleracao() {
-  const navigate = useNavigate();
-  const urlParams = new URLSearchParams(window.location.search);
-  const initialTab = urlParams.get('tab') === 'consultoria' ? 'dashboard-operacional' : (urlParams.get('tab') || "visao-geral");
-  const [activeTab, setActiveTab] = useState(initialTab);
   const [showMassRegistration, setShowMassRegistration] = useState(false);
 
-  // ── Estado central único ──
+  // ── Estado central (URL é a fonte de verdade) ──
   const state = useControleAceleracaoState();
-  const { user, loadingUser, filtros, setFiltros, consultores } = state;
+  const {
+    user, loadingUser,
+    activeTab, setActiveTab,
+    isModalOpen, atendimentoId, openModal, closeModal,
+    filtros, setFiltros, consultores
+  } = state;
 
   if (loadingUser) {
     return (
@@ -45,21 +44,14 @@ export default function ControleAceleracao() {
     );
   }
 
-  const isModalOpen = urlParams.get('modal') === 'atendimento';
-
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       {isModalOpen && (
         <RegistrarAtendimento 
           isModal={true}
+          atendimentoId={atendimentoId}
           consultoresExternos={consultores}
-          onClose={() => {
-            const newUrl = new URL(window.location);
-            newUrl.searchParams.delete('modal');
-            newUrl.searchParams.delete('edit');
-            newUrl.searchParams.delete('atendimento_id');
-            navigate(newUrl.pathname + newUrl.search, { replace: true });
-          }} 
+          onClose={closeModal}
         />
       )}
 
@@ -78,7 +70,7 @@ export default function ControleAceleracao() {
             Registro em Massa
           </Button>
           <Button
-            onClick={() => navigate(`${createPageUrl('ControleAceleracao')}?tab=${activeTab}&modal=atendimento`)}
+            onClick={() => openModal()}
             className="bg-blue-600 hover:bg-blue-700"
           >
             + Novo Atendimento
@@ -92,7 +84,6 @@ export default function ControleAceleracao() {
         user={user}
       />
 
-      {/* Filtros globais — visível em todas abas exceto 'atendimentos' que tem seus próprios controles visuais */}
       {activeTab !== 'atendimentos' && (
         <FiltrosControleAceleracao
           consultores={consultores}
