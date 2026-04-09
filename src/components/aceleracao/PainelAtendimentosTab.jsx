@@ -380,19 +380,19 @@ export default function PainelAtendimentosTab({ user }) {
           </Select>
         </div>
         <Card>
-          <CardContent className="pt-6">
+          <CardContent className="pt-4 px-3 sm:px-4 lg:px-5">
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full min-w-[1180px]">
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50/50">
                     <th className="text-left py-4 px-3 text-sm font-semibold text-gray-700 border-r border-gray-100">Consultor</th>
-                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">ID ATA</th>
-                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Criado em</th>
-                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Data</th>
-                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Cliente</th>
-                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Tipo</th>
-                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Status</th>
-                    <th className="text-right py-4 px-6 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Ações</th>
+                    <th className="text-left py-4 px-4 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">ID ATA</th>
+                    <th className="text-left py-4 px-4 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Criado em</th>
+                    <th className="text-left py-4 px-4 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Data</th>
+                    <th className="text-left py-4 px-4 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Cliente</th>
+                    <th className="text-left py-4 px-4 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Tipo</th>
+                    <th className="text-left py-4 px-4 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Status</th>
+                    <th className="text-right py-4 px-4 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Ações</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -410,7 +410,7 @@ export default function PainelAtendimentosTab({ user }) {
                         <td className="py-4 px-3 text-sm text-gray-600 border-r border-gray-100 font-medium">
                           {atendimento.consultor_nome || '-'}
                         </td>
-                        <td className="py-4 px-6 text-sm text-gray-600 border-r border-gray-100 last:border-r-0">
+                        <td className="py-4 px-4 text-sm text-gray-600 border-r border-gray-100 last:border-r-0">
                           <div className="flex items-center justify-center">
                             {ataVinculada?.code ? (
                               <span className="font-mono text-xs bg-blue-50 px-3 py-2.5 rounded border border-blue-200 whitespace-nowrap inline-flex items-center justify-center min-h-[2.5rem]">
@@ -424,19 +424,19 @@ export default function PainelAtendimentosTab({ user }) {
                             )}
                           </div>
                         </td>
-                        <td className="py-4 px-6 text-sm text-gray-500 border-r border-gray-100 last:border-r-0 whitespace-nowrap">
+                        <td className="py-4 px-4 text-sm text-gray-500 border-r border-gray-100 last:border-r-0 whitespace-nowrap">
                           {atendimento.created_date ? formatDateTimeBR(atendimento.created_date) : '-'}
                         </td>
-                        <td className="py-4 px-6 text-sm text-gray-600 border-r border-gray-100 last:border-r-0 whitespace-nowrap">
+                        <td className="py-4 px-4 text-sm text-gray-600 border-r border-gray-100 last:border-r-0 whitespace-nowrap">
                           {formatDateTimeBR(atendimento.data_agendada)}
                         </td>
-                        <td className="py-4 px-6 text-sm text-gray-600 border-r border-gray-100 last:border-r-0 font-medium">
+                        <td className="py-4 px-4 text-sm text-gray-600 border-r border-gray-100 last:border-r-0 font-medium">
                           {workshop?.name || '-'}
                         </td>
-                        <td className="py-4 px-6 text-sm text-gray-600 border-r border-gray-100 last:border-r-0 capitalize">
+                        <td className="py-4 px-4 text-sm text-gray-600 border-r border-gray-100 last:border-r-0 capitalize">
                           {atendimento.tipo_atendimento?.replace(/_/g, ' ') || '-'}
                         </td>
-                        <td className="py-4 px-6 text-sm text-gray-600 border-r border-gray-100 last:border-r-0">
+                        <td className="py-4 px-4 text-sm text-gray-600 border-r border-gray-100 last:border-r-0">
                           {atendimento.status === ATENDIMENTO_STATUS.REALIZADO && !atendimento.ata_id ? (
                             <Badge className="bg-orange-100 text-orange-700 border-orange-300 animate-pulse flex items-center gap-1">
                               <AlertTriangle className="w-3 h-3 shrink-0" />
@@ -449,8 +449,8 @@ export default function PainelAtendimentosTab({ user }) {
                             </Badge>
                           )}
                         </td>
-                        <td className="py-4 px-6 border-r border-gray-100 last:border-r-0">
-                          <div className="flex items-center justify-end gap-1">
+                        <td className="py-4 px-4 border-r border-gray-100 last:border-r-0">
+                          <div className="flex items-center justify-end gap-1 whitespace-nowrap">
                             {(atendimento.status === ATENDIMENTO_STATUS.AGENDADO || 
                               atendimento.status === ATENDIMENTO_STATUS.CONFIRMADO || 
                               atendimento.status === ATENDIMENTO_STATUS.REAGENDADO || 
