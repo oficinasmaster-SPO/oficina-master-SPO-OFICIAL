@@ -42,9 +42,33 @@ export default function ReagendarAtendimentoModal({ atendimento, workshop, onClo
     const duracao = atendimento.duracao_minutos || 60;
     const endDateTime = new Date(startDateTime.getTime() + duracao * 60000);
 
+    const dataFormatada = startDateTime.toLocaleDateString('pt-BR');
+    const horaFormatada = startDateTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    const dataAnterior = new Date(atendimento.data_agendada).toLocaleString('pt-BR');
+
+    const statusLabel = STATUS_POS_VENDA[statusPosvenda] || statusPosvenda || 'Reagendamento';
+    const respLabel = RESPONSABILIDADE_OPTIONS[responsabilidade] || responsabilidade || '';
+    const motivoLabel = motivosFiltrados[motivoSelecionado] || motivoSelecionado || '';
+
+    const descricaoReuniao = [
+      `📋 REAGENDAMENTO DE ATENDIMENTO`,
+      ``,
+      `🏢 Cliente: ${workshop?.name || 'N/A'}`,
+      `📅 Data anterior: ${dataAnterior}`,
+      `📅 Nova data: ${dataFormatada} às ${horaFormatada}`,
+      ``,
+      `📌 Status: ${statusLabel}`,
+      respLabel ? `👤 Responsabilidade: ${respLabel}` : '',
+      motivoLabel ? `💬 Motivo: ${motivoLabel}` : '',
+      descricaoManual ? `\n📝 Observações: ${descricaoManual}` : '',
+      ``,
+      `---`,
+      `Reunião criada automaticamente pelo sistema Oficinas Master.`,
+    ].filter(Boolean).join('\n');
+
     const meetData = await createMeeting({
-      summary: `Reagendamento - ${workshop?.name || 'Cliente'} - Oficinas Master`,
-      description: `Atendimento reagendado. ${descricaoManual || ''}`,
+      summary: `🔄 Reagendamento - ${workshop?.name || 'Cliente'} - Oficinas Master`,
+      description: descricaoReuniao,
       startDateTime: startDateTime.toISOString(),
       endDateTime: endDateTime.toISOString(),
       attendees: []
