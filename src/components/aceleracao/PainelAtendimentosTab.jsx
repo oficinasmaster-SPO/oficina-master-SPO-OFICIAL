@@ -11,6 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import GerarAtaModal from "./GerarAtaModal";
 import VisualizarAtaModal from "./VisualizarAtaModal";
 import ReagendarAtendimentoModal from "./ReagendarAtendimentoModal";
@@ -41,6 +42,7 @@ export default function PainelAtendimentosTab({ user }) {
   const processedIdsRef = useRef(new Set());
   const [activeTab, setActiveTab] = useState("todos");
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [deleteFollowUp, setDeleteFollowUp] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [filtrosAtas, setFiltrosAtas] = useState({
     searchTerm: "",
@@ -579,7 +581,12 @@ export default function PainelAtendimentosTab({ user }) {
       </div>
 
       {/* Dialog de Confirmação de Exclusão */}
-      <AlertDialog open={!!deleteConfirm} onOpenChange={(open) => !open && setDeleteConfirm(null)}>
+      <AlertDialog open={!!deleteConfirm} onOpenChange={(open) => {
+        if (!open) {
+          setDeleteConfirm(null);
+          setDeleteFollowUp(false);
+        }
+      }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
@@ -599,6 +606,16 @@ export default function PainelAtendimentosTab({ user }) {
                   <p><span className="font-medium">Consultor:</span> {deleteConfirm.consultor_nome || '-'}</p>
                 </div>
               )}
+              {deleteConfirm?.ata_id && deleteConfirm?.google_event_id && (
+                <label className="mt-4 flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-700 cursor-pointer">
+                  <Checkbox
+                    checked={deleteFollowUp}
+                    onCheckedChange={(checked) => setDeleteFollowUp(checked === true)}
+                    className="mt-0.5"
+                  />
+                  <span>Deletar o follow up criado para esta ATA</span>
+                </label>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -612,7 +629,10 @@ export default function PainelAtendimentosTab({ user }) {
                 setIsDeleting(true);
                 try {
                   if (deleteConfirm.ata_id) {
-                    await base44.functions.invoke('deleteAta', { ata_id: deleteConfirm.ata_id });
+                    await base44.functions.invoke('deleteAta', {
+                      ata_id: deleteConfirm.ata_id,
+                      delete_follow_up: deleteFollowUp
+                    });
                     toast.success('ATA excluída com sucesso!');
                     queryClient.invalidateQueries(['meeting-minutes']);
                   } else {

@@ -9,7 +9,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Acesso negado' }, { status: 403 });
     }
 
-    const { ata_id } = await req.json();
+    const { ata_id, delete_follow_up } = await req.json();
 
     if (!ata_id) {
       return Response.json({ error: 'ata_id é obrigatório' }, { status: 400 });
@@ -22,6 +22,21 @@ Deno.serve(async (req) => {
     }
 
     console.log(`🗑️ Excluindo ATA ${ata_id}...`);
+
+    if (delete_follow_up && ata.google_event_id) {
+      const { accessToken } = await base44.asServiceRole.connectors.getConnection("googlecalendar");
+      const deleteResponse = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${ata.google_event_id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+
+      if (!deleteResponse.ok && deleteResponse.status !== 404) {
+        const errorText = await deleteResponse.text();
+        throw new Error(`Erro ao excluir follow up do calendário: ${errorText}`);
+      }
+    }
 
     // 2. Buscar o atendimento vinculado para limpar a referência
     const atendimento_id = ata.atendimento_id;
