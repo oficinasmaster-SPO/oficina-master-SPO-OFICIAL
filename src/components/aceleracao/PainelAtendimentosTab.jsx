@@ -312,7 +312,13 @@ export default function PainelAtendimentosTab({ user }) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {atendimentosFiltrados.map((atendimento) => {
+                  {atendimentosFiltrados.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="py-16 text-center">
+                        <p className="text-gray-400 text-sm">Nada para ver aqui</p>
+                      </td>
+                    </tr>
+                  ) : atendimentosFiltrados.map((atendimento) => {
                     const workshop = workshops?.find(w => w.id === atendimento.workshop_id);
                     const ataVinculada = atas?.find(a => a.id === atendimento.ata_id);
                     return (
