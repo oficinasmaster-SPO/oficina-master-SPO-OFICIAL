@@ -190,11 +190,6 @@ export default function ControleAceleracao() {
             </TabsList>
 
         <TabsContent value="visao-geral">
-          <FiltrosControleAceleracao
-            consultores={consultores || []}
-            filtros={filtros}
-            onFiltrosChange={setFiltros}
-          />
           <VisaoGeralTab user={user} filtros={filtros} />
         </TabsContent>
 
