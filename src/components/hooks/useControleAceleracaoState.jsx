@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import useWorkshopsAtivos from "./useWorkshopsAtivos";
@@ -58,12 +58,25 @@ export default function useControleAceleracaoState() {
     });
   }, [atendimentos, filtros.dataInicio, filtros.dataFim]);
 
-  // ── Meeting minutes ──
+  // ── Meeting minutes (limited to 500 for perf) ──
   const { data: atas } = useQuery({
     queryKey: ['meeting-minutes'],
-    queryFn: () => base44.entities.MeetingMinutes.list('-created_date', 5000),
-    staleTime: 2 * 60 * 1000
+    queryFn: () => base44.entities.MeetingMinutes.list('-created_date', 500),
+    staleTime: 3 * 60 * 1000
   });
+
+  // ── Lookup maps for O(1) access in child components ──
+  const workshopMap = useMemo(() => {
+    const map = {};
+    (workshops || []).forEach(w => { map[w.id] = w; });
+    return map;
+  }, [workshops]);
+
+  const atasMap = useMemo(() => {
+    const map = {};
+    (atas || []).forEach(a => { map[a.id] = a; });
+    return map;
+  }, [atas]);
 
   // ── Monthly plans ──
   const { data: planos } = useQuery({
@@ -89,11 +102,13 @@ export default function useControleAceleracaoState() {
     consultorEfetivo,
     // Shared data
     workshops: workshops || [],
+    workshopMap,
     consultores: consultores || [],
     atendimentos: atendimentos || [],
     atendimentosPeriodo,
     loadingAtendimentos,
     atas: atas || [],
+    atasMap,
     planos: planos || []
   };
 }

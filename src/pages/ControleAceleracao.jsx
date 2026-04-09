@@ -1,22 +1,30 @@
-import { useState } from "react";
+import React, { useState, Suspense, lazy } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Loader2, BarChart3, Calendar, FileText, ClipboardList, Users, Activity } from "lucide-react";
-import VisaoGeralTab from "@/components/aceleracao/VisaoGeralTab";
-import PainelAtendimentosTab from "@/components/aceleracao/PainelAtendimentosTab";
-import PedidosInternosTab from "@/components/aceleracao/PedidosInternosTab";
-import AgendaVisualTab from "@/components/aceleracao/AgendaVisualTab";
 import RegistroAtendimentoMassaModal from "@/components/aceleracao/RegistroAtendimentoMassaModal";
 import FiltrosControleAceleracao from "@/components/aceleracao/FiltrosControleAceleracao";
 import RegistrarAtendimento from "./RegistrarAtendimento";
-import CronogramaGeral from "./CronogramaGeral";
-import DashboardOperacionalTabRedesigned from "@/components/aceleracao/DashboardOperacionalTabRedesigned";
 import useControleAceleracaoState from "@/components/hooks/useControleAceleracaoState";
+import WheelLoader from "@/components/ui/WheelLoader";
+
+// Lazy-load heavy tabs — only loaded when user clicks them
+const VisaoGeralTab = lazy(() => import("@/components/aceleracao/VisaoGeralTab"));
+const PainelAtendimentosTab = lazy(() => import("@/components/aceleracao/PainelAtendimentosTab"));
+const AgendaVisualTab = lazy(() => import("@/components/aceleracao/AgendaVisualTab"));
+const CronogramaGeral = lazy(() => import("./CronogramaGeral"));
+const PedidosInternosTab = lazy(() => import("@/components/aceleracao/PedidosInternosTab"));
+const DashboardOperacionalTabRedesigned = lazy(() => import("@/components/aceleracao/DashboardOperacionalTabRedesigned"));
+
+const TabFallback = () => (
+  <div className="flex items-center justify-center py-16">
+    <WheelLoader size="lg" />
+  </div>
+);
 
 export default function ControleAceleracao() {
   const [showMassRegistration, setShowMassRegistration] = useState(false);
 
-  // ── Estado central (URL é a fonte de verdade) ──
   const state = useControleAceleracaoState();
   const {
     user, loadingUser,
@@ -69,10 +77,7 @@ export default function ControleAceleracao() {
             <Users className="w-4 h-4 mr-2" />
             Registro em Massa
           </Button>
-          <Button
-            onClick={() => openModal()}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
+          <Button onClick={() => openModal()} className="bg-blue-600 hover:bg-blue-700">
             + Novo Atendimento
           </Button>
         </div>
@@ -95,56 +100,52 @@ export default function ControleAceleracao() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="flex w-full justify-start overflow-x-auto bg-white shadow-md h-auto p-1 gap-1">
           <TabsTrigger value="visao-geral" className="flex-shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-colors">
-            <BarChart3 className="w-4 h-4 mr-2" />
-            Visão Geral
+            <BarChart3 className="w-4 h-4 mr-2" />Visão Geral
           </TabsTrigger>
           <TabsTrigger value="atendimentos" className="flex-shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-colors">
-            <ClipboardList className="w-4 h-4 mr-2" />
-            Atendimentos
+            <ClipboardList className="w-4 h-4 mr-2" />Atendimentos
           </TabsTrigger>
           <TabsTrigger value="cronograma" className="flex-shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-colors">
-            <Calendar className="w-4 h-4 mr-2" />
-            Cronograma Geral
+            <Calendar className="w-4 h-4 mr-2" />Cronograma Geral
           </TabsTrigger>
           <TabsTrigger value="pedidos" className="flex-shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-colors">
-            <FileText className="w-4 h-4 mr-2" />
-            Pedidos & Backlog
+            <FileText className="w-4 h-4 mr-2" />Pedidos & Backlog
           </TabsTrigger>
           <TabsTrigger value="agenda-visual" className="flex-shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-colors">
-            <Calendar className="w-4 h-4 mr-2" />
-            Agenda Visual
+            <Calendar className="w-4 h-4 mr-2" />Agenda Visual
           </TabsTrigger>
           <TabsTrigger value="dashboard-operacional" className="flex-shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-colors">
-            <Activity className="w-4 h-4 mr-2" />
-            Dashboard Sprints
+            <Activity className="w-4 h-4 mr-2" />Dashboard Sprints
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="visao-geral">
-          <VisaoGeralTab state={state} />
-        </TabsContent>
+        <Suspense fallback={<TabFallback />}>
+          <TabsContent value="visao-geral">
+            <VisaoGeralTab state={state} />
+          </TabsContent>
 
-        <TabsContent value="atendimentos">
-          <PainelAtendimentosTab state={state} />
-        </TabsContent>
+          <TabsContent value="atendimentos">
+            <PainelAtendimentosTab state={state} />
+          </TabsContent>
 
-        <TabsContent value="cronograma">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            <CronogramaGeral isTab={true} />
-          </div>
-        </TabsContent>
+          <TabsContent value="cronograma">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+              <CronogramaGeral isTab={true} />
+            </div>
+          </TabsContent>
 
-        <TabsContent value="pedidos">
-          <PedidosInternosTab user={user} />
-        </TabsContent>
+          <TabsContent value="pedidos">
+            <PedidosInternosTab user={user} />
+          </TabsContent>
 
-        <TabsContent value="agenda-visual">
-          <AgendaVisualTab state={state} />
-        </TabsContent>
+          <TabsContent value="agenda-visual">
+            <AgendaVisualTab state={state} />
+          </TabsContent>
 
-        <TabsContent value="dashboard-operacional">
-          <DashboardOperacionalTabRedesigned user={user} />
-        </TabsContent>
+          <TabsContent value="dashboard-operacional">
+            <DashboardOperacionalTabRedesigned user={user} />
+          </TabsContent>
+        </Suspense>
       </Tabs>
     </div>
   );

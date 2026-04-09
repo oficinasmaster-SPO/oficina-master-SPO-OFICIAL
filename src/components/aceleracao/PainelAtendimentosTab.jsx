@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useDebounce } from "@/components/hooks/useDebounce";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -25,7 +26,7 @@ import { toast } from "sonner";
 import RegistrarAtendimento from "@/pages/RegistrarAtendimento";
 
 export default function PainelAtendimentosTab({ state }) {
-  const { user, workshops, atendimentos, consultores, atas, planos, filtros } = state;
+  const { user, workshops, workshopMap, atendimentos, consultores, atas, atasMap, planos, filtros } = state;
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -118,39 +119,44 @@ export default function PainelAtendimentosTab({ state }) {
     }
   });
 
-  // ── Filtragem local (sobre dados já filtrados por consultor no hook central) ──
-  const atendimentosFiltrados = atendimentos
-    .filter(a => {
-      if (activeTab !== "todos" && a.status !== activeTab) return false;
-      if (localFilters.workshop_id && a.workshop_id !== localFilters.workshop_id) return false;
-      if (localFilters.tipo_atendimento && a.tipo_atendimento !== localFilters.tipo_atendimento) return false;
-      
-      if (localFilters.dateFrom) {
-        if (new Date(a.data_agendada) < new Date(localFilters.dateFrom)) return false;
-      }
-      if (localFilters.dateTo) {
-        const df = new Date(localFilters.dateTo);
-        df.setHours(23, 59, 59, 999);
-        if (new Date(a.data_agendada) > df) return false;
-      }
-      
-      if (localFilters.searchTerm) {
-        const s = localFilters.searchTerm.toLowerCase();
-        const ws = workshops.find(w => w.id === a.workshop_id);
-        if (!(ws?.name?.toLowerCase().includes(s) ||
-              a.tipo_atendimento?.toLowerCase().includes(s) ||
-              a.consultor_nome?.toLowerCase().includes(s))) return false;
-      }
-      return true;
-    })
-    .sort((a, b) => new Date(b.data_agendada) - new Date(a.data_agendada));
+  // ── Debounce search for perf ──
+  const debouncedSearch = useDebounce(localFilters.searchTerm, 300);
 
-  const handleAtaSaved = () => {
+  // ── Filtragem local (memoized) ──
+  const atendimentosFiltrados = useMemo(() => {
+    return atendimentos
+      .filter(a => {
+        if (activeTab !== "todos" && a.status !== activeTab) return false;
+        if (localFilters.workshop_id && a.workshop_id !== localFilters.workshop_id) return false;
+        if (localFilters.tipo_atendimento && a.tipo_atendimento !== localFilters.tipo_atendimento) return false;
+        
+        if (localFilters.dateFrom) {
+          if (new Date(a.data_agendada) < new Date(localFilters.dateFrom)) return false;
+        }
+        if (localFilters.dateTo) {
+          const df = new Date(localFilters.dateTo);
+          df.setHours(23, 59, 59, 999);
+          if (new Date(a.data_agendada) > df) return false;
+        }
+        
+        if (debouncedSearch) {
+          const s = debouncedSearch.toLowerCase();
+          const ws = workshopMap[a.workshop_id];
+          if (!(ws?.name?.toLowerCase().includes(s) ||
+                a.tipo_atendimento?.toLowerCase().includes(s) ||
+                a.consultor_nome?.toLowerCase().includes(s))) return false;
+        }
+        return true;
+      })
+      .sort((a, b) => new Date(b.data_agendada) - new Date(a.data_agendada));
+  }, [atendimentos, activeTab, localFilters.workshop_id, localFilters.tipo_atendimento, localFilters.dateFrom, localFilters.dateTo, debouncedSearch, workshopMap]);
+
+  const handleAtaSaved = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['atendimentos-acelerador'] });
     queryClient.invalidateQueries({ queryKey: ['meeting-minutes'] });
     setShowGerarAta(false);
     setSelectedAtendimento(null);
-  };
+  }, [queryClient]);
 
   return (
     <div className="space-y-6">
@@ -321,8 +327,8 @@ export default function PainelAtendimentosTab({ state }) {
                       </td>
                     </tr>
                   ) : atendimentosFiltrados.map((atendimento) => {
-                    const workshop = workshops.find(w => w.id === atendimento.workshop_id);
-                    const ataVinculada = atas.find(a => a.id === atendimento.ata_id);
+                    const workshop = workshopMap[atendimento.workshop_id];
+                    const ataVinculada = atasMap[atendimento.ata_id];
                     return (
                       <tr key={atendimento.id} className="hover:bg-gray-50 transition-colors">
                         <td className="py-4 px-2 text-sm text-gray-600 border-r border-gray-100 font-medium break-words">

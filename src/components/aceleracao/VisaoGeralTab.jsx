@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,31 +34,29 @@ export default function VisaoGeralTab({ state }) {
   const [modalReunioes, setModalReunioes] = useState({ isOpen: false, tipo: null, reunioes: [] });
   const [hoverSides, setHoverSides] = useState({});
 
+  const hoje = useMemo(() => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' }), []);
+
+  const { reunioesRealizadas, totalHorasRealizadas, tarefasPendentes } = useMemo(() => {
+    const realizados = atendimentosPeriodo.filter(a => a.status === 'realizado');
+    return {
+      reunioesRealizadas: realizados.length,
+      totalHorasRealizadas: realizados.reduce((acc, a) => acc + (a.duracao_real_minutos || a.duracao_minutos || 0), 0),
+      tarefasPendentes: atendimentosPeriodo.filter(a => {
+        if (a.status === 'realizado') return false;
+        const d = new Date(a.data_agendada).toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+        return d < hoje;
+      })
+    };
+  }, [atendimentosPeriodo, hoje]);
+
+  const futurasList = useMemo(() => atendimentos.filter(a => {
+    if (!['agendado', 'confirmado'].includes(a.status)) return false;
+    const d = new Date(a.data_agendada).toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+    return d >= hoje;
+  }), [atendimentos, hoje]);
+
+  const proximosAtendimentos = useMemo(() => futurasList.slice(0, 5), [futurasList]);
   const clientesAtivos = workshops.length;
-  const hoje = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
-
-  const reunioesRealizadas = atendimentosPeriodo.filter(a => a.status === 'realizado').length;
-  
-  const futurasList = atendimentos.filter(a => {
-    if (!['agendado', 'confirmado'].includes(a.status)) return false;
-    const d = new Date(a.data_agendada).toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
-    return d >= hoje;
-  });
-
-  const totalHorasRealizadas = atendimentosPeriodo.filter(a => a.status === 'realizado')
-    .reduce((acc, a) => acc + (a.duracao_real_minutos || a.duracao_minutos || 0), 0);
-
-  const tarefasPendentes = atendimentosPeriodo.filter(a => {
-    if (a.status === 'realizado') return false;
-    const d = new Date(a.data_agendada).toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
-    return d < hoje;
-  });
-
-  const proximosAtendimentos = atendimentos.filter(a => {
-    if (!['agendado', 'confirmado'].includes(a.status)) return false;
-    const d = new Date(a.data_agendada).toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
-    return d >= hoje;
-  }).slice(0, 5);
 
   return (
     <div className="space-y-6">

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { RefreshCw, CalendarCheck } from "lucide-react";
@@ -17,10 +17,10 @@ export default function AgendaVisualTab({ state }) {
   });
   const lastSync = syncState?.[0]?.last_synced_at;
 
-  const handleRefresh = () => {
+  const handleRefresh = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['atendimentos-acelerador'] });
     queryClient.invalidateQueries({ queryKey: ['sync-state-calendar'] });
-  };
+  }, [queryClient]);
 
   return (
     <div className="space-y-6">
