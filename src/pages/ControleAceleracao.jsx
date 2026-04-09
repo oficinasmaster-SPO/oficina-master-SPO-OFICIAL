@@ -180,7 +180,7 @@ export default function ControleAceleracao() {
         </TabsContent>
 
         <TabsContent value="atendimentos">
-          <PainelAtendimentosTab user={user} />
+          <PainelAtendimentosTab user={user} filtrosGlobais={filtros} />
         </TabsContent>
 
         <TabsContent value="cronograma">

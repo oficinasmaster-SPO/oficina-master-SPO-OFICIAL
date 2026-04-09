@@ -27,7 +27,7 @@ import RegistrarAtendimento from "@/pages/RegistrarAtendimento";
 // Forçar rebuild do Vite v2
 
 
-export default function PainelAtendimentosTab({ user }) {
+export default function PainelAtendimentosTab({ user, filtrosGlobais }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [showGerarAta, setShowGerarAta] = useState(false);
@@ -47,19 +47,12 @@ export default function PainelAtendimentosTab({ user }) {
   const [filtrosAtas, setFiltrosAtas] = useState({
     searchTerm: "",
     workshop_id: "",
-    consultor_id: "",
+    consultor_id: filtrosGlobais?.consultorId !== "todos" ? filtrosGlobais?.consultorId || "" : "",
     status: "",
     tipo_atendimento: "",
-    preset: "mes_atual",
-    dateFrom: format(startOfMonth(new Date()), "yyyy-MM-dd"),
-    dateTo: format(endOfMonth(new Date()), "yyyy-MM-dd")
-  });
-
-  const { data: atendimentos, isLoading } = useQuery({
-    queryKey: ['todos-atendimentos'],
-    queryFn: () => base44.entities.ConsultoriaAtendimento.list('-data_agendada', 5000),
-    staleTime: 2 * 60 * 1000,
-    refetchInterval: 5 * 60 * 1000
+    preset: filtrosGlobais?.preset || "mes_atual",
+    dateFrom: filtrosGlobais?.dataInicio || format(startOfMonth(new Date()), "yyyy-MM-dd"),
+    dateTo: filtrosGlobais?.dataFim || format(endOfMonth(new Date()), "yyyy-MM-dd")
   });
 
   const { data: workshops } = useQuery({
@@ -91,6 +84,34 @@ export default function PainelAtendimentosTab({ user }) {
     }
   });
 
+  // Sincronizar filtros globais quando mudam
+  useEffect(() => {
+    if (!filtrosGlobais) return;
+    setFiltrosAtas(prev => ({
+      ...prev,
+      consultor_id: filtrosGlobais.consultorId !== "todos" ? filtrosGlobais.consultorId || "" : "",
+      dateFrom: filtrosGlobais.dataInicio || prev.dateFrom,
+      dateTo: filtrosGlobais.dataFim || prev.dateTo,
+      preset: filtrosGlobais.preset || prev.preset
+    }));
+  }, [filtrosGlobais?.consultorId, filtrosGlobais?.dataInicio, filtrosGlobais?.dataFim]);
+
+  const consultorFiltrado = filtrosAtas.consultor_id || (user?.role !== 'admin' ? user?.id : null);
+
+  const { data: atendimentos, isLoading } = useQuery({
+    queryKey: ['atendimentos-acelerador', user?.id, consultorFiltrado],
+    queryFn: async () => {
+      let query = {};
+      if (consultorFiltrado) {
+        query.consultor_id = consultorFiltrado;
+      }
+      return await base44.entities.ConsultoriaAtendimento.filter(query, '-data_agendada', 500);
+    },
+    enabled: !!user?.id,
+    staleTime: 2 * 60 * 1000,
+    refetchInterval: 5 * 60 * 1000
+  });
+
   const processedOnceRef = useRef(false);
   useEffect(() => {
     if (!atendimentos || processedOnceRef.current) return;
@@ -120,7 +141,7 @@ export default function PainelAtendimentosTab({ user }) {
 
   const marcarAtrasadoMutation = useMutation({
     mutationFn: (id) => base44.entities.ConsultoriaAtendimento.update(id, { status: ATENDIMENTO_STATUS.ATRASADO }),
-    onSuccess: () => queryClient.invalidateQueries(['todos-atendimentos'])
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['atendimentos-acelerador'] })
   });
 
   const iniciarMutation = useMutation({
@@ -130,7 +151,7 @@ export default function PainelAtendimentosTab({ user }) {
     }),
     onSuccess: (_, id) => {
       toast.success('Reunião iniciada!');
-      queryClient.invalidateQueries(['todos-atendimentos']);
+      queryClient.invalidateQueries({ queryKey: ['atendimentos-acelerador'] });
       navigate(createPageUrl('RegistrarAtendimento') + `?atendimento_id=${id}`);
     }
   });
@@ -143,7 +164,7 @@ export default function PainelAtendimentosTab({ user }) {
     }),
     onSuccess: () => {
       toast.success('Atendimento finalizado!');
-      queryClient.invalidateQueries(['todos-atendimentos']);
+      queryClient.invalidateQueries({ queryKey: ['atendimentos-acelerador'] });
     }
   });
 
@@ -187,8 +208,8 @@ export default function PainelAtendimentosTab({ user }) {
     });
 
   const handleAtaSaved = () => {
-    queryClient.invalidateQueries(['todos-atendimentos']);
-    queryClient.invalidateQueries(['meeting-minutes']);
+    queryClient.invalidateQueries({ queryKey: ['atendimentos-acelerador'] });
+    queryClient.invalidateQueries({ queryKey: ['meeting-minutes'] });
     setShowGerarAta(false);
     setSelectedAtendimento(null);
   };
@@ -236,7 +257,7 @@ export default function PainelAtendimentosTab({ user }) {
           onClose={() => {
             setShowFinalizar(false);
             setAtendimentoFinalizar(null);
-            queryClient.invalidateQueries(['todos-atendimentos']);
+            queryClient.invalidateQueries({ queryKey: ['atendimentos-acelerador'] });
           }}
         />
       )}
@@ -248,8 +269,8 @@ export default function PainelAtendimentosTab({ user }) {
           onClose={() => {
             setShowEditarAtendimento(false);
             setEditarAtendimentoId(null);
-            queryClient.invalidateQueries(['todos-atendimentos']);
-            queryClient.invalidateQueries(['meeting-minutes']);
+            queryClient.invalidateQueries({ queryKey: ['atendimentos-acelerador'] });
+            queryClient.invalidateQueries({ queryKey: ['meeting-minutes'] });
           }}
         />
       )}
@@ -634,12 +655,12 @@ export default function PainelAtendimentosTab({ user }) {
                       delete_follow_up: deleteFollowUp
                     });
                     toast.success('ATA excluída com sucesso!');
-                    queryClient.invalidateQueries(['meeting-minutes']);
+                    queryClient.invalidateQueries({ queryKey: ['meeting-minutes'] });
                   } else {
                     await base44.entities.ConsultoriaAtendimento.delete(deleteConfirm.id);
                     toast.success('Atendimento excluído com sucesso!');
                   }
-                  queryClient.invalidateQueries(['todos-atendimentos']);
+                  queryClient.invalidateQueries({ queryKey: ['atendimentos-acelerador'] });
                 } catch (error) {
                   toast.error('Erro ao excluir: ' + error.message);
                 } finally {
