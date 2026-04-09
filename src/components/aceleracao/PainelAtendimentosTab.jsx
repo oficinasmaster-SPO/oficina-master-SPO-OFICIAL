@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Edit, AlertTriangle, FilePlus, Play, StopCircle, CalendarClock, FileText, CheckCircle, Trash2, Clock } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import GerarAtaModal from "./GerarAtaModal";
 import VisualizarAtaModal from "./VisualizarAtaModal";
 import ReagendarAtendimentoModal from "./ReagendarAtendimentoModal";
@@ -35,6 +36,8 @@ export default function PainelAtendimentosTab({ user }) {
   const [selectedAta, setSelectedAta] = useState(null);
   const processedIdsRef = useRef(new Set());
   const [activeTab, setActiveTab] = useState("todos");
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [filtrosAtas, setFiltrosAtas] = useState({
     searchTerm: "",
     workshop_id: "",
@@ -455,28 +458,7 @@ export default function PainelAtendimentosTab({ user }) {
                           <Button 
                             variant="ghost" 
                             size="sm"
-                            onClick={async () => {
-                              const confirmMessage = atendimento.ata_id 
-                                ? "Tem certeza que deseja excluir esta ATA? Esta ação não pode ser desfeita."
-                                : "Tem certeza que deseja excluir este registro de atendimento?";
-
-                              if (confirm(confirmMessage)) {
-                                try {
-                                  if (atendimento.ata_id) {
-                                    await base44.functions.invoke('deleteAta', { ata_id: atendimento.ata_id });
-                                    toast.success("ATA excluída com sucesso!");
-                                    queryClient.invalidateQueries(['meeting-minutes']);
-                                  } else {
-                                    await base44.entities.ConsultoriaAtendimento.delete(atendimento.id);
-                                    toast.success("Atendimento excluído com sucesso!");
-                                  }
-                                  queryClient.invalidateQueries(['todos-atendimentos']);
-                                } catch (error) {
-                                  console.error(error);
-                                  toast.error("Erro ao excluir: " + error.message);
-                                }
-                              }
-                            }}
+                            onClick={() => setDeleteConfirm(atendimento)}
                             title={atendimento.ata_id ? "Excluir ATA" : "Excluir Atendimento"}
                           >
                             <Trash2 className="w-4 h-4 text-red-600" />
@@ -493,6 +475,62 @@ export default function PainelAtendimentosTab({ user }) {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Dialog de Confirmação de Exclusão */}
+      <AlertDialog open={!!deleteConfirm} onOpenChange={(open) => !open && setDeleteConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Trash2 className="w-5 h-5 text-red-600" />
+              {deleteConfirm?.ata_id ? 'Excluir ATA' : 'Excluir Atendimento'}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>
+                {deleteConfirm?.ata_id
+                  ? 'Tem certeza que deseja excluir esta ATA? Esta ação não pode ser desfeita.'
+                  : 'Tem certeza que deseja excluir este registro de atendimento? Esta ação não pode ser desfeita.'}
+              </p>
+              {deleteConfirm && (
+                <div className="bg-gray-50 rounded-lg p-3 mt-3 text-sm text-gray-700 space-y-1">
+                  <p><span className="font-medium">Tipo:</span> {deleteConfirm.tipo_atendimento?.replace(/_/g, ' ')}</p>
+                  <p><span className="font-medium">Data:</span> {formatDateTimeBR(deleteConfirm.data_agendada)}</p>
+                  <p><span className="font-medium">Consultor:</span> {deleteConfirm.consultor_nome || '-'}</p>
+                </div>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={async (e) => {
+                e.preventDefault();
+                if (!deleteConfirm) return;
+                setIsDeleting(true);
+                try {
+                  if (deleteConfirm.ata_id) {
+                    await base44.functions.invoke('deleteAta', { ata_id: deleteConfirm.ata_id });
+                    toast.success('ATA excluída com sucesso!');
+                    queryClient.invalidateQueries(['meeting-minutes']);
+                  } else {
+                    await base44.entities.ConsultoriaAtendimento.delete(deleteConfirm.id);
+                    toast.success('Atendimento excluído com sucesso!');
+                  }
+                  queryClient.invalidateQueries(['todos-atendimentos']);
+                } catch (error) {
+                  toast.error('Erro ao excluir: ' + error.message);
+                } finally {
+                  setIsDeleting(false);
+                  setDeleteConfirm(null);
+                }
+              }}
+            >
+              {isDeleting ? 'Excluindo...' : 'Excluir'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
