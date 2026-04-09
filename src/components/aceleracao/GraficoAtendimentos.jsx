@@ -70,10 +70,10 @@ export default function GraficoAtendimentos({ atendimentos = [], workshops = [] 
       </CardHeader>
       <CardContent className="space-y-4">
         <ResponsiveContainer width="100%" height={250}>
-          <BarChart data={data}>
+          <BarChart data={data} margin={{ top: 5, right: 5, left: -10, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="name" />
-            <YAxis />
+            <XAxis dataKey="name" tick={{ fontSize: 10 }} interval={0} angle={-25} textAnchor="end" height={50} />
+            <YAxis tick={{ fontSize: 10 }} />
             <Tooltip />
             <Bar dataKey="value" fill="#8884d8" />
           </BarChart>
