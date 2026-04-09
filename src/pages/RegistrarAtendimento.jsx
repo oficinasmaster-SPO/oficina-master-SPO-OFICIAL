@@ -177,10 +177,27 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
     enabled: user?.role === 'admin' || user?.job_role === 'acelerador'
   });
 
-  // Usar consultores passados via prop OU buscar do cache compartilhado
+  // Usar consultores passados via prop OU buscar independente
   const { data: consultoresFetched } = useQuery({
     queryKey: ['consultores-list'],
-    enabled: !!user && !(consultoresExternos?.length > 0)
+    queryFn: async () => {
+      const consultoresMap = new Map();
+      const employees = await base44.entities.Employee.filter({
+        tipo_vinculo: 'interno',
+        status: 'ativo'
+      }, null, 1000);
+      employees
+        .filter(e => e.user_id && ['consultor', 'mentor', 'acelerador'].includes(e.job_role))
+        .forEach(e => {
+          consultoresMap.set(e.user_id, e.full_name);
+        });
+      if (user?.id) {
+        consultoresMap.set(user.id, user.full_name);
+      }
+      return Array.from(consultoresMap.entries()).map(([id, full_name]) => ({ id, full_name }));
+    },
+    enabled: !!user && !(consultoresExternos?.length > 0),
+    staleTime: 5 * 60 * 1000
   });
   const consultores = (consultoresExternos?.length > 0) ? consultoresExternos : consultoresFetched;
 
