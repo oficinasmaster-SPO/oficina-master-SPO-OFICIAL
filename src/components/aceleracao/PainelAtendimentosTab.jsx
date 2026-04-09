@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Edit, AlertTriangle, FilePlus, Play, StopCircle, CalendarClock, FileText, CheckCircle, Trash2, FileX2, Clock, Search, X, CalendarDays } from "lucide-react";
+import { Edit, AlertTriangle, FilePlus, Play, StopCircle, CalendarClock, FileText, CheckCircle, Trash2, Clock, Search, X, CalendarDays } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
@@ -56,29 +56,8 @@ export default function PainelAtendimentosTab({ user }) {
   });
 
   const { data: atendimentos, isLoading } = useQuery({
-    queryKey: ['todos-atendimentos', filtrosAtas.dateFrom, filtrosAtas.dateTo, filtrosAtas.consultor_id],
-    queryFn: async () => {
-      const query = {};
-      if (filtrosAtas.consultor_id) {
-        query.consultor_id = filtrosAtas.consultor_id;
-      }
-      // Buscar atendimentos no período filtrado (padrão = mês atual)
-      const all = await base44.entities.ConsultoriaAtendimento.filter(query, '-data_agendada', 500);
-      // Filtrar por data no cliente apenas se houver filtro de data definido
-      if (filtrosAtas.dateFrom || filtrosAtas.dateTo) {
-        return all.filter(a => {
-          const d = new Date(a.data_agendada);
-          if (filtrosAtas.dateFrom && d < new Date(filtrosAtas.dateFrom)) return false;
-          if (filtrosAtas.dateTo) {
-            const fim = new Date(filtrosAtas.dateTo);
-            fim.setHours(23, 59, 59, 999);
-            if (d > fim) return false;
-          }
-          return true;
-        });
-      }
-      return all;
-    },
+    queryKey: ['todos-atendimentos'],
+    queryFn: () => base44.entities.ConsultoriaAtendimento.list('-data_agendada', 5000),
     staleTime: 2 * 60 * 1000,
     refetchInterval: 5 * 60 * 1000
   });
@@ -88,30 +67,12 @@ export default function PainelAtendimentosTab({ user }) {
     queryFn: async () => {
       const all = await base44.entities.Workshop.list(null, 5000);
       return all.filter(w => w.planoAtual && w.planoAtual !== 'FREE');
-    },
-    staleTime: 10 * 60 * 1000
+    }
   });
 
-  // Buscar apenas as ATAs dos atendimentos visíveis (não todas 5000)
-  const ataIds = (atendimentos || []).map(a => a.ata_id).filter(Boolean);
   const { data: atas } = useQuery({
-    queryKey: ['meeting-minutes-visible', ataIds.join(',')],
-    queryFn: async () => {
-      if (ataIds.length === 0) return [];
-      // Buscar em lotes de 50 para não sobrecarregar
-      const batchSize = 50;
-      const results = [];
-      for (let i = 0; i < Math.min(ataIds.length, 200); i += batchSize) {
-        const batch = ataIds.slice(i, i + batchSize);
-        const batchResults = await Promise.all(
-          batch.map(id => base44.entities.MeetingMinutes.get(id).catch(() => null))
-        );
-        results.push(...batchResults.filter(Boolean));
-      }
-      return results;
-    },
-    enabled: ataIds.length > 0,
-    staleTime: 5 * 60 * 1000
+    queryKey: ['meeting-minutes'],
+    queryFn: () => base44.entities.MeetingMinutes.list('-created_date', 5000)
   });
 
   const { data: planos } = useQuery({
@@ -122,32 +83,11 @@ export default function PainelAtendimentosTab({ user }) {
   const { data: consultores } = useQuery({
     queryKey: ['consultores-list'],
     queryFn: async () => {
-      const consultoresMap = new Map();
-
-      try {
-        const employees = await base44.entities.Employee.filter({
-          tipo_vinculo: 'interno',
-          status: 'ativo'
-        }, null, 1000);
-
-        employees
-          .filter(e => e.user_id && ['consultor', 'mentor', 'acelerador'].includes(e.job_role))
-          .forEach(e => {
-            consultoresMap.set(e.user_id, e.full_name);
-          });
-      } catch (e) {
-        console.warn('Erro ao buscar employees internos:', e);
-      }
-
-      const me = await base44.auth.me();
-      if (me?.id) {
-        consultoresMap.set(me.id, me.full_name);
-      }
-
-      return Array.from(consultoresMap.entries()).map(([id, full_name]) => ({
-        id,
-        full_name
-      }));
+      const employees = await base44.entities.Employee.filter({
+        tipo_vinculo: 'interno',
+        status: 'ativo'
+      }, null, 1000);
+      return employees;
     }
   });
 
@@ -158,30 +98,30 @@ export default function PainelAtendimentosTab({ user }) {
     
     const now = toBrazilDate(new Date());
 
-    const idsToUpdate = atendimentos
-      .filter(a => {
-        if (processedIdsRef.current.has(a.id)) return false;
-        const dataAtendimento = toBrazilDate(a.data_agendada);
-        return now > dataAtendimento && 
-          ![ATENDIMENTO_STATUS.REALIZADO, ATENDIMENTO_STATUS.PARTICIPANDO, ATENDIMENTO_STATUS.ATRASADO, ATENDIMENTO_STATUS.REAGENDADO].includes(a.status);
-      })
-      .map(a => a.id);
+    // Collect IDs to update, then batch with small delay to avoid rate limit
+    const idsToUpdate = [];
+    atendimentos.forEach(atendimento => {
+      if (processedIdsRef.current.has(atendimento.id)) return;
+      
+      const dataAtendimento = toBrazilDate(atendimento.data_agendada);
+      
+      if (now > dataAtendimento && 
+          ![ATENDIMENTO_STATUS.REALIZADO, ATENDIMENTO_STATUS.PARTICIPANDO, ATENDIMENTO_STATUS.ATRASADO, ATENDIMENTO_STATUS.REAGENDADO].includes(atendimento.status)) {
+        idsToUpdate.push(atendimento.id);
+        processedIdsRef.current.add(atendimento.id);
+      }
+    });
 
-    if (idsToUpdate.length === 0) return;
-
-    idsToUpdate.forEach(id => processedIdsRef.current.add(id));
-    
-    // Um único Promise.all + uma única invalidação no final
-    Promise.all(
-      idsToUpdate.slice(0, 20).map(id =>
-        base44.entities.ConsultoriaAtendimento.update(id, { status: ATENDIMENTO_STATUS.ATRASADO }).catch(() => {})
-      )
-    ).then(() => {
-      queryClient.invalidateQueries(['todos-atendimentos']);
+    // Batch updates with staggered timing to avoid rate limit
+    idsToUpdate.slice(0, 10).forEach((id, idx) => {
+      setTimeout(() => marcarAtrasadoMutation.mutate(id), idx * 500);
     });
   }, [atendimentos]);
 
-
+  const marcarAtrasadoMutation = useMutation({
+    mutationFn: (id) => base44.entities.ConsultoriaAtendimento.update(id, { status: ATENDIMENTO_STATUS.ATRASADO }),
+    onSuccess: () => queryClient.invalidateQueries(['todos-atendimentos'])
+  });
 
   const iniciarMutation = useMutation({
     mutationFn: (id) => base44.entities.ConsultoriaAtendimento.update(id, { 
@@ -207,13 +147,27 @@ export default function PainelAtendimentosTab({ user }) {
     }
   });
 
-  // Filtros client-side (data já foi filtrada server-side, consultor_id também)
   const atendimentosFiltrados = (atendimentos || [])
     .filter(atendimento => {
       if (activeTab !== "todos" && atendimento.status !== activeTab) return false;
+      // Aplicar filtros
       if (filtrosAtas.workshop_id && atendimento.workshop_id !== filtrosAtas.workshop_id) return false;
+      if (filtrosAtas.consultor_id && atendimento.consultor_id !== filtrosAtas.consultor_id) return false;
       if (filtrosAtas.status && atendimento.status !== filtrosAtas.status) return false;
       if (filtrosAtas.tipo_atendimento && atendimento.tipo_atendimento !== filtrosAtas.tipo_atendimento) return false;
+      
+      // Filtro de data
+      if (filtrosAtas.dateFrom) {
+        const dataAtendimento = new Date(atendimento.data_agendada);
+        const dataInicio = new Date(filtrosAtas.dateFrom);
+        if (dataAtendimento < dataInicio) return false;
+      }
+      if (filtrosAtas.dateTo) {
+        const dataAtendimento = new Date(atendimento.data_agendada);
+        const dataFim = new Date(filtrosAtas.dateTo);
+        dataFim.setHours(23, 59, 59, 999);
+        if (dataAtendimento > dataFim) return false;
+      }
       
       // Filtro de busca textual
       if (filtrosAtas.searchTerm) {
@@ -420,7 +374,7 @@ export default function PainelAtendimentosTab({ user }) {
             <SelectContent>
               <SelectItem value="all">Todos Consultores</SelectItem>
               {consultores?.map((c) => (
-                <SelectItem key={c.id} value={c.id}>
+                <SelectItem key={c.id} value={c.user_id || c.id}>
                   {c.full_name}
                 </SelectItem>
               ))}
@@ -433,14 +387,14 @@ export default function PainelAtendimentosTab({ user }) {
               <table className="w-full table-fixed">
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50/50">
-                    <th className="w-[10%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100">Consultor</th>
-                    <th className="w-[10%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100">ID ATA</th>
-                    <th className="w-[12%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100">Criado em</th>
-                    <th className="w-[12%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100">Data</th>
-                    <th className="w-[15%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100">Cliente</th>
-                    <th className="w-[9%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100">Tipo</th>
-                    <th className="w-[9%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100">Status</th>
-                    <th className="w-[23%] text-right py-4 px-2 text-sm font-semibold text-gray-700">Ações</th>
+                    <th className="w-[11%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100">Consultor</th>
+                    <th className="w-[13%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">ID ATA</th>
+                    <th className="w-[14%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Criado em</th>
+                    <th className="w-[14%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Data</th>
+                    <th className="w-[18%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Cliente</th>
+                    <th className="w-[10%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Tipo</th>
+                    <th className="w-[10%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Status</th>
+                    <th className="w-[10%] text-right py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Ações</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -606,22 +560,11 @@ export default function PainelAtendimentosTab({ user }) {
                               </Button>
                             )}
 
-                            {atendimento.ata_id && (
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => setDeleteConfirm({ ...atendimento, _deleteType: 'ata' })}
-                                title="Excluir ATA (mantém o atendimento)"
-                              >
-                                <FileX2 className="w-4 h-4 text-orange-600" />
-                              </Button>
-                            )}
-
                             <Button 
                               variant="ghost" 
                               size="sm"
-                              onClick={() => setDeleteConfirm({ ...atendimento, _deleteType: 'atendimento' })}
-                              title="Excluir Atendimento"
+                              onClick={() => setDeleteConfirm(atendimento)}
+                              title={atendimento.ata_id ? "Excluir ATA" : "Excluir Atendimento"}
                             >
                               <Trash2 className="w-4 h-4 text-red-600" />
                             </Button>
@@ -647,17 +590,14 @@ export default function PainelAtendimentosTab({ user }) {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
-              {deleteConfirm?._deleteType === 'ata' ? (
-                <><FileX2 className="w-5 h-5 text-orange-600" /> Excluir ATA</>
-              ) : (
-                <><Trash2 className="w-5 h-5 text-red-600" /> Excluir Atendimento</>
-              )}
+              <Trash2 className="w-5 h-5 text-red-600" />
+              {deleteConfirm?.ata_id ? 'Excluir ATA' : 'Excluir Atendimento'}
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
               <p>
-                {deleteConfirm?._deleteType === 'ata'
-                  ? 'Tem certeza que deseja excluir esta ATA? O atendimento será mantido, mas a ATA será removida permanentemente.'
-                  : 'Tem certeza que deseja excluir este registro de atendimento completo? Esta ação não pode ser desfeita.'}
+                {deleteConfirm?.ata_id
+                  ? 'Tem certeza que deseja excluir esta ATA? Esta ação não pode ser desfeita.'
+                  : 'Tem certeza que deseja excluir este registro de atendimento? Esta ação não pode ser desfeita.'}
               </p>
               {deleteConfirm && (
                 <div className="bg-gray-50 rounded-lg p-3 mt-3 text-sm text-gray-700 space-y-1">
@@ -666,7 +606,7 @@ export default function PainelAtendimentosTab({ user }) {
                   <p><span className="font-medium">Consultor:</span> {deleteConfirm.consultor_nome || '-'}</p>
                 </div>
               )}
-              {deleteConfirm?._deleteType === 'ata' && deleteConfirm?.google_event_id && (
+              {deleteConfirm?.ata_id && deleteConfirm?.google_event_id && (
                 <label className="mt-4 flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-700 cursor-pointer">
                   <Checkbox
                     checked={deleteFollowUp}
@@ -688,22 +628,14 @@ export default function PainelAtendimentosTab({ user }) {
                 if (!deleteConfirm) return;
                 setIsDeleting(true);
                 try {
-                  if (deleteConfirm._deleteType === 'ata' && deleteConfirm.ata_id) {
+                  if (deleteConfirm.ata_id) {
                     await base44.functions.invoke('deleteAta', {
                       ata_id: deleteConfirm.ata_id,
                       delete_follow_up: deleteFollowUp
                     });
                     toast.success('ATA excluída com sucesso!');
-                    queryClient.invalidateQueries(['meeting-minutes-visible']);
+                    queryClient.invalidateQueries(['meeting-minutes']);
                   } else {
-                    // Se tem ATA vinculada, excluir ATA primeiro
-                    if (deleteConfirm.ata_id) {
-                      await base44.functions.invoke('deleteAta', {
-                        ata_id: deleteConfirm.ata_id,
-                        delete_follow_up: true
-                      }).catch(() => {});
-                      queryClient.invalidateQueries(['meeting-minutes-visible']);
-                    }
                     await base44.entities.ConsultoriaAtendimento.delete(deleteConfirm.id);
                     toast.success('Atendimento excluído com sucesso!');
                   }
