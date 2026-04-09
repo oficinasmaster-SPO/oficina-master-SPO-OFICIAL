@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { TimePicker } from "@/components/ui/time-picker";
+
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -141,9 +141,10 @@ export default function ReagendarAtendimentoModal({ atendimento, workshop, onClo
             </div>
             <div>
               <Label>Novo Horário *</Label>
-              <TimePicker
+              <Input
+                type="time"
                 value={novoHorario}
-                onChange={(val) => setNovoHorario(val)}
+                onChange={(e) => setNovoHorario(e.target.value)}
               />
             </div>
           </div>
