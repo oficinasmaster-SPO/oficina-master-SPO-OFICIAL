@@ -46,7 +46,8 @@ Deno.serve(async (req) => {
             ata_id: null,
             ata_gerada: false,
             ata_ia: null,
-            ata_gerada_em: null
+            ata_gerada_em: null,
+            ...(delete_follow_up ? { google_event_id: null } : {})
         });
     }
 
