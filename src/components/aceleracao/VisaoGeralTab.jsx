@@ -363,6 +363,7 @@ export default function VisaoGeralTab({ user, filtros = {} }) {
         <AgendaVisual
           atendimentos={atendimentos || []}
           workshops={workshops || []}
+          user={user}
         />
       </div>
 
