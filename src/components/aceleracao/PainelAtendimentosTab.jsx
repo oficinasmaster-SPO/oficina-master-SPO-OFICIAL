@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
-
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Edit, AlertTriangle, FilePlus, Play, StopCircle, CalendarClock, FileText, CheckCircle, Trash2, Clock, Search, X, CalendarDays } from "lucide-react";
@@ -24,13 +23,13 @@ import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { toast } from "sonner";
 import RegistrarAtendimento from "@/pages/RegistrarAtendimento";
-import useWorkshopsAtivos from "@/components/hooks/useWorkshopsAtivos";
-import useConsultoresList from "@/components/hooks/useConsultoresList";
 
-
-export default function PainelAtendimentosTab({ user, filtrosGlobais }) {
+export default function PainelAtendimentosTab({ state }) {
+  const { user, workshops, atendimentos, consultores, atas, planos, filtros } = state;
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
+  // ── UI state (local only — not filter state) ──
   const [showGerarAta, setShowGerarAta] = useState(false);
   const [showVisualizarAta, setShowVisualizarAta] = useState(false);
   const [showReagendar, setShowReagendar] = useState(false);
@@ -40,91 +39,51 @@ export default function PainelAtendimentosTab({ user, filtrosGlobais }) {
   const [selectedAtendimento, setSelectedAtendimento] = useState(null);
   const [atendimentoFinalizar, setAtendimentoFinalizar] = useState(null);
   const [selectedAta, setSelectedAta] = useState(null);
-  const processedIdsRef = useRef(new Set());
   const [activeTab, setActiveTab] = useState("todos");
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [deleteFollowUp, setDeleteFollowUp] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [filtrosAtas, setFiltrosAtas] = useState({
+
+  // ── Filtros LOCAIS da aba (search, workshop, tipo, datas) ──
+  const [localFilters, setLocalFilters] = useState({
     searchTerm: "",
     workshop_id: "",
     tipo_atendimento: "",
-    preset: filtrosGlobais?.preset || "mes_atual",
-    dateFrom: filtrosGlobais?.dataInicio || format(startOfMonth(new Date()), "yyyy-MM-dd"),
-    dateTo: filtrosGlobais?.dataFim || format(endOfMonth(new Date()), "yyyy-MM-dd")
+    preset: "mes_atual",
+    dateFrom: filtros.dataInicio || format(startOfMonth(new Date()), "yyyy-MM-dd"),
+    dateTo: filtros.dataFim || format(endOfMonth(new Date()), "yyyy-MM-dd")
   });
 
-  const { data: workshops } = useWorkshopsAtivos();
-
-  const { data: atas } = useQuery({
-    queryKey: ['meeting-minutes'],
-    queryFn: () => base44.entities.MeetingMinutes.list('-created_date', 5000)
-  });
-
-  const { data: planos } = useQuery({
-    queryKey: ['planos-aceleracao'],
-    queryFn: () => base44.entities.MonthlyAccelerationPlan.list('-created_date')
-  });
-
-  const { data: consultores } = useConsultoresList(user);
-
-  // Sincronizar filtros globais de data quando mudam
+  // Sync datas do filtro global quando mudam
   useEffect(() => {
-    if (!filtrosGlobais) return;
-    setFiltrosAtas(prev => ({
-      ...prev,
-      dateFrom: filtrosGlobais.dataInicio || prev.dateFrom,
-      dateTo: filtrosGlobais.dataFim || prev.dateTo,
-      preset: filtrosGlobais.preset || prev.preset
-    }));
-  }, [filtrosGlobais?.dataInicio, filtrosGlobais?.dataFim]);
+    if (filtros.dataInicio && filtros.dataFim) {
+      setLocalFilters(prev => ({
+        ...prev,
+        dateFrom: filtros.dataInicio,
+        dateTo: filtros.dataFim,
+        preset: filtros.preset || prev.preset
+      }));
+    }
+  }, [filtros.dataInicio, filtros.dataFim]);
 
-  // Consultor: filtro global tem prioridade, senão filtro local, senão user (se não admin)
-  const [consultorLocal, setConsultorLocal] = useState("");
-  const consultorFiltrado = (() => {
-    const fromGlobal = filtrosGlobais?.consultorId && filtrosGlobais.consultorId !== "todos" ? filtrosGlobais.consultorId : null;
-    if (fromGlobal) return fromGlobal;
-    if (consultorLocal) return consultorLocal;
-    if (user?.role !== 'admin') return user?.id;
-    return null;
-  })();
-
-  const { data: atendimentos, isLoading } = useQuery({
-    queryKey: ['atendimentos-acelerador', user?.id, consultorFiltrado],
-    queryFn: async () => {
-      let query = {};
-      if (consultorFiltrado) {
-        query.consultor_id = consultorFiltrado;
-      }
-      return await base44.entities.ConsultoriaAtendimento.filter(query, '-data_agendada', 500);
-    },
-    enabled: !!user?.id,
-    staleTime: 2 * 60 * 1000,
-    refetchInterval: 5 * 60 * 1000
-  });
-
+  // ── Auto-marcar atrasados (uma vez) ──
+  const processedIdsRef = useRef(new Set());
   const processedOnceRef = useRef(false);
   useEffect(() => {
-    if (!atendimentos || processedOnceRef.current) return;
+    if (!atendimentos.length || processedOnceRef.current) return;
     processedOnceRef.current = true;
     
     const now = toBrazilDate(new Date());
-
-    // Collect IDs to update, then batch with small delay to avoid rate limit
     const idsToUpdate = [];
-    atendimentos.forEach(atendimento => {
-      if (processedIdsRef.current.has(atendimento.id)) return;
-      
-      const dataAtendimento = toBrazilDate(atendimento.data_agendada);
-      
+    atendimentos.forEach(a => {
+      if (processedIdsRef.current.has(a.id)) return;
+      const dataAtendimento = toBrazilDate(a.data_agendada);
       if (now > dataAtendimento && 
-          ![ATENDIMENTO_STATUS.REALIZADO, ATENDIMENTO_STATUS.PARTICIPANDO, ATENDIMENTO_STATUS.ATRASADO, ATENDIMENTO_STATUS.REAGENDADO].includes(atendimento.status)) {
-        idsToUpdate.push(atendimento.id);
-        processedIdsRef.current.add(atendimento.id);
+          ![ATENDIMENTO_STATUS.REALIZADO, ATENDIMENTO_STATUS.PARTICIPANDO, ATENDIMENTO_STATUS.ATRASADO, ATENDIMENTO_STATUS.REAGENDADO, ATENDIMENTO_STATUS.CANCELADO, ATENDIMENTO_STATUS.FALTOU, ATENDIMENTO_STATUS.DESMARCOU].includes(a.status)) {
+        idsToUpdate.push(a.id);
+        processedIdsRef.current.add(a.id);
       }
     });
-
-    // Batch updates with staggered timing to avoid rate limit
     idsToUpdate.slice(0, 10).forEach((id, idx) => {
       setTimeout(() => marcarAtrasadoMutation.mutate(id), idx * 500);
     });
@@ -159,43 +118,32 @@ export default function PainelAtendimentosTab({ user, filtrosGlobais }) {
     }
   });
 
-  const atendimentosFiltrados = (atendimentos || [])
-    .filter(atendimento => {
-      // Status via tabs (activeTab) — única fonte de verdade para status
-      if (activeTab !== "todos" && atendimento.status !== activeTab) return false;
-      // Filtros locais da aba
-      if (filtrosAtas.workshop_id && atendimento.workshop_id !== filtrosAtas.workshop_id) return false;
-      if (filtrosAtas.tipo_atendimento && atendimento.tipo_atendimento !== filtrosAtas.tipo_atendimento) return false;
+  // ── Filtragem local (sobre dados já filtrados por consultor no hook central) ──
+  const atendimentosFiltrados = atendimentos
+    .filter(a => {
+      if (activeTab !== "todos" && a.status !== activeTab) return false;
+      if (localFilters.workshop_id && a.workshop_id !== localFilters.workshop_id) return false;
+      if (localFilters.tipo_atendimento && a.tipo_atendimento !== localFilters.tipo_atendimento) return false;
       
-      // Filtro de data
-      if (filtrosAtas.dateFrom) {
-        const dataAtendimento = new Date(atendimento.data_agendada);
-        const dataInicio = new Date(filtrosAtas.dateFrom);
-        if (dataAtendimento < dataInicio) return false;
+      if (localFilters.dateFrom) {
+        if (new Date(a.data_agendada) < new Date(localFilters.dateFrom)) return false;
       }
-      if (filtrosAtas.dateTo) {
-        const dataAtendimento = new Date(atendimento.data_agendada);
-        const dataFim = new Date(filtrosAtas.dateTo);
-        dataFim.setHours(23, 59, 59, 999);
-        if (dataAtendimento > dataFim) return false;
+      if (localFilters.dateTo) {
+        const df = new Date(localFilters.dateTo);
+        df.setHours(23, 59, 59, 999);
+        if (new Date(a.data_agendada) > df) return false;
       }
       
-      // Filtro de busca textual
-      if (filtrosAtas.searchTerm) {
-        const searchLower = filtrosAtas.searchTerm.toLowerCase();
-        const workshop = workshops?.find(w => w.id === atendimento.workshop_id);
-        const matchesSearch = 
-          workshop?.name?.toLowerCase().includes(searchLower) ||
-          atendimento.tipo_atendimento?.toLowerCase().includes(searchLower) ||
-          atendimento.consultor_nome?.toLowerCase().includes(searchLower);
-        if (!matchesSearch) return false;
+      if (localFilters.searchTerm) {
+        const s = localFilters.searchTerm.toLowerCase();
+        const ws = workshops.find(w => w.id === a.workshop_id);
+        if (!(ws?.name?.toLowerCase().includes(s) ||
+              a.tipo_atendimento?.toLowerCase().includes(s) ||
+              a.consultor_nome?.toLowerCase().includes(s))) return false;
       }
-      
       return true;
     })
-    .sort((a, b) => {
-      return new Date(b.data_agendada) - new Date(a.data_agendada);
-    });
+    .sort((a, b) => new Date(b.data_agendada) - new Date(a.data_agendada));
 
   const handleAtaSaved = () => {
     queryClient.invalidateQueries({ queryKey: ['atendimentos-acelerador'] });
@@ -209,34 +157,22 @@ export default function PainelAtendimentosTab({ user, filtrosGlobais }) {
       {showGerarAta && selectedAtendimento && (
         <GerarAtaModal
           atendimento={selectedAtendimento}
-          workshop={workshops?.find(w => w.id === selectedAtendimento.workshop_id)}
-          planoAceleracao={planos?.find(p => p.workshop_id === selectedAtendimento.workshop_id)}
-          onClose={() => {
-            setShowGerarAta(false);
-            setSelectedAtendimento(null);
-          }}
+          workshop={workshops.find(w => w.id === selectedAtendimento.workshop_id)}
+          planoAceleracao={planos.find(p => p.workshop_id === selectedAtendimento.workshop_id)}
+          onClose={() => { setShowGerarAta(false); setSelectedAtendimento(null); }}
           onSaved={handleAtaSaved}
         />
       )}
 
       {showVisualizarAta && selectedAta && (
-        <VisualizarAtaModal
-          ata={selectedAta}
-          onClose={() => {
-            setShowVisualizarAta(false);
-            setSelectedAta(null);
-          }}
-        />
+        <VisualizarAtaModal ata={selectedAta} onClose={() => { setShowVisualizarAta(false); setSelectedAta(null); }} />
       )}
 
       {showReagendar && selectedAtendimento && (
         <ReagendarAtendimentoModal
           atendimento={selectedAtendimento}
-          workshop={workshops?.find(w => w.id === selectedAtendimento.workshop_id)}
-          onClose={() => {
-            setShowReagendar(false);
-            setSelectedAtendimento(null);
-          }}
+          workshop={workshops.find(w => w.id === selectedAtendimento.workshop_id)}
+          onClose={() => { setShowReagendar(false); setSelectedAtendimento(null); }}
           onSaved={handleAtaSaved}
         />
       )}
@@ -265,58 +201,49 @@ export default function PainelAtendimentosTab({ user, filtrosGlobais }) {
         />
       )}
 
-
-
-      {/* Dashboard de Estatísticas */}
       <DashboardAtendimentos atendimentos={atendimentosFiltrados} />
 
-
-
-      {/* Tabela de Atendimentos */}
       <div className="w-full">
         <div className="flex items-center gap-2 mb-4 flex-wrap">
           <div className="inline-flex items-center rounded-lg bg-gray-100 p-1 gap-1">
-          {[
-            { value: 'todos', label: 'Todos' },
-            { value: ATENDIMENTO_STATUS.AGENDADO, label: 'Agendados' },
-            { value: ATENDIMENTO_STATUS.CONFIRMADO, label: 'Confirmados' },
-            { value: ATENDIMENTO_STATUS.ATRASADO, label: 'Atrasados' },
-            { value: ATENDIMENTO_STATUS.REAGENDADO, label: 'Reagendados' },
-            { value: ATENDIMENTO_STATUS.REALIZADO, label: 'Realizados' },
-          ].map(tab => (
-            <button
-              key={tab.value}
-              type="button"
-              onClick={() => setActiveTab(tab.value)}
-              className={`inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none
-                ${activeTab === tab.value 
-                  ? 'bg-red-600 text-white shadow-sm' 
-                  : 'text-gray-600 hover:bg-red-600 hover:text-white'}`}
-            >
-              {tab.label}
-            </button>
-          ))}
+            {[
+              { value: 'todos', label: 'Todos' },
+              { value: ATENDIMENTO_STATUS.AGENDADO, label: 'Agendados' },
+              { value: ATENDIMENTO_STATUS.CONFIRMADO, label: 'Confirmados' },
+              { value: ATENDIMENTO_STATUS.ATRASADO, label: 'Atrasados' },
+              { value: ATENDIMENTO_STATUS.REAGENDADO, label: 'Reagendados' },
+              { value: ATENDIMENTO_STATUS.REALIZADO, label: 'Realizados' },
+            ].map(tab => (
+              <button
+                key={tab.value}
+                type="button"
+                onClick={() => setActiveTab(tab.value)}
+                className={`inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none
+                  ${activeTab === tab.value 
+                    ? 'bg-red-600 text-white shadow-sm' 
+                    : 'text-gray-600 hover:bg-red-600 hover:text-white'}`}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
           <div className="relative flex-1 min-w-[180px] max-w-xs">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
             <Input
               placeholder="Buscar cliente, tipo, consultor..."
-              value={filtrosAtas.searchTerm || ""}
-              onChange={(e) => setFiltrosAtas(prev => ({ ...prev, searchTerm: e.target.value }))}
+              value={localFilters.searchTerm}
+              onChange={(e) => setLocalFilters(prev => ({ ...prev, searchTerm: e.target.value }))}
               className="h-9 pl-8 pr-16 text-sm bg-white border-gray-200 shadow-sm"
             />
             <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-              {filtrosAtas.searchTerm && (
-                <button
-                  onClick={() => setFiltrosAtas(prev => ({ ...prev, searchTerm: "" }))}
-                  className="text-gray-400 hover:text-gray-600 p-0.5"
-                >
+              {localFilters.searchTerm && (
+                <button onClick={() => setLocalFilters(prev => ({ ...prev, searchTerm: "" }))} className="text-gray-400 hover:text-gray-600 p-0.5">
                   <X className="w-3.5 h-3.5" />
                 </button>
               )}
               <Popover>
                 <PopoverTrigger asChild>
-                  <button className={`p-0.5 rounded transition-colors ${filtrosAtas.dateFrom || filtrosAtas.dateTo ? 'text-red-600' : 'text-gray-400 hover:text-gray-600'}`}>
+                  <button className={`p-0.5 rounded transition-colors ${localFilters.dateFrom || localFilters.dateTo ? 'text-red-600' : 'text-gray-400 hover:text-gray-600'}`}>
                     <CalendarDays className="w-4 h-4" />
                   </button>
                 </PopoverTrigger>
@@ -334,10 +261,10 @@ export default function PainelAtendimentosTab({ user, filtrosGlobais }) {
                             else if (p.v === '15d') di = format(new Date(hoje.getTime() - 15*86400000), 'yyyy-MM-dd');
                             else if (p.v === '30d') di = format(new Date(hoje.getTime() - 30*86400000), 'yyyy-MM-dd');
                             else if (p.v === 'mes_atual') di = format(startOfMonth(hoje), 'yyyy-MM-dd');
-                            setFiltrosAtas(prev => ({ ...prev, preset: p.v, dateFrom: di, dateTo: df }));
+                            setLocalFilters(prev => ({ ...prev, preset: p.v, dateFrom: di, dateTo: df }));
                           }}
                           className={`px-2 py-1 rounded text-xs font-medium border transition-colors ${
-                            filtrosAtas.preset === p.v ? 'bg-red-600 text-white border-red-600' : 'bg-white text-gray-600 border-gray-200 hover:border-red-300'
+                            localFilters.preset === p.v ? 'bg-red-600 text-white border-red-600' : 'bg-white text-gray-600 border-gray-200 hover:border-red-300'
                           }`}
                         >
                           {p.l}
@@ -346,27 +273,14 @@ export default function PainelAtendimentosTab({ user, filtrosGlobais }) {
                     </div>
                     <div className="space-y-1.5">
                       <Label className="text-xs text-gray-500">De</Label>
-                      <Input
-                        type="date"
-                        value={filtrosAtas.dateFrom || ""}
-                        onChange={(e) => setFiltrosAtas(prev => ({ ...prev, dateFrom: e.target.value, preset: 'custom' }))}
-                        className="h-8 text-xs"
-                      />
+                      <Input type="date" value={localFilters.dateFrom} onChange={(e) => setLocalFilters(prev => ({ ...prev, dateFrom: e.target.value, preset: 'custom' }))} className="h-8 text-xs" />
                     </div>
                     <div className="space-y-1.5">
                       <Label className="text-xs text-gray-500">Até</Label>
-                      <Input
-                        type="date"
-                        value={filtrosAtas.dateTo || ""}
-                        onChange={(e) => setFiltrosAtas(prev => ({ ...prev, dateTo: e.target.value, preset: 'custom' }))}
-                        className="h-8 text-xs"
-                      />
+                      <Input type="date" value={localFilters.dateTo} onChange={(e) => setLocalFilters(prev => ({ ...prev, dateTo: e.target.value, preset: 'custom' }))} className="h-8 text-xs" />
                     </div>
-                    {(filtrosAtas.dateFrom || filtrosAtas.dateTo) && (
-                      <button
-                        onClick={() => setFiltrosAtas(prev => ({ ...prev, dateFrom: '', dateTo: '', preset: '' }))}
-                        className="text-xs text-red-600 hover:underline w-full text-center"
-                      >
+                    {(localFilters.dateFrom || localFilters.dateTo) && (
+                      <button onClick={() => setLocalFilters(prev => ({ ...prev, dateFrom: '', dateTo: '', preset: '' }))} className="text-xs text-red-600 hover:underline w-full text-center">
                         Limpar datas
                       </button>
                     )}
@@ -375,23 +289,14 @@ export default function PainelAtendimentosTab({ user, filtrosGlobais }) {
               </Popover>
             </div>
           </div>
-          <Select
-            value={consultorLocal || "all"}
-            onValueChange={(v) => setConsultorLocal(v === "all" ? "" : v)}
-          >
-            <SelectTrigger className="h-9 w-[180px] text-sm bg-white border-gray-200 shadow-sm">
-              <SelectValue placeholder="Consultor" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos Consultores</SelectItem>
-              {consultores?.map((c) => (
-                <SelectItem key={c.id} value={c.id}>
-                  {c.full_name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {/* Consultor info — read-only, controlled by global filter */}
+          {state.consultorEfetivo && (
+            <div className="h-9 px-3 flex items-center text-sm text-gray-500 bg-gray-50 border rounded-md">
+              Consultor: {consultores.find(c => c.id === state.consultorEfetivo)?.full_name || 'Selecionado'}
+            </div>
+          )}
         </div>
+
         <Card>
           <CardContent className="pt-4 px-2 sm:px-3 lg:px-4 xl:px-5">
             <div className="w-full">
@@ -399,13 +304,13 @@ export default function PainelAtendimentosTab({ user, filtrosGlobais }) {
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50/50">
                     <th className="w-[11%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100">Consultor</th>
-                    <th className="w-[13%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">ID ATA</th>
-                    <th className="w-[14%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Criado em</th>
-                    <th className="w-[14%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Data</th>
-                    <th className="w-[18%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Cliente</th>
-                    <th className="w-[10%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Tipo</th>
-                    <th className="w-[10%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Status</th>
-                    <th className="w-[10%] text-right py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Ações</th>
+                    <th className="w-[13%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100">ID ATA</th>
+                    <th className="w-[14%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100">Criado em</th>
+                    <th className="w-[14%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100">Data</th>
+                    <th className="w-[18%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100">Cliente</th>
+                    <th className="w-[10%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100">Tipo</th>
+                    <th className="w-[10%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100">Status</th>
+                    <th className="w-[10%] text-right py-4 px-2 text-sm font-semibold text-gray-700">Ações</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -416,40 +321,40 @@ export default function PainelAtendimentosTab({ user, filtrosGlobais }) {
                       </td>
                     </tr>
                   ) : atendimentosFiltrados.map((atendimento) => {
-                    const workshop = workshops?.find(w => w.id === atendimento.workshop_id);
-                    const ataVinculada = atas?.find(a => a.id === atendimento.ata_id);
+                    const workshop = workshops.find(w => w.id === atendimento.workshop_id);
+                    const ataVinculada = atas.find(a => a.id === atendimento.ata_id);
                     return (
                       <tr key={atendimento.id} className="hover:bg-gray-50 transition-colors">
                         <td className="py-4 px-2 text-sm text-gray-600 border-r border-gray-100 font-medium break-words">
                           {atendimento.consultor_nome || '-'}
                         </td>
-                        <td className="py-4 px-2 text-sm text-gray-600 border-r border-gray-100 last:border-r-0">
+                        <td className="py-4 px-2 text-sm text-gray-600 border-r border-gray-100">
                           <div className="flex items-center justify-center">
                             {ataVinculada?.code ? (
                               <span className="font-mono text-[11px] bg-blue-50 px-2 py-2 rounded border border-blue-200 whitespace-nowrap inline-flex items-center justify-center min-h-[2.25rem] max-w-full">
                                 {ataVinculada.code.replace('IT.', 'AT.')}
                               </span>
                             ) : (
-                              <span className="inline-flex items-center justify-center gap-1 text-amber-600 bg-amber-50 px-2 py-2 rounded border border-amber-200 text-[11px] font-medium whitespace-nowrap" title="Aguardando geração da ATA">
+                              <span className="inline-flex items-center justify-center gap-1 text-amber-600 bg-amber-50 px-2 py-2 rounded border border-amber-200 text-[11px] font-medium whitespace-nowrap">
                                 <Clock className="w-3 h-3" />
                                 Pendente
                               </span>
                             )}
                           </div>
                         </td>
-                        <td className="py-4 px-2 text-sm text-gray-500 border-r border-gray-100 last:border-r-0 whitespace-nowrap">
+                        <td className="py-4 px-2 text-sm text-gray-500 border-r border-gray-100 whitespace-nowrap">
                           {atendimento.created_date ? formatDateTimeBR(atendimento.created_date) : '-'}
                         </td>
-                        <td className="py-4 px-2 text-sm text-gray-600 border-r border-gray-100 last:border-r-0 whitespace-nowrap">
+                        <td className="py-4 px-2 text-sm text-gray-600 border-r border-gray-100 whitespace-nowrap">
                           {formatDateTimeBR(atendimento.data_agendada)}
                         </td>
-                        <td className="py-4 px-2 text-sm text-gray-600 border-r border-gray-100 last:border-r-0 font-medium break-words">
+                        <td className="py-4 px-2 text-sm text-gray-600 border-r border-gray-100 font-medium break-words">
                           {workshop?.name || '-'}
                         </td>
-                        <td className="py-4 px-2 text-sm text-gray-600 border-r border-gray-100 last:border-r-0 capitalize break-words">
+                        <td className="py-4 px-2 text-sm text-gray-600 border-r border-gray-100 capitalize break-words">
                           {atendimento.tipo_atendimento?.replace(/_/g, ' ') || '-'}
                         </td>
-                        <td className="py-4 px-2 text-sm text-gray-600 border-r border-gray-100 last:border-r-0">
+                        <td className="py-4 px-2 text-sm text-gray-600 border-r border-gray-100">
                           {atendimento.status === ATENDIMENTO_STATUS.REALIZADO && !atendimento.ata_id ? (
                             <Badge className="bg-orange-100 text-orange-700 border-orange-300 animate-pulse inline-flex items-center gap-1 text-[11px] px-2 py-1">
                               <AlertTriangle className="w-3 h-3 shrink-0" />
@@ -462,7 +367,7 @@ export default function PainelAtendimentosTab({ user, filtrosGlobais }) {
                             </Badge>
                           )}
                         </td>
-                        <td className="py-4 px-2 border-r border-gray-100 last:border-r-0">
+                        <td className="py-4 px-2">
                           <div className="flex items-center justify-end gap-0.5 whitespace-nowrap">
                             {(atendimento.status === ATENDIMENTO_STATUS.AGENDADO || 
                               atendimento.status === ATENDIMENTO_STATUS.CONFIRMADO || 
@@ -470,35 +375,17 @@ export default function PainelAtendimentosTab({ user, filtrosGlobais }) {
                               atendimento.status === ATENDIMENTO_STATUS.ATRASADO ||
                               !atendimento.status) && (
                               <>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => iniciarMutation.mutate(atendimento.id)}
-                                  title="Iniciar"
-                                >
+                                <Button variant="ghost" size="sm" onClick={() => iniciarMutation.mutate(atendimento.id)} title="Iniciar">
                                   <Play className="w-4 h-4 text-blue-600" />
                                 </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    setSelectedAtendimento(atendimento);
-                                    setShowReagendar(true);
-                                  }}
-                                  title="Reagendar"
-                                >
+                                <Button variant="ghost" size="sm" onClick={() => { setSelectedAtendimento(atendimento); setShowReagendar(true); }} title="Reagendar">
                                   <CalendarClock className="w-4 h-4 text-purple-600" />
                                 </Button>
                               </>
                             )}
 
                             {(atendimento.status === ATENDIMENTO_STATUS.PARTICIPANDO || !atendimento.status) && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => finalizarMutation.mutate(atendimento.id)}
-                                title="Finalizar Rápido"
-                              >
+                              <Button variant="ghost" size="sm" onClick={() => finalizarMutation.mutate(atendimento.id)} title="Finalizar Rápido">
                                 <StopCircle className="w-4 h-4 text-green-600" />
                               </Button>
                             )}
@@ -509,47 +396,21 @@ export default function PainelAtendimentosTab({ user, filtrosGlobais }) {
                               atendimento.status === ATENDIMENTO_STATUS.REAGENDADO || 
                               atendimento.status === ATENDIMENTO_STATUS.ATRASADO ||
                               !atendimento.status) && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  setAtendimentoFinalizar(atendimento);
-                                  setShowFinalizar(true);
-                                }}
-                                title="Finalizar Atendimento"
-                              >
+                              <Button variant="ghost" size="sm" onClick={() => { setAtendimentoFinalizar(atendimento); setShowFinalizar(true); }} title="Finalizar Atendimento">
                                 <CheckCircle className="w-4 h-4 text-green-600" />
                               </Button>
                             )}
 
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                setEditarAtendimentoId(atendimento.id);
-                                setShowEditarAtendimento(true);
-                              }}
-                              title="Editar"
-                            >
+                            <Button variant="ghost" size="sm" onClick={() => { setEditarAtendimentoId(atendimento.id); setShowEditarAtendimento(true); }} title="Editar">
                               <Edit className="w-4 h-4 text-gray-600" />
                             </Button>
 
                             {atendimento.ata_id && (
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
+                              <Button variant="ghost" size="sm"
                                 onClick={async () => {
-                                  try {
-                                    const ata = await base44.entities.MeetingMinutes.get(atendimento.ata_id);
-                                    if (ata) {
-                                      setSelectedAta(ata);
-                                      setShowVisualizarAta(true);
-                                    } else {
-                                      toast.error("ATA não encontrada");
-                                    }
-                                  } catch (error) {
-                                    toast.error("Erro ao carregar ATA");
-                                  }
+                                  const ata = await base44.entities.MeetingMinutes.get(atendimento.ata_id);
+                                  if (ata) { setSelectedAta(ata); setShowVisualizarAta(true); }
+                                  else toast.error("ATA não encontrada");
                                 }}
                                 title="Ver/Finalizar ATA"
                               >
@@ -558,25 +419,12 @@ export default function PainelAtendimentosTab({ user, filtrosGlobais }) {
                             )}
 
                             {!atendimento.ata_id && atendimento.status === ATENDIMENTO_STATUS.REALIZADO && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  setSelectedAtendimento(atendimento);
-                                  setShowGerarAta(true);
-                                }}
-                                title="Gerar ATA"
-                              >
+                              <Button variant="ghost" size="sm" onClick={() => { setSelectedAtendimento(atendimento); setShowGerarAta(true); }} title="Gerar ATA">
                                 <FilePlus className="w-4 h-4 text-blue-600" />
                               </Button>
                             )}
 
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => setDeleteConfirm(atendimento)}
-                              title={atendimento.ata_id ? "Excluir ATA" : "Excluir Atendimento"}
-                            >
+                            <Button variant="ghost" size="sm" onClick={() => setDeleteConfirm(atendimento)} title={atendimento.ata_id ? "Excluir ATA" : "Excluir Atendimento"}>
                               <Trash2 className="w-4 h-4 text-red-600" />
                             </Button>
                           </div>
@@ -591,13 +439,7 @@ export default function PainelAtendimentosTab({ user, filtrosGlobais }) {
         </Card>
       </div>
 
-      {/* Dialog de Confirmação de Exclusão */}
-      <AlertDialog open={!!deleteConfirm} onOpenChange={(open) => {
-        if (!open) {
-          setDeleteConfirm(null);
-          setDeleteFollowUp(false);
-        }
-      }}>
+      <AlertDialog open={!!deleteConfirm} onOpenChange={(open) => { if (!open) { setDeleteConfirm(null); setDeleteFollowUp(false); } }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
@@ -605,11 +447,7 @@ export default function PainelAtendimentosTab({ user, filtrosGlobais }) {
               {deleteConfirm?.ata_id ? 'Excluir ATA' : 'Excluir Atendimento'}
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
-              <p>
-                {deleteConfirm?.ata_id
-                  ? 'Tem certeza que deseja excluir esta ATA? Esta ação não pode ser desfeita.'
-                  : 'Tem certeza que deseja excluir este registro de atendimento? Esta ação não pode ser desfeita.'}
-              </p>
+              <p>{deleteConfirm?.ata_id ? 'Tem certeza que deseja excluir esta ATA?' : 'Tem certeza que deseja excluir este registro de atendimento?'}</p>
               {deleteConfirm && (
                 <div className="bg-gray-50 rounded-lg p-3 mt-3 text-sm text-gray-700 space-y-1">
                   <p><span className="font-medium">Tipo:</span> {deleteConfirm.tipo_atendimento?.replace(/_/g, ' ')}</p>
@@ -619,11 +457,7 @@ export default function PainelAtendimentosTab({ user, filtrosGlobais }) {
               )}
               {deleteConfirm?.ata_id && deleteConfirm?.google_event_id && (
                 <label className="mt-4 flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-700 cursor-pointer">
-                  <Checkbox
-                    checked={deleteFollowUp}
-                    onCheckedChange={(checked) => setDeleteFollowUp(checked === true)}
-                    className="mt-0.5"
-                  />
+                  <Checkbox checked={deleteFollowUp} onCheckedChange={(checked) => setDeleteFollowUp(checked === true)} className="mt-0.5" />
                   <span>Deletar o follow up criado para esta ATA</span>
                 </label>
               )}
@@ -640,10 +474,7 @@ export default function PainelAtendimentosTab({ user, filtrosGlobais }) {
                 setIsDeleting(true);
                 try {
                   if (deleteConfirm.ata_id) {
-                    await base44.functions.invoke('deleteAta', {
-                      ata_id: deleteConfirm.ata_id,
-                      delete_follow_up: deleteFollowUp
-                    });
+                    await base44.functions.invoke('deleteAta', { ata_id: deleteConfirm.ata_id, delete_follow_up: deleteFollowUp });
                     toast.success('ATA excluída com sucesso!');
                     queryClient.invalidateQueries({ queryKey: ['meeting-minutes'] });
                   } else {

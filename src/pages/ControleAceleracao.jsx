@@ -1,9 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
-import { format, startOfMonth, endOfMonth } from "date-fns";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Loader2, BarChart3, Calendar, FileText, ClipboardList, Users, Activity } from "lucide-react";
@@ -16,30 +13,19 @@ import FiltrosControleAceleracao from "@/components/aceleracao/FiltrosControleAc
 import RegistrarAtendimento from "./RegistrarAtendimento";
 import CronogramaGeral from "./CronogramaGeral";
 import DashboardOperacionalTabRedesigned from "@/components/aceleracao/DashboardOperacionalTabRedesigned";
-import useConsultoresList from "@/components/hooks/useConsultoresList";
+import useControleAceleracaoState from "@/components/hooks/useControleAceleracaoState";
 
-// ControleAceleracao v6 - cache bust force reload
 export default function ControleAceleracao() {
   const navigate = useNavigate();
   const urlParams = new URLSearchParams(window.location.search);
   const initialTab = urlParams.get('tab') === 'consultoria' ? 'dashboard-operacional' : (urlParams.get('tab') || "visao-geral");
   const [activeTab, setActiveTab] = useState(initialTab);
   const [showMassRegistration, setShowMassRegistration] = useState(false);
-  const [filtros, setFiltros] = useState({
-    consultorId: "todos",
-    preset: "mes_atual",
-    dataInicio: format(startOfMonth(new Date()), "yyyy-MM-dd"),
-    dataFim: format(endOfMonth(new Date()), "yyyy-MM-dd")
-  });
 
-  const { data: user, isLoading: loadingUser } = useQuery({
-    queryKey: ['current-user'],
-    queryFn: () => base44.auth.me()
-  });
+  // ── Estado central único ──
+  const state = useControleAceleracaoState();
+  const { user, loadingUser, filtros, setFiltros, consultores } = state;
 
-  const { data: consultores } = useConsultoresList(user);
-
-  // Verificar permissão
   if (loadingUser) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -53,9 +39,7 @@ export default function ControleAceleracao() {
       <div className="max-w-4xl mx-auto text-center py-12">
         <div className="bg-red-50 border-2 border-red-200 rounded-lg p-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Acesso Restrito</h2>
-          <p className="text-gray-600">
-            Esta área é restrita a consultores e aceleradores.
-          </p>
+          <p className="text-gray-600">Esta área é restrita a consultores e aceleradores.</p>
         </div>
       </div>
     );
@@ -78,12 +62,11 @@ export default function ControleAceleracao() {
           }} 
         />
       )}
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Controle da Aceleração</h1>
-          <p className="text-gray-600 mt-2">
-            Gestão completa de clientes, atendimentos e cronogramas
-          </p>
+          <p className="text-gray-600 mt-2">Gestão completa de clientes, atendimentos e cronogramas</p>
         </div>
         <div className="flex gap-3">
           <Button
@@ -109,9 +92,10 @@ export default function ControleAceleracao() {
         user={user}
       />
 
+      {/* Filtros globais — visível em todas abas exceto 'atendimentos' que tem seus próprios controles visuais */}
       {activeTab !== 'atendimentos' && (
         <FiltrosControleAceleracao
-          consultores={consultores || []}
+          consultores={consultores}
           filtros={filtros}
           onFiltrosChange={setFiltros}
         />
@@ -127,10 +111,7 @@ export default function ControleAceleracao() {
             <ClipboardList className="w-4 h-4 mr-2" />
             Atendimentos
           </TabsTrigger>
-          <TabsTrigger 
-            value="cronograma"
-            className="flex-shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-colors"
-          >
+          <TabsTrigger value="cronograma" className="flex-shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-colors">
             <Calendar className="w-4 h-4 mr-2" />
             Cronograma Geral
           </TabsTrigger>
@@ -146,14 +127,14 @@ export default function ControleAceleracao() {
             <Activity className="w-4 h-4 mr-2" />
             Dashboard Sprints
           </TabsTrigger>
-            </TabsList>
+        </TabsList>
 
         <TabsContent value="visao-geral">
-          <VisaoGeralTab user={user} filtros={filtros} />
+          <VisaoGeralTab state={state} />
         </TabsContent>
 
         <TabsContent value="atendimentos">
-          <PainelAtendimentosTab user={user} filtrosGlobais={filtros} />
+          <PainelAtendimentosTab state={state} />
         </TabsContent>
 
         <TabsContent value="cronograma">
@@ -167,7 +148,7 @@ export default function ControleAceleracao() {
         </TabsContent>
 
         <TabsContent value="agenda-visual">
-          <AgendaVisualTab user={user} filtros={filtros} />
+          <AgendaVisualTab state={state} />
         </TabsContent>
 
         <TabsContent value="dashboard-operacional">

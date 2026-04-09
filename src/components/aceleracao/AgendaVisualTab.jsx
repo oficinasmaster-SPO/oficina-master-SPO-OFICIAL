@@ -5,13 +5,10 @@ import { RefreshCw, CalendarCheck } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import AgendaVisual from "./AgendaVisual";
-import useWorkshopsAtivos from "@/components/hooks/useWorkshopsAtivos";
 
-export default function AgendaVisualTab({ user, filtros }) {
+export default function AgendaVisualTab({ state }) {
+  const { user, workshops, atendimentosPeriodo } = state;
   const queryClient = useQueryClient();
-  const consultorFiltrado = filtros?.consultorId && filtros.consultorId !== "todos" ? filtros.consultorId : null;
-
-  const { data: workshops } = useWorkshopsAtivos();
 
   const { data: syncState } = useQuery({
     queryKey: ['sync-state-calendar'],
@@ -25,33 +22,8 @@ export default function AgendaVisualTab({ user, filtros }) {
     queryClient.invalidateQueries({ queryKey: ['sync-state-calendar'] });
   };
 
-  const { data: atendimentos, isFetching } = useQuery({
-    queryKey: ['atendimentos-acelerador', user?.id, consultorFiltrado],
-    queryFn: async () => {
-      let query = {};
-      
-      if (consultorFiltrado) {
-        query.consultor_id = consultorFiltrado;
-      } else if (user?.role !== 'admin') {
-        query.consultor_id = user.id;
-      }
-      
-      return await base44.entities.ConsultoriaAtendimento.filter(query, '-data_agendada', 500);
-    },
-    enabled: !!user?.id,
-    staleTime: 2 * 60 * 1000
-  });
-
-  // Aplicar filtro de período localmente
-  const atendimentosFiltrados = (atendimentos || []).filter(a => {
-    if (!filtros?.dataInicio || !filtros?.dataFim) return true;
-    const dataAtendBR = new Date(a.data_agendada).toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
-    return dataAtendBR >= filtros.dataInicio && dataAtendBR <= filtros.dataFim;
-  });
-
   return (
     <div className="space-y-6">
-      {/* Barra de status do sync */}
       <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-2 text-xs text-gray-500">
           <CalendarCheck className="w-3.5 h-3.5 text-green-500" />
@@ -63,18 +35,17 @@ export default function AgendaVisualTab({ user, filtros }) {
         </div>
         <button
           onClick={handleRefresh}
-          disabled={isFetching}
-          className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-800 border rounded-lg px-3 py-1.5 hover:bg-gray-50 transition-colors disabled:opacity-50"
+          className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-800 border rounded-lg px-3 py-1.5 hover:bg-gray-50 transition-colors"
         >
-          <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? 'animate-spin' : ''}`} />
+          <RefreshCw className="w-3.5 h-3.5" />
           Atualizar
         </button>
       </div>
       <AgendaVisual
-          atendimentos={atendimentosFiltrados}
-          workshops={workshops || []}
-          user={user}
-        />
+        atendimentos={atendimentosPeriodo}
+        workshops={workshops}
+        user={user}
+      />
     </div>
   );
 }
