@@ -103,9 +103,7 @@ export default function ReagendarAtendimentoModal({ atendimento, workshop, onClo
       const user = await base44.auth.me();
       const novaDataHora = `${novaData}T${novoHorario}:00`;
 
-      const statusFinal = ['cancelada_cliente_sem_reagendar', 'cancelada_empresa_sem_reagendar'].includes(statusPosvenda)
-        ? 'atrasado'
-        : 'reagendado';
+      const statusFinal = 'reagendado';
 
       const updateData = {
         data_agendada: novaDataHora,
