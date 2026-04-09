@@ -4,7 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Filter, Calendar, User } from "lucide-react";
-import { format, subDays, startOfMonth, endOfMonth } from "date-fns";
+import { format, subDays, addDays, startOfMonth, endOfMonth } from "date-fns";
 
 export default function FiltrosControleAceleracao({ 
   consultores = [], 
@@ -34,7 +34,7 @@ export default function FiltrosControleAceleracao({
         break;
       case "30d":
         dataInicio = format(subDays(hoje, 30), "yyyy-MM-dd");
-        dataFim = format(hoje, "yyyy-MM-dd");
+        dataFim = format(addDays(hoje, 30), "yyyy-MM-dd");
         break;
       case "mes_atual":
         dataInicio = format(startOfMonth(hoje), "yyyy-MM-dd");

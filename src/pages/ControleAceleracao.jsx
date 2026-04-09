@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
-import { format, subDays } from "date-fns";
+import { format, subDays, addDays } from "date-fns";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,7 +29,7 @@ export default function ControleAceleracao() {
     consultorId: "todos",
     preset: "30d",
     dataInicio: format(subDays(new Date(), 30), "yyyy-MM-dd"),
-    dataFim: format(new Date(), "yyyy-MM-dd")
+    dataFim: format(addDays(new Date(), 30), "yyyy-MM-dd")
   });
 
   const { data: user, isLoading: loadingUser } = useQuery({
