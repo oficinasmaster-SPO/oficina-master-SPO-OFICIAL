@@ -433,14 +433,14 @@ export default function PainelAtendimentosTab({ user }) {
               <table className="w-full table-fixed">
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50/50">
-                    <th className="w-[11%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100">Consultor</th>
-                    <th className="w-[13%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">ID ATA</th>
-                    <th className="w-[14%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Criado em</th>
-                    <th className="w-[14%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Data</th>
-                    <th className="w-[18%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Cliente</th>
-                    <th className="w-[10%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Tipo</th>
-                    <th className="w-[10%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Status</th>
-                    <th className="w-[10%] text-right py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Ações</th>
+                    <th className="w-[10%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100">Consultor</th>
+                    <th className="w-[10%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100">ID ATA</th>
+                    <th className="w-[12%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100">Criado em</th>
+                    <th className="w-[12%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100">Data</th>
+                    <th className="w-[15%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100">Cliente</th>
+                    <th className="w-[9%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100">Tipo</th>
+                    <th className="w-[9%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100">Status</th>
+                    <th className="w-[23%] text-right py-4 px-2 text-sm font-semibold text-gray-700">Ações</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
