@@ -44,7 +44,7 @@ export default function AgendaVisualTab({ user, filtros }) {
         query.consultor_id = user.id;
       }
       
-      return await base44.entities.ConsultoriaAtendimento.filter(query, null, 5000);
+      return await base44.entities.ConsultoriaAtendimento.filter(query, null, 500);
     },
     enabled: !!user?.id
   });
