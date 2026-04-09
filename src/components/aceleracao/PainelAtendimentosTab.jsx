@@ -24,7 +24,7 @@ import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { toast } from "sonner";
 import RegistrarAtendimento from "@/pages/RegistrarAtendimento";
-// Forçar rebuild do Vite
+// Forçar rebuild do Vite v2
 
 
 export default function PainelAtendimentosTab({ user }) {
