@@ -275,7 +275,8 @@ export default function PainelAtendimentosTab({ user }) {
 
       {/* Tabela de Atendimentos */}
       <div className="w-full">
-        <div className="inline-flex items-center rounded-lg bg-gray-100 p-1 mb-4 gap-1">
+        <div className="flex items-center gap-3 mb-4 flex-wrap">
+          <div className="inline-flex items-center rounded-lg bg-gray-100 p-1 gap-1">
           {[
             { value: 'todos', label: 'Todos' },
             { value: ATENDIMENTO_STATUS.AGENDADO, label: 'Agendados' },
@@ -296,6 +297,23 @@ export default function PainelAtendimentosTab({ user }) {
               {tab.label}
             </button>
           ))}
+          </div>
+          <Select
+            value={filtrosAtas.consultor_id || "all"}
+            onValueChange={(v) => setFiltrosAtas(prev => ({ ...prev, consultor_id: v === "all" ? "" : v }))}
+          >
+            <SelectTrigger className="h-9 w-[180px] text-sm bg-white border-gray-200 shadow-sm">
+              <SelectValue placeholder="Consultor" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos Consultores</SelectItem>
+              {consultores?.map((c) => (
+                <SelectItem key={c.id} value={c.user_id || c.id}>
+                  {c.full_name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <Card>
           <CardContent className="pt-6">
@@ -303,27 +321,7 @@ export default function PainelAtendimentosTab({ user }) {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50/50">
-                     <th className="text-left py-4 px-3 text-sm font-semibold text-gray-700 border-r border-gray-100 min-w-[200px]">
-                      <div className="space-y-1">
-                        <span>Consultor</span>
-                        <Select
-                          value={filtrosAtas.consultor_id || "all"}
-                          onValueChange={(v) => setFiltrosAtas(prev => ({ ...prev, consultor_id: v === "all" ? "" : v }))}
-                        >
-                          <SelectTrigger className="h-7 text-xs bg-white w-full">
-                            <SelectValue placeholder="Todos" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">Todos</SelectItem>
-                            {consultores?.map((c) => (
-                              <SelectItem key={c.id} value={c.user_id || c.id}>
-                                {c.full_name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </th>
+                    <th className="text-left py-4 px-3 text-sm font-semibold text-gray-700 border-r border-gray-100">Consultor</th>
                     <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">ID ATA</th>
                     <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Data</th>
                     <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Cliente</th>
