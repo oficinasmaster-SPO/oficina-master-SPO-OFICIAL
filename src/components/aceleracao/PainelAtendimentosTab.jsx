@@ -387,6 +387,7 @@ export default function PainelAtendimentosTab({ user }) {
                   <tr className="border-b border-gray-200 bg-gray-50/50">
                     <th className="text-left py-4 px-3 text-sm font-semibold text-gray-700 border-r border-gray-100">Consultor</th>
                     <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">ID ATA</th>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Criado em</th>
                     <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Data</th>
                     <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Cliente</th>
                     <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0">Tipo</th>
@@ -397,7 +398,7 @@ export default function PainelAtendimentosTab({ user }) {
                 <tbody className="divide-y divide-gray-100">
                   {atendimentosFiltrados.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="py-16 text-center">
+                      <td colSpan={8} className="py-16 text-center">
                         <p className="text-gray-400 text-sm">Nada para ver aqui</p>
                       </td>
                     </tr>
@@ -422,6 +423,9 @@ export default function PainelAtendimentosTab({ user }) {
                               </span>
                             )}
                           </div>
+                        </td>
+                        <td className="py-4 px-6 text-sm text-gray-500 border-r border-gray-100 last:border-r-0 whitespace-nowrap">
+                          {atendimento.created_date ? formatDateTimeBR(atendimento.created_date) : '-'}
                         </td>
                         <td className="py-4 px-6 text-sm text-gray-600 border-r border-gray-100 last:border-r-0 whitespace-nowrap">
                           {formatDateTimeBR(atendimento.data_agendada)}
