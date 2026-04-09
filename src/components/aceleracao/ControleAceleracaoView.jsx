@@ -139,14 +139,14 @@ export default function ControleAceleracaoView({ state }) {
         user={user}
       />
 
-      {/* Filtros (ocultos na aba atendimentos) */}
-      {activeTab !== "atendimentos" && (
+      {/* Filtros — hidden via CSS on atendimentos tab to avoid layout shift */}
+      <div className={activeTab === "atendimentos" ? "hidden" : ""}>
         <FiltrosControleAceleracao
           consultores={consultores}
           filtros={filtros}
           onFiltrosChange={setFiltros}
         />
-      )}
+      </div>
 
       {/* Active Filters Bar — sempre visível quando há filtros */}
       {hasActiveFilters && (
@@ -197,48 +197,38 @@ export default function ControleAceleracaoView({ state }) {
           </TabsList>
         </div>
 
-        {/* Tab Content with skeleton fallbacks */}
+        {/* Tab Content — single Suspense, forceMount on main tabs to prevent layout shift */}
         <Suspense fallback={<TabSkeleton variant="overview" />}>
-          <TabsContent value="visao-geral" className="mt-0">
+          <TabsContent value="visao-geral" forceMount className={`mt-0 ${activeTab !== "visao-geral" ? "hidden" : ""}`}>
             {loadingAtendimentos ? (
               <TabSkeleton variant="overview" />
             ) : (
               <VisaoGeralTab state={state} />
             )}
           </TabsContent>
-        </Suspense>
 
-        <Suspense fallback={<TabSkeleton variant="table" />}>
-          <TabsContent value="atendimentos" className="mt-0">
+          <TabsContent value="atendimentos" forceMount className={`mt-0 ${activeTab !== "atendimentos" ? "hidden" : ""}`}>
             {loadingAtendimentos ? (
               <TabSkeleton variant="table" />
             ) : (
               <PainelAtendimentosTab state={state} />
             )}
           </TabsContent>
-        </Suspense>
 
-        <Suspense fallback={<TabSkeleton variant="default" />}>
           <TabsContent value="cronograma" className="mt-0">
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
               <CronogramaGeral isTab={true} />
             </div>
           </TabsContent>
-        </Suspense>
 
-        <Suspense fallback={<TabSkeleton variant="table" />}>
           <TabsContent value="pedidos" className="mt-0">
             <PedidosInternosTab user={user} />
           </TabsContent>
-        </Suspense>
 
-        <Suspense fallback={<TabSkeleton variant="default" />}>
           <TabsContent value="agenda-visual" className="mt-0">
             <AgendaVisualTab state={state} />
           </TabsContent>
-        </Suspense>
 
-        <Suspense fallback={<TabSkeleton variant="overview" />}>
           <TabsContent value="dashboard-operacional" className="mt-0">
             <DashboardOperacionalTabRedesigned user={user} />
           </TabsContent>
