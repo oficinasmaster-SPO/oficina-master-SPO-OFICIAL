@@ -1,11 +1,14 @@
-import React, { useState, Suspense, lazy } from "react";
+import React, { useState, Suspense, lazy, useMemo } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { BarChart3, Calendar, FileText, ClipboardList, Users, Activity } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { BarChart3, Calendar, FileText, ClipboardList, Users, Activity, Plus, Loader2 } from "lucide-react";
 import RegistroAtendimentoMassaModal from "@/components/aceleracao/RegistroAtendimentoMassaModal";
 import FiltrosControleAceleracao from "@/components/aceleracao/FiltrosControleAceleracao";
+import ActiveFiltersBar from "@/components/aceleracao/ActiveFiltersBar";
+import TabSkeleton from "@/components/aceleracao/TabSkeleton";
 import RegistrarAtendimento from "@/pages/RegistrarAtendimento";
-import WheelLoader from "@/components/ui/WheelLoader";
+import { format, startOfMonth, endOfMonth } from "date-fns";
 
 // Lazy tabs
 const VisaoGeralTab = lazy(() => import("@/components/aceleracao/VisaoGeralTab"));
@@ -15,31 +18,77 @@ const CronogramaGeral = lazy(() => import("@/pages/CronogramaGeral"));
 const PedidosInternosTab = lazy(() => import("@/components/aceleracao/PedidosInternosTab"));
 const DashboardOperacionalTabRedesigned = lazy(() => import("@/components/aceleracao/DashboardOperacionalTabRedesigned"));
 
-const TabFallback = () => (
-  <div className="flex items-center justify-center py-16">
-    <WheelLoader size="lg" />
-  </div>
-);
+const TAB_BASE = "flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200";
+const TAB_ACTIVE = "data-[state=active]:bg-[#FF0000] data-[state=active]:text-white data-[state=active]:shadow-md";
+const TAB_HOVER = "hover:bg-gray-100 data-[state=active]:hover:bg-[#FF0000]";
+const TAB_CLASS = `${TAB_BASE} ${TAB_ACTIVE} ${TAB_HOVER}`;
 
-const TAB_TRIGGER_CLASS = "flex-shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-colors";
+function TabBadge({ count, active }) {
+  if (count === undefined || count === null) return null;
+  return (
+    <span className={`
+      ml-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center leading-none
+      ${active 
+        ? "bg-white/25 text-white" 
+        : "bg-gray-200 text-gray-600"}
+    `}>
+      {count > 999 ? "999+" : count}
+    </span>
+  );
+}
 
 /**
  * View pura — sem lógica de negócio.
- * Permissões já validadas pelo PageAccessControl no container.
+ * UX: skeleton loaders, filtros ativos visíveis, contadores nas tabs, feedback visual.
  */
 export default function ControleAceleracaoView({ state }) {
   const {
     user,
     activeTab, setActiveTab,
     isModalOpen, atendimentoId, openModal, closeModal,
-    filtros, setFiltros, consultores
+    filtros, setFiltros, consultores,
+    workshops, atendimentos, atendimentosPeriodo, loadingAtendimentos
   } = state;
 
   const [showMassRegistration, setShowMassRegistration] = useState(false);
 
+  // Tab counts
+  const counts = useMemo(() => ({
+    atendimentos: atendimentosPeriodo?.length || 0,
+    workshops: workshops?.length || 0,
+  }), [atendimentosPeriodo, workshops]);
+
+  // Check if any filter is active (non-default)
+  const hasActiveFilters = filtros.consultorId && filtros.consultorId !== "todos" || 
+    (filtros.preset && filtros.preset !== "mes_atual");
+
+  const handleClearFilter = (filterKey) => {
+    const hoje = new Date();
+    if (filterKey === "consultorId") {
+      setFiltros({ ...filtros, consultorId: "todos" });
+    } else if (filterKey === "preset") {
+      setFiltros({
+        ...filtros,
+        preset: "mes_atual",
+        dataInicio: format(startOfMonth(hoje), "yyyy-MM-dd"),
+        dataFim: format(endOfMonth(hoje), "yyyy-MM-dd"),
+      });
+    }
+  };
+
+  const handleClearAllFilters = () => {
+    const hoje = new Date();
+    setFiltros({
+      consultorId: "todos",
+      preset: "mes_atual",
+      dataInicio: format(startOfMonth(hoje), "yyyy-MM-dd"),
+      dataFim: format(endOfMonth(hoje), "yyyy-MM-dd"),
+    });
+  };
+
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      {/* Modal de atendimento (URL-driven) */}
+    <div className="max-w-7xl mx-auto space-y-5">
+      {/* Modal */}
       {isModalOpen && (
         <RegistrarAtendimento
           isModal={true}
@@ -50,22 +99,36 @@ export default function ControleAceleracaoView({ state }) {
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Controle da Aceleração</h1>
-          <p className="text-gray-600 mt-2">Gestão completa de clientes, atendimentos e cronogramas</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Controle da Aceleração</h1>
+          <p className="text-gray-500 mt-1 text-sm">
+            Gestão de clientes, atendimentos e cronogramas
+            {loadingAtendimentos && (
+              <span className="inline-flex items-center gap-1 ml-2 text-blue-600">
+                <Loader2 className="w-3 h-3 animate-spin" />
+                Atualizando...
+              </span>
+            )}
+          </p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-2">
           <Button
             onClick={() => setShowMassRegistration(true)}
             variant="outline"
-            className="border-blue-600 text-blue-600 hover:bg-blue-50"
+            size="sm"
+            className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300"
           >
-            <Users className="w-4 h-4 mr-2" />
+            <Users className="w-4 h-4 mr-1.5" />
             Registro em Massa
           </Button>
-          <Button onClick={() => openModal()} className="bg-blue-600 hover:bg-blue-700">
-            + Novo Atendimento
+          <Button
+            onClick={() => openModal()}
+            size="sm"
+            className="bg-blue-600 hover:bg-blue-700 shadow-sm"
+          >
+            <Plus className="w-4 h-4 mr-1.5" />
+            Novo Atendimento
           </Button>
         </div>
       </div>
@@ -76,7 +139,7 @@ export default function ControleAceleracaoView({ state }) {
         user={user}
       />
 
-      {/* Filtros globais (ocultos na aba atendimentos que tem controles próprios) */}
+      {/* Filtros (ocultos na aba atendimentos) */}
       {activeTab !== "atendimentos" && (
         <FiltrosControleAceleracao
           consultores={consultores}
@@ -85,48 +148,98 @@ export default function ControleAceleracaoView({ state }) {
         />
       )}
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="flex w-full justify-start overflow-x-auto bg-white shadow-md h-auto p-1 gap-1">
-          <TabsTrigger value="visao-geral" className={TAB_TRIGGER_CLASS}>
-            <BarChart3 className="w-4 h-4 mr-2" />Visão Geral
-          </TabsTrigger>
-          <TabsTrigger value="atendimentos" className={TAB_TRIGGER_CLASS}>
-            <ClipboardList className="w-4 h-4 mr-2" />Atendimentos
-          </TabsTrigger>
-          <TabsTrigger value="cronograma" className={TAB_TRIGGER_CLASS}>
-            <Calendar className="w-4 h-4 mr-2" />Cronograma Geral
-          </TabsTrigger>
-          <TabsTrigger value="pedidos" className={TAB_TRIGGER_CLASS}>
-            <FileText className="w-4 h-4 mr-2" />Pedidos & Backlog
-          </TabsTrigger>
-          <TabsTrigger value="agenda-visual" className={TAB_TRIGGER_CLASS}>
-            <Calendar className="w-4 h-4 mr-2" />Agenda Visual
-          </TabsTrigger>
-          <TabsTrigger value="dashboard-operacional" className={TAB_TRIGGER_CLASS}>
-            <Activity className="w-4 h-4 mr-2" />Dashboard Sprints
-          </TabsTrigger>
-        </TabsList>
+      {/* Active Filters Bar — sempre visível quando há filtros */}
+      {hasActiveFilters && (
+        <ActiveFiltersBar
+          filtros={filtros}
+          consultores={consultores}
+          onClearFilter={handleClearFilter}
+          onClearAll={handleClearAllFilters}
+        />
+      )}
 
-        <Suspense fallback={<TabFallback />}>
-          <TabsContent value="visao-geral">
-            <VisaoGeralTab state={state} />
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-5">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-1.5">
+          <TabsList className="flex w-full justify-start overflow-x-auto bg-transparent h-auto gap-1 scrollbar-hide">
+            <TabsTrigger value="visao-geral" className={TAB_CLASS}>
+              <BarChart3 className="w-4 h-4" />
+              <span className="hidden sm:inline">Visão Geral</span>
+              <span className="sm:hidden">Geral</span>
+              <TabBadge count={counts.workshops} active={activeTab === "visao-geral"} />
+            </TabsTrigger>
+            <TabsTrigger value="atendimentos" className={TAB_CLASS}>
+              <ClipboardList className="w-4 h-4" />
+              <span className="hidden sm:inline">Atendimentos</span>
+              <span className="sm:hidden">Atend.</span>
+              <TabBadge count={counts.atendimentos} active={activeTab === "atendimentos"} />
+            </TabsTrigger>
+            <TabsTrigger value="cronograma" className={TAB_CLASS}>
+              <Calendar className="w-4 h-4" />
+              <span className="hidden sm:inline">Cronograma Geral</span>
+              <span className="sm:hidden">Crono.</span>
+            </TabsTrigger>
+            <TabsTrigger value="pedidos" className={TAB_CLASS}>
+              <FileText className="w-4 h-4" />
+              <span className="hidden sm:inline">Pedidos & Backlog</span>
+              <span className="sm:hidden">Pedidos</span>
+            </TabsTrigger>
+            <TabsTrigger value="agenda-visual" className={TAB_CLASS}>
+              <Calendar className="w-4 h-4" />
+              <span className="hidden sm:inline">Agenda Visual</span>
+              <span className="sm:hidden">Agenda</span>
+            </TabsTrigger>
+            <TabsTrigger value="dashboard-operacional" className={TAB_CLASS}>
+              <Activity className="w-4 h-4" />
+              <span className="hidden sm:inline">Dashboard Sprints</span>
+              <span className="sm:hidden">Sprints</span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
+
+        {/* Tab Content with skeleton fallbacks */}
+        <Suspense fallback={<TabSkeleton variant="overview" />}>
+          <TabsContent value="visao-geral" className="mt-0">
+            {loadingAtendimentos ? (
+              <TabSkeleton variant="overview" />
+            ) : (
+              <VisaoGeralTab state={state} />
+            )}
           </TabsContent>
-          <TabsContent value="atendimentos">
-            <PainelAtendimentosTab state={state} />
+        </Suspense>
+
+        <Suspense fallback={<TabSkeleton variant="table" />}>
+          <TabsContent value="atendimentos" className="mt-0">
+            {loadingAtendimentos ? (
+              <TabSkeleton variant="table" />
+            ) : (
+              <PainelAtendimentosTab state={state} />
+            )}
           </TabsContent>
-          <TabsContent value="cronograma">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        </Suspense>
+
+        <Suspense fallback={<TabSkeleton variant="default" />}>
+          <TabsContent value="cronograma" className="mt-0">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
               <CronogramaGeral isTab={true} />
             </div>
           </TabsContent>
-          <TabsContent value="pedidos">
+        </Suspense>
+
+        <Suspense fallback={<TabSkeleton variant="table" />}>
+          <TabsContent value="pedidos" className="mt-0">
             <PedidosInternosTab user={user} />
           </TabsContent>
-          <TabsContent value="agenda-visual">
+        </Suspense>
+
+        <Suspense fallback={<TabSkeleton variant="default" />}>
+          <TabsContent value="agenda-visual" className="mt-0">
             <AgendaVisualTab state={state} />
           </TabsContent>
-          <TabsContent value="dashboard-operacional">
+        </Suspense>
+
+        <Suspense fallback={<TabSkeleton variant="overview" />}>
+          <TabsContent value="dashboard-operacional" className="mt-0">
             <DashboardOperacionalTabRedesigned user={user} />
           </TabsContent>
         </Suspense>
