@@ -56,9 +56,8 @@ export default function ControleAceleracao() {
         console.warn('Erro ao buscar employees internos:', e);
       }
 
-      const me = await base44.auth.me();
-      if (me?.id) {
-        consultoresMap.set(me.id, me.full_name);
+      if (user?.id) {
+        consultoresMap.set(user.id, user.full_name);
       }
 
       return Array.from(consultoresMap.entries()).map(([id, full_name]) => ({
