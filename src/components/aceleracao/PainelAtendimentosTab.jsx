@@ -15,7 +15,7 @@ import GerarAtaModal from "./GerarAtaModal";
 import VisualizarAtaModal from "./VisualizarAtaModal";
 import ReagendarAtendimentoModal from "./ReagendarAtendimentoModal";
 import FinalizarAtendimentoModal from "./FinalizarAtendimentoModal";
-import FiltrosAtendimentos from "./FiltrosAtendimentos";
+
 import DashboardAtendimentos from "./DashboardAtendimentos";
 import { ATENDIMENTO_STATUS, ATENDIMENTO_STATUS_COLORS, ATENDIMENTO_STATUS_LABELS } from "@/components/lib/ataConstants";
 import { format, startOfMonth, endOfMonth } from "date-fns";
