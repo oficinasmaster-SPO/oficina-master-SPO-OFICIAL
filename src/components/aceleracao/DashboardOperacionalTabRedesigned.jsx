@@ -10,6 +10,7 @@ import {
 "lucide-react";
 import { differenceInDays } from "date-fns";
 import SprintPhaseDetailModalRedesigned from "./SprintPhaseDetailModalRedesigned";
+import useWorkshopsAtivos from "@/components/hooks/useWorkshopsAtivos";
 
 const STATUS_CONFIG = {
   pending: { label: "Pendente", color: "bg-gray-100 text-gray-600", dot: "bg-gray-400" },
@@ -80,14 +81,7 @@ export default function DashboardOperacionalTabRedesigned({ user }) {
     staleTime: 2 * 60 * 1000
   });
 
-  const { data: workshops = [] } = useQuery({
-    queryKey: ['workshops-ativos'],
-    queryFn: async () => {
-      const all = await base44.entities.Workshop.list(null, 5000);
-      return all.filter(w => w.planoAtual && w.planoAtual !== 'FREE');
-    },
-    staleTime: 10 * 60 * 1000
-  });
+  const { data: workshops = [] } = useWorkshopsAtivos();
 
   const workshopMap = Object.fromEntries(workshops.map((w) => [w.id, w]));
 

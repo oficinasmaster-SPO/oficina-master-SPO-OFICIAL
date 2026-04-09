@@ -5,6 +5,7 @@ import { RefreshCw, CalendarCheck } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import AgendaVisual from "./AgendaVisual";
+import useWorkshopsAtivos from "@/components/hooks/useWorkshopsAtivos";
 
 export default function AgendaVisualTab({ user, filtros }) {
   const queryClient = useQueryClient();
@@ -12,14 +13,7 @@ export default function AgendaVisualTab({ user, filtros }) {
   const dataInicio = filtros?.dataInicio ? new Date(filtros.dataInicio) : null;
   const dataFim = filtros?.dataFim ? new Date(filtros.dataFim) : null;
 
-  const { data: workshops } = useQuery({
-    queryKey: ['workshops-ativos'],
-    queryFn: async () => {
-      const all = await base44.entities.Workshop.list(null, 5000);
-      return all.filter(w => w.planoAtual && w.planoAtual !== 'FREE');
-    },
-    staleTime: 10 * 60 * 1000
-  });
+  const { data: workshops } = useWorkshopsAtivos();
 
   const { data: syncState } = useQuery({
     queryKey: ['sync-state-calendar'],

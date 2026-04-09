@@ -16,6 +16,7 @@ import FiltrosControleAceleracao from "@/components/aceleracao/FiltrosControleAc
 import RegistrarAtendimento from "./RegistrarAtendimento";
 import CronogramaGeral from "./CronogramaGeral";
 import DashboardOperacionalTabRedesigned from "@/components/aceleracao/DashboardOperacionalTabRedesigned";
+import useConsultoresList from "@/components/hooks/useConsultoresList";
 
 // ControleAceleracao v6 - cache bust force reload
 export default function ControleAceleracao() {
@@ -36,37 +37,7 @@ export default function ControleAceleracao() {
     queryFn: () => base44.auth.me()
   });
 
-  const { data: consultores } = useQuery({
-    queryKey: ['consultores-list'],
-    queryFn: async () => {
-      const consultoresMap = new Map();
-
-      try {
-        const employees = await base44.entities.Employee.filter({
-          tipo_vinculo: 'interno',
-          status: 'ativo'
-        }, null, 1000);
-
-        employees
-          .filter(e => e.user_id && ['consultor', 'mentor', 'acelerador'].includes(e.job_role))
-          .forEach(e => {
-            consultoresMap.set(e.user_id, e.full_name);
-          });
-      } catch (e) {
-        console.warn('Erro ao buscar employees internos:', e);
-      }
-
-      if (user?.id) {
-        consultoresMap.set(user.id, user.full_name);
-      }
-
-      return Array.from(consultoresMap.entries()).map(([id, full_name]) => ({
-        id,
-        full_name
-      }));
-    },
-    enabled: !!user
-  });
+  const { data: consultores } = useConsultoresList(user);
 
   // Verificar permissão
   if (loadingUser) {
@@ -138,11 +109,13 @@ export default function ControleAceleracao() {
         user={user}
       />
 
-      <FiltrosControleAceleracao
-        consultores={consultores || []}
-        filtros={filtros}
-        onFiltrosChange={setFiltros}
-      />
+      {activeTab !== 'atendimentos' && (
+        <FiltrosControleAceleracao
+          consultores={consultores || []}
+          filtros={filtros}
+          onFiltrosChange={setFiltros}
+        />
+      )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="flex w-full justify-start overflow-x-auto bg-white shadow-md h-auto p-1 gap-1">

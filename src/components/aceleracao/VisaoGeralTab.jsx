@@ -11,6 +11,7 @@ import { ptBR } from "date-fns/locale";
 import { formatDateTimeBR } from "@/utils/timezone";
 import AgendaVisual from "./AgendaVisual";
 import GraficoAtendimentos from "./GraficoAtendimentos";
+import useWorkshopsAtivos from "@/components/hooks/useWorkshopsAtivos";
 import StatusClientesCard from "./StatusClientesCard";
 import ClientesDetalhesModal from "./ClientesDetalhesModal";
 import ReunioesDetalhesModal from "./ReunioesDetalhesModal";
@@ -41,14 +42,7 @@ export default function VisaoGeralTab({ user, filtros = {} }) {
   const [modalReunioes, setModalReunioes] = useState({ isOpen: false, tipo: null, reunioes: [] });
   const [hoverSides, setHoverSides] = useState({});
 
-  const { data: workshops } = useQuery({
-    queryKey: ['workshops-ativos'],
-    queryFn: async () => {
-      const all = await base44.entities.Workshop.list(null, 5000);
-      return all.filter(w => w.planoAtual && w.planoAtual !== 'FREE');
-    },
-    staleTime: 10 * 60 * 1000
-  });
+  const { data: workshops } = useWorkshopsAtivos();
 
   const { data: atendimentos } = useQuery({
     queryKey: ['atendimentos-acelerador', user?.id, consultorFiltrado],

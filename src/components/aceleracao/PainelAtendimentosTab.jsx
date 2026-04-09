@@ -24,7 +24,8 @@ import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { toast } from "sonner";
 import RegistrarAtendimento from "@/pages/RegistrarAtendimento";
-// Forçar rebuild do Vite v2
+import useWorkshopsAtivos from "@/components/hooks/useWorkshopsAtivos";
+import useConsultoresList from "@/components/hooks/useConsultoresList";
 
 
 export default function PainelAtendimentosTab({ user, filtrosGlobais }) {
@@ -55,13 +56,7 @@ export default function PainelAtendimentosTab({ user, filtrosGlobais }) {
     dateTo: filtrosGlobais?.dataFim || format(endOfMonth(new Date()), "yyyy-MM-dd")
   });
 
-  const { data: workshops } = useQuery({
-    queryKey: ['workshops-ativos'],
-    queryFn: async () => {
-      const all = await base44.entities.Workshop.list(null, 5000);
-      return all.filter(w => w.planoAtual && w.planoAtual !== 'FREE');
-    }
-  });
+  const { data: workshops } = useWorkshopsAtivos();
 
   const { data: atas } = useQuery({
     queryKey: ['meeting-minutes'],
@@ -73,16 +68,7 @@ export default function PainelAtendimentosTab({ user, filtrosGlobais }) {
     queryFn: () => base44.entities.MonthlyAccelerationPlan.list('-created_date')
   });
 
-  const { data: consultores } = useQuery({
-    queryKey: ['consultores-list'],
-    queryFn: async () => {
-      const employees = await base44.entities.Employee.filter({
-        tipo_vinculo: 'interno',
-        status: 'ativo'
-      }, null, 1000);
-      return employees;
-    }
-  });
+  const { data: consultores } = useConsultoresList(user);
 
   // Sincronizar filtros globais quando mudam
   useEffect(() => {
