@@ -12,8 +12,9 @@ export default function useConsultoresList(user) {
         status: 'ativo'
       }, null, 1000);
 
+      // Listar todos os colaboradores internos ativos que possuem user_id
       employees
-        .filter(e => e.user_id && ['consultor', 'mentor', 'acelerador'].includes(e.job_role))
+        .filter(e => e.user_id)
         .forEach(e => {
           consultoresMap.set(e.user_id, e.full_name);
         });
