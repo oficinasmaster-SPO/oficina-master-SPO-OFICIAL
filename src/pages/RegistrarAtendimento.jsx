@@ -177,12 +177,20 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
     enabled: user?.role === 'admin' || user?.job_role === 'acelerador'
   });
 
-  // Carregar consultores/aceleradores
+  // Carregar consultores/aceleradores (baseado em Employee interno com user_id)
   const { data: consultores } = useQuery({
     queryKey: ['consultores-list'],
     queryFn: async () => {
-      const users = await base44.entities.User.list(null, 1000);
-      return users.filter(u => u.role === 'interno');
+      const employees = await base44.entities.Employee.filter({
+        tipo_vinculo: 'interno',
+        status: 'ativo'
+      }, null, 1000);
+      return employees
+        .filter(e => e.user_id)
+        .map(e => ({
+          id: e.user_id,
+          full_name: e.full_name
+        }));
     },
     enabled: !!user
   });
