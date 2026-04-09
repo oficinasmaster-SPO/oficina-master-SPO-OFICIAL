@@ -56,8 +56,29 @@ export default function PainelAtendimentosTab({ user }) {
   });
 
   const { data: atendimentos, isLoading } = useQuery({
-    queryKey: ['todos-atendimentos'],
-    queryFn: () => base44.entities.ConsultoriaAtendimento.list('-data_agendada', 5000),
+    queryKey: ['todos-atendimentos', filtrosAtas.dateFrom, filtrosAtas.dateTo, filtrosAtas.consultor_id],
+    queryFn: async () => {
+      const query = {};
+      if (filtrosAtas.consultor_id) {
+        query.consultor_id = filtrosAtas.consultor_id;
+      }
+      // Buscar atendimentos no período filtrado (padrão = mês atual)
+      const all = await base44.entities.ConsultoriaAtendimento.filter(query, '-data_agendada', 500);
+      // Filtrar por data no cliente apenas se houver filtro de data definido
+      if (filtrosAtas.dateFrom || filtrosAtas.dateTo) {
+        return all.filter(a => {
+          const d = new Date(a.data_agendada);
+          if (filtrosAtas.dateFrom && d < new Date(filtrosAtas.dateFrom)) return false;
+          if (filtrosAtas.dateTo) {
+            const fim = new Date(filtrosAtas.dateTo);
+            fim.setHours(23, 59, 59, 999);
+            if (d > fim) return false;
+          }
+          return true;
+        });
+      }
+      return all;
+    },
     staleTime: 2 * 60 * 1000,
     refetchInterval: 5 * 60 * 1000
   });
@@ -67,12 +88,30 @@ export default function PainelAtendimentosTab({ user }) {
     queryFn: async () => {
       const all = await base44.entities.Workshop.list(null, 5000);
       return all.filter(w => w.planoAtual && w.planoAtual !== 'FREE');
-    }
+    },
+    staleTime: 10 * 60 * 1000
   });
 
+  // Buscar apenas as ATAs dos atendimentos visíveis (não todas 5000)
+  const ataIds = (atendimentos || []).map(a => a.ata_id).filter(Boolean);
   const { data: atas } = useQuery({
-    queryKey: ['meeting-minutes'],
-    queryFn: () => base44.entities.MeetingMinutes.list('-created_date', 5000)
+    queryKey: ['meeting-minutes-visible', ataIds.join(',')],
+    queryFn: async () => {
+      if (ataIds.length === 0) return [];
+      // Buscar em lotes de 50 para não sobrecarregar
+      const batchSize = 50;
+      const results = [];
+      for (let i = 0; i < Math.min(ataIds.length, 200); i += batchSize) {
+        const batch = ataIds.slice(i, i + batchSize);
+        const batchResults = await Promise.all(
+          batch.map(id => base44.entities.MeetingMinutes.get(id).catch(() => null))
+        );
+        results.push(...batchResults.filter(Boolean));
+      }
+      return results;
+    },
+    enabled: ataIds.length > 0,
+    staleTime: 5 * 60 * 1000
   });
 
   const { data: planos } = useQuery({
@@ -168,27 +207,13 @@ export default function PainelAtendimentosTab({ user }) {
     }
   });
 
+  // Filtros client-side (data já foi filtrada server-side, consultor_id também)
   const atendimentosFiltrados = (atendimentos || [])
     .filter(atendimento => {
       if (activeTab !== "todos" && atendimento.status !== activeTab) return false;
-      // Aplicar filtros
       if (filtrosAtas.workshop_id && atendimento.workshop_id !== filtrosAtas.workshop_id) return false;
-      if (filtrosAtas.consultor_id && atendimento.consultor_id !== filtrosAtas.consultor_id) return false;
       if (filtrosAtas.status && atendimento.status !== filtrosAtas.status) return false;
       if (filtrosAtas.tipo_atendimento && atendimento.tipo_atendimento !== filtrosAtas.tipo_atendimento) return false;
-      
-      // Filtro de data
-      if (filtrosAtas.dateFrom) {
-        const dataAtendimento = new Date(atendimento.data_agendada);
-        const dataInicio = new Date(filtrosAtas.dateFrom);
-        if (dataAtendimento < dataInicio) return false;
-      }
-      if (filtrosAtas.dateTo) {
-        const dataAtendimento = new Date(atendimento.data_agendada);
-        const dataFim = new Date(filtrosAtas.dateTo);
-        dataFim.setHours(23, 59, 59, 999);
-        if (dataAtendimento > dataFim) return false;
-      }
       
       // Filtro de busca textual
       if (filtrosAtas.searchTerm) {
