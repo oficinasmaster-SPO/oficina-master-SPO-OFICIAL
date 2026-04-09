@@ -259,7 +259,6 @@ Deno.serve(async (req) => {
     if (existingUser) {
       console.log("User já existe, atualizando:", existingUser.id);
       
-      // Atualizar dados do usuário existente
       const updatedUser = await base44.asServiceRole.entities.User.update(existingUser.id, {
         workshop_id: workshop_id,
         consulting_firm_id: consulting_firm_id,
@@ -278,30 +277,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Criar novo User
-    console.log("Criando novo User...");
-    const newUser = await base44.asServiceRole.entities.User.create({
-      email: employee_data.email,
-      full_name: employee_data.full_name,
-      role: 'user',
-      workshop_id: workshop_id,
-      consulting_firm_id: consulting_firm_id,
-      position: employee_data.position,
-      job_role: employee_data.job_role || 'outros',
-      area: employee_data.area || 'tecnico',
-      telefone: employee_data.telefone || '',
-      profile_picture_url: employee_data.profile_picture_url || '',
-      hire_date: employee_data.hire_date || new Date().toISOString().split('T')[0],
-      user_status: 'ativo'
-    });
-
-    console.log("User criado com sucesso:", newUser.id);
-
     return Response.json({
-      success: true,
-      user_id: newUser.id,
-      message: 'User criado com sucesso'
-    });
+      success: false,
+      error: 'Usuário não encontrado. Use o fluxo de convite para criar novos usuários.'
+    }, { status: 400 });
 
   } catch (error) {
     console.error("Erro ao criar User:", error);

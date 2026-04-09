@@ -98,6 +98,30 @@ Deno.serve(async (req) => {
         // Usar profile_id do user se disponível, caso contrário do invite
         const employeeProfileId = user.profile_id || profileId;
 
+        const existingEmployeeByEmail = await base44.asServiceRole.entities.Employee.filter({
+            email: user.email,
+            workshop_id: workshopId
+        });
+
+        if (existingEmployeeByEmail && existingEmployeeByEmail.length > 0) {
+            const employee = existingEmployeeByEmail[0];
+            await base44.asServiceRole.entities.Employee.update(employee.id, {
+                user_id: user.id,
+                consulting_firm_id: employee.consulting_firm_id || inviteConsultingFirmId || updatedConsultingFirmId || user.consulting_firm_id || defaultConsultingFirmId,
+                profile_id: employee.profile_id || employeeProfileId,
+                user_status: 'ativo'
+            });
+
+            return Response.json({ 
+                success: true, 
+                message: 'Employee existente vinculado automaticamente ao criar User',
+                employee_id: employee.id,
+                user_id: user.id,
+                workshop_id: workshopId,
+                profile_id: employee.profile_id || employeeProfileId || null
+            });
+        }
+
         // Criar Employee record
         const employeeData = {
             workshop_id: workshopId,

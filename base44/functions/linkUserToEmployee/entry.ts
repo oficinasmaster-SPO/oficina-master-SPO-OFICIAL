@@ -10,10 +10,16 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Buscar Employee pelo email do usuário
-    const employees = await base44.asServiceRole.entities.Employee.filter({ 
-      email: user.email 
+    // Buscar Employee prioritariamente pelo vínculo oficial user_id
+    let employees = await base44.asServiceRole.entities.Employee.filter({ 
+      user_id: user.id 
     });
+
+    if (!employees || employees.length === 0) {
+      employees = await base44.asServiceRole.entities.Employee.filter({ 
+        email: user.email 
+      });
+    }
 
     if (!employees || employees.length === 0) {
       return Response.json({ 

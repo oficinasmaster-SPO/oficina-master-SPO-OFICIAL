@@ -21,7 +21,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Role deve ser "user" ou "admin"' }, { status: 400 });
     }
 
-    console.log("👤 Criando colaborador:", email);
+    console.log("👤 Criando colaborador e usuário por convite:", email);
 
     // 1. Verificar se já existe Employee com este email
     const existingEmployees = await base44.asServiceRole.entities.Employee.filter({ 
