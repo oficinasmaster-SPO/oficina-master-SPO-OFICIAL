@@ -27,6 +27,7 @@ export default function ReagendarAtendimentoModal({ atendimento, workshop, onClo
   const [novoMeetLink, setNovoMeetLink] = useState("");
   const [novoEventId, setNovoEventId] = useState("");
   const [novoCalendarLink, setNovoCalendarLink] = useState("");
+  const [descricaoReuniao, setDescricaoReuniao] = useState("");
   const { createMeeting, isCreating } = useGoogleMeet();
 
   const motivosFiltrados = responsabilidade === 'cliente' ? MOTIVOS_CLIENTE :
@@ -50,7 +51,7 @@ export default function ReagendarAtendimentoModal({ atendimento, workshop, onClo
     const respLabel = RESPONSABILIDADE_OPTIONS[responsabilidade] || responsabilidade || '';
     const motivoLabel = motivosFiltrados[motivoSelecionado] || motivoSelecionado || '';
 
-    const descricaoReuniao = [
+    const descricaoTexto = [
       `📋 REAGENDAMENTO DE ATENDIMENTO`,
       ``,
       `🏢 Cliente: ${workshop?.name || 'N/A'}`,
@@ -68,7 +69,7 @@ export default function ReagendarAtendimentoModal({ atendimento, workshop, onClo
 
     const meetData = await createMeeting({
       summary: `🔄 Reagendamento - ${workshop?.name || 'Cliente'} - Oficinas Master`,
-      description: descricaoReuniao,
+      description: descricaoTexto,
       startDateTime: startDateTime.toISOString(),
       endDateTime: endDateTime.toISOString(),
       attendees: []
@@ -78,6 +79,7 @@ export default function ReagendarAtendimentoModal({ atendimento, workshop, onClo
       setNovoMeetLink(meetData.meetLink);
       setNovoEventId(meetData.eventId);
       setNovoCalendarLink(meetData.htmlLink);
+      setDescricaoReuniao(descricaoTexto);
       toast.success("Reunião criada com sucesso!");
     }
   };
@@ -267,6 +269,12 @@ export default function ReagendarAtendimentoModal({ atendimento, workshop, onClo
                       <Copy className="w-4 h-4" />
                     </Button>
                   </div>
+                  {descricaoReuniao && (
+                    <div className="mt-3 bg-white border border-green-100 rounded-md p-3">
+                      <p className="text-xs font-medium text-green-700 mb-1">📋 Descrição enviada ao evento:</p>
+                      <pre className="text-xs text-gray-700 whitespace-pre-wrap font-sans leading-relaxed">{descricaoReuniao}</pre>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
