@@ -62,7 +62,7 @@ export default function VisaoGeralTab({ user, filtros = {} }) {
         query.consultor_id = user.id;
       }
       // Se é admin e não tem filtro = mostra todos os atendimentos
-      return await base44.entities.ConsultoriaAtendimento.filter(query, '-data_agendada', 5000);
+      return await base44.entities.ConsultoriaAtendimento.filter(query, '-data_agendada', 500);
     },
     enabled: !!user?.id,
     staleTime: 2 * 60 * 1000
