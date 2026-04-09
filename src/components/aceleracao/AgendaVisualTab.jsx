@@ -18,7 +18,7 @@ export default function AgendaVisualTab({ user, filtros }) {
       const all = await base44.entities.Workshop.list(null, 5000);
       return all.filter(w => w.planoAtual && w.planoAtual !== 'FREE');
     },
-    staleTime: 5 * 60 * 1000
+    staleTime: 10 * 60 * 1000
   });
 
   const { data: syncState } = useQuery({

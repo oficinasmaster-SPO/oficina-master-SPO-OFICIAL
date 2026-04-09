@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Edit, AlertTriangle, FilePlus, Play, StopCircle, CalendarClock, FileText, CheckCircle, Trash2, Clock, Search, X, CalendarDays } from "lucide-react";
+import { Edit, AlertTriangle, FilePlus, Play, StopCircle, CalendarClock, FileText, CheckCircle, Trash2, FileX2, Clock, Search, X, CalendarDays } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
@@ -606,11 +606,22 @@ export default function PainelAtendimentosTab({ user }) {
                               </Button>
                             )}
 
+                            {atendimento.ata_id && (
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => setDeleteConfirm({ ...atendimento, _deleteType: 'ata' })}
+                                title="Excluir ATA (mantém o atendimento)"
+                              >
+                                <FileX2 className="w-4 h-4 text-orange-600" />
+                              </Button>
+                            )}
+
                             <Button 
                               variant="ghost" 
                               size="sm"
-                              onClick={() => setDeleteConfirm(atendimento)}
-                              title={atendimento.ata_id ? "Excluir ATA" : "Excluir Atendimento"}
+                              onClick={() => setDeleteConfirm({ ...atendimento, _deleteType: 'atendimento' })}
+                              title="Excluir Atendimento"
                             >
                               <Trash2 className="w-4 h-4 text-red-600" />
                             </Button>
@@ -636,14 +647,17 @@ export default function PainelAtendimentosTab({ user }) {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
-              <Trash2 className="w-5 h-5 text-red-600" />
-              {deleteConfirm?.ata_id ? 'Excluir ATA' : 'Excluir Atendimento'}
+              {deleteConfirm?._deleteType === 'ata' ? (
+                <><FileX2 className="w-5 h-5 text-orange-600" /> Excluir ATA</>
+              ) : (
+                <><Trash2 className="w-5 h-5 text-red-600" /> Excluir Atendimento</>
+              )}
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
               <p>
-                {deleteConfirm?.ata_id
-                  ? 'Tem certeza que deseja excluir esta ATA? Esta ação não pode ser desfeita.'
-                  : 'Tem certeza que deseja excluir este registro de atendimento? Esta ação não pode ser desfeita.'}
+                {deleteConfirm?._deleteType === 'ata'
+                  ? 'Tem certeza que deseja excluir esta ATA? O atendimento será mantido, mas a ATA será removida permanentemente.'
+                  : 'Tem certeza que deseja excluir este registro de atendimento completo? Esta ação não pode ser desfeita.'}
               </p>
               {deleteConfirm && (
                 <div className="bg-gray-50 rounded-lg p-3 mt-3 text-sm text-gray-700 space-y-1">
@@ -652,7 +666,7 @@ export default function PainelAtendimentosTab({ user }) {
                   <p><span className="font-medium">Consultor:</span> {deleteConfirm.consultor_nome || '-'}</p>
                 </div>
               )}
-              {deleteConfirm?.ata_id && deleteConfirm?.google_event_id && (
+              {deleteConfirm?._deleteType === 'ata' && deleteConfirm?.google_event_id && (
                 <label className="mt-4 flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-700 cursor-pointer">
                   <Checkbox
                     checked={deleteFollowUp}
@@ -674,14 +688,22 @@ export default function PainelAtendimentosTab({ user }) {
                 if (!deleteConfirm) return;
                 setIsDeleting(true);
                 try {
-                  if (deleteConfirm.ata_id) {
+                  if (deleteConfirm._deleteType === 'ata' && deleteConfirm.ata_id) {
                     await base44.functions.invoke('deleteAta', {
                       ata_id: deleteConfirm.ata_id,
                       delete_follow_up: deleteFollowUp
                     });
                     toast.success('ATA excluída com sucesso!');
-                    queryClient.invalidateQueries(['meeting-minutes']);
+                    queryClient.invalidateQueries(['meeting-minutes-visible']);
                   } else {
+                    // Se tem ATA vinculada, excluir ATA primeiro
+                    if (deleteConfirm.ata_id) {
+                      await base44.functions.invoke('deleteAta', {
+                        ata_id: deleteConfirm.ata_id,
+                        delete_follow_up: true
+                      }).catch(() => {});
+                      queryClient.invalidateQueries(['meeting-minutes-visible']);
+                    }
                     await base44.entities.ConsultoriaAtendimento.delete(deleteConfirm.id);
                     toast.success('Atendimento excluído com sucesso!');
                   }

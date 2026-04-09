@@ -139,6 +139,12 @@ export default function ControleAceleracao() {
         user={user}
       />
 
+      <FiltrosControleAceleracao
+        consultores={consultores || []}
+        filtros={filtros}
+        onFiltrosChange={setFiltros}
+      />
+
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="flex w-full justify-start overflow-x-auto bg-white shadow-md h-auto p-1 gap-1">
           <TabsTrigger value="visao-geral" className="flex-shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-colors">
@@ -189,11 +195,6 @@ export default function ControleAceleracao() {
         </TabsContent>
 
         <TabsContent value="agenda-visual">
-          <FiltrosControleAceleracao
-            consultores={consultores || []}
-            filtros={filtros}
-            onFiltrosChange={setFiltros}
-          />
           <AgendaVisualTab user={user} filtros={filtros} />
         </TabsContent>
 
