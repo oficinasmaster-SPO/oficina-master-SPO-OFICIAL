@@ -1,106 +1,97 @@
-import { useMemo, useCallback } from "react";
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import useWorkshopsAtivos from "./useWorkshopsAtivos";
 import useConsultoresList from "./useConsultoresList";
 import useControleAceleracaoURLState from "./useControleAceleracaoURLState";
+import useFiltrosControle from "./useFiltrosControle";
 
 /**
- * Hook central de estado para /controleaceleracao.
- * A URL é a fonte de verdade para: tab, filtros, modal.
- * Dados compartilhados: user, workshops, atendimentos, atas, planos.
+ * Composição central de estado para /controleaceleracao.
+ *
+ * Camadas:
+ *  1. useControleAceleracaoURLState — URL ↔ estado (tab, filtros, modal)
+ *  2. useFiltrosControle — regras derivadas (consultorEfetivo, atendimentosPeriodo)
+ *  3. Este hook — data fetching e lookup maps
+ *
+ * Nenhuma lógica de UI aqui.
  */
 export default function useControleAceleracaoState() {
-  // ── URL state (fonte de verdade) ──
+  // ── 1. URL state ──
   const urlState = useControleAceleracaoURLState();
   const { filtros, setFiltros, activeTab, setActiveTab, isModalOpen, atendimentoId, openModal, closeModal } = urlState;
 
-  // ── User ──
+  // ── 2. Auth ──
   const { data: user, isLoading: loadingUser } = useQuery({
-    queryKey: ['current-user'],
-    queryFn: () => base44.auth.me()
+    queryKey: ["current-user"],
+    queryFn: () => base44.auth.me(),
   });
 
-  // ── Consultor efetivo (derivado dos filtros URL) ──
-  const consultorEfetivo = useMemo(() => {
-    if (filtros.consultorId && filtros.consultorId !== "todos") return filtros.consultorId;
-    if (user?.role !== 'admin') return user?.id || null;
-    return null;
-  }, [filtros.consultorId, user?.id, user?.role]);
-
-  // ── Shared data queries ──
+  // ── 3. Shared reference data ──
   const { data: workshops } = useWorkshopsAtivos();
   const { data: consultores } = useConsultoresList(user);
 
-  // ── Atendimentos — query ÚNICA para todas as abas ──
+  // ── 4. Filtros derivados (precisa de user para consultorEfetivo) ──
+  //    Atendimentos query depende de consultorEfetivo, então compute primeiro com array vazio
+  const { consultorEfetivo } = useFiltrosControle({ filtros, user, atendimentos: [] });
+
+  // ── 5. Atendimentos — query única compartilhada ──
   const { data: atendimentos, isLoading: loadingAtendimentos } = useQuery({
-    queryKey: ['atendimentos-acelerador', user?.id, consultorEfetivo],
+    queryKey: ["atendimentos-acelerador", user?.id, consultorEfetivo],
     queryFn: async () => {
       const query = {};
-      if (consultorEfetivo) {
-        query.consultor_id = consultorEfetivo;
-      }
-      return await base44.entities.ConsultoriaAtendimento.filter(query, '-data_agendada', 500);
+      if (consultorEfetivo) query.consultor_id = consultorEfetivo;
+      return await base44.entities.ConsultoriaAtendimento.filter(query, "-data_agendada", 500);
     },
     enabled: !!user?.id,
     staleTime: 2 * 60 * 1000,
-    refetchInterval: 5 * 60 * 1000
+    refetchInterval: 5 * 60 * 1000,
   });
 
-  // ── Atendimentos filtrados por período ──
-  const atendimentosPeriodo = useMemo(() => {
-    if (!atendimentos) return [];
-    const { dataInicio, dataFim } = filtros;
-    if (!dataInicio || !dataFim) return atendimentos;
-    return atendimentos.filter(a => {
-      const d = new Date(a.data_agendada).toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
-      return d >= dataInicio && d <= dataFim;
-    });
-  }, [atendimentos, filtros.dataInicio, filtros.dataFim]);
+  // ── 6. Atendimentos filtrados por período (agora com dados reais) ──
+  const { atendimentosPeriodo } = useFiltrosControle({
+    filtros,
+    user,
+    atendimentos: atendimentos || [],
+  });
 
-  // ── Meeting minutes (limited to 500 for perf) ──
+  // ── 7. Meeting minutes ──
   const { data: atas } = useQuery({
-    queryKey: ['meeting-minutes'],
-    queryFn: () => base44.entities.MeetingMinutes.list('-created_date', 500),
-    staleTime: 3 * 60 * 1000
+    queryKey: ["meeting-minutes"],
+    queryFn: () => base44.entities.MeetingMinutes.list("-created_date", 500),
+    staleTime: 3 * 60 * 1000,
   });
 
-  // ── Lookup maps for O(1) access in child components ──
+  // ── 8. Lookup maps O(1) ──
   const workshopMap = useMemo(() => {
     const map = {};
-    (workshops || []).forEach(w => { map[w.id] = w; });
+    (workshops || []).forEach((w) => { map[w.id] = w; });
     return map;
   }, [workshops]);
 
   const atasMap = useMemo(() => {
     const map = {};
-    (atas || []).forEach(a => { map[a.id] = a; });
+    (atas || []).forEach((a) => { map[a.id] = a; });
     return map;
   }, [atas]);
 
-  // ── Monthly plans ──
+  // ── 9. Monthly plans ──
   const { data: planos } = useQuery({
-    queryKey: ['planos-aceleracao'],
-    queryFn: () => base44.entities.MonthlyAccelerationPlan.list('-created_date'),
-    staleTime: 5 * 60 * 1000
+    queryKey: ["planos-aceleracao"],
+    queryFn: () => base44.entities.MonthlyAccelerationPlan.list("-created_date"),
+    staleTime: 5 * 60 * 1000,
   });
 
   return {
     // Auth
     user,
     loadingUser,
-    // URL-synced state
-    activeTab,
-    setActiveTab,
-    isModalOpen,
-    atendimentoId,
-    openModal,
-    closeModal,
-    // Filtros (URL-synced)
-    filtros,
-    setFiltros,
-    consultorEfetivo,
-    // Shared data
+    // URL-synced
+    activeTab, setActiveTab,
+    isModalOpen, atendimentoId, openModal, closeModal,
+    // Filtros
+    filtros, setFiltros, consultorEfetivo,
+    // Data
     workshops: workshops || [],
     workshopMap,
     consultores: consultores || [],
@@ -109,6 +100,6 @@ export default function useControleAceleracaoState() {
     loadingAtendimentos,
     atas: atas || [],
     atasMap,
-    planos: planos || []
+    planos: planos || [],
   };
 }
