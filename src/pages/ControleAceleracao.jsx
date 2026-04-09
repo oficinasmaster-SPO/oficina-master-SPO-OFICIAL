@@ -40,20 +40,43 @@ export default function ControleAceleracao() {
   const { data: consultores } = useQuery({
     queryKey: ['consultores-list'],
     queryFn: async () => {
-      // Buscar colaboradores internos (Oficinas Master)
-      const employees = await base44.entities.Employee.filter({
-        tipo_vinculo: 'interno',
-        status: 'ativo'
-      }, null, 1000);
-      
-      // Retornar os dados formatados usando os registros de Employee, 
-      // evitando falha de permissão (RLS) ao tentar listar todos os Users sem ser admin
-      return employees
-        .filter(e => e.user_id)
-        .map(e => ({
-          id: e.user_id,
-          full_name: e.full_name
-        }));
+      const consultoresMap = new Map();
+
+      // Fonte 1: Employees internos (pode ser limitado por RLS)
+      try {
+        const employees = await base44.entities.Employee.filter({
+          tipo_vinculo: 'interno',
+          status: 'ativo'
+        }, null, 1000);
+        employees.filter(e => e.user_id).forEach(e => {
+          consultoresMap.set(e.user_id, e.full_name);
+        });
+      } catch (e) {
+        console.warn('Erro ao buscar employees internos:', e);
+      }
+
+      // Fonte 2: Consultores dos atendimentos existentes (sem RLS restritivo)
+      try {
+        const atendimentos = await base44.entities.ConsultoriaAtendimento.filter({}, null, 5000);
+        atendimentos.forEach(a => {
+          if (a.consultor_id && a.consultor_nome) {
+            consultoresMap.set(a.consultor_id, a.consultor_nome);
+          }
+        });
+      } catch (e) {
+        console.warn('Erro ao buscar consultores dos atendimentos:', e);
+      }
+
+      // Fonte 3: Usuário logado (sempre incluir)
+      const me = await base44.auth.me();
+      if (me?.id) {
+        consultoresMap.set(me.id, me.full_name);
+      }
+
+      return Array.from(consultoresMap.entries()).map(([id, full_name]) => ({
+        id,
+        full_name
+      }));
     },
     enabled: !!user
   });
