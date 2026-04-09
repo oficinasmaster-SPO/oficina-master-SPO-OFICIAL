@@ -83,11 +83,32 @@ export default function PainelAtendimentosTab({ user }) {
   const { data: consultores } = useQuery({
     queryKey: ['consultores-list'],
     queryFn: async () => {
-      const employees = await base44.entities.Employee.filter({
-        tipo_vinculo: 'interno',
-        status: 'ativo'
-      }, null, 1000);
-      return employees;
+      const consultoresMap = new Map();
+
+      try {
+        const employees = await base44.entities.Employee.filter({
+          tipo_vinculo: 'interno',
+          status: 'ativo'
+        }, null, 1000);
+
+        employees
+          .filter(e => e.user_id && ['consultor', 'mentor', 'acelerador'].includes(e.job_role))
+          .forEach(e => {
+            consultoresMap.set(e.user_id, e.full_name);
+          });
+      } catch (e) {
+        console.warn('Erro ao buscar employees internos:', e);
+      }
+
+      const me = await base44.auth.me();
+      if (me?.id) {
+        consultoresMap.set(me.id, me.full_name);
+      }
+
+      return Array.from(consultoresMap.entries()).map(([id, full_name]) => ({
+        id,
+        full_name
+      }));
     }
   });
 
@@ -374,7 +395,7 @@ export default function PainelAtendimentosTab({ user }) {
             <SelectContent>
               <SelectItem value="all">Todos Consultores</SelectItem>
               {consultores?.map((c) => (
-                <SelectItem key={c.id} value={c.user_id || c.id}>
+                <SelectItem key={c.id} value={c.id}>
                   {c.full_name}
                 </SelectItem>
               ))}

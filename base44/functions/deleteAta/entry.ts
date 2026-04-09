@@ -16,9 +16,17 @@ Deno.serve(async (req) => {
     }
 
     // 1. Buscar a ATA para confirmar existência
-    const ata = await base44.entities.MeetingMinutes.get(ata_id);
+    let ata;
+    try {
+      ata = await base44.entities.MeetingMinutes.get(ata_id);
+    } catch (e) {
+      if (e.status === 404) {
+        return Response.json({ success: true, message: 'ATA já foi excluída anteriormente' });
+      }
+      throw e;
+    }
     if (!ata) {
-      return Response.json({ error: 'ATA não encontrada' }, { status: 404 });
+      return Response.json({ success: true, message: 'ATA já foi excluída anteriormente' });
     }
 
     console.log(`🗑️ Excluindo ATA ${ata_id}...`);
@@ -52,7 +60,15 @@ Deno.serve(async (req) => {
     }
 
     // 3. Excluir a ATA
-    await base44.entities.MeetingMinutes.delete(ata_id);
+    try {
+      await base44.entities.MeetingMinutes.delete(ata_id);
+    } catch (e) {
+      if (e.status === 404) {
+        console.log('ATA já havia sido excluída');
+      } else {
+        throw e;
+      }
+    }
 
     return Response.json({ 
       success: true, 
