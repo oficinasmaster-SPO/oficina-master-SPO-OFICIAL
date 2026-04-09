@@ -175,7 +175,8 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
       const allWorkshops = await base44.entities.Workshop.list('-created_date', 2000);
       return allWorkshops.filter(w => w.planoAtual && w.planoAtual !== 'FREE');
     },
-    enabled: user?.role === 'admin' || user?.job_role === 'acelerador'
+    enabled: user?.role === 'admin' || user?.job_role === 'acelerador',
+    staleTime: 10 * 60 * 1000
   });
 
   // Usar consultores passados via prop OU buscar via hook compartilhado
@@ -203,7 +204,8 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
     queryKey: ['processos-disponiveis'],
     queryFn: async () => {
       return await base44.entities.ProcessDocument.list('-created_date', 1000);
-    }
+    },
+    staleTime: 10 * 60 * 1000
   });
 
   // Carregar tipos de atendimento customizados do banco
