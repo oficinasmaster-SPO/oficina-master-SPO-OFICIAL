@@ -99,9 +99,7 @@ export default function CronogramaGeral({ isTab = false }) {
   // Obter dados do plano selecionado
   const planData = planFeatures.find(p => p.plan_id === selectedPlan);
   
-  console.log("🔍 DEBUG - Plan Data:", planData);
-  console.log("🔍 DEBUG - Selected Plan:", selectedPlan);
-  console.log("🔍 DEBUG - All Plan Features:", planFeatures);
+
   
   // Combinar funcionalidades e módulos do cronograma
   let processos = [];
@@ -435,118 +433,97 @@ export default function CronogramaGeral({ isTab = false }) {
       </div>
 
       {isTab && (
-        <div className="p-4 bg-white border-b border-gray-200 flex items-center justify-between rounded-t-lg">
-          <div className="flex gap-3">
-            <Select value={selectedPlan} onValueChange={setSelectedPlan}>
-              <SelectTrigger className="w-48">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="TODOS" className="font-bold">TODOS OS CLIENTES</SelectItem>
-                <SelectItem value="FREE" className="font-bold">FREE</SelectItem>
-                <SelectItem value="START" className="font-bold">START</SelectItem>
-                <SelectItem value="BRONZE" className="font-bold">BRONZE</SelectItem>
-                <SelectItem value="PRATA" className="font-bold">PRATA</SelectItem>
-                <SelectItem value="GOLD" className="font-bold">GOLD</SelectItem>
-                <SelectItem value="IOM" className="font-bold">IOM</SelectItem>
-                <SelectItem value="MILLIONS" className="font-bold">MILLIONS</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button variant="outline" onClick={handleExport}>
-              <Download className="w-4 h-4 mr-2" />
-              Exportar
-            </Button>
-          </div>
-          <div className="flex gap-4">
-            <div className="text-center px-4 border-r">
-              <p className="text-xs text-blue-600 font-medium">A Fazer</p>
-              <p className="font-bold text-blue-900">
-                {processos.reduce((acc, p) => {
-                  const contagem = getContagemPorProcesso(p.codigo);
-                  return acc + contagem.a_fazer + contagem.em_andamento;
-                }, 0)}
-              </p>
+        <div className="px-5 py-3 bg-white border-b border-gray-200 rounded-t-lg">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <Select value={selectedPlan} onValueChange={setSelectedPlan}>
+                <SelectTrigger className="w-[200px] h-9 text-sm font-medium bg-white border-gray-300">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="TODOS">TODOS OS CLIENTES</SelectItem>
+                  <SelectItem value="FREE">FREE</SelectItem>
+                  <SelectItem value="START">START</SelectItem>
+                  <SelectItem value="BRONZE">BRONZE</SelectItem>
+                  <SelectItem value="PRATA">PRATA</SelectItem>
+                  <SelectItem value="GOLD">GOLD</SelectItem>
+                  <SelectItem value="IOM">IOM</SelectItem>
+                  <SelectItem value="MILLIONS">MILLIONS</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button variant="outline" size="sm" onClick={handleExport} className="h-9 text-sm">
+                <Download className="w-3.5 h-3.5 mr-1.5" />
+                Exportar
+              </Button>
             </div>
-            <div className="text-center px-4 border-r">
-              <p className="text-xs text-red-600 font-medium">Atrasado</p>
-              <p className="font-bold text-red-900">
-                {processos.reduce((acc, p) => {
-                  const contagem = getContagemPorProcesso(p.codigo);
-                  return acc + contagem.atrasado;
-                }, 0)}
-              </p>
-            </div>
-            <div className="text-center px-4 border-r">
-              <p className="text-xs text-green-600 font-medium">Concluído</p>
-              <p className="font-bold text-green-900">
-                {processos.reduce((acc, p) => {
-                  const contagem = getContagemPorProcesso(p.codigo);
-                  return acc + contagem.concluido;
-                }, 0)}
-              </p>
-            </div>
-            <div className="text-center px-4">
-              <p className="text-xs text-purple-600 font-medium">Taxa Conclusão</p>
-              <p className="font-bold text-purple-900">
-                {processos.length > 0 ? Math.round(
-                  (processos.reduce((acc, p) => {
-                    const contagem = getContagemPorProcesso(p.codigo);
-                    return acc + contagem.concluido;
-                  }, 0) / (workshopsPorPlano.length * processos.length || 1)) * 100
-                ) : 0}%
-              </p>
+            <div className="flex items-center gap-1">
+              <div className="text-center px-4 py-1 border-r border-gray-200">
+                <p className="text-[11px] font-medium text-blue-600 leading-tight">A Fazer</p>
+                <p className="text-lg font-bold text-blue-900 leading-tight">
+                  {processos.reduce((acc, p) => { const c = getContagemPorProcesso(p.codigo); return acc + c.a_fazer + c.em_andamento; }, 0)}
+                </p>
+              </div>
+              <div className="text-center px-4 py-1 border-r border-gray-200">
+                <p className="text-[11px] font-medium text-red-600 leading-tight">Atrasado</p>
+                <p className="text-lg font-bold text-red-900 leading-tight">
+                  {processos.reduce((acc, p) => { const c = getContagemPorProcesso(p.codigo); return acc + c.atrasado; }, 0)}
+                </p>
+              </div>
+              <div className="text-center px-4 py-1 border-r border-gray-200">
+                <p className="text-[11px] font-medium text-green-600 leading-tight">Concluído</p>
+                <p className="text-lg font-bold text-green-900 leading-tight">
+                  {processos.reduce((acc, p) => { const c = getContagemPorProcesso(p.codigo); return acc + c.concluido; }, 0)}
+                </p>
+              </div>
+              <div className="text-center px-4 py-1">
+                <p className="text-[11px] font-medium text-purple-600 leading-tight">Taxa Conclusão</p>
+                <p className="text-lg font-bold text-purple-900 leading-tight">
+                  {processos.length > 0 ? Math.round((processos.reduce((acc, p) => { const c = getContagemPorProcesso(p.codigo); return acc + c.concluido; }, 0) / (workshopsPorPlano.length * processos.length || 1)) * 100) : 0}%
+                </p>
+              </div>
             </div>
           </div>
         </div>
       )}
 
       {/* Conteúdo Principal */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 overflow-hidden">
         {/* Coluna Esquerda - Tabela de Processos */}
-        <div className="w-1/2 border-r border-gray-200 overflow-y-auto p-6">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>
-                    Processos - {selectedPlan === 'TODOS' ? 'TODOS OS PLANOS' : `Plano ${selectedPlan}`}
-                  </CardTitle>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {processos.length} itens no cronograma
-                  </p>
-                </div>
-                <Badge variant="outline" className="bg-blue-50 text-blue-700">
-                  {workshopsPorPlano.length} clientes
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent>
+        <div className="border-r border-gray-200 overflow-y-auto p-4 lg:p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-sm font-semibold text-gray-900">
+                Processos — {selectedPlan === 'TODOS' ? 'Todos os Planos' : `Plano ${selectedPlan}`}
+              </h2>
+              <p className="text-xs text-gray-500 mt-0.5">
+                {processos.length} itens no cronograma
+              </p>
+            </div>
+            <Badge variant="outline" className="bg-blue-50 text-blue-700 text-xs px-2 py-0.5">
+              {workshopsPorPlano.length} clientes
+            </Badge>
+          </div>
+
+          <Card className="shadow-sm border-gray-200">
+            <CardContent className="p-0">
               {processos.length === 0 ? (
-                <div className="text-center py-12 text-gray-500">
-                  <AlertCircle className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-                  <p className="font-semibold mb-2">Nenhum processo registrado para o plano {selectedPlan}.</p>
-                  <p className="text-sm mb-4">Configure os processos deste plano em PlanFeature ou CronogramaTemplate.</p>
-                  {user.role === 'admin' && (
-                    <div className="text-xs text-left bg-gray-50 p-3 rounded border mt-4 max-w-md mx-auto">
-                      <p className="font-semibold mb-1">💡 Debug Info:</p>
-                      <p>Plan Features carregados: {planFeatures.length}</p>
-                      <p>Templates carregados: {templates.length}</p>
-                      <p>Plan Data encontrado: {planData ? 'Sim' : 'Não'}</p>
-                    </div>
-                  )}
+                <div className="text-center py-10 text-gray-500 px-4">
+                  <AlertCircle className="w-10 h-10 mx-auto mb-2 text-gray-300" />
+                  <p className="text-sm font-medium mb-1">Nenhum processo registrado para o plano {selectedPlan}.</p>
+                  <p className="text-xs text-gray-400">Configure os processos deste plano em PlanFeature ou CronogramaTemplate.</p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full border-collapse">
+                  <table className="w-full">
                     <thead>
-                      <tr className="border-b-2 border-gray-200">
-                        <th className="text-left py-3 px-4 font-semibold text-gray-700">Processos</th>
-                        <th className="text-center py-3 px-4 font-semibold text-gray-700">A Fazer</th>
-                        <th className="text-center py-3 px-4 font-semibold text-red-600">Atrasado</th>
-                        <th className="text-center py-3 px-4 font-semibold text-green-600">Concluído</th>
+                      <tr className="border-b border-gray-200 bg-gray-50/60">
+                        <th className="text-left py-2.5 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Processos</th>
+                        <th className="text-center py-2.5 px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider w-20">A Fazer</th>
+                        <th className="text-center py-2.5 px-3 text-xs font-semibold text-red-500 uppercase tracking-wider w-20">Atrasado</th>
+                        <th className="text-center py-2.5 px-3 text-xs font-semibold text-green-600 uppercase tracking-wider w-24">Concluído</th>
                       </tr>
                     </thead>
-                    <tbody>
+                    <tbody className="divide-y divide-gray-100">
                       {processos.map((processo) => {
                         const contagem = getContagemPorProcesso(processo.codigo);
                         const isSelected = selectedProcess?.codigo === processo.codigo;
@@ -554,29 +531,29 @@ export default function CronogramaGeral({ isTab = false }) {
                           <tr 
                             key={processo.codigo} 
                             onClick={() => setSelectedProcess(isSelected ? null : processo)}
-                            className={`border-b border-gray-100 cursor-pointer transition-colors ${
+                            className={`cursor-pointer transition-colors ${
                               isSelected 
-                                ? 'bg-blue-100 hover:bg-blue-100' 
+                                ? 'bg-blue-50 ring-1 ring-inset ring-blue-200' 
                                 : 'hover:bg-gray-50'
                             }`}
                           >
-                            <td className={`py-3 px-4 font-medium ${isSelected ? 'text-blue-900' : ''}`}>
+                            <td className={`py-3 px-4 text-sm font-medium leading-tight ${isSelected ? 'text-blue-800' : 'text-gray-800'}`}>
                               {processo.nome || processo.codigo}
                             </td>
-                            <td className="text-center py-3 px-4">
-                              <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                            <td className="text-center py-3 px-3">
+                              <span className="inline-flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
                                 {contagem.a_fazer + contagem.em_andamento}
-                              </Badge>
+                              </span>
                             </td>
-                            <td className="text-center py-3 px-4">
-                              <Badge variant="outline" className="bg-red-50 text-red-700">
+                            <td className="text-center py-3 px-3">
+                              <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold border ${contagem.atrasado > 0 ? 'bg-red-50 text-red-700 border-red-200' : 'bg-gray-50 text-gray-400 border-gray-200'}`}>
                                 {contagem.atrasado}
-                              </Badge>
+                              </span>
                             </td>
-                            <td className="text-center py-3 px-4">
-                              <Badge variant="outline" className="bg-green-50 text-green-700">
+                            <td className="text-center py-3 px-3">
+                              <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold border ${contagem.concluido > 0 ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-400 border-gray-200'}`}>
                                 {contagem.concluido}
-                              </Badge>
+                              </span>
                             </td>
                           </tr>
                         );
@@ -590,119 +567,108 @@ export default function CronogramaGeral({ isTab = false }) {
         </div>
 
         {/* Coluna Direita - Lista de Clientes */}
-        <div className="w-1/2 flex flex-col p-6">
-          <Card className="flex flex-col h-full">
-            <CardHeader className="flex-shrink-0">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>LISTA DE CLIENTES</CardTitle>
-                  {selectedProcess && (
-                    <p className="text-sm text-gray-600 mt-1">
-                      Filtrando por: <span className="font-semibold text-blue-600">{selectedProcess.nome}</span>
-                    </p>
-                  )}
-                </div>
-                {selectedProcess && (
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => setSelectedProcess(null)}
-                    className="text-gray-500 hover:text-gray-700"
-                  >
-                    Limpar Filtro
-                  </Button>
-                )}
-              </div>
-              <div className="flex gap-3 mt-4">
-                <Select value={filterStatus} onValueChange={setFilterStatus}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todos">Todos</SelectItem>
-                    <SelectItem value="ativo">Ativo</SelectItem>
-                    <SelectItem value="concluido">Concluído</SelectItem>
-                    <SelectItem value="a_fazer">A Fazer</SelectItem>
-                  </SelectContent>
-                </Select>
-                <div className="flex-1 relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <Input
-                    placeholder="Buscar oficina..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="flex-1 overflow-y-auto">
-              {clientesFiltrados.length === 0 ? (
-                <div className="text-center py-12 text-gray-500">
-                  <AlertCircle className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-                  <p>Nenhum cliente encontrado para este filtro.</p>
-                  {user.role === 'admin' && (
-                    <Button className="mt-4" variant="outline">
-                      Associar Clientes ao Plano
-                    </Button>
-                  )}
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {clientesFiltrados.map((cliente) => (
-                    <div
-                      key={cliente.id}
-                      onClick={() => {
-                        setSelectedClient(cliente);
-                        setShowPanel(true);
-                      }}
-                      className="border rounded-lg p-4 hover:shadow-md transition-all cursor-pointer bg-white"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <h3 className="font-semibold text-gray-900">{cliente.name}</h3>
-                            {cliente.statusGeral === 'atrasado' && (
-                              <Badge className="bg-red-100 text-red-700">
-                                <AlertCircle className="w-3 h-3 mr-1" />
-                                Atrasado
-                              </Badge>
-                            )}
-                            {cliente.statusGeral === 'concluido' && (
-                              <Badge className="bg-green-100 text-green-700">
-                                <CheckCircle2 className="w-3 h-3 mr-1" />
-                                Concluído
-                              </Badge>
-                            )}
-                          </div>
-                          <div className="text-sm text-gray-600 space-y-1">
-                            <p>Plano: <span className="font-medium">{cliente.planoAtual}</span></p>
-                            <p>Cidade: {cliente.city}/{cliente.state}</p>
-                            <div className="flex items-center gap-2 mt-2">
-                              <div className="flex-1 bg-gray-200 rounded-full h-2">
-                                <div 
-                                  className="bg-blue-600 h-2 rounded-full"
-                                  style={{ width: `${cliente.percentualConclusao}%` }}
-                                />
-                              </div>
-                              <span className="text-xs font-medium">{cliente.percentualConclusao}%</span>
-                            </div>
-                          </div>
-                        </div>
-                        <ChevronRight className="w-5 h-5 text-gray-400" />
-                      </div>
-                      {cliente.atrasados > 0 && (
-                        <div className="mt-2 text-xs text-red-600 flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          {cliente.atrasados} processo(s) atrasado(s)
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
+        <div className="flex flex-col p-4 lg:p-5 overflow-hidden">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h2 className="text-sm font-semibold text-gray-900">Lista de Clientes</h2>
+              {selectedProcess && (
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Filtrando: <span className="font-medium text-blue-600">{selectedProcess.nome}</span>
+                </p>
               )}
-            </CardContent>
-          </Card>
+            </div>
+            {selectedProcess && (
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setSelectedProcess(null)}
+                className="text-xs text-gray-500 hover:text-gray-700 h-7"
+              >
+                Limpar
+              </Button>
+            )}
+          </div>
+          <div className="flex gap-2 mb-3">
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="w-[130px] h-9 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos</SelectItem>
+                <SelectItem value="ativo">Ativo</SelectItem>
+                <SelectItem value="concluido">Concluído</SelectItem>
+                <SelectItem value="a_fazer">A Fazer</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="flex-1 relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+              <Input
+                placeholder="Buscar oficina..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-8 h-9 text-sm"
+              />
+            </div>
+          </div>
+          <div className="flex-1 overflow-y-auto">
+            {clientesFiltrados.length === 0 ? (
+              <div className="text-center py-10 text-gray-500">
+                <AlertCircle className="w-10 h-10 mx-auto mb-2 text-gray-300" />
+                <p className="text-sm">Nenhum cliente encontrado.</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {clientesFiltrados.map((cliente) => (
+                  <div
+                    key={cliente.id}
+                    onClick={() => {
+                      setSelectedClient(cliente);
+                      setShowPanel(true);
+                    }}
+                    className="group border border-gray-200 rounded-lg px-4 py-3 hover:border-gray-300 hover:shadow-sm transition-all cursor-pointer bg-white"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-sm font-semibold text-gray-900 truncate">{cliente.name}</h3>
+                          {cliente.statusGeral === 'atrasado' && (
+                            <Badge className="bg-red-50 text-red-600 border-red-200 text-[10px] px-1.5 py-0 shrink-0">
+                              Atrasado
+                            </Badge>
+                          )}
+                          {cliente.statusGeral === 'concluido' && (
+                            <Badge className="bg-green-50 text-green-600 border-green-200 text-[10px] px-1.5 py-0 shrink-0">
+                              Concluído
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
+                          <span>Plano: <span className="font-medium text-gray-700">{cliente.planoAtual}</span></span>
+                          {cliente.city && <span>Cidade: {cliente.city}/{cliente.state}</span>}
+                        </div>
+                        <div className="flex items-center gap-2 mt-2">
+                          <div className="flex-1 bg-gray-100 rounded-full h-1.5">
+                            <div 
+                              className={`h-1.5 rounded-full transition-all ${cliente.percentualConclusao === 100 ? 'bg-green-500' : cliente.percentualConclusao > 0 ? 'bg-blue-500' : 'bg-gray-300'}`}
+                              style={{ width: `${Math.max(cliente.percentualConclusao, 2)}%` }}
+                            />
+                          </div>
+                          <span className="text-[11px] font-semibold text-gray-600 w-8 text-right">{cliente.percentualConclusao}%</span>
+                        </div>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-gray-500 transition-colors shrink-0" />
+                    </div>
+                    {cliente.atrasados > 0 && (
+                      <div className="mt-1.5 text-[11px] text-red-500 flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        {cliente.atrasados} processo(s) atrasado(s)
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -723,7 +689,6 @@ export default function CronogramaGeral({ isTab = false }) {
           onClose={() => setAvaliacaoModal({ show: false, client: null, process: null })}
           onSave={() => {
             setAvaliacaoModal({ show: false, client: null, process: null });
-            // Recarregar dados
           }}
         />
       )}
