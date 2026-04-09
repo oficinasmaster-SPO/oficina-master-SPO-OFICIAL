@@ -51,7 +51,7 @@ export default function VisaoGeralTab({ user, filtros = {} }) {
   });
 
   const { data: atendimentos } = useQuery({
-    queryKey: ['atendimentos-acelerador', user?.id, consultorFiltrado, user?.role],
+    queryKey: ['atendimentos-acelerador', user?.id, consultorFiltrado],
     queryFn: async () => {
       let query = {};
       // Se tem filtro específico de consultor, aplica
