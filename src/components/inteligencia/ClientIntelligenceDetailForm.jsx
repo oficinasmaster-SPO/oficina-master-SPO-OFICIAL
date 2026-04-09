@@ -216,10 +216,11 @@ export default function ClientIntelligenceDetailForm({ open, onOpenChange, intel
 
           {/* Botões */}
           <div className="flex gap-2 justify-end pt-4">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
             <Button
+              type="button"
               className="bg-blue-600 hover:bg-blue-700"
               onClick={handleSubmit}
               disabled={isLoading}
