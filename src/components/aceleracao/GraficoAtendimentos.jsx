@@ -8,9 +8,11 @@ export default function GraficoAtendimentos({ atendimentos = [], workshops = [] 
   const contarPorStatus = () => {
     const counts = {
       realizado: 0,
-      faltou: 0,
-      desmarcou: 0,
-      participando: 0
+      agendado: 0,
+      confirmado: 0,
+      participando: 0,
+      atrasado: 0,
+      reagendado: 0
     };
 
     atendimentos.forEach(a => {
@@ -21,9 +23,11 @@ export default function GraficoAtendimentos({ atendimentos = [], workshops = [] 
 
     return [
       { name: 'Realizados', value: counts.realizado, fill: '#10b981' },
-      { name: 'Faltou', value: counts.faltou, fill: '#ef4444' },
-      { name: 'Desmarcou', value: counts.desmarcou, fill: '#f59e0b' },
-      { name: 'Participando', value: counts.participando, fill: '#8b5cf6' }
+      { name: 'Agendados', value: counts.agendado, fill: '#3b82f6' },
+      { name: 'Confirmados', value: counts.confirmado, fill: '#eab308' },
+      { name: 'Participando', value: counts.participando, fill: '#8b5cf6' },
+      { name: 'Atrasados', value: counts.atrasado, fill: '#ef4444' },
+      { name: 'Reagendados', value: counts.reagendado, fill: '#f59e0b' }
     ];
   };
 

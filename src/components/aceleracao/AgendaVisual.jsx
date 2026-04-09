@@ -126,11 +126,11 @@ export default function AgendaVisual({ atendimentos = [], workshops = [], user }
   const getStatusColor = (status) => {
     const colors = {
       agendado: 'bg-blue-100 text-blue-700 border-blue-300',
-      confirmado: 'bg-green-100 text-green-700 border-green-300',
+      confirmado: 'bg-yellow-100 text-yellow-700 border-yellow-300',
       participando: 'bg-purple-100 text-purple-700 border-purple-300',
-      realizado: 'bg-gray-100 text-gray-700 border-gray-300',
-      faltou: 'bg-red-100 text-red-700 border-red-300',
-      desmarcou: 'bg-orange-100 text-orange-700 border-orange-300'
+      realizado: 'bg-green-100 text-green-700 border-green-300',
+      atrasado: 'bg-red-100 text-red-700 border-red-300',
+      reagendado: 'bg-orange-100 text-orange-700 border-orange-300'
     };
     return colors[status] || 'bg-gray-100 text-gray-700';
   };
@@ -152,7 +152,7 @@ export default function AgendaVisual({ atendimentos = [], workshops = [], user }
       let colaboradoresRelevantes = [];
       if (ownerIds.length > 0) {
         colaboradoresRelevantes = await base44.entities.Employee.filter(
-          { status: 'ativo' }, null, 1000
+          { status: 'ativo', user_id: ownerIds[0] }, null, 50
         );
       }
 
@@ -215,7 +215,7 @@ export default function AgendaVisual({ atendimentos = [], workshops = [], user }
       const numeroLimpo = telefone.replace(/\D/g, '');
       const whatsappUrl = `https://wa.me/55${numeroLimpo}?text=${encodeURIComponent(mensagem)}`;
       
-      console.log('Abrindo WhatsApp:', whatsappUrl);
+      // WhatsApp URL ready
       window.open(whatsappUrl, '_blank');
       toast.success('WhatsApp aberto com lembrete!');
     } catch (error) {

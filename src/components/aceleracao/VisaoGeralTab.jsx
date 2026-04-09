@@ -46,7 +46,8 @@ export default function VisaoGeralTab({ user, filtros = {} }) {
     queryFn: async () => {
       const all = await base44.entities.Workshop.list(null, 5000);
       return all.filter(w => w.planoAtual && w.planoAtual !== 'FREE');
-    }
+    },
+    staleTime: 5 * 60 * 1000
   });
 
   const { data: atendimentos } = useQuery({
@@ -61,9 +62,10 @@ export default function VisaoGeralTab({ user, filtros = {} }) {
         query.consultor_id = user.id;
       }
       // Se é admin e não tem filtro = mostra todos os atendimentos
-      return await base44.entities.ConsultoriaAtendimento.filter(query, null, 10000);
+      return await base44.entities.ConsultoriaAtendimento.filter(query, '-data_agendada', 5000);
     },
-    enabled: !!user?.id
+    enabled: !!user?.id,
+    staleTime: 2 * 60 * 1000
   });
 
   const { data: planos } = useQuery({

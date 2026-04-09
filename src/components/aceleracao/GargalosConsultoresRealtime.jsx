@@ -19,19 +19,16 @@ export default function GargalosConsultoresRealtime() {
   });
 
   const handlePeriodChange = (newPeriod) => {
-    console.log('Mudando período para:', newPeriod);
     setPeriod(newPeriod);
   };
 
   const { data: saturacaoData, isLoading, error, refetch } = useQuery({
     queryKey: ['saturacao-real-consultores', period.startDate, period.endDate],
     queryFn: async () => {
-      console.log('Buscando saturação para:', period);
       const response = await base44.functions.invoke('calcularSaturacaoReal', {
         startDate: period.startDate,
         endDate: period.endDate
       });
-      console.log('Resposta da saturação:', response.data);
       return response.data;
     },
     refetchInterval: false,

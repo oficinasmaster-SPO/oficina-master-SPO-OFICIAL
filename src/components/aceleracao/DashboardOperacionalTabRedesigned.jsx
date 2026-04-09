@@ -81,8 +81,11 @@ export default function DashboardOperacionalTabRedesigned({ user }) {
   });
 
   const { data: workshops = [] } = useQuery({
-    queryKey: ['dashboard-workshops'],
-    queryFn: () => base44.entities.Workshop.list('-created_date', 500),
+    queryKey: ['workshops-ativos'],
+    queryFn: async () => {
+      const all = await base44.entities.Workshop.list(null, 5000);
+      return all.filter(w => w.planoAtual && w.planoAtual !== 'FREE');
+    },
     staleTime: 5 * 60 * 1000
   });
 

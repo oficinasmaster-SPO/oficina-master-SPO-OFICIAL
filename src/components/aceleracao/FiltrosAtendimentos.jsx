@@ -133,8 +133,7 @@ export default function FiltrosAtendimentos({
                   type="date"
                   value={filters.dateFrom || ""}
                   onChange={(e) => {
-                    updateFilter("dateFrom", e.target.value);
-                    updateFilter("preset", "custom");
+                    onFiltersChange({ ...filters, dateFrom: e.target.value, preset: "custom" });
                   }}
                   className="bg-white"
                 />
@@ -146,8 +145,7 @@ export default function FiltrosAtendimentos({
                   type="date"
                   value={filters.dateTo || ""}
                   onChange={(e) => {
-                    updateFilter("dateTo", e.target.value);
-                    updateFilter("preset", "custom");
+                    onFiltersChange({ ...filters, dateTo: e.target.value, preset: "custom" });
                   }}
                   className="bg-white"
                 />

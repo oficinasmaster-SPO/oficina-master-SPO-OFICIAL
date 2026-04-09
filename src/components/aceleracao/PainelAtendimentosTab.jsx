@@ -49,7 +49,8 @@ export default function PainelAtendimentosTab({ user }) {
   const { data: atendimentos, isLoading } = useQuery({
     queryKey: ['todos-atendimentos'],
     queryFn: () => base44.entities.ConsultoriaAtendimento.list('-data_agendada', 5000),
-    refetchInterval: 30000
+    staleTime: 2 * 60 * 1000,
+    refetchInterval: 5 * 60 * 1000
   });
 
   const { data: workshops } = useQuery({
@@ -88,6 +89,8 @@ export default function PainelAtendimentosTab({ user }) {
     
     const now = toBrazilDate(new Date());
 
+    // Collect IDs to update, then batch with small delay to avoid rate limit
+    const idsToUpdate = [];
     atendimentos.forEach(atendimento => {
       if (processedIdsRef.current.has(atendimento.id)) return;
       
@@ -95,9 +98,14 @@ export default function PainelAtendimentosTab({ user }) {
       
       if (now > dataAtendimento && 
           ![ATENDIMENTO_STATUS.REALIZADO, ATENDIMENTO_STATUS.PARTICIPANDO, ATENDIMENTO_STATUS.ATRASADO].includes(atendimento.status)) {
-        marcarAtrasadoMutation.mutate(atendimento.id);
+        idsToUpdate.push(atendimento.id);
         processedIdsRef.current.add(atendimento.id);
       }
+    });
+
+    // Batch updates with staggered timing to avoid rate limit
+    idsToUpdate.slice(0, 10).forEach((id, idx) => {
+      setTimeout(() => marcarAtrasadoMutation.mutate(id), idx * 500);
     });
   }, [atendimentos]);
 
@@ -265,8 +273,10 @@ export default function PainelAtendimentosTab({ user }) {
       <Tabs defaultValue="todos" value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="mb-4">
           <TabsTrigger value="todos">Todos</TabsTrigger>
-          <TabsTrigger value={ATENDIMENTO_STATUS.ATRASADO}>Atrasados</TabsTrigger>
+          <TabsTrigger value={ATENDIMENTO_STATUS.AGENDADO}>Agendados</TabsTrigger>
           <TabsTrigger value={ATENDIMENTO_STATUS.CONFIRMADO}>Confirmados</TabsTrigger>
+          <TabsTrigger value={ATENDIMENTO_STATUS.ATRASADO}>Atrasados</TabsTrigger>
+          <TabsTrigger value={ATENDIMENTO_STATUS.REAGENDADO}>Reagendados</TabsTrigger>
           <TabsTrigger value={ATENDIMENTO_STATUS.REALIZADO}>Realizados</TabsTrigger>
         </TabsList>
         <TabsContent value={activeTab} className="mt-0">
