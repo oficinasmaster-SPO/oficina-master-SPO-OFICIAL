@@ -100,7 +100,7 @@ export default function PainelAtendimentosTab({ user }) {
       const dataAtendimento = toBrazilDate(atendimento.data_agendada);
       
       if (now > dataAtendimento && 
-          ![ATENDIMENTO_STATUS.REALIZADO, ATENDIMENTO_STATUS.PARTICIPANDO, ATENDIMENTO_STATUS.ATRASADO].includes(atendimento.status)) {
+          ![ATENDIMENTO_STATUS.REALIZADO, ATENDIMENTO_STATUS.PARTICIPANDO, ATENDIMENTO_STATUS.ATRASADO, ATENDIMENTO_STATUS.REAGENDADO].includes(atendimento.status)) {
         idsToUpdate.push(atendimento.id);
         processedIdsRef.current.add(atendimento.id);
       }
@@ -273,14 +273,28 @@ export default function PainelAtendimentosTab({ user }) {
 
 
       {/* Tabela de Atendimentos */}
-      <Tabs defaultValue="todos" value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs defaultValue="todos" value={activeTab} onValueChange={(val) => { setActiveTab(val); }} className="w-full">
         <TabsList className="mb-4">
-          <TabsTrigger value="todos">Todos</TabsTrigger>
-          <TabsTrigger value={ATENDIMENTO_STATUS.AGENDADO}>Agendados</TabsTrigger>
-          <TabsTrigger value={ATENDIMENTO_STATUS.CONFIRMADO}>Confirmados</TabsTrigger>
-          <TabsTrigger value={ATENDIMENTO_STATUS.ATRASADO}>Atrasados</TabsTrigger>
-          <TabsTrigger value={ATENDIMENTO_STATUS.REAGENDADO}>Reagendados</TabsTrigger>
-          <TabsTrigger value={ATENDIMENTO_STATUS.REALIZADO}>Realizados</TabsTrigger>
+          {[
+            { value: 'todos', label: 'Todos' },
+            { value: ATENDIMENTO_STATUS.AGENDADO, label: 'Agendados' },
+            { value: ATENDIMENTO_STATUS.CONFIRMADO, label: 'Confirmados' },
+            { value: ATENDIMENTO_STATUS.ATRASADO, label: 'Atrasados' },
+            { value: ATENDIMENTO_STATUS.REAGENDADO, label: 'Reagendados' },
+            { value: ATENDIMENTO_STATUS.REALIZADO, label: 'Realizados' },
+          ].map(tab => (
+            <button
+              key={tab.value}
+              type="button"
+              onClick={(e) => { e.preventDefault(); setActiveTab(tab.value); }}
+              className={`inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none
+                ${activeTab === tab.value 
+                  ? 'bg-red-600 text-white shadow-sm' 
+                  : 'text-gray-600 hover:bg-red-600 hover:text-white'}`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </TabsList>
         <TabsContent value={activeTab} className="mt-0">
           <Card>
