@@ -309,14 +309,14 @@ export default function PainelAtendimentosTab({ state }) {
               <table className="w-full table-fixed">
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50/50">
-                    <th className="w-[11%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100">Consultor</th>
-                    <th className="w-[13%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100">ID ATA</th>
-                    <th className="w-[14%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100">Criado em</th>
-                    <th className="w-[14%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100">Data</th>
-                    <th className="w-[18%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100">Cliente</th>
-                    <th className="w-[10%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100">Tipo</th>
-                    <th className="w-[10%] text-left py-4 px-2 text-sm font-semibold text-gray-700 border-r border-gray-100">Status</th>
-                    <th className="w-[10%] text-right py-4 px-2 text-sm font-semibold text-gray-700">Ações</th>
+                    <th className="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wider border-r border-gray-100" style={{ width: '120px' }}>Consultor</th>
+                    <th className="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wider border-r border-gray-100" style={{ width: '110px' }}>ID ATA</th>
+                    <th className="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wider border-r border-gray-100" style={{ width: '130px' }}>Criado em</th>
+                    <th className="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wider border-r border-gray-100" style={{ width: '130px' }}>Data</th>
+                    <th className="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wider border-r border-gray-100">Cliente</th>
+                    <th className="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wider border-r border-gray-100" style={{ width: '110px' }}>Tipo</th>
+                    <th className="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wider border-r border-gray-100" style={{ width: '110px' }}>Status</th>
+                    <th className="text-right py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wider" style={{ width: '190px' }}>Ações</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -331,36 +331,36 @@ export default function PainelAtendimentosTab({ state }) {
                     const ataVinculada = atasMap[atendimento.ata_id];
                     return (
                       <tr key={atendimento.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="py-4 px-2 text-sm text-gray-600 border-r border-gray-100 font-medium break-words">
+                        <td className="py-3 px-3 text-sm text-gray-700 border-r border-gray-100 font-medium truncate" title={atendimento.consultor_nome || '-'}>
                           {atendimento.consultor_nome || '-'}
                         </td>
-                        <td className="py-4 px-2 text-sm text-gray-600 border-r border-gray-100">
+                        <td className="py-3 px-3 text-sm text-gray-600 border-r border-gray-100">
                           <div className="flex items-center justify-center">
                             {ataVinculada?.code ? (
-                              <span className="font-mono text-[11px] bg-blue-50 px-2 py-2 rounded border border-blue-200 whitespace-nowrap inline-flex items-center justify-center min-h-[2.25rem] max-w-full">
+                              <span className="font-mono text-[11px] bg-blue-50 px-2 py-1.5 rounded border border-blue-200 whitespace-nowrap inline-flex items-center justify-center">
                                 {ataVinculada.code.replace('IT.', 'AT.')}
                               </span>
                             ) : (
-                              <span className="inline-flex items-center justify-center gap-1 text-amber-600 bg-amber-50 px-2 py-2 rounded border border-amber-200 text-[11px] font-medium whitespace-nowrap">
+                              <span className="inline-flex items-center justify-center gap-1 text-amber-600 bg-amber-50 px-2 py-1.5 rounded border border-amber-200 text-[11px] font-medium whitespace-nowrap">
                                 <Clock className="w-3 h-3" />
                                 Pendente
                               </span>
                             )}
                           </div>
                         </td>
-                        <td className="py-4 px-2 text-sm text-gray-500 border-r border-gray-100 whitespace-nowrap">
+                        <td className="py-3 px-3 text-sm text-gray-500 border-r border-gray-100 whitespace-nowrap">
                           {atendimento.created_date ? formatDateTimeBR(atendimento.created_date) : '-'}
                         </td>
-                        <td className="py-4 px-2 text-sm text-gray-600 border-r border-gray-100 whitespace-nowrap">
+                        <td className="py-3 px-3 text-sm text-gray-600 border-r border-gray-100 whitespace-nowrap">
                           {formatDateTimeBR(atendimento.data_agendada)}
                         </td>
-                        <td className="py-4 px-2 text-sm text-gray-600 border-r border-gray-100 font-medium break-words">
+                        <td className="py-3 px-3 text-sm text-gray-700 border-r border-gray-100 font-medium truncate" title={workshop?.name || '-'}>
                           {workshop?.name || '-'}
                         </td>
-                        <td className="py-4 px-2 text-sm text-gray-600 border-r border-gray-100 capitalize break-words">
+                        <td className="py-3 px-3 text-sm text-gray-600 border-r border-gray-100 capitalize truncate" title={atendimento.tipo_atendimento?.replace(/_/g, ' ') || '-'}>
                           {atendimento.tipo_atendimento?.replace(/_/g, ' ') || '-'}
                         </td>
-                        <td className="py-4 px-2 text-sm text-gray-600 border-r border-gray-100">
+                        <td className="py-3 px-3 text-sm text-gray-600 border-r border-gray-100">
                           {atendimento.status === ATENDIMENTO_STATUS.REALIZADO && !atendimento.ata_id ? (
                             <Badge className="bg-orange-100 text-orange-700 border-orange-300 animate-pulse inline-flex items-center gap-1 text-[11px] px-2 py-1">
                               <AlertTriangle className="w-3 h-3 shrink-0" />
@@ -373,8 +373,8 @@ export default function PainelAtendimentosTab({ state }) {
                             </Badge>
                           )}
                         </td>
-                        <td className="py-4 px-2">
-                          <div className="flex items-center justify-end gap-0.5 whitespace-nowrap">
+                        <td className="py-3 px-3">
+                          <div className="flex items-center justify-end gap-0 flex-nowrap">
                             {(atendimento.status === ATENDIMENTO_STATUS.AGENDADO || 
                               atendimento.status === ATENDIMENTO_STATUS.CONFIRMADO || 
                               atendimento.status === ATENDIMENTO_STATUS.REAGENDADO || 
