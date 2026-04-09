@@ -39,42 +39,23 @@ export default function ControleAceleracao() {
   const { data: consultores } = useQuery({
     queryKey: ['consultores-list'],
     queryFn: async () => {
-      // consultoresMap: chave = User ID, valor = nome
       const consultoresMap = new Map();
 
-      // Fonte 1: Employees internos → sempre usa user_id como chave
-      let employeeIdToUserId = new Map(); // employee.id → employee.user_id
       try {
         const employees = await base44.entities.Employee.filter({
           tipo_vinculo: 'interno',
           status: 'ativo'
         }, null, 1000);
-        employees.filter(e => e.user_id).forEach(e => {
-          consultoresMap.set(e.user_id, e.full_name);
-          employeeIdToUserId.set(e.id, e.user_id);
-        });
+
+        employees
+          .filter(e => e.user_id && ['consultor', 'mentor', 'acelerador'].includes(e.job_role))
+          .forEach(e => {
+            consultoresMap.set(e.user_id, e.full_name);
+          });
       } catch (e) {
         console.warn('Erro ao buscar employees internos:', e);
       }
 
-      // Fonte 2: Consultores dos atendimentos existentes
-      // Resolver Employee IDs → User IDs usando o mapa da Fonte 1
-      try {
-        const atendimentos = await base44.entities.ConsultoriaAtendimento.filter({}, null, 5000);
-        atendimentos.forEach(a => {
-          if (a.consultor_id && a.consultor_nome) {
-            // Se o consultor_id é um Employee ID, converter para User ID
-            const resolvedUserId = employeeIdToUserId.get(a.consultor_id) || a.consultor_id;
-            if (!consultoresMap.has(resolvedUserId)) {
-              consultoresMap.set(resolvedUserId, a.consultor_nome);
-            }
-          }
-        });
-      } catch (e) {
-        console.warn('Erro ao buscar consultores dos atendimentos:', e);
-      }
-
-      // Fonte 3: Usuário logado (sempre incluir)
       const me = await base44.auth.me();
       if (me?.id) {
         consultoresMap.set(me.id, me.full_name);
