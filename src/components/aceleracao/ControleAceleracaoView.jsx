@@ -1,4 +1,4 @@
-import React, { useState, Suspense, lazy, useMemo } from "react";
+import React, { useState, Suspense, lazy, useMemo, useCallback, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +9,7 @@ import ActiveFiltersBar from "@/components/aceleracao/ActiveFiltersBar";
 import TabSkeleton from "@/components/aceleracao/TabSkeleton";
 import RegistrarAtendimento from "@/pages/RegistrarAtendimento";
 import { format, startOfMonth, endOfMonth } from "date-fns";
+import { useAceleracaoObservability } from "@/components/hooks/useAceleracaoObservability";
 
 // Lazy tabs
 const VisaoGeralTab = lazy(() => import("@/components/aceleracao/VisaoGeralTab"));
@@ -51,6 +52,31 @@ export default function ControleAceleracaoView({ state }) {
   } = state;
 
   const [showMassRegistration, setShowMassRegistration] = useState(false);
+
+  // Observability
+  const { trackTabChange, trackFilterChange, trackAtendimentoOpen, trackMassRegistrationOpen, trackError } = useAceleracaoObservability(user);
+  const prevTabRef = useRef(activeTab);
+
+  const handleTabChange = useCallback((newTab) => {
+    trackTabChange(prevTabRef.current, newTab);
+    prevTabRef.current = newTab;
+    setActiveTab(newTab);
+  }, [setActiveTab, trackTabChange]);
+
+  const handleOpenModal = useCallback((id) => {
+    trackAtendimentoOpen(id);
+    openModal(id);
+  }, [openModal, trackAtendimentoOpen]);
+
+  const handleOpenMassRegistration = useCallback(() => {
+    trackMassRegistrationOpen();
+    setShowMassRegistration(true);
+  }, [trackMassRegistrationOpen]);
+
+  const handleFiltrosChange = useCallback((newFiltros) => {
+    trackFilterChange(newFiltros);
+    setFiltros(newFiltros);
+  }, [setFiltros, trackFilterChange]);
 
   // Tab counts
   const counts = useMemo(() => ({
@@ -114,7 +140,7 @@ export default function ControleAceleracaoView({ state }) {
         </div>
         <div className="flex gap-2">
           <Button
-            onClick={() => setShowMassRegistration(true)}
+            onClick={handleOpenMassRegistration}
             variant="outline"
             size="sm"
             className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300"
@@ -123,7 +149,7 @@ export default function ControleAceleracaoView({ state }) {
             Registro em Massa
           </Button>
           <Button
-            onClick={() => openModal()}
+            onClick={() => handleOpenModal()}
             size="sm"
             className="bg-blue-600 hover:bg-blue-700 shadow-sm"
           >
@@ -144,7 +170,7 @@ export default function ControleAceleracaoView({ state }) {
         <FiltrosControleAceleracao
           consultores={consultores}
           filtros={filtros}
-          onFiltrosChange={setFiltros}
+          onFiltrosChange={handleFiltrosChange}
         />
       </div>
 
@@ -159,7 +185,7 @@ export default function ControleAceleracaoView({ state }) {
       )}
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-5">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-5">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-1.5">
           <TabsList className="flex w-full justify-start overflow-x-auto bg-transparent h-auto gap-1 scrollbar-hide">
             <TabsTrigger value="visao-geral" className={TAB_CLASS}>
