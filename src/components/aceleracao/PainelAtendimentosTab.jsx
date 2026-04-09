@@ -5,8 +5,10 @@ import { Card, CardContent } from "@/components/ui/card";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Edit, AlertTriangle, FilePlus, Play, StopCircle, CalendarClock, FileText, CheckCircle, Trash2, Clock, ChevronDown, Search, Filter, X } from "lucide-react";
+import { Edit, AlertTriangle, FilePlus, Play, StopCircle, CalendarClock, FileText, CheckCircle, Trash2, Clock, ChevronDown, Search, Filter, X, CalendarDays } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import GerarAtaModal from "./GerarAtaModal";
@@ -288,16 +290,77 @@ export default function PainelAtendimentosTab({ user }) {
               placeholder="Buscar cliente, tipo, consultor..."
               value={filtrosAtas.searchTerm || ""}
               onChange={(e) => setFiltrosAtas(prev => ({ ...prev, searchTerm: e.target.value }))}
-              className="h-9 pl-8 text-sm bg-white border-gray-200 shadow-sm"
+              className="h-9 pl-8 pr-16 text-sm bg-white border-gray-200 shadow-sm"
             />
-            {filtrosAtas.searchTerm && (
-              <button
-                onClick={() => setFiltrosAtas(prev => ({ ...prev, searchTerm: "" }))}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
+            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+              {filtrosAtas.searchTerm && (
+                <button
+                  onClick={() => setFiltrosAtas(prev => ({ ...prev, searchTerm: "" }))}
+                  className="text-gray-400 hover:text-gray-600 p-0.5"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className={`p-0.5 rounded transition-colors ${filtrosAtas.dateFrom || filtrosAtas.dateTo ? 'text-red-600' : 'text-gray-400 hover:text-gray-600'}`}>
+                    <CalendarDays className="w-4 h-4" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-64 p-3" align="end">
+                  <div className="space-y-3">
+                    <p className="text-xs font-semibold text-gray-700">Filtrar por data</p>
+                    <div className="flex gap-2">
+                      {[{v:'7d',l:'7d'},{v:'15d',l:'15d'},{v:'30d',l:'30d'},{v:'mes_atual',l:'Mês'}].map(p => (
+                        <button
+                          key={p.v}
+                          onClick={() => {
+                            const hoje = new Date();
+                            let di = '', df = format(hoje, 'yyyy-MM-dd');
+                            if (p.v === '7d') di = format(new Date(hoje.getTime() - 7*86400000), 'yyyy-MM-dd');
+                            else if (p.v === '15d') di = format(new Date(hoje.getTime() - 15*86400000), 'yyyy-MM-dd');
+                            else if (p.v === '30d') di = format(new Date(hoje.getTime() - 30*86400000), 'yyyy-MM-dd');
+                            else if (p.v === 'mes_atual') di = format(startOfMonth(hoje), 'yyyy-MM-dd');
+                            setFiltrosAtas(prev => ({ ...prev, preset: p.v, dateFrom: di, dateTo: df }));
+                          }}
+                          className={`px-2 py-1 rounded text-xs font-medium border transition-colors ${
+                            filtrosAtas.preset === p.v ? 'bg-red-600 text-white border-red-600' : 'bg-white text-gray-600 border-gray-200 hover:border-red-300'
+                          }`}
+                        >
+                          {p.l}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-gray-500">De</Label>
+                      <Input
+                        type="date"
+                        value={filtrosAtas.dateFrom || ""}
+                        onChange={(e) => setFiltrosAtas(prev => ({ ...prev, dateFrom: e.target.value, preset: 'custom' }))}
+                        className="h-8 text-xs"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-gray-500">Até</Label>
+                      <Input
+                        type="date"
+                        value={filtrosAtas.dateTo || ""}
+                        onChange={(e) => setFiltrosAtas(prev => ({ ...prev, dateTo: e.target.value, preset: 'custom' }))}
+                        className="h-8 text-xs"
+                      />
+                    </div>
+                    {(filtrosAtas.dateFrom || filtrosAtas.dateTo) && (
+                      <button
+                        onClick={() => setFiltrosAtas(prev => ({ ...prev, dateFrom: '', dateTo: '', preset: '' }))}
+                        className="text-xs text-red-600 hover:underline w-full text-center"
+                      >
+                        Limpar datas
+                      </button>
+                    )}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
           </div>
           <Select
             value={filtrosAtas.consultor_id || "all"}
