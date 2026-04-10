@@ -4,6 +4,7 @@ import { base44 } from "@/api/base44Client";
 /**
  * Observability hook for /controleaceleracao page.
  * Tracks: page load performance, tab switches, filter usage, atendimento creation, errors.
+ * v2 - fixed trackTabChange definition order
  */
 export function useAceleracaoObservability(user) {
   const pageLoadTime = useRef(performance.now());
