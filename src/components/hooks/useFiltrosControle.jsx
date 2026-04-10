@@ -1,28 +1,27 @@
-import { useMemo } from "react";
+/**
+ * Funções puras de filtro para /controleaceleracao.
+ * Sem hooks — podem ser usadas dentro de useMemo livremente.
+ */
 
 /**
- * Hook de regras de filtro para /controleaceleracao.
- * Deriva consultorEfetivo e atendimentosPeriodo a partir dos filtros e dados brutos.
- * Puro: sem side-effects, sem queries.
+ * Deriva o ID do consultor efetivo a partir dos filtros e do usuário autenticado.
+ * Regra: filtro explícito > role-based default (non-admin usa próprio ID) > null (todos).
  */
-export default function useFiltrosControle({ filtros, user, atendimentos }) {
-  // Consultor efetivo: filtro explícito > role-based default
-  const consultorEfetivo = useMemo(() => {
-    if (filtros.consultorId && filtros.consultorId !== "todos") return filtros.consultorId;
-    if (user?.role !== "admin") return user?.id || null;
-    return null;
-  }, [filtros.consultorId, user?.id, user?.role]);
+export function getConsultorEfetivo(filtros, user) {
+  if (filtros.consultorId && filtros.consultorId !== "todos") return filtros.consultorId;
+  if (user?.role !== "admin") return user?.id || null;
+  return null;
+}
 
-  // Atendimentos filtrados por período selecionado
-  const atendimentosPeriodo = useMemo(() => {
-    if (!atendimentos?.length) return [];
-    const { dataInicio, dataFim } = filtros;
-    if (!dataInicio || !dataFim) return atendimentos;
-    return atendimentos.filter(a => {
-      const d = new Date(a.data_agendada).toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
-      return d >= dataInicio && d <= dataFim;
-    });
-  }, [atendimentos, filtros.dataInicio, filtros.dataFim]);
-
-  return { consultorEfetivo, atendimentosPeriodo };
+/**
+ * Filtra atendimentos pelo período (dataInicio / dataFim) presente nos filtros.
+ */
+export function filterAtendimentosPeriodo(atendimentos, filtros) {
+  if (!atendimentos?.length) return [];
+  const { dataInicio, dataFim } = filtros;
+  if (!dataInicio || !dataFim) return atendimentos;
+  return atendimentos.filter(a => {
+    const d = new Date(a.data_agendada).toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+    return d >= dataInicio && d <= dataFim;
+  });
 }

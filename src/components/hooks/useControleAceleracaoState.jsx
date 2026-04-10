@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import useWorkshopsAtivos from "./useWorkshopsAtivos";
 import useConsultoresList from "./useConsultoresList";
 import useControleAceleracaoURLState from "./useControleAceleracaoURLState";
-import useFiltrosControle from "./useFiltrosControle";
+import { getConsultorEfetivo, filterAtendimentosPeriodo } from "./useFiltrosControle";
 
 /**
  * Composição central de estado para /controleaceleracao.
@@ -31,9 +31,11 @@ export default function useControleAceleracaoState() {
   const { data: workshops } = useWorkshopsAtivos();
   const { data: consultores } = useConsultoresList(user);
 
-  // ── 4. Filtros derivados (precisa de user para consultorEfetivo) ──
-  //    Atendimentos query depende de consultorEfetivo, então compute primeiro com array vazio
-  const { consultorEfetivo } = useFiltrosControle({ filtros, user, atendimentos: [] });
+  // ── 4. Consultor efetivo (função pura, sem hook) ──
+  const consultorEfetivo = useMemo(
+    () => getConsultorEfetivo(filtros, user),
+    [filtros.consultorId, user?.id, user?.role]
+  );
 
   // ── 5. Atendimentos — query única compartilhada ──
   const { data: atendimentos, isLoading: loadingAtendimentos } = useQuery({
@@ -48,12 +50,11 @@ export default function useControleAceleracaoState() {
     refetchInterval: 5 * 60 * 1000,
   });
 
-  // ── 6. Atendimentos filtrados por período (agora com dados reais) ──
-  const { atendimentosPeriodo } = useFiltrosControle({
-    filtros,
-    user,
-    atendimentos: atendimentos || [],
-  });
+  // ── 6. Atendimentos filtrados por período (função pura, sem hook) ──
+  const atendimentosPeriodo = useMemo(
+    () => filterAtendimentosPeriodo(atendimentos || [], filtros),
+    [atendimentos, filtros.dataInicio, filtros.dataFim]
+  );
 
   // ── 7. Meeting minutes ──
   const { data: atas } = useQuery({
