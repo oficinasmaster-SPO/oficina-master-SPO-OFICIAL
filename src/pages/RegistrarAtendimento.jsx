@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, X, Check, AlertCircle, User, ChevronRight, Download } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
 import ConflitosHorarioModal from "@/components/aceleracao/ConflitosHorarioModal";
 import ClientIntelligenceCapturePanel from "@/components/inteligencia/ClientIntelligenceCapturePanel";
@@ -263,6 +264,12 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
     queryKey: ['cursos-treinamento'],
     queryFn: () => base44.entities.TrainingCourse.list('-created_date', 1000),
     staleTime: 10 * 60 * 1000
+  });
+
+  const { data: ataData } = useQuery({
+    queryKey: ['ata-read-only', formData.ata_id],
+    queryFn: () => base44.entities.MeetingMinutes.get(formData.ata_id),
+    enabled: !!formData.ata_id && isReadOnly
   });
 
   const { data: clientIntelligences } = useQuery({
@@ -587,9 +594,10 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
         </div>
       </div>
 
+      {/* Participantes (Header em Documento) */}
       {formData.participantes?.length > 0 && formData.participantes.some(p => p.nome) && (
         <section className="space-y-3">
-          <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">{sectionCounter++}. Participantes</h3>
+          <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">Participantes</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pl-4">
             {formData.participantes.filter(p => p.nome).map((p, idx) => (
               <div key={idx} className="text-gray-700">
@@ -603,98 +611,67 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
         </section>
       )}
 
-      {clientIntelligences?.length > 0 && (
+      {/* 1. PAUTAS */}
+      {((ataData?.pautas) || (formData.pauta?.length > 0 && formData.pauta.some(p => p.titulo))) && (
         <section className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">{sectionCounter++}. Inteligência do Cliente Capturada</h3>
-          <div className="pl-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-            {clientIntelligences.map((item, idx) => (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => {
-                  setSelectedIntelligence(item);
-                  setViewerOpen(true);
-                }}
-                className="text-left bg-white border border-gray-100 hover:border-blue-300 hover:shadow-md hover:bg-blue-50/20 rounded-lg p-4 space-y-2 transition-all cursor-pointer group"
-              >
-                <div className="flex items-start gap-2">
-                  <div className="bg-blue-100 p-1.5 rounded-md mt-0.5">
-                    <AlertCircle className="w-4 h-4 text-blue-700" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold text-gray-900 text-base">{item.areaLabel}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                       <span className="text-xs font-semibold text-gray-500">Tipo:</span>
-                       <span className={`text-xs font-medium ${item.typeColor ? `text-${item.typeColor}` : 'text-blue-600'}`}>
-                         {item.typeLabel}
-                       </span>
-                     </div>
-                    <div className="mt-1">
-                      <span className="text-xs font-semibold text-gray-500">Problema:</span>
-                      <p className="text-sm text-gray-800 font-medium truncate group-hover:whitespace-normal group-hover:text-clip">{item.subcategory}</p>
-                    </div>
-                    <div className="flex items-center gap-2 pt-2 mt-1 border-t border-gray-50">
-                      <span className="text-xs font-semibold text-gray-500">Gravidade:</span>
-                      <span className="inline-block px-2 py-0.5 bg-amber-100 text-amber-800 text-xs font-bold rounded">
-                        {item.gravityLabel}
-                      </span>
-                      <span className="ml-auto text-xs text-blue-500 opacity-0 group-hover:opacity-100 font-medium flex items-center gap-1 transition-opacity">Ver detalhes <ChevronRight className="w-3 h-3" /></span>
-                    </div>
-                  </div>
-                </div>
-              </button>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {formData.pauta?.length > 0 && formData.pauta.some(p => p.titulo) && (
-        <section className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">{sectionCounter++}. Pauta da Reunião</h3>
+          <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">1. Pautas (Anotações do Consultor)</h3>
           <div className="space-y-4 pl-4">
-            {formData.pauta.filter(p => p.titulo).map((p, idx) => (
-              <div key={idx}>
-                <h4 className="text-base font-medium text-gray-800 flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-                  {p.titulo} <span className="text-sm font-normal text-gray-500 bg-gray-100 px-2 py-0.5 rounded-md">{p.tempo_estimado} min</span>
-                </h4>
-                {p.descricao && <p className="text-sm text-gray-600 mt-1.5 leading-relaxed pl-3 border-l-2 border-gray-100">{p.descricao}</p>}
-              </div>
-            ))}
+            {ataData?.pautas ? (
+              <p className="text-gray-700 text-base whitespace-pre-wrap leading-relaxed">{ataData.pautas}</p>
+            ) : (
+              formData.pauta.filter(p => p.titulo).map((p, idx) => (
+                <div key={idx}>
+                  <h4 className="text-base font-medium text-gray-800 flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                    {p.titulo} <span className="text-sm font-normal text-gray-500 bg-gray-100 px-2 py-0.5 rounded-md">{p.tempo_estimado} min</span>
+                  </h4>
+                  {p.descricao && <p className="text-sm text-gray-600 mt-1.5 leading-relaxed pl-3 border-l-2 border-gray-100">{p.descricao}</p>}
+                </div>
+              ))
+            )}
           </div>
         </section>
       )}
 
-      {formData.objetivos?.length > 0 && formData.objetivos.some(o => o) && (
+      {/* 2. OBJETIVOS DO ATENDIMENTO */}
+      {((ataData?.objetivos_atendimento) || (formData.objetivos?.length > 0 && formData.objetivos.some(o => o))) && (
         <section className="space-y-3">
-          <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">{sectionCounter++}. Objetivos</h3>
-          <ul className="space-y-2 pl-4">
-            {formData.objetivos.filter(o => o).map((obj, idx) => (
-              <li key={idx} className="text-gray-700 text-base flex items-start gap-2">
-                <span className="text-blue-500 mt-0.5">•</span>
-                <span>{obj}</span>
-              </li>
-            ))}
-          </ul>
+          <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">2. Objetivos do Atendimento (Anotações do Consultor)</h3>
+          <div className="pl-4">
+            {ataData?.objetivos_atendimento ? (
+              <p className="text-gray-700 text-base whitespace-pre-wrap leading-relaxed">{ataData.objetivos_atendimento}</p>
+            ) : (
+              <ul className="space-y-2">
+                {formData.objetivos.filter(o => o).map((obj, idx) => (
+                  <li key={idx} className="text-gray-700 text-base flex items-start gap-2">
+                    <span className="text-blue-500 mt-0.5">•</span>
+                    <span>{obj}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </section>
       )}
 
-      {formData.observacoes_consultor && (
+      {/* 3. OBSERVAÇÕES E OBJETIVOS DO CONSULTOR */}
+      {(ataData?.objetivos_consultor || ataData?.observacoes_consultor || formData.observacoes_consultor) && (
         <section className="space-y-3">
-          <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">{sectionCounter++}. Observações do Consultor</h3>
+          <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">3. Observações e Objetivos do Consultor (Anotações)</h3>
           <div className="pl-4">
             <p className="text-gray-700 text-base whitespace-pre-wrap leading-relaxed bg-gray-50/50 p-4 rounded-lg border border-gray-100">
-              {formData.observacoes_consultor}
+              {ataData?.objetivos_consultor || ataData?.observacoes_consultor || formData.observacoes_consultor}
             </p>
           </div>
         </section>
       )}
 
-      {formData.proximos_passos_list?.length > 0 && formData.proximos_passos_list.some(p => p.descricao) && (
+      {/* 4. PRÓXIMOS PASSOS */}
+      {((formData.proximos_passos_list?.length > 0 && formData.proximos_passos_list.some(p => p.descricao)) || formData.proximos_passos) && (
         <section className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">{sectionCounter++}. Próximos Passos</h3>
+          <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">4. Próximos Passos (Anotações do Consultor)</h3>
           <div className="space-y-3 pl-4">
-            {formData.proximos_passos_list.filter(p => p.descricao).map((step, idx) => (
+            {formData.proximos_passos_list?.filter(p => p.descricao).map((step, idx) => (
               <div key={idx} className="text-base text-gray-700 flex items-start gap-3 bg-white border border-gray-100 p-3 rounded-lg shadow-sm">
                 <span className="bg-blue-100 text-blue-600 w-6 h-6 rounded-full flex items-center justify-center font-medium shrink-0 mt-0.5 text-sm">{idx + 1}</span>
                 <div>
@@ -706,29 +683,97 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
                 </div>
               </div>
             ))}
+            {formData.proximos_passos && (
+              <p className="text-gray-700 text-base whitespace-pre-wrap leading-relaxed mt-4">
+                {formData.proximos_passos}
+              </p>
+            )}
           </div>
         </section>
       )}
 
-      {(formData.processos_vinculados?.length > 0 || formData.videoaulas_vinculadas?.length > 0 || formData.midias_anexas?.length > 0) && (
+      {/* 5. RESUMO DA REUNIAO (GERADO POR IA) */}
+      {ataData?.ata_ia && (
         <section className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">{sectionCounter++}. Conteúdo Vinculado</h3>
+          <h3 className="text-lg font-semibold text-purple-700 border-l-4 border-purple-500 pl-3">5. Resumo Executivo (Gerado por IA)</h3>
+          <div className="pl-4 prose prose-slate prose-sm max-w-none text-gray-700 bg-purple-50/30 p-5 rounded-lg border border-purple-100">
+            <ReactMarkdown>{ataData.ata_ia}</ReactMarkdown>
+          </div>
+        </section>
+      )}
+
+      {/* 6. DECISÕES TOMADAS */}
+      {formData.decisoes_tomadas?.length > 0 && (
+        <section className="space-y-4">
+          <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">6. Decisões Tomadas (Anotações do Consultor)</h3>
+          <div className="space-y-3 pl-4">
+            {formData.decisoes_tomadas.map((decisao, idx) => (
+              <div key={idx} className="bg-blue-50 border border-blue-200 p-3 rounded-lg">
+                <p className="font-medium text-gray-900 text-base">{decisao.decisao}</p>
+                <div className="flex gap-3 mt-1.5 text-sm text-gray-600">
+                  {decisao.responsavel && <span>Responsável: {decisao.responsavel}</span>}
+                  {decisao.prazo && <span>Prazo: {toBrazilDate(decisao.prazo).toLocaleDateString('pt-BR')}</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* 7. AÇÕES DE ACOMPANHAMENTO */}
+      {formData.acoes_geradas?.length > 0 && (
+        <section className="space-y-4">
+          <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">7. Ações de Acompanhamento (Anotações do Consultor)</h3>
+          <div className="space-y-3 pl-4">
+            {formData.acoes_geradas.map((acao, idx) => (
+              <div key={idx} className="bg-green-50 border border-green-200 p-3 rounded-lg">
+                <p className="font-medium text-gray-900 text-base">{acao.acao}</p>
+                <div className="flex gap-3 mt-1.5 text-sm text-gray-600">
+                  {acao.responsavel && <span>Responsável: {acao.responsavel}</span>}
+                  {acao.prazo && <span>Prazo: {toBrazilDate(acao.prazo).toLocaleDateString('pt-BR')}</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* 8. PROCESSOS (MAPs) COMPARTILHADOS */}
+      {formData.processos_vinculados?.length > 0 && (
+        <section className="space-y-4">
+          <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">8. Processos (MAPs) Compartilhados</h3>
           <div className="pl-4 flex flex-col gap-2">
-            {formData.processos_vinculados?.map((p, idx) => (
-              <p key={`p-${idx}`} className="text-base text-gray-700 flex items-center gap-2">
-                <span className="bg-gray-100 p-1.5 rounded text-gray-600 text-sm">📦</span>
-                <span className="font-medium">{p.titulo}</span>
-                <span className="text-gray-500 text-sm">({p.categoria})</span>
-              </p>
+            {formData.processos_vinculados.map((p, idx) => (
+              <div key={idx} className="bg-blue-50/50 border border-blue-200 p-3 rounded-lg">
+                <p className="font-medium text-gray-900 text-base">{p.titulo}</p>
+                <p className="text-sm text-gray-600">Categoria: {p.categoria}</p>
+              </div>
             ))}
-            {formData.videoaulas_vinculadas?.map((v, idx) => (
-              <p key={`v-${idx}`} className="text-base text-gray-700 flex items-center gap-2">
-                <span className="bg-gray-100 p-1.5 rounded text-gray-600 text-sm">📺</span>
-                <span className="font-medium">{v.titulo}</span>
-                <span className="text-gray-500 text-sm">({v.descricao})</span>
-              </p>
+          </div>
+        </section>
+      )}
+
+      {/* 9. VIDEOAULAS RECOMENDADAS */}
+      {formData.videoaulas_vinculadas?.length > 0 && (
+        <section className="space-y-4">
+          <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">9. Videoaulas Recomendadas</h3>
+          <div className="pl-4 flex flex-col gap-2">
+            {formData.videoaulas_vinculadas.map((v, idx) => (
+              <div key={idx} className="bg-purple-50/50 border border-purple-200 p-3 rounded-lg">
+                <p className="font-medium text-gray-900 text-base">{v.titulo}</p>
+                <p className="text-sm text-gray-600">Curso: {v.descricao}</p>
+              </div>
             ))}
-            {formData.midias_anexas?.map((m, idx) => (
+          </div>
+        </section>
+      )}
+
+      {/* 10. MIDIAS E ANEXOS */}
+      {formData.midias_anexas?.length > 0 && (
+        <section className="space-y-4">
+          <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">10. Mídias e Anexos</h3>
+          <div className="pl-4 flex flex-col gap-2">
+            {formData.midias_anexas.map((m, idx) => (
               <a key={`m-${idx}`} href={m.url} target="_blank" rel="noreferrer" className="text-base text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-2 w-fit">
                 <span className="bg-blue-50 p-1.5 rounded text-blue-500 text-sm">📎</span>
                 <span className="font-medium">{m.nome || 'Arquivo Anexo'}</span>
@@ -738,9 +783,22 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
         </section>
       )}
 
+      {/* 11. VISÃO GERAL DO PROJETO */}
+      {(ataData?.visao_geral_projeto || formData.visao_geral_projeto) && (
+        <section className="space-y-3">
+          <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">11. Visão Geral do Projeto de Aceleração</h3>
+          <div className="pl-4">
+            <p className="text-gray-700 text-base whitespace-pre-wrap leading-relaxed bg-gray-50/50 p-4 rounded-lg border border-gray-100">
+              {ataData?.visao_geral_projeto || formData.visao_geral_projeto}
+            </p>
+          </div>
+        </section>
+      )}
+
+      {/* 12. CHECKLIST DE DIAGNÓSTICO */}
       {formData.checklist_respostas?.length > 0 && (
         <section className="space-y-6">
-          <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">{sectionCounter++}. Checklist de Diagnóstico</h3>
+          <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">12. Checklist de Diagnóstico</h3>
           <div className="pl-4 flex flex-col gap-6">
             {formData.checklist_respostas.map((bloco, idx) => (
               <div key={idx} className="space-y-3">
@@ -784,6 +842,52 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
                   ))}
                 </div>
               </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* 13. INTELIGÊNCIA DO CLIENTE */}
+      {clientIntelligences?.length > 0 && (
+        <section className="space-y-4">
+          <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">13. Inteligência do Cliente (Dores e Oportunidades)</h3>
+          <div className="pl-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            {clientIntelligences.map((item, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => {
+                  setSelectedIntelligence(item);
+                  setViewerOpen(true);
+                }}
+                className="text-left bg-orange-50/50 border border-orange-200 hover:border-orange-300 hover:shadow-md rounded-lg p-4 space-y-2 transition-all cursor-pointer group"
+              >
+                <div className="flex items-start gap-2">
+                  <div className="bg-orange-100 p-1.5 rounded-md mt-0.5">
+                    <AlertCircle className="w-4 h-4 text-orange-700" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-orange-900 text-base">{item.areaLabel}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                       <span className="text-xs font-semibold text-gray-500">Tipo:</span>
+                       <span className={`text-xs font-medium ${item.typeColor ? `text-${item.typeColor}` : 'text-orange-600'}`}>
+                         {item.typeLabel}
+                       </span>
+                     </div>
+                    <div className="mt-1">
+                      <span className="text-xs font-semibold text-gray-500">Problema:</span>
+                      <p className="text-sm text-gray-800 font-medium truncate group-hover:whitespace-normal group-hover:text-clip">{item.subcategory}</p>
+                    </div>
+                    <div className="flex items-center gap-2 pt-2 mt-1 border-t border-orange-200/50">
+                      <span className="text-xs font-semibold text-gray-500">Gravidade:</span>
+                      <span className="inline-block px-2 py-0.5 bg-orange-100 text-orange-800 text-xs font-bold rounded">
+                        {item.gravityLabel}
+                      </span>
+                      <span className="ml-auto text-xs text-orange-500 opacity-0 group-hover:opacity-100 font-medium flex items-center gap-1 transition-opacity">Ver detalhes <ChevronRight className="w-3 h-3" /></span>
+                    </div>
+                  </div>
+                </div>
+              </button>
             ))}
           </div>
         </section>
