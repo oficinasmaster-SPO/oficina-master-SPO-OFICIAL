@@ -297,7 +297,7 @@ export default function PainelAtendimentosTab({ state }) {
                     <th className="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wider border-r border-gray-100">Cliente</th>
                     <th className="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wider border-r border-gray-100" style={{ width: '110px' }}>Tipo</th>
                     <th className="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wider border-r border-gray-100" style={{ width: '110px' }}>Status</th>
-                    <th className="text-right py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wider" style={{ width: '220px', minWidth: '220px' }}>Ações</th>
+                    <th className="text-center py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wider" style={{ width: '80px', minWidth: '80px' }}>Ações</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -386,12 +386,12 @@ export default function PainelAtendimentosTab({ state }) {
                           )}
                         </td>
                         <td className="py-3 px-3">
-                          <div className="flex items-center justify-end">
+                          <div className="flex items-center justify-center">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                <Button variant="outline" className="h-8 w-8 p-0 border-gray-200 bg-white hover:bg-gray-50 shadow-sm transition-colors">
                                   <span className="sr-only">Abrir menu</span>
-                                  <MoreVertical className="h-4 w-4 text-gray-500" />
+                                  <MoreVertical className="h-4 w-4 text-gray-600" />
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end" className="w-56">
