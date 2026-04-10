@@ -11,6 +11,8 @@ import ClientesDetalhesModal from "./ClientesDetalhesModal";
 import ReunioesDetalhesModal from "./ReunioesDetalhesModal";
 import GargalosConsultoresRealtime from "./GargalosConsultoresRealtime";
 
+const STATUS_FINALIZADOS = ['realizado', 'cancelado', 'faltou', 'desmarcou', 'remarcado'];
+
 function getMouseEnterSide(e) {
   const rect = e.currentTarget.getBoundingClientRect();
   const x = e.clientX - rect.left;
@@ -35,8 +37,6 @@ export default function VisaoGeralTab({ state }) {
   const [hoverSides, setHoverSides] = useState({});
 
   const hoje = useMemo(() => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' }), []);
-
-  const STATUS_FINALIZADOS = ['realizado', 'cancelado', 'faltou', 'desmarcou', 'remarcado'];
 
   const { reunioesRealizadas, totalHorasRealizadas, tarefasPendentes } = useMemo(() => {
     const realizados = atendimentosPeriodo.filter(a => a.status === 'realizado');
