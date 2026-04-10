@@ -645,18 +645,40 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
               {isReadOnly ? (
                 <>
                   <div className="flex items-center gap-3">
-                    <h1 className="text-2xl font-bold text-gray-900 truncate max-w-md" title={workshops?.find(w => w.id === formData.workshop_id)?.name || 'Oficina'}>
-                      {workshops?.find(w => w.id === formData.workshop_id)?.name || 'Oficina'}
-                    </h1>
-                    <span className="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
-                    {formData.consultor_nome && (
-                      <span className="text-lg font-medium text-gray-600 flex items-center">
-                        <User className="w-5 h-5 mr-1.5 text-gray-400" />
-                        {formData.consultor_nome}
-                      </span>
-                    )}
+                    {formData.consultor_nome && (() => {
+                      const consultor = consultores?.find(c => c.id === formData.consultor_id);
+                      return (
+                        <div className="flex items-center gap-2.5">
+                          {consultor?.profile_picture_url ? (
+                            <img src={consultor.profile_picture_url} alt={formData.consultor_nome} className="w-9 h-9 rounded-full object-cover border border-gray-200" />
+                          ) : (
+                            <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center border border-blue-200">
+                              <User className="w-4 h-4 text-blue-600" />
+                            </div>
+                          )}
+                          <h1 className="text-2xl font-bold text-gray-900 truncate max-w-[200px]" title={formData.consultor_nome}>
+                            {formData.consultor_nome}
+                          </h1>
+                        </div>
+                      );
+                    })()}
+                    <span className="text-gray-300 text-2xl font-light mx-1">/</span>
+                    {(() => {
+                      const workshop = workshops?.find(w => w.id === formData.workshop_id);
+                      const wsName = workshop?.name || 'Oficina';
+                      return (
+                        <div className="flex items-center gap-2.5">
+                          {workshop?.logo_url ? (
+                            <img src={workshop.logo_url} alt={wsName} className="w-9 h-9 rounded-lg object-contain bg-white border border-gray-200 p-0.5" />
+                          ) : null}
+                          <span className="text-xl font-medium text-gray-600 truncate max-w-md" title={wsName}>
+                            {wsName}
+                          </span>
+                        </div>
+                      );
+                    })()}
                   </div>
-                  <p className="text-sm text-gray-500 mt-1 uppercase tracking-wider font-medium">Modo Visualização (Somente Leitura)</p>
+                  <p className="text-sm text-gray-500 mt-2 uppercase tracking-wider font-medium">Visualizando Atendimento (Somente Leitura)</p>
                 </>
               ) : (
                 <>
@@ -722,18 +744,40 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
         {isReadOnly ? (
           <>
             <div className="flex items-center gap-3 mb-1">
-              <h1 className="text-3xl font-bold text-gray-900 truncate" title={workshops?.find(w => w.id === formData.workshop_id)?.name || 'Oficina'}>
-                {workshops?.find(w => w.id === formData.workshop_id)?.name || 'Oficina'}
-              </h1>
-              <span className="w-2 h-2 rounded-full bg-gray-300 mx-2"></span>
-              {formData.consultor_nome && (
-                <span className="text-2xl font-medium text-gray-600 flex items-center">
-                  <User className="w-6 h-6 mr-2 text-gray-400" />
-                  {formData.consultor_nome}
-                </span>
-              )}
+              {formData.consultor_nome && (() => {
+                const consultor = consultores?.find(c => c.id === formData.consultor_id);
+                return (
+                  <div className="flex items-center gap-3">
+                    {consultor?.profile_picture_url ? (
+                      <img src={consultor.profile_picture_url} alt={formData.consultor_nome} className="w-10 h-10 rounded-full object-cover border border-gray-200 shadow-sm" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center border border-blue-200 shadow-sm">
+                        <User className="w-5 h-5 text-blue-600" />
+                      </div>
+                    )}
+                    <h1 className="text-3xl font-bold text-gray-900 truncate" title={formData.consultor_nome}>
+                      {formData.consultor_nome}
+                    </h1>
+                  </div>
+                );
+              })()}
+              <span className="text-gray-300 text-3xl font-light mx-2">/</span>
+              {(() => {
+                const workshop = workshops?.find(w => w.id === formData.workshop_id);
+                const wsName = workshop?.name || 'Oficina';
+                return (
+                  <div className="flex items-center gap-3">
+                    {workshop?.logo_url ? (
+                      <img src={workshop.logo_url} alt={wsName} className="w-10 h-10 rounded-lg object-contain bg-white border border-gray-200 shadow-sm p-0.5" />
+                    ) : null}
+                    <span className="text-2xl font-medium text-gray-600 truncate" title={wsName}>
+                      {wsName}
+                    </span>
+                  </div>
+                );
+              })()}
             </div>
-            <p className="text-sm text-gray-500 uppercase tracking-wider font-medium">Modo Visualização (Somente Leitura)</p>
+            <p className="text-sm text-gray-500 mt-2 uppercase tracking-wider font-medium">Visualizando Atendimento (Somente Leitura)</p>
           </>
         ) : (
           <>
