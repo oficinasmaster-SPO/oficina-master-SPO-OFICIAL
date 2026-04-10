@@ -260,11 +260,16 @@ export default function PainelAtendimentosTab({ state }) {
                       <Label className="text-xs text-gray-500">Até</Label>
                       <Input type="date" value={filtros.dataFim || ''} onChange={(e) => setFiltros({ ...filtros, preset: 'custom', dataFim: e.target.value })} className="h-8 text-xs" />
                     </div>
-                    {filtros.preset !== 'mes_atual' && (
-                      <button onClick={() => setFiltros({ ...filtros, preset: 'mes_atual' })} className="text-xs text-red-600 hover:underline w-full text-center">
-                        Limpar datas
+                    <div className="flex flex-col gap-2 pt-2 border-t border-gray-50 mt-1">
+                      <button onClick={() => setFiltros({ ...filtros, preset: 'all', dataInicio: null, dataFim: null })} className="text-xs text-red-600 font-medium hover:underline w-full text-center">
+                        Todo o período existente
                       </button>
-                    )}
+                      {filtros.preset !== 'mes_atual' && (
+                        <button onClick={() => setFiltros({ ...filtros, preset: 'mes_atual', dataInicio: null, dataFim: null })} className="text-xs text-gray-500 hover:underline w-full text-center">
+                          Voltar para Mês Atual
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </PopoverContent>
               </Popover>
