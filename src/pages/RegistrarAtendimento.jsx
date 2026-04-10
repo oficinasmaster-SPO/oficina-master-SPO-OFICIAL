@@ -608,30 +608,6 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
         handleDeleteAta={handleDeleteAta} queryClient={queryClient}
       />
 
-      {/* Action Buttons */}
-      <div className="sticky bottom-0 z-20 -mx-6 px-6 mt-6">
-        <div className="flex gap-3 justify-end bg-white/95 backdrop-blur-sm border-t border-gray-200 shadow-[0_-4px_12px_rgba(0,0,0,0.06)] rounded-t-xl py-4 px-6">
-          <Button type="button" variant="outline" onClick={handleClose} className="px-6">Cancelar</Button>
-          <Button
-            type="submit"
-            disabled={createMutation.isPending || saveSuccess}
-            className={`px-6 shadow-md transition-all duration-300 ${
-              saveSuccess
-                ? 'bg-green-600 hover:bg-green-600'
-                : 'bg-blue-600 hover:bg-blue-700'
-            }`}
-          >
-            {createMutation.isPending ? (
-              <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Salvando...</>
-            ) : saveSuccess ? (
-              <><Check className="w-4 h-4 mr-2" />Salvo!</>
-            ) : (
-              formData.id ? 'Atualizar Atendimento' : 'Salvar Atendimento'
-            )}
-          </Button>
-        </div>
-      </div>
-
       <ConflitosHorarioModal
         open={conflitosModal.open}
         onOpenChange={(open) => setConflitosModal(prev => ({ ...prev, open }))}
@@ -661,7 +637,28 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
             </button>
           </div>
           <div className="p-6 overflow-y-auto flex-1">
-            <form onSubmit={handleSubmit} className="space-y-6">{content}</form>
+            <form id="atendimento-form" onSubmit={handleSubmit} className="space-y-6">{content}</form>
+          </div>
+          <div className="flex gap-3 justify-end border-t border-gray-200 bg-white px-6 py-4 shrink-0 rounded-b-2xl">
+            <Button type="button" variant="outline" onClick={handleClose} className="px-6">Cancelar</Button>
+            <Button
+              type="submit"
+              form="atendimento-form"
+              disabled={createMutation.isPending || saveSuccess}
+              className={`px-6 shadow-md transition-all duration-300 ${
+                saveSuccess
+                  ? 'bg-green-600 hover:bg-green-600'
+                  : 'bg-blue-600 hover:bg-blue-700'
+              }`}
+            >
+              {createMutation.isPending ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Salvando...</>
+              ) : saveSuccess ? (
+                <><Check className="w-4 h-4 mr-2" />Salvo!</>
+              ) : (
+                formData.id ? 'Atualizar Atendimento' : 'Salvar Atendimento'
+              )}
+            </Button>
           </div>
         </div>
       </div>
@@ -674,7 +671,31 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
         <h1 className="text-3xl font-bold text-gray-900">{formData.id ? 'Editar Atendimento' : 'Registrar Atendimento de Consultoria'}</h1>
         <p className="text-gray-600 mt-2">{formData.id ? 'Atualize as informações do atendimento' : 'Agende e registre informações do atendimento ao cliente'}</p>
       </div>
-      <form onSubmit={handleSubmit} className="space-y-6">{content}</form>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {content}
+        <div className="sticky bottom-0 z-20 -mx-6 px-6 mt-6">
+          <div className="flex gap-3 justify-end bg-white/95 backdrop-blur-sm border-t border-gray-200 shadow-[0_-4px_12px_rgba(0,0,0,0.06)] rounded-t-xl py-4 px-6">
+            <Button type="button" variant="outline" onClick={handleClose} className="px-6">Cancelar</Button>
+            <Button
+              type="submit"
+              disabled={createMutation.isPending || saveSuccess}
+              className={`px-6 shadow-md transition-all duration-300 ${
+                saveSuccess
+                  ? 'bg-green-600 hover:bg-green-600'
+                  : 'bg-blue-600 hover:bg-blue-700'
+              }`}
+            >
+              {createMutation.isPending ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Salvando...</>
+              ) : saveSuccess ? (
+                <><Check className="w-4 h-4 mr-2" />Salvo!</>
+              ) : (
+                formData.id ? 'Atualizar Atendimento' : 'Salvar Atendimento'
+              )}
+            </Button>
+          </div>
+        </div>
+      </form>
     </div>
   );
 }
