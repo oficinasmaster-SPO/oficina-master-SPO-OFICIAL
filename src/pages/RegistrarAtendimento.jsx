@@ -5,7 +5,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, X } from "lucide-react";
+import { Loader2, X, Check } from "lucide-react";
 import { toast } from "sonner";
 import ConflitosHorarioModal from "@/components/aceleracao/ConflitosHorarioModal";
 import ClientIntelligenceCapturePanel from "@/components/inteligencia/ClientIntelligenceCapturePanel";
@@ -77,6 +77,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
   const [timerData, setTimerData] = useState(null);
   const [showMeetingTimer, setShowMeetingTimer] = useState(false);
   const [autoSaveStatus, setAutoSaveStatus] = useState(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
   const [conflitosModal, setConflitosModal] = useState({ open: false, conflitos: [], dataHorario: null });
   const autoSaveTimerRef = useRef(null);
   const pautaRef = React.useRef(null);
@@ -345,8 +346,9 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
       queryClient.invalidateQueries(['consultoria-atendimentos']);
       queryClient.invalidateQueries(['meeting-minutes']);
       queryClient.invalidateQueries(['todos-atendimentos']);
+      setSaveSuccess(true);
       toast.success('Atendimento salvo com sucesso!');
-      handleClose();
+      setTimeout(() => handleClose(), 800);
     },
     onError: (error) => {
       toast.error('Erro ao salvar: ' + (error.message || "Verifique os campos obrigatórios"));
@@ -560,9 +562,19 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
       <div className="sticky bottom-0 z-20 -mx-6 px-6 mt-6">
         <div className="flex gap-3 justify-end bg-white/95 backdrop-blur-sm border-t border-gray-200 shadow-[0_-4px_12px_rgba(0,0,0,0.06)] rounded-t-xl py-4 px-6">
           <Button type="button" variant="outline" onClick={handleClose} className="px-6">Cancelar</Button>
-          <Button type="submit" disabled={createMutation.isPending} className="bg-blue-600 hover:bg-blue-700 px-6 shadow-md">
+          <Button
+            type="submit"
+            disabled={createMutation.isPending || saveSuccess}
+            className={`px-6 shadow-md transition-all duration-300 ${
+              saveSuccess
+                ? 'bg-green-600 hover:bg-green-600'
+                : 'bg-blue-600 hover:bg-blue-700'
+            }`}
+          >
             {createMutation.isPending ? (
               <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Salvando...</>
+            ) : saveSuccess ? (
+              <><Check className="w-4 h-4 mr-2" />Salvo!</>
             ) : (
               formData.id ? 'Atualizar Atendimento' : 'Salvar Atendimento'
             )}
