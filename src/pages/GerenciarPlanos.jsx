@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, lazy, Suspense } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -14,8 +14,9 @@ import { Loader2, Save, Shield, Lock, Unlock, Settings, Calendar, Plus, Trash2 }
 import { toast } from "sonner";
 import { createPageUrl } from "@/utils";
 import { useNavigate } from "react-router-dom";
-import AttendanceRulesTab from "@/components/plans/AttendanceRulesTab";
-import VouchersTab from "@/components/vouchers/VouchersTab";
+
+const AttendanceRulesTab = lazy(() => import("@/components/plans/AttendanceRulesTab"));
+const VouchersTab = lazy(() => import("@/components/vouchers/VouchersTab"));
 
 
 export default function GerenciarPlanos() {
@@ -474,7 +475,9 @@ export default function GerenciarPlanos() {
           </TabsList>
 
           <TabsContent value="vouchers">
-            <VouchersTab />
+            <Suspense fallback={<div className="flex items-center justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-blue-600" /></div>}>
+              <VouchersTab />
+            </Suspense>
           </TabsContent>
 
           <TabsContent value="plans">
@@ -837,10 +840,12 @@ export default function GerenciarPlanos() {
                 </TabsContent>
 
                 <TabsContent value="attendances">
-                  <AttendanceRulesTab 
-                    planId={selectedPlan.plan_id} 
-                    planName={selectedPlan.plan_name}
-                  />
+                  <Suspense fallback={<div className="flex items-center justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-blue-600" /></div>}>
+                    <AttendanceRulesTab 
+                      planId={selectedPlan.plan_id} 
+                      planName={selectedPlan.plan_name}
+                    />
+                  </Suspense>
                 </TabsContent>
               </Tabs>
 
