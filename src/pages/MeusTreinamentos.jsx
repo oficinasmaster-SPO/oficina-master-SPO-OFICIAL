@@ -25,72 +25,72 @@ export default function MeusTreinamentos() {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
 
-      // 1. Fetch available modules (published ones)
-      // Filter by workshop and assignment
-      let allModules = await base44.entities.TrainingModule.filter({ status: 'publicado' });
+      // 1. Buscar cursos disponíveis (publicados)
+      let allCourses = await base44.entities.TrainingCourse.filter({ status: 'publicado' });
       
       // Verificar se é dono de oficina
       const ownedWorkshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
       const isOwner = ownedWorkshops.length > 0;
       const ownerWorkshopId = isOwner ? ownedWorkshops[0].id : null;
 
-      // Encontrar meu registro de colaborador para verificar workshop e atribuição
+      // Encontrar registro de colaborador para verificar workshop e atribuição
       const myEmployeeRecords = await base44.entities.Employee.filter({ email: currentUser.email });
       const myEmployee = myEmployeeRecords[0];
 
       if (isOwner) {
-          // Se for dono, vê todos os módulos da sua oficina + globais
-          allModules = allModules.filter(mod => !mod.workshop_id || mod.workshop_id === ownerWorkshopId);
+          // Se for dono, vê todos os cursos da sua oficina + globais
+          allCourses = allCourses.filter(course => !course.workshop_id || course.workshop_id === ownerWorkshopId);
       } else if (myEmployee) {
-          allModules = allModules.filter(mod => {
+          allCourses = allCourses.filter(course => {
               // 1. Filtro por Workshop
-              if (mod.workshop_id && mod.workshop_id !== myEmployee.workshop_id) {
+              if (course.workshop_id && course.workshop_id !== myEmployee.workshop_id) {
                   return false;
               }
               // 2. Filtro por Atribuição Específica (assigned_to_ids)
-              if (mod.assigned_to_ids && mod.assigned_to_ids.length > 0) {
-                  return mod.assigned_to_ids.includes(myEmployee.id);
+              if (course.assigned_to_ids && course.assigned_to_ids.length > 0) {
+                  return course.assigned_to_ids.includes(myEmployee.id);
               }
               // Se assigned_to_ids estiver vazio, é público para a oficina (ou global)
               return true;
           });
       } else {
           // Usuário sem vínculo (nem dono, nem colaborador) -> vê apenas globais
-          allModules = allModules.filter(mod => !mod.workshop_id);
+          allCourses = allCourses.filter(course => !course.workshop_id);
       }
       
-      // 2. Fetch user progress
-      const progress = await base44.entities.EmployeeTrainingProgress.filter({ employee_id: currentUser.id });
+      // 2. Buscar progresso do usuário
+      const progress = await base44.entities.EmployeeTrainingProgress.filter({ employee_id: currentUser.id }, null, 1000);
       
-      // Map progress by module
+      // Mapa de progresso por curso
       const progMap = {};
       
-      // We need to know how many lessons are in each module to calculate %.
-      // Fetching all lessons might be heavy, but necessary for accurate progress bar unless we denormalize.
-      const allLessons = await base44.entities.TrainingLesson.list();
+      const allLessons = await base44.entities.CourseLesson.list('-created_date', 1000);
+      const allModulesOfCourses = await base44.entities.CourseModule.list('-created_date', 1000);
       
-      for (const mod of allModules) {
-        const modLessons = allLessons.filter(l => l.module_id === mod.id);
-        const totalLessons = modLessons.length;
+      for (const course of allCourses) {
+        const courseModulesIds = allModulesOfCourses.filter(cm => cm.course_id === course.id).map(cm => cm.id);
+        const courseLessons = allLessons.filter(l => courseModulesIds.includes(l.module_id));
+        const totalLessons = courseLessons.length;
         
         if (totalLessons === 0) {
-            progMap[mod.id] = { percent: 0, completed: 0, total: 0, started: false };
+            progMap[course.id] = { percent: 0, completed: 0, total: 0, started: false };
             continue;
         }
 
-        const userModProgress = progress.filter(p => p.module_id === mod.id);
-        const completedCount = userModProgress.filter(p => p.status === 'completed').length;
+        const lessonIds = courseLessons.map(l => l.id);
+        const userCourseProgress = progress.filter(p => lessonIds.includes(p.lesson_id));
+        const completedCount = userCourseProgress.filter(p => p.status === 'completed').length;
         
-        progMap[mod.id] = {
+        progMap[course.id] = {
             percent: Math.round((completedCount / totalLessons) * 100),
             completed: completedCount,
             total: totalLessons,
-            started: userModProgress.length > 0,
-            nextLessonId: modLessons.sort((a,b) => a.order - b.order).find(l => !userModProgress.find(p => p.lesson_id === l.id && p.status === 'completed'))?.id || modLessons[0].id
+            started: userCourseProgress.length > 0,
+            nextLessonId: courseLessons.sort((a,b) => a.order - b.order).find(l => !userCourseProgress.find(p => p.lesson_id === l.id && p.status === 'completed'))?.id || courseLessons[0].id
         };
       }
       
-      setModules(allModules.sort((a, b) => a.order - b.order));
+      setModules(allCourses.sort((a, b) => a.order - b.order));
       setProgressData(progMap);
 
     } catch (error) {

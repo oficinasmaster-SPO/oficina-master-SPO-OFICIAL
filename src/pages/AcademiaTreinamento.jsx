@@ -50,25 +50,26 @@ export default function AcademiaTreinamento() {
         );
       }
 
-      // Buscar progresso do usuário
-      const userProgress = await base44.entities.CourseProgress.filter({
-        user_id: currentUser.id
-      });
+      // Buscar progresso do usuário e informações estruturais de uma vez (evitar N+1)
+      const userProgress = await base44.entities.EmployeeTrainingProgress.filter({
+        employee_id: currentUser.id
+      }, null, 1000);
+      const allCourseLessons = await base44.entities.CourseLesson.list('-created_date', 1000);
+      const allCourseModules = await base44.entities.CourseModule.list('-created_date', 1000);
 
       // Criar mapa de progresso por curso
       const progMap = {};
       for (const course of availableCourses) {
-        const courseLessons = await base44.entities.CourseLesson.list();
-        const courseModules = await base44.entities.CourseModule.filter({
-          course_id: course.id
-        });
+        const courseModules = allCourseModules.filter(m => m.course_id === course.id);
+        const moduleIds = courseModules.map(m => m.id);
         
-        const totalLessons = courseLessons.filter(l => 
-          courseModules.some(m => m.id === l.module_id)
-        ).length;
+        const courseLessons = allCourseLessons.filter(l => moduleIds.includes(l.module_id));
+        const totalLessons = courseLessons.length;
+        
+        const lessonIds = courseLessons.map(l => l.id);
 
         const completedLessons = userProgress.filter(p => 
-          p.course_id === course.id && p.status === 'completed'
+          lessonIds.includes(p.lesson_id) && p.status === 'completed'
         ).length;
 
         progMap[course.id] = {
@@ -77,7 +78,7 @@ export default function AcademiaTreinamento() {
             : 0,
           completed: completedLessons,
           total: totalLessons,
-          has_progress: userProgress.some(p => p.course_id === course.id)
+          has_progress: userProgress.some(p => lessonIds.includes(p.lesson_id))
         };
       }
       setProgressMap(progMap);

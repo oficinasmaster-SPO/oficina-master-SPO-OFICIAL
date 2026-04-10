@@ -33,7 +33,7 @@ export default function AssistirCurso() {
   const { data: allLessons = [] } = useQuery({
     queryKey: ['course-lessons', courseId],
     queryFn: async () => {
-      const lessons = await base44.entities.CourseLesson.list();
+      const lessons = await base44.entities.CourseLesson.list('-created_date', 1000);
       return lessons.filter(l => modules.some(m => m.id === l.module_id));
     },
     enabled: modules.length > 0
@@ -41,11 +41,14 @@ export default function AssistirCurso() {
 
   const { data: progress = [] } = useQuery({
     queryKey: ['user-progress', courseId, user?.id],
-    queryFn: () => base44.entities.CourseProgress.filter({
-      user_id: user.id,
-      course_id: courseId
-    }),
-    enabled: !!user?.id && !!courseId
+    queryFn: async () => {
+      const progressList = await base44.entities.EmployeeTrainingProgress.filter({
+        employee_id: user.id
+      });
+      const lessonIds = allLessons.map(l => l.id);
+      return progressList.filter(p => lessonIds.includes(p.lesson_id));
+    },
+    enabled: !!user?.id && allLessons.length > 0
   });
 
   const handleStartLesson = (lessonId) => {
@@ -105,7 +108,10 @@ export default function AssistirCurso() {
                 {course.category}
               </Badge>
               <Badge variant="secondary" className="capitalize">
-                {course.difficulty_level}
+                {course.difficulty_level === 'introducao' ? 'Introdução' : 
+                 course.difficulty_level === 'fundamentos' ? 'Fundamentos' : 
+                 course.difficulty_level === 'formacao' ? 'Formação' : 
+                 course.difficulty_level}
               </Badge>
               {course.total_duration_minutes > 0 && (
                 <Badge variant="secondary">
