@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Save, Shield, Lock, Unlock, Settings, Calendar, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { createPageUrl } from "@/utils";
+import { createPageUrl } from "@/utils/index";
 import { useNavigate } from "react-router-dom";
 import AttendanceRulesTab from "@/components/plans/AttendanceRulesTab";
 import VouchersTab from "@/components/vouchers/VouchersTab";
@@ -20,7 +20,7 @@ import VouchersTab from "@/components/vouchers/VouchersTab";
 export default function GerenciarPlanos() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [user, setUser] = useState(null);
+  const [, setUser] = useState(null);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [loading, setLoading] = useState(true);
 
