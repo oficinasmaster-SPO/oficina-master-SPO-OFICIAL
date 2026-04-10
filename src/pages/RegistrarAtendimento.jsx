@@ -5,7 +5,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, X, Check, AlertCircle, User, ChevronRight } from "lucide-react";
+import { Loader2, X, Check, AlertCircle, User, ChevronRight, Download } from "lucide-react";
 import { toast } from "sonner";
 import ConflitosHorarioModal from "@/components/aceleracao/ConflitosHorarioModal";
 import ClientIntelligenceCapturePanel from "@/components/inteligencia/ClientIntelligenceCapturePanel";
@@ -976,7 +976,32 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
           </div>
           <div className="flex gap-3 justify-end border-t border-gray-200 bg-white px-6 py-4 shrink-0 rounded-b-2xl shadow-[0_-4px_16px_rgba(0,0,0,0.10)]">
             {isReadOnly ? (
-              <Button type="button" variant="outline" onClick={handleClose} className="px-6">Fechar</Button>
+              <>
+                <Button type="button" variant="outline" onClick={handleClose} className="px-6">Fechar</Button>
+                <Button 
+                  type="button" 
+                  disabled={!formData.ata_id}
+                  title={!formData.ata_id ? "Atendimento em aberto" : "Baixar ATA em PDF"}
+                  onClick={async () => {
+                    try {
+                      const ata = await base44.entities.MeetingMinutes.get(formData.ata_id);
+                      if (ata) {
+                        const intelligence = await base44.entities.ClientIntelligence.filter({ attendance_id: formData.id });
+                        const ataComInteligencia = { ...ata, client_intelligence: intelligence || [], checklist_respostas: ata.checklist_respostas || formData.checklist_respostas || [] };
+                        const { downloadAtaPDF } = await import("@/components/aceleracao/AtasPDFGenerator");
+                        const workshop = workshops?.find(w => w.id === formData.workshop_id);
+                        await downloadAtaPDF(ataComInteligencia, workshop);
+                        toast.success("Download iniciado!");
+                      }
+                    } catch (error) {
+                      toast.error("Erro ao acessar ATA: " + error.message);
+                    }
+                  }}
+                  className={`px-6 transition-all ${!formData.ata_id ? 'bg-gray-100 text-gray-400 border-gray-200 opacity-80' : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm'}`}
+                >
+                  <Download className="w-4 h-4 mr-2" /> Baixar ATA
+                </Button>
+              </>
             ) : (
               <>
                 <Button type="button" variant="outline" onClick={handleClose} className="px-6">Cancelar</Button>
@@ -1071,7 +1096,32 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
         <div className="sticky bottom-0 z-20 -mx-6 px-6 mt-6">
           <div className="flex gap-3 justify-end bg-white/95 backdrop-blur-sm border-t border-gray-200 shadow-[0_-4px_12px_rgba(0,0,0,0.06)] rounded-t-xl py-4 px-6">
             {isReadOnly ? (
-              <Button type="button" variant="outline" onClick={handleClose} className="px-6">Fechar</Button>
+              <>
+                <Button type="button" variant="outline" onClick={handleClose} className="px-6">Fechar</Button>
+                <Button 
+                  type="button" 
+                  disabled={!formData.ata_id}
+                  title={!formData.ata_id ? "Atendimento em aberto" : "Baixar ATA em PDF"}
+                  onClick={async () => {
+                    try {
+                      const ata = await base44.entities.MeetingMinutes.get(formData.ata_id);
+                      if (ata) {
+                        const intelligence = await base44.entities.ClientIntelligence.filter({ attendance_id: formData.id });
+                        const ataComInteligencia = { ...ata, client_intelligence: intelligence || [], checklist_respostas: ata.checklist_respostas || formData.checklist_respostas || [] };
+                        const { downloadAtaPDF } = await import("@/components/aceleracao/AtasPDFGenerator");
+                        const workshop = workshops?.find(w => w.id === formData.workshop_id);
+                        await downloadAtaPDF(ataComInteligencia, workshop);
+                        toast.success("Download iniciado!");
+                      }
+                    } catch (error) {
+                      toast.error("Erro ao acessar ATA: " + error.message);
+                    }
+                  }}
+                  className={`px-6 transition-all ${!formData.ata_id ? 'bg-gray-100 text-gray-400 border-gray-200 opacity-80' : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm'}`}
+                >
+                  <Download className="w-4 h-4 mr-2" /> Baixar ATA
+                </Button>
+              </>
             ) : (
               <>
                 <Button type="button" variant="outline" onClick={handleClose} className="px-6">Cancelar</Button>
