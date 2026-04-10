@@ -91,7 +91,7 @@ export default function BasicInfoSection({
             </Select>
           </div>
 
-          <div className="py-4">
+          <div className="flex flex-col justify-end">
             <Label>Status *</Label>
             <Select
               value={formData.status}
