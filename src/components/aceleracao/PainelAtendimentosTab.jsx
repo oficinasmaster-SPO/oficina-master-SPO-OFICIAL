@@ -305,8 +305,8 @@ export default function PainelAtendimentosTab({ state }) {
 
         <Card>
           <CardContent className="pt-4 px-2 sm:px-3 lg:px-4 xl:px-5">
-            <div className="w-full">
-              <table className="w-full table-fixed">
+            <div className="w-full overflow-x-auto">
+              <table className="w-full" style={{ minWidth: '900px' }}>
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50/50">
                     <th className="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wider border-r border-gray-100" style={{ width: '120px' }}>Consultor</th>
@@ -316,7 +316,7 @@ export default function PainelAtendimentosTab({ state }) {
                     <th className="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wider border-r border-gray-100">Cliente</th>
                     <th className="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wider border-r border-gray-100" style={{ width: '110px' }}>Tipo</th>
                     <th className="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wider border-r border-gray-100" style={{ width: '110px' }}>Status</th>
-                    <th className="text-right py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wider" style={{ width: '190px' }}>Ações</th>
+                    <th className="text-right py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wider" style={{ width: '220px', minWidth: '220px' }}>Ações</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -374,7 +374,7 @@ export default function PainelAtendimentosTab({ state }) {
                           )}
                         </td>
                         <td className="py-3 px-3">
-                          <div className="flex items-center justify-end gap-0 flex-nowrap">
+                          <div className="flex items-center justify-end gap-0 flex-nowrap flex-shrink-0">
                             {(atendimento.status === ATENDIMENTO_STATUS.AGENDADO || 
                               atendimento.status === ATENDIMENTO_STATUS.CONFIRMADO || 
                               atendimento.status === ATENDIMENTO_STATUS.REAGENDADO || 
