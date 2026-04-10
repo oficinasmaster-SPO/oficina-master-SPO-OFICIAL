@@ -134,7 +134,14 @@ export default function BasicInfoSection({
               </SelectContent>
             </Select>
           </div>
-          <div />
+          <div>
+            <Label>Observações</Label>
+            <Input
+              value={formData.observacoes_consultor || ""}
+              onChange={(e) => setFormData(prev => ({ ...prev, observacoes_consultor: e.target.value }))}
+              placeholder="Observações rápidas..."
+            />
+          </div>
         </div>
 
         <div className="grid grid-cols-3 gap-4">
