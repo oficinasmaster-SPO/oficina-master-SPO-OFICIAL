@@ -2,7 +2,7 @@ import React, { useState, Suspense, lazy, useMemo, useCallback, useRef } from "r
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { BarChart3, Calendar, FileText, ClipboardList, Users, Activity, Plus, Loader2 } from "lucide-react";
+import { BarChart3, Calendar, CalendarRange, FileText, ClipboardList, Users, Activity, Plus, Loader2 } from "lucide-react";
 import RegistroAtendimentoMassaModal from "@/components/aceleracao/RegistroAtendimentoMassaModal";
 import FiltrosControleAceleracao from "@/components/aceleracao/FiltrosControleAceleracao";
 import ActiveFiltersBar from "@/components/aceleracao/ActiveFiltersBar";
@@ -228,7 +228,7 @@ export default function ControleAceleracaoView({ state }) {
               <span className="sm:hidden">Pedidos</span>
             </TabsTrigger>
             <TabsTrigger value="agenda-visual" className={TAB_CLASS}>
-              <Calendar className="w-4 h-4" />
+              <CalendarRange className="w-4 h-4" />
               <span className="hidden sm:inline">Agenda Visual</span>
               <span className="sm:hidden">Agenda</span>
             </TabsTrigger>
