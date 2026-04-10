@@ -116,6 +116,43 @@ export default function BasicInfoSection({
           </div>
         </div>
 
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label>Status do Cliente</Label>
+            <Select
+              value={formData.status_cliente || ""}
+              onValueChange={(value) => setFormData(prev => ({ ...prev, status_cliente: value }))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="crescente">Crescente</SelectItem>
+                <SelectItem value="decrescente">Decrescente</SelectItem>
+                <SelectItem value="estagnado">Estagnado</SelectItem>
+                <SelectItem value="nao_responde">Não Responde</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Fase da Oficina</Label>
+            <Select
+              value={formData.fase_oficina ? String(formData.fase_oficina) : ""}
+              onValueChange={(value) => setFormData(prev => ({ ...prev, fase_oficina: parseInt(value, 10) }))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">Fase 1</SelectItem>
+                <SelectItem value="2">Fase 2</SelectItem>
+                <SelectItem value="3">Fase 3</SelectItem>
+                <SelectItem value="4">Fase 4</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
         <div className="grid grid-cols-3 gap-4">
           <div>
             <Label>Data *</Label>
