@@ -525,10 +525,10 @@ export default function PainelAtendimentosTab({ state }) {
                   <p><span className="font-medium">Consultor:</span> {deleteConfirm.atendimento.consultor_nome || '-'}</p>
                 </div>
               )}
-              {deleteConfirm?.atendimento?.ata_id && deleteConfirm?.atendimento?.google_event_id && (
+              {deleteConfirm?.atendimento?.google_event_id && (
                 <label className="mt-4 flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-700 cursor-pointer">
                   <Checkbox checked={deleteFollowUp} onCheckedChange={(checked) => setDeleteFollowUp(checked === true)} className="mt-0.5" />
-                  <span>Deletar o follow up criado para esta ATA no Google Calendar</span>
+                  <span>{deleteConfirm?.type === 'ata' ? 'Deletar também o evento/follow up criado no Google Calendar' : 'Deletar também o evento no Google Calendar'}</span>
                 </label>
               )}
             </AlertDialogDescription>
@@ -548,10 +548,16 @@ export default function PainelAtendimentosTab({ state }) {
                     toast.success('ATA excluída com sucesso!');
                     queryClient.invalidateQueries({ queryKey: ['meeting-minutes'] });
                   } else {
+                    // Excluindo atendimento inteiro
                     if (deleteConfirm.atendimento.ata_id) {
+                      // Se tem ATA, deleta a ATA primeiro (isso já deleta o evento do Calendar se marcado)
                       await base44.functions.invoke('deleteAta', { ata_id: deleteConfirm.atendimento.ata_id, delete_follow_up: deleteFollowUp });
                       queryClient.invalidateQueries({ queryKey: ['meeting-minutes'] });
+                    } else if (deleteFollowUp && deleteConfirm.atendimento.google_event_id) {
+                      // Se NÃO tem ATA, mas tem evento no Calendar e o usuário pediu pra deletar
+                      await base44.functions.invoke('deleteGoogleMeetEvent', { eventId: deleteConfirm.atendimento.google_event_id });
                     }
+                    // Exclui o Atendimento em si
                     await base44.entities.ConsultoriaAtendimento.delete(deleteConfirm.atendimento.id);
                     toast.success('Atendimento excluído com sucesso!');
                   }
