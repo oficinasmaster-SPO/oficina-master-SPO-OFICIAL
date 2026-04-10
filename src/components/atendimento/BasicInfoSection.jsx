@@ -96,9 +96,8 @@ export default function BasicInfoSection({
             <Select
               value={formData.status}
               onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}
-              disabled={formData.status === 'participando'}
             >
-              <SelectTrigger className={formData.status === 'participando' ? 'opacity-70 cursor-not-allowed bg-gray-50' : ''}>
+              <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -113,9 +112,7 @@ export default function BasicInfoSection({
                 <SelectItem value="desmarcou">Desmarcou</SelectItem>
               </SelectContent>
             </Select>
-            {formData.status === 'participando' && (
-              <p className="text-xs text-blue-600 mt-1">Status bloqueado. Finalize a reunião usando os botões da listagem ou o timer.</p>
-            )}
+
           </div>
         </div>
 
