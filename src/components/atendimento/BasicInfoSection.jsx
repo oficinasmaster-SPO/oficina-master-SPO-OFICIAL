@@ -153,6 +153,7 @@ export default function BasicInfoSection({
           formData={formData}
           setFormData={setFormData}
           user={user}
+          consultores={consultores}
           createMeeting={createMeeting}
           isCreating={isCreating}
         />
@@ -176,9 +177,9 @@ export default function BasicInfoSection({
   );
 }
 
-function GoogleMeetSection({ formData, setFormData, user, createMeeting, isCreating }) {
+function GoogleMeetSection({ formData, setFormData, user, consultores, createMeeting, isCreating }) {
   const copyInviteMessage = () => {
-    const msg = buildInviteMessage(formData, user);
+    const msg = buildInviteMessage(formData, user, consultores);
     try {
       navigator.clipboard.writeText(msg);
       toast.success("Mensagem copiada para a área de transferência!");
@@ -221,7 +222,7 @@ function GoogleMeetSection({ formData, setFormData, user, createMeeting, isCreat
                 google_calendar_link: meetData.htmlLink
               }));
               try {
-                const msg = buildInviteMessage({ ...formData, google_meet_link: meetData.meetLink }, user);
+                const msg = buildInviteMessage({ ...formData, google_meet_link: meetData.meetLink }, user, consultores);
                 navigator.clipboard.writeText(msg);
                 toast.success("Reunião criada e convite copiado!");
               } catch {
@@ -256,7 +257,7 @@ function GoogleMeetSection({ formData, setFormData, user, createMeeting, isCreat
               <Textarea
                 readOnly
                 className="text-sm text-gray-700 bg-white min-h-[140px] pr-12 focus-visible:ring-1"
-                value={buildInviteMessage(formData, user)}
+                value={buildInviteMessage(formData, user, consultores)}
               />
               <Button
                 type="button"
@@ -283,6 +284,13 @@ function GoogleMeetSection({ formData, setFormData, user, createMeeting, isCreat
   );
 }
 
-function buildInviteMessage(formData, user) {
-  return `Olá! Tudo bem?\nSua reunião de ${formData.tipo_atendimento?.replace(/_/g, ' ')} com ${formData.consultor_nome || user?.full_name || 'o consultor'} está agendada.\n\n🗓 Data: ${formData.data_agendada?.split('-').reverse().join('/') || ''}\n⏰ Horário: ${formData.hora_agendada || ''}\n\nPara participar, acesse o link abaixo no horário combinado:\n🔗 ${formData.google_meet_link}`;
+function buildInviteMessage(formData, user, consultores) {
+  // I4: resolve consul name from consultores list when consultor_nome is empty
+  let nomeConsultor = formData.consultor_nome;
+  if (!nomeConsultor && consultores?.length > 0) {
+    const c = consultores.find(c => c.id === (formData.consultor_id || user?.id));
+    nomeConsultor = c?.full_name;
+  }
+  nomeConsultor = nomeConsultor || user?.full_name || 'o consultor';
+  return `Olá! Tudo bem?\nSua reunião de ${formData.tipo_atendimento?.replace(/_/g, ' ')} com ${nomeConsultor} está agendada.\n\n🗓 Data: ${formData.data_agendada?.split('-').reverse().join('/') || ''}\n⏰ Horário: ${formData.hora_agendada || ''}\n\nPara participar, acesse o link abaixo no horário combinado:\n🔗 ${formData.google_meet_link}`;
 }

@@ -39,7 +39,7 @@ export default function ParticipantsSection({ formData, setFormData, colaborador
               Manual
             </Button>
             {colaboradores && colaboradores.length > 0 && (
-              <Select onValueChange={(value) => {
+              <Select value="" onValueChange={(value) => {
                 const colab = colaboradores.find(c => c.id === value);
                 if (colab) {
                   setFormData(prev => ({
@@ -65,7 +65,7 @@ export default function ParticipantsSection({ formData, setFormData, colaborador
               </Select>
             )}
             {colaboradoresInternos && colaboradoresInternos.length > 0 && (
-              <Select onValueChange={(value) => {
+              <Select value="" onValueChange={(value) => {
                 const colab = colaboradoresInternos.find(c => c.id === value);
                 if (colab) {
                   setFormData(prev => ({

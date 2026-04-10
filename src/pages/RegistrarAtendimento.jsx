@@ -83,7 +83,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
   const pendingIntelligenceIdsRef = useRef([]);
   const { createMeeting, isCreating } = useGoogleMeet();
 
-  // ── C4: Stable auto-save deps via JSON snapshot ──
+  // ── C4: Stable auto-save deps via JSON snapshot (I5: includes participantes, pauta, objetivos) ──
   const autoSaveSnapshot = useMemo(() => JSON.stringify({
     obs: formData.observacoes_consultor,
     pp: formData.proximos_passos,
@@ -96,13 +96,17 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
     pv: formData.processos_vinculados,
     vv: formData.videoaulas_vinculadas,
     dv: formData.documentos_vinculados,
+    pa: formData.participantes,
+    pt: formData.pauta,
+    ob: formData.objetivos,
   }), [
     formData.observacoes_consultor, formData.proximos_passos,
     formData.proximos_passos_list, formData.checklist_respostas,
     formData.topicos_discutidos, formData.decisoes_tomadas,
     formData.acoes_geradas, formData.midias_anexas,
     formData.processos_vinculados, formData.videoaulas_vinculadas,
-    formData.documentos_vinculados,
+    formData.documentos_vinculados, formData.participantes,
+    formData.pauta, formData.objetivos,
   ]);
 
   // ── Auth ──
@@ -168,6 +172,18 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
   const { data: consultoresFetched } = useConsultoresList(user);
   const consultores = (consultoresExternos?.length > 0) ? consultoresExternos : consultoresFetched;
 
+  // ── I2: Set default consultor_id when user loads and consultores are available ──
+  useEffect(() => {
+    if (user?.id && !formData.consultor_id && !resolvedAtendimentoId) {
+      const consultor = consultores?.find(c => c.id === user.id);
+      setFormData(prev => ({
+        ...prev,
+        consultor_id: user.id,
+        consultor_nome: consultor?.full_name || user.full_name
+      }));
+    }
+  }, [user?.id, consultores, resolvedAtendimentoId]);
+
   const { data: colaboradores } = useQuery({
     queryKey: ['colaboradores-oficina', formData.workshop_id],
     queryFn: async () => {
@@ -179,7 +195,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
     enabled: !!formData.workshop_id
   });
 
-  const colaboradoresInternos = consultores;
+
 
   const { data: processos } = useQuery({
     queryKey: ['processos-disponiveis'],
@@ -437,6 +453,9 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
           processos_vinculados: formData.processos_vinculados || [],
           videoaulas_vinculadas: formData.videoaulas_vinculadas || [],
           documentos_vinculados: formData.documentos_vinculados || [],
+          participantes: (formData.participantes || []).filter(p => p.nome),
+          pauta: (formData.pauta || []).filter(p => p.titulo),
+          objetivos: (formData.objetivos || []).filter(o => o),
         });
         setAutoSaveStatus('saved');
         setTimeout(() => setAutoSaveStatus(null), 3000);
@@ -472,7 +491,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
 
       <ParticipantsSection
         formData={formData} setFormData={setFormData}
-        colaboradores={colaboradores} colaboradoresInternos={colaboradoresInternos}
+        colaboradores={colaboradores} colaboradoresInternos={consultores}
       />
 
       {/* Captura Inteligente */}
