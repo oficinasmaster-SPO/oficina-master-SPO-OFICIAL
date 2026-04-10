@@ -135,11 +135,11 @@ export default function BasicInfoSection({
             </Select>
           </div>
           <div>
-            <Label>Observações</Label>
+            <Label>Observações do Status do Cliente</Label>
             <Input
               value={formData.observacoes_consultor || ""}
               onChange={(e) => setFormData(prev => ({ ...prev, observacoes_consultor: e.target.value }))}
-              placeholder="Observações rápidas..."
+              placeholder="Justifique o status do cliente..."
             />
           </div>
         </div>
