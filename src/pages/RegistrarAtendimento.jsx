@@ -642,16 +642,36 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
         <div className={`relative bg-white rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.2)] w-full max-w-[800px] max-h-[95vh] flex flex-col z-10 transition-all duration-250 ${isClosing ? 'opacity-0 scale-95 translate-y-4' : 'animate-in fade-in zoom-in-95 duration-200'}`}>
           <div className="flex items-center justify-between p-6 border-b shrink-0 shadow-[0_4px_16px_rgba(0,0,0,0.10)]">
             <div>
-              <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-bold text-gray-900">{isReadOnly ? 'Visualizar Atendimento' : (formData.id ? 'Editar Atendimento' : 'Registrar Atendimento de Consultoria')}</h1>
-                {formData.consultor_nome && (
-                  <span className="px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 text-sm font-medium border border-blue-100 flex items-center">
-                    <User className="w-3.5 h-3.5 mr-1.5" />
-                    {formData.consultor_nome}
-                  </span>
-                )}
-              </div>
-              <p className="text-sm text-gray-600 mt-1">{isReadOnly ? 'Detalhes do atendimento (Somente Leitura)' : (formData.id ? 'Atualize as informações do atendimento' : 'Agende e registre informações do atendimento ao cliente')}</p>
+              {isReadOnly ? (
+                <>
+                  <div className="flex items-center gap-3">
+                    <h1 className="text-2xl font-bold text-gray-900 truncate max-w-md" title={workshops?.find(w => w.id === formData.workshop_id)?.name || 'Oficina'}>
+                      {workshops?.find(w => w.id === formData.workshop_id)?.name || 'Oficina'}
+                    </h1>
+                    <span className="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
+                    {formData.consultor_nome && (
+                      <span className="text-lg font-medium text-gray-600 flex items-center">
+                        <User className="w-5 h-5 mr-1.5 text-gray-400" />
+                        {formData.consultor_nome}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-500 mt-1 uppercase tracking-wider font-medium">Modo Visualização (Somente Leitura)</p>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center gap-3">
+                    <h1 className="text-2xl font-bold text-gray-900">{formData.id ? 'Editar Atendimento' : 'Registrar Atendimento de Consultoria'}</h1>
+                    {formData.consultor_nome && (
+                      <span className="px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 text-sm font-medium border border-blue-100 flex items-center">
+                        <User className="w-3.5 h-3.5 mr-1.5" />
+                        {formData.consultor_nome}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-600 mt-1">{formData.id ? 'Atualize as informações do atendimento' : 'Agende e registre informações do atendimento ao cliente'}</p>
+                </>
+              )}
             </div>
             <button type="button" onClick={handleClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
               <X className="w-5 h-5 text-gray-500" />
@@ -699,16 +719,36 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div>
-        <div className="flex items-center gap-3">
-          <h1 className="text-3xl font-bold text-gray-900">{isReadOnly ? 'Visualizar Atendimento' : (formData.id ? 'Editar Atendimento' : 'Registrar Atendimento de Consultoria')}</h1>
-          {formData.consultor_nome && (
-            <span className="px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-sm font-medium border border-blue-100 flex items-center mt-1">
-              <User className="w-4 h-4 mr-1.5" />
-              {formData.consultor_nome}
-            </span>
-          )}
-        </div>
-        <p className="text-gray-600 mt-2">{isReadOnly ? 'Detalhes do atendimento (Somente Leitura)' : (formData.id ? 'Atualize as informações do atendimento' : 'Agende e registre informações do atendimento ao cliente')}</p>
+        {isReadOnly ? (
+          <>
+            <div className="flex items-center gap-3 mb-1">
+              <h1 className="text-3xl font-bold text-gray-900 truncate" title={workshops?.find(w => w.id === formData.workshop_id)?.name || 'Oficina'}>
+                {workshops?.find(w => w.id === formData.workshop_id)?.name || 'Oficina'}
+              </h1>
+              <span className="w-2 h-2 rounded-full bg-gray-300 mx-2"></span>
+              {formData.consultor_nome && (
+                <span className="text-2xl font-medium text-gray-600 flex items-center">
+                  <User className="w-6 h-6 mr-2 text-gray-400" />
+                  {formData.consultor_nome}
+                </span>
+              )}
+            </div>
+            <p className="text-sm text-gray-500 uppercase tracking-wider font-medium">Modo Visualização (Somente Leitura)</p>
+          </>
+        ) : (
+          <>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-bold text-gray-900">{formData.id ? 'Editar Atendimento' : 'Registrar Atendimento de Consultoria'}</h1>
+              {formData.consultor_nome && (
+                <span className="px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-sm font-medium border border-blue-100 flex items-center mt-1">
+                  <User className="w-4 h-4 mr-1.5" />
+                  {formData.consultor_nome}
+                </span>
+              )}
+            </div>
+            <p className="text-gray-600 mt-2">{formData.id ? 'Atualize as informações do atendimento' : 'Agende e registre informações do atendimento ao cliente'}</p>
+          </>
+        )}
       </div>
       <form onSubmit={handleSubmit} className="space-y-6">
         <fieldset disabled={isReadOnly} className={`space-y-0 border-0 p-0 m-0 min-w-0 ${isReadOnly ? 'opacity-95' : ''}`}>
