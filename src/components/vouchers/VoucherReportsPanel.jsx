@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Activity, TrendingUp, Users, DollarSign, Ticket, CheckCircle2, XCircle, Clock } from "lucide-react";
+import { BarChart3, TrendingUp, Users, DollarSign, Ticket, CheckCircle2, XCircle, Clock } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
@@ -120,7 +120,7 @@ export default function VoucherReportsPanel({ user }) {
       {/* Period selector */}
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold flex items-center gap-2">
-          <Activity className="w-5 h-5 text-purple-600" />
+          <BarChart3 className="w-5 h-5 text-purple-600" />
           Relatórios de Vouchers
         </h3>
         <Select value={period} onValueChange={setPeriod}>

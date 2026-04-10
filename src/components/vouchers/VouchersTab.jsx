@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Ticket, PlusCircle, List, ShoppingCart, ClipboardList, ShieldCheck, Activity, Settings, History } from "lucide-react";
+import { Ticket, PlusCircle, List, ShoppingCart, ClipboardList, ShieldCheck, BarChart3, Settings, History } from "lucide-react";
 import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 import VoucherGenerateForm from "./VoucherGenerateForm";
 import VoucherMyList from "./VoucherMyList";
@@ -67,7 +67,7 @@ export default function VouchersTab() {
                 Histórico
               </TabsTrigger>
               <TabsTrigger value="reports" className="gap-2">
-                <Activity className="w-4 h-4" />
+                <BarChart3 className="w-4 h-4" />
                 Relatórios
               </TabsTrigger>
             </>
