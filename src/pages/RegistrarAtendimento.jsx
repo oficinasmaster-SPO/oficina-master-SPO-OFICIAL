@@ -5,7 +5,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, X, Check, AlertCircle, User } from "lucide-react";
+import { Loader2, X, Check, AlertCircle, User, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import ConflitosHorarioModal from "@/components/aceleracao/ConflitosHorarioModal";
 import ClientIntelligenceCapturePanel from "@/components/inteligencia/ClientIntelligenceCapturePanel";
@@ -24,6 +24,8 @@ import ContentSection from "@/components/atendimento/ContentSection";
 import ObservationsSection from "@/components/atendimento/ObservationsSection";
 import AdvancedOptionsSection from "@/components/atendimento/AdvancedOptionsSection";
 import AtaActionsSection from "@/components/atendimento/AtaActionsSection";
+import ClientIntelligenceViewer from "@/components/inteligencia/ClientIntelligenceViewer";
+import { INTELLIGENCE_AREAS, INTELLIGENCE_TYPES } from "@/components/lib/clientIntelligenceConstants";
 
 export default function RegistrarAtendimento({ isModal = false, onClose, atendimentoId: atendimentoIdProp, consultoresExternos, isReadOnly = false }) {
   const navigate = useNavigate();
@@ -262,6 +264,30 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
     queryFn: () => base44.entities.TrainingCourse.list('-created_date', 1000),
     staleTime: 10 * 60 * 1000
   });
+
+  const { data: clientIntelligences } = useQuery({
+    queryKey: ['client-intelligences', resolvedAtendimentoId],
+    queryFn: async () => {
+      if (!resolvedAtendimentoId) return [];
+      const items = await base44.entities.ClientIntelligence.filter({ attendance_id: resolvedAtendimentoId });
+      return items.map(item => {
+        const typeObj = INTELLIGENCE_TYPES[item.type];
+        const gravityLabel = { baixa: "Baixa", media: "Média", alta: "Alta", critica: "Crítica" }[item.gravity || "media"];
+        return {
+          ...item,
+          gravityLabel,
+          typeIcon: typeObj?.icon,
+          typeColor: typeObj?.color,
+          areaLabel: INTELLIGENCE_AREAS[item.area]?.label || item.area,
+          typeLabel: INTELLIGENCE_TYPES[item.type]?.label || item.type,
+        };
+      });
+    },
+    enabled: !!resolvedAtendimentoId && isReadOnly
+  });
+
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [selectedIntelligence, setSelectedIntelligence] = useState(null);
 
   const { data: todasAulas } = useQuery({
     queryKey: ['todas-aulas-publicadas'],
@@ -576,6 +602,51 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
         </section>
       )}
 
+      {clientIntelligences?.length > 0 && (
+        <section className="space-y-4">
+          <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">Inteligência do Cliente Capturada</h3>
+          <div className="pl-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            {clientIntelligences.map((item, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => {
+                  setSelectedIntelligence(item);
+                  setViewerOpen(true);
+                }}
+                className="text-left bg-white border border-gray-100 hover:border-blue-300 hover:shadow-md hover:bg-blue-50/20 rounded-lg p-4 space-y-2 transition-all cursor-pointer group"
+              >
+                <div className="flex items-start gap-2">
+                  <div className="bg-blue-100 p-1.5 rounded-md mt-0.5">
+                    <AlertCircle className="w-4 h-4 text-blue-700" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-gray-900 text-base">{item.areaLabel}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                       <span className="text-xs font-semibold text-gray-500">Tipo:</span>
+                       <span className={`text-xs font-medium ${item.typeColor ? `text-${item.typeColor}` : 'text-blue-600'}`}>
+                         {item.typeLabel}
+                       </span>
+                     </div>
+                    <div className="mt-1">
+                      <span className="text-xs font-semibold text-gray-500">Problema:</span>
+                      <p className="text-sm text-gray-800 font-medium truncate group-hover:whitespace-normal group-hover:text-clip">{item.subcategory}</p>
+                    </div>
+                    <div className="flex items-center gap-2 pt-2 mt-1 border-t border-gray-50">
+                      <span className="text-xs font-semibold text-gray-500">Gravidade:</span>
+                      <span className="inline-block px-2 py-0.5 bg-amber-100 text-amber-800 text-xs font-bold rounded">
+                        {item.gravityLabel}
+                      </span>
+                      <span className="ml-auto text-xs text-blue-500 opacity-0 group-hover:opacity-100 font-medium flex items-center gap-1 transition-opacity">Ver detalhes <ChevronRight className="w-3 h-3" /></span>
+                    </div>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
       {formData.pauta?.length > 0 && formData.pauta.some(p => p.titulo) && (
         <section className="space-y-4">
           <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">Pauta da Reunião</h3>
@@ -716,6 +787,13 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
           </div>
         </section>
       )}
+      
+      <ClientIntelligenceViewer
+        open={viewerOpen}
+        onOpenChange={setViewerOpen}
+        item={selectedIntelligence}
+        workshopId={formData.workshop_id}
+      />
     </div>
   );
 
