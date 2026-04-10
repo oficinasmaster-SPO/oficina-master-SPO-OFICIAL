@@ -177,34 +177,34 @@ export default function GestaoOficina() {
         )}
         
         <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-          <div className="flex items-start justify-between mb-6">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-3xl font-bold text-gray-900">{workshop.name}</h1>
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 mb-6">
+            <div className="w-full lg:w-auto">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-2">
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{workshop.name}</h1>
                 {workshop.identificador && (
-                  <span className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-lg font-bold text-lg shadow-md">
+                  <span className="px-3 py-1 sm:px-4 sm:py-2 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-lg font-bold text-base sm:text-lg shadow-md">
                     {workshop.identificador}
                   </span>
                 )}
               </div>
-              <p className="text-lg text-gray-600 mt-1">
+              <p className="text-base sm:text-lg text-gray-600 mt-1">
                 {workshop.city} - {workshop.state}
               </p>
               <div className="flex gap-2 mt-3 flex-wrap">
-                <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
+                <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm text-center">
                   {workshop.segment}
                 </span>
-                <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">
+                <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm whitespace-nowrap">
                   Maturidade Nível {workshop.maturity_level || 1}
                 </span>
                 {workshop.is_autocenter && (
-                  <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm">
+                  <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm whitespace-nowrap">
                     Auto Center
                   </span>
                 )}
               </div>
             </div>
-            <div className="flex flex-col items-end gap-4">
+            <div className="flex flex-col items-start lg:items-end w-full lg:w-auto bg-blue-50/50 p-4 lg:p-0 rounded-lg lg:bg-transparent">
                 {workshopGameProfile && (
                     <div className="w-64">
                         <WorkshopLevelBadge 
@@ -232,8 +232,8 @@ export default function GestaoOficina() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center justify-between">
-                <div>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="w-full sm:w-auto">
                   {loadingTcmp2 ? (
                     <div className="flex items-center gap-2">
                       <Loader2 className="w-5 h-5 animate-spin text-green-600" />
@@ -264,7 +264,7 @@ export default function GestaoOficina() {
                   variant="outline"
                   size="sm"
                   onClick={() => navigate(createPageUrl("DRETCMP2"))}
-                  className="bg-white hover:bg-green-50"
+                  className="bg-white hover:bg-green-50 w-full sm:w-auto mt-2 sm:mt-0"
                 >
                   {tcmp2Value > 0 ? "Atualizar DRE" : "Cadastrar DRE"}
                 </Button>
@@ -278,60 +278,60 @@ export default function GestaoOficina() {
           // Atualizar URL com a aba selecionada
           navigate(`?tab=${value}`, { replace: false });
         }}>
-          <TabsList className="flex flex-wrap w-full justify-start bg-white shadow-md gap-2 p-2 h-auto rounded-lg">
-            <TabsTrigger value="dados" className="text-xs md:text-sm hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
+          <TabsList className="flex overflow-x-auto flex-nowrap w-full justify-start bg-white shadow-sm gap-2 p-2 h-auto rounded-lg border border-gray-100 scrollbar-hide">
+            <TabsTrigger value="dados" className="py-2 px-4 whitespace-nowrap shrink-0 text-xs md:text-sm hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
               <Building2 className="w-4 h-4 mr-1" />
-              <span className="hidden sm:inline">Dados</span>
+              <span>Dados</span>
             </TabsTrigger>
-            <TabsTrigger value="servicos" className="text-xs md:text-sm hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
+            <TabsTrigger value="servicos" className="py-2 px-4 whitespace-nowrap shrink-0 text-xs md:text-sm hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
               <Settings className="w-4 h-4 mr-1" />
-              <span className="hidden sm:inline">Serviços</span>
+              <span>Serviços</span>
             </TabsTrigger>
-            <TabsTrigger value="equipamentos" className="text-xs md:text-sm hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
+            <TabsTrigger value="equipamentos" className="py-2 px-4 whitespace-nowrap shrink-0 text-xs md:text-sm hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
               <Package className="w-4 h-4 mr-1" />
-              <span className="hidden sm:inline">Equipamentos</span>
+              <span>Equipamentos</span>
             </TabsTrigger>
-            <TabsTrigger value="terceiros" className="text-xs md:text-sm hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
+            <TabsTrigger value="terceiros" className="py-2 px-4 whitespace-nowrap shrink-0 text-xs md:text-sm hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
               <DollarSign className="w-4 h-4 mr-1" />
-              <span className="hidden sm:inline">Terceiros</span>
+              <span>Terceiros</span>
             </TabsTrigger>
-            <TabsTrigger value="metas" className="text-xs md:text-sm hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
+            <TabsTrigger value="metas" className="py-2 px-4 whitespace-nowrap shrink-0 text-xs md:text-sm hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
               <Target className="w-4 h-4 mr-1" />
-              <span className="hidden sm:inline">Metas</span>
+              <span>Metas</span>
             </TabsTrigger>
-            <TabsTrigger value="cultura" className="text-xs md:text-sm hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
+            <TabsTrigger value="cultura" className="py-2 px-4 whitespace-nowrap shrink-0 text-xs md:text-sm hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
               <TrendingUp className="w-4 h-4 mr-1" />
-              <span className="hidden sm:inline">Cultura</span>
+              <span>Cultura</span>
             </TabsTrigger>
-            <TabsTrigger value="processos" className="text-xs md:text-sm hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
+            <TabsTrigger value="processos" className="py-2 px-4 whitespace-nowrap shrink-0 text-xs md:text-sm hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
               <FileText className="w-4 h-4 mr-1" />
-              <span className="hidden sm:inline">Processos</span>
+              <span>Processos</span>
             </TabsTrigger>
-            <TabsTrigger value="relatorios" className="text-xs md:text-sm hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
+            <TabsTrigger value="relatorios" className="py-2 px-4 whitespace-nowrap shrink-0 text-xs md:text-sm hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
               <BarChart3 className="w-4 h-4 mr-1" />
-              <span className="hidden sm:inline">Relatórios</span>
+              <span>Relatórios</span>
             </TabsTrigger>
             {isMatriz && (
-              <TabsTrigger value="filiais" className="text-xs md:text-sm hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
+              <TabsTrigger value="filiais" className="py-2 px-4 whitespace-nowrap shrink-0 text-xs md:text-sm hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
                 <Building2 className="w-4 h-4 mr-1" />
-                <span className="hidden sm:inline">Filiais</span>
+                <span>Filiais</span>
               </TabsTrigger>
             )}
-            <TabsTrigger value="aceleracao" className="text-xs md:text-sm bg-purple-50 text-purple-700 data-[state=active]:bg-purple-100 data-[state=active]:text-purple-900 hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
+            <TabsTrigger value="aceleracao" className="py-2 px-4 whitespace-nowrap shrink-0 text-xs md:text-sm bg-purple-50 text-purple-700 data-[state=active]:bg-purple-100 data-[state=active]:text-purple-900 hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
               <Briefcase className="w-4 h-4 mr-1" />
-              <span className="hidden sm:inline">Aceleração</span>
+              <span>Aceleração</span>
             </TabsTrigger>
-            <TabsTrigger value="crescimento" className="text-xs md:text-sm bg-green-50 text-green-700 data-[state=active]:bg-green-100 data-[state=active]:text-green-900 hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
+            <TabsTrigger value="crescimento" className="py-2 px-4 whitespace-nowrap shrink-0 text-xs md:text-sm bg-green-50 text-green-700 data-[state=active]:bg-green-100 data-[state=active]:text-green-900 hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
               <TrendingUp className="w-4 h-4 mr-1" />
-              <span className="hidden sm:inline">Crescimento</span>
+              <span>Crescimento</span>
             </TabsTrigger>
-            <TabsTrigger value="conquistas" className="text-xs md:text-sm bg-yellow-50 text-yellow-700 data-[state=active]:bg-yellow-100 data-[state=active]:text-yellow-900 hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
+            <TabsTrigger value="conquistas" className="py-2 px-4 whitespace-nowrap shrink-0 text-xs md:text-sm bg-yellow-50 text-yellow-700 data-[state=active]:bg-yellow-100 data-[state=active]:text-yellow-900 hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
               <Trophy className="w-4 h-4 mr-1" />
-              <span className="hidden sm:inline">Conquistas</span>
+              <span>Conquistas</span>
             </TabsTrigger>
-            <TabsTrigger value="customization" className="text-xs md:text-sm bg-gray-50 text-gray-700 data-[state=active]:bg-gray-100 data-[state=active]:text-gray-900 hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
+            <TabsTrigger value="customization" className="py-2 px-4 whitespace-nowrap shrink-0 text-xs md:text-sm bg-gray-50 text-gray-700 data-[state=active]:bg-gray-100 data-[state=active]:text-gray-900 hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
               <Settings className="w-4 h-4 mr-1" />
-              <span className="hidden sm:inline">Personalização</span>
+              <span>Personalização</span>
             </TabsTrigger>
           </TabsList>
 
