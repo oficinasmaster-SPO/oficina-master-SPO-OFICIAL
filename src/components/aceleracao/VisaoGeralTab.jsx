@@ -131,7 +131,7 @@ export default function VisaoGeralTab({ state }) {
                   <HoverCard key={atendimento.id} openDelay={80} closeDelay={80}>
                     <HoverCardTrigger asChild>
                       <div
-                       className="border-l-4 border-blue-500 pl-3 py-2 rounded-r cursor-pointer hover:bg-blue-50 transition-colors flex items-start justify-between gap-2"
+                       className="border-l-4 border-blue-500 pl-3 py-2 rounded-r cursor-pointer hover:bg-blue-50 transition-colors flex items-end justify-between gap-2"
                        onMouseEnter={(e) => {
                          const side = getMouseEnterSide(e);
                          setHoverSides(prev => ({ ...prev, [atendimento.id]: side }));
@@ -141,7 +141,7 @@ export default function VisaoGeralTab({ state }) {
                          <p className="font-medium text-sm">{atendimento.tipo_atendimento}</p>
                          <p className="text-xs text-gray-600">{formatDateTimeBR(atendimento.data_agendada)}</p>
                        </div>
-                       <p className="text-xs text-gray-500 font-medium text-right truncate flex-shrink-0 max-w-[45%] mt-0.5">
+                       <p className="text-xs text-gray-500 font-medium text-right truncate flex-shrink-0 max-w-[45%]">
                          {workshopMap?.[atendimento.workshop_id]?.name || ''}
                        </p>
                       </div>
