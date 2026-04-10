@@ -29,19 +29,13 @@ export default function AttendanceRulesTab({ planId, planName }) {
     allow_anticipation: true
   });
 
-  // Carregar tipos de atendimento customizados do banco
-  const { data: tiposCustomizados = [] } = useQuery({
+  // Carregar tipos de atendimento do banco (entidade unificada)
+  const { data: attendanceTypes = [], isLoading: loadingTypes } = useQuery({
     queryKey: ['tipos-atendimento-consultoria'],
     queryFn: async () => {
       const tipos = await base44.entities.TipoAtendimentoConsultoria.filter({ ativo: true });
       return tipos || [];
     }
-  });
-
-  // Carregar tipos de atendimento disponíveis
-  const { data: attendanceTypes = [], isLoading: loadingTypes } = useQuery({
-    queryKey: ['attendance-types'],
-    queryFn: () => base44.entities.AttendanceType.filter({ is_active: true })
   });
 
   // Carregar regras do plano atual
@@ -141,7 +135,7 @@ export default function AttendanceRulesTab({ planId, planName }) {
     const ruleData = {
       plan_id: planId,
       attendance_type_id: formData.attendance_type_id,
-      attendance_type_name: attendanceType?.name || "",
+      attendance_type_name: attendanceType?.label || "",
       total_allowed: formData.total_allowed,
       scheduling_type: formData.scheduling_type,
       frequency_days: formData.scheduling_type === "frequency" ? formData.frequency_days : null,
@@ -206,9 +200,8 @@ export default function AttendanceRulesTab({ planId, planName }) {
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <Label>Tipo de Atendimento *</Label>
-                  <TipoAtendimentoManager customTipos={tiposCustomizados} onSave={() => {
+                  <TipoAtendimentoManager customTipos={attendanceTypes} onSave={() => {
                     queryClient.invalidateQueries(['tipos-atendimento-consultoria']);
-                    queryClient.invalidateQueries(['attendance-types']);
                   }} />
                 </div>
                 <Select
@@ -222,7 +215,7 @@ export default function AttendanceRulesTab({ planId, planName }) {
                   <SelectContent>
                     {attendanceTypes.map((type) => (
                       <SelectItem key={type.id} value={type.id}>
-                        {type.name} ({type.default_duration_minutes}min)
+                        {type.label} ({type.duracao_minutos || 60}min)
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -392,13 +385,13 @@ export default function AttendanceRulesTab({ planId, planName }) {
                   <div className="flex items-start justify-between">
                     <div className="space-y-1">
                       <CardTitle className="text-base flex items-center gap-2">
-                        {rule.attendance_type_name || attendanceType?.name}
+                        {rule.attendance_type_name || attendanceType?.label}
                         <Badge variant="outline" className="ml-2">
                           {rule.total_allowed}x
                         </Badge>
                       </CardTitle>
                       <p className="text-sm text-gray-600">
-                        {attendanceType?.description || "Sem descrição"}
+                        {attendanceType?.descricao || "Sem descrição"}
                       </p>
                     </div>
                     <div className="flex gap-2">
