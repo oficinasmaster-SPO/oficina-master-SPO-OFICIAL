@@ -271,6 +271,7 @@ export default function ClientIntelligenceViewer({ open, onOpenChange, item, wor
               </TabsTrigger>
             </TabsList>
             <Button
+              type="button"
               variant="outline"
               size="sm"
               onClick={() => setEvolutionFormOpen(true)}

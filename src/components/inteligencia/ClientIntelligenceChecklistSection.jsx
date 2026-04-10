@@ -120,6 +120,7 @@ export default function ClientIntelligenceChecklistSection({
           <p className="text-xs text-blue-700">Crie um checklist para ajudar a orientar as ações</p>
         </div>
         <Button
+          type="button"
           variant="outline"
           size="sm"
           onClick={() => setManagerOpen(true)}
@@ -145,6 +146,7 @@ export default function ClientIntelligenceChecklistSection({
             )}
           </div>
           <Button
+            type="button"
             variant="ghost"
             size="icon"
             onClick={() => setManagerOpen(true)}
