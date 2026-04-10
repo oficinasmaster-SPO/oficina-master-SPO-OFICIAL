@@ -65,17 +65,7 @@ export default function PainelAtendimentosTab({ state }) {
     }
   });
 
-  const finalizarMutation = useMutation({
-    mutationFn: (id) => base44.entities.ConsultoriaAtendimento.update(id, { 
-      status: ATENDIMENTO_STATUS.REALIZADO,
-      data_realizada: new Date().toISOString(),
-      hora_fim_real: new Date().toISOString()
-    }),
-    onSuccess: () => {
-      toast.success('Atendimento finalizado!');
-      queryClient.invalidateQueries({ queryKey: ['atendimentos-acelerador'] });
-    }
-  });
+
 
   // ── Debounce search for perf ──
   const debouncedSearch = useDebounce(localFilters.searchTerm, 300);
@@ -338,11 +328,7 @@ export default function PainelAtendimentosTab({ state }) {
                               </>
                             )}
 
-                            {(atendimento.status === ATENDIMENTO_STATUS.PARTICIPANDO || !atendimento.status) && (
-                              <Button variant="ghost" size="sm" onClick={() => finalizarMutation.mutate(atendimento.id)} title="Finalizar Rápido">
-                                <StopCircle className="w-4 h-4 text-green-600" />
-                              </Button>
-                            )}
+
 
                             {(atendimento.status === ATENDIMENTO_STATUS.PARTICIPANDO || 
                               atendimento.status === ATENDIMENTO_STATUS.AGENDADO || 
