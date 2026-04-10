@@ -89,6 +89,8 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
   const autoSaveInitializedRef = useRef(false);
   const pautaRef = React.useRef(null);
   const pendingIntelligenceIdsRef = useRef([]);
+  const closeTimerRef = useRef(null);
+  const fallbackTimerRef = useRef(null);
   const { createMeeting, isCreating } = useGoogleMeet();
 
   // ── C4: Stable auto-save deps via JSON snapshot (I5: includes participantes, pauta, objetivos) ──
@@ -367,9 +369,14 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
       setSaveSuccess(true);
       setHasUnsavedChanges(false);
       toast.success('Atendimento salvo com sucesso!');
-      // E5: Reset saveSuccess after timeout in case modal doesn't close (E2 confirm cancelled)
-      const closeTimer = setTimeout(() => handleClose(), 800);
-      setTimeout(() => { setSaveSuccess(false); clearTimeout(closeTimer); }, 5000);
+      // E5: Use refs so timers can be properly cleaned up
+      if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+      if (fallbackTimerRef.current) clearTimeout(fallbackTimerRef.current);
+      closeTimerRef.current = setTimeout(() => handleClose(), 800);
+      fallbackTimerRef.current = setTimeout(() => {
+        setSaveSuccess(false);
+        if (closeTimerRef.current) { clearTimeout(closeTimerRef.current); closeTimerRef.current = null; }
+      }, 5000);
     },
     onError: (error) => {
       toast.error('Erro ao salvar: ' + (error.message || "Verifique os campos obrigatórios"));
