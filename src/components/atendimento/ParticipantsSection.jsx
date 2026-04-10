@@ -4,8 +4,15 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
 export default function ParticipantsSection({ formData, setFormData, colaboradores, colaboradoresInternos }) {
+  // E1: Check for duplicate by name (case-insensitive)
+  const isDuplicate = (nome) => {
+    if (!nome) return false;
+    return formData.participantes.some(p => p.nome.toLowerCase().trim() === nome.toLowerCase().trim());
+  };
+
   const addParticipante = () => {
     setFormData(prev => ({
       ...prev,
@@ -42,6 +49,10 @@ export default function ParticipantsSection({ formData, setFormData, colaborador
               <Select value="" onValueChange={(value) => {
                 const colab = colaboradores.find(c => c.id === value);
                 if (colab) {
+                  if (isDuplicate(colab.full_name)) {
+                    toast.warning(`${colab.full_name} já está na lista de participantes`);
+                    return;
+                  }
                   setFormData(prev => ({
                     ...prev,
                     participantes: [...prev.participantes, {
@@ -68,6 +79,10 @@ export default function ParticipantsSection({ formData, setFormData, colaborador
               <Select value="" onValueChange={(value) => {
                 const colab = colaboradoresInternos.find(c => c.id === value);
                 if (colab) {
+                  if (isDuplicate(colab.full_name)) {
+                    toast.warning(`${colab.full_name} já está na lista de participantes`);
+                    return;
+                  }
                   setFormData(prev => ({
                     ...prev,
                     participantes: [...prev.participantes, {

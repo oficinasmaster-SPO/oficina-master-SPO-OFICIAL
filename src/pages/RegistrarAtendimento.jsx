@@ -5,7 +5,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, X, Check } from "lucide-react";
+import { Loader2, X, Check, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import ConflitosHorarioModal from "@/components/aceleracao/ConflitosHorarioModal";
 import ClientIntelligenceCapturePanel from "@/components/inteligencia/ClientIntelligenceCapturePanel";
@@ -33,6 +33,10 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
   const fromAgenda = urlParams.get('fromAgenda') === 'true';
 
   const handleClose = () => {
+    // E2: Confirm before discarding unsaved changes
+    if (hasUnsavedChanges && formData.id) {
+      if (!window.confirm('Existem alterações não salvas. Deseja realmente sair?')) return;
+    }
     if (onClose) {
       onClose();
     } else if (fromAgenda) {
@@ -78,6 +82,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
   const [showMeetingTimer, setShowMeetingTimer] = useState(false);
   const [autoSaveStatus, setAutoSaveStatus] = useState(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [conflitosModal, setConflitosModal] = useState({ open: false, conflitos: [], dataHorario: null });
   const autoSaveTimerRef = useRef(null);
   const pautaRef = React.useRef(null);
@@ -441,6 +446,9 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
     if (!formData.id) return;
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
 
+    // E3: Mark unsaved immediately on change
+    setHasUnsavedChanges(true);
+
     autoSaveTimerRef.current = setTimeout(async () => {
       if (!formData.workshop_id || !formData.data_agendada || !formData.hora_agendada) return;
       setAutoSaveStatus('saving');
@@ -462,6 +470,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
           objetivos: (formData.objetivos || []).filter(o => o),
         });
         setAutoSaveStatus('saved');
+        setHasUnsavedChanges(false);
         setTimeout(() => setAutoSaveStatus(null), 3000);
       } catch (e) {
         console.error('Auto-save error:', e);
@@ -480,8 +489,15 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
     <>
       <AtendimentoProgressIndicator formData={formData} />
 
-      {formData.id && autoSaveStatus && (
-        <div className="flex justify-end"><AutoSaveIndicator status={autoSaveStatus} /></div>
+      {formData.id && (autoSaveStatus || hasUnsavedChanges) && (
+        <div className="flex justify-end items-center gap-2">
+          {hasUnsavedChanges && !autoSaveStatus && (
+            <span className="text-xs text-amber-600 flex items-center gap-1">
+              <AlertCircle className="w-3 h-3" /> Alterações não salvas
+            </span>
+          )}
+          {autoSaveStatus && <AutoSaveIndicator status={autoSaveStatus} />}
+        </div>
       )}
 
       <BasicInfoSection
