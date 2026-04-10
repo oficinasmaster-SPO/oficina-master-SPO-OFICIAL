@@ -61,6 +61,7 @@ export default function useControleAceleracaoState() {
     queryKey: ["meeting-minutes"],
     queryFn: () => base44.entities.MeetingMinutes.list("-created_date", 500),
     staleTime: 3 * 60 * 1000,
+    enabled: !!user?.id,
   });
 
   // ── 8. Lookup maps O(1) ──
@@ -81,6 +82,7 @@ export default function useControleAceleracaoState() {
     queryKey: ["planos-aceleracao"],
     queryFn: () => base44.entities.MonthlyAccelerationPlan.list("-created_date"),
     staleTime: 5 * 60 * 1000,
+    enabled: !!user?.id,
   });
 
   return {
