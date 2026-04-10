@@ -531,6 +531,125 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
     return <div className="text-center py-12"><p className="text-gray-600">Acesso restrito a consultores</p></div>;
   }
 
+  const readOnlyContent = (
+    <div className="space-y-12 max-w-4xl mx-auto py-8 text-center px-4">
+      <div className="space-y-3">
+        <h2 className="text-2xl font-semibold text-gray-800 uppercase tracking-wide">
+          {formData.tipo_atendimento?.replace(/_/g, ' ')}
+        </h2>
+        <p className="text-lg text-gray-600">
+          {formData.data_agendada?.split('-').reverse().join('/')} às {formData.hora_agendada} &middot; {formData.duracao_minutos} min
+        </p>
+        <p className="text-base text-gray-600">
+          Status: <span className="font-medium capitalize">{formData.status}</span>
+          {formData.status_cliente && ` | Status do Cliente: `}
+          {formData.status_cliente && <span className="font-medium capitalize">{formData.status_cliente}</span>}
+        </p>
+        {formData.google_meet_link && (
+          <a href={formData.google_meet_link} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline mt-2 inline-block">
+            Link da Reunião
+          </a>
+        )}
+      </div>
+
+      {formData.participantes?.length > 0 && formData.participantes.some(p => p.nome) && (
+        <div className="space-y-4">
+          <h3 className="text-xl font-semibold text-gray-900 border-b border-gray-200 pb-2 inline-block px-8">Participantes</h3>
+          <div className="flex flex-col items-center gap-2">
+            {formData.participantes.filter(p => p.nome).map((p, idx) => (
+              <div key={idx} className="text-gray-700 text-lg">
+                <span className="font-medium">{p.nome}</span>
+                {p.cargo && <span className="text-gray-500"> — {p.cargo}</span>}
+                {p.email && <span className="text-gray-400"> ({p.email})</span>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {formData.pauta?.length > 0 && formData.pauta.some(p => p.titulo) && (
+        <div className="space-y-6">
+          <h3 className="text-xl font-semibold text-gray-900 border-b border-gray-200 pb-2 inline-block px-8">Pauta da Reunião</h3>
+          <div className="flex flex-col items-center gap-6">
+            {formData.pauta.filter(p => p.titulo).map((p, idx) => (
+              <div key={idx} className="max-w-2xl">
+                <h4 className="text-lg font-medium text-gray-800">{p.titulo} <span className="text-sm font-normal text-gray-500">({p.tempo_estimado} min)</span></h4>
+                {p.descricao && <p className="text-base text-gray-600 mt-2 leading-relaxed">{p.descricao}</p>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {formData.objetivos?.length > 0 && formData.objetivos.some(o => o) && (
+        <div className="space-y-4">
+          <h3 className="text-xl font-semibold text-gray-900 border-b border-gray-200 pb-2 inline-block px-8">Objetivos</h3>
+          <div className="flex flex-col items-center gap-2">
+            {formData.objetivos.filter(o => o).map((obj, idx) => (
+              <p key={idx} className="text-gray-700 text-lg">{obj}</p>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {formData.observacoes_consultor && (
+        <div className="space-y-4">
+          <h3 className="text-xl font-semibold text-gray-900 border-b border-gray-200 pb-2 inline-block px-8">Observações do Consultor</h3>
+          <p className="text-gray-700 max-w-3xl mx-auto whitespace-pre-wrap leading-relaxed text-lg">
+            {formData.observacoes_consultor}
+          </p>
+        </div>
+      )}
+
+      {formData.proximos_passos_list?.length > 0 && formData.proximos_passos_list.some(p => p.descricao) && (
+        <div className="space-y-6">
+          <h3 className="text-xl font-semibold text-gray-900 border-b border-gray-200 pb-2 inline-block px-8">Próximos Passos</h3>
+          <div className="flex flex-col items-center gap-5">
+            {formData.proximos_passos_list.filter(p => p.descricao).map((step, idx) => (
+              <div key={idx} className="text-gray-700 max-w-xl">
+                <p className="font-medium text-lg">{step.descricao}</p>
+                {step.responsavel && <p className="text-gray-500 text-sm mt-1">Responsável: {step.responsavel}</p>}
+                {step.prazo && <p className="text-gray-500 text-sm">Prazo: {toBrazilDate(step.prazo).toLocaleDateString('pt-BR')}</p>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {(formData.processos_vinculados?.length > 0 || formData.videoaulas_vinculadas?.length > 0 || formData.midias_anexas?.length > 0) && (
+        <div className="space-y-4">
+          <h3 className="text-xl font-semibold text-gray-900 border-b border-gray-200 pb-2 inline-block px-8">Conteúdo Vinculado</h3>
+          <div className="flex flex-col items-center gap-3">
+            {formData.processos_vinculados?.map((p, idx) => (
+              <p key={`p-${idx}`} className="text-gray-700 text-lg flex items-center gap-2 justify-center">📦 {p.titulo} <span className="text-sm text-gray-500">({p.categoria})</span></p>
+            ))}
+            {formData.videoaulas_vinculadas?.map((v, idx) => (
+              <p key={`v-${idx}`} className="text-gray-700 text-lg flex items-center gap-2 justify-center">📺 {v.titulo} <span className="text-sm text-gray-500">({v.descricao})</span></p>
+            ))}
+            {formData.midias_anexas?.map((m, idx) => (
+              <a key={`m-${idx}`} href={m.url} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline text-lg flex items-center gap-2 justify-center">
+                📎 {m.nome || 'Arquivo Anexo'}
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {formData.checklist_respostas?.length > 0 && (
+        <div className="space-y-4">
+          <h3 className="text-xl font-semibold text-gray-900 border-b border-gray-200 pb-2 inline-block px-8">Checklist</h3>
+          <div className="flex flex-col items-center gap-2">
+            {formData.checklist_respostas.map((r, idx) => (
+              <p key={idx} className="text-gray-700 text-lg flex items-center gap-2 justify-center">
+                {r.concluido ? '✅' : '❌'} {r.pergunta}
+              </p>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
   const content = (
     <>
       <AtendimentoProgressIndicator formData={formData} />
@@ -608,21 +727,15 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
         </CardContent>
       </Card>
 
-      {(!isReadOnly || !!formData.observacoes_consultor) && (
-        <ObservationsSection formData={formData} setFormData={setFormData} />
-      )}
+      <ObservationsSection formData={formData} setFormData={setFormData} />
 
-      {!isReadOnly && (
-        <>
-          <AdvancedOptionsSection formData={formData} setFormData={setFormData} workshops={workshops} />
+      <AdvancedOptionsSection formData={formData} setFormData={setFormData} workshops={workshops} />
 
-          <AtaActionsSection
-            formData={formData} setFormData={setFormData}
-            workshops={workshops} gerarAtaMutation={gerarAtaMutation}
-            handleDeleteAta={handleDeleteAta} queryClient={queryClient}
-          />
-        </>
-      )}
+      <AtaActionsSection
+        formData={formData} setFormData={setFormData}
+        workshops={workshops} gerarAtaMutation={gerarAtaMutation}
+        handleDeleteAta={handleDeleteAta} queryClient={queryClient}
+      />
 
       <ConflitosHorarioModal
         open={conflitosModal.open}
@@ -707,9 +820,11 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
           </div>
           <div className="p-6 overflow-y-auto flex-1">
             <form id="atendimento-form" onSubmit={handleSubmit} className="space-y-6">
-              <fieldset disabled={isReadOnly} className={`space-y-0 border-0 p-0 m-0 min-w-0 ${isReadOnly ? 'opacity-95' : ''}`}>
-                {content}
-              </fieldset>
+              {isReadOnly ? readOnlyContent : (
+                <fieldset disabled={isReadOnly} className={`space-y-0 border-0 p-0 m-0 min-w-0 ${isReadOnly ? 'opacity-95' : ''}`}>
+                  {content}
+                </fieldset>
+              )}
             </form>
           </div>
           <div className="flex gap-3 justify-end border-t border-gray-200 bg-white px-6 py-4 shrink-0 rounded-b-2xl shadow-[0_-4px_16px_rgba(0,0,0,0.10)]">
@@ -801,9 +916,11 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
         )}
       </div>
       <form onSubmit={handleSubmit} className="space-y-6">
-        <fieldset disabled={isReadOnly} className={`space-y-0 border-0 p-0 m-0 min-w-0 ${isReadOnly ? 'opacity-95' : ''}`}>
-          {content}
-        </fieldset>
+        {isReadOnly ? readOnlyContent : (
+          <fieldset disabled={isReadOnly} className={`space-y-0 border-0 p-0 m-0 min-w-0 ${isReadOnly ? 'opacity-95' : ''}`}>
+            {content}
+          </fieldset>
+        )}
         <div className="sticky bottom-0 z-20 -mx-6 px-6 mt-6">
           <div className="flex gap-3 justify-end bg-white/95 backdrop-blur-sm border-t border-gray-200 shadow-[0_-4px_12px_rgba(0,0,0,0.06)] rounded-t-xl py-4 px-6">
             {isReadOnly ? (
