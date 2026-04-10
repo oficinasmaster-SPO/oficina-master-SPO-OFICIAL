@@ -85,6 +85,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [conflitosModal, setConflitosModal] = useState({ open: false, conflitos: [], dataHorario: null });
   const autoSaveTimerRef = useRef(null);
+  const autoSaveInitializedRef = useRef(false);
   const pautaRef = React.useRef(null);
   const pendingIntelligenceIdsRef = useRef([]);
   const { createMeeting, isCreating } = useGoogleMeet();
@@ -447,6 +448,13 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
   // ── C4: Auto-save uses stable JSON snapshot ──
   useEffect(() => {
     if (!formData.id) return;
+
+    // E4: Skip first auto-save after loading existing record
+    if (!autoSaveInitializedRef.current) {
+      autoSaveInitializedRef.current = true;
+      return;
+    }
+
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
 
     // E3: Mark unsaved immediately on change
