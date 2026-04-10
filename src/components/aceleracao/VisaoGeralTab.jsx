@@ -31,7 +31,7 @@ function getMouseEnterSide(e) {
 }
 
 export default function VisaoGeralTab({ state }) {
-  const { user, workshops, atendimentos, atendimentosPeriodo } = state;
+  const { user, workshops, workshopMap, atendimentos, atendimentosPeriodo } = state;
   const [modalClientes, setModalClientes] = useState({ isOpen: false, tipo: null, clientes: [] });
   const [modalReunioes, setModalReunioes] = useState({ isOpen: false, tipo: null, reunioes: [] });
   const [hoverSides, setHoverSides] = useState({});
@@ -131,14 +131,19 @@ export default function VisaoGeralTab({ state }) {
                   <HoverCard key={atendimento.id} openDelay={80} closeDelay={80}>
                     <HoverCardTrigger asChild>
                       <div
-                        className="border-l-4 border-blue-500 pl-3 py-2 rounded-r cursor-pointer hover:bg-blue-50 transition-colors"
-                        onMouseEnter={(e) => {
-                          const side = getMouseEnterSide(e);
-                          setHoverSides(prev => ({ ...prev, [atendimento.id]: side }));
-                        }}
+                       className="border-l-4 border-blue-500 pl-3 py-2 rounded-r cursor-pointer hover:bg-blue-50 transition-colors flex items-start justify-between gap-2"
+                       onMouseEnter={(e) => {
+                         const side = getMouseEnterSide(e);
+                         setHoverSides(prev => ({ ...prev, [atendimento.id]: side }));
+                       }}
                       >
-                        <p className="font-medium text-sm">{atendimento.tipo_atendimento}</p>
-                        <p className="text-xs text-gray-600">{formatDateTimeBR(atendimento.data_agendada)}</p>
+                       <div className="min-w-0">
+                         <p className="font-medium text-sm">{atendimento.tipo_atendimento}</p>
+                         <p className="text-xs text-gray-600">{formatDateTimeBR(atendimento.data_agendada)}</p>
+                       </div>
+                       <p className="text-xs text-gray-500 font-medium text-right truncate flex-shrink-0 max-w-[45%] mt-0.5">
+                         {workshopMap?.[atendimento.workshop_id]?.name || ''}
+                       </p>
                       </div>
                     </HoverCardTrigger>
                     <HoverCardContent className="w-52 p-3" side={hoverSides[atendimento.id] || "right"} align="center">
