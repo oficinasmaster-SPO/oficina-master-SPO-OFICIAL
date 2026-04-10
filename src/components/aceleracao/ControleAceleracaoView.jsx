@@ -7,6 +7,7 @@ import RegistroAtendimentoMassaModal from "@/components/aceleracao/RegistroAtend
 import FiltrosControleAceleracao from "@/components/aceleracao/FiltrosControleAceleracao";
 import ActiveFiltersBar from "@/components/aceleracao/ActiveFiltersBar";
 import TabSkeleton from "@/components/aceleracao/TabSkeleton";
+import TabErrorBoundary from "@/components/aceleracao/TabErrorBoundary";
 import RegistrarAtendimento from "@/pages/RegistrarAtendimento";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { useAceleracaoObservability } from "@/components/hooks/useAceleracaoObservability";
@@ -226,37 +227,49 @@ export default function ControleAceleracaoView({ state }) {
         {/* Tab Content — single Suspense, forceMount on main tabs to prevent layout shift */}
         <Suspense fallback={<TabSkeleton variant="overview" />}>
           <TabsContent value="visao-geral" forceMount className={`mt-0 ${activeTab !== "visao-geral" ? "hidden" : ""}`}>
-            {loadingAtendimentos ? (
-              <TabSkeleton variant="overview" />
-            ) : (
-              <VisaoGeralTab state={state} />
-            )}
+            <TabErrorBoundary tabName="Visão Geral">
+              {loadingAtendimentos ? (
+                <TabSkeleton variant="overview" />
+              ) : (
+                <VisaoGeralTab state={state} />
+              )}
+            </TabErrorBoundary>
           </TabsContent>
 
           <TabsContent value="atendimentos" forceMount className={`mt-0 ${activeTab !== "atendimentos" ? "hidden" : ""}`}>
-            {loadingAtendimentos ? (
-              <TabSkeleton variant="table" />
-            ) : (
-              <PainelAtendimentosTab state={state} />
-            )}
+            <TabErrorBoundary tabName="Atendimentos">
+              {loadingAtendimentos ? (
+                <TabSkeleton variant="table" />
+              ) : (
+                <PainelAtendimentosTab state={state} />
+              )}
+            </TabErrorBoundary>
           </TabsContent>
 
           <TabsContent value="cronograma" className="mt-0">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              <CronogramaGeral isTab={true} />
-            </div>
+            <TabErrorBoundary tabName="Cronograma">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <CronogramaGeral isTab={true} />
+              </div>
+            </TabErrorBoundary>
           </TabsContent>
 
           <TabsContent value="pedidos" className="mt-0">
-            <PedidosInternosTab user={user} />
+            <TabErrorBoundary tabName="Pedidos & Backlog">
+              <PedidosInternosTab user={user} />
+            </TabErrorBoundary>
           </TabsContent>
 
           <TabsContent value="agenda-visual" className="mt-0">
-            <AgendaVisualTab state={state} />
+            <TabErrorBoundary tabName="Agenda Visual">
+              <AgendaVisualTab state={state} />
+            </TabErrorBoundary>
           </TabsContent>
 
           <TabsContent value="dashboard-operacional" className="mt-0">
-            <DashboardOperacionalTabRedesigned user={user} />
+            <TabErrorBoundary tabName="Dashboard Sprints">
+              <DashboardOperacionalTabRedesigned user={user} />
+            </TabErrorBoundary>
           </TabsContent>
         </Suspense>
       </Tabs>
