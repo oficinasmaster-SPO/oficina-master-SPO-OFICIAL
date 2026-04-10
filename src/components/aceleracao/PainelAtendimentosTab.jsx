@@ -347,9 +347,8 @@ export default function PainelAtendimentosTab({ state }) {
 
                             {atendimento.ata_id && (
                               <Button variant="ghost" size="sm"
-                                onClick={async () => {
-                                  const ata = await base44.entities.MeetingMinutes.get(atendimento.ata_id);
-                                  if (ata) { setSelectedAta(ata); setShowVisualizarAta(true); }
+                                onClick={() => {
+                                  if (ataVinculada) { setSelectedAta(ataVinculada); setShowVisualizarAta(true); }
                                   else toast.error("ATA não encontrada");
                                 }}
                                 title="Ver/Finalizar ATA"
