@@ -93,7 +93,8 @@ export default function ControleAceleracaoView({ state }) {
   }), [atendimentosPeriodo, workshops]);
 
   // Check if any filter is active (non-default)
-  const hasActiveFilters = filtros.consultorId && filtros.consultorId !== "todos" || 
+  const hasActiveFilters =
+    (filtros.consultorId && filtros.consultorId !== "todos") ||
     (filtros.preset && filtros.preset !== "mes_atual");
 
   const handleClearFilter = useCallback((filterKey) => {
