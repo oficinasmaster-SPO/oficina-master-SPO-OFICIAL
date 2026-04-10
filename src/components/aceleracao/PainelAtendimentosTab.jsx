@@ -64,7 +64,8 @@ export default function PainelAtendimentosTab({ state }) {
     onSuccess: (_, id) => {
       toast.success('Reunião iniciada!');
       queryClient.invalidateQueries({ queryKey: ['atendimentos-acelerador'] });
-      navigate(createPageUrl('RegistrarAtendimento') + `?atendimento_id=${id}`);
+      setEditarAtendimentoId(id);
+      setShowEditarAtendimento(true);
     }
   });
 
@@ -447,9 +448,16 @@ export default function PainelAtendimentosTab({ state }) {
 
                                 <DropdownMenuSeparator />
                                 
-                                <DropdownMenuItem className="text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer" onClick={() => setDeleteConfirm(atendimento)}>
+                                {atendimento.ata_id && (
+                                  <DropdownMenuItem className="text-orange-600 focus:text-orange-600 focus:bg-orange-50 cursor-pointer" onClick={() => setDeleteConfirm({ type: 'ata', atendimento })}>
+                                    <FileText className="mr-2 h-4 w-4" />
+                                    <span>Excluir apenas a ATA</span>
+                                  </DropdownMenuItem>
+                                )}
+                                
+                                <DropdownMenuItem className="text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer" onClick={() => setDeleteConfirm({ type: 'atendimento', atendimento })}>
                                   <Trash2 className="mr-2 h-4 w-4" />
-                                  <span>{atendimento.ata_id ? "Excluir ATA" : "Excluir Atendimento"}</span>
+                                  <span>Excluir Atendimento</span>
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
@@ -499,21 +507,28 @@ export default function PainelAtendimentosTab({ state }) {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <Trash2 className="w-5 h-5 text-red-600" />
-              {deleteConfirm?.ata_id ? 'Excluir ATA' : 'Excluir Atendimento'}
+              {deleteConfirm?.type === 'ata' ? 'Excluir ATA' : 'Excluir Atendimento'}
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
-              <p>{deleteConfirm?.ata_id ? 'Tem certeza que deseja excluir esta ATA?' : 'Tem certeza que deseja excluir este registro de atendimento?'}</p>
-              {deleteConfirm && (
+              <div className="text-gray-600">
+                {deleteConfirm?.type === 'ata' 
+                  ? 'Tem certeza que deseja excluir esta ATA? O atendimento será mantido.' 
+                  : 'Tem certeza que deseja excluir este registro de atendimento? Isso removerá o agendamento do sistema.'}
+                {deleteConfirm?.type === 'atendimento' && deleteConfirm?.atendimento?.ata_id && (
+                  <span className="block mt-2 text-red-600 font-medium">Atenção: A ATA vinculada a este atendimento também será excluída permanentemente.</span>
+                )}
+              </div>
+              {deleteConfirm?.atendimento && (
                 <div className="bg-gray-50 rounded-lg p-3 mt-3 text-sm text-gray-700 space-y-1">
-                  <p><span className="font-medium">Tipo:</span> {deleteConfirm.tipo_atendimento?.replace(/_/g, ' ')}</p>
-                  <p><span className="font-medium">Data:</span> {formatDateTimeBR(deleteConfirm.data_agendada)}</p>
-                  <p><span className="font-medium">Consultor:</span> {deleteConfirm.consultor_nome || '-'}</p>
+                  <p><span className="font-medium">Tipo:</span> {deleteConfirm.atendimento.tipo_atendimento?.replace(/_/g, ' ')}</p>
+                  <p><span className="font-medium">Data:</span> {formatDateTimeBR(deleteConfirm.atendimento.data_agendada)}</p>
+                  <p><span className="font-medium">Consultor:</span> {deleteConfirm.atendimento.consultor_nome || '-'}</p>
                 </div>
               )}
-              {deleteConfirm?.ata_id && deleteConfirm?.google_event_id && (
+              {deleteConfirm?.atendimento?.ata_id && deleteConfirm?.atendimento?.google_event_id && (
                 <label className="mt-4 flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-700 cursor-pointer">
                   <Checkbox checked={deleteFollowUp} onCheckedChange={(checked) => setDeleteFollowUp(checked === true)} className="mt-0.5" />
-                  <span>Deletar o follow up criado para esta ATA</span>
+                  <span>Deletar o follow up criado para esta ATA no Google Calendar</span>
                 </label>
               )}
             </AlertDialogDescription>
@@ -528,12 +543,16 @@ export default function PainelAtendimentosTab({ state }) {
                 if (!deleteConfirm) return;
                 setIsDeleting(true);
                 try {
-                  if (deleteConfirm.ata_id) {
-                    await base44.functions.invoke('deleteAta', { ata_id: deleteConfirm.ata_id, delete_follow_up: deleteFollowUp });
+                  if (deleteConfirm.type === 'ata') {
+                    await base44.functions.invoke('deleteAta', { ata_id: deleteConfirm.atendimento.ata_id, delete_follow_up: deleteFollowUp });
                     toast.success('ATA excluída com sucesso!');
                     queryClient.invalidateQueries({ queryKey: ['meeting-minutes'] });
                   } else {
-                    await base44.entities.ConsultoriaAtendimento.delete(deleteConfirm.id);
+                    if (deleteConfirm.atendimento.ata_id) {
+                      await base44.functions.invoke('deleteAta', { ata_id: deleteConfirm.atendimento.ata_id, delete_follow_up: deleteFollowUp });
+                      queryClient.invalidateQueries({ queryKey: ['meeting-minutes'] });
+                    }
+                    await base44.entities.ConsultoriaAtendimento.delete(deleteConfirm.atendimento.id);
                     toast.success('Atendimento excluído com sucesso!');
                   }
                   queryClient.invalidateQueries({ queryKey: ['atendimentos-acelerador'] });
