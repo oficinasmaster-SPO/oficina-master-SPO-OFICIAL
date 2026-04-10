@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, X, Check, AlertCircle, User, ChevronRight, Download } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ConflitosHorarioModal from "@/components/aceleracao/ConflitosHorarioModal";
 import ClientIntelligenceCapturePanel from "@/components/inteligencia/ClientIntelligenceCapturePanel";
 import ChecklistConsultoria from "@/components/aceleracao/ChecklistConsultoria";
@@ -603,6 +604,14 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
         </div>
       </div>
 
+      <Tabs defaultValue="ata" className="w-full">
+        <TabsList className="mb-6 grid w-full grid-cols-2 max-w-[400px]">
+          <TabsTrigger value="ata">Detalhes do Atendimento</TabsTrigger>
+          <TabsTrigger value="followups">Follow-ups</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="ata" className="space-y-10">
+
       {/* Participantes (Header em Documento) */}
       {formData.participantes?.length > 0 && formData.participantes.some(p => p.nome) && (
         <section className="space-y-3">
@@ -902,38 +911,44 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
         </section>
       )}
       
-      {/* 14. ACOMPANHAMENTOS (FOLLOW-UPS) */}
-      {followUps?.length > 0 && (
-        <section className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">14. Acompanhamentos (Follow-ups)</h3>
-          <div className="space-y-3 pl-4">
-            {followUps.map((followUp, idx) => (
-              <div key={idx} className={`border ${followUp.is_completed ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-white'} p-4 rounded-lg shadow-sm`}>
-                <div className="flex justify-between items-start mb-2">
-                  <p className="font-semibold text-gray-900 flex items-center gap-2">
-                    <span className="bg-blue-100 text-blue-600 w-6 h-6 rounded-full flex items-center justify-center text-sm">{followUp.sequence_number}</span>
-                    Acompanhamento {followUp.days_since_meeting ? `(${followUp.days_since_meeting} dias)` : ''}
-                  </p>
-                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${followUp.is_completed ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
-                    {followUp.is_completed ? 'Concluído' : 'Pendente'}
-                  </span>
-                </div>
-                <div className="text-sm text-gray-600 mb-2">
-                  <p><strong>Data Prevista:</strong> {followUp.reminder_date ? toBrazilDate(followUp.reminder_date).toLocaleDateString('pt-BR') : '-'}</p>
-                  {followUp.completed_at && <p><strong>Concluído em:</strong> {toBrazilDate(followUp.completed_at).toLocaleDateString('pt-BR')}</p>}
-                </div>
-                <p className="text-sm text-gray-700 whitespace-pre-wrap">{followUp.message}</p>
-                {followUp.notes && (
-                  <div className="mt-3 p-3 bg-white/50 border border-gray-100 rounded">
-                    <p className="text-xs font-semibold text-gray-500 mb-1">Anotações do Retorno:</p>
-                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{followUp.notes}</p>
+        </TabsContent>
+
+        <TabsContent value="followups" className="space-y-6">
+          {followUps?.length > 0 ? (
+            <div className="space-y-4 pt-2">
+              {followUps.map((followUp, idx) => (
+                <div key={idx} className={`border ${followUp.is_completed ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-white'} p-4 rounded-lg shadow-sm`}>
+                  <div className="flex justify-between items-start mb-2">
+                    <p className="font-semibold text-gray-900 flex items-center gap-2">
+                      <span className="bg-blue-100 text-blue-600 w-6 h-6 rounded-full flex items-center justify-center text-sm">{followUp.sequence_number}</span>
+                      Acompanhamento {followUp.days_since_meeting ? `(${followUp.days_since_meeting} dias)` : ''}
+                    </p>
+                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${followUp.is_completed ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                      {followUp.is_completed ? 'Concluído' : 'Pendente'}
+                    </span>
                   </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
+                  <div className="text-sm text-gray-600 mb-2">
+                    <p><strong>Data Prevista:</strong> {followUp.reminder_date ? toBrazilDate(followUp.reminder_date).toLocaleDateString('pt-BR') : '-'}</p>
+                    {followUp.completed_at && <p><strong>Concluído em:</strong> {toBrazilDate(followUp.completed_at).toLocaleDateString('pt-BR')}</p>}
+                  </div>
+                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{followUp.message}</p>
+                  {followUp.notes && (
+                    <div className="mt-3 p-3 bg-white/50 border border-gray-100 rounded">
+                      <p className="text-xs font-semibold text-gray-500 mb-1">Anotações do Retorno:</p>
+                      <p className="text-sm text-gray-700 whitespace-pre-wrap">{followUp.notes}</p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-200 mt-4">
+              <AlertCircle className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+              <p>Nenhum acompanhamento (follow-up) registrado para este atendimento.</p>
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
 
       <ClientIntelligenceViewer
         open={viewerOpen}
