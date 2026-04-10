@@ -668,12 +668,12 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
 
       {formData.checklist_respostas?.length > 0 && (
         <section className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">Checklist</h3>
+          <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">Checklist de Diagnóstico</h3>
           <div className="pl-4 flex flex-col gap-2">
             {formData.checklist_respostas.map((r, idx) => (
-              <p key={idx} className="text-base text-gray-700 flex items-center gap-2">
-                <span className={r.concluido ? 'text-green-500' : 'text-red-500'}>{r.concluido ? '✅' : '❌'}</span>
-                <span>{r.pergunta}</span>
+              <p key={idx} className="text-base text-gray-700 flex items-start gap-3 bg-gray-50 border border-gray-100 p-3 rounded-lg">
+                <span className="shrink-0 mt-0.5">{r.concluido ? '✅' : '❌'}</span>
+                <span className="font-medium text-gray-800">{r.pergunta}</span>
               </p>
             ))}
           </div>
