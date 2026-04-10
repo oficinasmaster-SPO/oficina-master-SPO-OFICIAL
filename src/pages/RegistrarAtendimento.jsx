@@ -5,7 +5,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, X, Check, AlertCircle } from "lucide-react";
+import { Loader2, X, Check, AlertCircle, User } from "lucide-react";
 import { toast } from "sonner";
 import ConflitosHorarioModal from "@/components/aceleracao/ConflitosHorarioModal";
 import ClientIntelligenceCapturePanel from "@/components/inteligencia/ClientIntelligenceCapturePanel";
@@ -642,7 +642,15 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
         <div className={`relative bg-white rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.2)] w-full max-w-[800px] max-h-[95vh] flex flex-col z-10 transition-all duration-250 ${isClosing ? 'opacity-0 scale-95 translate-y-4' : 'animate-in fade-in zoom-in-95 duration-200'}`}>
           <div className="flex items-center justify-between p-6 border-b shrink-0 shadow-[0_4px_16px_rgba(0,0,0,0.10)]">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">{isReadOnly ? 'Visualizar Atendimento' : (formData.id ? 'Editar Atendimento' : 'Registrar Atendimento de Consultoria')}</h1>
+              <div className="flex items-center gap-3">
+                <h1 className="text-2xl font-bold text-gray-900">{isReadOnly ? 'Visualizar Atendimento' : (formData.id ? 'Editar Atendimento' : 'Registrar Atendimento de Consultoria')}</h1>
+                {formData.consultor_nome && (
+                  <span className="px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 text-sm font-medium border border-blue-100 flex items-center">
+                    <User className="w-3.5 h-3.5 mr-1.5" />
+                    {formData.consultor_nome}
+                  </span>
+                )}
+              </div>
               <p className="text-sm text-gray-600 mt-1">{isReadOnly ? 'Detalhes do atendimento (Somente Leitura)' : (formData.id ? 'Atualize as informações do atendimento' : 'Agende e registre informações do atendimento ao cliente')}</p>
             </div>
             <button type="button" onClick={handleClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
@@ -691,7 +699,15 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">{isReadOnly ? 'Visualizar Atendimento' : (formData.id ? 'Editar Atendimento' : 'Registrar Atendimento de Consultoria')}</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-3xl font-bold text-gray-900">{isReadOnly ? 'Visualizar Atendimento' : (formData.id ? 'Editar Atendimento' : 'Registrar Atendimento de Consultoria')}</h1>
+          {formData.consultor_nome && (
+            <span className="px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-sm font-medium border border-blue-100 flex items-center mt-1">
+              <User className="w-4 h-4 mr-1.5" />
+              {formData.consultor_nome}
+            </span>
+          )}
+        </div>
         <p className="text-gray-600 mt-2">{isReadOnly ? 'Detalhes do atendimento (Somente Leitura)' : (formData.id ? 'Atualize as informações do atendimento' : 'Agende e registre informações do atendimento ao cliente')}</p>
       </div>
       <form onSubmit={handleSubmit} className="space-y-6">
