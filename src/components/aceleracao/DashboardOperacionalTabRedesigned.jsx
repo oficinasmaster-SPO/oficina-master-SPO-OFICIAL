@@ -10,7 +10,6 @@ import {
 "lucide-react";
 import { differenceInDays } from "date-fns";
 import SprintPhaseDetailModalRedesigned from "./SprintPhaseDetailModalRedesigned";
-import useWorkshopsAtivos from "@/components/hooks/useWorkshopsAtivos";
 
 const STATUS_CONFIG = {
   pending: { label: "Pendente", color: "bg-gray-100 text-gray-600", dot: "bg-gray-400" },
@@ -71,7 +70,7 @@ function SprintRow({ sprint, workshop, onSprintClick }) {
 
 }
 
-export default function DashboardOperacionalTabRedesigned({ user }) {
+export default function DashboardOperacionalTabRedesigned({ user, workshops = [] }) {
   const [filterStatus, setFilterStatus] = useState("all");
   const [selectedSprint, setSelectedSprint] = useState(null);
 
@@ -80,8 +79,6 @@ export default function DashboardOperacionalTabRedesigned({ user }) {
     queryFn: () => base44.entities.ConsultoriaSprint.filter({}),
     staleTime: 2 * 60 * 1000
   });
-
-  const { data: workshops = [] } = useWorkshopsAtivos();
 
   const workshopMap = Object.fromEntries(workshops.map((w) => [w.id, w]));
 
