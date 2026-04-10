@@ -87,6 +87,36 @@ export default function TemplateAtendimentoModal({ onClose, onSelect }) {
         "Identificar oportunidades de melhoria",
         "Documentar procedimentos"
       ]
+    },
+    {
+      id: 6,
+      nome: "Acelera Time",
+      tipo: "acelera_time",
+      duracao_minutos: 240,
+      pauta: [
+        { 
+          titulo: "Desenvolver a mentalidade da equipe", 
+          descricao: "Desenvolver a mentalidade da equipe com atitude de dono, comportamento de dono e trazer novas técnicas práticas. Para que o colaborador tenha uma mentalidade de dono, é necessário dar clareza sobre o funcionamento 360° da empresa, permitindo que ele entenda o todo e se envolva de forma mais ativa nos resultados.", 
+          tempo_estimado: 80 
+        },
+        { 
+          titulo: "Engajamento e sinergia", 
+          descricao: "Após assistir 1 hora dos treinamentos (Dia 1, Dia 2 e Dia 3), o colaborador terá espaço para compartilhar sua visão e percepção. Esse momento é essencial para gerar: Sentimento de pertencimento, Voz ativa dentro da empresa, Envolvimento com a cultura. O objetivo é criar sinergia, engajamento e estimular uma equipe com energia, comprometimento e “sangue nos olhos”.", 
+          tempo_estimado: 80 
+        },
+        { 
+          titulo: "Inscrição (Meta e Compromisso)", 
+          descricao: "Após os 3 dias do Acelera Time, o líder deve definir uma meta clara para a equipe, contendo: Um número específico, Um objetivo desafiador, porém possível, Um critério claro de atingimento. Recompensa atrelada ao resultado (Ex: Bonificação financeira, Confraternização). O objetivo é gerar compromisso coletivo e direcionamento prático para execução.", 
+          tempo_estimado: 80 
+        }
+      ],
+      objetivos: [
+        "Treinamento e engajamento da equipe",
+        "Criar sinergia e motivação (gerar motivo para entrar em ação)",
+        "Desenvolver habilidades técnicas do dia a dia",
+        "Dar clareza do funcionamento 360° da oficina"
+      ],
+      observacoes_consultor: "Todos os clientes que implementam o Acelera Time costumam ter uma dúvida comum: “Por que toda a equipe (faxineira, mecânico, funileiro, pintor, eletricista) precisa participar desses treinamentos?”\n\nA resposta é simples: Se você deseja uma equipe com atitude de dono, que resolve problemas, toma iniciativa e contribui para a gestão, é necessário dar clareza sobre o funcionamento da empresa.\n\nMuitos empresários reclamam que a equipe: Não resolve problemas, Não pensa, Não tem iniciativa. Porém, nunca deram contexto suficiente para que essas pessoas pudessem agir de forma estratégica.\n\nQuando o time entende o funcionamento da empresa: Passa a valorizar o financeiro, Entende o papel do administrativo, Reconhece a complexidade da operação, Desenvolve senso de responsabilidade.\n\nAlém disso, muitos empresários nunca envolveram todo o time em uma causa comum. O grande objetivo do Acelera Time é justamente esse: Criar um time alinhado, consciente, engajado e participativo no crescimento da empresa."
     }
   ];
 
