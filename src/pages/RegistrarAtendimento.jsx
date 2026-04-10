@@ -408,6 +408,8 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.workshop_id) { toast.error("Selecione uma oficina"); return; }
+    if (!formData.consultor_id) { toast.error("Selecione um consultor"); return; }
+    if (!formData.tipo_atendimento) { toast.error("Selecione o tipo de atendimento"); return; }
     if (!formData.data_agendada || !formData.hora_agendada) { toast.error("Preencha data e horário do atendimento"); return; }
 
     try {
