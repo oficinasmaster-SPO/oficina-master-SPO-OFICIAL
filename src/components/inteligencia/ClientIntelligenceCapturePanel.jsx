@@ -190,6 +190,7 @@ export default function ClientIntelligenceCapturePanel({ workshopId, ataId, onSu
         {/* Botão Adicionar */}
         {selectedSubcategory && (
         <Button
+          type="button"
           onClick={handleAddItem}
           disabled={isLoading}
           className="w-full bg-blue-600 hover:bg-blue-700"
@@ -207,6 +208,7 @@ export default function ClientIntelligenceCapturePanel({ workshopId, ataId, onSu
             {capturedItems.map((item, idx) => (
               <button
                 key={idx}
+                type="button"
                 onClick={() => {
                   setSelectedItem(item);
                   setViewerOpen(true);

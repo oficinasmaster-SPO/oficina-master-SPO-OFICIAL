@@ -209,6 +209,7 @@ export default function ClientIntelligenceChecklistManager({
                 placeholder="Digite o item e pressione Enter"
               />
               <Button
+                type="button"
                 variant="outline"
                 onClick={handleAddItem}
                 className="px-3"
@@ -220,10 +221,11 @@ export default function ClientIntelligenceChecklistManager({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
           <Button
+            type="button"
             onClick={handleSaveChecklist}
             disabled={isLoading}
             className="bg-indigo-600 hover:bg-indigo-700"
