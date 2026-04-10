@@ -107,6 +107,12 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
     pa: formData.participantes,
     pt: formData.pauta,
     ob: formData.objetivos,
+    // P3: basic fields included in auto-save
+    st: formData.status,
+    sc: formData.status_cliente,
+    ta: formData.tipo_atendimento,
+    dm: formData.duracao_minutos,
+    gm: formData.google_meet_link,
   }), [
     formData.observacoes_consultor, formData.proximos_passos,
     formData.proximos_passos_list, formData.checklist_respostas,
@@ -115,6 +121,9 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
     formData.processos_vinculados, formData.videoaulas_vinculadas,
     formData.documentos_vinculados, formData.participantes,
     formData.pauta, formData.objetivos,
+    formData.status, formData.status_cliente,
+    formData.tipo_atendimento, formData.duracao_minutos,
+    formData.google_meet_link,
   ]);
 
   // ── Auth ──
@@ -465,6 +474,13 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
       setAutoSaveStatus('saving');
       try {
         await base44.entities.ConsultoriaAtendimento.update(formData.id, {
+          // P3: basic fields
+          status: formData.status,
+          status_cliente: formData.status_cliente,
+          tipo_atendimento: formData.tipo_atendimento,
+          duracao_minutos: formData.duracao_minutos,
+          google_meet_link: formData.google_meet_link,
+          // content fields
           observacoes_consultor: formData.observacoes_consultor,
           proximos_passos: formData.proximos_passos,
           proximos_passos_list: (formData.proximos_passos_list || []).filter(p => p.descricao),
