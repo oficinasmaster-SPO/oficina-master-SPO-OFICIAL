@@ -54,6 +54,12 @@ export default function ControleAceleracaoView({ state }) {
 
   const [showMassRegistration, setShowMassRegistration] = useState(false);
 
+  // Track visited tabs — lazy-mount on first visit, keep mounted after
+  const [visitedTabs, setVisitedTabs] = useState(() => new Set([activeTab]));
+  const markVisited = useCallback((tab) => {
+    setVisitedTabs(prev => prev.has(tab) ? prev : new Set(prev).add(tab));
+  }, []);
+
   // Observability
   const { trackTabChange, trackFilterChange, trackAtendimentoOpen, trackMassRegistrationOpen, trackError } = useAceleracaoObservability(user);
   const prevTabRef = useRef(activeTab);
@@ -61,8 +67,9 @@ export default function ControleAceleracaoView({ state }) {
   const handleTabChange = useCallback((newTab) => {
     trackTabChange(prevTabRef.current, newTab);
     prevTabRef.current = newTab;
+    markVisited(newTab);
     setActiveTab(newTab);
-  }, [setActiveTab, trackTabChange]);
+  }, [setActiveTab, trackTabChange, markVisited]);
 
   const handleOpenModal = useCallback((id) => {
     trackAtendimentoOpen(id);
@@ -224,7 +231,7 @@ export default function ControleAceleracaoView({ state }) {
           </TabsList>
         </div>
 
-        {/* Tab Content — single Suspense, forceMount on main tabs to prevent layout shift */}
+        {/* Tab Content — forceMount + hidden on all tabs; lazy-mount on first visit */}
         <Suspense fallback={<TabSkeleton variant="overview" />}>
           <TabsContent value="visao-geral" forceMount className={`mt-0 ${activeTab !== "visao-geral" ? "hidden" : ""}`}>
             <TabErrorBoundary tabName="Visão Geral">
@@ -246,30 +253,38 @@ export default function ControleAceleracaoView({ state }) {
             </TabErrorBoundary>
           </TabsContent>
 
-          <TabsContent value="cronograma" className="mt-0">
-            <TabErrorBoundary tabName="Cronograma">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <CronogramaGeral isTab={true} />
-              </div>
-            </TabErrorBoundary>
+          <TabsContent value="cronograma" forceMount className={`mt-0 ${activeTab !== "cronograma" ? "hidden" : ""}`}>
+            {visitedTabs.has("cronograma") && (
+              <TabErrorBoundary tabName="Cronograma">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                  <CronogramaGeral isTab={true} />
+                </div>
+              </TabErrorBoundary>
+            )}
           </TabsContent>
 
-          <TabsContent value="pedidos" className="mt-0">
-            <TabErrorBoundary tabName="Pedidos & Backlog">
-              <PedidosInternosTab user={user} />
-            </TabErrorBoundary>
+          <TabsContent value="pedidos" forceMount className={`mt-0 ${activeTab !== "pedidos" ? "hidden" : ""}`}>
+            {visitedTabs.has("pedidos") && (
+              <TabErrorBoundary tabName="Pedidos & Backlog">
+                <PedidosInternosTab user={user} />
+              </TabErrorBoundary>
+            )}
           </TabsContent>
 
-          <TabsContent value="agenda-visual" className="mt-0">
-            <TabErrorBoundary tabName="Agenda Visual">
-              <AgendaVisualTab state={state} />
-            </TabErrorBoundary>
+          <TabsContent value="agenda-visual" forceMount className={`mt-0 ${activeTab !== "agenda-visual" ? "hidden" : ""}`}>
+            {visitedTabs.has("agenda-visual") && (
+              <TabErrorBoundary tabName="Agenda Visual">
+                <AgendaVisualTab state={state} />
+              </TabErrorBoundary>
+            )}
           </TabsContent>
 
-          <TabsContent value="dashboard-operacional" className="mt-0">
-            <TabErrorBoundary tabName="Dashboard Sprints">
-              <DashboardOperacionalTabRedesigned user={user} />
-            </TabErrorBoundary>
+          <TabsContent value="dashboard-operacional" forceMount className={`mt-0 ${activeTab !== "dashboard-operacional" ? "hidden" : ""}`}>
+            {visitedTabs.has("dashboard-operacional") && (
+              <TabErrorBoundary tabName="Dashboard Sprints">
+                <DashboardOperacionalTabRedesigned user={user} />
+              </TabErrorBoundary>
+            )}
           </TabsContent>
         </Suspense>
       </Tabs>
