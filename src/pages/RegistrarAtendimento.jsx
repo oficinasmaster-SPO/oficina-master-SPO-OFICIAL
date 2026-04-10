@@ -4,43 +4,33 @@ import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar as CalendarIcon, Plus, Trash2, Upload, Sparkles, Loader2, Video, Link as LinkIcon, Image, Film, Send, FileText, MessageSquare, Package, Clock, FilePlus, X, ExternalLink, Copy, Check, CheckCircle2 } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 import { toast } from "sonner";
-import { format } from "date-fns";
-import NotificationSchedulerModal from "@/components/aceleracao/NotificationSchedulerModal";
-import TemplateAtendimentoModal from "@/components/aceleracao/TemplateAtendimentoModal";
-import MeetingTimer from "@/components/aceleracao/MeetingTimer";
-import WorkshopSearchSelect from "@/components/aceleracao/WorkshopSearchSelect";
-import ProcessSearchSelect from "@/components/aceleracao/ProcessSearchSelect";
-import AudioTranscriptionField from "@/components/aceleracao/AudioTranscriptionField";
-import TipoAtendimentoManager from "@/components/aceleracao/TipoAtendimentoManager";
-import MediaUploadField from "@/components/aceleracao/MediaUploadField";
-import ClientDetailPanel from "@/components/aceleracao/ClientDetailPanel";
 import ConflitosHorarioModal from "@/components/aceleracao/ConflitosHorarioModal";
 import ClientIntelligenceCapturePanel from "@/components/inteligencia/ClientIntelligenceCapturePanel";
 import ChecklistConsultoria from "@/components/aceleracao/ChecklistConsultoria";
 import { useGoogleMeet } from "@/components/hooks/useGoogleMeet";
 import useConsultoresList from "@/components/hooks/useConsultoresList";
-import NextSteps from "@/components/aceleracao/NextSteps";
 import AtendimentoProgressIndicator from "@/components/aceleracao/AtendimentoProgressIndicator";
-import AtaAIConfigPanel from "@/components/aceleracao/AtaAIConfigPanel";
 import AutoSaveIndicator from "@/components/aceleracao/AutoSaveIndicator";
-// import { TimePicker } from "@/components/ui/time-picker";
 import { toBrazilDate } from "@/utils/timezone";
 
-// RegistrarAtendimento v3 - auto-save + progress
+// Decomposed sections (M3)
+import BasicInfoSection from "@/components/atendimento/BasicInfoSection";
+import ParticipantsSection from "@/components/atendimento/ParticipantsSection";
+import AgendaSection from "@/components/atendimento/AgendaSection";
+import ContentSection from "@/components/atendimento/ContentSection";
+import ObservationsSection from "@/components/atendimento/ObservationsSection";
+import AdvancedOptionsSection from "@/components/atendimento/AdvancedOptionsSection";
+import AtaActionsSection from "@/components/atendimento/AtaActionsSection";
+
 export default function RegistrarAtendimento({ isModal = false, onClose, atendimentoId: atendimentoIdProp, consultoresExternos }) {
   const navigate = useNavigate();
   const location = window.location;
   const queryClient = useQueryClient();
   const urlParams = new URLSearchParams(window.location.search);
   const fromAgenda = urlParams.get('fromAgenda') === 'true';
-  const wasFullscreen = urlParams.get('fullscreen') === 'true';
 
   const handleClose = () => {
     if (onClose) {
@@ -53,10 +43,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
   };
 
   React.useEffect(() => {
-    // Redireciona a página isolada para a tela de controle com o modal aberto
     if (!onClose && location.pathname.toLowerCase().includes('registraratendimento')) {
-      // Fix: Don't redirect if we're already rendering this as a page via routing 
-      // but ensure we navigate cleanly if it was opened incorrectly
       const isStandaloneMode = !isModal;
       if (!isStandaloneMode) {
         const newSearch = location.search ? location.search + '&modal=atendimento' : '?modal=atendimento';
@@ -68,69 +55,70 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
   React.useEffect(() => {
     if (isModal && (!location.pathname.toLowerCase().includes('registraratendimento'))) {
       document.body.style.overflow = 'hidden';
-      return () => {
-        document.body.style.overflow = 'unset';
-      };
+      return () => { document.body.style.overflow = 'unset'; };
     }
   }, [isModal, location.pathname]);
-  
+
   const [formData, setFormData] = useState({
-    workshop_id: "",
-    tipo_atendimento: "acompanhamento_mensal",
-    data_agendada: "",
-    hora_agendada: "",
-    duracao_minutos: 60,
-    status: "agendado",
-    status_cliente: "",
-    google_meet_link: "",
+    workshop_id: "", tipo_atendimento: "acompanhamento_mensal",
+    data_agendada: "", hora_agendada: "", duracao_minutos: 60,
+    status: "agendado", status_cliente: "", google_meet_link: "",
     participantes: [{ nome: "", cargo: "", email: "" }],
     pauta: [{ titulo: "", descricao: "", tempo_estimado: 15 }],
-    objetivos: [""],
-    topicos_discutidos: [],
-    decisoes_tomadas: [],
-    acoes_geradas: [],
-    midias_anexas: [],
-    processos_vinculados: [],
-    videoaulas_vinculadas: [],
-    documentos_vinculados: [],
-    observacoes_consultor: "",
-    proximos_passos: "",
-    proximos_passos_list: [],
-    notificacoes_programadas: [],
+    objetivos: [""], topicos_discutidos: [], decisoes_tomadas: [],
+    acoes_geradas: [], midias_anexas: [], processos_vinculados: [],
+    videoaulas_vinculadas: [], documentos_vinculados: [],
+    observacoes_consultor: "", proximos_passos: "",
+    proximos_passos_list: [], notificacoes_programadas: [],
     checklist_respostas: []
   });
 
-  const [showNotificationModal, setShowNotificationModal] = useState(false);
-  const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [customTipos, setCustomTipos] = useState([]);
   const [timerData, setTimerData] = useState(null);
   const [showMeetingTimer, setShowMeetingTimer] = useState(false);
-  const [customTipos, setCustomTipos] = useState([]);
-  const [showAISummary, setShowAISummary] = useState(false);
-  const [aiSummary, setAISummary] = useState(null);
-  const [conflitosModal, setConflitosModal] = useState({ open: false, conflitos: [], dataHorario: null });
-  const [showConsultoriasPanel, setShowConsultoriasPanel] = useState(false);
   const [autoSaveStatus, setAutoSaveStatus] = useState(null);
+  const [conflitosModal, setConflitosModal] = useState({ open: false, conflitos: [], dataHorario: null });
   const autoSaveTimerRef = useRef(null);
   const pautaRef = React.useRef(null);
   const pendingIntelligenceIdsRef = useRef([]);
   const { createMeeting, isCreating } = useGoogleMeet();
 
-  // Carregar usuário
+  // ── C4: Stable auto-save deps via JSON snapshot ──
+  const autoSaveSnapshot = useMemo(() => JSON.stringify({
+    obs: formData.observacoes_consultor,
+    pp: formData.proximos_passos,
+    ppl: formData.proximos_passos_list,
+    cr: formData.checklist_respostas,
+    td: formData.topicos_discutidos,
+    dt: formData.decisoes_tomadas,
+    ag: formData.acoes_geradas,
+    ma: formData.midias_anexas,
+    pv: formData.processos_vinculados,
+    vv: formData.videoaulas_vinculadas,
+    dv: formData.documentos_vinculados,
+  }), [
+    formData.observacoes_consultor, formData.proximos_passos,
+    formData.proximos_passos_list, formData.checklist_respostas,
+    formData.topicos_discutidos, formData.decisoes_tomadas,
+    formData.acoes_geradas, formData.midias_anexas,
+    formData.processos_vinculados, formData.videoaulas_vinculadas,
+    formData.documentos_vinculados,
+  ]);
+
+  // ── Auth ──
   const { data: user } = useQuery({
     queryKey: ['current-user'],
     queryFn: () => base44.auth.me()
   });
 
-  // Carregar atendimento se vier da URL ou da prop
+  // ── C3: Added atendimentoIdProp to deps ──
+  const resolvedAtendimentoId = atendimentoIdProp || urlParams.get('atendimento_id') || urlParams.get('edit');
+
   React.useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const atendimentoId = atendimentoIdProp || urlParams.get('atendimento_id') || urlParams.get('edit');
-    
-    if (atendimentoId && user) {
+    if (resolvedAtendimentoId && user) {
       const loadAtendimento = async () => {
         try {
-          const atendimento = await base44.entities.ConsultoriaAtendimento.get(atendimentoId);
-          
+          const atendimento = await base44.entities.ConsultoriaAtendimento.get(resolvedAtendimentoId);
           if (atendimento) {
             const dataAgendada = toBrazilDate(atendimento.data_agendada);
             const yr = dataAgendada.getFullYear();
@@ -139,76 +127,66 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
             const hr = String(dataAgendada.getHours()).padStart(2, '0');
             const mn = String(dataAgendada.getMinutes()).padStart(2, '0');
             setFormData({
-            ...atendimento,
-            data_agendada: `${yr}-${mo}-${dy}`,
-            hora_agendada: `${hr}:${mn}`,
-            participantes: atendimento.participantes || [{ nome: "", cargo: "", email: "" }],
-            pauta: atendimento.pauta || [{ titulo: "", descricao: "", tempo_estimado: 15 }],
-            objetivos: atendimento.objetivos || [""],
-            midias_anexas: atendimento.midias_anexas || [],
-            processos_vinculados: atendimento.processos_vinculados || [],
-            videoaulas_vinculadas: atendimento.videoaulas_vinculadas || [],
-            documentos_vinculados: atendimento.documentos_vinculados || [],
-            topicos_discutidos: atendimento.topicos_discutidos || [],
-            decisoes_tomadas: atendimento.decisoes_tomadas || [],
-            acoes_geradas: atendimento.acoes_geradas || [],
-            proximos_passos_list: atendimento.proximos_passos_list || [],
-            checklist_respostas: atendimento.checklist_respostas || []
+              ...atendimento,
+              data_agendada: `${yr}-${mo}-${dy}`,
+              hora_agendada: `${hr}:${mn}`,
+              participantes: atendimento.participantes || [{ nome: "", cargo: "", email: "" }],
+              pauta: atendimento.pauta || [{ titulo: "", descricao: "", tempo_estimado: 15 }],
+              objetivos: atendimento.objetivos || [""],
+              midias_anexas: atendimento.midias_anexas || [],
+              processos_vinculados: atendimento.processos_vinculados || [],
+              videoaulas_vinculadas: atendimento.videoaulas_vinculadas || [],
+              documentos_vinculados: atendimento.documentos_vinculados || [],
+              topicos_discutidos: atendimento.topicos_discutidos || [],
+              decisoes_tomadas: atendimento.decisoes_tomadas || [],
+              acoes_geradas: atendimento.acoes_geradas || [],
+              proximos_passos_list: atendimento.proximos_passos_list || [],
+              checklist_respostas: atendimento.checklist_respostas || []
             });
             setShowMeetingTimer(atendimento.status === 'participando');
-            console.log("Atendimento carregado para edição:", atendimento);
           }
         } catch (error) {
-          console.error("Erro ao carregar atendimento:", error);
           toast.error("Erro ao carregar atendimento");
         }
       };
-      
       loadAtendimento();
     }
-  }, [user]);
+  }, [user, resolvedAtendimentoId]);
 
-  // Carregar oficinas com planos habilitados
+  // ── C2: Unified workshop query — uses same queryKey as useWorkshopsAtivos ──
   const { data: workshops } = useQuery({
-    queryKey: ['workshops-list'],
+    queryKey: ['workshops-ativos'],
     queryFn: async () => {
-      const allWorkshops = await base44.entities.Workshop.list('-created_date', 2000);
-      return allWorkshops.filter(w => w.planoAtual && w.planoAtual !== 'FREE');
+      const all = await base44.entities.Workshop.filter({ status: 'ativo' }, 'name', 5000);
+      return all.filter(w => w.planoAtual && w.planoAtual !== 'FREE');
     },
     enabled: user?.role === 'admin' || user?.job_role === 'acelerador',
     staleTime: 10 * 60 * 1000
   });
 
-  // Usar consultores passados via prop OU buscar via hook compartilhado
+  // ── I1: consultores come from Employee (not User) — names are accurate ──
   const { data: consultoresFetched } = useConsultoresList(user);
   const consultores = (consultoresExternos?.length > 0) ? consultoresExternos : consultoresFetched;
 
-  // Carregar colaboradores da oficina selecionada
   const { data: colaboradores } = useQuery({
     queryKey: ['colaboradores-oficina', formData.workshop_id],
     queryFn: async () => {
       if (!formData.workshop_id) return [];
-      return await base44.entities.Employee.filter({ 
-        workshop_id: formData.workshop_id,
-        status: 'ativo'
+      return await base44.entities.Employee.filter({
+        workshop_id: formData.workshop_id, status: 'ativo'
       }, null, 500);
     },
     enabled: !!formData.workshop_id
   });
 
-  // Derivar colaboradores internos dos consultores já carregados (evita query duplicada)
   const colaboradoresInternos = consultores;
 
-  // Carregar processos disponíveis
   const { data: processos } = useQuery({
     queryKey: ['processos-disponiveis'],
-    queryFn: async () => {
-      return await base44.entities.ProcessDocument.list('-created_date', 1000);
-    },
+    queryFn: () => base44.entities.ProcessDocument.list('-created_date', 1000),
     staleTime: 10 * 60 * 1000
   });
 
-  // Carregar tipos de atendimento customizados do banco
   const { data: tiposCustomizados = [], refetch: refetchTipos } = useQuery({
     queryKey: ['tipos-atendimento-consultoria'],
     queryFn: async () => {
@@ -218,48 +196,26 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
     staleTime: 5 * 60 * 1000
   });
 
-  // Combinar tipos customizados + padrões com useMemo
   const todosOsTipos = useMemo(() => {
-    try {
-      // Tipos customizados já vêm de TipoAtendimentoConsultoria
-      const customFormatted = (tiposCustomizados || []).map(t => ({
-        id: t.value || t.id,
-        value: t.value,
-        label: t.label,
-        duracao: t.duracao_minutos || 45
-      }));
-      
-      // Tipos padrão do sistema (se houver)
-      const padrao = [
-        { id: 'acompanhamento_mensal', value: 'acompanhamento_mensal', label: 'Acompanhamento Mensal', duracao: 60 },
-        { id: 'diagnostico', value: 'diagnostico', label: 'Diagnóstico', duracao: 90 },
-        { id: 'workshop', value: 'workshop', label: 'Workshop', duracao: 120 },
-        { id: 'mentoria', value: 'mentoria', label: 'Mentoria', duracao: 45 }
-      ];
-      
-      // Evitar duplicatas
-      const customIds = new Set(customFormatted.map(c => c.value));
-      const padraoFiltered = padrao.filter(p => !customIds.has(p.value));
-      
-      const combined = [...customFormatted, ...padraoFiltered];
-      console.log('Todos os tipos combinados:', combined.length, combined);
-      return combined;
-    } catch (error) {
-      console.error('Erro ao combinar tipos:', error);
-      return [];
-    }
+    const customFormatted = (tiposCustomizados || []).map(t => ({
+      id: t.value || t.id, value: t.value, label: t.label, duracao: t.duracao_minutos || 45
+    }));
+    const padrao = [
+      { id: 'acompanhamento_mensal', value: 'acompanhamento_mensal', label: 'Acompanhamento Mensal', duracao: 60 },
+      { id: 'diagnostico', value: 'diagnostico', label: 'Diagnóstico', duracao: 90 },
+      { id: 'workshop', value: 'workshop', label: 'Workshop', duracao: 120 },
+      { id: 'mentoria', value: 'mentoria', label: 'Mentoria', duracao: 45 }
+    ];
+    const customIds = new Set(customFormatted.map(c => c.value));
+    return [...customFormatted, ...padrao.filter(p => !customIds.has(p.value))];
   }, [tiposCustomizados]);
 
-  // Carregar cursos de treinamento
   const { data: cursos } = useQuery({
     queryKey: ['cursos-treinamento'],
-    queryFn: async () => {
-      return await base44.entities.TrainingCourse.list('-created_date', 1000);
-    },
+    queryFn: () => base44.entities.TrainingCourse.list('-created_date', 1000),
     staleTime: 10 * 60 * 1000
   });
 
-  // Carregar aulas de cursos publicados
   const { data: todasAulas } = useQuery({
     queryKey: ['todas-aulas-publicadas'],
     queryFn: async () => {
@@ -271,25 +227,29 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
     staleTime: 10 * 60 * 1000
   });
 
-  // Mutation para criar ou atualizar atendimento
+  // ── Mutation: create/update ──
   const createMutation = useMutation({
     mutationFn: async (data) => {
-      if (!data.workshop_id) {
-        throw new Error("Selecione uma oficina");
-      }
-      if (!data.data_agendada || !data.hora_agendada) {
-        throw new Error("Preencha data e horário");
-      }
+      if (!data.workshop_id) throw new Error("Selecione uma oficina");
+      if (!data.data_agendada || !data.hora_agendada) throw new Error("Preencha data e horário");
 
       const dataHora = `${data.data_agendada}T${data.hora_agendada}:00`;
-      
+
+      // I1: Use consultor_nome from consultores list (Employee name) if available
+      let consultorNome = data.consultor_nome;
+      if (!consultorNome || consultorNome === user.full_name) {
+        const consultorId = data.consultor_id || user.id;
+        const consultor = consultores?.find(c => c.id === consultorId);
+        consultorNome = consultor?.full_name || user.full_name;
+      }
+
       const atendimentoData = {
         workshop_id: data.workshop_id,
         tipo_atendimento: data.tipo_atendimento,
         status: data.status,
         status_cliente: data.status_cliente,
         consultor_id: data.consultor_id || user.id,
-        consultor_nome: data.consultor_nome || user.full_name,
+        consultor_nome: consultorNome,
         data_agendada: dataHora,
         duracao_minutos: data.duracao_minutos,
         google_meet_link: data.google_meet_link,
@@ -310,16 +270,11 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
         notificacoes_programadas: data.notificacoes_programadas || []
       };
 
-      console.log("Salvando atendimento:", atendimentoData);
-
-      // Atualizar ou criar
-      const atendimento = data.id 
+      const atendimento = data.id
         ? await base44.entities.ConsultoriaAtendimento.update(data.id, atendimentoData)
         : await base44.entities.ConsultoriaAtendimento.create(atendimentoData);
 
-      console.log("Atendimento salvo:", atendimento);
-
-      // Vincular inteligências capturadas durante criação (sem ataId)
+      // Link pending intelligence
       if (!data.id && pendingIntelligenceIdsRef.current.length > 0) {
         try {
           await Promise.all(
@@ -327,50 +282,37 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
               base44.entities.ClientIntelligence.update(id, { attendance_id: atendimento.id })
             )
           );
-          console.log(`${pendingIntelligenceIdsRef.current.length} inteligências vinculadas ao atendimento`);
           pendingIntelligenceIdsRef.current = [];
         } catch (e) {
           console.error('Erro ao vincular inteligências:', e);
         }
       }
 
-      // Se status é "realizado" e não tem ATA, gerar automaticamente
+      // C1: Use base44.functions.invoke instead of asServiceRole in frontend
       if (atendimentoData.status === 'realizado' && !atendimento.ata_id) {
         try {
-          const ataResponse = await base44.asServiceRole.functions.invoke('gerarAtaConsultoria', {
+          const ataResponse = await base44.functions.invoke('gerarAtaConsultoria', {
             atendimento_id: atendimento.id
           });
-          console.log("ATA gerada automaticamente:", ataResponse);
-          
-          // Atualizar atendimento com ata_id
           if (ataResponse.data?.ata_id) {
             await base44.entities.ConsultoriaAtendimento.update(atendimento.id, {
               ata_id: ataResponse.data.ata_id
             });
-            
-            // Finalizar ATA
             await base44.entities.MeetingMinutes.update(ataResponse.data.ata_id, {
               status: 'finalizada'
             });
-            console.log("ATA finalizada automaticamente");
           }
         } catch (error) {
           console.error('Erro ao gerar/finalizar ATA:', error);
         }
-      }
-      // Se já tem ATA vinculada, apenas finalizá-la
-      else if (atendimento.ata_id) {
+      } else if (atendimento.ata_id) {
         try {
-          await base44.entities.MeetingMinutes.update(atendimento.ata_id, {
-            status: 'finalizada'
-          });
-          console.log("ATA finalizada automaticamente");
+          await base44.entities.MeetingMinutes.update(atendimento.ata_id, { status: 'finalizada' });
         } catch (error) {
           console.error('Erro ao finalizar ATA:', error);
         }
       }
 
-      // Se status é "realizado", enviar notificação
       if (atendimentoData.status === 'realizado') {
         try {
           await base44.functions.invoke('notificarClienteAtendimento', {
@@ -383,7 +325,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
 
       return atendimento;
     },
-    onSuccess: (atendimento) => {
+    onSuccess: () => {
       queryClient.invalidateQueries(['consultoria-atendimentos']);
       queryClient.invalidateQueries(['meeting-minutes']);
       queryClient.invalidateQueries(['todos-atendimentos']);
@@ -391,15 +333,13 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
       handleClose();
     },
     onError: (error) => {
-      console.error("Erro ao salvar:", error);
       toast.error('Erro ao salvar: ' + (error.message || "Verifique os campos obrigatórios"));
     }
   });
 
-  // Gerar ata com IA
+  // ── Mutation: gerar ATA ──
   const gerarAtaMutation = useMutation({
     mutationFn: async (params) => {
-      // params pode ser string (legacy) ou objeto com config
       const payload = typeof params === 'string'
         ? { atendimento_id: params }
         : {
@@ -415,7 +355,6 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
     onSuccess: (response) => {
       toast.success('Ata gerada com sucesso!');
       queryClient.invalidateQueries(['consultoria-atendimentos']);
-      // Se a IA sugeriu próximos passos, adicionar ao form
       const sugestoes = response?.data?.suggested_next_steps;
       if (sugestoes && sugestoes.length > 0) {
         setFormData(prev => ({
@@ -441,15 +380,10 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
       try {
         await base44.functions.invoke('deleteAta', { ata_id: formData.ata_id });
         toast.success("ATA excluída com sucesso!");
-        
-        // Update local state to remove ata_id and allow generating a new one
         setFormData(prev => ({ ...prev, ata_id: null }));
-        
-        // Invalidate queries to refresh lists
         queryClient.invalidateQueries(['consultoria-atendimentos']);
         queryClient.invalidateQueries(['meeting-minutes']);
       } catch (error) {
-        console.error("Erro ao excluir ATA:", error);
         toast.error("Erro ao excluir ATA: " + error.message);
       }
     }
@@ -457,153 +391,36 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!formData.workshop_id) {
-      toast.error("Selecione uma oficina");
-      return;
-    }
+    if (!formData.workshop_id) { toast.error("Selecione uma oficina"); return; }
+    if (!formData.data_agendada || !formData.hora_agendada) { toast.error("Preencha data e horário do atendimento"); return; }
 
-    if (!formData.data_agendada || !formData.hora_agendada) {
-      toast.error("Preencha data e horário do atendimento");
-      return;
-    }
-
-    // Verificar conflitos de horário
     try {
       const dataHoraCompleta = `${formData.data_agendada}T${formData.hora_agendada}:00`;
       const consultorId = formData.consultor_id || user.id;
-
       const response = await base44.functions.invoke('verificarConflitoHorario', {
         consultor_id: consultorId,
         data_agendada: dataHoraCompleta,
         duracao_minutos: formData.duracao_minutos,
-        atendimento_id_editando: formData.id // Ignora o próprio atendimento se estiver editando
+        atendimento_id_editando: formData.id
       });
-
       if (response.data.conflito) {
-        setConflitosModal({
-          open: true,
-          conflitos: response.data.atendimentos,
-          dataHorario: dataHoraCompleta
-        });
+        setConflitosModal({ open: true, conflitos: response.data.atendimentos, dataHorario: dataHoraCompleta });
         return;
       }
     } catch (error) {
-      console.error('Erro ao verificar conflitos:', error);
       toast.error("Erro ao verificar conflitos de horário");
       return;
     }
 
-    // Mesclar dados do timer se estiver ativo
     const dadosParaSalvar = timerData ? { ...formData, ...timerData } : formData;
-    
-    console.log("Submetendo formulário:", dadosParaSalvar);
     createMutation.mutate(dadosParaSalvar);
   };
 
-
-
-  const addMidia = () => {
-    setFormData({
-      ...formData,
-      midias_anexas: [...formData.midias_anexas, { tipo: "link", url: "", titulo: "" }]
-    });
-  };
-
-  const removeMidia = (index) => {
-    const newMidias = formData.midias_anexas.filter((_, i) => i !== index);
-    setFormData({ ...formData, midias_anexas: newMidias });
-  };
-
-  const addProcesso = (processoId) => {
-    const processo = processos?.find(p => p.id === processoId);
-    if (processo && !formData.processos_vinculados.find(p => p.id === processoId)) {
-      setFormData({
-        ...formData,
-        processos_vinculados: [...formData.processos_vinculados, {
-          id: processo.id,
-          titulo: processo.title,
-          categoria: processo.category,
-          url: processo.file_url
-        }]
-      });
-    }
-  };
-
-  const removeProcesso = (index) => {
-    const newProcessos = formData.processos_vinculados.filter((_, i) => i !== index);
-    setFormData({ ...formData, processos_vinculados: newProcessos });
-  };
-
-  const addVideoaula = (aulaId) => {
-    const aula = todasAulas?.find(a => a.id === aulaId);
-    if (aula && !formData.videoaulas_vinculadas.find(v => v.id === aulaId)) {
-      const curso = cursos?.find(c => c.id === aula.course_id);
-      setFormData({
-        ...formData,
-        videoaulas_vinculadas: [...formData.videoaulas_vinculadas, {
-          id: aula.id,
-          titulo: aula.title,
-          descricao: curso?.title || "",
-          video_url: aula.video_url
-        }]
-      });
-    }
-  };
-
-  const removeVideoaula = (index) => {
-    const newVideoaulas = formData.videoaulas_vinculadas.filter((_, i) => i !== index);
-    setFormData({ ...formData, videoaulas_vinculadas: newVideoaulas });
-  };
-
-  const addParticipante = () => {
-    setFormData({
-      ...formData,
-      participantes: [...formData.participantes, { nome: "", cargo: "", email: "" }]
-    });
-  };
-
-  const removeParticipante = (index) => {
-    const newParticipantes = formData.participantes.filter((_, i) => i !== index);
-    setFormData({ ...formData, participantes: newParticipantes });
-  };
-
-  const addPauta = () => {
-    setFormData({
-      ...formData,
-      pauta: [...formData.pauta, { titulo: "", descricao: "", tempo_estimado: 15 }]
-    });
-  };
-
-  const removePauta = (index) => {
-    const newPauta = formData.pauta.filter((_, i) => i !== index);
-    setFormData({ ...formData, pauta: newPauta });
-  };
-
-  const addObjetivo = () => {
-    setFormData({
-      ...formData,
-      objetivos: [...formData.objetivos, ""]
-    });
-  };
-
-  const addProximoPasso = () => {
-    setFormData({
-      ...formData,
-      proximos_passos_list: [...(formData.proximos_passos_list || []), { descricao: "", responsavel: "", prazo: "" }]
-    });
-  };
-
-  const removeProximoPasso = (index) => {
-    const newPassos = formData.proximos_passos_list.filter((_, i) => i !== index);
-    setFormData({ ...formData, proximos_passos_list: newPassos });
-  };
-
-  // Auto-save: debounce 3s after any formData change, only if editing existing record
+  // ── C4: Auto-save uses stable JSON snapshot ──
   useEffect(() => {
     if (!formData.id) return;
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
-    
+
     autoSaveTimerRef.current = setTimeout(async () => {
       if (!formData.workshop_id || !formData.data_agendada || !formData.hora_agendada) return;
       setAutoSaveStatus('saving');
@@ -629,1077 +446,139 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
       }
     }, 3000);
 
-    return () => {
-      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
-    };
-  }, [
-    formData.observacoes_consultor,
-    formData.proximos_passos,
-    formData.proximos_passos_list,
-    formData.checklist_respostas,
-    formData.topicos_discutidos,
-    formData.decisoes_tomadas,
-    formData.acoes_geradas,
-    formData.midias_anexas,
-    formData.processos_vinculados,
-    formData.videoaulas_vinculadas,
-    formData.documentos_vinculados,
-    formData.id,
-  ]);
+    return () => { if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current); };
+  }, [autoSaveSnapshot, formData.id, formData.workshop_id, formData.data_agendada, formData.hora_agendada]);
 
   if (!user || user.role !== 'admin') {
-    return (
-      <div className="text-center py-12">
-        <p className="text-gray-600">Acesso restrito a consultores</p>
-      </div>
-    );
+    return <div className="text-center py-12"><p className="text-gray-600">Acesso restrito a consultores</p></div>;
   }
 
   const content = (
     <>
-        {/* Progress Indicator */}
-        <AtendimentoProgressIndicator formData={formData} />
+      <AtendimentoProgressIndicator formData={formData} />
 
-        {/* Auto-save status */}
-        {formData.id && autoSaveStatus && (
-          <div className="flex justify-end">
-            <AutoSaveIndicator status={autoSaveStatus} />
-          </div>
-        )}
+      {formData.id && autoSaveStatus && (
+        <div className="flex justify-end"><AutoSaveIndicator status={autoSaveStatus} /></div>
+      )}
 
-        {/* Dados Básicos */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Informações Básicas</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Oficina Cliente *</Label>
-                <WorkshopSearchSelect
-                  workshops={workshops}
-                  value={formData.workshop_id}
-                  onValueChange={(value) => setFormData({ ...formData, workshop_id: value })}
-                />
-              </div>
+      <BasicInfoSection
+        formData={formData} setFormData={setFormData} user={user}
+        workshops={workshops} consultores={consultores}
+        todosOsTipos={todosOsTipos} customTipos={customTipos} setCustomTipos={setCustomTipos}
+        createMeeting={createMeeting} isCreating={isCreating}
+        showMeetingTimer={showMeetingTimer} setShowMeetingTimer={setShowMeetingTimer}
+        setTimerData={setTimerData}
+      />
 
-              {user?.role === 'admin' && (
-                <div>
-                  <Label>Consultor Responsável</Label>
-                  <Select
-                    value={formData.consultor_id || user.id}
-                    onValueChange={(value) => {
-                      const consultor = consultores?.find(c => c.id === value);
-                      setFormData({ 
-                        ...formData, 
-                        consultor_id: value,
-                        consultor_nome: consultor?.full_name || user.full_name
-                      });
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {consultores?.map((c) => (
-                        <SelectItem key={c.id} value={c.id}>
-                          {c.full_name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-            </div>
+      <ParticipantsSection
+        formData={formData} setFormData={setFormData}
+        colaboradores={colaboradores} colaboradoresInternos={colaboradoresInternos}
+      />
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <Label>Tipo de Atendimento *</Label>
-                  <TipoAtendimentoManager
-                    customTipos={customTipos}
-                    onSave={setCustomTipos}
-                  />
-                </div>
-                <Select
-                 value={formData.tipo_atendimento}
-                 onValueChange={(value) => {
-                   // Buscar duração do tipo selecionado
-                   const tipo = todosOsTipos.find(t => t.value === value || t.id === value);
-                   const duracao = tipo?.duracao || 60;
-
-                   setFormData({ 
-                     ...formData, 
-                     tipo_atendimento: value,
-                     duracao_minutos: duracao
-                   });
-                 }}
-                >
-                 <SelectTrigger>
-                   <SelectValue placeholder="Selecione o tipo..." />
-                 </SelectTrigger>
-                 <SelectContent>
-                   {todosOsTipos && todosOsTipos.length > 0 ? (
-                     todosOsTipos.map(tipo => (
-                       <SelectItem key={tipo.id} value={tipo.value || tipo.id}>
-                         {tipo.label} ({tipo.duracao}min)
-                       </SelectItem>
-                     ))
-                   ) : (
-                     <div className="p-2 text-sm text-gray-500">Carregando tipos...</div>
-                   )}
-                 </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label>Status *</Label>
-                <Select
-                  value={formData.status}
-                  onValueChange={(value) => setFormData({ ...formData, status: value })}
-                  disabled={formData.status === 'participando'}
-                >
-                  <SelectTrigger className={formData.status === 'participando' ? 'opacity-70 cursor-not-allowed bg-gray-50' : ''}>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="agendado">Agendado</SelectItem>
-                    <SelectItem value="confirmado">Confirmado</SelectItem>
-                    <SelectItem value="participando">Participando</SelectItem>
-                    <SelectItem value="realizado">Realizado</SelectItem>
-                    <SelectItem value="atrasado">Atrasado</SelectItem>
-                    <SelectItem value="reagendado">Reagendado</SelectItem>
-                  </SelectContent>
-                </Select>
-                {formData.status === 'participando' && (
-                  <p className="text-xs text-blue-600 mt-1">Status bloqueado. Finalize a reunião usando os botões da listagem ou o timer.</p>
-                )}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Label>Data *</Label>
-                <Input
-                  type="date"
-                  value={formData.data_agendada}
-                  onChange={(e) => setFormData({ ...formData, data_agendada: e.target.value })}
-                  required
-                />
-              </div>
-              <div>
-                <Label>Horário *</Label>
-                <Input
-                  type="time"
-                  value={formData.hora_agendada}
-                  onChange={(e) => setFormData({ ...formData, hora_agendada: e.target.value })}
-                  required
-                />
-              </div>
-              <div>
-                <Label>Duração (min)</Label>
-                <Input
-                  type="number"
-                  value={formData.duracao_minutos}
-                  onChange={(e) => setFormData({ ...formData, duracao_minutos: parseInt(e.target.value) })}
-                  min="15"
-                  step="15"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <Label>Google Meet</Label>
-              
-              {/* Criação automática com OAuth */}
-              {formData.data_agendada && formData.hora_agendada && !formData.google_meet_link && (
-                <Button
-                  type="button"
-                  variant="default"
-                  className="w-full bg-blue-600 hover:bg-blue-700"
-                  disabled={isCreating}
-                  onClick={async () => {
-                    const startDateTime = new Date(`${formData.data_agendada}T${formData.hora_agendada}:00`);
-                    const endDateTime = new Date(startDateTime.getTime() + formData.duracao_minutos * 60000);
-                    
-                    const attendeesEmails = formData.participantes
-                      .map(p => p.email)
-                      .filter(e => e && e.includes('@'));
-
-                    const meetData = await createMeeting({
-                      summary: `${formData.tipo_atendimento?.replace(/_/g, ' ')} - Oficinas Master`,
-                      description: formData.objetivos.join('\n'),
-                      startDateTime: startDateTime.toISOString(),
-                      endDateTime: endDateTime.toISOString(),
-                      attendees: attendeesEmails
-                    });
-
-                    if (meetData) {
-                      setFormData({
-                        ...formData,
-                        google_meet_link: meetData.meetLink,
-                        google_event_id: meetData.eventId,
-                        google_calendar_link: meetData.htmlLink
-                      });
-                      
-                      // Auto-copiar mensagem ao criar o link
-                      const dateStr = formData.data_agendada.split('-').reverse().join('/');
-                      const msg = `Olá! Tudo bem?\nSua reunião de ${formData.tipo_atendimento?.replace(/_/g, ' ')} com ${formData.consultor_nome || user?.full_name || 'o consultor'} está agendada.\n\n🗓 Data: ${dateStr}\n⏰ Horário: ${formData.hora_agendada}\n\nPara participar, acesse o link abaixo no horário combinado:\n🔗 ${meetData.meetLink}`;
-                      navigator.clipboard.writeText(msg);
-                      toast.success("Reunião criada e convite copiado para a área de transferência!");
-                    }
-                  }}
-                >
-                  {isCreating ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Criando reunião...
-                    </>
-                  ) : (
-                    <>
-                      <Video className="w-4 h-4 mr-2" />
-                      Criar Reunião Automática (Google Calendar + Meet)
-                    </>
-                  )}
-                </Button>
-              )}
-
-              {/* Link manual ou existente com Mensagem de Convite */}
-              <div className="space-y-3">
-                <Input
-                  placeholder="Ou cole o link manualmente"
-                  value={formData.google_meet_link}
-                  onChange={(e) => setFormData({ ...formData, google_meet_link: e.target.value })}
-                />
-
-                {formData.google_meet_link && (
-                  <div className="mt-4 p-4 border rounded-lg bg-gray-50 space-y-2">
-                    <Label className="text-sm font-semibold flex items-center gap-2">
-                      <MessageSquare className="w-4 h-4 text-blue-600" />
-                      Mensagem de Convite
-                    </Label>
-                    <p className="text-xs text-gray-500 mb-2">Envie esta mensagem de boas-vindas ao cliente pelo WhatsApp ou E-mail.</p>
-                    <div className="relative">
-                      <Textarea
-                        readOnly
-                        className="text-sm text-gray-700 bg-white min-h-[140px] pr-12 focus-visible:ring-1"
-                        value={`Olá! Tudo bem?\nSua reunião de ${formData.tipo_atendimento?.replace(/_/g, ' ')} com ${formData.consultor_nome || user?.full_name || 'o consultor'} está agendada.\n\n🗓 Data: ${formData.data_agendada?.split('-').reverse().join('/') || ''}\n⏰ Horário: ${formData.hora_agendada || ''}\n\nPara participar, acesse o link abaixo no horário combinado:\n🔗 ${formData.google_meet_link}`}
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="absolute top-2 right-2 h-8 w-8 hover:bg-blue-100 hover:text-blue-600 transition-colors"
-                        onClick={() => {
-                          const msg = `Olá! Tudo bem?\nSua reunião de ${formData.tipo_atendimento?.replace(/_/g, ' ')} com ${formData.consultor_nome || user?.full_name || 'o consultor'} está agendada.\n\n🗓 Data: ${formData.data_agendada?.split('-').reverse().join('/') || ''}\n⏰ Horário: ${formData.hora_agendada || ''}\n\nPara participar, acesse o link abaixo no horário combinado:\n🔗 ${formData.google_meet_link}`;
-                          navigator.clipboard.writeText(msg);
-                          toast.success("Mensagem copiada para a área de transferência!");
-                        }}
-                        title="Copiar mensagem"
-                      >
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {formData.google_event_id && (
-                <p className="text-xs text-green-600 flex items-center gap-1 mt-2">
-                  <CheckCircle2 className="w-3 h-3" />
-                  Evento criado e sincronizado com o Google Calendar
-                </p>
-              )}
-            </div>
-
-            {formData.status === 'participando' && (
-              <div className="border-t pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full mb-4"
-                  onClick={() => setShowMeetingTimer(!showMeetingTimer)}
-                >
-                  <Clock className="w-4 h-4 mr-2" />
-                  {showMeetingTimer ? 'Ocultar Timer' : 'Iniciar Reunião com Timer'}
-                </Button>
-                {showMeetingTimer && <MeetingTimer onTimerData={setTimerData} />}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Participantes */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-            <CardTitle>Participantes</CardTitle>
-            <div className="flex gap-2">
-              <Button type="button" variant="outline" size="sm" onClick={addParticipante}>
-                <Plus className="w-4 h-4 mr-2" />
-                Manual
-              </Button>
-              {colaboradores && colaboradores.length > 0 && (
-                <Select onValueChange={(value) => {
-                  const colab = colaboradores.find(c => c.id === value);
-                  if (colab) {
-                    setFormData({
-                      ...formData,
-                      participantes: [...formData.participantes, {
-                        nome: colab.full_name,
-                        cargo: colab.position,
-                        email: colab.email
-                      }]
-                    });
-                  }
-                }}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="Da oficina" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {colaboradores.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.full_name} - {c.position}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-              {colaboradoresInternos && colaboradoresInternos.length > 0 && (
-                <Select onValueChange={(value) => {
-                  const colab = colaboradoresInternos.find(c => c.id === value);
-                  if (colab) {
-                    setFormData({
-                      ...formData,
-                      participantes: [...formData.participantes, {
-                        nome: colab.full_name,
-                        cargo: "Consultor (Interno)",
-                        email: ""
-                      }]
-                    });
-                  }
-                }}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="Interno" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {colaboradoresInternos.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.full_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {formData.participantes.map((p, idx) => (
-              <div key={idx} className="flex gap-3 items-start">
-                <div className="flex-1 grid grid-cols-3 gap-3">
-                  <Input
-                    placeholder="Nome"
-                    value={p.nome}
-                    onChange={(e) => {
-                      const newP = [...formData.participantes];
-                      newP[idx].nome = e.target.value;
-                      setFormData({ ...formData, participantes: newP });
-                    }}
-                  />
-                  <Input
-                    placeholder="Cargo"
-                    value={p.cargo}
-                    onChange={(e) => {
-                      const newP = [...formData.participantes];
-                      newP[idx].cargo = e.target.value;
-                      setFormData({ ...formData, participantes: newP });
-                    }}
-                  />
-                  <Input
-                    placeholder="Email"
-                    type="email"
-                    value={p.email}
-                    onChange={(e) => {
-                      const newP = [...formData.participantes];
-                      newP[idx].email = e.target.value;
-                      setFormData({ ...formData, participantes: newP });
-                    }}
-                  />
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => removeParticipante(idx)}
-                >
-                  <Trash2 className="w-4 h-4 text-red-500" />
-                </Button>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        {/* Captura Inteligente */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              📊 Capturar Inteligência do Cliente
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {formData.workshop_id ? (
-              <ClientIntelligenceCapturePanel
-                key={`intel-${formData.id || 'new'}-${formData.workshop_id}`}
-                workshopId={formData.workshop_id}
-                ataId={formData.id}
-                onPendingIdsChange={(ids) => { pendingIntelligenceIdsRef.current = ids; }}
-                onSuccess={() => {
-                  toast.success('Inteligência capturada!');
-                }}
-                onIntelligenceAdded={(intelligence) => {
-                  const novaPauta = {
-                    titulo: `${intelligence.area} - ${intelligence.type}`,
-                    descricao: intelligence.subcategory,
-                    tempo_estimado: 15
-                  };
-                  setFormData({
-                    ...formData,
-                    pauta: [...formData.pauta, novaPauta]
-                  });
-                  toast.success('Adicionado à pauta da reunião!');
-
-                  // Scroll para pauta
-                  setTimeout(() => {
-                    pautaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  }, 300);
-                }}
-              />
-            ) : (
-              <p className="text-sm text-gray-500 text-center py-4">
-                Selecione uma oficina para capturar inteligência
-              </p>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Pauta */}
-        <Card ref={pautaRef}>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Pauta da Reunião</CardTitle>
-              <Button type="button" variant="outline" size="sm" onClick={addPauta}>
-                <Plus className="w-4 h-4 mr-2" />
-                Adicionar Tópico
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {formData.pauta.map((p, idx) => (
-              <div key={idx} className="space-y-2 border-b pb-4">
-                <div className="flex gap-3 items-start">
-                  <div className="flex-1 space-y-2">
-                    <Input
-                      placeholder="Título do tópico"
-                      value={p.titulo}
-                      onChange={(e) => {
-                        const newP = [...formData.pauta];
-                        newP[idx].titulo = e.target.value;
-                        setFormData({ ...formData, pauta: newP });
-                      }}
-                    />
-                    <Textarea
-                      placeholder="Descrição"
-                      value={p.descricao}
-                      onChange={(e) => {
-                        const newP = [...formData.pauta];
-                        newP[idx].descricao = e.target.value;
-                        setFormData({ ...formData, pauta: newP });
-                      }}
-                      rows={2}
-                    />
-                  </div>
-                  <Input
-                    type="number"
-                    placeholder="Tempo (min)"
-                    className="w-24"
-                    value={p.tempo_estimado}
-                    onChange={(e) => {
-                      const newP = [...formData.pauta];
-                      newP[idx].tempo_estimado = parseInt(e.target.value);
-                      setFormData({ ...formData, pauta: newP });
-                    }}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => removePauta(idx)}
-                  >
-                    <Trash2 className="w-4 h-4 text-red-500" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        {/* Objetivos */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Objetivos do Atendimento</CardTitle>
-              <Button type="button" variant="outline" size="sm" onClick={addObjetivo}>
-                <Plus className="w-4 h-4 mr-2" />
-                Adicionar
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {formData.objetivos.map((obj, idx) => (
-              <Input
-                key={idx}
-                placeholder={`Objetivo ${idx + 1}`}
-                value={obj}
-                onChange={(e) => {
-                  const newObj = [...formData.objetivos];
-                  newObj[idx] = e.target.value;
-                  setFormData({ ...formData, objetivos: newObj });
-                }}
-              />
-            ))}
-          </CardContent>
-        </Card>
-
-        {/* Mídias e Anexos */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Mídias e Anexos para o Cliente</CardTitle>
-            <p className="text-sm text-gray-600">Upload de arquivos, links e documentos do repositório</p>
-          </CardHeader>
-          <CardContent>
-            <MediaUploadField
-              midias={formData.midias_anexas}
-              onChange={(midias) => setFormData({ ...formData, midias_anexas: midias })}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Conteúdo Pedagógico Vinculado */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Processos e Conteúdo Compartilhado</CardTitle>
-            <p className="text-sm text-gray-600">Vincule processos, videoaulas e documentos discutidos na reunião</p>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Processos (MAPs) */}
-            <div>
-              <Label className="text-base font-semibold flex items-center gap-2 mb-3">
-                <Package className="w-4 h-4" />
-                Processos (MAPs)
-              </Label>
-              <div className="space-y-2">
-                <ProcessSearchSelect
-                  processos={processos}
-                  selectedIds={formData.processos_vinculados.map(p => p.id)}
-                  onAdd={addProcesso}
-                />
-
-                {formData.processos_vinculados.length > 0 && (
-                  <div className="mt-3 space-y-2">
-                    {formData.processos_vinculados.map((processo, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
-                        <div className="flex items-center gap-3">
-                          <Package className="w-5 h-5 text-blue-600" />
-                          <div>
-                            <p className="font-medium text-sm">{processo.titulo}</p>
-                            <p className="text-xs text-gray-600">{processo.categoria}</p>
-                          </div>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeProcesso(idx)}
-                        >
-                          <Trash2 className="w-4 h-4 text-red-500" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Videoaulas/Treinamentos */}
-            <div>
-              <Label className="text-base font-semibold flex items-center gap-2 mb-3">
-                <Video className="w-4 h-4" />
-                Videoaulas e Treinamentos
-              </Label>
-              <div className="space-y-2">
-                <Select onValueChange={addVideoaula}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Adicionar videoaula..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {todasAulas?.filter(a => !formData.videoaulas_vinculadas.find(v => v.id === a.id)).map((aula) => {
-                      const curso = cursos?.find(c => c.id === aula.course_id);
-                      return (
-                        <SelectItem key={aula.id} value={aula.id}>
-                          {curso?.title} - {aula.title}
-                        </SelectItem>
-                      );
-                    })}
-                  </SelectContent>
-                </Select>
-
-                {formData.videoaulas_vinculadas.length > 0 && (
-                  <div className="mt-3 space-y-2">
-                    {formData.videoaulas_vinculadas.map((video, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-3 bg-purple-50 rounded-lg border border-purple-200">
-                        <div className="flex items-center gap-3">
-                          <Video className="w-5 h-5 text-purple-600" />
-                          <div>
-                            <p className="font-medium text-sm">{video.titulo}</p>
-                            <p className="text-xs text-gray-600">{video.descricao}</p>
-                          </div>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeVideoaula(idx)}
-                        >
-                          <Trash2 className="w-4 h-4 text-red-500" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Checklist Temático */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <span>📋</span> Checklist de Diagnóstico
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ChecklistConsultoria
-              respostas={formData.checklist_respostas || []}
-              onChange={(respostas) => setFormData({ ...formData, checklist_respostas: respostas })}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Observações */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Observações e Próximos Passos</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <AudioTranscriptionField
-              label="Observações do Consultor"
-              value={formData.observacoes_consultor}
-              onChange={(text) => setFormData({ ...formData, observacoes_consultor: text })}
-              placeholder="Notas e observações sobre o atendimento..."
-              rows={4}
-            />
-            <div className="space-y-4 pt-4 border-t">
-              <Label className="text-base font-semibold">Próximos Passos (Para ATA)</Label>
-              <p className="text-sm text-gray-500 mb-4">Estas ações constarão no rodapé da ATA em formato de lista estruturada.</p>
-              <NextSteps 
-                steps={formData.proximos_passos_list || []} 
-                onChange={(steps) => setFormData({ ...formData, proximos_passos_list: steps })} 
-                editable={true} 
-              />
-            </div>
-
-            <AudioTranscriptionField
-              label="Observações Adicionais (Antigo Próximos Passos)"
-              value={formData.proximos_passos}
-              onChange={(text) => setFormData({ ...formData, proximos_passos: text })}
-              placeholder="Notas textuais extras caso necessário..."
-              rows={3}
-            />
-
-            {formData.id && (
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full"
-                onClick={async () => {
-                  setShowAISummary(true);
-                  try {
-                    const { data } = await base44.functions.invoke('generateAtaSummaryWithContext', {
-                      atendimento_id: formData.id
-                    });
-                    setAISummary(data.analise);
-                    toast.success("Análise com IA gerada!");
-                  } catch (error) {
-                    toast.error("Erro: " + error.message);
-                    setShowAISummary(false);
-                  }
-                }}
-              >
-                <Sparkles className="w-4 h-4 mr-2" />
-                Gerar Resumo com IA (últimas 10 atas)
-              </Button>
-            )}
-
-            {showAISummary && aiSummary && (
-              <div className="border rounded-lg p-4 bg-blue-50 space-y-3">
-                <h4 className="font-semibold text-blue-900">📊 Análise Inteligente</h4>
-                <div className="space-y-2 text-sm">
-                  <div>
-                    <p className="font-medium">Resumo:</p>
-                    <p className="text-gray-700">{aiSummary.resumo_executivo}</p>
-                  </div>
-                  {aiSummary.problemas_recorrentes?.length > 0 && (
-                    <div>
-                      <p className="font-medium">Problemas Recorrentes:</p>
-                      <ul className="list-disc ml-4 text-gray-700">
-                        {aiSummary.problemas_recorrentes.map((p, i) => <li key={i}>{p}</li>)}
-                      </ul>
-                    </div>
-                  )}
-                  {aiSummary.recomendacoes?.length > 0 && (
-                    <div>
-                      <p className="font-medium">Recomendações:</p>
-                      <ul className="list-disc ml-4 text-gray-700">
-                        {aiSummary.recomendacoes.map((r, i) => <li key={i}>{r}</li>)}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Opções Avançadas */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Opções Avançadas</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full justify-start"
-              onClick={() => setShowNotificationModal(true)}
-            >
-              📅 Programar Notificações Automáticas
-            </Button>
-
-            {!formData.id && (
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full justify-start"
-                onClick={() => setShowTemplateModal(true)}
-              >
-                📋 Usar Template de Atendimento
-              </Button>
-            )}
-
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full justify-start"
-              onClick={() => {
-                if (!formData.workshop_id) {
-                  toast.error("Selecione uma oficina primeiro");
-                  return;
-                }
-                setShowConsultoriasPanel(true);
+      {/* Captura Inteligente */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">📊 Capturar Inteligência do Cliente</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {formData.workshop_id ? (
+            <ClientIntelligenceCapturePanel
+              key={`intel-${formData.id || 'new'}-${formData.workshop_id}`}
+              workshopId={formData.workshop_id}
+              ataId={formData.id}
+              onPendingIdsChange={(ids) => { pendingIntelligenceIdsRef.current = ids; }}
+              onSuccess={() => { toast.success('Inteligência capturada!'); }}
+              onIntelligenceAdded={(intelligence) => {
+                const novaPauta = {
+                  titulo: `${intelligence.area} - ${intelligence.type}`,
+                  descricao: intelligence.subcategory,
+                  tempo_estimado: 15
+                };
+                setFormData(prev => ({ ...prev, pauta: [...prev.pauta, novaPauta] }));
+                toast.success('Adicionado à pauta da reunião!');
+                setTimeout(() => { pautaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 300);
               }}
-            >
-              <ExternalLink className="w-4 h-4 mr-2" />
-              📋 Ver Detalhes da Oficina
-            </Button>
+            />
+          ) : (
+            <p className="text-sm text-gray-500 text-center py-4">Selecione uma oficina para capturar inteligência</p>
+          )}
+        </CardContent>
+      </Card>
 
-            {formData.workshop_id && (
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full justify-start"
-                onClick={async () => {
-                  try {
-                    toast.info('Gerando relatório completo...');
-                    const response = await base44.functions.invoke('gerarRelatorioCliente', {
-                      workshop_id: formData.workshop_id
-                    });
-                    const blob = new Blob([response.data], { type: 'application/pdf' });
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `Relatorio_Completo_${new Date().toISOString().split('T')[0]}.pdf`;
-                    document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(url);
-                    a.remove();
-                    toast.success('Relatório gerado com sucesso!');
-                  } catch (error) {
-                    toast.error('Erro ao gerar relatório: ' + error.message);
-                  }
-                }}
-              >
-                Gerar Relatório Completo do Cliente
-              </Button>
+      <AgendaSection formData={formData} setFormData={setFormData} pautaRef={pautaRef} />
+
+      <ContentSection
+        formData={formData} setFormData={setFormData}
+        processos={processos} todasAulas={todasAulas} cursos={cursos}
+      />
+
+      {/* Checklist */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><span>📋</span> Checklist de Diagnóstico</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ChecklistConsultoria
+            respostas={formData.checklist_respostas || []}
+            onChange={(respostas) => setFormData(prev => ({ ...prev, checklist_respostas: respostas }))}
+          />
+        </CardContent>
+      </Card>
+
+      <ObservationsSection formData={formData} setFormData={setFormData} />
+
+      <AdvancedOptionsSection formData={formData} setFormData={setFormData} workshops={workshops} />
+
+      <AtaActionsSection
+        formData={formData} setFormData={setFormData}
+        workshops={workshops} gerarAtaMutation={gerarAtaMutation}
+        handleDeleteAta={handleDeleteAta} queryClient={queryClient}
+      />
+
+      {/* Action Buttons */}
+      <div className="sticky bottom-0 z-20 -mx-6 px-6 mt-6">
+        <div className="flex gap-3 justify-end bg-white/95 backdrop-blur-sm border-t border-gray-200 shadow-[0_-4px_12px_rgba(0,0,0,0.06)] rounded-t-xl py-4 px-6">
+          <Button type="button" variant="outline" onClick={handleClose} className="px-6">Cancelar</Button>
+          <Button type="submit" disabled={createMutation.isPending} className="bg-blue-600 hover:bg-blue-700 px-6 shadow-md">
+            {createMutation.isPending ? (
+              <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Salvando...</>
+            ) : (
+              formData.id ? 'Atualizar Atendimento' : 'Salvar Atendimento'
             )}
-          </CardContent>
-        </Card>
-
-        {/* Ações de Envio e Gestão da Ata */}
-        {formData.status === 'realizado' && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Documentação e Envio (ATA)</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col gap-4">
-                <div className="flex gap-3">
-                  {!formData.ata_id ? (
-                    <div className="flex-1 space-y-3">
-                      <AtaAIConfigPanel
-                        onGenerate={(config) => gerarAtaMutation.mutate({ atendimento_id: formData.id, ...config })}
-                        isGenerating={gerarAtaMutation.isPending}
-                      />
-                    </div>
-                  ) : (
-                    <div className="flex-1 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center justify-between">
-                      <span className="text-green-800 font-medium flex items-center gap-2">
-                        <FileText className="w-5 h-5" />
-                        ATA Gerada
-                      </span>
-                      <div className="flex gap-2">
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          size="sm"
-                          onClick={async () => {
-                            try {
-                              const ata = await base44.entities.MeetingMinutes.get(formData.ata_id);
-                              if (ata) {
-                                const intelligence = await base44.entities.ClientIntelligence.filter({ 
-                                  attendance_id: formData.id 
-                                });
-                                const ataComInteligencia = {
-                                  ...ata,
-                                  client_intelligence: intelligence || [],
-                                  checklist_respostas: ata.checklist_respostas || formData.checklist_respostas || []
-                                };
-                                const { downloadAtaPDF } = await import("@/components/aceleracao/AtasPDFGenerator");
-                                const workshop = workshops?.find(w => w.id === formData.workshop_id);
-                                await downloadAtaPDF(ataComInteligencia, workshop);
-                                toast.success("Download iniciado!");
-                              }
-                            } catch (error) {
-                              console.error(error);
-                              toast.error("Erro ao acessar ATA: " + error.message);
-                            }
-                          }}
-                        >
-                          <Upload className="w-4 h-4 mr-2" />
-                          Baixar PDF
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={handleDeleteAta}
-                          className="text-red-500 hover:text-red-700 hover:bg-red-50 border-red-200"
-                          title="Excluir ATA"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-3 gap-3">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  className="w-full"
-                  onClick={async () => {
-                    if (!formData.workshop_id) {
-                      toast.error("Selecione uma oficina primeiro");
-                      return;
-                    }
-                    try {
-                      const response = await base44.functions.invoke('enviarAtaWhatsApp', {
-                        atendimento_id: formData.id
-                      });
-                      const phone = response.data.phone?.replace(/\D/g, '') || '';
-                      const message = encodeURIComponent(response.data.whatsapp_message);
-                      window.open(`https://wa.me/55${phone}?text=${message}`, '_blank');
-                      toast.success("WhatsApp aberto!");
-                    } catch (error) {
-                      toast.error("Erro: " + error.message);
-                    }
-                  }}
-                >
-                  <MessageSquare className="w-4 h-4 mr-2" />
-                  WhatsApp
-                </Button>
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  className="w-full"
-                  onClick={async () => {
-                    try {
-                      await base44.functions.invoke('enviarAtaEmail', {
-                        atendimento_id: formData.id
-                      });
-                      toast.success("Ata enviada por email!");
-                    } catch (error) {
-                      toast.error("Erro: " + error.message);
-                    }
-                  }}
-                >
-                  <Send className="w-4 h-4 mr-2" />
-                  E-mail
-                </Button>
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  className="w-full"
-                  onClick={async () => {
-                    try {
-                      await base44.functions.invoke('disponibilizarAtaPlataforma', {
-                        atendimento_id: formData.id
-                      });
-                      toast.success("Ata disponibilizada na plataforma!");
-                    } catch (error) {
-                      toast.error("Erro: " + error.message);
-                    }
-                  }}
-                >
-                  <FileText className="w-4 h-4 mr-2" />
-                  Plataforma
-                </Button>
-              </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Ações */}
-        <div className="sticky bottom-0 z-20 -mx-6 px-6 mt-6">
-          <div className="flex gap-3 justify-end bg-white/95 backdrop-blur-sm border-t border-gray-200 shadow-[0_-4px_12px_rgba(0,0,0,0.06)] rounded-t-xl py-4 px-6">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              className="px-6"
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="submit"
-              disabled={createMutation.isPending}
-              className="bg-blue-600 hover:bg-blue-700 px-6 shadow-md"
-            >
-              {createMutation.isPending ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Salvando...
-                </>
-              ) : (
-                formData.id ? 'Atualizar Atendimento' : 'Salvar Atendimento'
-              )}
-            </Button>
-          </div>
+          </Button>
         </div>
+      </div>
 
-        {/* Modais */}
-        {showNotificationModal && (
-          <NotificationSchedulerModal
-            onClose={() => setShowNotificationModal(false)}
-            onSave={(notificacoes) => {
-              setFormData({ ...formData, notificacoes_programadas: notificacoes });
-              setShowNotificationModal(false);
-              toast.success('Notificações programadas!');
-            }}
-          />
-        )}
-
-        {showTemplateModal && (
-          <TemplateAtendimentoModal
-            onClose={() => setShowTemplateModal(false)}
-            onSelect={(template) => {
-              setFormData({
-                ...formData,
-                tipo_atendimento: template.tipo,
-                pauta: template.pauta || [{ titulo: "", descricao: "", tempo_estimado: 15 }],
-                objetivos: template.objetivos || [""],
-                duracao_minutos: template.duracao_minutos || 60
-              });
-              setShowTemplateModal(false);
-              toast.success('Template aplicado!');
-            }}
-          />
-        )}
-
-        {showConsultoriasPanel && formData.workshop_id && (
-          <ClientDetailPanel
-            client={workshops?.find(w => w.id === formData.workshop_id) || null}
-            isOpen={true}
-            onClose={() => setShowConsultoriasPanel(false)}
-            atendimentos={[]}
-            processos={[]}
-            defaultTab="consultoria"
-          />
-        )}
-
-        <ConflitosHorarioModal
-          open={conflitosModal.open}
-          onOpenChange={(open) => setConflitosModal({ ...conflitosModal, open })}
-          conflitos={conflitosModal.conflitos}
-          dataHorario={conflitosModal.dataHorario}
-          consultorId={formData.consultor_id || user?.id}
-          duracaoMinutos={formData.duracao_minutos}
-          onSelectHorario={({ data, hora }) => {
-            setFormData({
-              ...formData,
-              data_agendada: data,
-              hora_agendada: hora
-            });
-          }}
-        />
-        </>
-        );
+      <ConflitosHorarioModal
+        open={conflitosModal.open}
+        onOpenChange={(open) => setConflitosModal(prev => ({ ...prev, open }))}
+        conflitos={conflitosModal.conflitos}
+        dataHorario={conflitosModal.dataHorario}
+        consultorId={formData.consultor_id || user?.id}
+        duracaoMinutos={formData.duracao_minutos}
+        onSelectHorario={({ data, hora }) => {
+          setFormData(prev => ({ ...prev, data_agendada: data, hora_agendada: hora }));
+        }}
+      />
+    </>
+  );
 
   if (isModal) {
     return (
       <div className="fixed inset-0 z-40 flex items-center justify-center p-4 sm:p-6" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}>
-        <div className="absolute inset-0" />
+        <div className="absolute inset-0" onClick={handleClose} />
         <div className="relative bg-white rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.2)] w-full max-w-[800px] max-h-[95vh] flex flex-col z-10 animate-in fade-in zoom-in-95 duration-200">
           <div className="flex items-center justify-between p-6 border-b shrink-0">
-             <div>
-               <h1 className="text-2xl font-bold text-gray-900">
-                 {formData.id ? 'Editar Atendimento' : 'Registrar Atendimento de Consultoria'}
-               </h1>
-               <p className="text-sm text-gray-600 mt-1">
-                 {formData.id ? 'Atualize as informações do atendimento' : 'Agende e registre informações do atendimento ao cliente'}
-               </p>
-             </div>
-             <button type="button" onClick={handleClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-               <X className="w-5 h-5 text-gray-500" />
-             </button>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">{formData.id ? 'Editar Atendimento' : 'Registrar Atendimento de Consultoria'}</h1>
+              <p className="text-sm text-gray-600 mt-1">{formData.id ? 'Atualize as informações do atendimento' : 'Agende e registre informações do atendimento ao cliente'}</p>
+            </div>
+            <button type="button" onClick={handleClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+              <X className="w-5 h-5 text-gray-500" />
+            </button>
           </div>
           <div className="p-6 overflow-y-auto flex-1">
-             <form onSubmit={handleSubmit} className="space-y-6">
-               {content}
-             </form>
+            <form onSubmit={handleSubmit} className="space-y-6">{content}</form>
           </div>
         </div>
       </div>
@@ -1709,16 +588,10 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">
-          {formData.id ? 'Editar Atendimento' : 'Registrar Atendimento de Consultoria'}
-        </h1>
-        <p className="text-gray-600 mt-2">
-          {formData.id ? 'Atualize as informações do atendimento' : 'Agende e registre informações do atendimento ao cliente'}
-        </p>
+        <h1 className="text-3xl font-bold text-gray-900">{formData.id ? 'Editar Atendimento' : 'Registrar Atendimento de Consultoria'}</h1>
+        <p className="text-gray-600 mt-2">{formData.id ? 'Atualize as informações do atendimento' : 'Agende e registre informações do atendimento ao cliente'}</p>
       </div>
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {content}
-      </form>
+      <form onSubmit={handleSubmit} className="space-y-6">{content}</form>
     </div>
   );
 }
