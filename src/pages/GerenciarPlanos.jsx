@@ -17,6 +17,7 @@ import { useNavigate } from "react-router-dom";
 import AttendanceRulesTab from "@/components/plans/AttendanceRulesTab";
 import VouchersTab from "@/components/vouchers/VouchersTab";
 
+
 export default function GerenciarPlanos() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
