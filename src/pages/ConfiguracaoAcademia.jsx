@@ -101,20 +101,20 @@ export default function ConfiguracaoAcademia() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-            <Settings className="w-8 h-8 text-blue-600" />
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-2">
+            <Settings className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600 shrink-0" />
             Configuração da Academia
           </h1>
-          <p className="text-gray-600 mt-2">
+          <p className="text-sm sm:text-base text-gray-600 mt-2">
             Configure o comportamento e regras da Academia de Treinamento
           </p>
         </div>
         <Button 
           onClick={handleSave}
           disabled={saveMutation.isPending}
-          className="bg-blue-600 hover:bg-blue-700"
+          className="w-full md:w-auto bg-blue-600 hover:bg-blue-700"
         >
           {saveMutation.isPending ? (
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -126,11 +126,11 @@ export default function ConfiguracaoAcademia() {
       </div>
 
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-          <TabsTrigger value="display">Exibição</TabsTrigger>
-          <TabsTrigger value="progress">Progresso</TabsTrigger>
-          <TabsTrigger value="access">Acesso</TabsTrigger>
+        <TabsList className="flex overflow-x-auto flex-nowrap w-full bg-white shadow-sm p-1 gap-1 h-auto justify-start scrollbar-hide rounded-lg border border-gray-100">
+          <TabsTrigger value="overview" className="py-2 px-4 whitespace-nowrap shrink-0">Visão Geral</TabsTrigger>
+          <TabsTrigger value="display" className="py-2 px-4 whitespace-nowrap shrink-0">Exibição</TabsTrigger>
+          <TabsTrigger value="progress" className="py-2 px-4 whitespace-nowrap shrink-0">Progresso</TabsTrigger>
+          <TabsTrigger value="access" className="py-2 px-4 whitespace-nowrap shrink-0">Acesso</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="mt-6">

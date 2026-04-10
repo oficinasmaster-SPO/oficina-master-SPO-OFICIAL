@@ -63,23 +63,23 @@ export default function HeroBanner({ featuredCourse, onPlay, onInfo }) {
             EM DESTAQUE
           </Badge>
 
-          <h1 className="text-5xl lg:text-7xl font-bold text-white leading-tight">
+          <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold text-white leading-tight break-words">
             {featuredCourse.title}
           </h1>
 
-          <p className="text-xl lg:text-2xl text-white/90 leading-relaxed animate-fade-in">
+          <p className="text-lg sm:text-xl lg:text-2xl text-white/90 leading-relaxed animate-fade-in line-clamp-3 sm:line-clamp-none">
             {currentNarrative}
           </p>
 
-          <div className="flex items-center gap-4 text-white/80 text-sm">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-white/80 text-xs sm:text-sm">
             {featuredCourse.category && (
               <Badge variant="outline" className="border-white/30 text-white">
                 {featuredCourse.category}
               </Badge>
             )}
             {featuredCourse.total_duration_minutes > 0 && (
-              <span className="flex items-center gap-2">
-                <Clock className="w-4 h-4" />
+              <span className="flex items-center gap-1 sm:gap-2">
+                <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
                 {Math.floor(featuredCourse.total_duration_minutes / 60)}h {featuredCourse.total_duration_minutes % 60}min
               </span>
             )}
@@ -90,10 +90,10 @@ export default function HeroBanner({ featuredCourse, onPlay, onInfo }) {
             )}
           </div>
 
-          <div className="flex gap-4 pt-4">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4 w-full sm:w-auto">
             <Button 
               size="lg" 
-              className="bg-white text-black hover:bg-white/90 font-semibold px-8 text-lg"
+              className="bg-white text-black hover:bg-white/90 font-semibold px-4 sm:px-8 text-base sm:text-lg w-full sm:w-auto"
               onClick={() => onPlay?.(featuredCourse)}
             >
               <Play className="w-5 h-5 mr-2 fill-current" />
@@ -102,7 +102,7 @@ export default function HeroBanner({ featuredCourse, onPlay, onInfo }) {
             <Button 
               size="lg"
               variant="outline" 
-              className="border-white/50 text-white hover:bg-white/10 font-semibold px-8 text-lg"
+              className="border-white/50 text-white hover:bg-white/10 font-semibold px-4 sm:px-8 text-base sm:text-lg w-full sm:w-auto"
               onClick={() => onInfo?.(featuredCourse)}
             >
               <Info className="w-5 h-5 mr-2" />

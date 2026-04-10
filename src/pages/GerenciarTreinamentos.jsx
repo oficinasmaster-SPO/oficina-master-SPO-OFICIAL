@@ -76,19 +76,20 @@ export default function GerenciarTreinamentos() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-            <BookOpen className="w-8 h-8 text-blue-600" />
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-2">
+            <BookOpen className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600 shrink-0" />
             Gestão de Treinamentos
           </h1>
-          <p className="text-gray-600 mt-2">
+          <p className="text-sm sm:text-base text-gray-600 mt-2">
             Crie e organize cursos, módulos e aulas para sua equipe
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap sm:flex-nowrap gap-2 w-full md:w-auto">
           <Button
             variant="outline"
+            className="flex-1 sm:flex-none"
             onClick={() => navigate(createPageUrl('ConfiguracaoAcademia'))}
           >
             <Settings className="w-4 h-4 mr-2" />
@@ -96,7 +97,7 @@ export default function GerenciarTreinamentos() {
           </Button>
           <Button
             onClick={() => setIsCreateDialogOpen(true)}
-            className="bg-blue-600 hover:bg-blue-700"
+            className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700"
           >
             <Plus className="w-4 h-4 mr-2" />
             Novo Curso
@@ -105,12 +106,12 @@ export default function GerenciarTreinamentos() {
       </div>
 
       <Tabs defaultValue="meus-cursos" className="w-full">
-        <TabsList>
-          <TabsTrigger value="meus-cursos">
+        <TabsList className="flex overflow-x-auto flex-nowrap w-full bg-white shadow-sm p-1 gap-1 h-auto justify-start scrollbar-hide rounded-lg border border-gray-100">
+          <TabsTrigger value="meus-cursos" className="py-2 px-4 whitespace-nowrap shrink-0">
             Meus Cursos ({myCourses.length})
           </TabsTrigger>
           {user?.role === 'admin' && (
-            <TabsTrigger value="internos">
+            <TabsTrigger value="internos" className="py-2 px-4 whitespace-nowrap shrink-0">
               Treinamentos Internos ({internalCourses.length})
             </TabsTrigger>
           )}
