@@ -123,7 +123,7 @@ Deno.serve(async (req) => {
 
     // Validação 2: Funcionalidade (Feature)
     if (action === 'check_feature' || action === 'check_both') {
-      if (!feature || !plan.features || plan.features[feature] !== true) {
+      if (!feature || (plan.features !== null && plan.features[feature] !== true)) {
         return Response.json({ 
           success: false, 
           error: { code: 'FEATURE_NOT_AVAILABLE', message: `A funcionalidade '${feature}' não está disponível no plano atual.` } 

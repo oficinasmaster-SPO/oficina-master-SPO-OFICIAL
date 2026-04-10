@@ -33,7 +33,10 @@ Deno.serve(async (req) => {
           }, { status: 403 });
         }
       } catch (e) {
-        console.warn('Erro na validação do plano, continuando:', e);
+        if (e.response && e.response.status === 403) {
+          return Response.json(e.response.data, { status: 403 });
+        }
+        console.warn('Erro na validação do plano (integrations), continuando:', e.message);
       }
     }
 
@@ -65,7 +68,10 @@ Deno.serve(async (req) => {
         }, { status: 403 });
       }
     } catch (e) {
-      console.error("Erro na validação do plano:", e);
+      if (e.response && e.response.status === 403) {
+        return Response.json(e.response.data, { status: 403 });
+      }
+      console.warn("Erro na validação do plano (reports), continuando:", e.message);
     }
 
     // Buscar inteligência do cliente vinculada
