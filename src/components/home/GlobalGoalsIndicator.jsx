@@ -244,12 +244,12 @@ export default function GlobalGoalsIndicator({ workshop, className = "" }) {
   return (
     <Card className={className}>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Target className="w-6 h-6 text-blue-600" />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+            <Target className="w-6 h-6 text-blue-600 shrink-0" />
             Metas Globais do Mês
           </CardTitle>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Badge variant="outline" className="bg-blue-50 text-blue-700 capitalize">
               {new Date(currentMonth + '-01T12:00:00').toLocaleDateString('pt-BR', { 
                 month: 'long', 
@@ -257,8 +257,8 @@ export default function GlobalGoalsIndicator({ workshop, className = "" }) {
               })}
             </Badge>
             <Link to={createPageUrl("PainelMetas")}>
-              <Button variant="outline" size="sm">
-                <Edit3 className="w-4 h-4 mr-2" />
+              <Button variant="outline" size="sm" className="whitespace-nowrap">
+                <Edit3 className="w-4 h-4 mr-2 shrink-0" />
                 Atualizar
               </Button>
             </Link>
@@ -268,35 +268,37 @@ export default function GlobalGoalsIndicator({ workshop, className = "" }) {
       <CardContent className="space-y-6">
         {/* Indicador Principal - Faturamento Total */}
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6">
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
             <div className="flex items-center gap-2">
-              <DollarSign className="w-5 h-5 text-blue-600" />
+              <DollarSign className="w-5 h-5 text-blue-600 shrink-0" />
               <span className="text-sm font-medium text-gray-700">Faturamento Total</span>
             </div>
-            <StatusMetaBadge
-              realizadoAcumulado={totalAchieved}
-              metaAcumulada={metaAcumuladaRevenue}
-              onClick={() => setFeedbackModal({
-                open: true,
-                status: getStatus(totalAchieved, metaAcumuladaRevenue),
-                metricName: "Faturamento Total",
-                realizado: totalAchieved,
-                meta: metaAcumuladaRevenue
-              })}
-            />
+            <div className="self-start sm:self-auto">
+              <StatusMetaBadge
+                realizadoAcumulado={totalAchieved}
+                metaAcumulada={metaAcumuladaRevenue}
+                onClick={() => setFeedbackModal({
+                  open: true,
+                  status: getStatus(totalAchieved, metaAcumuladaRevenue),
+                  metricName: "Faturamento Total",
+                  realizado: totalAchieved,
+                  meta: metaAcumuladaRevenue
+                })}
+              />
+            </div>
           </div>
 
-          <div className="flex items-end justify-between mb-2">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 mb-2">
             <div>
-              <p className="text-3xl font-bold text-gray-900">
+              <p className="text-2xl sm:text-3xl font-bold text-gray-900 break-all">
                 {formatCurrency(totalAchieved)}
               </p>
               <p className="text-sm text-gray-500">
                 de {formatCurrency(projectedRevenue)} (meta)
               </p>
             </div>
-            <div className="text-right">
-              <p className="text-2xl font-bold text-blue-600">
+            <div className="text-left sm:text-right mt-2 sm:mt-0">
+              <p className="text-xl sm:text-2xl font-bold text-blue-600">
                 {revenueProgress.toFixed(1)}%
               </p>
               <p className="text-xs text-gray-500">Progresso</p>

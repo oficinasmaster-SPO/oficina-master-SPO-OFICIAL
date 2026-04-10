@@ -178,11 +178,11 @@ export default function OnboardingTour({ user, onComplete }) {
     return (
       <Button
         onClick={startTour}
-        className="fixed bottom-6 right-6 z-50 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-2xl"
+        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-2xl px-3 py-2 sm:px-8 sm:py-6 h-auto"
         size="lg"
       >
-        <Sparkles className="w-5 h-5 mr-2" />
-        Iniciar Tour Guiado
+        <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2 shrink-0" />
+        <span className="text-xs sm:text-base whitespace-nowrap">Iniciar Tour</span>
       </Button>
     );
   }
