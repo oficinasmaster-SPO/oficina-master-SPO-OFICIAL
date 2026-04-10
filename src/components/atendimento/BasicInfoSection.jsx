@@ -5,16 +5,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Video, Loader2, MessageSquare, Clock, Copy, CheckCircle2 } from "lucide-react";
+import { Video, Loader2, MessageSquare, Copy, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import TipoAtendimentoManager from "@/components/aceleracao/TipoAtendimentoManager";
-import MeetingTimer from "@/components/aceleracao/MeetingTimer";
 import WorkshopSearchSelect from "@/components/aceleracao/WorkshopSearchSelect";
 
 export default function BasicInfoSection({
   formData, setFormData, user, workshops, consultores,
   todosOsTipos, customTipos, setCustomTipos,
-  createMeeting, isCreating, showMeetingTimer, setShowMeetingTimer, setTimerData
+  createMeeting, isCreating
 }) {
   return (
     <Card>
@@ -161,20 +160,6 @@ export default function BasicInfoSection({
           isCreating={isCreating}
         />
 
-        {formData.status === 'participando' && (
-          <div className="border-t pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full mb-4"
-              onClick={() => setShowMeetingTimer(!showMeetingTimer)}
-            >
-              <Clock className="w-4 h-4 mr-2" />
-              {showMeetingTimer ? 'Ocultar Timer' : 'Iniciar Reunião com Timer'}
-            </Button>
-            {showMeetingTimer && <MeetingTimer onTimerData={setTimerData} />}
-          </div>
-        )}
       </CardContent>
     </Card>
   );

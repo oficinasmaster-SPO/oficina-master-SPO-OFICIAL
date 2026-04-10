@@ -78,8 +78,6 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
   });
 
   const [customTipos, setCustomTipos] = useState([]);
-  const [timerData, setTimerData] = useState(null);
-  const [showMeetingTimer, setShowMeetingTimer] = useState(false);
   const [autoSaveStatus, setAutoSaveStatus] = useState(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -154,7 +152,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
               proximos_passos_list: atendimento.proximos_passos_list || [],
               checklist_respostas: atendimento.checklist_respostas || []
             });
-            setShowMeetingTimer(atendimento.status === 'participando');
+            // Timer removed
           }
         } catch (error) {
           toast.error("Erro ao carregar atendimento");
@@ -441,8 +439,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
       return;
     }
 
-    const dadosParaSalvar = timerData ? { ...formData, ...timerData } : formData;
-    createMutation.mutate(dadosParaSalvar);
+    createMutation.mutate(formData);
   };
 
   // ── C4: Auto-save uses stable JSON snapshot ──
@@ -516,8 +513,6 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
         workshops={workshops} consultores={consultores}
         todosOsTipos={todosOsTipos} customTipos={customTipos} setCustomTipos={setCustomTipos}
         createMeeting={createMeeting} isCreating={isCreating}
-        showMeetingTimer={showMeetingTimer} setShowMeetingTimer={setShowMeetingTimer}
-        setTimerData={setTimerData}
       />
 
       <ParticipantsSection
