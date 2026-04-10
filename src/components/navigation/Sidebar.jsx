@@ -8,6 +8,7 @@ import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 import { useAdminMode } from "@/components/hooks/useAdminMode";
 import { base44 } from "@/api/base44Client";
 import { 
+  X,
   Home, 
   FileText, 
   History, 
@@ -1082,14 +1083,14 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           {isCollapsed ? (
             <button
               onClick={toggleCollapse}
-              className="mx-auto flex items-center justify-center p-2 hover:bg-gray-100 rounded-lg transition-colors w-full"
+              className="hidden lg:flex mx-auto items-center justify-center p-2 hover:bg-gray-100 rounded-lg transition-colors w-full"
               title="Expandir menu"
             >
               <Menu className="w-6 h-6 text-gray-700" />
             </button>
           ) : (
             <div className="flex items-center justify-between gap-3">
-              <Link to={getAdminUrl(createPageUrl('Home') + queryString)} className="flex items-center gap-3 flex-1">
+              <Link to={getAdminUrl(createPageUrl('Home') + queryString)} className="flex items-center gap-3 flex-1 min-w-0 pr-2">
                 {userWorkshop?.logo_url ? (
                   <div className="w-10 h-10 rounded-xl overflow-hidden bg-white border border-gray-200 flex items-center justify-center">
                     <img 
@@ -1112,8 +1113,15 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
                 </div>
               </Link>
               <button
+                onClick={onClose}
+                className="lg:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
+                title="Fechar menu"
+              >
+                <X className="w-6 h-6 text-gray-600" />
+              </button>
+              <button
                 onClick={toggleCollapse}
-                className="hidden lg:flex p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="hidden lg:flex p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
                 title="Recolher menu"
               >
                 <ChevronLeft className="w-5 h-5 text-gray-600" />

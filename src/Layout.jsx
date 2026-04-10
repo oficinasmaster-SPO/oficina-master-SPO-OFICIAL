@@ -164,7 +164,7 @@ export default function Layout({ children, currentPageName }) {
         </>
       )}
 
-      <div className={`${shouldShowMenus ? 'lg:pl-64' : ''} flex flex-col min-h-screen transition-all duration-300`} style={shouldShowMenus ? { paddingLeft: 'var(--sidebar-width, 16rem)' } : {}}>
+      <div className={`flex flex-col min-h-screen transition-all duration-300 ${shouldShowMenus ? 'lg:pl-[var(--sidebar-width,16rem)]' : ''}`}>
               {/* Injeção de CSS Personalizado por Oficina */}
               {workshop?.custom_css_url && (
                 <link rel="stylesheet" href={`${workshop.custom_css_url}?v=${cssVersion}`} />
@@ -190,7 +190,7 @@ export default function Layout({ children, currentPageName }) {
               )}
 
               <Link to={createPageUrl("Home")} className={`flex items-center gap-2 ${isAuthenticated ? 'lg:hidden' : ''}`}>
-                <img src="https://media.base44.com/images/public/69540822472c4a70b54d47aa/121a4c254_Horizontal_Fundo_Claro.png" alt="Oficinas Master" className="h-16 object-contain" />
+                <img src="https://media.base44.com/images/public/69540822472c4a70b54d47aa/121a4c254_Horizontal_Fundo_Claro.png" alt="Oficinas Master" className="h-10 sm:h-12 object-contain" />
               </Link>
 
               {isAuthenticated && user && <TenantSelector />}
