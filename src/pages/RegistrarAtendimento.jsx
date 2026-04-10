@@ -557,6 +557,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
     return <div className="text-center py-12"><p className="text-gray-600">Acesso restrito a consultores</p></div>;
   }
 
+  let sectionCounter = 1;
   const readOnlyContent = (
     <div className="space-y-10 max-w-4xl mx-auto py-8 text-left px-4">
       <div className="border-b border-gray-200 pb-6 mb-8">
@@ -588,7 +589,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
 
       {formData.participantes?.length > 0 && formData.participantes.some(p => p.nome) && (
         <section className="space-y-3">
-          <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">Participantes</h3>
+          <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">{sectionCounter++}. Participantes</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pl-4">
             {formData.participantes.filter(p => p.nome).map((p, idx) => (
               <div key={idx} className="text-gray-700">
@@ -604,7 +605,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
 
       {clientIntelligences?.length > 0 && (
         <section className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">Inteligência do Cliente Capturada</h3>
+          <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">{sectionCounter++}. Inteligência do Cliente Capturada</h3>
           <div className="pl-4 grid grid-cols-1 md:grid-cols-2 gap-4">
             {clientIntelligences.map((item, idx) => (
               <button
@@ -649,7 +650,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
 
       {formData.pauta?.length > 0 && formData.pauta.some(p => p.titulo) && (
         <section className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">Pauta da Reunião</h3>
+          <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">{sectionCounter++}. Pauta da Reunião</h3>
           <div className="space-y-4 pl-4">
             {formData.pauta.filter(p => p.titulo).map((p, idx) => (
               <div key={idx}>
@@ -666,7 +667,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
 
       {formData.objetivos?.length > 0 && formData.objetivos.some(o => o) && (
         <section className="space-y-3">
-          <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">Objetivos</h3>
+          <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">{sectionCounter++}. Objetivos</h3>
           <ul className="space-y-2 pl-4">
             {formData.objetivos.filter(o => o).map((obj, idx) => (
               <li key={idx} className="text-gray-700 text-base flex items-start gap-2">
@@ -680,7 +681,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
 
       {formData.observacoes_consultor && (
         <section className="space-y-3">
-          <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">Observações do Consultor</h3>
+          <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">{sectionCounter++}. Observações do Consultor</h3>
           <div className="pl-4">
             <p className="text-gray-700 text-base whitespace-pre-wrap leading-relaxed bg-gray-50/50 p-4 rounded-lg border border-gray-100">
               {formData.observacoes_consultor}
@@ -691,7 +692,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
 
       {formData.proximos_passos_list?.length > 0 && formData.proximos_passos_list.some(p => p.descricao) && (
         <section className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">Próximos Passos</h3>
+          <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">{sectionCounter++}. Próximos Passos</h3>
           <div className="space-y-3 pl-4">
             {formData.proximos_passos_list.filter(p => p.descricao).map((step, idx) => (
               <div key={idx} className="text-base text-gray-700 flex items-start gap-3 bg-white border border-gray-100 p-3 rounded-lg shadow-sm">
@@ -711,7 +712,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
 
       {(formData.processos_vinculados?.length > 0 || formData.videoaulas_vinculadas?.length > 0 || formData.midias_anexas?.length > 0) && (
         <section className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">Conteúdo Vinculado</h3>
+          <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">{sectionCounter++}. Conteúdo Vinculado</h3>
           <div className="pl-4 flex flex-col gap-2">
             {formData.processos_vinculados?.map((p, idx) => (
               <p key={`p-${idx}`} className="text-base text-gray-700 flex items-center gap-2">
@@ -739,7 +740,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
 
       {formData.checklist_respostas?.length > 0 && (
         <section className="space-y-6">
-          <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">Checklist de Diagnóstico</h3>
+          <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">{sectionCounter++}. Checklist de Diagnóstico</h3>
           <div className="pl-4 flex flex-col gap-6">
             {formData.checklist_respostas.map((bloco, idx) => (
               <div key={idx} className="space-y-3">
