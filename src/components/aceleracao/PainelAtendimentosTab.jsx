@@ -18,6 +18,7 @@ import VisualizarAtaModal from "./VisualizarAtaModal";
 import ReagendarAtendimentoModal from "./ReagendarAtendimentoModal";
 import FinalizarAtendimentoModal from "./FinalizarAtendimentoModal";
 import DashboardAtendimentos from "./DashboardAtendimentos";
+import VisualizarAtendimentoModal from "./VisualizarAtendimentoModal";
 import { ATENDIMENTO_STATUS, ATENDIMENTO_STATUS_COLORS, ATENDIMENTO_STATUS_LABELS } from "@/components/lib/ataConstants";
 import { format } from "date-fns";
 import { toBrazilDate, formatDateTimeBR } from "@/utils/timezone";
@@ -37,7 +38,9 @@ export default function PainelAtendimentosTab({ state }) {
   const [showReagendar, setShowReagendar] = useState(false);
   const [showFinalizar, setShowFinalizar] = useState(false);
   const [showEditarAtendimento, setShowEditarAtendimento] = useState(false);
+  const [showVisualizarAtendimento, setShowVisualizarAtendimento] = useState(false);
   const [editarAtendimentoId, setEditarAtendimentoId] = useState(null);
+  const [visualizarAtendimentoId, setVisualizarAtendimentoId] = useState(null);
   const [selectedAtendimento, setSelectedAtendimento] = useState(null);
   const [atendimentoFinalizar, setAtendimentoFinalizar] = useState(null);
   const [selectedAta, setSelectedAta] = useState(null);
@@ -174,6 +177,16 @@ export default function PainelAtendimentosTab({ state }) {
             setShowFinalizar(false);
             setAtendimentoFinalizar(null);
             queryClient.invalidateQueries({ queryKey: ['atendimentos-acelerador'] });
+          }}
+        />
+      )}
+
+      {showVisualizarAtendimento && visualizarAtendimentoId && (
+        <VisualizarAtendimentoModal
+          atendimentoId={visualizarAtendimentoId}
+          onClose={() => {
+            setShowVisualizarAtendimento(false);
+            setVisualizarAtendimentoId(null);
           }}
         />
       )}
@@ -345,7 +358,7 @@ export default function PainelAtendimentosTab({ state }) {
                       <tr 
                         key={atendimento.id} 
                         className="hover:bg-gray-50 transition-colors cursor-pointer"
-                        onClick={() => { setEditarAtendimentoId(atendimento.id); setShowEditarAtendimento(true); }}
+                        onClick={() => { setVisualizarAtendimentoId(atendimento.id); setShowVisualizarAtendimento(true); }}
                       >
                         <td className="py-3 px-3 text-sm text-gray-700 border-r border-gray-100 font-medium truncate" title={atendimento.consultor_nome || '-'}>
                           {atendimento.consultor_nome || '-'}
