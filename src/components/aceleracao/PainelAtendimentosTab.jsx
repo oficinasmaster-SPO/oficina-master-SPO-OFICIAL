@@ -77,31 +77,54 @@ export default function PainelAtendimentosTab({ state }) {
     setCurrentPage(1);
   }, [activeTab, filtros.dataInicio, filtros.dataFim, debouncedSearch, atendimentos.length]);
 
-  // ── Filtragem local (memoized) ──
+  // ── Filtragem local (memoized e otimizada) ──
   const atendimentosFiltrados = useMemo(() => {
+    let startLimit = null;
+    let endLimit = null;
+    
+    // Processa os limites de data apenas uma vez fora do loop
+    if (filtros.dataInicio) {
+      startLimit = new Date(filtros.dataInicio).getTime();
+    }
+    if (filtros.dataFim) {
+      const df = new Date(filtros.dataFim);
+      df.setHours(23, 59, 59, 999);
+      endLimit = df.getTime();
+    }
+    
+    // Transforma a busca uma vez só
+    const searchLower = debouncedSearch ? debouncedSearch.toLowerCase() : "";
+
     return atendimentos
       .filter(a => {
         if (activeTab !== "todos" && a.status !== activeTab) return false;
         
-        if (filtros.dataInicio) {
-          if (new Date(a.data_agendada) < new Date(filtros.dataInicio)) return false;
-        }
-        if (filtros.dataFim) {
-          const df = new Date(filtros.dataFim);
-          df.setHours(23, 59, 59, 999);
-          if (new Date(a.data_agendada) > df) return false;
+        // Verifica as datas usando milissegundos
+        if (startLimit || endLimit) {
+          const itemTime = new Date(a.data_agendada).getTime();
+          if (startLimit && itemTime < startLimit) return false;
+          if (endLimit && itemTime > endLimit) return false;
         }
         
-        if (debouncedSearch) {
-          const s = debouncedSearch.toLowerCase();
-          const ws = workshopMap[a.workshop_id];
-          if (!(ws?.name?.toLowerCase().includes(s) ||
-                a.tipo_atendimento?.toLowerCase().includes(s) ||
-                a.consultor_nome?.toLowerCase().includes(s))) return false;
+        if (searchLower) {
+          const wsName = workshopMap[a.workshop_id]?.name || "";
+          const tipo = a.tipo_atendimento || "";
+          const consultor = a.consultor_nome || "";
+          
+          if (!wsName.toLowerCase().includes(searchLower) &&
+              !tipo.toLowerCase().includes(searchLower) &&
+              !consultor.toLowerCase().includes(searchLower)) {
+            return false;
+          }
         }
         return true;
       })
-      .sort((a, b) => new Date(b.data_agendada) - new Date(a.data_agendada));
+      .sort((a, b) => {
+        const dateA = a.data_agendada || "";
+        const dateB = b.data_agendada || "";
+        // Datas ISO 8601 podem ser ordenadas alfabeticamente, muito mais rápido que criar instâncias de Date
+        return dateB.localeCompare(dateA);
+      });
   }, [atendimentos, activeTab, filtros.dataInicio, filtros.dataFim, debouncedSearch, workshopMap]);
 
   const totalPages = Math.ceil(atendimentosFiltrados.length / itemsPerPage);
