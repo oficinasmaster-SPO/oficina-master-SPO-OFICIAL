@@ -5,8 +5,9 @@ import { useDebounce } from "@/components/hooks/useDebounce";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Edit, AlertTriangle, FilePlus, Play, StopCircle, CalendarClock, FileText, CheckCircle, Trash2, Clock, Search, X, CalendarDays } from "lucide-react";
+import { Edit, AlertTriangle, FilePlus, Play, StopCircle, CalendarClock, FileText, CheckCircle, Trash2, Clock, Search, X, CalendarDays, MoreVertical } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -348,60 +349,74 @@ export default function PainelAtendimentosTab({ state }) {
                           )}
                         </td>
                         <td className="py-3 px-3">
-                          <div className="flex items-center justify-end gap-0 flex-nowrap flex-shrink-0">
-                            {(atendimento.status === ATENDIMENTO_STATUS.AGENDADO || 
-                              atendimento.status === ATENDIMENTO_STATUS.CONFIRMADO || 
-                              atendimento.status === ATENDIMENTO_STATUS.REAGENDADO || 
-                              atendimento.status === ATENDIMENTO_STATUS.ATRASADO ||
-                              !atendimento.status) && (
-                              <>
-                                <Button variant="ghost" size="sm" onClick={() => iniciarMutation.mutate(atendimento.id)} title="Iniciar">
-                                  <Play className="w-4 h-4 text-blue-600" />
+                          <div className="flex items-center justify-end">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                  <span className="sr-only">Abrir menu</span>
+                                  <MoreVertical className="h-4 w-4 text-gray-500" />
                                 </Button>
-                                <Button variant="ghost" size="sm" onClick={() => { setSelectedAtendimento(atendimento); setShowReagendar(true); }} title="Reagendar">
-                                  <CalendarClock className="w-4 h-4 text-purple-600" />
-                                </Button>
-                              </>
-                            )}
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-56">
+                                {(atendimento.status === ATENDIMENTO_STATUS.AGENDADO || 
+                                  atendimento.status === ATENDIMENTO_STATUS.CONFIRMADO || 
+                                  atendimento.status === ATENDIMENTO_STATUS.REAGENDADO || 
+                                  atendimento.status === ATENDIMENTO_STATUS.ATRASADO ||
+                                  !atendimento.status) && (
+                                  <>
+                                    <DropdownMenuItem onClick={() => iniciarMutation.mutate(atendimento.id)} className="cursor-pointer">
+                                      <Play className="mr-2 h-4 w-4 text-blue-600" />
+                                      <span>Iniciar Atendimento</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => { setSelectedAtendimento(atendimento); setShowReagendar(true); }} className="cursor-pointer">
+                                      <CalendarClock className="mr-2 h-4 w-4 text-purple-600" />
+                                      <span>Reagendar</span>
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
 
+                                {(atendimento.status === ATENDIMENTO_STATUS.PARTICIPANDO || 
+                                  atendimento.status === ATENDIMENTO_STATUS.AGENDADO || 
+                                  atendimento.status === ATENDIMENTO_STATUS.CONFIRMADO || 
+                                  atendimento.status === ATENDIMENTO_STATUS.REAGENDADO || 
+                                  atendimento.status === ATENDIMENTO_STATUS.ATRASADO ||
+                                  !atendimento.status) && (
+                                  <DropdownMenuItem onClick={() => { setAtendimentoFinalizar(atendimento); setShowFinalizar(true); }} className="cursor-pointer">
+                                    <CheckCircle className="mr-2 h-4 w-4 text-green-600" />
+                                    <span>Finalizar Atendimento</span>
+                                  </DropdownMenuItem>
+                                )}
 
+                                <DropdownMenuItem onClick={() => { setEditarAtendimentoId(atendimento.id); setShowEditarAtendimento(true); }} className="cursor-pointer">
+                                  <Edit className="mr-2 h-4 w-4 text-gray-600" />
+                                  <span>Editar</span>
+                                </DropdownMenuItem>
 
-                            {(atendimento.status === ATENDIMENTO_STATUS.PARTICIPANDO || 
-                              atendimento.status === ATENDIMENTO_STATUS.AGENDADO || 
-                              atendimento.status === ATENDIMENTO_STATUS.CONFIRMADO || 
-                              atendimento.status === ATENDIMENTO_STATUS.REAGENDADO || 
-                              atendimento.status === ATENDIMENTO_STATUS.ATRASADO ||
-                              !atendimento.status) && (
-                              <Button variant="ghost" size="sm" onClick={() => { setAtendimentoFinalizar(atendimento); setShowFinalizar(true); }} title="Finalizar Atendimento">
-                                <CheckCircle className="w-4 h-4 text-green-600" />
-                              </Button>
-                            )}
+                                {atendimento.ata_id && (
+                                  <DropdownMenuItem onClick={() => {
+                                    if (ataVinculada) { setSelectedAta(ataVinculada); setShowVisualizarAta(true); }
+                                    else toast.error("ATA não encontrada");
+                                  }} className="cursor-pointer">
+                                    <FileText className="mr-2 h-4 w-4 text-green-600" />
+                                    <span>Ver/Finalizar ATA</span>
+                                  </DropdownMenuItem>
+                                )}
 
-                            <Button variant="ghost" size="sm" onClick={() => { setEditarAtendimentoId(atendimento.id); setShowEditarAtendimento(true); }} title="Editar">
-                              <Edit className="w-4 h-4 text-gray-600" />
-                            </Button>
+                                {!atendimento.ata_id && atendimento.status === ATENDIMENTO_STATUS.REALIZADO && (
+                                  <DropdownMenuItem onClick={() => { setSelectedAtendimento(atendimento); setShowGerarAta(true); }} className="cursor-pointer">
+                                    <FilePlus className="mr-2 h-4 w-4 text-blue-600" />
+                                    <span>Gerar ATA</span>
+                                  </DropdownMenuItem>
+                                )}
 
-                            {atendimento.ata_id && (
-                              <Button variant="ghost" size="sm"
-                                onClick={() => {
-                                  if (ataVinculada) { setSelectedAta(ataVinculada); setShowVisualizarAta(true); }
-                                  else toast.error("ATA não encontrada");
-                                }}
-                                title="Ver/Finalizar ATA"
-                              >
-                                <FileText className="w-4 h-4 text-green-600" />
-                              </Button>
-                            )}
-
-                            {!atendimento.ata_id && atendimento.status === ATENDIMENTO_STATUS.REALIZADO && (
-                              <Button variant="ghost" size="sm" onClick={() => { setSelectedAtendimento(atendimento); setShowGerarAta(true); }} title="Gerar ATA">
-                                <FilePlus className="w-4 h-4 text-blue-600" />
-                              </Button>
-                            )}
-
-                            <Button variant="ghost" size="sm" onClick={() => setDeleteConfirm(atendimento)} title={atendimento.ata_id ? "Excluir ATA" : "Excluir Atendimento"}>
-                              <Trash2 className="w-4 h-4 text-red-600" />
-                            </Button>
+                                <DropdownMenuSeparator />
+                                
+                                <DropdownMenuItem className="text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer" onClick={() => setDeleteConfirm(atendimento)}>
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  <span>{atendimento.ata_id ? "Excluir ATA" : "Excluir Atendimento"}</span>
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
                         </td>
                       </tr>
