@@ -19,7 +19,9 @@ export default function useConsultoresList(user) {
           consultoresMap.set(e.user_id, e.full_name);
         });
 
-      if (user?.id) {
+      // Garante que o usuário logado aparece na lista, mas SEM
+      // sobrescrever o nome do Employee (que é o nome real da pessoa).
+      if (user?.id && !consultoresMap.has(user.id)) {
         consultoresMap.set(user.id, user.full_name);
       }
 
