@@ -89,7 +89,7 @@ export default function ControleAceleracaoView({ state }) {
   const hasActiveFilters = filtros.consultorId && filtros.consultorId !== "todos" || 
     (filtros.preset && filtros.preset !== "mes_atual");
 
-  const handleClearFilter = (filterKey) => {
+  const handleClearFilter = useCallback((filterKey) => {
     const hoje = new Date();
     if (filterKey === "consultorId") {
       setFiltros({ ...filtros, consultorId: "todos" });
@@ -101,9 +101,9 @@ export default function ControleAceleracaoView({ state }) {
         dataFim: format(endOfMonth(hoje), "yyyy-MM-dd"),
       });
     }
-  };
+  }, [filtros, setFiltros]);
 
-  const handleClearAllFilters = () => {
+  const handleClearAllFilters = useCallback(() => {
     const hoje = new Date();
     setFiltros({
       consultorId: "todos",
@@ -111,7 +111,7 @@ export default function ControleAceleracaoView({ state }) {
       dataInicio: format(startOfMonth(hoje), "yyyy-MM-dd"),
       dataFim: format(endOfMonth(hoje), "yyyy-MM-dd"),
     });
-  };
+  }, [setFiltros]);
 
   return (
     <div className="w-full space-y-5">
