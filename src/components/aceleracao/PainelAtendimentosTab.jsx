@@ -18,7 +18,6 @@ import VisualizarAtaModal from "./VisualizarAtaModal";
 import ReagendarAtendimentoModal from "./ReagendarAtendimentoModal";
 import FinalizarAtendimentoModal from "./FinalizarAtendimentoModal";
 import DashboardAtendimentos from "./DashboardAtendimentos";
-import VisualizarAtendimentoModal from "./VisualizarAtendimentoModal";
 import { ATENDIMENTO_STATUS, ATENDIMENTO_STATUS_COLORS, ATENDIMENTO_STATUS_LABELS } from "@/components/lib/ataConstants";
 import { format } from "date-fns";
 import { toBrazilDate, formatDateTimeBR } from "@/utils/timezone";
@@ -182,7 +181,9 @@ export default function PainelAtendimentosTab({ state }) {
       )}
 
       {showVisualizarAtendimento && visualizarAtendimentoId && (
-        <VisualizarAtendimentoModal
+        <RegistrarAtendimento
+          isModal={true}
+          isReadOnly={true}
           atendimentoId={visualizarAtendimentoId}
           onClose={() => {
             setShowVisualizarAtendimento(false);

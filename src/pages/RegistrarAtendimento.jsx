@@ -25,7 +25,7 @@ import ObservationsSection from "@/components/atendimento/ObservationsSection";
 import AdvancedOptionsSection from "@/components/atendimento/AdvancedOptionsSection";
 import AtaActionsSection from "@/components/atendimento/AtaActionsSection";
 
-export default function RegistrarAtendimento({ isModal = false, onClose, atendimentoId: atendimentoIdProp, consultoresExternos }) {
+export default function RegistrarAtendimento({ isModal = false, onClose, atendimentoId: atendimentoIdProp, consultoresExternos, isReadOnly = false }) {
   const navigate = useNavigate();
   const location = window.location;
   const queryClient = useQueryClient();
@@ -475,7 +475,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
 
   // ── C4: Auto-save uses stable JSON snapshot ──
   useEffect(() => {
-    if (!formData.id) return;
+    if (!formData.id || isReadOnly) return;
 
     // E4: Skip first auto-save after loading existing record
     if (!autoSaveInitializedRef.current) {
@@ -642,36 +642,46 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
         <div className={`relative bg-white rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.2)] w-full max-w-[800px] max-h-[95vh] flex flex-col z-10 transition-all duration-250 ${isClosing ? 'opacity-0 scale-95 translate-y-4' : 'animate-in fade-in zoom-in-95 duration-200'}`}>
           <div className="flex items-center justify-between p-6 border-b shrink-0 shadow-[0_4px_16px_rgba(0,0,0,0.10)]">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">{formData.id ? 'Editar Atendimento' : 'Registrar Atendimento de Consultoria'}</h1>
-              <p className="text-sm text-gray-600 mt-1">{formData.id ? 'Atualize as informações do atendimento' : 'Agende e registre informações do atendimento ao cliente'}</p>
+              <h1 className="text-2xl font-bold text-gray-900">{isReadOnly ? 'Visualizar Atendimento' : (formData.id ? 'Editar Atendimento' : 'Registrar Atendimento de Consultoria')}</h1>
+              <p className="text-sm text-gray-600 mt-1">{isReadOnly ? 'Detalhes do atendimento (Somente Leitura)' : (formData.id ? 'Atualize as informações do atendimento' : 'Agende e registre informações do atendimento ao cliente')}</p>
             </div>
             <button type="button" onClick={handleClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
               <X className="w-5 h-5 text-gray-500" />
             </button>
           </div>
           <div className="p-6 overflow-y-auto flex-1">
-            <form id="atendimento-form" onSubmit={handleSubmit} className="space-y-6">{content}</form>
+            <form id="atendimento-form" onSubmit={handleSubmit} className="space-y-6">
+              <fieldset disabled={isReadOnly} className={`space-y-0 border-0 p-0 m-0 min-w-0 ${isReadOnly ? 'opacity-95' : ''}`}>
+                {content}
+              </fieldset>
+            </form>
           </div>
           <div className="flex gap-3 justify-end border-t border-gray-200 bg-white px-6 py-4 shrink-0 rounded-b-2xl shadow-[0_-4px_16px_rgba(0,0,0,0.10)]">
-            <Button type="button" variant="outline" onClick={handleClose} className="px-6">Cancelar</Button>
-            <Button
-              type="submit"
-              form="atendimento-form"
-              disabled={createMutation.isPending || saveSuccess}
-              className={`px-6 shadow-md transition-all duration-300 ${
-                saveSuccess
-                  ? 'bg-green-600 hover:bg-green-600'
-                  : 'bg-blue-600 hover:bg-blue-700'
-              }`}
-            >
-              {createMutation.isPending ? (
-                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Salvando...</>
-              ) : saveSuccess ? (
-                <><Check className="w-4 h-4 mr-2" />Salvo!</>
-              ) : (
-                formData.id ? 'Atualizar Atendimento' : 'Salvar Atendimento'
-              )}
-            </Button>
+            {isReadOnly ? (
+              <Button type="button" variant="outline" onClick={handleClose} className="px-6">Fechar</Button>
+            ) : (
+              <>
+                <Button type="button" variant="outline" onClick={handleClose} className="px-6">Cancelar</Button>
+                <Button
+                  type="submit"
+                  form="atendimento-form"
+                  disabled={createMutation.isPending || saveSuccess}
+                  className={`px-6 shadow-md transition-all duration-300 ${
+                    saveSuccess
+                      ? 'bg-green-600 hover:bg-green-600'
+                      : 'bg-blue-600 hover:bg-blue-700'
+                  }`}
+                >
+                  {createMutation.isPending ? (
+                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Salvando...</>
+                  ) : saveSuccess ? (
+                    <><Check className="w-4 h-4 mr-2" />Salvo!</>
+                  ) : (
+                    formData.id ? 'Atualizar Atendimento' : 'Salvar Atendimento'
+                  )}
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -681,31 +691,39 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">{formData.id ? 'Editar Atendimento' : 'Registrar Atendimento de Consultoria'}</h1>
-        <p className="text-gray-600 mt-2">{formData.id ? 'Atualize as informações do atendimento' : 'Agende e registre informações do atendimento ao cliente'}</p>
+        <h1 className="text-3xl font-bold text-gray-900">{isReadOnly ? 'Visualizar Atendimento' : (formData.id ? 'Editar Atendimento' : 'Registrar Atendimento de Consultoria')}</h1>
+        <p className="text-gray-600 mt-2">{isReadOnly ? 'Detalhes do atendimento (Somente Leitura)' : (formData.id ? 'Atualize as informações do atendimento' : 'Agende e registre informações do atendimento ao cliente')}</p>
       </div>
       <form onSubmit={handleSubmit} className="space-y-6">
-        {content}
+        <fieldset disabled={isReadOnly} className={`space-y-0 border-0 p-0 m-0 min-w-0 ${isReadOnly ? 'opacity-95' : ''}`}>
+          {content}
+        </fieldset>
         <div className="sticky bottom-0 z-20 -mx-6 px-6 mt-6">
           <div className="flex gap-3 justify-end bg-white/95 backdrop-blur-sm border-t border-gray-200 shadow-[0_-4px_12px_rgba(0,0,0,0.06)] rounded-t-xl py-4 px-6">
-            <Button type="button" variant="outline" onClick={handleClose} className="px-6">Cancelar</Button>
-            <Button
-              type="submit"
-              disabled={createMutation.isPending || saveSuccess}
-              className={`px-6 shadow-md transition-all duration-300 ${
-                saveSuccess
-                  ? 'bg-green-600 hover:bg-green-600'
-                  : 'bg-blue-600 hover:bg-blue-700'
-              }`}
-            >
-              {createMutation.isPending ? (
-                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Salvando...</>
-              ) : saveSuccess ? (
-                <><Check className="w-4 h-4 mr-2" />Salvo!</>
-              ) : (
-                formData.id ? 'Atualizar Atendimento' : 'Salvar Atendimento'
-              )}
-            </Button>
+            {isReadOnly ? (
+              <Button type="button" variant="outline" onClick={handleClose} className="px-6">Fechar</Button>
+            ) : (
+              <>
+                <Button type="button" variant="outline" onClick={handleClose} className="px-6">Cancelar</Button>
+                <Button
+                  type="submit"
+                  disabled={createMutation.isPending || saveSuccess}
+                  className={`px-6 shadow-md transition-all duration-300 ${
+                    saveSuccess
+                      ? 'bg-green-600 hover:bg-green-600'
+                      : 'bg-blue-600 hover:bg-blue-700'
+                  }`}
+                >
+                  {createMutation.isPending ? (
+                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Salvando...</>
+                  ) : saveSuccess ? (
+                    <><Check className="w-4 h-4 mr-2" />Salvo!</>
+                  ) : (
+                    formData.id ? 'Atualizar Atendimento' : 'Salvar Atendimento'
+                  )}
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </form>
