@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2, X } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 
 export default function AgendaSection({ formData, setFormData, pautaRef }) {
   const addPauta = () => {
@@ -23,7 +23,7 @@ export default function AgendaSection({ formData, setFormData, pautaRef }) {
   const updatePauta = (index, field, value) => {
     setFormData(prev => {
       const newP = [...prev.pauta];
-      newP[index] = { ...newP[index], [field]: field === 'tempo_estimado' ? parseInt(value, 10) : value };
+      newP[index] = { ...newP[index], [field]: field === 'tempo_estimado' ? (parseInt(value, 10) || 15) : value };
       return { ...prev, pauta: newP };
     });
   };
