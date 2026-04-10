@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useDebounce } from "@/components/hooks/useDebounce";
@@ -44,6 +44,8 @@ export default function PainelAtendimentosTab({ state }) {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [deleteFollowUp, setDeleteFollowUp] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
 
   // ── Filtros LOCAIS da aba (apenas search — datas vêm da URL via filtros) ──
   const [localFilters, setLocalFilters] = useState({
@@ -69,6 +71,11 @@ export default function PainelAtendimentosTab({ state }) {
 
   // ── Debounce search for perf ──
   const debouncedSearch = useDebounce(localFilters.searchTerm, 300);
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, filtros.dataInicio, filtros.dataFim, debouncedSearch, atendimentos.length]);
 
   // ── Filtragem local (memoized) ──
   const atendimentosFiltrados = useMemo(() => {
@@ -96,6 +103,12 @@ export default function PainelAtendimentosTab({ state }) {
       })
       .sort((a, b) => new Date(b.data_agendada) - new Date(a.data_agendada));
   }, [atendimentos, activeTab, filtros.dataInicio, filtros.dataFim, debouncedSearch, workshopMap]);
+
+  const totalPages = Math.ceil(atendimentosFiltrados.length / itemsPerPage);
+  const paginatedAtendimentos = atendimentosFiltrados.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const handleAtaSaved = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['atendimentos-acelerador'] });
@@ -258,13 +271,13 @@ export default function PainelAtendimentosTab({ state }) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {atendimentosFiltrados.length === 0 ? (
+                  {paginatedAtendimentos.length === 0 ? (
                     <tr>
                       <td colSpan={8} className="py-16 text-center">
                         <p className="text-gray-400 text-sm">Nada para ver aqui</p>
                       </td>
                     </tr>
-                  ) : atendimentosFiltrados.map((atendimento) => {
+                  ) : paginatedAtendimentos.map((atendimento) => {
                     const workshop = workshopMap[atendimento.workshop_id];
                     const ataVinculada = atasMap[atendimento.ata_id];
                     return (
@@ -374,6 +387,35 @@ export default function PainelAtendimentosTab({ state }) {
                 </tbody>
               </table>
             </div>
+
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between mt-4 px-2">
+                <p className="text-sm text-gray-500">
+                  Mostrando {(currentPage - 1) * itemsPerPage + 1} até {Math.min(currentPage * itemsPerPage, atendimentosFiltrados.length)} de {atendimentosFiltrados.length} resultados
+                </p>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    Anterior
+                  </Button>
+                  <span className="text-sm text-gray-600 px-3">
+                    Página {currentPage} de {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    Próxima
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
