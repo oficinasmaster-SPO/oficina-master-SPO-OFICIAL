@@ -45,11 +45,9 @@ export default function PainelAtendimentosTab({ state }) {
   const [deleteFollowUp, setDeleteFollowUp] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // ── Filtros LOCAIS da aba (apenas search, workshop, tipo — datas vêm da URL via filtros) ──
+  // ── Filtros LOCAIS da aba (apenas search — datas vêm da URL via filtros) ──
   const [localFilters, setLocalFilters] = useState({
-    searchTerm: "",
-    workshop_id: "",
-    tipo_atendimento: ""
+    searchTerm: ""
   });
 
   // Auto-mark de atrasados agora é feito server-side via markAtrasados function
@@ -87,8 +85,6 @@ export default function PainelAtendimentosTab({ state }) {
     return atendimentos
       .filter(a => {
         if (activeTab !== "todos" && a.status !== activeTab) return false;
-        if (localFilters.workshop_id && a.workshop_id !== localFilters.workshop_id) return false;
-        if (localFilters.tipo_atendimento && a.tipo_atendimento !== localFilters.tipo_atendimento) return false;
         
         if (filtros.dataInicio) {
           if (new Date(a.data_agendada) < new Date(filtros.dataInicio)) return false;
@@ -109,7 +105,7 @@ export default function PainelAtendimentosTab({ state }) {
         return true;
       })
       .sort((a, b) => new Date(b.data_agendada) - new Date(a.data_agendada));
-  }, [atendimentos, activeTab, localFilters.workshop_id, localFilters.tipo_atendimento, filtros.dataInicio, filtros.dataFim, debouncedSearch, workshopMap]);
+  }, [atendimentos, activeTab, filtros.dataInicio, filtros.dataFim, debouncedSearch, workshopMap]);
 
   const handleAtaSaved = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['atendimentos-acelerador'] });
