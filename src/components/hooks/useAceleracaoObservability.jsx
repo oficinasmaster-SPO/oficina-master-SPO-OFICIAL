@@ -8,20 +8,26 @@ import { base44 } from "@/api/base44Client";
 export function useAceleracaoObservability(user) {
   const pageLoadTime = useRef(performance.now());
   const tabSwitchCount = useRef(0);
+  const pageLoadTracked = useRef(false);
 
-  // Track page load performance
+  // Track page load performance — waits for user to be loaded
   useEffect(() => {
+    if (!user?.role || pageLoadTracked.current) return;
+    pageLoadTracked.current = true;
+
     const loadDuration = Math.round(performance.now() - pageLoadTime.current);
     base44.analytics.track({
       eventName: "aceleracao_page_loaded",
       properties: {
         load_duration_ms: loadDuration,
-        user_role: user?.role || "unknown",
+        user_role: user.role,
       },
     });
+  }, [user?.role]);
 
+  // Track session duration on unmount
+  useEffect(() => {
     return () => {
-      // Track session duration on unmount
       const sessionDuration = Math.round((performance.now() - pageLoadTime.current) / 1000);
       base44.analytics.track({
         eventName: "aceleracao_session_ended",
