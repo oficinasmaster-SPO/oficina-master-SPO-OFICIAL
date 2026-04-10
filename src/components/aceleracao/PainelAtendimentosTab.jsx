@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useDebounce } from "@/components/hooks/useDebounce";
@@ -18,7 +18,7 @@ import ReagendarAtendimentoModal from "./ReagendarAtendimentoModal";
 import FinalizarAtendimentoModal from "./FinalizarAtendimentoModal";
 import DashboardAtendimentos from "./DashboardAtendimentos";
 import { ATENDIMENTO_STATUS, ATENDIMENTO_STATUS_COLORS, ATENDIMENTO_STATUS_LABELS } from "@/components/lib/ataConstants";
-import { format, startOfMonth, endOfMonth } from "date-fns";
+import { format } from "date-fns";
 import { toBrazilDate, formatDateTimeBR } from "@/utils/timezone";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -26,7 +26,7 @@ import { toast } from "sonner";
 import RegistrarAtendimento from "@/pages/RegistrarAtendimento";
 
 export default function PainelAtendimentosTab({ state }) {
-  const { user, workshops, workshopMap, atendimentos, consultores, atas, atasMap, planos, filtros } = state;
+  const { user, workshops, workshopMap, atendimentos, consultores, atas, atasMap, planos, filtros, setFiltros } = state;
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -45,27 +45,12 @@ export default function PainelAtendimentosTab({ state }) {
   const [deleteFollowUp, setDeleteFollowUp] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // ── Filtros LOCAIS da aba (search, workshop, tipo, datas) ──
+  // ── Filtros LOCAIS da aba (apenas search, workshop, tipo — datas vêm da URL via filtros) ──
   const [localFilters, setLocalFilters] = useState({
     searchTerm: "",
     workshop_id: "",
-    tipo_atendimento: "",
-    preset: "mes_atual",
-    dateFrom: filtros.dataInicio || format(startOfMonth(new Date()), "yyyy-MM-dd"),
-    dateTo: filtros.dataFim || format(endOfMonth(new Date()), "yyyy-MM-dd")
+    tipo_atendimento: ""
   });
-
-  // Sync datas do filtro global quando mudam
-  useEffect(() => {
-    if (filtros.dataInicio && filtros.dataFim) {
-      setLocalFilters(prev => ({
-        ...prev,
-        dateFrom: filtros.dataInicio,
-        dateTo: filtros.dataFim,
-        preset: filtros.preset || prev.preset
-      }));
-    }
-  }, [filtros.dataInicio, filtros.dataFim]);
 
   // Auto-mark de atrasados agora é feito server-side via markAtrasados function
   // Chamado uma vez no ControleAceleracaoView ao montar
@@ -105,11 +90,11 @@ export default function PainelAtendimentosTab({ state }) {
         if (localFilters.workshop_id && a.workshop_id !== localFilters.workshop_id) return false;
         if (localFilters.tipo_atendimento && a.tipo_atendimento !== localFilters.tipo_atendimento) return false;
         
-        if (localFilters.dateFrom) {
-          if (new Date(a.data_agendada) < new Date(localFilters.dateFrom)) return false;
+        if (filtros.dataInicio) {
+          if (new Date(a.data_agendada) < new Date(filtros.dataInicio)) return false;
         }
-        if (localFilters.dateTo) {
-          const df = new Date(localFilters.dateTo);
+        if (filtros.dataFim) {
+          const df = new Date(filtros.dataFim);
           df.setHours(23, 59, 59, 999);
           if (new Date(a.data_agendada) > df) return false;
         }
@@ -124,7 +109,7 @@ export default function PainelAtendimentosTab({ state }) {
         return true;
       })
       .sort((a, b) => new Date(b.data_agendada) - new Date(a.data_agendada));
-  }, [atendimentos, activeTab, localFilters.workshop_id, localFilters.tipo_atendimento, localFilters.dateFrom, localFilters.dateTo, debouncedSearch, workshopMap]);
+  }, [atendimentos, activeTab, localFilters.workshop_id, localFilters.tipo_atendimento, filtros.dataInicio, filtros.dataFim, debouncedSearch, workshopMap]);
 
   const handleAtaSaved = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['atendimentos-acelerador'] });
@@ -224,7 +209,7 @@ export default function PainelAtendimentosTab({ state }) {
               )}
               <Popover>
                 <PopoverTrigger asChild>
-                  <button className={`p-0.5 rounded transition-colors ${localFilters.dateFrom || localFilters.dateTo ? 'text-red-600' : 'text-gray-400 hover:text-gray-600'}`}>
+                  <button className={`p-0.5 rounded transition-colors ${filtros.preset !== 'mes_atual' ? 'text-red-600' : 'text-gray-400 hover:text-gray-600'}`}>
                     <CalendarDays className="w-4 h-4" />
                   </button>
                 </PopoverTrigger>
@@ -235,17 +220,9 @@ export default function PainelAtendimentosTab({ state }) {
                       {[{v:'7d',l:'7d'},{v:'15d',l:'15d'},{v:'30d',l:'30d'},{v:'mes_atual',l:'Mês'}].map(p => (
                         <button
                           key={p.v}
-                          onClick={() => {
-                            const hoje = new Date();
-                            let di = '', df = format(hoje, 'yyyy-MM-dd');
-                            if (p.v === '7d') di = format(new Date(hoje.getTime() - 7*86400000), 'yyyy-MM-dd');
-                            else if (p.v === '15d') di = format(new Date(hoje.getTime() - 15*86400000), 'yyyy-MM-dd');
-                            else if (p.v === '30d') di = format(new Date(hoje.getTime() - 30*86400000), 'yyyy-MM-dd');
-                            else if (p.v === 'mes_atual') di = format(startOfMonth(hoje), 'yyyy-MM-dd');
-                            setLocalFilters(prev => ({ ...prev, preset: p.v, dateFrom: di, dateTo: df }));
-                          }}
+                          onClick={() => setFiltros({ ...filtros, preset: p.v })}
                           className={`px-2 py-1 rounded text-xs font-medium border transition-colors ${
-                            localFilters.preset === p.v ? 'bg-red-600 text-white border-red-600' : 'bg-white text-gray-600 border-gray-200 hover:border-red-300'
+                            filtros.preset === p.v ? 'bg-red-600 text-white border-red-600' : 'bg-white text-gray-600 border-gray-200 hover:border-red-300'
                           }`}
                         >
                           {p.l}
@@ -254,14 +231,14 @@ export default function PainelAtendimentosTab({ state }) {
                     </div>
                     <div className="space-y-1.5">
                       <Label className="text-xs text-gray-500">De</Label>
-                      <Input type="date" value={localFilters.dateFrom} onChange={(e) => setLocalFilters(prev => ({ ...prev, dateFrom: e.target.value, preset: 'custom' }))} className="h-8 text-xs" />
+                      <Input type="date" value={filtros.dataInicio || ''} onChange={(e) => setFiltros({ ...filtros, preset: 'custom', dataInicio: e.target.value })} className="h-8 text-xs" />
                     </div>
                     <div className="space-y-1.5">
                       <Label className="text-xs text-gray-500">Até</Label>
-                      <Input type="date" value={localFilters.dateTo} onChange={(e) => setLocalFilters(prev => ({ ...prev, dateTo: e.target.value, preset: 'custom' }))} className="h-8 text-xs" />
+                      <Input type="date" value={filtros.dataFim || ''} onChange={(e) => setFiltros({ ...filtros, preset: 'custom', dataFim: e.target.value })} className="h-8 text-xs" />
                     </div>
-                    {(localFilters.dateFrom || localFilters.dateTo) && (
-                      <button onClick={() => setLocalFilters(prev => ({ ...prev, dateFrom: '', dateTo: '', preset: '' }))} className="text-xs text-red-600 hover:underline w-full text-center">
+                    {filtros.preset !== 'mes_atual' && (
+                      <button onClick={() => setFiltros({ ...filtros, preset: 'mes_atual' })} className="text-xs text-red-600 hover:underline w-full text-center">
                         Limpar datas
                       </button>
                     )}
