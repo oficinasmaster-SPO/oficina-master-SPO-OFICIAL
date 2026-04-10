@@ -352,8 +352,11 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
       queryClient.invalidateQueries(['meeting-minutes']);
       queryClient.invalidateQueries(['todos-atendimentos']);
       setSaveSuccess(true);
+      setHasUnsavedChanges(false);
       toast.success('Atendimento salvo com sucesso!');
-      setTimeout(() => handleClose(), 800);
+      // E5: Reset saveSuccess after timeout in case modal doesn't close (E2 confirm cancelled)
+      const closeTimer = setTimeout(() => handleClose(), 800);
+      setTimeout(() => { setSaveSuccess(false); clearTimeout(closeTimer); }, 5000);
     },
     onError: (error) => {
       toast.error('Erro ao salvar: ' + (error.message || "Verifique os campos obrigatórios"));

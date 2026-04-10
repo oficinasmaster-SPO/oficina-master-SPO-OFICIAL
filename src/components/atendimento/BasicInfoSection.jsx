@@ -109,6 +109,9 @@ export default function BasicInfoSection({
                 <SelectItem value="realizado">Realizado</SelectItem>
                 <SelectItem value="atrasado">Atrasado</SelectItem>
                 <SelectItem value="reagendado">Reagendado</SelectItem>
+                <SelectItem value="cancelado">Cancelado</SelectItem>
+                <SelectItem value="faltou">Faltou</SelectItem>
+                <SelectItem value="desmarcou">Desmarcou</SelectItem>
               </SelectContent>
             </Select>
             {formData.status === 'participando' && (
@@ -141,7 +144,7 @@ export default function BasicInfoSection({
             <Input
               type="number"
               value={formData.duracao_minutos}
-              onChange={(e) => setFormData(prev => ({ ...prev, duracao_minutos: parseInt(e.target.value, 10) }))}
+              onChange={(e) => setFormData(prev => ({ ...prev, duracao_minutos: parseInt(e.target.value, 10) || 60 }))}
               min="15"
               step="15"
             />

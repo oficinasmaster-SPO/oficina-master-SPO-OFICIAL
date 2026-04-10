@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, X } from "lucide-react";
 
 export default function AgendaSection({ formData, setFormData, pautaRef }) {
   const addPauta = () => {
@@ -91,18 +91,34 @@ export default function AgendaSection({ formData, setFormData, pautaRef }) {
         </CardHeader>
         <CardContent className="space-y-3">
           {formData.objetivos.map((obj, idx) => (
-            <Input
-              key={idx}
-              placeholder={`Objetivo ${idx + 1}`}
-              value={obj}
-              onChange={(e) => {
-                setFormData(prev => {
-                  const newObj = [...prev.objetivos];
-                  newObj[idx] = e.target.value;
-                  return { ...prev, objetivos: newObj };
-                });
-              }}
-            />
+            <div key={idx} className="flex gap-2 items-center">
+              <Input
+                placeholder={`Objetivo ${idx + 1}`}
+                value={obj}
+                onChange={(e) => {
+                  setFormData(prev => {
+                    const newObj = [...prev.objetivos];
+                    newObj[idx] = e.target.value;
+                    return { ...prev, objetivos: newObj };
+                  });
+                }}
+              />
+              {formData.objetivos.length > 1 && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    setFormData(prev => ({
+                      ...prev,
+                      objetivos: prev.objetivos.filter((_, i) => i !== idx)
+                    }));
+                  }}
+                >
+                  <Trash2 className="w-4 h-4 text-red-500" />
+                </Button>
+              )}
+            </div>
           ))}
         </CardContent>
       </Card>
