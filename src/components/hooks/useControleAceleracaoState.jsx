@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMemo, useEffect, useRef } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import useWorkshopsAtivos from "./useWorkshopsAtivos";
 import useConsultoresList from "./useConsultoresList";
@@ -84,6 +84,19 @@ export default function useControleAceleracaoState() {
     staleTime: 5 * 60 * 1000,
     enabled: !!user?.id,
   });
+
+  // ── 10. Auto-mark atrasados (server-side, once per session) ──
+  const queryClient = useQueryClient();
+  const markAtrasadosRanRef = useRef(false);
+  useEffect(() => {
+    if (!user?.id || markAtrasadosRanRef.current) return;
+    markAtrasadosRanRef.current = true;
+    base44.functions.invoke('markAtrasados', {}).then((res) => {
+      if (res.data?.updated > 0) {
+        queryClient.invalidateQueries({ queryKey: ['atendimentos-acelerador'] });
+      }
+    }).catch(() => { /* silent — non-critical */ });
+  }, [user?.id]);
 
   return {
     // Auth

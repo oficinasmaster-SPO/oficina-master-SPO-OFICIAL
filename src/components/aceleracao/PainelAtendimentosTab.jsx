@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useDebounce } from "@/components/hooks/useDebounce";
@@ -67,33 +67,8 @@ export default function PainelAtendimentosTab({ state }) {
     }
   }, [filtros.dataInicio, filtros.dataFim]);
 
-  // ── Auto-marcar atrasados (uma vez) ──
-  const processedIdsRef = useRef(new Set());
-  const processedOnceRef = useRef(false);
-  useEffect(() => {
-    if (!atendimentos.length || processedOnceRef.current) return;
-    processedOnceRef.current = true;
-    
-    const now = toBrazilDate(new Date());
-    const idsToUpdate = [];
-    atendimentos.forEach(a => {
-      if (processedIdsRef.current.has(a.id)) return;
-      const dataAtendimento = toBrazilDate(a.data_agendada);
-      if (now > dataAtendimento && 
-          ![ATENDIMENTO_STATUS.REALIZADO, ATENDIMENTO_STATUS.PARTICIPANDO, ATENDIMENTO_STATUS.ATRASADO, ATENDIMENTO_STATUS.REAGENDADO, ATENDIMENTO_STATUS.CANCELADO, ATENDIMENTO_STATUS.FALTOU, ATENDIMENTO_STATUS.DESMARCOU].includes(a.status)) {
-        idsToUpdate.push(a.id);
-        processedIdsRef.current.add(a.id);
-      }
-    });
-    idsToUpdate.slice(0, 10).forEach((id, idx) => {
-      setTimeout(() => marcarAtrasadoMutation.mutate(id), idx * 500);
-    });
-  }, [atendimentos]);
-
-  const marcarAtrasadoMutation = useMutation({
-    mutationFn: (id) => base44.entities.ConsultoriaAtendimento.update(id, { status: ATENDIMENTO_STATUS.ATRASADO }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['atendimentos-acelerador'] })
-  });
+  // Auto-mark de atrasados agora é feito server-side via markAtrasados function
+  // Chamado uma vez no ControleAceleracaoView ao montar
 
   const iniciarMutation = useMutation({
     mutationFn: (id) => base44.entities.ConsultoriaAtendimento.update(id, { 
