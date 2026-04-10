@@ -112,7 +112,24 @@ export default function BasicInfoSection({
                 <SelectItem value="desmarcou">Desmarcou</SelectItem>
               </SelectContent>
             </Select>
+          </div>
 
+          <div>
+            <Label>Status do Cliente</Label>
+            <Select
+              value={formData.status_cliente || ""}
+              onValueChange={(value) => setFormData(prev => ({ ...prev, status_cliente: value }))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="crescente">Crescente</SelectItem>
+                <SelectItem value="decrescente">Decrescente</SelectItem>
+                <SelectItem value="estagnado">Estagnado</SelectItem>
+                <SelectItem value="nao_responde">Não Responde</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
