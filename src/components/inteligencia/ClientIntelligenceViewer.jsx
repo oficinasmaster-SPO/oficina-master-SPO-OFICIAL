@@ -82,100 +82,76 @@ export default function ClientIntelligenceViewer({ open, onOpenChange, item, wor
   };
 
   const renderIntelligenceDetails = (intel) => (
-    <div className="space-y-8">
-      {/* Informações Principais */}
-      <div>
-        <div className="flex items-start justify-between mb-6">
-          <div>
-            <h3 className="text-2xl font-semibold tracking-tight text-gray-900">{intel.area || intel.title}</h3>
+    <div className="space-y-6">
+      {/* Grid de Informações Principais */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-200">
+          <div className="flex items-center gap-2 mb-2">
+            <Zap className="w-4 h-4 text-amber-500" />
+            <span className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Classificação</span>
           </div>
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className={`${gravityColors[intel.gravity || 'media']} font-medium`}>
-              {gravityLabel[intel.gravity] || 'Média'}
-            </Badge>
-            <Badge variant="secondary" className="font-medium">
-              {statusLabel[intel.status] || 'Ativo'}
-            </Badge>
-          </div>
+          <p className="font-medium text-gray-900 mt-1">{intel.type || 'N/A'}</p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 p-4 rounded-xl bg-gray-50/50 border border-gray-100">
-          <div>
-            <span className="text-xs font-medium text-gray-500 uppercase tracking-wider block mb-1">Classificação</span>
-            <span className="text-sm text-gray-900 font-medium">{intel.type || 'N/A'}</span>
+        <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-200">
+          <div className="flex items-center gap-2 mb-2">
+            <Repeat2 className="w-4 h-4 text-blue-500" />
+            <span className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Frequência</span>
           </div>
-          <div>
-            <span className="text-xs font-medium text-gray-500 uppercase tracking-wider block mb-1">Frequência</span>
-            <span className="text-sm text-gray-900 font-medium">{frequencyLabel[intel.frequency] || 'N/A'}</span>
-          </div>
-          <div>
-            <span className="text-xs font-medium text-gray-500 uppercase tracking-wider block mb-1">Prazo Desejado</span>
-            <span className="text-sm text-gray-900 font-medium">
-              {intel.resolution_date ? (() => { try { const d = parseISO(intel.resolution_date); return isNaN(d.getTime()) ? intel.resolution_date : format(d, "dd/MM/yyyy", { locale: ptBR }); } catch { return intel.resolution_date; } })() : 'Não definido'}
-            </span>
-          </div>
+          <p className="font-medium text-gray-900 mt-1">{frequencyLabel[intel.frequency] || 'N/A'}</p>
         </div>
       </div>
 
-      {/* Grid de detalhes extras */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="space-y-6">
-          {/* Descrição Detalhada */}
-          {intel.description && (
-            <div>
-              <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                <FileText className="w-4 h-4 text-gray-500" />
-                Descrição Detalhada
-              </h4>
-              <p className="text-sm text-gray-700 leading-relaxed bg-white p-4 rounded-xl border border-gray-200 shadow-sm whitespace-pre-wrap">{intel.description}</p>
-            </div>
-          )}
-
-          {/* Soluções Já Tentadas */}
-          {intel.action_description && (
-            <div>
-              <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-gray-500" />
-                Soluções Já Tentadas
-              </h4>
-              <p className="text-sm text-gray-700 leading-relaxed bg-white p-4 rounded-xl border border-gray-200 shadow-sm whitespace-pre-wrap">{intel.action_description}</p>
-            </div>
-          )}
+      {/* Descrição Detalhada */}
+      {intel.description && (
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <FileText className="w-4 h-4 text-gray-700" />
+            <h4 className="font-semibold text-gray-900">Descrição Detalhada</h4>
+          </div>
+          <div className="bg-white border border-gray-200 rounded-xl p-4">
+            <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{intel.description}</p>
+          </div>
         </div>
+      )}
 
-        <div className="space-y-6">
-          {/* Impacto */}
-          {intel.impact && (
-            <div>
-              <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                <TrendingDown className="w-4 h-4 text-gray-500" />
-                Impacto Quantitativo
-              </h4>
-              <p className="text-sm text-gray-700 bg-white p-4 rounded-xl border border-gray-200 shadow-sm">{intel.impact}</p>
-            </div>
-          )}
+      {/* Impacto */}
+      {intel.impact && (
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <TrendingDown className="w-4 h-4 text-red-600" />
+            <h4 className="font-semibold text-gray-900">Impacto Quantitativo</h4>
+          </div>
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+            <p className="text-sm font-semibold text-red-900">{intel.impact}</p>
+          </div>
+        </div>
+      )}
 
-          {/* Responsáveis */}
+      {/* Responsáveis e Causas - lado a lado se os dois existirem */}
+      {(intel.metadata?.responsibles || (intel.tags && intel.tags.length > 0)) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {intel.metadata?.responsibles && (
             <div>
-              <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                <User className="w-4 h-4 text-gray-500" />
-                Responsáveis
-              </h4>
-              <p className="text-sm text-gray-700 bg-white p-4 rounded-xl border border-gray-200 shadow-sm">{intel.metadata.responsibles}</p>
+              <div className="flex items-center gap-2 mb-2">
+                <User className="w-4 h-4 text-purple-600" />
+                <h4 className="font-semibold text-gray-900">Responsáveis</h4>
+              </div>
+              <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
+                <p className="text-sm text-purple-900">{intel.metadata.responsibles}</p>
+              </div>
             </div>
           )}
-          
-          {/* Possíveis Causas */}
+
           {intel.tags && intel.tags.length > 0 && (
             <div>
-              <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-gray-500" />
-                Possíveis Causas
-              </h4>
+              <div className="flex items-center gap-2 mb-2">
+                <AlertCircle className="w-4 h-4 text-gray-700" />
+                <h4 className="font-semibold text-gray-900">Possíveis Causas</h4>
+              </div>
               <div className="flex flex-wrap gap-2">
                 {intel.tags.map((cause) => (
-                  <Badge key={cause} variant="secondary" className="bg-gray-100 text-gray-700 border-transparent hover:bg-gray-200 px-3 py-1">
+                  <Badge key={cause} variant="outline" className="bg-blue-50 text-blue-800 border-blue-200 shadow-none font-medium">
                     {cause}
                   </Badge>
                 ))}
@@ -183,51 +159,80 @@ export default function ClientIntelligenceViewer({ open, onOpenChange, item, wor
             </div>
           )}
         </div>
-      </div>
+      )}
 
       {/* Checklist */}
       {intel.area && intel.type && (
-        <div className="pt-6 border-t border-gray-100">
-          <h4 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-gray-500" />
-            Checklist de Acompanhamento
-          </h4>
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-2">
-            <ClientIntelligenceChecklistSection
-              intelligenceId={intel.id}
-              area={intel.area}
-              type={intel.type}
-              workshopId={workshopId || intel.workshop_id}
-              onChecklistUpdated={() => {}}
-            />
+        <div className="mt-2">
+          <ClientIntelligenceChecklistSection
+            intelligenceId={intel.id}
+            area={intel.area}
+            type={intel.type}
+            workshopId={workshopId || intel.workshop_id}
+            onChecklistUpdated={() => {}}
+          />
+        </div>
+      )}
+
+      {/* Soluções Já Tentadas */}
+      {intel.action_description && (
+        <div>
+          <h4 className="font-semibold text-gray-900 mb-3">Soluções Já Tentadas</h4>
+          <div className="bg-green-50/60 border border-green-200 rounded-xl p-4">
+            <p className="text-sm text-green-900 whitespace-pre-wrap">{intel.action_description}</p>
           </div>
         </div>
       )}
 
+      {/* Prazo Desejado */}
+      {intel.resolution_date && (
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <Calendar className="w-4 h-4 text-teal-600" />
+            <h4 className="font-semibold text-gray-900">Prazo Desejado</h4>
+          </div>
+          <div className="bg-teal-50/50 border border-teal-200 rounded-xl p-4 max-w-sm">
+            <p className="text-sm font-medium text-teal-900">
+              {(() => { try { const d = parseISO(intel.resolution_date); return isNaN(d.getTime()) ? intel.resolution_date : format(d, "dd 'de' MMMM 'de' yyyy", { locale: ptBR }); } catch { return intel.resolution_date; } })()}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Status */}
+      <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-200">
+        <span className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</span>
+        <div className="mt-2">
+          <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100 border-transparent shadow-none font-medium px-3 py-1">
+            {statusLabel[intel.status] || 'Ativo'}
+          </Badge>
+        </div>
+      </div>
+
       {/* Evoluções Registradas */}
       {intel.metadata?.evolution && (
-        <div className="pt-6 border-t border-gray-100">
-          <h4 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Zap className="w-4 h-4 text-gray-500" />
-            Evolução Registrada
-          </h4>
-          <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm space-y-5 text-sm">
+        <div className="border-l-[3px] border-green-400 pl-4 mt-6">
+          <div className="flex items-center gap-2 mb-3">
+            <CheckCircle2 className="w-4 h-4 text-green-600" />
+            <h4 className="font-semibold text-gray-900">Evolução Registrada</h4>
+          </div>
+          <div className="space-y-4 text-sm bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
             {intel.metadata.evolution.impactBefore && (
               <div>
-                <span className="text-xs font-medium text-gray-500 uppercase tracking-wider block mb-1">Impacto Antes</span>
-                <p className="text-gray-900">{intel.metadata.evolution.impactBefore}</p>
+                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Impacto Antes</span>
+                <p className="text-gray-800 mt-1">{intel.metadata.evolution.impactBefore}</p>
               </div>
             )}
             {intel.metadata.evolution.impactAfter && (
               <div>
-                <span className="text-xs font-medium text-gray-500 uppercase tracking-wider block mb-1">Impacto Depois (Resultado)</span>
-                <p className="text-gray-900">{intel.metadata.evolution.impactAfter}</p>
+                <span className="text-xs font-semibold text-green-600 uppercase tracking-wider">Impacto Depois (Resultado)</span>
+                <p className="text-gray-800 mt-1">{intel.metadata.evolution.impactAfter}</p>
               </div>
             )}
             {intel.metadata.evolution.learnings && (
               <div>
-                <span className="text-xs font-medium text-gray-500 uppercase tracking-wider block mb-1">Lições Aprendidas</span>
-                <p className="text-gray-900">{intel.metadata.evolution.learnings}</p>
+                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Lições Aprendidas</span>
+                <p className="text-gray-800 mt-1">{intel.metadata.evolution.learnings}</p>
               </div>
             )}
           </div>
