@@ -185,6 +185,7 @@ export default function ClientIntelligenceChecklistManager({
                     <GripVertical className="w-4 h-4 text-gray-400" />
                     <span className="flex-1 text-sm text-gray-700">{item.label}</span>
                     <button
+                      type="button"
                       onClick={() => handleRemoveItem(item.id)}
                       className="p-1 hover:bg-red-100 rounded transition-colors"
                     >
