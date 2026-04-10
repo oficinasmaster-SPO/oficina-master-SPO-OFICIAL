@@ -103,7 +103,7 @@ export default function VisaoGeralTab({ state }) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{Math.round(totalHorasRealizadas / 60)}h</div>
-            <p className="text-xs text-gray-600">{totalHorasRealizadas} minutos no período</p>
+            <p className="text-xs text-gray-600">{reunioesRealizadas} reuniões concluídas</p>
           </CardContent>
         </Card>
       </div>
