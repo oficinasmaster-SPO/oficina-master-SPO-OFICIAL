@@ -4,56 +4,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Filter, Calendar, User } from "lucide-react";
-import { format, subDays, startOfMonth, endOfMonth } from "date-fns";
+import { computeDatesForPreset, PRESETS_PERIODO } from "@/utils/aceleracaoDates";
 
 export default function FiltrosControleAceleracao({ 
   consultores = [], 
   filtros = {}, 
   onFiltrosChange 
 }) {
-  const presetsPeriodo = [
-    { label: "Últimos 7 dias", value: "7d" },
-    { label: "Últimos 15 dias", value: "15d" },
-    { label: "Últimos 30 dias", value: "30d" },
-    { label: "Mês atual", value: "mes_atual" },
-    { label: "Personalizado", value: "custom" }
-  ];
-
   const handlePresetChange = (preset) => {
-    const hoje = new Date();
-    let dataInicio, dataFim;
-
-    switch (preset) {
-      case "7d":
-        dataInicio = format(subDays(hoje, 7), "yyyy-MM-dd");
-        dataFim = format(hoje, "yyyy-MM-dd");
-        break;
-      case "15d":
-        dataInicio = format(subDays(hoje, 15), "yyyy-MM-dd");
-        dataFim = format(hoje, "yyyy-MM-dd");
-        break;
-      case "30d":
-        dataInicio = format(subDays(hoje, 30), "yyyy-MM-dd");
-        dataFim = format(hoje, "yyyy-MM-dd");
-        break;
-      case "mes_atual":
-        dataInicio = format(startOfMonth(hoje), "yyyy-MM-dd");
-        dataFim = format(endOfMonth(hoje), "yyyy-MM-dd");
-        break;
-      case "custom":
-        // Manter datas atuais ao selecionar personalizado
-        onFiltrosChange({ ...filtros, preset: "custom" });
-        return;
-      default:
-        return;
+    if (preset === "custom") {
+      onFiltrosChange({ ...filtros, preset: "custom" });
+      return;
     }
-
-    onFiltrosChange({
-      ...filtros,
-      preset,
-      dataInicio,
-      dataFim
-    });
+    const { dataInicio, dataFim } = computeDatesForPreset(preset);
+    onFiltrosChange({ ...filtros, preset, dataInicio, dataFim });
   };
 
   return (
@@ -103,7 +67,7 @@ export default function FiltrosControleAceleracao({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {presetsPeriodo.map((p) => (
+                {PRESETS_PERIODO.map((p) => (
                   <SelectItem key={p.value} value={p.value}>
                     {p.label}
                   </SelectItem>

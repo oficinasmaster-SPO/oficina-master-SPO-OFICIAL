@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
-import { format, startOfMonth, endOfMonth, subDays } from "date-fns";
+import { computeDatesForPreset } from "@/utils/aceleracaoDates";
 
 const VALID_TABS = [
   "visao-geral", "atendimentos", "cronograma",
@@ -15,20 +15,7 @@ function isValidDate(str) {
   return /^\d{4}-\d{2}-\d{2}$/.test(str) && !isNaN(new Date(str).getTime());
 }
 
-function computeDatesForPreset(preset) {
-  const hoje = new Date();
-  switch (preset) {
-    case "7d":
-      return { dataInicio: format(subDays(hoje, 7), "yyyy-MM-dd"), dataFim: format(hoje, "yyyy-MM-dd") };
-    case "15d":
-      return { dataInicio: format(subDays(hoje, 15), "yyyy-MM-dd"), dataFim: format(hoje, "yyyy-MM-dd") };
-    case "30d":
-      return { dataInicio: format(subDays(hoje, 30), "yyyy-MM-dd"), dataFim: format(hoje, "yyyy-MM-dd") };
-    case "mes_atual":
-    default:
-      return { dataInicio: format(startOfMonth(hoje), "yyyy-MM-dd"), dataFim: format(endOfMonth(hoje), "yyyy-MM-dd") };
-  }
-}
+
 
 /**
  * Sincroniza estado da página /controleaceleracao com a URL.
