@@ -232,7 +232,7 @@ export default function PainelAtendimentosTab({ state }) {
               )}
               <Popover>
                 <PopoverTrigger asChild>
-                  <button className={`p-0.5 rounded transition-colors ${filtros.preset !== 'mes_atual' ? 'text-red-600' : 'text-gray-400 hover:text-gray-600'}`}>
+                  <button className="p-0.5 rounded transition-colors text-red-600 hover:text-red-700">
                     <CalendarDays className="w-4 h-4" />
                   </button>
                 </PopoverTrigger>
