@@ -479,29 +479,29 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
           </CardHeader>
           <CardContent>
             <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-              <div className="flex items-center gap-6">
+              <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 text-center sm:text-left">
                 <div className={cn(
-                  "w-24 h-24 rounded-full bg-gradient-to-br flex items-center justify-center shadow-lg",
+                  "w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br flex items-center justify-center shadow-lg shrink-0",
                   `bg-gradient-to-br ${phaseColors[userWorkshop?.maturity_level] || "from-gray-400 to-gray-500"}`
                 )}>
-                  {userWorkshop?.maturity_level === 1 && <TrendingUp className="w-12 h-12 text-white" />}
-                  {userWorkshop?.maturity_level === 2 && <Users className="w-12 h-12 text-white" />}
-                  {userWorkshop?.maturity_level === 3 && <BarChart3 className="w-12 h-12 text-white" />}
-                  {userWorkshop?.maturity_level === 4 && <Rocket className="w-12 h-12 text-white" />}
+                  {userWorkshop?.maturity_level === 1 && <TrendingUp className="w-10 h-10 sm:w-12 sm:h-12 text-white" />}
+                  {userWorkshop?.maturity_level === 2 && <Users className="w-10 h-10 sm:w-12 sm:h-12 text-white" />}
+                  {userWorkshop?.maturity_level === 3 && <BarChart3 className="w-10 h-10 sm:w-12 sm:h-12 text-white" />}
+                  {userWorkshop?.maturity_level === 4 && <Rocket className="w-10 h-10 sm:w-12 sm:h-12 text-white" />}
                 </div>
                 <div>
-                  <h3 className="text-2xl font-bold text-gray-900">
+                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900">
                     {phaseLabels[userWorkshop?.maturity_level || 1]}
                   </h3>
-                  <p className="text-gray-600 mt-1 max-w-md">
+                  <p className="text-sm sm:text-base text-gray-600 mt-1 max-w-md">
                     Sua oficina está na fase de {phaseLabels[userWorkshop?.maturity_level || 1]?.toLowerCase()}. 
                     Continue realizando diagnósticos para evoluir.
                   </p>
                 </div>
               </div>
-              <Link to={getAdminUrl(createPageUrl("SelecionarDiagnostico"))}>
-                <Button size="lg" className="bg-blue-600 hover:bg-blue-700 shadow-md">
-                  <Rocket className="mr-2 w-5 h-5" />
+              <Link to={getAdminUrl(createPageUrl("SelecionarDiagnostico"))} className="w-full md:w-auto">
+                <Button size="lg" className="w-full bg-blue-600 hover:bg-blue-700 shadow-md">
+                  <Rocket className="mr-2 w-5 h-5 shrink-0" />
                   Evoluir de Nível
                 </Button>
               </Link>
@@ -568,18 +568,18 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+              <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
                 <div className={cn(
-                  "w-20 h-20 rounded-2xl bg-gradient-to-br flex items-center justify-center",
+                  "w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br flex items-center justify-center shrink-0",
                   phaseColors[lastDiagnostic.phase] || "from-gray-500 to-gray-600"
                 )}>
-                  <span className="text-3xl font-bold text-white">
+                  <span className="text-2xl sm:text-3xl font-bold text-white">
                     {lastDiagnostic.phase}
                   </span>
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900">
+                  <h3 className="text-lg sm:text-xl font-bold text-gray-900">
                     Fase {lastDiagnostic.phase}: {phaseLabels[lastDiagnostic.phase]}
                   </h3>
                   <p className="text-sm text-gray-600 mt-1">
@@ -590,10 +590,10 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
                   </p>
                 </div>
               </div>
-              <Link to={getAdminUrl(createPageUrl("Resultado") + `?id=${lastDiagnostic.id}`)}>
-                <Button className="bg-blue-600 hover:bg-blue-700">
+              <Link to={getAdminUrl(createPageUrl("Resultado") + `?id=${lastDiagnostic.id}`)} className="w-full sm:w-auto">
+                <Button className="w-full bg-blue-600 hover:bg-blue-700">
                   Ver Resultado
-                  <ArrowRight className="ml-2 w-4 h-4" />
+                  <ArrowRight className="ml-2 w-4 h-4 shrink-0" />
                 </Button>
               </Link>
             </div>
@@ -631,13 +631,13 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
       {gameProfile && (
         <Card className="mb-6 bg-gradient-to-br from-yellow-50 to-amber-50 border-2 border-yellow-200">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-yellow-500 to-amber-500 rounded-full flex items-center justify-center">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+              <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
+                <div className="w-16 h-16 bg-gradient-to-br from-yellow-500 to-amber-500 rounded-full flex items-center justify-center shrink-0">
                   <Award className="w-8 h-8 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900">
+                  <h3 className="text-lg sm:text-xl font-bold text-gray-900">
                     Nível {gameProfile.level} - {gameProfile.level_name}
                   </h3>
                   <p className="text-sm text-gray-600">
@@ -645,10 +645,10 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
                   </p>
                 </div>
               </div>
-              <Link to={getAdminUrl(createPageUrl("Gamificacao"))}>
-                <Button variant="outline" className="border-yellow-400 text-yellow-700 hover:bg-yellow-100">
+              <Link to={getAdminUrl(createPageUrl("Gamificacao"))} className="w-full sm:w-auto">
+                <Button variant="outline" className="w-full border-yellow-400 text-yellow-700 hover:bg-yellow-100">
                   Ver Conquistas
-                  <Trophy className="ml-2 w-4 h-4" />
+                  <Trophy className="ml-2 w-4 h-4 shrink-0" />
                 </Button>
               </Link>
             </div>
