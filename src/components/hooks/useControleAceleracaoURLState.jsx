@@ -30,6 +30,9 @@ export default function useControleAceleracaoURLState() {
   // ── Ler estado da URL ──
   const rawTab = searchParams.get("tab");
   const activeTab = useMemo(() => {
+    // LEGADO (pré-2025): tab "consultoria" foi renomeada para "dashboard-operacional".
+    // Mantido para não quebrar bookmarks/links antigos. Remover quando analytics
+    // confirmarem que nenhum acesso usa ?tab=consultoria (avaliar em Jul/2026).
     if (rawTab === "consultoria") return "dashboard-operacional";
     if (rawTab && VALID_TABS.includes(rawTab)) return rawTab;
     return DEFAULT_TAB;
