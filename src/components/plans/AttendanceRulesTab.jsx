@@ -17,9 +17,7 @@ export default function AttendanceRulesTab({ planId, planName }) {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingRule, setEditingRule] = useState(null);
-  const [showCreateTipo, setShowCreateTipo] = useState(false);
 
-  // Form state
   const [formData, setFormData] = useState({
     attendance_type_id: "",
     total_allowed: 1,
@@ -29,52 +27,44 @@ export default function AttendanceRulesTab({ planId, planName }) {
     allow_anticipation: true
   });
 
-  // Carregar tipos de atendimento do banco (entidade unificada)
+  // Unified: load from TipoAtendimentoConsultoria only
   const { data: attendanceTypes = [], isLoading: loadingTypes } = useQuery({
-    queryKey: ['tipos-atendimento-consultoria'],
+    queryKey: ["tipos-atendimento-consultoria"],
     queryFn: async () => {
       const tipos = await base44.entities.TipoAtendimentoConsultoria.filter({ ativo: true });
       return tipos || [];
     }
   });
 
-  // Carregar regras do plano atual
   const { data: planRules = [], isLoading: loadingRules } = useQuery({
-    queryKey: ['plan-attendance-rules', planId],
+    queryKey: ["plan-attendance-rules", planId],
     queryFn: () => base44.entities.PlanAttendanceRule.filter({ plan_id: planId, is_active: true })
   });
 
-  // Mutation para criar regra
   const createRuleMutation = useMutation({
     mutationFn: (data) => base44.entities.PlanAttendanceRule.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries(['plan-attendance-rules', planId]);
+      queryClient.invalidateQueries(["plan-attendance-rules", planId]);
       toast.success("Regra adicionada com sucesso!");
       resetForm();
     },
-    onError: (error) => {
-      toast.error("Erro ao criar regra: " + error.message);
-    }
+    onError: (error) => toast.error("Erro ao criar regra: " + error.message)
   });
 
-  // Mutation para atualizar regra
   const updateRuleMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.PlanAttendanceRule.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries(['plan-attendance-rules', planId]);
+      queryClient.invalidateQueries(["plan-attendance-rules", planId]);
       toast.success("Regra atualizada!");
       resetForm();
     },
-    onError: (error) => {
-      toast.error("Erro ao atualizar: " + error.message);
-    }
+    onError: (error) => toast.error("Erro ao atualizar: " + error.message)
   });
 
-  // Mutation para remover regra (soft delete)
   const deleteRuleMutation = useMutation({
     mutationFn: (id) => base44.entities.PlanAttendanceRule.update(id, { is_active: false }),
     onSuccess: () => {
-      queryClient.invalidateQueries(['plan-attendance-rules', planId]);
+      queryClient.invalidateQueries(["plan-attendance-rules", planId]);
       toast.success("Regra removida!");
     }
   });
@@ -107,31 +97,24 @@ export default function AttendanceRulesTab({ planId, planName }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
-    // Validações
     if (!formData.attendance_type_id) {
       toast.error("Selecione um tipo de atendimento");
       return;
     }
-
     if (formData.total_allowed <= 0) {
       toast.error("Quantidade deve ser maior que zero");
       return;
     }
-
     if (formData.frequency_days <= 0) {
       toast.error("Frequência deve ser maior que zero");
       return;
     }
-
-    // Verificar duplicação (só se não estiver editando)
-    if (!editingRule && planRules.find(r => r.attendance_type_id === formData.attendance_type_id)) {
+    if (!editingRule && planRules.find((r) => r.attendance_type_id === formData.attendance_type_id)) {
       toast.error("Este tipo já está configurado neste plano");
       return;
     }
 
-    const attendanceType = attendanceTypes.find(t => t.id === formData.attendance_type_id);
-
+    const attendanceType = attendanceTypes.find((t) => t.id === formData.attendance_type_id);
     const ruleData = {
       plan_id: planId,
       attendance_type_id: formData.attendance_type_id,
@@ -169,7 +152,6 @@ export default function AttendanceRulesTab({ planId, planName }) {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-start justify-between">
         <div>
           <h3 className="text-lg font-semibold text-gray-900">Atendimentos do Plano {planName}</h3>
@@ -177,193 +159,195 @@ export default function AttendanceRulesTab({ planId, planName }) {
             Configure quais tipos de atendimento estão inclusos e suas frequências
           </p>
         </div>
-
         <div className="flex gap-2">
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => {
-                resetForm();
-                setDialogOpen(true);
-              }}>
+              <Button
+                className="bg-blue-600 hover:bg-blue-700"
+                onClick={() => {
+                  resetForm();
+                  setDialogOpen(true);
+                }}
+              >
                 <Plus className="w-4 h-4 mr-2" />
                 Adicionar Tipo
               </Button>
             </DialogTrigger>
-          <DialogContent className="max-w-lg">
-            <DialogHeader>
-              <DialogTitle>
-                {editingRule ? "Editar Regra de Atendimento" : "Adicionar Tipo de Atendimento"}
-              </DialogTitle>
-            </DialogHeader>
-
-            <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <Label>Tipo de Atendimento *</Label>
-                  <TipoAtendimentoManager customTipos={attendanceTypes} onSave={() => {
-                    queryClient.invalidateQueries(['tipos-atendimento-consultoria']);
-                  }} />
-                </div>
-                <Select
-                  value={formData.attendance_type_id}
-                  onValueChange={(value) => setFormData({ ...formData, attendance_type_id: value })}
-                  disabled={!!editingRule}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o tipo..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {attendanceTypes.map((type) => (
-                      <SelectItem key={type.id} value={type.id}>
-                        {type.label} ({type.duracao_minutos || 60}min)
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label>Tipo de Agendamento *</Label>
-                <Select
-                  value={formData.scheduling_type}
-                  onValueChange={(value) => setFormData({ ...formData, scheduling_type: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="frequency">Por Frequência (ex: mensal, quinzenal)</SelectItem>
-                    <SelectItem value="event_based">Baseado em Calendário de Eventos</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-gray-500 mt-1">
-                  {formData.scheduling_type === "frequency" 
-                    ? "Atendimentos distribuídos por frequência a partir do contrato"
-                    : "Atendimentos puxados automaticamente do Calendário Anual de Eventos"}
-                </p>
-              </div>
-
-              <div>
-                <Label>Quantidade Permitida *</Label>
-                <Input
-                  type="number"
-                  min="1"
-                  value={formData.total_allowed}
-                  onChange={(e) => setFormData({ ...formData, total_allowed: parseInt(e.target.value) })}
-                  placeholder="Ex: 12"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  {formData.scheduling_type === "event_based"
-                    ? "Quantos eventos futuros serão vinculados automaticamente"
-                    : "Quantos atendimentos deste tipo o cliente terá acesso"}
-                </p>
-              </div>
-
-              {formData.scheduling_type === "frequency" && (
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle>
+                  {editingRule ? "Editar Regra de Atendimento" : "Adicionar Tipo de Atendimento"}
+                </DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-4 mt-4">
                 <div>
-                  <Label>Frequência (Cadência) *</Label>
-                  <div className="space-y-2">
-                    <div className="grid grid-cols-3 gap-2">
-                      {frequencyPresets.map((preset) => (
-                        <Button
-                          key={preset.value}
-                          type="button"
-                          variant={formData.frequency_days === preset.value ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => setFormData({ ...formData, frequency_days: preset.value })}
-                          className={formData.frequency_days === preset.value ? "bg-blue-600" : ""}
-                        >
-                          {preset.label.split(' ')[0]}
-                        </Button>
-                      ))}
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <Input
-                        type="number"
-                        min="1"
-                        value={formData.frequency_days}
-                        onChange={(e) => setFormData({ ...formData, frequency_days: parseInt(e.target.value) })}
-                        placeholder="Dias"
-                        className="w-24"
-                      />
-                      <span className="text-sm text-gray-600">dias entre atendimentos</span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center space-x-2 border rounded-lg p-3 mt-3">
-                    <Checkbox
-                      checked={formData.start_from_contract_date}
-                      onCheckedChange={(checked) => setFormData({ ...formData, start_from_contract_date: checked })}
+                  <div className="flex justify-between items-center mb-2">
+                    <Label>Tipo de Atendimento *</Label>
+                    <TipoAtendimentoManager
+                      customTipos={attendanceTypes}
+                      onSave={() => queryClient.invalidateQueries(["tipos-atendimento-consultoria"])}
                     />
-                    <div>
-                      <label className="text-sm font-medium cursor-pointer">
-                        Iniciar a partir da data de ativação do contrato
-                      </label>
-                      <p className="text-xs text-gray-500">
-                        Se marcado, o 1º atendimento será na data do contrato + frequência
-                      </p>
-                    </div>
                   </div>
+                  <Select
+                    value={formData.attendance_type_id}
+                    onValueChange={(value) => setFormData({ ...formData, attendance_type_id: value })}
+                    disabled={!!editingRule}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o tipo..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {attendanceTypes.map((type) => (
+                        <SelectItem key={type.id} value={type.id}>
+                          {type.label} ({type.duracao_minutos || 60}min)
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-              )}
 
-              {formData.scheduling_type === "event_based" && (
-                <div className="border rounded-lg p-4 bg-blue-50 border-blue-200">
-                  <div className="flex items-start gap-2">
-                    <Calendar className="w-5 h-5 text-blue-600 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium text-blue-900">
-                        Eventos do Calendário Anual
-                      </p>
-                      <p className="text-xs text-blue-700 mt-1">
-                        Os {formData.total_allowed} próximos eventos deste tipo serão automaticamente vinculados ao contrato.
-                        Para configurar os eventos do ano, acesse: <strong>Gestão de Planos → Calendário de Eventos</strong>
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div className="flex items-center space-x-2 border rounded-lg p-3">
-                <Checkbox
-                  checked={formData.allow_anticipation}
-                  onCheckedChange={(checked) => setFormData({ ...formData, allow_anticipation: checked })}
-                />
                 <div>
-                  <label className="text-sm font-medium cursor-pointer">
-                    Permitir antecipação de atendimentos
-                  </label>
-                  <p className="text-xs text-gray-500">Cliente pode consumir antes do prazo previsto</p>
+                  <Label>Tipo de Agendamento *</Label>
+                  <Select
+                    value={formData.scheduling_type}
+                    onValueChange={(value) => setFormData({ ...formData, scheduling_type: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="frequency">Por Frequência (ex: mensal, quinzenal)</SelectItem>
+                      <SelectItem value="event_based">Baseado em Calendário de Eventos</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {formData.scheduling_type === "frequency"
+                      ? "Atendimentos distribuídos por frequência a partir do contrato"
+                      : "Atendimentos puxados automaticamente do Calendário Anual de Eventos"}
+                  </p>
                 </div>
-              </div>
 
-              <div className="flex gap-3 justify-end pt-4">
-                <Button type="button" variant="outline" onClick={resetForm}>
-                  Cancelar
-                </Button>
-                <Button 
-                  type="submit" 
-                  disabled={createRuleMutation.isPending || updateRuleMutation.isPending}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  {(createRuleMutation.isPending || updateRuleMutation.isPending) ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Salvando...
-                    </>
-                  ) : (
-                    editingRule ? "Atualizar" : "Adicionar"
-                  )}
-                </Button>
-              </div>
-            </form>
+                <div>
+                  <Label>Quantidade Permitida *</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    value={formData.total_allowed}
+                    onChange={(e) => setFormData({ ...formData, total_allowed: parseInt(e.target.value) })}
+                    placeholder="Ex: 12"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    {formData.scheduling_type === "event_based"
+                      ? "Quantos eventos futuros serão vinculados automaticamente"
+                      : "Quantos atendimentos deste tipo o cliente terá acesso"}
+                  </p>
+                </div>
+
+                {formData.scheduling_type === "frequency" && (
+                  <div>
+                    <Label>Frequência (Cadência) *</Label>
+                    <div className="space-y-2">
+                      <div className="grid grid-cols-3 gap-2">
+                        {frequencyPresets.map((preset) => (
+                          <Button
+                            key={preset.value}
+                            type="button"
+                            variant={formData.frequency_days === preset.value ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setFormData({ ...formData, frequency_days: preset.value })}
+                            className={formData.frequency_days === preset.value ? "bg-blue-600" : ""}
+                          >
+                            {preset.label.split(" ")[0]}
+                          </Button>
+                        ))}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          min="1"
+                          value={formData.frequency_days}
+                          onChange={(e) => setFormData({ ...formData, frequency_days: parseInt(e.target.value) })}
+                          placeholder="Dias"
+                          className="w-24"
+                        />
+                        <span className="text-sm text-gray-600">dias entre atendimentos</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2 border rounded-lg p-3 mt-3">
+                      <Checkbox
+                        checked={formData.start_from_contract_date}
+                        onCheckedChange={(checked) =>
+                          setFormData({ ...formData, start_from_contract_date: checked })
+                        }
+                      />
+                      <div>
+                        <label className="text-sm font-medium cursor-pointer">
+                          Iniciar a partir da data de ativação do contrato
+                        </label>
+                        <p className="text-xs text-gray-500">
+                          Se marcado, o 1º atendimento será na data do contrato + frequência
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {formData.scheduling_type === "event_based" && (
+                  <div className="border rounded-lg p-4 bg-blue-50 border-blue-200">
+                    <div className="flex items-start gap-2">
+                      <Calendar className="w-5 h-5 text-blue-600 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium text-blue-900">Eventos do Calendário Anual</p>
+                        <p className="text-xs text-blue-700 mt-1">
+                          Os {formData.total_allowed} próximos eventos deste tipo serão automaticamente vinculados ao
+                          contrato. Para configurar os eventos do ano, acesse:{" "}
+                          <strong>Gestão de Planos → Calendário de Eventos</strong>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center space-x-2 border rounded-lg p-3">
+                  <Checkbox
+                    checked={formData.allow_anticipation}
+                    onCheckedChange={(checked) => setFormData({ ...formData, allow_anticipation: checked })}
+                  />
+                  <div>
+                    <label className="text-sm font-medium cursor-pointer">
+                      Permitir antecipação de atendimentos
+                    </label>
+                    <p className="text-xs text-gray-500">Cliente pode consumir antes do prazo previsto</p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 justify-end pt-4">
+                  <Button type="button" variant="outline" onClick={resetForm}>
+                    Cancelar
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={createRuleMutation.isPending || updateRuleMutation.isPending}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    {createRuleMutation.isPending || updateRuleMutation.isPending ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Salvando...
+                      </>
+                    ) : editingRule ? (
+                      "Atualizar"
+                    ) : (
+                      "Adicionar"
+                    )}
+                  </Button>
+                </div>
+              </form>
             </DialogContent>
-            </Dialog>
-            </div>
-            </div>
+          </Dialog>
+        </div>
+      </div>
 
-      {/* Lista de Regras */}
       {planRules.length === 0 ? (
         <Card className="border-dashed">
           <CardContent className="py-12 text-center">
@@ -377,29 +361,22 @@ export default function AttendanceRulesTab({ planId, planName }) {
       ) : (
         <div className="grid gap-4">
           {planRules.map((rule) => {
-            const attendanceType = attendanceTypes.find(t => t.id === rule.attendance_type_id);
-            
+            const at = attendanceTypes.find((t) => t.id === rule.attendance_type_id);
             return (
               <Card key={rule.id} className="border-l-4 border-l-blue-500">
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="space-y-1">
                       <CardTitle className="text-base flex items-center gap-2">
-                        {rule.attendance_type_name || attendanceType?.label}
+                        {rule.attendance_type_name || at?.label}
                         <Badge variant="outline" className="ml-2">
                           {rule.total_allowed}x
                         </Badge>
                       </CardTitle>
-                      <p className="text-sm text-gray-600">
-                        {attendanceType?.descricao || "Sem descrição"}
-                      </p>
+                      <p className="text-sm text-gray-600">{at?.descricao || "Sem descrição"}</p>
                     </div>
                     <div className="flex gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEdit(rule)}
-                      >
+                      <Button variant="ghost" size="sm" onClick={() => handleEdit(rule)}>
                         Editar
                       </Button>
                       <Button
@@ -448,12 +425,12 @@ export default function AttendanceRulesTab({ planId, planName }) {
                           </div>
                         </div>
                       </div>
-
                       <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
                         <p className="text-xs font-medium text-blue-900 mb-1">📅 Previsão de duração</p>
                         <p className="text-xs text-blue-700">
-                          Com {rule.total_allowed} atendimentos a cada {rule.frequency_days} dias = {" "}
-                          <strong>{rule.total_allowed * rule.frequency_days} dias</strong> ({Math.ceil((rule.total_allowed * rule.frequency_days) / 30)} meses aprox.)
+                          Com {rule.total_allowed} atendimentos a cada {rule.frequency_days} dias ={" "}
+                          <strong>{rule.total_allowed * rule.frequency_days} dias</strong> (
+                          {Math.ceil((rule.total_allowed * rule.frequency_days) / 30)} meses aprox.)
                         </p>
                         {rule.start_from_contract_date && (
                           <p className="text-xs text-blue-600 mt-1">
@@ -472,7 +449,7 @@ export default function AttendanceRulesTab({ planId, planName }) {
                       <div className="text-sm text-blue-700 border-l-2 border-blue-500 pl-3">
                         <p className="font-medium">📅 Eventos Automáticos</p>
                         <p className="text-xs mt-1">
-                          Os {rule.total_allowed} próximos eventos de "{rule.attendance_type_name}" do Calendário Anual 
+                          Os {rule.total_allowed} próximos eventos de "{rule.attendance_type_name}" do Calendário Anual
                           serão automaticamente vinculados ao contrato quando ativado.
                         </p>
                       </div>
@@ -485,7 +462,6 @@ export default function AttendanceRulesTab({ planId, planName }) {
         </div>
       )}
 
-      {/* Resumo */}
       {planRules.length > 0 && (
         <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
           <CardHeader>
@@ -497,7 +473,7 @@ export default function AttendanceRulesTab({ planId, planName }) {
                 Total de tipos configurados: <span className="text-blue-600">{planRules.length}</span>
               </p>
               <p className="font-medium text-gray-900">
-                Total de atendimentos no plano: {" "}
+                Total de atendimentos no plano:{" "}
                 <span className="text-blue-600">
                   {planRules.reduce((sum, rule) => sum + rule.total_allowed, 0)}
                 </span>
