@@ -246,7 +246,7 @@ export default function ClientIntelligenceViewer({ open, onOpenChange, item, wor
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
-        className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-0 gap-0"
+        className="w-full max-w-[800px] max-h-[95vh] overflow-hidden flex flex-col p-0 gap-0 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.2)]"
         onInteractOutside={(e) => e.preventDefault()}
       >
         <DialogHeader className="px-6 py-4 border-b border-gray-100">
