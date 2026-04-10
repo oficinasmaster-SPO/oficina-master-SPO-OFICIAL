@@ -32,6 +32,16 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
   const urlParams = new URLSearchParams(window.location.search);
   const fromAgenda = urlParams.get('fromAgenda') === 'true';
 
+  const actualClose = () => {
+    if (onClose) {
+      onClose();
+    } else if (fromAgenda) {
+      navigate(-1);
+    } else {
+      navigate(`${createPageUrl('ControleAceleracao')}?tab=atendimentos`);
+    }
+  };
+
   const handleClose = () => {
     // E2: Confirm before discarding unsaved changes (also for new records with data filled)
     const hasFilledData = formData.workshop_id || formData.data_agendada || formData.observacoes_consultor;
@@ -40,12 +50,11 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
     } else if (!formData.id && hasFilledData) {
       if (!window.confirm('Você preencheu dados que ainda não foram salvos. Deseja realmente sair?')) return;
     }
-    if (onClose) {
-      onClose();
-    } else if (fromAgenda) {
-      navigate(-1);
+    if (isModal) {
+      setIsClosing(true);
+      setTimeout(() => actualClose(), 250);
     } else {
-      navigate(`${createPageUrl('ControleAceleracao')}?tab=atendimentos`);
+      actualClose();
     }
   };
 
@@ -84,6 +93,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
   const [autoSaveStatus, setAutoSaveStatus] = useState(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
   const [conflitosModal, setConflitosModal] = useState({ open: false, conflitos: [], dataHorario: null });
   const autoSaveTimerRef = useRef(null);
   const autoSaveInitializedRef = useRef(false);
@@ -624,9 +634,12 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
 
   if (isModal) {
     return (
-      <div className="fixed inset-0 z-40 flex items-center justify-center p-4 sm:p-6" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}>
+      <div
+        className={`fixed inset-0 z-40 flex items-center justify-center p-4 sm:p-6 transition-opacity duration-250 ${isClosing ? 'opacity-0' : 'opacity-100'}`}
+        style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}
+      >
         <div className="absolute inset-0" onClick={handleClose} />
-        <div className="relative bg-white rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.2)] w-full max-w-[800px] max-h-[95vh] flex flex-col z-10 animate-in fade-in zoom-in-95 duration-200">
+        <div className={`relative bg-white rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.2)] w-full max-w-[800px] max-h-[95vh] flex flex-col z-10 transition-all duration-250 ${isClosing ? 'opacity-0 scale-95 translate-y-4' : 'animate-in fade-in zoom-in-95 duration-200'}`}>
           <div className="flex items-center justify-between p-6 border-b shrink-0 shadow-[0_4px_16px_rgba(0,0,0,0.10)]">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">{formData.id ? 'Editar Atendimento' : 'Registrar Atendimento de Consultoria'}</h1>
