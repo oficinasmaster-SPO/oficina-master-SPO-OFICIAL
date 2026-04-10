@@ -114,17 +114,17 @@ export default function ClientIntelligenceChecklistSection({
 
   if (!checklist) {
     return (
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start justify-between">
+      <div className="bg-blue-50/50 border border-blue-100 rounded-lg p-4 flex items-start justify-between">
         <div>
-          <p className="text-sm font-semibold text-blue-900 mb-1">Nenhum checklist</p>
-          <p className="text-xs text-blue-700">Crie um checklist para ajudar a orientar as ações</p>
+          <p className="text-sm font-semibold text-blue-800 mb-1">Nenhum checklist</p>
+          <p className="text-xs text-blue-600">Crie um checklist para ajudar a orientar as ações</p>
         </div>
         <Button
           type="button"
           variant="outline"
           size="sm"
           onClick={() => setManagerOpen(true)}
-          className="ml-2"
+          className="ml-2 bg-white"
         >
           <Plus className="w-4 h-4" />
         </Button>
@@ -134,7 +134,7 @@ export default function ClientIntelligenceChecklistSection({
 
   return (
     <>
-      <div className="border-l-4 border-indigo-400 pl-4 py-3">
+      <div className="pl-3 py-3 pr-2 border-l-[3px] border-indigo-400">
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
