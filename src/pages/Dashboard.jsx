@@ -491,12 +491,12 @@ export default function Dashboard() {
         </div>
 
         <Tabs defaultValue="rankings" className="space-y-6">
-          <TabsList className="bg-white shadow-md">
-            <TabsTrigger value="rankings">🏆 Rankings Brasil</TabsTrigger>
-            <TabsTrigger value="pessoas">👥 Rankings Pessoas</TabsTrigger>
-            <TabsTrigger value="metas">🎯 Metas por Área</TabsTrigger>
-            <TabsTrigger value="tempo">⚡ Tempo de Uso</TabsTrigger>
-            <TabsTrigger value="segmentos">📊 Segmentos</TabsTrigger>
+          <TabsList className="flex overflow-x-auto flex-nowrap w-full bg-white shadow-sm p-2 gap-2 h-auto justify-start scrollbar-hide rounded-lg border border-gray-100">
+            <TabsTrigger value="rankings" className="py-2 px-4 whitespace-nowrap shrink-0">🏆 Rankings Brasil</TabsTrigger>
+            <TabsTrigger value="pessoas" className="py-2 px-4 whitespace-nowrap shrink-0">👥 Rankings Pessoas</TabsTrigger>
+            <TabsTrigger value="metas" className="py-2 px-4 whitespace-nowrap shrink-0">🎯 Metas por Área</TabsTrigger>
+            <TabsTrigger value="tempo" className="py-2 px-4 whitespace-nowrap shrink-0">⚡ Tempo de Uso</TabsTrigger>
+            <TabsTrigger value="segmentos" className="py-2 px-4 whitespace-nowrap shrink-0">📊 Segmentos</TabsTrigger>
           </TabsList>
 
           {/* Rankings Brasil */}

@@ -21,15 +21,15 @@ export default function RankingTable({ data, type = "faturamento" }) {
   };
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full">
+    <div className="overflow-x-auto scrollbar-hide pb-2">
+      <table className="w-full min-w-[600px]">
         <thead>
           <tr className="border-b-2 border-gray-200">
-            <th className="text-left p-3 font-semibold text-gray-700 w-16">Pos.</th>
-            <th className="text-left p-3 font-semibold text-gray-700">Oficina</th>
-            <th className="text-left p-3 font-semibold text-gray-700">Estado</th>
-            <th className="text-left p-3 font-semibold text-gray-700">Segmento</th>
-            <th className="text-right p-3 font-semibold text-gray-700">Valor</th>
+            <th className="text-left p-3 font-semibold text-gray-700 w-16 whitespace-nowrap">Pos.</th>
+            <th className="text-left p-3 font-semibold text-gray-700 whitespace-nowrap">Oficina</th>
+            <th className="text-left p-3 font-semibold text-gray-700 whitespace-nowrap">Estado</th>
+            <th className="text-left p-3 font-semibold text-gray-700 whitespace-nowrap">Segmento</th>
+            <th className="text-right p-3 font-semibold text-gray-700 whitespace-nowrap">Valor</th>
           </tr>
         </thead>
         <tbody>
@@ -41,21 +41,21 @@ export default function RankingTable({ data, type = "faturamento" }) {
               }`}
             >
               <td className="p-3">
-                <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-50">
+                <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-50 shrink-0">
                   {getRankIcon(index + 1)}
                 </div>
               </td>
               <td className="p-3">
-                <p className="font-medium text-gray-900">{item.name}</p>
+                <p className="font-medium text-gray-900 whitespace-nowrap">{item.name}</p>
               </td>
               <td className="p-3">
-                <Badge variant="outline">{item.state}</Badge>
+                <Badge variant="outline" className="whitespace-nowrap">{item.state}</Badge>
               </td>
               <td className="p-3">
-                <span className="text-sm text-gray-600">{item.segment}</span>
+                <span className="text-sm text-gray-600 whitespace-nowrap">{item.segment}</span>
               </td>
               <td className="p-3 text-right">
-                <p className="font-bold text-gray-900">
+                <p className="font-bold text-gray-900 whitespace-nowrap">
                   {formatValue(item.value, type)}
                 </p>
               </td>
