@@ -87,10 +87,18 @@ export default function ControleAceleracaoView({ state }) {
   }, [setFiltros, trackFilterChange]);
 
   // Tab counts
-  const counts = useMemo(() => ({
-    atendimentos: atendimentosPeriodo?.length || 0,
-    workshops: workshops?.length || 0,
-  }), [atendimentosPeriodo, workshops]);
+  const counts = useMemo(() => {
+    const hoje = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+    const atrasados = (atendimentosPeriodo || []).filter(a => {
+      if (a.status === 'realizado') return false;
+      const d = new Date(a.data_agendada).toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+      return d < hoje;
+    }).length;
+    return {
+      atendimentos: atendimentosPeriodo?.length || 0,
+      atrasados,
+    };
+  }, [atendimentosPeriodo]);
 
   // Check if any filter is active (non-default)
   const hasActiveFilters =
@@ -201,7 +209,7 @@ export default function ControleAceleracaoView({ state }) {
               <BarChart3 className="w-4 h-4" />
               <span className="hidden sm:inline">Visão Geral</span>
               <span className="sm:hidden">Geral</span>
-              <TabBadge count={counts.workshops} active={activeTab === "visao-geral"} />
+              {counts.atrasados > 0 && <TabBadge count={counts.atrasados} active={activeTab === "visao-geral"} />}
             </TabsTrigger>
             <TabsTrigger value="atendimentos" className={TAB_CLASS}>
               <ClipboardList className="w-4 h-4" />
