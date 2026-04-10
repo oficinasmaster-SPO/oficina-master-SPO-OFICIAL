@@ -5,7 +5,7 @@ import { useDebounce } from "@/components/hooks/useDebounce";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Edit, AlertTriangle, FilePlus, Play, StopCircle, CalendarClock, FileText, CheckCircle, Trash2, Clock, Search, X, CalendarDays, MoreVertical } from "lucide-react";
+import { Edit, AlertTriangle, FilePlus, Play, StopCircle, CalendarClock, FileText, CheckCircle, Trash2, Clock, Search, X, CalendarDays, MoreVertical, SearchX, PlusCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -297,8 +297,39 @@ export default function PainelAtendimentosTab({ state }) {
                 <tbody className="divide-y divide-gray-100">
                   {paginatedAtendimentos.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="py-16 text-center">
-                        <p className="text-gray-400 text-sm">Nada para ver aqui</p>
+                      <td colSpan={8} className="py-24 text-center">
+                        <div className="flex flex-col items-center justify-center max-w-md mx-auto space-y-4">
+                          <div className="bg-gray-50 p-4 rounded-full">
+                            <SearchX className="w-10 h-10 text-gray-400" />
+                          </div>
+                          <div className="space-y-1">
+                            <h3 className="text-lg font-medium text-gray-900">Nenhum atendimento encontrado</h3>
+                            <p className="text-sm text-gray-500">
+                              Não encontramos nenhum registro que corresponda aos filtros aplicados ou não há atendimentos para este período.
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-3 pt-2">
+                            {(localFilters.searchTerm || activeTab !== 'todos' || filtros.preset !== 'mes_atual') && (
+                              <Button
+                                variant="outline"
+                                onClick={() => {
+                                  setLocalFilters({ searchTerm: "" });
+                                  setActiveTab("todos");
+                                  setFiltros({ ...filtros, preset: 'mes_atual', dataInicio: null, dataFim: null });
+                                }}
+                              >
+                                Limpar Filtros
+                              </Button>
+                            )}
+                            <Button 
+                              onClick={() => navigate(createPageUrl('RegistrarAtendimento'))}
+                              className="bg-red-600 hover:bg-red-700 text-white"
+                            >
+                              <PlusCircle className="w-4 h-4 mr-2" />
+                              Novo Atendimento
+                            </Button>
+                          </div>
+                        </div>
                       </td>
                     </tr>
                   ) : paginatedAtendimentos.map((atendimento) => {
