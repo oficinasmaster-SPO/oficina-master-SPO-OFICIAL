@@ -667,14 +667,51 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
       )}
 
       {formData.checklist_respostas?.length > 0 && (
-        <section className="space-y-4">
+        <section className="space-y-6">
           <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">Checklist de Diagnóstico</h3>
-          <div className="pl-4 flex flex-col gap-2">
-            {formData.checklist_respostas.map((r, idx) => (
-              <p key={idx} className="text-base text-gray-700 flex items-start gap-3 bg-gray-50 border border-gray-100 p-3 rounded-lg">
-                <span className="shrink-0 mt-0.5">{r.concluido ? '✅' : '❌'}</span>
-                <span className="font-medium text-gray-800">{r.pergunta}</span>
-              </p>
+          <div className="pl-4 flex flex-col gap-6">
+            {formData.checklist_respostas.map((bloco, idx) => (
+              <div key={idx} className="space-y-3">
+                <h4 className="text-base font-semibold text-gray-800 flex items-center gap-2">
+                  <span className="text-blue-500">📋</span>
+                  {bloco.template_nome}
+                </h4>
+                <div className="flex flex-col gap-3 pl-6 border-l-2 border-gray-100">
+                  {bloco.perguntas?.map((p, pIdx) => (
+                    <div key={pIdx} className="bg-gray-50 border border-gray-100 p-4 rounded-lg space-y-2">
+                      <p className="font-medium text-gray-900 text-base">{p.pergunta_texto}</p>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                        {p.resposta_atual && (
+                          <div>
+                            <span className="text-xs font-semibold uppercase text-gray-400 block mb-0.5">Resposta Atual</span>
+                            <p className="text-sm text-gray-700">{p.resposta_atual}</p>
+                          </div>
+                        )}
+                        {p.resposta_meta && (
+                          <div>
+                            <span className="text-xs font-semibold uppercase text-gray-400 block mb-0.5">Resposta Meta</span>
+                            <p className="text-sm text-gray-700">{p.resposta_meta}</p>
+                          </div>
+                        )}
+                        {(p.atingimento_descritivo || p.pct_atingimento) && (
+                          <div className="md:col-span-2 flex items-center gap-2 bg-white px-3 py-2 rounded border border-gray-100 w-fit">
+                            <span className="text-xs font-semibold uppercase text-gray-400">Atingimento:</span>
+                            {p.pct_atingimento && (
+                              <span className={`text-sm font-bold ${Number(p.pct_atingimento) >= 80 ? 'text-green-600' : Number(p.pct_atingimento) >= 50 ? 'text-amber-600' : 'text-red-600'}`}>
+                                {p.pct_atingimento}%
+                              </span>
+                            )}
+                            {p.atingimento_descritivo && (
+                              <span className="text-sm text-gray-600">({p.atingimento_descritivo})</span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         </section>
