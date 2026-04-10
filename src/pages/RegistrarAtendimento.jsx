@@ -137,6 +137,8 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
 
   React.useEffect(() => {
     if (resolvedAtendimentoId && user) {
+      // P6: Reset auto-save guard when switching between attendances
+      autoSaveInitializedRef.current = false;
       const loadAtendimento = async () => {
         try {
           const atendimento = await base44.entities.ConsultoriaAtendimento.get(resolvedAtendimentoId);
