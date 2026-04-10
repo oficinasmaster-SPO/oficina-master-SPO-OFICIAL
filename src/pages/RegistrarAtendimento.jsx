@@ -272,6 +272,15 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
     enabled: !!formData.ata_id && isReadOnly
   });
 
+  const { data: followUps } = useQuery({
+    queryKey: ['follow-ups', resolvedAtendimentoId],
+    queryFn: async () => {
+      if (!resolvedAtendimentoId) return [];
+      return await base44.entities.FollowUpReminder.filter({ atendimento_id: resolvedAtendimentoId }, 'sequence_number');
+    },
+    enabled: !!resolvedAtendimentoId && isReadOnly
+  });
+
   const { data: clientIntelligences } = useQuery({
     queryKey: ['client-intelligences', resolvedAtendimentoId],
     queryFn: async () => {
@@ -893,6 +902,39 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
         </section>
       )}
       
+      {/* 14. ACOMPANHAMENTOS (FOLLOW-UPS) */}
+      {followUps?.length > 0 && (
+        <section className="space-y-4">
+          <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">14. Acompanhamentos (Follow-ups)</h3>
+          <div className="space-y-3 pl-4">
+            {followUps.map((followUp, idx) => (
+              <div key={idx} className={`border ${followUp.is_completed ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-white'} p-4 rounded-lg shadow-sm`}>
+                <div className="flex justify-between items-start mb-2">
+                  <p className="font-semibold text-gray-900 flex items-center gap-2">
+                    <span className="bg-blue-100 text-blue-600 w-6 h-6 rounded-full flex items-center justify-center text-sm">{followUp.sequence_number}</span>
+                    Acompanhamento {followUp.days_since_meeting ? `(${followUp.days_since_meeting} dias)` : ''}
+                  </p>
+                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${followUp.is_completed ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                    {followUp.is_completed ? 'Concluído' : 'Pendente'}
+                  </span>
+                </div>
+                <div className="text-sm text-gray-600 mb-2">
+                  <p><strong>Data Prevista:</strong> {followUp.reminder_date ? toBrazilDate(followUp.reminder_date).toLocaleDateString('pt-BR') : '-'}</p>
+                  {followUp.completed_at && <p><strong>Concluído em:</strong> {toBrazilDate(followUp.completed_at).toLocaleDateString('pt-BR')}</p>}
+                </div>
+                <p className="text-sm text-gray-700 whitespace-pre-wrap">{followUp.message}</p>
+                {followUp.notes && (
+                  <div className="mt-3 p-3 bg-white/50 border border-gray-100 rounded">
+                    <p className="text-xs font-semibold text-gray-500 mb-1">Anotações do Retorno:</p>
+                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{followUp.notes}</p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       <ClientIntelligenceViewer
         open={viewerOpen}
         onOpenChange={setViewerOpen}
