@@ -627,7 +627,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
       <div className="fixed inset-0 z-40 flex items-center justify-center p-4 sm:p-6" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}>
         <div className="absolute inset-0" onClick={handleClose} />
         <div className="relative bg-white rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.2)] w-full max-w-[800px] max-h-[95vh] flex flex-col z-10 animate-in fade-in zoom-in-95 duration-200">
-          <div className="flex items-center justify-between p-6 border-b shrink-0 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+          <div className="flex items-center justify-between p-6 border-b shrink-0 shadow-[0_4px_16px_rgba(0,0,0,0.10)]">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">{formData.id ? 'Editar Atendimento' : 'Registrar Atendimento de Consultoria'}</h1>
               <p className="text-sm text-gray-600 mt-1">{formData.id ? 'Atualize as informações do atendimento' : 'Agende e registre informações do atendimento ao cliente'}</p>
@@ -639,7 +639,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
           <div className="p-6 overflow-y-auto flex-1">
             <form id="atendimento-form" onSubmit={handleSubmit} className="space-y-6">{content}</form>
           </div>
-          <div className="flex gap-3 justify-end border-t border-gray-200 bg-white px-6 py-4 shrink-0 rounded-b-2xl shadow-[0_-2px_8px_rgba(0,0,0,0.06)]">
+          <div className="flex gap-3 justify-end border-t border-gray-200 bg-white px-6 py-4 shrink-0 rounded-b-2xl shadow-[0_-4px_16px_rgba(0,0,0,0.10)]">
             <Button type="button" variant="outline" onClick={handleClose} className="px-6">Cancelar</Button>
             <Button
               type="submit"
