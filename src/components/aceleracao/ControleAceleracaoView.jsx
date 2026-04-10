@@ -61,7 +61,7 @@ export default function ControleAceleracaoView({ state }) {
   }, []);
 
   // Observability
-  const { trackTabChange, trackFilterChange, trackAtendimentoOpen, trackMassRegistrationOpen, trackError } = useAceleracaoObservability(user);
+  const { trackTabChange, trackFilterChange, trackAtendimentoOpen, trackMassRegistrationOpen } = useAceleracaoObservability(user);
   const prevTabRef = useRef(activeTab);
 
   const handleTabChange = useCallback((newTab) => {
