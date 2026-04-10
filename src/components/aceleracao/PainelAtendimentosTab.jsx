@@ -342,7 +342,11 @@ export default function PainelAtendimentosTab({ state }) {
                     const workshop = workshopMap[atendimento.workshop_id];
                     const ataVinculada = atasMap[atendimento.ata_id];
                     return (
-                      <tr key={atendimento.id} className="hover:bg-gray-50 transition-colors">
+                      <tr 
+                        key={atendimento.id} 
+                        className="hover:bg-gray-50 transition-colors cursor-pointer"
+                        onClick={() => { setEditarAtendimentoId(atendimento.id); setShowEditarAtendimento(true); }}
+                      >
                         <td className="py-3 px-3 text-sm text-gray-700 border-r border-gray-100 font-medium truncate" title={atendimento.consultor_nome || '-'}>
                           {atendimento.consultor_nome || '-'}
                         </td>
@@ -385,7 +389,7 @@ export default function PainelAtendimentosTab({ state }) {
                             </Badge>
                           )}
                         </td>
-                        <td className="py-3 px-3">
+                        <td className="py-3 px-3" onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center justify-center">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
