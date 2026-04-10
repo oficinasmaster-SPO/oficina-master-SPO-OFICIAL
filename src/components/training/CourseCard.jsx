@@ -117,7 +117,10 @@ export default function CourseCard({ course, onRefetch }) {
               {course.category || 'outros'}
             </Badge>
             <Badge variant="outline" className="capitalize">
-              {course.difficulty_level || 'iniciante'}
+              {course.difficulty_level === 'introducao' ? 'Introdução' : 
+               course.difficulty_level === 'fundamentos' ? 'Fundamentos' : 
+               course.difficulty_level === 'formacao' ? 'Formação' : 
+               (course.difficulty_level || 'Introdução')}
             </Badge>
             {course.total_duration_minutes > 0 && (
               <Badge variant="outline">

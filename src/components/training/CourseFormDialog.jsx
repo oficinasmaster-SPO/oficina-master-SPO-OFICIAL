@@ -14,7 +14,7 @@ export default function CourseFormDialog({ open, onClose, onSuccess, course, wor
     title: "",
     description: "",
     category: "outros",
-    difficulty_level: "iniciante",
+    difficulty_level: "introducao",
     cover_images: [],
     trailer_url: ""
   });
@@ -27,7 +27,10 @@ export default function CourseFormDialog({ open, onClose, onSuccess, course, wor
         title: course.title || "",
         description: course.description || "",
         category: course.category || "outros",
-        difficulty_level: course.difficulty_level || "iniciante",
+        difficulty_level: (course.difficulty_level === 'iniciante' ? 'introducao' : 
+                           course.difficulty_level === 'intermediario' ? 'fundamentos' : 
+                           course.difficulty_level === 'avancado' ? 'formacao' : 
+                           course.difficulty_level) || "introducao",
         cover_images: course.cover_images || [],
         trailer_url: course.trailer_url || ""
       });
@@ -36,7 +39,7 @@ export default function CourseFormDialog({ open, onClose, onSuccess, course, wor
         title: "",
         description: "",
         category: "outros",
-        difficulty_level: "iniciante",
+        difficulty_level: "introducao",
         cover_images: [],
         trailer_url: ""
       });
@@ -164,9 +167,9 @@ export default function CourseFormDialog({ open, onClose, onSuccess, course, wor
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="iniciante">Iniciante</SelectItem>
-                  <SelectItem value="intermediario">Intermediário</SelectItem>
-                  <SelectItem value="avancado">Avançado</SelectItem>
+                  <SelectItem value="introducao">Introdução</SelectItem>
+                  <SelectItem value="fundamentos">Fundamentos</SelectItem>
+                  <SelectItem value="formacao">Formação</SelectItem>
                 </SelectContent>
               </Select>
             </div>

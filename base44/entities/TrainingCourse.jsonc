@@ -1,0 +1,178 @@
+{
+  "name": "TrainingCourse",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "T\u00edtulo do curso"
+    },
+    "description": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o do curso"
+    },
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina ou null para global"
+    },
+    "cover_images": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "At\u00e9 5 URLs de capas din\u00e2micas"
+    },
+    "trailer_url": {
+      "type": "string",
+      "description": "URL do v\u00eddeo trailer (10-30s)"
+    },
+    "impact_narratives": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Frases base para narrativas din\u00e2micas da IA"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "rascunho",
+        "ativo",
+        "inativo",
+        "arquivado",
+        "em_breve"
+      ],
+      "default": "rascunho",
+      "description": "Estado do curso - rascunho/ativo/inativo/arquivado/em_breve"
+    },
+    "release_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data de libera\u00e7\u00e3o para status 'em_breve'"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "vendas",
+        "tecnico",
+        "gestao",
+        "comercial",
+        "marketing",
+        "rh",
+        "financeiro",
+        "outros"
+      ],
+      "default": "outros"
+    },
+    "difficulty_level": {
+      "type": "string",
+      "enum": [
+        "introducao",
+        "fundamentos",
+        "formacao"
+      ],
+      "default": "introducao"
+    },
+    "total_duration_minutes": {
+      "type": "integer",
+      "default": 0,
+      "description": "Dura\u00e7\u00e3o total calculada"
+    },
+    "order": {
+      "type": "integer",
+      "default": 0
+    },
+    "is_featured": {
+      "type": "boolean",
+      "default": false,
+      "description": "Destacar no banner principal"
+    },
+    "assigned_to_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "IDs espec\u00edficos ou vazio para todos"
+    },
+    "target_audience": {
+      "type": "string",
+      "description": "P\u00fablico-alvo do curso"
+    },
+    "learning_objectives": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Lista de objetivos de aprendizado"
+    },
+    "prerequisites": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Pr\u00e9-requisitos para o curso"
+    },
+    "completion_rate": {
+      "type": "number",
+      "default": 0,
+      "description": "Taxa de conclus\u00e3o do curso (%)"
+    },
+    "avg_rating": {
+      "type": "number",
+      "default": 0,
+      "description": "Avalia\u00e7\u00e3o m\u00e9dia do curso"
+    },
+    "total_enrollments": {
+      "type": "integer",
+      "default": 0,
+      "description": "Total de matr\u00edculas"
+    },
+    "last_content_update": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data da \u00faltima atualiza\u00e7\u00e3o de conte\u00fado"
+    }
+  },
+  "required": [
+    "title"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "created_by": "{{user.email}}"
+        }
+      ]
+    },
+    "read": true,
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "created_by": "{{user.email}}"
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "created_by": "{{user.email}}"
+        }
+      ]
+    }
+  }
+}
