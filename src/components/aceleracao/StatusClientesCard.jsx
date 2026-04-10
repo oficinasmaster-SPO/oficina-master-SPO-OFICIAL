@@ -1,54 +1,30 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, TrendingDown, Minus, AlertCircle } from "lucide-react";
 
 export default function StatusClientesCard({ workshops = [], atendimentos = [], onStatusClick }) {
-  const getClientesPorStatus = (status) => {
-    const clientesComStatus = [];
-    
+  // Calcular status de cada workshop uma única vez
+  const { counts, clientesPorStatus } = useMemo(() => {
+    const statusMap = { crescente: [], decrescente: [], estagnado: [], nao_responde: [] };
+    const countsObj = { crescente: 0, decrescente: 0, estagnado: 0, nao_responde: 0 };
+
     workshops.forEach(workshop => {
       const atendimentosWorkshop = atendimentos
         .filter(a => a.workshop_id === workshop.id && a.status_cliente)
         .sort((a, b) => new Date(b.data_realizada || b.data_agendada) - new Date(a.data_realizada || a.data_agendada));
-      
+
       if (atendimentosWorkshop.length > 0) {
         const ultimoStatus = atendimentosWorkshop[0].status_cliente;
-        if (ultimoStatus === status) {
-          clientesComStatus.push(workshop);
-        }
-      }
-    });
-    
-    return clientesComStatus;
-  };
-
-  const getStatusCounts = () => {
-    const counts = {
-      crescente: 0,
-      decrescente: 0,
-      estagnado: 0,
-      nao_responde: 0
-    };
-
-    // Pegar o último atendimento de cada workshop
-    workshops.forEach(workshop => {
-      const atendimentosWorkshop = atendimentos
-        .filter(a => a.workshop_id === workshop.id && a.status_cliente)
-        .sort((a, b) => new Date(b.data_realizada || b.data_agendada) - new Date(a.data_realizada || a.data_agendada));
-      
-      if (atendimentosWorkshop.length > 0) {
-        const ultimoStatus = atendimentosWorkshop[0].status_cliente;
-        if (counts.hasOwnProperty(ultimoStatus)) {
-          counts[ultimoStatus]++;
+        if (statusMap.hasOwnProperty(ultimoStatus)) {
+          statusMap[ultimoStatus].push(workshop);
+          countsObj[ultimoStatus]++;
         }
       }
     });
 
-    return counts;
-  };
-
-  const counts = getStatusCounts();
+    return { counts: countsObj, clientesPorStatus: statusMap };
+  }, [workshops, atendimentos]);
 
   const statusConfig = {
     crescente: { label: 'Crescente', color: 'bg-green-100 text-green-700', icon: TrendingUp },
@@ -66,7 +42,7 @@ export default function StatusClientesCard({ workshops = [], atendimentos = [], 
         <div className="space-y-3">
           {Object.entries(statusConfig).map(([key, config]) => {
             const Icon = config.icon;
-            const clientesStatus = getClientesPorStatus(key);
+            const clientesStatus = clientesPorStatus[key] || [];
             
             return (
               <div 

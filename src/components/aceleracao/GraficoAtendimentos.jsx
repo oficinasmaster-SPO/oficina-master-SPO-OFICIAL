@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { ClipboardList, CheckCircle2, Calendar } from "lucide-react";
@@ -12,7 +12,11 @@ export default function GraficoAtendimentos({ atendimentos = [], workshops = [] 
       confirmado: 0,
       participando: 0,
       atrasado: 0,
-      reagendado: 0
+      reagendado: 0,
+      cancelado: 0,
+      faltou: 0,
+      desmarcou: 0,
+      remarcado: 0
     };
 
     atendimentos.forEach(a => {
@@ -27,8 +31,12 @@ export default function GraficoAtendimentos({ atendimentos = [], workshops = [] 
       { name: 'Confirmados', value: counts.confirmado, fill: '#eab308' },
       { name: 'Participando', value: counts.participando, fill: '#8b5cf6' },
       { name: 'Atrasados', value: counts.atrasado, fill: '#ef4444' },
-      { name: 'Reagendados', value: counts.reagendado, fill: '#f59e0b' }
-    ];
+      { name: 'Reagendados', value: counts.reagendado, fill: '#f59e0b' },
+      { name: 'Cancelados', value: counts.cancelado, fill: '#6b7280' },
+      { name: 'Faltou', value: counts.faltou, fill: '#dc2626' },
+      { name: 'Desmarcou', value: counts.desmarcou, fill: '#9ca3af' },
+      { name: 'Remarcado', value: counts.remarcado, fill: '#f97316' }
+    ].filter(item => item.value > 0);
   };
 
   const data = contarPorStatus();

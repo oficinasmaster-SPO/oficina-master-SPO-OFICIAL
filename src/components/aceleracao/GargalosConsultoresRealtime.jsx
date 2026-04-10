@@ -66,7 +66,7 @@ export default function GargalosConsultoresRealtime() {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium">Críticos ({`>`}150%)</CardTitle>

@@ -93,7 +93,11 @@ export default function ClientesDetalhesModal({ isOpen, onClose, clientes, tipo,
                         <div className="flex items-center gap-2 text-gray-600">
                           <Calendar className="w-4 h-4" />
                           <span>
-                            Último contato: {format(new Date(ultimoAtendimento.data_realizada), "dd/MM/yyyy", { locale: ptBR })}
+                            Último contato: {ultimoAtendimento.data_realizada
+                              ? format(new Date(ultimoAtendimento.data_realizada), "dd/MM/yyyy", { locale: ptBR })
+                              : ultimoAtendimento.data_agendada
+                                ? format(new Date(ultimoAtendimento.data_agendada), "dd/MM/yyyy", { locale: ptBR })
+                                : 'Data não registrada'}
                           </span>
                         </div>
                       ) : (
