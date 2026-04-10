@@ -532,120 +532,152 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
   }
 
   const readOnlyContent = (
-    <div className="space-y-12 max-w-4xl mx-auto py-8 text-center px-4">
-      <div className="space-y-3">
-        <h2 className="text-2xl font-semibold text-gray-800 uppercase tracking-wide">
+    <div className="space-y-10 max-w-4xl mx-auto py-8 text-left px-4">
+      <div className="border-b border-gray-200 pb-6 mb-8">
+        <h2 className="text-3xl font-bold text-gray-900 tracking-tight capitalize">
           {formData.tipo_atendimento?.replace(/_/g, ' ')}
         </h2>
-        <p className="text-lg text-gray-600">
-          {formData.data_agendada?.split('-').reverse().join('/')} às {formData.hora_agendada} &middot; {formData.duracao_minutos} min
-        </p>
-        <p className="text-base text-gray-600">
-          Status: <span className="font-medium capitalize">{formData.status}</span>
-          {formData.status_cliente && ` | Status do Cliente: `}
-          {formData.status_cliente && <span className="font-medium capitalize">{formData.status_cliente}</span>}
-        </p>
-        {formData.google_meet_link && (
-          <a href={formData.google_meet_link} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline mt-2 inline-block">
-            Link da Reunião
-          </a>
-        )}
+        <div className="mt-4 flex flex-wrap gap-4 text-sm text-gray-600">
+          <span className="bg-gray-100 px-3 py-1.5 rounded-full font-medium">
+            🗓️ {formData.data_agendada?.split('-').reverse().join('/')} às {formData.hora_agendada}
+          </span>
+          <span className="bg-gray-100 px-3 py-1.5 rounded-full font-medium">
+            ⏱️ {formData.duracao_minutos} min
+          </span>
+          <span className="bg-gray-100 px-3 py-1.5 rounded-full font-medium capitalize">
+            📌 Status: {formData.status}
+          </span>
+          {formData.status_cliente && (
+            <span className="bg-gray-100 px-3 py-1.5 rounded-full font-medium capitalize">
+              👤 Cliente: {formData.status_cliente}
+            </span>
+          )}
+          {formData.google_meet_link && (
+            <a href={formData.google_meet_link} target="_blank" rel="noreferrer" className="bg-blue-50 text-blue-600 px-3 py-1.5 rounded-full font-medium hover:bg-blue-100 transition-colors">
+              🔗 Link da Reunião
+            </a>
+          )}
+        </div>
       </div>
 
       {formData.participantes?.length > 0 && formData.participantes.some(p => p.nome) && (
-        <div className="space-y-4">
-          <h3 className="text-xl font-semibold text-gray-900 border-b border-gray-200 pb-2 inline-block px-8">Participantes</h3>
-          <div className="flex flex-col items-center gap-2">
+        <section className="space-y-3">
+          <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">Participantes</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pl-4">
             {formData.participantes.filter(p => p.nome).map((p, idx) => (
-              <div key={idx} className="text-gray-700 text-lg">
-                <span className="font-medium">{p.nome}</span>
-                {p.cargo && <span className="text-gray-500"> — {p.cargo}</span>}
-                {p.email && <span className="text-gray-400"> ({p.email})</span>}
+              <div key={idx} className="text-gray-700">
+                <p className="font-medium text-base">{p.nome}</p>
+                {(p.cargo || p.email) && (
+                  <p className="text-sm text-gray-500">{p.cargo}{p.cargo && p.email ? ' • ' : ''}{p.email}</p>
+                )}
               </div>
             ))}
           </div>
-        </div>
+        </section>
       )}
 
       {formData.pauta?.length > 0 && formData.pauta.some(p => p.titulo) && (
-        <div className="space-y-6">
-          <h3 className="text-xl font-semibold text-gray-900 border-b border-gray-200 pb-2 inline-block px-8">Pauta da Reunião</h3>
-          <div className="flex flex-col items-center gap-6">
+        <section className="space-y-4">
+          <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">Pauta da Reunião</h3>
+          <div className="space-y-4 pl-4">
             {formData.pauta.filter(p => p.titulo).map((p, idx) => (
-              <div key={idx} className="max-w-2xl">
-                <h4 className="text-lg font-medium text-gray-800">{p.titulo} <span className="text-sm font-normal text-gray-500">({p.tempo_estimado} min)</span></h4>
-                {p.descricao && <p className="text-base text-gray-600 mt-2 leading-relaxed">{p.descricao}</p>}
+              <div key={idx}>
+                <h4 className="text-base font-medium text-gray-800 flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                  {p.titulo} <span className="text-sm font-normal text-gray-500 bg-gray-100 px-2 py-0.5 rounded-md">{p.tempo_estimado} min</span>
+                </h4>
+                {p.descricao && <p className="text-sm text-gray-600 mt-1.5 leading-relaxed pl-3 border-l-2 border-gray-100">{p.descricao}</p>}
               </div>
             ))}
           </div>
-        </div>
+        </section>
       )}
 
       {formData.objetivos?.length > 0 && formData.objetivos.some(o => o) && (
-        <div className="space-y-4">
-          <h3 className="text-xl font-semibold text-gray-900 border-b border-gray-200 pb-2 inline-block px-8">Objetivos</h3>
-          <div className="flex flex-col items-center gap-2">
+        <section className="space-y-3">
+          <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">Objetivos</h3>
+          <ul className="space-y-2 pl-4">
             {formData.objetivos.filter(o => o).map((obj, idx) => (
-              <p key={idx} className="text-gray-700 text-lg">{obj}</p>
+              <li key={idx} className="text-gray-700 text-base flex items-start gap-2">
+                <span className="text-blue-500 mt-0.5">•</span>
+                <span>{obj}</span>
+              </li>
             ))}
-          </div>
-        </div>
+          </ul>
+        </section>
       )}
 
       {formData.observacoes_consultor && (
-        <div className="space-y-4">
-          <h3 className="text-xl font-semibold text-gray-900 border-b border-gray-200 pb-2 inline-block px-8">Observações do Consultor</h3>
-          <p className="text-gray-700 max-w-3xl mx-auto whitespace-pre-wrap leading-relaxed text-lg">
-            {formData.observacoes_consultor}
-          </p>
-        </div>
+        <section className="space-y-3">
+          <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">Observações do Consultor</h3>
+          <div className="pl-4">
+            <p className="text-gray-700 text-base whitespace-pre-wrap leading-relaxed bg-gray-50/50 p-4 rounded-lg border border-gray-100">
+              {formData.observacoes_consultor}
+            </p>
+          </div>
+        </section>
       )}
 
       {formData.proximos_passos_list?.length > 0 && formData.proximos_passos_list.some(p => p.descricao) && (
-        <div className="space-y-6">
-          <h3 className="text-xl font-semibold text-gray-900 border-b border-gray-200 pb-2 inline-block px-8">Próximos Passos</h3>
-          <div className="flex flex-col items-center gap-5">
+        <section className="space-y-4">
+          <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">Próximos Passos</h3>
+          <div className="space-y-3 pl-4">
             {formData.proximos_passos_list.filter(p => p.descricao).map((step, idx) => (
-              <div key={idx} className="text-gray-700 max-w-xl">
-                <p className="font-medium text-lg">{step.descricao}</p>
-                {step.responsavel && <p className="text-gray-500 text-sm mt-1">Responsável: {step.responsavel}</p>}
-                {step.prazo && <p className="text-gray-500 text-sm">Prazo: {toBrazilDate(step.prazo).toLocaleDateString('pt-BR')}</p>}
+              <div key={idx} className="text-base text-gray-700 flex items-start gap-3 bg-white border border-gray-100 p-3 rounded-lg shadow-sm">
+                <span className="bg-blue-100 text-blue-600 w-6 h-6 rounded-full flex items-center justify-center font-medium shrink-0 mt-0.5 text-sm">{idx + 1}</span>
+                <div>
+                  <p className="font-medium text-gray-900">{step.descricao}</p>
+                  <div className="flex gap-3 mt-1.5 text-sm text-gray-500">
+                    {step.responsavel && <span className="flex items-center gap-1">👤 {step.responsavel}</span>}
+                    {step.prazo && <span className="flex items-center gap-1">📅 {toBrazilDate(step.prazo).toLocaleDateString('pt-BR')}</span>}
+                  </div>
+                </div>
               </div>
             ))}
           </div>
-        </div>
+        </section>
       )}
 
       {(formData.processos_vinculados?.length > 0 || formData.videoaulas_vinculadas?.length > 0 || formData.midias_anexas?.length > 0) && (
-        <div className="space-y-4">
-          <h3 className="text-xl font-semibold text-gray-900 border-b border-gray-200 pb-2 inline-block px-8">Conteúdo Vinculado</h3>
-          <div className="flex flex-col items-center gap-3">
+        <section className="space-y-4">
+          <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">Conteúdo Vinculado</h3>
+          <div className="pl-4 flex flex-col gap-2">
             {formData.processos_vinculados?.map((p, idx) => (
-              <p key={`p-${idx}`} className="text-gray-700 text-lg flex items-center gap-2 justify-center">📦 {p.titulo} <span className="text-sm text-gray-500">({p.categoria})</span></p>
+              <p key={`p-${idx}`} className="text-base text-gray-700 flex items-center gap-2">
+                <span className="bg-gray-100 p-1.5 rounded text-gray-600 text-sm">📦</span>
+                <span className="font-medium">{p.titulo}</span>
+                <span className="text-gray-500 text-sm">({p.categoria})</span>
+              </p>
             ))}
             {formData.videoaulas_vinculadas?.map((v, idx) => (
-              <p key={`v-${idx}`} className="text-gray-700 text-lg flex items-center gap-2 justify-center">📺 {v.titulo} <span className="text-sm text-gray-500">({v.descricao})</span></p>
+              <p key={`v-${idx}`} className="text-base text-gray-700 flex items-center gap-2">
+                <span className="bg-gray-100 p-1.5 rounded text-gray-600 text-sm">📺</span>
+                <span className="font-medium">{v.titulo}</span>
+                <span className="text-gray-500 text-sm">({v.descricao})</span>
+              </p>
             ))}
             {formData.midias_anexas?.map((m, idx) => (
-              <a key={`m-${idx}`} href={m.url} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline text-lg flex items-center gap-2 justify-center">
-                📎 {m.nome || 'Arquivo Anexo'}
+              <a key={`m-${idx}`} href={m.url} target="_blank" rel="noreferrer" className="text-base text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-2 w-fit">
+                <span className="bg-blue-50 p-1.5 rounded text-blue-500 text-sm">📎</span>
+                <span className="font-medium">{m.nome || 'Arquivo Anexo'}</span>
               </a>
             ))}
           </div>
-        </div>
+        </section>
       )}
 
       {formData.checklist_respostas?.length > 0 && (
-        <div className="space-y-4">
-          <h3 className="text-xl font-semibold text-gray-900 border-b border-gray-200 pb-2 inline-block px-8">Checklist</h3>
-          <div className="flex flex-col items-center gap-2">
+        <section className="space-y-4">
+          <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">Checklist</h3>
+          <div className="pl-4 flex flex-col gap-2">
             {formData.checklist_respostas.map((r, idx) => (
-              <p key={idx} className="text-gray-700 text-lg flex items-center gap-2 justify-center">
-                {r.concluido ? '✅' : '❌'} {r.pergunta}
+              <p key={idx} className="text-base text-gray-700 flex items-center gap-2">
+                <span className={r.concluido ? 'text-green-500' : 'text-red-500'}>{r.concluido ? '✅' : '❌'}</span>
+                <span>{r.pergunta}</span>
               </p>
             ))}
           </div>
-        </div>
+        </section>
       )}
     </div>
   );
