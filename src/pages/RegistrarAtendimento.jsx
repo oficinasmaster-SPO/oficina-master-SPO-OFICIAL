@@ -608,15 +608,21 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
         </CardContent>
       </Card>
 
-      <ObservationsSection formData={formData} setFormData={setFormData} />
+      {(!isReadOnly || !!formData.observacoes_consultor) && (
+        <ObservationsSection formData={formData} setFormData={setFormData} />
+      )}
 
-      <AdvancedOptionsSection formData={formData} setFormData={setFormData} workshops={workshops} />
+      {!isReadOnly && (
+        <>
+          <AdvancedOptionsSection formData={formData} setFormData={setFormData} workshops={workshops} />
 
-      <AtaActionsSection
-        formData={formData} setFormData={setFormData}
-        workshops={workshops} gerarAtaMutation={gerarAtaMutation}
-        handleDeleteAta={handleDeleteAta} queryClient={queryClient}
-      />
+          <AtaActionsSection
+            formData={formData} setFormData={setFormData}
+            workshops={workshops} gerarAtaMutation={gerarAtaMutation}
+            handleDeleteAta={handleDeleteAta} queryClient={queryClient}
+          />
+        </>
+      )}
 
       <ConflitosHorarioModal
         open={conflitosModal.open}
