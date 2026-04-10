@@ -373,9 +373,9 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
       return atendimento;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['consultoria-atendimentos']);
-      queryClient.invalidateQueries(['meeting-minutes']);
-      queryClient.invalidateQueries(['todos-atendimentos']);
+      queryClient.invalidateQueries({ queryKey: ['consultoria-atendimentos'] });
+      queryClient.invalidateQueries({ queryKey: ['meeting-minutes'] });
+      queryClient.invalidateQueries({ queryKey: ['todos-atendimentos'] });
       setSaveSuccess(true);
       setHasUnsavedChanges(false);
       toast.success('Atendimento salvo com sucesso!');
@@ -410,7 +410,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
     },
     onSuccess: (response) => {
       toast.success('Ata gerada com sucesso!');
-      queryClient.invalidateQueries(['consultoria-atendimentos']);
+      queryClient.invalidateQueries({ queryKey: ['consultoria-atendimentos'] });
       const sugestoes = response?.data?.suggested_next_steps;
       if (sugestoes && sugestoes.length > 0) {
         setFormData(prev => ({
@@ -437,8 +437,8 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
         await base44.functions.invoke('deleteAta', { ata_id: formData.ata_id });
         toast.success("ATA excluída com sucesso!");
         setFormData(prev => ({ ...prev, ata_id: null }));
-        queryClient.invalidateQueries(['consultoria-atendimentos']);
-        queryClient.invalidateQueries(['meeting-minutes']);
+        queryClient.invalidateQueries({ queryKey: ['consultoria-atendimentos'] });
+        queryClient.invalidateQueries({ queryKey: ['meeting-minutes'] });
       } catch (error) {
         toast.error("Erro ao excluir ATA: " + error.message);
       }
