@@ -110,6 +110,10 @@ export default function AtaActionsSection({
               className="w-full"
               disabled={!formData.ata_id}
               onClick={async () => {
+                if (!formData.workshop_id) {
+                  toast.error("Selecione uma oficina primeiro");
+                  return;
+                }
                 try {
                   await base44.functions.invoke('enviarAtaEmail', {
                     atendimento_id: formData.id
@@ -129,6 +133,10 @@ export default function AtaActionsSection({
               className="w-full"
               disabled={!formData.ata_id}
               onClick={async () => {
+                if (!formData.workshop_id) {
+                  toast.error("Selecione uma oficina primeiro");
+                  return;
+                }
                 try {
                   await base44.functions.invoke('disponibilizarAtaPlataforma', {
                     atendimento_id: formData.id
