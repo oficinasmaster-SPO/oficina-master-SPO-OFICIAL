@@ -249,30 +249,35 @@ export default function ClientIntelligenceViewer({ open, onOpenChange, item, wor
         className="w-full max-w-[800px] max-h-[95vh] overflow-hidden flex flex-col p-0 gap-0 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.2)]"
         onInteractOutside={(e) => e.preventDefault()}
       >
-        <DialogHeader className="px-6 py-4 border-b border-gray-100">
-          <DialogTitle className="flex items-center gap-2 text-xl">
-            <AlertCircle className="w-5 h-5 text-indigo-600" />
-            Detalhes da Inteligência do Cliente
-          </DialogTitle>
-        </DialogHeader>
+        <div className="flex items-center justify-between p-5 border-b border-gray-200 shrink-0 bg-white shadow-[0_4px_16px_rgba(0,0,0,0.02)]">
+          <div className="flex items-center gap-3">
+            <div className="bg-indigo-50 p-2 rounded-lg border border-indigo-100">
+              <AlertCircle className="w-5 h-5 text-indigo-600" />
+            </div>
+            <DialogTitle className="text-xl font-bold text-gray-900 m-0">
+              Detalhes da Inteligência do Cliente
+            </DialogTitle>
+          </div>
+          <div className="flex items-center gap-3 pr-8">
+            <Button
+              type="button"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
+              onClick={() => setEvolutionFormOpen(true)}
+            >
+              <CheckCircle2 className="w-4 h-4 mr-2" />
+              Registrar Evolução
+            </Button>
+          </div>
+        </div>
 
-        <Tabs defaultValue="current" className="flex-1 overflow-hidden flex flex-col pt-2">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-6 pb-2">
-            <TabsList className="w-full sm:w-auto grid grid-cols-2 bg-gray-100/50 p-1">
+        <Tabs defaultValue="current" className="flex-1 overflow-hidden flex flex-col pt-4">
+          <div className="flex items-center px-6 pb-2">
+            <TabsList className="grid grid-cols-2 bg-gray-100/70 p-1">
               <TabsTrigger value="current" className="rounded-md">Captura Atual</TabsTrigger>
               <TabsTrigger value="history" className="rounded-md">
                 Histórico ({historySimilar.length})
               </TabsTrigger>
             </TabsList>
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full sm:w-auto shadow-sm border-gray-200"
-              onClick={() => setEvolutionFormOpen(true)}
-            >
-              <CheckCircle2 className="w-4 h-4 mr-2 text-gray-500" />
-              Registrar Evolução
-            </Button>
           </div>
 
           <div className="flex-1 overflow-y-auto">
