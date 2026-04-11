@@ -2,7 +2,7 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Sparkles, TrendingUp, AlertCircle } from "lucide-react";
+import { Check, Sparkles, TrendingUp, AlertCircle } from "lucide-react";
 
 export default function ActionPlanCard({ 
   plan, 
@@ -59,7 +59,7 @@ export default function ActionPlanCard({
 
         {completion_percentage >= 100 && (
           <div className="flex items-start gap-2 p-3 bg-green-50 rounded-lg border border-green-200">
-            <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+            <Check className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
             <p className="text-xs text-green-800">
               Parabéns! Você completou todas as atividades do plano de ação.
             </p>

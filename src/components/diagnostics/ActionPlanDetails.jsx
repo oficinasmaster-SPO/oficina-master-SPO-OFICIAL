@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Circle, Clock, TrendingUp, Target, BarChart3, Calendar } from "lucide-react";
+import { Check, Circle, Clock, TrendingUp, Target, BarChart3, Calendar } from "lucide-react";
 import ActionPlanTimeline from "./ActionPlanTimeline";
 
 export default function ActionPlanDetails({ 
@@ -217,7 +217,7 @@ function ActivityItem({ activity, index, onStatusChange }) {
   const statusIcons = {
     pendente: <Circle className="w-5 h-5 text-gray-400" />,
     em_andamento: <Clock className="w-5 h-5 text-blue-500" />,
-    concluida: <CheckCircle className="w-5 h-5 text-green-500" />
+    concluida: <Check className="w-5 h-5 text-green-500" />
   };
 
   return (
