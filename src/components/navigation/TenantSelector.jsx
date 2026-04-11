@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Building2, Briefcase, Search, Check, ChevronsUpDown } from 'lucide-react';
 
-export default function TenantSelector() {
+export default function TenantSelector({ isMobileSidebar = false }) {
   const { user, selectedFirmId, changeConsultingFirm, selectedCompanyId, changeCompany } = useTenant();
   const { workshop, workshopsDisponiveis } = useWorkshopContext();
   const [openFirmPopover, setOpenFirmPopover] = useState(false);
@@ -55,7 +55,9 @@ export default function TenantSelector() {
   }
 
   return (
-    <div className="hidden md:flex items-center gap-3 ml-4">
+    <div className={cn(
+      isMobileSidebar ? "flex flex-col gap-3" : "hidden md:flex items-center gap-3 ml-4"
+    )}>
       {user?.role === 'admin' && (
         <Popover open={openFirmPopover} onOpenChange={setOpenFirmPopover}>
         <PopoverTrigger asChild>
@@ -63,7 +65,7 @@ export default function TenantSelector() {
             variant="outline"
             role="combobox"
             aria-expanded={openFirmPopover}
-            className="w-[180px] justify-between text-gray-600"
+            className={cn("justify-between text-gray-600", isMobileSidebar ? "w-full" : "w-[180px]")}
           >
             <span className="flex items-center gap-2 truncate">
               <Building2 className="w-4 h-4 shrink-0 text-gray-500" />
@@ -149,7 +151,7 @@ export default function TenantSelector() {
             variant="outline"
             role="combobox"
             aria-expanded={openCompanyPopover}
-            className="w-[180px] justify-between text-gray-600"
+            className={cn("justify-between text-gray-600", isMobileSidebar ? "w-full" : "w-[180px]")}
           >
             <span className="flex items-center gap-2 truncate">
               <Briefcase className="w-4 h-4 shrink-0 text-gray-500" />

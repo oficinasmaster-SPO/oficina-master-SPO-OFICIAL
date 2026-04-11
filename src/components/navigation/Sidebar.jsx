@@ -67,6 +67,7 @@ import {
   UserPlus
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import TenantSelector from "./TenantSelector";
 
 function UserProfileSection({ user, collapsed, workshop }) {
   const { workshopId } = useWorkshopContext();
@@ -1307,6 +1308,18 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
                )}
              </Link>
            </div>
+          )}
+
+          {/* Seletores de Contexto (Apenas Mobile) */}
+          {!isCollapsed && (
+            <div className="mt-4 border-t border-gray-200 pt-4 lg:hidden">
+              <p className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                Localizar
+              </p>
+              <div className="px-3">
+                <TenantSelector isMobileSidebar={true} />
+              </div>
+            </div>
           )}
         </nav>
 
