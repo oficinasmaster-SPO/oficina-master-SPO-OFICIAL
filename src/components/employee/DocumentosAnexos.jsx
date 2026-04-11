@@ -193,9 +193,9 @@ export default function DocumentosAnexos({ employee, onUpdate }) {
               <FileText className="w-5 h-5" />
               Documentos Anexados
             </CardTitle>
-            <Button onClick={() => setShowDocDialog(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              Adicionar Documento
+            <Button onClick={() => setShowDocDialog(true)} title="Adicionar Documento">
+              <Plus className="w-4 h-4 md:mr-2" />
+              <span className="hidden md:inline">Adicionar Documento</span>
             </Button>
           </div>
         </CardHeader>
@@ -237,9 +237,9 @@ export default function DocumentosAnexos({ employee, onUpdate }) {
               <Camera className="w-5 h-5 text-red-600" />
               Atestados Médicos
             </CardTitle>
-            <Button onClick={() => setShowAtestadoDialog(true)} className="bg-red-600 hover:bg-red-700">
-              <Plus className="w-4 h-4 mr-2" />
-              Enviar Atestado
+            <Button onClick={() => setShowAtestadoDialog(true)} className="bg-red-600 hover:bg-red-700" title="Enviar Atestado">
+              <Plus className="w-4 h-4 md:mr-2" />
+              <span className="hidden md:inline">Enviar Atestado</span>
             </Button>
           </div>
         </CardHeader>

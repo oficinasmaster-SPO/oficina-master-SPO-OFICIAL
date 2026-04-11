@@ -658,9 +658,10 @@ ${colab.nome} (Colaborador)
                   variant="outline" 
                   size="sm"
                   onClick={() => window.open(employee.work_contract_url, '_blank')}
+                  title="Baixar"
                 >
-                  <Download className="w-4 h-4 mr-2" />
-                  Baixar
+                  <Download className="w-4 h-4 md:mr-2" />
+                  <span className="hidden md:inline">Baixar</span>
                 </Button>
               </div>
 
@@ -744,9 +745,9 @@ ${colab.nome} (Colaborador)
                 Gere contratos automaticamente com os dados do colaborador e envie para assinatura digital.
               </CardDescription>
             </div>
-            <Button onClick={() => setShowGenerator(true)} className="bg-blue-600 hover:bg-blue-700">
-              <Edit className="w-4 h-4 mr-2" />
-              Abrir Gerador
+            <Button onClick={() => setShowGenerator(true)} className="bg-blue-600 hover:bg-blue-700" title="Abrir Gerador">
+              <Edit className="w-4 h-4 md:mr-2" />
+              <span className="hidden md:inline">Abrir Gerador</span>
             </Button>
           </div>
         </CardHeader>

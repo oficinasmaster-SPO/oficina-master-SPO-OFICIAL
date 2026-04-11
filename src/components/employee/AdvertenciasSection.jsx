@@ -332,9 +332,9 @@ JSON: { "rule_violated": "...", "corrective_guidance": "..." }`;
               <AlertTriangle className="w-5 h-5 text-orange-600" />
               Advertências Trabalhistas
             </CardTitle>
-            <Button onClick={() => setShowDialog(true)} className="bg-orange-600 hover:bg-orange-700" size="sm">
-              <Plus className="w-4 h-4 mr-2" />
-              Registrar Advertência
+            <Button onClick={() => setShowDialog(true)} className="bg-orange-600 hover:bg-orange-700" size="sm" title="Registrar Advertência">
+              <Plus className="w-4 h-4 md:mr-2" />
+              <span className="hidden md:inline">Registrar Advertência</span>
             </Button>
           </div>
 

@@ -100,9 +100,9 @@ export default function EngajamentoCursos({ employee, onUpdate }) {
                 <CardDescription>Histórico de treinamentos e capacitações</CardDescription>
               </div>
             </div>
-            <Button onClick={() => setShowAddCourseDialog(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              Adicionar Curso
+            <Button onClick={() => setShowAddCourseDialog(true)} title="Adicionar Curso">
+              <Plus className="w-4 h-4 md:mr-2" />
+              <span className="hidden md:inline">Adicionar Curso</span>
             </Button>
           </div>
         </CardHeader>

@@ -396,17 +396,17 @@ export default function FeedbacksSection({ employee }) {
             Feedbacks Contínuos e Planos de Ação
           </CardTitle>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={exportToPDF}>
-              <Printer className="w-4 h-4 mr-2" />
-              Relatório
+            <Button variant="outline" size="sm" onClick={exportToPDF} title="Relatório">
+              <Printer className="w-4 h-4 md:mr-2" />
+              <span className="hidden md:inline">Relatório</span>
             </Button>
-            <Button onClick={() => setShowDialog(true)} size="sm" className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="w-4 h-4 mr-2" />
-              Novo Registro
+            <Button onClick={() => setShowDialog(true)} size="sm" className="bg-blue-600 hover:bg-blue-700" title="Novo Registro">
+              <Plus className="w-4 h-4 md:mr-2" />
+              <span className="hidden md:inline">Novo Registro</span>
             </Button>
-            <Button onClick={analyzeFeedbacks} size="sm" variant="secondary" className="bg-purple-100 text-purple-700 hover:bg-purple-200 border border-purple-200">
-              <Wand2 className="w-4 h-4 mr-2" />
-              Analisar com IA
+            <Button onClick={analyzeFeedbacks} size="sm" variant="secondary" className="bg-purple-100 text-purple-700 hover:bg-purple-200 border border-purple-200" title="Analisar com IA">
+              <Wand2 className="w-4 h-4 md:mr-2" />
+              <span className="hidden md:inline">Analisar com IA</span>
             </Button>
           </div>
         </div>

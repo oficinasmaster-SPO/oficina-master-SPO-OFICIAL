@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Award, Brain, TrendingUp, Target, CheckCircle, Eye } from "lucide-react";
+import { Loader2, Award, Brain, TrendingUp, Target, CheckCircle, Eye, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 
@@ -102,8 +102,9 @@ export default function DiagnosticosVinculados({ employee }) {
                   </div>
                   <CardTitle>{diagnostic.title}</CardTitle>
                 </div>
-                <Button onClick={() => navigate(createPageUrl(diagnostic.createLink))}>
-                  Realizar Novo
+                <Button onClick={() => navigate(createPageUrl(diagnostic.createLink))} title="Realizar Novo">
+                  <Plus className="w-4 h-4 md:mr-2" />
+                  <span className="hidden md:inline">Realizar Novo</span>
                 </Button>
               </div>
             </CardHeader>
