@@ -12,7 +12,8 @@ import { Progress } from "@/components/ui/progress";
 import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 import { Loader2, Brain, AlertCircle, CheckCircle2, Link as LinkIcon, History, Copy, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { discQuestions } from "../components/disc/DISCQuestions";
+import { discQuestions } from "@/components/disc/DISCQuestions";
+// HMR force update
 import { toast } from "sonner";
 import TrackingWrapper from "@/components/shared/TrackingWrapper";
 import EvaluationGate from "@/components/evaluations/EvaluationGate";
@@ -321,7 +322,7 @@ export default function DiagnosticoDISC() {
               <Brain className="w-6 h-6 text-indigo-600" />
             </div>
             <h1 className="text-3xl font-bold text-gray-900">
-              Teste DISC - Gestor
+              Teste DISC Comportamental
             </h1>
             <p className="text-gray-600">
               Avaliação comportamental realizada pelo gestor ou envio de link.
@@ -443,6 +444,7 @@ export default function DiagnosticoDISC() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
                 <div className="md:col-span-2">
                   <EvaluationGate 
+                    employees={employees}
                     selectedEmployee={selectedEmployee} 
                     onSelectEmployee={setSelectedEmployee} 
                   />

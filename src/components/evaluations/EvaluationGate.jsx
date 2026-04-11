@@ -4,20 +4,18 @@ import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { AlertCircle, Loader2 } from 'lucide-react';
 
-export default function EvaluationGate({ selectedEmployee, onSelectEmployee }) {
-  const { evaluableEmployees, isLeader, currentUserEmployee, loading } = useEvaluationPermissions();
+export default function EvaluationGate({ employees = [], selectedEmployee, onSelectEmployee }) {
+  const { isLeader, currentUserEmployee } = useEvaluationPermissions();
   const [evaluationType, setEvaluationType] = useState("");
   
   useEffect(() => {
-    if (!loading && evaluableEmployees.length === 1 && !isLeader) {
+    if (employees.length === 1 && !isLeader) {
       if (!selectedEmployee) {
-        onSelectEmployee(evaluableEmployees[0].id);
+        onSelectEmployee(employees[0].id);
       }
       setEvaluationType("self");
     }
-  }, [loading, evaluableEmployees, isLeader, selectedEmployee]);
-  
-  if (loading) return <div className="flex items-center gap-2 text-gray-500 py-4"><Loader2 className="w-4 h-4 animate-spin"/> Carregando permissões...</div>;
+  }, [employees, isLeader, selectedEmployee]);
   
   return (
     <div className="space-y-4">
@@ -49,18 +47,18 @@ export default function EvaluationGate({ selectedEmployee, onSelectEmployee }) {
           <Select 
             value={selectedEmployee} 
             onValueChange={onSelectEmployee}
-            disabled={!isLeader && evaluableEmployees.length <= 1}
+            disabled={!isLeader && employees.length <= 1}
           >
             <SelectTrigger>
               <SelectValue placeholder="Escolha um colaborador..." />
             </SelectTrigger>
             <SelectContent>
-              {evaluableEmployees.length === 0 ? (
+              {employees.length === 0 ? (
                 <SelectItem value="none" disabled>
                   Nenhum colaborador disponível
                 </SelectItem>
               ) : (
-                evaluableEmployees.map((emp) => (
+                employees.map((emp) => (
                   <SelectItem key={emp.id} value={emp.id}>
                     {emp.full_name} - {emp.position}
                   </SelectItem>
