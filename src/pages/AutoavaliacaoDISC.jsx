@@ -141,6 +141,7 @@ export default function AutoavaliacaoDISC() {
               Ordene os traços de 1 a 4 (1 = mais parecido com você, 4 = menos parecido)
             </h3>
             <DISCQuestionCard 
+              key={currentQuestion}
               question={question}
               onAnswer={handleAnswer}
             />
