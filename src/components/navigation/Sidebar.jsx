@@ -513,7 +513,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
         },
         { 
           name: 'Teste DISC', 
-          href: createPageUrl('DiagnosticoDISC'), 
+          href: createPageUrl('AutoavaliacaoDISC'), 
           icon: Smile,
           description: 'Perfil comportamental DEUSA',
           requiredPermission: 'diagnostics.create'
