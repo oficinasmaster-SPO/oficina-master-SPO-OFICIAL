@@ -63,7 +63,7 @@ export default function SelecionarDiagnostico() {
       title: "Teste DISC",
       description: "Perfil comportamental da equipe",
       icon: Users,
-      href: createPageUrl("DiagnosticoDISC"),
+      href: createPageUrl("AutoavaliacaoDISC"),
       color: "from-indigo-500 to-purple-500"
     },
     {
