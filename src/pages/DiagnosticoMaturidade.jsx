@@ -325,6 +325,7 @@ export default function DiagnosticoMaturidade() {
                     Configuração da Avaliação
                   </Label>
                   <EvaluationGate 
+                    employees={employees}
                     selectedEmployee={selectedEmployee} 
                     onSelectEmployee={setSelectedEmployee} 
                   />
