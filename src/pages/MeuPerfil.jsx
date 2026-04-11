@@ -28,6 +28,7 @@ import JobDescriptionTab from "../components/employee/JobDescriptionTab";
 export default function MeuPerfil() {
   const location = useLocation();
   const [loading, setLoading] = useState(true);
+  // HMR trigger
   const [employee, setEmployee] = useState(null);
   const [user, setUser] = useState(null);
   const [assistanceMode, setAssistanceMode] = useState(false);
@@ -221,7 +222,7 @@ export default function MeuPerfil() {
               <Avatar className="w-16 h-16 sm:w-20 sm:h-20 border-2 border-gray-100 shrink-0">
                 <AvatarImage src={employee.profile_picture_url} />
                 <AvatarFallback className="bg-blue-100 text-blue-700 text-xl font-bold">
-                  {employee.full_name?.substring(0, 2).toUpperCase()}
+                  {(employee?.full_name || 'U').substring(0, 2).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
