@@ -150,12 +150,10 @@ export default function DetalhesColaborador() {
           </div>
         </div>
 
-        <Tabs defaultValue="dados" className="space-y-6 w-full max-w-full">
-          <div className="w-full overflow-hidden">
-            <TabsList 
-              className="flex overflow-x-auto flex-nowrap w-full bg-white shadow-sm p-2 gap-2 h-auto justify-start scrollbar-hide rounded-lg border border-gray-100"
-              style={{ WebkitOverflowScrolling: 'touch' }}
-            >
+        <Tabs defaultValue="dados" className="space-y-6 w-full">
+          <TabsList 
+            className="flex overflow-x-auto flex-nowrap scrollbar-hide w-full bg-white shadow-sm p-2 gap-2 h-auto justify-start rounded-lg border border-gray-100 touch-pan-x"
+          >
               <TabsTrigger value="dados" className="py-2 px-4 whitespace-nowrap shrink-0 hover:bg-[#FF0000] hover:text-white data-[state=active]:bg-[#FF0000] data-[state=active]:text-white transition-colors rounded-lg">
                 <User className="w-4 h-4 mr-2 shrink-0" />
                 Dados
@@ -213,7 +211,6 @@ export default function DetalhesColaborador() {
                 PDI (IA)
               </TabsTrigger>
             </TabsList>
-          </div>
 
           <TabsContent value="dados">
             <DadosPessoais employee={employee} onUpdate={handleUpdate} />
