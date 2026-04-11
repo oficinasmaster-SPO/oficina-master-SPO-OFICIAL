@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Calendar, Search, Download, AlertCircle, CheckCircle2, Clock, ChevronRight } from "lucide-react";
+import { Calendar, Search, Download, AlertCircle, Check, Clock, ChevronRight } from "lucide-react";
 import ClientDetailPanel from "@/components/aceleracao/ClientDetailPanel";
 import AvaliacaoProcessoModal from "@/components/aceleracao/AvaliacaoProcessoModal";
 
@@ -736,7 +736,7 @@ export default function CronogramaGeral({ isTab = false }) {
                           )}
                           {cliente.statusGeral === 'concluido' && (
                             <Badge className="bg-green-100 text-green-700">
-                              <CheckCircle2 className="w-3 h-3 mr-1" />
+                              <Check className="w-3 h-3 mr-1" />
                               Concluído
                             </Badge>
                           )}

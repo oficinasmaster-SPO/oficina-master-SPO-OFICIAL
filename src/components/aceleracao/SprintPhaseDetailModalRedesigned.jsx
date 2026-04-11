@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CheckCircle2, Circle, Plus, Trash2, Save, BarChart2, ListChecks, Calendar, FileText, AlertCircle, TrendingUp } from "lucide-react";
+import { Check, Circle, Plus, Trash2, Save, BarChart2, ListChecks, Calendar, FileText, AlertCircle, TrendingUp } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
 const PHASE_CONFIG = {
@@ -377,7 +377,7 @@ export default function SprintPhaseDetailModalRedesigned({ sprint, phaseIndex, o
                       className="flex-shrink-0 hover:scale-110 transition"
                     >
                       {task.status === "done" ? (
-                        <CheckCircle2 className="w-5 h-5 text-green-500" />
+                        <Check className="w-5 h-5 text-green-500" />
                       ) : (
                         <Circle className="w-5 h-5 text-gray-300" />
                       )}

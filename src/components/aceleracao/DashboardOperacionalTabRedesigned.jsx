@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import {
-  Zap, AlertTriangle, CheckCircle2, Clock,
+  Zap, AlertTriangle, Check, Clock,
   Users, BarChart2, RefreshCw } from
 "lucide-react";
 import { differenceInDays } from "date-fns";
@@ -144,7 +144,7 @@ export default function DashboardOperacionalTabRedesigned({ user, workshops = []
         <MetricCard icon={Zap} label="Total de Sprints" value={total} color="text-blue-600" />
         <MetricCard icon={Clock} label="Em Andamento" value={em_andamento} color="text-blue-500" />
         <MetricCard icon={AlertTriangle} label="Atrasados" value={atrasados} color="text-red-500" />
-        <MetricCard icon={CheckCircle2} label="Concluídos" value={concluidos} color="text-green-500" />
+        <MetricCard icon={Check} label="Concluídos" value={concluidos} color="text-green-500" />
         <MetricCard icon={BarChart2} label="Progresso Médio" value={`${avgProgress}%`} color="text-purple-500" />
       </div>
 
