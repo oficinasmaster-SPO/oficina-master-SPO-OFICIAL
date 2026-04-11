@@ -243,73 +243,78 @@ export default function MeuPerfil() {
           </div>
         </div>
 
-        <Tabs defaultValue="dados" className="space-y-6">
-          <TabsList className="flex overflow-x-auto flex-nowrap w-full bg-white shadow-sm p-2 gap-2 h-auto justify-start scrollbar-hide rounded-lg border border-gray-100">
-            <TabsTrigger value="dados" className="py-2 px-4 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap shrink-0">
-              <User className="w-4 h-4 mr-2 shrink-0" />
-              Dados
-            </TabsTrigger>
-            <TabsTrigger value="permissoes" className="py-2 px-4 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap shrink-0">
-              <Shield className="w-4 h-4 mr-2 shrink-0" />
-              Permissões
-            </TabsTrigger>
-            <TabsTrigger value="descricao_cargo" className="py-2 px-4 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap shrink-0">
-              <FileText className="w-4 h-4 mr-2 shrink-0" />
-              Cargo (DC)
-            </TabsTrigger>
-            <TabsTrigger value="documentos_empresa" className="py-2 px-4 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap shrink-0">
-              <BookOpen className="w-4 h-4 mr-2 shrink-0" />
-              Regimento
-            </TabsTrigger>
-            <TabsTrigger value="remuneracao" className="py-2 px-4 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap shrink-0">
-              <TrendingUp className="w-4 h-4 mr-2 shrink-0" />
-              Produção
-            </TabsTrigger>
-            <TabsTrigger value="metas" className="py-2 px-4 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap shrink-0">
-              <Target className="w-4 h-4 mr-2 shrink-0" />
-              Metas
-            </TabsTrigger>
-            <TabsTrigger value="engajamento" className="py-2 px-4 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap shrink-0">
-              <GraduationCap className="w-4 h-4 mr-2 shrink-0" />
-              Cursos
-            </TabsTrigger>
-            <TabsTrigger value="contrato" className="py-2 px-4 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap shrink-0">
-              <FileText className="w-4 h-4 mr-2 shrink-0" />
-              Contrato
-            </TabsTrigger>
-            <TabsTrigger value="coex-cdc" className="py-2 px-4 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap shrink-0">
-              <Heart className="w-4 h-4 mr-2 shrink-0" />
-              CDC/COEX
-            </TabsTrigger>
-            <TabsTrigger value="desempenho" className="py-2 px-4 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap shrink-0">
-              <Activity className="w-4 h-4 mr-2 shrink-0" />
-              Desempenho
-            </TabsTrigger>
-            <TabsTrigger value="evolucao" className="py-2 px-4 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap shrink-0">
-              <BarChart3 className="w-4 h-4 mr-2 shrink-0" />
-              Evolução
-            </TabsTrigger>
-            <TabsTrigger value="feedbacks" className="py-2 px-4 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap shrink-0">
-              <MessageSquare className="w-4 h-4 mr-2 shrink-0" />
-              Feedbacks
-            </TabsTrigger>
-            <TabsTrigger value="advertencias" className="py-2 px-4 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap shrink-0">
-              <AlertTriangle className="w-4 h-4 mr-2 shrink-0" />
-              Alertas
-            </TabsTrigger>
-            <TabsTrigger value="diagnosticos" className="py-2 px-4 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap shrink-0">
-              <Award className="w-4 h-4 mr-2 shrink-0" />
-              Testes
-            </TabsTrigger>
-            <TabsTrigger value="documentos" className="py-2 px-4 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap shrink-0">
-              <FileCheck className="w-4 h-4 mr-2 shrink-0" />
-              Anexos
-            </TabsTrigger>
-            <TabsTrigger value="pdi" className="py-2 px-4 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap shrink-0">
-              <Rocket className="w-4 h-4 mr-2 shrink-0" />
-              PDI (IA)
-            </TabsTrigger>
-          </TabsList>
+        <Tabs defaultValue="dados" className="space-y-6 w-full max-w-full">
+          <div className="w-full overflow-hidden">
+            <TabsList 
+              className="flex overflow-x-auto flex-nowrap w-full bg-white shadow-sm p-2 gap-2 h-auto justify-start scrollbar-hide rounded-lg border border-gray-100"
+              style={{ WebkitOverflowScrolling: 'touch' }}
+            >
+              <TabsTrigger value="dados" className="py-2 px-4 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap shrink-0">
+                <User className="w-4 h-4 mr-2 shrink-0" />
+                Dados
+              </TabsTrigger>
+              <TabsTrigger value="permissoes" className="py-2 px-4 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap shrink-0">
+                <Shield className="w-4 h-4 mr-2 shrink-0" />
+                Permissões
+              </TabsTrigger>
+              <TabsTrigger value="descricao_cargo" className="py-2 px-4 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap shrink-0">
+                <FileText className="w-4 h-4 mr-2 shrink-0" />
+                Cargo (DC)
+              </TabsTrigger>
+              <TabsTrigger value="documentos_empresa" className="py-2 px-4 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap shrink-0">
+                <BookOpen className="w-4 h-4 mr-2 shrink-0" />
+                Regimento
+              </TabsTrigger>
+              <TabsTrigger value="remuneracao" className="py-2 px-4 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap shrink-0">
+                <TrendingUp className="w-4 h-4 mr-2 shrink-0" />
+                Produção
+              </TabsTrigger>
+              <TabsTrigger value="metas" className="py-2 px-4 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap shrink-0">
+                <Target className="w-4 h-4 mr-2 shrink-0" />
+                Metas
+              </TabsTrigger>
+              <TabsTrigger value="engajamento" className="py-2 px-4 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap shrink-0">
+                <GraduationCap className="w-4 h-4 mr-2 shrink-0" />
+                Cursos
+              </TabsTrigger>
+              <TabsTrigger value="contrato" className="py-2 px-4 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap shrink-0">
+                <FileText className="w-4 h-4 mr-2 shrink-0" />
+                Contrato
+              </TabsTrigger>
+              <TabsTrigger value="coex-cdc" className="py-2 px-4 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap shrink-0">
+                <Heart className="w-4 h-4 mr-2 shrink-0" />
+                CDC/COEX
+              </TabsTrigger>
+              <TabsTrigger value="desempenho" className="py-2 px-4 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap shrink-0">
+                <Activity className="w-4 h-4 mr-2 shrink-0" />
+                Desempenho
+              </TabsTrigger>
+              <TabsTrigger value="evolucao" className="py-2 px-4 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap shrink-0">
+                <BarChart3 className="w-4 h-4 mr-2 shrink-0" />
+                Evolução
+              </TabsTrigger>
+              <TabsTrigger value="feedbacks" className="py-2 px-4 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap shrink-0">
+                <MessageSquare className="w-4 h-4 mr-2 shrink-0" />
+                Feedbacks
+              </TabsTrigger>
+              <TabsTrigger value="advertencias" className="py-2 px-4 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap shrink-0">
+                <AlertTriangle className="w-4 h-4 mr-2 shrink-0" />
+                Alertas
+              </TabsTrigger>
+              <TabsTrigger value="diagnosticos" className="py-2 px-4 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap shrink-0">
+                <Award className="w-4 h-4 mr-2 shrink-0" />
+                Testes
+              </TabsTrigger>
+              <TabsTrigger value="documentos" className="py-2 px-4 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap shrink-0">
+                <FileCheck className="w-4 h-4 mr-2 shrink-0" />
+                Anexos
+              </TabsTrigger>
+              <TabsTrigger value="pdi" className="py-2 px-4 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap shrink-0">
+                <Rocket className="w-4 h-4 mr-2 shrink-0" />
+                PDI (IA)
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="dados">
             <DadosPessoais employee={employee} onUpdate={handleUpdate} />
