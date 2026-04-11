@@ -245,69 +245,69 @@ export default function MeuPerfil() {
 
         <Tabs defaultValue="dados" className="space-y-6 w-full">
           <TabsList className="flex flex-wrap scrollbar-hide w-full bg-white shadow-sm p-2 gap-2 h-auto justify-start rounded-lg border border-gray-100">
-            <TabsTrigger value="dados" className="py-2 px-4 shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap">
-              <User className="w-4 h-4 mr-2 shrink-0" />
-              Dados
+            <TabsTrigger value="dados" className="group py-2 px-3 md:px-4 shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap">
+              <User className="w-4 h-4 mr-0 md:mr-2 group-data-[state=active]:mr-2 shrink-0" />
+              <span className="hidden md:inline group-data-[state=active]:inline">Dados</span>
             </TabsTrigger>
-            <TabsTrigger value="permissoes" className="py-2 px-4 shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap">
-              <Shield className="w-4 h-4 mr-2 shrink-0" />
-              Permissões
+            <TabsTrigger value="permissoes" className="group py-2 px-3 md:px-4 shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap">
+              <Shield className="w-4 h-4 mr-0 md:mr-2 group-data-[state=active]:mr-2 shrink-0" />
+              <span className="hidden md:inline group-data-[state=active]:inline">Permissões</span>
             </TabsTrigger>
-            <TabsTrigger value="descricao_cargo" className="py-2 px-4 shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap">
-              <FileText className="w-4 h-4 mr-2 shrink-0" />
-              Cargo (DC)
+            <TabsTrigger value="descricao_cargo" className="group py-2 px-3 md:px-4 shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap">
+              <FileText className="w-4 h-4 mr-0 md:mr-2 group-data-[state=active]:mr-2 shrink-0" />
+              <span className="hidden md:inline group-data-[state=active]:inline">Cargo (DC)</span>
             </TabsTrigger>
-            <TabsTrigger value="documentos_empresa" className="py-2 px-4 shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap">
-              <BookOpen className="w-4 h-4 mr-2 shrink-0" />
-              Regimento
+            <TabsTrigger value="documentos_empresa" className="group py-2 px-3 md:px-4 shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap">
+              <BookOpen className="w-4 h-4 mr-0 md:mr-2 group-data-[state=active]:mr-2 shrink-0" />
+              <span className="hidden md:inline group-data-[state=active]:inline">Regimento</span>
             </TabsTrigger>
-            <TabsTrigger value="remuneracao" className="py-2 px-4 shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap">
-              <TrendingUp className="w-4 h-4 mr-2 shrink-0" />
-              Produção
+            <TabsTrigger value="remuneracao" className="group py-2 px-3 md:px-4 shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap">
+              <TrendingUp className="w-4 h-4 mr-0 md:mr-2 group-data-[state=active]:mr-2 shrink-0" />
+              <span className="hidden md:inline group-data-[state=active]:inline">Produção</span>
             </TabsTrigger>
-            <TabsTrigger value="metas" className="py-2 px-4 shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap">
-              <Target className="w-4 h-4 mr-2 shrink-0" />
-              Metas
+            <TabsTrigger value="metas" className="group py-2 px-3 md:px-4 shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap">
+              <Target className="w-4 h-4 mr-0 md:mr-2 group-data-[state=active]:mr-2 shrink-0" />
+              <span className="hidden md:inline group-data-[state=active]:inline">Metas</span>
             </TabsTrigger>
-            <TabsTrigger value="engajamento" className="py-2 px-4 shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap">
-              <GraduationCap className="w-4 h-4 mr-2 shrink-0" />
-              Cursos
+            <TabsTrigger value="engajamento" className="group py-2 px-3 md:px-4 shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap">
+              <GraduationCap className="w-4 h-4 mr-0 md:mr-2 group-data-[state=active]:mr-2 shrink-0" />
+              <span className="hidden md:inline group-data-[state=active]:inline">Cursos</span>
             </TabsTrigger>
-            <TabsTrigger value="contrato" className="py-2 px-4 shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap">
-              <FileText className="w-4 h-4 mr-2 shrink-0" />
-              Contrato
+            <TabsTrigger value="contrato" className="group py-2 px-3 md:px-4 shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap">
+              <FileText className="w-4 h-4 mr-0 md:mr-2 group-data-[state=active]:mr-2 shrink-0" />
+              <span className="hidden md:inline group-data-[state=active]:inline">Contrato</span>
             </TabsTrigger>
-            <TabsTrigger value="coex-cdc" className="py-2 px-4 shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap">
-              <Heart className="w-4 h-4 mr-2 shrink-0" />
-              CDC/COEX
+            <TabsTrigger value="coex-cdc" className="group py-2 px-3 md:px-4 shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap">
+              <Heart className="w-4 h-4 mr-0 md:mr-2 group-data-[state=active]:mr-2 shrink-0" />
+              <span className="hidden md:inline group-data-[state=active]:inline">CDC/COEX</span>
             </TabsTrigger>
-            <TabsTrigger value="desempenho" className="py-2 px-4 shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap">
-              <Activity className="w-4 h-4 mr-2 shrink-0" />
-              Desempenho
+            <TabsTrigger value="desempenho" className="group py-2 px-3 md:px-4 shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap">
+              <Activity className="w-4 h-4 mr-0 md:mr-2 group-data-[state=active]:mr-2 shrink-0" />
+              <span className="hidden md:inline group-data-[state=active]:inline">Desempenho</span>
             </TabsTrigger>
-            <TabsTrigger value="evolucao" className="py-2 px-4 shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap">
-              <BarChart3 className="w-4 h-4 mr-2 shrink-0" />
-              Evolução
+            <TabsTrigger value="evolucao" className="group py-2 px-3 md:px-4 shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap">
+              <BarChart3 className="w-4 h-4 mr-0 md:mr-2 group-data-[state=active]:mr-2 shrink-0" />
+              <span className="hidden md:inline group-data-[state=active]:inline">Evolução</span>
             </TabsTrigger>
-            <TabsTrigger value="feedbacks" className="py-2 px-4 shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap">
-              <MessageSquare className="w-4 h-4 mr-2 shrink-0" />
-              Feedbacks
+            <TabsTrigger value="feedbacks" className="group py-2 px-3 md:px-4 shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap">
+              <MessageSquare className="w-4 h-4 mr-0 md:mr-2 group-data-[state=active]:mr-2 shrink-0" />
+              <span className="hidden md:inline group-data-[state=active]:inline">Feedbacks</span>
             </TabsTrigger>
-            <TabsTrigger value="advertencias" className="py-2 px-4 shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap">
-              <AlertTriangle className="w-4 h-4 mr-2 shrink-0" />
-              Alertas
+            <TabsTrigger value="advertencias" className="group py-2 px-3 md:px-4 shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap">
+              <AlertTriangle className="w-4 h-4 mr-0 md:mr-2 group-data-[state=active]:mr-2 shrink-0" />
+              <span className="hidden md:inline group-data-[state=active]:inline">Alertas</span>
             </TabsTrigger>
-            <TabsTrigger value="diagnosticos" className="py-2 px-4 shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap">
-              <Award className="w-4 h-4 mr-2 shrink-0" />
-              Testes
+            <TabsTrigger value="diagnosticos" className="group py-2 px-3 md:px-4 shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap">
+              <Award className="w-4 h-4 mr-0 md:mr-2 group-data-[state=active]:mr-2 shrink-0" />
+              <span className="hidden md:inline group-data-[state=active]:inline">Testes</span>
             </TabsTrigger>
-            <TabsTrigger value="documentos" className="py-2 px-4 shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap">
-              <FileCheck className="w-4 h-4 mr-2 shrink-0" />
-              Anexos
+            <TabsTrigger value="documentos" className="group py-2 px-3 md:px-4 shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap">
+              <FileCheck className="w-4 h-4 mr-0 md:mr-2 group-data-[state=active]:mr-2 shrink-0" />
+              <span className="hidden md:inline group-data-[state=active]:inline">Anexos</span>
             </TabsTrigger>
-            <TabsTrigger value="pdi" className="py-2 px-4 shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap">
-              <Rocket className="w-4 h-4 mr-2 shrink-0" />
-              PDI (IA)
+            <TabsTrigger value="pdi" className="group py-2 px-3 md:px-4 shrink-0 data-[state=active]:bg-[#FF0000] data-[state=active]:text-white hover:bg-[#FF0000] hover:text-white transition-all data-[state=active]:shadow-md rounded-lg whitespace-nowrap">
+              <Rocket className="w-4 h-4 mr-0 md:mr-2 group-data-[state=active]:mr-2 shrink-0" />
+              <span className="hidden md:inline group-data-[state=active]:inline">PDI (IA)</span>
             </TabsTrigger>
           </TabsList>
 
