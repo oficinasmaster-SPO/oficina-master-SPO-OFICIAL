@@ -340,23 +340,50 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="mb-8">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
+      <div className="mb-5 md:mb-8">
+        <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 mb-1 leading-tight tracking-tight">
           {isAdminMode && workshop ? `Visualizando: ${workshop.name}` : `Bem-vindo, ${user.full_name || user.email}!`}
         </h1>
-        <p className="text-gray-600">
+        <p className="text-sm md:text-base text-gray-600 font-medium">
           {isAdminMode ? 'Aqui está o resumo da oficina do cliente' : 'Aqui está o resumo da sua oficina'}
         </p>
       </div>
 
       {/* Dicas Rápidas (Admin Altera) */}
-      <Card className="mb-6 bg-gradient-to-r from-indigo-50 to-blue-50 border-l-4 border-indigo-500 shadow-sm">
-        <CardContent className="p-4 flex justify-between items-start">
-            <div className="flex gap-3">
-                <Lightbulb className="w-6 h-6 text-indigo-600 flex-shrink-0 mt-1" />
-                <div>
-                    <h3 className="font-bold text-indigo-900 text-lg mb-1">Dicas Rápidas</h3>
-                    <p className="text-indigo-800 whitespace-pre-line">
+      <Card className="mb-6 bg-gradient-to-r from-indigo-50 to-blue-50 border-l-4 border-indigo-500 shadow-sm relative">
+        <CardContent className="p-4 flex justify-between items-center md:items-start">
+            <div className="flex gap-3 w-full items-center md:items-start">
+                <Lightbulb className="w-6 h-6 text-indigo-600 flex-shrink-0 md:mt-1" />
+                <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                        <h3 className="font-bold text-indigo-900 text-base md:text-lg mb-0 md:mb-1">Dicas Rápidas</h3>
+                        
+                        {/* Botão de Ler Dica Mobile */}
+                        <div className="md:hidden">
+                           <Dialog>
+                               <DialogTrigger asChild>
+                                   <Button variant="ghost" size="sm" className="text-indigo-600 hover:text-indigo-800 bg-indigo-100/50 h-8 px-3 rounded-full text-xs font-semibold">
+                                       Ler Dica
+                                   </Button>
+                               </DialogTrigger>
+                               <DialogContent className="w-[90vw] max-w-[400px] rounded-xl">
+                                   <DialogHeader>
+                                       <DialogTitle className="flex items-center gap-2 text-indigo-900">
+                                           <Lightbulb className="w-5 h-5 text-indigo-600" />
+                                           Dicas Rápidas
+                                       </DialogTitle>
+                                   </DialogHeader>
+                                   <div className="py-2">
+                                       <p className="text-gray-700 whitespace-pre-line text-sm leading-relaxed">
+                                           {typeof displayTips === 'string' ? displayTips : displayTips?.texto || displayTips?.Texto || 'Sem dicas disponíveis'}
+                                       </p>
+                                   </div>
+                               </DialogContent>
+                           </Dialog>
+                        </div>
+                    </div>
+                    
+                    <p className="text-indigo-800 whitespace-pre-line hidden md:block mt-1 text-sm md:text-base">
                         {typeof displayTips === 'string' ? displayTips : displayTips?.texto || displayTips?.Texto || 'Sem dicas disponíveis'}
                     </p>
                 </div>
@@ -420,8 +447,9 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
          <div className="mb-6 flex justify-end">
             <Dialog open={isNoticeDialogOpen} onOpenChange={setIsNoticeDialogOpen}>
                 <DialogTrigger asChild>
-                    <Button variant="outline" className="border-yellow-500 text-yellow-700 hover:bg-yellow-50">
-                        <Plus className="w-4 h-4 mr-2" /> Novo Aviso
+                    <Button variant="outline" className="border-yellow-500 text-yellow-700 hover:bg-yellow-50 h-9 px-3 md:px-4">
+                        <Plus className="w-4 h-4 md:mr-2" /> 
+                        <span className="hidden md:inline">Novo Aviso</span>
                     </Button>
                 </DialogTrigger>
                 <DialogContent>
