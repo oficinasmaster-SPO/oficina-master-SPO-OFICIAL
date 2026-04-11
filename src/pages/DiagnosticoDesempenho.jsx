@@ -161,7 +161,7 @@ export default function DiagnosticoDesempenho() {
             </CardHeader>
             <CardContent className="space-y-4">
               <EvaluationGate 
-                employees={employees}
+                employees={employees || []}
                 selectedEmployee={selectedEmployee} 
                 onSelectEmployee={setSelectedEmployee} 
               />

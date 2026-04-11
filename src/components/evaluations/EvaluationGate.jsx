@@ -4,18 +4,19 @@ import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { AlertCircle, Loader2 } from 'lucide-react';
 
-export default function EvaluationGate({ employees = [], selectedEmployee, onSelectEmployee }) {
+export default function EvaluationGate({ employees, selectedEmployee, onSelectEmployee }) {
   const { isLeader, currentUserEmployee } = useEvaluationPermissions();
   const [evaluationType, setEvaluationType] = useState("");
+  const safeEmployees = Array.isArray(employees) ? employees : [];
   
   useEffect(() => {
-    if (employees.length === 1 && !isLeader) {
+    if (safeEmployees.length === 1 && !isLeader) {
       if (!selectedEmployee) {
-        onSelectEmployee(employees[0].id);
+        onSelectEmployee(safeEmployees[0].id);
       }
       setEvaluationType("self");
     }
-  }, [employees, isLeader, selectedEmployee]);
+  }, [safeEmployees, isLeader, selectedEmployee]);
   
   return (
     <div className="space-y-4">
@@ -47,18 +48,18 @@ export default function EvaluationGate({ employees = [], selectedEmployee, onSel
           <Select 
             value={selectedEmployee} 
             onValueChange={onSelectEmployee}
-            disabled={!isLeader && employees.length <= 1}
+            disabled={!isLeader && safeEmployees.length <= 1}
           >
             <SelectTrigger>
               <SelectValue placeholder="Escolha um colaborador..." />
             </SelectTrigger>
             <SelectContent>
-              {employees.length === 0 ? (
+              {safeEmployees.length === 0 ? (
                 <SelectItem value="none" disabled>
                   Nenhum colaborador disponível
                 </SelectItem>
               ) : (
-                employees.map((emp) => (
+                safeEmployees.map((emp) => (
                   <SelectItem key={emp.id} value={emp.id}>
                     {emp.full_name} - {emp.position}
                   </SelectItem>
