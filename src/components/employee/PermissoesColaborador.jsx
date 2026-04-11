@@ -161,13 +161,13 @@ export default function PermissoesColaborador({ employee }) {
             <CardContent>
               <div className="space-y-2">
                 {getModulePermissions().map(({ module, level }) => (
-                  <div key={module} className="flex items-center justify-between p-3 border rounded">
-                    <span className="font-medium capitalize">{module}</span>
-                    <Badge className={
+                  <div key={module} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded gap-2">
+                    <span className="font-medium capitalize break-all">{module}</span>
+                    <Badge className={`w-fit ${
                       level === 'total' ? 'bg-green-600' :
                       level === 'visualizacao' ? 'bg-blue-600' :
                       'bg-gray-600'
-                    }>
+                    }`}>
                       {level === 'total' ? 'Acesso Total' : 
                        level === 'visualizacao' ? 'Visualização' : 'Bloqueado'}
                     </Badge>
@@ -193,9 +193,9 @@ export default function PermissoesColaborador({ employee }) {
             <CardContent>
               <div className="space-y-2">
                 {getSidebarPermissions().map(([item, perms]) => (
-                  <div key={item} className="flex items-center justify-between p-3 border rounded">
-                    <span className="font-medium text-sm">{item}</span>
-                    <div className="flex gap-2">
+                  <div key={item} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded gap-2">
+                    <span className="font-medium text-sm break-all">{item}</span>
+                    <div className="flex flex-wrap gap-2">
                       {perms.view && <Badge variant="outline" className="bg-green-50 text-xs">Ver</Badge>}
                       {perms.edit && <Badge variant="outline" className="bg-blue-50 text-xs">Editar</Badge>}
                       {perms.create && <Badge variant="outline" className="bg-purple-50 text-xs">Criar</Badge>}

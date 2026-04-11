@@ -364,7 +364,7 @@ export default function EmployeeGoals({ employee, onUpdate }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4 pt-4 border-t-2 border-green-300">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t-2 border-green-300">
             <div className="bg-white p-4 rounded-lg">
               <p className="text-xs text-blue-600 mb-1">PREVISTO (Mês)</p>
               <p className="text-2xl font-bold text-blue-600">

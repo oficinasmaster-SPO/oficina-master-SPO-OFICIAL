@@ -338,10 +338,10 @@ JSON: { "rule_violated": "...", "corrective_guidance": "..." }`;
             </Button>
           </div>
 
-          <div className="flex gap-2 mt-4 flex-wrap">
+          <div className="flex gap-2 mt-4 flex-col sm:flex-row flex-wrap">
             {isManager && (
               <Select value={filters.employee_id} onValueChange={(v) => setFilters({...filters, employee_id: v})}>
-                <SelectTrigger className="h-8 w-48">
+                <SelectTrigger className="h-8 w-full sm:w-48">
                   <SelectValue placeholder="Colaborador" />
                 </SelectTrigger>
                 <SelectContent>
@@ -355,7 +355,7 @@ JSON: { "rule_violated": "...", "corrective_guidance": "..." }`;
               </Select>
             )}
             <Select value={filters.severity} onValueChange={(v) => setFilters({...filters, severity: v})}>
-              <SelectTrigger className="h-8 w-32">
+              <SelectTrigger className="h-8 w-full sm:w-32">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -366,7 +366,7 @@ JSON: { "rule_violated": "...", "corrective_guidance": "..." }`;
               </SelectContent>
             </Select>
             <Select value={filters.acknowledged} onValueChange={(v) => setFilters({...filters, acknowledged: v})}>
-              <SelectTrigger className="h-8 w-32">
+              <SelectTrigger className="h-8 w-full sm:w-32">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -386,8 +386,8 @@ JSON: { "rule_violated": "...", "corrective_guidance": "..." }`;
           ) : filteredWarnings.length === 0 ? (
             <p className="text-center text-gray-500 py-8">Nenhuma advertência encontrada</p>
           ) : (
-            <div className="bg-white rounded-lg border overflow-hidden">
-              <table className="w-full">
+            <div className="bg-white rounded-lg border overflow-x-auto">
+              <table className="w-full min-w-[600px]">
                 <thead className="bg-gray-50 border-b">
                   <tr>
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600">ID</th>

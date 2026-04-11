@@ -117,12 +117,12 @@ export default function DocumentsTab({ employee }) {
           {/* Regimento Interno */}
           <Card className="border-2 border-blue-200">
             <CardContent className="p-4">
-              <div className="flex items-start justify-between">
-                <div className="flex items-start gap-3">
-                  <div className="p-3 bg-blue-100 rounded-lg">
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                <div className="flex items-start gap-3 flex-1 min-w-0">
+                  <div className="p-3 bg-blue-100 rounded-lg shrink-0">
                     <FileText className="w-6 h-6 text-blue-700" />
                   </div>
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <h3 className="font-bold text-lg">Regimento Interno</h3>
                     <p className="text-sm text-gray-600 mb-2">
                       Regulamento jurídico e operacional da empresa
@@ -163,12 +163,12 @@ export default function DocumentsTab({ employee }) {
           {/* Manual da Cultura */}
           <Card className="border-2 border-purple-200">
             <CardContent className="p-4">
-              <div className="flex items-start justify-between">
-                <div className="flex items-start gap-3">
-                  <div className="p-3 bg-purple-100 rounded-lg">
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                <div className="flex items-start gap-3 flex-1 min-w-0">
+                  <div className="p-3 bg-purple-100 rounded-lg shrink-0">
                     <BookOpen className="w-6 h-6 text-purple-700" />
                   </div>
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <h3 className="font-bold text-lg">Manual da Cultura</h3>
                     <p className="text-sm text-gray-600 mb-2">
                       Pilares, valores e expectativas comportamentais

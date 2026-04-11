@@ -273,7 +273,7 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
             </div>
           </div>
           
-          <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t border-yellow-200">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 pt-4 border-t border-yellow-200">
             <div>
               <Label className="text-xs text-gray-600 mb-1 block">Ticket Médio Peças (Automático)</Label>
               <Input

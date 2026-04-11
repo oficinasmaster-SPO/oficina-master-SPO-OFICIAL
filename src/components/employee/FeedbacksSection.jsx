@@ -411,9 +411,9 @@ export default function FeedbacksSection({ employee }) {
           </div>
         </div>
         
-        <div className="flex gap-2 mt-4 flex-wrap">
+        <div className="flex gap-2 mt-4 flex-col sm:flex-row flex-wrap">
           {isManager && (
-            <div className="w-48">
+            <div className="w-full sm:w-48">
               <Select value={filters.employee_id} onValueChange={(v) => setFilters({...filters, employee_id: v})}>
                 <SelectTrigger className="h-8 bg-white">
                   <SelectValue placeholder="Colaborador" />
@@ -429,7 +429,7 @@ export default function FeedbacksSection({ employee }) {
               </Select>
             </div>
           )}
-          <div className="w-40">
+          <div className="w-full sm:w-40">
             <Select value={filters.type} onValueChange={(v) => setFilters({...filters, type: v})}>
               <SelectTrigger className="h-8 bg-white">
                 <SelectValue placeholder="Tipo" />
@@ -442,7 +442,7 @@ export default function FeedbacksSection({ employee }) {
               </SelectContent>
             </Select>
           </div>
-          <div className="w-40">
+          <div className="w-full sm:w-40">
             <Select value={filters.status} onValueChange={(v) => setFilters({...filters, status: v})}>
               <SelectTrigger className="h-8 bg-white">
                 <SelectValue placeholder="Status Plano" />
@@ -467,8 +467,8 @@ export default function FeedbacksSection({ employee }) {
             <p>Nenhum feedback registrado com estes filtros.</p>
           </div>
         ) : (
-          <div className="bg-white rounded-lg border overflow-hidden">
-            <table className="w-full">
+          <div className="bg-white rounded-lg border overflow-x-auto">
+            <table className="w-full min-w-[600px]">
               <thead className="bg-gray-50 border-b">
                 <tr>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600">ID</th>
