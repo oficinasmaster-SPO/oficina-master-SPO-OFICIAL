@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Trash2, Clock, Calendar, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
+import { Plus, Trash2, Clock, Calendar, AlertCircle, Check, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import TipoAtendimentoManager from "@/components/aceleracao/TipoAtendimentoManager";
 
@@ -436,7 +436,7 @@ export default function AttendanceRulesTab({ planId, planName }) {
                         </div>
                         <div className="flex items-center gap-2">
                           {rule.allow_anticipation ? (
-                            <CheckCircle2 className="w-4 h-4 text-green-600" />
+                            <Check className="w-4 h-4 text-green-600" />
                           ) : (
                             <AlertCircle className="w-4 h-4 text-orange-600" />
                           )}

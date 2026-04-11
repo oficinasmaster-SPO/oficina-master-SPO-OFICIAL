@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BarChart3, TrendingUp, Users, DollarSign, Ticket, CheckCircle2, XCircle, Clock } from "lucide-react";
+import { BarChart3, TrendingUp, Users, DollarSign, Ticket, Check, XCircle, Clock } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
@@ -139,7 +139,7 @@ export default function VoucherReportsPanel({ user }) {
       {/* KPIs */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         <KPICard icon={Ticket} label="Vouchers Criados" value={kpis.totalVouchers} color="purple" />
-        <KPICard icon={CheckCircle2} label="Utilizações" value={kpis.totalUses} color="blue" />
+        <KPICard icon={Check} label="Utilizações" value={kpis.totalUses} color="blue" />
         <KPICard icon={Users} label="Vendedores Ativos" value={kpis.uniqueSellers} color="indigo" />
         <KPICard icon={DollarSign} label="Vendas Totais" value={`R$ ${kpis.totalSales.toFixed(0)}`} color="green" />
         <KPICard icon={TrendingUp} label="Descontos Dados" value={`R$ ${kpis.totalDiscount.toFixed(0)}`} color="orange" />

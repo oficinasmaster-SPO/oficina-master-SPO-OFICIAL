@@ -3,13 +3,13 @@ import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, ShoppingCart, Clock, CheckCircle2, XCircle } from "lucide-react";
+import { Loader2, ShoppingCart, Clock, Check, XCircle } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 const USE_STATUS_MAP = {
   pending: { label: "Pendente", color: "bg-yellow-100 text-yellow-800", icon: Clock },
-  approved: { label: "Aprovado", color: "bg-green-100 text-green-800", icon: CheckCircle2 },
+  approved: { label: "Aprovado", color: "bg-green-100 text-green-800", icon: Check },
   rejected: { label: "Rejeitado", color: "bg-red-100 text-red-800", icon: XCircle }
 };
 

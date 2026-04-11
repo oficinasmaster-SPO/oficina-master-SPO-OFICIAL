@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Loader2, Ticket, Copy, CheckCircle2, AlertTriangle, Info } from "lucide-react";
+import { Loader2, Ticket, Copy, Check, AlertTriangle, Info } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -270,7 +270,7 @@ export default function VoucherGenerateForm({ user, workshop }) {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-green-700">
-              <CheckCircle2 className="w-6 h-6" />
+              <Check className="w-6 h-6" />
               Voucher Criado!
             </DialogTitle>
             <DialogDescription>

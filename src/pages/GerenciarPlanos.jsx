@@ -14,8 +14,9 @@ import { Loader2, Save, Shield, Lock, Unlock, Settings, Calendar, Plus, Trash2 }
 import { toast } from "sonner";
 import { createPageUrl } from "@/utils";
 import { useNavigate } from "react-router-dom";
-import AttendanceRulesTab from "@/components/plans/AttendanceRulesTab";
-import VouchersTab from "@/components/vouchers/VouchersTab";
+import AttendanceRulesTab from "../components/plans/AttendanceRulesTab";
+import VouchersTab from "../components/vouchers/VouchersTab";
+// Cache bust para recarregar o módulo dinâmico após atualizações globais
 
 export default function GerenciarPlanos() {
   const navigate = useNavigate();

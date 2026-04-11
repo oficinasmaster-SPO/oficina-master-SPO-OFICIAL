@@ -5,13 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, ShieldCheck, Clock, CheckCircle2, XCircle, AlertTriangle, Inbox } from "lucide-react";
+import { Loader2, ShieldCheck, Clock, Check, XCircle, AlertTriangle, Inbox } from "lucide-react";
 import VoucherApprovalCard from "./VoucherApprovalCard";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 const HISTORY_STATUS_MAP = {
-  approved: { label: "Aprovado", color: "bg-green-100 text-green-800", icon: CheckCircle2 },
+  approved: { label: "Aprovado", color: "bg-green-100 text-green-800", icon: Check },
   rejected: { label: "Rejeitado", color: "bg-red-100 text-red-800", icon: XCircle }
 };
 
@@ -70,7 +70,7 @@ export default function VoucherAdminPanel({ user }) {
         <Card>
           <CardContent className="p-4 flex items-center gap-3">
             <div className="bg-green-100 p-2 rounded-lg">
-              <CheckCircle2 className="w-5 h-5 text-green-700" />
+              <Check className="w-5 h-5 text-green-700" />
             </div>
             <div>
               <p className="text-2xl font-bold">{allUses.filter((u) => u.status === "approved").length}</p>

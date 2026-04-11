@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import {
-  Loader2, CheckCircle2, XCircle, Upload, Clock, AlertTriangle,
+  Loader2, Check, XCircle, Upload, Clock, AlertTriangle,
   ShoppingCart, FileText, Receipt, User
 } from "lucide-react";
 import { toast } from "sonner";
@@ -171,7 +171,7 @@ export default function VoucherApprovalCard({ use, adminUser }) {
                 className="bg-green-600 hover:bg-green-700 flex-1"
                 onClick={() => setShowApproveDialog(true)}
               >
-                <CheckCircle2 className="w-4 h-4 mr-1" />
+                <Check className="w-4 h-4 mr-1" />
                 Aprovar
               </Button>
               <Button
@@ -193,7 +193,7 @@ export default function VoucherApprovalCard({ use, adminUser }) {
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-green-700">
-              <CheckCircle2 className="w-5 h-5" />
+              <Check className="w-5 h-5" />
               Aprovar Uso — {use.voucher_code}
             </DialogTitle>
             <DialogDescription>
@@ -210,7 +210,7 @@ export default function VoucherApprovalCard({ use, adminUser }) {
               </Label>
               {paymentUrl ? (
                 <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg p-3">
-                  <CheckCircle2 className="w-5 h-5 text-green-600" />
+                  <Check className="w-5 h-5 text-green-600" />
                   <span className="text-sm text-green-800 flex-1 truncate">{paymentFile?.name || "Arquivo enviado"}</span>
                   <Button variant="ghost" size="sm" onClick={() => { setPaymentUrl(null); setPaymentFile(null); }}>
                     Trocar
@@ -251,7 +251,7 @@ export default function VoucherApprovalCard({ use, adminUser }) {
               </Label>
               {contractUrl ? (
                 <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg p-3">
-                  <CheckCircle2 className="w-5 h-5 text-green-600" />
+                  <Check className="w-5 h-5 text-green-600" />
                   <span className="text-sm text-green-800 flex-1 truncate">{contractFile?.name || "Arquivo enviado"}</span>
                   <Button variant="ghost" size="sm" onClick={() => { setContractUrl(null); setContractFile(null); }}>
                     Trocar
@@ -319,7 +319,7 @@ export default function VoucherApprovalCard({ use, adminUser }) {
               {approveMutation.isPending ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               ) : (
-                <CheckCircle2 className="w-4 h-4 mr-2" />
+                <Check className="w-4 h-4 mr-2" />
               )}
               Confirmar Aprovação
             </Button>
