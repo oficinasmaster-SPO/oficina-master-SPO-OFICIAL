@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -7,39 +7,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Loader2, TrendingUp, Award, Mic } from "lucide-react";
 import AudioRecorder from "@/components/audio/AudioRecorder";
+import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
+import { useAuth } from "@/lib/AuthContext";
 
 export default function DiagnosticoComercial() {
-  const [user, setUser] = useState(null);
-  const [workshop, setWorkshop] = useState(null);
+  const { user } = useAuth();
+  const { workshop, isLoading: isWorkshopLoading } = useWorkshopContext();
   const [selectedType, setSelectedType] = useState("");
   const [audioUrl, setAudioUrl] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentResult, setCurrentResult] = useState(null);
 
-  useEffect(() => {
-    loadUser();
-  }, []);
-
-  const loadUser = async () => {
-    const currentUser = await base44.auth.me();
-    setUser(currentUser);
-    
-    const workshops = await base44.entities.Workshop.list();
-    let userWorkshop = workshops.find(w => w.owner_id === currentUser.id);
-
-    if (!userWorkshop) {
-      const employees = await base44.entities.Employee.filter({ email: currentUser.email });
-      if (employees && employees.length > 0 && employees[0].workshop_id) {
-        userWorkshop = workshops.find(w => w.id === employees[0].workshop_id);
-      }
-    }
-    setWorkshop(userWorkshop);
-  };
-
-  const { data: diagnostics = [], isLoading } = useQuery({
+  const { data: diagnostics = [], isLoading: isDiagnosticsLoading } = useQuery({
     queryKey: ['commercial-diagnostics', workshop?.id],
-    queryFn: () => base44.entities.CommercialDiagnostic.list('-created_date'),
-    enabled: !!workshop
+    queryFn: () => base44.entities.CommercialDiagnostic.filter({ workshop_id: workshop.id }, '-created_date'),
+    enabled: !!workshop?.id
   });
 
   const diagnosticTypes = [
