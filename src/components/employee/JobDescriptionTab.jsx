@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { FileText, Link, ExternalLink, Loader2, CheckCircle, AlertCircle, History } from "lucide-react";
+import { FileText, Link, ExternalLink, Loader2, CheckCircle, AlertCircle, History, Trash2 } from "lucide-react";
 import JobDescriptionViewer from "../job-description/JobDescriptionViewer";
 
 export default function JobDescriptionTab({ employee, onUpdate }) {
@@ -121,13 +121,14 @@ export default function JobDescriptionTab({ employee, onUpdate }) {
                   <p className="text-purple-700 mt-1">{currentJob.area ? `Área: ${currentJob.area.charAt(0).toUpperCase() + currentJob.area.slice(1)}` : 'Área não definida'}</p>
                 </div>
                 <div className="flex gap-2">
-                  <Button onClick={() => setIsViewerOpen(true)} className="bg-purple-600 hover:bg-purple-700">
-                    <ExternalLink className="w-4 h-4 mr-2" />
-                    Visualizar Completo
+                  <Button onClick={() => setIsViewerOpen(true)} className="bg-purple-600 hover:bg-purple-700" title="Visualizar Completo">
+                    <ExternalLink className="w-4 h-4 md:mr-2" />
+                    <span className="hidden md:inline">Visualizar Completo</span>
                   </Button>
                   {/* Only show unlink if user has permission to edit - assuming onUpdate is passed, they can edit */}
-                  <Button variant="outline" onClick={handleUnlink} className="text-red-600 hover:bg-red-50 border-red-200">
-                      Desvincular
+                  <Button variant="outline" onClick={handleUnlink} className="text-red-600 hover:bg-red-50 border-red-200" title="Desvincular">
+                      <Trash2 className="w-4 h-4 md:mr-2" />
+                      <span className="hidden md:inline">Desvincular</span>
                   </Button>
                 </div>
               </div>
@@ -180,9 +181,9 @@ export default function JobDescriptionTab({ employee, onUpdate }) {
                     </SelectContent>
                   </Select>
                 </div>
-                <Button onClick={handleLinkJob} disabled={!selectedJobId || isLinking}>
-                  {isLinking ? <Loader2 className="w-4 h-4 animate-spin" /> : <Link className="w-4 h-4 mr-2" />}
-                  Vincular
+                <Button onClick={handleLinkJob} disabled={!selectedJobId || isLinking} title="Vincular">
+                  {isLinking ? <Loader2 className="w-4 h-4 animate-spin md:mr-2" /> : <Link className="w-4 h-4 md:mr-2" />}
+                  <span className="hidden md:inline">Vincular</span>
                 </Button>
               </div>
             </div>

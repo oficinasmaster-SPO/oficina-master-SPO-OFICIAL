@@ -88,9 +88,10 @@ export default function PermissoesColaborador({ employee }) {
                 variant="outline" 
                 size="sm"
                 className="gap-2"
+                title="Ver Detalhes Completos"
               >
                 <Eye className="w-4 h-4" />
-                Ver Detalhes Completos
+                <span className="hidden md:inline">Ver Detalhes Completos</span>
               </Button>
             </div>
           </CardHeader>
@@ -208,8 +209,11 @@ export default function PermissoesColaborador({ employee }) {
                     onClick={() => setShowDetailedView(true)} 
                     variant="outline" 
                     size="sm"
+                    className="gap-2"
+                    title={`Ver Todas as ${totalSidebarPermissions} Permissões`}
                   >
-                    Ver Todas as {totalSidebarPermissions} Permissões
+                    <Eye className="w-4 h-4" />
+                    <span className="hidden md:inline">Ver Todas as {totalSidebarPermissions} Permissões</span>
                   </Button>
                 </div>
               )}

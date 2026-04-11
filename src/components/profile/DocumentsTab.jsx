@@ -151,9 +151,9 @@ export default function DocumentsTab({ employee }) {
                   </div>
                 </div>
                 {regiment && (
-                  <Button onClick={() => setShowRegiment(true)}>
-                    <Eye className="w-4 h-4 mr-2" />
-                    Visualizar
+                  <Button onClick={() => setShowRegiment(true)} title="Visualizar">
+                    <Eye className="w-4 h-4 md:mr-2" />
+                    <span className="hidden md:inline">Visualizar</span>
                   </Button>
                 )}
               </div>
@@ -193,9 +193,9 @@ export default function DocumentsTab({ employee }) {
                   </div>
                 </div>
                 {cultureManual && (
-                  <Button onClick={() => setShowCulture(true)}>
-                    <Eye className="w-4 h-4 mr-2" />
-                    Visualizar
+                  <Button onClick={() => setShowCulture(true)} title="Visualizar">
+                    <Eye className="w-4 h-4 md:mr-2" />
+                    <span className="hidden md:inline">Visualizar</span>
                   </Button>
                 )}
               </div>
