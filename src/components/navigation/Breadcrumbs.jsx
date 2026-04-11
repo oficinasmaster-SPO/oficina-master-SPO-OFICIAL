@@ -58,10 +58,13 @@ export default function Breadcrumbs() {
   }
 
   return (
-    <div className="print:hidden mb-4">
+    <div className="print:hidden mb-4 flex flex-wrap items-center gap-x-4 gap-y-2">
       {/* Botão Voltar */}
-      <BackButton />
+      <BackButton className="!mb-0" />
       
+      {/* Separador (opcional, escondido no celular se ficar muito apertado, mas ajuda a dividir) */}
+      <div className="hidden sm:block h-4 w-px bg-gray-300"></div>
+
       {/* Breadcrumbs */}
       <nav className="flex items-center gap-2 text-sm text-gray-600 flex-wrap">
         <Link 
