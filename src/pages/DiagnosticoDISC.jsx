@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
-import { Loader2, Brain, AlertCircle, CheckCircle2, Link as LinkIcon, History, Copy, X } from "lucide-react";
+import { Loader2, Brain, AlertCircle, CheckCircle, Link as LinkIcon, History, Copy, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { discQuestions } from "@/components/disc/DISCQuestions";
 // HMR force update
@@ -520,7 +520,7 @@ export default function DiagnosticoDISC() {
                     <CardTitle className="text-lg">Conjunto {question.id}</CardTitle>
                     {isComplete && (
                       <div className="flex items-center gap-1 text-green-600">
-                        <CheckCircle2 className="w-5 h-5" />
+                        <CheckCircle className="w-5 h-5" />
                         <span className="text-sm font-semibold">Completo</span>
                       </div>
                     )}
