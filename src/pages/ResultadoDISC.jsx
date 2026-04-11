@@ -6,12 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Loader2, Home, RotateCcw, Users, Briefcase, Sparkles } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Cell } from "recharts";
-import { profileInfo } from "../components/disc/DISCQuestions";
+import { profileInfo } from "@/components/disc/DISCQuestions";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import ActionPlanCard from "../components/diagnostics/ActionPlanCard";
-import ActionPlanDetails from "../components/diagnostics/ActionPlanDetails";
-import ActionPlanFeedbackModal from "../components/diagnostics/ActionPlanFeedbackModal";
+import ActionPlanCard from "@/components/diagnostics/ActionPlanCard";
+import ActionPlanDetails from "@/components/diagnostics/ActionPlanDetails";
+import ActionPlanFeedbackModal from "@/components/diagnostics/ActionPlanFeedbackModal";
+// Cache bust to resolve dynamic import failure
 import { useEvaluationPermissions } from "@/components/hooks/useEvaluationPermissions";
 
 export default function ResultadoDISC() {
