@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-// Cache invalidation timestamp: 2026-04-11
+// FORCE FULL REBUILD: 2026-04-11 14:15
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
-import { Loader2, Brain, AlertCircle, CheckCircle, Link as LinkIcon, History, Copy, X } from "lucide-react";
+import { Loader2, Brain, AlertCircle, Check, Link as LinkIcon, History, Copy, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { discQuestions } from "@/components/disc/DISCQuestions";
 // HMR force update
@@ -520,7 +520,7 @@ export default function DiagnosticoDISC() {
                     <CardTitle className="text-lg">Conjunto {question.id}</CardTitle>
                     {isComplete && (
                       <div className="flex items-center gap-1 text-green-600">
-                        <CheckCircle className="w-5 h-5" />
+                        <Check className="w-5 h-5" />
                         <span className="text-sm font-semibold">Completo</span>
                       </div>
                     )}
