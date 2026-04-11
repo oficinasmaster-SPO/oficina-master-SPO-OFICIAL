@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertCircle, Calendar, Loader2, Video, CheckCircle2, Copy } from "lucide-react";
+import { AlertCircle, Calendar, Loader2, Video, CheckCircle, Copy } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 import { useGoogleMeet } from "@/components/hooks/useGoogleMeet";
@@ -249,7 +249,7 @@ export default function ReagendarAtendimentoModal({ atendimento, workshop, onClo
               ) : (
                 <div className="bg-green-50 border border-green-200 rounded-lg p-3 space-y-2">
                   <div className="flex items-center gap-2 text-green-700">
-                    <CheckCircle2 className="w-4 h-4" />
+                    <CheckCircle className="w-4 h-4" />
                     <span className="text-sm font-medium">Reunião criada com sucesso!</span>
                   </div>
                   <div className="flex items-center gap-2">

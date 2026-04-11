@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Video, Loader2, MessageSquare, Copy, CheckCircle2 } from "lucide-react";
+import { Video, Loader2, MessageSquare, Copy, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import TipoAtendimentoManager from "@/components/aceleracao/TipoAtendimentoManager";
 import WorkshopSearchSelect from "@/components/aceleracao/WorkshopSearchSelect";
@@ -289,7 +289,7 @@ function GoogleMeetSection({ formData, setFormData, user, consultores, createMee
 
       {formData.google_event_id &&
       <p className="text-xs text-green-600 flex items-center gap-1 mt-2">
-          <CheckCircle2 className="w-3 h-3" />
+          <CheckCircle className="w-3 h-3" />
           Evento criado e sincronizado com o Google Calendar
         </p>
       }

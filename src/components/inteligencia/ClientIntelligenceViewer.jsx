@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
-import { AlertCircle, Calendar, User, TrendingDown, Repeat2, FileText, Zap, Clock, CheckCircle2 } from "lucide-react";
+import { AlertCircle, Calendar, User, TrendingDown, Repeat2, FileText, Zap, Clock, CheckCircle } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -213,7 +213,7 @@ export default function ClientIntelligenceViewer({ open, onOpenChange, item, wor
       {intel.metadata?.evolution && (
         <div className="border-l-[3px] border-green-400 pl-4 mt-6">
           <div className="flex items-center gap-2 mb-3">
-            <CheckCircle2 className="w-4 h-4 text-green-600" />
+            <CheckCircle className="w-4 h-4 text-green-600" />
             <h4 className="font-semibold text-gray-900">Evolução Registrada</h4>
           </div>
           <div className="space-y-4 text-sm bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
@@ -264,7 +264,7 @@ export default function ClientIntelligenceViewer({ open, onOpenChange, item, wor
               className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
               onClick={() => setEvolutionFormOpen(true)}
             >
-              <CheckCircle2 className="w-4 h-4 mr-2" />
+              <CheckCircle className="w-4 h-4 mr-2" />
               Registrar Evolução
             </Button>
           </div>
