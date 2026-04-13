@@ -75,8 +75,18 @@ export default function AdvancedMAPSearch({ workshop, onViewMAP }) {
 
   const highlightMatch = (text, term) => {
     if (!text) return "";
-    const regex = new RegExp(`(${term})`, 'gi');
-    return text.replace(regex, '<mark class="bg-yellow-200">$1</mark>');
+    const escapeHtml = (unsafe) => {
+      return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    };
+    const escapedText = escapeHtml(text);
+    const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`(${escapedTerm})`, 'gi');
+    return escapedText.replace(regex, '<mark class="bg-yellow-200">$1</mark>');
   };
 
   return (

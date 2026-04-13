@@ -271,7 +271,7 @@ export default function DiagnosticoGerencial() {
   const addPartner = () => {
     setFormData({
       ...formData,
-      partners: [...formData.partners, { employee_id: "", name: "", presence_percentage: 0, delivery_value: 0, best_month_clients: 0 }]
+      partners: [...formData.partners, { _uid: Math.random().toString(36).substring(2, 9), employee_id: "", name: "", presence_percentage: 0, delivery_value: 0, best_month_clients: 0 }]
     });
   };
 
@@ -319,12 +319,12 @@ export default function DiagnosticoGerencial() {
   const addToSection = (section, subsection = null) => {
     if (subsection) {
       const updated = { ...formData[section] };
-      updated[subsection] = [...updated[subsection], { employee_id: "", name: "", delivery_value: 0, presence_percentage: 0, best_month_clients: 0 }];
+      updated[subsection] = [...updated[subsection], { _uid: Math.random().toString(36).substring(2, 9), employee_id: "", name: "", delivery_value: 0, presence_percentage: 0, best_month_clients: 0 }];
       setFormData({ ...formData, [section]: updated });
     } else {
       setFormData({
         ...formData,
-        [section]: [...formData[section], { employee_id: "", name: "", delivery_value: 0, presence_percentage: 0, best_month_clients: 0 }]
+        [section]: [...formData[section], { _uid: Math.random().toString(36).substring(2, 9), employee_id: "", name: "", delivery_value: 0, presence_percentage: 0, best_month_clients: 0 }]
       });
     }
   };
@@ -574,7 +574,7 @@ export default function DiagnosticoGerencial() {
                     <CardContent>
                         <div className="space-y-2">
                             {getEmployeeRoleAnalysis().filter(r => r.count > 1).map((r, i) => (
-                                <div key={i} className="flex justify-between items-center bg-white p-2 rounded border border-amber-100">
+                                <div key={r.name || i} className="flex justify-between items-center bg-white p-2 rounded border border-amber-100">
                                     <span className="font-medium text-amber-800">{r.name}</span>
                                     <div className="text-sm text-gray-600">
                                         Atua em <strong className="text-amber-700">{r.count} áreas</strong> ({r.percentagePerRole}% de carga em cada)
@@ -652,7 +652,7 @@ export default function DiagnosticoGerencial() {
               </CardHeader>
               <CardContent className="space-y-2">
                 {formData.partners.map((partner, index) => (
-                  <div key={index} className="grid grid-cols-12 gap-3 items-end bg-gradient-to-r from-purple-50 to-pink-50 p-3 rounded-lg border-2 border-purple-200">
+                  <div key={partner._uid || partner.employee_id || index} className="grid grid-cols-12 gap-3 items-end bg-gradient-to-r from-purple-50 to-pink-50 p-3 rounded-lg border-2 border-purple-200">
                     <div className="col-span-4">
                       <Label className="text-xs">Sócio</Label>
                       <Select
@@ -723,7 +723,7 @@ export default function DiagnosticoGerencial() {
               </CardHeader>
               <CardContent className="space-y-2">
                 {formData.operational.sales.map((item, index) => (
-                  <EmployeeRow key={index} item={item} index={index} section="operational" subsection="sales" showDelivery />
+                  <EmployeeRow key={item._uid || item.employee_id || index} item={item} index={index} section="operational" subsection="sales" showDelivery />
                 ))}
               </CardContent>
             </Card>
@@ -745,7 +745,7 @@ export default function DiagnosticoGerencial() {
               </CardHeader>
               <CardContent className="space-y-2">
                 {formData.operational.commercial.map((item, index) => (
-                  <EmployeeRow key={index} item={item} index={index} section="operational" subsection="commercial" showDelivery />
+                  <EmployeeRow key={item._uid || item.employee_id || index} item={item} index={index} section="operational" subsection="commercial" showDelivery />
                 ))}
               </CardContent>
             </Card>
@@ -767,7 +767,7 @@ export default function DiagnosticoGerencial() {
               </CardHeader>
               <CardContent className="space-y-2">
                 {formData.operational.marketing.map((item, index) => (
-                  <EmployeeRow key={index} item={item} index={index} section="operational" subsection="marketing" showDelivery />
+                  <EmployeeRow key={item._uid || item.employee_id || index} item={item} index={index} section="operational" subsection="marketing" showDelivery />
                 ))}
               </CardContent>
             </Card>
@@ -789,7 +789,7 @@ export default function DiagnosticoGerencial() {
               </CardHeader>
               <CardContent className="space-y-2">
                 {formData.technical.map((item, index) => (
-                  <EmployeeRow key={index} item={item} index={index} section="technical" showDelivery />
+                  <EmployeeRow key={item._uid || item.employee_id || index} item={item} index={index} section="technical" showDelivery />
                 ))}
               </CardContent>
             </Card>
@@ -811,7 +811,7 @@ export default function DiagnosticoGerencial() {
               </CardHeader>
               <CardContent className="space-y-2">
                 {formData.auxiliary.map((item, index) => (
-                  <EmployeeRow key={index} item={item} index={index} section="auxiliary" showDelivery />
+                  <EmployeeRow key={item._uid || item.employee_id || index} item={item} index={index} section="auxiliary" showDelivery />
                 ))}
               </CardContent>
             </Card>

@@ -253,10 +253,7 @@ export default function ConvidarColaborador() {
       return { ...response.data, action: 'created' };
     },
     onSuccess: (data) => {
-      console.log("🎉 Sucesso ao criar colaborador:", data);
-      console.log("📧 Email:", data?.email);
-      console.log("🔑 Senha:", data?.temporary_password);
-      console.log("🔗 Invite Link:", data?.invite_link);
+      console.log("🎉 Sucesso ao criar colaborador");
       
       // Validar se todos os dados necessários estão presentes
       if (!data?.email || !data?.temporary_password || !data?.invite_link) {
@@ -266,7 +263,6 @@ export default function ConvidarColaborador() {
       }
       
       console.log("✅ Dados validados e prontos para exibição");
-      console.log("📝 Setando createdUser com:", { email: data.email, password: data.temporary_password, link: data.invite_link });
       queryClient.invalidateQueries({ queryKey: ['employees-list'] });
       
       // Somente setar createdUser quando TODOS os dados estão disponíveis

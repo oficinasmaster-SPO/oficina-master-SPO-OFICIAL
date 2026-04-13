@@ -272,7 +272,8 @@ export default function GerenciarPlanos() {
       queryClient.invalidateQueries(['plans']);
       toast.success("Plano criado com sucesso! Você pode continuar editando.");
       setSelectedPlan(createdPlan);
-    }
+    },
+    onError: (error) => toast.error("Erro ao criar plano: " + error.message)
   });
 
   const updatePlanMutation = useMutation({
@@ -282,7 +283,8 @@ export default function GerenciarPlanos() {
       queryClient.invalidateQueries(['plans']);
       toast.success("Plano atualizado com sucesso!");
       // Mantém a tela aberta para continuar editando
-    }
+    },
+    onError: (error) => toast.error("Erro ao atualizar plano: " + error.message)
   });
 
   const deletePlanMutation = useMutation({
@@ -291,7 +293,8 @@ export default function GerenciarPlanos() {
       queryClient.invalidateQueries(['planFeatures']);
       queryClient.invalidateQueries(['plans']);
       toast.success("Plano deletado com sucesso!");
-    }
+    },
+    onError: (error) => toast.error("Erro ao deletar plano: " + error.message)
   });
 
   const togglePlanActiveMutation = useMutation({

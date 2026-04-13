@@ -428,7 +428,8 @@ export default function Rituais() {
       setDialogOpen(false);
       resetForm();
       toast.success("Ritual criado!");
-    }
+    },
+    onError: (error) => toast.error("Erro ao criar ritual: " + error.message)
   });
 
   const updateMutation = useMutation({
@@ -439,7 +440,8 @@ export default function Rituais() {
       setEditingRitual(null);
       resetForm();
       toast.success("Ritual atualizado!");
-    }
+    },
+    onError: (error) => toast.error("Erro ao atualizar ritual: " + error.message)
   });
 
   const deleteMutation = useMutation({
@@ -447,7 +449,8 @@ export default function Rituais() {
     onSuccess: () => {
       queryClient.invalidateQueries(['rituals']);
       toast.success("Ritual removido!");
-    }
+    },
+    onError: (error) => toast.error("Erro ao remover ritual: " + error.message)
   });
 
   const resetForm = () => {
