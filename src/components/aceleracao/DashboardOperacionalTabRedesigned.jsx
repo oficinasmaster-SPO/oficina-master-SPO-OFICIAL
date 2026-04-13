@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -74,13 +74,16 @@ export default function DashboardOperacionalTabRedesigned({ user, workshops = []
   const [filterStatus, setFilterStatus] = useState("all");
   const [selectedSprint, setSelectedSprint] = useState(null);
 
+  const workshopIds = useMemo(() => workshops.map(w => w.id), [workshops]);
+
   const { data: sprints = [], isLoading, refetch } = useQuery({
-    queryKey: ['dashboard-sprints'],
-    queryFn: () => base44.entities.ConsultoriaSprint.filter({}),
-    staleTime: 2 * 60 * 1000
+    queryKey: ['dashboard-sprints', workshopIds],
+    queryFn: () => base44.entities.ConsultoriaSprint.filter({ workshop_id: { $in: workshopIds } }),
+    staleTime: 2 * 60 * 1000,
+    enabled: workshopIds.length > 0
   });
 
-  const workshopMap = Object.fromEntries(workshops.map((w) => [w.id, w]));
+  const workshopMap = useMemo(() => Object.fromEntries(workshops.map((w) => [w.id, w])), [workshops]);
 
   const handleSprintClick = (sprint) => {
     setSelectedSprint(sprint);
@@ -96,24 +99,28 @@ export default function DashboardOperacionalTabRedesigned({ user, workshops = []
   0;
 
   // Filtro
-  const sprintsFiltrados = filterStatus === "all" ?
-  sprints :
-  sprints.filter((s) => s.status === filterStatus);
+  const sprintsFiltrados = useMemo(() => {
+    return filterStatus === "all" ?
+    sprints :
+    sprints.filter((s) => s.status === filterStatus);
+  }, [sprints, filterStatus]);
 
   // Sprints atrasados
-  const sprintsAtrasados = sprints.filter((s) => s.status === "overdue");
+  const sprintsAtrasados = useMemo(() => sprints.filter((s) => s.status === "overdue"), [sprints]);
 
   // Top workshops por progresso
-  const workshopsComSprints = workshops.
-  map((w) => {
-    const ws = sprints.filter((s) => s.workshop_id === w.id);
-    if (!ws.length) return null;
-    const avg = Math.round(ws.reduce((a, s) => a + (s.progress_percentage || 0), 0) / ws.length);
-    return { workshop: w, sprints: ws, avgProgress: avg };
-  }).
-  filter(Boolean).
-  sort((a, b) => b.sprints.length - a.sprints.length).
-  slice(0, 8);
+  const workshopsComSprints = useMemo(() => {
+    return workshops.
+    map((w) => {
+      const ws = sprints.filter((s) => s.workshop_id === w.id);
+      if (!ws.length) return null;
+      const avg = Math.round(ws.reduce((a, s) => a + (s.progress_percentage || 0), 0) / ws.length);
+      return { workshop: w, sprints: ws, avgProgress: avg };
+    }).
+    filter(Boolean).
+    sort((a, b) => b.sprints.length - a.sprints.length).
+    slice(0, 8);
+  }, [workshops, sprints]);
 
   if (isLoading) {
     return (

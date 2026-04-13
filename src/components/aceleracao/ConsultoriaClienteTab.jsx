@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { base44 } from "@/api/base44Client";
 import { CheckCircle2, X, Plus, Star, Map, Lock, ListChecks, Settings2, Zap, BookOpen, ExternalLink, PlayCircle, ChevronDown, ChevronUp, ChevronRight, RotateCcw, AlertTriangle, Lightbulb, PlaySquare, BarChart2, TrendingUp, MessageSquare, Circle, Clock } from "lucide-react";
 import CamadaEstrategica from './CamadaEstrategica';
-import SprintPhaseDetailModal from './SprintPhaseDetailModal';
+import SprintPhaseDetailModalRedesigned from './SprintPhaseDetailModalRedesigned';
 
 const MISSOES = [
   {
@@ -545,7 +545,7 @@ function SprintCard({ numero, titulo, emoji, descricao, cor, isFixed, sprint, on
       )}
 
       {modalPhaseIndex !== null && sprint && (
-        <SprintPhaseDetailModal
+        <SprintPhaseDetailModalRedesigned
           sprint={sprint}
           phaseIndex={modalPhaseIndex}
           onClose={() => setModalPhaseIndex(null)}
