@@ -100,9 +100,8 @@ const AuthenticatedApp = () => {
   // Render the main app
   return (
     <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><WheelLoader size="xl" /></div>}>
-      <PermissionsProvider>
-        <Routes>
-        <Route path="/" element={
+      <Routes>
+      <Route path="/" element={
         <LayoutWrapper currentPageName="Home">
           <Home />
         </LayoutWrapper>
@@ -168,8 +167,7 @@ const AuthenticatedApp = () => {
         );
       })}
       <Route path="*" element={<PageNotFound />} />
-        </Routes>
-      </PermissionsProvider>
+      </Routes>
     </Suspense>
   );
 };
@@ -184,8 +182,10 @@ function App() {
           <TenantProvider>
             <AttendanceTypeProvider>
               <Router>
-                <NavigationTracker />
-                <AuthenticatedApp />
+                <PermissionsProvider>
+                  <NavigationTracker />
+                  <AuthenticatedApp />
+                </PermissionsProvider>
               </Router>
               <Toaster />
               <SonnerToaster />

@@ -128,97 +128,23 @@ Deno.serve(async (req) => {
       console.error("⚠️ Erro ao criar convite no banco:", inviteDbError.message);
     }
 
-    // 4. CRIAR USER IMEDIATAMENTE com status pending
-    let createdUserId = null;
+    // 4. CRIAR USER E DEIXAR A AUTOMAÇÃO FAZER O MERGE
     try {
       console.log("👤 [PASSO 1] Criando User com base44.users.inviteUser...");
       console.log("   Email:", email, "| Role:", role);
       
       // Criar usuário no Base44
       await base44.users.inviteUser(email, role);
-      console.log(`✅ [PASSO 1] Usuário Base44 criado com role: ${role}`);
+      console.log(`✅ [PASSO 1] Comando de inviteUser enviado com role: ${role}`);
+      console.log(`✅ [PASSO 2] A atualização complementar do usuário (workshop_id, profile, etc) e vínculo com Employee será feita automaticamente pela Automação de Backend (createEmployeeOnUserCreation) engatilhada no evento 'create' da entidade User.`);
       
-      // Aguardar criação (aumentado para 3 segundos)
-      console.log("⏳ [PASSO 2] Aguardando 3 segundos para criação do usuário...");
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      // Buscar o usuário criado
-      console.log("🔍 [PASSO 3] Buscando usuário criado na entidade User...");
-      const users = await base44.asServiceRole.entities.User.filter({ email: email }, '-created_date', 1);
-      const createdUser = users && users.length > 0 ? users[0] : null;
-      
-      if (!createdUser) {
-        console.error("❌ [PASSO 3] ERRO: Usuário não encontrado após criação!");
-        console.error("   Verificando se o usuário foi criado com outro método...");
-        
-        // Tentar buscar novamente após mais 2 segundos
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        const retryUsers = await base44.asServiceRole.entities.User.filter({ email: email }, '-created_date', 1);
-        const retryUser = retryUsers && retryUsers.length > 0 ? retryUsers[0] : null;
-        
-        if (!retryUser) {
-          console.error("❌ [RETRY] Usuário ainda não encontrado. Criação falhou.");
-          throw new Error("Falha ao criar usuário no Base44");
-        }
-        
-        console.log("✅ [RETRY] Usuário encontrado após segunda tentativa:", retryUser.id);
-        createdUserId = retryUser.id;
-      } else {
-        console.log("✅ [PASSO 3] Usuário encontrado:", createdUser.id);
-        createdUserId = createdUser.id;
-      }
-      
-      if (createdUserId) {
-        console.log("📝 [PASSO 4] Preparando dados para atualizar User...");
-        
-        // Atualizar User com todos os dados do colaborador
-        const userData = {
-          workshop_id: workshop_id,
-          profile_id: profileId,
-          position: position || 'Colaborador',
-          job_role: job_role || 'outros',
-          area: area || 'tecnico',
-          telefone: telefone || '',
-          hire_date: new Date().toISOString().split('T')[0],
-          user_status: 'pending',
-          is_internal: true,
-          invite_id: inviteId,
-          admin_responsavel_id: user.id
-        };
-
-        console.log("📝 [PASSO 4] Dados a serem salvos:", JSON.stringify(userData, null, 2));
-        
-        await base44.asServiceRole.entities.User.update(createdUserId, userData);
-        console.log("✅ [PASSO 4] User atualizado com sucesso!");
-        
-        // Verificar se os dados foram salvos
-        console.log("🔍 [PASSO 5] Verificando se dados foram salvos corretamente...");
-        const verifyUser = await base44.asServiceRole.entities.User.get(createdUserId);
-        console.log("📊 [PASSO 5] Dados salvos no User:");
-        console.log("   - workshop_id:", verifyUser.workshop_id);
-        console.log("   - profile_id:", verifyUser.profile_id);
-        console.log("   - position:", verifyUser.position);
-        console.log("   - user_status:", verifyUser.user_status);
-        console.log("   - is_internal:", verifyUser.is_internal);
-        
-        if (!verifyUser.workshop_id) {
-          console.error("❌ [PASSO 5] CRÍTICO: workshop_id não foi salvo!");
-        }
-        
-        // Vincular user_id no Employee
-        console.log("🔗 [PASSO 6] Vinculando user_id no Employee...");
-        await base44.asServiceRole.entities.Employee.update(employee.id, { user_id: createdUserId });
-        console.log("✅ [PASSO 6] Employee vinculado ao User com sucesso!");
-      }
     } catch (userError) {
-      console.error("❌ [ERRO CRÍTICO] Falha ao criar/atualizar User:");
+      console.error("❌ [ERRO CRÍTICO] Falha ao solicitar criação de User:");
       console.error("   Mensagem:", userError.message);
-      console.error("   Stack:", userError.stack);
       
-      // Retornar erro detalhado
       return Response.json({ 
         success: false,
-        error: 'Falha ao criar usuário no sistema',
+        error: 'Falha ao iniciar criação do usuário no sistema',
         details: userError.message,
         employee_created: true,
         employee_id: employee.id
