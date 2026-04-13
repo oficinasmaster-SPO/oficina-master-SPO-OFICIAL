@@ -65,40 +65,52 @@ const withAuthAndTenant = (handler) => async (req) => {
 
 // --- Repositories ---
 class DashboardRepository {
-    constructor(base44) {
+    constructor(base44, user, tenantId) {
         this.base44 = base44;
+        this.user = user;
+        this.tenantId = tenantId;
+        this.isAdmin = user.role === 'admin';
+    }
+
+    buildQuery(baseQuery = {}) {
+        if (this.isAdmin) return baseQuery;
+        return { ...baseQuery, workshop_id: this.tenantId };
     }
 
     async getWorkshops() {
-        return await this.base44.entities.Workshop.list();
+        const query = this.isAdmin ? {} : { id: this.tenantId };
+        return await this.base44.entities.Workshop.filter(query, '', 500);
     }
     
     async getOsAssessments() {
-        return await this.base44.entities.ServiceOrderDiagnostic.list('-created_date');
+        return await this.base44.entities.ServiceOrderDiagnostic.filter(this.buildQuery(), '-created_date', 500);
     }
     
     async getWorkshopGameProfiles() {
-        return await this.base44.entities.WorkshopGameProfile.list();
+        return await this.base44.entities.WorkshopGameProfile.filter(this.buildQuery(), '', 500);
     }
     
     async getUserGameProfiles() {
-        return await this.base44.entities.UserGameProfile.list();
+        if (this.isAdmin) return await this.base44.entities.UserGameProfile.filter({}, '', 500);
+        return await this.base44.entities.UserGameProfile.filter({ user_id: this.user.id }, '', 500);
     }
     
     async getEmployees() {
-        return await this.base44.entities.Employee.list();
+        return await this.base44.entities.Employee.filter(this.buildQuery(), '', 500);
     }
     
     async getAreaGoals() {
-        return await this.base44.entities.AreaGoal.list();
+        return await this.base44.entities.AreaGoal.filter(this.buildQuery(), '', 500);
     }
     
     async getUsers() {
-        return await this.base44.entities.User.list();
+        if (this.isAdmin) return await this.base44.entities.User.filter({}, '', 500);
+        return await this.base44.entities.User.filter({ id: this.user.id }, '', 500);
     }
     
     async getUserProgress() {
-        return await this.base44.entities.UserProgress.list();
+        if (this.isAdmin) return await this.base44.entities.UserProgress.filter({}, '', 500);
+        return await this.base44.entities.UserProgress.filter({ user_id: this.user.id }, '', 500);
     }
 }
 
@@ -145,7 +157,7 @@ class DashboardService {
 // --- BFF (Controller/Handler) ---
 const handleDashboard = async (req, { base44, user, tenantId }) => {
     try {
-        const repository = new DashboardRepository(base44);
+        const repository = new DashboardRepository(base44, user, tenantId);
         const service = new DashboardService(repository);
         const result = await service.getDashboardData();
 
