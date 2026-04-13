@@ -119,7 +119,7 @@ export default function Layout({ children, currentPageName }) {
                               !user?.workshop_id
                             );
 
-  const shouldShowMenus = isAuthenticated && !isPublicPage && !isPendingOnboarding && (!!workshop || isAdminMode);
+  const shouldShowMenus = isAuthenticated && !isPublicPage && !isPendingOnboarding && (!!workshop || isAdminMode || user?.role === 'admin');
 
   // IMPORTANTE: Desabilitar modo Admin em páginas de primeiro acesso
   const isFirstAccessPage = location.pathname.toLowerCase().includes('primeiroacesso');
@@ -130,7 +130,7 @@ export default function Layout({ children, currentPageName }) {
   }
 
   const globalAdminPages = ['/', '/home', '/dashboard', '/dashboardfinanceiro', '/configuracoeskiwify', '/gestaousuariosempresas', '/gestaotenants', '/gestaoempresas', '/adminprodutividade', '/admindesafios', '/gerenciarplanos', '/calendarioeventos', '/cadastrousuariodireto', '/testusuarios', '/adminmensagens', '/adminnotificacoes', '/gerenciartoursvideos', '/gerenciarprocessos', '/gestaorbac', '/configuracaopermissoesgranulares', '/logsauditoriarbac', '/usuariosadmin', '/monitoramentousuarios', '/diagnosticoplano', '/integracoes', '/testeopenai', '/adminqadashboard'];
-  const isGlobalAdminPage = isAdminMode && globalAdminPages.some(p => location.pathname.toLowerCase() === p || location.pathname.toLowerCase().startsWith(p + '/'));
+  const isGlobalAdminPage = (isAdminMode || user?.role === 'admin') && globalAdminPages.some(p => location.pathname.toLowerCase() === p || location.pathname.toLowerCase().startsWith(p + '/'));
 
   const [showLoading, setShowLoading] = useState(false);
   useEffect(() => {
