@@ -15,6 +15,7 @@ import { TenantProvider } from '@/components/contexts/TenantContext';
 import { AttendanceTypeProvider } from '@/components/contexts/AttendanceTypeContext';
 import PageAccessControl from '@/components/auth/PageAccessControl';
 import { pagePermissions } from '@/components/lib/pagePermissions';
+import { PermissionsProvider } from '@/components/contexts/PermissionsContext';
 import Home from '@/pages/Home';
 import GestaoTenants from '@/pages/GestaoTenants';
 import CompletarPerfil from '@/pages/CompletarPerfil';
@@ -99,7 +100,8 @@ const AuthenticatedApp = () => {
   // Render the main app
   return (
     <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><WheelLoader size="xl" /></div>}>
-      <Routes>
+      <PermissionsProvider>
+        <Routes>
         <Route path="/" element={
         <LayoutWrapper currentPageName="Home">
           <Home />
@@ -166,7 +168,8 @@ const AuthenticatedApp = () => {
         );
       })}
       <Route path="*" element={<PageNotFound />} />
-      </Routes>
+        </Routes>
+      </PermissionsProvider>
     </Suspense>
   );
 };

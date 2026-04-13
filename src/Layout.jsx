@@ -18,7 +18,7 @@ import AssistanceModeBanner from "@/components/shared/AssistanceModeBanner.jsx";
 import AdminModeBanner from "@/components/shared/AdminModeBanner.jsx";
 import { useAdminMode } from "@/components/hooks/useAdminMode";
 import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
-import { PermissionsProvider } from "@/components/contexts/PermissionsContext";
+
 import OnboardingGate from "@/components/onboarding/OnboardingGate";
 import { useModuleTracking } from "@/components/hooks/useModuleTracking";
 import { useNavigationHistory } from "@/components/hooks/useNavigationHistory";
@@ -141,7 +141,6 @@ export default function Layout({ children, currentPageName }) {
   }, [isAuthenticated, isPublicPage, isLoadingWorkshop]);
 
   return (
-    <PermissionsProvider>
       <OnboardingGate user={user} isAuthenticated={isAuthenticated}>
       <div className="min-h-screen bg-gray-50">
         <PlanLimitModal />
@@ -363,6 +362,5 @@ export default function Layout({ children, currentPageName }) {
       </div>
     </div>
       </OnboardingGate>
-    </PermissionsProvider>
   );
 }
