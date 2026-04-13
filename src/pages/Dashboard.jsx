@@ -36,7 +36,7 @@ export default function Dashboard() {
     async () => {
       try {
         const currentUser = await base44.auth.me();
-        if (currentUser.role !== "admin" && currentUser.role !== "user") {
+        if (currentUser.role !== "admin") {
           navigate(createPageUrl("Home"));
         }
         return currentUser;
@@ -50,7 +50,7 @@ export default function Dashboard() {
 
   useCacheInvalidation('User', 'auth-me');
 
-  const isAuthorized = user?.role === "admin" || user?.role === "user";
+  const isAuthorized = user?.role === "admin";
 
   const { data: bffData, isLoading: loadingDashboard } = useQueryCache(
     ['bff-dashboard', tenantId],

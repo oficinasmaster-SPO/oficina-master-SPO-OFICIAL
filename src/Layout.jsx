@@ -129,6 +129,9 @@ export default function Layout({ children, currentPageName }) {
     window.location.search = '';
   }
 
+  const globalAdminPages = ['/', '/home', '/dashboard', '/dashboardfinanceiro', '/configuracoeskiwify', '/gestaousuariosempresas', '/gestaotenants', '/gestaoempresas', '/adminprodutividade', '/admindesafios', '/gerenciarplanos', '/calendarioeventos', '/cadastrousuariodireto', '/testusuarios', '/adminmensagens', '/adminnotificacoes', '/gerenciartoursvideos', '/gerenciarprocessos', '/gestaorbac', '/configuracaopermissoesgranulares', '/logsauditoriarbac', '/usuariosadmin', '/monitoramentousuarios', '/diagnosticoplano', '/integracoes', '/testeopenai', '/adminqadashboard'];
+  const isGlobalAdminPage = isAdminMode && globalAdminPages.some(p => location.pathname.toLowerCase() === p || location.pathname.toLowerCase().startsWith(p + '/'));
+
   const [showLoading, setShowLoading] = useState(false);
   useEffect(() => {
     let timeout;
@@ -300,7 +303,7 @@ export default function Layout({ children, currentPageName }) {
                     {showLoading ? <WheelLoader size="lg" text="Carregando dados..." /> : null}
                   </div>
                 ) : (
-                  isAuthenticated && !isPublicPage && !isPendingOnboarding && !workshopId ? (
+                  isAuthenticated && !isPublicPage && !isPendingOnboarding && !workshopId && !isGlobalAdminPage ? (
                     <div className="min-h-[60vh] flex flex-col items-center justify-center">
                       <AlertCircle className="w-12 h-12 text-amber-500 mb-4" />
                       <h2 className="text-xl font-bold text-gray-900">Nenhuma oficina selecionada</h2>

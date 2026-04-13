@@ -28,7 +28,7 @@ const withAuthAndTenant = (handler) => async (req) => {
             } catch (e) {}
         }
 
-        if (!tenantId || typeof tenantId !== 'string') {
+        if (user.role !== 'admin' && (!tenantId || typeof tenantId !== 'string')) {
             // Log missing tenant access as suspicious
             base44.asServiceRole.entities.SecurityLog.create({
                 user_id: user.id,
