@@ -32,7 +32,6 @@ function MetricCard({ icon: Icon, label, value, sub, color = "text-gray-900", bg
         </div>
       </CardContent>
     </Card>);
-
 }
 
 function SprintRow({ sprint, workshop, onSprintClick }) {
@@ -67,7 +66,6 @@ function SprintRow({ sprint, workshop, onSprintClick }) {
         <Badge className={`text-xs ${statusCfg.color}`}>{statusCfg.label}</Badge>
       </div>
     </div>);
-
 }
 
 export default function DashboardOperacionalTabRedesigned({ user, workshops = [] }) {
@@ -85,30 +83,26 @@ export default function DashboardOperacionalTabRedesigned({ user, workshops = []
 
   const workshopMap = useMemo(() => Object.fromEntries(workshops.map((w) => [w.id, w])), [workshops]);
 
-  const handleSprintClick = (sprint) => {
-    setSelectedSprint(sprint);
-  };
+  // MOVE USEMEMO TO TOP LEVEL BEFORE ANY EARLY RETURNS
+  const { total, em_andamento, atrasados, concluidos, avgProgress } = useMemo(() => {
+    const t = sprints.length;
+    return {
+      total: t,
+      em_andamento: sprints.filter((s) => s.status === "in_progress").length,
+      atrasados: sprints.filter((s) => s.status === "overdue").length,
+      concluidos: sprints.filter((s) => s.status === "completed").length,
+      avgProgress: t > 0 ? Math.round(sprints.reduce((acc, s) => acc + (s.progress_percentage || 0), 0) / t) : 0
+    };
+  }, [sprints]);
 
-  // Métricas
-  const total = sprints.length;
-  const em_andamento = sprints.filter((s) => s.status === "in_progress").length;
-  const atrasados = sprints.filter((s) => s.status === "overdue").length;
-  const concluidos = sprints.filter((s) => s.status === "completed").length;
-  const avgProgress = total > 0 ?
-  Math.round(sprints.reduce((acc, s) => acc + (s.progress_percentage || 0), 0) / total) :
-  0;
-
-  // Filtro
   const sprintsFiltrados = useMemo(() => {
     return filterStatus === "all" ?
     sprints :
     sprints.filter((s) => s.status === filterStatus);
   }, [sprints, filterStatus]);
 
-  // Sprints atrasados
   const sprintsAtrasados = useMemo(() => sprints.filter((s) => s.status === "overdue"), [sprints]);
 
-  // Top workshops por progresso
   const workshopsComSprints = useMemo(() => {
     return workshops.
     map((w) => {
@@ -122,12 +116,26 @@ export default function DashboardOperacionalTabRedesigned({ user, workshops = []
     slice(0, 8);
   }, [workshops, sprints]);
 
+  // MOVED CONDITIONAL USEMEMO TO THE TOP LEVEL HERE
+  const sprintsPorMissao = useMemo(() => {
+    if (sprints.length === 0) return [];
+    const grouped = sprints.reduce((acc, s) => {
+      const key = s.mission_id || "sem_missao";
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {});
+    return Object.entries(grouped).sort((a, b) => b[1] - a[1]);
+  }, [sprints]);
+
+  const handleSprintClick = (sprint) => {
+    setSelectedSprint(sprint);
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <RefreshCw className="w-6 h-6 animate-spin text-blue-500" />
       </div>);
-
   }
 
   return (
@@ -250,37 +258,29 @@ export default function DashboardOperacionalTabRedesigned({ user, workshops = []
       </div>
 
       {/* Distribuição por missão */}
-      {sprints.length > 0 &&
+      {sprintsPorMissao.length > 0 &&
       <Card className="shadow-sm">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold text-gray-800">Distribuição por Missão</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-2">
-              {Object.entries(
-              sprints.reduce((acc, s) => {
-                const key = s.mission_id || "sem_missao";
-                acc[key] = (acc[key] || 0) + 1;
-                return acc;
-              }, {})
-            ).
-            sort((a, b) => b[1] - a[1]).
-            map(([missionId, count]) =>
-            <div key={missionId} className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 rounded-full">
-                    <span className="text-xs font-medium text-gray-700">
-                      {missionId === "sprint0" ? "Sprint 0 — Diagnóstico" :
-                missionId === "agenda_cheia" ? "📅 Agenda Cheia" :
-                missionId === "fechamento_imbativel" ? "🎯 Fechamento Imbatível" :
-                missionId === "caixa_forte" ? "💰 Caixa Forte" :
-                missionId === "equipe_elite" ? "👥 Equipe de Elite" :
-                missionId === "contratacao_certa" ? "🤝 Contratação Certa" :
-                missionId === "estrutura_produtiva" ? "⚙️ Estrutura Produtiva" :
-                missionId === "oficina_sistematizada" ? "📋 Oficina Sistematizada" :
-                missionId}
-                    </span>
-                    <Badge className="text-xs bg-gray-200 text-gray-700 px-1.5">{count}</Badge>
-                  </div>
-            )}
+              {sprintsPorMissao.map(([missionId, count]) =>
+                <div key={missionId} className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 rounded-full">
+                  <span className="text-xs font-medium text-gray-700">
+                    {missionId === "sprint0" ? "Sprint 0 — Diagnóstico" :
+                    missionId === "agenda_cheia" ? "📅 Agenda Cheia" :
+                    missionId === "fechamento_imbativel" ? "🎯 Fechamento Imbatível" :
+                    missionId === "caixa_forte" ? "💰 Caixa Forte" :
+                    missionId === "equipe_elite" ? "👥 Equipe de Elite" :
+                    missionId === "contratacao_certa" ? "🤝 Contratação Certa" :
+                    missionId === "estrutura_produtiva" ? "⚙️ Estrutura Produtiva" :
+                    missionId === "oficina_sistematizada" ? "📋 Oficina Sistematizada" :
+                    missionId}
+                  </span>
+                  <Badge className="text-xs bg-gray-200 text-gray-700 px-1.5">{count}</Badge>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
