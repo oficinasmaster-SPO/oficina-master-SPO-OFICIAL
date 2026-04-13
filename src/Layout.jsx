@@ -108,9 +108,11 @@ export default function Layout({ children, currentPageName }) {
 
   // Verificar se a página atual é pública (não precisa de autenticação)
   const publicPages = ['/PrimeiroAcesso', '/ClientRegistration', '/CadastroSucesso', '/Planos', '/Cadastro'];
-  const isPublicPage = publicPages.some(page => 
-    location.pathname.toLowerCase().includes(page.toLowerCase())
-  );
+  const isPublicPage = publicPages.some(page => {
+    const loc = location.pathname.toLowerCase();
+    const p = page.toLowerCase();
+    return loc === p || loc.startsWith(p + '/');
+  });
 
   const isPendingOnboarding = user?.role !== 'admin' && (
                               user?.cadastro_em_andamento === true || 

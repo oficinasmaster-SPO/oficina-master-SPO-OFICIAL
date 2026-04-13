@@ -43,7 +43,11 @@ const AuthenticatedApp = () => {
   const location = useLocation();
 
   const publicPaths = ['/PublicNPS', '/PublicDISC', '/PrimeiroAcesso', '/ClientRegistration', '/CadastroSucesso', '/Planos', '/Cadastro', '/BemVindoPlanos'];
-  const isPublicPath = publicPaths.some(path => location.pathname.toLowerCase().includes(path.toLowerCase()));
+  const isPublicPath = publicPaths.some(path => {
+    const loc = location.pathname.toLowerCase();
+    const p = path.toLowerCase();
+    return loc === p || loc.startsWith(p + '/');
+  });
 
   useEffect(() => {
     let timeout;
