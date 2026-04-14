@@ -154,7 +154,12 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
         return false;
       }
       try {
-        await onUpdate(formData);
+        const dataToSave = {
+          ...formData,
+          capacidade_atendimento_dia: Number(formData.capacidade_atendimento_dia) || 0,
+          tempo_medio_servico: Number(formData.tempo_medio_servico) || 0
+        };
+        await onUpdate(dataToSave);
         toast.success("Dados básicos salvos!");
         setEditing(false);
         return true;
@@ -233,7 +238,12 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
 
     setSaving(true);
     try {
-      await onUpdate(formData);
+      const dataToSave = {
+        ...formData,
+        capacidade_atendimento_dia: Number(formData.capacidade_atendimento_dia) || 0,
+        tempo_medio_servico: Number(formData.tempo_medio_servico) || 0
+      };
+      await onUpdate(dataToSave);
       toast.success("Dados básicos salvos!");
     } catch (error) {
       console.error("Erro ao salvar:", error);
@@ -824,7 +834,7 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
                 type="number"
                 min="0"
                 value={formData.capacidade_atendimento_dia === 0 ? "" : formData.capacidade_atendimento_dia}
-                onChange={(e) => setFormData({...formData, capacidade_atendimento_dia: e.target.value ? parseInt(e.target.value) : 0})}
+                onChange={(e) => setFormData({...formData, capacidade_atendimento_dia: e.target.value})}
                 disabled={!editing}
                 placeholder="Ex: 10"
               />
@@ -836,7 +846,7 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
                 step="0.5"
                 min="0"
                 value={formData.tempo_medio_servico === 0 ? "" : formData.tempo_medio_servico}
-                onChange={(e) => setFormData({...formData, tempo_medio_servico: e.target.value ? parseFloat(e.target.value) : 0})}
+                onChange={(e) => setFormData({...formData, tempo_medio_servico: e.target.value})}
                 disabled={!editing}
                 placeholder="Ex: 2.5"
               />
