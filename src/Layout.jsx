@@ -249,9 +249,11 @@ export default function Layout({ children, currentPageName }) {
                                 >
                                   <div className="flex flex-col min-w-0">
                                     <span className="truncate text-sm">{ws.name}</span>
-                                    {!ws.company_id
-                                      ? <span className="text-xs opacity-60">Matriz</span>
-                                      : <span className="text-xs opacity-60">Filial · {ws.city || 'Sem cidade'}</span>
+                                    {ws.company_id
+                                      ? <span className="text-xs opacity-60">Filial · {ws.city || 'Sem cidade'}</span>
+                                      : workshopsDisponiveis.some(w => w.company_id === ws.id)
+                                        ? <span className="text-xs opacity-60">Matriz</span>
+                                        : <span className="text-xs opacity-60">{ws.city || 'Oficina'}</span>
                                     }
                                   </div>
                                   {workshop?.id === ws.id && <Check className="w-4 h-4 flex-shrink-0" />}
