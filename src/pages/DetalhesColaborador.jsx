@@ -132,7 +132,10 @@ export default function DetalhesColaborador() {
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <h1 className="text-xl sm:text-3xl font-bold text-gray-900 truncate">{employee.full_name}</h1>
+                <div className="flex items-baseline gap-2">
+                  <h1 className="text-xl sm:text-3xl font-bold text-gray-900 truncate">{employee.full_name}</h1>
+                  <span className="text-xs text-gray-400 shrink-0">ID: {employee.id}</span>
+                </div>
                 <p className="text-sm sm:text-lg text-gray-600">{employee.position}</p>
                 <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-2">
                   <span className="px-2 py-0.5 sm:px-3 sm:py-1 bg-blue-100 text-blue-700 rounded-full text-xs sm:text-sm whitespace-nowrap">
