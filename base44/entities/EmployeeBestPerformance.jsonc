@@ -1,0 +1,166 @@
+{
+  "name": "EmployeeBestPerformance",
+  "type": "object",
+  "properties": {
+    "employee_id": {
+      "type": "string",
+      "description": "ID do colaborador"
+    },
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "company_id": {
+      "type": "string",
+      "description": "ID da empresa"
+    },
+    "consulting_firm_id": {
+      "type": "string",
+      "description": "ID da consultoria"
+    },
+    "area": {
+      "type": "string",
+      "enum": [
+        "vendas",
+        "comercial",
+        "tecnico",
+        "administrativo",
+        "gerencia",
+        "marketing",
+        "financeiro"
+      ],
+      "description": "\u00c1rea do colaborador"
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data do melhor m\u00eas (YYYY-MM-DD)"
+    },
+    "revenue_total": {
+      "type": "number",
+      "default": 0,
+      "description": "Faturamento total do melhor m\u00eas"
+    },
+    "revenue_parts": {
+      "type": "number",
+      "default": 0,
+      "description": "Faturamento de pe\u00e7as do melhor m\u00eas"
+    },
+    "revenue_services": {
+      "type": "number",
+      "default": 0,
+      "description": "Faturamento de servi\u00e7os do melhor m\u00eas"
+    },
+    "profit_percentage": {
+      "type": "number",
+      "default": 0,
+      "description": "Percentual de lucro do melhor m\u00eas"
+    },
+    "rentability_percentage": {
+      "type": "number",
+      "default": 0,
+      "description": "Percentual de rentabilidade do melhor m\u00eas"
+    },
+    "customer_volume": {
+      "type": "number",
+      "default": 0,
+      "description": "Volume de clientes do melhor m\u00eas"
+    },
+    "average_ticket": {
+      "type": "number",
+      "default": 0,
+      "description": "Ticket m\u00e9dio do melhor m\u00eas (calculado)"
+    },
+    "average_ticket_parts": {
+      "type": "number",
+      "default": 0,
+      "description": "Ticket m\u00e9dio de pe\u00e7as (calculado)"
+    },
+    "average_ticket_services": {
+      "type": "number",
+      "default": 0,
+      "description": "Ticket m\u00e9dio de servi\u00e7os (calculado)"
+    }
+  },
+  "required": [
+    "employee_id",
+    "workshop_id"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        },
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        },
+        {
+          "company_id": "{{user.data.company_id}}"
+        },
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        },
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        },
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        }
+      ]
+    }
+  }
+}

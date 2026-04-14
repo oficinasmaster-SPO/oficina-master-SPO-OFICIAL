@@ -101,9 +101,44 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
         average_ticket_services: calculatedAverageTicketServices
       };
       
+      // 1) Salvar no Employee (campo best_month_history) - mantém compatibilidade
       if (onUpdate) {
         await onUpdate({ best_month_history: dataToSave });
       }
+
+      // 2) Salvar/atualizar na entidade EmployeeBestPerformance
+      try {
+        const existing = await base44.entities.EmployeeBestPerformance.filter({
+          employee_id: employee.id
+        });
+
+        const bestPerfData = {
+          employee_id: employee.id,
+          workshop_id: employee.workshop_id,
+          company_id: employee.company_id || '',
+          consulting_firm_id: employee.consulting_firm_id || '',
+          area: employee.area || 'tecnico',
+          date: dataToSave.date,
+          revenue_total: dataToSave.revenue_total || 0,
+          revenue_parts: dataToSave.revenue_parts || 0,
+          revenue_services: dataToSave.revenue_services || 0,
+          profit_percentage: dataToSave.profit_percentage || 0,
+          rentability_percentage: dataToSave.rentability_percentage || 0,
+          customer_volume: dataToSave.customer_volume || 0,
+          average_ticket: dataToSave.average_ticket || 0,
+          average_ticket_parts: dataToSave.average_ticket_parts || 0,
+          average_ticket_services: dataToSave.average_ticket_services || 0
+        };
+
+        if (existing.length > 0) {
+          await base44.entities.EmployeeBestPerformance.update(existing[0].id, bestPerfData);
+        } else {
+          await base44.entities.EmployeeBestPerformance.create(bestPerfData);
+        }
+      } catch (bpError) {
+        console.error("Erro ao salvar EmployeeBestPerformance:", bpError);
+      }
+
       setEditingBestMonth(false);
     } catch (error) {
       console.error("Erro ao salvar melhor mês:", error);
