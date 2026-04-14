@@ -61,10 +61,14 @@ export default function PainelProducao({ employee }) {
 
   // Formatar mês para exibição
   const formatMonth = (monthStr) => {
-    if (!monthStr) return "-";
-    const [year, month] = monthStr.split("-");
-    const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-    return `${months[parseInt(month) - 1]}/${year?.substring(2)}`;
+    if (!monthStr || monthStr === "-") return "-";
+    const parts = monthStr.split("-");
+    if (parts.length < 2 || !parts[1]) return "-";
+    const [year, month] = parts;
+    const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+    const idx = parseInt(month) - 1;
+    if (isNaN(idx) || idx < 0 || idx > 11) return "-";
+    return `${monthNames[idx]}/${year?.substring(2)}`;
   };
 
   // Dados para gráficos
