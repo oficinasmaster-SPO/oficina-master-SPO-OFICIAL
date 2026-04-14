@@ -46,17 +46,13 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
 
   // Calcular ticket médio automaticamente
   const currentBest = localBestMonth || employee?.best_month_history;
-  const calculatedAverageTicket = currentBest?.customer_volume > 0 
-    ? currentBest.revenue_total / currentBest.customer_volume 
-    : 0;
-  
-  const calculatedAverageTicketParts = currentBest?.customer_volume > 0 
-    ? currentBest.revenue_parts / currentBest.customer_volume 
-    : 0;
-  
-  const calculatedAverageTicketServices = currentBest?.customer_volume > 0 
-    ? currentBest.revenue_services / currentBest.customer_volume 
-    : 0;
+  const cbVolume = parseFloat(currentBest?.customer_volume) || 0;
+  const cbTotal = parseFloat(currentBest?.revenue_total) || 0;
+  const cbParts = parseFloat(currentBest?.revenue_parts) || 0;
+  const cbServices = parseFloat(currentBest?.revenue_services) || 0;
+  const calculatedAverageTicket = cbVolume > 0 ? cbTotal / cbVolume : 0;
+  const calculatedAverageTicketParts = cbVolume > 0 ? cbParts / cbVolume : 0;
+  const calculatedAverageTicketServices = cbVolume > 0 ? cbServices / cbVolume : 0;
 
   useEffect(() => {
     const loadMetrics = async () => {
@@ -186,10 +182,10 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
     setFormData({ ...formData, commission_rules: newRules });
   };
 
-  const totalCost = formData.salary + formData.commission + formData.bonus + 
+  const totalCost = (parseFloat(formData.salary) || 0) + (parseFloat(formData.commission) || 0) + (parseFloat(formData.bonus) || 0) + 
     (Array.isArray(formData.benefits) ? formData.benefits.reduce((sum, b) => sum + (b.valor || 0), 0) : 0);
   
-  const totalProduction = formData.production_parts + formData.production_parts_sales + formData.production_services + formData.production_services_sales;
+  const totalProduction = (parseFloat(formData.production_parts) || 0) + (parseFloat(formData.production_parts_sales) || 0) + (parseFloat(formData.production_services) || 0) + (parseFloat(formData.production_services_sales) || 0);
   // Formula: Custo (Salário) / Faturamento Total (Produção) * 100
   const productionPercentage = totalProduction > 0 ? ((totalCost / totalProduction) * 100).toFixed(1) : 0;
 
@@ -235,8 +231,9 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
               <Label className="text-xs text-gray-600 mb-1 block">Faturamento Total (R$)</Label>
               <Input
                 type="number"
-                value={localBestMonth?.revenue_total || 0}
-                onChange={(e) => setLocalBestMonth({...localBestMonth, revenue_total: parseFloat(e.target.value) || 0})}
+                value={localBestMonth?.revenue_total ?? ''}
+                onChange={(e) => setLocalBestMonth({...localBestMonth, revenue_total: e.target.value === '' ? '' : parseFloat(e.target.value)})}
+                onBlur={(e) => setLocalBestMonth(prev => ({...prev, revenue_total: parseFloat(prev.revenue_total) || 0}))}
                 disabled={!editingBestMonth}
                 className="h-9"
               />
@@ -245,8 +242,9 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
               <Label className="text-xs text-gray-600 mb-1 block">Volume de Clientes</Label>
               <Input
                 type="number"
-                value={localBestMonth?.customer_volume || 0}
-                onChange={(e) => setLocalBestMonth({...localBestMonth, customer_volume: parseInt(e.target.value) || 0})}
+                value={localBestMonth?.customer_volume ?? ''}
+                onChange={(e) => setLocalBestMonth({...localBestMonth, customer_volume: e.target.value === '' ? '' : parseInt(e.target.value)})}
+                onBlur={(e) => setLocalBestMonth(prev => ({...prev, customer_volume: parseInt(prev.customer_volume) || 0}))}
                 disabled={!editingBestMonth}
                 className="h-9"
               />
@@ -268,8 +266,9 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
               <Label className="text-xs text-gray-600 mb-1 block">Faturamento Peças (R$)</Label>
               <Input
                 type="number"
-                value={localBestMonth?.revenue_parts || 0}
-                onChange={(e) => setLocalBestMonth({...localBestMonth, revenue_parts: parseFloat(e.target.value) || 0})}
+                value={localBestMonth?.revenue_parts ?? ''}
+                onChange={(e) => setLocalBestMonth({...localBestMonth, revenue_parts: e.target.value === '' ? '' : parseFloat(e.target.value)})}
+                onBlur={(e) => setLocalBestMonth(prev => ({...prev, revenue_parts: parseFloat(prev.revenue_parts) || 0}))}
                 disabled={!editingBestMonth}
                 className="h-9"
               />
@@ -278,8 +277,9 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
               <Label className="text-xs text-gray-600 mb-1 block">Faturamento Serviços (R$)</Label>
               <Input
                 type="number"
-                value={localBestMonth?.revenue_services || 0}
-                onChange={(e) => setLocalBestMonth({...localBestMonth, revenue_services: parseFloat(e.target.value) || 0})}
+                value={localBestMonth?.revenue_services ?? ''}
+                onChange={(e) => setLocalBestMonth({...localBestMonth, revenue_services: e.target.value === '' ? '' : parseFloat(e.target.value)})}
+                onBlur={(e) => setLocalBestMonth(prev => ({...prev, revenue_services: parseFloat(prev.revenue_services) || 0}))}
                 disabled={!editingBestMonth}
                 className="h-9"
               />
@@ -289,8 +289,9 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
               <Input
                 type="number"
                 step="0.1"
-                value={localBestMonth?.profit_percentage || 0}
-                onChange={(e) => setLocalBestMonth({...localBestMonth, profit_percentage: parseFloat(e.target.value) || 0})}
+                value={localBestMonth?.profit_percentage ?? ''}
+                onChange={(e) => setLocalBestMonth({...localBestMonth, profit_percentage: e.target.value === '' ? '' : parseFloat(e.target.value)})}
+                onBlur={(e) => setLocalBestMonth(prev => ({...prev, profit_percentage: parseFloat(prev.profit_percentage) || 0}))}
                 disabled={!editingBestMonth}
                 className="h-9"
               />
@@ -300,8 +301,9 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
               <Input
                 type="number"
                 step="0.1"
-                value={localBestMonth?.rentability_percentage || 0}
-                onChange={(e) => setLocalBestMonth({...localBestMonth, rentability_percentage: parseFloat(e.target.value) || 0})}
+                value={localBestMonth?.rentability_percentage ?? ''}
+                onChange={(e) => setLocalBestMonth({...localBestMonth, rentability_percentage: e.target.value === '' ? '' : parseFloat(e.target.value)})}
+                onBlur={(e) => setLocalBestMonth(prev => ({...prev, rentability_percentage: parseFloat(prev.rentability_percentage) || 0}))}
                 disabled={!editingBestMonth}
                 className="h-9"
               />
@@ -348,8 +350,9 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
               <Label>Produção de Peças (R$)</Label>
               <Input
                 type="number"
-                value={formData.production_parts}
-                onChange={(e) => setFormData({...formData, production_parts: parseFloat(e.target.value) || 0})}
+                value={formData.production_parts ?? ''}
+                onChange={(e) => setFormData({...formData, production_parts: e.target.value === '' ? '' : parseFloat(e.target.value)})}
+                onBlur={() => setFormData(prev => ({...prev, production_parts: parseFloat(prev.production_parts) || 0}))}
                 disabled={!editing}
               />
             </div>
@@ -357,8 +360,9 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
               <Label>Produção Vendas de Peças (R$)</Label>
               <Input
                 type="number"
-                value={formData.production_parts_sales}
-                onChange={(e) => setFormData({...formData, production_parts_sales: parseFloat(e.target.value) || 0})}
+                value={formData.production_parts_sales ?? ''}
+                onChange={(e) => setFormData({...formData, production_parts_sales: e.target.value === '' ? '' : parseFloat(e.target.value)})}
+                onBlur={() => setFormData(prev => ({...prev, production_parts_sales: parseFloat(prev.production_parts_sales) || 0}))}
                 disabled={!editing}
               />
             </div>
@@ -366,8 +370,9 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
               <Label>Produção de Serviços (R$)</Label>
               <Input
                 type="number"
-                value={formData.production_services}
-                onChange={(e) => setFormData({...formData, production_services: parseFloat(e.target.value) || 0})}
+                value={formData.production_services ?? ''}
+                onChange={(e) => setFormData({...formData, production_services: e.target.value === '' ? '' : parseFloat(e.target.value)})}
+                onBlur={() => setFormData(prev => ({...prev, production_services: parseFloat(prev.production_services) || 0}))}
                 disabled={!editing}
               />
             </div>
@@ -375,8 +380,9 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
               <Label>Produção Vendas de Serviços (R$)</Label>
               <Input
                 type="number"
-                value={formData.production_services_sales}
-                onChange={(e) => setFormData({...formData, production_services_sales: parseFloat(e.target.value) || 0})}
+                value={formData.production_services_sales ?? ''}
+                onChange={(e) => setFormData({...formData, production_services_sales: e.target.value === '' ? '' : parseFloat(e.target.value)})}
+                onBlur={() => setFormData(prev => ({...prev, production_services_sales: parseFloat(prev.production_services_sales) || 0}))}
                 disabled={!editing}
               />
             </div>
@@ -423,8 +429,9 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
               <Label>Salário Fixo (R$)</Label>
               <Input
                 type="number"
-                value={formData.salary}
-                onChange={(e) => setFormData({...formData, salary: parseFloat(e.target.value) || 0})}
+                value={formData.salary ?? ''}
+                onChange={(e) => setFormData({...formData, salary: e.target.value === '' ? '' : parseFloat(e.target.value)})}
+                onBlur={() => setFormData(prev => ({...prev, salary: parseFloat(prev.salary) || 0}))}
                 disabled={!editing}
               />
             </div>
@@ -432,8 +439,9 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
               <Label>Comissão Mensal (R$)</Label>
               <Input
                 type="number"
-                value={formData.commission}
-                onChange={(e) => setFormData({...formData, commission: parseFloat(e.target.value) || 0})}
+                value={formData.commission ?? ''}
+                onChange={(e) => setFormData({...formData, commission: e.target.value === '' ? '' : parseFloat(e.target.value)})}
+                onBlur={() => setFormData(prev => ({...prev, commission: parseFloat(prev.commission) || 0}))}
                 disabled={!editing}
               />
             </div>
@@ -441,8 +449,9 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
               <Label>Bonificação/Prêmio (R$)</Label>
               <Input
                 type="number"
-                value={formData.bonus}
-                onChange={(e) => setFormData({...formData, bonus: parseFloat(e.target.value) || 0})}
+                value={formData.bonus ?? ''}
+                onChange={(e) => setFormData({...formData, bonus: e.target.value === '' ? '' : parseFloat(e.target.value)})}
+                onBlur={() => setFormData(prev => ({...prev, bonus: parseFloat(prev.bonus) || 0}))}
                 disabled={!editing}
               />
             </div>
