@@ -16,8 +16,10 @@ import WhatsAppButton from "@/components/convite/WhatsAppButton";
 import StatusBadge from "@/components/convite/StatusBadge";
 import { jobRoles } from "@/components/lib/jobRoles";
 import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
+import { useNavigate } from "react-router-dom";
 
 export default function ConvidarColaborador() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
   const { workshop: activeWorkshop } = useWorkshopContext();
@@ -651,7 +653,7 @@ export default function ConvidarColaborador() {
           
           <div className="flex justify-end mt-6">
             <Button 
-              onClick={() => window.location.href = '/Colaboradores'}
+              onClick={() => navigate('/Colaboradores')}
               className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto h-12 px-8 text-base"
             >
               Concluir
