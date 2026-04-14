@@ -27,7 +27,7 @@ Deno.serve(async (req) => {
     const atendimentos = await base44.asServiceRole.entities.ConsultoriaAtendimento.filter({
       consultor_id,
       data_agendada: { $gte: startOfDay.toISOString(), $lte: endOfDay.toISOString() },
-      status: { $in: ['agendado', 'confirmado', 'participando', 'realizado'] }
+      status: { $in: ['agendado', 'confirmado', 'participando', 'realizado', 'atrasado'] }
     });
 
     // Se está editando, remover o próprio atendimento da lista

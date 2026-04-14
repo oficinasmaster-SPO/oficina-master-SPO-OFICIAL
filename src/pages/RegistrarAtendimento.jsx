@@ -1056,6 +1056,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
         onSelectHorario={({ data, hora }) => {
           setFormData(prev => ({ ...prev, data_agendada: data, hora_agendada: hora }));
         }}
+        onIgnoreConflict={() => createMutation.mutate(formData)}
       />
     </>
   );

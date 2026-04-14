@@ -21,7 +21,8 @@ export default function ConflitosHorarioModal({
   dataHorario,
   consultorId,
   duracaoMinutos = 60,
-  onSelectHorario
+  onSelectHorario,
+  onIgnoreConflict
 }) {
   const [horariosSugeridos, setHorariosSugeridos] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -54,9 +55,11 @@ export default function ConflitosHorarioModal({
 
       for (const horario of horariosComerciais) {
         const [hora, minuto] = horario.split(':');
-        const dataCompleta = new Date(dataBase);
-        dataCompleta.setHours(parseInt(hora), parseInt(minuto), 0, 0);
-        const dataHoraStr = dataCompleta.toISOString().slice(0, 19);
+        
+        // Fix timezone issue: construct the string manually matching the format YYYY-MM-DDTHH:mm:00
+        // dataHorario comes as YYYY-MM-DDTHH:mm:00
+        const datePart = dataHorario.split('T')[0];
+        const dataHoraStr = `${datePart}T${hora}:${minuto}:00`;
 
         try {
           const response = await base44.functions.invoke('verificarConflitoHorario', {
@@ -88,9 +91,9 @@ export default function ConflitosHorarioModal({
 
   const handleSelecionarHorario = (sugestao) => {
     if (onSelectHorario) {
-      const dataObj = new Date(sugestao.dataCompleta);
+      const [datePart] = sugestao.dataCompleta.split('T');
       onSelectHorario({
-        data: dataObj.toISOString().split('T')[0],
+        data: datePart,
         hora: sugestao.horario
       });
       toast.success(`Horário atualizado para ${sugestao.horario}`);
@@ -251,7 +254,19 @@ export default function ConflitosHorarioModal({
           </div>
         </div>
 
-        <DialogFooter className="mt-6">
+        <DialogFooter className="mt-6 flex sm:justify-between items-center gap-2">
+          {onIgnoreConflict ? (
+            <Button
+              variant="outline"
+              onClick={() => {
+                onIgnoreConflict();
+                onOpenChange(false);
+              }}
+              className="w-full sm:w-auto text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700"
+            >
+              Ignorar conflito e salvar mesmo assim
+            </Button>
+          ) : <div />}
           <Button
             onClick={() => onOpenChange(false)}
             className="w-full sm:w-auto"
