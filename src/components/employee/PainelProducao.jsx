@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TrendingUp, DollarSign, Calendar, Award, BarChart3, Users, Loader2 } from "lucide-react";
+import { TrendingUp, DollarSign, Calendar, Award, BarChart3, Users, Loader2, Tag } from "lucide-react";
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, 
   ResponsiveContainer, LineChart, Line 
@@ -105,67 +105,8 @@ export default function PainelProducao({ employee }) {
 
   return (
     <div className="space-y-6">
-      {/* Melhor Mês Histórico - Destaque */}
-      {bestMonthData && (bestMonthData.revenue_total > 0 || bestMonthData.customer_volume > 0) && (
-        <Card className="shadow-xl border-2 border-yellow-400 bg-gradient-to-r from-yellow-50 to-amber-50">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-yellow-800">
-              <Award className="w-6 h-6" />
-              🏆 Melhor Mês Histórico do Colaborador
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-              <div>
-                <p className="text-xs text-gray-600 mb-1">Data</p>
-                <p className="text-lg font-bold text-gray-900">
-                  {bestMonthData.date 
-                    ? new Date(bestMonthData.date + "T12:00:00").toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }) 
-                    : '-'}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-600 mb-1">Faturamento Total</p>
-                <p className="text-lg font-bold text-green-600">{formatCurrency(bestMonthData.revenue_total)}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-600 mb-1">Volume de Clientes</p>
-                <p className="text-lg font-bold text-blue-600">{bestMonthData.customer_volume || 0} clientes</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-600 mb-1">Ticket Médio</p>
-                <p className="text-lg font-bold text-purple-600">{formatCurrency(bestMonthData.average_ticket)}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-600 mb-1">% Lucro</p>
-                <p className="text-lg font-bold text-orange-600">{(bestMonthData.profit_percentage || 0).toFixed(1)}%</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 pt-4 border-t border-yellow-200">
-              <div>
-                <p className="text-xs text-gray-600 mb-1">Faturamento Peças</p>
-                <p className="text-sm font-semibold text-gray-700">{formatCurrency(bestMonthData.revenue_parts)}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-600 mb-1">Faturamento Serviços</p>
-                <p className="text-sm font-semibold text-gray-700">{formatCurrency(bestMonthData.revenue_services)}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-600 mb-1">Ticket Médio Peças</p>
-                <p className="text-sm font-semibold text-gray-700">{formatCurrency(bestMonthData.average_ticket_parts)}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-600 mb-1">Ticket Médio Serviços</p>
-                <p className="text-sm font-semibold text-gray-700">{formatCurrency(bestMonthData.average_ticket_services)}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {/* KPIs calculados do MonthlyGoalHistory */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="shadow-lg border-2 border-blue-200">
           <CardContent className="p-6">
             <div className="flex items-center gap-3">
@@ -227,6 +168,41 @@ export default function PainelProducao({ employee }) {
           </CardContent>
         </Card>
       </div>
+
+      {/* Ticket Médio Peças e Serviços (do Melhor Mês Histórico) */}
+      {bestMonthData && (bestMonthData.average_ticket_parts > 0 || bestMonthData.average_ticket_services > 0) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Card className="shadow-lg border-2 border-indigo-200">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
+                  <Tag className="w-6 h-6 text-indigo-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Ticket Médio Peças</p>
+                  <p className="text-xl font-bold text-indigo-600">{formatCurrency(bestMonthData.average_ticket_parts)}</p>
+                  <p className="text-xs text-gray-400">Melhor mês histórico</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-lg border-2 border-teal-200">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center">
+                  <Tag className="w-6 h-6 text-teal-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Ticket Médio Serviços</p>
+                  <p className="text-xl font-bold text-teal-600">{formatCurrency(bestMonthData.average_ticket_services)}</p>
+                  <p className="text-xs text-gray-400">Melhor mês histórico</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Gráficos */}
       <Card className="shadow-lg">
