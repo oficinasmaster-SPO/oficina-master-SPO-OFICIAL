@@ -384,7 +384,7 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-sm font-semibold text-green-900">Produção Total Prevista</p>
-                <p className="text-2xl font-bold text-green-600">R$ {totalProduction.toFixed(2)}</p>
+                <p className="text-2xl font-bold text-green-600">R$ {totalProduction.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
               </div>
               <div>
                 <p className="text-sm font-semibold text-green-900">% Custo sobre Produção</p>
@@ -568,7 +568,7 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
 
           <div className="pt-4 border-t bg-blue-50 rounded-lg p-4">
             <p className="text-sm font-semibold text-blue-900">Custo Total Mensal</p>
-            <p className="text-2xl font-bold text-blue-600">R$ {totalCost.toFixed(2)}</p>
+            <p className="text-2xl font-bold text-blue-600">R$ {totalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
           </div>
         </CardContent>
       </Card>
