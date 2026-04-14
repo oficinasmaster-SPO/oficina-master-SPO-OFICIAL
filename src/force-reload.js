@@ -1,0 +1,1 @@
+export const mock = "just a comment to trigger HMR in vite";
