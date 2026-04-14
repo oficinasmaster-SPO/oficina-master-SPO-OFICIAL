@@ -247,16 +247,6 @@ export default function ContractForm({ contract, user, onSuccess }) {
             </div>
 
             <div className="space-y-2">
-              <Label>Valor Mensal</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={formData.monthly_value}
-                onChange={(e) => setFormData({ ...formData, monthly_value: parseFloat(e.target.value) })}
-              />
-            </div>
-
-            <div className="space-y-2">
               <Label>Duração (meses)</Label>
               <Input
                 type="number"
