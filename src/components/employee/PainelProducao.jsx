@@ -170,39 +170,60 @@ export default function PainelProducao({ employee }) {
       </div>
 
       {/* Ticket Médio Peças e Serviços (do Melhor Mês Histórico) */}
-      {bestMonthData && (bestMonthData.average_ticket_parts > 0 || bestMonthData.average_ticket_services > 0) && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card className="shadow-lg border-2 border-indigo-200">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
-                  <Tag className="w-6 h-6 text-indigo-600" />
+      {bestMonthData && (bestMonthData.revenue_total > 0 || bestMonthData.revenue_parts > 0 || bestMonthData.revenue_services > 0) && (() => {
+        const vol = bestMonthData.customer_volume || 0;
+        const ticketParts = bestMonthData.average_ticket_parts || (vol > 0 ? (bestMonthData.revenue_parts || 0) / vol : 0);
+        const ticketServices = bestMonthData.average_ticket_services || (vol > 0 ? (bestMonthData.revenue_services || 0) / vol : 0);
+        const ticketTotal = bestMonthData.average_ticket || (vol > 0 ? (bestMonthData.revenue_total || 0) / vol : 0);
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card className="shadow-lg border-2 border-yellow-200">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+                    <Award className="w-6 h-6 text-yellow-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Ticket Médio Total</p>
+                    <p className="text-xl font-bold text-yellow-600">{formatCurrency(ticketTotal)}</p>
+                    <p className="text-xs text-gray-400">Melhor mês · {vol} clientes</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-600">Ticket Médio Peças</p>
-                  <p className="text-xl font-bold text-indigo-600">{formatCurrency(bestMonthData.average_ticket_parts)}</p>
-                  <p className="text-xs text-gray-400">Melhor mês histórico</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          <Card className="shadow-lg border-2 border-teal-200">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center">
-                  <Tag className="w-6 h-6 text-teal-600" />
+            <Card className="shadow-lg border-2 border-indigo-200">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
+                    <Tag className="w-6 h-6 text-indigo-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Ticket Médio Peças</p>
+                    <p className="text-xl font-bold text-indigo-600">{formatCurrency(ticketParts)}</p>
+                    <p className="text-xs text-gray-400">Melhor mês histórico</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-600">Ticket Médio Serviços</p>
-                  <p className="text-xl font-bold text-teal-600">{formatCurrency(bestMonthData.average_ticket_services)}</p>
-                  <p className="text-xs text-gray-400">Melhor mês histórico</p>
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-lg border-2 border-teal-200">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center">
+                    <Tag className="w-6 h-6 text-teal-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Ticket Médio Serviços</p>
+                    <p className="text-xl font-bold text-teal-600">{formatCurrency(ticketServices)}</p>
+                    <p className="text-xs text-gray-400">Melhor mês histórico</p>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+              </CardContent>
+            </Card>
+          </div>
+        );
+      })()}
 
       {/* Gráficos */}
       <Card className="shadow-lg">
