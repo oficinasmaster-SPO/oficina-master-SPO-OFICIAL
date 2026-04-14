@@ -1,1 +1,1 @@
-export const mock = "force vite to re-trigger build again";
+export const force = "full reload again please";

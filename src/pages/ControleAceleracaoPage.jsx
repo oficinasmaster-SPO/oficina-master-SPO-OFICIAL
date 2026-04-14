@@ -4,7 +4,7 @@ import ControleAceleracaoView from "@/components/aceleracao/ControleAceleracaoVi
 import PageAccessControl from "@/components/auth/PageAccessControl";
 import WheelLoader from "@/components/ui/WheelLoader";
 
-export default function ControleAceleracao() {
+export default function ControleAceleracaoPage() {
   const state = useControleAceleracaoState();
 
   if (state.loadingUser) {
