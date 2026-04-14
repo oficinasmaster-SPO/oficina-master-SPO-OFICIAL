@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +9,7 @@ import { InputMoeda } from "@/components/ui/InputMoeda";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Send, Copy, Save, Eye, FileText } from "lucide-react";
+import { Loader2, Send, Copy, Save, Eye, FileText, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import ContractPreview from "./ContractPreview";
 import { TRAFEGO_PAGO_TEMPLATE } from "./templates/TrafegoPagoTemplate";
@@ -168,6 +168,26 @@ export default function ContractForm({ contract, user, onSuccess }) {
     toast.success("Link copiado!");
   };
 
+  const useContratoFinanceiro = (form) => {
+    return React.useMemo(() => {
+      const meses = parseInt(form.contract_duration_months) || 0;
+      const parcela = parseFloat(form.installment_value) || 0;
+      const setup = parseFloat(form.setup_fee) || 0;
+
+      const mrr = parcela;
+      const totalContrato = (parcela * meses) + setup;
+      const ltv = mrr * meses;
+
+      return { mrr, totalContrato, ltv };
+    }, [form.contract_duration_months, form.installment_value, form.setup_fee]);
+  };
+
+  const financeiro = useContratoFinanceiro(formData);
+
+  const formatMoney = (value) => {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -195,176 +215,244 @@ export default function ContractForm({ contract, user, onSuccess }) {
 
           <TabsContent value="formulario">
             <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Oficina Cliente *</Label>
-              <Select
-                value={formData.workshop_id}
-                onValueChange={(value) => setFormData({ ...formData, workshop_id: value })}
-                required
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecionar oficina..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {workshops.map((workshop) => (
-                    <SelectItem key={workshop.id} value={workshop.id}>
-                      {workshop.name} - {workshop.city}/{workshop.state}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+              
+              {/* 2. Informações do Contrato */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium text-gray-900 border-b pb-2">Informações do Contrato</h3>
+                <div className="grid md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-xs text-gray-500 mb-1 block">Oficina Cliente *</label>
+                    <Select value={formData.workshop_id} onValueChange={(value) => setFormData({ ...formData, workshop_id: value })} required>
+                      <SelectTrigger className="border-gray-200 rounded-xl focus:ring-red-500">
+                        <SelectValue placeholder="Selecionar oficina..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {workshops.map((workshop) => (
+                          <SelectItem key={workshop.id} value={workshop.id}>
+                            {workshop.name} - {workshop.city}/{workshop.state}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-            <div className="space-y-2">
-              <Label>Plano *</Label>
-              <Select
-                value={formData.plan_type}
-                onValueChange={handlePlanChange}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="START">START</SelectItem>
-                  <SelectItem value="BRONZE">BRONZE</SelectItem>
-                  <SelectItem value="PRATA">PRATA</SelectItem>
-                  <SelectItem value="GOLD">GOLD</SelectItem>
-                  <SelectItem value="IOM">IOM</SelectItem>
-                  <SelectItem value="MILLIONS">MILLIONS</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+                  <div className="space-y-2">
+                    <label className="text-xs text-gray-500 mb-1 block">Plano *</label>
+                    <Select value={formData.plan_type} onValueChange={handlePlanChange}>
+                      <SelectTrigger className="border-gray-200 rounded-xl focus:ring-red-500">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="START">START</SelectItem>
+                        <SelectItem value="BRONZE">BRONZE</SelectItem>
+                        <SelectItem value="PRATA">PRATA</SelectItem>
+                        <SelectItem value="GOLD">GOLD</SelectItem>
+                        <SelectItem value="IOM">IOM</SelectItem>
+                        <SelectItem value="MILLIONS">MILLIONS</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-            <div className="space-y-2">
-              <Label>Valor do Contrato *</Label>
-              <InputMoeda
-                value={formData.contract_value}
-                onChange={(e) => setFormData({ ...formData, contract_value: parseFloat(e.target.value) })}
-                required
-              />
-            </div>
+                  <div className="space-y-2">
+                    <label className="text-xs text-gray-500 mb-1 block">Duração (meses)</label>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={formData.contract_duration_months}
+                      onChange={(e) => {
+                        const m = parseInt(e.target.value) || 0;
+                        setFormData({ 
+                          ...formData, 
+                          contract_duration_months: m,
+                          contract_value: ((formData.installment_value || 0) * m) + (formData.setup_fee || 0)
+                        });
+                      }}
+                      className="border-gray-200 rounded-xl focus:ring-red-500"
+                    />
+                  </div>
+                </div>
+              </div>
 
-            <div className="space-y-2">
-              <Label>Duração (meses)</Label>
-              <Input
-                type="number"
-                value={formData.contract_duration_months}
-                onChange={(e) => setFormData({ ...formData, contract_duration_months: parseInt(e.target.value) })}
-              />
-            </div>
+              {selectedWorkshop && (
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                  <h4 className="font-semibold text-blue-900 mb-2">Dados da Oficina Selecionada:</h4>
+                  <div className="grid md:grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <p className="text-gray-600">Razão Social:</p>
+                      <p className="font-medium">{selectedWorkshop.razao_social || selectedWorkshop.name}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-600">CNPJ:</p>
+                      <p className="font-medium">{selectedWorkshop.cnpj || "Não informado"}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-600">Cidade/Estado:</p>
+                      <p className="font-medium">{selectedWorkshop.city}/{selectedWorkshop.state}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-600">Endereço:</p>
+                      <p className="font-medium">{selectedWorkshop.endereco_completo || "Não informado"}</p>
+                    </div>
+                  </div>
+                  <p className="text-xs text-blue-700 mt-3">
+                    ✓ Estes dados serão inseridos automaticamente no contrato
+                  </p>
+                </div>
+              )}
 
-            <div className="space-y-2">
-              <Label>Método de Pagamento</Label>
-              <Select
-                value={formData.payment_method}
-                onValueChange={(value) => setFormData({ ...formData, payment_method: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="asas">Asas</SelectItem>
-                  <SelectItem value="prefi">Prefi</SelectItem>
-                  <SelectItem value="pix">PIX</SelectItem>
-                  <SelectItem value="boleto">Boleto</SelectItem>
-                  <SelectItem value="cartao">Cartão</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+              {/* 3. BLOCO FINANCEIRO (DESTAQUE VISUAL) */}
+              <div className="bg-red-50 border border-red-200 rounded-xl p-5 space-y-4">
+                <h3 className="text-lg font-medium text-red-900 border-b border-red-200 pb-2">Financeiro</h3>
+                <div className="grid md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-xs text-gray-500 mb-1 block">Valor da Parcela</label>
+                    <InputMoeda
+                      value={formData.installment_value}
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value) || 0;
+                        setFormData({ 
+                          ...formData, 
+                          installment_value: val, 
+                          contract_value: (val * (formData.contract_duration_months || 0)) + (formData.setup_fee || 0) 
+                        });
+                      }}
+                      className="border-red-200 rounded-xl focus:ring-red-500 font-semibold"
+                    />
+                  </div>
 
-            <div className="md:col-span-2 grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-xs text-gray-500 mb-1 block">Taxa Setup</label>
+                    <InputMoeda
+                      value={formData.setup_fee}
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value) || 0;
+                        setFormData({ 
+                          ...formData, 
+                          setup_fee: val, 
+                          contract_value: ((formData.installment_value || 0) * (formData.contract_duration_months || 0)) + val 
+                        });
+                      }}
+                      className="border-red-200 rounded-xl focus:ring-red-500 font-semibold"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs text-gray-500 mb-1 block">Valor do Contrato (Total)</label>
+                    <InputMoeda
+                      value={formData.contract_value}
+                      onChange={(e) => setFormData({ ...formData, contract_value: parseFloat(e.target.value) || 0 })}
+                      className="border-red-200 rounded-xl focus:ring-red-500 font-semibold text-gray-700"
+                      placeholder={formatMoney(financeiro.totalContrato)}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* 4. Configuração de Pagamento */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium text-gray-900 border-b pb-2">Configuração de Pagamento</h3>
+                <div className="grid md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-xs text-gray-500 mb-1 block">Método de Pagamento</label>
+                    <Select value={formData.payment_method} onValueChange={(value) => setFormData({ ...formData, payment_method: value })}>
+                      <SelectTrigger className="border-gray-200 rounded-xl focus:ring-red-500">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="asas">Asas</SelectItem>
+                        <SelectItem value="prefi">Prefi</SelectItem>
+                        <SelectItem value="pix">PIX</SelectItem>
+                        <SelectItem value="boleto">Boleto</SelectItem>
+                        <SelectItem value="cartao">Cartão</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs text-gray-500 mb-1 block">Dia de Vencimento</label>
+                    <Select value={formData.installment_due_day?.toString() || "5"} onValueChange={(value) => setFormData({ ...formData, installment_due_day: value })}>
+                      <SelectTrigger className="border-gray-200 rounded-xl focus:ring-red-500">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="5">Dia 5</SelectItem>
+                        <SelectItem value="10">Dia 10</SelectItem>
+                        <SelectItem value="15">Dia 15</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs text-gray-500 mb-1 block">Data da Taxa Setup</label>
+                    <Input
+                      type="date"
+                      value={formData.setup_date}
+                      onChange={(e) => setFormData({ ...formData, setup_date: e.target.value })}
+                      className="border-gray-200 rounded-xl focus:ring-red-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* 6. Card de Inteligência Financeira (OBRIGATÓRIO) */}
+              <div className="bg-gray-900 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-red-500 opacity-10 rounded-full blur-2xl transform translate-x-1/2 -translate-y-1/2"></div>
+                <div className="absolute bottom-0 left-0 w-24 h-24 bg-blue-500 opacity-10 rounded-full blur-2xl transform -translate-x-1/2 translate-y-1/2"></div>
+                
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 relative z-10">
+                  <TrendingUp className="w-5 h-5 text-red-400" />
+                  Inteligência Financeira
+                </h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 relative z-10">
+                  <div>
+                    <p className="text-gray-400 text-sm mb-1">MRR (Receita Recorrente)</p>
+                    <p className="text-2xl font-bold">{formatMoney(financeiro.mrr)}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-400 text-sm mb-1">Valor Total do Contrato</p>
+                    <p className="text-2xl font-bold">{formatMoney(financeiro.totalContrato)}</p>
+                  </div>
+                  <div className="bg-gray-800 p-3 rounded-lg border border-green-500/30 relative">
+                    <div className="absolute top-0 right-0 p-1">
+                      <span className="flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                      </span>
+                    </div>
+                    <p className="text-green-400 text-sm mb-1 font-medium">LTV Projetado</p>
+                    <p className="text-2xl font-bold text-green-400">{formatMoney(financeiro.ltv)}</p>
+                  </div>
+                </div>
+
+                <div className="bg-gray-800/80 rounded-lg p-3 text-sm text-gray-300 border border-gray-700/50 relative z-10">
+                  💡 <span className="font-medium text-white">Insight Automático:</span> Esse contrato representa <span className="font-bold text-green-400">{formatMoney(financeiro.totalContrato)}</span> em receita total para a empresa ao longo de {formData.contract_duration_months || 0} meses.
+                </div>
+              </div>
+
+              {/* 5. Observações */}
               <div className="space-y-2">
-                <Label>Taxa Setup (R$)</Label>
-                <InputMoeda
-                  value={formData.setup_fee}
-                  onChange={(e) => setFormData({ ...formData, setup_fee: parseFloat(e.target.value) })}
+                <label className="text-xs text-gray-500 mb-1 block">Observações Internas</label>
+                <Textarea
+                  value={formData.internal_notes}
+                  onChange={(e) => setFormData({ ...formData, internal_notes: e.target.value })}
+                  placeholder="Anotações internas sobre este contrato..."
+                  className="min-h-[100px] border-gray-200 rounded-xl focus:ring-red-500"
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label>Data da Taxa Setup</Label>
-                <Input
-                  type="date"
-                  value={formData.setup_date}
-                  onChange={(e) => setFormData({ ...formData, setup_date: e.target.value })}
-                />
-              </div>
-            </div>
-
-            <div className="md:col-span-2 grid md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Valor da Parcela (R$)</Label>
-                <InputMoeda
-                  value={formData.installment_value}
-                  onChange={(e) => setFormData({ ...formData, installment_value: parseFloat(e.target.value) })}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Dia de Vencimento da Parcela</Label>
-                <Select
-                  value={formData.installment_due_day?.toString() || "5"}
-                  onValueChange={(value) => setFormData({ ...formData, installment_due_day: value })}
+              <div className="flex gap-3 pt-4 border-t">
+                <Button 
+                  type="submit" 
+                  className="bg-red-600 hover:bg-red-700 text-white font-semibold px-8"
+                  disabled={createMutation.isPending || updateMutation.isPending}
                 >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="5">Dia 5</SelectItem>
-                    <SelectItem value="10">Dia 10</SelectItem>
-                    <SelectItem value="15">Dia 15</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-
-          {selectedWorkshop && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h4 className="font-semibold text-blue-900 mb-2">Dados da Oficina Selecionada:</h4>
-              <div className="grid md:grid-cols-2 gap-3 text-sm">
-                <div>
-                  <p className="text-gray-600">Razão Social:</p>
-                  <p className="font-medium">{selectedWorkshop.razao_social || selectedWorkshop.name}</p>
-                </div>
-                <div>
-                  <p className="text-gray-600">CNPJ:</p>
-                  <p className="font-medium">{selectedWorkshop.cnpj || "Não informado"}</p>
-                </div>
-                <div>
-                  <p className="text-gray-600">Cidade/Estado:</p>
-                  <p className="font-medium">{selectedWorkshop.city}/{selectedWorkshop.state}</p>
-                </div>
-                <div>
-                  <p className="text-gray-600">Endereço:</p>
-                  <p className="font-medium">{selectedWorkshop.endereco_completo || "Não informado"}</p>
-                </div>
-              </div>
-              <p className="text-xs text-blue-700 mt-3">
-                ✓ Estes dados serão inseridos automaticamente no contrato
-              </p>
-            </div>
-          )}
-
-          <div className="space-y-2">
-            <Label>Observações Internas</Label>
-            <Textarea
-              value={formData.internal_notes}
-              onChange={(e) => setFormData({ ...formData, internal_notes: e.target.value })}
-              placeholder="Anotações internas sobre este contrato..."
-              className="min-h-[100px]"
-            />
-          </div>
-
-              <div className="flex gap-3">
-                <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
                   {createMutation.isPending || updateMutation.isPending ? (
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   ) : (
                     <Save className="w-4 h-4 mr-2" />
                   )}
-                  {contract ? 'Atualizar' : 'Criar'} Contrato
+                  {contract ? 'Atualizar Contrato' : 'Criar Contrato'}
                 </Button>
 
                 {contract && contract.status === 'rascunho' && (
@@ -372,7 +460,7 @@ export default function ContractForm({ contract, user, onSuccess }) {
                     type="button"
                     variant="outline"
                     onClick={handleSendContract}
-                    className="border-blue-600 text-blue-600"
+                    className="border-red-200 text-red-600 hover:bg-red-50"
                   >
                     <Send className="w-4 h-4 mr-2" />
                     Enviar para Cliente
