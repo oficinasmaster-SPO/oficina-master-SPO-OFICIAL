@@ -274,50 +274,54 @@ export default function ContractForm({ contract, user, onSuccess }) {
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <Label>Taxa Setup (R$)</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={formData.setup_fee}
-                onChange={(e) => setFormData({ ...formData, setup_fee: parseFloat(e.target.value) })}
-              />
+            <div className="md:col-span-2 grid md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Taxa Setup (R$)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={formData.setup_fee}
+                  onChange={(e) => setFormData({ ...formData, setup_fee: parseFloat(e.target.value) })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Data da Taxa Setup</Label>
+                <Input
+                  type="date"
+                  value={formData.setup_date}
+                  onChange={(e) => setFormData({ ...formData, setup_date: e.target.value })}
+                />
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label>Data da Taxa Setup</Label>
-              <Input
-                type="date"
-                value={formData.setup_date}
-                onChange={(e) => setFormData({ ...formData, setup_date: e.target.value })}
-              />
-            </div>
+            <div className="md:col-span-2 grid md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Valor da Parcela (R$)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={formData.installment_value}
+                  onChange={(e) => setFormData({ ...formData, installment_value: parseFloat(e.target.value) })}
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label>Valor da Parcela (R$)</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={formData.installment_value}
-                onChange={(e) => setFormData({ ...formData, installment_value: parseFloat(e.target.value) })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Dia de Vencimento da Parcela</Label>
-              <Select
-                value={formData.installment_due_day?.toString() || "5"}
-                onValueChange={(value) => setFormData({ ...formData, installment_due_day: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="5">Dia 5</SelectItem>
-                  <SelectItem value="10">Dia 10</SelectItem>
-                  <SelectItem value="15">Dia 15</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="space-y-2">
+                <Label>Dia de Vencimento da Parcela</Label>
+                <Select
+                  value={formData.installment_due_day?.toString() || "5"}
+                  onValueChange={(value) => setFormData({ ...formData, installment_due_day: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">Dia 5</SelectItem>
+                    <SelectItem value="10">Dia 10</SelectItem>
+                    <SelectItem value="15">Dia 15</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 
