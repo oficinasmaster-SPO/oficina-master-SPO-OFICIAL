@@ -63,6 +63,9 @@ export default function ContractDetailsModal({ contract, open, onClose, onEdit }
     toast.success("Link copiado!");
   };
 
+  const mrr = parseFloat(contract.installment_value || contract.monthly_value || 0);
+  const ltv = mrr * parseInt(contract.contract_duration_months || 0);
+
   return (
     <>
       <Dialog open={open} onOpenChange={onClose}>
@@ -129,6 +132,18 @@ export default function ContractDetailsModal({ contract, open, onClose, onEdit }
               <Label className="text-gray-600">Valor Mensal</Label>
               <p className="font-semibold">
                 R$ {contract.monthly_value?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </p>
+            </div>
+            <div>
+              <Label className="text-gray-600">MRR</Label>
+              <p className="font-semibold text-blue-600">
+                R$ {mrr.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </p>
+            </div>
+            <div>
+              <Label className="text-gray-600">LTV (Lifetime Value)</Label>
+              <p className="font-semibold text-purple-600">
+                R$ {ltv.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </p>
             </div>
           </div>
