@@ -1,0 +1,243 @@
+{
+  "name": "Contract",
+  "type": "object",
+  "properties": {
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina cliente"
+    },
+    "workshop_name": {
+      "type": "string",
+      "description": "Nome da oficina"
+    },
+    "contract_number": {
+      "type": "string",
+      "description": "N\u00famero do contrato (CT001, CT002...)"
+    },
+    "consultor_id": {
+      "type": "string",
+      "description": "ID do consultor/acelerador respons\u00e1vel"
+    },
+    "consultor_nome": {
+      "type": "string",
+      "description": "Nome do consultor"
+    },
+    "plan_type": {
+      "type": "string",
+      "enum": [
+        "START",
+        "BRONZE",
+        "PRATA",
+        "GOLD",
+        "IOM",
+        "MILLIONS"
+      ],
+      "description": "Tipo de plano contratado"
+    },
+    "contract_value": {
+      "type": "number",
+      "description": "Valor do contrato"
+    },
+    "monthly_value": {
+      "type": "number",
+      "description": "Valor mensal"
+    },
+    "setup_fee": {
+      "type": "number",
+      "description": "Valor da taxa de setup"
+    },
+    "setup_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data da taxa de setup"
+    },
+    "installment_value": {
+      "type": "number",
+      "description": "Valor da parcela"
+    },
+    "installment_due_day": {
+      "type": "integer",
+      "enum": [
+        5,
+        10,
+        15
+      ],
+      "description": "Dia de vencimento da parcela"
+    },
+    "contract_duration_months": {
+      "type": "integer",
+      "default": 12,
+      "description": "Dura\u00e7\u00e3o do contrato em meses"
+    },
+    "payment_method": {
+      "type": "string",
+      "enum": [
+        "asas",
+        "prefi",
+        "pix",
+        "boleto",
+        "cartao",
+        "kiwify"
+      ],
+      "description": "M\u00e9todo de pagamento"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "rascunho",
+        "enviado",
+        "dados_preenchidos",
+        "assinado",
+        "pagamento_confirmado",
+        "efetivado",
+        "cancelado"
+      ],
+      "default": "rascunho",
+      "description": "Status do contrato"
+    },
+    "completion_percentage": {
+      "type": "number",
+      "default": 0,
+      "description": "Percentual de conclus\u00e3o do contrato"
+    },
+    "contract_link": {
+      "type": "string",
+      "description": "Link \u00fanico para o cliente acessar e assinar"
+    },
+    "clicksign_contract_id": {
+      "type": "string",
+      "description": "ID do contrato no ClickSign"
+    },
+    "payment_due_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de vencimento do pagamento"
+    },
+    "asas_payment_id": {
+      "type": "string",
+      "description": "ID do pagamento no ASAS"
+    },
+    "kiwify_order_id": {
+      "type": "string",
+      "description": "ID do pedido na Kiwify"
+    },
+    "boleto_url": {
+      "type": "string",
+      "description": "URL do boleto gerado"
+    },
+    "boleto_code": {
+      "type": "string",
+      "description": "C\u00f3digo de barras do boleto"
+    },
+    "client_data_filled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Cliente preencheu dados cadastrais"
+    },
+    "client_signed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Cliente assinou o contrato"
+    },
+    "payment_confirmed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Pagamento confirmado"
+    },
+    "contract_template": {
+      "type": "string",
+      "description": "Template do contrato (HTML/texto)"
+    },
+    "custom_clauses": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Cl\u00e1usulas personalizadas adicionadas"
+    },
+    "sent_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data de envio do contrato"
+    },
+    "signed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data de assinatura"
+    },
+    "payment_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data de confirma\u00e7\u00e3o do pagamento"
+    },
+    "activated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data de efetiva\u00e7\u00e3o"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de in\u00edcio do contrato"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de t\u00e9rmino do contrato"
+    },
+    "client_notes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es do cliente"
+    },
+    "internal_notes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es internas"
+    },
+    "timeline": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "action": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "user": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Linha do tempo de eventos do contrato"
+    }
+  },
+  "required": [
+    "workshop_id",
+    "contract_number",
+    "plan_type",
+    "contract_value"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": true,
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

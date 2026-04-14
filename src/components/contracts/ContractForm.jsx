@@ -29,6 +29,10 @@ export default function ContractForm({ contract, user, onSuccess }) {
     plan_type: "BRONZE",
     contract_value: 5000,
     monthly_value: 5000,
+    setup_fee: 0,
+    setup_date: "",
+    installment_value: 0,
+    installment_due_day: "5",
     contract_duration_months: 12,
     payment_method: "asas",
     contract_template: TRAFEGO_PAGO_TEMPLATE,
@@ -69,6 +73,10 @@ export default function ContractForm({ contract, user, onSuccess }) {
         plan_type: contract.plan_type || "BRONZE",
         contract_value: contract.contract_value || 5000,
         monthly_value: contract.monthly_value || 5000,
+        setup_fee: contract.setup_fee || 0,
+        setup_date: contract.setup_date || "",
+        installment_value: contract.installment_value || 0,
+        installment_due_day: contract.installment_due_day?.toString() || "5",
         contract_duration_months: contract.contract_duration_months || 12,
         payment_method: contract.payment_method || "asas",
         contract_template: contract.contract_template || TRAFEGO_PAGO_TEMPLATE,
@@ -275,6 +283,52 @@ export default function ContractForm({ contract, user, onSuccess }) {
                 </SelectContent>
               </Select>
             </div>
+
+            <div className="space-y-2">
+              <Label>Taxa Setup (R$)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={formData.setup_fee}
+                onChange={(e) => setFormData({ ...formData, setup_fee: parseFloat(e.target.value) })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Data da Taxa Setup</Label>
+              <Input
+                type="date"
+                value={formData.setup_date}
+                onChange={(e) => setFormData({ ...formData, setup_date: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Valor da Parcela (R$)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={formData.installment_value}
+                onChange={(e) => setFormData({ ...formData, installment_value: parseFloat(e.target.value) })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Dia de Vencimento da Parcela</Label>
+              <Select
+                value={formData.installment_due_day?.toString() || "5"}
+                onValueChange={(value) => setFormData({ ...formData, installment_due_day: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="5">Dia 5</SelectItem>
+                  <SelectItem value="10">Dia 10</SelectItem>
+                  <SelectItem value="15">Dia 15</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {selectedWorkshop && (
@@ -386,7 +440,7 @@ export default function ContractForm({ contract, user, onSuccess }) {
 
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
                 <p className="text-sm text-yellow-800">
-                  Variáveis disponíveis: {"{{razao_social}}"}, {"{{cnpj}}"}, {"{{city}}"}, {"{{state}}"}, {"{{contract_value}}"}, {"{{duration}}"}, {"{{installments}}"}, {"{{installment_value}}"}, {"{{contract_date}}"}, etc.
+                  Variáveis disponíveis: {"{{razao_social}}"}, {"{{cnpj}}"}, {"{{city}}"}, {"{{state}}"}, {"{{contract_value}}"}, {"{{duration}}"}, {"{{installment_value}}"}, {"{{installment_due_day}}"}, {"{{setup_fee}}"}, {"{{setup_date}}"}, {"{{contract_date}}"}, etc.
                 </p>
               </div>
               

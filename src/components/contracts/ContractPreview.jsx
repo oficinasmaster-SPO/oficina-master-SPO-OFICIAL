@@ -23,7 +23,11 @@ export default function ContractPreview({ contract, workshop }) {
       .replace(/{{plan_type}}/g, contract.plan_type)
       .replace(/{{contract_value}}/g, `R$ ${contract.contract_value?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`)
       .replace(/{{monthly_value}}/g, `R$ ${contract.monthly_value?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`)
-      .replace(/{{duration}}/g, contract.contract_duration_months || 12);
+      .replace(/{{duration}}/g, contract.contract_duration_months || 12)
+      .replace(/{{setup_fee}}/g, contract.setup_fee ? `R$ ${contract.setup_fee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : "___")
+      .replace(/{{setup_date}}/g, contract.setup_date ? format(new Date(contract.setup_date), 'dd/MM/yyyy', { locale: ptBR }) : "___")
+      .replace(/{{installment_value}}/g, contract.installment_value ? `R$ ${contract.installment_value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : "___")
+      .replace(/{{installment_due_day}}/g, contract.installment_due_day || "___");
   };
 
   return (
