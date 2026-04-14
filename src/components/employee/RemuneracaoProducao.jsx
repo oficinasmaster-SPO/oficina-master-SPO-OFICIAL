@@ -26,23 +26,32 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
     production_services_sales: employee.production_services_sales || 0
   });
 
+  const getOriginalBestMonth = () => {
+    const bm = employee?.best_month_history;
+    if (!bm) return null;
+    return {
+      date: bm.date || '',
+      revenue_total: bm.revenue_total || 0,
+      revenue_parts: bm.revenue_parts || 0,
+      revenue_services: bm.revenue_services || 0,
+      profit_percentage: bm.profit_percentage || 0,
+      rentability_percentage: bm.rentability_percentage || 0,
+      customer_volume: bm.customer_volume || 0,
+      average_ticket: bm.average_ticket || 0,
+      average_ticket_parts: bm.average_ticket_parts || 0,
+      average_ticket_services: bm.average_ticket_services || 0
+    };
+  };
+
   // Sincronizar best_month_history do employee com o estado local
   useEffect(() => {
-    if (employee?.best_month_history) {
-      setLocalBestMonth({
-        date: employee.best_month_history.date || '',
-        revenue_total: employee.best_month_history.revenue_total || 0,
-        revenue_parts: employee.best_month_history.revenue_parts || 0,
-        revenue_services: employee.best_month_history.revenue_services || 0,
-        profit_percentage: employee.best_month_history.profit_percentage || 0,
-        rentability_percentage: employee.best_month_history.rentability_percentage || 0,
-        customer_volume: employee.best_month_history.customer_volume || 0,
-        average_ticket: employee.best_month_history.average_ticket || 0,
-        average_ticket_parts: employee.best_month_history.average_ticket_parts || 0,
-        average_ticket_services: employee.best_month_history.average_ticket_services || 0
-      });
-    }
+    setLocalBestMonth(getOriginalBestMonth());
   }, [employee?.best_month_history]);
+
+  const handleCancelBestMonth = () => {
+    setLocalBestMonth(getOriginalBestMonth());
+    setEditingBestMonth(false);
+  };
 
   // Calcular ticket médio automaticamente
   const currentBest = localBestMonth || employee?.best_month_history;
@@ -206,7 +215,7 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
               </Button>
             ) : (
               <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setEditingBestMonth(false)} size="sm">Cancelar</Button>
+                <Button variant="outline" onClick={handleCancelBestMonth} size="sm">Cancelar</Button>
                 <Button onClick={handleSaveBestMonth} size="sm" className="bg-yellow-600 hover:bg-yellow-700">
                   <Save className="w-4 h-4 mr-2" />
                   Salvar
