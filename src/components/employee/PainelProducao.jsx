@@ -147,9 +147,23 @@ export default function PainelProducao({ employee }) {
                 <Award className="w-6 h-6 text-purple-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Melhor Mês (Registros)</p>
-                <p className="text-lg font-bold text-purple-600">{formatMonth(bestMonthFromHistory.month)}</p>
-                <p className="text-sm text-gray-500">{formatCurrency(bestMonthFromHistory.total)}</p>
+                <p className="text-sm text-gray-600">Melhor Mês Histórico</p>
+                {bestMonthFromHistory.total > 0 ? (
+                  <>
+                    <p className="text-lg font-bold text-purple-600">{formatMonth(bestMonthFromHistory.month)}</p>
+                    <p className="text-sm text-gray-500">{formatCurrency(bestMonthFromHistory.total)}</p>
+                  </>
+                ) : bestMonthData ? (
+                  <>
+                    <p className="text-lg font-bold text-purple-600">{formatMonth(bestMonthData.date?.substring(0, 7))}</p>
+                    <p className="text-sm text-gray-500">{formatCurrency(bestMonthData.revenue_total)}</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-lg font-bold text-purple-600">-</p>
+                    <p className="text-sm text-gray-500">R$ 0,00</p>
+                  </>
+                )}
               </div>
             </div>
           </CardContent>
