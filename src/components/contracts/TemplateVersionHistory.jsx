@@ -2,18 +2,21 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Clock, Eye, RotateCcw, Trash2 } from "lucide-react";
+import { Clock, Eye, RotateCcw, Trash2, X } from "lucide-react";
 import moment from "moment";
 
 export default function TemplateVersionHistory({ versions = [], onRestore, onDelete, open, onOpenChange }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden flex flex-col p-0 gap-0">
-        <DialogHeader className="p-6 pb-4 bg-background sticky top-0 z-20 shadow-[0_5px_10px_-5px_rgba(0,0,0,0.1)] border-b">
+      <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden flex flex-col p-0 gap-0 [&>button]:hidden">
+        <DialogHeader className="p-6 bg-background sticky top-0 z-20 shadow-[0_5px_10px_-5px_rgba(0,0,0,0.1)] border-b flex-row justify-between items-center space-y-0">
           <DialogTitle className="flex items-center gap-2">
             <Clock className="w-5 h-5" />
             Histórico de Versões ({versions.length})
           </DialogTitle>
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500 hover:text-gray-900" onClick={() => onOpenChange(false)}>
+            <X className="w-5 h-5" />
+          </Button>
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto space-y-3 p-6">
@@ -81,11 +84,6 @@ export default function TemplateVersionHistory({ versions = [], onRestore, onDel
           ))}
         </div>
 
-        <div className="p-6 py-4 bg-background sticky bottom-0 z-20 shadow-[0_-5px_10px_-5px_rgba(0,0,0,0.1)] border-t flex justify-end">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Fechar
-          </Button>
-        </div>
       </DialogContent>
     </Dialog>
   );
