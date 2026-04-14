@@ -12,11 +12,18 @@ import { Loader2, Send, Copy, Save, Eye, FileText } from "lucide-react";
 import { toast } from "sonner";
 import ContractPreview from "./ContractPreview";
 import { TRAFEGO_PAGO_TEMPLATE } from "./templates/TrafegoPagoTemplate";
+import { CONSULTORIA_GOLD_TEMPLATE } from "./templates/ConsultoriaGoldTemplate";
+
+const CONTRACT_TEMPLATES = [
+  { id: "trafego-pago", label: "MATRIX - Tráfego Pago", plan: "Todos", content: TRAFEGO_PAGO_TEMPLATE },
+  { id: "consultoria-gold", label: "GOLD - Consultoria e Aceleração", plan: "GOLD", content: CONSULTORIA_GOLD_TEMPLATE },
+];
 
 export default function ContractForm({ contract, user, onSuccess }) {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("formulario");
   const [selectedWorkshop, setSelectedWorkshop] = useState(null);
+  const [selectedTemplateId, setSelectedTemplateId] = useState("trafego-pago");
   const [formData, setFormData] = useState({
     workshop_id: "",
     plan_type: "BRONZE",
@@ -28,6 +35,24 @@ export default function ContractForm({ contract, user, onSuccess }) {
     custom_clauses: [],
     internal_notes: ""
   });
+
+  const handleTemplateChange = (templateId) => {
+    const template = CONTRACT_TEMPLATES.find(t => t.id === templateId);
+    if (template) {
+      setSelectedTemplateId(templateId);
+      setFormData(prev => ({ ...prev, contract_template: template.content }));
+      toast.success(`Template "${template.label}" aplicado!`);
+    }
+  };
+
+  // Auto-suggest template when plan changes
+  const handlePlanChange = (planValue) => {
+    setFormData(prev => ({ ...prev, plan_type: planValue }));
+    const matchingTemplate = CONTRACT_TEMPLATES.find(t => t.plan === planValue);
+    if (matchingTemplate && matchingTemplate.id !== selectedTemplateId) {
+      handleTemplateChange(matchingTemplate.id);
+    }
+  };
 
   const { data: workshops = [] } = useQuery({
     queryKey: ['workshops-list'],
@@ -186,7 +211,7 @@ export default function ContractForm({ contract, user, onSuccess }) {
               <Label>Plano *</Label>
               <Select
                 value={formData.plan_type}
-                onValueChange={(value) => setFormData({ ...formData, plan_type: value })}
+                onValueChange={handlePlanChange}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -336,10 +361,32 @@ export default function ContractForm({ contract, user, onSuccess }) {
 
           <TabsContent value="template">
             <div className="space-y-4">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                <div className="flex items-center justify-between flex-wrap gap-3">
+                  <div className="flex-1 min-w-[200px]">
+                    <Label className="text-blue-900 font-semibold mb-1 block">Selecionar Template</Label>
+                    <Select value={selectedTemplateId} onValueChange={handleTemplateChange}>
+                      <SelectTrigger className="bg-white">
+                        <SelectValue placeholder="Escolha um template..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {CONTRACT_TEMPLATES.map(t => (
+                          <SelectItem key={t.id} value={t.id}>
+                            {t.label} {t.plan !== "Todos" ? `(Plano ${t.plan})` : ""}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <p className="text-xs text-blue-700">
+                    Ao selecionar um plano (ex: GOLD), o template correspondente é aplicado automaticamente.
+                  </p>
+                </div>
+              </div>
+
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
                 <p className="text-sm text-yellow-800">
-                  💡 <strong>Dica:</strong> Use variáveis como [RAZÃO SOCIAL DA EMPRESA], [CNPJ], [ENDEREÇO COMPLETO], etc. 
-                  Elas serão substituídas automaticamente pelos dados da oficina.
+                  Variáveis disponíveis: {"{{razao_social}}"}, {"{{cnpj}}"}, {"{{city}}"}, {"{{state}}"}, {"{{contract_value}}"}, {"{{duration}}"}, {"{{installments}}"}, {"{{installment_value}}"}, {"{{contract_date}}"}, etc.
                 </p>
               </div>
               
