@@ -1,1 +1,1 @@
-export const force = "full reload again please";
+export const force = "full reload fix dynamic import issue";

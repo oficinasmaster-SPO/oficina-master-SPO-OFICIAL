@@ -59,7 +59,7 @@ const ConfiguracaoPermissoesGranulares = lazy(() => import('./pages/Configuracao
 const ConfiguracoesKiwify = lazy(() => import('./pages/ConfiguracoesKiwify'));
 const ConfiguracoesNotificacao = lazy(() => import('./pages/ConfiguracoesNotificacao'));
 const ConsolidadoMensal = lazy(() => import('./pages/ConsolidadoMensal'));
-const ControleAceleracao = lazy(() => import('./pages/ControleAceleracaoPage.jsx'));
+const ControleAceleracao = lazy(() => import('./pages/ControleAceleracao.jsx'));
 const ConvidarColaborador = lazy(() => import('./pages/ConvidarColaborador'));
 const CriarDescricaoCargo = lazy(() => import('./pages/CriarDescricaoCargo'));
 const CriarRitualMAP = lazy(() => import('./pages/CriarRitualMAP'));
