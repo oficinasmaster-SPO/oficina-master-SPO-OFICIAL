@@ -108,6 +108,21 @@ export default function ContractTemplates({ user }) {
     }
   };
 
+  const handleDeleteVersion = (templateId) => (versionId) => {
+    setTemplates(prev => prev.map(t => {
+      if (t.id !== templateId) return t;
+      if (t.versions.length <= 1) {
+        toast.error("Não é possível excluir a única versão do template.");
+        return t;
+      }
+      return {
+        ...t,
+        versions: t.versions.filter(v => v.id !== versionId)
+      };
+    }));
+    toast.success("Versão removida com sucesso!");
+  };
+
   return (
     <div className="space-y-6">
       {/* Criar Novo Template */}
@@ -196,10 +211,8 @@ export default function ContractTemplates({ user }) {
                       variant="outline"
                       onClick={() => setHistoryTemplate(template)}
                       title="Histórico de versões"
-                      className="gap-2 px-3"
                     >
                       <Clock className="w-4 h-4" />
-                      Histórico de Versões ({template.versions?.length || 1})
                     </Button>
                     <Button
                       size="sm"
@@ -209,16 +222,14 @@ export default function ContractTemplates({ user }) {
                     >
                       <Copy className="w-4 h-4" />
                     </Button>
-                    {!template.isDefault && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => deleteTemplate(template.id)}
-                        title="Excluir template"
-                      >
-                        <Trash2 className="w-4 h-4 text-red-600" />
-                      </Button>
-                    )}
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => deleteTemplate(template.id)}
+                      title="Excluir template"
+                    >
+                      <Trash2 className="w-4 h-4 text-red-600" />
+                    </Button>
                   </div>
                 </div>
                 <pre className="bg-gray-50 rounded p-3 text-xs overflow-x-auto max-h-40 whitespace-pre-wrap">
@@ -245,6 +256,7 @@ export default function ContractTemplates({ user }) {
         <TemplateVersionHistory
           versions={historyTemplate.versions || []}
           onRestore={handleRestoreVersion(historyTemplate.id)}
+          onDelete={handleDeleteVersion(historyTemplate.id)}
           open={!!historyTemplate}
           onOpenChange={(open) => !open && setHistoryTemplate(null)}
         />

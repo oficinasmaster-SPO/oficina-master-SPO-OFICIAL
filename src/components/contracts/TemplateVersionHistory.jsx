@@ -2,10 +2,10 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Clock, Eye, RotateCcw } from "lucide-react";
+import { Clock, Eye, RotateCcw, Trash2 } from "lucide-react";
 import moment from "moment";
 
-export default function TemplateVersionHistory({ versions = [], onRestore, open, onOpenChange }) {
+export default function TemplateVersionHistory({ versions = [], onRestore, onDelete, open, onOpenChange }) {
   const [previewVersion, setPreviewVersion] = useState(null);
 
   return (
@@ -62,6 +62,16 @@ export default function TemplateVersionHistory({ versions = [], onRestore, open,
                     >
                       <RotateCcw className="w-4 h-4 mr-1" />
                       Carregar no Editor
+                    </Button>
+                  )}
+                  {versions.length > 1 && onDelete && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => onDelete(version.id)}
+                      title="Excluir versão"
+                    >
+                      <Trash2 className="w-4 h-4 text-red-600" />
                     </Button>
                   )}
                 </div>
