@@ -1,1 +1,1 @@
-export const mock = "just a comment to trigger HMR in vite";
+export const mock = "just another comment to trigger HMR in vite";
