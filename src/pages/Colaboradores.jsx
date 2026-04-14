@@ -123,7 +123,7 @@ export default function Colaboradores() {
   };
 
   const getTotalProduction = (employee) => {
-    return (employee.production_parts || 0) + (employee.production_services || 0);
+    return (employee.production_parts || 0) + (employee.production_parts_sales || 0) + (employee.production_services || 0) + (employee.production_services_sales || 0);
   };
 
   const getActiveCOEX = (employeeId) => {
