@@ -4,7 +4,8 @@ import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { RedTabsList, RedTabsTrigger } from "@/components/ui/RedTabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Building2, Settings, Target, FileText, Users, TrendingUp, Package, DollarSign, BarChart3, Calculator, MessageCircle, Trophy, Briefcase, Calendar as CalendarIcon } from "lucide-react";
 import { toast } from "sonner";
@@ -278,62 +279,62 @@ export default function GestaoOficina() {
           // Atualizar URL com a aba selecionada
           navigate(`?tab=${value}`, { replace: false });
         }}>
-          <TabsList className="flex overflow-x-auto flex-nowrap w-full justify-start bg-white shadow-sm gap-2 p-2 h-auto rounded-lg border border-gray-100 scrollbar-hide">
-            <TabsTrigger value="dados" className="py-2 px-4 whitespace-nowrap shrink-0 text-xs md:text-sm hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
+          <RedTabsList>
+            <RedTabsTrigger value="dados">
               <Building2 className="w-4 h-4 mr-1" />
               <span>Dados</span>
-            </TabsTrigger>
-            <TabsTrigger value="servicos" className="py-2 px-4 whitespace-nowrap shrink-0 text-xs md:text-sm hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
+            </RedTabsTrigger>
+            <RedTabsTrigger value="servicos">
               <Settings className="w-4 h-4 mr-1" />
               <span>Serviços</span>
-            </TabsTrigger>
-            <TabsTrigger value="equipamentos" className="py-2 px-4 whitespace-nowrap shrink-0 text-xs md:text-sm hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
+            </RedTabsTrigger>
+            <RedTabsTrigger value="equipamentos">
               <Package className="w-4 h-4 mr-1" />
               <span>Equipamentos</span>
-            </TabsTrigger>
-            <TabsTrigger value="terceiros" className="py-2 px-4 whitespace-nowrap shrink-0 text-xs md:text-sm hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
+            </RedTabsTrigger>
+            <RedTabsTrigger value="terceiros">
               <DollarSign className="w-4 h-4 mr-1" />
               <span>Terceiros</span>
-            </TabsTrigger>
-            <TabsTrigger value="metas" className="py-2 px-4 whitespace-nowrap shrink-0 text-xs md:text-sm hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
+            </RedTabsTrigger>
+            <RedTabsTrigger value="metas">
               <Target className="w-4 h-4 mr-1" />
               <span>Metas</span>
-            </TabsTrigger>
-            <TabsTrigger value="cultura" className="py-2 px-4 whitespace-nowrap shrink-0 text-xs md:text-sm hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
+            </RedTabsTrigger>
+            <RedTabsTrigger value="cultura">
               <TrendingUp className="w-4 h-4 mr-1" />
               <span>Cultura</span>
-            </TabsTrigger>
-            <TabsTrigger value="processos" className="py-2 px-4 whitespace-nowrap shrink-0 text-xs md:text-sm hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
+            </RedTabsTrigger>
+            <RedTabsTrigger value="processos">
               <FileText className="w-4 h-4 mr-1" />
               <span>Processos</span>
-            </TabsTrigger>
-            <TabsTrigger value="relatorios" className="py-2 px-4 whitespace-nowrap shrink-0 text-xs md:text-sm hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
+            </RedTabsTrigger>
+            <RedTabsTrigger value="relatorios">
               <BarChart3 className="w-4 h-4 mr-1" />
               <span>Relatórios</span>
-            </TabsTrigger>
+            </RedTabsTrigger>
             {isMatriz && (
-              <TabsTrigger value="filiais" className="py-2 px-4 whitespace-nowrap shrink-0 text-xs md:text-sm hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
+              <RedTabsTrigger value="filiais">
                 <Building2 className="w-4 h-4 mr-1" />
                 <span>Filiais</span>
-              </TabsTrigger>
+              </RedTabsTrigger>
             )}
-            <TabsTrigger value="aceleracao" className="py-2 px-4 whitespace-nowrap shrink-0 text-xs md:text-sm bg-purple-50 text-purple-700 data-[state=active]:bg-purple-100 data-[state=active]:text-purple-900 hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
+            <RedTabsTrigger value="aceleracao">
               <Briefcase className="w-4 h-4 mr-1" />
               <span>Aceleração</span>
-            </TabsTrigger>
-            <TabsTrigger value="crescimento" className="py-2 px-4 whitespace-nowrap shrink-0 text-xs md:text-sm bg-green-50 text-green-700 data-[state=active]:bg-green-100 data-[state=active]:text-green-900 hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
+            </RedTabsTrigger>
+            <RedTabsTrigger value="crescimento">
               <TrendingUp className="w-4 h-4 mr-1" />
               <span>Crescimento</span>
-            </TabsTrigger>
-            <TabsTrigger value="conquistas" className="py-2 px-4 whitespace-nowrap shrink-0 text-xs md:text-sm bg-yellow-50 text-yellow-700 data-[state=active]:bg-yellow-100 data-[state=active]:text-yellow-900 hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
+            </RedTabsTrigger>
+            <RedTabsTrigger value="conquistas">
               <Trophy className="w-4 h-4 mr-1" />
               <span>Conquistas</span>
-            </TabsTrigger>
-            <TabsTrigger value="customization" className="py-2 px-4 whitespace-nowrap shrink-0 text-xs md:text-sm bg-gray-50 text-gray-700 data-[state=active]:bg-gray-100 data-[state=active]:text-gray-900 hover:!bg-[#FF0000] hover:!text-white data-[state=active]:!bg-[#FF0000] data-[state=active]:!text-white transition-colors">
+            </RedTabsTrigger>
+            <RedTabsTrigger value="customization">
               <Settings className="w-4 h-4 mr-1" />
               <span>Personalização</span>
-            </TabsTrigger>
-          </TabsList>
+            </RedTabsTrigger>
+          </RedTabsList>
 
           <TabsContent value="crescimento">
             <GrowthDashboard workshop={workshop} />
