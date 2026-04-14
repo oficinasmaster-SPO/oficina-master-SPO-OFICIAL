@@ -98,14 +98,16 @@ export default function ContractTemplates({ user }) {
   };
 
   const handleRestoreVersion = (templateId) => (version) => {
-    const template = templates.find(t => t.id === templateId);
-    if (template) {
-      setEditingTemplate({
-        ...template,
-        content: version.content
-      });
-      toast.info(`Conteúdo da v${version.version} carregado no editor. Salve para confirmar.`);
-    }
+    setTemplates(prev => prev.map(t => {
+      if (t.id === templateId) {
+        return {
+          ...t,
+          content: version.content
+        };
+      }
+      return t;
+    }));
+    toast.success(`Conteúdo da versão ${version.version} carregado com sucesso.`);
   };
 
   const handleDeleteVersion = (templateId) => (versionId) => {
