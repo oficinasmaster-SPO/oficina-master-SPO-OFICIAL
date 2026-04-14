@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,27 +23,43 @@ function createInitialVersion(content) {
   };
 }
 
+const defaultTemplates = [
+  {
+    id: "trafego-pago-matrix",
+    name: "Contrato MATRIX - Tráfego Pago e Performance Digital",
+    plan_type: "Todos",
+    description: "Contrato completo com 18 cláusulas para serviços de tráfego pago (Google Ads e Meta Ads)",
+    content: TRAFEGO_PAGO_TEMPLATE,
+    isDefault: true,
+    versions: [createInitialVersion(TRAFEGO_PAGO_TEMPLATE)]
+  },
+  {
+    id: "consultoria-gold",
+    name: "Contrato GOLD - Consultoria e Aceleração de Resultados",
+    plan_type: "GOLD",
+    description: "Contrato B2B completo com 18 cláusulas, 4 marcos contratuais, licenciamento de conteúdo digital, plataforma SPO e serviços consultivos estratégicos.",
+    content: CONSULTORIA_GOLD_TEMPLATE,
+    isDefault: true,
+    versions: [createInitialVersion(CONSULTORIA_GOLD_TEMPLATE)]
+  }
+];
+
 export default function ContractTemplates({ user }) {
-  const [templates, setTemplates] = useState([
-    {
-      id: "trafego-pago-matrix",
-      name: "Contrato MATRIX - Tráfego Pago e Performance Digital",
-      plan_type: "Todos",
-      description: "Contrato completo com 18 cláusulas para serviços de tráfego pago (Google Ads e Meta Ads)",
-      content: TRAFEGO_PAGO_TEMPLATE,
-      isDefault: true,
-      versions: [createInitialVersion(TRAFEGO_PAGO_TEMPLATE)]
-    },
-    {
-      id: "consultoria-gold",
-      name: "Contrato GOLD - Consultoria e Aceleração de Resultados",
-      plan_type: "GOLD",
-      description: "Contrato B2B completo com 18 cláusulas, 4 marcos contratuais, licenciamento de conteúdo digital, plataforma SPO e serviços consultivos estratégicos.",
-      content: CONSULTORIA_GOLD_TEMPLATE,
-      isDefault: true,
-      versions: [createInitialVersion(CONSULTORIA_GOLD_TEMPLATE)]
+  const [templates, setTemplates] = useState(() => {
+    try {
+      const saved = localStorage.getItem("contract_templates");
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (e) {
+      console.error("Error reading templates from localStorage", e);
     }
-  ]);
+    return defaultTemplates;
+  });
+
+  useEffect(() => {
+    localStorage.setItem("contract_templates", JSON.stringify(templates));
+  }, [templates]);
 
   const [newTemplate, setNewTemplate] = useState({ name: "", plan_type: "", content: "" });
   const [editingTemplate, setEditingTemplate] = useState(null);
