@@ -8,8 +8,8 @@ import moment from "moment";
 export default function TemplateVersionHistory({ versions = [], onRestore, onDelete, open, onOpenChange }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden flex flex-col p-0 gap-0 bg-gray-50/30">
-        <DialogHeader className="p-6 pb-4 bg-white sticky top-0 z-20 shadow-[0_5px_10px_-5px_rgba(0,0,0,0.1)] border-b">
+      <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden flex flex-col p-0 gap-0">
+        <DialogHeader className="p-6 pb-4 bg-background sticky top-0 z-20 shadow-[0_5px_10px_-5px_rgba(0,0,0,0.1)] border-b">
           <DialogTitle className="flex items-center gap-2">
             <Clock className="w-5 h-5" />
             Histórico de Versões ({versions.length})
@@ -24,7 +24,7 @@ export default function TemplateVersionHistory({ versions = [], onRestore, onDel
           {versions.map((version, index) => (
             <div
               key={version.id}
-              className="border rounded-lg p-4 transition-colors hover:bg-gray-50 bg-white"
+              className="border rounded-lg p-4 transition-colors hover:bg-gray-50"
             >
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
@@ -81,7 +81,7 @@ export default function TemplateVersionHistory({ versions = [], onRestore, onDel
           ))}
         </div>
 
-        <div className="p-6 py-4 bg-white sticky bottom-0 z-20 shadow-[0_-5px_10px_-5px_rgba(0,0,0,0.1)] border-t flex justify-end">
+        <div className="p-6 py-4 bg-background sticky bottom-0 z-20 shadow-[0_-5px_10px_-5px_rgba(0,0,0,0.1)] border-t flex justify-end">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Fechar
           </Button>
