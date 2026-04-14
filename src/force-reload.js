@@ -1,1 +1,1 @@
-export const mock = "just another comment to trigger HMR in vite";
+export const mock = "force vite to re-trigger build again";
