@@ -124,7 +124,7 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
     notas_manuais: "",
     capacidade_atendimento_dia: 0,
     tempo_medio_servico: 0,
-    horario_funcionamento: { abertura: "", fechamento: "", almoco_inicio: "", almoco_fim: "", sabado_abertura: "", sabado_fechamento: "", dias_semana: [] }
+    horario_funcionamento: { abertura: "", fechamento: "", almoco_inicio: "", almoco_fim: "", sabado_abertura: "", sabado_fechamento: "", dias_semana: [], nao_fecha_almoco: false }
   });
 
   useImperativeHandle(ref, () => ({
@@ -198,7 +198,7 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
         capacidade_atendimento_dia: workshop.capacidade_atendimento_dia || 0,
         tempo_medio_servico: workshop.tempo_medio_servico || 0,
         horario_funcionamento: {
-          abertura: "", fechamento: "", almoco_inicio: "", almoco_fim: "", sabado_abertura: "", sabado_fechamento: "", dias_semana: [],
+          abertura: "", fechamento: "", almoco_inicio: "", almoco_fim: "", sabado_abertura: "", sabado_fechamento: "", dias_semana: [], nao_fecha_almoco: false,
           ...(workshop.horario_funcionamento || {})
         }
       });
@@ -865,30 +865,57 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
                 disabled={!editing}
               />
             </div>
-            <div>
-              <Label>Início do Almoço</Label>
-              <TimePicker
-                value={formData.horario_funcionamento.almoco_inicio || ""}
-                defaultOpenValue="12:00"
-                onChange={(val) => setFormData({
-                  ...formData,
-                  horario_funcionamento: { ...formData.horario_funcionamento, almoco_inicio: val }
-                })}
+
+            <div className="md:col-span-2 flex items-center space-x-2 mt-2">
+              <Checkbox
+                id="nao_fecha_almoco"
+                checked={formData.horario_funcionamento.nao_fecha_almoco}
+                onCheckedChange={(checked) => {
+                  setFormData({
+                    ...formData,
+                    horario_funcionamento: {
+                      ...formData.horario_funcionamento,
+                      nao_fecha_almoco: checked,
+                      almoco_inicio: checked ? "" : formData.horario_funcionamento.almoco_inicio,
+                      almoco_fim: checked ? "" : formData.horario_funcionamento.almoco_fim
+                    }
+                  })
+                }}
                 disabled={!editing}
               />
+              <label htmlFor="nao_fecha_almoco" className="text-sm font-medium leading-none cursor-pointer">
+                Não fechamos para o almoço
+              </label>
             </div>
-            <div>
-              <Label>Fim do Almoço</Label>
-              <TimePicker
-                value={formData.horario_funcionamento.almoco_fim || ""}
-                defaultOpenValue="13:30"
-                onChange={(val) => setFormData({
-                  ...formData,
-                  horario_funcionamento: { ...formData.horario_funcionamento, almoco_fim: val }
-                })}
-                disabled={!editing}
-              />
-            </div>
+
+            {!formData.horario_funcionamento.nao_fecha_almoco && (
+              <>
+                <div>
+                  <Label>Início do Almoço</Label>
+                  <TimePicker
+                    value={formData.horario_funcionamento.almoco_inicio || ""}
+                    defaultOpenValue="12:00"
+                    onChange={(val) => setFormData({
+                      ...formData,
+                      horario_funcionamento: { ...formData.horario_funcionamento, almoco_inicio: val }
+                    })}
+                    disabled={!editing}
+                  />
+                </div>
+                <div>
+                  <Label>Fim do Almoço</Label>
+                  <TimePicker
+                    value={formData.horario_funcionamento.almoco_fim || ""}
+                    defaultOpenValue="13:30"
+                    onChange={(val) => setFormData({
+                      ...formData,
+                      horario_funcionamento: { ...formData.horario_funcionamento, almoco_fim: val }
+                    })}
+                    disabled={!editing}
+                  />
+                </div>
+              </>
+            )}
           </div>
           <div className="p-4 border rounded-xl bg-slate-50/50 space-y-4">
             <div>
