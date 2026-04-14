@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { FileText, Plus, Trash2, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { TRAFEGO_PAGO_TEMPLATE } from "./templates/TrafegoPagoTemplate";
+import { CONSULTORIA_GOLD_TEMPLATE } from "./templates/ConsultoriaGoldTemplate";
 
 export default function ContractTemplates({ user }) {
   const [templates, setTemplates] = useState([
@@ -16,6 +17,14 @@ export default function ContractTemplates({ user }) {
       plan_type: "Todos",
       description: "Contrato completo com 18 cláusulas para serviços de tráfego pago (Google Ads e Meta Ads)",
       content: TRAFEGO_PAGO_TEMPLATE,
+      isDefault: true
+    },
+    {
+      id: "consultoria-gold",
+      name: "Contrato GOLD - Consultoria e Aceleração de Resultados",
+      plan_type: "GOLD",
+      description: "Contrato B2B completo com 18 cláusulas, 4 marcos contratuais (20%/10%/10%/60%), licenciamento de conteúdo digital, plataforma SPO e serviços consultivos estratégicos. Valor referência: R$ 40.475,00 em até 12x.",
+      content: CONSULTORIA_GOLD_TEMPLATE,
       isDefault: true
     }
   ]);
