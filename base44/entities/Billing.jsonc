@@ -1,0 +1,37 @@
+{
+  "name": "Billing",
+  "type": "object",
+  "properties": {
+    "tenant_id": {
+      "type": "string"
+    },
+    "contrato_id": {
+      "type": "string"
+    },
+    "valor": {
+      "type": "number"
+    },
+    "data_vencimento": {
+      "type": "string",
+      "format": "date"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pendente",
+        "pago",
+        "vencido"
+      ],
+      "default": "pendente"
+    },
+    "metodo_pagamento": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "contrato_id",
+    "valor",
+    "data_vencimento"
+  ]
+}

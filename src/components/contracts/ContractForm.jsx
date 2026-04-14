@@ -152,8 +152,14 @@ export default function ContractForm({ contract, user, onSuccess, onCancel }) {
       const contractNumber = `CT${String(Math.floor(Math.random() * 9999) + 1).padStart(4, '0')}`;
       const contractLink = `${window.location.origin}/contrato/${contractNumber}`;
 
-      return await base44.entities.Contract.create({
+      const res = await base44.functions.invoke('createContrato', {
         ...data,
+        tenant_id: data.workshop_id,
+        cliente_id: data.workshop_id,
+        plano: data.plan_type,
+        meses: data.contract_duration_months,
+        valor_parcela: data.installment_value,
+        taxa_setup: data.setup_fee,
         workshop_name: workshop?.name || "",
         contract_number: contractNumber,
         consultor_id: user.id,
@@ -168,6 +174,11 @@ export default function ContractForm({ contract, user, onSuccess, onCancel }) {
           user: user.full_name
         }]
       });
+      
+      if (res.data?.error) {
+        throw new Error(res.data.error);
+      }
+      return res.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['contracts']);
@@ -178,12 +189,30 @@ export default function ContractForm({ contract, user, onSuccess, onCancel }) {
 
   const updateMutation = useMutation({
     mutationFn: async (data) => {
-      return await base44.entities.Contract.update(contract.id, data);
+      const updates = {
+        ...data,
+        tenant_id: data.workshop_id,
+        cliente_id: data.workshop_id,
+        plano: data.plan_type,
+        meses: data.contract_duration_months,
+        valor_parcela: data.installment_value,
+        taxa_setup: data.setup_fee,
+      };
+      
+      const res = await base44.functions.invoke('updateContrato', { contract_id: contract.id, updates });
+      
+      if (res.data?.error) {
+        throw new Error(res.data.error);
+      }
+      return res.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['contracts']);
-      toast.success("Contrato atualizado!");
+      toast.success("Nova versão do contrato gerada com sucesso!");
       onSuccess();
+    },
+    onError: (error) => {
+      toast.error(`Erro: ${error.message}`);
     }
   });
 

@@ -2,6 +2,40 @@
   "name": "Contract",
   "type": "object",
   "properties": {
+    "tenant_id": {
+      "type": "string"
+    },
+    "cliente_id": {
+      "type": "string"
+    },
+    "plano": {
+      "type": "string"
+    },
+    "meses": {
+      "type": "integer"
+    },
+    "valor_parcela": {
+      "type": "number"
+    },
+    "taxa_setup": {
+      "type": "number"
+    },
+    "valor_total": {
+      "type": "number"
+    },
+    "mrr": {
+      "type": "number"
+    },
+    "ltv": {
+      "type": "number"
+    },
+    "version": {
+      "type": "integer",
+      "default": 1
+    },
+    "parent_contract_id": {
+      "type": "string"
+    },
     "workshop_id": {
       "type": "string",
       "description": "ID da oficina cliente"
@@ -90,7 +124,10 @@
         "assinado",
         "pagamento_confirmado",
         "efetivado",
-        "cancelado"
+        "cancelado",
+        "ativo",
+        "pausado",
+        "versionado"
       ],
       "default": "rascunho",
       "description": "Status do contrato"
@@ -218,9 +255,7 @@
   },
   "required": [
     "workshop_id",
-    "contract_number",
-    "plan_type",
-    "contract_value"
+    "contract_number"
   ],
   "rls": {
     "create": {

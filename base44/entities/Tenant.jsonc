@@ -1,0 +1,12 @@
+{
+  "name": "Tenant",
+  "type": "object",
+  "properties": {
+    "nome": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "nome"
+  ]
+}
