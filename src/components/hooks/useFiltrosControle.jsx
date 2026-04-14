@@ -21,6 +21,7 @@ export function filterAtendimentosPeriodo(atendimentos, filtros) {
   const { dataInicio, dataFim } = filtros;
   if (!dataInicio || !dataFim) return atendimentos;
   return atendimentos.filter(a => {
+    if (a.status === 'atrasado') return true;
     const d = new Date(a.data_agendada).toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
     return d >= dataInicio && d <= dataFim;
   });
