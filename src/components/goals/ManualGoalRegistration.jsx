@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { InputMoeda } from "@/components/ui/InputMoeda";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -1048,8 +1049,7 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
             </div>
             <div>
               <Label className="text-xs text-green-600">REALIZADO</Label>
-              <Input
-                type="number"
+              <InputMoeda
                 value={formData.revenue_parts}
                 onChange={(e) => setFormData({...formData, revenue_parts: parseFloat(e.target.value) || 0})}
                 className="font-semibold"
@@ -1073,8 +1073,7 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
             </div>
             <div>
               <Label className="text-xs text-green-600">REALIZADO</Label>
-              <Input
-                type="number"
+              <InputMoeda
                 value={formData.revenue_services}
                 onChange={(e) => setFormData({...formData, revenue_services: parseFloat(e.target.value) || 0})}
                 className="font-semibold"
@@ -1345,8 +1344,7 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
                 </div>
                 <div className="border-l-4 border-purple-500 pl-3 py-2 bg-purple-50/50">
                   <Label className="text-xs font-semibold text-gray-700 mb-1 block">Vendas Mkt R$</Label>
-                  <Input
-                    type="number"
+                  <InputMoeda
                     value={formData.sales_marketing}
                     onChange={(e) => setFormData({...formData, sales_marketing: parseFloat(e.target.value) || 0})}
                     className="h-9 font-semibold text-sm"
@@ -1521,15 +1519,14 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
               </div>
               <div>
                 <Label className="text-xs text-green-600">REALIZADO</Label>
-                <Input
-                  type="number"
+                <InputMoeda
                   value={formData.sales_base}
                   onChange={(e) => setFormData({...formData, sales_base: parseFloat(e.target.value) || 0})}
                   className="font-semibold"
                 />
               </div>
-            </div>
-          </div>
+              </div>
+              </div>
 
           {/* Clientes Marketing */}
           <div className="space-y-3">
@@ -1590,8 +1587,7 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
               </div>
               <div>
                 <Label className="text-xs text-green-600">REALIZADO</Label>
-                <Input
-                  type="number"
+                <InputMoeda
                   value={formData.sales_marketing}
                   onChange={(e) => setFormData({...formData, sales_marketing: parseFloat(e.target.value) || 0})}
                   className="font-semibold"
@@ -1637,15 +1633,14 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
               </div>
               <div>
                 <Label className="text-xs text-green-600">REALIZADO</Label>
-                <Input
-                  type="number"
+                <InputMoeda
                   value={formData.sales_base}
                   onChange={(e) => setFormData({...formData, sales_base: parseFloat(e.target.value) || 0})}
                   className="font-semibold"
                 />
               </div>
-            </div>
-          </div>
+              </div>
+              </div>
 
           {/* Valor Faturado Total */}
           <div className="border-l-4 border-emerald-500 pl-3 py-2 bg-emerald-50/30">
@@ -1791,8 +1786,7 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
                   </div>
                   <div>
                     <Label className="text-xs text-green-600">REALIZADO</Label>
-                    <Input
-                      type="number"
+                    <InputMoeda
                       value={formData.marketing_data.invested_value}
                       onChange={(e) => setFormData({
                         ...formData,
@@ -2089,8 +2083,7 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
                 </div>
                 <div className="border-l-4 border-purple-500 pl-3 py-2 bg-purple-50/50">
                   <Label className="text-xs font-semibold text-gray-700 mb-1 block">Vendas Mkt R$</Label>
-                  <Input
-                    type="number"
+                  <InputMoeda
                     value={formData.sales_marketing}
                     onChange={(e) => setFormData({...formData, sales_marketing: parseFloat(e.target.value) || 0})}
                     className="h-9 font-semibold text-sm"
@@ -2292,8 +2285,7 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
                   </div>
                   <div>
                     <Label className="text-xs text-green-600">REALIZADO</Label>
-                    <Input
-                      type="number"
+                    <InputMoeda
                       value={formData.marketing_data.invested_value}
                       onChange={(e) => setFormData({
                         ...formData,
@@ -2320,8 +2312,7 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
                   </div>
                   <div>
                     <Label className="text-xs text-green-600">REALIZADO</Label>
-                    <Input
-                      type="number"
+                    <InputMoeda
                       value={formData.marketing_data.revenue_from_traffic}
                       onChange={(e) => setFormData({
                         ...formData,
@@ -2454,8 +2445,7 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
                     <TrendingUp className="w-4 h-4 text-purple-600" />
                     REALIZADO - R$
                   </Label>
-                  <Input
-                    type="number"
+                  <InputMoeda
                     value={formData.achieved_total}
                     onChange={(e) => setFormData({...formData, achieved_total: parseFloat(e.target.value) || 0})}
                     className="font-bold text-lg"

@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { InputMoeda } from "@/components/ui/InputMoeda";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import { Plus, Trash2, Save, Target, TrendingUp, Calendar, Award, AlertCircle, CheckCircle2, Edit } from "lucide-react";
@@ -519,8 +520,7 @@ export default function EmployeeGoals({ employee, onUpdate }) {
                           
                           <div className="w-32">
                             <Label className="text-xs text-gray-600 mb-1 block">Valor Meta (R$)</Label>
-                            <Input
-                              type="number"
+                            <InputMoeda
                               value={goal.goal_value}
                               onChange={(e) => updateGoal(index, 'goal_value', e.target.value)}
                               className="h-9"
