@@ -61,7 +61,7 @@ export default function TemplateVersionHistory({ versions = [], onRestore, open,
                       }}
                     >
                       <RotateCcw className="w-4 h-4 mr-1" />
-                      Restaurar
+                      Carregar no Editor
                     </Button>
                   )}
                 </div>
