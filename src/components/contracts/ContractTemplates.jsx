@@ -194,8 +194,10 @@ export default function ContractTemplates({ user }) {
                       variant="outline"
                       onClick={() => setHistoryTemplate(template)}
                       title="Histórico de versões"
+                      className="gap-2 px-3"
                     >
                       <Clock className="w-4 h-4" />
+                      Histórico de Versões ({template.versions?.length || 1})
                     </Button>
                     <Button
                       size="sm"
