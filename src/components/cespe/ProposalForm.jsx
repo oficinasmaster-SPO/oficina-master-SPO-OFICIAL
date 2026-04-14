@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { InputMoeda } from "@/components/ui/InputMoeda";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Save, Plus, Trash2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -229,16 +230,14 @@ export default function ProposalForm({ proposal, candidate, workshop, onSave, is
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>Salário Fixo (R$) *</Label>
-              <Input 
-                type="number" 
+              <InputMoeda
                 value={formData.fixed_salary} 
                 onChange={(e) => setFormData({...formData, fixed_salary: parseFloat(e.target.value)})}
               />
             </div>
             <div>
               <Label>Variável/Comissão (R$)</Label>
-              <Input 
-                type="number" 
+              <InputMoeda
                 value={formData.variable_bonus} 
                 onChange={(e) => setFormData({...formData, variable_bonus: parseFloat(e.target.value)})}
               />
@@ -269,8 +268,7 @@ export default function ProposalForm({ proposal, candidate, workshop, onSave, is
                   value={benefit.name} 
                   onChange={(e) => updateBenefit(idx, 'name', e.target.value)}
                 />
-                <Input 
-                  type="number" 
+                <InputMoeda
                   placeholder="Valor (R$)" 
                   value={benefit.value} 
                   onChange={(e) => updateBenefit(idx, 'value', parseFloat(e.target.value))}

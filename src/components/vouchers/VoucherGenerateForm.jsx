@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { InputMoeda } from "@/components/ui/InputMoeda";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -211,10 +212,7 @@ export default function VoucherGenerateForm({ user, workshop }) {
             ) : (
               <div>
                 <Label>Valor do Desconto (R$)</Label>
-                <Input
-                  type="number"
-                  min="1"
-                  step="0.01"
+                <InputMoeda
                   value={form.discount_value}
                   onChange={(e) => setForm({ ...form, discount_value: e.target.value })}
                   placeholder="Ex: 50.00"

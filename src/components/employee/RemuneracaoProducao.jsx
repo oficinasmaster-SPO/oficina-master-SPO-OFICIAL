@@ -4,6 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { InputMoeda } from "@/components/ui/InputMoeda";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Save, Plus, Trash2, Target, DollarSign, Percent, Award, Edit } from "lucide-react";
@@ -352,41 +353,33 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <Label>Produção de Peças (R$)</Label>
-              <Input
-                type="number"
+              <InputMoeda
                 value={formData.production_parts ?? ''}
                 onChange={(e) => setFormData({...formData, production_parts: e.target.value === '' ? '' : parseFloat(e.target.value)})}
-                onBlur={() => setFormData(prev => ({...prev, production_parts: parseFloat(prev.production_parts) || 0}))}
                 disabled={!editing}
               />
             </div>
             <div>
               <Label>Produção Vendas de Peças (R$)</Label>
-              <Input
-                type="number"
+              <InputMoeda
                 value={formData.production_parts_sales ?? ''}
                 onChange={(e) => setFormData({...formData, production_parts_sales: e.target.value === '' ? '' : parseFloat(e.target.value)})}
-                onBlur={() => setFormData(prev => ({...prev, production_parts_sales: parseFloat(prev.production_parts_sales) || 0}))}
                 disabled={!editing}
               />
             </div>
             <div>
               <Label>Produção de Serviços (R$)</Label>
-              <Input
-                type="number"
+              <InputMoeda
                 value={formData.production_services ?? ''}
                 onChange={(e) => setFormData({...formData, production_services: e.target.value === '' ? '' : parseFloat(e.target.value)})}
-                onBlur={() => setFormData(prev => ({...prev, production_services: parseFloat(prev.production_services) || 0}))}
                 disabled={!editing}
               />
             </div>
             <div>
               <Label>Produção Vendas de Serviços (R$)</Label>
-              <Input
-                type="number"
+              <InputMoeda
                 value={formData.production_services_sales ?? ''}
                 onChange={(e) => setFormData({...formData, production_services_sales: e.target.value === '' ? '' : parseFloat(e.target.value)})}
-                onBlur={() => setFormData(prev => ({...prev, production_services_sales: parseFloat(prev.production_services_sales) || 0}))}
                 disabled={!editing}
               />
             </div>
@@ -431,31 +424,25 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <Label>Salário Fixo (R$)</Label>
-              <Input
-                type="number"
+              <InputMoeda
                 value={formData.salary ?? ''}
                 onChange={(e) => setFormData({...formData, salary: e.target.value === '' ? '' : parseFloat(e.target.value)})}
-                onBlur={() => setFormData(prev => ({...prev, salary: parseFloat(prev.salary) || 0}))}
                 disabled={!editing}
               />
             </div>
             <div>
               <Label>Comissão Mensal (R$)</Label>
-              <Input
-                type="number"
+              <InputMoeda
                 value={formData.commission ?? ''}
                 onChange={(e) => setFormData({...formData, commission: e.target.value === '' ? '' : parseFloat(e.target.value)})}
-                onBlur={() => setFormData(prev => ({...prev, commission: parseFloat(prev.commission) || 0}))}
                 disabled={!editing}
               />
             </div>
             <div>
               <Label>Bonificação/Prêmio (R$)</Label>
-              <Input
-                type="number"
+              <InputMoeda
                 value={formData.bonus ?? ''}
                 onChange={(e) => setFormData({...formData, bonus: e.target.value === '' ? '' : parseFloat(e.target.value)})}
-                onBlur={() => setFormData(prev => ({...prev, bonus: parseFloat(prev.bonus) || 0}))}
                 disabled={!editing}
               />
             </div>
@@ -566,8 +553,7 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
                       disabled={!editing}
                       className="flex-1"
                     />
-                    <Input
-                      type="number"
+                    <InputMoeda
                       placeholder="Valor"
                       value={benefit.valor}
                       onChange={(e) => updateBenefit(index, 'valor', e.target.value)}

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { InputMoeda } from "@/components/ui/InputMoeda";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Calculator, DollarSign, TrendingUp, History, Search, RefreshCw } from "lucide-react";
 import { formatCurrency } from "@/components/utils/formatters";
@@ -542,9 +543,7 @@ export default function DiagnosticoProducao() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="salary_base">Salário Base *</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
+                  <InputMoeda
                     value={formData.salary_base}
                     onChange={(e) => setFormData({...formData, salary_base: e.target.value})}
                     placeholder="R$ 0,00"
@@ -554,9 +553,7 @@ export default function DiagnosticoProducao() {
 
                 <div>
                   <Label htmlFor="commission">Comissão</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
+                  <InputMoeda
                     value={formData.commission}
                     onChange={(e) => setFormData({...formData, commission: e.target.value})}
                     placeholder="R$ 0,00"
@@ -567,9 +564,7 @@ export default function DiagnosticoProducao() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="meal_voucher">Vale Alimentação</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
+                  <InputMoeda
                     value={formData.benefits.meal_voucher}
                     onChange={(e) => setFormData({
                       ...formData, 
@@ -581,9 +576,7 @@ export default function DiagnosticoProducao() {
 
                 <div>
                   <Label htmlFor="transport_voucher">Vale Transporte</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
+                  <InputMoeda
                     value={formData.benefits.transport_voucher}
                     onChange={(e) => setFormData({
                       ...formData, 
@@ -595,9 +588,7 @@ export default function DiagnosticoProducao() {
 
                 <div>
                   <Label htmlFor="health_insurance">Plano de Saúde</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
+                  <InputMoeda
                     value={formData.benefits.health_insurance}
                     onChange={(e) => setFormData({
                       ...formData, 
@@ -609,9 +600,7 @@ export default function DiagnosticoProducao() {
 
                 <div>
                   <Label htmlFor="other_benefits">Outros Benefícios</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
+                  <InputMoeda
                     value={formData.benefits.other_benefits}
                     onChange={(e) => setFormData({
                       ...formData, 
@@ -655,9 +644,7 @@ export default function DiagnosticoProducao() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="services_value">Valor de Serviços *</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
+                    <InputMoeda
                       value={formData.productivity_data.services_value}
                       onChange={(e) => setFormData({
                         ...formData, 
@@ -670,9 +657,7 @@ export default function DiagnosticoProducao() {
 
                   <div>
                     <Label htmlFor="parts_value">Valor de Peças *</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
+                    <InputMoeda
                       value={formData.productivity_data.parts_value}
                       onChange={(e) => setFormData({
                         ...formData, 
@@ -688,9 +673,7 @@ export default function DiagnosticoProducao() {
               {formData.employee_role === "vendas" && (
                 <div>
                   <Label htmlFor="sales_value">Valor de Vendas *</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
+                  <InputMoeda
                     value={formData.productivity_data.sales_value}
                     onChange={(e) => setFormData({
                       ...formData, 

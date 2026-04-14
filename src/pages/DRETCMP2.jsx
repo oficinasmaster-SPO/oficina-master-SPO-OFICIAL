@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { InputMoeda } from "@/components/ui/InputMoeda";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -602,8 +603,7 @@ export default function DRETCMP2() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <Label>Faturamento Peças Aplicadas (R$)</Label>
-                    <Input
-                      type="number"
+                    <InputMoeda
                       value={formData.revenue.parts_applied}
                       onChange={(e) => updateRevenue('parts_applied', e.target.value)}
                       className="text-right"
@@ -611,8 +611,7 @@ export default function DRETCMP2() {
                   </div>
                   <div>
                     <Label>Faturamento Serviços (R$)</Label>
-                    <Input
-                      type="number"
+                    <InputMoeda
                       value={formData.revenue.services}
                       onChange={(e) => updateRevenue('services', e.target.value)}
                       className="text-right"
@@ -620,8 +619,7 @@ export default function DRETCMP2() {
                   </div>
                   <div>
                     <Label>Outras Receitas (R$)</Label>
-                    <Input
-                      type="number"
+                    <InputMoeda
                       value={formData.revenue.other}
                       onChange={(e) => updateRevenue('other', e.target.value)}
                       className="text-right"
@@ -653,8 +651,7 @@ export default function DRETCMP2() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div>
                     <Label>Operacionais (Aluguel, Energia, Água, Tel)</Label>
-                    <Input
-                      type="number"
+                    <InputMoeda
                       value={formData.costs_tcmp2.operational}
                       onChange={(e) => updateCostsTcmp2('operational', e.target.value)}
                       className="text-right"
@@ -662,8 +659,7 @@ export default function DRETCMP2() {
                   </div>
                   <div>
                     <Label>Pessoas (Salários, Encargos, Benefícios)</Label>
-                    <Input
-                      type="number"
+                    <InputMoeda
                       value={formData.costs_tcmp2.people}
                       onChange={(e) => updateCostsTcmp2('people', e.target.value)}
                       className="text-right"
@@ -671,8 +667,7 @@ export default function DRETCMP2() {
                   </div>
                   <div>
                     <Label>Pró-labore dos Sócios</Label>
-                    <Input
-                      type="number"
+                    <InputMoeda
                       value={formData.costs_tcmp2.prolabore}
                       onChange={(e) => updateCostsTcmp2('prolabore', e.target.value)}
                       className="text-right"
@@ -680,8 +675,7 @@ export default function DRETCMP2() {
                   </div>
                   <div>
                     <Label>Marketing e Propaganda</Label>
-                    <Input
-                      type="number"
+                    <InputMoeda
                       value={formData.costs_tcmp2.marketing}
                       onChange={(e) => updateCostsTcmp2('marketing', e.target.value)}
                       className="text-right"
@@ -689,8 +683,7 @@ export default function DRETCMP2() {
                   </div>
                   <div>
                     <Label>Manutenção (Predial e Equipamentos)</Label>
-                    <Input
-                      type="number"
+                    <InputMoeda
                       value={formData.costs_tcmp2.maintenance}
                       onChange={(e) => updateCostsTcmp2('maintenance', e.target.value)}
                       className="text-right"
@@ -698,8 +691,7 @@ export default function DRETCMP2() {
                   </div>
                   <div>
                     <Label>Serviços Terceirizados</Label>
-                    <Input
-                      type="number"
+                    <InputMoeda
                       value={formData.costs_tcmp2.third_party}
                       onChange={(e) => updateCostsTcmp2('third_party', e.target.value)}
                       className="text-right"
@@ -707,8 +699,7 @@ export default function DRETCMP2() {
                   </div>
                   <div>
                     <Label>Despesas Administrativas</Label>
-                    <Input
-                      type="number"
+                    <InputMoeda
                       value={formData.costs_tcmp2.administrative}
                       onChange={(e) => updateCostsTcmp2('administrative', e.target.value)}
                       className="text-right"
@@ -740,8 +731,7 @@ export default function DRETCMP2() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div>
                     <Label>Financiamentos</Label>
-                    <Input
-                      type="number"
+                    <InputMoeda
                       value={formData.costs_not_tcmp2.financing}
                       onChange={(e) => updateCostsNotTcmp2('financing', e.target.value)}
                       className="text-right"
@@ -749,8 +739,7 @@ export default function DRETCMP2() {
                   </div>
                   <div>
                     <Label>Consórcios</Label>
-                    <Input
-                      type="number"
+                    <InputMoeda
                       value={formData.costs_not_tcmp2.consortium}
                       onChange={(e) => updateCostsNotTcmp2('consortium', e.target.value)}
                       className="text-right"
@@ -758,8 +747,7 @@ export default function DRETCMP2() {
                   </div>
                   <div>
                     <Label>Equipamentos Parcelados</Label>
-                    <Input
-                      type="number"
+                    <InputMoeda
                       value={formData.costs_not_tcmp2.equipment_installments}
                       onChange={(e) => updateCostsNotTcmp2('equipment_installments', e.target.value)}
                       className="text-right"
@@ -767,8 +755,7 @@ export default function DRETCMP2() {
                   </div>
                   <div>
                     <Label>Boletos de Peças (Estoque)</Label>
-                    <Input
-                      type="number"
+                    <InputMoeda
                       value={formData.costs_not_tcmp2.parts_invoices}
                       onChange={(e) => updateCostsNotTcmp2('parts_invoices', e.target.value)}
                       className="text-right"
@@ -776,8 +763,7 @@ export default function DRETCMP2() {
                   </div>
                   <div>
                     <Label>Processos Judiciais</Label>
-                    <Input
-                      type="number"
+                    <InputMoeda
                       value={formData.costs_not_tcmp2.legal_processes}
                       onChange={(e) => updateCostsNotTcmp2('legal_processes', e.target.value)}
                       className="text-right"
@@ -785,8 +771,7 @@ export default function DRETCMP2() {
                   </div>
                   <div>
                     <Label>Compra de Terreno/Imóvel</Label>
-                    <Input
-                      type="number"
+                    <InputMoeda
                       value={formData.costs_not_tcmp2.land_purchase}
                       onChange={(e) => updateCostsNotTcmp2('land_purchase', e.target.value)}
                       className="text-right"
@@ -794,8 +779,7 @@ export default function DRETCMP2() {
                   </div>
                   <div>
                     <Label>Investimentos Diversos</Label>
-                    <Input
-                      type="number"
+                    <InputMoeda
                       value={formData.costs_not_tcmp2.investments}
                       onChange={(e) => updateCostsNotTcmp2('investments', e.target.value)}
                       className="text-right"
@@ -827,8 +811,7 @@ export default function DRETCMP2() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <Label>Custo das Peças APLICADAS no Mês (R$)</Label>
-                    <Input
-                      type="number"
+                    <InputMoeda
                       value={formData.parts_cost.parts_applied_cost}
                       onChange={(e) => updatePartsCost('parts_applied_cost', e.target.value)}
                       className="text-right text-lg"
@@ -839,8 +822,7 @@ export default function DRETCMP2() {
                   </div>
                   <div>
                     <Label>Peças Compradas para ESTOQUE (R$)</Label>
-                    <Input
-                      type="number"
+                    <InputMoeda
                       value={formData.parts_cost.parts_stock_purchase}
                       onChange={(e) => updatePartsCost('parts_stock_purchase', e.target.value)}
                       className="text-right text-lg"
