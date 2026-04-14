@@ -298,24 +298,18 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
               <Label className="text-xs text-gray-600 mb-1 block">% Lucro</Label>
               <Input
                 type="number"
-                step="0.1"
-                value={localBestMonth?.profit_percentage ?? ''}
-                onChange={(e) => setLocalBestMonth({...localBestMonth, profit_percentage: e.target.value === '' ? '' : parseFloat(e.target.value)})}
-                onBlur={(e) => setLocalBestMonth(prev => ({...prev, profit_percentage: parseFloat(prev.profit_percentage) || 0}))}
-                disabled={!editingBestMonth}
-                className="h-9"
+                value={localBestMonth?.profit_percentage ?? 0}
+                disabled
+                className="h-9 bg-gray-100"
               />
             </div>
             <div>
               <Label className="text-xs text-gray-600 mb-1 block">% Rentabilidade</Label>
               <Input
                 type="number"
-                step="0.1"
-                value={localBestMonth?.rentability_percentage ?? ''}
-                onChange={(e) => setLocalBestMonth({...localBestMonth, rentability_percentage: e.target.value === '' ? '' : parseFloat(e.target.value)})}
-                onBlur={(e) => setLocalBestMonth(prev => ({...prev, rentability_percentage: parseFloat(prev.rentability_percentage) || 0}))}
-                disabled={!editingBestMonth}
-                className="h-9"
+                value={localBestMonth?.rentability_percentage ?? 0}
+                disabled
+                className="h-9 bg-gray-100"
               />
             </div>
           </div>
