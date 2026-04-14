@@ -1,11 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
-import { CheckCircle, Clock, Send, Copy, Edit, Trash } from "lucide-react";
+import { CheckCircle, Clock, Send, Copy, Edit, Trash, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -14,14 +14,23 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export default function ContractDetailsModal({ contract, open, onClose, onEdit }) {
   const queryClient = useQueryClient();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const deleteMutation = useMutation({
     mutationFn: async () => {
+      if (contract.workshop_id) {
+        await base44.entities.Workshop.update(contract.workshop_id, {
+          planoAtual: "FREE",
+          planStatus: "trial"
+        });
+      }
       await base44.entities.Contract.delete(contract.id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['contracts']);
-      toast.success("Contrato excluído com sucesso!");
+      queryClient.invalidateQueries(['workshops-list']);
+      toast.success("Contrato excluído e cliente rebaixado para o plano FREE!");
+      setIsDeleteDialogOpen(false);
       onClose();
     },
     onError: () => {
@@ -29,10 +38,12 @@ export default function ContractDetailsModal({ contract, open, onClose, onEdit }
     }
   });
 
-  const handleDelete = () => {
-    if (window.confirm("Tem certeza que deseja excluir este contrato? Esta ação não pode ser desfeita.")) {
-      deleteMutation.mutate();
-    }
+  const confirmDelete = () => {
+    deleteMutation.mutate();
+  };
+
+  const handleDeleteClick = () => {
+    setIsDeleteDialogOpen(true);
   };
   if (!contract) return null;
 
@@ -53,7 +64,8 @@ export default function ContractDetailsModal({ contract, open, onClose, onEdit }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <>
+      <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col p-0 overflow-hidden">
         <DialogHeader className="px-6 py-4 border-b bg-white">
           <DialogTitle className="flex items-center justify-between">
@@ -129,7 +141,7 @@ export default function ContractDetailsModal({ contract, open, onClose, onEdit }
               <Edit className="w-4 h-4 mr-2" />
               Editar
             </Button>
-            <Button onClick={handleDelete} variant="destructive" className="bg-red-600 hover:bg-red-700 text-white" disabled={deleteMutation.isPending}>
+            <Button onClick={handleDeleteClick} variant="destructive" className="bg-red-600 hover:bg-red-700 text-white" disabled={deleteMutation.isPending}>
               <Trash className="w-4 h-4 mr-2" />
               Excluir
             </Button>
@@ -148,5 +160,40 @@ export default function ContractDetailsModal({ contract, open, onClose, onEdit }
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+      {/* Diálogo de Confirmação de Exclusão */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-red-600 flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5" />
+              Atenção: Exclusão de Contrato
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4 space-y-3">
+            <p className="text-gray-700">
+              Você está prestes a excluir o contrato <strong>{contract?.contract_number}</strong> da oficina <strong>{contract?.workshop_name}</strong>.
+            </p>
+            <div className="bg-red-50 text-red-800 p-4 rounded-lg border border-red-200">
+              <p className="font-semibold mb-2">Consequências desta ação:</p>
+              <ul className="list-disc list-inside space-y-1 ml-4 text-sm">
+                <li>O contrato será excluído permanentemente.</li>
+                <li><strong>A oficina será automaticamente rebaixada para o plano FREE.</strong></li>
+                <li>O cliente perderá acesso imediato aos recursos premium do plano atual.</li>
+              </ul>
+            </div>
+            <p className="text-sm text-gray-500 font-medium">Esta ação não pode ser desfeita. Deseja realmente prosseguir?</p>
+          </div>
+          <DialogFooter className="flex gap-3 sm:justify-end">
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)} disabled={deleteMutation.isPending}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={confirmDelete} disabled={deleteMutation.isPending} className="bg-red-600 hover:bg-red-700">
+              {deleteMutation.isPending ? "Processando..." : "Sim, Excluir e Rebaixar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
