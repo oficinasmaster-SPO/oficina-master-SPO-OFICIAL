@@ -9,7 +9,9 @@ export default function TechnicianRanking({ employees }) {
     .filter(emp => emp.area === 'tecnico' && emp.status === 'ativo')
     .map(emp => {
       const totalCost = (emp.salary || 0) + (emp.commission || 0) + (emp.bonus || 0);
-      const totalProduction = (emp.production_parts || 0) + (emp.production_services || 0);
+      const realizedProduction = emp.monthly_goals?.actual_revenue_achieved || 0;
+      const predictedProduction = (emp.production_parts || 0) + (emp.production_services || 0);
+      const totalProduction = realizedProduction > 0 ? realizedProduction : predictedProduction;
       const productivity = totalCost > 0 ? (totalProduction / totalCost) * 100 : 0;
       
       return {

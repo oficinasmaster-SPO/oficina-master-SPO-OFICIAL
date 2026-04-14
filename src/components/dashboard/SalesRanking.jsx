@@ -8,7 +8,9 @@ export default function SalesRanking({ employees }) {
   const salespeople = employees
     .filter(emp => (emp.area === 'vendas' || emp.area === 'comercial') && emp.status === 'ativo')
     .map(emp => {
-      const totalSales = (emp.production_parts_sales || 0) + (emp.production_services || 0);
+      const realizedSales = emp.monthly_goals?.actual_revenue_achieved || 0;
+      const predictedSales = (emp.production_parts_sales || 0) + (emp.production_services || 0);
+      const totalSales = realizedSales > 0 ? realizedSales : predictedSales;
       const commission = emp.commission || 0;
       
       return {

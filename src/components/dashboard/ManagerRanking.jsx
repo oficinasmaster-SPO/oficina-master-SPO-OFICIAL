@@ -8,7 +8,9 @@ export default function ManagerRanking({ employees }) {
   const managers = employees
     .filter(emp => emp.position?.toLowerCase().includes('gerente') && emp.status === 'ativo')
     .map(emp => {
-      const totalProduction = (emp.production_parts || 0) + (emp.production_services || 0);
+      const realizedProduction = emp.monthly_goals?.actual_revenue_achieved || 0;
+      const predictedProduction = (emp.production_parts || 0) + (emp.production_services || 0);
+      const totalProduction = realizedProduction > 0 ? realizedProduction : predictedProduction;
       
       return {
         id: emp.id,

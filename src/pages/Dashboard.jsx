@@ -155,9 +155,11 @@ export default function Dashboard() {
   // Faturamento por técnico
   const employeesArray = Array.isArray(employees) ? employees : [];
   const technicians = employeesArray.filter(emp => emp?.area === 'tecnico' && emp?.status === 'ativo');
-  const totalTechProduction = technicians.reduce((sum, tech) => 
-    sum + (tech.production_parts || 0) + (tech.production_services || 0), 0
-  );
+  const totalTechProduction = technicians.reduce((sum, tech) => {
+    const realized = tech.monthly_goals?.actual_revenue_achieved || 0;
+    const predicted = (tech.production_parts || 0) + (tech.production_services || 0);
+    return sum + (realized > 0 ? realized : predicted);
+  }, 0);
   const avgTechRevenue = technicians.length > 0 ? totalTechProduction / technicians.length : 0;
 
   // Kit Master e Pneus
