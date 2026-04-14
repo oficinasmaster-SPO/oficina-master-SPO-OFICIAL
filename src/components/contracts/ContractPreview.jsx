@@ -39,7 +39,8 @@ export default function ContractPreview({ contract, workshop }) {
       </CardHeader>
       <CardContent>
         <div 
-          className="prose prose-sm max-w-none"
+          id="contract-preview-content"
+          className="prose prose-sm max-w-none text-justify leading-relaxed"
           style={{ whiteSpace: 'pre-wrap' }}
         >
           {replaceVariables(contract.contract_template)}

@@ -9,9 +9,11 @@ import { InputMoeda } from "@/components/ui/InputMoeda";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Send, Copy, Save, Eye, FileText, TrendingUp } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Loader2, Send, Copy, Save, Eye, FileText, TrendingUp, ArrowRight, ArrowLeft, Download, Mail } from "lucide-react";
 import { toast } from "sonner";
 import ContractPreview from "./ContractPreview";
+import jsPDF from "jspdf";
 import { TRAFEGO_PAGO_TEMPLATE } from "./templates/TrafegoPagoTemplate";
 import { CONSULTORIA_GOLD_TEMPLATE } from "./templates/ConsultoriaGoldTemplate";
 
@@ -168,6 +170,93 @@ export default function ContractForm({ contract, user, onSuccess }) {
     toast.success("Link copiado!");
   };
 
+  const handleNextStep = (e) => {
+    if (e) e.preventDefault();
+    if (activeTab === "formulario") {
+      if (!formData.workshop_id) {
+        toast.error("Selecione uma oficina cliente primeiro.");
+        return;
+      }
+      setActiveTab("template");
+    } else if (activeTab === "template") {
+      setActiveTab("preview");
+    }
+  };
+
+  const handlePrevStep = () => {
+    if (activeTab === "preview") setActiveTab("template");
+    else if (activeTab === "template") setActiveTab("formulario");
+  };
+
+  const downloadPDF = () => {
+    const doc = new jsPDF({
+      orientation: "portrait",
+      unit: "mm",
+      format: "a4"
+    });
+
+    const margin = 30; // Margem ABNT: Esquerda 3cm, Superior 3cm, Direita 2cm, Inferior 2cm
+    const pageWidth = doc.internal.pageSize.width;
+    const maxLineWidth = pageWidth - margin - 20;
+
+    doc.setFont("times", "normal");
+    doc.setFontSize(12);
+
+    let yPosition = 30;
+
+    doc.setFont("times", "bold");
+    doc.text("CONTRATO DE PRESTAÇÃO DE SERVIÇOS", pageWidth / 2, yPosition, { align: "center" });
+    yPosition += 15;
+
+    doc.setFont("times", "normal");
+    const previewElement = document.getElementById("contract-preview-content");
+    const textContent = previewElement ? previewElement.innerText : formData.contract_template;
+
+    const lines = doc.splitTextToSize(textContent, maxLineWidth);
+    
+    lines.forEach((line) => {
+      if (yPosition > 270) {
+        doc.addPage();
+        yPosition = 30;
+      }
+      doc.text(line, margin, yPosition, { align: "justify", maxWidth: maxLineWidth });
+      yPosition += 7; // Espaçamento 1.5 padrão ABNT
+    });
+
+    doc.save(`Contrato_${selectedWorkshop?.name || "Oficina"}.pdf`);
+    toast.success("PDF baixado com sucesso!");
+  };
+
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
+  const [emailToSend, setEmailToSend] = useState("");
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
+
+  const handleOpenEmailModal = () => {
+    setEmailToSend(selectedWorkshop?.email || "");
+    setIsEmailModalOpen(true);
+  };
+
+  const handleSendEmail = async () => {
+    if (!emailToSend) {
+      toast.error("Informe um e-mail válido.");
+      return;
+    }
+    setIsSendingEmail(true);
+    try {
+      await base44.integrations.Core.SendEmail({
+        to: emailToSend,
+        subject: `Contrato de Prestação de Serviços - ${selectedWorkshop?.name}`,
+        body: `Olá,\n\nSegue o link para visualização e assinatura do seu contrato: ${contract?.contract_link || `${window.location.origin}/contrato/${contract?.id || 'novo'}`}\n\nAtenciosamente,\nEquipe Oficinas Master`
+      });
+      toast.success("Contrato enviado por e-mail com sucesso!");
+      setIsEmailModalOpen(false);
+    } catch (error) {
+      toast.error("Erro ao enviar e-mail.");
+    } finally {
+      setIsSendingEmail(false);
+    }
+  };
+
   const useContratoFinanceiro = (form) => {
     return React.useMemo(() => {
       const meses = parseInt(form.contract_duration_months) || 0;
@@ -197,24 +286,24 @@ export default function ContractForm({ contract, user, onSuccess }) {
         </p>
       </CardHeader>
       <CardContent>
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="formulario">
-              <FileText className="w-4 h-4 mr-2" />
-              Dados do Contrato
-            </TabsTrigger>
-            <TabsTrigger value="preview" disabled={!formData.workshop_id}>
-              <Eye className="w-4 h-4 mr-2" />
-              Pré-visualização
-            </TabsTrigger>
-            <TabsTrigger value="template">
-              <FileText className="w-4 h-4 mr-2" />
-              Template
-            </TabsTrigger>
-          </TabsList>
+        <div className="mb-6 flex justify-between items-center bg-gray-50 p-2 rounded-lg border">
+          <div className={`flex items-center gap-2 px-4 py-2 rounded-md ${activeTab === 'formulario' ? 'bg-white shadow text-blue-600 font-semibold' : 'text-gray-500'}`}>
+            <span className={`flex items-center justify-center w-6 h-6 rounded-full text-xs ${activeTab === 'formulario' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>1</span>
+            Dados do Contrato
+          </div>
+          <div className={`flex items-center gap-2 px-4 py-2 rounded-md ${activeTab === 'template' ? 'bg-white shadow text-blue-600 font-semibold' : 'text-gray-500'}`}>
+            <span className={`flex items-center justify-center w-6 h-6 rounded-full text-xs ${activeTab === 'template' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>2</span>
+            Template
+          </div>
+          <div className={`flex items-center gap-2 px-4 py-2 rounded-md ${activeTab === 'preview' ? 'bg-white shadow text-blue-600 font-semibold' : 'text-gray-500'}`}>
+            <span className={`flex items-center justify-center w-6 h-6 rounded-full text-xs ${activeTab === 'preview' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>3</span>
+            Pré-visualização
+          </div>
+        </div>
 
-          <TabsContent value="formulario">
-            <form onSubmit={handleSubmit} className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsContent value="formulario" forceMount className={activeTab === 'formulario' ? 'block' : 'hidden'}>
+            <form onSubmit={handleNextStep} className="space-y-6">
               
               {/* 2. Informações do Contrato */}
               <div className="space-y-4">
@@ -441,56 +530,15 @@ export default function ContractForm({ contract, user, onSuccess }) {
                 />
               </div>
 
-              <div className="flex gap-3 pt-4 border-t">
-                <Button 
-                  type="submit" 
-                  className="bg-red-600 hover:bg-red-700 text-white font-semibold px-8"
-                  disabled={createMutation.isPending || updateMutation.isPending}
-                >
-                  {createMutation.isPending || updateMutation.isPending ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <Save className="w-4 h-4 mr-2" />
-                  )}
-                  {contract ? 'Atualizar Contrato' : 'Criar Contrato'}
+              <div className="flex justify-end gap-3 pt-4 border-t">
+                <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white">
+                  Próximo Passo <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
-
-                {contract && contract.status === 'rascunho' && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleSendContract}
-                    className="border-red-200 text-red-600 hover:bg-red-50"
-                  >
-                    <Send className="w-4 h-4 mr-2" />
-                    Enviar para Cliente
-                  </Button>
-                )}
-
-                {contract && contract.contract_link && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={copyLink}
-                  >
-                    <Copy className="w-4 h-4 mr-2" />
-                    Copiar Link
-                  </Button>
-                )}
               </div>
             </form>
           </TabsContent>
 
-          <TabsContent value="preview">
-            {selectedWorkshop && (
-              <ContractPreview 
-                contract={{ ...formData, ...contract }} 
-                workshop={selectedWorkshop} 
-              />
-            )}
-          </TabsContent>
-
-          <TabsContent value="template">
+          <TabsContent value="template" forceMount className={activeTab === 'template' ? 'block' : 'hidden'}>
             <div className="space-y-4">
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
                 <div className="flex items-center justify-between flex-wrap gap-3">
@@ -530,10 +578,93 @@ export default function ContractForm({ contract, user, onSuccess }) {
                   className="min-h-[500px] font-mono text-xs"
                 />
               </div>
+
+              <div className="flex justify-between pt-4 border-t">
+                <Button type="button" variant="outline" onClick={handlePrevStep}>
+                  <ArrowLeft className="w-4 h-4 mr-2" /> Voltar
+                </Button>
+                <Button type="button" onClick={handleNextStep} className="bg-blue-600 hover:bg-blue-700 text-white">
+                  Pré-visualizar <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="preview" forceMount className={activeTab === 'preview' ? 'block' : 'hidden'}>
+            {selectedWorkshop && (
+              <div id="contract-preview-container">
+                <ContractPreview 
+                  contract={{ ...formData, ...contract }} 
+                  workshop={selectedWorkshop} 
+                />
+              </div>
+            )}
+            
+            <div className="flex justify-between items-center pt-6 mt-6 border-t">
+              <Button type="button" variant="outline" onClick={handlePrevStep}>
+                <ArrowLeft className="w-4 h-4 mr-2" /> Voltar para Template
+              </Button>
+              
+              <div className="flex flex-wrap gap-3">
+                <Button type="button" variant="outline" onClick={downloadPDF} className="border-gray-300">
+                  <Download className="w-4 h-4 mr-2" /> Download PDF (ABNT)
+                </Button>
+                
+                <Button type="button" variant="outline" onClick={handleOpenEmailModal} className="border-blue-200 text-blue-700 hover:bg-blue-50">
+                  <Mail className="w-4 h-4 mr-2" /> Enviar por E-mail
+                </Button>
+
+                {contract && contract.contract_link && (
+                  <Button type="button" variant="outline" onClick={copyLink}>
+                    <Copy className="w-4 h-4 mr-2" /> Copiar Link
+                  </Button>
+                )}
+
+                <Button 
+                  type="button" 
+                  onClick={handleSubmit}
+                  className="bg-red-600 hover:bg-red-700 text-white font-semibold px-8"
+                  disabled={createMutation.isPending || updateMutation.isPending}
+                >
+                  {createMutation.isPending || updateMutation.isPending ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Save className="w-4 h-4 mr-2" />
+                  )}
+                  {contract ? 'Atualizar Contrato' : 'Salvar Contrato'}
+                </Button>
+              </div>
             </div>
           </TabsContent>
         </Tabs>
       </CardContent>
+
+      <Dialog open={isEmailModalOpen} onOpenChange={setIsEmailModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Enviar Contrato por E-mail</DialogTitle>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            <div className="space-y-2">
+              <Label>E-mail do Destinatário</Label>
+              <Input 
+                type="email" 
+                value={emailToSend} 
+                onChange={(e) => setEmailToSend(e.target.value)} 
+                placeholder="exemplo@cliente.com"
+              />
+              <p className="text-xs text-gray-500">Puxamos o e-mail do cadastro automaticamente, mas você pode alterar caso necessário.</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEmailModalOpen(false)}>Cancelar</Button>
+            <Button onClick={handleSendEmail} disabled={isSendingEmail} className="bg-blue-600 hover:bg-blue-700 text-white">
+              {isSendingEmail ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
+              Enviar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
