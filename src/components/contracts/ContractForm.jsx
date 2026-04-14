@@ -22,7 +22,7 @@ const CONTRACT_TEMPLATES = [
   { id: "consultoria-gold", label: "GOLD - Consultoria e Aceleração", plan: "GOLD", content: CONSULTORIA_GOLD_TEMPLATE },
 ];
 
-export default function ContractForm({ contract, user, onSuccess }) {
+export default function ContractForm({ contract, user, onSuccess, onCancel }) {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("formulario");
   const [selectedWorkshop, setSelectedWorkshop] = useState(null);
@@ -574,7 +574,12 @@ export default function ContractForm({ contract, user, onSuccess }) {
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t">
+              <div className="flex justify-between pt-4 border-t">
+                {onCancel ? (
+                  <Button type="button" variant="outline" onClick={onCancel}>
+                    Cancelar
+                  </Button>
+                ) : <div></div>}
                 <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white">
                   Próximo Passo <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
@@ -627,9 +632,16 @@ export default function ContractForm({ contract, user, onSuccess }) {
               </div>
 
               <div className="flex justify-between pt-4 border-t">
-                <Button type="button" variant="outline" onClick={handlePrevStep}>
-                  <ArrowLeft className="w-4 h-4 mr-2" /> Voltar
-                </Button>
+                <div className="flex gap-3">
+                  {onCancel && (
+                    <Button type="button" variant="outline" onClick={onCancel}>
+                      Cancelar
+                    </Button>
+                  )}
+                  <Button type="button" variant="outline" onClick={handlePrevStep}>
+                    <ArrowLeft className="w-4 h-4 mr-2" /> Voltar
+                  </Button>
+                </div>
                 <Button type="button" onClick={handleNextStep} className="bg-blue-600 hover:bg-blue-700 text-white">
                   Pré-visualizar <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
@@ -647,10 +659,17 @@ export default function ContractForm({ contract, user, onSuccess }) {
               </div>
             )}
             
-            <div className="flex justify-between items-center pt-6 mt-6 border-t">
-              <Button type="button" variant="outline" onClick={handlePrevStep}>
-                <ArrowLeft className="w-4 h-4 mr-2" /> Voltar para Template
-              </Button>
+            <div className="flex justify-between items-center pt-6 mt-6 border-t flex-wrap gap-4">
+              <div className="flex gap-3">
+                {onCancel && (
+                  <Button type="button" variant="outline" onClick={onCancel}>
+                    Cancelar
+                  </Button>
+                )}
+                <Button type="button" variant="outline" onClick={handlePrevStep}>
+                  <ArrowLeft className="w-4 h-4 mr-2" /> Voltar para Template
+                </Button>
+              </div>
               
               <div className="flex flex-wrap gap-3">
                 <Button type="button" variant="outline" onClick={downloadPDF} className="border-gray-300">

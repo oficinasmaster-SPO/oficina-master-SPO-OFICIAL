@@ -203,6 +203,10 @@ export default function GestaoContratos() {
               setActiveTab("lista");
               setEditingContract(null);
             }}
+            onCancel={() => {
+              setActiveTab("lista");
+              setEditingContract(null);
+            }}
           />
         </TabsContent>
 
