@@ -108,7 +108,7 @@ const GerenciarProcessos = lazy(() => import('./pages/GerenciarProcessos'));
 const GerenciarRoles = lazy(() => import('./pages/GerenciarRoles'));
 const GerenciarToursVideos = lazy(() => import('./pages/GerenciarToursVideos'));
 const GerenciarTreinamentos = lazy(() => import('./pages/GerenciarTreinamentos'));
-const GestaoContratos = lazy(() => import('./pages/GestaoContratos'));
+const GestaoContratos = lazy(() => import('./pages/GestaoContratos.jsx'));
 const GestaoDesafios = lazy(() => import('./pages/GestaoDesafios'));
 const GestaoOficina = lazy(() => import('./pages/GestaoOficina'));
 const GestaoRBAC = lazy(() => import('./pages/GestaoRBAC'));

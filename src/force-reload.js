@@ -1,1 +1,1 @@
-export const force = "full reload fix dynamic import issue";
+export const force = 'reload for gestao contratos';
