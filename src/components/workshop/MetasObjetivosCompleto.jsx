@@ -5,6 +5,7 @@ import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { InputMoeda } from "@/components/ui/InputMoeda";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -595,8 +596,7 @@ const MetasObjetivosCompleto = forwardRef(({ workshop, onUpdate, onEditingChange
                   </div>
                   <div>
                     <Label>Faturamento Peças (R$)</Label>
-                    <Input
-                      type="number"
+                    <InputMoeda
                       value={formData.best_month_history.revenue_parts}
                       onChange={(e) => updateBestMonth('revenue_parts', parseFloat(e.target.value) || 0)}
                       disabled={!editing}
@@ -605,8 +605,7 @@ const MetasObjetivosCompleto = forwardRef(({ workshop, onUpdate, onEditingChange
                   </div>
                   <div>
                     <Label>Faturamento Serviços (R$)</Label>
-                    <Input
-                      type="number"
+                    <InputMoeda
                       value={formData.best_month_history.revenue_services}
                       onChange={(e) => updateBestMonth('revenue_services', parseFloat(e.target.value) || 0)}
                       disabled={!editing}
@@ -723,8 +722,7 @@ const MetasObjetivosCompleto = forwardRef(({ workshop, onUpdate, onEditingChange
                       TCMP2 (R$)
                       <span className="text-xs text-gray-500 font-normal">- Automático do DRE</span>
                     </Label>
-                    <Input
-                      type="number"
+                    <InputMoeda
                       value={formData.best_month_history.tcmp2}
                       onChange={(e) => updateBestMonth('tcmp2', parseFloat(e.target.value) || 0)}
                       disabled={!editing}
@@ -795,8 +793,7 @@ const MetasObjetivosCompleto = forwardRef(({ workshop, onUpdate, onEditingChange
                   </div>
                   <div>
                     <Label>Vendas Clientes Base (R$)</Label>
-                    <Input
-                      type="number"
+                    <InputMoeda
                       value={formData.best_month_history.sales_base}
                       onChange={(e) => updateBestMonth('sales_base', parseFloat(e.target.value) || 0)}
                       disabled={!editing} />
@@ -826,8 +823,7 @@ const MetasObjetivosCompleto = forwardRef(({ workshop, onUpdate, onEditingChange
                   </div>
                   <div>
                     <Label>Vendas Lead Marketing (R$)</Label>
-                    <Input
-                      type="number"
+                    <InputMoeda
                       value={formData.best_month_history.sales_marketing}
                       onChange={(e) => updateBestMonth('sales_marketing', parseFloat(e.target.value) || 0)}
                       disabled={!editing} />
@@ -925,8 +921,7 @@ const MetasObjetivosCompleto = forwardRef(({ workshop, onUpdate, onEditingChange
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                   <div>
                     <Label>Valor Investido (Tráfego) R$</Label>
-                    <Input
-                      type="number"
+                    <InputMoeda
                       value={formData.best_month_history.marketing?.invested_value || 0}
                       onChange={(e) => updateMarketing('invested_value', parseFloat(e.target.value) || 0)}
                       disabled={!editing} />
@@ -934,8 +929,7 @@ const MetasObjetivosCompleto = forwardRef(({ workshop, onUpdate, onEditingChange
                   </div>
                   <div>
                     <Label>Valor Faturado Lead Tráfego (R$)</Label>
-                    <Input
-                      type="number"
+                    <InputMoeda
                       value={formData.best_month_history.marketing?.revenue_from_traffic || 0}
                       onChange={(e) => updateMarketing('revenue_from_traffic', parseFloat(e.target.value) || 0)}
                       disabled={!editing} />
@@ -972,8 +966,7 @@ const MetasObjetivosCompleto = forwardRef(({ workshop, onUpdate, onEditingChange
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                       <div>
                         <Label className="text-xs">Fat. Peças (R$)</Label>
-                        <Input
-                        type="number"
+                        <InputMoeda
                         value={formData.best_month_history.physical_person?.revenue_parts || 0}
                         onChange={(e) => updatePhysicalPerson('revenue_parts', parseFloat(e.target.value) || 0)}
                         disabled={!editing}
@@ -982,8 +975,7 @@ const MetasObjetivosCompleto = forwardRef(({ workshop, onUpdate, onEditingChange
                       </div>
                       <div>
                         <Label className="text-xs">Fat. Serviços (R$)</Label>
-                        <Input
-                        type="number"
+                        <InputMoeda
                         value={formData.best_month_history.physical_person?.revenue_services || 0}
                         onChange={(e) => updatePhysicalPerson('revenue_services', parseFloat(e.target.value) || 0)}
                         disabled={!editing}
@@ -1023,8 +1015,7 @@ const MetasObjetivosCompleto = forwardRef(({ workshop, onUpdate, onEditingChange
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                       <div>
                         <Label className="text-xs">Fat. Peças (R$)</Label>
-                        <Input
-                        type="number"
+                        <InputMoeda
                         value={formData.best_month_history.juridical_person?.revenue_parts || 0}
                         onChange={(e) => updateJuridicalPerson('revenue_parts', parseFloat(e.target.value) || 0)}
                         disabled={!editing}
@@ -1033,8 +1024,7 @@ const MetasObjetivosCompleto = forwardRef(({ workshop, onUpdate, onEditingChange
                       </div>
                       <div>
                         <Label className="text-xs">Fat. Serviços (R$)</Label>
-                        <Input
-                        type="number"
+                        <InputMoeda
                         value={formData.best_month_history.juridical_person?.revenue_services || 0}
                         onChange={(e) => updateJuridicalPerson('revenue_services', parseFloat(e.target.value) || 0)}
                         disabled={!editing}

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useImperativeHandle, forwardRef } from "rea
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { InputMoeda } from "@/components/ui/InputMoeda";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Save, Plus, Trash2, Loader2 } from "lucide-react";
@@ -170,9 +171,7 @@ const ServicosTerceirizados = forwardRef(({ workshop, onUpdate, onEditingChange 
                   </div>
                   <div>
                     <Label className="text-xs text-gray-600">Valor Mensal (R$)</Label>
-                    <Input
-                      type="number"
-                      placeholder="0,00"
+                    <InputMoeda
                       value={service.value}
                       onChange={(e) => updateService(index, 'value', e.target.value)}
                       disabled={!editing}
