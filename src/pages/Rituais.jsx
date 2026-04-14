@@ -415,6 +415,7 @@ export default function Rituais() {
         return data || [];
       } catch (error) {
         console.error("Erro ao carregar rituais:", error);
+        toast.error("Erro ao carregar os rituais. Verifique sua conexão e tente novamente.");
         return [];
       }
     },
