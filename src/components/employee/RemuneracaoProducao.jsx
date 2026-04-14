@@ -241,9 +241,8 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
             </div>
             <div>
               <Label className="text-xs text-gray-600 mb-1 block">Faturamento Total (R$)</Label>
-              <Input
-                type="number"
-                value={((parseFloat(localBestMonth?.revenue_parts) || 0) + (parseFloat(localBestMonth?.revenue_services) || 0)).toFixed(2)}
+              <InputMoeda
+                value={(parseFloat(localBestMonth?.revenue_parts) || 0) + (parseFloat(localBestMonth?.revenue_services) || 0)}
                 disabled
                 className="h-9 bg-gray-100"
                 title="Calculado automaticamente: Peças + Serviços"
@@ -275,22 +274,18 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 pt-4 border-t border-yellow-200">
             <div>
               <Label className="text-xs text-gray-600 mb-1 block">Faturamento Peças (R$)</Label>
-              <Input
-                type="number"
+              <InputMoeda
                 value={localBestMonth?.revenue_parts ?? ''}
                 onChange={(e) => setLocalBestMonth({...localBestMonth, revenue_parts: e.target.value === '' ? '' : parseFloat(e.target.value)})}
-                onBlur={(e) => setLocalBestMonth(prev => ({...prev, revenue_parts: parseFloat(prev.revenue_parts) || 0}))}
                 disabled={!editingBestMonth}
                 className="h-9"
               />
             </div>
             <div>
               <Label className="text-xs text-gray-600 mb-1 block">Faturamento Serviços (R$)</Label>
-              <Input
-                type="number"
+              <InputMoeda
                 value={localBestMonth?.revenue_services ?? ''}
                 onChange={(e) => setLocalBestMonth({...localBestMonth, revenue_services: e.target.value === '' ? '' : parseFloat(e.target.value)})}
-                onBlur={(e) => setLocalBestMonth(prev => ({...prev, revenue_services: parseFloat(prev.revenue_services) || 0}))}
                 disabled={!editingBestMonth}
                 className="h-9"
               />
