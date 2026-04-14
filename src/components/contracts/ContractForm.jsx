@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { InputMoeda } from "@/components/ui/InputMoeda";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -237,9 +238,7 @@ export default function ContractForm({ contract, user, onSuccess }) {
 
             <div className="space-y-2">
               <Label>Valor do Contrato *</Label>
-              <Input
-                type="number"
-                step="0.01"
+              <InputMoeda
                 value={formData.contract_value}
                 onChange={(e) => setFormData({ ...formData, contract_value: parseFloat(e.target.value) })}
                 required
@@ -277,9 +276,7 @@ export default function ContractForm({ contract, user, onSuccess }) {
             <div className="md:col-span-2 grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Taxa Setup (R$)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
+                <InputMoeda
                   value={formData.setup_fee}
                   onChange={(e) => setFormData({ ...formData, setup_fee: parseFloat(e.target.value) })}
                 />
@@ -298,9 +295,7 @@ export default function ContractForm({ contract, user, onSuccess }) {
             <div className="md:col-span-2 grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Valor da Parcela (R$)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
+                <InputMoeda
                   value={formData.installment_value}
                   onChange={(e) => setFormData({ ...formData, installment_value: parseFloat(e.target.value) })}
                 />
