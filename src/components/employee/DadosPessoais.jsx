@@ -378,9 +378,7 @@ export default function DadosPessoais({ employee, onUpdate }) {
             </div>
             <div>
               <Label>Faturamento Total (R$)</Label>
-              <Input
-                type="number"
-                step="0.01"
+              <InputMoeda
                 value={formData.best_month_history?.revenue_total || 0}
                 onChange={(e) => setFormData({...formData, best_month_history: {...formData.best_month_history, revenue_total: parseFloat(e.target.value) || 0}})}
                 disabled={!editing}
