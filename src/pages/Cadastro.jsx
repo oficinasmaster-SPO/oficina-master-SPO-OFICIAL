@@ -138,7 +138,7 @@ export default function Cadastro() {
         identificador: workshopId,
         owner_id: user.id,
         consulting_firm_id: user.consulting_firm_id || '69bab264d7c3fe5d367c3959',
-        name: "Minha Nova Oficina",
+        name: "",
         city: "A Definir",
         state: "UF",
         status: "ativo",

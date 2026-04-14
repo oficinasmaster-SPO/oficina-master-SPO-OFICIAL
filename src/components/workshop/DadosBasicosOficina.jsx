@@ -133,6 +133,10 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
         toast.error("A logo da empresa é obrigatória para prosseguir.");
         return false;
       }
+      if (!formData.name || formData.name.trim() === "") {
+        toast.error("Nome Fantasia é obrigatório.");
+        return false;
+      }
       if (!formData.razao_social) {
         toast.error("Razão Social é obrigatória.");
         return false;
@@ -204,6 +208,10 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
   const handleSave = async () => {
     if (!workshop?.logo_url) {
       toast.error("A logo da empresa é obrigatória para prosseguir.");
+      return;
+    }
+    if (!formData.name || formData.name.trim() === "") {
+      toast.error("Nome Fantasia é obrigatório.");
       return;
     }
     if (!formData.razao_social) {
@@ -382,6 +390,7 @@ const DadosBasicosOficina = forwardRef(({ workshop, onUpdate, onEditingChange },
                 value={formData.name}
                 onChange={(e) => setFormData({...formData, name: e.target.value})}
                 disabled={!editing}
+                placeholder="Ex: Minha Oficina"
               />
             </div>
             <div>
