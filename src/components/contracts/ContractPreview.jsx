@@ -10,23 +10,27 @@ export default function ContractPreview({ contract, workshop }) {
     if (!text) return "";
     
     return text
-      .replace(/\[RAZÃO SOCIAL DA EMPRESA\]/g, workshop.razao_social || workshop.name)
-      .replace(/\[CNPJ\]/g, workshop.cnpj || "___________________")
-      .replace(/\[ENDEREÇO COMPLETO – rua, número, bairro, cidade\/UF e CEP\]/g, 
-        workshop.endereco_completo || `${workshop.city || "___"}/${workshop.state || "___"}, CEP: ___`)
-      .replace(/\[NOME DO REPRESENTANTE LEGAL\]/g, workshop.owner_name || "___________________")
-      .replace(/\[CPF\]/g, "___________________")
-      .replace(/\[E-MAIL\]/g, "___________________")
-      .replace(/\[TELEFONE\]/g, "___________________")
-      .replace(/{{workshop_name}}/g, workshop.name)
-      .replace(/{{cnpj}}/g, workshop.cnpj || "___________________")
-      .replace(/{{plan_type}}/g, contract.plan_type)
-      .replace(/{{contract_value}}/g, `R$ ${contract.contract_value?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`)
-      .replace(/{{duration}}/g, contract.contract_duration_months || 12)
-      .replace(/{{setup_fee}}/g, contract.setup_fee ? `R$ ${contract.setup_fee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : "___")
-      .replace(/{{setup_date}}/g, contract.setup_date ? format(new Date(contract.setup_date), 'dd/MM/yyyy', { locale: ptBR }) : "___")
-      .replace(/{{installment_value}}/g, contract.installment_value ? `R$ ${contract.installment_value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : "___")
-      .replace(/{{installment_due_day}}/g, contract.installment_due_day || "___");
+      .replace(/\[RAZÃO SOCIAL DA EMPRESA\]/gi, workshop.razao_social || workshop.name || "")
+      .replace(/\[CNPJ\]/gi, workshop.cnpj || "___")
+      .replace(/\[ENDEREÇO COMPLETO.*?\]/gi, workshop.endereco_completo || `${workshop.endereco_rua || ""} ${workshop.endereco_numero || ""}, ${workshop.endereco_bairro || ""}, ${workshop.city || ""}/${workshop.state || ""}, CEP: ${workshop.cep || ""}`)
+      .replace(/\[NOME DO REPRESENTANTE LEGAL\]/gi, workshop.owner_name || "___")
+      .replace(/\[CPF\]/gi, "___")
+      .replace(/\[E-MAIL\]/gi, workshop.email || "___")
+      .replace(/\[TELEFONE\]/gi, workshop.telefone || "___")
+      .replace(/{{workshop_name}}/gi, workshop.name || "")
+      .replace(/{{razao_social}}/gi, workshop.razao_social || workshop.name || "")
+      .replace(/{{cnpj}}/gi, workshop.cnpj || "___")
+      .replace(/{{city}}/gi, workshop.city || "___")
+      .replace(/{{state}}/gi, workshop.state || "___")
+      .replace(/{{endereco_completo}}/gi, workshop.endereco_completo || `${workshop.endereco_rua || ""} ${workshop.endereco_numero || ""}, ${workshop.endereco_bairro || ""}, ${workshop.city || ""}/${workshop.state || ""}, CEP: ${workshop.cep || ""}`)
+      .replace(/{{plan_type}}/gi, contract.plan_type || "")
+      .replace(/{{contract_value}}/gi, `R$ ${contract.contract_value?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || "0,00"}`)
+      .replace(/{{duration}}/gi, contract.contract_duration_months || 12)
+      .replace(/{{setup_fee}}/gi, contract.setup_fee ? `R$ ${contract.setup_fee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : "R$ 0,00")
+      .replace(/{{setup_date}}/gi, contract.setup_date ? new Date(contract.setup_date).toLocaleDateString('pt-BR') : "___")
+      .replace(/{{installment_value}}/gi, contract.installment_value ? `R$ ${contract.installment_value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : "R$ 0,00")
+      .replace(/{{installment_due_day}}/gi, contract.installment_due_day || "___")
+      .replace(/{{contract_date}}/gi, format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR }));
   };
 
   return (

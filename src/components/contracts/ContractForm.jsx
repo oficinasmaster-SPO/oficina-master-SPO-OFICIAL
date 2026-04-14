@@ -43,13 +43,57 @@ export default function ContractForm({ contract, user, onSuccess }) {
     internal_notes: ""
   });
 
+  const applyVariablesToText = (text, workshop, form) => {
+    if (!text || !workshop) return text;
+    return text
+      .replace(/\[RAZÃO SOCIAL DA EMPRESA\]/gi, workshop.razao_social || workshop.name || "")
+      .replace(/\[CNPJ\]/gi, workshop.cnpj || "___")
+      .replace(/\[ENDEREÇO COMPLETO.*?\]/gi, workshop.endereco_completo || `${workshop.endereco_rua || ""} ${workshop.endereco_numero || ""}, ${workshop.endereco_bairro || ""}, ${workshop.city || ""}/${workshop.state || ""}, CEP: ${workshop.cep || ""}`)
+      .replace(/\[NOME DO REPRESENTANTE LEGAL\]/gi, workshop.owner_name || "___")
+      .replace(/\[CPF\]/gi, "___")
+      .replace(/\[E-MAIL\]/gi, workshop.email || "___")
+      .replace(/\[TELEFONE\]/gi, workshop.telefone || "___")
+      .replace(/{{workshop_name}}/gi, workshop.name || "")
+      .replace(/{{razao_social}}/gi, workshop.razao_social || workshop.name || "")
+      .replace(/{{cnpj}}/gi, workshop.cnpj || "___")
+      .replace(/{{city}}/gi, workshop.city || "___")
+      .replace(/{{state}}/gi, workshop.state || "___")
+      .replace(/{{endereco_completo}}/gi, workshop.endereco_completo || `${workshop.endereco_rua || ""} ${workshop.endereco_numero || ""}, ${workshop.endereco_bairro || ""}, ${workshop.city || ""}/${workshop.state || ""}, CEP: ${workshop.cep || ""}`)
+      .replace(/{{plan_type}}/gi, form.plan_type || "")
+      .replace(/{{contract_value}}/gi, `R$ ${form.contract_value?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || "0,00"}`)
+      .replace(/{{duration}}/gi, form.contract_duration_months || 12)
+      .replace(/{{setup_fee}}/gi, form.setup_fee ? `R$ ${form.setup_fee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : "R$ 0,00")
+      .replace(/{{setup_date}}/gi, form.setup_date ? new Date(form.setup_date).toLocaleDateString('pt-BR') : "___")
+      .replace(/{{installment_value}}/gi, form.installment_value ? `R$ ${form.installment_value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : "R$ 0,00")
+      .replace(/{{installment_due_day}}/gi, form.installment_due_day || "___")
+      .replace(/{{contract_date}}/gi, new Date().toLocaleDateString('pt-BR'));
+  };
+
   const handleTemplateChange = (templateId) => {
     const template = CONTRACT_TEMPLATES.find(t => t.id === templateId);
     if (template) {
       setSelectedTemplateId(templateId);
-      setFormData(prev => ({ ...prev, contract_template: template.content }));
+      
+      let newContent = template.content;
+      if (selectedWorkshop) {
+        newContent = applyVariablesToText(newContent, selectedWorkshop, formData);
+      }
+      
+      setFormData(prev => ({ ...prev, contract_template: newContent }));
       toast.success(`Template "${template.label}" aplicado!`);
     }
+  };
+
+  const handleApplyVariablesManual = () => {
+    if (!selectedWorkshop) {
+      toast.error("Por favor, selecione a oficina cliente primeiro na aba Dados do Contrato.");
+      return;
+    }
+    setFormData(prev => ({
+      ...prev,
+      contract_template: applyVariablesToText(prev.contract_template, selectedWorkshop, prev)
+    }));
+    toast.success("Variáveis substituídas com sucesso!");
   };
 
   // Auto-suggest template when plan changes
@@ -563,10 +607,13 @@ export default function ContractForm({ contract, user, onSuccess }) {
                 </div>
               </div>
 
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4 flex justify-between items-center flex-wrap gap-4">
                 <p className="text-sm text-yellow-800">
-                  Variáveis disponíveis: {"{{razao_social}}"}, {"{{cnpj}}"}, {"{{city}}"}, {"{{state}}"}, {"{{contract_value}}"}, {"{{duration}}"}, {"{{installment_value}}"}, {"{{installment_due_day}}"}, {"{{setup_fee}}"}, {"{{setup_date}}"}, {"{{contract_date}}"}, etc.
+                  Variáveis disponíveis: {"{{razao_social}}"}, {"{{cnpj}}"}, {"{{city}}"}, {"{{state}}"}, {"{{endereco_completo}}"}, {"{{contract_value}}"}, {"{{duration}}"}, {"{{installment_value}}"}, {"{{installment_due_day}}"}, {"{{setup_fee}}"}, {"{{setup_date}}"}, {"{{contract_date}}"}, etc.
                 </p>
+                <Button type="button" onClick={handleApplyVariablesManual} variant="outline" className="border-yellow-300 text-yellow-800 hover:bg-yellow-100">
+                  Substituir Variáveis Agora
+                </Button>
               </div>
               
               <div className="space-y-2">
