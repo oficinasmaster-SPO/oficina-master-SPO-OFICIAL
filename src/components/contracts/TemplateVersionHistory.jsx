@@ -6,8 +6,6 @@ import { Clock, Eye, RotateCcw, Trash2 } from "lucide-react";
 import moment from "moment";
 
 export default function TemplateVersionHistory({ versions = [], onRestore, onDelete, open, onOpenChange }) {
-  const [previewVersion, setPreviewVersion] = useState(null);
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden flex flex-col">
@@ -26,9 +24,7 @@ export default function TemplateVersionHistory({ versions = [], onRestore, onDel
           {versions.map((version, index) => (
             <div
               key={version.id}
-              className={`border rounded-lg p-4 transition-colors ${
-                previewVersion?.id === version.id ? "border-blue-400 bg-blue-50" : "hover:bg-gray-50"
-              }`}
+              className="border rounded-lg p-4 transition-colors hover:bg-gray-50"
             >
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
@@ -43,15 +39,7 @@ export default function TemplateVersionHistory({ versions = [], onRestore, onDel
                   </span>
                 </div>
                 <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => setPreviewVersion(previewVersion?.id === version.id ? null : version)}
-                  >
-                    <Eye className="w-4 h-4 mr-1" />
-                    {previewVersion?.id === version.id ? "Fechar" : "Ver"}
-                  </Button>
-                  {index !== 0 && onRestore && (
+                  {onRestore && (
                     <Button
                       size="sm"
                       variant="outline"
@@ -60,8 +48,8 @@ export default function TemplateVersionHistory({ versions = [], onRestore, onDel
                         onOpenChange(false);
                       }}
                     >
-                      <RotateCcw className="w-4 h-4 mr-1" />
-                      Carregar no Editor
+                      <Eye className="w-4 h-4 mr-1" />
+                      Selecionar
                     </Button>
                   )}
                   {versions.length > 1 && onDelete && (
@@ -89,11 +77,6 @@ export default function TemplateVersionHistory({ versions = [], onRestore, onDel
                 </p>
               )}
 
-              {previewVersion?.id === version.id && (
-                <pre className="mt-3 bg-white border rounded p-3 text-xs overflow-auto max-h-60 font-mono whitespace-pre-wrap">
-                  {version.content}
-                </pre>
-              )}
             </div>
           ))}
         </div>
