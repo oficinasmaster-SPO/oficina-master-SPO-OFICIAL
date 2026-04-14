@@ -1,0 +1,532 @@
+{
+  "name": "Employee",
+  "type": "object",
+  "properties": {
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina (Rela\u00e7\u00e3o 1-N: Workshop \u2192 Employee)"
+    },
+    "company_id": {
+      "type": "string",
+      "description": "ID da empresa (matriz) a qual este colaborador pertence."
+    },
+    "consulting_firm_id": {
+      "type": "string",
+      "description": "ID do escrit\u00f3rio de consultoria que gerencia este colaborador (duplicado para otimiza\u00e7\u00e3o de consulta)."
+    },
+    "user_id": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio (Rela\u00e7\u00e3o 1-1: User \u2194 Employee) - Cada colaborador tem um \u00fanico usu\u00e1rio"
+    },
+    "owner_id": {
+      "type": "string",
+      "description": "ID do propriet\u00e1rio/admin respons\u00e1vel"
+    },
+    "profile_id": {
+      "type": "string",
+      "description": "ID do perfil de acesso (Rela\u00e7\u00e3o 1-1: Employee \u2192 UserProfile) - Define permiss\u00f5es"
+    },
+    "job_description_id": {
+      "type": "string",
+      "description": "ID da descri\u00e7\u00e3o de cargo vinculada (Rela\u00e7\u00e3o N-1: Employee \u2192 JobDescription)"
+    },
+    "admin_responsavel_id": {
+      "type": "string",
+      "description": "ID do administrador respons\u00e1vel (Rela\u00e7\u00e3o 1-N: Admin \u2192 Employee)"
+    },
+    "full_name": {
+      "type": "string",
+      "description": "Nome completo do colaborador"
+    },
+    "email": {
+      "type": "string",
+      "format": "email",
+      "description": "Email \u00fanico do colaborador"
+    },
+    "cpf": {
+      "type": "string",
+      "description": "CPF do colaborador"
+    },
+    "rg": {
+      "type": "string",
+      "description": "RG do colaborador"
+    },
+    "data_nascimento": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de nascimento"
+    },
+    "telefone": {
+      "type": "string",
+      "description": "Telefone do colaborador"
+    },
+    "endereco": {
+      "type": "object",
+      "properties": {
+        "rua": {
+          "type": "string"
+        },
+        "numero": {
+          "type": "string"
+        },
+        "bairro": {
+          "type": "string"
+        },
+        "cidade": {
+          "type": "string"
+        },
+        "estado": {
+          "type": "string"
+        },
+        "cep": {
+          "type": "string"
+        }
+      },
+      "description": "Endere\u00e7o completo"
+    },
+    "profile_picture_url": {
+      "type": "string",
+      "description": "URL da foto de perfil"
+    },
+    "digital_signature_url": {
+      "type": "string",
+      "description": "URL da assinatura digital"
+    },
+    "work_contract_url": {
+      "type": "string",
+      "description": "URL do contrato de trabalho atual"
+    },
+    "contract_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          },
+          "uploaded_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Hist\u00f3rico de contratos anteriores"
+    },
+    "career_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "job_description_id": {
+            "type": "string"
+          },
+          "job_title": {
+            "type": "string"
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "end_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Hist\u00f3rico de cargos ocupados"
+    },
+    "position": {
+      "type": "string",
+      "description": "Cargo/posi\u00e7\u00e3o no workshop"
+    },
+    "job_role": {
+      "type": "string",
+      "enum": [
+        "socio",
+        "socio_interno",
+        "diretor",
+        "supervisor_loja",
+        "gerente",
+        "lider_tecnico",
+        "financeiro",
+        "rh",
+        "tecnico",
+        "funilaria_pintura",
+        "comercial",
+        "consultor_vendas",
+        "marketing",
+        "estoque",
+        "administrativo",
+        "motoboy",
+        "lavador",
+        "acelerador",
+        "consultor",
+        "mentor",
+        "outros"
+      ],
+      "default": "outros",
+      "description": "Fun\u00e7\u00e3o espec\u00edfica no sistema"
+    },
+    "tipo_vinculo": {
+      "type": "string",
+      "enum": [
+        "interno",
+        "cliente"
+      ],
+      "default": "cliente",
+      "description": "Tipo de v\u00ednculo: interno (funcion\u00e1rio) ou cliente (externo)"
+    },
+    "area": {
+      "type": "string",
+      "enum": [
+        "vendas",
+        "comercial",
+        "marketing",
+        "tecnico",
+        "administrativo",
+        "financeiro",
+        "gerencia"
+      ],
+      "description": "\u00c1rea de atua\u00e7\u00e3o"
+    },
+    "user_status": {
+      "type": "string",
+      "enum": [
+        "ativo",
+        "inativo",
+        "bloqueado",
+        "ferias"
+      ],
+      "default": "ativo",
+      "description": "Status do colaborador"
+    },
+    "is_internal": {
+      "type": "boolean",
+      "default": false,
+      "description": "Indica se \u00e9 membro interno da empresa"
+    },
+    "is_partner": {
+      "type": "boolean",
+      "default": false,
+      "description": "Indica se \u00e9 s\u00f3cio"
+    },
+    "hire_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de contrata\u00e7\u00e3o"
+    },
+    "salary": {
+      "type": "number",
+      "description": "Sal\u00e1rio do colaborador"
+    },
+    "commission": {
+      "type": "number",
+      "description": "Comiss\u00e3o mensal estimada"
+    },
+    "bonus": {
+      "type": "number",
+      "description": "Bonifica\u00e7\u00e3o/Pr\u00eamio"
+    },
+    "benefits": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string"
+          },
+          "valor": {
+            "type": "number"
+          }
+        }
+      },
+      "description": "Lista de benef\u00edcios"
+    },
+    "commission_rules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "metric_code": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "value": {
+            "type": "number"
+          }
+        }
+      },
+      "description": "Regras de comissionamento"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ativo",
+        "inativo",
+        "ferias",
+        "afastado"
+      ],
+      "default": "ativo",
+      "description": "Status geral"
+    },
+    "shift_settings": {
+      "type": "object",
+      "properties": {
+        "lunch_start": {
+          "type": "string",
+          "description": "Hor\u00e1rio in\u00edcio almo\u00e7o"
+        },
+        "lunch_end": {
+          "type": "string",
+          "description": "Hor\u00e1rio fim almo\u00e7o"
+        },
+        "work_start": {
+          "type": "string",
+          "description": "Hor\u00e1rio in\u00edcio expediente"
+        },
+        "work_end": {
+          "type": "string",
+          "description": "Hor\u00e1rio fim expediente"
+        }
+      },
+      "description": "Configura\u00e7\u00f5es de turno"
+    },
+    "first_login_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data do primeiro login"
+    },
+    "last_login_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data do \u00faltimo login"
+    },
+    "cdc_completed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Indica se o CDC foi completado"
+    },
+    "cdc_data": {
+      "type": "object",
+      "description": "Dados do \u00faltimo CDC preenchido"
+    },
+    "audit_log": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "changed_by": {
+            "type": "string",
+            "description": "ID do usu\u00e1rio que fez a altera\u00e7\u00e3o"
+          },
+          "changed_by_email": {
+            "type": "string",
+            "description": "Email do usu\u00e1rio que fez a altera\u00e7\u00e3o"
+          },
+          "changed_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "action": {
+            "type": "string",
+            "description": "Tipo de a\u00e7\u00e3o (create, update, delete)"
+          },
+          "field_changed": {
+            "type": "string",
+            "description": "Campo que foi alterado"
+          },
+          "old_value": {
+            "type": "string"
+          },
+          "new_value": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Log de auditoria (Rela\u00e7\u00e3o 1-N: Employee \u2192 AuditLog)"
+    },
+    "best_month_history": {
+      "type": "object",
+      "properties": {
+        "date": {
+          "type": "string",
+          "format": "date"
+        },
+        "revenue_total": {
+          "type": "number"
+        },
+        "revenue_parts": {
+          "type": "number"
+        },
+        "revenue_services": {
+          "type": "number"
+        },
+        "profit_percentage": {
+          "type": "number"
+        },
+        "rentability_percentage": {
+          "type": "number"
+        },
+        "customer_volume": {
+          "type": "number"
+        },
+        "average_ticket": {
+          "type": "number"
+        },
+        "average_ticket_parts": {
+          "type": "number"
+        },
+        "average_ticket_services": {
+          "type": "number"
+        }
+      }
+    },
+    "production_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "month": {
+            "type": "string"
+          },
+          "parts": {
+            "type": "number"
+          },
+          "services": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "production_parts": {
+      "type": "number"
+    },
+    "production_parts_sales": {
+      "type": "number"
+    },
+    "production_services": {
+      "type": "number"
+    },
+    "production_services_sales": {
+      "type": "number"
+    },
+    "production_percentage": {
+      "type": "number"
+    },
+    "monthly_goals": {
+      "type": "object",
+      "properties": {
+        "actual_revenue_achieved": {
+          "type": "number"
+        }
+      }
+    }
+  },
+  "required": [
+    "full_name",
+    "position"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_id": "{{user.id}}"
+        },
+        {
+          "email": "{{user.email}}"
+        },
+        {
+          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        },
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        },
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_id": "{{user.id}}"
+        },
+        {
+          "owner_id": "{{user.id}}"
+        },
+        {
+          "admin_responsavel_id": "{{user.id}}"
+        },
+        {
+          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        },
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "owner_id": "{{user.id}}"
+        },
+        {
+          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        },
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        }
+      ]
+    }
+  }
+}
