@@ -1,16 +1,39 @@
 import React from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
-import { CheckCircle, Clock, Send, Copy, Edit } from "lucide-react";
+import { CheckCircle, Clock, Send, Copy, Edit, Trash } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+import { base44 } from "@/api/base44Client";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export default function ContractDetailsModal({ contract, open, onClose, onEdit }) {
+  const queryClient = useQueryClient();
+
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      await base44.entities.Contract.delete(contract.id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['contracts']);
+      toast.success("Contrato excluído com sucesso!");
+      onClose();
+    },
+    onError: () => {
+      toast.error("Erro ao excluir contrato.");
+    }
+  });
+
+  const handleDelete = () => {
+    if (window.confirm("Tem certeza que deseja excluir este contrato? Esta ação não pode ser desfeita.")) {
+      deleteMutation.mutate();
+    }
+  };
   if (!contract) return null;
 
   const statusConfig = {
@@ -31,8 +54,8 @@ export default function ContractDetailsModal({ contract, open, onClose, onEdit }
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col p-0 overflow-hidden">
+        <DialogHeader className="px-6 py-4 border-b bg-white">
           <DialogTitle className="flex items-center justify-between">
             <span>Detalhes do Contrato</span>
             <Badge className={statusConfig[contract.status]?.color}>
@@ -41,7 +64,7 @@ export default function ContractDetailsModal({ contract, open, onClose, onEdit }
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
           {/* Progresso */}
           <div className="bg-blue-50 rounded-lg p-4">
             <div className="flex items-center justify-between mb-3">
@@ -98,48 +121,31 @@ export default function ContractDetailsModal({ contract, open, onClose, onEdit }
             </div>
           </div>
 
-          <Separator />
+        </div>
 
-          {/* Timeline */}
-          {contract.timeline && contract.timeline.length > 0 && (
-            <div>
-              <h3 className="font-semibold mb-3">Linha do Tempo</h3>
-              <div className="space-y-3">
-                {contract.timeline.map((event, idx) => (
-                  <div key={idx} className="flex gap-3">
-                    <div className="flex flex-col items-center">
-                      <Clock className="w-4 h-4 text-blue-600" />
-                      {idx < contract.timeline.length - 1 && (
-                        <div className="w-0.5 h-full bg-blue-200 mt-1" />
-                      )}
-                    </div>
-                    <div className="flex-1 pb-4">
-                      <p className="font-medium">{event.description}</p>
-                      <p className="text-sm text-gray-600">
-                        {format(new Date(event.date), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                      </p>
-                      {event.user && (
-                        <p className="text-xs text-gray-500">Por: {event.user}</p>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Ações */}
-          <div className="flex gap-3">
-            <Button onClick={() => onEdit(contract)} variant="outline">
+        <DialogFooter className="px-6 py-4 border-t bg-gray-50 flex flex-col sm:flex-row sm:justify-between items-center w-full gap-4 sm:gap-0">
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <Button onClick={() => { onClose(); onEdit(contract); }} variant="outline" className="border-gray-300">
               <Edit className="w-4 h-4 mr-2" />
               Editar
             </Button>
-            <Button onClick={copyLink} variant="outline">
-              <Copy className="w-4 h-4 mr-2" />
-              Copiar Link
+            <Button onClick={handleDelete} variant="destructive" className="bg-red-600 hover:bg-red-700 text-white" disabled={deleteMutation.isPending}>
+              <Trash className="w-4 h-4 mr-2" />
+              Excluir
             </Button>
           </div>
-        </div>
+          
+          <div className="text-left sm:text-right text-xs text-gray-500 w-full sm:w-auto">
+            {contract.timeline && contract.timeline.length > 0 ? (
+              <>
+                <p>Atualizado em: {format(new Date(contract.timeline[contract.timeline.length - 1].date), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
+                <p>Por: <span className="font-medium">{contract.timeline[contract.timeline.length - 1].user || "Sistema"}</span></p>
+              </>
+            ) : (
+              <p>Sem informações de histórico</p>
+            )}
+          </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
