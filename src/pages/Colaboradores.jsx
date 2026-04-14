@@ -296,10 +296,10 @@ export default function Colaboradores() {
                         )}
                       </td>
                       <td className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                        R$ {totalCost.toFixed(2)}
+                        R$ {totalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </td>
                       <td className="px-6 py-4 text-left text-sm font-semibold text-green-600">
-                        R$ {totalProduction.toFixed(2)}
+                        R$ {totalProduction.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </td>
                       <td className="px-6 py-4 text-center">
                         <span className={`font-bold text-sm ${
