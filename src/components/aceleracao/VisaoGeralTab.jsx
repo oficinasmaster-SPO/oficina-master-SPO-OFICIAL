@@ -38,18 +38,21 @@ export default function VisaoGeralTab({ state }) {
 
   const hoje = useMemo(() => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' }), []);
 
-  const { reunioesRealizadas, totalHorasRealizadas, tarefasPendentes } = useMemo(() => {
+  const { reunioesRealizadas, totalHorasRealizadas } = useMemo(() => {
     const realizados = atendimentosPeriodo.filter(a => a.status === 'realizado');
     return {
       reunioesRealizadas: realizados.length,
       totalHorasRealizadas: realizados.reduce((acc, a) => acc + (a.duracao_real_minutos || a.duracao_minutos || 0), 0),
-      tarefasPendentes: atendimentosPeriodo.filter(a => {
-        if (STATUS_FINALIZADOS.includes(a.status)) return false;
-        const d = new Date(a.data_agendada).toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
-        return d < hoje;
-      })
     };
-  }, [atendimentosPeriodo, hoje]);
+  }, [atendimentosPeriodo]);
+
+  const tarefasPendentes = useMemo(() => {
+    return atendimentos.filter(a => {
+      if (STATUS_FINALIZADOS.includes(a.status)) return false;
+      const d = new Date(a.data_agendada).toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+      return d < hoje;
+    });
+  }, [atendimentos, hoje]);
 
   const futurasList = useMemo(() => atendimentos.filter(a => {
     if (!['agendado', 'confirmado'].includes(a.status)) return false;

@@ -15,16 +15,12 @@ export function getConsultorEfetivo(filtros, user) {
 
 /**
  * Filtra atendimentos pelo período (dataInicio / dataFim) presente nos filtros.
- * Atendimentos com status "atrasado" SEMPRE passam, independentemente do filtro de data,
- * para que apareçam nos contadores e na aba de Atrasados.
  */
 export function filterAtendimentosPeriodo(atendimentos, filtros) {
   if (!atendimentos?.length) return [];
   const { dataInicio, dataFim } = filtros;
   if (!dataInicio || !dataFim) return atendimentos;
   return atendimentos.filter(a => {
-    // Atrasados sempre aparecem, independente do período
-    if (a.status === 'atrasado') return true;
     const d = new Date(a.data_agendada).toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
     return d >= dataInicio && d <= dataFim;
   });

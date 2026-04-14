@@ -20,7 +20,7 @@ Deno.serve(async (req) => {
     const atendimentos = await base44.asServiceRole.entities.ConsultoriaAtendimento.filter(
       {},
       '-data_agendada',
-      500
+      5000 // Aumentado para garantir que todos os atendimentos antigos sejam avaliados
     );
 
     const now = new Date();
