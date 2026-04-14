@@ -103,8 +103,11 @@ export default function PainelAtendimentosTab({ state }) {
       .filter(a => {
         if (activeTab !== "todos" && a.status !== activeTab) return false;
         
-        // Verifica as datas usando milissegundos
-        if (startLimit || endLimit) {
+        // Atrasados sempre passam no filtro de data (já foram incluídos no atendimentosPeriodo)
+        const isAtrasado = a.status === 'atrasado';
+        
+        // Verifica as datas usando milissegundos (exceto atrasados)
+        if (!isAtrasado && (startLimit || endLimit)) {
           const itemTime = new Date(a.data_agendada).getTime();
           if (startLimit && itemTime < startLimit) return false;
           if (endLimit && itemTime > endLimit) return false;
