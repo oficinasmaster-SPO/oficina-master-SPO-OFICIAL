@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { RedTabsList, RedTabsTrigger } from "@/components/ui/RedTabs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, FileText, List, Plus, CheckCircle, Clock, CreditCard, Send, XCircle } from "lucide-react";
@@ -170,20 +171,20 @@ export default function GestaoContratos() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3 bg-white shadow-md">
-          <TabsTrigger value="lista">
+        <RedTabsList className="grid grid-cols-3 w-full">
+          <RedTabsTrigger value="lista" className="justify-center">
             <List className="w-4 h-4 mr-2" />
             Contratos
-          </TabsTrigger>
-          <TabsTrigger value="criar">
+          </RedTabsTrigger>
+          <RedTabsTrigger value="criar" className="justify-center">
             <FileText className="w-4 h-4 mr-2" />
             {editingContract ? 'Editar' : 'Criar'}
-          </TabsTrigger>
-          <TabsTrigger value="templates">
+          </RedTabsTrigger>
+          <RedTabsTrigger value="templates" className="justify-center">
             <FileText className="w-4 h-4 mr-2" />
             Templates
-          </TabsTrigger>
-        </TabsList>
+          </RedTabsTrigger>
+        </RedTabsList>
 
         <TabsContent value="lista">
           <ContractList 
