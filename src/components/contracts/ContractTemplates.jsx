@@ -5,84 +5,109 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Plus, Trash2, Copy, Pencil, Clock } from "lucide-react";
+import { FileText, Plus, Trash2, Copy, Pencil, Clock, DownloadCloud } from "lucide-react";
 import { toast } from "sonner";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
 import { TRAFEGO_PAGO_TEMPLATE } from "./templates/TrafegoPagoTemplate";
 import { CONSULTORIA_GOLD_TEMPLATE } from "./templates/ConsultoriaGoldTemplate";
 import TemplateEditor from "./TemplateEditor";
 import TemplateVersionHistory from "./TemplateVersionHistory";
 
-function createInitialVersion(content) {
+function createInitialVersion(content, userName) {
   return {
     id: Date.now().toString(),
     version: 1,
     content,
     change_note: "Versão inicial",
-    edited_by: "Sistema",
+    edited_by: userName || "Sistema",
     created_at: new Date().toISOString()
   };
 }
 
 const defaultTemplates = [
   {
-    id: "trafego-pago-matrix",
     name: "Contrato MATRIX - Tráfego Pago e Performance Digital",
     plan_type: "Todos",
     description: "Contrato completo com 18 cláusulas para serviços de tráfego pago (Google Ads e Meta Ads)",
     content: TRAFEGO_PAGO_TEMPLATE,
-    isDefault: true,
-    versions: [createInitialVersion(TRAFEGO_PAGO_TEMPLATE)]
+    isDefault: true
   },
   {
-    id: "consultoria-gold",
     name: "Contrato GOLD - Consultoria e Aceleração de Resultados",
     plan_type: "GOLD",
     description: "Contrato B2B completo com 18 cláusulas, 4 marcos contratuais, licenciamento de conteúdo digital, plataforma SPO e serviços consultivos estratégicos.",
     content: CONSULTORIA_GOLD_TEMPLATE,
-    isDefault: true,
-    versions: [createInitialVersion(CONSULTORIA_GOLD_TEMPLATE)]
+    isDefault: true
   }
 ];
 
 export default function ContractTemplates({ user }) {
-  const [templates, setTemplates] = useState(() => {
-    try {
-      const saved = localStorage.getItem("contract_templates");
-      if (saved) {
-        return JSON.parse(saved);
-      }
-    } catch (e) {
-      console.error("Error reading templates from localStorage", e);
-    }
-    return defaultTemplates;
-  });
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    localStorage.setItem("contract_templates", JSON.stringify(templates));
-  }, [templates]);
+  const { data: templates = [], isLoading } = useQuery({
+    queryKey: ['contract_templates'],
+    queryFn: () => base44.entities.ContractTemplate.list('-created_date', 100),
+  });
 
   const [newTemplate, setNewTemplate] = useState({ name: "", plan_type: "", content: "" });
   const [editingTemplate, setEditingTemplate] = useState(null);
   const [historyTemplate, setHistoryTemplate] = useState(null);
+
+  const createMutation = useMutation({
+    mutationFn: (data) => base44.entities.ContractTemplate.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contract_templates'] });
+      toast.success("Template criado!");
+    }
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.ContractTemplate.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contract_templates'] });
+    }
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => base44.entities.ContractTemplate.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contract_templates'] });
+      toast.success("Template removido!");
+    }
+  });
 
   const addTemplate = () => {
     if (!newTemplate.name || !newTemplate.content) {
       toast.error("Preencha nome e conteúdo do template");
       return;
     }
-    const id = Date.now().toString();
-    setTemplates([...templates, {
-      id,
+    createMutation.mutate({
       ...newTemplate,
-      versions: [createInitialVersion(newTemplate.content)]
-    }]);
+      versions: [createInitialVersion(newTemplate.content, user?.full_name)]
+    });
     setNewTemplate({ name: "", plan_type: "", content: "" });
-    toast.success("Template criado!");
+  };
+
+  const loadDefaultTemplates = async () => {
+    try {
+      for (const t of defaultTemplates) {
+        await base44.entities.ContractTemplate.create({
+          ...t,
+          versions: [createInitialVersion(t.content, "Sistema")]
+        });
+      }
+      queryClient.invalidateQueries({ queryKey: ['contract_templates'] });
+      toast.success("Templates padrão carregados com sucesso!");
+    } catch (e) {
+      toast.error("Erro ao carregar templates padrão.");
+    }
   };
 
   const deleteTemplate = (id) => {
-    setTemplates(templates.filter(t => t.id !== id));
-    toast.success("Template removido!");
+    if (confirm("Tem certeza que deseja excluir este template?")) {
+      deleteMutation.mutate(id);
+    }
   };
 
   const copyTemplate = (template) => {
@@ -91,54 +116,61 @@ export default function ContractTemplates({ user }) {
   };
 
   const handleSaveVersion = ({ templateId, content, changeNote }) => {
-    setTemplates(prev => prev.map(t => {
-      if (t.id !== templateId) return t;
-      const currentMaxVersion = t.versions.length > 0
-        ? Math.max(...t.versions.map(v => v.version))
-        : 0;
-      const newVersion = {
-        id: Date.now().toString(),
-        version: currentMaxVersion + 1,
+    const template = templates.find(t => t.id === templateId);
+    if (!template) return;
+
+    const currentMaxVersion = template.versions?.length > 0
+      ? Math.max(...template.versions.map(v => v.version))
+      : 0;
+
+    const newVersion = {
+      id: Date.now().toString(),
+      version: currentMaxVersion + 1,
+      content,
+      change_note: changeNote,
+      edited_by: user?.full_name || "Usuário",
+      created_at: new Date().toISOString()
+    };
+
+    updateMutation.mutate({
+      id: templateId,
+      data: {
         content,
-        change_note: changeNote,
-        edited_by: user?.full_name || "Usuário",
-        created_at: new Date().toISOString()
-      };
-      return {
-        ...t,
-        content,
-        versions: [newVersion, ...t.versions]
-      };
-    }));
-    toast.success("Nova versão salva com sucesso!");
+        versions: [newVersion, ...(template.versions || [])]
+      }
+    }, {
+      onSuccess: () => toast.success("Nova versão salva com sucesso!")
+    });
   };
 
   const handleRestoreVersion = (templateId) => (version) => {
-    setTemplates(prev => prev.map(t => {
-      if (t.id === templateId) {
-        return {
-          ...t,
-          content: version.content
-        };
+    updateMutation.mutate({
+      id: templateId,
+      data: {
+        content: version.content
       }
-      return t;
-    }));
-    toast.success(`Conteúdo da versão ${version.version} carregado com sucesso.`);
+    }, {
+      onSuccess: () => toast.success(`Conteúdo da versão ${version.version} carregado com sucesso.`)
+    });
   };
 
   const handleDeleteVersion = (templateId) => (versionId) => {
-    setTemplates(prev => prev.map(t => {
-      if (t.id !== templateId) return t;
-      if (t.versions.length <= 1) {
-        toast.error("Não é possível excluir a única versão do template.");
-        return t;
+    const template = templates.find(t => t.id === templateId);
+    if (!template) return;
+
+    if (template.versions?.length <= 1) {
+      toast.error("Não é possível excluir a única versão do template.");
+      return;
+    }
+
+    updateMutation.mutate({
+      id: templateId,
+      data: {
+        versions: template.versions.filter(v => v.id !== versionId)
       }
-      return {
-        ...t,
-        versions: t.versions.filter(v => v.id !== versionId)
-      };
-    }));
-    toast.success("Versão removida com sucesso!");
+    }, {
+      onSuccess: () => toast.success("Versão removida com sucesso!")
+    });
   };
 
   return (
@@ -190,8 +222,14 @@ export default function ContractTemplates({ user }) {
 
       {/* Lista de Templates */}
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Templates Salvos</CardTitle>
+          {templates.length === 0 && !isLoading && (
+            <Button variant="outline" size="sm" onClick={loadDefaultTemplates}>
+              <DownloadCloud className="w-4 h-4 mr-2" />
+              Carregar Padrões
+            </Button>
+          )}
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
