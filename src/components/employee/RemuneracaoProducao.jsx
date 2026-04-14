@@ -56,7 +56,7 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
   // Calcular ticket médio automaticamente
   const currentBest = localBestMonth || employee?.best_month_history;
   const cbVolume = parseFloat(currentBest?.customer_volume) || 0;
-  const cbTotal = parseFloat(currentBest?.revenue_total) || 0;
+  const cbTotal = (parseFloat(currentBest?.revenue_parts) || 0) + (parseFloat(currentBest?.revenue_services) || 0);
   const cbParts = parseFloat(currentBest?.revenue_parts) || 0;
   const cbServices = parseFloat(currentBest?.revenue_services) || 0;
   const calculatedAverageTicket = cbVolume > 0 ? cbTotal / cbVolume : 0;
@@ -98,9 +98,11 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
         return;
       }
 
-      // Salvar com os tickets médios calculados automaticamente
+      // Calcular total e tickets médios automaticamente
+      const computedTotal = (parseFloat(localBestMonth.revenue_parts) || 0) + (parseFloat(localBestMonth.revenue_services) || 0);
       const dataToSave = {
         ...localBestMonth,
+        revenue_total: computedTotal,
         average_ticket: calculatedAverageTicket,
         average_ticket_parts: calculatedAverageTicketParts,
         average_ticket_services: calculatedAverageTicketServices
@@ -240,11 +242,10 @@ export default function RemuneracaoProducao({ employee, onUpdate }) {
               <Label className="text-xs text-gray-600 mb-1 block">Faturamento Total (R$)</Label>
               <Input
                 type="number"
-                value={localBestMonth?.revenue_total ?? ''}
-                onChange={(e) => setLocalBestMonth({...localBestMonth, revenue_total: e.target.value === '' ? '' : parseFloat(e.target.value)})}
-                onBlur={(e) => setLocalBestMonth(prev => ({...prev, revenue_total: parseFloat(prev.revenue_total) || 0}))}
-                disabled={!editingBestMonth}
-                className="h-9"
+                value={((parseFloat(localBestMonth?.revenue_parts) || 0) + (parseFloat(localBestMonth?.revenue_services) || 0)).toFixed(2)}
+                disabled
+                className="h-9 bg-gray-100"
+                title="Calculado automaticamente: Peças + Serviços"
               />
             </div>
             <div>
