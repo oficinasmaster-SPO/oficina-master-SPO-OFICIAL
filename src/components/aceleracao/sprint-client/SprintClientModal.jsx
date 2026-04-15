@@ -61,6 +61,10 @@ export default function SprintClientModal({ sprint, user, workshop, open, onClos
 
   const handleToggleTask = (taskIdx) => {
     const updated = [...phases];
+    // Auto-start phase if it's not_started
+    if (updated[currentPhaseIdx].status === "not_started") {
+      updated[currentPhaseIdx] = { ...updated[currentPhaseIdx], status: "in_progress" };
+    }
     const task = { ...updated[currentPhaseIdx].tasks[taskIdx] };
     const wasDone = task.status === "done";
     task.status = wasDone ? "to_do" : "done";
@@ -172,8 +176,8 @@ export default function SprintClientModal({ sprint, user, workshop, open, onClos
                 key={idx}
                 task={task}
                 index={idx}
-                canComplete={permissions.canCompleteTasks && phase.status === "in_progress"}
-                canAddNotes={permissions.canAddNotes && phase.status === "in_progress"}
+                canComplete={permissions.canCompleteTasks && (phase.status === "in_progress" || phase.status === "not_started")}
+                canAddNotes={permissions.canAddNotes && (phase.status === "in_progress" || phase.status === "not_started")}
                 userRole={permissions.role}
                 onToggle={handleToggleTask}
                 onUpdateEvidence={handleUpdateEvidence}
@@ -188,7 +192,7 @@ export default function SprintClientModal({ sprint, user, workshop, open, onClos
             <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-1">
               <StickyNote className="w-4 h-4" /> Notas da Fase
             </h4>
-            {permissions.canAddNotes && phase.status === "in_progress" && !editingNotes && (
+            {permissions.canAddNotes && (phase.status === "in_progress" || phase.status === "not_started") && !editingNotes && (
               <Button variant="ghost" size="sm" onClick={() => setEditingNotes(true)}>
                 Editar
               </Button>
