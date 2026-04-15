@@ -36,7 +36,7 @@ export function useWorkshopContext() {
             }
           } catch (fallbackErr) {
             console.warn('Fallback de workshop também falhou (possível rate limit):', fallbackErr);
-            return [{ id: fallbackWorkshopId, name: 'Carregando...', _partial: true }];
+            return [];
           }
         }
       }
@@ -84,7 +84,8 @@ export function useWorkshopContext() {
         if (workshops && workshops.length > 0) return workshops[0];
 
         const ws = await base44.entities.Workshop.get(missingWorkshopIdToFetch).catch(() => null);
-        return ws;
+        // Retorna null explicitamente se não encontrou - NÃO vai retentar
+        return ws || null;
       } catch (e) {
         return null;
       }
@@ -92,11 +93,17 @@ export function useWorkshopContext() {
     enabled: !!missingWorkshopIdToFetch && !isAvailableLoading,
     staleTime: 10 * 60 * 1000,
     gcTime: 15 * 60 * 1000,
+    retry: 1, // Apenas 1 retry para não ficar em loop
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 
   const workshop = userWorkshop || fetchedWorkshop || null;
   const workshopsDisponiveis = available;
-  const isLoading = isTenantLoading || isAvailableLoading || (!!missingWorkshopIdToFetch && isFetchedLoading && !userWorkshop);
+  // isLoading só é true se AINDA estamos carregando dados iniciais
+  // Se o fetch do workshop individual terminou (mesmo sem resultado), não estamos mais loading
+  const isFetchingMissing = !!missingWorkshopIdToFetch && isFetchedLoading && !userWorkshop;
+  const isLoading = isTenantLoading || isAvailableLoading || isFetchingMissing;
 
   const setCurrentWorkshop = (id) => {
     if (changeCompany) {

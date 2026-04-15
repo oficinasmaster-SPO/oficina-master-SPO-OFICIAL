@@ -9,8 +9,8 @@ import { cn } from '@/lib/utils';
 import { Building2, Briefcase, Search, Check, ChevronsUpDown } from 'lucide-react';
 
 export default function TenantSelector({ isMobileSidebar = false }) {
-  const { user, selectedFirmId, changeConsultingFirm, selectedCompanyId, changeCompany } = useTenant();
-  const { workshop, workshopsDisponiveis } = useWorkshopContext();
+  const { user, selectedFirmId, changeConsultingFirm, selectedCompanyId, changeCompany, isLoading: isTenantLoading } = useTenant();
+  const { workshop, workshopsDisponiveis, isLoading: isWorkshopLoading } = useWorkshopContext();
   const [openFirmPopover, setOpenFirmPopover] = useState(false);
   const [openCompanyPopover, setOpenCompanyPopover] = useState(false);
   const [firmSearchTerm, setFirmSearchTerm] = useState('');
@@ -50,8 +50,19 @@ export default function TenantSelector({ isMobileSidebar = false }) {
     `${c.name} ${c.city || ''} ${c.state || ''}`.toLowerCase().includes(companySearchTerm.toLowerCase())
   ) || [];
 
+  // Não mostrar para usuários não-admin com 0 ou 1 workshop
   if (user?.role !== 'admin' && (!workshopsDisponiveis || workshopsDisponiveis.length <= 1)) {
     return null;
+  }
+  
+  // Mostrar skeleton enquanto carrega
+  if (isTenantLoading || isWorkshopLoading) {
+    return (
+      <div className={cn(isMobileSidebar ? "flex flex-col gap-3" : "hidden md:flex items-center gap-3 ml-4")}>
+        <div className="h-9 w-[180px] bg-gray-100 animate-pulse rounded-md" />
+        {user?.role === 'admin' && <div className="h-9 w-[180px] bg-gray-100 animate-pulse rounded-md" />}
+      </div>
+    );
   }
 
   return (

@@ -86,9 +86,7 @@ export function TenantProvider({ children }) {
 
           if (!compIdToLoad) {
             compIdToLoad = currentUser.data?.workshop_id || currentUser.data?.company_id || null;
-            if (compIdToLoad) {
-              localStorage.setItem('selected_company_id', compIdToLoad);
-            }
+            // Não salva no localStorage ainda - será validado abaixo
           }
           
           if (!cancelled) setSelectedCompanyId(compIdToLoad);
@@ -109,13 +107,24 @@ export function TenantProvider({ children }) {
 
              if (compOrWorkshop && !cancelled) {
                  setCompany(compOrWorkshop);
+                 localStorage.setItem('selected_company_id', compIdToLoad);
              } else if (!compOrWorkshop && !cancelled) {
-                 // Workshop/Company não encontrado - limpa apenas o localStorage e o state local
+                 // Workshop/Company não encontrado - limpa TUDO e marca como inválido
                  console.warn(`Workshop/Company com ID ${compIdToLoad} não encontrado. Limpando referência.`);
                  localStorage.removeItem('selected_company_id');
                  setSelectedCompanyId(null);
                  setCompany(null);
-                 // NÃO incrementa companySwitch aqui para evitar loop
+                 
+                 // Se o ID inválido veio do perfil do usuário, limpa no perfil também
+                 const userWsId = currentUser.data?.workshop_id;
+                 if (userWsId && userWsId === compIdToLoad) {
+                   console.warn('Workshop do perfil do usuário é inválido. Limpando workshop_id do perfil.');
+                   try {
+                     await base44.auth.updateMe({ workshop_id: null });
+                   } catch (e) {
+                     console.warn('Não foi possível limpar workshop_id do perfil:', e);
+                   }
+                 }
              }
           } else {
              if (!cancelled) setCompany(null);

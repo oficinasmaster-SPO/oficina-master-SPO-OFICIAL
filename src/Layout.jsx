@@ -114,14 +114,18 @@ export default function Layout({ children, currentPageName }) {
     return loc === p || loc.startsWith(p + '/');
   });
 
+  // Verificar se onboarding pendente considerando o workshop REAL (não só o ID do perfil)
+  const hasValidWorkshop = !!workshop && !workshop._partial;
+  const userHasWorkshopId = !!(user?.workshop_id || user?.data?.workshop_id);
+  
   const isPendingOnboarding = user?.role !== 'admin' && (
                               user?.cadastro_em_andamento === true || 
                               user?.first_access_completed === false || 
                               user?.profile_completed === false ||
-                              !user?.workshop_id
+                              (!userHasWorkshopId && !isLoadingWorkshop)
                             );
 
-  const shouldShowMenus = isAuthenticated && !isPublicPage && !isPendingOnboarding && (!!workshop || isAdminMode || user?.role === 'admin');
+  const shouldShowMenus = isAuthenticated && !isPublicPage && !isPendingOnboarding && (hasValidWorkshop || isAdminMode || user?.role === 'admin');
 
   // IMPORTANTE: Desabilitar modo Admin em páginas de primeiro acesso
   const isFirstAccessPage = location.pathname.toLowerCase().includes('primeiroacesso');
@@ -229,15 +233,20 @@ export default function Layout({ children, currentPageName }) {
                   ) : isAuthenticated && user ? (
                     <>
                       <div className="hidden md:block text-right">
-                        {workshopsDisponiveis && workshopsDisponiveis.length > 1 ? (
+                        {isLoadingWorkshop ? (
+                          <div className="animate-pulse">
+                            <div className="h-4 w-24 bg-gray-200 rounded mb-1" />
+                            <div className="h-3 w-16 bg-gray-100 rounded" />
+                          </div>
+                        ) : workshopsDisponiveis && workshopsDisponiveis.length > 1 ? (
                           <DropdownMenu>
                             <DropdownMenuTrigger className="flex items-center gap-2 hover:bg-gray-50 p-2 rounded-md transition-colors focus:outline-none">
                               <div className="text-right">
                                 <p className="text-sm font-medium text-gray-900">
-                                  {workshop?.name || 'Oficina'}
+                                  {workshop?.name || 'Sem oficina'}
                                 </p>
                                 <p className="text-xs text-gray-600">
-                                  {workshop?.segment || workshop?.segment_auto || 'Automotiva'}
+                                  {workshop?.segment || workshop?.segment_auto || ''}
                                 </p>
                               </div>
                               <ChevronDown className="w-4 h-4 text-gray-500" />
@@ -263,16 +272,16 @@ export default function Layout({ children, currentPageName }) {
                               ))}
                             </DropdownMenuContent>
                           </DropdownMenu>
-                        ) : (
+                        ) : workshop ? (
                           <>
                             <p className="text-sm font-medium text-gray-900">
-                              {workshop?.name || 'Oficina'}
+                              {workshop.name}
                             </p>
                             <p className="text-xs text-gray-600">
-                              {workshop?.segment || workshop?.segment_auto || 'Automotiva'}
+                              {workshop.segment || workshop.segment_auto || ''}
                             </p>
                           </>
-                        )}
+                        ) : null}
                       </div>
                       <Button
                         variant="outline"
@@ -310,10 +319,13 @@ export default function Layout({ children, currentPageName }) {
                   </div>
                 ) : (
                   isAuthenticated && !isPublicPage && !isPendingOnboarding && !workshopId && !isGlobalAdminPage && !isPageWithoutWorkshopRequired ? (
-                    <div className="min-h-[60vh] flex flex-col items-center justify-center">
+                    <div className="min-h-[60vh] flex flex-col items-center justify-center text-center p-6">
                       <AlertCircle className="w-12 h-12 text-amber-500 mb-4" />
-                      <h2 className="text-xl font-bold text-gray-900">Nenhuma oficina selecionada</h2>
-                      <p className="text-gray-600">Por favor, selecione uma oficina para continuar.</p>
+                      <h2 className="text-xl font-bold text-gray-900">Nenhuma oficina vinculada</h2>
+                      <p className="text-gray-600 mb-4 max-w-md">Você ainda não possui uma oficina vinculada ao seu perfil. Cadastre sua oficina para começar.</p>
+                      <Button onClick={() => window.location.href = '/Cadastro'}>
+                        Cadastrar Oficina
+                      </Button>
                     </div>
                   ) : (
                     isAuthenticated && workshopId ? (
