@@ -8,7 +8,7 @@ import SprintClientModal from "./SprintClientModal";
 import SprintCompletionSummary from "../sprint-shared/SprintCompletionSummary";
 
 export default function SprintClientSection({ workshopId, user, workshop }) {
-  const [selectedSprint, setSelectedSprint] = useState(null);
+  const [selectedSprintId, setSelectedSprintId] = useState(null);
 
   const { data: sprints = [], isLoading } = useQuery({
     queryKey: ["sprints-client", workshopId],
@@ -22,6 +22,9 @@ export default function SprintClientSection({ workshopId, user, workshop }) {
     enabled: !!workshopId,
     staleTime: 3 * 60 * 1000,
   });
+
+  // Always derive selectedSprint from fresh query data
+  const selectedSprint = selectedSprintId ? sprints.find(s => s.id === selectedSprintId) || null : null;
 
   if (isLoading) {
     return (
@@ -58,7 +61,7 @@ export default function SprintClientSection({ workshopId, user, workshop }) {
                   <SprintClientCard
                     key={sprint.id}
                     sprint={sprint}
-                    onOpen={() => setSelectedSprint(sprint)}
+                    onOpen={() => setSelectedSprintId(sprint.id)}
                   />
                 ))}
               </div>
@@ -74,7 +77,7 @@ export default function SprintClientSection({ workshopId, user, workshop }) {
                   <SprintClientCard
                     key={sprint.id}
                     sprint={sprint}
-                    onOpen={() => setSelectedSprint(sprint)}
+                    onOpen={() => setSelectedSprintId(sprint.id)}
                   />
                 ))}
               </div>
@@ -91,7 +94,7 @@ export default function SprintClientSection({ workshopId, user, workshop }) {
                     <SprintCompletionSummary sprint={sprint} />
                     <SprintClientCard
                       sprint={sprint}
-                      onOpen={() => setSelectedSprint(sprint)}
+                      onOpen={() => setSelectedSprintId(sprint.id)}
                     />
                   </div>
                 ))}
@@ -106,8 +109,8 @@ export default function SprintClientSection({ workshopId, user, workshop }) {
         sprint={selectedSprint}
         user={user}
         workshop={workshop}
-        open={!!selectedSprint}
-        onClose={() => setSelectedSprint(null)}
+        open={!!selectedSprintId}
+        onClose={() => setSelectedSprintId(null)}
       />
     </>
   );
