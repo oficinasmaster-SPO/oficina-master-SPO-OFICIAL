@@ -32,6 +32,7 @@ export default function SprintPhaseDetailModalRedesigned({
   onClose,
   onSaved,
   onNavigateToPhase,
+  onNavigateToNextSprint,
 }) {
   const phases = sprint?.phases || [];
   const currentPhase = phases[phaseIndex];
@@ -76,7 +77,13 @@ export default function SprintPhaseDetailModalRedesigned({
         last_activity_date: new Date().toISOString(),
       });
       toast.success("Fase atualizada!");
-      if (onSaved) onSaved();
+      // Se há próxima fase, navega para ela automaticamente
+      if (canGoForward) {
+        onNavigateToPhase(phaseIndex + 1);
+      } else {
+        // Última fase — fecha o modal e atualiza
+        if (onSaved) onSaved();
+      }
     } catch (err) {
       toast.error("Erro ao salvar fase");
     } finally {
