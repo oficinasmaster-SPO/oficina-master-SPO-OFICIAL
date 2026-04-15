@@ -50,7 +50,10 @@ export default function DashboardOperacionalTabRedesigned({ user, workshops = []
 
   const handleSprintClick = (sprint) => {
     setSelectedSprint(sprint);
-    setSelectedPhaseIndex(0);
+    // Abre na primeira fase não concluída
+    const phases = sprint?.phases || [];
+    const nextIncomplete = phases.findIndex(p => p.status !== "completed");
+    setSelectedPhaseIndex(nextIncomplete >= 0 ? nextIncomplete : 0);
   };
 
   if (isLoading) return <LoadingSkeleton />;
