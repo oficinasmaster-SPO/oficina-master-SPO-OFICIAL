@@ -606,12 +606,44 @@ function CamadaSprints({ workshopId, missoesSelecionadas, cronogramaTemplateId }
     
     setLoadingCreate(mission.id);
     try {
+      const phaseDefaultTasks = {
+        Planning: [
+          "Revisar diagnóstico e prioridades",
+          "Definir objetivo claro do sprint",
+          "Listar entregáveis mensuráveis",
+          "Distribuir tarefas e prazos",
+        ],
+        Execution: [
+          "Assistir treinamentos da missão",
+          "Implementar ferramentas e processos",
+          "Executar tarefas priorizadas",
+          "Registrar progresso na plataforma",
+        ],
+        Monitoring: [
+          "Check-in: o que foi feito",
+          "Medir resultados parciais",
+          "Identificar bloqueios",
+          "Ajustar tarefas se necessário",
+        ],
+        Review: [
+          "Apresentar entregáveis concluídos",
+          "Medir KPIs vs meta do sprint",
+          "Validar com o cliente os resultados",
+          "Documentar conquistas",
+        ],
+        Retrospective: [
+          "O que funcionou bem?",
+          "O que precisa melhorar?",
+          "Quais ajustes fazer no processo?",
+          "Planejar próximo sprint",
+        ],
+      };
       const defaultPhases = ["Planning", "Execution", "Monitoring", "Review", "Retrospective"].map(name => ({
         name,
         status: "not_started",
         notes: "",
         metrics: [],
-        tasks: [],
+        tasks: (phaseDefaultTasks[name] || []).map(desc => ({ description: desc, status: "to_do" })),
       }));
       const today = new Date();
       const endDate = new Date(today);
