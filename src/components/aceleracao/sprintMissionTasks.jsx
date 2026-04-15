@@ -1,6 +1,42 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+/**
+ * Tarefas padrão por missão e fase.
+ * Quando um sprint é criado para uma missão específica,
+ * essas tarefas são usadas em vez das genéricas.
+ */
 
-// Tarefas específicas por missão
+const GENERIC_PHASE_TASKS = {
+  Planning: [
+    "Revisar diagnóstico e prioridades",
+    "Definir objetivo claro do sprint",
+    "Listar entregáveis mensuráveis",
+    "Distribuir tarefas e prazos",
+  ],
+  Execution: [
+    "Assistir treinamentos da missão",
+    "Implementar ferramentas e processos",
+    "Executar tarefas priorizadas",
+    "Registrar progresso na plataforma",
+  ],
+  Monitoring: [
+    "Check-in: o que foi feito",
+    "Medir resultados parciais",
+    "Identificar bloqueios",
+    "Ajustar tarefas se necessário",
+  ],
+  Review: [
+    "Apresentar entregáveis concluídos",
+    "Medir KPIs vs meta do sprint",
+    "Validar com o cliente os resultados",
+    "Documentar conquistas",
+  ],
+  Retrospective: [
+    "O que funcionou bem?",
+    "O que precisa melhorar?",
+    "Quais ajustes fazer no processo?",
+    "Planejar próximo sprint",
+  ],
+};
+
 const MISSION_PHASE_TASKS = {
   agenda_cheia: {
     Planning: [
@@ -329,110 +365,34 @@ const MISSION_PHASE_TASKS = {
   },
 };
 
-const GENERIC_PHASE_TASKS = {
-  Planning: [
-    "Revisar diagnóstico e prioridades",
-    "Definir objetivo claro do sprint",
-    "Listar entregáveis mensuráveis",
-    "Distribuir tarefas e prazos",
-  ],
-  Execution: [
-    "Assistir treinamentos da missão",
-    "Implementar ferramentas e processos",
-    "Executar tarefas priorizadas",
-    "Registrar progresso na plataforma",
-  ],
-  Monitoring: [
-    "Check-in: o que foi feito",
-    "Medir resultados parciais",
-    "Identificar bloqueios",
-    "Ajustar tarefas se necessário",
-  ],
-  Review: [
-    "Apresentar entregáveis concluídos",
-    "Medir KPIs vs meta do sprint",
-    "Validar com o cliente os resultados",
-    "Documentar conquistas",
-  ],
-  Retrospective: [
-    "O que funcionou bem?",
-    "O que precisa melhorar?",
-    "Quais ajustes fazer no processo?",
-    "Planejar próximo sprint",
-  ],
-};
-
-function getTasksForPhase(missionId, phaseName) {
+/**
+ * Retorna as tarefas padrão para uma fase de um sprint.
+ * Se houver tarefas específicas para a missão, usa essas.
+ * Caso contrário, usa as genéricas.
+ */
+export function getDefaultTasksForPhase(missionId, phaseName) {
   const missionTasks = MISSION_PHASE_TASKS[missionId];
   if (missionTasks && missionTasks[phaseName]) {
-    return missionTasks[phaseName];
+    return missionTasks[phaseName].map(desc => ({ description: desc, status: "to_do" }));
   }
-  return GENERIC_PHASE_TASKS[phaseName] || [];
+  const genericTasks = GENERIC_PHASE_TASKS[phaseName];
+  if (genericTasks) {
+    return genericTasks.map(desc => ({ description: desc, status: "to_do" }));
+  }
+  return [];
 }
 
-Deno.serve(async (req) => {
-  const base44 = createClientFromRequest(req);
-  const user = await base44.auth.me();
-  if (user?.role !== 'admin') {
-    return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
-  }
-
-  const allSprints = await base44.asServiceRole.entities.ConsultoriaSprint.filter({});
-  let updated = 0;
-  const details = [];
-
-  for (const sprint of allSprints) {
-    const phases = sprint.phases || [];
-    const missionId = sprint.mission_id || "custom";
-    let needsUpdate = false;
-
-    const updatedPhases = phases.map(phase => {
-      // Only replace phases that have the old generic 4-task defaults OR are empty
-      const currentTasks = phase.tasks || [];
-      const isEmptyOrGeneric = currentTasks.length === 0 || isGenericTasks(currentTasks, phase.name);
-      
-      if (isEmptyOrGeneric && missionId !== "custom") {
-        const newTasks = getTasksForPhase(missionId, phase.name);
-        if (newTasks.length > 0 && newTasks.length !== currentTasks.length) {
-          needsUpdate = true;
-          // Preserve completed status for tasks that match
-          return {
-            ...phase,
-            tasks: newTasks.map(desc => {
-              const existingTask = currentTasks.find(t => t.description === desc);
-              if (existingTask) return existingTask;
-              return { description: desc, status: "to_do" };
-            }),
-          };
-        }
-      }
-      return phase;
-    });
-
-    if (needsUpdate) {
-      const totalTasks = updatedPhases.reduce((sum, p) => sum + (p.tasks?.length || 0), 0);
-      const doneTasks = updatedPhases.reduce((sum, p) => sum + (p.tasks?.filter(t => t.status === "done").length || 0), 0);
-      const progress = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
-
-      await base44.asServiceRole.entities.ConsultoriaSprint.update(sprint.id, {
-        phases: updatedPhases,
-        progress_percentage: progress,
-      });
-      updated++;
-      details.push({ id: sprint.id, title: sprint.title, mission: missionId });
-    }
-  }
-
-  return Response.json({ 
-    message: `Migration complete. Updated ${updated} sprints out of ${allSprints.length} total.`,
-    updated,
-    total: allSprints.length,
-    details,
-  });
-});
-
-function isGenericTasks(tasks, phaseName) {
-  const genericDescs = GENERIC_PHASE_TASKS[phaseName] || [];
-  if (tasks.length !== genericDescs.length) return false;
-  return tasks.every(t => genericDescs.includes(t.description));
+/**
+ * Retorna as fases padrão completas para um sprint de uma missão.
+ */
+export function getDefaultPhasesForMission(missionId) {
+  return ["Planning", "Execution", "Monitoring", "Review", "Retrospective"].map(name => ({
+    name,
+    status: "not_started",
+    notes: "",
+    metrics: [],
+    tasks: getDefaultTasksForPhase(missionId, name),
+  }));
 }
+
+export { GENERIC_PHASE_TASKS, MISSION_PHASE_TASKS };
