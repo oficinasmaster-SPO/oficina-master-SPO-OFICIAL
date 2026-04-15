@@ -86,6 +86,7 @@
             "enum": [
               "not_started",
               "in_progress",
+              "pending_review",
               "completed"
             ],
             "default": "not_started"
@@ -97,6 +98,28 @@
           "completion_date": {
             "type": "string",
             "format": "date-time"
+          },
+          "submitted_for_review_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data em que a oficina submeteu para revis\u00e3o"
+          },
+          "submitted_for_review_by": {
+            "type": "string",
+            "description": "ID do usu\u00e1rio que submeteu para revis\u00e3o"
+          },
+          "reviewed_by": {
+            "type": "string",
+            "description": "ID do consultor que revisou"
+          },
+          "reviewed_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data da revis\u00e3o"
+          },
+          "review_feedback": {
+            "type": "string",
+            "description": "Feedback do consultor ao devolver ou aprovar a fase"
           },
           "notes": {
             "type": "string"
@@ -133,6 +156,31 @@
                     "done"
                   ],
                   "default": "to_do"
+                },
+                "completed_by": {
+                  "type": "string",
+                  "description": "ID do usu\u00e1rio que completou a tarefa"
+                },
+                "completed_by_role": {
+                  "type": "string",
+                  "enum": [
+                    "consultor",
+                    "oficina"
+                  ],
+                  "description": "Papel de quem completou: consultor ou oficina"
+                },
+                "completed_at": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "Data/hora em que foi marcada como conclu\u00edda"
+                },
+                "evidence_url": {
+                  "type": "string",
+                  "description": "URL de arquivo de evid\u00eancia (foto, PDF, etc)"
+                },
+                "evidence_note": {
+                  "type": "string",
+                  "description": "Nota/observa\u00e7\u00e3o da oficina sobre a tarefa"
                 }
               }
             }
