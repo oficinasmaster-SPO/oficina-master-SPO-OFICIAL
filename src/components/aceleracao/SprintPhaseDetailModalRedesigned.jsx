@@ -55,6 +55,7 @@ export default function SprintPhaseDetailModalRedesigned({
 
   const handleSave = async () => {
     setSaving(true);
+
     const updatedPhases = [...phases];
     updatedPhases[phaseIndex] = {
       ...updatedPhases[phaseIndex],
@@ -75,9 +76,18 @@ export default function SprintPhaseDetailModalRedesigned({
         status: allCompleted ? "completed" : "in_progress",
         last_activity_date: new Date().toISOString(),
       });
-      toast.success(`Fase atualizada! (${progress}%)`);
+
+      toast.success("Fase atualizada com sucesso!");
+
       if (onSaved) onSaved();
+
+      if (!allCompleted && phaseIndex < phases.length - 1) {
+        onNavigateToPhase(phaseIndex + 1);
+      } else {
+        onClose();
+      }
     } catch (err) {
+      console.error(err);
       toast.error("Erro ao salvar fase");
     } finally {
       setSaving(false);
@@ -213,9 +223,9 @@ export default function SprintPhaseDetailModalRedesigned({
         {/* Actions */}
         <div className="flex justify-end gap-2 pt-3 border-t">
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button onClick={() => handleSave()} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
+          <Button onClick={handleSave} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
             {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Save className="w-4 h-4 mr-1" />}
-            Salvar e Fechar
+            {canGoForward ? "Salvar e Avançar" : "Salvar e Fechar"}
           </Button>
         </div>
       </DialogContent>

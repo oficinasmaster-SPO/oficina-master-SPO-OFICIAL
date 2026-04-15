@@ -133,8 +133,6 @@ export default function DashboardOperacionalTabRedesigned({ user, workshops = []
             refetch();
           }}
           onSaved={() => {
-            setSelectedSprint(null);
-            setSelectedPhaseIndex(0);
             refetch();
           }}
           onNavigateToPhase={(idx) => setSelectedPhaseIndex(idx)}
