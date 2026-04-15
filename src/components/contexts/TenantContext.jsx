@@ -109,6 +109,10 @@ export function TenantProvider({ children }) {
              if (compOrWorkshop && !cancelled) {
                  setCompany(compOrWorkshop);
              } else if (!compOrWorkshop && !cancelled) {
+                 // Workshop/Company não encontrado - limpa o ID inválido
+                 console.warn(`Workshop/Company com ID ${compIdToLoad} não encontrado. Limpando referência.`);
+                 localStorage.removeItem('selected_company_id');
+                 setSelectedCompanyId(null);
                  setCompany(null);
              }
           } else {
