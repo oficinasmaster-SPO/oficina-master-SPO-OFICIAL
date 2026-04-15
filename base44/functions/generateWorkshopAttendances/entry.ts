@@ -24,16 +24,27 @@ Deno.serve(async (req) => {
         return Response.json({ message: 'Workshop did not become active' });
     }
 
-    const planId = workshop.planId || workshop.planoAtual;
-    if (!planId) {
+    const rawPlanId = workshop.planId || workshop.planoAtual;
+    if (!rawPlanId) {
         return Response.json({ message: 'Workshop has no plan' });
     }
 
-    // Get plan rules
-    const planRules = await base44.asServiceRole.entities.PlanAttendanceRule.filter({
-      plan_id: planId,
-      is_active: true
-    });
+    // Normalize: try both the raw value and uppercase version to handle case mismatches
+    const planIdVariants = [rawPlanId, rawPlanId.toUpperCase(), rawPlanId.toLowerCase()];
+    const uniqueVariants = [...new Set(planIdVariants)];
+    
+    let planRules = [];
+    for (const variant of uniqueVariants) {
+      const rules = await base44.asServiceRole.entities.PlanAttendanceRule.filter({
+        plan_id: variant,
+        is_active: true
+      });
+      if (rules && rules.length > 0) {
+        planRules = rules;
+        console.log(`Found ${rules.length} rules for plan_id="${variant}"`);
+        break;
+      }
+    }
 
     if (!planRules || planRules.length === 0) {
       return Response.json({ message: 'Nenhuma regra de atendimento configurada para este plano' });
