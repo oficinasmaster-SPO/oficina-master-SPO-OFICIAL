@@ -46,6 +46,7 @@ import { cn } from "@/lib/utils";
 import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 import { useAdminMode } from "@/components/hooks/useAdminMode";
 import { toBrazilDate, formatDateBR } from "@/utils/timezone";
+import SprintAtivaWidget from "./SprintAtivaWidget";
 
 export default function DashboardHub({ user, workshop: propWorkshop }) {
   const { workshop: contextWorkshop, isAdminMode } = useWorkshopContext();
@@ -538,6 +539,9 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
         </Card>
       )}
 
+
+      {/* Sprint Ativa - Aceleração */}
+      {workshop?.id && <SprintAtivaWidget workshopId={workshop.id} />}
 
       {/* Alertas e Notificações */}
       {(overdueTasks.length > 0 || unreadNotifications.length > 0) && (
