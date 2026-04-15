@@ -550,6 +550,7 @@ function SprintCard({ numero, titulo, emoji, descricao, cor, isFixed, sprint, on
           phaseIndex={modalPhaseIndex}
           onClose={() => setModalPhaseIndex(null)}
           onSaved={onSprintUpdated}
+          onNavigateToPhase={(nextIdx) => setModalPhaseIndex(nextIdx)}
         />
       )}
     </div>

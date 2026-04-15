@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -143,9 +143,11 @@ const DEFAULT_KPIS_RETROSPECTIVE_AGENDA_CHEIA = [
   { name: "Taxa de retorno dos clientes", value: 0, unit: "%" },
 ];
 
-export default function SprintPhaseDetailModalRedesigned({ sprint, phaseIndex, onClose, onSaved }) {
+export default function SprintPhaseDetailModalRedesigned({ sprint, phaseIndex, onClose, onSaved, onNavigateToPhase }) {
   const phase = sprint?.phases?.[phaseIndex];
   const config = phase ? PHASE_CONFIG[phase.name] : null;
+  const totalPhases = sprint?.phases?.length || 0;
+  const isLastPhase = phaseIndex >= totalPhases - 1;
 
   const [status, setStatus] = useState(phase?.status || "not_started");
   const [notes, setNotes] = useState(phase?.notes || "");
@@ -181,6 +183,17 @@ export default function SprintPhaseDetailModalRedesigned({ sprint, phaseIndex, o
        : isAgendaCheia && isRetrospective ? DEFAULT_KPIS_RETROSPECTIVE_AGENDA_CHEIA
        : []);
   const [metrics, setMetrics] = useState(initMetrics);
+
+  // Reset state when navigating between phases
+  useEffect(() => {
+    if (!phase) return;
+    setStatus(phase.status || "not_started");
+    setNotes(phase.notes || "");
+    setDueDate(phase.due_date || "");
+    setActiveTab("resumo");
+    setTasks(initTasks);
+    setMetrics(initMetrics);
+  }, [phaseIndex]);
 
   if (!sprint || !phase || !config) return null;
 
@@ -237,7 +250,12 @@ export default function SprintPhaseDetailModalRedesigned({ sprint, phaseIndex, o
 
     setSaving(false);
     onSaved?.();
-    onClose();
+    
+    if (!isLastPhase && onNavigateToPhase) {
+      onNavigateToPhase(phaseIndex + 1);
+    } else {
+      onClose();
+    }
   };
 
   const completedTasks = tasks.filter(t => t.status === "done").length;
@@ -481,7 +499,7 @@ export default function SprintPhaseDetailModalRedesigned({ sprint, phaseIndex, o
           </Button>
           <Button onClick={handleSave} disabled={saving} className="flex-1 gap-2 bg-green-600 hover:bg-green-700">
             <Save className="w-4 h-4" />
-            {saving ? "Salvando..." : "Salvar Fase"}
+            {saving ? "Salvando..." : isLastPhase ? "Concluir Sprint ✓" : "Salvar e Avançar →"}
           </Button>
         </div>
       </DialogContent>
