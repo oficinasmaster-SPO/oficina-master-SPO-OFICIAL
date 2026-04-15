@@ -24,7 +24,7 @@ export default function SprintSubmitReview({ phase, canSubmit, allTasksDone, onS
     return null;
   }
 
-  if (phase.status !== "in_progress") {
+  if (phase.status !== "in_progress" && phase.status !== "not_started") {
     return null;
   }
 
