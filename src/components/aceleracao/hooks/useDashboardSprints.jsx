@@ -50,6 +50,13 @@ export default function useDashboardSprints(workshops = []) {
       .sort((a, b) => b.sprints.length - a.sprints.length);
   }, [workshops, sprints]);
 
+  const sprintsConcluidos = useMemo(
+    () => sprints
+      .filter(s => s.status === "completed")
+      .sort((a, b) => new Date(b.updated_date || b.created_date) - new Date(a.updated_date || a.created_date)),
+    [sprints]
+  );
+
   const sprintsPendingReview = useMemo(() => {
     return sprints
       .map(sprint => {
@@ -76,6 +83,7 @@ export default function useDashboardSprints(workshops = []) {
     sprints,
     sprintsAtrasados,
     sprintsEmAndamento,
+    sprintsConcluidos,
     sprintsPendingReview,
     clientesComTrilha,
     workshopMap,

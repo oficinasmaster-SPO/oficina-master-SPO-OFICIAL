@@ -5,6 +5,7 @@ import SprintsAtrasadosBlock from "./dashboard/SprintsAtrasadosBlock";
 import SprintsEmAndamentoBlock from "./dashboard/SprintsEmAndamentoBlock";
 import SprintsPendingReviewBlock from "./dashboard/SprintsPendingReviewBlock";
 import ClientesComTrilhaBlock from "./dashboard/ClientesComTrilhaBlock";
+import SprintsHistoricoBlock from "./dashboard/SprintsHistoricoBlock";
 import SprintPhaseDetailModalRedesigned from "./SprintPhaseDetailModalRedesigned";
 
 function StatPill({ icon: Icon, label, value, color, bgColor }) {
@@ -43,6 +44,7 @@ export default function DashboardOperacionalTabRedesigned({ user, workshops = []
   const {
     sprintsAtrasados,
     sprintsEmAndamento,
+    sprintsConcluidos,
     sprintsPendingReview,
     clientesComTrilha,
     workshopMap,
@@ -129,6 +131,13 @@ export default function DashboardOperacionalTabRedesigned({ user, workshops = []
             </div>
             <ClientesComTrilhaBlock clientes={clientesComTrilha} />
           </div>
+
+          {/* BLOCO 4 — Histórico de Sprints Concluídos */}
+          <SprintsHistoricoBlock
+            sprints={sprintsConcluidos}
+            workshopMap={workshopMap}
+            onSprintClick={handleSprintClick}
+          />
         </>
       )}
 
