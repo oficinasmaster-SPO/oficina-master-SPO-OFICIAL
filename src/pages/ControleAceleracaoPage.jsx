@@ -1,1 +1,1 @@
-export { default } from './ControleAceleracao.jsx';
+export { default } from "./ControleAceleracao.jsx";

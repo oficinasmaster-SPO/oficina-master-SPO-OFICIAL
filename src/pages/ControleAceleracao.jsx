@@ -1,5 +1,4 @@
 import React from "react";
-// rebuild trigger
 import useControleAceleracaoState from "@/components/hooks/useControleAceleracaoState";
 import ControleAceleracaoView from "@/components/aceleracao/ControleAceleracaoView";
 import PageAccessControl from "@/components/auth/PageAccessControl";
