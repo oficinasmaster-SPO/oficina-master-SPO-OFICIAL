@@ -15,6 +15,7 @@ import AtividadesImplementacao from "../components/aceleracao/AtividadesImplemen
 import PlanoAceleracaoMensal from "../components/aceleracao/PlanoAceleracaoMensal";
 import FeedbackPlanoModal from "../components/aceleracao/FeedbackPlanoModal";
 import AtasSection from "../components/aceleracao/AtasSection";
+import SprintClientSection from "../components/aceleracao/sprint-client/SprintClientSection";
 
 export default function PainelClienteAceleracao() {
   const navigate = useNavigate();
@@ -418,6 +419,11 @@ export default function PainelClienteAceleracao() {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Sprints de Aceleração - Colaborativo */}
+      {workshop?.id && user && (
+        <SprintClientSection workshopId={workshop.id} user={user} workshop={workshop} />
       )}
 
       {/* Atividades de Implementação do Cronograma */}
