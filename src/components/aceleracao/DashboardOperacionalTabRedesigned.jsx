@@ -49,11 +49,11 @@ export default function DashboardOperacionalTabRedesigned({ user, workshops = []
   } = useDashboardSprints(workshops);
 
   const handleSprintClick = (sprint) => {
-    setSelectedSprint(sprint);
-    // Abre na primeira fase não concluída
     const phases = sprint?.phases || [];
-    const nextIncomplete = phases.findIndex(p => p.status !== "completed");
-    setSelectedPhaseIndex(nextIncomplete >= 0 ? nextIncomplete : 0);
+    // Abre exatamente na fase em andamento (recuperação automática)
+    const currentPhaseIndex = phases.findIndex(p => p.status === "in_progress");
+    setSelectedSprint(sprint);
+    setSelectedPhaseIndex(currentPhaseIndex >= 0 ? currentPhaseIndex : 0);
   };
 
   if (isLoading) return <LoadingSkeleton />;
@@ -138,6 +138,7 @@ export default function DashboardOperacionalTabRedesigned({ user, workshops = []
           onNavigateToPhase={(idx) => setSelectedPhaseIndex(idx)}
         />
       )}
+
     </div>
   );
 }
