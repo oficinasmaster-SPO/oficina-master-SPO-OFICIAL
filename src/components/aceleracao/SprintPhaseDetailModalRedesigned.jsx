@@ -7,10 +7,13 @@ import { Input } from "@/components/ui/input";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 import {
-  ChevronLeft, ChevronRight, CheckCircle2, Circle, Clock,
+  ChevronLeft, ChevronRight, CheckCircle2, Circle, Clock, Send,
   ListChecks, PlaySquare, BarChart2, TrendingUp, MessageSquare,
   Plus, Trash2, Save, Loader2
 } from "lucide-react";
+import SprintPhaseProgress from "./sprint-client/SprintPhaseProgress";
+import SprintTaskItem from "./sprint-client/SprintTaskItem";
+import ConsultorReviewPanel from "./sprint-consultant/ConsultorReviewPanel";
 
 const PHASES_CONFIG = [
   { name: "Planning", label: "Sprint Planning", icon: ListChecks, color: "text-blue-600", bg: "bg-blue-50" },
@@ -23,6 +26,7 @@ const PHASES_CONFIG = [
 const STATUS_OPTIONS = [
   { value: "not_started", label: "Não iniciado", icon: <Circle className="w-4 h-4 text-gray-400" /> },
   { value: "in_progress", label: "Em andamento", icon: <Clock className="w-4 h-4 text-blue-500" /> },
+  { value: "pending_review", label: "Aguardando revisão", icon: <Send className="w-4 h-4 text-amber-500" /> },
   { value: "completed", label: "Concluído", icon: <CheckCircle2 className="w-4 h-4 text-green-500" /> },
 ];
 
@@ -54,8 +58,30 @@ export default function SprintPhaseDetailModalRedesigned({
     }
   }, [phaseIndex, phases]);
 
-  const handleSave = async () => {
+  const persistPhases = async (updatedPhases) => {
     setSaving(true);
+    const totalTasks = updatedPhases.reduce((sum, p) => sum + (p.tasks?.length || 0), 0);
+    const doneTasks = updatedPhases.reduce((sum, p) => sum + (p.tasks?.filter(t => t.status === "done").length || 0), 0);
+    const taskProgress = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
+    const allCompleted = updatedPhases.every(p => p.status === "completed");
+
+    try {
+      await base44.entities.ConsultoriaSprint.update(sprint.id, {
+        phases: updatedPhases,
+        progress_percentage: taskProgress,
+        status: allCompleted ? "completed" : "in_progress",
+        last_activity_date: new Date().toISOString(),
+      });
+      return true;
+    } catch {
+      toast.error("Erro ao salvar fase");
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSave = async () => {
     const updatedPhases = [...phases];
     updatedPhases[phaseIndex] = {
       ...updatedPhases[phaseIndex],
@@ -64,31 +90,61 @@ export default function SprintPhaseDetailModalRedesigned({
       tasks,
       ...(status === "completed" ? { completion_date: new Date().toISOString() } : {}),
     };
-
-    const completedCount = updatedPhases.filter(p => p.status === "completed").length;
-    const progress = Math.round((completedCount / updatedPhases.length) * 100);
-    const allCompleted = completedCount === updatedPhases.length;
-
-    try {
-      await base44.entities.ConsultoriaSprint.update(sprint.id, {
-        phases: updatedPhases,
-        progress_percentage: progress,
-        status: allCompleted ? "completed" : "in_progress",
-        last_activity_date: new Date().toISOString(),
-      });
+    const ok = await persistPhases(updatedPhases);
+    if (ok) {
       toast.success("Fase atualizada!");
-      // Se há próxima fase, navega para ela automaticamente
       if (canGoForward) {
         onNavigateToPhase(phaseIndex + 1);
       } else {
-        // Última fase — fecha o modal e atualiza
         if (onSaved) onSaved();
       }
-    } catch (err) {
-      toast.error("Erro ao salvar fase");
-    } finally {
-      setSaving(false);
     }
+  };
+
+  // Review actions for consultant
+  const handleApprovePhase = async (feedback) => {
+    const updatedPhases = [...phases];
+    updatedPhases[phaseIndex] = {
+      ...updatedPhases[phaseIndex],
+      status: "completed",
+      completion_date: new Date().toISOString(),
+      reviewed_at: new Date().toISOString(),
+      review_feedback: feedback || "",
+    };
+    const ok = await persistPhases(updatedPhases);
+    if (ok) {
+      toast.success("Fase aprovada!");
+      if (canGoForward) onNavigateToPhase(phaseIndex + 1);
+      else if (onSaved) onSaved();
+    }
+  };
+
+  const handleReturnPhase = async (feedback) => {
+    const updatedPhases = [...phases];
+    updatedPhases[phaseIndex] = {
+      ...updatedPhases[phaseIndex],
+      status: "in_progress",
+      reviewed_at: new Date().toISOString(),
+      review_feedback: feedback,
+    };
+    const ok = await persistPhases(updatedPhases);
+    if (ok) toast.success("Fase devolvida para a oficina com feedback.");
+  };
+
+  const handleToggleTask = (taskIdx) => {
+    const updated = [...tasks];
+    updated[taskIdx] = {
+      ...updated[taskIdx],
+      status: updated[taskIdx].status === "done" ? "to_do" : "done",
+      ...(updated[taskIdx].status !== "done" ? { completed_by_role: "consultor", completed_at: new Date().toISOString() } : { completed_by_role: null, completed_at: null }),
+    };
+    setTasks(updated);
+  };
+
+  const handleUpdateEvidence = (taskIdx, data) => {
+    const updated = [...tasks];
+    updated[taskIdx] = { ...updated[taskIdx], ...data };
+    setTasks(updated);
   };
 
   const addTask = () => {
@@ -97,21 +153,13 @@ export default function SprintPhaseDetailModalRedesigned({
     setNewTask("");
   };
 
-  const toggleTask = (idx) => {
-    const updated = [...tasks];
-    updated[idx] = {
-      ...updated[idx],
-      status: updated[idx].status === "done" ? "to_do" : "done",
-    };
-    setTasks(updated);
-  };
-
   const removeTask = (idx) => {
     setTasks(tasks.filter((_, i) => i !== idx));
   };
 
   const canGoBack = phaseIndex > 0;
   const canGoForward = phaseIndex < phases.length - 1;
+  const isPendingReview = currentPhase?.status === "pending_review";
 
   return (
     <Dialog open={true} onOpenChange={() => onClose()}>
@@ -127,6 +175,9 @@ export default function SprintPhaseDetailModalRedesigned({
             </div>
           </DialogTitle>
         </DialogHeader>
+
+        {/* Phase Progress Bar */}
+        <SprintPhaseProgress phases={phases} />
 
         {/* Phase Navigation */}
         <div className="flex items-center justify-between py-2 border-b">
@@ -147,25 +198,35 @@ export default function SprintPhaseDetailModalRedesigned({
           </Button>
         </div>
 
-        {/* Status */}
-        <div className="space-y-1">
-          <label className="text-xs font-semibold text-gray-700">Status</label>
-          <div className="flex gap-2">
-            {STATUS_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                onClick={() => setStatus(opt.value)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${
-                  status === opt.value
-                    ? "border-blue-400 bg-blue-50 text-blue-700"
-                    : "border-gray-200 hover:border-gray-300 text-gray-600"
-                }`}
-              >
-                {opt.icon} {opt.label}
-              </button>
-            ))}
+        {/* Consultant Review Panel (shows only when pending_review) */}
+        <ConsultorReviewPanel
+          phase={currentPhase || {}}
+          onApprove={handleApprovePhase}
+          onReturn={handleReturnPhase}
+          isSaving={saving}
+        />
+
+        {/* Status (consultant can change directly) */}
+        {!isPendingReview && (
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-gray-700">Status</label>
+            <div className="flex flex-wrap gap-2">
+              {STATUS_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => setStatus(opt.value)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${
+                    status === opt.value
+                      ? "border-blue-400 bg-blue-50 text-blue-700"
+                      : "border-gray-200 hover:border-gray-300 text-gray-600"
+                  }`}
+                >
+                  {opt.icon} {opt.label}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Notes */}
         <div className="space-y-1">
@@ -178,29 +239,23 @@ export default function SprintPhaseDetailModalRedesigned({
           />
         </div>
 
-        {/* Tasks */}
+        {/* Tasks — reuse shared SprintTaskItem for evidence/completion visibility */}
         <div className="space-y-2">
           <label className="text-xs font-semibold text-gray-700">
             Tarefas ({tasks.filter(t => t.status === "done").length}/{tasks.length})
           </label>
-          <div className="space-y-1.5 max-h-40 overflow-y-auto">
+          <div className="space-y-2 max-h-60 overflow-y-auto">
             {tasks.map((task, idx) => (
-              <div key={idx} className="flex items-center gap-2 group">
-                <button onClick={() => toggleTask(idx)}>
-                  {task.status === "done"
-                    ? <CheckCircle2 className="w-4 h-4 text-green-500" />
-                    : <Circle className="w-4 h-4 text-gray-300" />}
-                </button>
-                <span className={`text-sm flex-1 ${task.status === "done" ? "line-through text-gray-400" : "text-gray-700"}`}>
-                  {task.description}
-                </span>
-                <button
-                  onClick={() => removeTask(idx)}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <Trash2 className="w-3.5 h-3.5 text-red-400 hover:text-red-600" />
-                </button>
-              </div>
+              <SprintTaskItem
+                key={idx}
+                task={task}
+                index={idx}
+                canComplete={true}
+                canAddNotes={true}
+                userRole="consultor"
+                onToggle={handleToggleTask}
+                onUpdateEvidence={handleUpdateEvidence}
+              />
             ))}
           </div>
           <div className="flex gap-2">
