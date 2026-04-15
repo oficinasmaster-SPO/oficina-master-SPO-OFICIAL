@@ -85,13 +85,13 @@ export default function ClientDetailPanel({ client, isOpen, onClose, atendimento
 
         <Tabs defaultValue={defaultTab} className="mt-4 flex flex-col flex-1 min-h-0">
           <div className="shrink-0">
-            <RedTabsList>
-              <RedTabsTrigger value="geral">Dados Gerais</RedTabsTrigger>
-              <RedTabsTrigger value="operacional">Operacional</RedTabsTrigger>
-              <RedTabsTrigger value="financeiro">Financeiro</RedTabsTrigger>
-              <RedTabsTrigger value="processos">Processos</RedTabsTrigger>
-              <RedTabsTrigger value="historico">Histórico</RedTabsTrigger>
-              <RedTabsTrigger value="consultoria" className="flex items-center gap-1">
+            <RedTabsList className="gap-3">
+              <RedTabsTrigger value="geral" className="flex-1 justify-center">Dados Gerais</RedTabsTrigger>
+              <RedTabsTrigger value="operacional" className="flex-1 justify-center">Operacional</RedTabsTrigger>
+              <RedTabsTrigger value="financeiro" className="flex-1 justify-center">Financeiro</RedTabsTrigger>
+              <RedTabsTrigger value="processos" className="flex-1 justify-center">Processos</RedTabsTrigger>
+              <RedTabsTrigger value="historico" className="flex-1 justify-center">Histórico</RedTabsTrigger>
+              <RedTabsTrigger value="consultoria" className="flex-1 justify-center">
                 <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
                 Consultoria
               </RedTabsTrigger>
