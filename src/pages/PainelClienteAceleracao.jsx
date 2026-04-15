@@ -30,20 +30,16 @@ export default function PainelClienteAceleracao() {
     retry: false
   });
 
+  // Detect admin/assistance mode from URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const adminWorkshopId = urlParams.get('workshop_id');
+  const isAdminMode = !!adminWorkshopId;
+  const workshopIdToUse = adminWorkshopId || user?.data?.workshop_id || user?.workshop_id;
+
   const { data: workshop } = useQuery({
-    queryKey: ['workshop', user?.id],
-    queryFn: async () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const adminWorkshopId = urlParams.get('workshop_id');
-      const assistanceMode = urlParams.get('assistance_mode') === 'true';
-      
-      if (assistanceMode && adminWorkshopId) {
-        return await base44.entities.Workshop.get(adminWorkshopId);
-      }
-      
-      return await base44.entities.Workshop.get(user.workshop_id);
-    },
-    enabled: !!user?.workshop_id,
+    queryKey: ['workshop-painel', workshopIdToUse],
+    queryFn: () => base44.entities.Workshop.get(workshopIdToUse),
+    enabled: !!workshopIdToUse,
     staleTime: 5 * 60 * 1000,
     retry: false
   });
@@ -61,14 +57,10 @@ export default function PainelClienteAceleracao() {
     retry: false
   });
 
-  // Buscar progresso do cronograma de implementação (nova fonte única de verdade)
+  // Buscar progresso do cronograma de implementação
   const { data: progressoItems } = useQuery({
     queryKey: ['progresso-implementacao', workshop?.id],
-    queryFn: async () => {
-      return await base44.entities.CronogramaImplementacao.filter({
-        workshop_id: workshop.id
-      });
-    },
+    queryFn: () => base44.entities.CronogramaImplementacao.filter({ workshop_id: workshop.id }),
     enabled: !!workshop?.id,
     staleTime: 5 * 60 * 1000,
     retry: false
@@ -77,12 +69,7 @@ export default function PainelClienteAceleracao() {
   // Buscar atividades do Cronograma de Implementação
   const { data: cronogramaItems, isLoading: loadingCronograma } = useQuery({
     queryKey: ['cronograma-implementacao', workshop?.id],
-    queryFn: async () => {
-      return await base44.entities.CronogramaImplementacao.filter(
-        { workshop_id: workshop.id },
-        '-created_date'
-      );
-    },
+    queryFn: () => base44.entities.CronogramaImplementacao.filter({ workshop_id: workshop.id }, '-created_date'),
     enabled: !!workshop?.id,
     staleTime: 5 * 60 * 1000,
     retry: false
@@ -219,11 +206,12 @@ export default function PainelClienteAceleracao() {
   }
 
   // Verificar se o cliente tem plano habilitado
-  // Planos válidos: START, BRONZE, PRATA, GOLD, IOM, MILLIONS
+  // Admins e modo admin sempre podem acessar
   const planosValidos = ['START', 'BRONZE', 'PRATA', 'GOLD', 'IOM', 'MILLIONS'];
   const temPlanoAtivo = workshop?.planoAtual && planosValidos.includes(workshop.planoAtual);
+  const canBypassPlanCheck = user?.role === 'admin' || isAdminMode;
 
-  if (!temPlanoAtivo) {
+  if (!temPlanoAtivo && !canBypassPlanCheck) {
     return (
       <div className="max-w-4xl mx-auto text-center py-12">
         <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-8">
