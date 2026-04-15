@@ -21,6 +21,7 @@ export default function SprintClientModal({ sprint, user, workshop, open, onClos
   const queryClient = useQueryClient();
   const permissions = useSprintPermissions(sprint, user, workshop);
   const phases = sprint?.phases || [];
+  const sprintCompleted = sprint?.status === "completed";
   
   // Start on the first non-completed phase
   const [currentPhaseIdx, setCurrentPhaseIdx] = useState(0);
@@ -199,8 +200,8 @@ export default function SprintClientModal({ sprint, user, workshop, open, onClos
                 key={idx}
                 task={task}
                 index={idx}
-                canComplete={permissions.canCompleteTasks && (phase.status === "in_progress" || phase.status === "not_started")}
-                canAddNotes={permissions.canAddNotes && (phase.status === "in_progress" || phase.status === "not_started")}
+                canComplete={(phase.status === "in_progress" || phase.status === "not_started") && !sprintCompleted}
+                canAddNotes={(phase.status === "in_progress" || phase.status === "not_started") && !sprintCompleted}
                 userRole={permissions.role}
                 onToggle={handleToggleTask}
                 onUpdateEvidence={handleUpdateEvidence}
@@ -215,7 +216,7 @@ export default function SprintClientModal({ sprint, user, workshop, open, onClos
             <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-1">
               <StickyNote className="w-4 h-4" /> Notas da Fase
             </h4>
-            {permissions.canAddNotes && (phase.status === "in_progress" || phase.status === "not_started") && !editingNotes && (
+            {(phase.status === "in_progress" || phase.status === "not_started") && !sprintCompleted && !editingNotes && (
               <Button variant="ghost" size="sm" onClick={() => setEditingNotes(true)}>
                 Editar
               </Button>
