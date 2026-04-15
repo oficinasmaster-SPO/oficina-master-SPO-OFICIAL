@@ -124,10 +124,15 @@ export default function DashboardOperacionalTabRedesigned({ user, workshops = []
         <SprintPhaseDetailModalRedesigned
           sprint={selectedSprint}
           phaseIndex={selectedPhaseIndex}
-          onClose={() => setSelectedSprint(null)}
-          onSaved={() => {
-            refetch();
+          onClose={() => {
             setSelectedSprint(null);
+            setSelectedPhaseIndex(0);
+            refetch();
+          }}
+          onSaved={() => {
+            setSelectedSprint(null);
+            setSelectedPhaseIndex(0);
+            refetch();
           }}
           onNavigateToPhase={(idx) => setSelectedPhaseIndex(idx)}
         />

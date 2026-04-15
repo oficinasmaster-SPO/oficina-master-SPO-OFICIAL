@@ -233,7 +233,16 @@ export default function SprintPhaseDetailModalRedesigned({ sprint, phaseIndex, o
       progress = Math.round((phasesCompleted / updatedPhases.length) * 100);
     }
 
-    const newSprintStatus = phasesCompleted === updatedPhases.length ? "completed" : phasesCompleted > 0 || doneTasks > 0 ? "in_progress" : sprint.status === "overdue" ? "overdue" : "pending";
+    // Mantém "in_progress" se há qualquer atividade; só marca "completed" se TODAS as fases forem concluídas
+    const newSprintStatus = phasesCompleted === updatedPhases.length
+      ? "completed"
+      : (phasesCompleted > 0 || doneTasks > 0)
+        ? "in_progress"
+        : sprint.status === "overdue"
+          ? "overdue"
+          : sprint.status; // mantém o status anterior se nenhuma fase/tarefa foi tocada
+
+    const willAdvance = !isLastPhase && onNavigateToPhase;
 
     try {
       await base44.entities.ConsultoriaSprint.update(sprint.id, {
@@ -242,19 +251,31 @@ export default function SprintPhaseDetailModalRedesigned({ sprint, phaseIndex, o
         status: newSprintStatus,
         last_activity_date: new Date().toISOString(),
       });
-      toast.success('✅ Fase salva com sucesso!');
+
+      // Atualiza o sprint local para refletir as mudanças sem fechar o modal
+      sprint.phases = updatedPhases;
+      sprint.progress_percentage = progress;
+      sprint.status = newSprintStatus;
+
+      toast.success(willAdvance
+        ? `✅ Fase "${config.nome}" salva — avançando para próxima fase`
+        : '✅ Sprint salva com sucesso!'
+      );
     } catch (error) {
       toast.error('❌ Erro ao salvar fase');
       console.error('Erro:', error);
+      setSaving(false);
+      return;
     }
 
     setSaving(false);
-    onSaved?.();
-    
-    if (!isLastPhase && onNavigateToPhase) {
+
+    if (willAdvance) {
+      // Avança para próxima fase SEM fechar o modal
       onNavigateToPhase(phaseIndex + 1);
     } else {
-      onClose();
+      // Última fase ou sem navegação: fecha e notifica o pai para refresh
+      onSaved?.();
     }
   };
 
