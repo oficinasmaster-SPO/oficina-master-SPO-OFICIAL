@@ -10,6 +10,10 @@
       "type": "string",
       "description": "ID do escrit\u00f3rio de consultoria"
     },
+    "cronograma_template_id": {
+      "type": "string",
+      "description": "ID do CronogramaTemplate (trilha) ao qual este sprint pertence"
+    },
     "mission_id": {
       "type": "string",
       "description": "ID da miss\u00e3o (ex: fechamento_imbativel) ou 'sprint0' para o fixo"

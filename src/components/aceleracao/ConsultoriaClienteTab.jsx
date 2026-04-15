@@ -556,7 +556,7 @@ function SprintCard({ numero, titulo, emoji, descricao, cor, isFixed, sprint, on
   );
 }
 
-function CamadaSprints({ workshopId, missoesSelecionadas }) {
+function CamadaSprints({ workshopId, missoesSelecionadas, cronogramaTemplateId }) {
   const missoesSelecionadasData = MISSOES.filter(m => missoesSelecionadas.includes(m.id));
   const [sprints, setSprints] = useState([]);
   const [loadingCreate, setLoadingCreate] = useState(null);
@@ -615,7 +615,7 @@ function CamadaSprints({ workshopId, missoesSelecionadas }) {
       const today = new Date();
       const endDate = new Date(today);
       endDate.setDate(endDate.getDate() + 21); // 3 semanas padrão
-      await base44.entities.ConsultoriaSprint.create({
+      const sprintData = {
         workshop_id: workshopId,
         mission_id: mission.id,
         sprint_number: numero,
@@ -627,7 +627,11 @@ function CamadaSprints({ workshopId, missoesSelecionadas }) {
         progress_percentage: 0,
         phases: defaultPhases,
         last_activity_date: new Date().toISOString(),
-      });
+      };
+      if (cronogramaTemplateId) {
+        sprintData.cronograma_template_id = cronogramaTemplateId;
+      }
+      await base44.entities.ConsultoriaSprint.create(sprintData);
       toast.success(`✓ Sprint ${numero} iniciado! (3 semanas)`);
       await loadSprints();
     } catch (error) {
@@ -810,6 +814,7 @@ function CamadaConsultor({ workshopId }) {
 export default function ConsultoriaClienteTab({ client }) {
   const workshopId = client?.id;
   const [missoesSelecionadas, setMissoesSelecionadas] = useState([]);
+  const [cronogramaTemplateId, setCronogramaTemplateId] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -823,6 +828,7 @@ export default function ConsultoriaClienteTab({ client }) {
         if (cronogramas?.length > 0) {
           const selecionadas = cronogramas[0].missoes_selecionadas || [];
           setMissoesSelecionadas(selecionadas);
+          setCronogramaTemplateId(cronogramas[0].id);
         }
       } catch (error) {
         console.error('Erro ao carregar trilhas selecionadas:', error);
@@ -845,12 +851,13 @@ export default function ConsultoriaClienteTab({ client }) {
           missoes_selecionadas: novasSelecionadas
         });
       } else {
-        await base44.entities.CronogramaTemplate.create({
+        const novo = await base44.entities.CronogramaTemplate.create({
           workshop_id: workshopId,
           fase_oficina: 1,
           nome_fase: 'Trilhas Selecionadas',
           missoes_selecionadas: novasSelecionadas
         });
+        if (novo?.id) setCronogramaTemplateId(novo.id);
       }
       
       const existingSprints = await base44.entities.ConsultoriaSprint.filter(
@@ -910,6 +917,7 @@ export default function ConsultoriaClienteTab({ client }) {
                 const cronogramas = await base44.entities.CronogramaTemplate.filter({ workshop_id: workshopId });
                 if (cronogramas?.length > 0) {
                   setMissoesSelecionadas(cronogramas[0].missoes_selecionadas || []);
+                  setCronogramaTemplateId(cronogramas[0].id);
                 }
               }}
             />
@@ -917,7 +925,7 @@ export default function ConsultoriaClienteTab({ client }) {
           {loading && <div className="text-center py-4 text-gray-500">Carregando trilhas...</div>}
         </TabsContent>
         <TabsContent value="sprints" className="mt-4">
-          <CamadaSprints workshopId={workshopId} missoesSelecionadas={missoesSelecionadas} />
+          <CamadaSprints workshopId={workshopId} missoesSelecionadas={missoesSelecionadas} cronogramaTemplateId={cronogramaTemplateId} />
         </TabsContent>
         <TabsContent value="consultor" className="mt-4">
           <CamadaConsultor workshopId={workshopId} />
