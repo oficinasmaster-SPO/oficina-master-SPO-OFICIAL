@@ -220,18 +220,24 @@ export default function SprintPhaseDetailModalRedesigned({ sprint, phaseIndex, o
       tasks,
     };
 
-    const totalTasks = updatedPhases.reduce((acc, p) => acc + (p.tasks?.length || 0), 0);
-    const doneTasks = updatedPhases.reduce((acc, p) => acc + (p.tasks?.filter(t => t.status === "done").length || 0), 0);
+    // Cálculo de progresso: cada fase vale uma fração igual (ex: 5 fases = 20% cada)
+    // Fase concluída = 100% do peso. Fase em andamento = progresso parcial pelas tarefas.
+    const totalPhaseCount = updatedPhases.length;
+    const phaseWeight = 100 / totalPhaseCount; // ex: 20% por fase se 5 fases
+    
+    let progress = 0;
+    updatedPhases.forEach(p => {
+      if (p.status === "completed") {
+        progress += phaseWeight; // fase completa = 20%
+      } else if (p.tasks?.length > 0) {
+        const done = p.tasks.filter(t => t.status === "done").length;
+        const ratio = done / p.tasks.length;
+        progress += phaseWeight * ratio; // progresso parcial pelas tarefas
+      }
+    });
+    progress = Math.round(progress);
+    
     const phasesCompleted = updatedPhases.filter(p => p.status === "completed").length;
-
-    let progress;
-    if (totalTasks > 0) {
-      const phaseProgress = Math.round((phasesCompleted / updatedPhases.length) * 50);
-      const taskProgress = Math.round((doneTasks / totalTasks) * 50);
-      progress = phaseProgress + taskProgress;
-    } else {
-      progress = Math.round((phasesCompleted / updatedPhases.length) * 100);
-    }
 
     // Mantém "in_progress" se há qualquer atividade; só marca "completed" se TODAS as fases forem concluídas
     const newSprintStatus = phasesCompleted === updatedPhases.length
@@ -242,8 +248,6 @@ export default function SprintPhaseDetailModalRedesigned({ sprint, phaseIndex, o
           ? "overdue"
           : sprint.status; // mantém o status anterior se nenhuma fase/tarefa foi tocada
 
-    const willAdvance = !isLastPhase && onNavigateToPhase;
-
     try {
       await base44.entities.ConsultoriaSprint.update(sprint.id, {
         phases: updatedPhases,
@@ -252,15 +256,7 @@ export default function SprintPhaseDetailModalRedesigned({ sprint, phaseIndex, o
         last_activity_date: new Date().toISOString(),
       });
 
-      // Atualiza o sprint local para refletir as mudanças sem fechar o modal
-      sprint.phases = updatedPhases;
-      sprint.progress_percentage = progress;
-      sprint.status = newSprintStatus;
-
-      toast.success(willAdvance
-        ? `✅ Fase "${config.nome}" salva — avançando para próxima fase`
-        : '✅ Sprint salva com sucesso!'
-      );
+      toast.success(`✅ Fase "${config.nome}" salva — progresso: ${progress}%`);
     } catch (error) {
       toast.error('❌ Erro ao salvar fase');
       console.error('Erro:', error);
@@ -269,14 +265,8 @@ export default function SprintPhaseDetailModalRedesigned({ sprint, phaseIndex, o
     }
 
     setSaving(false);
-
-    if (willAdvance) {
-      // Avança para próxima fase SEM fechar o modal
-      onNavigateToPhase(phaseIndex + 1);
-    } else {
-      // Última fase ou sem navegação: fecha e notifica o pai para refresh
-      onSaved?.();
-    }
+    // Sempre fecha o modal e atualiza a lista
+    onSaved?.();
   };
 
   const completedTasks = tasks.filter(t => t.status === "done").length;
