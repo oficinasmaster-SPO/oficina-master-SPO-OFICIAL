@@ -59,8 +59,8 @@ export function useSprintPermissions(sprint, user, workshop) {
       // Notes/evidence
       canAddNotes: (isConsultor || isOficina) && !sprintCompleted,
 
-      // Phase flow - oficina submete, consultor revisa
-      canSubmitForReview: isOficina && !sprintCompleted,
+      // Phase flow - oficina submete, consultor também pode submeter em nome da oficina
+      canSubmitForReview: (isOficina || isConsultor) && !sprintCompleted,
       canReviewPhase: isConsultor && !sprintCompleted,
       canAdvancePhase: isConsultor && !sprintCompleted,
       canReturnPhase: isConsultor && !sprintCompleted,
