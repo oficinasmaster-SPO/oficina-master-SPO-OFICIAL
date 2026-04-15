@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ChevronLeft, ChevronRight, StickyNote } from "lucide-react";
+import { ChevronLeft, ChevronRight, StickyNote, AlertCircle } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -162,6 +162,29 @@ export default function SprintClientModal({ sprint, user, workshop, open, onClos
             Próxima <ChevronRight className="w-4 h-4 ml-1" />
           </Button>
         </div>
+
+        {/* Consultant feedback banner - shown prominently when phase was returned */}
+        {phase.review_feedback && phase.status === "in_progress" && (
+          <div className="bg-orange-50 border-2 border-orange-300 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <div className="bg-orange-100 rounded-full p-1.5 mt-0.5 shrink-0">
+                <AlertCircle className="w-4 h-4 text-orange-600" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-orange-900">Fase devolvida pelo Consultor</p>
+                <p className="text-sm text-orange-800 mt-1">{phase.review_feedback}</p>
+                {phase.reviewed_at && (
+                  <p className="text-xs text-orange-600 mt-2">
+                    Devolvida em {new Date(phase.reviewed_at).toLocaleDateString("pt-BR")}
+                  </p>
+                )}
+                <p className="text-xs text-orange-700 mt-2 font-medium">
+                  Corrija os pontos indicados e reenvie para revisão.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Tasks */}
         <div className="space-y-2">
