@@ -53,7 +53,7 @@ export default function SprintPhaseDetailModalRedesigned({
     }
   }, [phaseIndex, phases]);
 
-  const handleSave = async () => {
+  const handleSave = async (andAdvance = false) => {
     setSaving(true);
     const updatedPhases = [...phases];
     updatedPhases[phaseIndex] = {
@@ -75,8 +75,17 @@ export default function SprintPhaseDetailModalRedesigned({
         status: allCompleted ? "completed" : "in_progress",
         last_activity_date: new Date().toISOString(),
       });
-      toast.success("Fase atualizada!");
-      if (onSaved) onSaved();
+      toast.success(`Fase atualizada! (${progress}%)`);
+
+      if (andAdvance && canGoForward) {
+        // Atualiza o sprint local para refletir as mudanças e avança
+        sprint.phases = updatedPhases;
+        sprint.progress_percentage = progress;
+        onNavigateToPhase(phaseIndex + 1);
+      } else {
+        // Fecha o modal e atualiza a lista
+        if (onSaved) onSaved();
+      }
     } catch (err) {
       toast.error("Erro ao salvar fase");
     } finally {
@@ -211,12 +220,20 @@ export default function SprintPhaseDetailModalRedesigned({
         </div>
 
         {/* Actions */}
-        <div className="flex justify-end gap-2 pt-3 border-t">
+        <div className="flex justify-between gap-2 pt-3 border-t">
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button onClick={handleSave} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
-            {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Save className="w-4 h-4 mr-1" />}
-            Salvar
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={() => handleSave(false)} disabled={saving} variant="outline">
+              {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Save className="w-4 h-4 mr-1" />}
+              Salvar e Fechar
+            </Button>
+            {canGoForward && (
+              <Button onClick={() => handleSave(true)} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
+                {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <ChevronRight className="w-4 h-4 mr-1" />}
+                Salvar e Avançar
+              </Button>
+            )}
+          </div>
         </div>
       </DialogContent>
     </Dialog>
