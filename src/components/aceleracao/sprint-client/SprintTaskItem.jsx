@@ -98,7 +98,7 @@ export default function SprintTaskItem({ task, index, canComplete, canAddNotes, 
         </div>
 
         {/* Add evidence button */}
-        {canAddNotes && !showEvidenceForm && !isDone && (
+        {canAddNotes && !showEvidenceForm && (
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setShowEvidenceForm(true)}>
             <MessageSquare className="w-3.5 h-3.5 text-gray-400" />
           </Button>

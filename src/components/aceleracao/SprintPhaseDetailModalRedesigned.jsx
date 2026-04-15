@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import {
   ChevronLeft, ChevronRight, CheckCircle2, Circle, Clock, Send,
   ListChecks, PlaySquare, BarChart2, TrendingUp, MessageSquare,
-  Plus, Trash2, Save, Loader2
+  Plus, Save, Loader2
 } from "lucide-react";
 import SprintPhaseProgress from "./sprint-client/SprintPhaseProgress";
 import SprintTaskItem from "./sprint-client/SprintTaskItem";
@@ -111,6 +111,7 @@ export default function SprintPhaseDetailModalRedesigned({
       status: "completed",
       completion_date: new Date().toISOString(),
       reviewed_at: new Date().toISOString(),
+      reviewed_by: "consultor",
       review_feedback: feedback || "",
     };
     const ok = await persistPhases(updatedPhases);
@@ -133,6 +134,7 @@ export default function SprintPhaseDetailModalRedesigned({
       ...updatedPhases[phaseIndex],
       status: "in_progress",
       reviewed_at: new Date().toISOString(),
+      reviewed_by: "consultor",
       review_feedback: feedback,
     };
     const ok = await persistPhases(updatedPhases);

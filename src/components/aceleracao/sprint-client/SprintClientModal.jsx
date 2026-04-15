@@ -23,11 +23,18 @@ export default function SprintClientModal({ sprint, user, workshop, open, onClos
   const phases = sprint?.phases || [];
   
   // Start on the first non-completed phase
-  const initialIdx = Math.max(0, phases.findIndex(p => p.status !== "completed"));
-  const [currentPhaseIdx, setCurrentPhaseIdx] = useState(initialIdx);
+  const [currentPhaseIdx, setCurrentPhaseIdx] = useState(0);
   const phase = phases[currentPhaseIdx] || {};
   const tasks = phase.tasks || [];
   const allTasksDone = tasks.length > 0 && tasks.every(t => t.status === "done");
+
+  // Reset to first non-completed phase when sprint changes
+  React.useEffect(() => {
+    if (sprint?.id) {
+      const idx = Math.max(0, phases.findIndex(p => p.status !== "completed"));
+      setCurrentPhaseIdx(idx);
+    }
+  }, [sprint?.id]);
 
   const saveMutation = useMutation({
     mutationFn: async (updatedPhases) => {

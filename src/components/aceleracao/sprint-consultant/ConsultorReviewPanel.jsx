@@ -85,9 +85,9 @@ export default function ConsultorReviewPanel({ phase, onApprove, onReturn, isSav
               size="sm"
               disabled={isSaving || (action === "return" && !feedback.trim())}
               className={action === "approve" ? "bg-green-600 hover:bg-green-700" : "bg-orange-600 hover:bg-orange-700"}
-              onClick={() => {
-                if (action === "approve") onApprove(feedback);
-                else onReturn(feedback);
+              onClick={async () => {
+                if (action === "approve") await onApprove(feedback);
+                else await onReturn(feedback);
                 setShowFeedbackForm(false);
                 setFeedback("");
                 setAction(null);
