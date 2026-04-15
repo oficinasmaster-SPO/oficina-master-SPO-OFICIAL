@@ -1,21 +1,34 @@
 import { useState } from "react";
-import { RefreshCw, Zap, AlertTriangle, Check, Clock, BarChart2 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { RefreshCw, Zap, AlertTriangle, Check, Clock, Activity } from "lucide-react";
 import useDashboardSprints from "./hooks/useDashboardSprints";
 import SprintsAtrasadosBlock from "./dashboard/SprintsAtrasadosBlock";
 import SprintsEmAndamentoBlock from "./dashboard/SprintsEmAndamentoBlock";
 import ClientesComTrilhaBlock from "./dashboard/ClientesComTrilhaBlock";
 import SprintPhaseDetailModalRedesigned from "./SprintPhaseDetailModalRedesigned";
 
-function StatCard({ icon: Icon, label, value, color, bgIcon }) {
+function StatPill({ icon: Icon, label, value, color, bgColor }) {
   return (
-    <div className="flex items-center gap-3 bg-white rounded-xl border p-4">
-      <div className={`w-10 h-10 rounded-lg ${bgIcon} flex items-center justify-center flex-shrink-0`}>
-        <Icon className={`w-5 h-5 ${color}`} />
+    <div className={`flex items-center gap-2.5 ${bgColor} rounded-xl px-4 py-3 border border-transparent`}>
+      <Icon className={`w-4 h-4 ${color} flex-shrink-0`} />
+      <span className="text-xs text-gray-600 font-medium">{label}</span>
+      <span className={`text-sm font-bold ${color} ml-auto`}>{value}</span>
+    </div>
+  );
+}
+
+function LoadingSkeleton() {
+  return (
+    <div className="space-y-6 animate-pulse">
+      <div className="h-8 bg-gray-100 rounded-lg w-48" />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {[1, 2, 3, 4].map(i => (
+          <div key={i} className="h-14 bg-gray-100 rounded-xl" />
+        ))}
       </div>
-      <div>
-        <p className="text-xl font-bold text-gray-900">{value}</p>
-        <p className="text-xs text-gray-500">{label}</p>
+      <div className="h-48 bg-gray-50 rounded-2xl border border-gray-100" />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 h-64 bg-gray-50 rounded-2xl border border-gray-100" />
+        <div className="h-64 bg-gray-50 rounded-2xl border border-gray-100" />
       </div>
     </div>
   );
@@ -40,58 +53,73 @@ export default function DashboardOperacionalTabRedesigned({ user, workshops = []
     setSelectedPhaseIndex(0);
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <RefreshCw className="w-6 h-6 animate-spin text-blue-500" />
-      </div>
-    );
-  }
+  if (isLoading) return <LoadingSkeleton />;
+
+  const hasAnyData = stats.total > 0;
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-gray-900">Painel de Execução</h2>
-          <p className="text-sm text-gray-500">Gerencie sprints em andamento e identifique atrasos</p>
+          <div className="flex items-center gap-2.5">
+            <h2 className="text-lg font-bold text-gray-900">Painel de Execução</h2>
+            {stats.total > 0 && (
+              <span className="bg-gray-100 text-gray-600 text-xs font-semibold px-2 py-0.5 rounded-full">
+                {stats.total} sprint{stats.total > 1 ? 's' : ''}
+              </span>
+            )}
+          </div>
+          <p className="text-sm text-gray-400 mt-0.5">O que precisa da sua atenção agora</p>
         </div>
         <button
           onClick={() => refetch()}
-          className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-800 border rounded-lg px-3 py-2 hover:bg-gray-50 transition-colors"
+          className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-700 border border-gray-200 rounded-lg px-3 py-2 hover:bg-gray-50 hover:border-gray-300 transition-all"
         >
           <RefreshCw className="w-3.5 h-3.5" /> Atualizar
         </button>
       </div>
 
-      {/* Stats resumidos */}
+      {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard icon={Zap} label="Total" value={stats.total} color="text-blue-600" bgIcon="bg-blue-50" />
-        <StatCard icon={Clock} label="Em Andamento" value={stats.em_andamento} color="text-blue-500" bgIcon="bg-blue-50" />
-        <StatCard icon={AlertTriangle} label="Atrasados" value={stats.atrasados} color="text-red-500" bgIcon="bg-red-50" />
-        <StatCard icon={Check} label="Concluídos" value={stats.concluidos} color="text-green-500" bgIcon="bg-green-50" />
+        <StatPill icon={Activity} label="Total" value={stats.total} color="text-gray-700" bgColor="bg-gray-50" />
+        <StatPill icon={Clock} label="Em andamento" value={stats.em_andamento} color="text-blue-600" bgColor="bg-blue-50/60" />
+        <StatPill icon={AlertTriangle} label="Atrasados" value={stats.atrasados} color="text-red-600" bgColor={stats.atrasados > 0 ? "bg-red-50/80" : "bg-gray-50"} />
+        <StatPill icon={Check} label="Concluídos" value={stats.concluidos} color="text-green-600" bgColor="bg-green-50/60" />
       </div>
 
-      {/* Bloco 1: Sprints em Atraso */}
-      <SprintsAtrasadosBlock
-        sprints={sprintsAtrasados}
-        workshopMap={workshopMap}
-        onSprintClick={handleSprintClick}
-      />
-
-      {/* Bloco 2 + 3: Andamento e Clientes lado a lado */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <SprintsEmAndamentoBlock
-            sprints={sprintsEmAndamento}
+      {!hasAnyData ? (
+        <div className="text-center py-16 border-2 border-dashed border-gray-200 rounded-2xl">
+          <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center mx-auto mb-4">
+            <Zap className="w-8 h-8 text-gray-300" />
+          </div>
+          <p className="text-base font-semibold text-gray-400">Nenhum sprint encontrado</p>
+          <p className="text-sm text-gray-400 mt-1">Crie trilhas e inicie sprints nos clientes</p>
+        </div>
+      ) : (
+        <>
+          {/* BLOCO 1 — Atrasados (sempre primeiro) */}
+          <SprintsAtrasadosBlock
+            sprints={sprintsAtrasados}
             workshopMap={workshopMap}
             onSprintClick={handleSprintClick}
           />
-        </div>
-        <ClientesComTrilhaBlock clientes={clientesComTrilha} />
-      </div>
 
-      {/* Modal de fase */}
+          {/* BLOCO 2 + 3 — Execução + Clientes */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <SprintsEmAndamentoBlock
+                sprints={sprintsEmAndamento}
+                workshopMap={workshopMap}
+                onSprintClick={handleSprintClick}
+              />
+            </div>
+            <ClientesComTrilhaBlock clientes={clientesComTrilha} />
+          </div>
+        </>
+      )}
+
+      {/* Modal */}
       {selectedSprint && (
         <SprintPhaseDetailModalRedesigned
           sprint={selectedSprint}

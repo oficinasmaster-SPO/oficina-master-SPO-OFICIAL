@@ -42,7 +42,9 @@ export default function useDashboardSprints(workshops = []) {
         const avg = Math.round(ws.reduce((a, s) => a + (s.progress_percentage || 0), 0) / ws.length);
         const hasOverdue = ws.some(s => s.status === "overdue");
         const hasInProgress = ws.some(s => s.status === "in_progress");
-        return { workshop: w, sprints: ws, avgProgress: avg, hasOverdue, hasInProgress };
+        const hasPending = ws.some(s => s.status === "pending");
+        const pendingCount = ws.filter(s => s.status === "pending").length;
+        return { workshop: w, sprints: ws, avgProgress: avg, hasOverdue, hasInProgress, hasPending, pendingCount };
       })
       .filter(Boolean)
       .sort((a, b) => b.sprints.length - a.sprints.length);
