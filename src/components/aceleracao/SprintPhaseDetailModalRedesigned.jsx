@@ -14,6 +14,8 @@ import {
 import SprintPhaseProgress from "./sprint-client/SprintPhaseProgress";
 import SprintTaskItem from "./sprint-client/SprintTaskItem";
 import ConsultorReviewPanel from "./sprint-consultant/ConsultorReviewPanel";
+import SprintActivityTimeline from "./sprint-shared/SprintActivityTimeline";
+import SprintCompletionSummary from "./sprint-shared/SprintCompletionSummary";
 
 const PHASES_CONFIG = [
   { name: "Planning", label: "Sprint Planning", icon: ListChecks, color: "text-blue-600", bg: "bg-blue-50" },
@@ -114,6 +116,12 @@ export default function SprintPhaseDetailModalRedesigned({
     const ok = await persistPhases(updatedPhases);
     if (ok) {
       toast.success("Fase aprovada!");
+      base44.functions.invoke("notifySprintPhaseChange", {
+        sprint_id: sprint.id,
+        phase_name: currentPhase.name,
+        action: "approved",
+        feedback: feedback || "",
+      }).catch(() => {});
       if (canGoForward) onNavigateToPhase(phaseIndex + 1);
       else if (onSaved) onSaved();
     }
@@ -128,7 +136,15 @@ export default function SprintPhaseDetailModalRedesigned({
       review_feedback: feedback,
     };
     const ok = await persistPhases(updatedPhases);
-    if (ok) toast.success("Fase devolvida para a oficina com feedback.");
+    if (ok) {
+      toast.success("Fase devolvida para a oficina com feedback.");
+      base44.functions.invoke("notifySprintPhaseChange", {
+        sprint_id: sprint.id,
+        phase_name: currentPhase.name,
+        action: "returned",
+        feedback,
+      }).catch(() => {});
+    }
   };
 
   const handleToggleTask = (taskIdx) => {
@@ -270,6 +286,15 @@ export default function SprintPhaseDetailModalRedesigned({
               <Plus className="w-4 h-4" />
             </Button>
           </div>
+        </div>
+
+        {/* Completion summary */}
+        <SprintCompletionSummary sprint={sprint} />
+
+        {/* Activity timeline */}
+        <div className="border-t pt-3">
+          <h4 className="text-xs font-semibold text-gray-700 mb-2">Histórico</h4>
+          <SprintActivityTimeline sprint={sprint} maxItems={6} />
         </div>
 
         {/* Actions */}

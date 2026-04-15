@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { RefreshCw, Zap, AlertTriangle, Check, Clock, Activity, Send } from "lucide-react";
+import { RefreshCw, Zap, AlertTriangle, Check, Clock, Activity, Send, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import useDashboardSprints from "./hooks/useDashboardSprints";
 import SprintsAtrasadosBlock from "./dashboard/SprintsAtrasadosBlock";
 import SprintsEmAndamentoBlock from "./dashboard/SprintsEmAndamentoBlock";
 import SprintsPendingReviewBlock from "./dashboard/SprintsPendingReviewBlock";
 import ClientesComTrilhaBlock from "./dashboard/ClientesComTrilhaBlock";
 import SprintPhaseDetailModalRedesigned from "./SprintPhaseDetailModalRedesigned";
+import SprintCreateForm from "./sprint-consultant/SprintCreateForm";
 
 function StatPill({ icon: Icon, label, value, color, bgColor }) {
   return (
@@ -38,6 +40,7 @@ function LoadingSkeleton() {
 export default function DashboardOperacionalTabRedesigned({ user, workshops = [] }) {
   const [selectedSprint, setSelectedSprint] = useState(null);
   const [selectedPhaseIndex, setSelectedPhaseIndex] = useState(0);
+  const [showCreateForm, setShowCreateForm] = useState(false);
 
   const {
     sprintsAtrasados,
@@ -76,12 +79,21 @@ export default function DashboardOperacionalTabRedesigned({ user, workshops = []
           </div>
           <p className="text-sm text-gray-400 mt-0.5">O que precisa da sua atenção agora</p>
         </div>
-        <button
-          onClick={() => refetch()}
-          className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-700 border border-gray-200 rounded-lg px-3 py-2 hover:bg-gray-50 hover:border-gray-300 transition-all"
-        >
-          <RefreshCw className="w-3.5 h-3.5" /> Atualizar
-        </button>
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            onClick={() => setShowCreateForm(true)}
+            className="bg-orange-600 hover:bg-orange-700 gap-1.5 text-xs"
+          >
+            <Plus className="w-3.5 h-3.5" /> Novo Sprint
+          </Button>
+          <button
+            onClick={() => refetch()}
+            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-700 border border-gray-200 rounded-lg px-3 py-2 hover:bg-gray-50 hover:border-gray-300 transition-all"
+          >
+            <RefreshCw className="w-3.5 h-3.5" /> Atualizar
+          </button>
+        </div>
       </div>
 
       {/* Stats */}
@@ -131,7 +143,16 @@ export default function DashboardOperacionalTabRedesigned({ user, workshops = []
         </>
       )}
 
-      {/* Modal */}
+      {/* Create Sprint Modal */}
+      <SprintCreateForm
+        open={showCreateForm}
+        onClose={() => setShowCreateForm(false)}
+        workshops={workshops}
+        user={user}
+        onCreated={() => refetch()}
+      />
+
+      {/* Sprint Detail Modal */}
       {selectedSprint && (
         <SprintPhaseDetailModalRedesigned
           sprint={selectedSprint}

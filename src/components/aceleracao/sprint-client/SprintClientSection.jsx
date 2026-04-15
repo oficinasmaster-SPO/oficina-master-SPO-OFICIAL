@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Rocket, Loader2 } from "lucide-react";
 import SprintClientCard from "./SprintClientCard";
 import SprintClientModal from "./SprintClientModal";
+import SprintCompletionSummary from "../sprint-shared/SprintCompletionSummary";
 
 export default function SprintClientSection({ workshopId, user, workshop }) {
   const [selectedSprint, setSelectedSprint] = useState(null);
@@ -86,11 +87,13 @@ export default function SprintClientSection({ workshopId, user, workshop }) {
               <h4 className="text-sm font-semibold text-gray-600 mb-2">Concluídos</h4>
               <div className="grid gap-3">
                 {completedSprints.map(sprint => (
-                  <SprintClientCard
-                    key={sprint.id}
-                    sprint={sprint}
-                    onOpen={() => setSelectedSprint(sprint)}
-                  />
+                  <div key={sprint.id} className="space-y-2">
+                    <SprintCompletionSummary sprint={sprint} />
+                    <SprintClientCard
+                      sprint={sprint}
+                      onOpen={() => setSelectedSprint(sprint)}
+                    />
+                  </div>
                 ))}
               </div>
             </div>

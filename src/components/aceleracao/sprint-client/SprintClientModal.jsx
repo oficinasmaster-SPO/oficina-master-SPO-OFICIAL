@@ -11,6 +11,8 @@ import { useSprintPermissions } from "@/components/hooks/useSprintPermissions";
 import SprintPhaseProgress from "./SprintPhaseProgress";
 import SprintTaskItem from "./SprintTaskItem";
 import SprintSubmitReview from "./SprintSubmitReview";
+import SprintActivityTimeline from "../sprint-shared/SprintActivityTimeline";
+import SprintCompletionSummary from "../sprint-shared/SprintCompletionSummary";
 
 const phaseNames = ["Planning", "Execution", "Monitoring", "Review", "Retrospective"];
 const phaseLabels = { Planning: "Planejamento", Execution: "Execução", Monitoring: "Monitoramento", Review: "Revisão", Retrospective: "Retrospectiva" };
@@ -78,7 +80,7 @@ export default function SprintClientModal({ sprint, user, workshop, open, onClos
     saveMutation.mutate(updated);
   };
 
-  const handleSubmitForReview = () => {
+  const handleSubmitForReview = async () => {
     const updated = [...phases];
     updated[currentPhaseIdx] = {
       ...updated[currentPhaseIdx],
@@ -88,6 +90,13 @@ export default function SprintClientModal({ sprint, user, workshop, open, onClos
     };
     saveMutation.mutate(updated);
     toast.success("Fase enviada para revisão do consultor!");
+
+    // Fire-and-forget notification
+    base44.functions.invoke("notifySprintPhaseChange", {
+      sprint_id: sprint.id,
+      phase_name: phase.name,
+      action: "submitted_for_review",
+    }).catch(() => {});
   };
 
   const [editingNotes, setEditingNotes] = useState(false);
@@ -202,6 +211,15 @@ export default function SprintClientModal({ sprint, user, workshop, open, onClos
           onSubmit={handleSubmitForReview}
           isSubmitting={saveMutation.isPending}
         />
+
+        {/* Completion summary */}
+        <SprintCompletionSummary sprint={sprint} />
+
+        {/* Activity timeline */}
+        <div className="border-t pt-3">
+          <h4 className="text-sm font-semibold text-gray-700 mb-3">Histórico de Atividades</h4>
+          <SprintActivityTimeline sprint={sprint} maxItems={8} />
+        </div>
       </DialogContent>
     </Dialog>
   );
