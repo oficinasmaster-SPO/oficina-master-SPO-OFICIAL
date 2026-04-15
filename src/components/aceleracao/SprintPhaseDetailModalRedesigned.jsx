@@ -20,6 +20,11 @@ const PHASES_CONFIG = [
   { name: "Retrospective", label: "Retrospectiva", icon: MessageSquare, color: "text-red-600", bg: "bg-red-50" },
 ];
 
+const STATUS_OPTIONS = [
+  { value: "not_started", label: "Não iniciado", icon: <Circle className="w-4 h-4 text-gray-400" /> },
+  { value: "in_progress", label: "Em andamento", icon: <Clock className="w-4 h-4 text-blue-500" /> },
+  { value: "completed", label: "Concluído", icon: <CheckCircle2 className="w-4 h-4 text-green-500" /> },
+];
 
 export default function SprintPhaseDetailModalRedesigned({
   sprint,
@@ -33,6 +38,7 @@ export default function SprintPhaseDetailModalRedesigned({
   const config = PHASES_CONFIG.find(p => p.name === currentPhase?.name) || PHASES_CONFIG[0];
   const Icon = config.icon;
 
+  const [status, setStatus] = useState(currentPhase?.status || "not_started");
   const [notes, setNotes] = useState(currentPhase?.notes || "");
   const [tasks, setTasks] = useState(currentPhase?.tasks || []);
   const [newTask, setNewTask] = useState("");
@@ -41,6 +47,7 @@ export default function SprintPhaseDetailModalRedesigned({
   useEffect(() => {
     const phase = phases[phaseIndex];
     if (phase) {
+      setStatus(phase.status || "not_started");
       setNotes(phase.notes || "");
       setTasks(phase.tasks || []);
     }
@@ -48,60 +55,30 @@ export default function SprintPhaseDetailModalRedesigned({
 
   const handleSave = async () => {
     setSaving(true);
+    const updatedPhases = [...phases];
+    updatedPhases[phaseIndex] = {
+      ...updatedPhases[phaseIndex],
+      status,
+      notes,
+      tasks,
+      ...(status === "completed" ? { completion_date: new Date().toISOString() } : {}),
+    };
+
+    const completedCount = updatedPhases.filter(p => p.status === "completed").length;
+    const progress = Math.round((completedCount / updatedPhases.length) * 100);
+    const allCompleted = completedCount === updatedPhases.length;
 
     try {
-      const updatedPhases = [...phases];
-      const total = updatedPhases.length;
-      const isLastPhase = phaseIndex === total - 1;
-
-      // 1. Marcar fase atual como concluída
-      updatedPhases[phaseIndex] = {
-        ...updatedPhases[phaseIndex],
-        status: "completed",
-        notes,
-        tasks,
-        completion_date: new Date().toISOString(),
-      };
-
-      // 2. Se não for última, iniciar próxima fase
-      if (!isLastPhase) {
-        updatedPhases[phaseIndex + 1] = {
-          ...updatedPhases[phaseIndex + 1],
-          status: "in_progress",
-        };
-      }
-
-      // 3. Calcular progresso
-      const completedCount = updatedPhases.filter(p => p.status === "completed").length;
-      const progress = Math.round((completedCount / total) * 100);
-
-      // 4. Regra de consistência: apenas 1 fase em andamento
-      const activePhases = updatedPhases.filter(p => p.status === "in_progress");
-      if (activePhases.length > 1) {
-        throw new Error("Mais de uma fase em andamento detectada");
-      }
-
-      // 5. Salvar sprint
       await base44.entities.ConsultoriaSprint.update(sprint.id, {
         phases: updatedPhases,
         progress_percentage: progress,
-        status: isLastPhase ? "completed" : "in_progress",
+        status: allCompleted ? "completed" : "in_progress",
         last_activity_date: new Date().toISOString(),
       });
-
-      toast.success("Fase salva com sucesso!");
-
+      toast.success("Fase atualizada!");
       if (onSaved) onSaved();
-
-      // 6. Controle de fluxo: avança ou fecha
-      if (!isLastPhase) {
-        onNavigateToPhase(phaseIndex + 1);
-      } else {
-        onClose();
-      }
     } catch (err) {
-      console.error(err);
-      toast.error(err.message || "Erro ao salvar fase");
+      toast.error("Erro ao salvar fase");
     } finally {
       setSaving(false);
     }
@@ -163,21 +140,24 @@ export default function SprintPhaseDetailModalRedesigned({
           </Button>
         </div>
 
-        {/* Status badge (read-only, controlado pelo fluxo) */}
-        <div className="flex items-center gap-2 py-1">
-          {currentPhase?.status === "completed" ? (
-            <span className="flex items-center gap-1.5 text-xs font-medium text-green-700 bg-green-50 px-3 py-1.5 rounded-lg border border-green-200">
-              <CheckCircle2 className="w-3.5 h-3.5" /> Concluída
-            </span>
-          ) : currentPhase?.status === "in_progress" ? (
-            <span className="flex items-center gap-1.5 text-xs font-medium text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-200">
-              <Clock className="w-3.5 h-3.5" /> Em andamento
-            </span>
-          ) : (
-            <span className="flex items-center gap-1.5 text-xs font-medium text-gray-500 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-200">
-              <Circle className="w-3.5 h-3.5" /> Pendente
-            </span>
-          )}
+        {/* Status */}
+        <div className="space-y-1">
+          <label className="text-xs font-semibold text-gray-700">Status</label>
+          <div className="flex gap-2">
+            {STATUS_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => setStatus(opt.value)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${
+                  status === opt.value
+                    ? "border-blue-400 bg-blue-50 text-blue-700"
+                    : "border-gray-200 hover:border-gray-300 text-gray-600"
+                }`}
+              >
+                {opt.icon} {opt.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Notes */}
@@ -235,7 +215,7 @@ export default function SprintPhaseDetailModalRedesigned({
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
           <Button onClick={handleSave} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
             {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Save className="w-4 h-4 mr-1" />}
-            {canGoForward ? "Salvar e Avançar" : "Salvar e Fechar"}
+            Salvar
           </Button>
         </div>
       </DialogContent>
