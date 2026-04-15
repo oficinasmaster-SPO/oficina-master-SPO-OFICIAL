@@ -50,8 +50,12 @@ export default function SprintClientModal({ sprint, user, workshop, open, onClos
       });
     },
     onSuccess: () => {
+      // Invalidate all sprint-related queries across all tabs
       queryClient.invalidateQueries({ queryKey: ["sprints-client"] });
       queryClient.invalidateQueries({ queryKey: ["active-sprint-widget"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-sprints"] });
+      queryClient.invalidateQueries({ queryKey: ["sprints"] });
+      queryClient.invalidateQueries({ queryKey: ["client-sprints"] });
     },
   });
 

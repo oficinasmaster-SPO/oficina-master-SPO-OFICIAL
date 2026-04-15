@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   ChevronLeft, ChevronRight, CheckCircle2, Circle, Clock, Send,
   ListChecks, PlaySquare, BarChart2, TrendingUp, MessageSquare,
@@ -40,6 +41,7 @@ export default function SprintPhaseDetailModalRedesigned({
   onNavigateToPhase,
   onNavigateToNextSprint,
 }) {
+  const queryClient = useQueryClient();
   const phases = sprint?.phases || [];
   const currentPhase = phases[phaseIndex];
   const config = PHASES_CONFIG.find(p => p.name === currentPhase?.name) || PHASES_CONFIG[0];
@@ -74,6 +76,12 @@ export default function SprintPhaseDetailModalRedesigned({
         status: allCompleted ? "completed" : "in_progress",
         last_activity_date: new Date().toISOString(),
       });
+      // Invalidate all sprint queries across tabs (Dashboard, Cronograma, Client panels)
+      queryClient.invalidateQueries({ queryKey: ['dashboard-sprints'] });
+      queryClient.invalidateQueries({ queryKey: ['sprints'] });
+      queryClient.invalidateQueries({ queryKey: ['sprints-client'] });
+      queryClient.invalidateQueries({ queryKey: ['client-sprints'] });
+      queryClient.invalidateQueries({ queryKey: ['ConsultoriaSprint'] });
       return true;
     } catch {
       toast.error("Erro ao salvar fase");
