@@ -21,6 +21,7 @@ export function TenantProvider({ children }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isSwitching, setIsSwitching] = useState(false);
   const loadAttemptRef = useRef(0);
+  const [companySwitch, setCompanySwitch] = useState(0);
 
   // Wait for auth to be ready before loading tenant data
   useEffect(() => {
@@ -109,11 +110,12 @@ export function TenantProvider({ children }) {
              if (compOrWorkshop && !cancelled) {
                  setCompany(compOrWorkshop);
              } else if (!compOrWorkshop && !cancelled) {
-                 // Workshop/Company não encontrado - limpa o ID inválido
+                 // Workshop/Company não encontrado - limpa apenas o localStorage e o state local
                  console.warn(`Workshop/Company com ID ${compIdToLoad} não encontrado. Limpando referência.`);
                  localStorage.removeItem('selected_company_id');
                  setSelectedCompanyId(null);
                  setCompany(null);
+                 // NÃO incrementa companySwitch aqui para evitar loop
              }
           } else {
              if (!cancelled) setCompany(null);
@@ -131,7 +133,7 @@ export function TenantProvider({ children }) {
     loadTenantData();
     
     return () => { cancelled = true; };
-  }, [isLoadingAuth, isAuthenticated, authUser?.id, selectedFirmId, selectedCompanyId]);
+  }, [isLoadingAuth, isAuthenticated, authUser?.id, selectedFirmId, companySwitch]);
 
   const changeConsultingFirm = (firmId) => {
     if (firmId) {
@@ -163,6 +165,7 @@ export function TenantProvider({ children }) {
     }
     
     setSelectedCompanyId(compId);
+    setCompanySwitch(prev => prev + 1);
   };
 
   return (
