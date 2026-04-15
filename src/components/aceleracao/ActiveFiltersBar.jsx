@@ -2,7 +2,6 @@ import React from "react";
 import { X, Filter, Calendar, User } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 
 const PRESET_LABELS = {
   "7d": "Últimos 7 dias",
@@ -77,7 +76,7 @@ export default function ActiveFiltersBar({ filtros, consultores, onClearFilter, 
 
 function formatShortDate(dateStr) {
   try {
-    return format(new Date(dateStr + "T12:00:00"), "dd/MM", { locale: ptBR });
+    return format(new Date(dateStr + "T12:00:00"), "dd/MM");
   } catch {
     return dateStr;
   }
