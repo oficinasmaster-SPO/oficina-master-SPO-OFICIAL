@@ -1,0 +1,123 @@
+{
+  "name": "CronogramaTemplate",
+  "type": "object",
+  "properties": {
+    "fase_oficina": {
+      "type": "integer",
+      "enum": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "description": "Fase da oficina"
+    },
+    "nome_fase": {
+      "type": "string",
+      "description": "Nome da fase"
+    },
+    "duracao_meses": {
+      "type": "integer",
+      "description": "Dura\u00e7\u00e3o t\u00edpica em meses"
+    },
+    "objetivo_geral": {
+      "type": "string",
+      "description": "Objetivo geral da fase"
+    },
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina vinculada"
+    },
+    "missoes_selecionadas": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "IDs das miss\u00f5es selecionadas na trilha do cliente"
+    },
+    "modulos": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "ordem": {
+            "type": "integer"
+          },
+          "codigo": {
+            "type": "string"
+          },
+          "nome": {
+            "type": "string"
+          },
+          "descricao": {
+            "type": "string"
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "diagnostico",
+              "treinamento",
+              "implementacao",
+              "reuniao",
+              "acompanhamento"
+            ]
+          },
+          "duracao_estimada_dias": {
+            "type": "integer"
+          },
+          "atividades_previstas": {
+            "type": "integer",
+            "default": 0
+          },
+          "tarefas_previstas": {
+            "type": "integer",
+            "default": 0
+          },
+          "ferramentas_vinculadas": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "modulos_plataforma": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "obrigatorio": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      }
+    },
+    "ativo": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "fase_oficina",
+    "nome_fase"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": true,
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
