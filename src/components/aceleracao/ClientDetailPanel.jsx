@@ -2,7 +2,8 @@ import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { RedTabsList, RedTabsTrigger } from "@/components/ui/RedTabs";
 import { createPageUrl } from "@/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -28,7 +29,7 @@ export default function ClientDetailPanel({ client, isOpen, onClose, atendimento
 
   return (
     <Dialog open={isOpen && !!client} onOpenChange={onClose}>
-      <DialogContent className="max-w-7xl h-[90vh] overflow-auto [&>button[class*='absolute']]:hidden">
+      <DialogContent className="max-w-7xl h-[90vh] overflow-hidden flex flex-col [&>button[class*='absolute']]:hidden">
         {client && (
           <>
             <DialogHeader>
@@ -82,18 +83,22 @@ export default function ClientDetailPanel({ client, isOpen, onClose, atendimento
               </div>
             </DialogHeader>
 
-        <Tabs defaultValue={defaultTab} className="mt-6">
-          <TabsList className="grid w-full grid-cols-6">
-            <TabsTrigger value="geral">Dados Gerais</TabsTrigger>
-            <TabsTrigger value="operacional">Operacional</TabsTrigger>
-            <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
-            <TabsTrigger value="processos">Processos</TabsTrigger>
-            <TabsTrigger value="historico">Histórico</TabsTrigger>
-            <TabsTrigger value="consultoria" className="flex items-center gap-1">
-              <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
-              Consultoria
-            </TabsTrigger>
-          </TabsList>
+        <Tabs defaultValue={defaultTab} className="mt-4 flex flex-col flex-1 min-h-0">
+          <div className="shrink-0">
+            <RedTabsList>
+              <RedTabsTrigger value="geral">Dados Gerais</RedTabsTrigger>
+              <RedTabsTrigger value="operacional">Operacional</RedTabsTrigger>
+              <RedTabsTrigger value="financeiro">Financeiro</RedTabsTrigger>
+              <RedTabsTrigger value="processos">Processos</RedTabsTrigger>
+              <RedTabsTrigger value="historico">Histórico</RedTabsTrigger>
+              <RedTabsTrigger value="consultoria" className="flex items-center gap-1">
+                <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
+                Consultoria
+              </RedTabsTrigger>
+            </RedTabsList>
+          </div>
+
+          <div className="flex-1 overflow-y-auto mt-4">
 
           <TabsContent value="geral" className="space-y-6 mt-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -521,6 +526,7 @@ export default function ClientDetailPanel({ client, isOpen, onClose, atendimento
           <TabsContent value="consultoria" className="mt-6">
             <ConsultoriaClienteTab client={client} />
           </TabsContent>
+          </div>
         </Tabs>
           </>
         )}
