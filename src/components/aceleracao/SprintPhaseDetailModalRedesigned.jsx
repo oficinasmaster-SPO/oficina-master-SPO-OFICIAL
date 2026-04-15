@@ -179,6 +179,11 @@ export default function SprintPhaseDetailModalRedesigned({
   const canGoForward = phaseIndex < phases.length - 1;
   const isPendingReview = currentPhase?.status === "pending_review";
 
+  // Build live phases array reflecting local edits for the current phase
+  const livePhases = phases.map((p, i) =>
+    i === phaseIndex ? { ...p, status, notes, tasks } : p
+  );
+
   return (
     <Dialog open={true} onOpenChange={() => onClose()}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
@@ -194,8 +199,8 @@ export default function SprintPhaseDetailModalRedesigned({
           </DialogTitle>
         </DialogHeader>
 
-        {/* Phase Progress Bar */}
-        <SprintPhaseProgress phases={phases} />
+        {/* Phase Progress Bar — uses live local state */}
+        <SprintPhaseProgress phases={livePhases} />
 
         {/* Phase Navigation */}
         <div className="flex items-center justify-between py-2 border-b">
@@ -280,12 +285,12 @@ export default function SprintPhaseDetailModalRedesigned({
             <Input
               value={newTask}
               onChange={(e) => setNewTask(e.target.value)}
-              placeholder="Nova tarefa..."
-              className="text-sm"
-              onKeyDown={(e) => e.key === "Enter" && addTask()}
+              placeholder="Descreva a nova tarefa e pressione Enter..."
+              className="text-sm flex-1"
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addTask(); } }}
             />
-            <Button size="sm" variant="outline" onClick={addTask} disabled={!newTask.trim()}>
-              <Plus className="w-4 h-4" />
+            <Button size="sm" onClick={addTask} disabled={!newTask.trim()} className="bg-blue-600 hover:bg-blue-700 text-white shrink-0">
+              <Plus className="w-4 h-4 mr-1" /> Adicionar
             </Button>
           </div>
         </div>
