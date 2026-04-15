@@ -141,6 +141,9 @@ export default function SprintPhaseDetailModalRedesigned({
     updatedPhases[phaseIndex] = {
       ...updatedPhases[phaseIndex],
       status: "in_progress",
+      completion_date: null,
+      submitted_for_review_at: null,
+      submitted_for_review_by: null,
       reviewed_at: new Date().toISOString(),
       reviewed_by: "consultor",
       review_feedback: feedback,

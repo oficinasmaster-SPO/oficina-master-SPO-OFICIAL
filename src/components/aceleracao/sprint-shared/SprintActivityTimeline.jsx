@@ -28,14 +28,16 @@ function buildTimeline(sprint) {
 
     // Phase reviewed (approved or returned)
     if (phase.reviewed_at) {
-      const wasApproved = phase.status === "completed" || phase.completion_date;
+      // A phase is only truly approved if its current status is "completed"
+      // If status is "in_progress" with reviewed_at, it means it was returned
+      const wasApproved = phase.status === "completed";
       events.push({
         type: wasApproved ? "approved" : "returned",
         date: phase.reviewed_at,
         phase_name: phase.name,
         description: wasApproved
           ? "Fase aprovada pelo consultor"
-          : "Fase devolvida com feedback",
+          : "Fase devolvida para correção",
         actor: "consultor",
         feedback: phase.review_feedback,
       });
