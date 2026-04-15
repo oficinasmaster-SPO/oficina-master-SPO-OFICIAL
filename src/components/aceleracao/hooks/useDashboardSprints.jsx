@@ -50,21 +50,33 @@ export default function useDashboardSprints(workshops = []) {
       .sort((a, b) => b.sprints.length - a.sprints.length);
   }, [workshops, sprints]);
 
+  const sprintsPendingReview = useMemo(() => {
+    return sprints
+      .map(sprint => {
+        const pendingPhases = (sprint.phases || []).filter(p => p.status === "pending_review");
+        if (!pendingPhases.length) return null;
+        return { sprint, pendingPhases, workshop: workshopMap[sprint.workshop_id] };
+      })
+      .filter(Boolean);
+  }, [sprints, workshopMap]);
+
   const stats = useMemo(() => {
     const t = sprints.length;
     return {
       total: t,
       em_andamento: sprintsEmAndamento.length,
       atrasados: sprintsAtrasados.length,
+      pendingReview: sprintsPendingReview.length,
       concluidos: sprints.filter(s => s.status === "completed").length,
       avgProgress: t > 0 ? Math.round(sprints.reduce((acc, s) => acc + (s.progress_percentage || 0), 0) / t) : 0
     };
-  }, [sprints, sprintsEmAndamento, sprintsAtrasados]);
+  }, [sprints, sprintsEmAndamento, sprintsAtrasados, sprintsPendingReview]);
 
   return {
     sprints,
     sprintsAtrasados,
     sprintsEmAndamento,
+    sprintsPendingReview,
     clientesComTrilha,
     workshopMap,
     stats,

@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { RefreshCw, Zap, AlertTriangle, Check, Clock, Activity } from "lucide-react";
+import { RefreshCw, Zap, AlertTriangle, Check, Clock, Activity, Send } from "lucide-react";
 import useDashboardSprints from "./hooks/useDashboardSprints";
 import SprintsAtrasadosBlock from "./dashboard/SprintsAtrasadosBlock";
 import SprintsEmAndamentoBlock from "./dashboard/SprintsEmAndamentoBlock";
+import SprintsPendingReviewBlock from "./dashboard/SprintsPendingReviewBlock";
 import ClientesComTrilhaBlock from "./dashboard/ClientesComTrilhaBlock";
 import SprintPhaseDetailModalRedesigned from "./SprintPhaseDetailModalRedesigned";
 
@@ -41,6 +42,7 @@ export default function DashboardOperacionalTabRedesigned({ user, workshops = []
   const {
     sprintsAtrasados,
     sprintsEmAndamento,
+    sprintsPendingReview,
     clientesComTrilha,
     workshopMap,
     stats,
@@ -49,8 +51,10 @@ export default function DashboardOperacionalTabRedesigned({ user, workshops = []
   } = useDashboardSprints(workshops);
 
   const handleSprintClick = (sprint) => {
+    // If sprint has a pending_review phase, open directly on it
+    const pendingIdx = (sprint.phases || []).findIndex(p => p.status === "pending_review");
     setSelectedSprint(sprint);
-    setSelectedPhaseIndex(0);
+    setSelectedPhaseIndex(pendingIdx >= 0 ? pendingIdx : 0);
   };
 
   if (isLoading) return <LoadingSkeleton />;
@@ -81,9 +85,10 @@ export default function DashboardOperacionalTabRedesigned({ user, workshops = []
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         <StatPill icon={Activity} label="Total" value={stats.total} color="text-gray-700" bgColor="bg-gray-50" />
         <StatPill icon={Clock} label="Em andamento" value={stats.em_andamento} color="text-blue-600" bgColor="bg-blue-50/60" />
+        <StatPill icon={Send} label="P/ Revisar" value={stats.pendingReview} color="text-amber-600" bgColor={stats.pendingReview > 0 ? "bg-amber-50/80" : "bg-gray-50"} />
         <StatPill icon={AlertTriangle} label="Atrasados" value={stats.atrasados} color="text-red-600" bgColor={stats.atrasados > 0 ? "bg-red-50/80" : "bg-gray-50"} />
         <StatPill icon={Check} label="Concluídos" value={stats.concluidos} color="text-green-600" bgColor="bg-green-50/60" />
       </div>
@@ -98,7 +103,14 @@ export default function DashboardOperacionalTabRedesigned({ user, workshops = []
         </div>
       ) : (
         <>
-          {/* BLOCO 1 — Atrasados (sempre primeiro) */}
+          {/* BLOCO 0 — Pendentes de Revisão (prioridade máxima) */}
+          <SprintsPendingReviewBlock
+            sprints={sprintsPendingReview}
+            workshopMap={workshopMap}
+            onSprintClick={(sprint) => handleSprintClick(sprint)}
+          />
+
+          {/* BLOCO 1 — Atrasados */}
           <SprintsAtrasadosBlock
             sprints={sprintsAtrasados}
             workshopMap={workshopMap}

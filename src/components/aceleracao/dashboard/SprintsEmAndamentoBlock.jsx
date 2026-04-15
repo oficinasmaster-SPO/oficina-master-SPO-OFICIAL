@@ -1,6 +1,7 @@
 import React from "react";
-import { Zap, ArrowRight, Clock, AlertCircle } from "lucide-react";
+import { Zap, ArrowRight, Clock, AlertCircle, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { differenceInDays } from "date-fns";
 
 function ProgressBar({ value }) {
@@ -55,6 +56,7 @@ export default function SprintsEmAndamentoBlock({ sprints, workshopMap, onSprint
               ? differenceInDays(new Date(sprint.end_date), new Date())
               : null;
             const isAtRisk = daysRemaining !== null && daysRemaining <= 3 && daysRemaining >= 0;
+            const pendingReviewCount = (sprint.phases || []).filter(p => p.status === "pending_review").length;
 
             return (
               <div
@@ -66,7 +68,14 @@ export default function SprintsEmAndamentoBlock({ sprints, workshopMap, onSprint
                     <p className="text-sm font-semibold text-gray-900 truncate">
                       {workshop?.name || 'Cliente'}
                     </p>
-                    <p className="text-xs text-gray-500 truncate mt-0.5">{sprint.title}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <p className="text-xs text-gray-500 truncate">{sprint.title}</p>
+                      {pendingReviewCount > 0 && (
+                        <Badge className="bg-amber-100 text-amber-700 text-[10px] gap-0.5 shrink-0">
+                          <Send className="w-2.5 h-2.5" /> {pendingReviewCount} revisão
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                   <Button
                     size="sm"
