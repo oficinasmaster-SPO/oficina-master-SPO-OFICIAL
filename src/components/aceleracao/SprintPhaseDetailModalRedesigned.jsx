@@ -242,7 +242,7 @@ export default function SprintPhaseDetailModalRedesigned({ sprint, phaseIndex, o
     // Mantém "in_progress" se há qualquer atividade; só marca "completed" se TODAS as fases forem concluídas
     const newSprintStatus = phasesCompleted === updatedPhases.length
       ? "completed"
-      : (phasesCompleted > 0 || doneTasks > 0)
+      : (phasesCompleted > 0 || progress > 0)
         ? "in_progress"
         : sprint.status === "overdue"
           ? "overdue"
