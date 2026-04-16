@@ -164,7 +164,9 @@ export default function SprintClientModal({ sprint, user, workshop, open, onClos
           </Button>
         </div>
 
-        {/* Consultant feedback banner - shown prominently when phase was returned */}
+        {/* Consultant feedback banner - shown prominently when phase was returned
+             NOTE: SprintSubmitReview also shows feedback inline, so we only show this 
+             prominent banner and suppress the one inside SprintSubmitReview via prop */}
         {phase.review_feedback && phase.status === "in_progress" && (
           <div className="bg-orange-50 border-2 border-orange-300 rounded-lg p-4">
             <div className="flex items-start gap-3">
@@ -249,6 +251,7 @@ export default function SprintClientModal({ sprint, user, workshop, open, onClos
           allTasksDone={allTasksDone}
           onSubmit={handleSubmitForReview}
           isSubmitting={saveMutation.isPending}
+          hideFeedback={!!(phase.review_feedback && phase.status === "in_progress")}
         />
 
         {/* Completion summary */}

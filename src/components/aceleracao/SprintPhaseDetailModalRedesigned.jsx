@@ -29,7 +29,6 @@ const PHASES_CONFIG = [
 const STATUS_OPTIONS = [
   { value: "not_started", label: "Não iniciado", icon: <Circle className="w-4 h-4 text-gray-400" /> },
   { value: "in_progress", label: "Em andamento", icon: <Clock className="w-4 h-4 text-blue-500" /> },
-  { value: "pending_review", label: "Aguardando revisão", icon: <Send className="w-4 h-4 text-amber-500" /> },
   { value: "completed", label: "Concluído", icon: <CheckCircle2 className="w-4 h-4 text-green-500" /> },
 ];
 
@@ -93,12 +92,22 @@ export default function SprintPhaseDetailModalRedesigned({
 
   const handleSave = async () => {
     const updatedPhases = [...phases];
+    const completionFields = status === "completed" ? {
+      completion_date: new Date().toISOString(),
+      reviewed_at: new Date().toISOString(),
+      reviewed_by: "consultor",
+    } : {};
+    // If moving away from completed, clear completion metadata
+    const clearFields = status !== "completed" && updatedPhases[phaseIndex].status === "completed" ? {
+      completion_date: null,
+    } : {};
     updatedPhases[phaseIndex] = {
       ...updatedPhases[phaseIndex],
       status,
       notes,
       tasks,
-      ...(status === "completed" ? { completion_date: new Date().toISOString() } : {}),
+      ...completionFields,
+      ...clearFields,
     };
     const ok = await persistPhases(updatedPhases);
     if (ok) {

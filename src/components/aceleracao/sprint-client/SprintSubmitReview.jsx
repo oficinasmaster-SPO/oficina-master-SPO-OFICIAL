@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Send, AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
-export default function SprintSubmitReview({ phase, canSubmit, allTasksDone, onSubmit, isSubmitting }) {
+export default function SprintSubmitReview({ phase, canSubmit, allTasksDone, onSubmit, isSubmitting, hideFeedback = false }) {
   if (phase.status === "pending_review") {
     return (
       <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-center">
@@ -28,8 +28,8 @@ export default function SprintSubmitReview({ phase, canSubmit, allTasksDone, onS
     return null;
   }
 
-  // Show feedback from last review if phase was returned
-  const hasFeedback = phase.review_feedback && phase.status === "in_progress";
+  // Show feedback from last review if phase was returned (unless parent already shows it)
+  const hasFeedback = !hideFeedback && phase.review_feedback && phase.status === "in_progress";
 
   return (
     <div className="space-y-3">
