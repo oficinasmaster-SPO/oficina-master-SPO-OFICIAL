@@ -81,27 +81,17 @@ export default function DashboardAtendimentos({ atendimentos = [] }) {
         </Card>
       </div>
 
-      {/* Cards por Tipo de Atendimento */}
+      {/* Distribuição por Tipo — compacta inline */}
       {tiposOrdenados.length > 0 && (
-        <Card className="border-gray-200">
-          <CardContent className="pt-6">
-            <h3 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
-              <BarChart3 className="w-4 h-4" />
-              Distribuição por Tipo de Atendimento
-            </h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-              {tiposOrdenados.map(([tipo, quantidade]) => (
-                <div 
-                  key={tipo}
-                  className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-3 border border-gray-200 hover:shadow-md transition-shadow"
-                >
-                  <p className="text-2xl font-bold text-gray-800">{quantidade}</p>
-                  <p className="text-xs text-gray-600 mt-1 line-clamp-2">{formatarTipo(tipo)}</p>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs font-medium text-gray-500">Tipos:</span>
+          {tiposOrdenados.map(([tipo, quantidade]) => (
+            <span key={tipo} className="inline-flex items-center gap-1 text-xs bg-gray-100 text-gray-700 rounded-full px-2.5 py-1 border border-gray-200">
+              <span className="font-semibold">{quantidade}</span>
+              <span className="text-gray-500">{formatarTipo(tipo)}</span>
+            </span>
+          ))}
+        </div>
       )}
     </div>
   );
