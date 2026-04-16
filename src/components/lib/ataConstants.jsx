@@ -45,7 +45,7 @@ export const ATENDIMENTO_STATUS_LABELS = {
 };
 
 export const ATENDIMENTO_STATUS_COLORS = {
-  [ATENDIMENTO_STATUS.AGENDADO]: 'bg-red-100 text-red-800 border-red-300',
+  [ATENDIMENTO_STATUS.AGENDADO]: 'bg-cyan-100 text-cyan-800 border-cyan-300',
   [ATENDIMENTO_STATUS.CONFIRMADO]: 'bg-yellow-100 text-yellow-800 border-yellow-300',
   [ATENDIMENTO_STATUS.PARTICIPANDO]: 'bg-blue-100 text-blue-800 border-blue-300 animate-pulse',
   [ATENDIMENTO_STATUS.REALIZADO]: 'bg-amber-100 text-amber-700 border-amber-300 animate-pulse',
@@ -59,7 +59,7 @@ export const ATENDIMENTO_STATUS_COLORS = {
 
 // Cores hex para gráficos (consistente com os badges)
 export const ATENDIMENTO_STATUS_CHART_COLORS = {
-  [ATENDIMENTO_STATUS.AGENDADO]: '#dc2626',
+  [ATENDIMENTO_STATUS.AGENDADO]: '#06b6d4',
   [ATENDIMENTO_STATUS.CONFIRMADO]: '#ca8a04',
   [ATENDIMENTO_STATUS.PARTICIPANDO]: '#2563eb',
   [ATENDIMENTO_STATUS.REALIZADO]: '#b45309',
