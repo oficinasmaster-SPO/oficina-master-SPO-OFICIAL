@@ -228,7 +228,7 @@ export default function PainelAtendimentosTab({ state }) {
       )}
 
       {activeTab !== 'bucket' && (
-        <DashboardAtendimentos atendimentos={atendimentosFiltrados} />
+        <DashboardAtendimentos atendimentos={atendimentosFiltrados} onStatusClick={setActiveTab} />
       )}
 
       <div className="w-full">
