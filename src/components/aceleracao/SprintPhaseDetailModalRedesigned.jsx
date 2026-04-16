@@ -92,13 +92,22 @@ export default function SprintPhaseDetailModalRedesigned({
 
   const handleSave = async () => {
     const updatedPhases = [...phases];
-    const completionFields = status === "completed" ? {
-      completion_date: new Date().toISOString(),
-      reviewed_at: new Date().toISOString(),
+    const now = new Date().toISOString();
+    const existingHistory = updatedPhases[phaseIndex].review_history || [];
+    const wasCompleted = updatedPhases[phaseIndex].status === "completed";
+    const isNowCompleted = status === "completed";
+
+    const completionFields = isNowCompleted && !wasCompleted ? {
+      completion_date: now,
+      reviewed_at: now,
       reviewed_by: "consultor",
+      review_history: [
+        ...existingHistory,
+        { action: "approved", date: now, actor: "consultor", feedback: "" },
+      ],
     } : {};
     // If moving away from completed, clear completion metadata
-    const clearFields = status !== "completed" && updatedPhases[phaseIndex].status === "completed" ? {
+    const clearFields = !isNowCompleted && wasCompleted ? {
       completion_date: null,
     } : {};
     updatedPhases[phaseIndex] = {
@@ -123,13 +132,19 @@ export default function SprintPhaseDetailModalRedesigned({
   // Review actions for consultant
   const handleApprovePhase = async (feedback) => {
     const updatedPhases = [...phases];
+    const now = new Date().toISOString();
+    const existingHistory = updatedPhases[phaseIndex].review_history || [];
     updatedPhases[phaseIndex] = {
       ...updatedPhases[phaseIndex],
       status: "completed",
-      completion_date: new Date().toISOString(),
-      reviewed_at: new Date().toISOString(),
+      completion_date: now,
+      reviewed_at: now,
       reviewed_by: "consultor",
       review_feedback: feedback || "",
+      review_history: [
+        ...existingHistory,
+        { action: "approved", date: now, actor: "consultor", feedback: feedback || "" },
+      ],
     };
     const ok = await persistPhases(updatedPhases);
     if (ok) {
@@ -147,15 +162,21 @@ export default function SprintPhaseDetailModalRedesigned({
 
   const handleReturnPhase = async (feedback) => {
     const updatedPhases = [...phases];
+    const now = new Date().toISOString();
+    const existingHistory = updatedPhases[phaseIndex].review_history || [];
     updatedPhases[phaseIndex] = {
       ...updatedPhases[phaseIndex],
       status: "in_progress",
       completion_date: null,
       submitted_for_review_at: null,
       submitted_for_review_by: null,
-      reviewed_at: new Date().toISOString(),
+      reviewed_at: now,
       reviewed_by: "consultor",
       review_feedback: feedback,
+      review_history: [
+        ...existingHistory,
+        { action: "returned", date: now, actor: "consultor", feedback },
+      ],
     };
     const ok = await persistPhases(updatedPhases);
     if (ok) {

@@ -58,6 +58,12 @@ export default function SprintClientModal({ sprint, user, workshop, open, onClos
       queryClient.invalidateQueries({ queryKey: ["sprints"] });
       queryClient.invalidateQueries({ queryKey: ["client-sprints"] });
     },
+    onError: () => {
+      // On failure, refetch to rollback optimistic local state (e.g. auto-start phase)
+      queryClient.invalidateQueries({ queryKey: ["sprints-client"] });
+      queryClient.invalidateQueries({ queryKey: ["client-sprints"] });
+      toast.error("Erro ao salvar. Tente novamente.");
+    },
   });
 
   const handleToggleTask = (taskIdx) => {
@@ -98,11 +104,17 @@ export default function SprintClientModal({ sprint, user, workshop, open, onClos
 
   const handleSubmitForReview = async () => {
     const updated = [...phases];
+    const now = new Date().toISOString();
+    const existingHistory = updated[currentPhaseIdx].review_history || [];
     updated[currentPhaseIdx] = {
       ...updated[currentPhaseIdx],
       status: "pending_review",
-      submitted_for_review_at: new Date().toISOString(),
+      submitted_for_review_at: now,
       submitted_for_review_by: user.id,
+      review_history: [
+        ...existingHistory,
+        { action: "submitted", date: now, actor: "oficina", actor_id: user.id },
+      ],
     };
     saveMutation.mutate(updated);
     toast.success("Fase enviada para revisão do consultor!");

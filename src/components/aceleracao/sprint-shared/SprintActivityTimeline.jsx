@@ -15,36 +15,59 @@ function buildTimeline(sprint) {
   const phases = sprint?.phases || [];
 
   phases.forEach((phase) => {
-    // Phase submitted for review
-    if (phase.submitted_for_review_at) {
-      events.push({
-        type: "submitted",
-        date: phase.submitted_for_review_at,
-        phase_name: phase.name,
-        description: "Fase enviada para revisão",
-        actor: "oficina",
+    const history = phase.review_history || [];
+
+    if (history.length > 0) {
+      // Use review_history for all submission/review events (new format)
+      history.forEach((entry) => {
+        const typeMap = {
+          submitted: "submitted",
+          approved: "approved",
+          returned: "returned",
+        };
+        const descMap = {
+          submitted: "Fase enviada para revisão",
+          approved: "Fase aprovada pelo consultor",
+          returned: "Fase devolvida para correção",
+        };
+        events.push({
+          type: typeMap[entry.action] || entry.action,
+          date: entry.date,
+          phase_name: phase.name,
+          description: descMap[entry.action] || entry.action,
+          actor: entry.actor || "consultor",
+          feedback: entry.feedback,
+        });
       });
+    } else {
+      // Fallback for legacy data without review_history
+      if (phase.submitted_for_review_at) {
+        events.push({
+          type: "submitted",
+          date: phase.submitted_for_review_at,
+          phase_name: phase.name,
+          description: "Fase enviada para revisão",
+          actor: "oficina",
+        });
+      }
+
+      if (phase.reviewed_at) {
+        const wasApproved = phase.status === "completed";
+        events.push({
+          type: wasApproved ? "approved" : "returned",
+          date: phase.reviewed_at,
+          phase_name: phase.name,
+          description: wasApproved
+            ? "Fase aprovada pelo consultor"
+            : "Fase devolvida para correção",
+          actor: "consultor",
+          feedback: phase.review_feedback,
+        });
+      }
     }
 
-    // Phase reviewed (approved or returned)
-    if (phase.reviewed_at) {
-      // A phase is only truly approved if its current status is "completed"
-      // If status is "in_progress" with reviewed_at, it means it was returned
-      const wasApproved = phase.status === "completed";
-      events.push({
-        type: wasApproved ? "approved" : "returned",
-        date: phase.reviewed_at,
-        phase_name: phase.name,
-        description: wasApproved
-          ? "Fase aprovada pelo consultor"
-          : "Fase devolvida para correção",
-        actor: "consultor",
-        feedback: phase.review_feedback,
-      });
-    }
-
-    // Phase completed
-    if (phase.completion_date && !phase.reviewed_at) {
+    // Phase completed without review (direct completion by consultant)
+    if (phase.completion_date && !phase.reviewed_at && !(history.some(h => h.action === "approved"))) {
       events.push({
         type: "completed",
         date: phase.completion_date,
