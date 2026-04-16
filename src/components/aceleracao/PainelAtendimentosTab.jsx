@@ -227,12 +227,6 @@ export default function PainelAtendimentosTab({ state }) {
         />
       )}
 
-      {activeTab === 'bucket' ? (
-        <BucketAtendimentosTab state={state} />
-      ) : (
-      <>
-      <DashboardAtendimentos atendimentos={atendimentosFiltrados} />
-
       <div className="w-full">
         <div className="flex items-center gap-2 mb-4 flex-wrap">
           <div className="inline-flex items-center rounded-lg bg-gray-100 p-1 gap-1">
@@ -259,9 +253,7 @@ export default function PainelAtendimentosTab({ state }) {
               </button>
             ))}
           </div>
-          {activeTab === 'bucket' ? (
-            <div className="flex-1" />
-          ) : (
+          {activeTab !== 'bucket' && (
           <div className="relative flex-1 min-w-[180px] max-w-xs">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
             <Input
@@ -329,7 +321,15 @@ export default function PainelAtendimentosTab({ state }) {
             </div>
           )}
         </div>
+      </div>
 
+      {activeTab === 'bucket' ? (
+        <BucketAtendimentosTab state={state} />
+      ) : (
+      <>
+      <DashboardAtendimentos atendimentos={atendimentosFiltrados} />
+
+      <div className="w-full">
         <Card>
           <CardContent className="pt-4 px-2 sm:px-3 lg:px-4 xl:px-5">
             <div className="w-full overflow-x-auto">
