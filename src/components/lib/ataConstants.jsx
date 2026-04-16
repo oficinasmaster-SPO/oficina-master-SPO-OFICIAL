@@ -23,35 +23,38 @@ export const ATENDIMENTO_STATUS = {
   CONFIRMADO: 'confirmado',
   PARTICIPANDO: 'participando',
   REALIZADO: 'realizado',
+  CONCLUIDO: 'concluido',
   CANCELADO: 'cancelado',
   FALTOU: 'faltou',
-  DESMARCOU: 'desmarcou',
   ATRASADO: 'atrasado',
-  REAGENDADO: 'reagendado'
+  REAGENDADO: 'reagendado',
+  A_REALIZAR: 'a_realizar'
 };
 
 export const ATENDIMENTO_STATUS_LABELS = {
   [ATENDIMENTO_STATUS.AGENDADO]: 'Agendado',
   [ATENDIMENTO_STATUS.CONFIRMADO]: 'Confirmado',
   [ATENDIMENTO_STATUS.PARTICIPANDO]: 'Participando',
-  [ATENDIMENTO_STATUS.REALIZADO]: 'Realizado',
+  [ATENDIMENTO_STATUS.REALIZADO]: '! Realizado',
+  [ATENDIMENTO_STATUS.CONCLUIDO]: 'Concluído',
   [ATENDIMENTO_STATUS.CANCELADO]: 'Cancelado',
   [ATENDIMENTO_STATUS.FALTOU]: 'Faltou',
-  [ATENDIMENTO_STATUS.DESMARCOU]: 'Desmarcou',
   [ATENDIMENTO_STATUS.ATRASADO]: 'Atrasado',
-  [ATENDIMENTO_STATUS.REAGENDADO]: 'Reagendado'
+  [ATENDIMENTO_STATUS.REAGENDADO]: 'Reagendado',
+  [ATENDIMENTO_STATUS.A_REALIZAR]: 'A Realizar'
 };
 
 export const ATENDIMENTO_STATUS_COLORS = {
   [ATENDIMENTO_STATUS.AGENDADO]: 'bg-red-100 text-red-800 border-red-300',
   [ATENDIMENTO_STATUS.CONFIRMADO]: 'bg-yellow-100 text-yellow-800 border-yellow-300',
   [ATENDIMENTO_STATUS.PARTICIPANDO]: 'bg-blue-100 text-blue-800 border-blue-300 animate-pulse',
-  [ATENDIMENTO_STATUS.REALIZADO]: 'bg-green-100 text-green-800 border-green-300',
+  [ATENDIMENTO_STATUS.REALIZADO]: 'bg-amber-100 text-amber-700 border-amber-300 animate-pulse',
+  [ATENDIMENTO_STATUS.CONCLUIDO]: 'bg-green-100 text-green-800 border-green-300',
   [ATENDIMENTO_STATUS.CANCELADO]: 'bg-gray-200 text-gray-700 border-gray-400',
   [ATENDIMENTO_STATUS.FALTOU]: 'bg-orange-100 text-orange-800 border-orange-300',
-  [ATENDIMENTO_STATUS.DESMARCOU]: 'bg-pink-100 text-pink-800 border-pink-300',
   [ATENDIMENTO_STATUS.ATRASADO]: 'bg-red-500 text-white border-red-700 animate-pulse',
-  [ATENDIMENTO_STATUS.REAGENDADO]: 'bg-purple-100 text-purple-800 border-purple-300'
+  [ATENDIMENTO_STATUS.REAGENDADO]: 'bg-purple-100 text-purple-800 border-purple-300',
+  [ATENDIMENTO_STATUS.A_REALIZAR]: 'bg-indigo-100 text-indigo-800 border-indigo-300'
 };
 
 // Tipos de aceleração

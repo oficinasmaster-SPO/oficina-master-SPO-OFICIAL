@@ -7,11 +7,12 @@ import { formatDateTimeBR } from "@/utils/timezone";
 import AgendaVisual from "./AgendaVisual";
 import GraficoAtendimentos from "./GraficoAtendimentos";
 import StatusClientesCard from "./StatusClientesCard";
+import BucketARealizarCard from "./BucketARealizarCard";
 import ClientesDetalhesModal from "./ClientesDetalhesModal";
 import ReunioesDetalhesModal from "./ReunioesDetalhesModal";
 import GargalosConsultoresRealtime from "./GargalosConsultoresRealtime";
 
-const STATUS_FINALIZADOS = ['realizado', 'cancelado', 'faltou', 'desmarcou', 'remarcado'];
+const STATUS_FINALIZADOS = ['realizado', 'concluido', 'cancelado', 'faltou', 'remarcado'];
 
 function getMouseEnterSide(e) {
   const rect = e.currentTarget.getBoundingClientRect();
@@ -112,11 +113,14 @@ export default function VisaoGeralTab({ state }) {
       </div>
 
       <div className="grid md:grid-cols-3 gap-6">
-        <StatusClientesCard
-          workshops={workshops}
-          atendimentos={atendimentos}
-          onStatusClick={(tipo, clientes) => setModalClientes({ isOpen: true, tipo, clientes })}
-        />
+        <div className="space-y-4">
+          <StatusClientesCard
+            workshops={workshops}
+            atendimentos={atendimentos}
+            onStatusClick={(tipo, clientes) => setModalClientes({ isOpen: true, tipo, clientes })}
+          />
+          <BucketARealizarCard />
+        </div>
 
         <Card>
           <CardHeader>

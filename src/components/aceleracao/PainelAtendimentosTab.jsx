@@ -16,7 +16,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import GerarAtaModal from "./GerarAtaModal";
 import VisualizarAtaModal from "./VisualizarAtaModal";
 import ReagendarAtendimentoModal from "./ReagendarAtendimentoModal";
-import FinalizarAtendimentoModal from "./FinalizarAtendimentoModal";
+import CancelarAtendimentoDialog from "./CancelarAtendimentoDialog";
+import FaltouAtendimentoDialog from "./FaltouAtendimentoDialog";
+import ConcluirAtendimentoDialog from "./ConcluirAtendimentoDialog";
+import BucketAtendimentosTab from "./BucketAtendimentosTab";
 import DashboardAtendimentos from "./DashboardAtendimentos";
 import { ATENDIMENTO_STATUS, ATENDIMENTO_STATUS_COLORS, ATENDIMENTO_STATUS_LABELS } from "@/components/lib/ataConstants";
 import { format } from "date-fns";
@@ -35,13 +38,15 @@ export default function PainelAtendimentosTab({ state }) {
   const [showGerarAta, setShowGerarAta] = useState(false);
   const [showVisualizarAta, setShowVisualizarAta] = useState(false);
   const [showReagendar, setShowReagendar] = useState(false);
-  const [showFinalizar, setShowFinalizar] = useState(false);
+  const [showCancelar, setShowCancelar] = useState(false);
+  const [showFaltou, setShowFaltou] = useState(false);
+  const [showConcluir, setShowConcluir] = useState(false);
   const [showEditarAtendimento, setShowEditarAtendimento] = useState(false);
   const [showVisualizarAtendimento, setShowVisualizarAtendimento] = useState(false);
   const [editarAtendimentoId, setEditarAtendimentoId] = useState(null);
   const [visualizarAtendimentoId, setVisualizarAtendimentoId] = useState(null);
   const [selectedAtendimento, setSelectedAtendimento] = useState(null);
-  const [atendimentoFinalizar, setAtendimentoFinalizar] = useState(null);
+  const [actionAtendimento, setActionAtendimento] = useState(null);
   const [selectedAta, setSelectedAta] = useState(null);
   const [activeTab, setActiveTab] = useState("todos");
   const [deleteConfirm, setDeleteConfirm] = useState(null);
@@ -172,16 +177,22 @@ export default function PainelAtendimentosTab({ state }) {
         />
       )}
 
-      {showFinalizar && atendimentoFinalizar && (
-        <FinalizarAtendimentoModal
-          atendimento={atendimentoFinalizar}
-          onClose={() => {
-            setShowFinalizar(false);
-            setAtendimentoFinalizar(null);
-            queryClient.invalidateQueries({ queryKey: ['atendimentos-acelerador'] });
-          }}
-        />
-      )}
+      <CancelarAtendimentoDialog
+        open={showCancelar}
+        onOpenChange={(o) => { setShowCancelar(o); if (!o) setActionAtendimento(null); }}
+        atendimento={actionAtendimento}
+      />
+      <FaltouAtendimentoDialog
+        open={showFaltou}
+        onOpenChange={(o) => { setShowFaltou(o); if (!o) setActionAtendimento(null); }}
+        atendimento={actionAtendimento}
+      />
+      <ConcluirAtendimentoDialog
+        open={showConcluir}
+        onOpenChange={(o) => { setShowConcluir(o); if (!o) setActionAtendimento(null); }}
+        atendimento={actionAtendimento}
+        workshops={workshops}
+      />
 
       {showVisualizarAtendimento && visualizarAtendimentoId && (
         <RegistrarAtendimento
@@ -208,6 +219,10 @@ export default function PainelAtendimentosTab({ state }) {
         />
       )}
 
+      {activeTab === 'bucket' ? (
+        <BucketAtendimentosTab state={state} />
+      ) : (
+      <>
       <DashboardAtendimentos atendimentos={atendimentosFiltrados} />
 
       <div className="w-full">
@@ -220,6 +235,8 @@ export default function PainelAtendimentosTab({ state }) {
               { value: ATENDIMENTO_STATUS.ATRASADO, label: 'Atrasados' },
               { value: ATENDIMENTO_STATUS.REAGENDADO, label: 'Reagendados' },
               { value: ATENDIMENTO_STATUS.REALIZADO, label: 'Realizados' },
+              { value: ATENDIMENTO_STATUS.CONCLUIDO, label: 'Concluídos' },
+              { value: 'bucket', label: '📥 Bucket' },
             ].map(tab => (
               <button
                 key={tab.value}
@@ -234,6 +251,9 @@ export default function PainelAtendimentosTab({ state }) {
               </button>
             ))}
           </div>
+          {activeTab === 'bucket' ? (
+            <div className="flex-1" />
+          ) : (
           <div className="relative flex-1 min-w-[180px] max-w-xs">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
             <Input
@@ -293,6 +313,7 @@ export default function PainelAtendimentosTab({ state }) {
               </Popover>
             </div>
           </div>
+          )}
           {/* Consultor info — read-only, controlled by global filter */}
           {state.consultorEfetivo && (
             <div className="h-9 px-3 flex items-center text-sm text-gray-500 bg-gray-50 border rounded-md">
@@ -394,17 +415,11 @@ export default function PainelAtendimentosTab({ state }) {
                           {atendimento.tipo_atendimento?.replace(/_/g, ' ') || '-'}
                         </td>
                         <td className="py-3 px-3 text-sm text-gray-600 border-r border-gray-100">
-                          {atendimento.status === ATENDIMENTO_STATUS.REALIZADO && !atendimento.ata_id ? (
-                            <Badge className="bg-orange-100 text-orange-700 border-orange-300 animate-pulse inline-flex items-center gap-1 text-[11px] px-2 py-1">
-                              <AlertTriangle className="w-3 h-3 shrink-0" />
-                              Realizado
-                            </Badge>
-                          ) : (
-                            <Badge className={`${ATENDIMENTO_STATUS_COLORS[atendimento.status] || 'bg-gray-100 text-gray-800 border-gray-300'} text-[11px] px-2 py-1 inline-flex items-center`}>
-                              {atendimento.status === ATENDIMENTO_STATUS.ATRASADO && <AlertTriangle className="w-3 h-3 mr-1" />}
-                              {ATENDIMENTO_STATUS_LABELS[atendimento.status] || atendimento.status || 'Indefinido'}
-                            </Badge>
-                          )}
+                          <Badge className={`${ATENDIMENTO_STATUS_COLORS[atendimento.status] || 'bg-gray-100 text-gray-800 border-gray-300'} text-[11px] px-2 py-1 inline-flex items-center justify-center min-w-[100px]`}>
+                            {atendimento.status === ATENDIMENTO_STATUS.ATRASADO && <AlertTriangle className="w-3 h-3 mr-1" />}
+                            {atendimento.status === ATENDIMENTO_STATUS.REALIZADO && <AlertTriangle className="w-3 h-3 mr-1" />}
+                            {ATENDIMENTO_STATUS_LABELS[atendimento.status] || atendimento.status || 'Indefinido'}
+                          </Badge>
                         </td>
                         <td className="py-3 px-3" onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center justify-center">
@@ -416,6 +431,19 @@ export default function PainelAtendimentosTab({ state }) {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end" className="w-56">
+                                {/* Confirmar — only agendado/reagendado */}
+                                {(atendimento.status === ATENDIMENTO_STATUS.AGENDADO || atendimento.status === ATENDIMENTO_STATUS.REAGENDADO) && (
+                                  <DropdownMenuItem onClick={async () => {
+                                    await base44.entities.ConsultoriaAtendimento.update(atendimento.id, { status: 'confirmado' });
+                                    toast.success('Status confirmado');
+                                    queryClient.invalidateQueries({ queryKey: ['atendimentos-acelerador'] });
+                                  }} className="cursor-pointer">
+                                    <CheckCircle className="mr-2 h-4 w-4 text-yellow-600" />
+                                    <span>Confirmar</span>
+                                  </DropdownMenuItem>
+                                )}
+
+                                {/* Iniciar + Reagendar */}
                                 {(atendimento.status === ATENDIMENTO_STATUS.AGENDADO || 
                                   atendimento.status === ATENDIMENTO_STATUS.CONFIRMADO || 
                                   atendimento.status === ATENDIMENTO_STATUS.REAGENDADO || 
@@ -433,15 +461,27 @@ export default function PainelAtendimentosTab({ state }) {
                                   </>
                                 )}
 
-                                {(atendimento.status === ATENDIMENTO_STATUS.PARTICIPANDO || 
-                                  atendimento.status === ATENDIMENTO_STATUS.AGENDADO || 
-                                  atendimento.status === ATENDIMENTO_STATUS.CONFIRMADO || 
-                                  atendimento.status === ATENDIMENTO_STATUS.REAGENDADO || 
-                                  atendimento.status === ATENDIMENTO_STATUS.ATRASADO ||
-                                  !atendimento.status) && (
-                                  <DropdownMenuItem onClick={() => { setAtendimentoFinalizar(atendimento); setShowFinalizar(true); }} className="cursor-pointer">
+                                {/* Concluir — only realizado */}
+                                {atendimento.status === ATENDIMENTO_STATUS.REALIZADO && (
+                                  <DropdownMenuItem onClick={() => { setActionAtendimento(atendimento); setShowConcluir(true); }} className="cursor-pointer">
                                     <CheckCircle className="mr-2 h-4 w-4 text-green-600" />
-                                    <span>Finalizar Atendimento</span>
+                                    <span>Concluir Atendimento</span>
+                                  </DropdownMenuItem>
+                                )}
+
+                                {/* Cancelar */}
+                                {!['cancelado', 'faltou', 'concluido'].includes(atendimento.status) && (
+                                  <DropdownMenuItem onClick={() => { setActionAtendimento(atendimento); setShowCancelar(true); }} className="cursor-pointer">
+                                    <StopCircle className="mr-2 h-4 w-4 text-red-600" />
+                                    <span>Cancelar</span>
+                                  </DropdownMenuItem>
+                                )}
+
+                                {/* Faltou — only atrasado */}
+                                {atendimento.status === ATENDIMENTO_STATUS.ATRASADO && (
+                                  <DropdownMenuItem onClick={() => { setActionAtendimento(atendimento); setShowFaltou(true); }} className="cursor-pointer">
+                                    <AlertTriangle className="mr-2 h-4 w-4 text-orange-600" />
+                                    <span>Faltou</span>
                                   </DropdownMenuItem>
                                 )}
 
@@ -460,7 +500,7 @@ export default function PainelAtendimentosTab({ state }) {
                                   </DropdownMenuItem>
                                 )}
 
-                                {!atendimento.ata_id && atendimento.status === ATENDIMENTO_STATUS.REALIZADO && (
+                                {!atendimento.ata_id && (atendimento.status === ATENDIMENTO_STATUS.REALIZADO || atendimento.status === ATENDIMENTO_STATUS.CONCLUIDO) && (
                                   <DropdownMenuItem onClick={() => { setSelectedAtendimento(atendimento); setShowGerarAta(true); }} className="cursor-pointer">
                                     <FilePlus className="mr-2 h-4 w-4 text-blue-600" />
                                     <span>Gerar ATA</span>
@@ -522,6 +562,9 @@ export default function PainelAtendimentosTab({ state }) {
           </CardContent>
         </Card>
       </div>
+
+      </>
+      )}
 
       <AlertDialog open={!!deleteConfirm} onOpenChange={(open) => { if (!open) { setDeleteConfirm(null); setDeleteFollowUp(false); } }}>
         <AlertDialogContent>

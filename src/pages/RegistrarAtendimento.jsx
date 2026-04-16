@@ -5,7 +5,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, X, Check, AlertCircle, User, ChevronRight, Download } from "lucide-react";
+import { Loader2, X, Check, AlertCircle, User, ChevronRight, Download, AlertTriangle } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -378,40 +378,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
         }
       }
 
-      // C1: Use base44.functions.invoke instead of asServiceRole in frontend
-      if (atendimentoData.status === 'realizado' && !atendimento.ata_id) {
-        try {
-          const ataResponse = await base44.functions.invoke('gerarAtaConsultoria', {
-            atendimento_id: atendimento.id
-          });
-          if (ataResponse.data?.ata_id) {
-            await base44.entities.ConsultoriaAtendimento.update(atendimento.id, {
-              ata_id: ataResponse.data.ata_id
-            });
-            await base44.entities.MeetingMinutes.update(ataResponse.data.ata_id, {
-              status: 'finalizada'
-            });
-          }
-        } catch (error) {
-          console.error('Erro ao gerar/finalizar ATA:', error);
-        }
-      } else if (atendimento.ata_id) {
-        try {
-          await base44.entities.MeetingMinutes.update(atendimento.ata_id, { status: 'finalizada' });
-        } catch (error) {
-          console.error('Erro ao finalizar ATA:', error);
-        }
-      }
-
-      if (atendimentoData.status === 'realizado') {
-        try {
-          await base44.functions.invoke('notificarClienteAtendimento', {
-            atendimento_id: atendimento.id
-          });
-        } catch (error) {
-          console.error('Erro ao enviar notificação:', error);
-        }
-      }
+      // ATA generation is now handled by ConcluirAtendimentoDialog — not on save
 
       return atendimento;
     },
@@ -1169,6 +1136,20 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
             ) : (
               <>
                 <Button type="button" variant="outline" onClick={handleClose} className="px-6">Cancelar</Button>
+                {formData.id && formData.status !== 'realizado' && formData.status !== 'concluido' && formData.status !== 'cancelado' && formData.status !== 'faltou' && (
+                  <Button
+                    type="button"
+                    className="px-6 bg-amber-500 hover:bg-amber-600 text-white font-semibold shadow-md"
+                    disabled={createMutation.isPending}
+                    onClick={async () => {
+                      setFormData(prev => ({ ...prev, status: 'realizado' }));
+                      createMutation.mutate({ ...formData, status: 'realizado' });
+                    }}
+                  >
+                    <AlertTriangle className="w-4 h-4 mr-2" />
+                    Atendimento Realizado
+                  </Button>
+                )}
                 <Button
                   type="submit"
                   form="atendimento-form"
@@ -1289,6 +1270,20 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
             ) : (
               <>
                 <Button type="button" variant="outline" onClick={handleClose} className="px-6">Cancelar</Button>
+                {formData.id && formData.status !== 'realizado' && formData.status !== 'concluido' && formData.status !== 'cancelado' && formData.status !== 'faltou' && (
+                  <Button
+                    type="button"
+                    className="px-6 bg-amber-500 hover:bg-amber-600 text-white font-semibold shadow-md"
+                    disabled={createMutation.isPending}
+                    onClick={async () => {
+                      setFormData(prev => ({ ...prev, status: 'realizado' }));
+                      createMutation.mutate({ ...formData, status: 'realizado' });
+                    }}
+                  >
+                    <AlertTriangle className="w-4 h-4 mr-2" />
+                    Atendimento Realizado
+                  </Button>
+                )}
                 <Button
                   type="submit"
                   disabled={createMutation.isPending || saveSuccess}

@@ -35,11 +35,11 @@ export default function StatusClientesCard({ workshops = [], atendimentos = [], 
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="pb-2">
         <CardTitle className="text-sm font-medium">Status dos Clientes</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
+      <CardContent className="pt-0">
+        <div className="space-y-1.5">
           {Object.entries(statusConfig).map(([key, config]) => {
             const Icon = config.icon;
             const clientesStatus = clientesPorStatus[key] || [];
@@ -47,7 +47,7 @@ export default function StatusClientesCard({ workshops = [], atendimentos = [], 
             return (
               <div 
                 key={key} 
-                className="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors"
+                className="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-1.5 rounded transition-colors"
                 onClick={() => onStatusClick && onStatusClick(key, clientesStatus)}
               >
                 <div className="flex items-center gap-2">

@@ -9,7 +9,7 @@ import AtaAIConfigPanel from "@/components/aceleracao/AtaAIConfigPanel";
 export default function AtaActionsSection({
   formData, setFormData, workshops, gerarAtaMutation, handleDeleteAta, queryClient
 }) {
-  if (formData.status !== 'realizado') return null;
+  if (formData.status !== 'realizado' && formData.status !== 'concluido') return null;
 
   return (
     <Card>

@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Video, Loader2, MessageSquare, Copy, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import { ATENDIMENTO_STATUS_COLORS as STATUS_COLORS, ATENDIMENTO_STATUS_LABELS as STATUS_LABELS } from "@/components/lib/ataConstants";
 import TipoAtendimentoManager from "@/components/aceleracao/TipoAtendimentoManager";
 import WorkshopSearchSelect from "@/components/aceleracao/WorkshopSearchSelect";
 
@@ -92,27 +94,12 @@ export default function BasicInfoSection({
           </div>
 
           <div className="flex flex-col justify-end">
-            <Label>Status *</Label>
-            <Select
-              value={formData.status}
-              onValueChange={(value) => setFormData((prev) => ({ ...prev, status: value }))}>
-              
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="agendado">Agendado</SelectItem>
-                <SelectItem value="confirmado">Confirmado</SelectItem>
-                <SelectItem value="participando">Participando</SelectItem>
-                <SelectItem value="realizado">Realizado</SelectItem>
-                <SelectItem value="atrasado">Atrasado</SelectItem>
-                <SelectItem value="reagendado">Reagendado</SelectItem>
-                <SelectItem value="cancelado">Cancelado</SelectItem>
-                <SelectItem value="faltou">Faltou</SelectItem>
-                <SelectItem value="desmarcou">Desmarcou</SelectItem>
-              </SelectContent>
-            </Select>
-
+            <Label>Status</Label>
+            <div className="h-10 flex items-center">
+              <Badge className={`${STATUS_COLORS[formData.status] || 'bg-gray-100 text-gray-800 border-gray-300'} min-w-[110px] text-center justify-center text-xs px-3 py-1.5`}>
+                {STATUS_LABELS[formData.status] || formData.status || 'Indefinido'}
+              </Badge>
+            </div>
           </div>
         </div>
 

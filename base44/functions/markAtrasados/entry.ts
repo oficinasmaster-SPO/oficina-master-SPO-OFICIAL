@@ -13,8 +13,8 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Statuses that should NOT be auto-marked
-    const finalStatuses = ['realizado', 'participando', 'atrasado', 'reagendado', 'cancelado', 'faltou', 'desmarcou'];
+    // Only mark 'confirmado' as atrasado — all others are either final or not eligible
+    const finalStatuses = ['realizado', 'concluido', 'participando', 'atrasado', 'reagendado', 'cancelado', 'faltou', 'agendado', 'a_realizar'];
 
     // Fetch all non-final atendimentos
     const atendimentos = await base44.asServiceRole.entities.ConsultoriaAtendimento.filter(
