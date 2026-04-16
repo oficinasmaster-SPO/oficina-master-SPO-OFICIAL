@@ -6,17 +6,19 @@ import { format } from "date-fns";
 import {
   ATENDIMENTO_STATUS,
   ATENDIMENTO_STATUS_LABELS,
-  ATENDIMENTO_STATUS_CHART_COLORS
+  ATENDIMENTO_STATUS_CHART_COLORS,
+  REALIZADO_SEM_ATA,
+  getVisualStatus
 } from "@/components/lib/ataConstants";
 
 const STATUS_ORDER = [
   ATENDIMENTO_STATUS.REALIZADO,
+  REALIZADO_SEM_ATA,
   ATENDIMENTO_STATUS.AGENDADO,
   ATENDIMENTO_STATUS.CONFIRMADO,
   ATENDIMENTO_STATUS.PARTICIPANDO,
   ATENDIMENTO_STATUS.ATRASADO,
   ATENDIMENTO_STATUS.REAGENDADO,
-  ATENDIMENTO_STATUS.CONCLUIDO,
   ATENDIMENTO_STATUS.A_REALIZAR,
   ATENDIMENTO_STATUS.CANCELADO,
   ATENDIMENTO_STATUS.FALTOU,
@@ -26,14 +28,14 @@ export default function GraficoAtendimentos({ atendimentos = [], workshops = [],
   const data = useMemo(() => {
     const counts = {};
     atendimentos.forEach(a => {
-      const st = a.status;
-      if (st) counts[st] = (counts[st] || 0) + 1;
+      const vs = getVisualStatus(a);
+      if (vs) counts[vs] = (counts[vs] || 0) + 1;
     });
 
     return STATUS_ORDER
       .filter(s => (counts[s] || 0) > 0)
       .map(s => ({
-        status: s,
+        status: s === REALIZADO_SEM_ATA ? ATENDIMENTO_STATUS.REALIZADO : s,
         name: (ATENDIMENTO_STATUS_LABELS[s] || s).replace('! ', ''),
         value: counts[s] || 0,
         fill: ATENDIMENTO_STATUS_CHART_COLORS[s] || '#6b7280',
