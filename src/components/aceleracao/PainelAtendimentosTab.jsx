@@ -339,12 +339,12 @@ export default function PainelAtendimentosTab({ state }) {
               <table className="w-full" style={{ minWidth: '900px' }}>
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50/50">
-                    <th className="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wider border-r border-gray-100" style={{ width: '120px' }}>Consultor</th>
-                    <th className="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wider border-r border-gray-100" style={{ width: '110px' }}>ID ATA</th>
-                    <th className="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wider border-r border-gray-100" style={{ width: '130px' }}>Criado em</th>
-                    <th className="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wider border-r border-gray-100" style={{ width: '130px' }}>Data</th>
                     <th className="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wider border-r border-gray-100">Cliente</th>
                     <th className="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wider border-r border-gray-100" style={{ width: '110px' }}>Tipo</th>
+                    <th className="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wider border-r border-gray-100" style={{ width: '120px' }}>Consultor</th>
+                    <th className="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wider border-r border-gray-100" style={{ width: '130px' }}>Data</th>
+                    <th className="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wider border-r border-gray-100" style={{ width: '130px' }}>Criado em</th>
+                    <th className="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wider border-r border-gray-100" style={{ width: '110px' }}>ID ATA</th>
                     <th className="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wider border-r border-gray-100" style={{ width: '110px' }}>Status</th>
                     <th className="text-center py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wider" style={{ width: '80px', minWidth: '80px' }}>Ações</th>
                   </tr>
@@ -396,8 +396,20 @@ export default function PainelAtendimentosTab({ state }) {
                         className="hover:bg-gray-50 transition-colors cursor-pointer"
                         onClick={() => { setVisualizarAtendimentoId(atendimento.id); setShowVisualizarAtendimento(true); }}
                       >
+                        <td className="py-3 px-3 text-sm text-gray-700 border-r border-gray-100 font-medium truncate" title={workshop?.name || '-'}>
+                          {workshop?.name || '-'}
+                        </td>
+                        <td className="py-3 px-3 text-sm text-gray-600 border-r border-gray-100 capitalize truncate" title={atendimento.tipo_atendimento?.replace(/_/g, ' ') || '-'}>
+                          {atendimento.tipo_atendimento?.replace(/_/g, ' ') || '-'}
+                        </td>
                         <td className="py-3 px-3 text-sm text-gray-700 border-r border-gray-100 font-medium truncate" title={atendimento.consultor_nome || '-'}>
                           {atendimento.consultor_nome || '-'}
+                        </td>
+                        <td className="py-3 px-3 text-sm text-gray-600 border-r border-gray-100 whitespace-nowrap">
+                          {formatDateTimeBR(atendimento.data_agendada)}
+                        </td>
+                        <td className="py-3 px-3 text-sm text-gray-500 border-r border-gray-100 whitespace-nowrap">
+                          {atendimento.created_date ? formatDateTimeBR(atendimento.created_date) : '-'}
                         </td>
                         <td className="py-3 px-3 text-sm text-gray-600 border-r border-gray-100">
                           <div className="flex items-center justify-center">
@@ -412,18 +424,6 @@ export default function PainelAtendimentosTab({ state }) {
                               </span>
                             )}
                           </div>
-                        </td>
-                        <td className="py-3 px-3 text-sm text-gray-500 border-r border-gray-100 whitespace-nowrap">
-                          {atendimento.created_date ? formatDateTimeBR(atendimento.created_date) : '-'}
-                        </td>
-                        <td className="py-3 px-3 text-sm text-gray-600 border-r border-gray-100 whitespace-nowrap">
-                          {formatDateTimeBR(atendimento.data_agendada)}
-                        </td>
-                        <td className="py-3 px-3 text-sm text-gray-700 border-r border-gray-100 font-medium truncate" title={workshop?.name || '-'}>
-                          {workshop?.name || '-'}
-                        </td>
-                        <td className="py-3 px-3 text-sm text-gray-600 border-r border-gray-100 capitalize truncate" title={atendimento.tipo_atendimento?.replace(/_/g, ' ') || '-'}>
-                          {atendimento.tipo_atendimento?.replace(/_/g, ' ') || '-'}
                         </td>
                         <td className="py-3 px-3 text-sm text-gray-600 border-r border-gray-100">
                           <Badge className={`${ATENDIMENTO_STATUS_COLORS[atendimento.status] || 'bg-gray-100 text-gray-800 border-gray-300'} text-[11px] px-2 py-1 inline-flex items-center justify-center min-w-[100px]`}>
