@@ -1,45 +1,44 @@
 import React, { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { ClipboardList, CheckCircle2, Calendar } from "lucide-react";
 import { format } from "date-fns";
+import {
+  ATENDIMENTO_STATUS,
+  ATENDIMENTO_STATUS_LABELS,
+  ATENDIMENTO_STATUS_CHART_COLORS
+} from "@/components/lib/ataConstants";
 
-export default function GraficoAtendimentos({ atendimentos = [], workshops = [] }) {
-  const contarPorStatus = () => {
-    const counts = {
-      realizado: 0,
-      agendado: 0,
-      confirmado: 0,
-      participando: 0,
-      atrasado: 0,
-      reagendado: 0,
-      cancelado: 0,
-      faltou: 0,
-      desmarcou: 0,
-      remarcado: 0
-    };
+const STATUS_ORDER = [
+  ATENDIMENTO_STATUS.REALIZADO,
+  ATENDIMENTO_STATUS.AGENDADO,
+  ATENDIMENTO_STATUS.CONFIRMADO,
+  ATENDIMENTO_STATUS.PARTICIPANDO,
+  ATENDIMENTO_STATUS.ATRASADO,
+  ATENDIMENTO_STATUS.REAGENDADO,
+  ATENDIMENTO_STATUS.CONCLUIDO,
+  ATENDIMENTO_STATUS.A_REALIZAR,
+  ATENDIMENTO_STATUS.CANCELADO,
+  ATENDIMENTO_STATUS.FALTOU,
+];
 
+export default function GraficoAtendimentos({ atendimentos = [], workshops = [], onStatusClick }) {
+  const data = useMemo(() => {
+    const counts = {};
     atendimentos.forEach(a => {
-      if (counts.hasOwnProperty(a.status)) {
-        counts[a.status]++;
-      }
+      const st = a.status;
+      if (st) counts[st] = (counts[st] || 0) + 1;
     });
 
-    return [
-      { name: 'Realizados', value: counts.realizado, fill: '#10b981' },
-      { name: 'Agendados', value: counts.agendado, fill: '#3b82f6' },
-      { name: 'Confirmados', value: counts.confirmado, fill: '#eab308' },
-      { name: 'Participando', value: counts.participando, fill: '#8b5cf6' },
-      { name: 'Atrasados', value: counts.atrasado, fill: '#ef4444' },
-      { name: 'Reagendados', value: counts.reagendado, fill: '#f59e0b' },
-      { name: 'Cancelados', value: counts.cancelado, fill: '#6b7280' },
-      { name: 'Faltou', value: counts.faltou, fill: '#dc2626' },
-      { name: 'Desmarcou', value: counts.desmarcou, fill: '#9ca3af' },
-      { name: 'Remarcado', value: counts.remarcado, fill: '#f97316' }
-    ].filter(item => item.value > 0);
-  };
-
-  const data = contarPorStatus();
+    return STATUS_ORDER
+      .filter(s => (counts[s] || 0) > 0)
+      .map(s => ({
+        status: s,
+        name: (ATENDIMENTO_STATUS_LABELS[s] || s).replace('! ', ''),
+        value: counts[s] || 0,
+        fill: ATENDIMENTO_STATUS_CHART_COLORS[s] || '#6b7280',
+      }));
+  }, [atendimentos]);
 
   // Últimas reuniões realizadas (até 8)
   const reunioesRecentes = React.useMemo(() => {
@@ -82,8 +81,12 @@ export default function GraficoAtendimentos({ atendimentos = [], workshops = [] 
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="name" tick={{ fontSize: 10 }} interval={0} angle={-25} textAnchor="end" height={50} />
             <YAxis tick={{ fontSize: 10 }} />
-            <Tooltip />
-            <Bar dataKey="value" fill="#8884d8" />
+            <Tooltip formatter={(value) => [value, 'Atendimentos']} />
+            <Bar dataKey="value" cursor="pointer" onClick={(entry) => onStatusClick?.(entry.status)}>
+              {data.map((entry) => (
+                <Cell key={entry.status} fill={entry.fill} />
+              ))}
+            </Bar>
           </BarChart>
         </ResponsiveContainer>
 

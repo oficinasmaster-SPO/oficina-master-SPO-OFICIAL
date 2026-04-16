@@ -243,7 +243,14 @@ export default function VisaoGeralTab({ state }) {
       />
 
       <div className="grid md:grid-cols-2 gap-6">
-        <GraficoAtendimentos atendimentos={atendimentosPeriodo} workshops={workshops} />
+        <GraficoAtendimentos
+          atendimentos={atendimentosPeriodo}
+          workshops={workshops}
+          onStatusClick={(status) => {
+            setPendingSubTab(status);
+            setActiveTab("atendimentos");
+          }}
+        />
         <AgendaVisual atendimentos={atendimentos} workshops={workshops} user={user} />
       </div>
 
