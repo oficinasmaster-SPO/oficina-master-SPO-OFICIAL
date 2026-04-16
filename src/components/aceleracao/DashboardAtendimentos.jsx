@@ -74,17 +74,17 @@ export default function DashboardAtendimentos({ atendimentos = [] }) {
       </div>
 
       {/* Distribuição por Tipo — compacta inline */}
-      {tiposOrdenados.length > 0 && (
-        <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex items-center gap-2 flex-wrap min-h-[28px]">
+        {tiposOrdenados.length > 0 && (
           <span className="text-xs font-medium text-gray-500">Tipos:</span>
-          {tiposOrdenados.map(([tipo, quantidade]) => (
-            <span key={tipo} className="inline-flex items-center gap-1 text-xs bg-gray-100 text-gray-700 rounded-full px-2.5 py-1 border border-gray-200">
-              <span className="font-semibold">{quantidade}</span>
-              <span className="text-gray-500">{formatarTipo(tipo)}</span>
-            </span>
-          ))}
-        </div>
-      )}
+        )}
+        {tiposOrdenados.map(([tipo, quantidade]) => (
+          <span key={tipo} className="inline-flex items-center gap-1 text-xs bg-gray-100 text-gray-700 rounded-full px-2.5 py-1 border border-gray-200">
+            <span className="font-semibold">{quantidade}</span>
+            <span className="text-gray-500">{formatarTipo(tipo)}</span>
+          </span>
+        ))}
+      </div>
     </div>
   );
 }
