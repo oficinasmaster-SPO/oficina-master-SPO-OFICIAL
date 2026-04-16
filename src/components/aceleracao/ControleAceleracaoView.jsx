@@ -100,7 +100,7 @@ export default function ControleAceleracaoView({ state }) {
   const counts = useMemo(() => {
     const hoje = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
     const atrasados = (atendimentosPeriodo || []).filter(a => {
-      if (a.status === 'realizado') return false;
+      if (a.status === 'realizado' || a.status === 'concluido') return false;
       const d = new Date(a.data_agendada).toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
       return d < hoje;
     }).length;

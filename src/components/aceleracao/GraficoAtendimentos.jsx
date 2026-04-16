@@ -6,14 +6,12 @@ import { format } from "date-fns";
 import {
   ATENDIMENTO_STATUS,
   ATENDIMENTO_STATUS_LABELS,
-  ATENDIMENTO_STATUS_CHART_COLORS,
-  REALIZADO_SEM_ATA,
-  getVisualStatus
+  ATENDIMENTO_STATUS_CHART_COLORS
 } from "@/components/lib/ataConstants";
 
 const STATUS_ORDER = [
+  ATENDIMENTO_STATUS.CONCLUIDO,
   ATENDIMENTO_STATUS.REALIZADO,
-  REALIZADO_SEM_ATA,
   ATENDIMENTO_STATUS.AGENDADO,
   ATENDIMENTO_STATUS.CONFIRMADO,
   ATENDIMENTO_STATUS.PARTICIPANDO,
@@ -28,14 +26,14 @@ export default function GraficoAtendimentos({ atendimentos = [], workshops = [],
   const data = useMemo(() => {
     const counts = {};
     atendimentos.forEach(a => {
-      const vs = getVisualStatus(a);
-      if (vs) counts[vs] = (counts[vs] || 0) + 1;
+      const st = a.status;
+      if (st) counts[st] = (counts[st] || 0) + 1;
     });
 
     return STATUS_ORDER
       .filter(s => (counts[s] || 0) > 0)
       .map(s => ({
-        status: s === REALIZADO_SEM_ATA ? ATENDIMENTO_STATUS.REALIZADO : s,
+        status: s,
         name: (ATENDIMENTO_STATUS_LABELS[s] || s).replace('! ', ''),
         value: counts[s] || 0,
         fill: ATENDIMENTO_STATUS_CHART_COLORS[s] || '#6b7280',
@@ -45,7 +43,7 @@ export default function GraficoAtendimentos({ atendimentos = [], workshops = [],
   // Últimas reuniões realizadas (até 8)
   const reunioesRecentes = React.useMemo(() => {
     return atendimentos
-      .filter(a => a.status === 'realizado')
+      .filter(a => a.status === 'concluido' || a.status === 'realizado')
       .sort((a, b) => new Date(b.data_realizada || b.data_agendada) - new Date(a.data_realizada || a.data_agendada))
       .slice(0, 6);
   }, [atendimentos]);

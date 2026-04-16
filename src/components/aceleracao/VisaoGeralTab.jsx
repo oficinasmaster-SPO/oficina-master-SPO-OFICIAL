@@ -40,7 +40,7 @@ export default function VisaoGeralTab({ state }) {
   const hoje = useMemo(() => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' }), []);
 
   const { reunioesRealizadas, totalHorasRealizadas } = useMemo(() => {
-    const realizados = atendimentosPeriodo.filter(a => a.status === 'realizado');
+    const realizados = atendimentosPeriodo.filter(a => a.status === 'realizado' || a.status === 'concluido');
     return {
       reunioesRealizadas: realizados.length,
       totalHorasRealizadas: realizados.reduce((acc, a) => acc + (a.duracao_real_minutos || a.duracao_minutos || 0), 0),
@@ -78,7 +78,7 @@ export default function VisaoGeralTab({ state }) {
           </CardContent>
         </Card>
 
-        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setModalReunioes({ isOpen: true, tipo: 'realizadas', reunioes: atendimentosPeriodo.filter(a => a.status === 'realizado') })}>
+        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setModalReunioes({ isOpen: true, tipo: 'realizadas', reunioes: atendimentosPeriodo.filter(a => a.status === 'realizado' || a.status === 'concluido') })}>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Reuniões Realizadas</CardTitle>
             <CheckCircle className="h-4 w-4 text-green-600" />

@@ -53,6 +53,7 @@
         "agendado",
         "confirmado",
         "realizado",
+        "concluido",
         "cancelado",
         "remarcado",
         "faltou",

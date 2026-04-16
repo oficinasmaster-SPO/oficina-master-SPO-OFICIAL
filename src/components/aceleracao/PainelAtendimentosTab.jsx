@@ -21,7 +21,7 @@ import FaltouAtendimentoDialog from "./FaltouAtendimentoDialog";
 import ConcluirAtendimentoDialog from "./ConcluirAtendimentoDialog";
 import BucketAtendimentosTab from "./BucketAtendimentosTab";
 import DashboardAtendimentos from "./DashboardAtendimentos";
-import { ATENDIMENTO_STATUS, ATENDIMENTO_STATUS_COLORS, ATENDIMENTO_STATUS_LABELS, REALIZADO_SEM_ATA, getVisualStatus } from "@/components/lib/ataConstants";
+import { ATENDIMENTO_STATUS, ATENDIMENTO_STATUS_COLORS, ATENDIMENTO_STATUS_LABELS } from "@/components/lib/ataConstants";
 import { format } from "date-fns";
 import { toBrazilDate, formatDateTimeBR } from "@/utils/timezone";
 import { useNavigate } from "react-router-dom";
@@ -241,6 +241,7 @@ export default function PainelAtendimentosTab({ state }) {
               { value: ATENDIMENTO_STATUS.ATRASADO, label: 'Atrasados' },
               { value: ATENDIMENTO_STATUS.REAGENDADO, label: 'Reagendados' },
               { value: ATENDIMENTO_STATUS.REALIZADO, label: 'Realizados' },
+              { value: ATENDIMENTO_STATUS.CONCLUIDO, label: 'Concluídos' },
               { value: 'bucket', label: '📥 Bucket' },
             ].map(tab => (
               <button
@@ -425,16 +426,11 @@ export default function PainelAtendimentosTab({ state }) {
                           {atendimento.tipo_atendimento?.replace(/_/g, ' ') || '-'}
                         </td>
                         <td className="py-3 px-3 text-sm text-gray-600 border-r border-gray-100">
-                          {(() => {
-                            const vs = getVisualStatus(atendimento);
-                            return (
-                              <Badge className={`${ATENDIMENTO_STATUS_COLORS[vs] || 'bg-gray-100 text-gray-800 border-gray-300'} text-[11px] px-2 py-1 inline-flex items-center justify-center min-w-[100px]`}>
-                                {vs === REALIZADO_SEM_ATA && <AlertTriangle className="w-3 h-3 mr-1" />}
-                                {atendimento.status === ATENDIMENTO_STATUS.ATRASADO && <AlertTriangle className="w-3 h-3 mr-1" />}
-                                {ATENDIMENTO_STATUS_LABELS[vs] || atendimento.status || 'Indefinido'}
-                              </Badge>
-                            );
-                          })()}
+                          <Badge className={`${ATENDIMENTO_STATUS_COLORS[atendimento.status] || 'bg-gray-100 text-gray-800 border-gray-300'} text-[11px] px-2 py-1 inline-flex items-center justify-center min-w-[100px]`}>
+                            {atendimento.status === ATENDIMENTO_STATUS.ATRASADO && <AlertTriangle className="w-3 h-3 mr-1" />}
+                            {atendimento.status === ATENDIMENTO_STATUS.REALIZADO && <AlertTriangle className="w-3 h-3 mr-1" />}
+                            {ATENDIMENTO_STATUS_LABELS[atendimento.status] || atendimento.status || 'Indefinido'}
+                          </Badge>
                         </td>
                         <td className="py-3 px-3" onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center justify-center">
@@ -485,7 +481,7 @@ export default function PainelAtendimentosTab({ state }) {
                                 )}
 
                                 {/* Cancelar */}
-                                {!['cancelado', 'faltou'].includes(atendimento.status) && (
+                                {!['cancelado', 'faltou', 'concluido'].includes(atendimento.status) && (
                                   <DropdownMenuItem onClick={() => { setActionAtendimento(atendimento); setShowCancelar(true); }} className="cursor-pointer">
                                     <StopCircle className="mr-2 h-4 w-4 text-red-600" />
                                     <span>Cancelar</span>
@@ -515,7 +511,7 @@ export default function PainelAtendimentosTab({ state }) {
                                   </DropdownMenuItem>
                                 )}
 
-                                {!atendimento.ata_id && atendimento.status === ATENDIMENTO_STATUS.REALIZADO && (
+                                {!atendimento.ata_id && (atendimento.status === ATENDIMENTO_STATUS.REALIZADO || atendimento.status === ATENDIMENTO_STATUS.CONCLUIDO) && (
                                   <DropdownMenuItem onClick={() => { setSelectedAtendimento(atendimento); setShowGerarAta(true); }} className="cursor-pointer">
                                     <FilePlus className="mr-2 h-4 w-4 text-blue-600" />
                                     <span>Gerar ATA</span>
