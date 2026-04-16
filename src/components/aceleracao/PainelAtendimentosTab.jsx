@@ -324,25 +324,6 @@ export default function PainelAtendimentosTab({ state }) {
               Consultor: {consultores.find(c => c.id === state.consultorEfetivo)?.full_name || 'Selecionado'}
             </div>
           )}
-          {/* Filtro rápido A Definir */}
-          <button
-            type="button"
-            onClick={() => {
-              if (localFilters.searchTerm === 'A Definir') {
-                setLocalFilters(prev => ({ ...prev, searchTerm: '' }));
-              } else {
-                setLocalFilters(prev => ({ ...prev, searchTerm: 'A Definir' }));
-                setFiltros({ ...filtros, preset: 'all', dataInicio: null, dataFim: null });
-              }
-            }}
-            className={`h-9 px-3 rounded-md text-sm font-medium border transition-colors whitespace-nowrap ${
-              localFilters.searchTerm === 'A Definir'
-                ? 'bg-orange-600 text-white border-orange-600'
-                : 'bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100'
-            }`}
-          >
-            ⚠️ A Definir {localFilters.searchTerm !== 'A Definir' && `(${atendimentos.filter(a => a.consultor_nome === 'A Definir').length})`}
-          </button>
         </div>
       </div>
 
