@@ -1,4 +1,5 @@
 import React, { useState, Suspense, lazy, useMemo, useCallback, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -71,6 +72,15 @@ export default function ControleAceleracaoView({ state }) {
     setActiveTab(newTab);
   }, [setActiveTab, trackTabChange, markVisited]);
 
+  const queryClient = useQueryClient();
+
+  const handleCloseModal = useCallback(() => {
+    closeModal();
+    // Refresh attendance list to reflect any changes made in the modal (auto-save, etc.)
+    queryClient.invalidateQueries({ queryKey: ['atendimentos-acelerador'] });
+    queryClient.invalidateQueries({ queryKey: ['meeting-minutes'] });
+  }, [closeModal, queryClient]);
+
   const handleOpenModal = useCallback((id) => {
     trackAtendimentoOpen(id);
     openModal(id);
@@ -137,7 +147,7 @@ export default function ControleAceleracaoView({ state }) {
           isModal={true}
           atendimentoId={atendimentoId}
           consultoresExternos={consultores}
-          onClose={closeModal}
+          onClose={handleCloseModal}
         />
       )}
 

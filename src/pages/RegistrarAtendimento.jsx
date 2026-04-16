@@ -417,6 +417,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['consultoria-atendimentos'] });
+      queryClient.invalidateQueries({ queryKey: ['atendimentos-acelerador'] });
       queryClient.invalidateQueries({ queryKey: ['meeting-minutes'] });
       queryClient.invalidateQueries({ queryKey: ['todos-atendimentos'] });
       setSaveSuccess(true);
