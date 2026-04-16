@@ -113,14 +113,11 @@ export default function VisaoGeralTab({ state }) {
       </div>
 
       <div className="grid md:grid-cols-3 gap-6">
-        <div className="space-y-4">
-          <StatusClientesCard
-            workshops={workshops}
-            atendimentos={atendimentos}
-            onStatusClick={(tipo, clientes) => setModalClientes({ isOpen: true, tipo, clientes })}
-          />
-          <BucketARealizarCard />
-        </div>
+        <StatusClientesCard
+          workshops={workshops}
+          atendimentos={atendimentos}
+          onStatusClick={(tipo, clientes) => setModalClientes({ isOpen: true, tipo, clientes })}
+        />
 
         <Card>
           <CardHeader>
@@ -238,6 +235,8 @@ export default function VisaoGeralTab({ state }) {
         tipo={modalReunioes.tipo}
         workshops={workshops}
       />
+
+      <BucketARealizarCard />
 
       <div className="grid md:grid-cols-2 gap-6">
         <GraficoAtendimentos atendimentos={atendimentosPeriodo} workshops={workshops} />
