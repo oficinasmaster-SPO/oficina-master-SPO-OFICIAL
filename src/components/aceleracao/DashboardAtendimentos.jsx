@@ -1,51 +1,19 @@
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { FileText, BarChart3 } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, Cell, ResponsiveContainer } from "recharts";
-import { ATENDIMENTO_STATUS, ATENDIMENTO_STATUS_LABELS, ATENDIMENTO_STATUS_CHART_COLORS } from "@/components/lib/ataConstants";
 
-const STATUS_ORDER = [
-  ATENDIMENTO_STATUS.AGENDADO,
-  ATENDIMENTO_STATUS.CONFIRMADO,
-  ATENDIMENTO_STATUS.PARTICIPANDO,
-  ATENDIMENTO_STATUS.ATRASADO,
-  ATENDIMENTO_STATUS.REAGENDADO,
-  ATENDIMENTO_STATUS.REALIZADO,
-  ATENDIMENTO_STATUS.CONCLUIDO,
-  ATENDIMENTO_STATUS.A_REALIZAR,
-  ATENDIMENTO_STATUS.CANCELADO,
-  ATENDIMENTO_STATUS.FALTOU,
-];
-
-export default function DashboardAtendimentos({ atendimentos = [], onStatusClick }) {
-  const { estatisticas, statusData } = React.useMemo(() => {
+export default function DashboardAtendimentos({ atendimentos = [] }) {
+  const estatisticas = React.useMemo(() => {
     const grupos = {};
-    const statusCount = {};
     let totalAtas = 0;
 
     atendimentos.forEach(atendimento => {
       const tipo = atendimento.tipo_atendimento || "outros";
       grupos[tipo] = (grupos[tipo] || 0) + 1;
-
-      const st = atendimento.status || "indefinido";
-      statusCount[st] = (statusCount[st] || 0) + 1;
-
       if (atendimento.ata_id) totalAtas++;
     });
 
-    const statusData = STATUS_ORDER
-      .filter(s => (statusCount[s] || 0) > 0)
-      .map(s => ({
-        status: s,
-        label: ATENDIMENTO_STATUS_LABELS[s] || s,
-        count: statusCount[s] || 0,
-        color: ATENDIMENTO_STATUS_CHART_COLORS[s] || '#6b7280',
-      }));
-
-    return {
-      estatisticas: { grupos, totalAtas, totalAtendimentos: atendimentos.length },
-      statusData,
-    };
+    return { grupos, totalAtas, totalAtendimentos: atendimentos.length };
   }, [atendimentos]);
 
   const formatarTipo = (tipo) => {
@@ -104,46 +72,6 @@ export default function DashboardAtendimentos({ atendimentos = [], onStatusClick
           </CardContent>
         </Card>
       </div>
-
-      {/* Gráfico de Status */}
-      {statusData.length > 0 && (
-        <Card className="border-gray-200">
-          <CardContent className="pt-4 pb-2 px-4">
-            <h3 className="text-xs font-semibold text-gray-600 mb-2 flex items-center gap-1.5">
-              <BarChart3 className="w-3.5 h-3.5" />
-              Status de Atendimento
-            </h3>
-            <ResponsiveContainer width="100%" height={statusData.length * 32 + 8}>
-              <BarChart data={statusData} layout="vertical" margin={{ top: 0, right: 30, left: 0, bottom: 0 }}>
-                <XAxis type="number" hide />
-                <YAxis
-                  type="category"
-                  dataKey="label"
-                  width={100}
-                  tick={{ fontSize: 11, fill: '#4b5563' }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <Tooltip
-                  formatter={(value) => [value, 'Atendimentos']}
-                  contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }}
-                />
-                <Bar
-                  dataKey="count"
-                  radius={[0, 4, 4, 0]}
-                  barSize={20}
-                  cursor="pointer"
-                  onClick={(data) => onStatusClick?.(data.status)}
-                >
-                  {statusData.map((entry) => (
-                    <Cell key={entry.status} fill={entry.color} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Distribuição por Tipo — compacta inline */}
       {tiposOrdenados.length > 0 && (
