@@ -48,7 +48,7 @@ export default function PainelAtendimentosTab({ state }) {
   const [selectedAtendimento, setSelectedAtendimento] = useState(null);
   const [actionAtendimento, setActionAtendimento] = useState(null);
   const [selectedAta, setSelectedAta] = useState(null);
-  const [activeTab, setActiveTab] = useState("todos");
+  const [activeTab, setActiveTab] = useState(state.pendingSubTab || "todos");
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [deleteFollowUp, setDeleteFollowUp] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -59,6 +59,14 @@ export default function PainelAtendimentosTab({ state }) {
   const [localFilters, setLocalFilters] = useState({
     searchTerm: ""
   });
+
+  // Consume pending sub-tab from cross-tab navigation
+  useEffect(() => {
+    if (state.pendingSubTab) {
+      setActiveTab(state.pendingSubTab);
+      state.setPendingSubTab(null);
+    }
+  }, [state.pendingSubTab]);
 
   // Auto-mark de atrasados agora é feito server-side via markAtrasados function
   // Chamado uma vez no ControleAceleracaoView ao montar

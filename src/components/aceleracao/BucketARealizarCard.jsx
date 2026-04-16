@@ -5,7 +5,7 @@ import { Inbox } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 
-export default function BucketARealizarCard() {
+export default function BucketARealizarCard({ onNavigate }) {
   const { data: bucketItems = [] } = useQuery({
     queryKey: ['bucket-atendimentos'],
     queryFn: async () => {
@@ -20,7 +20,7 @@ export default function BucketARealizarCard() {
   });
 
   return (
-    <Card>
+    <Card className={onNavigate ? "cursor-pointer hover:shadow-md transition-shadow" : ""} onClick={onNavigate}>
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-medium flex items-center gap-2">
           <Inbox className="w-4 h-4 text-indigo-600" />

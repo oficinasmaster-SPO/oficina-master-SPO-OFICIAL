@@ -32,7 +32,7 @@ function getMouseEnterSide(e) {
 }
 
 export default function VisaoGeralTab({ state }) {
-  const { user, workshops, workshopMap, atendimentos, atendimentosPeriodo } = state;
+  const { user, workshops, workshopMap, atendimentos, atendimentosPeriodo, setActiveTab, setPendingSubTab } = state;
   const [modalClientes, setModalClientes] = useState({ isOpen: false, tipo: null, clientes: [] });
   const [modalReunioes, setModalReunioes] = useState({ isOpen: false, tipo: null, reunioes: [] });
   const [hoverSides, setHoverSides] = useState({});
@@ -119,7 +119,10 @@ export default function VisaoGeralTab({ state }) {
             atendimentos={atendimentos}
             onStatusClick={(tipo, clientes) => setModalClientes({ isOpen: true, tipo, clientes })}
           />
-          <BucketARealizarCard />
+          <BucketARealizarCard onNavigate={() => {
+            setPendingSubTab("bucket");
+            setActiveTab("atendimentos");
+          }} />
         </div>
 
         <Card>

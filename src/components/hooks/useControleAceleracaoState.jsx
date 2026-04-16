@@ -1,4 +1,4 @@
-import { useMemo, useEffect, useRef } from "react";
+import { useMemo, useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import useWorkshopsAtivos from "./useWorkshopsAtivos";
@@ -20,6 +20,9 @@ export default function useControleAceleracaoState() {
   // ── 1. URL state ──
   const urlState = useControleAceleracaoURLState();
   const { filtros, setFiltros, activeTab, setActiveTab, isModalOpen, atendimentoId, openModal, closeModal } = urlState;
+
+  // ── 1b. Pending sub-tab (for cross-tab navigation, e.g. bucket card → atendimentos/bucket) ──
+  const [pendingSubTab, setPendingSubTab] = useState(null);
 
   // ── 2. Auth ──
   const { data: user, isLoading: loadingUser } = useQuery({
@@ -104,6 +107,7 @@ export default function useControleAceleracaoState() {
     loadingUser,
     // URL-synced
     activeTab, setActiveTab,
+    pendingSubTab, setPendingSubTab,
     isModalOpen, atendimentoId, openModal, closeModal,
     // Filtros
     filtros, setFiltros, consultorEfetivo,
