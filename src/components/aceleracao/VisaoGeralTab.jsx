@@ -211,7 +211,7 @@ export default function VisaoGeralTab({ state }) {
                 {tarefasPendentes.slice(0, 5).map((atendimento) => (
                   <div key={atendimento.id} className="border-l-4 border-red-500 pl-3 py-2">
                     <div className="flex items-start justify-between gap-2">
-                      <p className="font-medium text-sm truncate">{atendimento.tipo_atendimento}</p>
+                      <p className="font-medium text-sm break-all">{atendimento.tipo_atendimento}</p>
                       {atendimento.consultor_nome && (
                         <p className="text-xs text-gray-500 font-medium text-right truncate flex-shrink-0 max-w-[45%]">
                           {atendimento.consultor_nome}
