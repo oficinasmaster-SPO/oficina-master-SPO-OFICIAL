@@ -59,7 +59,6 @@ const ConfiguracaoPermissoesGranulares = lazy(() => import('./pages/Configuracao
 const ConfiguracoesKiwify = lazy(() => import('./pages/ConfiguracoesKiwify'));
 const ConfiguracoesNotificacao = lazy(() => import('./pages/ConfiguracoesNotificacao'));
 const ConsolidadoMensal = lazy(() => import('./pages/ConsolidadoMensal'));
-const ControleAceleracao = lazy(() => import('./pages/ControleAceleracao'));
 const ConvidarColaborador = lazy(() => import('./pages/ConvidarColaborador'));
 const CriarDescricaoCargo = lazy(() => import('./pages/CriarDescricaoCargo'));
 const CriarRitualMAP = lazy(() => import('./pages/CriarRitualMAP'));
@@ -238,7 +237,6 @@ export const PAGES = {
     "ConfiguracoesKiwify": ConfiguracoesKiwify,
     "ConfiguracoesNotificacao": ConfiguracoesNotificacao,
     "ConsolidadoMensal": ConsolidadoMensal,
-    "ControleAceleracao": ControleAceleracao,
     "ConvidarColaborador": ConvidarColaborador,
     "CriarDescricaoCargo": CriarDescricaoCargo,
     "CriarRitualMAP": CriarRitualMAP,
