@@ -210,8 +210,22 @@ export default function VisaoGeralTab({ state }) {
               <div className="space-y-3">
                 {tarefasPendentes.slice(0, 5).map((atendimento) => (
                   <div key={atendimento.id} className="border-l-4 border-red-500 pl-3 py-2">
-                    <p className="font-medium text-sm">{atendimento.tipo_atendimento}</p>
-                    <p className="text-xs text-red-600">Previsto: {formatDateTimeBR(atendimento.data_agendada)}</p>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="font-medium text-sm">{atendimento.tipo_atendimento}</p>
+                        <p className="text-xs text-red-600">Previsto: {formatDateTimeBR(atendimento.data_agendada)}</p>
+                      </div>
+                      {atendimento.consultor_nome && (
+                        <p className="text-xs text-gray-500 font-medium text-right truncate flex-shrink-0 max-w-[45%]">
+                          {atendimento.consultor_nome}
+                        </p>
+                      )}
+                    </div>
+                    {workshopMap?.[atendimento.workshop_id]?.name && (
+                      <p className="text-xs text-gray-400 text-right mt-0.5">
+                        {workshopMap[atendimento.workshop_id].name}
+                      </p>
+                    )}
                   </div>
                 ))}
                 {tarefasPendentes.length > 0 && (
