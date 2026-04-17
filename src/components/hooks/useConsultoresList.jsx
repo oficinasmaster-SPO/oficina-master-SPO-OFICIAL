@@ -19,10 +19,16 @@ export default function useConsultoresList(user) {
           consultoresMap.set(e.user_id, e.full_name);
         });
 
-      // Garante que o usuário logado aparece na lista, mas SEM
-      // sobrescrever o nome do Employee (que é o nome real da pessoa).
+      // Garante que o usuário logado aparece na lista.
+      // Tenta buscar pelo email também, caso o user_id não esteja vinculado.
       if (user?.id && !consultoresMap.has(user.id)) {
-        consultoresMap.set(user.id, user.full_name);
+        // Tenta encontrar o employee pelo email do usuário
+        const employeeByEmail = employees.find(e => e.email === user.email);
+        if (employeeByEmail) {
+          consultoresMap.set(user.id, employeeByEmail.full_name);
+        } else {
+          consultoresMap.set(user.id, user.full_name);
+        }
       }
 
       return Array.from(consultoresMap.entries()).map(([id, full_name]) => ({

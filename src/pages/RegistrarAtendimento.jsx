@@ -325,13 +325,11 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
 
       const dataHora = `${data.data_agendada}T${data.hora_agendada}:00`;
 
-      // I1: Use consultor_nome from consultores list (Employee name) if available
-      let consultorNome = data.consultor_nome;
-      if (!consultorNome || consultorNome === user.full_name) {
-        const consultorId = data.consultor_id || user.id;
-        const consultor = consultores?.find(c => c.id === consultorId);
-        consultorNome = consultor?.full_name || user.full_name;
-      }
+      // I1: Use consultor_nome from consultores list (Employee name) — always prefer Employee name over user.full_name
+      const consultorId = data.consultor_id || user.id;
+      const consultor = consultores?.find(c => c.id === consultorId);
+      // Always use the employee's real name if found in the consultores list
+      let consultorNome = consultor?.full_name || data.consultor_nome || user.full_name;
 
       const atendimentoData = {
         workshop_id: data.workshop_id,
