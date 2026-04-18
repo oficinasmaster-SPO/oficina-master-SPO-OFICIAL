@@ -1,8 +1,8 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ import VisualizarAtaModal from "@/components/aceleracao/VisualizarAtaModal";
 
 export default function CronogramaConsultoria() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [selectedAta, setSelectedAta] = useState(null);
   const [showVisualizarAta, setShowVisualizarAta] = useState(false);
   const [filters, setFilters] = useState({
@@ -143,6 +144,20 @@ export default function CronogramaConsultoria() {
     },
     enabled: !!activeWorkshopId
   });
+
+  // Hook: Subscription para ATAs em tempo real
+  useEffect(() => {
+    if (!activeWorkshopId) return;
+
+    const unsubscribe = base44.entities.MeetingMinutes.subscribe((event) => {
+      if (event.data?.workshop_id === activeWorkshopId) {
+        // Refetch instantaneamente quando ATA muda
+        queryClient.refetchQueries(['meeting-minutes', activeWorkshopId]);
+      }
+    });
+
+    return unsubscribe;
+  }, [activeWorkshopId, queryClient]);
 
   // Segmentação por data
   const hoje = new Date();
