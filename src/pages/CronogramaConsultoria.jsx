@@ -15,6 +15,7 @@ import AtaPrintLayout from "@/components/aceleracao/AtaPrintLayout";
 import AtaSearchFilters from "@/components/aceleracao/AtaSearchFilters";
 import { useAtaSearch } from "@/components/aceleracao/useAtaSearch";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import EventosTab from "@/components/aceleracao/EventosTab";
 
 export default function CronogramaConsultoria() {
   const navigate = useNavigate();
@@ -259,6 +260,13 @@ export default function CronogramaConsultoria() {
             {(followUpsRealizados?.length || 0) > 0 && (
               <Badge className="ml-2 bg-green-100 text-green-700 text-xs">{followUpsRealizados?.length}</Badge>
             )}
+          </TabsTrigger>
+          <TabsTrigger
+            value="eventos"
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-700 data-[state=active]:bg-transparent px-6 py-3 font-medium"
+          >
+            <Calendar className="w-4 h-4 mr-2" />
+            Eventos
           </TabsTrigger>
         </TabsList>
 
@@ -588,6 +596,14 @@ export default function CronogramaConsultoria() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+        {/* ABA 4: Eventos */}
+        <TabsContent value="eventos" className="mt-4">
+          <EventosTab
+            workshop={workshop}
+            activeWorkshopId={activeWorkshopId}
+            user={user}
+          />
         </TabsContent>
       </Tabs>
 
