@@ -25,13 +25,14 @@ export default function EventosTab({ workshop, activeWorkshopId, user }) {
     queryFn: () =>
       base44.entities.EventCalendar.filter({ is_active: true }, "event_date"),
     staleTime: 0,
+    gcTime: 0,
   });
 
   // Plano atual do workshop — pode vir em data.planoAtual ou direto no objeto
   const planoAtual = workshop?.planoAtual || workshop?.data?.planoAtual;
 
   // Carregar regras do plano da oficina para identificar eventos inclusos
-  const { data: planRules = [] } = useQuery({
+  const { data: planRules = [], isLoading: loadingRules } = useQuery({
     queryKey: ["plan-rules-workshop", activeWorkshopId, planoAtual],
     queryFn: async () => {
       if (!planoAtual) return [];
@@ -42,6 +43,8 @@ export default function EventosTab({ workshop, activeWorkshopId, user }) {
       return rules;
     },
     enabled: !!activeWorkshopId && !!planoAtual,
+    staleTime: 0,
+    gcTime: 0,
   });
 
   // Inscrições já feitas pela oficina
@@ -91,7 +94,7 @@ export default function EventosTab({ workshop, activeWorkshopId, user }) {
     setShowModal(true);
   };
 
-  if (loadingEventos || (!!activeWorkshopId && !planoAtual)) {
+  if (loadingEventos || loadingRules || (!!activeWorkshopId && !planoAtual)) {
     return (
       <div className="flex items-center justify-center py-16 text-gray-500">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3" />
