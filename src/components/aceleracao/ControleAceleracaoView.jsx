@@ -77,7 +77,9 @@ export default function ControleAceleracaoView({ state }) {
   const handleCloseModal = useCallback(() => {
     closeModal();
     // Refresh attendance list to reflect any changes made in the modal (auto-save, etc.)
+    // Invalida com prefixo para cobrir todas as variações da chave
     queryClient.invalidateQueries({ queryKey: ['atendimentos-acelerador'] });
+    queryClient.invalidateQueries({ queryKey: ['consultoria-atendimentos'] });
     queryClient.invalidateQueries({ queryKey: ['meeting-minutes'] });
   }, [closeModal, queryClient]);
 

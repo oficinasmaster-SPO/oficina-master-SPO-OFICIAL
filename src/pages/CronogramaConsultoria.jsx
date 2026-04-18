@@ -68,18 +68,20 @@ export default function CronogramaConsultoria() {
   const activeWorkshopId = workshop?.id;
 
   // ✅ Filtro único por empresa logada — sem exceções por perfil
+  // NOTA: queryKey alinhado com o usado em ControleAceleracao para que invalidações funcionem
   const { data: allAtendimentos, isLoading: loadingAtendimentos } = useQuery({
-    queryKey: ['consultoria-atendimentos', activeWorkshopId],
+    queryKey: ['consultoria-atendimentos', user?.id, activeWorkshopId],
     queryFn: async () => {
       if (!activeWorkshopId) return [];
       return await base44.entities.ConsultoriaAtendimento.filter(
         { workshop_id: activeWorkshopId },
-        '-data_agendada'
+        '-data_agendada',
+        500
       );
     },
-    enabled: !!activeWorkshopId,
-    staleTime: 0,
-    gcTime: 0,
+    enabled: !!activeWorkshopId && !!user?.id,
+    staleTime: 2 * 60 * 1000,
+    refetchInterval: 5 * 60 * 1000,
   });
 
   const { data: allAtas, isLoading: loadingAtas } = useQuery({
