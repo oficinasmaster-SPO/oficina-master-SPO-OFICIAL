@@ -57,8 +57,32 @@ export default function PainelClienteAceleracao() {
     retry: false
   });
 
+  // Buscar recursos do plano
+  const { data: planFeatures = [] } = useQuery({
+    queryKey: ['plan-features'],
+    queryFn: () => base44.entities.PlanFeature.list(),
+    enabled: !!workshop?.id,
+    staleTime: 5 * 60 * 1000,
+    retry: false
+  });
+
+  // Buscar regras de atendimento do plano
+  const { data: planAttendanceRules = [] } = useQuery({
+    queryKey: ['plan-attendance-rules', workshop?.planoAtual],
+    queryFn: async () => {
+      if (!workshop?.planoAtual) return [];
+      return await base44.entities.PlanAttendanceRule.filter({ 
+        plan_id: workshop.planoAtual, 
+        is_active: true 
+      });
+    },
+    enabled: !!workshop?.planoAtual,
+    staleTime: 5 * 60 * 1000,
+    retry: false
+  });
+
   // Buscar progresso do cronograma de implementação
-  const { data: progressoItems } = useQuery({
+  const { data: cronogramaItems = [] } = useQuery({
     queryKey: ['progresso-implementacao', workshop?.id],
     queryFn: () => base44.entities.CronogramaImplementacao.filter({ workshop_id: workshop.id }),
     enabled: !!workshop?.id,
@@ -241,6 +265,51 @@ export default function PainelClienteAceleracao() {
     a.status === 'realizado' && a.ata_ia
   ).slice(0, 5) || [];
 
+  // Configuração do plano atual
+  const currentPlanData = planFeatures.find(p => p.plan_id === workshop?.planoAtual);
+  
+  // Combinar itens do cronograma com itens configurados no plano
+  const allPlanItems = [
+    ...(currentPlanData?.cronograma_features || []).map(f => ({
+      codigo: f,
+      nome: f.replace(/_/g, ' ').toUpperCase(),
+      tipo: 'funcionalidade'
+    })),
+    ...(currentPlanData?.cronograma_modules || []).map(m => ({
+      codigo: m,
+      nome: m,
+      tipo: 'modulo'
+    })),
+    ...planAttendanceRules.map(rule => ({
+      codigo: rule.attendance_type_id,
+      nome: `${rule.attendance_type_name} (${rule.total_allowed}x)`,
+      tipo: 'atendimento'
+    }))
+  ];
+
+  // Mesclar itens do plano com itens já rastreados no cronograma
+  const allItemsForPanel = allPlanItems.map(planItem => {
+    const cronogramaItem = cronogramaItems.find(c => c.item_id === planItem.codigo || c.item_nome === planItem.nome);
+    
+    if (cronogramaItem) {
+      return cronogramaItem;
+    }
+    
+    // Item não iniciado - criar virtual
+    return {
+      id: `virtual-${planItem.codigo}-${Date.now()}`,
+      item_nome: planItem.nome,
+      item_tipo: planItem.tipo,
+      item_id: planItem.codigo,
+      status: 'a_fazer',
+      workshop_id: workshop?.id,
+      created_date: workshop?.created_date || new Date().toISOString(),
+      data_inicio_previsto: null,
+      data_termino_previsto: null,
+      not_started: true
+    };
+  });
+
   // Calcular se tarefa está atrasada
   const isTaskOverdue = (item) => {
     if (item.status === 'concluido') return false;
@@ -265,15 +334,15 @@ export default function PainelClienteAceleracao() {
     return false;
   };
 
-  const tarefasPendentes = progressoItems?.filter(p => 
-    p.status === 'em_andamento' || p.status === 'a_fazer'
+  const tarefasPendentes = allItemsForPanel?.filter(p => 
+    p.status !== 'concluido'
   ).map(p => ({
     ...p,
     isOverdue: isTaskOverdue(p)
   })) || [];
 
-  const progressoGeral = progressoItems?.length > 0 
-    ? Math.round((progressoItems.filter(p => p.status === 'concluido').length / progressoItems.length) * 100)
+  const progressoGeral = allItemsForPanel?.length > 0 
+    ? Math.round((allItemsForPanel.filter(p => p.status === 'concluido').length / allItemsForPanel.length) * 100)
     : 0;
 
   const handleGeneratePlan = async () => {
@@ -318,19 +387,19 @@ export default function PainelClienteAceleracao() {
               <div className="grid grid-cols-3 gap-4 mt-4 text-center">
                 <div>
                   <p className="text-2xl font-bold text-green-600">
-                    {progressoItems?.filter(p => p.status === 'concluido').length || 0}
+                    {allItemsForPanel?.filter(p => p.status === 'concluido').length || 0}
                   </p>
                   <p className="text-xs text-gray-600">Concluídos</p>
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-yellow-600">
-                    {progressoItems?.filter(p => p.status === 'em_andamento').length || 0}
+                    {allItemsForPanel?.filter(p => p.status === 'em_andamento').length || 0}
                   </p>
                   <p className="text-xs text-gray-600">Em Andamento</p>
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-gray-600">
-                    {progressoItems?.filter(p => p.status === 'a_fazer').length || 0}
+                    {allItemsForPanel?.filter(p => p.status === 'a_fazer').length || 0}
                   </p>
                   <p className="text-xs text-gray-600">A Fazer</p>
                 </div>
@@ -442,7 +511,7 @@ export default function PainelClienteAceleracao() {
       )}
 
       {/* Atividades de Implementação do Cronograma */}
-      <AtividadesImplementacao items={cronogramaItems} workshop={workshop} />
+      <AtividadesImplementacao items={allItemsForPanel} workshop={workshop} />
 
       <div className="grid md:grid-cols-2 gap-6">
         {/* Próximos Atendimentos */}
