@@ -29,17 +29,15 @@ export default function EventosTab({ workshop, activeWorkshopId, user }) {
 
   // Carregar regras do plano da oficina para identificar eventos inclusos
   const { data: planRules = [] } = useQuery({
-    queryKey: ["plan-rules-workshop", activeWorkshopId],
+    queryKey: ["plan-rules-workshop", activeWorkshopId, workshop?.planoAtual],
     queryFn: async () => {
-      const plans = await base44.entities.Plan.filter({
-        workshop_id: activeWorkshopId,
-        status: "ativo",
-      });
-      if (!plans.length) return [];
-      const plan = plans[0];
+      // Usa o plano do workshop passado como prop (já carregado na página pai)
+      const planoAtual = workshop?.planoAtual;
+      if (!planoAtual) return [];
+
+      // Busca todas as regras ativas do plano
       const rules = await base44.entities.PlanAttendanceRule.filter({
-        plan_id: plan.plan_type,
-        scheduling_type: "event_based",
+        plan_id: planoAtual,
         is_active: true,
       });
       return rules;
@@ -64,18 +62,32 @@ export default function EventosTab({ workshop, activeWorkshopId, user }) {
   });
 
   // Tipos de atendimento vinculados a eventos no plano
-  const tiposIncluso = new Set(planRules.map((r) => r.attendance_type_id));
+  // Match por ID OU por nome (normalizado), pois eventos legados usam slugs como attendance_type_id
+  const normalizar = (s) => (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
+
+  const isEventoIncluso = (evento) => {
+    return planRules.some((r) => {
+      // 1) Match exato por ID
+      if (r.attendance_type_id === evento.attendance_type_id) return true;
+      // 2) Match por nome normalizado (cobre slugs legados)
+      if (normalizar(r.attendance_type_name) === normalizar(evento.attendance_type_name)) return true;
+      // 3) Match entre o slug do evento e o nome da regra normalizado
+      if (normalizar(r.attendance_type_name).includes(normalizar(evento.attendance_type_id))) return true;
+      if (normalizar(evento.attendance_type_id).includes(normalizar(r.attendance_type_name))) return true;
+      return false;
+    });
+  };
 
   const getStatusEvento = (evento) => {
     const inscricao = inscricoes.find((i) => i.event_id === evento.id);
     if (inscricao) return { label: "Inscrito", badge: "bg-green-100 text-green-800", icon: CheckCircle2 };
-    const incluso = tiposIncluso.has(evento.attendance_type_id);
-    if (incluso) return { label: "Disponível", badge: "bg-blue-100 text-blue-800", icon: Ticket };
+    const incluso = isEventoIncluso(evento);
+    if (incluso) return { label: "Incluso no plano", badge: "bg-blue-100 text-blue-800", icon: Ticket };
     return { label: "Sob contratação", badge: "bg-amber-100 text-amber-800", icon: Lock };
   };
 
   const handleAbrirInscricao = (evento) => {
-    const incluso = tiposIncluso.has(evento.attendance_type_id);
+    const incluso = isEventoIncluso(evento);
     setSelectedEvent({ ...evento, incluso });
     setShowModal(true);
   };
@@ -93,12 +105,8 @@ export default function EventosTab({ workshop, activeWorkshopId, user }) {
     (a, b) => new Date(a.event_date) - new Date(b.event_date)
   );
 
-  const eventosInclusos = eventosOrdenados.filter((e) =>
-    tiposIncluso.has(e.attendance_type_id)
-  );
-  const eventosNaoInclusos = eventosOrdenados.filter(
-    (e) => !tiposIncluso.has(e.attendance_type_id)
-  );
+  const eventosInclusos = eventosOrdenados.filter((e) => isEventoIncluso(e));
+  const eventosNaoInclusos = eventosOrdenados.filter((e) => !isEventoIncluso(e));
 
   return (
     <div className="space-y-6">
