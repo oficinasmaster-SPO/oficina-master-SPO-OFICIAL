@@ -28,6 +28,7 @@ import PublicDISC from '@/pages/PublicDISC';
 import BemVindoPlanos from '@/pages/BemVindoPlanos';
 import WheelLoader from '@/components/ui/WheelLoader';
 import ErrorBoundary from '@/components/shared/ErrorBoundary';
+import ControleAceleracao from '@/pages/ControleAceleracao';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -134,6 +135,11 @@ const AuthenticatedApp = () => {
           <PageAccessControl requiredPermissions={pagePermissions['MatrizDesempenho'] ? [pagePermissions['MatrizDesempenho']] : []}>
             <MatrizDesempenho />
           </PageAccessControl>
+        </LayoutWrapper>
+      } />
+      <Route path="/ControleAceleracao" element={
+        <LayoutWrapper currentPageName="ControleAceleracao">
+          <ControleAceleracao />
         </LayoutWrapper>
       } />
       <Route path="/PublicNPS" element={<PublicNPS />} />
