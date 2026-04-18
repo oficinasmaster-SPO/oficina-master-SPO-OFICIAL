@@ -17,6 +17,7 @@ import FeedbackPlanoModal from "../components/aceleracao/FeedbackPlanoModal";
 import AtasSection from "../components/aceleracao/AtasSection";
 import SprintClientSection from "../components/aceleracao/sprint-client/SprintClientSection";
 import EAPViewer from "../components/aceleracao/EAPViewer";
+import SprintSimulatorDemo from "../components/aceleracao/SprintSimulatorDemo";
 
 export default function PainelClienteAceleracao() {
   const navigate = useNavigate();
@@ -554,6 +555,9 @@ export default function PainelClienteAceleracao() {
           </CardContent>
         </Card>
       )}
+
+      {/* Simulador de Sprint em Tempo Real */}
+      <SprintSimulatorDemo />
 
       {/* Sprints de Aceleração - Colaborativo */}
       {workshop?.id && user && (
