@@ -120,7 +120,7 @@ export default function EventosTab({ workshop, activeWorkshopId, user }) {
   return (
     <div className="space-y-6">
       {/* Debug temporário — remover após confirmar correção */}
-      {process.env.NODE_ENV !== 'production' && (
+      {(
         <div className="bg-yellow-50 border border-yellow-300 rounded-lg p-3 text-xs text-yellow-900 space-y-1">
           <p><strong>🔍 Debug EventosTab:</strong></p>
           <p>planoAtual: <code>{planoAtual || 'undefined'}</code></p>
