@@ -16,6 +16,7 @@ export default function EventosTab({ workshop, activeWorkshopId, planoAtual: pla
   const queryClient = useQueryClient();
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [filtroAtivo, setFiltroAtivo] = useState("inclusos");
 
   const anoAtual = new Date().getFullYear();
 
@@ -120,76 +121,125 @@ export default function EventosTab({ workshop, activeWorkshopId, planoAtual: pla
   return (
     <div className="space-y-6">
 
-      {/* Resumo */}
+      {/* Filtros como botões */}
       <div className="grid grid-cols-3 gap-4">
-        <Card className="border-blue-200 bg-blue-50">
-          <CardContent className="pt-4 pb-4">
-            <p className="text-xs text-blue-600 font-medium">Eventos Inclusos no Plano</p>
-            <p className="text-2xl font-bold text-blue-800">{eventosInclusos.length}</p>
-          </CardContent>
-        </Card>
-        <Card className="border-amber-200 bg-amber-50">
-          <CardContent className="pt-4 pb-4">
-            <p className="text-xs text-amber-600 font-medium">Disponíveis sob Contratação</p>
-            <p className="text-2xl font-bold text-amber-800">{eventosNaoInclusos.length}</p>
-          </CardContent>
-        </Card>
-        <Card className="border-green-200 bg-green-50">
-          <CardContent className="pt-4 pb-4">
-            <p className="text-xs text-green-600 font-medium">Minhas Inscrições</p>
-            <p className="text-2xl font-bold text-green-800">{inscricoes.length}</p>
-          </CardContent>
-        </Card>
+        <Button
+          onClick={() => setFiltroAtivo("inclusos")}
+          variant={filtroAtivo === "inclusos" ? "default" : "outline"}
+          className={`h-auto py-4 flex flex-col items-start justify-start gap-1 ${
+            filtroAtivo === "inclusos" ? "bg-blue-600 text-white hover:bg-blue-700" : ""
+          }`}
+        >
+          <span className="text-xs font-medium">Eventos Inclusos no Plano</span>
+          <span className="text-2xl font-bold">{eventosInclusos.length}</span>
+        </Button>
+        <Button
+          onClick={() => setFiltroAtivo("contratacao")}
+          variant={filtroAtivo === "contratacao" ? "default" : "outline"}
+          className={`h-auto py-4 flex flex-col items-start justify-start gap-1 ${
+            filtroAtivo === "contratacao" ? "bg-amber-600 text-white hover:bg-amber-700" : ""
+          }`}
+        >
+          <span className="text-xs font-medium">Disponíveis sob Contratação</span>
+          <span className="text-2xl font-bold">{eventosNaoInclusos.length}</span>
+        </Button>
+        <Button
+          onClick={() => setFiltroAtivo("inscricoes")}
+          variant={filtroAtivo === "inscricoes" ? "default" : "outline"}
+          className={`h-auto py-4 flex flex-col items-start justify-start gap-1 ${
+            filtroAtivo === "inscricoes" ? "bg-green-600 text-white hover:bg-green-700" : ""
+          }`}
+        >
+          <span className="text-xs font-medium">Minhas Inscrições</span>
+          <span className="text-2xl font-bold">{inscricoes.length}</span>
+        </Button>
       </div>
 
       {/* Eventos Inclusos */}
-      {eventosInclusos.length > 0 && (
-        <div>
-          <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
-            <Ticket className="w-4 h-4 text-blue-600" />
-            Inclusos no seu plano
-          </h3>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {eventosInclusos.map((evento) => (
-              <EventoCard
-                key={evento.id}
-                evento={evento}
-                status={getStatusEvento(evento)}
-                inscricao={inscricoes.find((i) => i.event_id === evento.id)}
-                onInscrever={() => handleAbrirInscricao(evento)}
-              />
-            ))}
+      {filtroAtivo === "inclusos" && (
+        eventosInclusos.length > 0 ? (
+          <div>
+            <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+              <Ticket className="w-4 h-4 text-blue-600" />
+              Inclusos no seu plano
+            </h3>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {eventosInclusos.map((evento) => (
+                <EventoCard
+                  key={evento.id}
+                  evento={evento}
+                  status={getStatusEvento(evento)}
+                  inscricao={inscricoes.find((i) => i.event_id === evento.id)}
+                  onInscrever={() => handleAbrirInscricao(evento)}
+                />
+              ))}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="text-center py-16 text-gray-500">
+            <Calendar className="w-14 h-14 mx-auto mb-3 text-gray-300" />
+            <p className="font-medium">Nenhum evento incluso no seu plano</p>
+          </div>
+        )
       )}
 
       {/* Eventos Não Inclusos */}
-      {eventosNaoInclusos.length > 0 && (
-        <div>
-          <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
-            <Lock className="w-4 h-4 text-amber-600" />
-            Disponíveis sob contratação
-          </h3>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {eventosNaoInclusos.map((evento) => (
-              <EventoCard
-                key={evento.id}
-                evento={evento}
-                status={getStatusEvento(evento)}
-                inscricao={inscricoes.find((i) => i.event_id === evento.id)}
-                onInscrever={() => handleAbrirInscricao(evento)}
-              />
-            ))}
+      {filtroAtivo === "contratacao" && (
+        eventosNaoInclusos.length > 0 ? (
+          <div>
+            <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+              <Lock className="w-4 h-4 text-amber-600" />
+              Disponíveis sob contratação
+            </h3>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {eventosNaoInclusos.map((evento) => (
+                <EventoCard
+                  key={evento.id}
+                  evento={evento}
+                  status={getStatusEvento(evento)}
+                  inscricao={inscricoes.find((i) => i.event_id === evento.id)}
+                  onInscrever={() => handleAbrirInscricao(evento)}
+                />
+              ))}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="text-center py-16 text-gray-500">
+            <Calendar className="w-14 h-14 mx-auto mb-3 text-gray-300" />
+            <p className="font-medium">Nenhum evento sob contratação</p>
+          </div>
+        )
       )}
 
-      {eventosCalendario.length === 0 && (
-        <div className="text-center py-16 text-gray-500">
-          <Calendar className="w-14 h-14 mx-auto mb-3 text-gray-300" />
-          <p className="font-medium">Nenhum evento disponível para {anoAtual}</p>
-          <p className="text-sm mt-1">Os eventos do calendário anual aparecerão aqui quando cadastrados.</p>
-        </div>
+      {/* Minhas Inscrições */}
+      {filtroAtivo === "inscricoes" && (
+        inscricoes.length > 0 ? (
+          <div>
+            <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-green-600" />
+              Minhas Inscrições
+            </h3>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {inscricoes.map((inscricao) => {
+                const evento = eventosOrdenados.find((e) => e.id === inscricao.event_id);
+                return evento ? (
+                  <EventoCard
+                    key={evento.id}
+                    evento={evento}
+                    status={getStatusEvento(evento)}
+                    inscricao={inscricao}
+                    onInscrever={() => handleAbrirInscricao(evento)}
+                  />
+                ) : null;
+              })}
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-16 text-gray-500">
+            <Calendar className="w-14 h-14 mx-auto mb-3 text-gray-300" />
+            <p className="font-medium">Você ainda não fez nenhuma inscrição</p>
+          </div>
+        )
       )}
 
       {/* Modal de Inscrição */}
