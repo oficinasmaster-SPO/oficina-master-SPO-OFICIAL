@@ -504,46 +504,8 @@ export default function PainelClienteAceleracao() {
       {/* Atividades de Implementação do Cronograma */}
       <AtividadesImplementacao items={allItemsForPanel} workshop={workshop} />
 
-      <div className="grid md:grid-cols-2 gap-6">
-        {/* Próximos Atendimentos */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="w-5 h-5" />
-              Próximos Atendimentos
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {proximosAtendimentos.length === 0 ? (
-              <p className="text-gray-500 text-center py-4">Nenhum atendimento agendado</p>
-            ) : (
-              <div className="space-y-3">
-                {(Array.isArray(proximosAtendimentos) ? proximosAtendimentos : []).map((atendimento) => (
-                  <div key={atendimento.id} className="border rounded-lg p-3">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="font-medium text-gray-900">
-                          {atendimento.tipo_atendimento.replace(/_/g, ' ')}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          {format(new Date(atendimento.data_agendada), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          Com: {atendimento.consultor_nome}
-                        </p>
-                      </div>
-                      <Badge className="bg-blue-100 text-blue-700">
-                        {atendimento.status}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Tarefas Pendentes */}
+      <div className="grid md:grid-cols-1 gap-6">
+         {/* Tarefas Pendentes */}
          <Card>
            <CardHeader>
              <CardTitle className="flex items-center gap-2">
@@ -586,9 +548,6 @@ export default function PainelClienteAceleracao() {
            </CardContent>
          </Card>
       </div>
-
-      {/* ATAs de Reunião */}
-      <AtasSection atas={atas} workshop={workshop} />
 
       {/* Modal de Feedback */}
       <FeedbackPlanoModal
