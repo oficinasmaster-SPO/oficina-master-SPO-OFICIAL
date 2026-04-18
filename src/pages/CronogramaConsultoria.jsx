@@ -362,14 +362,21 @@ export default function CronogramaConsultoria() {
                           )}
 
                           {atendimento.google_meet_link && (
-                            <a
-                              href={atendimento.google_meet_link}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-block mt-3 text-sm text-blue-600 underline hover:text-blue-800"
-                            >
-                              🎥 Entrar na reunião (Google Meet)
-                            </a>
+                            <div className="mt-4">
+                              <Button
+                                asChild
+                                className="bg-blue-600 hover:bg-blue-700 text-white gap-2"
+                                size="sm"
+                              >
+                                <a
+                                  href={atendimento.google_meet_link}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
+                                  <span>▶</span> Iniciar
+                                </a>
+                              </Button>
+                            </div>
                           )}
                         </div>
                       </div>
