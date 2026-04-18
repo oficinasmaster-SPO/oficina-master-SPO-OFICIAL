@@ -241,9 +241,36 @@ export default function PainelClienteAceleracao() {
     a.status === 'realizado' && a.ata_ia
   ).slice(0, 5) || [];
 
+  // Calcular se tarefa está atrasada
+  const isTaskOverdue = (item) => {
+    if (item.status === 'concluido') return false;
+    
+    // Se há data de início previsto customizada, usar ela. Senão, usar 7 dias após criação
+    const dataInicioPrevisto = item.data_inicio_previsto 
+      ? new Date(item.data_inicio_previsto)
+      : new Date(new Date(item.created_date).getTime() + 7 * 24 * 60 * 60 * 1000);
+    
+    const hoje = new Date();
+    
+    // Atrasada se passou a data de início previsto
+    if (hoje > dataInicioPrevisto) return true;
+    
+    // Atrasada se há data de término previsto e passou 1 dia após ela
+    if (item.data_termino_previsto) {
+      const dataTerminoPrevisto = new Date(item.data_termino_previsto);
+      const dataTerminoComToleranciA = new Date(dataTerminoPrevisto.getTime() + 1 * 24 * 60 * 60 * 1000);
+      if (hoje > dataTerminoComToleranciA) return true;
+    }
+    
+    return false;
+  };
+
   const tarefasPendentes = progressoItems?.filter(p => 
     p.status === 'em_andamento' || p.status === 'a_fazer'
-  ) || [];
+  ).map(p => ({
+    ...p,
+    isOverdue: isTaskOverdue(p)
+  })) || [];
 
   const progressoGeral = progressoItems?.length > 0 
     ? Math.round((progressoItems.filter(p => p.status === 'concluido').length / progressoItems.length) * 100)
@@ -457,36 +484,47 @@ export default function PainelClienteAceleracao() {
         </Card>
 
         {/* Tarefas Pendentes */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="w-5 h-5" />
-              Tarefas Pendentes
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {tarefasPendentes.length === 0 ? (
-              <div className="text-center py-4">
-                <CheckCircle className="w-12 h-12 mx-auto text-green-500 mb-2" />
-                <p className="text-gray-500">Tudo em dia!</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {(Array.isArray(tarefasPendentes) ? tarefasPendentes : []).slice(0, 5).map((tarefa) => (
-                  <div key={tarefa.id} className="flex items-start gap-3 p-3 border rounded-lg">
-                    <AlertCircle className="w-5 h-5 text-orange-500 flex-shrink-0 mt-0.5" />
-                    <div className="flex-1">
-                      <p className="font-medium text-sm">{tarefa.item_nome}</p>
-                      <p className="text-xs text-gray-600">
-                        Status: {tarefa.status === 'em_andamento' ? 'Em andamento' : 'A fazer'}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+         <Card>
+           <CardHeader>
+             <CardTitle className="flex items-center gap-2">
+               <Clock className="w-5 h-5" />
+               Tarefas Pendentes
+             </CardTitle>
+           </CardHeader>
+           <CardContent>
+             {tarefasPendentes.length === 0 ? (
+               <div className="text-center py-4">
+                 <CheckCircle className="w-12 h-12 mx-auto text-green-500 mb-2" />
+                 <p className="text-gray-500">Tudo em dia!</p>
+               </div>
+             ) : (
+               <div className="space-y-3">
+                 {(Array.isArray(tarefasPendentes) ? tarefasPendentes : []).slice(0, 5).map((tarefa) => (
+                   <div 
+                     key={tarefa.id} 
+                     className={`flex items-start gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
+                       tarefa.isOverdue ? 'border-red-300 bg-red-50' : 'hover:bg-gray-50'
+                     }`}
+                     onClick={() => navigate(createPageUrl("CronogramaImplementacao"))}
+                   >
+                     <AlertCircle className={`w-5 h-5 flex-shrink-0 mt-0.5 ${
+                       tarefa.isOverdue ? 'text-red-600' : 'text-orange-500'
+                     }`} />
+                     <div className="flex-1">
+                       <p className="font-medium text-sm">{tarefa.item_nome}</p>
+                       <p className="text-xs text-gray-600">
+                         Status: {tarefa.status === 'em_andamento' ? 'Em andamento' : 'A fazer'}
+                       </p>
+                       {tarefa.isOverdue && (
+                         <p className="text-xs text-red-600 font-semibold mt-1">⚠️ Atrasada</p>
+                       )}
+                     </div>
+                   </div>
+                 ))}
+               </div>
+             )}
+           </CardContent>
+         </Card>
       </div>
 
       {/* ATAs de Reunião */}
