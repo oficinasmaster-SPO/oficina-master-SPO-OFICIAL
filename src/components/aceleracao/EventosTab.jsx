@@ -19,30 +19,29 @@ export default function EventosTab({ workshop, activeWorkshopId, user }) {
 
   const anoAtual = new Date().getFullYear();
 
-  // Carregar eventos do calendário anual (todos ativos)
+  // Carregar eventos do calendário anual (todos ativos — sem filtro de ano para não perder nada)
   const { data: eventosCalendario = [], isLoading: loadingEventos } = useQuery({
-    queryKey: ["event-calendar-todos", anoAtual],
+    queryKey: ["event-calendar-todos"],
     queryFn: () =>
-      base44.entities.EventCalendar.filter({ is_active: true, year: anoAtual }, "event_date"),
-    enabled: !!activeWorkshopId,
+      base44.entities.EventCalendar.filter({ is_active: true }, "event_date"),
+    staleTime: 0,
   });
+
+  // Plano atual do workshop — pode vir em data.planoAtual ou direto no objeto
+  const planoAtual = workshop?.planoAtual || workshop?.data?.planoAtual;
 
   // Carregar regras do plano da oficina para identificar eventos inclusos
   const { data: planRules = [] } = useQuery({
-    queryKey: ["plan-rules-workshop", activeWorkshopId, workshop?.planoAtual],
+    queryKey: ["plan-rules-workshop", activeWorkshopId, planoAtual],
     queryFn: async () => {
-      // Usa o plano do workshop passado como prop (já carregado na página pai)
-      const planoAtual = workshop?.planoAtual;
       if (!planoAtual) return [];
-
-      // Busca todas as regras ativas do plano
       const rules = await base44.entities.PlanAttendanceRule.filter({
         plan_id: planoAtual,
         is_active: true,
       });
       return rules;
     },
-    enabled: !!activeWorkshopId,
+    enabled: !!activeWorkshopId && !!planoAtual,
   });
 
   // Inscrições já feitas pela oficina
@@ -92,7 +91,7 @@ export default function EventosTab({ workshop, activeWorkshopId, user }) {
     setShowModal(true);
   };
 
-  if (loadingEventos) {
+  if (loadingEventos || (!!activeWorkshopId && !planoAtual)) {
     return (
       <div className="flex items-center justify-center py-16 text-gray-500">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3" />
