@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, User, FileText, Eye, Users, Target, Printer, MessageSquare, Send } from "lucide-react";
+import { Calendar, Clock, User, FileText, Eye, Users, Target, Printer, MessageSquare, Send, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -91,6 +91,20 @@ export default function CronogramaConsultoria() {
     enabled: !!activeWorkshopId
   });
 
+  // Follow-ups realizados — filtrados por workshop_id ativo
+  const { data: followUpsRealizados, isLoading: loadingFollowUps } = useQuery({
+    queryKey: ['followups-realizados', activeWorkshopId],
+    queryFn: async () => {
+      if (!activeWorkshopId) return [];
+      const all = await base44.entities.FollowUpReminder.filter(
+        { workshop_id: activeWorkshopId, is_completed: true },
+        '-completed_at'
+      );
+      return all;
+    },
+    enabled: !!activeWorkshopId
+  });
+
   const { data: consultores } = useQuery({
     queryKey: ['consultores-list', activeWorkshopId],
     queryFn: async () => {
@@ -114,7 +128,7 @@ export default function CronogramaConsultoria() {
 
   const atasFiltradas = useAtaSearch(allAtas, filters);
 
-  const isLoading = loadingAtendimentos || loadingAtas;
+  const isLoading = loadingAtendimentos || loadingAtas || loadingFollowUps;
 
   const getStatusColor = (status) => {
     const colors = {
@@ -204,6 +218,10 @@ export default function CronogramaConsultoria() {
                 <p className="text-sm text-blue-600 font-medium">Atas Disponíveis</p>
                 <p className="text-2xl font-bold text-blue-900">{allAtas?.length || 0}</p>
               </div>
+              <div>
+                <p className="text-sm text-blue-600 font-medium">Follow-ups Realizados</p>
+                <p className="text-2xl font-bold text-blue-900">{followUpsRealizados?.length || 0}</p>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -230,6 +248,16 @@ export default function CronogramaConsultoria() {
             Atas de Reunião
             {(allAtas?.length || 0) > 0 && (
               <Badge className="ml-2 bg-gray-100 text-gray-700 text-xs">{allAtas?.length}</Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger
+            value="followups"
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-700 data-[state=active]:bg-transparent px-6 py-3 font-medium"
+          >
+            <CheckCircle2 className="w-4 h-4 mr-2" />
+            Follow-ups
+            {(followUpsRealizados?.length || 0) > 0 && (
+              <Badge className="ml-2 bg-green-100 text-green-700 text-xs">{followUpsRealizados?.length}</Badge>
             )}
           </TabsTrigger>
         </TabsList>
@@ -462,6 +490,94 @@ export default function CronogramaConsultoria() {
                                   <Send className="w-4 h-4" />
                                 </Button>
                               </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ABA 3: Follow-ups Realizados */}
+        <TabsContent value="followups" className="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <CheckCircle2 className="w-5 h-5 text-green-600" />
+                Histórico de Follow-ups Realizados ({followUpsRealizados?.length || 0})
+                <span className="text-sm font-normal text-gray-500">— mais recente primeiro</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {!followUpsRealizados || followUpsRealizados.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  <CheckCircle2 className="w-14 h-14 mx-auto mb-3 text-gray-300" />
+                  <p className="font-medium">Nenhum follow-up realizado ainda</p>
+                  <p className="text-sm mt-1">Os follow-ups concluídos pelo consultor aparecem aqui.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {followUpsRealizados.map((fu) => {
+                    const atendimento = allAtendimentos?.find(a => a.id === fu.atendimento_id);
+                    return (
+                      <div key={fu.id} className="border border-green-100 rounded-lg p-4 bg-green-50/40 hover:shadow-md transition-shadow">
+                        <div className="flex items-start justify-between gap-4 flex-wrap">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2 flex-wrap">
+                              <Badge className="bg-green-100 text-green-800 flex items-center gap-1">
+                                <CheckCircle2 className="w-3 h-3" /> Realizado
+                              </Badge>
+                              {fu.sequence_number && (
+                                <span className="text-xs text-gray-500 font-medium">
+                                  Follow-up #{fu.sequence_number} · {fu.days_since_meeting} dias após atendimento
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+                              <div className="flex items-center gap-2 text-sm text-gray-600">
+                                <Calendar className="w-4 h-4 text-green-500" />
+                                <span>
+                                  Data prevista: {fu.reminder_date
+                                    ? format(new Date(fu.reminder_date), "dd/MM/yyyy", { locale: ptBR })
+                                    : '—'}
+                                </span>
+                              </div>
+                              {fu.completed_at && (
+                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                  <CheckCircle2 className="w-4 h-4 text-green-500" />
+                                  <span>
+                                    Concluído em: {format(new Date(fu.completed_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                                  </span>
+                                </div>
+                              )}
+                              <div className="flex items-center gap-2 text-sm text-gray-600">
+                                <User className="w-4 h-4 text-green-500" />
+                                {fu.consultor_nome || 'Consultor'}
+                              </div>
+                              {atendimento && (
+                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                  <FileText className="w-4 h-4 text-green-500" />
+                                  Ref: {atendimento.tipo_atendimento
+                                    ? atendimento.tipo_atendimento.replace(/_/g, ' ')
+                                    : 'Atendimento vinculado'}
+                                </div>
+                              )}
+                            </div>
+
+                            {fu.notes && (
+                              <div className="mt-3 bg-white rounded-md border border-green-100 p-3">
+                                <p className="text-xs font-medium text-gray-500 mb-1">Observações:</p>
+                                <p className="text-sm text-gray-700">{fu.notes}</p>
+                              </div>
+                            )}
+
+                            {!fu.notes && fu.message && (
+                              <p className="mt-2 text-sm text-gray-500 italic line-clamp-2">{fu.message}</p>
                             )}
                           </div>
                         </div>
