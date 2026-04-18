@@ -32,7 +32,7 @@ export default function EventosTab({ workshop, activeWorkshopId, user }) {
   const planoAtual = workshop?.planoAtual || workshop?.data?.planoAtual;
 
   // Carregar regras do plano da oficina para identificar eventos inclusos
-  const { data: planRules = [], isLoading: loadingRules } = useQuery({
+  const { data: planRules = [], isLoading: loadingRules, isFetched: rulesFetched } = useQuery({
     queryKey: ["plan-rules-workshop", activeWorkshopId, planoAtual],
     queryFn: async () => {
       if (!planoAtual) return [];
@@ -94,7 +94,7 @@ export default function EventosTab({ workshop, activeWorkshopId, user }) {
     setShowModal(true);
   };
 
-  if (loadingEventos || loadingRules || (!!activeWorkshopId && !planoAtual)) {
+  if (loadingEventos || loadingRules || (!!activeWorkshopId && !!planoAtual && !rulesFetched)) {
     return (
       <div className="flex items-center justify-center py-16 text-gray-500">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3" />
@@ -103,15 +103,12 @@ export default function EventosTab({ workshop, activeWorkshopId, user }) {
     );
   }
 
-  // Se planRules ainda não chegou mas workshop já existe, aguarda — evita flash de "Sob Contratação"
-  const planRulesLoaded = !planoAtual || planRules.length > 0 || (planoAtual && planRules !== undefined);
-
   const eventosOrdenados = [...eventosCalendario].sort(
     (a, b) => new Date(a.event_date) - new Date(b.event_date)
   );
 
-  const eventosInclusos = planRulesLoaded ? eventosOrdenados.filter((e) => isEventoIncluso(e)) : [];
-  const eventosNaoInclusos = planRulesLoaded ? eventosOrdenados.filter((e) => !isEventoIncluso(e)) : [];
+  const eventosInclusos = eventosOrdenados.filter((e) => isEventoIncluso(e));
+  const eventosNaoInclusos = eventosOrdenados.filter((e) => !isEventoIncluso(e));
 
   return (
     <div className="space-y-6">
