@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -86,9 +86,23 @@ export default function PainelClienteAceleracao() {
     queryKey: ['progresso-implementacao', workshop?.id],
     queryFn: () => base44.entities.CronogramaImplementacao.filter({ workshop_id: workshop.id }),
     enabled: !!workshop?.id,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0, // Força sempre buscar do servidor
+    refetchInterval: 5000, // Refetch a cada 5 segundos enquanto página ativa
     retry: false
   });
+
+  // Hook: Escutar mudanças em ATAs e invalidar cache do cronograma
+  useEffect(() => {
+    if (!workshop?.id) return;
+    
+    const unsubscribe = base44.entities.MeetingMinutes.subscribe((event) => {
+      if (event.type === 'update' && event.data?.workshop_id === workshop.id) {
+        queryClient.invalidateQueries(['progresso-implementacao', workshop.id]);
+      }
+    });
+
+    return unsubscribe;
+  }, [workshop?.id, queryClient]);
 
   // Buscar último diagnóstico para mostrar a fase
   const { data: lastDiagnostic } = useQuery({
