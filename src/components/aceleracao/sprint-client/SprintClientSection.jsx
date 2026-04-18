@@ -38,9 +38,8 @@ export default function SprintClientSection({ workshopId, user, workshop }) {
 
   if (sprints.length === 0) return null;
 
-  const activeSprints = sprints.filter(s => s.status === "in_progress" || s.status === "overdue");
+  const activeSprints = sprints.filter(s => s.status === "in_progress" || s.status === "overdue" || s.status === "pending");
   const completedSprints = sprints.filter(s => s.status === "completed");
-  const pendingSprints = sprints.filter(s => s.status === "pending");
 
   return (
     <>
@@ -53,9 +52,9 @@ export default function SprintClientSection({ workshopId, user, workshop }) {
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Active sprints first */}
-          {activeSprints.length > 0 && (
-            <div>
-              <h4 className="text-sm font-semibold text-gray-600 mb-2">Em andamento</h4>
+           {activeSprints.length > 0 && (
+             <div>
+               <h4 className="text-sm font-semibold text-gray-600 mb-2">Em execução</h4>
               <div className="grid gap-3">
                 {activeSprints.map(sprint => (
                   <SprintClientCard
@@ -68,21 +67,7 @@ export default function SprintClientSection({ workshopId, user, workshop }) {
             </div>
           )}
 
-          {/* Pending */}
-          {pendingSprints.length > 0 && (
-            <div>
-              <h4 className="text-sm font-semibold text-gray-600 mb-2">Próximos</h4>
-              <div className="grid gap-3">
-                {pendingSprints.map(sprint => (
-                  <SprintClientCard
-                    key={sprint.id}
-                    sprint={sprint}
-                    onOpen={() => setSelectedSprintId(sprint.id)}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
+
 
           {/* Completed */}
           {completedSprints.length > 0 && (
