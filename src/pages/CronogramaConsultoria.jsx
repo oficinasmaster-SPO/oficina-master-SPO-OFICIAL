@@ -77,7 +77,9 @@ export default function CronogramaConsultoria() {
         '-data_agendada'
       );
     },
-    enabled: !!activeWorkshopId
+    enabled: !!activeWorkshopId,
+    staleTime: 0,
+    gcTime: 0,
   });
 
   const { data: allAtas, isLoading: loadingAtas } = useQuery({
@@ -89,12 +91,15 @@ export default function CronogramaConsultoria() {
         '-meeting_date'
       );
     },
-    enabled: !!activeWorkshopId
+    enabled: !!activeWorkshopId,
+    staleTime: 0,
+    gcTime: 0,
   });
 
   // Follow-ups realizados — filtrados por workshop_id ativo
+  // queryKey alinhado com o usado em FollowUpPostIt para invalidação funcionar
   const { data: followUpsRealizados, isLoading: loadingFollowUps } = useQuery({
-    queryKey: ['followups-realizados', activeWorkshopId],
+    queryKey: ['follow-up-reminders', activeWorkshopId],
     queryFn: async () => {
       if (!activeWorkshopId) return [];
       const all = await base44.entities.FollowUpReminder.filter(
@@ -103,7 +108,9 @@ export default function CronogramaConsultoria() {
       );
       return all;
     },
-    enabled: !!activeWorkshopId
+    enabled: !!activeWorkshopId,
+    staleTime: 0,
+    gcTime: 0,
   });
 
   const { data: consultores } = useQuery({

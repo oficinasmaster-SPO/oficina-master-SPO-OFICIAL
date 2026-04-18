@@ -17,7 +17,9 @@ export default function FollowUpPostIt({ reminders, onUpdate }) {
         completed_at: new Date().toISOString()
       });
       toast.success("Follow-up marcado como realizado!");
+      // Invalida todas as queries de follow-up (independente de workshop_id no cache)
       queryClient.invalidateQueries({ queryKey: ['follow-up-reminders'] });
+      queryClient.invalidateQueries({ queryKey: ['followups-realizados'] });
       if (onUpdate) onUpdate();
     } catch (error) {
       toast.error("Erro ao atualizar: " + error.message);
