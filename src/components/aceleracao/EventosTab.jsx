@@ -28,24 +28,31 @@ export default function EventosTab({ workshop, activeWorkshopId, user }) {
     gcTime: 0,
   });
 
-  // Plano atual do workshop — pode vir em data.planoAtual ou direto no objeto
+  // Plano atual do workshop — tenta todas as combinações possíveis de estrutura do objeto
   const planoAtual = workshop?.planoAtual || workshop?.data?.planoAtual;
 
   // Carregar regras do plano da oficina para identificar eventos inclusos
-  const { data: planRules = [], isLoading: loadingRules, isFetched: rulesFetched } = useQuery({
-    queryKey: ["plan-rules-workshop", activeWorkshopId, planoAtual],
+  // Busca por plan_id exato E também traz todas as regras ativas para filtrar no client
+  const { data: planRulesRaw = [], isLoading: loadingRules, isFetched: rulesFetched } = useQuery({
+    queryKey: ["plan-rules-workshop-v2", planoAtual],
     queryFn: async () => {
       if (!planoAtual) return [];
-      const rules = await base44.entities.PlanAttendanceRule.filter({
-        plan_id: planoAtual,
-        is_active: true,
-      });
-      return rules;
+      // Busca case-insensitive: tenta o valor exato e também em minúsculas
+      const [rulesUpper, rulesLower] = await Promise.all([
+        base44.entities.PlanAttendanceRule.filter({ plan_id: planoAtual, is_active: true }),
+        base44.entities.PlanAttendanceRule.filter({ plan_id: planoAtual.toLowerCase(), is_active: true }),
+      ]);
+      // Deduplica por ID
+      const allRules = [...rulesUpper, ...rulesLower];
+      const seen = new Set();
+      return allRules.filter(r => seen.has(r.id) ? false : seen.add(r.id));
     },
-    enabled: !!activeWorkshopId && !!planoAtual,
+    enabled: !!planoAtual,
     staleTime: 0,
     gcTime: 0,
   });
+
+  const planRules = planRulesRaw;
 
   // Inscrições já feitas pela oficina
   const { data: inscricoes = [] } = useQuery({
@@ -94,7 +101,7 @@ export default function EventosTab({ workshop, activeWorkshopId, user }) {
     setShowModal(true);
   };
 
-  if (loadingEventos || loadingRules || (!!activeWorkshopId && !!planoAtual && !rulesFetched)) {
+  if (loadingEventos || (!!planoAtual && (loadingRules || !rulesFetched))) {
     return (
       <div className="flex items-center justify-center py-16 text-gray-500">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3" />
@@ -112,6 +119,21 @@ export default function EventosTab({ workshop, activeWorkshopId, user }) {
 
   return (
     <div className="space-y-6">
+      {/* Debug temporário — remover após confirmar correção */}
+      {process.env.NODE_ENV !== 'production' && (
+        <div className="bg-yellow-50 border border-yellow-300 rounded-lg p-3 text-xs text-yellow-900 space-y-1">
+          <p><strong>🔍 Debug EventosTab:</strong></p>
+          <p>planoAtual: <code>{planoAtual || 'undefined'}</code></p>
+          <p>planRules carregadas: <code>{planRules.length}</code></p>
+          <p>eventosCalendario: <code>{eventosCalendario.length}</code></p>
+          <p>eventosInclusos: <code>{eventosInclusos.length}</code></p>
+          <p>rulesFetched: <code>{String(rulesFetched)}</code></p>
+          {planRules.length > 0 && <p>IDs das regras: <code>{planRules.map(r => r.attendance_type_id).join(', ')}</code></p>}
+          {eventosCalendario.slice(0, 3).map(e => (
+            <p key={e.id}>Evento: <code>{e.event_name}</code> → type_id: <code>{e.attendance_type_id}</code></p>
+          ))}
+        </div>
+      )}
       {/* Resumo */}
       <div className="grid grid-cols-3 gap-4">
         <Card className="border-blue-200 bg-blue-50">
