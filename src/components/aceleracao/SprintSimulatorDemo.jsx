@@ -221,36 +221,54 @@ export default function SprintSimulatorDemo() {
                   {tasksByPhase[phaseIdx].length === 0 ? (
                     <p className="text-sm text-gray-500 italic">Nenhuma tarefa nesta fase</p>
                   ) : (
-                    tasksByPhase[phaseIdx].map((task) => (
-                      <div
-                        key={task.id}
-                        className={`flex items-center gap-3 p-2 rounded border-2 transition-all ${getTaskStatusColor(
-                          taskStatuses[task.id]
-                        )}`}
-                      >
-                        {getTaskStatusIcon(taskStatuses[task.id])}
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-gray-900">{task.name}</p>
-                          <p className="text-xs text-gray-600">Duração: {task.duration} dias</p>
-                        </div>
-                        <Badge
-                          variant="outline"
-                          className={`text-xs ${
-                            taskStatuses[task.id] === "completed"
-                              ? "bg-green-100 text-green-700 border-green-300"
-                              : taskStatuses[task.id] === "in-progress"
-                              ? "bg-blue-100 text-blue-700 border-blue-300"
-                              : "bg-gray-100 text-gray-700 border-gray-300"
-                          }`}
+                    tasksByPhase[phaseIdx].map((task) => {
+                      const handleTaskClick = () => {
+                        const currentStatus = taskStatuses[task.id];
+                        const newStatus = 
+                          currentStatus === "pending" ? "in-progress" :
+                          currentStatus === "in-progress" ? "completed" :
+                          "pending";
+                        
+                        setTaskStatuses(prev => ({ ...prev, [task.id]: newStatus }));
+                        
+                        // Atualizar progresso
+                        const updatedStatuses = { ...taskStatuses, [task.id]: newStatus };
+                        const completedCount = Object.values(updatedStatuses).filter(s => s === "completed").length;
+                        setSprintProgress(Math.round((completedCount / MOCK_TASKS.length) * 100));
+                      };
+
+                      return (
+                        <button
+                          key={task.id}
+                          onClick={handleTaskClick}
+                          className={`w-full flex items-center gap-3 p-3 rounded border-2 transition-all cursor-pointer hover:shadow-md ${getTaskStatusColor(
+                            taskStatuses[task.id]
+                          )}`}
                         >
-                          {taskStatuses[task.id] === "completed"
-                            ? "✓ Concluída"
-                            : taskStatuses[task.id] === "in-progress"
-                            ? "⏱ Andamento"
-                            : "○ Pendente"}
-                        </Badge>
-                      </div>
-                    ))
+                          {getTaskStatusIcon(taskStatuses[task.id])}
+                          <div className="flex-1 text-left">
+                            <p className="text-sm font-medium text-gray-900">{task.name}</p>
+                            <p className="text-xs text-gray-600">Duração: {task.duration} dias</p>
+                          </div>
+                          <Badge
+                            variant="outline"
+                            className={`text-xs ${
+                              taskStatuses[task.id] === "completed"
+                                ? "bg-green-100 text-green-700 border-green-300"
+                                : taskStatuses[task.id] === "in-progress"
+                                ? "bg-blue-100 text-blue-700 border-blue-300"
+                                : "bg-gray-100 text-gray-700 border-gray-300"
+                            }`}
+                          >
+                            {taskStatuses[task.id] === "completed"
+                              ? "✓ Concluída"
+                              : taskStatuses[task.id] === "in-progress"
+                              ? "⏱ Andamento"
+                              : "○ Clique para iniciar"}
+                          </Badge>
+                        </button>
+                      );
+                    })
                   )}
                 </div>
               )}
