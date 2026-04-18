@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, User, FileText, Star, Eye, Download, Users, Target, Printer, MessageSquare, Send } from "lucide-react";
+import { Calendar, Clock, User, FileText, Eye, Users, Target, Printer, MessageSquare, Send } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -14,13 +14,13 @@ import ReactMarkdown from "react-markdown";
 import AtaPrintLayout from "@/components/aceleracao/AtaPrintLayout";
 import AtaSearchFilters from "@/components/aceleracao/AtaSearchFilters";
 import { useAtaSearch } from "@/components/aceleracao/useAtaSearch";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 export default function CronogramaConsultoria() {
   const navigate = useNavigate();
   const [selectedAtendimento, setSelectedAtendimento] = useState(null);
   const [showAta, setShowAta] = useState(false);
   const [showPrintPreview, setShowPrintPreview] = useState(false);
-  const printRef = useRef();
   const [filters, setFilters] = useState({
     searchTerm: "",
     workshop_id: "",
@@ -37,25 +37,22 @@ export default function CronogramaConsultoria() {
     queryFn: () => base44.auth.me()
   });
 
-  // Resolver workshop do contexto ativo (URL param tem prioridade — modo assistência/admin visualizando cliente)
+  // Resolver workshop do contexto ativo
   const { data: workshop } = useQuery({
     queryKey: ['workshop-context', user?.id],
     queryFn: async () => {
       const urlParams = new URLSearchParams(window.location.search);
       const urlWorkshopId = urlParams.get('workshop_id');
 
-      // Se há workshop_id na URL (modo assistência/admin visualizando), usa esse
       if (urlWorkshopId) {
         return await base44.entities.Workshop.get(urlWorkshopId);
       }
 
-      // Caso contrário, usa o workshop do próprio usuário logado
       const workshopId = user?.workshop_id || user?.data?.workshop_id;
       if (workshopId) {
         return await base44.entities.Workshop.get(workshopId);
       }
 
-      // Fallback: busca via Employee
       const employees = await base44.entities.Employee.filter({ user_id: user.id });
       if (employees.length > 0 && employees[0].workshop_id) {
         return await base44.entities.Workshop.get(employees[0].workshop_id);
@@ -67,10 +64,10 @@ export default function CronogramaConsultoria() {
     enabled: !!user
   });
 
-  // ✅ REGRA ÚNICA: sempre filtrar por workshop_id do contexto ativo — sem exceções por perfil
   const activeWorkshopId = workshop?.id;
 
-  const { data: allAtendimentos, isLoading } = useQuery({
+  // ✅ Filtro único por empresa logada — sem exceções por perfil
+  const { data: allAtendimentos, isLoading: loadingAtendimentos } = useQuery({
     queryKey: ['consultoria-atendimentos', activeWorkshopId],
     queryFn: async () => {
       if (!activeWorkshopId) return [];
@@ -82,7 +79,7 @@ export default function CronogramaConsultoria() {
     enabled: !!activeWorkshopId
   });
 
-  const { data: allAtas } = useQuery({
+  const { data: allAtas, isLoading: loadingAtas } = useQuery({
     queryKey: ['meeting-minutes', activeWorkshopId],
     queryFn: async () => {
       if (!activeWorkshopId) return [];
@@ -104,8 +101,20 @@ export default function CronogramaConsultoria() {
     enabled: !!activeWorkshopId
   });
 
+  // Segmentação por data
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+
+  const proximosAtendimentos = (allAtendimentos || [])
+    .filter(a => {
+      const dataAtend = new Date(a.data_agendada);
+      return dataAtend >= hoje && ['agendado', 'confirmado', 'remarcado', 'reagendado'].includes(a.status);
+    })
+    .sort((a, b) => new Date(a.data_agendada) - new Date(b.data_agendada)); // mais próximo primeiro
+
   const atasFiltradas = useAtaSearch(allAtas, filters);
-  const atendimentos = allAtendimentos;
+
+  const isLoading = loadingAtendimentos || loadingAtas;
 
   const getStatusColor = (status) => {
     const colors = {
@@ -113,7 +122,8 @@ export default function CronogramaConsultoria() {
       confirmado: "bg-green-100 text-green-800",
       realizado: "bg-gray-100 text-gray-800",
       cancelado: "bg-red-100 text-red-800",
-      remarcado: "bg-yellow-100 text-yellow-800"
+      remarcado: "bg-yellow-100 text-yellow-800",
+      reagendado: "bg-orange-100 text-orange-800",
     };
     return colors[status] || "bg-gray-100 text-gray-800";
   };
@@ -131,31 +141,11 @@ export default function CronogramaConsultoria() {
     return labels[tipo] || tipo;
   };
 
-  const handleDownloadAta = async (atendimento) => {
-    if (!atendimento.ata_ia) return;
-    
-    const blob = new Blob([atendimento.ata_ia], { type: 'text/markdown' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Ata_${format(new Date(atendimento.data_realizada || atendimento.data_agendada), 'yyyy-MM-dd')}.md`;
-    document.body.appendChild(a);
-    a.click();
-    window.URL.revokeObjectURL(url);
-    a.remove();
-  };
-
   const handlePrintAta = (atendimento) => {
     setSelectedAtendimento(atendimento);
     setShowPrintPreview(true);
-    
-    // Aguardar renderização e chamar impressão
-    setTimeout(() => {
-      window.print();
-    }, 100);
+    setTimeout(() => window.print(), 100);
   };
-
-  // activeWorkshopId já definido acima (const activeWorkshopId = workshop?.id)
 
   if (isLoading) {
     return (
@@ -168,14 +158,6 @@ export default function CronogramaConsultoria() {
     );
   }
 
-  const proximosAtendimentos = atendimentos?.filter(a => 
-    ['agendado', 'confirmado'].includes(a.status)
-  ) || [];
-
-  const atendimentosRealizados = atendimentos?.filter(a => 
-    a.status === 'realizado'
-  ) || [];
-
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       {/* Header */}
@@ -183,14 +165,13 @@ export default function CronogramaConsultoria() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
             <Calendar className="w-8 h-8 text-blue-600" />
-            Cronograma de Consultoria
+            Cronograma de Atendimento
           </h1>
-          <p className="text-gray-600 mt-2">
-            Acompanhe seus atendimentos e acesse as atas das reuniões
+          <p className="text-gray-600 mt-1">
+            {workshop?.name && <span className="font-medium text-blue-700">{workshop.name}</span>}
           </p>
         </div>
 
-        {/* Botão de registro disponível apenas quando há contexto de oficina ativo */}
         {activeWorkshopId && user?.role === 'admin' && (
           <Button
             onClick={() => navigate(createPageUrl('RegistrarAtendimento') + `?workshop_id=${activeWorkshopId}`)}
@@ -202,11 +183,11 @@ export default function CronogramaConsultoria() {
         )}
       </div>
 
-      {/* Informações do Plano */}
+      {/* Card de resumo da oficina */}
       {workshop && (
         <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
           <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-4">
               <div>
                 <p className="text-sm text-blue-600 font-medium">Plano Atual</p>
                 <p className="text-2xl font-bold text-blue-900">{workshop.planoAtual || 'FREE'}</p>
@@ -216,249 +197,283 @@ export default function CronogramaConsultoria() {
                 <p className="text-2xl font-bold text-blue-900">Fase {workshop.maturity_level || 1}</p>
               </div>
               <div>
-                <p className="text-sm text-blue-600 font-medium">Atendimentos Realizados</p>
-                <p className="text-2xl font-bold text-blue-900">{atendimentosRealizados.length}</p>
+                <p className="text-sm text-blue-600 font-medium">Próximos Agendamentos</p>
+                <p className="text-2xl font-bold text-blue-900">{proximosAtendimentos.length}</p>
+              </div>
+              <div>
+                <p className="text-sm text-blue-600 font-medium">Atas Disponíveis</p>
+                <p className="text-2xl font-bold text-blue-900">{allAtas?.length || 0}</p>
               </div>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Próximos Atendimentos */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Clock className="w-5 h-5 text-blue-600" />
+      {/* Abas principais */}
+      <Tabs defaultValue="proximos">
+        <TabsList className="w-full justify-start border-b bg-white rounded-none p-0 h-auto">
+          <TabsTrigger
+            value="proximos"
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-700 data-[state=active]:bg-transparent px-6 py-3 font-medium"
+          >
+            <Clock className="w-4 h-4 mr-2" />
             Próximos Atendimentos
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {proximosAtendimentos.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <Calendar className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-              <p>Nenhum atendimento agendado</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {proximosAtendimentos.map((atendimento) => (
-                <div
-                  key={atendimento.id}
-                  className="border rounded-lg p-4 hover:shadow-md transition-shadow"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <Badge className={getStatusColor(atendimento.status)}>
-                          {atendimento.status}
-                        </Badge>
-                        <span className="text-sm text-gray-600">
-                          {getTipoLabel(atendimento.tipo_atendimento)}
-                        </span>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-4 mt-3">
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <Calendar className="w-4 h-4" />
-                          {format(new Date(atendimento.data_agendada), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <Clock className="w-4 h-4" />
-                          {format(new Date(atendimento.data_agendada), "HH:mm")} - {atendimento.duracao_minutos}min
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <User className="w-4 h-4" />
-                          {atendimento.consultor_nome || 'Consultor'}
-                        </div>
-                        {atendimento.participantes?.length > 0 && (
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <Users className="w-4 h-4" />
-                            {atendimento.participantes.length} participante(s)
+            {proximosAtendimentos.length > 0 && (
+              <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">{proximosAtendimentos.length}</Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger
+            value="atas"
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-700 data-[state=active]:bg-transparent px-6 py-3 font-medium"
+          >
+            <FileText className="w-4 h-4 mr-2" />
+            Atas de Reunião
+            {(allAtas?.length || 0) > 0 && (
+              <Badge className="ml-2 bg-gray-100 text-gray-700 text-xs">{allAtas?.length}</Badge>
+            )}
+          </TabsTrigger>
+        </TabsList>
+
+        {/* ABA 1: Próximos Atendimentos */}
+        <TabsContent value="proximos" className="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Clock className="w-5 h-5 text-blue-600" />
+                Reuniões futuras — ordenadas do mais próximo ao mais distante
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {proximosAtendimentos.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  <Calendar className="w-14 h-14 mx-auto mb-3 text-gray-300" />
+                  <p className="font-medium">Nenhum atendimento agendado</p>
+                  <p className="text-sm mt-1">Novos agendamentos aparecerão aqui.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {proximosAtendimentos.map((atendimento) => (
+                    <div
+                      key={atendimento.id}
+                      className="border rounded-lg p-4 hover:shadow-md transition-shadow bg-white"
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2 flex-wrap">
+                            <Badge className={getStatusColor(atendimento.status)}>
+                              {atendimento.status}
+                            </Badge>
+                            <span className="text-sm font-medium text-gray-800">
+                              {getTipoLabel(atendimento.tipo_atendimento)}
+                            </span>
                           </div>
-                        )}
-                      </div>
 
-                      {atendimento.objetivos && atendimento.objetivos.length > 0 && (
-                        <div className="mt-3">
-                          <p className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-1">
-                            <Target className="w-4 h-4" />
-                            Objetivos:
-                          </p>
-                          <ul className="text-sm text-gray-600 ml-6 list-disc">
-                            {atendimento.objetivos.slice(0, 2).map((obj, idx) => (
-                              <li key={idx}>{obj}</li>
-                            ))}
-                          </ul>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                              <Calendar className="w-4 h-4 text-blue-500" />
+                              {format(new Date(atendimento.data_agendada), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                              <Clock className="w-4 h-4 text-blue-500" />
+                              {format(new Date(atendimento.data_agendada), "HH:mm")}
+                              {atendimento.duracao_minutos && ` — ${atendimento.duracao_minutos} min`}
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                              <User className="w-4 h-4 text-blue-500" />
+                              {atendimento.consultor_nome || 'Consultor não definido'}
+                            </div>
+                            {atendimento.participantes?.length > 0 && (
+                              <div className="flex items-center gap-2 text-sm text-gray-600">
+                                <Users className="w-4 h-4 text-blue-500" />
+                                {atendimento.participantes.length} participante(s)
+                              </div>
+                            )}
+                          </div>
+
+                          {atendimento.objetivos?.length > 0 && (
+                            <div className="mt-3">
+                              <p className="text-sm font-medium text-gray-700 flex items-center gap-1 mb-1">
+                                <Target className="w-4 h-4" /> Objetivos:
+                              </p>
+                              <ul className="text-sm text-gray-600 ml-5 list-disc space-y-0.5">
+                                {atendimento.objetivos.slice(0, 3).map((obj, idx) => (
+                                  <li key={idx}>{obj}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                          {atendimento.google_meet_link && (
+                            <a
+                              href={atendimento.google_meet_link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-block mt-3 text-sm text-blue-600 underline hover:text-blue-800"
+                            >
+                              🎥 Entrar na reunião (Google Meet)
+                            </a>
+                          )}
                         </div>
-                      )}
+                      </div>
                     </div>
-                  </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-      {/* Busca e Filtros de ATAs */}
-      <AtaSearchFilters
-        filters={filters}
-        onFiltersChange={setFilters}
-        workshops={workshop ? [workshop] : []}
-        consultores={consultores || []}
-        onClearFilters={() => setFilters({
-          searchTerm: "",
-          workshop_id: "",
-          consultor_id: "",
-          status: "",
-          tipo_aceleracao: "",
-          dateFrom: "",
-          dateTo: ""
-        })}
-      />
+        {/* ABA 2: Atas de Reunião */}
+        <TabsContent value="atas" className="mt-4">
+          {/* Filtros */}
+          <AtaSearchFilters
+            filters={filters}
+            onFiltersChange={setFilters}
+            workshops={workshop ? [workshop] : []}
+            consultores={consultores || []}
+            onClearFilters={() => setFilters({
+              searchTerm: "",
+              workshop_id: "",
+              consultor_id: "",
+              status: "",
+              tipo_aceleracao: "",
+              dateFrom: "",
+              dateTo: ""
+            })}
+          />
 
-      {/* Histórico de ATAs */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span className="flex items-center gap-2">
-              <FileText className="w-5 h-5 text-gray-600" />
-              Atas de Reunião ({atasFiltradas?.length || 0})
-            </span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {!atasFiltradas || atasFiltradas.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <FileText className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-              <p>Nenhuma ata encontrada</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {atasFiltradas.map((ata) => {
-                const atendimento = allAtendimentos?.find(a => a.ata_id === ata.id);
-                return (
-                <div
-                  key={ata.id}
-                  className="border rounded-lg p-4 hover:shadow-md transition-shadow"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <Badge className={ata.status === 'finalizada' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
-                          {ata.status === 'finalizada' ? 'Finalizada' : 'Rascunho'}
-                        </Badge>
-                        <span className="text-sm font-medium text-gray-900">
-                          {ata.code}
-                        </span>
-                        <Badge variant="outline" className="text-red-600 border-red-600">
-                          {ata.tipo_aceleracao?.toUpperCase()}
-                        </Badge>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4 mt-3">
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <Calendar className="w-4 h-4" />
-                          {format(new Date(ata.meeting_date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })} - {ata.meeting_time}
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <User className="w-4 h-4" />
-                          {ata.consultor_name || 'Consultor'}
-                        </div>
-                      </div>
-
-                      {ata.pautas && (
-                        <div className="mt-3">
-                          <p className="text-sm text-gray-700 line-clamp-2">
-                            {ata.pautas.substring(0, 150)}...
-                          </p>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={async () => {
-                            try {
-                              const ataCompleta = await base44.entities.MeetingMinutes.get(ata.id);
-                              setSelectedAtendimento({ ...atendimento, ata_ia: ataCompleta.pautas });
-                              setShowAta(true);
-                            } catch (error) {
-                              toast.error("Erro ao carregar ATA");
-                            }
-                          }}
-                        >
-                          <Eye className="w-4 h-4 mr-2" />
-                          Ver Ata
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedAtendimento(atendimento || {});
-                            handlePrintAta(atendimento || {});
-                          }}
-                          title="Imprimir Ata"
-                        >
-                          <Printer className="w-4 h-4" />
-                        </Button>
-                      </div>
-
-                      {/* Ações de Envio */}
-                      {atendimento?.id && (
-                        <div className="flex gap-2 pt-2 border-t">
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                            onClick={async () => {
-                              try {
-                                const response = await base44.functions.invoke('enviarAtaWhatsApp', {
-                                  atendimento_id: atendimento.id
-                                });
-                                const phone = response.data.phone?.replace(/\D/g, '') || '';
-                                const message = encodeURIComponent(response.data.whatsapp_message);
-                                window.open(`https://wa.me/55${phone}?text=${message}`, '_blank');
-                                toast.success("WhatsApp aberto!");
-                              } catch (error) {
-                                toast.error("Erro: " + error.message);
-                              }
-                            }}
-                            title="Enviar via WhatsApp"
-                          >
-                            <MessageSquare className="w-4 h-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                            onClick={async () => {
-                              try {
-                                await base44.functions.invoke('enviarAtaEmail', {
-                                  atendimento_id: atendimento.id
-                                });
-                                toast.success("Ata enviada por email!");
-                              } catch (error) {
-                                toast.error("Erro: " + error.message);
-                              }
-                            }}
-                            title="Enviar via E-mail"
-                          >
-                            <Send className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+          <Card className="mt-4">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <FileText className="w-5 h-5 text-gray-600" />
+                Atas de Reunião ({atasFiltradas?.length || 0})
+                <span className="text-sm font-normal text-gray-500">— mais recente primeiro</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {!atasFiltradas || atasFiltradas.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  <FileText className="w-14 h-14 mx-auto mb-3 text-gray-300" />
+                  <p className="font-medium">Nenhuma ata encontrada</p>
+                  <p className="text-sm mt-1">As atas geradas após os atendimentos aparecem aqui.</p>
                 </div>
-              );
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+              ) : (
+                <div className="space-y-4">
+                  {atasFiltradas.map((ata) => {
+                    const atendimento = allAtendimentos?.find(a => a.ata_id === ata.id);
+                    return (
+                      <div key={ata.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow bg-white">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2 flex-wrap">
+                              <Badge className={ata.status === 'finalizada' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
+                                {ata.status === 'finalizada' ? 'Finalizada' : 'Rascunho'}
+                              </Badge>
+                              <span className="text-sm font-medium text-gray-900">{ata.code}</span>
+                              {ata.tipo_aceleracao && (
+                                <Badge variant="outline" className="text-red-600 border-red-600 text-xs">
+                                  {ata.tipo_aceleracao?.toUpperCase()}
+                                </Badge>
+                              )}
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+                              <div className="flex items-center gap-2 text-sm text-gray-600">
+                                <Calendar className="w-4 h-4 text-gray-400" />
+                                {format(new Date(ata.meeting_date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                                {ata.meeting_time && ` — ${ata.meeting_time}`}
+                              </div>
+                              <div className="flex items-center gap-2 text-sm text-gray-600">
+                                <User className="w-4 h-4 text-gray-400" />
+                                {ata.consultor_name || 'Consultor'}
+                              </div>
+                            </div>
+
+                            {ata.pautas && (
+                              <p className="mt-3 text-sm text-gray-600 line-clamp-2">
+                                {ata.pautas.substring(0, 160)}...
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Ações */}
+                          <div className="flex flex-col gap-2 items-end shrink-0">
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={async () => {
+                                  try {
+                                    const ataCompleta = await base44.entities.MeetingMinutes.get(ata.id);
+                                    setSelectedAtendimento({ ...atendimento, ata_ia: ataCompleta.pautas });
+                                    setShowAta(true);
+                                  } catch {
+                                    toast.error("Erro ao carregar ATA");
+                                  }
+                                }}
+                              >
+                                <Eye className="w-4 h-4 mr-1" /> Ver
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handlePrintAta(atendimento || {})}
+                                title="Imprimir Ata"
+                              >
+                                <Printer className="w-4 h-4" />
+                              </Button>
+                            </div>
+
+                            {atendimento?.id && (
+                              <div className="flex gap-2 pt-2 border-t w-full justify-end">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-green-600 hover:bg-green-50"
+                                  title="Enviar via WhatsApp"
+                                  onClick={async () => {
+                                    try {
+                                      const response = await base44.functions.invoke('enviarAtaWhatsApp', { atendimento_id: atendimento.id });
+                                      const phone = response.data.phone?.replace(/\D/g, '') || '';
+                                      const message = encodeURIComponent(response.data.whatsapp_message);
+                                      window.open(`https://wa.me/55${phone}?text=${message}`, '_blank');
+                                      toast.success("WhatsApp aberto!");
+                                    } catch (e) {
+                                      toast.error("Erro: " + e.message);
+                                    }
+                                  }}
+                                >
+                                  <MessageSquare className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-blue-600 hover:bg-blue-50"
+                                  title="Enviar via E-mail"
+                                  onClick={async () => {
+                                    try {
+                                      await base44.functions.invoke('enviarAtaEmail', { atendimento_id: atendimento.id });
+                                      toast.success("Ata enviada por email!");
+                                    } catch (e) {
+                                      toast.error("Erro: " + e.message);
+                                    }
+                                  }}
+                                >
+                                  <Send className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Modal Ata */}
       {showAta && selectedAtendimento && (
@@ -467,17 +482,13 @@ export default function CronogramaConsultoria() {
             <CardHeader className="border-b">
               <div className="flex items-center justify-between">
                 <CardTitle>Ata da Reunião</CardTitle>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowAta(false)}
-                >
-                  ✕
-                </Button>
+                <Button variant="ghost" size="sm" onClick={() => setShowAta(false)}>✕</Button>
               </div>
-              <p className="text-sm text-gray-600">
-                {format(new Date(selectedAtendimento.data_realizada), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-              </p>
+              {selectedAtendimento.data_realizada && (
+                <p className="text-sm text-gray-600">
+                  {format(new Date(selectedAtendimento.data_realizada), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                </p>
+              )}
             </CardHeader>
             <CardContent className="pt-6">
               <div className="prose max-w-none">
@@ -491,10 +502,7 @@ export default function CronogramaConsultoria() {
       {/* Preview de Impressão */}
       {showPrintPreview && selectedAtendimento && (
         <div className="hidden print:block">
-          <AtaPrintLayout 
-            atendimento={selectedAtendimento} 
-            workshop={workshop}
-          />
+          <AtaPrintLayout atendimento={selectedAtendimento} workshop={workshop} />
         </div>
       )}
     </div>
