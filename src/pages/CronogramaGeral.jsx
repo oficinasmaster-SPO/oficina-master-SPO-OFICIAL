@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +11,7 @@ import ClientDetailPanel from "@/components/aceleracao/ClientDetailPanel";
 import AvaliacaoProcessoModal from "@/components/aceleracao/AvaliacaoProcessoModal";
 
 export default function CronogramaGeral({ isTab = false }) {
+  const queryClient = useQueryClient();
   const [selectedPlan, setSelectedPlan] = useState("GOLD");
   const [filterStatus, setFilterStatus] = useState("todos");
   const [searchTerm, setSearchTerm] = useState("");
@@ -25,6 +26,24 @@ export default function CronogramaGeral({ isTab = false }) {
     queryKey: ['current-user'],
     queryFn: () => base44.auth.me()
   });
+
+  // Sincronizar sprints com cronograma em tempo real
+  useEffect(() => {
+    const unsubscribeSprints = base44.entities.ConsultoriaSprint.subscribe((event) => {
+      queryClient.refetchQueries(['cronograma-progressos']);
+      queryClient.refetchQueries(['cronograma-implementacoes-all']);
+    });
+
+    const unsubscribeImplementacoes = base44.entities.CronogramaImplementacao.subscribe((event) => {
+      queryClient.refetchQueries(['cronograma-progressos']);
+      queryClient.refetchQueries(['cronograma-implementacoes-all']);
+    });
+
+    return () => {
+      unsubscribeSprints();
+      unsubscribeImplementacoes();
+    };
+  }, [queryClient]);
 
   // Carregar workshops com planos ativos
   const { data: workshops = [], isLoading } = useQuery({

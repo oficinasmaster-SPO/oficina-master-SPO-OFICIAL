@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import React, { useState, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Rocket, Loader2 } from "lucide-react";
@@ -9,19 +9,34 @@ import SprintCompletionSummary from "../sprint-shared/SprintCompletionSummary";
 
 export default function SprintClientSection({ workshopId, user, workshop }) {
   const [selectedSprintId, setSelectedSprintId] = useState(null);
+  const queryClient = useQueryClient();
 
   const { data: sprints = [], isLoading } = useQuery({
     queryKey: ["sprints-client", workshopId],
     queryFn: async () => {
       const result = await base44.entities.ConsultoriaSprint.filter(
         { workshop_id: workshopId },
-        "-updated_date"
+        "sprint_number"
       );
       return Array.isArray(result) ? result : [];
     },
     enabled: !!workshopId,
-    staleTime: 3 * 60 * 1000,
+    staleTime: 0, // Sempre buscar dados frescos
+    refetchInterval: 5000, // Refetch a cada 5 segundos
   });
+
+  // Sincronizar com mudanças em tempo real do banco
+  useEffect(() => {
+    if (!workshopId) return;
+    
+    const unsubscribe = base44.entities.ConsultoriaSprint.subscribe((event) => {
+      if (event.data?.workshop_id === workshopId) {
+        queryClient.refetchQueries(['sprints-client', workshopId]);
+      }
+    });
+
+    return unsubscribe;
+  }, [workshopId, queryClient]);
 
   // Always derive selectedSprint from fresh query data
   const selectedSprint = selectedSprintId ? sprints.find(s => s.id === selectedSprintId) || null : null;

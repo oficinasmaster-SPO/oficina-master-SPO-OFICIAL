@@ -155,48 +155,38 @@ export default function PainelClienteAceleracao() {
     retry: false
   });
 
-  // Carregar trilhas, sprints e tarefas para EAP
-  const { data: trilhas = [] } = useQuery({
-    queryKey: ['trilhas-eap', workshop?.id],
-    queryFn: async () => {
-      if (!workshop?.id) return [];
-      return await base44.entities.ConsultoriaSprint.filter(
-        { workshop_id: workshop.id, tipo: 'trilha' },
-        'order'
-      );
-    },
-    enabled: !!workshop?.id,
-    staleTime: 5 * 60 * 1000,
-    retry: false
-  });
-
+  // Carregar sprints REAIS do banco (sem filtro de tipo - todas são sprints)
   const { data: sprints = [] } = useQuery({
-    queryKey: ['sprints-eap', workshop?.id],
+    queryKey: ['sprints-reais', workshop?.id],
     queryFn: async () => {
       if (!workshop?.id) return [];
       return await base44.entities.ConsultoriaSprint.filter(
-        { workshop_id: workshop.id, tipo: 'sprint' },
-        'order'
+        { workshop_id: workshop.id },
+        'sprint_number'
       );
     },
     enabled: !!workshop?.id,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0, // Sempre buscar dados frescos
+    refetchInterval: 5000, // Refetch a cada 5 segundos
     retry: false
   });
 
-  const { data: tarefasEAP = [] } = useQuery({
-    queryKey: ['tarefas-eap', workshop?.id],
-    queryFn: async () => {
-      if (!workshop?.id) return [];
-      return await base44.entities.TarefaBacklog.filter(
-        { workshop_id: workshop.id },
-        'order'
-      );
-    },
-    enabled: !!workshop?.id,
-    staleTime: 5 * 60 * 1000,
-    retry: false
-  });
+  // EAP usa as mesmas sprints (não há trilhas separadas)
+  const trilhas = [];
+
+  // Sincronizar sprints com cronograma de implementação em tempo real
+  useEffect(() => {
+    if (!workshop?.id || sprints.length === 0) return;
+    
+    const unsubscribe = base44.entities.ConsultoriaSprint.subscribe((event) => {
+      if (event.data?.workshop_id === workshop.id) {
+        queryClient.refetchQueries(['sprints-reais', workshop.id]);
+        queryClient.refetchQueries(['progresso-implementacao', workshop.id]);
+      }
+    });
+
+    return unsubscribe;
+  }, [workshop?.id, sprints.length, queryClient]);
 
   // Mutation para gerar plano
   const generatePlanMutation = useMutation({
@@ -564,11 +554,11 @@ export default function PainelClienteAceleracao() {
         <SprintClientSection workshopId={workshop.id} user={user} workshop={workshop} />
       )}
 
-      {/* EAP - Estrutura Analítica do Projeto */}
+      {/* EAP - Estrutura Analítica do Projeto (usando sprints reais do banco) */}
       <EAPViewer 
-        trilhas={trilhas} 
+        trilhas={[]} 
         sprints={sprints} 
-        tarefas={tarefasEAP}
+        tarefas={[]}
         workshop={workshop}
       />
 
