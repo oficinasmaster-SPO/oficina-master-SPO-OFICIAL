@@ -46,21 +46,40 @@ export default function CronogramaConsultoria() {
       const urlWorkshopId = urlParams.get('workshop_id');
 
       if (urlWorkshopId) {
-        return await base44.entities.Workshop.get(urlWorkshopId);
+        try {
+          return await base44.entities.Workshop.get(urlWorkshopId);
+        } catch (e) {
+          console.error(`CronogramaConsultoria: Workshop/Company com ID ${urlWorkshopId} não encontrado. Limpando referência.`, e);
+        }
       }
 
       const workshopId = user?.workshop_id || user?.data?.workshop_id;
       if (workshopId) {
-        return await base44.entities.Workshop.get(workshopId);
+        try {
+          return await base44.entities.Workshop.get(workshopId);
+        } catch (e) {
+          console.error(`CronogramaConsultoria: Workshop do perfil do usuário é inválido. Limpando workshop_id do perfil.`, e);
+        }
       }
 
-      const employees = await base44.entities.Employee.filter({ user_id: user.id });
-      if (employees.length > 0 && employees[0].workshop_id) {
-        return await base44.entities.Workshop.get(employees[0].workshop_id);
+      // Fallback 1: Employee vinculado
+      try {
+        const employees = await base44.entities.Employee.filter({ user_id: user.id });
+        if (employees.length > 0 && employees[0].workshop_id) {
+          return await base44.entities.Workshop.get(employees[0].workshop_id);
+        }
+      } catch (e) {
+        console.warn(`CronogramaConsultoria: Erro ao buscar workshop via Employee:`, e);
       }
 
-      const workshops = await base44.entities.Workshop.filter({ owner_id: user.id });
-      return workshops[0] || null;
+      // Fallback 2: Workshop como proprietário
+      try {
+        const workshops = await base44.entities.Workshop.filter({ owner_id: user.id });
+        return workshops[0] || null;
+      } catch (e) {
+        console.error(`CronogramaConsultoria: Erro ao buscar workshop como proprietário:`, e);
+        return null;
+      }
     },
     enabled: !!user
   });
