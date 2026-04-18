@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { downloadAtaPDF } from "./AtasPDFGenerator";
 import { toast } from "sonner";
 import { base44 } from "@/api/base44Client";
-import AtaSendOptionsBar from "./AtaSendOptionsBar";
+
 import ClientIntelligenceCapturePanel from "@/components/inteligencia/ClientIntelligenceCapturePanel";
 import { sanitizeAtaData, formatPrazoSafe } from "@/utils/ataSanitizer";
 
@@ -201,7 +201,6 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
                   </Button>
                 </div>
               </div>
-              <AtaSendOptionsBar ata={d} workshop={workshop} atendimento={atendimento} />
             </div>
           </DialogHeader>
 
