@@ -248,6 +248,18 @@ Formate em Markdown para fácil leitura. ${toneText} NÃO adicione saudações f
       ata_gerada_em: new Date().toISOString()
     });
 
+    // 🔗 HOOK: Sincronizar próximos passos com tarefas pendentes
+    try {
+      await base44.functions.invoke('syncProximosPassosToTasks', {
+        ata_id: novaAta.id,
+        ata_data: dataAta,
+        workshop_id: atendimento.workshop_id
+      });
+      console.log("✅ Próximos passos sincronizados com tarefas pendentes");
+    } catch (syncError) {
+      console.warn("⚠️ Erro ao sincronizar próximos passos (não bloqueia):", syncError.message);
+    }
+
     // Se suggestNextSteps, extrair sugestões da IA
     let suggestedNextSteps = [];
     if (suggestNextSteps && typeof ataGerada === 'string') {
