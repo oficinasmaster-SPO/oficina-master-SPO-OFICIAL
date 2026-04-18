@@ -15,7 +15,7 @@ export function RedTabsList({ className, children, ...props }) {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-1.5">
       <TabsList 
-        className={cn("flex w-full justify-start overflow-x-auto bg-transparent h-auto gap-1 scrollbar-hide", className)} 
+        className={cn("flex flex-wrap w-full justify-start bg-transparent h-auto gap-1", className)} 
         {...props}
       >
         {children}
