@@ -69,7 +69,8 @@ export default function CalendarioEventos() {
     try {
       const customFormatted = (tiposCustomizados || []).map(t => ({
         id: t.value || t.id,
-        name: t.label || t.name
+        name: t.label || t.name,
+        duracao: t.duracao_minutos
       }));
       
       const customIds = new Set(customFormatted.map(c => c.id));
