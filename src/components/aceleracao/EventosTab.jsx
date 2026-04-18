@@ -119,21 +119,7 @@ export default function EventosTab({ workshop, activeWorkshopId, planoAtual: pla
 
   return (
     <div className="space-y-6">
-      {/* Debug temporário — remover após confirmar correção */}
-      {process.env.NODE_ENV !== 'production' && (
-        <div className="bg-yellow-50 border border-yellow-300 rounded-lg p-3 text-xs text-yellow-900 space-y-1">
-          <p><strong>🔍 Debug EventosTab:</strong></p>
-          <p>planoAtual: <code>{planoAtual || 'undefined'}</code></p>
-          <p>planRules carregadas: <code>{planRules.length}</code></p>
-          <p>eventosCalendario: <code>{eventosCalendario.length}</code></p>
-          <p>eventosInclusos: <code>{eventosInclusos.length}</code></p>
-          <p>rulesFetched: <code>{String(rulesFetched)}</code></p>
-          {planRules.length > 0 && <p>IDs das regras: <code>{planRules.map(r => r.attendance_type_id).join(', ')}</code></p>}
-          {eventosCalendario.slice(0, 3).map(e => (
-            <p key={e.id}>Evento: <code>{e.event_name}</code> → type_id: <code>{e.attendance_type_id}</code></p>
-          ))}
-        </div>
-      )}
+
       {/* Resumo */}
       <div className="grid grid-cols-3 gap-4">
         <Card className="border-blue-200 bg-blue-50">
