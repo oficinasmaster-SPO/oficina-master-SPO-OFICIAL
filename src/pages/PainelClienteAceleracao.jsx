@@ -90,15 +90,6 @@ export default function PainelClienteAceleracao() {
     retry: false
   });
 
-  // Buscar atividades do Cronograma de Implementação
-  const { data: cronogramaItems, isLoading: loadingCronograma } = useQuery({
-    queryKey: ['cronograma-implementacao', workshop?.id],
-    queryFn: () => base44.entities.CronogramaImplementacao.filter({ workshop_id: workshop.id }, '-created_date'),
-    enabled: !!workshop?.id,
-    staleTime: 5 * 60 * 1000,
-    retry: false
-  });
-
   // Buscar último diagnóstico para mostrar a fase
   const { data: lastDiagnostic } = useQuery({
     queryKey: ['last-diagnostic', workshop?.id],
