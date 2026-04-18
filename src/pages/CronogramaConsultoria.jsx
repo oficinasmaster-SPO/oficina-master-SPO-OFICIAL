@@ -16,12 +16,12 @@ import AtaSearchFilters from "@/components/aceleracao/AtaSearchFilters";
 import { useAtaSearch } from "@/components/aceleracao/useAtaSearch";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import EventosTab from "@/components/aceleracao/EventosTab";
+import VisualizarAtaModal from "@/components/aceleracao/VisualizarAtaModal";
 
 export default function CronogramaConsultoria() {
   const navigate = useNavigate();
-  const [selectedAtendimento, setSelectedAtendimento] = useState(null);
-  const [showAta, setShowAta] = useState(false);
-  const [showPrintPreview, setShowPrintPreview] = useState(false);
+  const [selectedAta, setSelectedAta] = useState(null);
+  const [showVisualizarAta, setShowVisualizarAta] = useState(false);
   const [filters, setFilters] = useState({
     searchTerm: "",
     workshop_id: "",
@@ -182,12 +182,6 @@ export default function CronogramaConsultoria() {
       outros: "Outros"
     };
     return labels[tipo] || tipo;
-  };
-
-  const handlePrintAta = (atendimento) => {
-    setSelectedAtendimento(atendimento);
-    setShowPrintPreview(true);
-    setTimeout(() => window.print(), 100);
   };
 
   if (isLoading) {
@@ -466,25 +460,12 @@ export default function CronogramaConsultoria() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={async () => {
-                                  try {
-                                    const ataCompleta = await base44.entities.MeetingMinutes.get(ata.id);
-                                    setSelectedAtendimento({ ...atendimento, ata_ia: ataCompleta.pautas });
-                                    setShowAta(true);
-                                  } catch {
-                                    toast.error("Erro ao carregar ATA");
-                                  }
+                                onClick={() => {
+                                  setSelectedAta(ata);
+                                  setShowVisualizarAta(true);
                                 }}
                               >
                                 <Eye className="w-4 h-4 mr-1" /> Ver
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handlePrintAta(atendimento || {})}
-                                title="Imprimir Ata"
-                              >
-                                <Printer className="w-4 h-4" />
                               </Button>
                             </div>
 
@@ -643,35 +624,9 @@ export default function CronogramaConsultoria() {
         </TabsContent>
       </Tabs>
 
-      {/* Modal Ata */}
-      {showAta && selectedAtendimento && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-4xl max-h-[90vh] overflow-auto">
-            <CardHeader className="border-b">
-              <div className="flex items-center justify-between">
-                <CardTitle>Ata da Reunião</CardTitle>
-                <Button variant="ghost" size="sm" onClick={() => setShowAta(false)}>✕</Button>
-              </div>
-              {selectedAtendimento.data_realizada && (
-                <p className="text-sm text-gray-600">
-                  {format(new Date(selectedAtendimento.data_realizada), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                </p>
-              )}
-            </CardHeader>
-            <CardContent className="pt-6">
-              <div className="prose max-w-none">
-                <ReactMarkdown>{selectedAtendimento.ata_ia}</ReactMarkdown>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Preview de Impressão */}
-      {showPrintPreview && selectedAtendimento && (
-        <div className="hidden print:block">
-          <AtaPrintLayout atendimento={selectedAtendimento} workshop={workshop} />
-        </div>
+      {/* Modal Visualizar Ata */}
+      {showVisualizarAta && selectedAta && (
+        <VisualizarAtaModal ata={selectedAta} onClose={() => { setShowVisualizarAta(false); setSelectedAta(null); }} />
       )}
     </div>
   );
