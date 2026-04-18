@@ -609,6 +609,7 @@ export default function CronogramaConsultoria() {
           <EventosTab
             workshop={workshop}
             activeWorkshopId={activeWorkshopId}
+            planoAtual={workshop?.planoAtual || workshop?.data?.planoAtual}
             user={user}
           />
         </TabsContent>
