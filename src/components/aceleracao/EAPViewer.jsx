@@ -1,0 +1,320 @@
+import React, { useState, useMemo } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { ChevronDown, ChevronRight, Target, Zap, CheckCircle2, AlertCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+// Fases fixas de uma Sprint (CRÍTICO: sempre 5 fases na mesma ordem)
+const FIXED_PHASES = [
+  { id: "planejamento", label: "Planejamento", color: "bg-blue-50 border-blue-200" },
+  { id: "implementacao", label: "Implementação", color: "bg-purple-50 border-purple-200" },
+  { id: "acompanhamento", label: "Acompanhamento", color: "bg-green-50 border-green-200" },
+  { id: "revisao", label: "Revisão", color: "bg-yellow-50 border-yellow-200" },
+  { id: "melhoria", label: "Melhoria", color: "bg-orange-50 border-orange-200" }
+];
+
+export default function EAPViewer({ trilhas = [], sprints = [], tarefas = [], workshop = null }) {
+  const [expandedMissoes, setExpandedMissoes] = useState({});
+  const [expandedSprints, setExpandedSprints] = useState({});
+  const [expandedFases, setExpandedFases] = useState({});
+
+  // Garantir que trilhas é um array
+  const trilhasArray = Array.isArray(trilhas) ? trilhas : [];
+  const sprintsArray = Array.isArray(sprints) ? sprints : [];
+  const tarefasArray = Array.isArray(tarefas) ? tarefas : [];
+
+  // Estrutura: Missão (Trilha) → Sprints → Fases → Tarefas
+  const eapStructure = useMemo(() => {
+    return trilhasArray.map((trilha) => {
+      // Sprints da trilha
+      const trilhaSprints = sprintsArray.filter(
+        (s) => s.trilha_id === trilha.id || s.mission_id === trilha.id
+      );
+
+      // Se não houver sprints, criar mocks
+      const sprintsToShow =
+        trilhaSprints.length > 0
+          ? trilhaSprints
+          : [
+              {
+                id: `mock-sprint-${trilha.id}-1`,
+                title: "Sprint 1",
+                trilha_id: trilha.id,
+                status: "planejamento"
+              }
+            ];
+
+      return {
+        trilha,
+        sprints: sprintsToShow.map((sprint) => {
+          // Tarefas da sprint
+          const sprintTarefas = tarefasArray.filter(
+            (t) => t.sprint_id === sprint.id || t.mission_id === trilha.id
+          );
+
+          // Agrupar tarefas por fase (ou atribuir à primeira fase)
+          const tarefasPorFase = {};
+          FIXED_PHASES.forEach((phase) => {
+            tarefasPorFase[phase.id] = sprintTarefas.filter(
+              (t) => t.phase_id === phase.id || t.fase === phase.id
+            );
+          });
+
+          // Se não houver tarefas, distribuir mocks
+          if (sprintTarefas.length === 0) {
+            FIXED_PHASES.forEach((phase, idx) => {
+              tarefasPorFase[phase.id] = [
+                {
+                  id: `mock-tarefa-${sprint.id}-${phase.id}-1`,
+                  title: `Tarefa exemplo ${idx + 1}.1`,
+                  phase_id: phase.id,
+                  status: "a_fazer"
+                },
+                {
+                  id: `mock-tarefa-${sprint.id}-${phase.id}-2`,
+                  title: `Tarefa exemplo ${idx + 1}.2`,
+                  phase_id: phase.id,
+                  status: "a_fazer"
+                }
+              ];
+            });
+          }
+
+          return {
+            sprint,
+            tarefasPorFase
+          };
+        })
+      };
+    });
+  }, [trilhasArray, sprintsArray, tarefasArray]);
+
+  // Toggle functions
+  const toggleMissao = (trilhaId) => {
+    setExpandedMissoes((prev) => ({
+      ...prev,
+      [trilhaId]: !prev[trilhaId]
+    }));
+  };
+
+  const toggleSprint = (sprintId) => {
+    setExpandedSprints((prev) => ({
+      ...prev,
+      [sprintId]: !prev[sprintId]
+    }));
+  };
+
+  const toggleFase = (faseId) => {
+    setExpandedFases((prev) => ({
+      ...prev,
+      [faseId]: !prev[faseId]
+    }));
+  };
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case "concluida":
+      case "concluido":
+        return <CheckCircle2 className="w-4 h-4 text-green-600" />;
+      case "em_andamento":
+        return <Zap className="w-4 h-4 text-blue-600" />;
+      default:
+        return <AlertCircle className="w-4 h-4 text-gray-400" />;
+    }
+  };
+
+  const getStatusLabel = (status) => {
+    const labels = {
+      concluida: "Concluída",
+      concluido: "Concluído",
+      em_andamento: "Em Andamento",
+      a_fazer: "A Fazer"
+    };
+    return labels[status] || status;
+  };
+
+  if (trilhasArray.length === 0) {
+    return (
+      <Card className="bg-gray-50">
+        <CardContent className="py-8">
+          <div className="text-center">
+            <Target className="w-12 h-12 mx-auto text-gray-300 mb-3" />
+            <p className="text-gray-500">
+              Nenhuma trilha carregada. Aguarde os dados do plano de aceleração.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-4" role="region" aria-label="Estrutura Analítica do Projeto">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Target className="w-5 h-5 text-blue-600" />
+            Estrutura Analítica do Projeto (EAP)
+            {workshop && <Badge className="ml-auto">{workshop.name}</Badge>}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            {/* NÍVEL 1: MISSÕES (Trilhas) */}
+            {eapStructure.map(({ trilha, sprints }) => (
+              <div key={trilha.id} className="border border-gray-200 rounded-lg overflow-hidden">
+                {/* Missão Header */}
+                <button
+                  onClick={() => toggleMissao(trilha.id)}
+                  className="w-full flex items-center gap-3 p-4 bg-red-50 hover:bg-red-100 transition-colors"
+                  aria-expanded={expandedMissoes[trilha.id]}
+                  aria-label={`Missão: ${trilha.name || trilha.titulo}`}
+                >
+                  {expandedMissoes[trilha.id] ? (
+                    <ChevronDown className="w-5 h-5 text-red-600 flex-shrink-0" />
+                  ) : (
+                    <ChevronRight className="w-5 h-5 text-red-600 flex-shrink-0" />
+                  )}
+                  <div className="flex-1 text-left">
+                    <div className="flex items-center gap-2">
+                      <Badge className="bg-red-600 text-white">Nível 1</Badge>
+                      <h3 className="font-bold text-gray-900">MISSÃO: {trilha.name || trilha.titulo}</h3>
+                    </div>
+                    {trilha.descricao && (
+                      <p className="text-xs text-gray-600 mt-1">{trilha.descricao}</p>
+                    )}
+                  </div>
+                </button>
+
+                {/* Missão Content - Sprints */}
+                {expandedMissoes[trilha.id] && (
+                  <div className="bg-white border-t border-gray-200 p-4 space-y-3">
+                    {sprints.map(({ sprint, tarefasPorFase }) => (
+                      <div
+                        key={sprint.id}
+                        className="border border-yellow-200 rounded-lg overflow-hidden bg-yellow-50/50"
+                      >
+                        {/* NÍVEL 2: SPRINT */}
+                        <button
+                          onClick={() => toggleSprint(sprint.id)}
+                          className="w-full flex items-center gap-3 p-3 bg-yellow-100 hover:bg-yellow-200 transition-colors"
+                          aria-expanded={expandedSprints[sprint.id]}
+                          aria-label={`Sprint: ${sprint.title || sprint.nome}`}
+                        >
+                          {expandedSprints[sprint.id] ? (
+                            <ChevronDown className="w-4 h-4 text-yellow-700 flex-shrink-0" />
+                          ) : (
+                            <ChevronRight className="w-4 h-4 text-yellow-700 flex-shrink-0" />
+                          )}
+                          <div className="flex-1 text-left">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="border-yellow-600 text-yellow-700">
+                                Nível 2
+                              </Badge>
+                              <h4 className="font-semibold text-yellow-900">
+                                {sprint.title || sprint.nome || "Sprint"}
+                              </h4>
+                            </div>
+                          </div>
+                          <Badge variant="outline">{sprint.status || "ativo"}</Badge>
+                        </button>
+
+                        {/* Sprint Content - Fases */}
+                        {expandedSprints[sprint.id] && (
+                          <div className="bg-white border-t border-yellow-200 p-3 space-y-2">
+                            {FIXED_PHASES.map((phase) => (
+                              <div
+                                key={phase.id}
+                                className={`border rounded-lg overflow-hidden ${phase.color}`}
+                              >
+                                {/* NÍVEL 3: FASE */}
+                                <button
+                                  onClick={() => toggleFase(phase.id)}
+                                  className="w-full flex items-center gap-3 p-3 hover:opacity-80 transition-opacity"
+                                  aria-expanded={expandedFases[phase.id]}
+                                  aria-label={`Fase: ${phase.label}`}
+                                >
+                                  {expandedFases[phase.id] ? (
+                                    <ChevronDown className="w-4 h-4 flex-shrink-0" />
+                                  ) : (
+                                    <ChevronRight className="w-4 h-4 flex-shrink-0" />
+                                  )}
+                                  <div className="flex-1 text-left">
+                                    <Badge variant="outline" className="text-xs mb-1">
+                                      Nível 3
+                                    </Badge>
+                                    <h5 className="font-semibold text-gray-900">{phase.label}</h5>
+                                  </div>
+                                  <Badge className="text-xs">
+                                    {tarefasPorFase[phase.id]?.length || 0} pacotes
+                                  </Badge>
+                                </button>
+
+                                {/* Fase Content - Tarefas (Pacotes de Trabalho) */}
+                                {expandedFases[phase.id] && (
+                                  <div className="border-t p-3 space-y-2 bg-white">
+                                    {tarefasPorFase[phase.id]?.length > 0 ? (
+                                      tarefasPorFase[phase.id].map((tarefa) => (
+                                        <div
+                                          key={tarefa.id}
+                                          className="flex items-start gap-3 p-2 rounded bg-gray-50 border border-gray-200"
+                                        >
+                                          {getStatusIcon(tarefa.status)}
+                                          <div className="flex-1 min-w-0">
+                                            <p className="font-medium text-sm text-gray-900 line-clamp-2">
+                                              {tarefa.title || tarefa.descricao}
+                                            </p>
+                                            <p className="text-xs text-gray-500">
+                                              {getStatusLabel(tarefa.status)}
+                                            </p>
+                                          </div>
+                                        </div>
+                                      ))
+                                    ) : (
+                                      <p className="text-xs text-gray-400 italic p-2">Sem pacotes nesta fase</p>
+                                    )}
+                                  </div>
+                                )}
+                            </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Legenda */}
+      <Card className="bg-blue-50 border-blue-200">
+        <CardContent className="pt-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div className="flex items-center gap-2">
+              <Badge className="bg-red-600">Nível 1</Badge>
+              <span className="text-gray-700">Missão (Trilha)</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="border-yellow-600">
+                Nível 2
+              </Badge>
+              <span className="text-gray-700">Sprint</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-green-600" />
+              <span className="text-gray-700">Concluído</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Zap className="w-4 h-4 text-blue-600" />
+              <span className="text-gray-700">Em Andamento</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

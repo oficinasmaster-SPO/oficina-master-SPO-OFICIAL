@@ -16,6 +16,7 @@ import PlanoAceleracaoMensal from "../components/aceleracao/PlanoAceleracaoMensa
 import FeedbackPlanoModal from "../components/aceleracao/FeedbackPlanoModal";
 import AtasSection from "../components/aceleracao/AtasSection";
 import SprintClientSection from "../components/aceleracao/sprint-client/SprintClientSection";
+import EAPViewer from "../components/aceleracao/EAPViewer";
 
 export default function PainelClienteAceleracao() {
   const navigate = useNavigate();
@@ -147,6 +148,49 @@ export default function PainelClienteAceleracao() {
         1
       );
       return plans?.[0] || null;
+    },
+    enabled: !!workshop?.id,
+    staleTime: 5 * 60 * 1000,
+    retry: false
+  });
+
+  // Carregar trilhas, sprints e tarefas para EAP
+  const { data: trilhas = [] } = useQuery({
+    queryKey: ['trilhas-eap', workshop?.id],
+    queryFn: async () => {
+      if (!workshop?.id) return [];
+      return await base44.entities.ConsultoriaSprint.filter(
+        { workshop_id: workshop.id, tipo: 'trilha' },
+        'order'
+      );
+    },
+    enabled: !!workshop?.id,
+    staleTime: 5 * 60 * 1000,
+    retry: false
+  });
+
+  const { data: sprints = [] } = useQuery({
+    queryKey: ['sprints-eap', workshop?.id],
+    queryFn: async () => {
+      if (!workshop?.id) return [];
+      return await base44.entities.ConsultoriaSprint.filter(
+        { workshop_id: workshop.id, tipo: 'sprint' },
+        'order'
+      );
+    },
+    enabled: !!workshop?.id,
+    staleTime: 5 * 60 * 1000,
+    retry: false
+  });
+
+  const { data: tarefasEAP = [] } = useQuery({
+    queryKey: ['tarefas-eap', workshop?.id],
+    queryFn: async () => {
+      if (!workshop?.id) return [];
+      return await base44.entities.TarefaBacklog.filter(
+        { workshop_id: workshop.id },
+        'order'
+      );
     },
     enabled: !!workshop?.id,
     staleTime: 5 * 60 * 1000,
@@ -515,6 +559,14 @@ export default function PainelClienteAceleracao() {
       {workshop?.id && user && (
         <SprintClientSection workshopId={workshop.id} user={user} workshop={workshop} />
       )}
+
+      {/* EAP - Estrutura Analítica do Projeto */}
+      <EAPViewer 
+        trilhas={trilhas} 
+        sprints={sprints} 
+        tarefas={tarefasEAP}
+        workshop={workshop}
+      />
 
       {/* Atividades de Implementação do Cronograma */}
       <AtividadesImplementacao items={allItemsForPanel} workshop={workshop} />
