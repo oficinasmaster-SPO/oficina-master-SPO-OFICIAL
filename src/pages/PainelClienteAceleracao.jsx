@@ -97,7 +97,8 @@ export default function PainelClienteAceleracao() {
     
     const unsubscribe = base44.entities.MeetingMinutes.subscribe((event) => {
       if (event.type === 'update' && event.data?.workshop_id === workshop.id) {
-        queryClient.invalidateQueries(['progresso-implementacao', workshop.id]);
+        // Force refetch immediately
+        queryClient.refetchQueries(['progresso-implementacao', workshop.id]);
       }
     });
 
