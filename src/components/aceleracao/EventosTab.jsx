@@ -100,12 +100,15 @@ export default function EventosTab({ workshop, activeWorkshopId, user }) {
     );
   }
 
+  // Se planRules ainda não chegou mas workshop já existe, aguarda — evita flash de "Sob Contratação"
+  const planRulesLoaded = !planoAtual || planRules.length > 0 || (planoAtual && planRules !== undefined);
+
   const eventosOrdenados = [...eventosCalendario].sort(
     (a, b) => new Date(a.event_date) - new Date(b.event_date)
   );
 
-  const eventosInclusos = eventosOrdenados.filter((e) => isEventoIncluso(e));
-  const eventosNaoInclusos = eventosOrdenados.filter((e) => !isEventoIncluso(e));
+  const eventosInclusos = planRulesLoaded ? eventosOrdenados.filter((e) => isEventoIncluso(e)) : [];
+  const eventosNaoInclusos = planRulesLoaded ? eventosOrdenados.filter((e) => !isEventoIncluso(e)) : [];
 
   return (
     <div className="space-y-6">
