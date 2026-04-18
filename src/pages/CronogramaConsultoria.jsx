@@ -31,80 +31,77 @@ export default function CronogramaConsultoria() {
     dateTo: ""
   });
 
-  // Carregar usuário e workshop
+  // Carregar usuário
   const { data: user } = useQuery({
     queryKey: ['current-user'],
     queryFn: () => base44.auth.me()
   });
 
+  // Resolver workshop do contexto ativo (URL param tem prioridade — modo assistência/admin visualizando cliente)
   const { data: workshop } = useQuery({
-    queryKey: ['workshop', user?.id],
+    queryKey: ['workshop-context', user?.id],
     queryFn: async () => {
       const urlParams = new URLSearchParams(window.location.search);
-      const adminWorkshopId = urlParams.get('workshop_id');
-      
-      if (adminWorkshopId && user.role === 'admin') {
-        return await base44.entities.Workshop.get(adminWorkshopId);
+      const urlWorkshopId = urlParams.get('workshop_id');
+
+      // Se há workshop_id na URL (modo assistência/admin visualizando), usa esse
+      if (urlWorkshopId) {
+        return await base44.entities.Workshop.get(urlWorkshopId);
       }
-      
-      if (user.workshop_id) {
-        return await base44.entities.Workshop.get(user.workshop_id);
-      } else {
-        const employees = await base44.entities.Employee.filter({ user_id: user.id });
-        if (employees.length > 0) {
-          return await base44.entities.Workshop.get(employees[0].workshop_id);
-        }
-        const workshops = await base44.entities.Workshop.filter({ owner_id: user.id });
-        return workshops[0] || null;
+
+      // Caso contrário, usa o workshop do próprio usuário logado
+      const workshopId = user?.workshop_id || user?.data?.workshop_id;
+      if (workshopId) {
+        return await base44.entities.Workshop.get(workshopId);
       }
+
+      // Fallback: busca via Employee
+      const employees = await base44.entities.Employee.filter({ user_id: user.id });
+      if (employees.length > 0 && employees[0].workshop_id) {
+        return await base44.entities.Workshop.get(employees[0].workshop_id);
+      }
+
+      const workshops = await base44.entities.Workshop.filter({ owner_id: user.id });
+      return workshops[0] || null;
     },
     enabled: !!user
   });
 
-  // Carregar atendimentos
+  // ✅ REGRA ÚNICA: sempre filtrar por workshop_id do contexto ativo — sem exceções por perfil
+  const activeWorkshopId = workshop?.id;
+
   const { data: allAtendimentos, isLoading } = useQuery({
-    queryKey: ['consultoria-atendimentos', workshop?.id],
+    queryKey: ['consultoria-atendimentos', activeWorkshopId],
     queryFn: async () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const adminWorkshopId = urlParams.get('workshop_id');
-
-      if (adminWorkshopId && user?.role === 'admin') {
-        return await base44.entities.ConsultoriaAtendimento.filter({ workshop_id: adminWorkshopId }, '-data_agendada');
-      } else if (user?.role === 'admin') {
-        return await base44.entities.ConsultoriaAtendimento.list('-data_agendada');
-      } else if (workshop?.id) {
-        return await base44.entities.ConsultoriaAtendimento.filter({ workshop_id: workshop.id }, '-data_agendada');
-      }
-      return [];
+      if (!activeWorkshopId) return [];
+      return await base44.entities.ConsultoriaAtendimento.filter(
+        { workshop_id: activeWorkshopId },
+        '-data_agendada'
+      );
     },
-    enabled: !!user
+    enabled: !!activeWorkshopId
   });
 
-  // Carregar ATAs
   const { data: allAtas } = useQuery({
-    queryKey: ['meeting-minutes', workshop?.id],
+    queryKey: ['meeting-minutes', activeWorkshopId],
     queryFn: async () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const adminWorkshopId = urlParams.get('workshop_id');
-
-      if (adminWorkshopId && user?.role === 'admin') {
-        return await base44.entities.MeetingMinutes.filter({ workshop_id: adminWorkshopId }, '-meeting_date');
-      } else if (user?.role === 'admin') {
-        return await base44.entities.MeetingMinutes.list('-meeting_date');
-      } else if (workshop?.id) {
-        return await base44.entities.MeetingMinutes.filter({ workshop_id: workshop.id }, '-meeting_date');
-      }
-      return [];
+      if (!activeWorkshopId) return [];
+      return await base44.entities.MeetingMinutes.filter(
+        { workshop_id: activeWorkshopId },
+        '-meeting_date'
+      );
     },
-    enabled: !!user
+    enabled: !!activeWorkshopId
   });
 
   const { data: consultores } = useQuery({
-    queryKey: ['consultores-list'],
+    queryKey: ['consultores-list', activeWorkshopId],
     queryFn: async () => {
-      const employees = await base44.entities.Employee.list();
+      if (!activeWorkshopId) return [];
+      const employees = await base44.entities.Employee.filter({ workshop_id: activeWorkshopId });
       return employees.filter(e => e.job_role === 'acelerador' || e.position?.toLowerCase().includes('consultor'));
-    }
+    },
+    enabled: !!activeWorkshopId
   });
 
   const atasFiltradas = useAtaSearch(allAtas, filters);
@@ -158,6 +155,8 @@ export default function CronogramaConsultoria() {
     }, 100);
   };
 
+  // activeWorkshopId já definido acima (const activeWorkshopId = workshop?.id)
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -191,9 +190,10 @@ export default function CronogramaConsultoria() {
           </p>
         </div>
 
-        {user?.role === 'admin' && (
+        {/* Botão de registro disponível apenas quando há contexto de oficina ativo */}
+        {activeWorkshopId && user?.role === 'admin' && (
           <Button
-            onClick={() => navigate(createPageUrl('RegistrarAtendimento'))}
+            onClick={() => navigate(createPageUrl('RegistrarAtendimento') + `?workshop_id=${activeWorkshopId}`)}
             className="bg-blue-600 hover:bg-blue-700"
           >
             <Calendar className="w-4 h-4 mr-2" />
