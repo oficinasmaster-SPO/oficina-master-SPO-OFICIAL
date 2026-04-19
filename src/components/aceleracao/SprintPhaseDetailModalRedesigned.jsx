@@ -41,7 +41,8 @@ export default function SprintPhaseDetailModalRedesigned({
   onNavigateToNextSprint,
 }) {
   const queryClient = useQueryClient();
-  const modalOpenRef = useRef(true);
+  const [modalOpen, setModalOpen] = useState(true);
+  const isSavingRef = useRef(false);
 
   // Sempre buscar dados frescos do banco para evitar uso de cache stale
   const { data: freshSprint } = useQuery({
@@ -64,7 +65,6 @@ export default function SprintPhaseDetailModalRedesigned({
   const [tasks, setTasks] = useState(currentPhase?.tasks || []);
   const [newTask, setNewTask] = useState("");
   const [saving, setSaving] = useState(false);
-  const isSavingRef = useRef(false);
 
   // Sincroniza estado local APENAS quando muda de fase ou de sprint — nunca durante um save
   useEffect(() => {
@@ -79,8 +79,8 @@ export default function SprintPhaseDetailModalRedesigned({
 
   // Proteger contra fechamento acidental do modal
   const handleModalOpenChange = (open) => {
-    if (!open && modalOpenRef.current) {
-      modalOpenRef.current = false;
+    if (!open) {
+      setModalOpen(false);
       onClose();
     }
   };
@@ -319,7 +319,7 @@ export default function SprintPhaseDetailModalRedesigned({
   );
 
   return (
-    <Dialog open={true} onOpenChange={handleModalOpenChange}>
+    <Dialog open={modalOpen} onOpenChange={handleModalOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
