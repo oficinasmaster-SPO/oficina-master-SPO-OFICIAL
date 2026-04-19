@@ -549,13 +549,15 @@ export default function PainelClienteAceleracao() {
         <SprintClientSection key={workshopIdToUse} workshopId={workshopIdToUse} user={user} workshop={workshop} />
       )}
 
-      {/* EAP - Estrutura Analítica do Projeto (usando sprints reais do banco) */}
-      <EAPViewer 
-        trilhas={[]} 
-        sprints={sprints} 
-        tarefas={[]}
-        workshop={workshop}
-      />
+      {/* EAP - só exibe se houver sprints com trilha vinculada */}
+      {sprints.some(s => s.cronograma_template_id) && (
+        <EAPViewer 
+          trilhas={[]} 
+          sprints={sprints} 
+          tarefas={[]}
+          workshop={workshop}
+        />
+      )}
 
       {/* Atividades de Implementação do Cronograma */}
       <AtividadesImplementacao items={allItemsForPanel} workshop={workshop} />
