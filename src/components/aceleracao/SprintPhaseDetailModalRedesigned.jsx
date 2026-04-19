@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import {
   ChevronLeft, ChevronRight, CheckCircle2, Circle, Clock, Send,
   ListChecks, PlaySquare, BarChart2, TrendingUp, MessageSquare,
@@ -33,7 +33,7 @@ const STATUS_OPTIONS = [
 ];
 
 export default function SprintPhaseDetailModalRedesigned({
-  sprint,
+  sprint: sprintProp,
   phaseIndex = 0,
   onClose,
   onSaved,
@@ -41,6 +41,18 @@ export default function SprintPhaseDetailModalRedesigned({
   onNavigateToNextSprint,
 }) {
   const queryClient = useQueryClient();
+
+  // Sempre buscar dados frescos do banco para evitar uso de cache stale
+  const { data: freshSprint } = useQuery({
+    queryKey: ['sprint-detail', sprintProp?.id],
+    queryFn: () => base44.entities.ConsultoriaSprint.get(sprintProp.id),
+    enabled: !!sprintProp?.id,
+    staleTime: 0,
+    refetchOnWindowFocus: false,
+  });
+
+  // Usar dados frescos se disponíveis, senão usar o prop (enquanto carrega)
+  const sprint = freshSprint || sprintProp;
   const phases = sprint?.phases || [];
   const currentPhase = phases[phaseIndex];
   const config = PHASES_CONFIG.find(p => p.name === currentPhase?.name) || PHASES_CONFIG[0];
@@ -59,7 +71,7 @@ export default function SprintPhaseDetailModalRedesigned({
       setNotes(phase.notes || "");
       setTasks(phase.tasks || []);
     }
-  }, [phaseIndex, phases]);
+  }, [phaseIndex, sprint?.id, JSON.stringify(phases[phaseIndex])]);
 
   const persistPhases = async (updatedPhases) => {
     setSaving(true);
@@ -75,6 +87,8 @@ export default function SprintPhaseDetailModalRedesigned({
         status: allCompleted ? "completed" : "in_progress",
         last_activity_date: new Date().toISOString(),
       });
+      // Invalidar query local do modal primeiro para forçar re-fetch imediato
+      await queryClient.invalidateQueries({ queryKey: ['sprint-detail', sprint.id] });
       // Invalidate all sprint queries across tabs (Dashboard, Cronograma, Client panels, EAP, Home)
       queryClient.invalidateQueries({ queryKey: ['dashboard-sprints'], exact: false });
       queryClient.invalidateQueries({ queryKey: ['sprints'], exact: false });
@@ -122,12 +136,7 @@ export default function SprintPhaseDetailModalRedesigned({
     };
     const ok = await persistPhases(updatedPhases);
     if (ok) {
-      toast.success("Fase atualizada!");
-      if (canGoForward) {
-        onNavigateToPhase(phaseIndex + 1);
-      } else {
-        if (onSaved) onSaved();
-      }
+      toast.success("Fase salva com sucesso!");
     }
   };
 
@@ -220,14 +229,25 @@ export default function SprintPhaseDetailModalRedesigned({
     toast.success("Evidência salva!");
   };
 
-  const addTask = () => {
+  const addTask = async () => {
     if (!newTask.trim()) return;
-    setTasks([...tasks, { description: newTask.trim(), status: "to_do" }]);
+    const updated = [...tasks, { description: newTask.trim(), status: "to_do" }];
+    setTasks(updated);
     setNewTask("");
+    const updatedPhases = phases.map((p, i) =>
+      i === phaseIndex ? { ...p, tasks: updated, status, notes } : p
+    );
+    await persistPhases(updatedPhases);
+    toast.success("Tarefa adicionada!");
   };
 
-  const removeTask = (idx) => {
-    setTasks(tasks.filter((_, i) => i !== idx));
+  const removeTask = async (idx) => {
+    const updated = tasks.filter((_, i) => i !== idx);
+    setTasks(updated);
+    const updatedPhases = phases.map((p, i) =>
+      i === phaseIndex ? { ...p, tasks: updated, status, notes } : p
+    );
+    await persistPhases(updatedPhases);
   };
 
   const canGoBack = phaseIndex > 0;
