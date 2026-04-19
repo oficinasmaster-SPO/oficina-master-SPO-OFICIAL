@@ -567,8 +567,10 @@ function CamadaSprints({ workshopId, missoesSelecionadas, cronogramaTemplateId }
   const phaseIndexFromUrl = urlParams.get('phase_index') ? parseInt(urlParams.get('phase_index')) : null;
 
   const loadSprints = useCallback(async () => {
-    if (!workshopId) return;
-    const data = await base44.entities.ConsultoriaSprint.filter({ workshop_id: workshopId });
+    // Em modo global: carrega TODOS os sprints
+    // Em modo contextual: carrega apenas do cliente específico
+    const query = workshopId ? { workshop_id: workshopId } : {};
+    const data = await base44.entities.ConsultoriaSprint.filter(query);
     setSprints(data || []);
   }, [workshopId]);
 
@@ -807,35 +809,49 @@ function CamadaConsultor({ workshopId }) {
   );
 }
 
-export default function ConsultoriaClienteTab({ client }) {
+export default function ConsultoriaClienteTab({ client, mode = "contextual" }) {
   const workshopId = client?.id;
+  const isGlobalMode = mode === "global" || !workshopId;
   const [missoesSelecionadas, setMissoesSelecionadas] = useState([]);
   const [cronogramaTemplateId, setCronogramaTemplateId] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!workshopId) return;
+    // Em modo global, não há workshopId, então carregamos sem filtro
+    // Em modo contextual, carregamos para o cliente específico
     const loadSelectedMissions = async () => {
       try {
-        const cronogramas = await base44.entities.CronogramaTemplate.filter(
-          { workshop_id: workshopId }
-        );
-        
-        if (cronogramas?.length > 0) {
-          const selecionadas = cronogramas[0].missoes_selecionadas || [];
-          setMissoesSelecionadas(selecionadas);
-          setCronogramaTemplateId(cronogramas[0].id);
+        if (isGlobalMode) {
+          // Modo global: não há seleção de missões agregadas
+          // Cada sprint funciona independentemente
+          setMissoesSelecionadas([]);
+          setLoading(false);
+        } else if (workshopId) {
+          // Modo contextual: carrega para o cliente específico
+          const cronogramas = await base44.entities.CronogramaTemplate.filter(
+            { workshop_id: workshopId }
+          );
+          
+          if (cronogramas?.length > 0) {
+            const selecionadas = cronogramas[0].missoes_selecionadas || [];
+            setMissoesSelecionadas(selecionadas);
+            setCronogramaTemplateId(cronogramas[0].id);
+          }
+          setLoading(false);
         }
       } catch (error) {
         console.error('Erro ao carregar trilhas selecionadas:', error);
-      } finally {
         setLoading(false);
       }
     };
     loadSelectedMissions();
-  }, [workshopId]);
+  }, [workshopId, isGlobalMode]);
 
   const handleSetMissoesSelecionadas = useCallback(async (novasSelecionadas) => {
+    // Em modo global, não há operação de salvar para cliente específico
+    // Cada sprint é autossuficiente
+    if (isGlobalMode) return;
+    
     if (!workshopId) return;
     try {
       const existing = await base44.entities.CronogramaTemplate.filter(
@@ -869,7 +885,7 @@ export default function ConsultoriaClienteTab({ client }) {
     } catch (error) {
       console.error('❌ Erro ao salvar trilhas:', error);
     }
-  }, [workshopId]);
+  }, [workshopId, isGlobalMode]);
 
   return (
     <div className="space-y-4">
