@@ -563,6 +563,9 @@ function CamadaSprints({ workshopId, missoesSelecionadas, cronogramaTemplateId }
   const [sprints, setSprints] = useState([]);
   const [loadingCreate, setLoadingCreate] = useState(null);
   const [loadError, setLoadError] = useState(null);
+  const urlParams = new URLSearchParams(window.location.search);
+  const sprintIdFromUrl = urlParams.get('sprint_id');
+  const phaseIndexFromUrl = urlParams.get('phase_index') ? parseInt(urlParams.get('phase_index')) : null;
 
   const loadSprints = useCallback(async () => {
     try {
