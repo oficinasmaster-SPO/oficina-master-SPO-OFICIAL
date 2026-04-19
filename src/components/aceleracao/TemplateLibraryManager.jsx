@@ -1,0 +1,348 @@
+import React, { useState, useEffect } from 'react';
+import { base44 } from '@/api/base44Client';
+import { useQuery } from '@tanstack/react-query';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { AlertCircle, Copy, Edit2, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import WheelLoader from '@/components/ui/WheelLoader';
+
+/**
+ * TemplateLibraryManager - Matriz Global de Templates Padrão
+ * Consolida todas as trilhas, missões e sprints de todos os clientes
+ * como templates editáveis e reutilizáveis
+ */
+export default function TemplateLibraryManager() {
+  const [templates, setTemplates] = useState({
+    trails: [],
+    missions: [],
+    sprints: []
+  });
+  const [expandedTrail, setExpandedTrail] = useState(null);
+  const [expandedSprint, setExpandedSprint] = useState(null);
+
+  // Busca todas as trilhas (CronogramaTemplate)
+  const { data: allTrails = [], isLoading: loadingTrails } = useQuery({
+    queryKey: ['allCronogramaTemplates'],
+    queryFn: async () => {
+      try {
+        const data = await base44.entities.CronogramaTemplate.list('-updated_date', 500);
+        return data || [];
+      } catch (error) {
+        console.error('Erro ao carregar trilhas:', error);
+        return [];
+      }
+    },
+    staleTime: 30 * 1000,
+  });
+
+  // Busca todos os sprints (ConsultoriaSprint)
+  const { data: allSprints = [], isLoading: loadingSprints } = useQuery({
+    queryKey: ['allConsultoriaSprints'],
+    queryFn: async () => {
+      try {
+        const data = await base44.entities.ConsultoriaSprint.list('-updated_date', 500);
+        return data || [];
+      } catch (error) {
+        console.error('Erro ao carregar sprints:', error);
+        return [];
+      }
+    },
+    staleTime: 30 * 1000,
+  });
+
+  // Processa e consolida os dados em um formato de matriz única
+  useEffect(() => {
+    if (allTrails.length === 0 && allSprints.length === 0) {
+      setTemplates({ trails: [], missions: [], sprints: [] });
+      return;
+    }
+
+    // Deduplica trilhas por missões selecionadas
+    const trailsMap = new Map();
+    allTrails.forEach(trail => {
+      const key = JSON.stringify(trail.missoes_selecionadas?.sort() || []);
+      if (!trailsMap.has(key)) {
+        trailsMap.set(key, {
+          id: trail.id,
+          name: trail.nome_fase,
+          missions: trail.missoes_selecionadas || [],
+          source: `${trail.workshop_id}`,
+          createdAt: trail.created_date,
+        });
+      }
+    });
+
+    // Extrai todas as missões únicas
+    const missionsSet = new Set();
+    allTrails.forEach(trail => {
+      trail.missoes_selecionadas?.forEach(m => missionsSet.add(m));
+    });
+    allSprints.forEach(sprint => {
+      if (sprint.mission_id) missionsSet.add(sprint.mission_id);
+    });
+
+    // Consolida sprints por missão e cronograma_template_id
+    const sprintsMap = new Map();
+    allSprints.forEach(sprint => {
+      const key = `${sprint.cronograma_template_id}_${sprint.mission_id}`;
+      if (!sprintsMap.has(key)) {
+        sprintsMap.set(key, {
+          id: sprint.id,
+          title: sprint.title,
+          objective: sprint.objective,
+          mission_id: sprint.mission_id,
+          sprint_number: sprint.sprint_number,
+          phases: sprint.phases || [],
+          start_date: sprint.start_date,
+          end_date: sprint.end_date,
+          progress_percentage: sprint.progress_percentage,
+          status: sprint.status,
+          total_tasks: countTotalTasks(sprint.phases),
+          completed_tasks: countCompletedTasks(sprint.phases),
+        });
+      }
+    });
+
+    setTemplates({
+      trails: Array.from(trailsMap.values()),
+      missions: Array.from(missionsSet).sort(),
+      sprints: Array.from(sprintsMap.values()),
+    });
+  }, [allTrails, allSprints]);
+
+  const countTotalTasks = (phases) => {
+    return phases.reduce((acc, phase) => acc + (phase.tasks?.length || 0), 0);
+  };
+
+  const countCompletedTasks = (phases) => {
+    return phases.reduce((acc, phase) => 
+      acc + (phase.tasks?.filter(t => t.status === 'done').length || 0), 0);
+  };
+
+  const handleDuplicateTrail = async (trail) => {
+    // TODO: Implementar duplicação de trilha como template padrão
+    console.log('Duplicando trilha:', trail);
+  };
+
+  const handleDuplicateSprint = async (sprint) => {
+    // TODO: Implementar duplicação de sprint como template padrão
+    console.log('Duplicando sprint:', sprint);
+  };
+
+  if (loadingTrails || loadingSprints) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <WheelLoader size="lg" text="Carregando matriz de templates..." />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6">
+        <div className="flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+          <div>
+            <h3 className="font-semibold text-blue-900">Matriz de Templates Padrão</h3>
+            <p className="text-sm text-blue-700 mt-1">
+              Consolidação de todas as trilhas, missões e sprints existentes de todos os clientes.
+              Use como referência para criar novos templates ou duplicar estruturas já testadas.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <Tabs defaultValue="trails" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="trails">
+            Trilhas ({templates.trails.length})
+          </TabsTrigger>
+          <TabsTrigger value="missions">
+            Missões ({templates.missions.length})
+          </TabsTrigger>
+          <TabsTrigger value="sprints">
+            Sprints ({templates.sprints.length})
+          </TabsTrigger>
+        </TabsList>
+
+        {/* TAB: TRILHAS */}
+        <TabsContent value="trails" className="space-y-4">
+          {templates.trails.length === 0 ? (
+            <Card>
+              <CardContent className="pt-6 text-center text-gray-500">
+                Nenhuma trilha encontrada no sistema.
+              </CardContent>
+            </Card>
+          ) : (
+            templates.trails.map((trail) => (
+              <Card key={trail.id} className="overflow-hidden">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <CardTitle>{trail.name}</CardTitle>
+                      <CardDescription>
+                        {trail.missions.length} missão(ões) • Fonte: {trail.source}
+                      </CardDescription>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setExpandedTrail(expandedTrail === trail.id ? null : trail.id)}
+                      >
+                        {expandedTrail === trail.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleDuplicateTrail(trail)}
+                      >
+                        <Copy className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+
+                {expandedTrail === trail.id && (
+                  <CardContent className="space-y-3 border-t pt-4">
+                    <div>
+                      <p className="text-sm font-semibold text-gray-700 mb-2">Missões incluídas:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {trail.missions.map((mission) => (
+                          <Badge key={mission} variant="secondary">
+                            {mission}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="pt-2 border-t text-xs text-gray-500">
+                      Criada em: {new Date(trail.createdAt).toLocaleDateString('pt-BR')}
+                    </div>
+                  </CardContent>
+                )}
+              </Card>
+            ))
+          )}
+        </TabsContent>
+
+        {/* TAB: MISSÕES */}
+        <TabsContent value="missions" className="space-y-4">
+          {templates.missions.length === 0 ? (
+            <Card>
+              <CardContent className="pt-6 text-center text-gray-500">
+                Nenhuma missão encontrada no sistema.
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {templates.missions.map((mission) => {
+                const relatedSprints = templates.sprints.filter(s => s.mission_id === mission);
+                return (
+                  <Card key={mission}>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base">{mission}</CardTitle>
+                      <CardDescription>
+                        {relatedSprints.length} sprint(s) relacionado(s)
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Button size="sm" className="w-full">
+                        <Copy className="w-4 h-4 mr-2" />
+                        Usar como Template
+                      </Button>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </TabsContent>
+
+        {/* TAB: SPRINTS */}
+        <TabsContent value="sprints" className="space-y-4">
+          {templates.sprints.length === 0 ? (
+            <Card>
+              <CardContent className="pt-6 text-center text-gray-500">
+                Nenhum sprint encontrado no sistema.
+              </CardContent>
+            </Card>
+          ) : (
+            templates.sprints.map((sprint) => (
+              <Card key={sprint.id} className="overflow-hidden">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <CardTitle className="text-base">{sprint.title}</CardTitle>
+                      <CardDescription>
+                        {sprint.mission_id} • Sprint #{sprint.sprint_number}
+                      </CardDescription>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setExpandedSprint(expandedSprint === sprint.id ? null : sprint.id)}
+                      >
+                        {expandedSprint === sprint.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleDuplicateSprint(sprint)}
+                      >
+                        <Copy className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+
+                {expandedSprint === sprint.id && (
+                  <CardContent className="space-y-3 border-t pt-4">
+                    <div>
+                      <p className="text-sm text-gray-700">{sprint.objective}</p>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div>
+                        <span className="text-gray-500">Tarefas:</span>
+                        <span className="ml-2 font-semibold text-gray-900">
+                          {sprint.completed_tasks}/{sprint.total_tasks}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Progresso:</span>
+                        <span className="ml-2 font-semibold text-gray-900">
+                          {sprint.progress_percentage}%
+                        </span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="text-xs font-semibold text-gray-700 mb-2">Fases:</p>
+                      <div className="space-y-2">
+                        {sprint.phases.map((phase, idx) => (
+                          <div key={idx} className="text-xs bg-gray-50 p-2 rounded">
+                            <p className="font-semibold text-gray-900">{phase.name}</p>
+                            <p className="text-gray-600">
+                              {phase.tasks?.length || 0} tarefa(s) • Status: {phase.status}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="pt-2 border-t text-xs text-gray-500">
+                      {sprint.start_date} até {sprint.end_date}
+                    </div>
+                  </CardContent>
+                )}
+              </Card>
+            ))
+          )}
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
