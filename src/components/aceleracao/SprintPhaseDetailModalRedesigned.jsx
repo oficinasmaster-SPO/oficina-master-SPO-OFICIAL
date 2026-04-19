@@ -75,12 +75,14 @@ export default function SprintPhaseDetailModalRedesigned({
         status: allCompleted ? "completed" : "in_progress",
         last_activity_date: new Date().toISOString(),
       });
-      // Invalidate all sprint queries across tabs (Dashboard, Cronograma, Client panels)
-      queryClient.invalidateQueries({ queryKey: ['dashboard-sprints'] });
-      queryClient.invalidateQueries({ queryKey: ['sprints'] });
-      queryClient.invalidateQueries({ queryKey: ['sprints-client'] });
-      queryClient.invalidateQueries({ queryKey: ['client-sprints'] });
-      queryClient.invalidateQueries({ queryKey: ['ConsultoriaSprint'] });
+      // Invalidate all sprint queries across tabs (Dashboard, Cronograma, Client panels, EAP, Home)
+      queryClient.invalidateQueries({ queryKey: ['dashboard-sprints'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['sprints'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['sprints-client'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['client-sprints'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['sprints-reais'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['active-sprint-widget'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['ConsultoriaSprint'], exact: false });
       return true;
     } catch {
       toast.error("Erro ao salvar fase");
@@ -190,20 +192,32 @@ export default function SprintPhaseDetailModalRedesigned({
     }
   };
 
-  const handleToggleTask = (taskIdx) => {
+  const handleToggleTask = async (taskIdx) => {
     const updated = [...tasks];
+    const wasDone = updated[taskIdx].status === "done";
     updated[taskIdx] = {
       ...updated[taskIdx],
-      status: updated[taskIdx].status === "done" ? "to_do" : "done",
-      ...(updated[taskIdx].status !== "done" ? { completed_by_role: "consultor", completed_at: new Date().toISOString() } : { completed_by_role: null, completed_at: null }),
+      status: wasDone ? "to_do" : "done",
+      ...((!wasDone) ? { completed_by_role: "consultor", completed_at: new Date().toISOString() } : { completed_by_role: null, completed_at: null }),
     };
     setTasks(updated);
+    // Auto-persist immediately — same as SprintClientModal behavior
+    const updatedPhases = phases.map((p, i) =>
+      i === phaseIndex ? { ...p, tasks: updated, status: status, notes } : p
+    );
+    await persistPhases(updatedPhases);
   };
 
-  const handleUpdateEvidence = (taskIdx, data) => {
+  const handleUpdateEvidence = async (taskIdx, data) => {
     const updated = [...tasks];
     updated[taskIdx] = { ...updated[taskIdx], ...data };
     setTasks(updated);
+    // Auto-persist evidence immediately
+    const updatedPhases = phases.map((p, i) =>
+      i === phaseIndex ? { ...p, tasks: updated, status, notes } : p
+    );
+    await persistPhases(updatedPhases);
+    toast.success("Evidência salva!");
   };
 
   const addTask = () => {
