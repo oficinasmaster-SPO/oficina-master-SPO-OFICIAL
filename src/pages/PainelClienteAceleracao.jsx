@@ -37,7 +37,7 @@ export default function PainelClienteAceleracao() {
   const isAdminMode = !!adminWorkshopId;
   const workshopIdToUse = adminWorkshopId || user?.data?.workshop_id || user?.workshop_id;
 
-  const { data: workshop, isError: workshopError } = useQuery({
+  const { data: workshop } = useQuery({
     queryKey: ['workshop-painel', workshopIdToUse, user?.id],
     queryFn: async () => {
       // Tentar buscar pelo ID salvo no perfil
@@ -283,26 +283,6 @@ export default function PainelClienteAceleracao() {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-      </div>
-    );
-  }
-
-  // Workshop não encontrado no banco (ex: ID desatualizado no perfil)
-  if (workshopIdToUse && workshopError && !isAdminMode) {
-    return (
-      <div className="max-w-4xl mx-auto text-center py-12">
-        <div className="bg-red-50 border-2 border-red-200 rounded-lg p-8">
-          <AlertCircle className="w-12 h-12 mx-auto text-red-500 mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Oficina não encontrada</h2>
-          <p className="text-gray-600 mb-4">
-            Sua oficina vinculada não foi encontrada no sistema. 
-            O ID pode estar desatualizado ou a oficina pode ter sido removida.
-          </p>
-          <p className="text-xs text-gray-400 mb-6">ID: {workshopIdToUse}</p>
-          <Button onClick={() => window.location.href = '/GestaoOficina'}>
-            Ir para Gestão da Oficina
-          </Button>
-        </div>
       </div>
     );
   }
@@ -584,8 +564,8 @@ export default function PainelClienteAceleracao() {
       )}
 
       {/* Sprints de Aceleração - Colaborativo */}
-      {(workshop?.id || workshopIdToUse) && user && (
-        <SprintClientSection key={workshop?.id || workshopIdToUse} workshopId={workshop?.id || workshopIdToUse} user={user} workshop={workshop} />
+      {workshopIdToUse && user && (
+        <SprintClientSection key={workshopIdToUse} workshopId={workshopIdToUse} user={user} workshop={workshop} />
       )}
 
       {/* EAP - sempre visível */}
