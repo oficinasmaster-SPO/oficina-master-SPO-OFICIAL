@@ -191,6 +191,20 @@
                   ],
                   "default": "to_do"
                 },
+                "instructions": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Instru\u00e7\u00f5es para executar a tarefa (como fazer)"
+                },
+                "link_url": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "URL do material complementar"
+                },
                 "completed_by": {
                   "type": "string",
                   "description": "ID do usu\u00e1rio que completou a tarefa"
