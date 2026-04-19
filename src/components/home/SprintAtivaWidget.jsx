@@ -37,7 +37,8 @@ export default function SprintAtivaWidget({ workshopId }) {
       return Array.isArray(sprints) && sprints.length > 0 ? sprints[0] : null;
     },
     enabled: !!workshopId,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
+    refetchInterval: 15 * 1000,
   });
 
   if (!activeSprint) return null;

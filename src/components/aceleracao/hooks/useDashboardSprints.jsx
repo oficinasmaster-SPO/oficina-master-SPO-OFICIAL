@@ -31,7 +31,7 @@ export default function useDashboardSprints(workshops = []) {
   );
 
   const sprintsEmAndamento = useMemo(
-    () => sprints.filter(s => s.status === "in_progress"),
+    () => sprints.filter(s => s.status === "in_progress" || s.status === "pending"),
     [sprints]
   );
 
