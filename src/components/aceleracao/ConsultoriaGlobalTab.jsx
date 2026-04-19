@@ -1,16 +1,40 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { base44 } from '@/api/base44Client';
+import { useQuery } from '@tanstack/react-query';
 import ConsultoriaClienteTab from './ConsultoriaClienteTab';
 
 /**
- * Wrapper que reutiliza 100% a lógica de ConsultoriaClienteTab
- * mas funciona em modo GLOBAL (sem cliente específico)
+ * ConsultoriaGlobalTab - Wrapper que passa workshopId=null
+ * para ConsultoriaClienteTab renderizar em MODO GLOBAL
  * 
- * Modo GLOBAL: workshopId = null → busca TODOS os workshops
- * Modo CONTEXTUAL: workshopId = cliente.id → filtra por cliente
+ * Carrega TODOS os sprints de TODOS os clientes agregados
  */
 export default function ConsultoriaGlobalTab() {
-  // Em modo global, passamos id=null para buscar TODOS os dados agregados
+  const [allSprints, setAllSprints] = useState([]);
+  
+  // Carrega TODOS os sprints do sistema (sem filtro de workshop)
+  const { isLoading } = useQuery({
+    queryKey: ['allConsultoriaSprints'],
+    queryFn: async () => {
+      try {
+        const data = await base44.entities.ConsultoriaSprint.list('-updated_date', 500);
+        setAllSprints(data || []);
+        return data;
+      } catch (error) {
+        console.error('Erro ao carregar todos os sprints:', error);
+        return [];
+      }
+    },
+    staleTime: 30 * 1000,
+  });
+
+  // Em modo global, passamos workshopId=null para buscar TODOS os dados agregados
   return (
-    <ConsultoriaClienteTab client={{ id: null, name: 'Todas as Oficinas' }} mode="global" />
+    <ConsultoriaClienteTab 
+      client={{ id: null, name: 'Todas as Oficinas' }} 
+      mode="global"
+      globalSprints={allSprints}
+      isLoadingGlobal={isLoading}
+    />
   );
 }

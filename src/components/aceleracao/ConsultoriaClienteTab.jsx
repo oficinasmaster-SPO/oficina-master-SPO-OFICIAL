@@ -558,7 +558,7 @@ function SprintCard({ numero, titulo, emoji, descricao, cor, isFixed, sprint, on
   );
 }
 
-function CamadaSprints({ workshopId, missoesSelecionadas, cronogramaTemplateId }) {
+function CamadaSprints({ workshopId, missoesSelecionadas, cronogramaTemplateId, isGlobalMode = false, globalSprints = [] }) {
   const missoesSelecionadasData = MISSOES.filter(m => missoesSelecionadas.includes(m.id));
   const [sprints, setSprints] = useState([]);
   const [loadingCreate, setLoadingCreate] = useState(null);
@@ -570,17 +570,21 @@ function CamadaSprints({ workshopId, missoesSelecionadas, cronogramaTemplateId }
   const loadSprints = useCallback(async () => {
     try {
       setLoadError(null);
-      // Em modo global, carrega TODOS os sprints sem filtro
+      // Em modo global, usa os sprints passados
       // Em modo contextual, filtra por workshop_id
-      const query = workshopId ? { workshop_id: workshopId } : {};
-      const data = await base44.entities.ConsultoriaSprint.filter(query);
-      setSprints(data || []);
+      if (isGlobalMode && globalSprints?.length > 0) {
+        setSprints(globalSprints);
+      } else {
+        const query = workshopId ? { workshop_id: workshopId } : {};
+        const data = await base44.entities.ConsultoriaSprint.filter(query);
+        setSprints(data || []);
+      }
     } catch (error) {
       console.error('Erro ao carregar sprints:', error);
       setLoadError(error.message);
       setSprints([]);
     }
-  }, [workshopId]);
+  }, [workshopId, isGlobalMode, globalSprints]);
 
   useEffect(() => {
     loadSprints();
@@ -819,12 +823,13 @@ function CamadaConsultor({ workshopId }) {
   );
 }
 
-export default function ConsultoriaClienteTab({ client, mode = "contextual" }) {
+export default function ConsultoriaClienteTab({ client, mode = "contextual", globalSprints = [], isLoadingGlobal = false }) {
   const workshopId = client?.id;
   const isGlobalMode = mode === "global" || !workshopId;
   const [missoesSelecionadas, setMissoesSelecionadas] = useState([]);
   const [cronogramaTemplateId, setCronogramaTemplateId] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [displaySprints, setDisplaySprints] = useState([]);
 
   useEffect(() => {
     const loadSelectedMissions = async () => {
@@ -851,6 +856,14 @@ export default function ConsultoriaClienteTab({ client, mode = "contextual" }) {
     };
     loadSelectedMissions();
   }, [workshopId]);
+
+  // Se em modo global e globalSprints fornecidos, usa-os para exibição
+  useEffect(() => {
+    if (isGlobalMode && globalSprints?.length > 0) {
+      setDisplaySprints(globalSprints);
+      setLoading(isLoadingGlobal);
+    }
+  }, [globalSprints, isLoadingGlobal, isGlobalMode]);
 
   const handleSetMissoesSelecionadas = useCallback(async (novasSelecionadas) => {
     // Em modo global, permite criar/editar trilhas
@@ -951,8 +964,14 @@ export default function ConsultoriaClienteTab({ client, mode = "contextual" }) {
            {loading && <div className="text-center py-4 text-gray-500">Carregando trilhas...</div>}
          </TabsContent>
         <TabsContent value="sprints" className="mt-4">
-          <CamadaSprints workshopId={workshopId} missoesSelecionadas={missoesSelecionadas} cronogramaTemplateId={cronogramaTemplateId} />
-        </TabsContent>
+           <CamadaSprints 
+             workshopId={workshopId} 
+             missoesSelecionadas={missoesSelecionadas} 
+             cronogramaTemplateId={cronogramaTemplateId}
+             isGlobalMode={isGlobalMode}
+             globalSprints={displaySprints}
+           />
+         </TabsContent>
         <TabsContent value="consultor" className="mt-4">
           <CamadaConsultor workshopId={workshopId} />
         </TabsContent>
