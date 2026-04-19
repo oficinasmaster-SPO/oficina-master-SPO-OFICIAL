@@ -143,11 +143,23 @@ export default function SprintTaskItem({ task, index, canComplete, canAddNotes, 
         </div>
 
         {/* Add evidence button */}
-        {canAddNotes && !showEvidenceForm && (
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setShowEvidenceForm(true)}>
-            <MessageSquare className="w-3.5 h-3.5 text-gray-400" />
-          </Button>
-        )}
+        {canAddNotes && !showEvidenceForm && (() => {
+          const hasContent = !!(task.evidence_note || task.evidence_url || task.link_url);
+          return (
+            <Button
+              variant="ghost"
+              size="icon"
+              className={cn("h-7 w-7 relative", hasContent && "hover:bg-blue-50")}
+              onClick={() => setShowEvidenceForm(true)}
+              title={hasContent ? "Há observações nesta tarefa" : "Adicionar observação"}
+            >
+              <MessageSquare className={cn("w-3.5 h-3.5", hasContent ? "text-blue-500 fill-blue-100" : "text-gray-400")} />
+              {hasContent && (
+                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-blue-500 rounded-full" />
+              )}
+            </Button>
+          );
+        })()}
       </div>
     </div>
   );
