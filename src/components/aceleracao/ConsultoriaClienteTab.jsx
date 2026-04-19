@@ -562,27 +562,24 @@ function CamadaSprints({ workshopId, missoesSelecionadas, cronogramaTemplateId }
   const missoesSelecionadasData = MISSOES.filter(m => missoesSelecionadas.includes(m.id));
   const [sprints, setSprints] = useState([]);
   const [loadingCreate, setLoadingCreate] = useState(null);
-  const urlParams = new URLSearchParams(window.location.search);
-  const sprintIdFromUrl = urlParams.get('sprint_id');
-  const phaseIndexFromUrl = urlParams.get('phase_index') ? parseInt(urlParams.get('phase_index')) : null;
+  const [loadError, setLoadError] = useState(null);
 
   const loadSprints = useCallback(async () => {
-    // Em modo global: carrega TODOS os sprints
-    // Em modo contextual: carrega apenas do cliente específico
-    const query = workshopId ? { workshop_id: workshopId } : {};
-    const data = await base44.entities.ConsultoriaSprint.filter(query);
-    setSprints(data || []);
+    try {
+      setLoadError(null);
+      const query = workshopId ? { workshop_id: workshopId } : {};
+      const data = await base44.entities.ConsultoriaSprint.filter(query);
+      setSprints(data || []);
+    } catch (error) {
+      console.error('Erro ao carregar sprints:', error);
+      setLoadError(error.message);
+      setSprints([]);
+    }
   }, [workshopId]);
 
   useEffect(() => {
     loadSprints();
   }, [loadSprints]);
-
-  useEffect(() => {
-    if (workshopId) {
-      loadSprints();
-    }
-  }, [workshopId, missoesSelecionadas]);
 
   const getSprintForMission = (missionId, number) =>
     sprints.find(s => s.mission_id === missionId && s.sprint_number === number);
@@ -659,7 +656,15 @@ function CamadaSprints({ workshopId, missoesSelecionadas, cronogramaTemplateId }
         ))}
       </div>
 
-      {missoesSelecionadasData.length === 0 && (
+      {loadError && (
+        <div className="text-center py-8 text-red-500 border-2 border-dashed border-red-200 rounded-xl bg-red-50">
+          <AlertTriangle className="w-10 h-10 mx-auto mb-3 text-red-300" />
+          <p className="text-sm font-medium">Erro ao carregar sprints</p>
+          <p className="text-xs mt-1">{loadError}</p>
+        </div>
+      )}
+
+      {!loadError && missoesSelecionadasData.length === 0 && (
         <div className="text-center py-8 text-gray-500 border-2 border-dashed border-gray-200 rounded-xl">
           <Zap className="w-10 h-10 mx-auto mb-3 text-gray-300" />
           <p className="text-sm font-medium">Nenhuma missão selecionada</p>
