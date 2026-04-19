@@ -7,14 +7,14 @@ import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronRight, Target, Zap, CheckCircle2, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// Fases fixas de uma Sprint (CRÍTICO: sempre 5 fases na mesma ordem)
-const FIXED_PHASES = [
-  { id: "planejamento", label: "Planejamento", color: "bg-blue-50 border-blue-200" },
-  { id: "implementacao", label: "Implementação", color: "bg-purple-50 border-purple-200" },
-  { id: "acompanhamento", label: "Acompanhamento", color: "bg-green-50 border-green-200" },
-  { id: "revisao", label: "Revisão", color: "bg-yellow-50 border-yellow-200" },
-  { id: "melhoria", label: "Melhoria", color: "bg-orange-50 border-orange-200" }
-];
+// Mapeamento dos nomes reais das fases (conforme salvo no banco)
+const PHASE_LABELS = {
+  Planning: { label: "Planejamento", color: "bg-blue-50 border-blue-200" },
+  Execution: { label: "Execução", color: "bg-purple-50 border-purple-200" },
+  Monitoring: { label: "Monitoramento", color: "bg-green-50 border-green-200" },
+  Review: { label: "Revisão", color: "bg-yellow-50 border-yellow-200" },
+  Retrospective: { label: "Retrospectiva", color: "bg-orange-50 border-orange-200" },
+};
 
 export default function EAPViewer({ trilhas = [], sprints = [], tarefas = [], workshop = null, isLoading = false }) {
   const [expandedMissoes, setExpandedMissoes] = useState({});
@@ -74,42 +74,12 @@ export default function EAPViewer({ trilhas = [], sprints = [], tarefas = [], wo
       return {
         trilha,
         sprints: sprintsToShow.map((sprint) => {
-          // Tarefas da sprint
-          const sprintTarefas = tarefasArray.filter(
-            (t) => t.sprint_id === sprint.id || t.mission_id === trilha.id
-          );
-
-          // Agrupar tarefas por fase (ou atribuir à primeira fase)
-          const tarefasPorFase = {};
-          FIXED_PHASES.forEach((phase) => {
-            tarefasPorFase[phase.id] = sprintTarefas.filter(
-              (t) => t.phase_id === phase.id || t.fase === phase.id
-            );
-          });
-
-          // Se não houver tarefas, distribuir mocks
-          if (sprintTarefas.length === 0) {
-            FIXED_PHASES.forEach((phase, idx) => {
-              tarefasPorFase[phase.id] = [
-                {
-                  id: `mock-tarefa-${sprint.id}-${phase.id}-1`,
-                  title: `Tarefa exemplo ${idx + 1}.1`,
-                  phase_id: phase.id,
-                  status: "a_fazer"
-                },
-                {
-                  id: `mock-tarefa-${sprint.id}-${phase.id}-2`,
-                  title: `Tarefa exemplo ${idx + 1}.2`,
-                  phase_id: phase.id,
-                  status: "a_fazer"
-                }
-              ];
-            });
-          }
+          // Usar as fases REAIS da sprint vindas do banco (sprint.phases[])
+          const realPhases = Array.isArray(sprint.phases) ? sprint.phases : [];
 
           return {
             sprint,
-            tarefasPorFase
+            realPhases
           };
         })
       };
@@ -243,7 +213,7 @@ export default function EAPViewer({ trilhas = [], sprints = [], tarefas = [], wo
                 {/* Missão Content - Sprints */}
                 {expandedMissoes[trilha.id] && (
                   <div className="bg-white border-t border-gray-200 p-4 space-y-3">
-                    {sprints.map(({ sprint, tarefasPorFase }) => (
+                    {sprints.map(({ sprint, realPhases }) => (
                       <div
                         key={sprint.id}
                         className="border border-yellow-200 rounded-lg overflow-hidden bg-yellow-50/50"
@@ -273,64 +243,65 @@ export default function EAPViewer({ trilhas = [], sprints = [], tarefas = [], wo
                           <Badge variant="outline">{sprint.status || "ativo"}</Badge>
                         </button>
 
-                        {/* Sprint Content - Fases */}
+                        {/* Sprint Content - Fases REAIS */}
                         {expandedSprints[sprint.id] && (
                           <div className="bg-white border-t border-yellow-200 p-3 space-y-2">
-                            {FIXED_PHASES.map((phase) => (
-                              <div
-                                key={phase.id}
-                                className={`border rounded-lg overflow-hidden ${phase.color}`}
-                              >
-                                {/* NÍVEL 3: FASE */}
-                                <button
-                                  onClick={() => toggleFase(phase.id)}
-                                  className="w-full flex items-center gap-3 p-3 hover:opacity-80 transition-opacity"
-                                  aria-expanded={expandedFases[phase.id]}
-                                  aria-label={`Fase: ${phase.label}`}
+                            {realPhases.length === 0 ? (
+                              <p className="text-xs text-gray-400 italic p-2">Nenhuma fase configurada neste sprint.</p>
+                            ) : realPhases.map((phase, phaseIdx) => {
+                              const phaseConfig = PHASE_LABELS[phase.name] || { label: phase.name, color: "bg-gray-50 border-gray-200" };
+                              const faseKey = `${sprint.id}-${phaseIdx}`;
+                              const tasks = Array.isArray(phase.tasks) ? phase.tasks : [];
+                              return (
+                                <div
+                                  key={faseKey}
+                                  className={`border rounded-lg overflow-hidden ${phaseConfig.color}`}
                                 >
-                                  {expandedFases[phase.id] ? (
-                                    <ChevronDown className="w-4 h-4 flex-shrink-0" />
-                                  ) : (
-                                    <ChevronRight className="w-4 h-4 flex-shrink-0" />
-                                  )}
-                                  <div className="flex-1 text-left">
-                                    <Badge variant="outline" className="text-xs mb-1">
-                                      Nível 3
-                                    </Badge>
-                                    <h5 className="font-semibold text-gray-900">{phase.label}</h5>
-                                  </div>
-                                  <Badge className="text-xs">
-                                    {tarefasPorFase[phase.id]?.length || 0} pacotes
-                                  </Badge>
-                                </button>
+                                  {/* NÍVEL 3: FASE */}
+                                  <button
+                                    onClick={() => toggleFase(faseKey)}
+                                    className="w-full flex items-center gap-3 p-3 hover:opacity-80 transition-opacity"
+                                    aria-expanded={expandedFases[faseKey]}
+                                    aria-label={`Fase: ${phaseConfig.label}`}
+                                  >
+                                    {expandedFases[faseKey] ? (
+                                      <ChevronDown className="w-4 h-4 flex-shrink-0" />
+                                    ) : (
+                                      <ChevronRight className="w-4 h-4 flex-shrink-0" />
+                                    )}
+                                    <div className="flex-1 text-left">
+                                      <Badge variant="outline" className="text-xs mb-1">Nível 3</Badge>
+                                      <h5 className="font-semibold text-gray-900">{phaseConfig.label}</h5>
+                                    </div>
+                                    <Badge className="text-xs">{tasks.length} tarefas</Badge>
+                                  </button>
 
-                                {/* Fase Content - Tarefas (Pacotes de Trabalho) */}
-                                {expandedFases[phase.id] && (
-                                  <div className="border-t p-3 space-y-2 bg-white">
-                                    {tarefasPorFase[phase.id]?.length > 0 ? (
-                                      tarefasPorFase[phase.id].map((tarefa) => (
+                                  {/* Fase Content - Tarefas REAIS */}
+                                  {expandedFases[faseKey] && (
+                                    <div className="border-t p-3 space-y-2 bg-white">
+                                      {tasks.length === 0 ? (
+                                        <p className="text-xs text-gray-400 italic p-2">Sem tarefas nesta fase.</p>
+                                      ) : tasks.map((tarefa, tIdx) => (
                                         <div
-                                          key={tarefa.id}
+                                          key={tIdx}
                                           className="flex items-start gap-3 p-2 rounded bg-gray-50 border border-gray-200"
                                         >
-                                          {getStatusIcon(tarefa.status)}
+                                          {getStatusIcon(tarefa.status === "done" ? "concluido" : tarefa.status)}
                                           <div className="flex-1 min-w-0">
                                             <p className="font-medium text-sm text-gray-900 line-clamp-2">
-                                              {tarefa.title || tarefa.descricao}
+                                              {tarefa.description || tarefa.title}
                                             </p>
                                             <p className="text-xs text-gray-500">
-                                              {getStatusLabel(tarefa.status)}
+                                              {tarefa.status === "done" ? "Concluída" : "A fazer"}
                                             </p>
                                           </div>
                                         </div>
-                                      ))
-                                    ) : (
-                                      <p className="text-xs text-gray-400 italic p-2">Sem pacotes nesta fase</p>
-                                    )}
-                                  </div>
-                                )}
-                            </div>
-                            ))}
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
                           </div>
                         )}
                       </div>
