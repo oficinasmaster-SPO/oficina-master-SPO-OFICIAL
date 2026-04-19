@@ -41,6 +41,7 @@ export default function SprintPhaseDetailModalRedesigned({
   onNavigateToNextSprint,
 }) {
   const queryClient = useQueryClient();
+  const modalOpenRef = useRef(true);
 
   // Sempre buscar dados frescos do banco para evitar uso de cache stale
   const { data: freshSprint } = useQuery({
@@ -76,6 +77,14 @@ export default function SprintPhaseDetailModalRedesigned({
     }
   }, [phaseIndex, sprint?.id]);
 
+  // Proteger contra fechamento acidental do modal
+  const handleModalOpenChange = (open) => {
+    if (!open && modalOpenRef.current) {
+      modalOpenRef.current = false;
+      onClose();
+    }
+  };
+
   const persistPhases = async (updatedPhases) => {
     isSavingRef.current = true;
     setSaving(true);
@@ -92,7 +101,8 @@ export default function SprintPhaseDetailModalRedesigned({
         last_activity_date: new Date().toISOString(),
       });
       // Invalidar query local do modal primeiro para forçar re-fetch imediato
-      await queryClient.invalidateQueries({ queryKey: ['sprint-detail', sprint.id] });
+      // NÃO usar await aqui para evitar bloqueio e fechamento automático
+      queryClient.invalidateQueries({ queryKey: ['sprint-detail', sprint.id] });
       // Invalidate all sprint queries across tabs (Dashboard, Cronograma, Client panels, EAP, Home)
       queryClient.invalidateQueries({ queryKey: ['dashboard-sprints'], exact: false });
       queryClient.invalidateQueries({ queryKey: ['sprints'], exact: false });
@@ -101,8 +111,10 @@ export default function SprintPhaseDetailModalRedesigned({
       queryClient.invalidateQueries({ queryKey: ['sprints-reais'], exact: false });
       queryClient.invalidateQueries({ queryKey: ['active-sprint-widget'], exact: false });
       queryClient.invalidateQueries({ queryKey: ['ConsultoriaSprint'], exact: false });
+      toast.success("Alteração salva com sucesso!");
       return true;
-    } catch {
+    } catch (error) {
+      console.error("Erro ao salvar:", error);
       toast.error("Erro ao salvar fase");
       return false;
     } finally {
@@ -149,62 +161,78 @@ export default function SprintPhaseDetailModalRedesigned({
 
   // Review actions for consultant
   const handleApprovePhase = async (feedback) => {
-    const updatedPhases = [...phases];
-    const now = new Date().toISOString();
-    const existingHistory = updatedPhases[phaseIndex].review_history || [];
-    updatedPhases[phaseIndex] = {
-      ...updatedPhases[phaseIndex],
-      status: "completed",
-      completion_date: now,
-      reviewed_at: now,
-      reviewed_by: "consultor",
-      review_feedback: feedback || "",
-      review_history: [
-        ...existingHistory,
-        { action: "approved", date: now, actor: "consultor", feedback: feedback || "" },
-      ],
-    };
-    const ok = await persistPhases(updatedPhases);
-    if (ok) {
-      toast.success("Fase aprovada!");
-      base44.functions.invoke("notifySprintPhaseChange", {
-        sprint_id: sprint.id,
-        phase_name: currentPhase.name,
-        action: "approved",
-        feedback: feedback || "",
-      }).catch(() => {});
-      if (canGoForward) onNavigateToPhase(phaseIndex + 1);
-      else if (onSaved) onSaved();
+    try {
+      const updatedPhases = [...phases];
+      const now = new Date().toISOString();
+      const existingHistory = updatedPhases[phaseIndex].review_history || [];
+      updatedPhases[phaseIndex] = {
+        ...updatedPhases[phaseIndex],
+        status: "completed",
+        completion_date: now,
+        reviewed_at: now,
+        reviewed_by: "consultor",
+        review_feedback: feedback || "",
+        review_history: [
+          ...existingHistory,
+          { action: "approved", date: now, actor: "consultor", feedback: feedback || "" },
+        ],
+      };
+      const ok = await persistPhases(updatedPhases);
+      if (ok) {
+        toast.success("Fase aprovada!");
+        base44.functions.invoke("notifySprintPhaseChange", {
+          sprint_id: sprint.id,
+          phase_name: currentPhase.name,
+          action: "approved",
+          feedback: feedback || "",
+        }).catch(() => {});
+        // Navegar sem fechar o modal (será fechado manualmente pelo usuário)
+        if (canGoForward) {
+          onNavigateToPhase(phaseIndex + 1);
+        } else if (onSaved) {
+          // Só chamar onSaved se explicitamente necessário
+          onSaved();
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao aprovar fase:", error);
+      toast.error("Erro ao aprovar fase");
     }
   };
 
   const handleReturnPhase = async (feedback) => {
-    const updatedPhases = [...phases];
-    const now = new Date().toISOString();
-    const existingHistory = updatedPhases[phaseIndex].review_history || [];
-    updatedPhases[phaseIndex] = {
-      ...updatedPhases[phaseIndex],
-      status: "in_progress",
-      completion_date: null,
-      submitted_for_review_at: null,
-      submitted_for_review_by: null,
-      reviewed_at: now,
-      reviewed_by: "consultor",
-      review_feedback: feedback,
-      review_history: [
-        ...existingHistory,
-        { action: "returned", date: now, actor: "consultor", feedback },
-      ],
-    };
-    const ok = await persistPhases(updatedPhases);
-    if (ok) {
-      toast.success("Fase devolvida para a oficina com feedback.");
-      base44.functions.invoke("notifySprintPhaseChange", {
-        sprint_id: sprint.id,
-        phase_name: currentPhase.name,
-        action: "returned",
-        feedback,
-      }).catch(() => {});
+    try {
+      const updatedPhases = [...phases];
+      const now = new Date().toISOString();
+      const existingHistory = updatedPhases[phaseIndex].review_history || [];
+      updatedPhases[phaseIndex] = {
+        ...updatedPhases[phaseIndex],
+        status: "in_progress",
+        completion_date: null,
+        submitted_for_review_at: null,
+        submitted_for_review_by: null,
+        reviewed_at: now,
+        reviewed_by: "consultor",
+        review_feedback: feedback,
+        review_history: [
+          ...existingHistory,
+          { action: "returned", date: now, actor: "consultor", feedback },
+        ],
+      };
+      const ok = await persistPhases(updatedPhases);
+      if (ok) {
+        toast.success("Fase devolvida para a oficina com feedback.");
+        base44.functions.invoke("notifySprintPhaseChange", {
+          sprint_id: sprint.id,
+          phase_name: currentPhase.name,
+          action: "returned",
+          feedback,
+        }).catch(() => {});
+        // Modal permanece aberto para o usuário continuar editando
+      }
+    } catch (error) {
+      console.error("Erro ao devolver fase:", error);
+      toast.error("Erro ao devolver fase");
     }
   };
 
@@ -241,21 +269,28 @@ export default function SprintPhaseDetailModalRedesigned({
 
   const addTask = async () => {
     if (!newTask.trim()) return;
-    const updated = [...tasks, {
-      description: newTask.trim(),
-      status: "to_do",
-      instructions: newTaskInstructions.trim() || undefined,
-      link_url: newTaskLink.trim() || undefined,
-    }];
-    setTasks(updated);
-    setNewTask("");
-    setNewTaskInstructions("");
-    setNewTaskLink("");
-    const updatedPhases = phases.map((p, i) =>
-      i === phaseIndex ? { ...p, tasks: updated, status, notes } : p
-    );
-    await persistPhases(updatedPhases);
-    toast.success("Tarefa adicionada!");
+    try {
+      const updated = [...tasks, {
+        description: newTask.trim(),
+        status: "to_do",
+        instructions: newTaskInstructions.trim() || undefined,
+        link_url: newTaskLink.trim() || undefined,
+      }];
+      setTasks(updated);
+      const updatedPhases = phases.map((p, i) =>
+        i === phaseIndex ? { ...p, tasks: updated, status, notes } : p
+      );
+      const success = await persistPhases(updatedPhases);
+      if (success) {
+        // Limpar campos APENAS após sucesso
+        setNewTask("");
+        setNewTaskInstructions("");
+        setNewTaskLink("");
+      }
+    } catch (error) {
+      console.error("Erro ao adicionar tarefa:", error);
+      toast.error("Erro ao adicionar tarefa");
+    }
   };
 
   const removeTask = async (idx) => {
@@ -277,7 +312,7 @@ export default function SprintPhaseDetailModalRedesigned({
   );
 
   return (
-    <Dialog open={true} onOpenChange={() => onClose()}>
+    <Dialog open={true} onOpenChange={handleModalOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
