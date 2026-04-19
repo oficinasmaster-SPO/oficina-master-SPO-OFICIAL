@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -63,17 +63,21 @@ export default function SprintPhaseDetailModalRedesigned({
   const [tasks, setTasks] = useState(currentPhase?.tasks || []);
   const [newTask, setNewTask] = useState("");
   const [saving, setSaving] = useState(false);
+  const isSavingRef = useRef(false);
 
+  // Sincroniza estado local APENAS quando muda de fase ou de sprint — nunca durante um save
   useEffect(() => {
+    if (isSavingRef.current) return;
     const phase = phases[phaseIndex];
     if (phase) {
       setStatus(phase.status || "not_started");
       setNotes(phase.notes || "");
       setTasks(phase.tasks || []);
     }
-  }, [phaseIndex, sprint?.id, JSON.stringify(phases[phaseIndex])]);
+  }, [phaseIndex, sprint?.id]);
 
   const persistPhases = async (updatedPhases) => {
+    isSavingRef.current = true;
     setSaving(true);
     const totalTasks = updatedPhases.reduce((sum, p) => sum + (p.tasks?.length || 0), 0);
     const doneTasks = updatedPhases.reduce((sum, p) => sum + (p.tasks?.filter(t => t.status === "done").length || 0), 0);
@@ -103,6 +107,9 @@ export default function SprintPhaseDetailModalRedesigned({
       return false;
     } finally {
       setSaving(false);
+      // Libera o bloqueio após um tick para garantir que o useEffect não rode
+      // imediatamente após o invalidateQueries retornar
+      setTimeout(() => { isSavingRef.current = false; }, 500);
     }
   };
 
