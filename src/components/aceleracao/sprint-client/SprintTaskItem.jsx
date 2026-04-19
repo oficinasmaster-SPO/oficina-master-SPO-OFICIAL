@@ -78,6 +78,7 @@ export default function SprintTaskItem({ task, index, canComplete, canAddNotes, 
               href={task.link_url}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
               className="inline-flex items-center gap-1.5 mt-1.5 px-2 py-1 rounded-md bg-blue-50 border border-blue-200 text-xs text-blue-700 font-medium hover:bg-blue-100 transition-colors"
             >
               <Link className="w-3 h-3 shrink-0" /> Material complementar
@@ -124,10 +125,10 @@ export default function SprintTaskItem({ task, index, canComplete, canAddNotes, 
                     <span><Upload className="w-3 h-3 mr-1" />{uploading ? "Enviando..." : "Arquivo"}</span>
                   </Button>
                 </label>
-                <Button size="sm" variant="outline" onClick={handleSaveNote}>
-                  Salvar Nota
+                <Button size="sm" variant="outline" onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleSaveNote(); }}>
+                 Salvar Nota
                 </Button>
-                <Button size="sm" variant="ghost" onClick={() => setShowEvidenceForm(false)}>
+                <Button size="sm" variant="ghost" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowEvidenceForm(false); }}>
                   Cancelar
                 </Button>
               </div>
