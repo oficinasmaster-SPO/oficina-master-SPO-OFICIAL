@@ -77,11 +77,14 @@ export default function SprintCreateForm({ open, onClose, workshops = [], user, 
 
     const workshop = workshops.find(w => w.id === form.workshop_id);
     const trilhaSelecionada = trilhas.find(t => t.id === form.cronograma_template_id);
+    const templateId = (form.cronograma_template_id && form.cronograma_template_id !== "none")
+      ? form.cronograma_template_id
+      : null;
 
     await base44.entities.ConsultoriaSprint.create({
       ...form,
       mission_id: trilhaSelecionada?.id || "custom",
-      cronograma_template_id: form.cronograma_template_id || null,
+      cronograma_template_id: templateId,
       phases,
       status: "in_progress",
       progress_percentage: 0,
@@ -148,7 +151,7 @@ export default function SprintCreateForm({ open, onClose, workshops = [], user, 
                 <SelectValue placeholder="Selecione uma trilha (opcional)" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="sem_trilha">Sem trilha (customizado)</SelectItem>
+                <SelectItem value="none">Sem trilha (customizado)</SelectItem>
                 {trilhas.map(t => (
                   <SelectItem key={t.id} value={t.id}>
                     {t.nome_fase} {t.fase_oficina ? `— Fase ${t.fase_oficina}` : ""}

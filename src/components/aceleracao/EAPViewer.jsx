@@ -33,29 +33,21 @@ export default function EAPViewer({ trilhas = [], sprints = [], tarefas = [], wo
   const sprintsArray = Array.isArray(sprints) ? sprints : [];
   const tarefasArray = Array.isArray(tarefas) ? tarefas : [];
 
-  // Montar trilhas: se trilhas passadas são objetos CronogramaTemplate, usá-las.
-  // Senão, agrupar sprints por cronograma_template_id (ou criar grupo "Sprints")
+  // Montar trilhas agrupando sprints por cronograma_template_id
   const trilhasArray = useMemo(() => {
-    const rawTrilhas = Array.isArray(trilhas) ? trilhas : [];
-    // Se as trilhas são os próprios sprints (legado), agrupar por template ou criar uma trilha virtual
-    const isSprints = rawTrilhas.length > 0 && rawTrilhas[0]?.workshop_id !== undefined;
-    if (isSprints || rawTrilhas.length === 0) {
-      // Agrupar sprints por cronograma_template_id
-      const templateMap = {};
-      sprintsArray.forEach(s => {
-        const key = s.cronograma_template_id || "sem_trilha";
-        if (!templateMap[key]) {
-          templateMap[key] = {
-            id: key,
-            name: key === "sem_trilha" ? "Sprints Customizados" : (s.cronograma_template_id),
-            _virtual: true,
-          };
-        }
-      });
-      return Object.values(templateMap);
-    }
-    return rawTrilhas;
-  }, [trilhas, sprintsArray]);
+    const groupMap = {};
+    sprintsArray.forEach(s => {
+      const key = s.cronograma_template_id || "sem_trilha";
+      if (!groupMap[key]) {
+        groupMap[key] = {
+          id: key,
+          name: key === "sem_trilha" ? "Sprints Customizados" : key,
+          _virtual: true,
+        };
+      }
+    });
+    return Object.values(groupMap);
+  }, [sprintsArray]);
 
   // Estrutura: Missão (Trilha) → Sprints → Fases → Tarefas
   const eapStructure = useMemo(() => {
