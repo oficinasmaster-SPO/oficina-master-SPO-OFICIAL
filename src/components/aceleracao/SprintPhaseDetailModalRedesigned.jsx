@@ -254,7 +254,14 @@ export default function SprintPhaseDetailModalRedesigned({
 
   const handleUpdateEvidence = async (taskIdx, data) => {
     const updated = [...tasks];
-    updated[taskIdx] = { ...updated[taskIdx], ...data };
+    const originalTask = updated[taskIdx];
+    updated[taskIdx] = { 
+      ...originalTask, 
+      ...data,
+      // Garantir que instruções e link_url NÃO são removidas
+      instructions: originalTask.instructions,
+      link_url: originalTask.link_url
+    };
     setTasks(updated);
     // Auto-persist evidence immediately
     const updatedPhases = phases.map((p, i) =>
