@@ -29,6 +29,7 @@ import BemVindoPlanos from '@/pages/BemVindoPlanos';
 import WheelLoader from '@/components/ui/WheelLoader';
 import ErrorBoundary from '@/components/shared/ErrorBoundary';
 import ControleAceleracao from '@/pages/ControleAceleracao';
+import ConsultoriaGlobal from '@/pages/ConsultoriaGlobal';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -140,6 +141,11 @@ const AuthenticatedApp = () => {
       <Route path="/ControleAceleracao" element={
         <LayoutWrapper currentPageName="ControleAceleracao">
           <ControleAceleracao />
+        </LayoutWrapper>
+      } />
+      <Route path="/ConsultoriaGlobal" element={
+        <LayoutWrapper currentPageName="ConsultoriaGlobal">
+          <ConsultoriaGlobal />
         </LayoutWrapper>
       } />
       <Route path="/PublicNPS" element={<PublicNPS />} />
