@@ -21,6 +21,7 @@ const AgendaVisualTab = lazy(() => import("@/components/aceleracao/AgendaVisualT
 const CronogramaGeral = lazy(() => import("@/pages/CronogramaGeral"));
 const PedidosInternosTab = lazy(() => import("@/components/aceleracao/PedidosInternosTab"));
 const DashboardOperacionalTabRedesigned = lazy(() => import("@/components/aceleracao/DashboardOperacionalTabRedesigned"));
+const ConsultoriaGlobalTab = lazy(() => import("@/components/aceleracao/ConsultoriaGlobalTab"));
 
 const TAB_BASE = "flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200";
 const TAB_ACTIVE = "data-[state=active]:bg-[#FF0000] data-[state=active]:text-white data-[state=active]:shadow-md";
