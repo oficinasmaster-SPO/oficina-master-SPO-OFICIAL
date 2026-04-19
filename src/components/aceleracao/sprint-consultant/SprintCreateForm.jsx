@@ -46,15 +46,29 @@ export default function SprintCreateForm({ open, onClose, workshops = [], user, 
 
   const updateField = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
 
+  const [newTaskInstructions, setNewTaskInstructions] = useState(DEFAULT_PHASES.map(() => ""));
+  const [newTaskLinks, setNewTaskLinks] = useState(DEFAULT_PHASES.map(() => ""));
+
   const addTask = (phaseIdx) => {
     const text = newTaskTexts[phaseIdx]?.trim();
     if (!text) return;
     const updated = [...phaseTasks];
-    updated[phaseIdx] = [...updated[phaseIdx], { description: text, status: "to_do" }];
+    updated[phaseIdx] = [...updated[phaseIdx], {
+      description: text,
+      status: "to_do",
+      instructions: newTaskInstructions[phaseIdx]?.trim() || undefined,
+      link_url: newTaskLinks[phaseIdx]?.trim() || undefined,
+    }];
     setPhaseTasks(updated);
     const newTexts = [...newTaskTexts];
     newTexts[phaseIdx] = "";
     setNewTaskTexts(newTexts);
+    const newInstr = [...newTaskInstructions];
+    newInstr[phaseIdx] = "";
+    setNewTaskInstructions(newInstr);
+    const newLinks = [...newTaskLinks];
+    newLinks[phaseIdx] = "";
+    setNewTaskLinks(newLinks);
   };
 
   const removeTask = (phaseIdx, taskIdx) => {
@@ -230,21 +244,43 @@ export default function SprintCreateForm({ open, onClose, workshops = [], user, 
                     </button>
                   </div>
                 ))}
-                <div className="flex gap-1.5">
+                <div className="space-y-1.5">
+                  <div className="flex gap-1.5">
+                    <Input
+                      value={newTaskTexts[phaseIdx]}
+                      onChange={(e) => {
+                        const t = [...newTaskTexts];
+                        t[phaseIdx] = e.target.value;
+                        setNewTaskTexts(t);
+                      }}
+                      placeholder="Tarefa (obrigatório)..."
+                      className="text-xs h-8"
+                      onKeyDown={(e) => e.key === "Enter" && addTask(phaseIdx)}
+                    />
+                    <Button size="sm" variant="outline" className="h-8 px-2" onClick={() => addTask(phaseIdx)}>
+                      <Plus className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
                   <Input
-                    value={newTaskTexts[phaseIdx]}
+                    value={newTaskInstructions[phaseIdx]}
                     onChange={(e) => {
-                      const t = [...newTaskTexts];
+                      const t = [...newTaskInstructions];
                       t[phaseIdx] = e.target.value;
-                      setNewTaskTexts(t);
+                      setNewTaskInstructions(t);
                     }}
-                    placeholder="Nova tarefa..."
+                    placeholder="Como fazer (instruções)..."
                     className="text-xs h-8"
-                    onKeyDown={(e) => e.key === "Enter" && addTask(phaseIdx)}
                   />
-                  <Button size="sm" variant="outline" className="h-8 px-2" onClick={() => addTask(phaseIdx)}>
-                    <Plus className="w-3.5 h-3.5" />
-                  </Button>
+                  <Input
+                    value={newTaskLinks[phaseIdx]}
+                    onChange={(e) => {
+                      const t = [...newTaskLinks];
+                      t[phaseIdx] = e.target.value;
+                      setNewTaskLinks(t);
+                    }}
+                    placeholder="Link material complementar (https://...)"
+                    className="text-xs h-8"
+                  />
                 </div>
               </div>
             ))}

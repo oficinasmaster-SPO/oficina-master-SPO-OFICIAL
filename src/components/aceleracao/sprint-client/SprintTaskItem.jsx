@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,14 @@ export default function SprintTaskItem({ task, index, canComplete, canAddNotes, 
   const [evidenceNote, setEvidenceNote] = useState(task.evidence_note || "");
   const [linkUrl, setLinkUrl] = useState(task.link_url || "");
   const [uploading, setUploading] = useState(false);
+
+  // Sincronizar estado local quando a task mudar (ex: troca de fase)
+  useEffect(() => {
+    setEvidenceNote(task.evidence_note || "");
+    setLinkUrl(task.link_url || "");
+    setShowEvidenceForm(false);
+    setShowDetails(false);
+  }, [task.evidence_note, task.link_url, task.description]);
 
   const isDone = task.status === "done";
 

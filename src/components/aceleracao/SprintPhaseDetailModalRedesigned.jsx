@@ -229,11 +229,21 @@ export default function SprintPhaseDetailModalRedesigned({
     toast.success("Evidência salva!");
   };
 
+  const [newTaskInstructions, setNewTaskInstructions] = useState("");
+  const [newTaskLink, setNewTaskLink] = useState("");
+
   const addTask = async () => {
     if (!newTask.trim()) return;
-    const updated = [...tasks, { description: newTask.trim(), status: "to_do" }];
+    const updated = [...tasks, {
+      description: newTask.trim(),
+      status: "to_do",
+      instructions: newTaskInstructions.trim() || undefined,
+      link_url: newTaskLink.trim() || undefined,
+    }];
     setTasks(updated);
     setNewTask("");
+    setNewTaskInstructions("");
+    setNewTaskLink("");
     const updatedPhases = phases.map((p, i) =>
       i === phaseIndex ? { ...p, tasks: updated, status, notes } : p
     );
@@ -356,17 +366,31 @@ export default function SprintPhaseDetailModalRedesigned({
               />
             ))}
           </div>
-          <div className="flex gap-2">
+          <div className="space-y-1.5">
+            <div className="flex gap-2">
+              <Input
+                value={newTask}
+                onChange={(e) => setNewTask(e.target.value)}
+                placeholder="Descreva a nova tarefa e pressione Enter..."
+                className="text-sm flex-1"
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addTask(); } }}
+              />
+              <Button size="sm" onClick={addTask} disabled={!newTask.trim()} className="bg-blue-600 hover:bg-blue-700 text-white shrink-0">
+                <Plus className="w-4 h-4 mr-1" /> Adicionar
+              </Button>
+            </div>
             <Input
-              value={newTask}
-              onChange={(e) => setNewTask(e.target.value)}
-              placeholder="Descreva a nova tarefa e pressione Enter..."
-              className="text-sm flex-1"
-              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addTask(); } }}
+              value={newTaskInstructions}
+              onChange={(e) => setNewTaskInstructions(e.target.value)}
+              placeholder="Como fazer (instruções para a oficina)..."
+              className="text-sm"
             />
-            <Button size="sm" onClick={addTask} disabled={!newTask.trim()} className="bg-blue-600 hover:bg-blue-700 text-white shrink-0">
-              <Plus className="w-4 h-4 mr-1" /> Adicionar
-            </Button>
+            <Input
+              value={newTaskLink}
+              onChange={(e) => setNewTaskLink(e.target.value)}
+              placeholder="Link material complementar (https://...)..."
+              className="text-sm"
+            />
           </div>
         </div>
 
