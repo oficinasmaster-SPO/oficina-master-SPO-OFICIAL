@@ -103,7 +103,14 @@ export default function SprintClientModal({ sprint, user, workshop, open, onClos
 
   const handleUpdateEvidence = (taskIdx, data) => {
     const updated = [...phases];
-    const task = { ...updated[currentPhaseIdx].tasks[taskIdx], ...data };
+    const originalTask = updated[currentPhaseIdx].tasks[taskIdx];
+    const task = { 
+      ...originalTask, 
+      ...data,
+      // Garantir que instruções e link_url NÃO são removidas
+      instructions: originalTask.instructions,
+      link_url: originalTask.link_url
+    };
     updated[currentPhaseIdx] = { ...updated[currentPhaseIdx], tasks: updated[currentPhaseIdx].tasks.map((t, i) => i === taskIdx ? task : t) };
     saveMutation.mutate(updated);
     toast.success("Evidência salva!");
