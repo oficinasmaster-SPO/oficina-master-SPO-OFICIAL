@@ -10,7 +10,6 @@ import { cn } from "@/lib/utils";
 
 export default function SprintTaskItem({ task, index, canComplete, canAddNotes, userRole, onToggle, onUpdateEvidence }) {
   const [showEvidenceForm, setShowEvidenceForm] = useState(false);
-  const [showTaskInfo, setShowTaskInfo] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [evidenceNote, setEvidenceNote] = useState(task.evidence_note || "");
   const [uploading, setUploading] = useState(false);
@@ -58,14 +57,14 @@ export default function SprintTaskItem({ task, index, canComplete, canAddNotes, 
           </p>
         </div>
         {canAddNotes && !showEvidenceForm && (() => {
-          const hasContent = !!(task.evidence_note || task.evidence_url || task.instructions || task.link_url || task.completed_by_role);
+          const hasContent = !!(task.evidence_note || task.evidence_url || task.link_url);
           return (
             <Button
               variant="ghost"
               size="icon"
               className={cn("h-7 w-7 relative flex-shrink-0", hasContent && "hover:bg-blue-50")}
-              onClick={() => hasContent ? setShowTaskInfo(!showTaskInfo) : setShowEvidenceForm(true)}
-              title={hasContent ? "Há informações nesta tarefa" : "Adicionar observação"}
+              onClick={() => setShowEvidenceForm(true)}
+              title={hasContent ? "Há observações nesta tarefa" : "Adicionar observação"}
             >
               <MessageSquare className={cn("w-3.5 h-3.5", hasContent ? "text-blue-500 fill-blue-100" : "text-gray-400")} />
               {hasContent && (
@@ -76,52 +75,50 @@ export default function SprintTaskItem({ task, index, canComplete, canAddNotes, 
         })()}
       </div>
 
-      {/* Dropdown de informações (apareça ao clicar no botão) */}
-      {showTaskInfo && (
-        <div className="ml-6 grid grid-cols-3 gap-4 mb-2 text-xs bg-gray-50 border border-gray-200 rounded p-3">
-          {/* Como fazer */}
-          <div className="flex flex-col gap-1">
-            <span className="font-semibold text-gray-700">Instruções:</span>
-            {task.instructions ? (
-              <button
-                className="flex items-center gap-1 text-blue-600 hover:text-blue-800 font-medium text-left"
-                onClick={() => setShowDetails(!showDetails)}
-              >
-                <Info className="w-3 h-3 flex-shrink-0" />
-                Ver como fazer
-                {showDetails ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-              </button>
-            ) : (
-              <span className="text-gray-400 italic">Nenhuma instrução</span>
-            )}
-          </div>
-
-          {/* Evidência */}
-          <div className="flex flex-col gap-1">
-            <span className="font-semibold text-gray-700">Evidência:</span>
-            {task.evidence_url ? (
-              <a href={task.evidence_url} target="_blank" rel="noopener noreferrer" className="text-green-700 hover:text-green-900 font-medium">
-                <Check className="w-3 h-3 inline mr-1" /> Arquivo anexado
-              </a>
-            ) : (
-              <span className="text-gray-400 italic">Sem evidência</span>
-            )}
-          </div>
-
-          {/* Concluída por */}
-          <div className="flex flex-col gap-1">
-            <span className="font-semibold text-gray-700">Status:</span>
-            {isDone && task.completed_by_role ? (
-              <div className="flex items-center gap-1 text-green-700 font-medium">
-                <Check className="w-3 h-3" />
-                Concluída por {task.completed_by_role === "oficina" ? "Oficina" : "Consultor"}
-              </div>
-            ) : (
-              <span className="text-gray-400 italic">Pendente</span>
-            )}
-          </div>
+      {/* Informações fixas dentro da linha: Como fazer + Evidência + Concluída por */}
+      <div className="ml-6 grid grid-cols-3 gap-4 mb-2 text-xs">
+        {/* Como fazer */}
+        <div className="flex flex-col gap-1">
+          <span className="font-semibold text-gray-700">Instruções:</span>
+          {task.instructions ? (
+            <button
+              className="flex items-center gap-1 text-blue-600 hover:text-blue-800 font-medium text-left"
+              onClick={() => setShowDetails(!showDetails)}
+            >
+              <Info className="w-3 h-3 flex-shrink-0" />
+              Ver como fazer
+              {showDetails ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+            </button>
+          ) : (
+            <span className="text-gray-400 italic">Nenhuma instrução</span>
+          )}
         </div>
-      )}
+
+        {/* Evidência */}
+        <div className="flex flex-col gap-1">
+          <span className="font-semibold text-gray-700">Evidência:</span>
+          {task.evidence_url ? (
+            <a href={task.evidence_url} target="_blank" rel="noopener noreferrer" className="text-green-700 hover:text-green-900 font-medium">
+              <Check className="w-3 h-3 inline mr-1" /> Arquivo anexado
+            </a>
+          ) : (
+            <span className="text-gray-400 italic">Sem evidência</span>
+          )}
+        </div>
+
+        {/* Concluída por */}
+        <div className="flex flex-col gap-1">
+          <span className="font-semibold text-gray-700">Status:</span>
+          {isDone && task.completed_by_role ? (
+            <div className="flex items-center gap-1 text-green-700 font-medium">
+              <Check className="w-3 h-3" />
+              Concluída por {task.completed_by_role === "oficina" ? "Oficina" : "Consultor"}
+            </div>
+          ) : (
+            <span className="text-gray-400 italic">Pendente</span>
+          )}
+        </div>
+      </div>
 
       {/* Expandir instrução */}
       {showDetails && task.instructions && (
