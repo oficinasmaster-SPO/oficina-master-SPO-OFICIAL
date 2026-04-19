@@ -5,9 +5,11 @@ import { differenceInDays } from "date-fns";
 
 export default function useDashboardSprints(workshops = []) {
   const workshopIds = useMemo(() => workshops.map(w => w.id), [workshops]);
+  // stable string key to avoid re-creating queries when array reference changes
+  const workshopIdsKey = workshopIds.join(',');
 
   const { data: sprints = [], isLoading, refetch } = useQuery({
-    queryKey: ['dashboard-sprints', workshopIds],
+    queryKey: ['dashboard-sprints', workshopIdsKey],
     queryFn: () => base44.entities.ConsultoriaSprint.filter({ workshop_id: { $in: workshopIds } }),
     staleTime: 0,
     refetchInterval: 10 * 1000,

@@ -31,7 +31,7 @@ export default function SprintClientSection({ workshopId, user, workshop }) {
     
     const unsubscribe = base44.entities.ConsultoriaSprint.subscribe((event) => {
       if (event.data?.workshop_id === workshopId) {
-        queryClient.refetchQueries(['sprints-client', workshopId]);
+        queryClient.refetchQueries({ queryKey: ['sprints-client', workshopId] });
       }
     });
 

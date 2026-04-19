@@ -17,7 +17,6 @@ import FeedbackPlanoModal from "../components/aceleracao/FeedbackPlanoModal";
 import AtasSection from "../components/aceleracao/AtasSection";
 import SprintClientSection from "../components/aceleracao/sprint-client/SprintClientSection";
 import EAPViewer from "../components/aceleracao/EAPViewer";
-import SprintSimulatorDemo from "../components/aceleracao/SprintSimulatorDemo";
 
 export default function PainelClienteAceleracao() {
   const navigate = useNavigate();
@@ -99,8 +98,7 @@ export default function PainelClienteAceleracao() {
     
     const unsubscribe = base44.entities.MeetingMinutes.subscribe((event) => {
       if (event.type === 'update' && event.data?.workshop_id === workshop.id) {
-        // Force refetch immediately
-        queryClient.refetchQueries(['progresso-implementacao', workshop.id]);
+        queryClient.refetchQueries({ queryKey: ['progresso-implementacao', workshop.id] });
       }
     });
 
@@ -174,19 +172,19 @@ export default function PainelClienteAceleracao() {
   // EAP usa as mesmas sprints (não há trilhas separadas)
   const trilhas = [];
 
-  // Sincronizar sprints com cronograma de implementação em tempo real
+  // Sincronizar sprints em tempo real
   useEffect(() => {
-    if (!workshop?.id || sprints.length === 0) return;
+    if (!workshop?.id) return;
     
     const unsubscribe = base44.entities.ConsultoriaSprint.subscribe((event) => {
       if (event.data?.workshop_id === workshop.id) {
-        queryClient.refetchQueries(['sprints-reais', workshop.id]);
-        queryClient.refetchQueries(['progresso-implementacao', workshop.id]);
+        queryClient.refetchQueries({ queryKey: ['sprints-reais', workshop.id] });
+        queryClient.refetchQueries({ queryKey: ['progresso-implementacao', workshop.id] });
       }
     });
 
     return unsubscribe;
-  }, [workshop?.id, sprints.length, queryClient]);
+  }, [workshop?.id, queryClient]);
 
   // Mutation para gerar plano
   const generatePlanMutation = useMutation({
@@ -545,9 +543,6 @@ export default function PainelClienteAceleracao() {
           </CardContent>
         </Card>
       )}
-
-      {/* Simulador de Sprint em Tempo Real */}
-      <SprintSimulatorDemo />
 
       {/* Sprints de Aceleração - Colaborativo */}
       {workshopIdToUse && user && (

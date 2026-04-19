@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -52,11 +52,10 @@ export default function SprintClientModal({ sprint, user, workshop, open, onClos
     },
     onSuccess: () => {
       // Invalidate all sprint-related queries across all tabs
-      queryClient.invalidateQueries({ queryKey: ["sprints-client"] });
-      queryClient.invalidateQueries({ queryKey: ["active-sprint-widget"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard-sprints"] });
-      queryClient.invalidateQueries({ queryKey: ["sprints"] });
-      queryClient.invalidateQueries({ queryKey: ["client-sprints"] });
+      queryClient.invalidateQueries({ queryKey: ["sprints-client"], exact: false });
+      queryClient.invalidateQueries({ queryKey: ["active-sprint-widget"], exact: false });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-sprints"], exact: false });
+      queryClient.invalidateQueries({ queryKey: ["sprints-reais"], exact: false });
     },
     onError: () => {
       // On failure, refetch to rollback optimistic local state (e.g. auto-start phase)
