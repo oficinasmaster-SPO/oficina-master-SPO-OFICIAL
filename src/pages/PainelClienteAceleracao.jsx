@@ -38,9 +38,28 @@ export default function PainelClienteAceleracao() {
   const workshopIdToUse = adminWorkshopId || user?.data?.workshop_id || user?.workshop_id;
 
   const { data: workshop, isError: workshopError } = useQuery({
-    queryKey: ['workshop-painel', workshopIdToUse],
-    queryFn: () => base44.entities.Workshop.get(workshopIdToUse),
-    enabled: !!workshopIdToUse,
+    queryKey: ['workshop-painel', workshopIdToUse, user?.id],
+    queryFn: async () => {
+      // Tentar buscar pelo ID salvo no perfil
+      if (workshopIdToUse) {
+        try {
+          const ws = await base44.entities.Workshop.get(workshopIdToUse);
+          if (ws) return ws;
+        } catch {}
+      }
+      // Fallback: buscar pelo owner_id do usuário logado
+      if (user?.id) {
+        const byOwner = await base44.entities.Workshop.filter({ owner_id: user.id }, '-created_date', 1);
+        if (byOwner?.[0]) return byOwner[0];
+      }
+      // Fallback 2: buscar pelo email do usuário logado
+      if (user?.email) {
+        const byEmail = await base44.entities.Workshop.filter({ email: user.email }, '-created_date', 1);
+        if (byEmail?.[0]) return byEmail[0];
+      }
+      return null;
+    },
+    enabled: !!(workshopIdToUse || user?.id),
     staleTime: 5 * 60 * 1000,
     retry: false
   });
@@ -565,8 +584,8 @@ export default function PainelClienteAceleracao() {
       )}
 
       {/* Sprints de Aceleração - Colaborativo */}
-      {workshopIdToUse && user && (
-        <SprintClientSection key={workshopIdToUse} workshopId={workshopIdToUse} user={user} workshop={workshop} />
+      {(workshop?.id || workshopIdToUse) && user && (
+        <SprintClientSection key={workshop?.id || workshopIdToUse} workshopId={workshop?.id || workshopIdToUse} user={user} workshop={workshop} />
       )}
 
       {/* EAP - sempre visível */}
