@@ -4,13 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Upload, MessageSquare, Check, User } from "lucide-react";
+import { Upload, MessageSquare, Check, User, Link, ChevronDown, ChevronUp, Info } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { cn } from "@/lib/utils";
 
 export default function SprintTaskItem({ task, index, canComplete, canAddNotes, userRole, onToggle, onUpdateEvidence }) {
   const [showEvidenceForm, setShowEvidenceForm] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
   const [evidenceNote, setEvidenceNote] = useState(task.evidence_note || "");
+  const [linkUrl, setLinkUrl] = useState(task.link_url || "");
   const [uploading, setUploading] = useState(false);
 
   const isDone = task.status === "done";
@@ -20,13 +22,13 @@ export default function SprintTaskItem({ task, index, canComplete, canAddNotes, 
     if (!file) return;
     setUploading(true);
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
-    onUpdateEvidence(index, { evidence_url: file_url, evidence_note: evidenceNote });
+    onUpdateEvidence(index, { evidence_url: file_url, evidence_note: evidenceNote, link_url: linkUrl });
     setUploading(false);
     setShowEvidenceForm(false);
   };
 
   const handleSaveNote = () => {
-    onUpdateEvidence(index, { evidence_note: evidenceNote });
+    onUpdateEvidence(index, { evidence_note: evidenceNote, link_url: linkUrl });
     setShowEvidenceForm(false);
   };
 
@@ -46,6 +48,35 @@ export default function SprintTaskItem({ task, index, canComplete, canAddNotes, 
           <p className={cn("text-sm", isDone && "line-through text-gray-500")}>
             {task.description}
           </p>
+
+          {/* Descrição/instruções expansível */}
+          {task.instructions && (
+            <button
+              className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 mt-1"
+              onClick={() => setShowDetails(!showDetails)}
+            >
+              <Info className="w-3 h-3" />
+              Como fazer
+              {showDetails ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+            </button>
+          )}
+          {showDetails && task.instructions && (
+            <div className="mt-1 text-xs text-gray-600 bg-blue-50 border border-blue-100 rounded p-2 whitespace-pre-line">
+              {task.instructions}
+            </div>
+          )}
+
+          {/* Link material complementar */}
+          {task.link_url && (
+            <a
+              href={task.link_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-xs text-blue-600 hover:underline mt-1"
+            >
+              <Link className="w-3 h-3" /> Material complementar
+            </a>
+          )}
 
           {/* Who completed */}
           {isDone && task.completed_by_role && (
@@ -77,6 +108,12 @@ export default function SprintTaskItem({ task, index, canComplete, canAddNotes, 
                 value={evidenceNote}
                 onChange={(e) => setEvidenceNote(e.target.value)}
                 rows={2}
+                className="text-sm"
+              />
+              <Input
+                placeholder="Link de material complementar (ex: https://...)"
+                value={linkUrl}
+                onChange={(e) => setLinkUrl(e.target.value)}
                 className="text-sm"
               />
               <div className="flex gap-2">
