@@ -12,14 +12,11 @@ export default function SprintTaskItem({ task, index, canComplete, canAddNotes, 
   const [showEvidenceForm, setShowEvidenceForm] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [evidenceNote, setEvidenceNote] = useState(task.evidence_note || "");
-  const [linkUrl, setLinkUrl] = useState(task.link_url || "");
   const [uploading, setUploading] = useState(false);
 
   // Sincronizar estado local APENAS quando a task em si troca (nova tarefa/fase)
-  // Não sincronizar quando evidence_note/link_url mudam para evitar sobrescrever edições locais
   useEffect(() => {
     setEvidenceNote(task.evidence_note || "");
-    setLinkUrl(task.link_url || "");
     setShowEvidenceForm(false);
     setShowDetails(false);
   }, [task.description, index]);
@@ -31,13 +28,13 @@ export default function SprintTaskItem({ task, index, canComplete, canAddNotes, 
     if (!file) return;
     setUploading(true);
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
-    onUpdateEvidence(index, { evidence_url: file_url, evidence_note: evidenceNote, link_url: linkUrl });
+    onUpdateEvidence(index, { evidence_url: file_url, evidence_note: evidenceNote });
     setUploading(false);
     setShowEvidenceForm(false);
   };
 
   const handleSaveNote = () => {
-    onUpdateEvidence(index, { evidence_note: evidenceNote, link_url: linkUrl });
+    onUpdateEvidence(index, { evidence_note: evidenceNote });
     setShowEvidenceForm(false);
   };
 
@@ -75,15 +72,15 @@ export default function SprintTaskItem({ task, index, canComplete, canAddNotes, 
             </div>
           )}
 
-          {/* Link material complementar */}
+          {/* Link material complementar — definido pelo consultor, sempre visível */}
           {task.link_url && (
             <a
               href={task.link_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1 text-xs text-blue-600 hover:underline mt-1"
+              className="inline-flex items-center gap-1.5 mt-1.5 px-2 py-1 rounded-md bg-blue-50 border border-blue-200 text-xs text-blue-700 font-medium hover:bg-blue-100 transition-colors"
             >
-              <Link className="w-3 h-3" /> Material complementar
+              <Link className="w-3 h-3 shrink-0" /> Material complementar
             </a>
           )}
 
@@ -119,12 +116,7 @@ export default function SprintTaskItem({ task, index, canComplete, canAddNotes, 
                 rows={2}
                 className="text-sm"
               />
-              <Input
-                placeholder="Link de material complementar (ex: https://...)"
-                value={linkUrl}
-                onChange={(e) => setLinkUrl(e.target.value)}
-                className="text-sm"
-              />
+
               <div className="flex gap-2">
                 <label className="cursor-pointer">
                   <Input type="file" className="hidden" onChange={handleFileUpload} accept="image/*,.pdf,.doc,.docx" />
