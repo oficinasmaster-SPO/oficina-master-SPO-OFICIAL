@@ -280,8 +280,8 @@ export default function SprintPhaseDetailModalRedesigned({
       const updated = [...tasks, {
         description: newTask.trim(),
         status: "to_do",
-        instructions: newTaskInstructions.trim() || undefined,
-        link_url: newTaskLink.trim() || undefined,
+        instructions: newTaskInstructions.trim() || null,
+        link_url: newTaskLink.trim() || null,
       }];
       setTasks(updated);
       const updatedPhases = phases.map((p, i) =>
