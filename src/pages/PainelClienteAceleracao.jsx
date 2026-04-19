@@ -550,8 +550,8 @@ export default function PainelClienteAceleracao() {
       <SprintSimulatorDemo />
 
       {/* Sprints de Aceleração - Colaborativo */}
-      {workshop?.id && user && (
-        <SprintClientSection workshopId={workshop.id} user={user} workshop={workshop} />
+      {workshopIdToUse && user && (
+        <SprintClientSection key={workshopIdToUse} workshopId={workshopIdToUse} user={user} workshop={workshop} />
       )}
 
       {/* EAP - Estrutura Analítica do Projeto (usando sprints reais do banco) */}
