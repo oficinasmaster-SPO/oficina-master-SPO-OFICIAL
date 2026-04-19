@@ -817,17 +817,9 @@ export default function ConsultoriaClienteTab({ client, mode = "contextual" }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Em modo global, não há workshopId, então carregamos sem filtro
-    // Em modo contextual, carregamos para o cliente específico
     const loadSelectedMissions = async () => {
       try {
-        if (isGlobalMode) {
-          // Modo global: não há seleção de missões agregadas
-          // Cada sprint funciona independentemente
-          setMissoesSelecionadas([]);
-          setLoading(false);
-        } else if (workshopId) {
-          // Modo contextual: carrega para o cliente específico
+        if (workshopId) {
           const cronogramas = await base44.entities.CronogramaTemplate.filter(
             { workshop_id: workshopId }
           );
@@ -837,22 +829,22 @@ export default function ConsultoriaClienteTab({ client, mode = "contextual" }) {
             setMissoesSelecionadas(selecionadas);
             setCronogramaTemplateId(cronogramas[0].id);
           }
-          setLoading(false);
+        } else {
+          // Modo global: carrega sprints sem filtro de cliente
+          setMissoesSelecionadas([]);
         }
+        setLoading(false);
       } catch (error) {
         console.error('Erro ao carregar trilhas selecionadas:', error);
         setLoading(false);
       }
     };
     loadSelectedMissions();
-  }, [workshopId, isGlobalMode]);
+  }, [workshopId]);
 
   const handleSetMissoesSelecionadas = useCallback(async (novasSelecionadas) => {
-    // Em modo global, não há operação de salvar para cliente específico
-    // Cada sprint é autossuficiente
-    if (isGlobalMode) return;
+    if (!workshopId) return; // Só salva se houver workshopId específico
     
-    if (!workshopId) return;
     try {
       const existing = await base44.entities.CronogramaTemplate.filter(
         { workshop_id: workshopId }
@@ -885,7 +877,7 @@ export default function ConsultoriaClienteTab({ client, mode = "contextual" }) {
     } catch (error) {
       console.error('❌ Erro ao salvar trilhas:', error);
     }
-  }, [workshopId, isGlobalMode]);
+  }, [workshopId]);
 
   return (
     <div className="space-y-4">
@@ -919,7 +911,7 @@ export default function ConsultoriaClienteTab({ client, mode = "contextual" }) {
           <CamadaEstrategica workshopId={workshopId} />
         </TabsContent>
         <TabsContent value="trilha" className="mt-4">
-          {!loading && (
+          {!loading && workshopId && (
             <CamadaTrilhaCliente
               workshopId={workshopId}
               missoesSelecionadas={missoesSelecionadas}
@@ -933,6 +925,13 @@ export default function ConsultoriaClienteTab({ client, mode = "contextual" }) {
                 }
               }}
             />
+          )}
+          {!loading && !workshopId && (
+            <div className="text-center py-8 text-gray-500 border-2 border-dashed border-gray-200 rounded-xl">
+              <Map className="w-10 h-10 mx-auto mb-3 text-gray-300" />
+              <p className="text-sm font-medium">Modo Global Ativo</p>
+              <p className="text-xs mt-1">Vá à aba <strong>Sprints</strong> para gerenciar todas as trilhas agregadas.</p>
+            </div>
           )}
           {loading && <div className="text-center py-4 text-gray-500">Carregando trilhas...</div>}
         </TabsContent>
