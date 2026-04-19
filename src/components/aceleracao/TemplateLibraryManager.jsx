@@ -147,8 +147,8 @@ export default function TemplateLibraryManager() {
           <div>
             <h3 className="font-semibold text-blue-900">Matriz de Templates Padrão</h3>
             <p className="text-sm text-blue-700 mt-1">
-              Consolidação de todas as trilhas, missões e sprints existentes de todos os clientes.
-              Use como referência para criar novos templates ou duplicar estruturas já testadas.
+              Base de trilhas guiadas, missões e sprints padrão para reutilizar e adaptar.
+              As trilhas personalizadas dos clientes são montadas individualmente no cronograma de cada consultoria.
             </p>
           </div>
         </div>
@@ -157,7 +157,7 @@ export default function TemplateLibraryManager() {
       <Tabs defaultValue="trails" className="space-y-4">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="trails">
-            Trilhas ({templates.trails.length})
+            Trilhas Guiadas ({templates.trails.length})
           </TabsTrigger>
           <TabsTrigger value="missions">
             Missões ({templates.missions.length})
@@ -167,12 +167,19 @@ export default function TemplateLibraryManager() {
           </TabsTrigger>
         </TabsList>
 
-        {/* TAB: TRILHAS */}
+        {/* TAB: TRILHAS GUIADAS */}
         <TabsContent value="trails" className="space-y-4">
+          <Card className="bg-amber-50 border-amber-200">
+            <CardContent className="pt-4 text-sm text-amber-700">
+              <p className="font-semibold mb-1">ℹ️ Trilhas Guiadas</p>
+              <p>Modelos pré-prontos que podem ser usados como base. As trilhas personalizadas dos clientes são criadas individualmente no cronograma de consultoria após o diagnóstico.</p>
+            </CardContent>
+          </Card>
+
           {templates.trails.length === 0 ? (
             <Card>
               <CardContent className="pt-6 text-center text-gray-500">
-                Nenhuma trilha encontrada no sistema.
+                Nenhuma trilha guiada encontrada no sistema.
               </CardContent>
             </Card>
           ) : (
