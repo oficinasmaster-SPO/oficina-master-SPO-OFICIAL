@@ -4,7 +4,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BarChart3, Calendar, CalendarRange, FileText, ClipboardList, Users, Activity, Plus, Loader2, Lightbulb } from "lucide-react";
-import ConsultoriaGlobalTab from "./ConsultoriaGlobalTab";
 import RegistroAtendimentoMassaModal from "@/components/aceleracao/RegistroAtendimentoMassaModal";
 import FiltrosControleAceleracao from "@/components/aceleracao/FiltrosControleAceleracao";
 import ActiveFiltersBar from "@/components/aceleracao/ActiveFiltersBar";
