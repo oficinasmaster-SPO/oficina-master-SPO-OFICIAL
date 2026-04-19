@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 import { Loader2, Plus, Trash2, Rocket } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 
 const DEFAULT_PHASES = [
   { name: "Planning", status: "not_started", tasks: [] },
@@ -19,6 +20,7 @@ const DEFAULT_PHASES = [
 
 export default function SprintCreateForm({ open, onClose, workshops = [], user, onCreated }) {
   const [saving, setSaving] = useState(false);
+  const queryClient = useQueryClient();
   const [form, setForm] = useState({
     workshop_id: "",
     title: "",
@@ -79,6 +81,13 @@ export default function SprintCreateForm({ open, onClose, workshops = [], user, 
 
     toast.success(`Sprint criado para ${workshop?.name || "cliente"}!`);
     setSaving(false);
+
+    // Invalidar todas as queries relacionadas a sprints para sincronismo imediato
+    queryClient.invalidateQueries({ queryKey: ["dashboard-sprints"], exact: false });
+    queryClient.invalidateQueries({ queryKey: ["sprints-client"], exact: false });
+    queryClient.invalidateQueries({ queryKey: ["sprints-reais"], exact: false });
+    queryClient.invalidateQueries({ queryKey: ["active-sprint-widget"], exact: false });
+
     onCreated?.();
     onClose();
 

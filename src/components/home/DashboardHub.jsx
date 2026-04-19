@@ -53,11 +53,6 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
   const { getAdminUrl } = useAdminMode();
   const workshop = contextWorkshop || propWorkshop;
   
-  console.log('🏠 DashboardHub renderizando com workshop:', {
-    id: workshop?.id,
-    name: workshop?.name,
-    city: workshop?.city
-  });
   const [isNoticeDialogOpen, setIsNoticeDialogOpen] = React.useState(false);
   const [isTipsDialogOpen, setIsTipsDialogOpen] = React.useState(false);
   const [newNotice, setNewNotice] = React.useState({ title: "", content: "", priority: "media" });

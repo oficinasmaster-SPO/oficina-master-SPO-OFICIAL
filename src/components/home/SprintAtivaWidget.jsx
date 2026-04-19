@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +25,18 @@ const phaseStatusColors = {
 
 export default function SprintAtivaWidget({ workshopId }) {
   const { getAdminUrl } = useAdminMode();
+  const queryClient = useQueryClient();
+
+  // Subscribe em tempo real para atualizar imediatamente quando sprint for criada/atualizada
+  useEffect(() => {
+    if (!workshopId) return;
+    const unsubscribe = base44.entities.ConsultoriaSprint.subscribe((event) => {
+      if (event.data?.workshop_id === workshopId) {
+        queryClient.invalidateQueries({ queryKey: ["active-sprint-widget", workshopId] });
+      }
+    });
+    return unsubscribe;
+  }, [workshopId, queryClient]);
 
   const { data: activeSprint } = useQuery({
     queryKey: ["active-sprint-widget", workshopId],
