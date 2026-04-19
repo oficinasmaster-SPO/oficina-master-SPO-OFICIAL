@@ -10,10 +10,10 @@ export default function useDashboardSprints(workshops = []) {
 
   const { data: sprints = [], isLoading, refetch } = useQuery({
     queryKey: ['dashboard-sprints', workshopIdsKey],
-    queryFn: () => base44.entities.ConsultoriaSprint.filter({ workshop_id: { $in: workshopIds } }),
+    queryFn: () => base44.entities.ConsultoriaSprint.filter({ workshop_id: { $in: workshopIdsKey.split(',').filter(Boolean) } }),
     staleTime: 0,
     refetchInterval: 10 * 1000,
-    enabled: workshopIds.length > 0
+    enabled: workshopIdsKey.length > 0
   });
 
   const workshopMap = useMemo(
