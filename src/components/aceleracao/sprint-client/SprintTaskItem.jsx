@@ -15,13 +15,14 @@ export default function SprintTaskItem({ task, index, canComplete, canAddNotes, 
   const [linkUrl, setLinkUrl] = useState(task.link_url || "");
   const [uploading, setUploading] = useState(false);
 
-  // Sincronizar estado local quando a task mudar (ex: troca de fase)
+  // Sincronizar estado local APENAS quando a task em si troca (nova tarefa/fase)
+  // Não sincronizar quando evidence_note/link_url mudam para evitar sobrescrever edições locais
   useEffect(() => {
     setEvidenceNote(task.evidence_note || "");
     setLinkUrl(task.link_url || "");
     setShowEvidenceForm(false);
     setShowDetails(false);
-  }, [task.evidence_note, task.link_url, task.description]);
+  }, [task.description, index]);
 
   const isDone = task.status === "done";
 
