@@ -51,8 +51,6 @@ export default function SprintClientSection({ workshopId, user, workshop }) {
     );
   }
 
-  if (sprints.length === 0) return null;
-
   const activeSprints = sprints.filter(s => s.status === "in_progress" || s.status === "overdue" || s.status === "pending");
   const completedSprints = sprints.filter(s => s.status === "completed");
 
@@ -66,40 +64,48 @@ export default function SprintClientSection({ workshopId, user, workshop }) {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Active sprints first */}
-           {activeSprints.length > 0 && (
-             <div>
-               <h4 className="text-sm font-semibold text-gray-600 mb-2">Em execução</h4>
-              <div className="grid gap-3">
-                {activeSprints.map(sprint => (
-                  <SprintClientCard
-                    key={sprint.id}
-                    sprint={sprint}
-                    onOpen={() => setSelectedSprintId(sprint.id)}
-                  />
-                ))}
-              </div>
+          {sprints.length === 0 ? (
+            <div className="text-center py-6 text-gray-500">
+              <Rocket className="w-10 h-10 mx-auto mb-3 text-orange-300" />
+              <p className="font-medium">Nenhum sprint iniciado ainda</p>
+              <p className="text-sm mt-1">Seus sprints de aceleração aparecerão aqui quando forem criados pelo consultor.</p>
             </div>
-          )}
-
-
-
-          {/* Completed */}
-          {completedSprints.length > 0 && (
-            <div>
-              <h4 className="text-sm font-semibold text-gray-600 mb-2">Concluídos</h4>
-              <div className="grid gap-3">
-                {completedSprints.map(sprint => (
-                  <div key={sprint.id} className="space-y-2">
-                    <SprintCompletionSummary sprint={sprint} />
-                    <SprintClientCard
-                      sprint={sprint}
-                      onOpen={() => setSelectedSprintId(sprint.id)}
-                    />
+          ) : (
+            <>
+              {/* Active sprints first */}
+              {activeSprints.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-600 mb-2">Em execução</h4>
+                  <div className="grid gap-3">
+                    {activeSprints.map(sprint => (
+                      <SprintClientCard
+                        key={sprint.id}
+                        sprint={sprint}
+                        onOpen={() => setSelectedSprintId(sprint.id)}
+                      />
+                    ))}
                   </div>
-                ))}
-              </div>
-            </div>
+                </div>
+              )}
+
+              {/* Completed */}
+              {completedSprints.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-600 mb-2">Concluídos</h4>
+                  <div className="grid gap-3">
+                    {completedSprints.map(sprint => (
+                      <div key={sprint.id} className="space-y-2">
+                        <SprintCompletionSummary sprint={sprint} />
+                        <SprintClientCard
+                          sprint={sprint}
+                          onOpen={() => setSelectedSprintId(sprint.id)}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>

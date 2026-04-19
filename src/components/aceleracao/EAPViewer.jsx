@@ -160,15 +160,21 @@ export default function EAPViewer({ trilhas = [], sprints = [], tarefas = [], wo
     return labels[status] || status;
   };
 
-  if (trilhasArray.length === 0 || sprintsArray.length === 0) {
+  if (sprintsArray.length === 0) {
     return (
-      <Card className="bg-gray-50">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Target className="w-5 h-5 text-blue-600" />
+            Estrutura Analítica do Projeto (EAP)
+            {workshop && <Badge className="ml-auto">{workshop.name}</Badge>}
+          </CardTitle>
+        </CardHeader>
         <CardContent className="py-8">
           <div className="text-center">
             <Target className="w-12 h-12 mx-auto text-gray-300 mb-3" />
-            <p className="text-gray-500">
-              Nenhuma trilha carregada. Aguarde os dados do plano de aceleração.
-            </p>
+            <p className="text-gray-600 font-medium">Nenhum sprint cadastrado ainda</p>
+            <p className="text-sm text-gray-400 mt-1">A estrutura do projeto aparecerá aqui quando os sprints forem criados.</p>
           </div>
         </CardContent>
       </Card>
