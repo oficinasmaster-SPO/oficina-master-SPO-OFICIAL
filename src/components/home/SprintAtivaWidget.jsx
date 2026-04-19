@@ -30,7 +30,7 @@ export default function SprintAtivaWidget({ workshopId }) {
     queryKey: ["active-sprint-widget", workshopId],
     queryFn: async () => {
       const sprints = await base44.entities.ConsultoriaSprint.filter(
-        { workshop_id: workshopId, status: "in_progress" },
+        { workshop_id: workshopId, status: { $in: ["in_progress", "pending"] } },
         "-updated_date",
         1
       );
