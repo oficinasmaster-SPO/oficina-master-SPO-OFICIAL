@@ -1,4 +1,6 @@
 import React, { useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,18 +21,50 @@ export default function EAPViewer({ trilhas = [], sprints = [], tarefas = [], wo
   const [expandedSprints, setExpandedSprints] = useState({});
   const [expandedFases, setExpandedFases] = useState({});
 
-  // Garantir que trilhas é um array
-  const trilhasArray = Array.isArray(trilhas) ? trilhas : [];
+  // Buscar nomes dos templates para exibição
+  const { data: templates = [] } = useQuery({
+    queryKey: ['cronograma-templates-eap'],
+    queryFn: () => base44.entities.CronogramaTemplate.filter({ ativo: true }),
+    staleTime: 10 * 60 * 1000,
+  });
+  const templateMap = useMemo(() => Object.fromEntries(templates.map(t => [t.id, t])), [templates]);
+
+  // Garantir que os arrays são válidos
   const sprintsArray = Array.isArray(sprints) ? sprints : [];
   const tarefasArray = Array.isArray(tarefas) ? tarefas : [];
 
+  // Montar trilhas: se trilhas passadas são objetos CronogramaTemplate, usá-las.
+  // Senão, agrupar sprints por cronograma_template_id (ou criar grupo "Sprints")
+  const trilhasArray = useMemo(() => {
+    const rawTrilhas = Array.isArray(trilhas) ? trilhas : [];
+    // Se as trilhas são os próprios sprints (legado), agrupar por template ou criar uma trilha virtual
+    const isSprints = rawTrilhas.length > 0 && rawTrilhas[0]?.workshop_id !== undefined;
+    if (isSprints || rawTrilhas.length === 0) {
+      // Agrupar sprints por cronograma_template_id
+      const templateMap = {};
+      sprintsArray.forEach(s => {
+        const key = s.cronograma_template_id || "sem_trilha";
+        if (!templateMap[key]) {
+          templateMap[key] = {
+            id: key,
+            name: key === "sem_trilha" ? "Sprints Customizados" : (s.cronograma_template_id),
+            _virtual: true,
+          };
+        }
+      });
+      return Object.values(templateMap);
+    }
+    return rawTrilhas;
+  }, [trilhas, sprintsArray]);
+
   // Estrutura: Missão (Trilha) → Sprints → Fases → Tarefas
   const eapStructure = useMemo(() => {
-    return trilhasArray.map((trilha) => {
+    return trilhasArray.map((trilha) => { // eslint-disable-line
       // Sprints da trilha
-      const trilhaSprints = sprintsArray.filter(
-        (s) => s.trilha_id === trilha.id || s.mission_id === trilha.id
-      );
+      const trilhaSprints = sprintsArray.filter(s => {
+        const key = s.cronograma_template_id || "sem_trilha";
+        return key === trilha.id || s.trilha_id === trilha.id || s.mission_id === trilha.id;
+      });
 
       // Se não houver sprints, criar mocks
       const sprintsToShow =
@@ -134,7 +168,7 @@ export default function EAPViewer({ trilhas = [], sprints = [], tarefas = [], wo
     return labels[status] || status;
   };
 
-  if (trilhasArray.length === 0) {
+  if (trilhasArray.length === 0 || sprintsArray.length === 0) {
     return (
       <Card className="bg-gray-50">
         <CardContent className="py-8">
@@ -179,7 +213,9 @@ export default function EAPViewer({ trilhas = [], sprints = [], tarefas = [], wo
                   <div className="flex-1 text-left">
                     <div className="flex items-center gap-2">
                       <Badge className="bg-red-600 text-white">Nível 1</Badge>
-                      <h3 className="font-bold text-gray-900">MISSÃO: {trilha.name || trilha.titulo}</h3>
+                      <h3 className="font-bold text-gray-900">
+                        MISSÃO: {templateMap[trilha.id]?.nome_fase || trilha.name || trilha.titulo || "Sprints"}
+                      </h3>
                     </div>
                     {trilha.descricao && (
                       <p className="text-xs text-gray-600 mt-1">{trilha.descricao}</p>

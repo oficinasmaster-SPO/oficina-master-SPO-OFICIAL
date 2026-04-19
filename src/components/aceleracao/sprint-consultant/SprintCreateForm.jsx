@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 import { Loader2, Plus, Trash2, Rocket } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 
 const DEFAULT_PHASES = [
   { name: "Planning", status: "not_started", tasks: [] },
@@ -21,8 +21,10 @@ const DEFAULT_PHASES = [
 export default function SprintCreateForm({ open, onClose, workshops = [], user, onCreated }) {
   const [saving, setSaving] = useState(false);
   const queryClient = useQueryClient();
+
   const [form, setForm] = useState({
     workshop_id: "",
+    cronograma_template_id: "",
     title: "",
     objective: "",
     start_date: new Date().toISOString().split("T")[0],
@@ -30,10 +32,16 @@ export default function SprintCreateForm({ open, onClose, workshops = [], user, 
     sprint_number: 1,
   });
 
+  // Buscar trilhas disponíveis
+  const { data: trilhas = [] } = useQuery({
+    queryKey: ['cronograma-templates-sprint-form'],
+    queryFn: () => base44.entities.CronogramaTemplate.filter({ ativo: true }),
+    staleTime: 5 * 60 * 1000,
+    enabled: open,
+  });
+
   // Per-phase tasks editing
-  const [phaseTasks, setPhaseTasks] = useState(
-    DEFAULT_PHASES.map(() => [])
-  );
+  const [phaseTasks, setPhaseTasks] = useState(DEFAULT_PHASES.map(() => []));
   const [newTaskTexts, setNewTaskTexts] = useState(DEFAULT_PHASES.map(() => ""));
 
   const updateField = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
@@ -68,10 +76,12 @@ export default function SprintCreateForm({ open, onClose, workshops = [], user, 
     }));
 
     const workshop = workshops.find(w => w.id === form.workshop_id);
+    const trilhaSelecionada = trilhas.find(t => t.id === form.cronograma_template_id);
 
     await base44.entities.ConsultoriaSprint.create({
       ...form,
-      mission_id: "custom",
+      mission_id: trilhaSelecionada?.id || "custom",
+      cronograma_template_id: form.cronograma_template_id || null,
       phases,
       status: "in_progress",
       progress_percentage: 0,
@@ -94,6 +104,7 @@ export default function SprintCreateForm({ open, onClose, workshops = [], user, 
     // Reset form
     setForm({
       workshop_id: "",
+      cronograma_template_id: "",
       title: "",
       objective: "",
       start_date: new Date().toISOString().split("T")[0],
@@ -127,6 +138,27 @@ export default function SprintCreateForm({ open, onClose, workshops = [], user, 
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Trilha (CronogramaTemplate) */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold">Trilha de Aceleração</Label>
+            <Select value={form.cronograma_template_id} onValueChange={(v) => updateField("cronograma_template_id", v)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione uma trilha (opcional)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="sem_trilha">Sem trilha (customizado)</SelectItem>
+                {trilhas.map(t => (
+                  <SelectItem key={t.id} value={t.id}>
+                    {t.nome_fase} {t.fase_oficina ? `— Fase ${t.fase_oficina}` : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {trilhas.length === 0 && (
+              <p className="text-xs text-amber-600">Nenhuma trilha cadastrada. Sprints serão criados sem trilha.</p>
+            )}
           </div>
 
           {/* Title */}

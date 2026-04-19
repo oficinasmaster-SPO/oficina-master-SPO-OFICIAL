@@ -549,8 +549,8 @@ export default function PainelClienteAceleracao() {
         <SprintClientSection key={workshopIdToUse} workshopId={workshopIdToUse} user={user} workshop={workshop} />
       )}
 
-      {/* EAP - só exibe se houver sprints com trilha vinculada */}
-      {sprints.some(s => s.cronograma_template_id) && (
+      {/* EAP - exibe quando há sprints */}
+      {sprints.length > 0 && (
         <EAPViewer 
           trilhas={[]} 
           sprints={sprints} 
