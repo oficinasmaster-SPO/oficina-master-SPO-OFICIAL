@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { BarChart3, Calendar, CalendarRange, FileText, ClipboardList, Users, Activity, Plus, Loader2 } from "lucide-react";
+import { BarChart3, Calendar, CalendarRange, FileText, ClipboardList, Users, Activity, Plus, Loader2, Lightbulb } from "lucide-react";
 import RegistroAtendimentoMassaModal from "@/components/aceleracao/RegistroAtendimentoMassaModal";
 import FiltrosControleAceleracao from "@/components/aceleracao/FiltrosControleAceleracao";
 import ActiveFiltersBar from "@/components/aceleracao/ActiveFiltersBar";
@@ -249,6 +249,11 @@ export default function ControleAceleracaoView({ state }) {
               <span className="hidden sm:inline">Dashboard Sprints</span>
               <span className="sm:hidden">Sprints</span>
             </TabsTrigger>
+            <TabsTrigger value="consultoria" className={TAB_CLASS}>
+              <Lightbulb className="w-4 h-4" />
+              <span className="hidden sm:inline">Consultoria</span>
+              <span className="sm:hidden">Cons.</span>
+            </TabsTrigger>
           </TabsList>
         </div>
 
@@ -304,6 +309,16 @@ export default function ControleAceleracaoView({ state }) {
             <TabErrorBoundary tabName="Dashboard Sprints">
               <DashboardOperacionalTabRedesigned user={user} workshops={workshops} />
             </TabErrorBoundary>
+          </TabsContent>
+
+          <TabsContent value="consultoria" forceMount className={`mt-0 ${activeTab !== "consultoria" ? "hidden" : ""}`}>
+            {visitedTabs.has("consultoria") && (
+              <TabErrorBoundary tabName="Consultoria Global">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                  <VisaoGeralTab state={state} mode="global" />
+                </div>
+              </TabErrorBoundary>
+            )}
           </TabsContent>
         </Suspense>
       </Tabs>

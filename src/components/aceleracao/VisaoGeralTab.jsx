@@ -32,7 +32,7 @@ function getMouseEnterSide(e) {
   return "top";
 }
 
-export default function VisaoGeralTab({ state }) {
+export default function VisaoGeralTab({ state, mode = "contextual" }) {
   const { user, workshops, workshopMap, atendimentos, atendimentosPeriodo, setActiveTab, setPendingSubTab } = state;
   const [modalClientes, setModalClientes] = useState({ isOpen: false, tipo: null, clientes: [] });
   const [modalReunioes, setModalReunioes] = useState({ isOpen: false, tipo: null, reunioes: [] });
@@ -64,6 +64,10 @@ export default function VisaoGeralTab({ state }) {
 
   const proximosAtendimentos = useMemo(() => futurasList.slice(0, 5), [futurasList]);
   const clientesAtivos = workshops.length;
+
+  // Em modo global, mostrar todos os dados agregados
+  // Em modo contextual, manter comportamento atual (pode ser filtrado por cliente)
+  const displayMode = mode === "global" ? "global" : "contextual";
 
   return (
     <div className="space-y-6">
