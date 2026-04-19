@@ -9,16 +9,8 @@ import ConsultoriaClienteTab from './ConsultoriaClienteTab';
  * Modo CONTEXTUAL: workshopId = cliente.id → filtra por cliente
  */
 export default function ConsultoriaGlobalTab() {
-  // Em modo global, passamos um objeto vazio (sem id específico)
-  // Isso faz a ConsultoriaClienteTab buscar todos os dados agregados
-  const globalClient = {
-    id: null, // Sem cliente específico → modo global
-    name: 'Todas as Oficinas',
-  };
-
+  // Em modo global, passamos id=null para buscar TODOS os dados agregados
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <ConsultoriaClienteTab client={globalClient} />
-    </div>
+    <ConsultoriaClienteTab client={{ id: null, name: 'Todas as Oficinas' }} mode="global" />
   );
 }
