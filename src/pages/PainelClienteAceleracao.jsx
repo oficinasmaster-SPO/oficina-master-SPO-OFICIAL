@@ -570,9 +570,7 @@ export default function PainelClienteAceleracao() {
 
       {/* EAP - sempre visível */}
       <EAPViewer 
-        trilhas={[]} 
         sprints={sprints} 
-        tarefas={[]}
         workshop={workshop}
       />
 
