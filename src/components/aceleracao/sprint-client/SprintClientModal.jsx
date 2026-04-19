@@ -20,8 +20,19 @@ const phaseLabels = { Planning: "Planejamento", Execution: "Execução", Monitor
 export default function SprintClientModal({ sprint, user, workshop, open, onClose }) {
   const queryClient = useQueryClient();
   const permissions = useSprintPermissions(sprint, user, workshop);
-  const phases = sprint?.phases || [];
   const sprintCompleted = sprint?.status === "completed";
+
+  // Estado local de phases para evitar stale closure nos handlers de save
+  const [localPhases, setLocalPhases] = useState(sprint?.phases || []);
+
+  // Sincronizar quando sprint atualizar (ex: após invalidateQueries)
+  useEffect(() => {
+    if (sprint?.phases) {
+      setLocalPhases(sprint.phases);
+    }
+  }, [sprint?.id, JSON.stringify(sprint?.phases)]);
+
+  const phases = localPhases;
   
   // Start on the first non-completed phase
   const [currentPhaseIdx, setCurrentPhaseIdx] = useState(0);
@@ -39,7 +50,9 @@ export default function SprintClientModal({ sprint, user, workshop, open, onClos
 
   const saveMutation = useMutation({
     mutationFn: async (updatedPhases) => {
-      // Recalculate progress
+      // Atualizar estado local imediatamente (optimistic update)
+      setLocalPhases(updatedPhases);
+
       const totalTasks = updatedPhases.reduce((sum, p) => sum + (p.tasks?.length || 0), 0);
       const doneTasks = updatedPhases.reduce((sum, p) => sum + (p.tasks?.filter(t => t.status === "done").length || 0), 0);
       const progress = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
@@ -51,14 +64,14 @@ export default function SprintClientModal({ sprint, user, workshop, open, onClos
       });
     },
     onSuccess: () => {
-      // Invalidate all sprint-related queries across all tabs
       queryClient.invalidateQueries({ queryKey: ["sprints-client"], exact: false });
       queryClient.invalidateQueries({ queryKey: ["active-sprint-widget"], exact: false });
       queryClient.invalidateQueries({ queryKey: ["dashboard-sprints"], exact: false });
       queryClient.invalidateQueries({ queryKey: ["sprints-reais"], exact: false });
     },
     onError: () => {
-      // On failure, refetch to rollback optimistic local state (e.g. auto-start phase)
+      // Rollback: ressincronizar com dado do banco
+      if (sprint?.phases) setLocalPhases(sprint.phases);
       queryClient.invalidateQueries({ queryKey: ["sprints-client"] });
       queryClient.invalidateQueries({ queryKey: ["client-sprints"] });
       toast.error("Erro ao salvar. Tente novamente.");
