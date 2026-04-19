@@ -16,7 +16,7 @@ const FIXED_PHASES = [
   { id: "melhoria", label: "Melhoria", color: "bg-orange-50 border-orange-200" }
 ];
 
-export default function EAPViewer({ trilhas = [], sprints = [], tarefas = [], workshop = null }) {
+export default function EAPViewer({ trilhas = [], sprints = [], tarefas = [], workshop = null, isLoading = false }) {
   const [expandedMissoes, setExpandedMissoes] = useState({});
   const [expandedSprints, setExpandedSprints] = useState({});
   const [expandedFases, setExpandedFases] = useState({});
@@ -159,6 +159,25 @@ export default function EAPViewer({ trilhas = [], sprints = [], tarefas = [], wo
     };
     return labels[status] || status;
   };
+
+  if (isLoading || (!workshop?.id && sprintsArray.length === 0)) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Target className="w-5 h-5 text-blue-600" />
+            Estrutura Analítica do Projeto (EAP)
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="py-8">
+          <div className="text-center">
+            <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-3" />
+            <p className="text-gray-500 text-sm">Carregando estrutura do projeto...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (sprintsArray.length === 0) {
     return (

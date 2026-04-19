@@ -173,7 +173,7 @@ export default function PainelClienteAceleracao() {
   });
 
   // Carregar sprints REAIS do banco (sem filtro de tipo - todas são sprints)
-  const { data: sprints = [] } = useQuery({
+  const { data: sprints = [], isLoading: loadingSprints } = useQuery({
     queryKey: ['sprints-reais', workshop?.id],
     queryFn: async () => {
       if (!workshop?.id) return [];
@@ -188,8 +188,7 @@ export default function PainelClienteAceleracao() {
     retry: false
   });
 
-  // EAP usa as mesmas sprints (não há trilhas separadas)
-  const trilhas = [];
+
 
   // Sincronizar sprints em tempo real
   useEffect(() => {
@@ -572,6 +571,7 @@ export default function PainelClienteAceleracao() {
       <EAPViewer 
         sprints={sprints} 
         workshop={workshop}
+        isLoading={loadingSprints || !workshop?.id}
       />
 
       {/* Atividades de Implementação do Cronograma */}
