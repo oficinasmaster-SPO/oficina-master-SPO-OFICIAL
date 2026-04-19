@@ -570,6 +570,8 @@ function CamadaSprints({ workshopId, missoesSelecionadas, cronogramaTemplateId }
   const loadSprints = useCallback(async () => {
     try {
       setLoadError(null);
+      // Em modo global, carrega TODOS os sprints sem filtro
+      // Em modo contextual, filtra por workshop_id
       const query = workshopId ? { workshop_id: workshopId } : {};
       const data = await base44.entities.ConsultoriaSprint.filter(query);
       setSprints(data || []);
@@ -851,7 +853,11 @@ export default function ConsultoriaClienteTab({ client, mode = "contextual" }) {
   }, [workshopId]);
 
   const handleSetMissoesSelecionadas = useCallback(async (novasSelecionadas) => {
-    if (!workshopId) return; // Só salva se houver workshopId específico
+    // Em modo global, permite criar/editar trilhas
+    if (!workshopId) {
+      toast.info('ℹ️ Modo global: visualização agregada. Acesse um cliente específico para editar trilhas.');
+      return;
+    }
     
     try {
       const existing = await base44.entities.CronogramaTemplate.filter(
@@ -919,30 +925,31 @@ export default function ConsultoriaClienteTab({ client, mode = "contextual" }) {
           <CamadaEstrategica workshopId={workshopId} />
         </TabsContent>
         <TabsContent value="trilha" className="mt-4">
-          {!loading && workshopId && (
-            <CamadaTrilhaCliente
-              workshopId={workshopId}
-              missoesSelecionadas={missoesSelecionadas}
-              setMissoesSelecionadas={setMissoesSelecionadas}
-              handleSetMissoesSelecionadas={handleSetMissoesSelecionadas}
-              onRefresh={async () => {
-                const cronogramas = await base44.entities.CronogramaTemplate.filter({ workshop_id: workshopId });
-                if (cronogramas?.length > 0) {
-                  setMissoesSelecionadas(cronogramas[0].missoes_selecionadas || []);
-                  setCronogramaTemplateId(cronogramas[0].id);
-                }
-              }}
-            />
-          )}
-          {!loading && !workshopId && (
-            <div className="text-center py-8 text-gray-500 border-2 border-dashed border-gray-200 rounded-xl">
-              <Map className="w-10 h-10 mx-auto mb-3 text-gray-300" />
-              <p className="text-sm font-medium">Modo Global Ativo</p>
-              <p className="text-xs mt-1">Vá à aba <strong>Sprints</strong> para gerenciar todas as trilhas agregadas.</p>
-            </div>
-          )}
-          {loading && <div className="text-center py-4 text-gray-500">Carregando trilhas...</div>}
-        </TabsContent>
+           {!loading && workshopId && (
+             <CamadaTrilhaCliente
+               workshopId={workshopId}
+               missoesSelecionadas={missoesSelecionadas}
+               setMissoesSelecionadas={setMissoesSelecionadas}
+               handleSetMissoesSelecionadas={handleSetMissoesSelecionadas}
+               onRefresh={async () => {
+                 const cronogramas = await base44.entities.CronogramaTemplate.filter({ workshop_id: workshopId });
+                 if (cronogramas?.length > 0) {
+                   setMissoesSelecionadas(cronogramas[0].missoes_selecionadas || []);
+                   setCronogramaTemplateId(cronogramas[0].id);
+                 }
+               }}
+             />
+           )}
+           {!loading && !workshopId && (
+             <div className="text-center py-8 text-gray-500 border-2 border-dashed border-gray-200 rounded-xl">
+               <Map className="w-10 h-10 mx-auto mb-3 text-gray-300" />
+               <p className="text-sm font-medium">Modo Global — Visualização Agregada</p>
+               <p className="text-xs mt-1">Vá à aba <strong>Sprints</strong> para ver todas as trilhas e sprints de todos os clientes.</p>
+               <p className="text-xs mt-2 text-blue-600 font-medium">💡 Para editar trilhas específicas, acesse cada cliente em Cronograma Geral.</p>
+             </div>
+           )}
+           {loading && <div className="text-center py-4 text-gray-500">Carregando trilhas...</div>}
+         </TabsContent>
         <TabsContent value="sprints" className="mt-4">
           <CamadaSprints workshopId={workshopId} missoesSelecionadas={missoesSelecionadas} cronogramaTemplateId={cronogramaTemplateId} />
         </TabsContent>
