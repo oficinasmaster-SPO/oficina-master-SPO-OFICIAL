@@ -25,12 +25,13 @@ export default function SprintClientModal({ sprint, user, workshop, open, onClos
   // Estado local de phases para evitar stale closure nos handlers de save
   const [localPhases, setLocalPhases] = useState(sprint?.phases || []);
 
-  // Sincronizar quando sprint atualizar (ex: após invalidateQueries)
+  // Sincronizar localPhases APENAS quando abre um sprint diferente (sprint.id muda)
+  // Não sincronizar a cada refetch para evitar sobrescrever dados locais não persistidos ainda
   useEffect(() => {
     if (sprint?.phases) {
       setLocalPhases(sprint.phases);
     }
-  }, [sprint?.id, JSON.stringify(sprint?.phases)]);
+  }, [sprint?.id]);
 
   const phases = localPhases;
   
