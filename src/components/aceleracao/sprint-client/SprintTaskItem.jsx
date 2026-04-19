@@ -76,37 +76,48 @@ export default function SprintTaskItem({ task, index, canComplete, canAddNotes, 
       </div>
 
       {/* Informações fixas dentro da linha: Como fazer + Evidência + Concluída por */}
-      <div className="ml-6 flex flex-wrap items-center gap-3 mb-2 text-xs">
+      <div className="ml-6 grid grid-cols-3 gap-4 mb-2 text-xs">
         {/* Como fazer */}
-        {task.instructions && (
-          <button
-            className="flex items-center gap-1 text-blue-600 hover:text-blue-800 font-medium"
-            onClick={() => setShowDetails(!showDetails)}
-          >
-            <Info className="w-3 h-3" />
-            Como fazer
-            {showDetails ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-          </button>
-        )}
+        <div className="flex flex-col gap-1">
+          <span className="font-semibold text-gray-700">Instruções:</span>
+          {task.instructions ? (
+            <button
+              className="flex items-center gap-1 text-blue-600 hover:text-blue-800 font-medium text-left"
+              onClick={() => setShowDetails(!showDetails)}
+            >
+              <Info className="w-3 h-3 flex-shrink-0" />
+              Ver como fazer
+              {showDetails ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+            </button>
+          ) : (
+            <span className="text-gray-400 italic">Nenhuma instrução</span>
+          )}
+        </div>
 
         {/* Evidência */}
-        {task.evidence_url && (
-          <a href={task.evidence_url} target="_blank" rel="noopener noreferrer">
-            <Badge variant="outline" className="text-xs gap-1 text-green-700 border-green-300">
-              <Check className="w-3 h-3" /> Evidência
-            </Badge>
-          </a>
-        )}
+        <div className="flex flex-col gap-1">
+          <span className="font-semibold text-gray-700">Evidência:</span>
+          {task.evidence_url ? (
+            <a href={task.evidence_url} target="_blank" rel="noopener noreferrer" className="text-green-700 hover:text-green-900 font-medium">
+              <Check className="w-3 h-3 inline mr-1" /> Arquivo anexado
+            </a>
+          ) : (
+            <span className="text-gray-400 italic">Sem evidência</span>
+          )}
+        </div>
 
-        {/* Who completed */}
-        {isDone && task.completed_by_role && (
-          <div className="flex items-center gap-1">
-            <User className="w-3 h-3 text-gray-400" />
-            <span className="text-gray-500">
+        {/* Concluída por */}
+        <div className="flex flex-col gap-1">
+          <span className="font-semibold text-gray-700">Status:</span>
+          {isDone && task.completed_by_role ? (
+            <div className="flex items-center gap-1 text-green-700 font-medium">
+              <Check className="w-3 h-3" />
               Concluída por {task.completed_by_role === "oficina" ? "Oficina" : "Consultor"}
-            </span>
-          </div>
-        )}
+            </div>
+          ) : (
+            <span className="text-gray-400 italic">Pendente</span>
+          )}
+        </div>
       </div>
 
       {/* Expandir instrução */}
