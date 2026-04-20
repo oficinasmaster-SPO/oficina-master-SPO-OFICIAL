@@ -2,6 +2,8 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import puppeteer from 'npm:puppeteer@22.0.0';
 
 Deno.serve(async (req) => {
+  let browser = null;
+  
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
@@ -16,6 +18,8 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'ata_id is required' }, { status: 400 });
     }
 
+    console.log(`[PDF] Iniciando geração para ATA: ${ata_id}`);
+
     // Buscar dados da ATA
     const ata = await base44.entities.MeetingMinutes.get(ata_id);
     if (!ata) {
@@ -27,28 +31,46 @@ Deno.serve(async (req) => {
     if (ata.workshop_id) {
       try {
         workshop = await base44.entities.Workshop.get(ata.workshop_id);
+        console.log(`[PDF] Workshop carregado: ${workshop.name}`);
       } catch (e) {
-        console.warn('Workshop not found:', e);
+        console.warn(`[PDF] Workshop não encontrado:`, e.message);
       }
     }
 
-    // Gerar HTML da ATA (versão simplificada para PDF)
+    // Gerar HTML da ATA
+    console.log(`[PDF] Gerando HTML da ATA`);
     const htmlContent = generateAtaHTML(ata, workshop);
+    console.log(`[PDF] HTML gerado com sucesso (${htmlContent.length} caracteres)`);
 
     // Usar Puppeteer para gerar PDF
-    const browser = await puppeteer.launch({
+    console.log(`[PDF] Iniciando browser Puppeteer`);
+    browser = await puppeteer.launch({
       headless: 'new',
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
-        '--disable-gpu'
+        '--disable-gpu',
+        '--disable-web-resources',
+        '--disable-dev-shm-usage'
       ]
     });
 
+    console.log(`[PDF] Browser iniciado com sucesso`);
     const page = await browser.newPage();
-    await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
 
+    // Listeners de debug
+    page.on('console', msg => console.log(`[PDF-Page] ${msg.text()}`));
+    page.on('pageerror', err => console.error(`[PDF-PageError] ${err.message}`));
+    page.on('error', err => console.error(`[PDF-Error] ${err.message}`));
+
+    console.log(`[PDF] Definindo conteúdo HTML`);
+    await page.setContent(htmlContent, { 
+      waitUntil: 'networkidle0',
+      timeout: 60000 // 60 segundos
+    });
+
+    console.log(`[PDF] Renderizando PDF`);
     const pdf = await page.pdf({
       format: 'A4',
       printBackground: true,
@@ -58,25 +80,42 @@ Deno.serve(async (req) => {
         left: '20mm',
         right: '20mm'
       },
-      headerTemplate: '<div></div>',
-      footerTemplate: '<div></div>',
-      displayHeaderFooter: false
+      timeout: 60000
     });
 
+    console.log(`[PDF] PDF gerado com sucesso (${pdf.length} bytes)`);
+    
+    await page.close();
     await browser.close();
 
     // Retornar PDF como base64
     const base64PDF = btoa(String.fromCharCode.apply(null, new Uint8Array(pdf)));
 
+    console.log(`[PDF] Geração concluída com sucesso`);
     return Response.json({
       success: true,
       pdf: base64PDF,
       filename: `ATA-${ata.code || ata.id}.pdf`
     });
+
   } catch (error) {
-    console.error('PDF generation error:', error);
+    console.error(`[PDF-Error] ${error.message}`);
+    console.error(`[PDF-Stack] ${error.stack}`);
+
+    // Fechar browser em caso de erro
+    if (browser) {
+      try {
+        await browser.close();
+      } catch (closeError) {
+        console.error(`[PDF-CloseError] ${closeError.message}`);
+      }
+    }
+
     return Response.json(
-      { error: error.message || 'PDF generation failed' },
+      { 
+        error: error.message || 'PDF generation failed',
+        details: error.stack
+      },
       { status: 500 }
     );
   }
