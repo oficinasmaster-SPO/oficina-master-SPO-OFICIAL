@@ -33,7 +33,7 @@ export default function GestaoOficina() {
   const location = useLocation();
   const { workshop: contextWorkshop, isLoading: isContextLoading } = useWorkshopContext();
   const tenantId = contextWorkshop?.id;
-  const [activeTab, setActiveTab] = useState('dados');
+  const [activeTab, setActiveTab] = useState('aceleracao');
 
   // Uma oficina é considerada Matriz se o company_id for vazio, nulo ou for igual ao seu próprio ID
   const isMatriz = !contextWorkshop?.company_id || contextWorkshop?.company_id === contextWorkshop?.id || contextWorkshop?.company_id === '';
@@ -105,7 +105,7 @@ export default function GestaoOficina() {
 
   useEffect(() => {
     if (loading) return;
-    const tabFromUrl = new URLSearchParams(location.search).get('tab') || 'dados';
+    const tabFromUrl = new URLSearchParams(location.search).get('tab') || 'aceleracao';
     if (tabFromUrl === "filiais" && !isMatriz) {
       setActiveTab("dados");
       navigate(location.pathname + "?tab=dados", { replace: true });
@@ -280,6 +280,10 @@ export default function GestaoOficina() {
           navigate(`?tab=${value}`, { replace: false });
         }}>
           <RedTabsList>
+            <RedTabsTrigger value="aceleracao">
+              <Briefcase className="w-4 h-4 mr-1" />
+              <span>Aceleração</span>
+            </RedTabsTrigger>
             <RedTabsTrigger value="dados">
               <Building2 className="w-4 h-4 mr-1" />
               <span>Dados</span>
@@ -318,10 +322,6 @@ export default function GestaoOficina() {
                 <span>Filiais</span>
               </RedTabsTrigger>
             )}
-            <RedTabsTrigger value="aceleracao">
-              <Briefcase className="w-4 h-4 mr-1" />
-              <span>Aceleração</span>
-            </RedTabsTrigger>
             <RedTabsTrigger value="crescimento">
               <TrendingUp className="w-4 h-4 mr-1" />
               <span>Crescimento</span>
