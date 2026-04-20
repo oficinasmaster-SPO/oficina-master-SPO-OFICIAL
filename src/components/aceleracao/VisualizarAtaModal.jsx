@@ -177,7 +177,7 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
     <>
       <ClientIntelligenceCapturePanel workshopId={workshop?.id} ataId={ata?.id} />
       <Dialog open onOpenChange={onClose}>
-        <DialogContent ref={ataContentRef} className="max-w-5xl max-h-[90vh] overflow-y-auto print:max-w-full">
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto print:max-w-full">
           <DialogHeader className="print:hidden">
             <div className="space-y-4">
               <div className="flex items-center justify-between flex-wrap gap-2">
@@ -229,7 +229,7 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
              <p className="text-gray-500">Carregando dados da ATA...</p>
            </div>
           ) : (
-           <div ref={ataContentRef} className="space-y-6 py-4">
+           <div ref={ataContentRef} className="space-y-6 py-4 px-0">
               {/* CABEÇALHO */}
               <div className="text-center">
                 <h2 className="text-2xl font-bold text-gray-900">GESTÃO DE PROCESSOS</h2>
@@ -514,16 +514,12 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
                 </Card>
               )}
 
-              {/* RODAPÉ */}
-              <div className="text-sm text-gray-500 text-center pt-6 border-t print:hidden">
-                <p>Gerado por: {d.created_by}</p>
-                <p>Data de criação: {d.created_date ? new Date(d.created_date).toLocaleString('pt-BR') : '-'}</p>
-              </div>
+
             </div>
           )}
 
-          <div className="flex justify-end pt-4 border-t print:hidden">
-            <Button onClick={onClose}>Fechar</Button>
+          <div className="flex justify-end pt-4 border-t print:hidden gap-2">
+            <Button variant="outline" onClick={onClose}>Fechar</Button>
           </div>
         </DialogContent>
       </Dialog>

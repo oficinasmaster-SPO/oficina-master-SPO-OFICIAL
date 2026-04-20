@@ -5,39 +5,49 @@ import jsPDF from 'jspdf';
  * Captura um elemento HTML exatamente como aparece na tela e gera PDF A4.
  * @param {HTMLElement} element - Elemento DOM a capturar
  * @param {string} fileName - Nome do arquivo PDF (ex: "MS_CENTRO_AUTOMOTIVO_20042026.pdf")
- * @param {object} options - { scale: 2 (padrão), margin: 10 }
+ * @param {object} options - { scale: 2 (padrão), margin: 15 }
  */
 export async function htmlToPdf(element, fileName = 'documento.pdf', options = {}) {
-  const { scale = 2, margin = 10 } = options;
+  const { scale = 2, margin = 15 } = options;
 
   if (!element) throw new Error('Elemento não encontrado');
 
-  // Guardar estilos originais do elemento e do pai
+  // Guardar estilos originais do elemento e pais
   const originalEl = {
     overflow: element.style.overflow,
     overflowY: element.style.overflowY,
     maxHeight: element.style.maxHeight,
     height: element.style.height,
+    width: element.style.width,
   };
 
-  // O DialogContent tem overflow-y-auto que limita a captura
-  const parent = element.parentElement;
-  const originalParentOverflowY = parent?.style.overflowY || '';
-  const originalParentMaxHeight = parent?.style.maxHeight || '';
-
-  // Expandir elemento e pai para captura completa
+  // Expandir elemento para captura completa
   element.style.overflow = 'visible';
   element.style.overflowY = 'visible';
   element.style.maxHeight = 'none';
   element.style.height = 'auto';
+  element.style.width = 'auto';
 
-  if (parent) {
+  // Expandir todos os pais até DialogContent
+  let parent = element.parentElement;
+  const parentStyles = [];
+  while (parent && parent.className?.includes('DialogContent') === false) {
+    parentStyles.push({
+      el: parent,
+      overflow: parent.style.overflow,
+      overflowY: parent.style.overflowY,
+      maxHeight: parent.style.maxHeight,
+      height: parent.style.height,
+    });
+    parent.style.overflow = 'visible';
     parent.style.overflowY = 'visible';
     parent.style.maxHeight = 'none';
+    parent.style.height = 'auto';
+    parent = parent.parentElement;
   }
 
-  // Aguardar o browser renderizar com os novos estilos
-  await new Promise(resolve => setTimeout(resolve, 350));
+  // Aguardar renderização completa
+  await new Promise(resolve => setTimeout(resolve, 400));
 
   try {
     const fullHeight = element.scrollHeight;
@@ -84,11 +94,14 @@ export async function htmlToPdf(element, fileName = 'documento.pdf', options = {
     element.style.overflowY = originalEl.overflowY;
     element.style.maxHeight = originalEl.maxHeight;
     element.style.height = originalEl.height;
+    element.style.width = originalEl.width;
 
-    if (parent) {
-      parent.style.overflowY = originalParentOverflowY;
-      parent.style.maxHeight = originalParentMaxHeight;
-    }
+    parentStyles.forEach(({ el, overflow, overflowY, maxHeight, height }) => {
+      el.style.overflow = overflow;
+      el.style.overflowY = overflowY;
+      el.style.maxHeight = maxHeight;
+      el.style.height = height;
+    });
   }
 }
 
