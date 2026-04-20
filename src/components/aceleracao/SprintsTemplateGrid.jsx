@@ -24,22 +24,28 @@ const DEFAULT_SPRINT_MISSIONS = [
   { id: 'cultura_forte',       icon: '🌟', name: 'Cultura Forte' },
 ];
 
-// Estrutura padrão: cada missão tem 1 sprint com 5 fases, cada fase com tasks []
+// Estrutura padrão: cada missão tem Sprint 0 (Diagnóstico) + Sprint 1, ambas com 5 fases
 const buildDefaultData = () =>
   DEFAULT_SPRINT_MISSIONS.map(m => ({
     mission_id: m.id,
     mission_icon: m.icon,
     mission_name: m.name,
-    sprint: {
-      id: `${m.id}_sprint1`,
-      sprint_number: 1,
-      title: `Sprint 1 — ${m.name}`,
-      objective: '',
-      phases: PHASES_CONFIG.map(p => ({
-        name: p.name,
-        tasks: [],
-      })),
-    },
+    sprints: [
+      {
+        id: `${m.id}_sprint0`,
+        sprint_number: 0,
+        title: 'Sprint 0 — Diagnóstico e Alinhamento',
+        objective: 'Diagnóstico inicial, levantamento de dados e alinhamento de expectativas com a oficina.',
+        phases: PHASES_CONFIG.map(p => ({ name: p.name, tasks: [] })),
+      },
+      {
+        id: `${m.id}_sprint1`,
+        sprint_number: 1,
+        title: `Sprint 1 — ${m.name}`,
+        objective: '',
+        phases: PHASES_CONFIG.map(p => ({ name: p.name, tasks: [] })),
+      },
+    ],
   }));
 
 // ──────────────────────────────────────────────
@@ -267,8 +273,12 @@ export default function SprintsTemplateGrid() {
   const [data, setData] = useState(buildDefaultData);
   const [expandedMission, setExpandedMission] = useState(null);
 
-  const handleSprintSave = (missionId, updatedSprint) => {
-    setData(data.map(m => m.mission_id === missionId ? { ...m, sprint: updatedSprint } : m));
+  const handleSprintSave = (missionId, sprintId, updatedSprint) => {
+    setData(data.map(m =>
+      m.mission_id === missionId
+        ? { ...m, sprints: m.sprints.map(s => s.id === sprintId ? updatedSprint : s) }
+        : m
+    ));
   };
 
   return (
@@ -283,7 +293,8 @@ export default function SprintsTemplateGrid() {
 
       <div className="space-y-3">
         {data.map((mission) => {
-          const totalTasks = mission.sprint.phases?.reduce((acc, p) => acc + (p.tasks?.length || 0), 0) || 0;
+          const totalTasks = mission.sprints.reduce((acc, s) =>
+            acc + (s.phases?.reduce((a, p) => a + (p.tasks?.length || 0), 0) || 0), 0);
           return (
             <Card key={mission.mission_id} className="overflow-hidden">
               <CardHeader
@@ -296,7 +307,7 @@ export default function SprintsTemplateGrid() {
                     <div>
                       <CardTitle className="text-base">{mission.mission_name}</CardTitle>
                       <p className="text-xs text-gray-500">
-                        5 fases • {totalTasks} tarefa{totalTasks !== 1 ? 's' : ''} cadastrada{totalTasks !== 1 ? 's' : ''}
+                        {mission.sprints.length} sprints • 5 fases cada • {totalTasks} tarefa{totalTasks !== 1 ? 's' : ''} cadastrada{totalTasks !== 1 ? 's' : ''}
                       </p>
                     </div>
                   </div>
@@ -308,11 +319,14 @@ export default function SprintsTemplateGrid() {
               </CardHeader>
 
               {expandedMission === mission.mission_id && (
-                <CardContent className="pt-0 pb-4 border-t">
-                  <SprintEditor
-                    sprint={mission.sprint}
-                    onSave={(updated) => handleSprintSave(mission.mission_id, updated)}
-                  />
+                <CardContent className="pt-0 pb-4 border-t space-y-3">
+                  {mission.sprints.map((sprint) => (
+                    <SprintEditor
+                      key={sprint.id}
+                      sprint={sprint}
+                      onSave={(updated) => handleSprintSave(mission.mission_id, sprint.id, updated)}
+                    />
+                  ))}
                 </CardContent>
               )}
             </Card>
