@@ -70,10 +70,6 @@ export default function ControleAceleracaoView({ state }) {
   const navigate = useNavigate();
 
   const handleTabChange = useCallback((newTab) => {
-    if (newTab === "consultoria") {
-      navigate("/ConsultoriaGlobal");
-      return;
-    }
     trackTabChange(prevTabRef.current, newTab);
     prevTabRef.current = newTab;
     markVisited(newTab);
