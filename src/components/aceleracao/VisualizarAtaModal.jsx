@@ -2,7 +2,7 @@ import React, { useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { FileText, Download, Building2, MapPin, Award, Loader2 } from "lucide-react";
+import { FileText, Download, Building2, MapPin, Award, Loader2, Send } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { base44 } from "@/api/base44Client";
@@ -156,6 +156,18 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
     }
   };
 
+  const handleEnviarEmail = async () => {
+    try {
+      await base44.functions.invoke('enviarEmailATA', {
+        ata_id: ataAtualizada.id,
+        atendimento_id: atendimento?.id,
+      });
+      toast.success("ATA enviada por email com sucesso!");
+    } catch (error) {
+      toast.error("Erro ao enviar email: " + (error.response?.data?.error || error.message));
+    }
+  };
+
   if (!ataAtualizada) return null;
 
   const d = ataAtualizada;
@@ -176,30 +188,39 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
                   ATA de Atendimento - {d.code || 'Sem código'}
                 </span>
                 <div className="flex gap-2">
-                  {d.status !== 'finalizada' && (
-                    <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white" onClick={handleFinalizar}>
-                      <FileText className="w-4 h-4 mr-2" />Finalizar ATA
-                    </Button>
-                  )}
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleDownload}
-                    disabled={isGeneratingPDF || isLoading}
-                  >
-                    {isGeneratingPDF ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Gerando PDF...
-                      </>
-                    ) : (
-                      <>
-                        <Download className="w-4 h-4 mr-2" />
-                        Download PDF
-                      </>
-                    )}
-                  </Button>
-                </div>
+                   {d.status !== 'finalizada' && (
+                     <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white" onClick={handleFinalizar}>
+                       <FileText className="w-4 h-4 mr-2" />Finalizar ATA
+                     </Button>
+                   )}
+                   <Button
+                     size="sm"
+                     variant="outline"
+                     onClick={handleEnviarEmail}
+                     disabled={isLoading}
+                   >
+                     <Send className="w-4 h-4 mr-2" />
+                     Enviar E-mail
+                   </Button>
+                   <Button
+                     size="sm"
+                     variant="outline"
+                     onClick={handleDownload}
+                     disabled={isGeneratingPDF || isLoading}
+                   >
+                     {isGeneratingPDF ? (
+                       <>
+                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                         Gerando PDF...
+                       </>
+                     ) : (
+                       <>
+                         <Download className="w-4 h-4 mr-2" />
+                         Download PDF
+                       </>
+                     )}
+                   </Button>
+                 </div>
               </div>
             </div>
           </DialogHeader>
