@@ -77,7 +77,16 @@ export async function htmlToPdf(element, fileName = 'documento.pdf', options = {
     const imgData = canvas.toDataURL('image/jpeg', 0.95);
 
     for (let page = 0; page < totalPages; page++) {
-      if (page > 0) pdf.addPage();
+      const isLastPage = page === totalPages - 1;
+
+      if (isLastPage && totalPages > 1) {
+        const contentAlreadyRendered = page * contentHeight;
+        const remainingContent = imgHeight - contentAlreadyRendered;
+        pdf.addPage([pageWidth, margin + remainingContent + margin]);
+      } else if (page > 0) {
+        pdf.addPage();
+      }
+
       const yOffset = -(page * contentHeight);
       pdf.addImage(
         imgData, 'JPEG',

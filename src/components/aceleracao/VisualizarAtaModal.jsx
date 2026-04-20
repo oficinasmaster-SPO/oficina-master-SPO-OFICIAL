@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FileText, Download, Building2, MapPin, Award, Loader2, Send } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { base44 } from "@/api/base44Client";
@@ -316,7 +317,9 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
                       <Badge className="bg-purple-100 text-purple-700 border-purple-200 font-normal">Gerado por Inteligência Artificial</Badge>
                     </h3>
                     <p className="text-sm text-purple-600/80 mb-4 italic">As informações abaixo foram organizadas e geradas automaticamente pela IA baseadas nas anotações da reunião.</p>
-                    <div className="whitespace-pre-wrap text-gray-800 text-sm">{d.ata_ia}</div>
+                    <div className="prose prose-sm max-w-none text-gray-800">
+                      <ReactMarkdown>{d.ata_ia}</ReactMarkdown>
+                    </div>
                   </CardContent>
                 </Card>
               )}
