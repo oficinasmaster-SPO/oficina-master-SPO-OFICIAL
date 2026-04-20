@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import CloseButton from "@/components/ui/CloseButton";
 import ConsultoriaClienteTab from "./ConsultoriaClienteTab";
+import ClientHistoricoTimeline from "./ClientHistoricoTimeline";
 
 export default function ClientDetailPanel({ client, isOpen, onClose, atendimentos = [], processos = [], defaultTab = "geral" }) {
   const atendimentosCliente = client ? atendimentos.filter(a => a.workshop_id === client.id)
@@ -478,49 +479,8 @@ export default function ClientDetailPanel({ client, isOpen, onClose, atendimento
             )}
           </TabsContent>
 
-          <TabsContent value="historico" className="space-y-6 mt-6">
-            <h3 className="font-semibold text-lg flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-blue-600" />
-              Histórico de Atendimentos ({atendimentosCliente.length})
-            </h3>
-            
-            {atendimentosCliente.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">
-                <Calendar className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-                <p>Nenhum atendimento registrado</p>
-              </div>
-            ) : (
-              <div className="space-y-3 max-h-96 overflow-y-auto">
-                {atendimentosCliente.map((atendimento) => (
-                  <div key={atendimento.id} className="border rounded-lg p-4 hover:bg-gray-50">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <h4 className="font-semibold text-gray-900">{atendimento.tipo_atendimento}</h4>
-                        <p className="text-sm text-gray-600">
-                          {format(
-                            new Date(atendimento.data_realizada || atendimento.data_agendada), 
-                            "dd/MM/yyyy 'às' HH:mm", 
-                            { locale: ptBR }
-                          )}
-                        </p>
-                      </div>
-                      <Badge 
-                        className={
-                          atendimento.status === 'realizado' ? 'bg-green-100 text-green-700' :
-                          atendimento.status === 'cancelado' ? 'bg-red-100 text-red-700' :
-                          'bg-blue-100 text-blue-700'
-                        }
-                      >
-                        {atendimento.status}
-                      </Badge>
-                    </div>
-                    {atendimento.objetivo && (
-                      <p className="text-sm text-gray-600 mt-2">{atendimento.objetivo}</p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
+          <TabsContent value="historico" className="mt-6">
+            <ClientHistoricoTimeline client={client} atendimentos={atendimentos} />
           </TabsContent>
 
           <TabsContent value="consultoria" className="mt-6">
