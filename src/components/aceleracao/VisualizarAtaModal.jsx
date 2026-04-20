@@ -230,13 +230,7 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
              <p className="text-gray-500">Carregando dados da ATA...</p>
            </div>
           ) : (
-           <div ref={ataContentRef} className="space-y-6 py-4 px-0">
-              {/* PRINT HEADER */}
-              <div className="print-header hidden">
-                <h1>GESTÃO DE PROCESSOS</h1>
-                <p>Ata de Atendimento - Aceleração de Oficinas</p>
-              </div>
-
+           <div ref={ataContentRef} className="space-y-6 py-4 px-4">
               {/* CABEÇALHO */}
               <div className="text-center">
                 <h2 className="text-2xl font-bold text-gray-900">GESTÃO DE PROCESSOS</h2>
@@ -522,13 +516,6 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
                   </CardContent>
                 </Card>
               )}
-
-              {/* PRINT FOOTER */}
-              <div className="print-footer hidden mt-8">
-                <p>© 2026 Oficinas Master - Plataforma de Aceleração e Gestão</p>
-                <p>Documento gerado automaticamente - {d.code || 'ATA'} • {d.meeting_date ? new Date(d.meeting_date).toLocaleDateString('pt-BR') : 'Data não informada'}</p>
-                <p style={{'pageBreakBefore': 'avoid'}}>Página <span className="page-number">1</span> de <span className="page-count">1</span></p>
-              </div>
 
               </div>
               )}
