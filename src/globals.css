@@ -165,9 +165,25 @@
   .grid > div,
   svg,
   canvas,
-  .recharts-wrapper {
+  .recharts-wrapper,
+  h1, h2, h3, h4, h5, h6,
+  p, li, tr,
+  [class*="section"],
+  [class*="block"] {
     page-break-inside: avoid !important;
     break-inside: avoid !important;
+  }
+
+  /* Prevent orphans e widows */
+  p, li, td, th {
+    orphans: 3 !important;
+    widows: 3 !important;
+  }
+
+  /* Evitar quebra logo após heading */
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid !important;
+    break-after: avoid !important;
   }
 
   /* Headers - Padrão Profissional */
