@@ -126,7 +126,7 @@ export default function BemVindoPlanos() {
   ];
 
   return (
-    <div ref={containerRef} className="relative min-h-screen flex flex-col items-center py-20 px-4 font-sans text-gray-200 overflow-hidden bg-[#020617] selection:bg-amber-500/30 selection:text-amber-200">
+    <div ref={containerRef} className="relative min-h-screen flex flex-col items-center py-20 px-4 font-sans text-gray-200 overflow-hidden bg-[#020617] selection:bg-amber-500/30 selection:text-amber-200 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
       {/* Background Animated Gradient & Noise */}
       <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none mix-blend-overlay"></div>
       
