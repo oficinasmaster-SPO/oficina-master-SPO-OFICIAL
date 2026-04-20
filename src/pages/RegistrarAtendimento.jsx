@@ -472,6 +472,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
       });
       if (response.data.conflito) {
         setConflitosModal({ open: true, conflitos: response.data.atendimentos, dataHorario: dataHoraCompleta });
+        setHasUnsavedChanges(false);
         return;
       }
     } catch (error) {
@@ -1022,7 +1023,10 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
         onSelectHorario={({ data, hora }) => {
           setFormData(prev => ({ ...prev, data_agendada: data, hora_agendada: hora }));
         }}
-        onIgnoreConflict={() => createMutation.mutate(formData)}
+        onIgnoreConflict={() => {
+          setHasUnsavedChanges(false);
+          createMutation.mutate(formData);
+        }}
       />
     </>
   );
@@ -1140,8 +1144,10 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
                     className="px-6 bg-amber-500 hover:bg-amber-600 text-white font-semibold shadow-md"
                     disabled={createMutation.isPending}
                     onClick={async () => {
-                      setFormData(prev => ({ ...prev, status: 'realizado' }));
-                      createMutation.mutate({ ...formData, status: 'realizado' });
+                      const updatedData = { ...formData, status: 'realizado' };
+                      setFormData(updatedData);
+                      setHasUnsavedChanges(false);
+                      setTimeout(() => createMutation.mutate(updatedData), 0);
                     }}
                   >
                     <AlertTriangle className="w-4 h-4 mr-2" />
@@ -1274,8 +1280,10 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
                     className="px-6 bg-amber-500 hover:bg-amber-600 text-white font-semibold shadow-md"
                     disabled={createMutation.isPending}
                     onClick={async () => {
-                      setFormData(prev => ({ ...prev, status: 'realizado' }));
-                      createMutation.mutate({ ...formData, status: 'realizado' });
+                      const updatedData = { ...formData, status: 'realizado' };
+                      setFormData(updatedData);
+                      setHasUnsavedChanges(false);
+                      setTimeout(() => createMutation.mutate(updatedData), 0);
                     }}
                   >
                     <AlertTriangle className="w-4 h-4 mr-2" />
