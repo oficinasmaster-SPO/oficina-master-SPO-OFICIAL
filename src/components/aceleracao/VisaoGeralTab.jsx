@@ -1,4 +1,3 @@
-// v3
 import React, { useState, useMemo } from "react";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
