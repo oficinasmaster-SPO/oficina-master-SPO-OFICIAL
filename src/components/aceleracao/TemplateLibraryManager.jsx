@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { AlertCircle, Copy, Edit2, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import WheelLoader from '@/components/ui/WheelLoader';
+import MissionsTemplateGrid from './MissionsTemplateGrid';
 
 /**
  * TemplateLibraryManager - Matriz Global de Templates Padrão
@@ -236,35 +237,7 @@ export default function TemplateLibraryManager() {
 
         {/* TAB: MISSÕES */}
         <TabsContent value="missions" className="space-y-4">
-          {templates.missions.length === 0 ? (
-            <Card>
-              <CardContent className="pt-6 text-center text-gray-500">
-                Nenhuma missão encontrada no sistema.
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {templates.missions.map((mission) => {
-                const relatedSprints = templates.sprints.filter(s => s.mission_id === mission);
-                return (
-                  <Card key={mission}>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-base">{mission}</CardTitle>
-                      <CardDescription>
-                        {relatedSprints.length} sprint(s) relacionado(s)
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <Button size="sm" className="w-full">
-                        <Copy className="w-4 h-4 mr-2" />
-                        Usar como Template
-                      </Button>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          )}
+          <MissionsTemplateGrid />
         </TabsContent>
 
         {/* TAB: SPRINTS */}
