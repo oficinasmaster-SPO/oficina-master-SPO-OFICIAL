@@ -4,90 +4,178 @@ import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Calendar, FileText, Bell, CheckCircle2, Clock, 
-  ChevronDown, ChevronUp, User
+import {
+  Calendar, FileText, Bell, ChevronDown, ChevronRight,
+  User, CheckCircle2, Clock, AlertCircle, ListChecks
 } from "lucide-react";
 
-const TYPE_CONFIG = {
-  atendimento: {
-    icon: Calendar,
-    color: "bg-blue-100 text-blue-700 border-blue-200",
-    dot: "bg-blue-500",
-    label: "Atendimento"
-  },
-  ata: {
-    icon: FileText,
-    color: "bg-purple-100 text-purple-700 border-purple-200",
-    dot: "bg-purple-500",
-    label: "ATA"
-  },
-  followup: {
-    icon: Bell,
-    color: "bg-amber-100 text-amber-700 border-amber-200",
-    dot: "bg-amber-500",
-    label: "Follow-up"
-  }
+const statusAtendimentoConfig = {
+  realizado: { label: "Realizado", color: "bg-green-100 text-green-700" },
+  cancelado: { label: "Cancelado", color: "bg-red-100 text-red-700" },
+  agendado:  { label: "Agendado",  color: "bg-blue-100 text-blue-700" },
+  faltou:    { label: "Faltou",    color: "bg-orange-100 text-orange-700" },
 };
 
-function TimelineItem({ item }) {
-  const [expanded, setExpanded] = useState(false);
-  const config = TYPE_CONFIG[item.type];
-  const Icon = config.icon;
+function FollowUpRow({ fu }) {
+  const date = new Date(fu.reminder_date + "T00:00:00");
+  const isPast = date < new Date();
+  const status = fu.is_completed
+    ? { label: "Concluído", color: "bg-green-100 text-green-700", icon: CheckCircle2 }
+    : isPast
+    ? { label: "Pendente",  color: "bg-red-100 text-red-700",   icon: AlertCircle }
+    : { label: "Agendado",  color: "bg-amber-100 text-amber-700", icon: Clock };
+
+  const StatusIcon = status.icon;
 
   return (
-    <div className="flex gap-4">
-      {/* Dot + line */}
-      <div className="flex flex-col items-center">
-        <div className={`w-3 h-3 rounded-full mt-1.5 shrink-0 ${config.dot}`} />
-        <div className="w-px flex-1 bg-gray-200 mt-1" />
+    <div className="flex items-start gap-3 py-2.5 px-3 rounded-lg hover:bg-gray-50 transition-colors">
+      <div className="mt-0.5 w-5 h-5 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+        <Bell className="w-3 h-3 text-amber-600" />
       </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-sm font-medium text-gray-700">
+            Follow-up #{fu.sequence_number} 
+            <span className="font-normal text-gray-500 ml-1">
+              — {fu.days_since_meeting} dias após o atendimento
+            </span>
+          </span>
+          <Badge className={`text-xs shrink-0 flex items-center gap-1 ${status.color}`}>
+            <StatusIcon className="w-3 h-3" />
+            {status.label}
+          </Badge>
+        </div>
+        <p className="text-xs text-gray-500 mt-0.5">
+          {format(date, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+          {fu.consultor_nome && ` · ${fu.consultor_nome}`}
+        </p>
+        {fu.notes && (
+          <p className="text-xs text-gray-500 mt-1 italic">"{fu.notes}"</p>
+        )}
+      </div>
+    </div>
+  );
+}
 
-      {/* Content */}
-      <div className="pb-5 flex-1 min-w-0">
-        <div className="border border-gray-200 rounded-xl p-4 hover:shadow-sm transition-shadow bg-white">
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex items-center gap-2 min-w-0">
-              <div className={`p-1.5 rounded-lg border ${config.color}`}>
-                <Icon className="w-3.5 h-3.5" />
-              </div>
-              <div className="min-w-0">
-                <p className="font-semibold text-sm text-gray-900 truncate">{item.title}</p>
-                <p className="text-xs text-gray-500 mt-0.5">{item.dateLabel}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              {item.statusBadge && (
-                <Badge className={`text-xs ${item.statusBadge.color}`}>
-                  {item.statusBadge.label}
-                </Badge>
-              )}
-              {item.detail && (
-                <button onClick={() => setExpanded(!expanded)} className="text-gray-400 hover:text-gray-600">
-                  {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                </button>
-              )}
-            </div>
+function AtaRow({ ata }) {
+  return (
+    <div className="flex items-start gap-3 py-2.5 px-3 rounded-lg hover:bg-gray-50 transition-colors">
+      <div className="mt-0.5 w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center shrink-0">
+        <FileText className="w-3 h-3 text-purple-600" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-sm font-medium text-gray-700">
+            {ata.code ? `ATA · ${ata.code}` : "ATA"}
+            {ata.tipo_aceleracao && <span className="font-normal text-gray-500 ml-1">— {ata.tipo_aceleracao}</span>}
+          </span>
+          <Badge className={`text-xs shrink-0 ${ata.status === "finalizada" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>
+            {ata.status === "finalizada" ? "Finalizada" : "Rascunho"}
+          </Badge>
+        </div>
+        <p className="text-xs text-gray-500 mt-0.5">
+          {format(new Date(ata.meeting_date + "T00:00:00"), "dd/MM/yyyy", { locale: ptBR })}
+          {ata.meeting_time && ` às ${ata.meeting_time}`}
+          {ata.consultor_name && ` · ${ata.consultor_name}`}
+        </p>
+        {ata.proximos_passos_list?.length > 0 && (
+          <div className="flex items-center gap-1 mt-1 text-xs text-gray-400">
+            <ListChecks className="w-3 h-3" />
+            {ata.proximos_passos_list.length} próximos passo(s) registrado(s)
           </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
-          {item.meta && (
-            <div className="flex flex-wrap gap-3 mt-3 text-xs text-gray-500">
-              {item.meta.map((m, i) => (
-                <span key={i} className="flex items-center gap-1">
-                  {m.icon && <m.icon className="w-3 h-3" />}
-                  {m.text}
-                </span>
+function AtendimentoCard({ atendimento, atas, followups }) {
+  const [open, setOpen] = useState(false);
+
+  const ataVinculada = atas.find(a => a.atendimento_id === atendimento.id);
+  const followupsVinculados = followups
+    .filter(f => f.atendimento_id === atendimento.id)
+    .sort((a, b) => a.sequence_number - b.sequence_number);
+
+  const totalSubitens = (ataVinculada ? 1 : 0) + followupsVinculados.length;
+
+  const date = new Date(atendimento.data_realizada || atendimento.data_agendada);
+  const statusCfg = statusAtendimentoConfig[atendimento.status] || { label: atendimento.status, color: "bg-gray-100 text-gray-700" };
+
+  return (
+    <div className={`border rounded-xl overflow-hidden transition-all ${open ? "border-blue-200 shadow-sm" : "border-gray-200"}`}>
+      {/* Header do atendimento */}
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 transition-colors text-left"
+      >
+        <div className={`p-1.5 rounded-lg border bg-blue-50 border-blue-200 shrink-0`}>
+          <Calendar className="w-4 h-4 text-blue-600" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-semibold text-sm text-gray-900">
+              {atendimento.tipo_atendimento || "Atendimento"}
+            </span>
+            <Badge className={`text-xs ${statusCfg.color}`}>{statusCfg.label}</Badge>
+          </div>
+          <div className="flex items-center gap-3 mt-0.5 text-xs text-gray-500">
+            <span>{format(date, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</span>
+            {atendimento.consultor_nome && (
+              <span className="flex items-center gap-1">
+                <User className="w-3 h-3" />
+                {atendimento.consultor_nome}
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          {totalSubitens > 0 && (
+            <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
+              {totalSubitens} {totalSubitens === 1 ? "item" : "itens"}
+            </span>
+          )}
+          {open
+            ? <ChevronDown className="w-4 h-4 text-gray-400" />
+            : <ChevronRight className="w-4 h-4 text-gray-400" />
+          }
+        </div>
+      </button>
+
+      {/* Conteúdo expandido */}
+      {open && (
+        <div className="border-t border-gray-100 bg-gray-50/50 px-4 py-3 space-y-1">
+          {atendimento.objetivo && (
+            <p className="text-xs text-gray-500 mb-3 italic pl-1">"{atendimento.objetivo}"</p>
+          )}
+
+          {/* ATA vinculada */}
+          {ataVinculada ? (
+            <AtaRow ata={ataVinculada} />
+          ) : (
+            <div className="flex items-center gap-2 px-3 py-2 text-xs text-gray-400">
+              <FileText className="w-3.5 h-3.5" />
+              Nenhuma ATA vinculada a este atendimento
+            </div>
+          )}
+
+          {/* Divisor */}
+          {followupsVinculados.length > 0 && (
+            <div className="border-t border-gray-100 pt-1 mt-1">
+              {followupsVinculados.map(fu => (
+                <FollowUpRow key={fu.id} fu={fu} />
               ))}
             </div>
           )}
 
-          {expanded && item.detail && (
-            <div className="mt-3 pt-3 border-t border-gray-100 text-sm text-gray-600 whitespace-pre-line">
-              {item.detail}
+          {followupsVinculados.length === 0 && (
+            <div className="flex items-center gap-2 px-3 py-2 text-xs text-gray-400">
+              <Bell className="w-3.5 h-3.5" />
+              Nenhum follow-up registrado
             </div>
           )}
         </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -96,111 +184,48 @@ export default function ClientHistoricoTimeline({ client, atendimentos = [] }) {
   const workshopId = client?.id;
 
   const { data: atas = [] } = useQuery({
-    queryKey: ["atas-timeline", workshopId],
-    queryFn: () => base44.entities.MeetingMinutes.filter({ workshop_id: workshopId }, "-meeting_date", 50),
+    queryKey: ["atas-historico", workshopId],
+    queryFn: () => base44.entities.MeetingMinutes.filter({ workshop_id: workshopId }, "-meeting_date", 100),
     enabled: !!workshopId
   });
 
   const { data: followups = [] } = useQuery({
-    queryKey: ["followups-timeline", workshopId],
-    queryFn: () => base44.entities.FollowUpReminder.filter({ workshop_id: workshopId }, "-reminder_date", 50),
+    queryKey: ["followups-historico", workshopId],
+    queryFn: () => base44.entities.FollowUpReminder.filter({ workshop_id: workshopId }, "-reminder_date", 100),
     enabled: !!workshopId
   });
 
-  // Montar itens unificados
-  const items = [];
+  const clienteAtendimentos = atendimentos
+    .filter(a => a.workshop_id === workshopId)
+    .sort((a, b) => new Date(b.data_realizada || b.data_agendada) - new Date(a.data_realizada || a.data_agendada));
 
-  // Atendimentos
-  atendimentos.filter(a => a.workshop_id === workshopId).forEach(a => {
-    const date = new Date(a.data_realizada || a.data_agendada);
-    items.push({
-      type: "atendimento",
-      date,
-      dateLabel: format(date, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }),
-      title: a.tipo_atendimento || "Atendimento",
-      statusBadge: a.status === "realizado"
-        ? { label: "Realizado", color: "bg-green-100 text-green-700" }
-        : a.status === "cancelado"
-        ? { label: "Cancelado", color: "bg-red-100 text-red-700" }
-        : { label: a.status, color: "bg-gray-100 text-gray-700" },
-      meta: [
-        a.consultor_nome && { icon: User, text: a.consultor_nome },
-      ].filter(Boolean),
-      detail: a.objetivo || null
-    });
-  });
-
-  // ATAs
-  atas.forEach(ata => {
-    const date = new Date(ata.meeting_date + "T" + (ata.meeting_time || "00:00"));
-    items.push({
-      type: "ata",
-      date,
-      dateLabel: format(date, "dd/MM/yyyy", { locale: ptBR }) + (ata.meeting_time ? ` às ${ata.meeting_time}` : ""),
-      title: `ATA${ata.code ? ` · ${ata.code}` : ""}${ata.tipo_aceleracao ? ` — ${ata.tipo_aceleracao}` : ""}`,
-      statusBadge: ata.status === "finalizada"
-        ? { label: "Finalizada", color: "bg-green-100 text-green-700" }
-        : { label: "Rascunho", color: "bg-gray-100 text-gray-600" },
-      meta: [
-        ata.consultor_name && { icon: User, text: ata.consultor_name },
-        ata.proximos_passos_list?.length && { icon: CheckCircle2, text: `${ata.proximos_passos_list.length} próximos passos` },
-      ].filter(Boolean),
-      detail: ata.pautas || null
-    });
-  });
-
-  // Follow-ups
-  followups.forEach(fu => {
-    const date = new Date(fu.reminder_date + "T00:00:00");
-    items.push({
-      type: "followup",
-      date,
-      dateLabel: format(date, "dd/MM/yyyy", { locale: ptBR }),
-      title: `Follow-up #${fu.sequence_number || ""}`,
-      statusBadge: fu.is_completed
-        ? { label: "Concluído", color: "bg-green-100 text-green-700" }
-        : date < new Date()
-        ? { label: "Pendente", color: "bg-red-100 text-red-700" }
-        : { label: "Agendado", color: "bg-amber-100 text-amber-700" },
-      meta: [
-        fu.days_since_meeting && { icon: Clock, text: `${fu.days_since_meeting} dias após atendimento` },
-        fu.consultor_nome && { icon: User, text: fu.consultor_nome },
-      ].filter(Boolean),
-      detail: fu.message || null
-    });
-  });
-
-  // Ordenar por data decrescente
-  items.sort((a, b) => b.date - a.date);
-
-  if (items.length === 0) {
+  if (clienteAtendimentos.length === 0) {
     return (
       <div className="text-center py-16 text-gray-400">
         <Calendar className="w-12 h-12 mx-auto mb-3 opacity-40" />
-        <p className="text-sm">Nenhum histórico encontrado para este cliente</p>
+        <p className="text-sm">Nenhum atendimento encontrado para este cliente</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-1">
-      {/* Legenda */}
-      <div className="flex flex-wrap gap-3 mb-5">
-        {Object.entries(TYPE_CONFIG).map(([key, cfg]) => (
-          <span key={key} className="flex items-center gap-1.5 text-xs text-gray-500">
-            <span className={`w-2.5 h-2.5 rounded-full ${cfg.dot}`} />
-            {cfg.label}
-          </span>
-        ))}
-        <span className="text-xs text-gray-400 ml-auto">{items.length} eventos</span>
+    <div className="space-y-3">
+      <div className="flex items-center justify-between mb-4">
+        <p className="text-sm text-gray-500">{clienteAtendimentos.length} atendimento(s) registrado(s)</p>
+        <div className="flex items-center gap-4 text-xs text-gray-400">
+          <span className="flex items-center gap-1"><FileText className="w-3 h-3 text-purple-400" /> ATA</span>
+          <span className="flex items-center gap-1"><Bell className="w-3 h-3 text-amber-400" /> Follow-up</span>
+        </div>
       </div>
 
-      {/* Timeline */}
-      <div>
-        {items.map((item, idx) => (
-          <TimelineItem key={idx} item={item} />
-        ))}
-      </div>
+      {clienteAtendimentos.map(atendimento => (
+        <AtendimentoCard
+          key={atendimento.id}
+          atendimento={atendimento}
+          atas={atas}
+          followups={followups}
+        />
+      ))}
     </div>
   );
 }
