@@ -17,6 +17,45 @@ import { toast } from 'sonner';
 const MISSIONS_STORAGE_KEY = 'missions_templates_v1';
 const SPRINTS_STORAGE_KEY = 'sprint_templates_v1';
 
+const DEFAULT_MISSIONS_LIST = [
+  { id: 'agenda_cheia',         icon: '📅', name: 'Agenda Cheia' },
+  { id: 'fechamento_imbativel', icon: '🎯', name: 'Fechamento Imbatível' },
+  { id: 'caixa_forte',          icon: '💰', name: 'Caixa Forte' },
+  { id: 'empresa_organizada',   icon: '📊', name: 'Empresa Organizada' },
+  { id: 'funcoes_claras',       icon: '👥', name: 'Funções Claras' },
+  { id: 'contratacao_certa',    icon: '🎓', name: 'Contratação Certa' },
+  { id: 'cultura_forte',        icon: '🌟', name: 'Cultura Forte' },
+];
+
+function MissionPicker({ selected = [], onChange }) {
+  const toggle = (id) => {
+    if (selected.includes(id)) onChange(selected.filter(m => m !== id));
+    else onChange([...selected, id]);
+  };
+  return (
+    <div className="grid grid-cols-2 gap-2 mt-1">
+      {DEFAULT_MISSIONS_LIST.map(m => {
+        const isSelected = selected.includes(m.id);
+        return (
+          <button
+            key={m.id}
+            type="button"
+            onClick={() => toggle(m.id)}
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm text-left transition-colors ${
+              isSelected
+                ? 'bg-indigo-50 border-indigo-400 text-indigo-800 font-medium'
+                : 'bg-white border-gray-200 text-gray-600 hover:border-gray-400'
+            }`}
+          >
+            <span>{m.icon}</span>
+            <span className="truncate">{m.name}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 /**
  * TemplateLibraryManager - Matriz Global de Templates Padrão
  * Consolida todas as trilhas, missões e sprints de todos os clientes
@@ -164,6 +203,7 @@ export default function TemplateLibraryManager() {
       await base44.entities.CronogramaTemplate.update(editingTrail.id, {
         nome_fase: editingTrail.nome_fase,
         objetivo_geral: editingTrail.objetivo_geral,
+        missoes_selecionadas: editingTrail.missoes_selecionadas || [],
       });
       queryClient.invalidateQueries({ queryKey: ['allCronogramaTemplates'] });
       toast.success('Trilha atualizada!');
@@ -321,7 +361,7 @@ export default function TemplateLibraryManager() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => setEditingTrail({ id: trail.id, nome_fase: trail.name, objetivo_geral: trail.objetivo_geral || '' })}
+                        onClick={() => setEditingTrail({ id: trail.id, nome_fase: trail.name, objetivo_geral: trail.objetivo_geral || '', missoes_selecionadas: trail.missions || [] })}
                       >
                         <Pencil className="w-4 h-4" />
                       </Button>
@@ -403,6 +443,13 @@ export default function TemplateLibraryManager() {
                 onChange={e => setEditingTrail(prev => ({ ...prev, objetivo_geral: e.target.value }))}
               />
             </div>
+            <div>
+              <label className="text-sm font-semibold text-gray-700">Missões desta trilha</label>
+              <MissionPicker
+                selected={editingTrail?.missoes_selecionadas || []}
+                onChange={v => setEditingTrail(prev => ({ ...prev, missoes_selecionadas: v }))}
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditingTrail(null)}>Cancelar</Button>
@@ -436,6 +483,13 @@ export default function TemplateLibraryManager() {
                 placeholder="Descreva o objetivo desta trilha..."
                 value={newTrail.objetivo_geral}
                 onChange={e => setNewTrail({ ...newTrail, objetivo_geral: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-gray-700">Missões desta trilha</label>
+              <MissionPicker
+                selected={newTrail.missoes_selecionadas}
+                onChange={v => setNewTrail({ ...newTrail, missoes_selecionadas: v })}
               />
             </div>
           </div>
