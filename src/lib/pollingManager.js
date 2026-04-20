@@ -6,7 +6,6 @@ export class PollingManager {
   constructor() {
     this.pollers = new Map();
     this.lastResults = new Map();
-    this.changeListeners = new Map();
   }
 
   /**

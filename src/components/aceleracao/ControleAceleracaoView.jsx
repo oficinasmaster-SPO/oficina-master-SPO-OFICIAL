@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BarChart3, Calendar, CalendarRange, FileText, ClipboardList, Users, Activity, Plus, Loader2, Lightbulb } from "lucide-react";
 import RegistroAtendimentoMassaModal from "@/components/aceleracao/RegistroAtendimentoMassaModal";
-import FiltrosControleAceleracao from "@/components/aceleracao/FiltrosControleAceleracao";
 import ActiveFiltersBar from "@/components/aceleracao/ActiveFiltersBar";
 import TabSkeleton from "@/components/aceleracao/TabSkeleton";
 import TabErrorBoundary from "@/components/aceleracao/TabErrorBoundary";
@@ -201,15 +200,6 @@ export default function ControleAceleracaoView({ state }) {
         onClose={() => setShowMassRegistration(false)}
         user={user}
       />
-
-      {/* Filtros — hidden on all current tabs */}
-      <div className="hidden">
-        <FiltrosControleAceleracao
-          consultores={consultores}
-          filtros={filtros}
-          onFiltrosChange={handleFiltrosChange}
-        />
-      </div>
 
       {/* Active Filters Bar — sempre visível quando há filtros */}
       {hasActiveFilters && (

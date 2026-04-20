@@ -21,6 +21,8 @@ export function TenantProvider({ children }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isSwitching, setIsSwitching] = useState(false);
   const loadAttemptRef = useRef(0);
+  const hasCleanedProfileRef = useRef(false); // garante cleanup único por sessão
+  const switchingToIdRef = useRef(null); // evita race condition em cliques rápidos
   const [companySwitch, setCompanySwitch] = useState(0);
 
   // Wait for auth to be ready before loading tenant data
@@ -117,11 +119,13 @@ export function TenantProvider({ children }) {
                  
                  // Se o ID inválido veio do perfil do usuário, limpa no perfil também
                  const userWsId = currentUser.data?.workshop_id;
-                 if (userWsId && userWsId === compIdToLoad) {
+                 if (userWsId && userWsId === compIdToLoad && !hasCleanedProfileRef.current) {
+                   hasCleanedProfileRef.current = true;
                    console.warn('Workshop do perfil do usuário é inválido. Limpando workshop_id do perfil.');
                    try {
                      await base44.auth.updateMe({ workshop_id: null });
                    } catch (e) {
+                     hasCleanedProfileRef.current = false;
                      console.warn('Não foi possível limpar workshop_id do perfil:', e);
                    }
                  }
@@ -156,7 +160,8 @@ export function TenantProvider({ children }) {
   };
 
   const changeCompany = async (compId) => {
-    if (isSwitching || compId === selectedCompanyId) return;
+    if (isSwitching || switchingToIdRef.current === compId || compId === selectedCompanyId) return;
+    switchingToIdRef.current = compId;
 
     setIsSwitching(true);
 
@@ -174,6 +179,7 @@ export function TenantProvider({ children }) {
     }
     
     setSelectedCompanyId(compId);
+    switchingToIdRef.current = null;
     setCompanySwitch(prev => prev + 1);
   };
 

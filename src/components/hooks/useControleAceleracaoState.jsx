@@ -1,6 +1,7 @@
 import { useMemo, useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 import useWorkshopsAtivos from "./useWorkshopsAtivos";
 import useConsultoresList from "./useConsultoresList";
 import useControleAceleracaoURLState from "./useControleAceleracaoURLState";
@@ -24,11 +25,8 @@ export default function useControleAceleracaoState() {
   // ── 1b. Pending sub-tab (for cross-tab navigation, e.g. bucket card → atendimentos/bucket) ──
   const [pendingSubTab, setPendingSubTab] = useState(null);
 
-  // ── 2. Auth ──
-  const { data: user, isLoading: loadingUser } = useQuery({
-    queryKey: ["current-user"],
-    queryFn: () => base44.auth.me(),
-  });
+  // ── 2. Auth — usa AuthContext em vez de query duplicada ──
+  const { user, isLoadingAuth: loadingUser } = useAuth();
 
   // ── 3. Shared reference data ──
   const { data: workshops } = useWorkshopsAtivos();
@@ -46,6 +44,10 @@ export default function useControleAceleracaoState() {
     queryFn: async () => {
       const query = {};
       if (consultorEfetivo) query.consultor_id = consultorEfetivo;
+      // Limitar a últimos 12 meses para evitar payloads pesados
+      const dataMinima = new Date();
+      dataMinima.setFullYear(dataMinima.getFullYear() - 1);
+      query.data_agendada__gte = dataMinima.toISOString().split('T')[0];
       return await base44.entities.ConsultoriaAtendimento.filter(query, "-data_agendada", 500);
     },
     enabled: !!user?.id,
@@ -61,8 +63,12 @@ export default function useControleAceleracaoState() {
 
   // ── 7. Meeting minutes ──
   const { data: atas } = useQuery({
-    queryKey: ["meeting-minutes"],
-    queryFn: () => base44.entities.MeetingMinutes.list("-created_date", 500),
+    queryKey: ["meeting-minutes", consultorEfetivo],
+    queryFn: () => {
+      const filterQuery = {};
+      if (consultorEfetivo) filterQuery.consultor_id = consultorEfetivo;
+      return base44.entities.MeetingMinutes.filter(filterQuery, "-created_date", 200);
+    },
     staleTime: 3 * 60 * 1000,
     enabled: !!user?.id,
   });

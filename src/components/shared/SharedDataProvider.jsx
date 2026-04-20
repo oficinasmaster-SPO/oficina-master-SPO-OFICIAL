@@ -104,11 +104,16 @@ export function SharedDataProvider({ children, workshop, workshopId, userId }) {
     queryKey: ['shared-goals-history', workshopId],
     queryFn: async () => {
       if (!workshopId) return [];
-      const history = await base44.entities.MonthlyGoalHistory.filter(
-        { workshop_id: workshopId },
-        '-month'
-      );
-      return Array.isArray(history) ? history : [];
+      try {
+        const history = await base44.entities.MonthlyGoalHistory.filter(
+          { workshop_id: workshopId },
+          '-month'
+        );
+        return Array.isArray(history) ? history : [];
+      } catch (error) {
+        console.error("Erro ao carregar histórico de metas:", error);
+        return [];
+      }
     },
     enabled: !!workshopId,
     staleTime: 5 * 60 * 1000,

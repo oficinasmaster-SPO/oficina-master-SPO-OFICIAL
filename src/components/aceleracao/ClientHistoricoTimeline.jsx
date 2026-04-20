@@ -187,19 +187,22 @@ export default function ClientHistoricoTimeline({ client }) {
   const { data: atendimentos = [], isLoading: loadingAtendimentos } = useQuery({
     queryKey: ["atendimentos-historico-cliente", workshopId],
     queryFn: () => base44.entities.ConsultoriaAtendimento.filter({ workshop_id: workshopId }, "-data_agendada", 200),
-    enabled: !!workshopId
+    enabled: !!workshopId,
+    staleTime: 5 * 60 * 1000,
   });
 
   const { data: atas = [] } = useQuery({
     queryKey: ["atas-historico", workshopId],
     queryFn: () => base44.entities.MeetingMinutes.filter({ workshop_id: workshopId }, "-meeting_date", 100),
-    enabled: !!workshopId
+    enabled: !!workshopId,
+    staleTime: 5 * 60 * 1000,
   });
 
   const { data: followups = [] } = useQuery({
     queryKey: ["followups-historico", workshopId],
     queryFn: () => base44.entities.FollowUpReminder.filter({ workshop_id: workshopId }, "-reminder_date", 100),
-    enabled: !!workshopId
+    enabled: !!workshopId,
+    staleTime: 5 * 60 * 1000,
   });
 
   const clienteAtendimentos = [...atendimentos]
