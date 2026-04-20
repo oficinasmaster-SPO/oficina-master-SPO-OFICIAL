@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Edit2, Save, X, Plus, Trash2, ChevronDown, ChevronUp, Link, ExternalLink } from 'lucide-react';
+import { getDefaultTasksForPhase } from './sprintMissionTasks';
 
 const PHASES_CONFIG = [
   { name: 'Planning',      label: 'Sprint Planning', icon: '📋', color: 'bg-blue-50 border-blue-200 text-blue-800',   badge: 'bg-blue-100 text-blue-700',   desc: 'Planejar o que será feito no sprint.' },
@@ -15,7 +16,7 @@ const PHASES_CONFIG = [
 ];
 
 const DEFAULT_SPRINT_MISSIONS = [
-  { id: 'diagnostico_alinhamento', icon: '🔍', name: 'Diagnóstico e Alinhamento' },
+  { id: 'sprint0',              icon: '🔍', name: 'Diagnóstico e Alinhamento' },
   { id: 'agenda_cheia',        icon: '📅', name: 'Agenda Cheia' },
   { id: 'fechamento_imbativel', icon: '🎯', name: 'Fechamento Imbatível' },
   { id: 'caixa_forte',         icon: '💰', name: 'Caixa Forte' },
@@ -25,7 +26,7 @@ const DEFAULT_SPRINT_MISSIONS = [
   { id: 'cultura_forte',       icon: '🌟', name: 'Cultura Forte' },
 ];
 
-// Estrutura padrão: cada missão tem 1 sprint com 5 fases, cada fase com tasks []
+// Estrutura padrão: cada missão tem 1 sprint com 5 fases, tarefas carregadas do sprintMissionTasks
 const buildDefaultData = () =>
   DEFAULT_SPRINT_MISSIONS.map(m => ({
     mission_id: m.id,
@@ -38,7 +39,11 @@ const buildDefaultData = () =>
       objective: '',
       phases: PHASES_CONFIG.map(p => ({
         name: p.name,
-        tasks: [],
+        tasks: getDefaultTasksForPhase(m.id, p.name).map(t => ({
+          description: t.description,
+          instructions: '',
+          link_url: '',
+        })),
       })),
     },
   }));
