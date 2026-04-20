@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { BarChart3, Calendar, CalendarRange, FileText, ClipboardList, Users, Activity, Plus, Loader2, Lightbulb } from "lucide-react";
+import { BarChart3, Calendar, CalendarRange, FileText, Users, Activity, Plus, Loader2, Lightbulb, List } from "lucide-react";
 import RegistroAtendimentoMassaModal from "@/components/aceleracao/RegistroAtendimentoMassaModal";
 import ActiveFiltersBar from "@/components/aceleracao/ActiveFiltersBar";
 import TabSkeleton from "@/components/aceleracao/TabSkeleton";
@@ -222,7 +222,7 @@ export default function ControleAceleracaoView({ state }) {
               {counts.atrasados > 0 && <TabBadge count={counts.atrasados} active={activeTab === "visao-geral"} />}
             </TabsTrigger>
             <TabsTrigger value="atendimentos" className={TAB_CLASS}>
-              <ClipboardList className="w-4 h-4" />
+              <List className="w-4 h-4" />
               <span className="hidden sm:inline">Atendimentos</span>
               <span className="sm:hidden">Atend.</span>
               <TabBadge count={counts.atendimentos} active={activeTab === "atendimentos"} />
