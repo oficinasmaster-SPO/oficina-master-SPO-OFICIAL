@@ -12,27 +12,47 @@ export async function htmlToPdf(element, fileName = 'documento.pdf', options = {
 
   if (!element) throw new Error('Elemento não encontrado');
 
-  // Expandir para captura completa (remove max-height e overflow)
-  const original = {
+  // Guardar estilos originais do elemento e do pai
+  const originalEl = {
     overflow: element.style.overflow,
+    overflowY: element.style.overflowY,
     maxHeight: element.style.maxHeight,
     height: element.style.height,
   };
+
+  // O DialogContent tem overflow-y-auto que limita a captura
+  const parent = element.parentElement;
+  const originalParentOverflowY = parent?.style.overflowY || '';
+  const originalParentMaxHeight = parent?.style.maxHeight || '';
+
+  // Expandir elemento e pai para captura completa
   element.style.overflow = 'visible';
+  element.style.overflowY = 'visible';
   element.style.maxHeight = 'none';
   element.style.height = 'auto';
 
+  if (parent) {
+    parent.style.overflowY = 'visible';
+    parent.style.maxHeight = 'none';
+  }
+
+  // Aguardar o browser renderizar com os novos estilos
+  await new Promise(resolve => setTimeout(resolve, 350));
+
   try {
+    const fullHeight = element.scrollHeight;
+    const fullWidth = element.scrollWidth;
+
     const canvas = await html2canvas(element, {
       scale,
       useCORS: true,
       allowTaint: false,
       backgroundColor: '#ffffff',
       logging: false,
-      scrollX: 0,
-      scrollY: -window.scrollY,
-      windowWidth: element.scrollWidth,
-      windowHeight: element.scrollHeight,
+      width: fullWidth,
+      height: fullHeight,
+      windowWidth: fullWidth,
+      windowHeight: fullHeight,
     });
 
     const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
@@ -49,14 +69,26 @@ export async function htmlToPdf(element, fileName = 'documento.pdf', options = {
     for (let page = 0; page < totalPages; page++) {
       if (page > 0) pdf.addPage();
       const yOffset = -(page * contentHeight);
-      pdf.addImage(imgData, 'JPEG', margin, margin + yOffset, imgWidth, imgHeight, undefined, 'FAST');
+      pdf.addImage(
+        imgData, 'JPEG',
+        margin, margin + yOffset,
+        imgWidth, imgHeight,
+        undefined, 'FAST'
+      );
     }
 
     pdf.save(fileName);
   } finally {
-    element.style.overflow = original.overflow;
-    element.style.maxHeight = original.maxHeight;
-    element.style.height = original.height;
+    // Restaurar estilos
+    element.style.overflow = originalEl.overflow;
+    element.style.overflowY = originalEl.overflowY;
+    element.style.maxHeight = originalEl.maxHeight;
+    element.style.height = originalEl.height;
+
+    if (parent) {
+      parent.style.overflowY = originalParentOverflowY;
+      parent.style.maxHeight = originalParentMaxHeight;
+    }
   }
 }
 
@@ -69,21 +101,25 @@ export async function htmlToPdf(element, fileName = 'documento.pdf', options = {
  * @returns {string} Nome do arquivo
  */
 export function gerarNomePDF(workshop, data) {
-  // Normalizar nome da oficina: maiúsculas, sem acentos, espaços viram _
-  const nome = (workshop?.name || 'OFICINA')
+  // Fallbacks para o nome da oficina
+  const nomeRaw = workshop?.name
+    || workshop?.razao_social
+    || workshop?.nome
+    || 'OFICINA';
+
+  const nome = nomeRaw
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')  // remove acentos
+    .replace(/[\u0300-\u036f]/g, '')   // remove acentos
     .toUpperCase()
-    .replace(/[^A-Z0-9\s]/g, '')      // remove caracteres especiais
+    .replace(/[^A-Z0-9\s]/g, '')       // remove caracteres especiais
     .trim()
-    .replace(/\s+/g, '_');            // espaços viram _
+    .replace(/\s+/g, '_');             // espaços → underscore
 
-  // Formatar data: DDMMAAAA
+  // Usar UTC para evitar data errada por fuso horário
   const dataObj = data ? new Date(data) : new Date();
-  const dia = String(dataObj.getDate()).padStart(2, '0');
-  const mes = String(dataObj.getMonth() + 1).padStart(2, '0');
-  const ano = dataObj.getFullYear();
-  const dataFormatada = `${dia}${mes}${ano}`;
+  const dia = String(dataObj.getUTCDate()).padStart(2, '0');
+  const mes = String(dataObj.getUTCMonth() + 1).padStart(2, '0');
+  const ano = dataObj.getUTCFullYear();
 
-  return `${nome}_${dataFormatada}.pdf`;
+  return `${nome}_${dia}${mes}${ano}.pdf`;
 }

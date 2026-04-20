@@ -17,6 +17,7 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
   const [isLoading, setIsLoading] = React.useState(true);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [clientIntelligence, setClientIntelligence] = React.useState([]);
+  const d = ataAtualizada;
 
   React.useEffect(() => {
     const carregarAtaAtualizada = async () => {
@@ -133,9 +134,8 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
 
     setIsGeneratingPDF(true);
     try {
-      // Gera nome no formato: NOME_OFICINA_DDMMAAAA.pdf
-      const fileName = gerarNomePDF(workshop, ataAtualizada.meeting_date);
-      
+      const workshopParaNome = workshop || { name: d.responsavel?.name || 'OFICINA' };
+      const fileName = gerarNomePDF(workshopParaNome, d.meeting_date);
       await htmlToPdf(ataContentRef.current, fileName, { scale: 2 });
       toast.success(`PDF "${fileName}" baixado com sucesso!`);
     } catch (error) {
@@ -169,8 +169,6 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
   };
 
   if (!ataAtualizada) return null;
-
-  const d = ataAtualizada;
 
   // Dados para inteligência combinada (da ATA ou busca separada)
   const intelData = clientIntelligence.length > 0 ? clientIntelligence : (d.client_intelligence || []);
@@ -226,12 +224,12 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
           </DialogHeader>
 
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-16 gap-3">
-              <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
-              <p className="text-gray-500">Carregando dados da ATA...</p>
-            </div>
+           <div className="flex flex-col items-center justify-center py-16 gap-3">
+             <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+             <p className="text-gray-500">Carregando dados da ATA...</p>
+           </div>
           ) : (
-            <div className="space-y-6 py-4" ref={ataContentRef}>
+           <div ref={ataContentRef} className="space-y-6 py-4">
               {/* CABEÇALHO */}
               <div className="text-center">
                 <h2 className="text-2xl font-bold text-gray-900">GESTÃO DE PROCESSOS</h2>
