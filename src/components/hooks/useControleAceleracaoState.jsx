@@ -44,10 +44,6 @@ export default function useControleAceleracaoState() {
     queryFn: async () => {
       const query = {};
       if (consultorEfetivo) query.consultor_id = consultorEfetivo;
-      // Limitar a últimos 12 meses para evitar payloads pesados
-      const dataMinima = new Date();
-      dataMinima.setFullYear(dataMinima.getFullYear() - 1);
-      query.data_agendada__gte = dataMinima.toISOString().split('T')[0];
       return await base44.entities.ConsultoriaAtendimento.filter(query, "-data_agendada", 500);
     },
     enabled: !!user?.id,
