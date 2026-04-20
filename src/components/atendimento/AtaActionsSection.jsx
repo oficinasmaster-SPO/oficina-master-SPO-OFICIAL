@@ -115,12 +115,13 @@ export default function AtaActionsSection({
                   return;
                 }
                 try {
-                  await base44.functions.invoke('enviarAtaEmail', {
+                  await base44.functions.invoke('enviarEmailATA', {
+                    ata_id: formData.ata_id,
                     atendimento_id: formData.id
                   });
-                  toast.success("Ata enviada por email!");
+                  toast.success("ATA enviada por email com sucesso!");
                 } catch (error) {
-                  toast.error("Erro: " + error.message);
+                  toast.error("Erro ao enviar email: " + (error.response?.data?.error || error.message));
                 }
               }}
             >
