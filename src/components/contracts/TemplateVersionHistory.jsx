@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Clock, Eye, RotateCcw, Trash2, X } from "lucide-react";
-import moment from "moment";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export default function TemplateVersionHistory({ versions = [], onRestore, onDelete, open, onOpenChange }) {
   return (
@@ -38,7 +39,7 @@ export default function TemplateVersionHistory({ versions = [], onRestore, onDel
                     <Badge className="bg-green-100 text-green-700">Atual</Badge>
                   )}
                   <span className="text-sm text-gray-600">
-                    {moment(version.created_at).format("DD/MM/YYYY [às] HH:mm")}
+                    {format(new Date(version.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
                   </span>
                 </div>
                 <div className="flex gap-2">

@@ -34,13 +34,16 @@ export const AuthProvider = ({ children }) => {
       });
       
       try {
-        const publicSettings = await appClient.get(`/prod/public-settings/by-id/${appParams.appId}`);
-        setAppPublicSettings(publicSettings);
-        
-        // If we got the app public settings successfully, check if user is authenticated
+        // Disparar as duas requisições em paralelo quando há token
         if (appParams.token) {
-          await checkUserAuth();
+          const [publicSettings] = await Promise.all([
+            appClient.get(`/prod/public-settings/by-id/${appParams.appId}`),
+            checkUserAuth()
+          ]);
+          setAppPublicSettings(publicSettings);
         } else {
+          const publicSettings = await appClient.get(`/prod/public-settings/by-id/${appParams.appId}`);
+          setAppPublicSettings(publicSettings);
           setIsLoadingAuth(false);
           setIsAuthenticated(false);
         }

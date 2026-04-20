@@ -16,20 +16,22 @@ import { AttendanceTypeProvider } from '@/components/contexts/AttendanceTypeCont
 import PageAccessControl from '@/components/auth/PageAccessControl';
 import { pagePermissions } from '@/components/lib/pagePermissions';
 import { PermissionsProvider } from '@/components/contexts/PermissionsContext';
-import Home from '@/pages/Home';
-import GestaoTenants from '@/pages/GestaoTenants';
-import CompletarPerfil from '@/pages/CompletarPerfil';
-import DescricaoCargos from '@/pages/DescricaoCargos';
+import { lazy } from 'react';
 import QADashboard from '@/components/monitoring/QADashboard';
-import CentralAvaliacoes from '@/pages/CentralAvaliacoes';
-import MatrizDesempenho from '@/pages/MatrizDesempenho';
-import PublicNPS from '@/pages/PublicNPS';
-import PublicDISC from '@/pages/PublicDISC';
-import BemVindoPlanos from '@/pages/BemVindoPlanos';
 import WheelLoader from '@/components/ui/WheelLoader';
 import ErrorBoundary from '@/components/shared/ErrorBoundary';
-import ControleAceleracao from '@/pages/ControleAceleracao';
-import ConsultoriaGlobal from '@/pages/ConsultoriaGlobal';
+
+const Home = lazy(() => import('@/pages/Home'));
+const GestaoTenants = lazy(() => import('@/pages/GestaoTenants'));
+const CompletarPerfil = lazy(() => import('@/pages/CompletarPerfil'));
+const DescricaoCargos = lazy(() => import('@/pages/DescricaoCargos'));
+const CentralAvaliacoes = lazy(() => import('@/pages/CentralAvaliacoes'));
+const MatrizDesempenho = lazy(() => import('@/pages/MatrizDesempenho'));
+const PublicNPS = lazy(() => import('@/pages/PublicNPS'));
+const PublicDISC = lazy(() => import('@/pages/PublicDISC'));
+const BemVindoPlanos = lazy(() => import('@/pages/BemVindoPlanos'));
+const ControleAceleracao = lazy(() => import('@/pages/ControleAceleracao'));
+const ConsultoriaGlobal = lazy(() => import('@/pages/ConsultoriaGlobal'));
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];

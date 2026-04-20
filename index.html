@@ -3,6 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="google" content="notranslate" />
+    <meta name="theme-color" content="#ffffff" />
+    <style>
+      /* Reserva espaço para o root durante o carregamento — elimina CLS */
+      #root { min-height: 100vh; }
+      /* Skeleton do loading inicial para evitar tela branca */
+      body { margin: 0; background: #f9fafb; font-family: system-ui, sans-serif; }
+    </style>
     <script>
       const originalWarn = console.warn;
       console.warn = function(...args) {
