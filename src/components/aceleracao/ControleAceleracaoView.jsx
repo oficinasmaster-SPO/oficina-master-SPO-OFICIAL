@@ -73,7 +73,7 @@ export default function ControleAceleracaoView({ state }) {
     prevTabRef.current = newTab;
     markVisited(newTab);
     setActiveTab(newTab);
-  }, [setActiveTab, trackTabChange, markVisited, navigate]);
+  }, [setActiveTab, trackTabChange, markVisited]);
 
   const queryClient = useQueryClient();
 
