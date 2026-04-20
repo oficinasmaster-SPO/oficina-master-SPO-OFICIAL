@@ -7,8 +7,6 @@ import ReactMarkdown from "react-markdown";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { base44 } from "@/api/base44Client";
-import { htmlToPdf, gerarNomePDF } from "@/utils/htmlToPdf";
-
 import ClientIntelligenceCapturePanel from "@/components/inteligencia/ClientIntelligenceCapturePanel";
 import { sanitizeAtaData, formatPrazoSafe } from "@/utils/ataSanitizer";
 
