@@ -615,7 +615,32 @@ function CamadaSprints({ workshopId, missoesSelecionadas, cronogramaTemplateId, 
     
     setLoadingCreate(mission.id);
     try {
-      const defaultPhases = getDefaultPhasesForMission(mission.id);
+      // Tentar carregar fases do template salvo no banco (editado na ConsultoriaGlobal)
+      let defaultPhases = getDefaultPhasesForMission(mission.id);
+      try {
+        const savedSettings = await base44.entities.SystemSetting.filter({ key: 'sprint_templates_v1' });
+        if (savedSettings?.length > 0 && savedSettings[0].value) {
+          const savedTemplates = JSON.parse(savedSettings[0].value);
+          const missionTemplate = savedTemplates.find(m => m.mission_id === mission.id);
+          if (missionTemplate?.sprint?.phases) {
+            // Converter formato do template (tasks sem status) para formato de sprint
+            defaultPhases = missionTemplate.sprint.phases.map(p => ({
+              name: p.name,
+              status: "not_started",
+              notes: "",
+              metrics: [],
+              tasks: (p.tasks || []).map(t => ({
+                description: t.description,
+                instructions: t.instructions || "",
+                link_url: t.link_url || "",
+                status: "to_do",
+              })),
+            }));
+          }
+        }
+      } catch {
+        // fallback para default caso falhe
+      }
       const today = new Date();
       const endDate = new Date(today);
       endDate.setDate(endDate.getDate() + 21); // 3 semanas padrão

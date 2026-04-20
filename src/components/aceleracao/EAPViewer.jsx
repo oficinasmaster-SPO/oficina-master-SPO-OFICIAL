@@ -7,6 +7,18 @@ import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronRight, Target, Zap, CheckCircle2, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+// Mapeamento de mission_id para nome legível (para sprints sem cronograma_template_id)
+const MISSION_NAMES = {
+  sprint0: "Diagnóstico & Alinhamento",
+  agenda_cheia: "Agenda Cheia",
+  fechamento_imbativel: "Fechamento Imbatível",
+  caixa_forte: "Caixa Forte",
+  empresa_organizada: "Empresa Organizada",
+  funcoes_claras: "Funções Claras",
+  contratacao_certa: "Contratação Certa",
+  cultura_forte: "Cultura Forte",
+};
+
 // Mapeamento dos nomes reais das fases (conforme salvo no banco)
 const PHASE_LABELS = {
   Planning: { label: "Planejamento", color: "bg-blue-50 border-blue-200" },
@@ -33,29 +45,38 @@ export default function EAPViewer({ trilhas = [], sprints = [], tarefas = [], wo
   const sprintsArray = Array.isArray(sprints) ? sprints : [];
   const tarefasArray = Array.isArray(tarefas) ? tarefas : [];
 
-  // Montar trilhas agrupando sprints por cronograma_template_id
+  // Montar trilhas agrupando sprints por mission_id (preferência) ou cronograma_template_id
   const trilhasArray = useMemo(() => {
     const groupMap = {};
     sprintsArray.forEach(s => {
-      const key = s.cronograma_template_id || "sem_trilha";
+      // Agrupar por mission_id quando disponível — mais semântico
+      const key = s.mission_id || s.cronograma_template_id || "sem_trilha";
       if (!groupMap[key]) {
+        const missionName = MISSION_NAMES[s.mission_id] || null;
         groupMap[key] = {
           id: key,
-          name: key === "sem_trilha" ? "Sprints Customizados" : key,
+          name: missionName || (key === "sem_trilha" ? "Sprints Customizados" : key),
           _virtual: true,
         };
       }
     });
-    return Object.values(groupMap);
+    // Ordenar: sprint0 primeiro, depois por nome
+    const items = Object.values(groupMap);
+    items.sort((a, b) => {
+      if (a.id === "sprint0") return -1;
+      if (b.id === "sprint0") return 1;
+      return a.name.localeCompare(b.name);
+    });
+    return items;
   }, [sprintsArray]);
 
   // Estrutura: Missão (Trilha) → Sprints → Fases → Tarefas
   const eapStructure = useMemo(() => {
     return trilhasArray.map((trilha) => { // eslint-disable-line
-      // Sprints da trilha
+      // Sprints da trilha — usar a mesma chave de agrupamento (mission_id preferencial)
       const trilhaSprints = sprintsArray.filter(s => {
-        const key = s.cronograma_template_id || "sem_trilha";
-        return key === trilha.id || s.trilha_id === trilha.id || s.mission_id === trilha.id;
+        const key = s.mission_id || s.cronograma_template_id || "sem_trilha";
+        return key === trilha.id;
       });
 
       // Se não houver sprints, criar mocks

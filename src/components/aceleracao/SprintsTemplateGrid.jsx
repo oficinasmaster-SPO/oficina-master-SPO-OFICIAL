@@ -1,11 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Edit2, Save, X, Plus, Trash2, ChevronDown, ChevronUp, Link, ExternalLink } from 'lucide-react';
+import { Edit2, Save, X, Plus, Trash2, ChevronDown, ChevronUp, Link, ExternalLink, RefreshCw } from 'lucide-react';
 import { getDefaultTasksForPhase } from './sprintMissionTasks';
+import { base44 } from '@/api/base44Client';
+import { toast } from 'sonner';
+
+const STORAGE_KEY = 'sprint_templates_v1';
 
 const PHASES_CONFIG = [
   { name: 'Planning',      label: 'Sprint Planning', icon: '📋', color: 'bg-blue-50 border-blue-200 text-blue-800',   badge: 'bg-blue-100 text-blue-700',   desc: 'Planejar o que será feito no sprint.' },
@@ -272,19 +276,88 @@ function SprintEditor({ sprint, onSave }) {
 export default function SprintsTemplateGrid() {
   const [data, setData] = useState(buildDefaultData);
   const [expandedMission, setExpandedMission] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [loaded, setLoaded] = useState(false);
 
-  const handleSprintSave = (missionId, updatedSprint) => {
-    setData(data.map(m => m.mission_id === missionId ? { ...m, sprint: updatedSprint } : m));
+  // Carregar templates salvos do banco ao montar
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const settings = await base44.entities.SystemSetting.filter({ key: STORAGE_KEY });
+        if (settings?.length > 0 && settings[0].value) {
+          const saved = JSON.parse(settings[0].value);
+          if (Array.isArray(saved) && saved.length > 0) {
+            setData(saved);
+          }
+        }
+      } catch {
+        // se falhar, mantém o padrão
+      } finally {
+        setLoaded(true);
+      }
+    };
+    load();
+  }, []);
+
+  const handleSprintSave = async (missionId, updatedSprint) => {
+    const newData = data.map(m => m.mission_id === missionId ? { ...m, sprint: updatedSprint } : m);
+    setData(newData);
+    // Persistir no banco
+    setSaving(true);
+    try {
+      const existing = await base44.entities.SystemSetting.filter({ key: STORAGE_KEY });
+      const payload = { key: STORAGE_KEY, value: JSON.stringify(newData) };
+      if (existing?.length > 0) {
+        await base44.entities.SystemSetting.update(existing[0].id, payload);
+      } else {
+        await base44.entities.SystemSetting.create(payload);
+      }
+      toast.success('Template salvo com sucesso!');
+    } catch {
+      toast.error('Erro ao salvar template');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleResetToDefault = async () => {
+    const defaultData = buildDefaultData();
+    setData(defaultData);
+    setSaving(true);
+    try {
+      const existing = await base44.entities.SystemSetting.filter({ key: STORAGE_KEY });
+      const payload = { key: STORAGE_KEY, value: JSON.stringify(defaultData) };
+      if (existing?.length > 0) {
+        await base44.entities.SystemSetting.update(existing[0].id, payload);
+      } else {
+        await base44.entities.SystemSetting.create(payload);
+      }
+      toast.success('Templates restaurados para o padrão!');
+    } catch {
+      toast.error('Erro ao restaurar');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
     <div className="space-y-4">
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <p className="text-sm font-semibold text-blue-900">Sprints Padrão por Missão</p>
-        <p className="text-sm text-blue-700 mt-1">
-          Cada sprint tem <strong>5 fases fixas</strong>: Planning → Execução → Checkpoint → Review → Retrospectiva.
-          Configure as tarefas de cada fase clicando em ✏️.
-        </p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-sm font-semibold text-blue-900">Sprints Padrão por Missão</p>
+            <p className="text-sm text-blue-700 mt-1">
+              Cada sprint tem <strong>5 fases fixas</strong>: Planning → Execução → Checkpoint → Review → Retrospectiva.
+              Configure as tarefas de cada fase clicando em ✏️. As edições são <strong>persistidas no banco</strong> e usadas ao criar novos sprints para clientes.
+            </p>
+          </div>
+          <Button size="sm" variant="outline" onClick={handleResetToDefault} disabled={saving} className="shrink-0 text-xs">
+            <RefreshCw className={`w-3.5 h-3.5 mr-1 ${saving ? 'animate-spin' : ''}`} />
+            Restaurar Padrão
+          </Button>
+        </div>
+        {!loaded && <p className="text-xs text-blue-600 mt-2">Carregando templates salvos...</p>}
+        {saving && <p className="text-xs text-blue-600 mt-2">💾 Salvando...</p>}
       </div>
 
       <div className="space-y-3">
