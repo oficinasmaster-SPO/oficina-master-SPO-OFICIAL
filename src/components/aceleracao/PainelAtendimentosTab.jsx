@@ -304,7 +304,7 @@ export default function PainelAtendimentosTab({ state }) {
                       <Input type="date" value={filtros.dataFim || ''} onChange={(e) => setFiltros({ ...filtros, preset: 'custom', dataFim: e.target.value })} className="h-8 text-xs" />
                     </div>
                     <div className="flex flex-col gap-2 pt-2 border-t border-gray-50 mt-1">
-                      <button onClick={() => setFiltros({ ...filtros, preset: 'all', dataInicio: null, dataFim: null })} className="text-xs text-red-600 font-medium hover:underline w-full text-center">
+                      <button onClick={() => setFiltros({ ...filtros, preset: 'all', dataInicio: '', dataFim: '' })} className="text-xs text-red-600 font-medium hover:underline w-full text-center">
                         Todo o período existente
                       </button>
                       {filtros.preset !== 'mes_atual' && (

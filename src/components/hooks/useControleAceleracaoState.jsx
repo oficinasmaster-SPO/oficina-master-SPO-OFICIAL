@@ -40,15 +40,17 @@ export default function useControleAceleracaoState() {
 
   // ── 5. Atendimentos — query única compartilhada ──
   const { data: atendimentos, isLoading: loadingAtendimentos } = useQuery({
-    queryKey: ["atendimentos-acelerador", user?.id, consultorEfetivo],
+    queryKey: ["atendimentos-acelerador", user?.id, consultorEfetivo, filtros.preset, filtros.dataInicio],
     queryFn: async () => {
       const query = {};
       if (consultorEfetivo) query.consultor_id = consultorEfetivo;
-      // Limitar a últimos 12 meses para evitar payloads pesados
-      const dataMinima = new Date();
-      dataMinima.setFullYear(dataMinima.getFullYear() - 1);
-      query.data_agendada__gte = dataMinima.toISOString().split('T')[0];
-      return await base44.entities.ConsultoriaAtendimento.filter(query, "-data_agendada", 500);
+      // Sem filtro de data quando preset é 'all' — traz todo o histórico
+      if (filtros.preset !== 'all') {
+        const dataMinima = new Date();
+        dataMinima.setFullYear(dataMinima.getFullYear() - 1);
+        query.data_agendada__gte = filtros.dataInicio || dataMinima.toISOString().split('T')[0];
+      }
+      return await base44.entities.ConsultoriaAtendimento.filter(query, "-data_agendada", 1000);
     },
     enabled: !!user?.id,
     staleTime: 2 * 60 * 1000,
