@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { AlertCircle, Copy, Edit2, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import WheelLoader from '@/components/ui/WheelLoader';
 import MissionsTemplateGrid from './MissionsTemplateGrid';
+import SprintsTemplateGrid from './SprintsTemplateGrid';
 
 /**
  * TemplateLibraryManager - Matriz Global de Templates Padrão
@@ -164,7 +165,7 @@ export default function TemplateLibraryManager() {
             Missões ({templates.missions.length})
           </TabsTrigger>
           <TabsTrigger value="sprints">
-            Sprints ({templates.sprints.length})
+            Sprints
           </TabsTrigger>
         </TabsList>
 
@@ -242,85 +243,7 @@ export default function TemplateLibraryManager() {
 
         {/* TAB: SPRINTS */}
         <TabsContent value="sprints" className="space-y-4">
-          {templates.sprints.length === 0 ? (
-            <Card>
-              <CardContent className="pt-6 text-center text-gray-500">
-                Nenhum sprint encontrado no sistema.
-              </CardContent>
-            </Card>
-          ) : (
-            templates.sprints.map((sprint) => (
-              <Card key={sprint.id} className="overflow-hidden">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="text-base">{sprint.title}</CardTitle>
-                      <CardDescription>
-                        {sprint.mission_id} • Sprint #{sprint.sprint_number}
-                      </CardDescription>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setExpandedSprint(expandedSprint === sprint.id ? null : sprint.id)}
-                      >
-                        {expandedSprint === sprint.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleDuplicateSprint(sprint)}
-                      >
-                        <Copy className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-
-                {expandedSprint === sprint.id && (
-                  <CardContent className="space-y-3 border-t pt-4">
-                    <div>
-                      <p className="text-sm text-gray-700">{sprint.objective}</p>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                      <div>
-                        <span className="text-gray-500">Tarefas:</span>
-                        <span className="ml-2 font-semibold text-gray-900">
-                          {sprint.completed_tasks}/{sprint.total_tasks}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Progresso:</span>
-                        <span className="ml-2 font-semibold text-gray-900">
-                          {sprint.progress_percentage}%
-                        </span>
-                      </div>
-                    </div>
-
-                    <div>
-                      <p className="text-xs font-semibold text-gray-700 mb-2">Fases:</p>
-                      <div className="space-y-2">
-                        {sprint.phases.map((phase, idx) => (
-                          <div key={idx} className="text-xs bg-gray-50 p-2 rounded">
-                            <p className="font-semibold text-gray-900">{phase.name}</p>
-                            <p className="text-gray-600">
-                              {phase.tasks?.length || 0} tarefa(s) • Status: {phase.status}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="pt-2 border-t text-xs text-gray-500">
-                      {sprint.start_date} até {sprint.end_date}
-                    </div>
-                  </CardContent>
-                )}
-              </Card>
-            ))
-          )}
+          <SprintsTemplateGrid />
         </TabsContent>
       </Tabs>
     </div>
