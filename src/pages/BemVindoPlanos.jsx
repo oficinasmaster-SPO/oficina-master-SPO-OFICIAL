@@ -48,6 +48,11 @@ const Particles = () => {
 };
 
 export default function BemVindoPlanos() {
+  useEffect(() => {
+    window.location.href = createPageUrl("Home");
+  }, []);
+  return null;
+
   const [user, setUser] = useState(null);
   const [isAnnual, setIsAnnual] = useState(false);
   const containerRef = useRef(null);
