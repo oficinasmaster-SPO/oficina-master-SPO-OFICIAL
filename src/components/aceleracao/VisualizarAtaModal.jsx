@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { downloadAtaPDF } from "./AtasPDFGenerator";
 import { toast } from "sonner";
 import { base44 } from "@/api/base44Client";
+import { htmlToPdf } from "@/utils/htmlToPdf";
 
 import ClientIntelligenceCapturePanel from "@/components/inteligencia/ClientIntelligenceCapturePanel";
 import { sanitizeAtaData, formatPrazoSafe } from "@/utils/ataSanitizer";
@@ -14,7 +15,9 @@ import { sanitizeAtaData, formatPrazoSafe } from "@/utils/ataSanitizer";
 export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose }) {
   const [ataAtualizada, setAtaAtualizada] = React.useState(sanitizeAtaData(ata));
   const [isLoading, setIsLoading] = React.useState(true);
+  const [isGeneratingPdf, setIsGeneratingPdf] = React.useState(false);
   const [clientIntelligence, setClientIntelligence] = React.useState([]);
+  const contentRef = React.useRef(null);
 
   React.useEffect(() => {
     const carregarAtaAtualizada = async () => {
@@ -121,43 +124,18 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
 
   const handleDownload = async () => {
     if (isLoading) { toast.warning("Aguarde o carregamento completo"); return; }
+    if (!contentRef.current) { toast.error("Elemento não encontrado"); return; }
+    
+    setIsGeneratingPdf(true);
     try {
-      let ataParaDownload = sanitizeAtaData({ ...ataAtualizada });
-
-      // Buscar atendimento para merge completo
-      let atendimentoRef = atendimento;
-      let atendimentoId = atendimentoRef?.id || ataParaDownload.atendimento_id;
-      if (!atendimentoRef && atendimentoId) {
-        try { atendimentoRef = await base44.entities.ConsultoriaAtendimento.get(atendimentoId); } catch {}
-      }
-      if (!atendimentoId) {
-        const atendimentos = await base44.entities.ConsultoriaAtendimento.filter({ ata_id: ataParaDownload.id });
-        if (atendimentos?.length > 0) { atendimentoRef = atendimentos[0]; atendimentoId = atendimentos[0].id; }
-      }
-
-      // Merge: garantir que nenhum campo fique vazio se existir no atendimento
-      if (atendimentoRef) {
-        if (!ataParaDownload.midias_anexas?.length && atendimentoRef.midias_anexas?.length) ataParaDownload.midias_anexas = atendimentoRef.midias_anexas;
-        if (!ataParaDownload.processos_vinculados?.length && atendimentoRef.processos_vinculados?.length) ataParaDownload.processos_vinculados = atendimentoRef.processos_vinculados;
-        if (!ataParaDownload.videoaulas_vinculadas?.length && atendimentoRef.videoaulas_vinculadas?.length) ataParaDownload.videoaulas_vinculadas = atendimentoRef.videoaulas_vinculadas;
-        if (!ataParaDownload.checklist_respostas?.length && atendimentoRef.checklist_respostas?.length) ataParaDownload.checklist_respostas = atendimentoRef.checklist_respostas;
-        if (!ataParaDownload.decisoes_tomadas?.length && atendimentoRef.decisoes_tomadas?.length) ataParaDownload.decisoes_tomadas = atendimentoRef.decisoes_tomadas;
-        if (!ataParaDownload.acoes_geradas?.length && atendimentoRef.acoes_geradas?.length) ataParaDownload.acoes_geradas = atendimentoRef.acoes_geradas;
-      }
-
-      // Buscar inteligência do cliente
-      if (clientIntelligence.length > 0) {
-        ataParaDownload.client_intelligence = clientIntelligence;
-      } else if (atendimentoId) {
-        const intelligence = await base44.entities.ClientIntelligence.filter({ attendance_id: atendimentoId });
-        ataParaDownload.client_intelligence = intelligence || [];
-      }
-
-      await downloadAtaPDF(ataParaDownload, workshop);
-      toast.success("PDF baixado com sucesso!");
+      const filename = `ATA-${ataAtualizada.code || 'atendimento'}-${new Date().toISOString().split('T')[0]}`;
+      await htmlToPdf(contentRef.current, filename);
+      toast.success("PDF gerado e baixado com sucesso!");
     } catch (error) {
       console.error("Erro ao gerar PDF:", error);
-      toast.error("Erro ao gerar PDF");
+      toast.error(error.message || "Erro ao gerar PDF");
+    } finally {
+      setIsGeneratingPdf(false);
     }
   };
 
@@ -196,8 +174,12 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
                       <FileText className="w-4 h-4 mr-2" />Finalizar ATA
                     </Button>
                   )}
-                  <Button size="sm" variant="outline" onClick={handleDownload}>
-                    <Download className="w-4 h-4 mr-2" />Download PDF
+                  <Button size="sm" variant="outline" onClick={handleDownload} disabled={isGeneratingPdf}>
+                    {isGeneratingPdf ? (
+                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Gerando...</>
+                    ) : (
+                      <><Download className="w-4 h-4 mr-2" />Download PDF</>
+                    )}
                   </Button>
                 </div>
               </div>
@@ -210,7 +192,7 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
               <p className="text-gray-500">Carregando dados da ATA...</p>
             </div>
           ) : (
-            <div className="space-y-6 py-4">
+            <div className="space-y-6 py-4" ref={contentRef}>
               {/* CABEÇALHO */}
               <div className="text-center">
                 <h2 className="text-2xl font-bold text-gray-900">GESTÃO DE PROCESSOS</h2>
