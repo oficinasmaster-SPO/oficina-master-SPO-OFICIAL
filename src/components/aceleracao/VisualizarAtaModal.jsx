@@ -128,17 +128,34 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
       toast.warning('Aguarde o carregamento completo da ATA');
       return;
     }
-    if (!ataContentRef.current) {
-      toast.error('Erro: conteúdo da ATA não encontrado');
-      return;
-    }
 
     setIsGeneratingPDF(true);
     try {
-      const workshopParaNome = workshop || { name: d.responsavel?.name || 'OFICINA' };
-      const fileName = gerarNomePDF(workshopParaNome, d.meeting_date);
-      await htmlToPdf(ataContentRef.current, fileName, { scale: 2 });
-      toast.success(`PDF "${fileName}" baixado com sucesso!`);
+      const response = await base44.functions.invoke('generateAtaPDFPuppeteer', {
+        ata_id: ataAtualizada.id
+      });
+
+      if (!response.data.success) {
+        throw new Error(response.data.error || 'Erro ao gerar PDF');
+      }
+
+      // Converter base64 para blob e fazer download
+      const binaryString = atob(response.data.pdf);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      const blob = new Blob([bytes], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = response.data.filename || 'ata.pdf';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast.success(`PDF "${response.data.filename}" baixado com sucesso!`);
     } catch (error) {
       console.error('Erro ao gerar PDF:', error);
       toast.error('Erro ao gerar PDF: ' + error.message);
@@ -230,8 +247,16 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
              <p className="text-gray-500">Carregando dados da ATA...</p>
            </div>
           ) : (
-           <div ref={ataContentRef} className="space-y-6 py-4 px-4 pb-16" style={{ minHeight: '100%', paddingBottom: '60px' }}>
-              {/* CABEÇALHO */}
+            <div ref={ataContentRef} className="document">
+               {/* FIXED HEADER - Aparece em todas as páginas */}
+               <div className="document-header">
+                 <h1>GESTÃO DE PROCESSOS</h1>
+                 <p>Ata de Atendimento - Aceleração de Oficinas</p>
+               </div>
+
+               {/* DOCUMENT CONTENT */}
+               <div className="document-content space-y-6">
+               {/* CABEÇALHO */}
               <div className="text-center">
                 <h2 className="text-2xl font-bold text-gray-900">GESTÃO DE PROCESSOS</h2>
                 <p className="text-lg">AT - Ata de Atendimento</p>
@@ -515,10 +540,17 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
                     </div>
                   </CardContent>
                 </Card>
-              )}
+                )}
 
-              </div>
-              )}
+                </div>
+
+                {/* FIXED FOOTER - Aparece em todas as páginas */}
+                <div className="document-footer">
+                <p>© 2026 Oficinas Master • {d.code || 'ATA'} • {d.meeting_date ? new Date(d.meeting_date).toLocaleDateString('pt-BR') : ''}</p>
+                <p>Documento gerado automaticamente pela Plataforma de Aceleração de Oficinas</p>
+                </div>
+                </div>
+                )}
 
               <div className="flex justify-end pt-4 border-t print:hidden gap-2">
               <Button variant="outline" onClick={onClose}>Fechar</Button>

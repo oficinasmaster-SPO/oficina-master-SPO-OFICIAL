@@ -74,6 +74,11 @@
 }
 
 /* Print Styles - Professional Document Layout A4 */
+@page {
+  size: A4 portrait;
+  margin: 20mm;
+}
+
 @media print {
   /* Hide non-printable elements */
   .print\\:hidden,
@@ -83,8 +88,8 @@
   select,
   .no-print,
   nav,
-  header:not(.print-header),
-  footer:not(.print-footer),
+  header:not(.document-header),
+  footer:not(.document-footer),
   aside,
   .sidebar,
   [role="dialog"],
@@ -96,12 +101,6 @@
   /* Show print-only elements */
   .print\\:block {
     display: block !important;
-  }
-
-  /* Reset page margins - A4 Portrait */
-  @page {
-    size: A4 portrait;
-    margin: 15mm;
   }
 
   /* Force background colors and images */
@@ -162,16 +161,24 @@
   [class*="Card"],
   .shadow-lg,
   .shadow-2xl,
-  .grid > div,
   svg,
   canvas,
   .recharts-wrapper,
-  h1, h2, h3, h4, h5, h6,
-  p, li, tr,
-  [class*="section"],
-  [class*="block"] {
+  [class*="SectionCard"],
+  [class*="section-block"],
+  .print-section,
+  .document-section {
     page-break-inside: avoid !important;
     break-inside: avoid !important;
+  }
+
+  /* Grid items can break but not too aggressively */
+  .grid {
+    display: grid !important;
+  }
+
+  .grid > div {
+    page-break-inside: avoid !important;
   }
 
   /* Prevent orphans e widows */
@@ -186,19 +193,29 @@
     break-after: avoid !important;
   }
 
-  /* Headers - Padrão Profissional */
-  .print-header {
-    display: block !important;
-    margin-bottom: 15px !important;
-    padding-bottom: 10px !important;
-    border-bottom: 2px solid #000 !important;
-    text-align: left !important;
-    page-break-inside: avoid !important;
-    page-break-after: avoid !important;
-    position: relative !important;
+  /* Document Structure */
+  .document {
+    position: relative;
+    width: 100%;
+    margin: 0;
+    padding: 0;
   }
 
-  .print-header h1 {
+  /* Headers - Padrão Profissional */
+  .document-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 15mm 20mm;
+    background: white;
+    border-bottom: 2px solid #000;
+    z-index: 1000;
+    page-break-inside: avoid !important;
+    display: block !important;
+  }
+
+  .document-header h1 {
     font-size: 16pt !important;
     font-weight: bold !important;
     color: #000 !important;
@@ -206,23 +223,40 @@
     padding: 0 !important;
   }
 
-  .print-header p {
+  .document-header p {
     font-size: 9pt !important;
     color: #666 !important;
     margin: 2px 0 0 0 !important;
   }
 
+  /* Content area with margins for fixed header/footer */
+  .document-content {
+    margin-top: 100px !important;
+    margin-bottom: 80px !important;
+    padding: 0 !important;
+  }
+
   /* Footers - Rodapé Padrão */
-  .print-footer {
-    display: block !important;
-    margin-top: 15px !important;
-    padding-top: 10px !important;
-    border-top: 1px solid #ccc !important;
+  .document-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 10mm 20mm;
+    background: white;
+    border-top: 1px solid #ccc;
     font-size: 8pt !important;
     text-align: center !important;
     color: #666 !important;
     page-break-inside: avoid !important;
-    page-break-before: avoid !important;
+    display: block !important;
+    z-index: 1000;
+  }
+
+  /* Page break control */
+  .page-break {
+    page-break-before: always !important;
+    break-before: page !important;
   }
 
   /* Quebra de página — cada seção numerada começa em nova página */
