@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { AlertCircle, Copy, ChevronDown, ChevronUp, Plus } from 'lucide-react';
+import { AlertCircle, Copy, ChevronDown, ChevronUp, Plus, Pencil } from 'lucide-react';
 import WheelLoader from '@/components/ui/WheelLoader';
 import MissionsTemplateGrid from './MissionsTemplateGrid';
 import SprintsTemplateGrid from './SprintsTemplateGrid';
@@ -41,6 +41,10 @@ export default function TemplateLibraryManager() {
   const [newMission, setNewMission] = useState({ icon: '🎯', name: '', description: '', linked_sprint_id: '' });
   const [newSprint, setNewSprint] = useState({ mission_icon: '🚀', mission_name: '', objective: '' });
   const [creating, setCreating] = useState(false);
+
+  // ── Modal de edição de trilha ──
+  const [editingTrail, setEditingTrail] = useState(null); // { id, nome_fase, objetivo_geral }
+  const [saving, setSaving] = useState(false);
 
   // Busca todas as trilhas (CronogramaTemplate)
   const { data: allTrails = [], isLoading: loadingTrails } = useQuery({
@@ -87,6 +91,7 @@ export default function TemplateLibraryManager() {
         trailsMap.set(key, {
           id: trail.id,
           name: trail.nome_fase,
+          objetivo_geral: trail.objetivo_geral || '',
           missions: trail.missoes_selecionadas || [],
           source: `${trail.workshop_id}`,
           createdAt: trail.created_date,
@@ -149,6 +154,22 @@ export default function TemplateLibraryManager() {
   const handleDuplicateSprint = async (sprint) => {
     // TODO: Implementar duplicação de sprint como template padrão
     console.log('Duplicando sprint:', sprint);
+  };
+
+  // ── Editar Trilha ──
+  const handleSaveTrail = async () => {
+    if (!editingTrail?.nome_fase?.trim()) { toast.error('Informe o nome da trilha'); return; }
+    setSaving(true);
+    try {
+      await base44.entities.CronogramaTemplate.update(editingTrail.id, {
+        nome_fase: editingTrail.nome_fase,
+        objetivo_geral: editingTrail.objetivo_geral,
+      });
+      queryClient.invalidateQueries({ queryKey: ['allCronogramaTemplates'] });
+      toast.success('Trilha atualizada!');
+      setEditingTrail(null);
+    } catch { toast.error('Erro ao salvar trilha'); }
+    finally { setSaving(false); }
   };
 
   // ── Criar nova Trilha ──
@@ -300,6 +321,13 @@ export default function TemplateLibraryManager() {
                       <Button
                         size="sm"
                         variant="outline"
+                        onClick={() => setEditingTrail({ id: trail.id, nome_fase: trail.name, objetivo_geral: trail.objetivo_geral || '' })}
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
                         onClick={() => handleDuplicateTrail(trail)}
                       >
                         <Copy className="w-4 h-4" />
@@ -350,6 +378,40 @@ export default function TemplateLibraryManager() {
           <SprintsTemplateGrid />
         </TabsContent>
       </Tabs>
+
+      {/* ── Modal: Editar Trilha ── */}
+      <Dialog open={!!editingTrail} onOpenChange={open => !open && setEditingTrail(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Trilha</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <label className="text-sm font-semibold text-gray-700">Nome da Trilha *</label>
+              <Input
+                className="mt-1"
+                value={editingTrail?.nome_fase || ''}
+                onChange={e => setEditingTrail(prev => ({ ...prev, nome_fase: e.target.value }))}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-gray-700">Objetivo Geral</label>
+              <Textarea
+                className="mt-1 resize-none h-20"
+                placeholder="Descreva o objetivo desta trilha..."
+                value={editingTrail?.objetivo_geral || ''}
+                onChange={e => setEditingTrail(prev => ({ ...prev, objetivo_geral: e.target.value }))}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingTrail(null)}>Cancelar</Button>
+            <Button onClick={handleSaveTrail} disabled={saving}>
+              {saving ? 'Salvando...' : 'Salvar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* ── Modal: Nova Trilha ── */}
       <Dialog open={showNewTrail} onOpenChange={setShowNewTrail}>
