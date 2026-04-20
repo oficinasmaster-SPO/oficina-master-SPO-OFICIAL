@@ -15,6 +15,7 @@ const PHASES_CONFIG = [
 ];
 
 const DEFAULT_SPRINT_MISSIONS = [
+  { id: 'diagnostico_alinhamento', icon: '🔍', name: 'Diagnóstico e Alinhamento' },
   { id: 'agenda_cheia',        icon: '📅', name: 'Agenda Cheia' },
   { id: 'fechamento_imbativel', icon: '🎯', name: 'Fechamento Imbatível' },
   { id: 'caixa_forte',         icon: '💰', name: 'Caixa Forte' },
