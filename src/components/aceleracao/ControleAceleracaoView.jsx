@@ -1,6 +1,5 @@
 import React, { useState, Suspense, lazy, useMemo, useCallback, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -67,7 +66,7 @@ export default function ControleAceleracaoView({ state }) {
   const { trackTabChange, trackFilterChange, trackAtendimentoOpen, trackMassRegistrationOpen } = useAceleracaoObservability(user);
   const prevTabRef = useRef(activeTab);
 
-  const navigate = useNavigate();
+
 
   const handleTabChange = useCallback((newTab) => {
     trackTabChange(prevTabRef.current, newTab);
