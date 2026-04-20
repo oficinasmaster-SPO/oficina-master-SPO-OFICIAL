@@ -92,7 +92,8 @@ function AtaRow({ ata }) {
 function AtendimentoCard({ atendimento, atas, followups }) {
   const [open, setOpen] = useState(false);
 
-  const ataVinculada = atas.find(a => a.atendimento_id === atendimento.id);
+  // Busca pelo ata_id salvo no atendimento OU pelo atendimento_id na ATA
+  const ataVinculada = atas.find(a => a.id === atendimento.ata_id || a.atendimento_id === atendimento.id);
   const followupsVinculados = followups
     .filter(f => f.atendimento_id === atendimento.id)
     .sort((a, b) => a.sequence_number - b.sequence_number);
@@ -180,8 +181,14 @@ function AtendimentoCard({ atendimento, atas, followups }) {
   );
 }
 
-export default function ClientHistoricoTimeline({ client, atendimentos = [] }) {
+export default function ClientHistoricoTimeline({ client }) {
   const workshopId = client?.id;
+
+  const { data: atendimentos = [], isLoading: loadingAtendimentos } = useQuery({
+    queryKey: ["atendimentos-historico-cliente", workshopId],
+    queryFn: () => base44.entities.ConsultoriaAtendimento.filter({ workshop_id: workshopId }, "-data_agendada", 200),
+    enabled: !!workshopId
+  });
 
   const { data: atas = [] } = useQuery({
     queryKey: ["atas-historico", workshopId],
@@ -195,9 +202,17 @@ export default function ClientHistoricoTimeline({ client, atendimentos = [] }) {
     enabled: !!workshopId
   });
 
-  const clienteAtendimentos = atendimentos
-    .filter(a => a.workshop_id === workshopId)
+  const clienteAtendimentos = [...atendimentos]
     .sort((a, b) => new Date(b.data_realizada || b.data_agendada) - new Date(a.data_realizada || a.data_agendada));
+
+  if (loadingAtendimentos) {
+    return (
+      <div className="text-center py-16 text-gray-400">
+        <div className="w-8 h-8 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin mx-auto mb-3" />
+        <p className="text-sm">Carregando histórico...</p>
+      </div>
+    );
+  }
 
   if (clienteAtendimentos.length === 0) {
     return (
