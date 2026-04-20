@@ -1,57 +1,89 @@
 import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
+import jsPDF from 'jspdf';
 
 /**
- * Converte um elemento HTML para PDF usando html2canvas
- * @param {HTMLElement} element - Elemento HTML a capturar
- * @param {string} filename - Nome do arquivo PDF (sem extensão)
- * @returns {Promise<void>}
+ * Captura um elemento HTML exatamente como aparece na tela e gera PDF A4.
+ * @param {HTMLElement} element - Elemento DOM a capturar
+ * @param {string} fileName - Nome do arquivo PDF (ex: "MS_CENTRO_AUTOMOTIVO_20042026.pdf")
+ * @param {object} options - { scale: 2 (padrão), margin: 10 }
  */
-export async function htmlToPdf(element, filename = 'documento') {
-  if (!element) {
-    throw new Error('Elemento HTML não fornecido');
-  }
+export async function htmlToPdf(element, fileName = 'documento.pdf', options = {}) {
+  const { scale = 2, margin = 10 } = options;
+
+  if (!element) throw new Error('Elemento não encontrado');
+
+  // Expandir para captura completa (remove max-height e overflow)
+  const original = {
+    overflow: element.style.overflow,
+    maxHeight: element.style.maxHeight,
+    height: element.style.height,
+  };
+  element.style.overflow = 'visible';
+  element.style.maxHeight = 'none';
+  element.style.height = 'auto';
 
   try {
-    // Capturar elemento como imagem com alta qualidade
     const canvas = await html2canvas(element, {
-      scale: 2, // Aumentar escala para melhor qualidade
+      scale,
       useCORS: true,
-      allowTaint: true,
+      allowTaint: false,
       backgroundColor: '#ffffff',
-      windowHeight: element.scrollHeight,
+      logging: false,
+      scrollX: 0,
+      scrollY: -window.scrollY,
       windowWidth: element.scrollWidth,
+      windowHeight: element.scrollHeight,
     });
 
-    const imgData = canvas.toDataURL('image/png');
-    const imgWidth = 210; // A4 width em mm
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const contentWidth = pageWidth - margin * 2;
+    const contentHeight = pageHeight - margin * 2;
+
+    const imgWidth = contentWidth;
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    const totalPages = Math.ceil(imgHeight / contentHeight);
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
 
-    // Criar PDF com tamanho A4
-    const pdf = new jsPDF({
-      orientation: imgHeight > imgWidth ? 'portrait' : 'portrait',
-      unit: 'mm',
-      format: 'a4',
-    });
-
-    let heightLeft = imgHeight;
-    let position = 0;
-
-    // Adicionar imagem ao PDF com paginação automática
-    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-    heightLeft -= 297; // A4 height em mm
-
-    while (heightLeft > 0) {
-      position = heightLeft - imgHeight;
-      pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= 297;
+    for (let page = 0; page < totalPages; page++) {
+      if (page > 0) pdf.addPage();
+      const yOffset = -(page * contentHeight);
+      pdf.addImage(imgData, 'JPEG', margin, margin + yOffset, imgWidth, imgHeight, undefined, 'FAST');
     }
 
-    // Download do arquivo
-    pdf.save(`${filename}.pdf`);
-  } catch (error) {
-    console.error('Erro ao gerar PDF:', error);
-    throw new Error(`Falha ao gerar PDF: ${error.message}`);
+    pdf.save(fileName);
+  } finally {
+    element.style.overflow = original.overflow;
+    element.style.maxHeight = original.maxHeight;
+    element.style.height = original.height;
   }
+}
+
+/**
+ * Gera o nome do arquivo PDF no formato: NOME_OFICINA_DDMMAAAA.pdf
+ * Exemplo: "MS_CENTRO_AUTOMOTIVO_20042026.pdf"
+ *
+ * @param {object} workshop - Objeto do workshop com campo `name`
+ * @param {string|Date} data - Data da ATA (meeting_date) ou data atual
+ * @returns {string} Nome do arquivo
+ */
+export function gerarNomePDF(workshop, data) {
+  // Normalizar nome da oficina: maiúsculas, sem acentos, espaços viram _
+  const nome = (workshop?.name || 'OFICINA')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')  // remove acentos
+    .toUpperCase()
+    .replace(/[^A-Z0-9\s]/g, '')      // remove caracteres especiais
+    .trim()
+    .replace(/\s+/g, '_');            // espaços viram _
+
+  // Formatar data: DDMMAAAA
+  const dataObj = data ? new Date(data) : new Date();
+  const dia = String(dataObj.getDate()).padStart(2, '0');
+  const mes = String(dataObj.getMonth() + 1).padStart(2, '0');
+  const ano = dataObj.getFullYear();
+  const dataFormatada = `${dia}${mes}${ano}`;
+
+  return `${nome}_${dataFormatada}.pdf`;
 }

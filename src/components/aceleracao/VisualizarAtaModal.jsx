@@ -1,23 +1,22 @@
-import React from "react";
+import React, { useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FileText, Download, Building2, MapPin, Award, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { downloadAtaPDF } from "./AtasPDFGenerator";
 import { toast } from "sonner";
 import { base44 } from "@/api/base44Client";
-import { htmlToPdf } from "@/utils/htmlToPdf";
+import { htmlToPdf, gerarNomePDF } from "@/utils/htmlToPdf";
 
 import ClientIntelligenceCapturePanel from "@/components/inteligencia/ClientIntelligenceCapturePanel";
 import { sanitizeAtaData, formatPrazoSafe } from "@/utils/ataSanitizer";
 
 export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose }) {
+  const ataContentRef = useRef(null);
   const [ataAtualizada, setAtaAtualizada] = React.useState(sanitizeAtaData(ata));
   const [isLoading, setIsLoading] = React.useState(true);
-  const [isGeneratingPdf, setIsGeneratingPdf] = React.useState(false);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [clientIntelligence, setClientIntelligence] = React.useState([]);
-  const contentRef = React.useRef(null);
 
   React.useEffect(() => {
     const carregarAtaAtualizada = async () => {
@@ -123,19 +122,27 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
   }, [ata?.id, atendimento]);
 
   const handleDownload = async () => {
-    if (isLoading) { toast.warning("Aguarde o carregamento completo"); return; }
-    if (!contentRef.current) { toast.error("Elemento não encontrado"); return; }
-    
-    setIsGeneratingPdf(true);
+    if (isLoading) {
+      toast.warning('Aguarde o carregamento completo da ATA');
+      return;
+    }
+    if (!ataContentRef.current) {
+      toast.error('Erro: conteúdo da ATA não encontrado');
+      return;
+    }
+
+    setIsGeneratingPDF(true);
     try {
-      const filename = `ATA-${ataAtualizada.code || 'atendimento'}-${new Date().toISOString().split('T')[0]}`;
-      await htmlToPdf(contentRef.current, filename);
-      toast.success("PDF gerado e baixado com sucesso!");
+      // Gera nome no formato: NOME_OFICINA_DDMMAAAA.pdf
+      const fileName = gerarNomePDF(workshop, ataAtualizada.meeting_date);
+      
+      await htmlToPdf(ataContentRef.current, fileName, { scale: 2 });
+      toast.success(`PDF "${fileName}" baixado com sucesso!`);
     } catch (error) {
-      console.error("Erro ao gerar PDF:", error);
-      toast.error(error.message || "Erro ao gerar PDF");
+      console.error('Erro ao gerar PDF:', error);
+      toast.error('Erro ao gerar PDF: ' + error.message);
     } finally {
-      setIsGeneratingPdf(false);
+      setIsGeneratingPDF(false);
     }
   };
 
@@ -160,7 +167,7 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
     <>
       <ClientIntelligenceCapturePanel workshopId={workshop?.id} ataId={ata?.id} />
       <Dialog open onOpenChange={onClose}>
-        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto print:max-w-full">
+        <DialogContent ref={ataContentRef} className="max-w-5xl max-h-[90vh] overflow-y-auto print:max-w-full">
           <DialogHeader className="print:hidden">
             <div className="space-y-4">
               <div className="flex items-center justify-between flex-wrap gap-2">
@@ -174,11 +181,22 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
                       <FileText className="w-4 h-4 mr-2" />Finalizar ATA
                     </Button>
                   )}
-                  <Button size="sm" variant="outline" onClick={handleDownload} disabled={isGeneratingPdf}>
-                    {isGeneratingPdf ? (
-                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Gerando...</>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleDownload}
+                    disabled={isGeneratingPDF || isLoading}
+                  >
+                    {isGeneratingPDF ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Gerando PDF...
+                      </>
                     ) : (
-                      <><Download className="w-4 h-4 mr-2" />Download PDF</>
+                      <>
+                        <Download className="w-4 h-4 mr-2" />
+                        Download PDF
+                      </>
                     )}
                   </Button>
                 </div>
@@ -192,7 +210,7 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
               <p className="text-gray-500">Carregando dados da ATA...</p>
             </div>
           ) : (
-            <div className="space-y-6 py-4" ref={contentRef}>
+            <div className="space-y-6 py-4" ref={ataContentRef}>
               {/* CABEÇALHO */}
               <div className="text-center">
                 <h2 className="text-2xl font-bold text-gray-900">GESTÃO DE PROCESSOS</h2>
