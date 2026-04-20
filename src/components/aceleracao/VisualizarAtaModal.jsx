@@ -230,7 +230,7 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
              <p className="text-gray-500">Carregando dados da ATA...</p>
            </div>
           ) : (
-           <div ref={ataContentRef} className="space-y-6 py-4 px-4">
+           <div ref={ataContentRef} className="space-y-6 py-4 px-4 pb-16" style={{ minHeight: '100%', paddingBottom: '60px' }}>
               {/* CABEÇALHO */}
               <div className="text-center">
                 <h2 className="text-2xl font-bold text-gray-900">GESTÃO DE PROCESSOS</h2>
