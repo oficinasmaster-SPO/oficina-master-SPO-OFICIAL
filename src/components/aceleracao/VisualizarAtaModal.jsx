@@ -231,6 +231,12 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
            </div>
           ) : (
            <div ref={ataContentRef} className="space-y-6 py-4 px-0">
+              {/* PRINT HEADER */}
+              <div className="print-header hidden">
+                <h1>GESTÃO DE PROCESSOS</h1>
+                <p>Ata de Atendimento - Aceleração de Oficinas</p>
+              </div>
+
               {/* CABEÇALHO */}
               <div className="text-center">
                 <h2 className="text-2xl font-bold text-gray-900">GESTÃO DE PROCESSOS</h2>
@@ -517,13 +523,19 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
                 </Card>
               )}
 
+              {/* PRINT FOOTER */}
+              <div className="print-footer hidden mt-8">
+                <p>© 2026 Oficinas Master - Plataforma de Aceleração e Gestão</p>
+                <p>Documento gerado automaticamente - {d.code || 'ATA'} • {d.meeting_date ? new Date(d.meeting_date).toLocaleDateString('pt-BR') : 'Data não informada'}</p>
+                <p style={{'pageBreakBefore': 'avoid'}}>Página <span className="page-number">1</span> de <span className="page-count">1</span></p>
+              </div>
 
-            </div>
-          )}
+              </div>
+              )}
 
-          <div className="flex justify-end pt-4 border-t print:hidden gap-2">
-            <Button variant="outline" onClick={onClose}>Fechar</Button>
-          </div>
+              <div className="flex justify-end pt-4 border-t print:hidden gap-2">
+              <Button variant="outline" onClick={onClose}>Fechar</Button>
+              </div>
         </DialogContent>
       </Dialog>
     </>

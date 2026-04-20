@@ -188,19 +188,58 @@
 
   /* Headers - Padrão Profissional */
   .print-header {
-    margin-bottom: 20px !important;
+    display: block !important;
+    margin-bottom: 15px !important;
     padding-bottom: 10px !important;
-    border-bottom: 1px solid #ccc !important;
+    border-bottom: 2px solid #000 !important;
     text-align: left !important;
+    page-break-inside: avoid !important;
+    page-break-after: avoid !important;
+    position: relative !important;
+  }
+
+  .print-header h1 {
+    font-size: 16pt !important;
+    font-weight: bold !important;
+    color: #000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .print-header p {
+    font-size: 9pt !important;
+    color: #666 !important;
+    margin: 2px 0 0 0 !important;
   }
 
   /* Footers - Rodapé Padrão */
   .print-footer {
-    margin-top: 20px !important;
+    display: block !important;
+    margin-top: 15px !important;
     padding-top: 10px !important;
     border-top: 1px solid #ccc !important;
-    font-size: 9pt !important;
+    font-size: 8pt !important;
     text-align: center !important;
+    color: #666 !important;
+    page-break-inside: avoid !important;
+    page-break-before: avoid !important;
+  }
+
+  /* Quebra de página — cada seção numerada começa em nova página */
+  h3[class*="section-title"],
+  [class*="SectionTitle"] {
+    page-break-before: avoid !important;
+    page-break-after: avoid !important;
+    margin-top: 20px !important;
+  }
+
+  /* Forçar quebra antes de seções grandes */
+  .card {
+    page-break-inside: avoid !important;
+  }
+
+  /* Garantir que tabelas não quebrem */
+  table {
     page-break-inside: avoid !important;
   }
 

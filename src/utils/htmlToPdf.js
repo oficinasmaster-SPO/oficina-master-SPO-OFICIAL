@@ -94,6 +94,21 @@ export async function htmlToPdf(element, fileName = 'documento.pdf', options = {
         imgWidth, imgHeight,
         undefined, 'FAST'
       );
+
+      // Adicionar header em cada página
+      pdf.setFontSize(10);
+      pdf.setFont(undefined, 'bold');
+      pdf.text('GESTÃO DE PROCESSOS', margin, 10);
+      pdf.setFontSize(8);
+      pdf.setFont(undefined, 'normal');
+      pdf.text('Ata de Atendimento - Aceleração de Oficinas', margin, 14);
+
+      // Adicionar footer em cada página
+      const pageNum = page + 1;
+      const footerY = pdf.internal.pageSize.getHeight() - margin / 2;
+      pdf.setFontSize(8);
+      pdf.setFont(undefined, 'normal');
+      pdf.text(`© 2026 Oficinas Master • Página ${pageNum} de ${totalPages}`, margin, footerY);
     }
 
     pdf.save(fileName);
