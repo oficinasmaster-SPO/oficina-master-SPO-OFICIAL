@@ -1,14 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle, Copy, Edit2, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { AlertCircle, Copy, ChevronDown, ChevronUp, Plus } from 'lucide-react';
 import WheelLoader from '@/components/ui/WheelLoader';
 import MissionsTemplateGrid from './MissionsTemplateGrid';
 import SprintsTemplateGrid from './SprintsTemplateGrid';
+import { toast } from 'sonner';
+
+const MISSIONS_STORAGE_KEY = 'missions_templates_v1';
+const SPRINTS_STORAGE_KEY = 'sprint_templates_v1';
 
 /**
  * TemplateLibraryManager - Matriz Global de Templates Padrão
@@ -23,6 +30,17 @@ export default function TemplateLibraryManager() {
   });
   const [expandedTrail, setExpandedTrail] = useState(null);
   const [expandedSprint, setExpandedSprint] = useState(null);
+  const queryClient = useQueryClient();
+
+  // ── Modais de criação ──
+  const [showNewTrail, setShowNewTrail] = useState(false);
+  const [showNewMission, setShowNewMission] = useState(false);
+  const [showNewSprint, setShowNewSprint] = useState(false);
+
+  const [newTrail, setNewTrail] = useState({ nome_fase: '', objetivo_geral: '', missoes_selecionadas: [] });
+  const [newMission, setNewMission] = useState({ icon: '🎯', name: '', description: '', linked_sprint_id: '' });
+  const [newSprint, setNewSprint] = useState({ mission_icon: '🚀', mission_name: '', objective: '' });
+  const [creating, setCreating] = useState(false);
 
   // Busca todas as trilhas (CronogramaTemplate)
   const { data: allTrails = [], isLoading: loadingTrails } = useQuery({
@@ -133,6 +151,77 @@ export default function TemplateLibraryManager() {
     console.log('Duplicando sprint:', sprint);
   };
 
+  // ── Criar nova Trilha ──
+  const handleCreateTrail = async () => {
+    if (!newTrail.nome_fase.trim()) { toast.error('Informe o nome da trilha'); return; }
+    setCreating(true);
+    try {
+      await base44.entities.CronogramaTemplate.create({
+        nome_fase: newTrail.nome_fase,
+        objetivo_geral: newTrail.objetivo_geral,
+        missoes_selecionadas: newTrail.missoes_selecionadas,
+        fase_oficina: 1,
+        ativo: true,
+      });
+      queryClient.invalidateQueries({ queryKey: ['allCronogramaTemplates'] });
+      toast.success('Trilha criada!');
+      setShowNewTrail(false);
+      setNewTrail({ nome_fase: '', objetivo_geral: '', missoes_selecionadas: [] });
+    } catch { toast.error('Erro ao criar trilha'); }
+    finally { setCreating(false); }
+  };
+
+  // ── Criar nova Missão (persiste no SystemSetting) ──
+  const handleCreateMission = async () => {
+    if (!newMission.name.trim()) { toast.error('Informe o nome da missão'); return; }
+    setCreating(true);
+    try {
+      const existing = await base44.entities.SystemSetting.filter({ key: MISSIONS_STORAGE_KEY });
+      const current = existing?.length > 0 && existing[0].value ? JSON.parse(existing[0].value) : [];
+      const id = newMission.name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+      const newItem = { id, icon: newMission.icon, name: newMission.name, description: newMission.description, linked_sprint_id: newMission.linked_sprint_id };
+      const updated = [...current, newItem];
+      const payload = { key: MISSIONS_STORAGE_KEY, value: JSON.stringify(updated) };
+      if (existing?.length > 0) await base44.entities.SystemSetting.update(existing[0].id, payload);
+      else await base44.entities.SystemSetting.create(payload);
+      toast.success('Missão criada! Recarregue a aba Missões para ver.');
+      setShowNewMission(false);
+      setNewMission({ icon: '🎯', name: '', description: '', linked_sprint_id: '' });
+    } catch { toast.error('Erro ao criar missão'); }
+    finally { setCreating(false); }
+  };
+
+  // ── Criar novo Sprint template (persiste no SystemSetting) ──
+  const handleCreateSprint = async () => {
+    if (!newSprint.mission_name.trim()) { toast.error('Informe o nome da missão do sprint'); return; }
+    setCreating(true);
+    try {
+      const existing = await base44.entities.SystemSetting.filter({ key: SPRINTS_STORAGE_KEY });
+      const current = existing?.length > 0 && existing[0].value ? JSON.parse(existing[0].value) : [];
+      const mission_id = newSprint.mission_name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+      const newItem = {
+        mission_id,
+        mission_icon: newSprint.mission_icon,
+        mission_name: newSprint.mission_name,
+        sprint: {
+          id: `${mission_id}_sprint1`,
+          sprint_number: 1,
+          title: `Sprint 1 — ${newSprint.mission_name}`,
+          objective: newSprint.objective,
+          phases: ['Planning','Execution','Monitoring','Review','Retrospective'].map(name => ({ name, tasks: [] })),
+        },
+      };
+      const updated = [...current, newItem];
+      const payload = { key: SPRINTS_STORAGE_KEY, value: JSON.stringify(updated) };
+      if (existing?.length > 0) await base44.entities.SystemSetting.update(existing[0].id, payload);
+      else await base44.entities.SystemSetting.create(payload);
+      toast.success('Sprint criado! Recarregue a aba Sprints para ver.');
+      setShowNewSprint(false);
+      setNewSprint({ mission_icon: '🚀', mission_name: '', objective: '' });
+    } catch { toast.error('Erro ao criar sprint'); }
+    finally { setCreating(false); }
+  };
+
   if (loadingTrails || loadingSprints) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -171,12 +260,17 @@ export default function TemplateLibraryManager() {
 
         {/* TAB: TRILHAS GUIADAS */}
         <TabsContent value="trails" className="space-y-4">
-          <Card className="bg-amber-50 border-amber-200">
-            <CardContent className="pt-4 text-sm text-amber-700">
-              <p className="font-semibold mb-1">ℹ️ Trilhas Guiadas</p>
-              <p>Modelos pré-prontos que podem ser usados como base. As trilhas personalizadas dos clientes são criadas individualmente no cronograma de consultoria após o diagnóstico.</p>
-            </CardContent>
-          </Card>
+          <div className="flex items-center justify-between">
+            <Card className="bg-amber-50 border-amber-200 flex-1">
+              <CardContent className="pt-4 text-sm text-amber-700">
+                <p className="font-semibold mb-1">ℹ️ Trilhas Guiadas</p>
+                <p>Modelos pré-prontos que podem ser usados como base. As trilhas personalizadas dos clientes são criadas individualmente no cronograma de consultoria após o diagnóstico.</p>
+              </CardContent>
+            </Card>
+            <Button className="ml-4 shrink-0" onClick={() => setShowNewTrail(true)}>
+              <Plus className="w-4 h-4 mr-2" /> Nova Trilha
+            </Button>
+          </div>
 
           {templates.trails.length === 0 ? (
             <Card>
@@ -238,14 +332,153 @@ export default function TemplateLibraryManager() {
 
         {/* TAB: MISSÕES */}
         <TabsContent value="missions" className="space-y-4">
+          <div className="flex justify-end">
+            <Button onClick={() => setShowNewMission(true)}>
+              <Plus className="w-4 h-4 mr-2" /> Nova Missão
+            </Button>
+          </div>
           <MissionsTemplateGrid />
         </TabsContent>
 
         {/* TAB: SPRINTS */}
         <TabsContent value="sprints" className="space-y-4">
+          <div className="flex justify-end">
+            <Button onClick={() => setShowNewSprint(true)}>
+              <Plus className="w-4 h-4 mr-2" /> Novo Sprint
+            </Button>
+          </div>
           <SprintsTemplateGrid />
         </TabsContent>
       </Tabs>
+
+      {/* ── Modal: Nova Trilha ── */}
+      <Dialog open={showNewTrail} onOpenChange={setShowNewTrail}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Nova Trilha Guiada</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <label className="text-sm font-semibold text-gray-700">Nome da Trilha *</label>
+              <Input
+                className="mt-1"
+                placeholder="Ex: Trilha Crescimento Fase 1"
+                value={newTrail.nome_fase}
+                onChange={e => setNewTrail({ ...newTrail, nome_fase: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-gray-700">Objetivo Geral</label>
+              <Textarea
+                className="mt-1 resize-none h-20"
+                placeholder="Descreva o objetivo desta trilha..."
+                value={newTrail.objetivo_geral}
+                onChange={e => setNewTrail({ ...newTrail, objetivo_geral: e.target.value })}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowNewTrail(false)}>Cancelar</Button>
+            <Button onClick={handleCreateTrail} disabled={creating}>
+              {creating ? 'Criando...' : 'Criar Trilha'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Modal: Nova Missão ── */}
+      <Dialog open={showNewMission} onOpenChange={setShowNewMission}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Nova Missão</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="flex gap-3">
+              <div className="w-24">
+                <label className="text-sm font-semibold text-gray-700">Ícone</label>
+                <Input
+                  className="mt-1 text-center text-lg"
+                  maxLength={2}
+                  value={newMission.icon}
+                  onChange={e => setNewMission({ ...newMission, icon: e.target.value })}
+                />
+              </div>
+              <div className="flex-1">
+                <label className="text-sm font-semibold text-gray-700">Nome *</label>
+                <Input
+                  className="mt-1"
+                  placeholder="Ex: Reativação de Base"
+                  value={newMission.name}
+                  onChange={e => setNewMission({ ...newMission, name: e.target.value })}
+                />
+              </div>
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-gray-700">Descrição</label>
+              <Textarea
+                className="mt-1 resize-none h-20"
+                placeholder="Descreva o objetivo desta missão..."
+                value={newMission.description}
+                onChange={e => setNewMission({ ...newMission, description: e.target.value })}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowNewMission(false)}>Cancelar</Button>
+            <Button onClick={handleCreateMission} disabled={creating}>
+              {creating ? 'Criando...' : 'Criar Missão'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Modal: Novo Sprint ── */}
+      <Dialog open={showNewSprint} onOpenChange={setShowNewSprint}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Novo Sprint Template</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="flex gap-3">
+              <div className="w-24">
+                <label className="text-sm font-semibold text-gray-700">Ícone</label>
+                <Input
+                  className="mt-1 text-center text-lg"
+                  maxLength={2}
+                  value={newSprint.mission_icon}
+                  onChange={e => setNewSprint({ ...newSprint, mission_icon: e.target.value })}
+                />
+              </div>
+              <div className="flex-1">
+                <label className="text-sm font-semibold text-gray-700">Nome da Missão *</label>
+                <Input
+                  className="mt-1"
+                  placeholder="Ex: Pós-Venda Ativo"
+                  value={newSprint.mission_name}
+                  onChange={e => setNewSprint({ ...newSprint, mission_name: e.target.value })}
+                />
+              </div>
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-gray-700">Objetivo do Sprint</label>
+              <Textarea
+                className="mt-1 resize-none h-20"
+                placeholder="O que este sprint deve alcançar?"
+                value={newSprint.objective}
+                onChange={e => setNewSprint({ ...newSprint, objective: e.target.value })}
+              />
+            </div>
+            <p className="text-xs text-gray-500">O sprint será criado com 5 fases (Planning, Execução, Checkpoint, Review, Retrospectiva) sem tarefas. Configure as tarefas de cada fase diretamente na grade de Sprints.</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowNewSprint(false)}>Cancelar</Button>
+            <Button onClick={handleCreateSprint} disabled={creating}>
+              {creating ? 'Criando...' : 'Criar Sprint'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
