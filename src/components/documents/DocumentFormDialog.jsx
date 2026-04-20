@@ -181,6 +181,32 @@ export default function DocumentFormDialog({ open, onClose, document, workshopId
         training_link: document.training_link || '',
         observations: document.observations || ''
       });
+    } else {
+      // Resetar formulário para novo documento
+      setAutoGenerateId(true);
+      setFormData({
+        document_id: '',
+        title: '',
+        category: '',
+        subprocess_area: '',
+        document_type: '',
+        responsible_role: '',
+        process_owner: '',
+        status: 'em_construcao',
+        file_url: '',
+        version: 'v1.0',
+        creation_date: new Date().toISOString().split('T')[0],
+        last_revision_date: '',
+        next_review_date: '',
+        legal_impact: '',
+        risk_if_not_comply: '',
+        mandatory_by_law: false,
+        legal_reference: '',
+        target_audience: '',
+        has_training: false,
+        training_link: '',
+        observations: ''
+      });
     }
   }, [document]);
 
