@@ -9,32 +9,62 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
 
     if (!user) {
+      console.error(`[PDF] Não autenticado`);
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    console.log(`[PDF] Usuário autenticado: ${user.email} | ID: ${user.id}`);
 
     const { ata_id } = await req.json();
 
     if (!ata_id) {
+      console.error(`[PDF] ata_id não fornecido`);
       return Response.json({ error: 'ata_id is required' }, { status: 400 });
     }
 
-    console.log(`[PDF] Iniciando geração para ATA: ${ata_id}`);
+    console.log(`[PDF] ======== INICIANDO GERAÇÃO ========`);
+    console.log(`[PDF] ATA ID: ${ata_id}`);
 
     // Buscar dados da ATA
+    console.log(`[PDF] Buscando ATA...`);
     const ata = await base44.entities.MeetingMinutes.get(ata_id);
     if (!ata) {
-      return Response.json({ error: 'ATA not found' }, { status: 404 });
+      console.error(`[PDF] ATA não encontrada: ${ata_id}`);
+      return Response.json({ error: 'ATA not found', ata_id }, { status: 404 });
     }
 
-    // Buscar workshop se disponível
+    console.log(`[PDF] ATA carregada com sucesso`);
+    console.log(`[PDF]   - Código: ${ata.code || 'N/A'}`);
+    console.log(`[PDF]   - Workshop ID: ${ata.workshop_id || 'N/A'}`);
+    console.log(`[PDF]   - Atendimento ID: ${ata.atendimento_id || 'N/A'}`);
+
+    // VALIDAÇÃO 1: Verificar se tem dados mínimos
+    const hasContent = ata.pautas || ata.objetivos_atendimento || ata.objetivos_consultor || 
+                       ata.proximos_passos_list?.length > 0 || ata.acoes_geradas?.length > 0;
+    
+    if (!hasContent) {
+      console.warn(`[PDF-Validation] ATA sem conteúdo suficiente: ${ata_id}`);
+      return Response.json({ 
+        error: 'ATA sem dados suficientes para gerar PDF',
+        details: 'Preencha pelo menos uma seção (Pautas, Objetivos, Próximos Passos ou Ações)'
+      }, { status: 400 });
+    }
+
+    console.log(`[PDF-Validation] ✓ ATA tem dados válidos`);
+
+    // Buscar workshop se disponível (contexto multi-tenant)
     let workshop = null;
     if (ata.workshop_id) {
       try {
+        console.log(`[PDF] Buscando Workshop: ${ata.workshop_id}`);
         workshop = await base44.entities.Workshop.get(ata.workshop_id);
-        console.log(`[PDF] Workshop carregado: ${workshop.name}`);
+        console.log(`[PDF] ✓ Workshop carregado: ${workshop?.name || 'Sem nome'}`);
       } catch (e) {
-        console.warn(`[PDF] Workshop não encontrado:`, e.message);
+        console.warn(`[PDF] ⚠ Workshop não encontrado (ID: ${ata.workshop_id}): ${e.message}`);
+        // Não bloqueia - workshop é opcional para gerar PDF
       }
+    } else {
+      console.log(`[PDF] Nenhum workshop_id na ATA`);
     }
 
     // Gerar HTML da ATA (RENDERIZAÇÃO BACKEND COMPLETA)
@@ -110,8 +140,10 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
-    console.error(`[PDF-Error] ${error.message}`);
-    console.error(`[PDF-Stack] ${error.stack}`);
+    console.error(`[PDF-Error] ========== ERRO NA GERAÇÃO ==========`);
+    console.error(`[PDF-Error] Tipo: ${error.name}`);
+    console.error(`[PDF-Error] Mensagem: ${error.message}`);
+    console.error(`[PDF-Error] Stack: ${error.stack}`);
 
     // Fechar browser em caso de erro
     if (browser) {
@@ -123,13 +155,29 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Determinar status HTTP apropriado
+    let statusCode = 500;
+    let userMessage = 'Erro ao gerar PDF';
+
+    if (error.message?.includes('not found') || error.message?.includes('404')) {
+      statusCode = 404;
+      userMessage = 'ATA ou dados associados não encontrados';
+    } else if (error.message?.includes('timeout') || error.message?.includes('Timeout')) {
+      statusCode = 408;
+      userMessage = 'Tempo limite excedido na geração do PDF';
+    } else if (error.message?.includes('invalid') || error.message?.includes('validation')) {
+      statusCode = 400;
+      userMessage = 'Dados inválidos para gerar PDF';
+    }
+
+    console.error(`[PDF-Error] Status HTTP: ${statusCode}`);
     return Response.json(
       { 
-        error: error.message || 'PDF generation failed',
-        type: error.name || 'Unknown',
-        stack: error.stack
+        error: userMessage,
+        details: error.message,
+        type: error.name || 'Unknown'
       },
-      { status: 500 }
+      { status: statusCode }
     );
   }
 });

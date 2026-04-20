@@ -156,7 +156,9 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
       toast.success(`PDF "${response.data.filename}" baixado com sucesso!`);
     } catch (error) {
       console.error('Erro ao gerar PDF:', error);
-      toast.error('Erro ao gerar PDF: ' + error.message);
+      const errorMsg = error.response?.data?.error || error.message || 'Erro desconhecido ao gerar PDF';
+      const errorDetails = error.response?.data?.details ? ` - ${error.response.data.details}` : '';
+      toast.error('Erro ao gerar PDF: ' + errorMsg + errorDetails);
     } finally {
       setIsGeneratingPDF(false);
     }
@@ -185,6 +187,15 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
   };
 
   if (!ataAtualizada) return null;
+
+  // Validar se tem dados suficientes para PDF
+  const hasValidContent = !!(
+    d.pautas || 
+    d.objetivos_atendimento || 
+    d.objetivos_consultor || 
+    d.proximos_passos_list?.length > 0 || 
+    d.acoes_geradas?.length > 0
+  );
 
   // Dados para inteligência combinada (da ATA ou busca separada)
   const intelData = clientIntelligence.length > 0 ? clientIntelligence : (d.client_intelligence || []);
@@ -220,7 +231,8 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
                      size="sm"
                      variant="outline"
                      onClick={handleDownload}
-                     disabled={isGeneratingPDF || isLoading}
+                     disabled={isGeneratingPDF || isLoading || !hasValidContent}
+                     title={!hasValidContent ? 'Preencha pelo menos uma seção (Pautas, Objetivos, Próximos Passos ou Ações)' : isLoading ? 'Aguarde o carregamento da ATA' : 'Gerar e baixar PDF'}
                    >
                      {isGeneratingPDF ? (
                        <>
@@ -236,10 +248,15 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
                    </Button>
                  </div>
               </div>
-            </div>
-          </DialogHeader>
+              </div>
+              {!hasValidContent && !isLoading && (
+              <div className="bg-amber-50 border border-amber-200 rounded p-3 text-sm text-amber-800">
+                ⚠️ Preencha pelo menos uma seção (Pautas, Objetivos, Próximos Passos ou Ações) para gerar o PDF.
+              </div>
+              )}
+              </DialogHeader>
 
-          {isLoading ? (
+              {isLoading ? (
            <div className="flex flex-col items-center justify-center py-16 gap-3">
              <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
              <p className="text-gray-500">Carregando dados da ATA...</p>
