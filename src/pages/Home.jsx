@@ -8,12 +8,10 @@ import { ChevronRight, TrendingUp, Users, BarChart3, Rocket, Loader2, LogIn, Fil
 import { toast } from "sonner";
 import OnboardingTour from "../components/onboarding/OnboardingTour";
 import OnboardingChecklist from "../components/onboarding/OnboardingChecklist";
-import ContextualTips from "../components/onboarding/ContextualTips"; // This will be removed from authenticated view
 import DashboardHub from "../components/home/DashboardHub";
 import WheelLoader from "@/components/ui/WheelLoader";
 import DynamicHelpSystem from "@/components/help/DynamicHelpSystem";
 import QuickTipsBar from "@/components/help/QuickTipsBar";
-import AdminViewBanner from "../components/shared/AdminViewBanner";
 import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 import { getPhaseInfo } from "@/components/lib/phaseConstants";
 import { useQuery } from "@tanstack/react-query";
