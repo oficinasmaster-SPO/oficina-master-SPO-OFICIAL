@@ -404,6 +404,28 @@ export default function SprintsTemplateGrid() {
     }
   };
 
+  // Sincronizar retroativamente sprints existentes com o template
+  const syncExistingSprints = async (missionId) => {
+    try {
+      const response = await base44.functions.invoke('syncClientSprintTasksWithTemplate', {
+        missionId,
+      });
+
+      if (response.data?.success) {
+        const count = response.data.updatedCount;
+        if (count > 0) {
+          toast.success(`Sincronizadas ${count} sprints existentes`);
+        }
+        if (response.data.errors?.length > 0) {
+          console.warn('Alguns sprints falharam:', response.data.errors);
+        }
+      }
+    } catch (err) {
+      console.error('Erro ao sincronizar:', err);
+      // Não mostrar erro se falhar, pois pode ser primeira vez
+    }
+  };
+
   const handleSprintSave = async (missionId, updatedSprint) => {
     const newData = data.map(m => m.mission_id === missionId ? { ...m, sprint: updatedSprint } : m);
     setData(newData);
@@ -421,6 +443,10 @@ export default function SprintsTemplateGrid() {
       // Propagar atualizações para todos os sprints de clientes
       const oldSprint = data.find(m => m.mission_id === missionId)?.sprint;
       if (oldSprint?.phases && updatedSprint?.phases) {
+        // Primeiro, sincronizar sprints existentes que possam estar desatualizados
+        await syncExistingSprints(missionId);
+        
+        // Depois, propagar mudanças específicas da fase
         for (let phaseIdx = 0; phaseIdx < updatedSprint.phases.length; phaseIdx++) {
           const oldTasks = oldSprint.phases[phaseIdx]?.tasks || [];
           const newTasks = updatedSprint.phases[phaseIdx]?.tasks || [];
