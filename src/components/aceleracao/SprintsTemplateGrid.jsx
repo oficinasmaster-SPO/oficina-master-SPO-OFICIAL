@@ -443,8 +443,14 @@ export default function SprintsTemplateGrid() {
       // Propagar atualizações para todos os sprints de clientes
       const oldSprint = data.find(m => m.mission_id === missionId)?.sprint;
       if (oldSprint?.phases && updatedSprint?.phases) {
+        toast.info("🔄 Sincronizando sprints antigas com novo template...");
+        
         // Primeiro, sincronizar sprints existentes que possam estar desatualizados
-        await syncExistingSprints(missionId);
+        try {
+          await syncExistingSprints(missionId);
+        } catch (err) {
+          console.warn("Sincronização retroativa parcial:", err);
+        }
         
         // Depois, propagar mudanças específicas da fase
         for (let phaseIdx = 0; phaseIdx < updatedSprint.phases.length; phaseIdx++) {
@@ -457,6 +463,8 @@ export default function SprintsTemplateGrid() {
             await propagateUpdates(missionId, phaseIdx, newTasks);
           }
         }
+        
+        toast.success("✅ Template salvo e sprints antigas atualizadas!");
       }
       
       toast.success('Template salvo com sucesso!');
