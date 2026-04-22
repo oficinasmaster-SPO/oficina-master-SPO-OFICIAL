@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Edit2, Save, X, Plus, Trash2, ChevronDown, ChevronUp, Link, ExternalLink, RefreshCw } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Edit2, Save, X, Plus, Trash2, ChevronDown, ChevronUp, Link, ExternalLink, RefreshCw, BookOpen } from 'lucide-react';
 import { getDefaultTasksForPhase } from './sprintMissionTasks';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
@@ -109,11 +110,54 @@ function TaskEditor({ tasks, onUpdate }) {
 }
 
 // ──────────────────────────────────────────────
+// TaskDetailModal: modal com instrução + link
+// ──────────────────────────────────────────────
+function TaskDetailModal({ task, open, onClose }) {
+  if (!task) return null;
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-sm font-semibold text-gray-900 leading-snug">
+            {task.description}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 pt-2">
+          {task.instructions && (
+            <div>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Instrução</p>
+              <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{task.instructions}</p>
+            </div>
+          )}
+          {task.link_url && (
+            <div>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Material Complementar</p>
+              <a
+                href={task.link_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-blue-600 hover:underline text-sm"
+              >
+                <ExternalLink className="w-4 h-4" />
+                {task.link_url}
+              </a>
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ──────────────────────────────────────────────
 // PhaseRow: uma fase com suas tarefas
 // ──────────────────────────────────────────────
 function PhaseRow({ phaseData, phaseConfig, editing, onUpdateTasks }) {
   const [expanded, setExpanded] = useState(false);
+  const [selectedTask, setSelectedTask] = useState(null);
   const totalTasks = phaseData.tasks?.length || 0;
+
+  const hasDetail = (task) => !!(task.instructions || task.link_url);
 
   return (
     <div className={`rounded-lg border p-3 ${phaseConfig.color}`}>
@@ -147,14 +191,14 @@ function PhaseRow({ phaseData, phaseConfig, editing, onUpdateTasks }) {
             phaseData.tasks?.length > 0 ? (
               <div className="space-y-1.5">
                 {phaseData.tasks.map((task, idx) => (
-                  <div key={idx} className="bg-white/70 rounded p-2 text-xs space-y-0.5">
+                  <div
+                    key={idx}
+                    className={`bg-white/70 rounded p-2 text-xs flex items-start justify-between gap-2 ${hasDetail(task) ? 'cursor-pointer hover:bg-white transition-colors' : ''}`}
+                    onClick={() => hasDetail(task) && setSelectedTask(task)}
+                  >
                     <p className="font-semibold text-gray-800">• {task.description}</p>
-                    {task.instructions && <p className="text-gray-500 pl-3 whitespace-pre-wrap">{task.instructions}</p>}
-                    {task.link_url && (
-                      <a href={task.link_url} target="_blank" rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-blue-600 hover:underline pl-3">
-                        <ExternalLink className="w-3 h-3" /> Material complementar
-                      </a>
+                    {hasDetail(task) && (
+                      <BookOpen className="w-3 h-3 text-blue-400 shrink-0 mt-0.5" />
                     )}
                   </div>
                 ))}
@@ -165,6 +209,12 @@ function PhaseRow({ phaseData, phaseConfig, editing, onUpdateTasks }) {
           )}
         </div>
       )}
+
+      <TaskDetailModal
+        task={selectedTask}
+        open={!!selectedTask}
+        onClose={() => setSelectedTask(null)}
+      />
     </div>
   );
 }
