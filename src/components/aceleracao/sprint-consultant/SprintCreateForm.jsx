@@ -109,13 +109,11 @@ export default function SprintCreateForm({ open, onClose, workshops = [], user, 
   const addTask = (phaseIdx) => {
     const text = newTaskTexts[phaseIdx]?.trim();
     if (!text) return;
+    const taskObj = { description: text, status: "to_do" };
+    if (newTaskInstructions[phaseIdx]?.trim()) taskObj.instructions = newTaskInstructions[phaseIdx].trim();
+    if (newTaskLinks[phaseIdx]?.trim()) taskObj.link_url = newTaskLinks[phaseIdx].trim();
     const updated = [...phaseTasks];
-    updated[phaseIdx] = [...updated[phaseIdx], {
-      description: text,
-      status: "to_do",
-      instructions: newTaskInstructions[phaseIdx]?.trim() || undefined,
-      link_url: newTaskLinks[phaseIdx]?.trim() || undefined,
-    }];
+    updated[phaseIdx] = [...updated[phaseIdx], taskObj];
     setPhaseTasks(updated);
     const newTexts = [...newTaskTexts];
     newTexts[phaseIdx] = "";

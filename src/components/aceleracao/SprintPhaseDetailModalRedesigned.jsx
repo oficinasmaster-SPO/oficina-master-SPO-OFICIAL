@@ -245,9 +245,9 @@ export default function SprintPhaseDetailModalRedesigned({
       ...((!wasDone) ? { completed_by_role: "consultor", completed_at: new Date().toISOString() } : { completed_by_role: null, completed_at: null }),
     };
     setTasks(updated);
-    // Auto-persist immediately — same as SprintClientModal behavior
-    const updatedPhases = phases.map((p, i) =>
-      i === phaseIndex ? { ...p, tasks: updated, status: status, notes } : p
+    // Auto-persist immediately — usa livePhases para garantir tasks locais (com instructions/link_url)
+    const updatedPhases = livePhases.map((p, i) =>
+      i === phaseIndex ? { ...p, tasks: updated } : p
     );
     await persistPhases(updatedPhases);
   };
@@ -263,9 +263,9 @@ export default function SprintPhaseDetailModalRedesigned({
       link_url: originalTask.link_url
     };
     setTasks(updated);
-    // Auto-persist evidence immediately
-    const updatedPhases = phases.map((p, i) =>
-      i === phaseIndex ? { ...p, tasks: updated, status, notes } : p
+    // Auto-persist evidence — usa livePhases para preservar instructions/link_url
+    const updatedPhases = livePhases.map((p, i) =>
+      i === phaseIndex ? { ...p, tasks: updated } : p
     );
     await persistPhases(updatedPhases);
     toast.success("Evidência salva!");
@@ -277,12 +277,13 @@ export default function SprintPhaseDetailModalRedesigned({
   const addTask = async () => {
     if (!newTask.trim()) return;
     try {
-      const updated = [...tasks, {
+      const newTaskObj = {
         description: newTask.trim(),
         status: "to_do",
-        instructions: newTaskInstructions.trim() || null,
-        link_url: newTaskLink.trim() || null,
-      }];
+      };
+      if (newTaskInstructions.trim()) newTaskObj.instructions = newTaskInstructions.trim();
+      if (newTaskLink.trim()) newTaskObj.link_url = newTaskLink.trim();
+      const updated = [...tasks, newTaskObj];
       setTasks(updated);
       const updatedPhases = phases.map((p, i) =>
         i === phaseIndex ? { ...p, tasks: updated, status, notes } : p
@@ -303,8 +304,8 @@ export default function SprintPhaseDetailModalRedesigned({
   const removeTask = async (idx) => {
     const updated = tasks.filter((_, i) => i !== idx);
     setTasks(updated);
-    const updatedPhases = phases.map((p, i) =>
-      i === phaseIndex ? { ...p, tasks: updated, status, notes } : p
+    const updatedPhases = livePhases.map((p, i) =>
+      i === phaseIndex ? { ...p, tasks: updated } : p
     );
     await persistPhases(updatedPhases);
   };
@@ -424,11 +425,12 @@ export default function SprintPhaseDetailModalRedesigned({
                 className="text-sm flex-1 bg-white"
                 onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addTask(); } }}
               />
-              <Input
+              <Textarea
                 value={newTaskInstructions}
                 onChange={(e) => setNewTaskInstructions(e.target.value)}
                 placeholder="Como fazer (instruções para a oficina)..."
                 className="text-sm bg-white"
+                rows={2}
               />
               <Input
                 value={newTaskLink}
