@@ -456,13 +456,12 @@ export default function GerenciarProcessos() {
   const filteredDocs = documents.filter(doc => {
     const matchesSearch = doc.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           (doc.code && doc.code.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesCategory = categoryFilter === "all" || doc.category === categoryFilter;
+    const matchesCategory = categoryFilter === "all" || doc.area_id === categoryFilter;
     return matchesSearch && matchesCategory;
   });
 
-  const categories = processAreas.map(a => a.name);
-
   const plans = ["FREE", "START", "BRONZE", "PRATA", "GOLD", "IOM", "MILLIONS"];
+
 
   if (!user) return <div className="p-8 text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto" /></div>;
 
@@ -945,13 +944,26 @@ export default function GerenciarProcessos() {
             </div>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
               <SelectTrigger className="w-full md:w-48">
-                <SelectValue placeholder="Filtrar Categoria" />
+                <SelectValue placeholder="Filtrar por Área" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todas as Categorias</SelectItem>
-                {categories.map(cat => (
-                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                ))}
+                <SelectItem value="all">Todas as Áreas</SelectItem>
+                {processAreas.filter(a => a.category === 'geral').length > 0 && (
+                  <>
+                    <div className="px-2 py-1.5 text-xs font-semibold text-gray-400">GESTÃO / NEGÓCIO</div>
+                    {processAreas.filter(a => a.category === 'geral').map(area => (
+                      <SelectItem key={area.id} value={area.id}>{area.name}</SelectItem>
+                    ))}
+                  </>
+                )}
+                {processAreas.filter(a => a.category === 'tecnica').length > 0 && (
+                  <>
+                    <div className="px-2 py-1.5 text-xs font-semibold text-gray-400 mt-1">TÉCNICA</div>
+                    {processAreas.filter(a => a.category === 'tecnica').map(area => (
+                      <SelectItem key={area.id} value={area.id}>{area.name}</SelectItem>
+                    ))}
+                  </>
+                )}
               </SelectContent>
             </Select>
           </div>

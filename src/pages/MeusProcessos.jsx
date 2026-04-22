@@ -447,16 +447,17 @@ export default function MeusProcessos() {
                         </div>
                         </CardHeader>
                         <CardContent className="flex-1">
-                        <div className="w-full h-32 bg-gray-100 rounded-md flex items-center justify-center border border-gray-200 mb-2 group cursor-pointer" onClick={() => window.open(doc.pdf_url, '_blank')}>
-                          <FileText className="w-12 h-12 text-gray-400 group-hover:text-red-500 transition-colors" />
+                        <div
+                          className={`w-full h-32 bg-gray-100 rounded-md flex items-center justify-center border border-gray-200 mb-2 group ${doc.pdf_url ? 'cursor-pointer' : 'cursor-default'}`}
+                          onClick={() => doc.pdf_url && window.open(doc.pdf_url, '_blank')}
+                        >
+                          <FileText className={`w-12 h-12 text-gray-400 ${doc.pdf_url ? 'group-hover:text-red-500' : ''} transition-colors`} />
                         </div>
                       </CardContent>
                       <CardFooter className="pt-0 gap-2 flex-wrap">
                         <Button 
                           className="flex-1 bg-red-600 hover:bg-red-700" 
-                          onClick={() => {
-                            navigate(createPageUrl('VisualizarProcesso') + `?id=${doc.id}`);
-                          }}
+                          onClick={() => navigate(createPageUrl('VisualizarProcesso') + `?id=${doc.id}`)}
                         >
                           <Eye className="w-4 h-4 mr-2" />
                           Visualizar
@@ -464,10 +465,7 @@ export default function MeusProcessos() {
                         <Button 
                           variant="outline" 
                           size="icon" 
-                          onClick={() => {
-                            setSelectedProcess(doc);
-                            setShareDialogOpen(true);
-                          }}
+                          onClick={() => { setSelectedProcess(doc); setShareDialogOpen(true); }}
                           title="Compartilhar com Colaborador"
                           className="text-green-600 hover:text-green-700 border-green-200 hover:bg-green-50"
                         >
@@ -476,16 +474,19 @@ export default function MeusProcessos() {
                         <Button 
                           variant="outline" 
                           size="icon" 
-                          onClick={() => {
-                            setSelectedProcess(doc);
-                            setHistoryDialogOpen(true);
-                          }}
+                          onClick={() => { setSelectedProcess(doc); setHistoryDialogOpen(true); }}
                           title="Ver Histórico de Compartilhamentos"
                           className="text-purple-600 hover:text-purple-700 border-purple-200 hover:bg-purple-50"
                         >
                           <History className="w-4 h-4" />
                         </Button>
-                        <Button variant="outline" size="icon" onClick={() => window.open(doc.pdf_url, '_blank')} title="Baixar PDF">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => doc.pdf_url && window.open(doc.pdf_url, '_blank')}
+                          title="Baixar PDF"
+                          disabled={!doc.pdf_url}
+                        >
                           <Download className="w-4 h-4" />
                         </Button>
                         {doc.is_template && user?.role !== 'admin' && (
