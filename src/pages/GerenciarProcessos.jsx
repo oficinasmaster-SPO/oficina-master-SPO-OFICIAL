@@ -80,6 +80,14 @@ export default function GerenciarProcessos() {
     loadData();
   }, []);
 
+  const { data: processAreas = [] } = useQuery({
+    queryKey: ['process-areas'],
+    queryFn: async () => {
+      const allAreas = await base44.entities.ProcessArea.list();
+      return allAreas.sort((a, b) => (a.order || 0) - (b.order || 0));
+    }
+  });
+
   const { data: documents = [], isLoading } = useQuery({
     queryKey: ['process-documents', user?.id],
     queryFn: async () => {
@@ -450,14 +458,6 @@ export default function GerenciarProcessos() {
                           (doc.code && doc.code.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesCategory = categoryFilter === "all" || doc.category === categoryFilter;
     return matchesSearch && matchesCategory;
-  });
-
-  const { data: processAreas = [] } = useQuery({
-    queryKey: ['process-areas'],
-    queryFn: async () => {
-      const allAreas = await base44.entities.ProcessArea.list();
-      return allAreas.sort((a, b) => (a.order || 0) - (b.order || 0));
-    }
   });
 
   const categories = processAreas.map(a => a.name);
@@ -987,10 +987,16 @@ export default function GerenciarProcessos() {
                           <TableCell className="font-mono text-xs">{doc.code || "-"}</TableCell>
                           <TableCell>
                             <div className="font-medium">{doc.title}</div>
-                            <div className="text-xs text-gray-500">{doc.description && doc.description.substring(0, 50) + "..."}</div>
+                            <div className="text-xs text-gray-500">{doc.description ? doc.description.substring(0, 60) + (doc.description.length > 60 ? "..." : "") : ""}</div>
                           </TableCell>
                           <TableCell>
-                            <Badge variant="secondary">{doc.category}</Badge>
+                            {doc.subcategory ? (
+                              <Badge variant="secondary" className="text-xs">{doc.subcategory}</Badge>
+                            ) : doc.category ? (
+                              <Badge variant="secondary" className="text-xs text-gray-500">{doc.category}</Badge>
+                            ) : (
+                              <span className="text-xs text-gray-400">-</span>
+                            )}
                           </TableCell>
                           <TableCell>
                             {areaData ? (
@@ -1011,9 +1017,11 @@ export default function GerenciarProcessos() {
                           </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
-                            <Button size="icon" variant="ghost" onClick={() => window.open(doc.pdf_url, '_blank')}>
-                              <FileText className="w-4 h-4 text-blue-600" />
-                            </Button>
+                            {doc.pdf_url && (
+                              <Button size="icon" variant="ghost" onClick={() => window.open(doc.pdf_url, '_blank')}>
+                                <FileText className="w-4 h-4 text-blue-600" />
+                              </Button>
+                            )}
                             <Button size="icon" variant="ghost" onClick={() => handleEdit(doc)}>
                               <Edit className="w-4 h-4 text-gray-600" />
                             </Button>

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Search, FileText, Download, Eye, Filter, Briefcase, DollarSign, Settings, Users, BarChart3, Truck, Copy, Loader2, Mail, History, LayoutGrid, List, Flame, Tag, X } from "lucide-react";
+import { Search, FileText, Download, Eye, Filter, Settings, Copy, Loader2, Mail, History, LayoutGrid, List, Tag, X } from "lucide-react";
 import { createPageUrl } from "@/utils";
 import { Link, useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -127,7 +127,8 @@ export default function MeusProcessos() {
   const filteredDocs = accessibleDocs.filter(doc => {
     const matchesSearch = doc.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           (doc.code && doc.code.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesTab = activeTab === "Todos" || doc.category === activeTab;
+    const matchesTab = activeTab === "Todos"
+      || (activeTab.startsWith("area:") ? doc.area_id === activeTab.replace("area:", "") : doc.category === activeTab);
     const matchesArea = areaFilter === "all" || doc.area_id === areaFilter;
     const matchesSubcat = subcategoryFilter === "all" || doc.subcategory === subcategoryFilter;
     return matchesSearch && matchesTab && matchesArea && matchesSubcat;
@@ -213,20 +214,19 @@ export default function MeusProcessos() {
     onError: () => toast.error("Erro ao copiar modelo.")
   });
 
+  // Build tab list dynamically from areas that have processes
+  const areaTabsWithDocs = areas.filter(a => accessibleDocs.some(d => d.area_id === a.id));
+  const legacyCategories = [...new Set(accessibleDocs.filter(d => !d.area_id && d.category).map(d => d.category))];
+
   const categories = [
     { id: "Todos", label: "Todos", icon: Filter },
-    { id: "Ritual", label: "Rituais", icon: Flame },
-    { id: "Vendas", label: "Vendas", icon: DollarSign },
-    { id: "Comercial", label: "Comercial", icon: Briefcase },
-    { id: "Pátio", label: "Pátio", icon: Truck },
-    { id: "Financeiro", label: "Financeiro", icon: BarChart3 },
-    { id: "RH", label: "RH & Pessoas", icon: Users },
-    { id: "Geral", label: "Geral", icon: Settings },
+    ...areaTabsWithDocs.map(a => ({ id: `area:${a.id}`, label: a.name, icon: FileText })),
+    ...legacyCategories.map(cat => ({ id: cat, label: cat, icon: FileText })),
   ];
 
   const getCategoryIcon = (cat) => {
-    const found = categories.find(c => c.id === cat);
-    return found ? found.icon : FileText;
+    // For area-based categories stored by area_id, use FileText
+    return FileText;
   };
 
   return (
@@ -402,14 +402,14 @@ export default function MeusProcessos() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredDocs.map((doc) => {
-                  const CategoryIcon = getCategoryIcon(doc.category);
+                  const CategoryIcon = FileText;
                   return (
                     <Card key={doc.id} className="hover:shadow-lg transition-shadow duration-300 flex flex-col">
                       <CardHeader className="pb-3">
                         <div className="flex justify-between items-start mb-2">
                           <Badge variant="outline" className="flex items-center gap-1">
                             <CategoryIcon className="w-3 h-3" />
-                            {doc.category}
+                            {areas.find(a => a.id === doc.area_id)?.name || doc.category || "Geral"}
                           </Badge>
                           {doc.code && (
                             <span className="text-xs font-mono text-gray-500 bg-gray-100 px-2 py-1 rounded">
