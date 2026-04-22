@@ -211,7 +211,7 @@ function GoogleMeetSection({ formData, setFormData, user, consultores, workshops
           const nomeOficina = workshopSelecionado?.name || formData.workshop_name || 'Oficina';
           const meetData = await createMeeting({
                   summary: nomeOficina,
-            description: formData.objetivos.join('\n'),
+            description: `Tipo: ${formData.tipo_atendimento?.replace(/_/g, ' ') || ''}\nStatus: ${formData.status || ''}`,
             startDateTime: startDateTime.toISOString(),
             endDateTime: endDateTime.toISOString(),
             attendees: attendeesEmails
