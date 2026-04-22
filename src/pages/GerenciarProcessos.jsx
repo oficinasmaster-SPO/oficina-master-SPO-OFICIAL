@@ -11,7 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Plus, Upload, FileText, Trash2, Edit, Search, ArrowLeft, Save, Wand2, ImageIcon } from "lucide-react";
+import { Loader2, Plus, Upload, FileText, Trash2, Edit, Search, ArrowLeft, Save, Wand2, ImageIcon, Layers, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -54,6 +54,9 @@ export default function GerenciarProcessos() {
   });
   const [uploading, setUploading] = useState(false);
   const [generatingAI, setGeneratingAI] = useState(false);
+  const [initTemplatesOpen, setInitTemplatesOpen] = useState(false);
+  const [initTemplatesLoading, setInitTemplatesLoading] = useState(false);
+  const [initTemplatesResult, setInitTemplatesResult] = useState(null);
 
   const queryClient = useQueryClient();
 
@@ -462,6 +465,26 @@ export default function GerenciarProcessos() {
 
   const plans = ["FREE", "START", "BRONZE", "PRATA", "GOLD", "IOM", "MILLIONS"];
 
+  const handleInitTemplates = async (force = false) => {
+    setInitTemplatesLoading(true);
+    setInitTemplatesResult(null);
+    try {
+      const res = await base44.functions.invoke('initializeDefaultProcessTemplates', { force });
+      setInitTemplatesResult(res.data);
+      if (res.data?.success) {
+        queryClient.invalidateQueries(['process-documents']);
+        toast.success(`${res.data.created_count ?? 0} templates criados com sucesso!`);
+      } else {
+        toast.error(res.data?.error || "Erro ao criar templates.");
+      }
+    } catch (e) {
+      toast.error("Erro ao executar inicialização.");
+      setInitTemplatesResult({ error: e.message });
+    } finally {
+      setInitTemplatesLoading(false);
+    }
+  };
+
 
   if (!user) return <div className="p-8 text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto" /></div>;
 
@@ -486,7 +509,91 @@ export default function GerenciarProcessos() {
             </p>
           </div>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if(!open) resetForm(); }}>
+        <div className="flex gap-2 flex-wrap justify-end">
+          {user?.role === 'admin' && (
+            <>
+              <Button
+                variant="outline"
+                className="border-orange-300 text-orange-700 hover:bg-orange-50"
+                onClick={() => { setInitTemplatesOpen(true); setInitTemplatesResult(null); }}
+              >
+                <Layers className="w-4 h-4 mr-2" /> Inicializar Templates
+              </Button>
+
+              {/* Init Templates Dialog */}
+              <Dialog open={initTemplatesOpen} onOpenChange={setInitTemplatesOpen}>
+                <DialogContent className="max-w-lg">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <Layers className="w-5 h-5 text-orange-600" />
+                      Inicializar Templates de Processos
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 py-2">
+                    {!initTemplatesResult ? (
+                      <>
+                        <p className="text-sm text-gray-600">
+                          Esta ação irá criar automaticamente <strong>todos os MAPs padrão</strong> para cada categoria das 11 áreas funcionais, com status <em>Em elaboração</em> e disponíveis para todos os planos.
+                        </p>
+                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex gap-2 text-sm text-amber-800">
+                          <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                          <span>Se templates já existirem, use <strong>Forçar Recriação</strong> para deletar e recriar todos.</span>
+                        </div>
+                        <div className="flex flex-col gap-2 pt-2">
+                          <Button
+                            onClick={() => handleInitTemplates(false)}
+                            disabled={initTemplatesLoading}
+                            className="bg-orange-600 hover:bg-orange-700 w-full"
+                          >
+                            {initTemplatesLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Layers className="w-4 h-4 mr-2" />}
+                            Criar Templates (ignorar existentes)
+                          </Button>
+                          <Button
+                            onClick={() => handleInitTemplates(true)}
+                            disabled={initTemplatesLoading}
+                            variant="destructive"
+                            className="w-full"
+                          >
+                            {initTemplatesLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <AlertTriangle className="w-4 h-4 mr-2" />}
+                            Forçar Recriação (apagar e recriar todos)
+                          </Button>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="space-y-3">
+                        {initTemplatesResult.success ? (
+                          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                            <p className="font-semibold text-green-800 mb-1">✅ {initTemplatesResult.message}</p>
+                            <div className="text-sm text-green-700 space-y-1">
+                              <p>• <strong>{initTemplatesResult.created_count}</strong> templates criados</p>
+                              {initTemplatesResult.skipped_count > 0 && (
+                                <p>• <strong>{initTemplatesResult.skipped_count}</strong> ignorados (já existiam)</p>
+                              )}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-sm text-red-800">
+                            ❌ {initTemplatesResult.error || initTemplatesResult.message}
+                          </div>
+                        )}
+                        {initTemplatesResult.errors?.length > 0 && (
+                          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-xs text-yellow-800">
+                            <p className="font-semibold mb-1">Avisos:</p>
+                            {initTemplatesResult.errors.map((e, i) => <p key={i}>• {e}</p>)}
+                          </div>
+                        )}
+                        <Button variant="outline" className="w-full" onClick={() => setInitTemplatesOpen(false)}>
+                          Fechar
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </>
+          )}
+
+          <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if(!open) resetForm(); }}>
           <DialogTrigger asChild>
             <Button className="bg-red-600 hover:bg-red-700">
               <Plus className="w-4 h-4 mr-2" /> Novo Processo
@@ -928,6 +1035,7 @@ export default function GerenciarProcessos() {
             </Tabs>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <Card>
