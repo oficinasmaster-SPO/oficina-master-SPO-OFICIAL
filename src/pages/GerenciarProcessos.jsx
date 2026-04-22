@@ -34,6 +34,7 @@ export default function GerenciarProcessos() {
     code: "",
     revision: "1",
     category: "",
+    subcategory: "",
     description: "",
     pdf_url: "",
     plan_access: ["FREE", "START", "BRONZE", "PRATA", "GOLD", "IOM", "MILLIONS"],
@@ -212,6 +213,7 @@ export default function GerenciarProcessos() {
       code: "",
       revision: "1",
       category: "",
+      subcategory: "",
       description: "",
       pdf_url: "",
       plan_access: ["FREE", "START", "BRONZE", "PRATA", "GOLD", "IOM", "MILLIONS"],
@@ -241,6 +243,7 @@ export default function GerenciarProcessos() {
       code: doc.code || "",
       revision: doc.revision || "1",
       category: doc.category,
+      subcategory: doc.subcategory || "",
       description: doc.description || "",
       pdf_url: doc.pdf_url,
       plan_access: doc.plan_access || [],
@@ -263,10 +266,14 @@ export default function GerenciarProcessos() {
     setIsDialogOpen(true);
   };
 
+  // Derive subcategories from selected area
+  const selectedArea = processAreas.find(a => a.id === formData.area_id);
+  const availableSubcategories = selectedArea?.subcategories || [];
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.title || !formData.category || !formData.area_id) {
-      toast.error("Preencha todos os campos obrigatórios (Título, Categoria e Área).");
+    if (!formData.title || !formData.area_id) {
+      toast.error("Preencha todos os campos obrigatórios (Título e Área).");
       return;
     }
     // Remove pdf requirement for custom processes if user wants to rely on content_json content
@@ -524,57 +531,62 @@ export default function GerenciarProcessos() {
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <Label>Categoria *</Label>
-                        <Select 
-                          value={formData.category} 
-                          onValueChange={value => setFormData({...formData, category: value})}
+                        <Label>Área do Processo *</Label>
+                        <Select
+                          value={formData.area_id}
+                          onValueChange={value => setFormData({...formData, area_id: value, subcategory: "", category: processAreas.find(a => a.id === value)?.name || ""})}
                         >
                           <SelectTrigger>
-                            <SelectValue placeholder="Selecione..." />
+                            <SelectValue placeholder="Selecione a área..." />
                           </SelectTrigger>
                           <SelectContent>
-                            {categories.map(cat => (
-                              <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                            <div className="px-2 py-1.5 text-xs font-semibold text-gray-500 border-b">GESTÃO / NEGÓCIO</div>
+                            {processAreas.filter(a => a.category === 'geral').map(area => (
+                              <SelectItem key={area.id} value={area.id}>{area.name}</SelectItem>
+                            ))}
+                            <div className="px-2 py-1.5 text-xs font-semibold text-gray-500 border-b mt-2">TÉCNICA</div>
+                            {processAreas.filter(a => a.category === 'tecnica').map(area => (
+                              <SelectItem key={area.id} value={area.id}>{area.name}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                       </div>
                       <div>
                         <Label>Versão do Documento</Label>
-                        <Input 
-                          value={formData.revision} 
+                        <Input
+                          value={formData.revision}
                           onChange={e => setFormData({...formData, revision: e.target.value})}
                           placeholder="Ex: 1, 2, 3..."
                         />
-                        <p className="text-xs text-gray-500 mt-1">
-                          Incrementar ao atualizar o processo
-                        </p>
+                        <p className="text-xs text-gray-500 mt-1">Incrementar ao atualizar o processo</p>
                       </div>
                     </div>
 
                     <div>
-                      <Label>Área do Processo *</Label>
-                      <Select 
-                        value={formData.area_id} 
-                        onValueChange={value => setFormData({...formData, area_id: value})}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione a área..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <div className="px-2 py-1.5 text-xs font-semibold text-gray-500 border-b">ÁREAS GERAIS</div>
-                          {processAreas.filter(a => a.category === 'geral').map(area => (
-                            <SelectItem key={area.id} value={area.id}>{area.name}</SelectItem>
-                          ))}
-                          <div className="px-2 py-1.5 text-xs font-semibold text-gray-500 border-b mt-2">ÁREAS TÉCNICAS</div>
-                          {processAreas.filter(a => a.category === 'tecnica').map(area => (
-                            <SelectItem key={area.id} value={area.id}>{area.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <p className="text-xs text-gray-500 mt-1">
-                        Define a área de aplicação principal deste processo
-                      </p>
+                      <Label>Categoria / Subcategoria</Label>
+                      {availableSubcategories.length > 0 ? (
+                        <Select
+                          value={formData.subcategory}
+                          onValueChange={value => setFormData({...formData, subcategory: value})}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione a categoria dentro da área..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {availableSubcategories.map(sub => (
+                              <SelectItem key={sub} value={sub}>{sub}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Input
+                          value={formData.subcategory}
+                          onChange={e => setFormData({...formData, subcategory: e.target.value})}
+                          placeholder="Selecione uma área primeiro..."
+                          disabled={!formData.area_id}
+                        />
+                      )}
+                      <p className="text-xs text-gray-500 mt-1">Classifica o processo dentro da área selecionada</p>
                     </div>
                   </div>
 

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Search, FileText, Download, Eye, Filter, Briefcase, DollarSign, Settings, Users, BarChart3, Truck, Copy, Loader2, Mail, History, LayoutGrid, List, Flame } from "lucide-react";
+import { Search, FileText, Download, Eye, Filter, Briefcase, DollarSign, Settings, Users, BarChart3, Truck, Copy, Loader2, Mail, History, LayoutGrid, List, Flame, Tag, X } from "lucide-react";
 import { createPageUrl } from "@/utils";
 import { Link, useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -32,6 +32,8 @@ export default function MeusProcessos() {
   const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
   const [selectedProcess, setSelectedProcess] = useState(null);
   const [viewMode, setViewMode] = useState("cards"); // cards, areas, hierarchy
+  const [areaFilter, setAreaFilter] = useState("all");
+  const [subcategoryFilter, setSubcategoryFilter] = useState("all");
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [detailsType, setDetailsType] = useState(null);
   const [selectedIT, setSelectedIT] = useState(null);
@@ -118,11 +120,17 @@ export default function MeusProcessos() {
     return isRelevant;
   });
 
+  // subcategories of selected area filter
+  const selectedAreaData = areas.find(a => a.id === areaFilter);
+  const availableSubcats = selectedAreaData?.subcategories || [];
+
   const filteredDocs = accessibleDocs.filter(doc => {
-    const matchesSearch = doc.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    const matchesSearch = doc.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           (doc.code && doc.code.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesTab = activeTab === "Todos" || doc.category === activeTab;
-    return matchesSearch && matchesTab;
+    const matchesArea = areaFilter === "all" || doc.area_id === areaFilter;
+    const matchesSubcat = subcategoryFilter === "all" || doc.subcategory === subcategoryFilter;
+    return matchesSearch && matchesTab && matchesArea && matchesSubcat;
   });
 
   // Calculate metrics - contando todos os documentos acessíveis
@@ -258,11 +266,67 @@ export default function MeusProcessos() {
           onViewDetails={handleViewDetails}
         />
 
+        {/* Area + Subcategory filters */}
+        <div className="flex flex-wrap gap-3 mb-4 p-3 bg-white rounded-lg border">
+          <div className="flex items-center gap-1.5 text-sm font-medium text-gray-600 mr-1">
+            <Filter className="w-4 h-4" /> Filtrar por:
+          </div>
+          <select
+            value={areaFilter}
+            onChange={e => { setAreaFilter(e.target.value); setSubcategoryFilter("all"); }}
+            className="text-sm border rounded-md px-2 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-red-300"
+          >
+            <option value="all">Todas as Áreas</option>
+            {areas.filter(a => a.category === 'geral').length > 0 && (
+              <>
+                <optgroup label="── Gestão / Negócio">
+                  {areas.filter(a => a.category === 'geral').map(a => (
+                    <option key={a.id} value={a.id}>{a.name}</option>
+                  ))}
+                </optgroup>
+              </>
+            )}
+            {areas.filter(a => a.category === 'tecnica').length > 0 && (
+              <optgroup label="── Técnica">
+                {areas.filter(a => a.category === 'tecnica').map(a => (
+                  <option key={a.id} value={a.id}>{a.name}</option>
+                ))}
+              </optgroup>
+            )}
+          </select>
+
+          {areaFilter !== "all" && availableSubcats.length > 0 && (
+            <select
+              value={subcategoryFilter}
+              onChange={e => setSubcategoryFilter(e.target.value)}
+              className="text-sm border rounded-md px-2 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-red-300"
+            >
+              <option value="all">Todas as Categorias</option>
+              {availableSubcats.map(sub => (
+                <option key={sub} value={sub}>{sub}</option>
+              ))}
+            </select>
+          )}
+
+          {(areaFilter !== "all" || subcategoryFilter !== "all") && (
+            <button
+              onClick={() => { setAreaFilter("all"); setSubcategoryFilter("all"); }}
+              className="flex items-center gap-1 text-xs text-red-600 hover:text-red-800 border border-red-200 rounded-md px-2 py-1.5 bg-red-50 hover:bg-red-100 transition-colors"
+            >
+              <X className="w-3 h-3" /> Limpar filtros
+            </button>
+          )}
+
+          {filteredDocs.length > 0 && (
+            <span className="ml-auto text-xs text-gray-400 self-center">{filteredDocs.length} processo{filteredDocs.length !== 1 ? 's' : ''}</span>
+          )}
+        </div>
+
         <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between mb-6">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-            <Input 
-              placeholder="Buscar processos..." 
+            <Input
+              placeholder="Buscar processos..."
               className="pl-10 bg-white"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -360,11 +424,16 @@ export default function MeusProcessos() {
                          {doc.description || "Sem descrição disponível."}
                         </CardDescription>
                         <div className="flex flex-wrap gap-1 mt-3">
-                         {doc.operational_status && (
-                           <Badge variant="outline" className="text-xs">
-                             {doc.operational_status.replace(/_/g, ' ')}
-                           </Badge>
-                         )}
+                        {doc.subcategory && (
+                          <Badge variant="outline" className="text-xs text-blue-700 border-blue-200 bg-blue-50 flex items-center gap-1">
+                            <Tag className="w-2.5 h-2.5" />{doc.subcategory}
+                          </Badge>
+                        )}
+                        {doc.operational_status && (
+                          <Badge variant="outline" className="text-xs">
+                            {doc.operational_status.replace(/_/g, ' ')}
+                          </Badge>
+                        )}
                          {doc.child_its_count > 0 && (
                            <Badge variant="secondary" className="text-xs">
                              {doc.child_its_count} ITs

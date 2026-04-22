@@ -1,0 +1,55 @@
+{
+  "name": "ProcessArea",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Nome da \u00e1rea (ex: Comercial & Vendas, Financeiro, RH)"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "geral",
+        "tecnica"
+      ],
+      "default": "geral",
+      "description": "Categoria da \u00e1rea: geral (gest\u00e3o/admin) ou t\u00e9cnica (especialidade)"
+    },
+    "subcategories": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Lista de categorias/subcategorias dentro desta \u00e1rea (ex: Atendimento, Or\u00e7amenta\u00e7\u00e3o...)"
+    },
+    "description": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o da \u00e1rea"
+    },
+    "icon": {
+      "type": "string",
+      "description": "Nome do \u00edcone Lucide"
+    },
+    "color": {
+      "type": "string",
+      "description": "Cor hex para identifica\u00e7\u00e3o visual"
+    },
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina (null para \u00e1reas padr\u00e3o)"
+    },
+    "is_default": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se \u00e9 uma \u00e1rea padr\u00e3o do sistema"
+    },
+    "order": {
+      "type": "integer",
+      "default": 0,
+      "description": "Ordem de exibi\u00e7\u00e3o"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}
