@@ -73,7 +73,14 @@ export default function SprintCreateForm({ open, onClose, workshops = [], user, 
 
   // Quando selecionar uma missão, pré-popular tarefas do template salvo na Consultoria Global
   useEffect(() => {
-    if (!form.mission_id || !savedTemplates) return;
+    // BUG FIX 1: "custom" não tem template — limpa as tarefas e sai
+    if (!form.mission_id || form.mission_id === "custom") {
+      setPhaseTasks(DEFAULT_PHASES.map(() => []));
+      setTemplateApplied(false);
+      return;
+    }
+    if (!savedTemplates) return;
+
     const missionTemplate = savedTemplates.find(t => t.mission_id === form.mission_id);
     if (!missionTemplate?.sprint?.phases) return;
 
@@ -82,8 +89,9 @@ export default function SprintCreateForm({ open, onClose, workshops = [], user, 
       return (templatePhase?.tasks || []).map(t => ({
         description: t.description || '',
         status: 'to_do',
-        instructions: t.instructions || undefined,
-        link_url: t.link_url || undefined,
+        // BUG FIX 2: strings vazias ("") devem virar undefined para não poluir o banco
+        instructions: t.instructions?.trim() || undefined,
+        link_url: t.link_url?.trim() || undefined,
       }));
     });
 
@@ -91,13 +99,11 @@ export default function SprintCreateForm({ open, onClose, workshops = [], user, 
     setTemplateApplied(true);
 
     // Pré-popular título e objetivo se estiverem vazios
-    if (!form.title && missionTemplate.sprint.title) {
-      setForm(prev => ({
-        ...prev,
-        title: missionTemplate.sprint.title,
-        objective: prev.objective || missionTemplate.sprint.objective || '',
-      }));
-    }
+    setForm(prev => ({
+      ...prev,
+      title: prev.title || missionTemplate.sprint.title || '',
+      objective: prev.objective || missionTemplate.sprint.objective || '',
+    }));
   }, [form.mission_id, savedTemplates]);
 
   const addTask = (phaseIdx) => {
@@ -135,9 +141,12 @@ export default function SprintCreateForm({ open, onClose, workshops = [], user, 
     }
 
     setSaving(true);
+    // BUG FIX 3: spread do DEFAULT_PHASES incluía tasks:[] sobrescrevendo as tarefas reais.
+    // Construir fases sem spread para garantir que phaseTasks seja a fonte de verdade.
     const phases = DEFAULT_PHASES.map((p, idx) => ({
-      ...p,
-      tasks: phaseTasks[idx],
+      name: p.name,
+      status: p.status,
+      tasks: phaseTasks[idx] || [],
     }));
 
     const workshop = workshops.find(w => w.id === form.workshop_id);
@@ -145,7 +154,7 @@ export default function SprintCreateForm({ open, onClose, workshops = [], user, 
       ? form.cronograma_template_id
       : null;
 
-    const missionId = form.mission_id || "custom";
+    const missionId = (form.mission_id && form.mission_id !== "custom") ? form.mission_id : "custom";
 
     await base44.entities.ConsultoriaSprint.create({
       workshop_id: form.workshop_id,
