@@ -20,7 +20,7 @@
       "items": {
         "type": "string"
       },
-      "description": "Lista de categorias/subcategorias dentro desta \u00e1rea (ex: Atendimento, Or\u00e7amenta\u00e7\u00e3o...)"
+      "description": "Lista de categorias/subcategorias dentro desta \u00e1rea"
     },
     "description": {
       "type": "string",
@@ -51,5 +51,23 @@
   },
   "required": [
     "name"
-  ]
+  ],
+  "rls": {
+    "read": true,
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
 }
