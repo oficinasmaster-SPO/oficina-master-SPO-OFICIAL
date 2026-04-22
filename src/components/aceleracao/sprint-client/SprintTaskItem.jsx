@@ -122,8 +122,10 @@ export default function SprintTaskItem({ task, index, canComplete, canAddNotes, 
 
       {/* Expandir instrução */}
       {showDetails && task.instructions && (
-        <div className="ml-6 mb-2 text-xs text-gray-600 bg-blue-50 border border-blue-100 rounded p-2 whitespace-pre-line">
-          {task.instructions}
+        <div className="ml-6 mb-2 text-xs text-gray-700 bg-blue-50 border border-blue-200 rounded p-3 whitespace-pre-wrap break-words overflow-hidden">
+          <div className="max-h-64 overflow-y-auto">
+            {task.instructions}
+          </div>
         </div>
       )}
 
