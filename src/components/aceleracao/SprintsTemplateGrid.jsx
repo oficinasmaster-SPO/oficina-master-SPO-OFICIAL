@@ -149,7 +149,7 @@ function PhaseRow({ phaseData, phaseConfig, editing, onUpdateTasks }) {
                 {phaseData.tasks.map((task, idx) => (
                   <div key={idx} className="bg-white/70 rounded p-2 text-xs space-y-0.5">
                     <p className="font-semibold text-gray-800">• {task.description}</p>
-                    {task.instructions && <p className="text-gray-500 pl-3">{task.instructions}</p>}
+                    {task.instructions && <p className="text-gray-500 pl-3 whitespace-pre-wrap">{task.instructions}</p>}
                     {task.link_url && (
                       <a href={task.link_url} target="_blank" rel="noopener noreferrer"
                         className="inline-flex items-center gap-1 text-blue-600 hover:underline pl-3">
