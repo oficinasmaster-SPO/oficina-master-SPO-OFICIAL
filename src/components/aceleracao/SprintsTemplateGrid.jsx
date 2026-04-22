@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Edit2, Save, X, Plus, Trash2, ChevronDown, ChevronUp, Link, ExternalLink, RefreshCw, BookOpen } from 'lucide-react';
+import { Edit2, Save, X, Plus, Trash2, ChevronDown, ChevronUp, Link, ExternalLink, RefreshCw, BookOpen, ArrowUp, ArrowDown } from 'lucide-react';
 import { getDefaultTasksForPhase } from './sprintMissionTasks';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
@@ -69,15 +69,46 @@ function TaskEditor({ tasks, onUpdate }) {
     onUpdate(tasks.map((t, i) => i === idx ? { ...t, [field]: value } : t));
   };
 
+  const moveTask = (fromIdx, direction) => {
+    const toIdx = direction === 'up' ? fromIdx - 1 : fromIdx + 1;
+    if (toIdx < 0 || toIdx >= tasks.length) return;
+    
+    const newTasks = [...tasks];
+    [newTasks[fromIdx], newTasks[toIdx]] = [newTasks[toIdx], newTasks[fromIdx]];
+    onUpdate(newTasks);
+  };
+
   return (
     <div className="space-y-2 mt-2">
       {tasks.map((task, idx) => (
         <div key={idx} className="bg-white rounded-lg p-3 space-y-2 border border-gray-200 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-gray-400">Tarefa {idx + 1}</span>
-            <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-red-400 hover:text-red-600" onClick={() => removeTask(idx)}>
-              <Trash2 className="w-3 h-3" />
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600 disabled:opacity-50"
+                onClick={() => moveTask(idx, 'up')}
+                disabled={idx === 0}
+                title="Mover para cima"
+              >
+                <ArrowUp className="w-3 h-3" />
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600 disabled:opacity-50"
+                onClick={() => moveTask(idx, 'down')}
+                disabled={idx === tasks.length - 1}
+                title="Mover para baixo"
+              >
+                <ArrowDown className="w-3 h-3" />
+              </Button>
+              <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-red-400 hover:text-red-600" onClick={() => removeTask(idx)}>
+                <Trash2 className="w-3 h-3" />
+              </Button>
+            </div>
           </div>
           <Input
             placeholder="Descrição da tarefa"
