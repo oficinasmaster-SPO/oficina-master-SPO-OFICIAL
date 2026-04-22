@@ -380,6 +380,30 @@ export default function SprintsTemplateGrid() {
     load();
   }, []);
 
+  const propagateUpdates = async (missionId, phaseIdx, newTasks) => {
+    try {
+      const response = await base44.functions.invoke('propagateSprintTemplateUpdates', {
+        missionId,
+        phaseIdx,
+        newTasks,
+      });
+
+      if (response.data?.success) {
+        const count = response.data.updatedCount;
+        if (count > 0) {
+          toast.success(`Template propagado para ${count} sprint(s) de clientes`);
+        }
+        if (response.data.errors?.length > 0) {
+          console.warn('Alguns sprints falharam:', response.data.errors);
+          toast.warning(`Atualizados ${count} sprints, mas ${response.data.errors.length} tiveram erro`);
+        }
+      }
+    } catch (err) {
+      console.error('Erro ao propagar:', err);
+      toast.error('Erro ao propagar template para clientes');
+    }
+  };
+
   const handleSprintSave = async (missionId, updatedSprint) => {
     const newData = data.map(m => m.mission_id === missionId ? { ...m, sprint: updatedSprint } : m);
     setData(newData);
@@ -393,8 +417,25 @@ export default function SprintsTemplateGrid() {
       } else {
         await base44.entities.SystemSetting.create(payload);
       }
+      
+      // Propagar atualizações para todos os sprints de clientes
+      const oldSprint = data.find(m => m.mission_id === missionId)?.sprint;
+      if (oldSprint?.phases && updatedSprint?.phases) {
+        for (let phaseIdx = 0; phaseIdx < updatedSprint.phases.length; phaseIdx++) {
+          const oldTasks = oldSprint.phases[phaseIdx]?.tasks || [];
+          const newTasks = updatedSprint.phases[phaseIdx]?.tasks || [];
+          
+          // Detectar se houve mudanças nessa fase
+          const hasChanges = JSON.stringify(oldTasks) !== JSON.stringify(newTasks);
+          if (hasChanges) {
+            await propagateUpdates(missionId, phaseIdx, newTasks);
+          }
+        }
+      }
+      
       toast.success('Template salvo com sucesso!');
-    } catch {
+    } catch (err) {
+      console.error('Erro ao salvar:', err);
       toast.error('Erro ao salvar template');
     } finally {
       setSaving(false);
