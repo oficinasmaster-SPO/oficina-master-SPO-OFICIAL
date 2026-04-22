@@ -84,11 +84,12 @@ export default function GerenciarProcessos() {
   }, []);
 
   const { data: processAreas = [] } = useQuery({
-    queryKey: ['process-areas'],
+    queryKey: ['process-areas', user?.id],
     queryFn: async () => {
       const allAreas = await base44.entities.ProcessArea.list();
       return allAreas.sort((a, b) => (a.order || 0) - (b.order || 0));
-    }
+    },
+    enabled: !!user
   });
 
   const { data: documents = [], isLoading } = useQuery({
