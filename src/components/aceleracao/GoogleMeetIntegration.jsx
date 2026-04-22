@@ -23,7 +23,7 @@ export default function GoogleMeetIntegration({
       const endDateTime = new Date(startDateTime.getTime() + 60 * 60 * 1000); // 1 hora
 
       const response = await base44.functions.invoke('createGoogleMeetEvent', {
-        summary: `Atendimento - ${atendimento.workshop_name || 'Consultoria'}`,
+        summary: atendimento.workshop_name || atendimento.client_name || atendimento.empresa_nome || 'Consultoria',
         description: `Tipo: ${atendimento.tipo_atendimento}\nStatus: ${atendimento.status}`,
         startDateTime: startDateTime.toISOString(),
         endDateTime: endDateTime.toISOString(),

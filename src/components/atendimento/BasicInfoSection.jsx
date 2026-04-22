@@ -168,6 +168,7 @@ export default function BasicInfoSection({
           setFormData={setFormData}
           user={user}
           consultores={consultores}
+          workshops={workshops}
           createMeeting={createMeeting}
           isCreating={isCreating} />
         
@@ -177,7 +178,7 @@ export default function BasicInfoSection({
 
 }
 
-function GoogleMeetSection({ formData, setFormData, user, consultores, createMeeting, isCreating }) {
+function GoogleMeetSection({ formData, setFormData, user, consultores, workshops, createMeeting, isCreating }) {
   const copyInviteMessage = () => {
     const msg = buildInviteMessage(formData, user, consultores);
     try {
@@ -206,8 +207,10 @@ function GoogleMeetSection({ formData, setFormData, user, consultores, createMee
           map((p) => p.email).
           filter((e) => e && e.includes('@'));
 
+          const workshopSelecionado = workshops?.find(w => w.id === formData.workshop_id);
+          const nomeOficina = workshopSelecionado?.name || formData.workshop_name || 'Oficina';
           const meetData = await createMeeting({
-            summary: `${formData.tipo_atendimento?.replace(/_/g, ' ')} - Oficinas Master`,
+                  summary: nomeOficina,
             description: formData.objetivos.join('\n'),
             startDateTime: startDateTime.toISOString(),
             endDateTime: endDateTime.toISOString(),
