@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
-import { Loader2, Plus, Trash2, Rocket } from "lucide-react";
+import { Loader2, Plus, Trash2, Rocket, BookOpen } from "lucide-react";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 
 const DEFAULT_PHASES = [
@@ -18,6 +18,17 @@ const DEFAULT_PHASES = [
   { name: "Retrospective", status: "not_started", tasks: [] },
 ];
 
+const MISSION_OPTIONS = [
+  { id: 'sprint0',              icon: '🔍', name: 'Diagnóstico e Alinhamento' },
+  { id: 'agenda_cheia',         icon: '📅', name: 'Agenda Cheia' },
+  { id: 'fechamento_imbativel', icon: '🎯', name: 'Fechamento Imbatível' },
+  { id: 'caixa_forte',          icon: '💰', name: 'Caixa Forte' },
+  { id: 'empresa_organizada',   icon: '📊', name: 'Empresa Organizada' },
+  { id: 'funcoes_claras',       icon: '👥', name: 'Funções Claras' },
+  { id: 'contratacao_certa',    icon: '🎓', name: 'Contratação Certa' },
+  { id: 'cultura_forte',        icon: '🌟', name: 'Cultura Forte' },
+];
+
 export default function SprintCreateForm({ open, onClose, workshops = [], user, onCreated }) {
   const [saving, setSaving] = useState(false);
   const queryClient = useQueryClient();
@@ -25,6 +36,7 @@ export default function SprintCreateForm({ open, onClose, workshops = [], user, 
   const [form, setForm] = useState({
     workshop_id: "",
     cronograma_template_id: "",
+    mission_id: "",
     title: "",
     objective: "",
     start_date: new Date().toISOString().split("T")[0],
@@ -40,14 +52,53 @@ export default function SprintCreateForm({ open, onClose, workshops = [], user, 
     enabled: open,
   });
 
+  // Buscar templates salvos na Consultoria Global
+  const { data: sprintTemplatesData } = useQuery({
+    queryKey: ['sprint-templates-global'],
+    queryFn: () => base44.functions.invoke('getSprintTemplates', {}),
+    staleTime: 2 * 60 * 1000,
+    enabled: open,
+  });
+  const savedTemplates = sprintTemplatesData?.data?.templates || null;
+
   // Per-phase tasks editing
   const [phaseTasks, setPhaseTasks] = useState(DEFAULT_PHASES.map(() => []));
   const [newTaskTexts, setNewTaskTexts] = useState(DEFAULT_PHASES.map(() => ""));
+  const [templateApplied, setTemplateApplied] = useState(false);
 
   const updateField = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
 
   const [newTaskInstructions, setNewTaskInstructions] = useState(DEFAULT_PHASES.map(() => ""));
   const [newTaskLinks, setNewTaskLinks] = useState(DEFAULT_PHASES.map(() => ""));
+
+  // Quando selecionar uma missão, pré-popular tarefas do template salvo na Consultoria Global
+  useEffect(() => {
+    if (!form.mission_id || !savedTemplates) return;
+    const missionTemplate = savedTemplates.find(t => t.mission_id === form.mission_id);
+    if (!missionTemplate?.sprint?.phases) return;
+
+    const loadedTasks = DEFAULT_PHASES.map((phase) => {
+      const templatePhase = missionTemplate.sprint.phases.find(p => p.name === phase.name);
+      return (templatePhase?.tasks || []).map(t => ({
+        description: t.description || '',
+        status: 'to_do',
+        instructions: t.instructions || undefined,
+        link_url: t.link_url || undefined,
+      }));
+    });
+
+    setPhaseTasks(loadedTasks);
+    setTemplateApplied(true);
+
+    // Pré-popular título e objetivo se estiverem vazios
+    if (!form.title && missionTemplate.sprint.title) {
+      setForm(prev => ({
+        ...prev,
+        title: missionTemplate.sprint.title,
+        objective: prev.objective || missionTemplate.sprint.objective || '',
+      }));
+    }
+  }, [form.mission_id, savedTemplates]);
 
   const addTask = (phaseIdx) => {
     const text = newTaskTexts[phaseIdx]?.trim();
@@ -90,15 +141,21 @@ export default function SprintCreateForm({ open, onClose, workshops = [], user, 
     }));
 
     const workshop = workshops.find(w => w.id === form.workshop_id);
-    const trilhaSelecionada = trilhas.find(t => t.id === form.cronograma_template_id);
     const templateId = (form.cronograma_template_id && form.cronograma_template_id !== "none")
       ? form.cronograma_template_id
       : null;
 
+    const missionId = form.mission_id || "custom";
+
     await base44.entities.ConsultoriaSprint.create({
-      ...form,
-      mission_id: trilhaSelecionada?.id || "custom",
+      workshop_id: form.workshop_id,
       cronograma_template_id: templateId,
+      mission_id: missionId,
+      title: form.title,
+      objective: form.objective,
+      start_date: form.start_date,
+      end_date: form.end_date,
+      sprint_number: form.sprint_number,
       phases,
       status: "in_progress",
       progress_percentage: 0,
@@ -122,6 +179,7 @@ export default function SprintCreateForm({ open, onClose, workshops = [], user, 
     setForm({
       workshop_id: "",
       cronograma_template_id: "",
+      mission_id: "",
       title: "",
       objective: "",
       start_date: new Date().toISOString().split("T")[0],
@@ -129,6 +187,7 @@ export default function SprintCreateForm({ open, onClose, workshops = [], user, 
       sprint_number: 1,
     });
     setPhaseTasks(DEFAULT_PHASES.map(() => []));
+    setTemplateApplied(false);
   };
 
   return (
@@ -175,6 +234,34 @@ export default function SprintCreateForm({ open, onClose, workshops = [], user, 
             </Select>
             {trilhas.length === 0 && (
               <p className="text-xs text-amber-600">Nenhuma trilha cadastrada. Sprints serão criados sem trilha.</p>
+            )}
+          </div>
+
+          {/* Missão (para carregar template) */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold">Missão</Label>
+            <Select value={form.mission_id} onValueChange={(v) => {
+              updateField("mission_id", v);
+              setTemplateApplied(false);
+            }}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione a missão (carrega tarefas do template)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="custom">Sem missão (personalizado)</SelectItem>
+                {MISSION_OPTIONS.map(m => (
+                  <SelectItem key={m.id} value={m.id}>{m.icon} {m.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {templateApplied && (
+              <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-md px-3 py-2 text-xs text-green-700">
+                <BookOpen className="w-3.5 h-3.5 flex-shrink-0" />
+                Tarefas carregadas da Consultoria Global (Matriz de Templates)
+              </div>
+            )}
+            {form.mission_id && form.mission_id !== "custom" && !savedTemplates && (
+              <p className="text-xs text-amber-600">Carregando template...</p>
             )}
           </div>
 
