@@ -272,7 +272,7 @@ export default function SprintClientModal({ sprint, user, workshop, open, onClos
               </div>
             </div>
           ) : (
-            <p className="text-sm text-gray-600">{phase.notes || "Sem notas."}</p>
+            <p className="text-sm text-gray-600 whitespace-pre-wrap">{phase.notes || "Sem notas."}</p>
           )}
         </div>
 

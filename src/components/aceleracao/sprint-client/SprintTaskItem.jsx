@@ -131,7 +131,7 @@ export default function SprintTaskItem({ task, index, canComplete, canAddNotes, 
       {task.evidence_note && !showEvidenceForm && (
         <div className="ml-6 mb-2 p-2 bg-gray-50 border border-gray-200 rounded">
           <label className="text-xs font-medium text-gray-600 block mb-1">Observação:</label>
-          <p className="text-xs text-gray-700 italic">"{task.evidence_note}"</p>
+          <p className="text-xs text-gray-700 italic whitespace-pre-wrap">"{task.evidence_note}"</p>
         </div>
       )}
 

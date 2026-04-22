@@ -357,7 +357,7 @@ export default function SprintCreateForm({ open, onClose, workshops = [], user, 
                       <Plus className="w-3.5 h-3.5" />
                     </Button>
                   </div>
-                  <Input
+                  <Textarea
                     value={newTaskInstructions[phaseIdx]}
                     onChange={(e) => {
                       const t = [...newTaskInstructions];
@@ -365,7 +365,8 @@ export default function SprintCreateForm({ open, onClose, workshops = [], user, 
                       setNewTaskInstructions(t);
                     }}
                     placeholder="Como fazer (instruções)..."
-                    className="text-xs h-8"
+                    className="text-xs"
+                    rows={2}
                   />
                   <Input
                     value={newTaskLinks[phaseIdx]}
