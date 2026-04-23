@@ -289,8 +289,10 @@ export default function SprintPhaseDetailModalRedesigned({
       if (newTaskVideoUrl) newTaskObj.video_url = newTaskVideoUrl;
       const updated = [...tasks, newTaskObj];
       setTasks(updated);
-      const updatedPhases = phases.map((p, i) =>
-        i === phaseIndex ? { ...p, tasks: updated, status, notes } : p
+      // BUGFIX: usa livePhases (estado local completo) para não descartar edições não salvas
+      // e para garantir consistência com handleToggleTask/handleUpdateEvidence/removeTask
+      const updatedPhases = livePhases.map((p, i) =>
+        i === phaseIndex ? { ...p, tasks: updated } : p
       );
       const success = await persistPhases(updatedPhases);
       if (success) {
