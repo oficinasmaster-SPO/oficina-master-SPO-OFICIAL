@@ -450,8 +450,16 @@ const addITtoDoc = (doc, it, index, pageWidth, pageHeight, margin, contentWidth)
   doc.text(`${it.type} - ${it.code} - Versão ${it.version || '1'}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
 };
 
+/**
+ * DEPRECATED: Use downloadProcessPDFExterno() instead
+ * Mantém compatibilidade com código legado
+ */
 export const downloadProcessPDF = (processDoc, its = [], workshop) => {
-  const doc = generateProcessPDF(processDoc, its, workshop);
-  const fileName = `${processDoc.code || 'MAP'}_${processDoc.title.substring(0, 30).replace(/[^a-zA-Z0-9]/g, '_')}_${format(new Date(), 'ddMMyyyy')}.pdf`;
-  doc.save(fileName);
+  console.warn('[DEPRECATED] downloadProcessPDF: usar downloadProcessPDFExterno()');
 };
+
+/**
+ * Nova função para download de processo/MAP via serviço externo
+ * Substitui generateProcessPDF e downloadProcessPDF
+ */
+export { downloadProcessPDFExterno } from '@/lib/pdfExternalDownloader';

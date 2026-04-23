@@ -1,7 +1,24 @@
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 
+/**
+ * DEPRECATED: Use downloadCronogramaPDFExterno() instead
+ * Mantém compatibilidade com código legado
+ */
 export const generateCronogramaPDF = (cronogramaData, workshop, mode = 'download', options = {}) => {
+  console.warn('[DEPRECATED] generateCronogramaPDF usar downloadCronogramaPDFExterno()');
+  // Retorna um objeto mock para compatibilidade
+  return {
+    save: () => console.warn('Use downloadCronogramaPDFExterno() para download'),
+    output: () => null,
+    autoPrint: () => console.warn('Use downloadCronogramaPDFExterno() com action=print')
+  };
+};
+
+/**
+ * LEGADO - Função original jsPDF (mantida para referência, não usar)
+ */
+const _generateCronogramaPDFLegacy = (cronogramaData, workshop, mode = 'download', options = {}) => {
   const { stats, items, planName } = cronogramaData;
   const { customNotes = '', includeContactInfo = true, contactInfo = {} } = options;
   
@@ -217,6 +234,12 @@ export const generateCronogramaPDF = (cronogramaData, workshop, mode = 'download
     return doc.output('blob');
   }
 };
+
+/**
+ * Nova função para download de cronograma via serviço externo
+ * Substitui generateCronogramaPDF e downloadCronogramaPDF
+ */
+export { downloadCronogramaPDFExterno } from '@/lib/pdfExternalDownloader';
 
 function getStatusLabel(status) {
   const labels = {
