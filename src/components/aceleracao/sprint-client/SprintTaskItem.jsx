@@ -4,13 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Upload, MessageSquare, Check, User, Link, ChevronDown, ChevronUp, Info } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Upload, MessageSquare, Check, User, Link, ChevronDown, ChevronUp, Info, X, ArrowLeft } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { cn } from "@/lib/utils";
 
 export default function SprintTaskItem({ task, index, canComplete, canAddNotes, userRole, onToggle, onUpdateEvidence }) {
   const [showEvidenceForm, setShowEvidenceForm] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
+  const [showInstructionsModal, setShowInstructionsModal] = useState(false);
   const [evidenceNote, setEvidenceNote] = useState(task.evidence_note || "");
   const [uploading, setUploading] = useState(false);
 
@@ -83,11 +85,10 @@ export default function SprintTaskItem({ task, index, canComplete, canAddNotes, 
           {task.instructions ? (
             <button
               className="flex items-center gap-1 text-blue-600 hover:text-blue-800 font-medium text-left"
-              onClick={() => setShowDetails(!showDetails)}
+              onClick={() => setShowInstructionsModal(true)}
             >
               <Info className="w-3 h-3 flex-shrink-0" />
               Ver como fazer
-              {showDetails ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
             </button>
           ) : (
             <span className="text-gray-400 italic">Nenhuma instrução</span>
@@ -119,15 +120,6 @@ export default function SprintTaskItem({ task, index, canComplete, canAddNotes, 
           )}
         </div>
       </div>
-
-      {/* Expandir instrução */}
-      {showDetails && task.instructions && (
-        <div className="ml-6 mb-2 text-xs text-gray-700 bg-blue-50 border border-blue-200 rounded p-3 whitespace-pre-wrap break-words overflow-hidden">
-          <div className="max-h-64 overflow-y-auto">
-            {task.instructions}
-          </div>
-        </div>
-      )}
 
       {/* Observação salva */}
       {task.evidence_note && !showEvidenceForm && (
@@ -179,6 +171,48 @@ export default function SprintTaskItem({ task, index, canComplete, canAddNotes, 
           </a>
         </div>
       )}
+
+      {/* Modal tela cheia para instruções */}
+      <Dialog open={showInstructionsModal} onOpenChange={setShowInstructionsModal}>
+        <DialogContent className="max-w-[95vw] w-[95vw] max-h-[95vh] h-[95vh] flex flex-col overflow-hidden">
+          <DialogHeader className="shrink-0 border-b pb-3">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowInstructionsModal(false)}
+                className="gap-1 text-gray-600"
+              >
+                <ArrowLeft className="w-4 h-4" /> Voltar
+              </Button>
+              <div>
+                <DialogTitle className="text-base font-semibold text-gray-900">Como fazer</DialogTitle>
+                <p className="text-sm text-gray-500 mt-0.5">{task.description}</p>
+              </div>
+            </div>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto p-6">
+            <div className="max-w-3xl mx-auto">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
+                {task.instructions}
+              </div>
+              {task.link_url && (
+                <div className="mt-6">
+                  <p className="text-sm font-semibold text-gray-700 mb-2">Material complementar:</p>
+                  <a
+                    href={task.link_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
+                  >
+                    <Link className="w-4 h-4" /> Acessar material
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
