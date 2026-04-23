@@ -39,21 +39,11 @@ export default function AtaActionsSection({
                     size="sm"
                     onClick={async () => {
                       try {
-                        const ata = await base44.entities.MeetingMinutes.get(formData.ata_id);
-                        if (ata) {
-                          const intelligence = await base44.entities.ClientIntelligence.filter({
-                            attendance_id: formData.id
-                          });
-                          const ataComInteligencia = {
-                            ...ata,
-                            client_intelligence: intelligence || [],
-                            checklist_respostas: ata.checklist_respostas || formData.checklist_respostas || []
-                          };
-                          const { downloadAtaPDF } = await import("@/components/aceleracao/AtasPDFGenerator");
-                          const workshop = workshops?.find(w => w.id === formData.workshop_id);
-                          await downloadAtaPDF(ataComInteligencia, workshop);
-                          toast.success("Download iniciado!");
-                        }
+                        const { downloadAtaPDF } = await import("@/lib/pdfDownloadManager");
+                        await downloadAtaPDF(formData.ata_id, {
+                          onSuccess: () => toast.success("Download iniciado!"),
+                          onError: (error) => toast.error("Erro ao gerar PDF: " + error.message)
+                        });
                       } catch (error) {
                         toast.error("Erro ao acessar ATA: " + error.message);
                       }
