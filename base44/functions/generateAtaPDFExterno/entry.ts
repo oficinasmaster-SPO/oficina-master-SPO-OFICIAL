@@ -1,187 +1,124 @@
-import chromium from 'npm:chrome-aws-lambda@10.1.0';
-import puppeteer from 'npm:puppeteer-core@19.11.1';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
-  let browser = null;
-  
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
 
     if (!user) {
-      console.error(`[PDF] Não autenticado`);
+      console.error(`[PDF-External] Não autenticado`);
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    console.log(`[PDF] Usuário autenticado: ${user.email} | ID: ${user.id}`);
+    console.log(`[PDF-External] Usuário autenticado: ${user.email}`);
 
     const { ata_id } = await req.json();
 
     if (!ata_id) {
-      console.error(`[PDF] ata_id não fornecido`);
+      console.error(`[PDF-External] ata_id não fornecido`);
       return Response.json({ error: 'ata_id is required' }, { status: 400 });
     }
 
-    console.log(`[PDF] ======== INICIANDO GERAÇÃO ========`);
-    console.log(`[PDF] ATA ID: ${ata_id}`);
+    console.log(`[PDF-External] Gerando PDF para ATA: ${ata_id}`);
 
     // Buscar dados da ATA
-    console.log(`[PDF] Buscando ATA...`);
     const ata = await base44.entities.MeetingMinutes.get(ata_id);
     if (!ata) {
-      console.error(`[PDF] ATA não encontrada: ${ata_id}`);
+      console.error(`[PDF-External] ATA não encontrada: ${ata_id}`);
       return Response.json({ error: 'ATA not found', ata_id }, { status: 404 });
     }
 
-    console.log(`[PDF] ATA carregada com sucesso`);
-    console.log(`[PDF]   - Código: ${ata.code || 'N/A'}`);
-    console.log(`[PDF]   - Workshop ID: ${ata.workshop_id || 'N/A'}`);
-    console.log(`[PDF]   - Atendimento ID: ${ata.atendimento_id || 'N/A'}`);
+    console.log(`[PDF-External] ATA carregada: ${ata.code}`);
 
-    // VALIDAÇÃO 1: Verificar se tem dados mínimos
+    // Validação de conteúdo
     const hasContent = ata.pautas || ata.objetivos_atendimento || ata.objetivos_consultor || 
                        ata.proximos_passos_list?.length > 0 || ata.acoes_geradas?.length > 0;
     
     if (!hasContent) {
-      console.warn(`[PDF-Validation] ATA sem conteúdo suficiente: ${ata_id}`);
+      console.warn(`[PDF-External] ATA sem conteúdo suficiente: ${ata_id}`);
       return Response.json({ 
         error: 'ATA sem dados suficientes para gerar PDF',
         details: 'Preencha pelo menos uma seção (Pautas, Objetivos, Próximos Passos ou Ações)'
       }, { status: 400 });
     }
 
-    console.log(`[PDF-Validation] ✓ ATA tem dados válidos`);
-
-    // Buscar workshop se disponível (contexto multi-tenant)
+    // Buscar workshop para contexto
     let workshop = null;
     if (ata.workshop_id) {
       try {
-        console.log(`[PDF] Buscando Workshop: ${ata.workshop_id}`);
         workshop = await base44.entities.Workshop.get(ata.workshop_id);
-        console.log(`[PDF] ✓ Workshop carregado: ${workshop?.name || 'Sem nome'}`);
+        console.log(`[PDF-External] Workshop carregado: ${workshop?.name}`);
       } catch (e) {
-        console.warn(`[PDF] ⚠ Workshop não encontrado (ID: ${ata.workshop_id}): ${e.message}`);
-        // Não bloqueia - workshop é opcional para gerar PDF
+        console.warn(`[PDF-External] Workshop não encontrado: ${e.message}`);
       }
-    } else {
-      console.log(`[PDF] Nenhum workshop_id na ATA`);
     }
 
-    // Gerar HTML da ATA (RENDERIZAÇÃO BACKEND COMPLETA)
-    console.log(`[PDF] Gerando HTML da ATA (renderização backend)`);
+    // Gerar HTML da ATA
+    console.log(`[PDF-External] Gerando HTML para envio ao serviço externo`);
     const htmlContent = generateAtaHTML(ata, workshop);
-    console.log(`[PDF] HTML gerado com sucesso (${htmlContent.length} caracteres)`);
+    console.log(`[PDF-External] HTML gerado: ${htmlContent.length} caracteres`);
+
+    // Chamar serviço externo de PDF
+    console.log(`[PDF-External] Chamando serviço externo de geração de PDF`);
+    const pdfServiceUrl = Deno.env.get('PDF_SERVICE_URL') || 'https://pdf-service.railway.app/generate-pdf';
     
-    if (htmlContent.length < 1000) {
-      console.warn(`[PDF-Warning] HTML pequeno - verifique dados`);
-    }
-
-    // Usar Puppeteer para gerar PDF
-    console.log(`[PDF] Iniciando browser Puppeteer (chrome-aws-lambda)`);
-    
-    // Usar chrome-aws-lambda
-    console.log(`[PDF] Configurando Puppeteer com chrome-aws-lambda`);
-    
-    const launchConfig = {
-      args: chromium.args,
-      defaultViewport: chromium.defaultViewport,
-      headless: true
-    };
-    
-    // Incluir executablePath apenas se disponível
-    const executablePath = await chromium.executablePath;
-    if (executablePath) {
-      launchConfig.executablePath = executablePath;
-      console.log(`[PDF] Usando Chromium de: ${executablePath}`);
-    } else {
-      console.log(`[PDF] Usando Chromium padrão do sistema (chrome-aws-lambda)`);
-    }
-    
-    browser = await puppeteer.launch(launchConfig);
-
-    console.log(`[PDF] Browser iniciado com sucesso`);
-    const page = await browser.newPage();
-
-    // Listeners de debug
-    page.on('console', msg => console.log(`[PDF-Page-Console] ${msg.type()}: ${msg.text()}`));
-    page.on('pageerror', err => console.error(`[PDF-PageError] ${err.message}`));
-    page.on('error', err => console.error(`[PDF-BrowserError] ${err.message}`));
-    page.on('requestfailed', req => console.warn(`[PDF-RequestFailed] ${req.url()}`));
-
-    console.log(`[PDF] Renderizando HTML via setContent (SEM dependência de rota)`);
-    await page.setContent(htmlContent, { 
-      waitUntil: 'networkidle0',
-      timeout: 60000 // 60 segundos
-    });
-
-    console.log(`[PDF] Conteúdo renderizado com sucesso`);
-
-    // Gerar PDF
-    console.log(`[PDF] Gerando arquivo PDF em formato A4`);
-    const pdf = await page.pdf({
-      format: 'A4',
-      printBackground: true,
-      margin: {
-        top: '20mm',
-        bottom: '20mm',
-        left: '20mm',
-        right: '20mm'
+    const externalResponse = await fetch(pdfServiceUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
       },
-      timeout: 60000,
-      // Opcional: preferCSSPageSize se o CSS incluir @page
-      preferCSSPageSize: true
+      body: JSON.stringify({ 
+        html: htmlContent,
+        filename: `ATA-${ata.code || ata.id}.pdf`
+      }),
+      signal: AbortSignal.timeout(120000) // 2 minutos timeout
     });
 
-    console.log(`[PDF] PDF gerado com sucesso (${pdf.length} bytes)`);
-    
-    await page.close();
-    await browser.close();
-    console.log(`[PDF] Browser fechado com sucesso`);
+    if (!externalResponse.ok) {
+      const errorText = await externalResponse.text();
+      console.error(`[PDF-External] Serviço externo retornou erro: ${externalResponse.status} - ${errorText}`);
+      return Response.json(
+        { 
+          error: 'Erro no serviço externo de geração de PDF',
+          details: `Status ${externalResponse.status}`
+        },
+        { status: 502 }
+      );
+    }
 
-    // Retornar PDF como base64
-    const base64PDF = btoa(String.fromCharCode.apply(null, new Uint8Array(pdf)));
+    // Receber PDF do serviço externo
+    const pdfBuffer = await externalResponse.arrayBuffer();
+    console.log(`[PDF-External] PDF recebido: ${pdfBuffer.byteLength} bytes`);
 
-    console.log(`[PDF] Geração concluída com sucesso`);
+    // Converter para base64
+    const uint8Array = new Uint8Array(pdfBuffer);
+    const base64PDF = btoa(String.fromCharCode(...uint8Array));
+
+    console.log(`[PDF-External] Geração concluída com sucesso`);
     return Response.json({
       success: true,
       pdf: base64PDF,
       filename: `ATA-${ata.code || ata.id}.pdf`,
-      size: pdf.length
+      size: pdfBuffer.byteLength
     });
 
   } catch (error) {
-    console.error(`[PDF-Error] ========== ERRO NA GERAÇÃO ==========`);
-    console.error(`[PDF-Error] Tipo: ${error.name}`);
-    console.error(`[PDF-Error] Mensagem: ${error.message}`);
-    console.error(`[PDF-Error] Stack: ${error.stack}`);
+    console.error(`[PDF-External-Error] ========== ERRO NA GERAÇÃO ==========`);
+    console.error(`[PDF-External-Error] Tipo: ${error.name}`);
+    console.error(`[PDF-External-Error] Mensagem: ${error.message}`);
+    console.error(`[PDF-External-Error] Stack: ${error.stack}`);
 
-    // Fechar browser em caso de erro
-    if (browser) {
-      try {
-        await browser.close();
-        console.log(`[PDF] Browser fechado após erro`);
-      } catch (closeError) {
-        console.error(`[PDF-CloseError] ${closeError.message}`);
-      }
-    }
-
-    // Determinar status HTTP apropriado
     let statusCode = 500;
     let userMessage = 'Erro ao gerar PDF';
 
     if (error.message?.includes('not found') || error.message?.includes('404')) {
       statusCode = 404;
-      userMessage = 'ATA ou dados associados não encontrados';
+      userMessage = 'ATA não encontrada';
     } else if (error.message?.includes('timeout') || error.message?.includes('Timeout')) {
       statusCode = 408;
       userMessage = 'Tempo limite excedido na geração do PDF';
-    } else if (error.message?.includes('invalid') || error.message?.includes('validation')) {
-      statusCode = 400;
-      userMessage = 'Dados inválidos para gerar PDF';
     }
 
-    console.error(`[PDF-Error] Status HTTP: ${statusCode}`);
     return Response.json(
       { 
         error: userMessage,
@@ -194,12 +131,10 @@ Deno.serve(async (req) => {
 });
 
 /**
- * Gera HTML completo e independente da ATA
- * SEM dependência de frontend, rota ou autenticação
- * CSS inline, conteúdo pré-renderizado
+ * Gera HTML completo da ATA
+ * SEM dependência de browser
  */
 function generateAtaHTML(ata, workshop) {
-  // Sanitização de texto
   const sanitize = (text) => {
     if (!text) return '';
     return String(text)
@@ -606,7 +541,7 @@ function generateAtaHTML(ata, workshop) {
     <div class="document-footer">
       <p>© 2026 Oficinas Master • ${sanitize(d.code || 'ATA')} • ${d.meeting_date ? new Date(d.meeting_date).toLocaleDateString('pt-BR') : 'Data N/A'}</p>
       <p>Documento gerado automaticamente pela Plataforma de Aceleração de Oficinas</p>
-      <p><em>Renderização backend - 100% estável e independente</em></p>
+      <p><em>Geração via serviço externo - Infraestrutura escalável</em></p>
     </div>
 
   </div>
