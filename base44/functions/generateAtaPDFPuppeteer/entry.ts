@@ -80,46 +80,25 @@ Deno.serve(async (req) => {
     // Usar Puppeteer para gerar PDF
     console.log(`[PDF] Iniciando browser Puppeteer (chrome-aws-lambda)`);
     
-    // VALIDAÇÃO OBRIGATÓRIA: executablePath deve estar disponível
-    let executablePath = await chromium.executablePath;
-    console.log(`[PDF] Tentando chrome-aws-lambda executablePath: ${executablePath || 'não encontrado'}`);
+    // Usar chrome-aws-lambda
+    console.log(`[PDF] Configurando Puppeteer com chrome-aws-lambda`);
     
-    // Fallback para ambiente local/desenvolvimento
-    if (!executablePath) {
-      console.log('[PDF] chrome-aws-lambda falhou, tentando fallback local...');
-      
-      // Tentar varredura local de Chrome/Chromium (Deno compatible)
-      const possiblePaths = [
-        '/usr/bin/chromium-browser',           // Linux
-        '/usr/bin/chromium',                   // Linux alternativo
-        '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', // macOS
-        'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',  // Windows
-        'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe'
-      ];
-      
-      for (const p of possiblePaths) {
-        try {
-          // Deno.statSync verifica se arquivo existe
-          Deno.statSync(p);
-          executablePath = p;
-          console.log(`[PDF] Chrome encontrado em: ${executablePath}`);
-          break;
-        } catch {
-          // Arquivo não encontrado, continua para próximo
-        }
-      }
-    }
-    
-    if (!executablePath) {
-      throw new Error('Chromium não encontrado - nem chrome-aws-lambda nem instalação local. Instale com: npm install puppeteer-core chrome-aws-lambda');
-    }
-    
-    browser = await puppeteer.launch({
-      args: chromium.args || ['--no-sandbox', '--disable-setuid-sandbox'],
-      defaultViewport: chromium.defaultViewport || { width: 1024, height: 768 },
-      executablePath: executablePath,
+    const launchConfig = {
+      args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
       headless: true
-    });
+    };
+    
+    // Incluir executablePath apenas se disponível
+    const executablePath = await chromium.executablePath;
+    if (executablePath) {
+      launchConfig.executablePath = executablePath;
+      console.log(`[PDF] Usando Chromium de: ${executablePath}`);
+    } else {
+      console.log(`[PDF] Usando Chromium padrão do sistema (chrome-aws-lambda)`);
+    }
+    
+    browser = await puppeteer.launch(launchConfig);
 
     console.log(`[PDF] Browser iniciado com sucesso`);
     const page = await browser.newPage();
