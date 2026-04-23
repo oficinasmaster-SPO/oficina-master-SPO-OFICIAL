@@ -108,11 +108,12 @@ export function generateProcessHTML(processDoc, its = [], workshop) {
     }
 
     .document-header {
-      border-bottom: 3px solid #cc0000;
-      padding: 0 0 12px 0;
-      margin-bottom: 20px;
-      page-break-after: avoid;
-    }
+       border-bottom: 3px solid #CC0000;
+       padding: 0 0 12px 0;
+       margin-bottom: 20px;
+       page-break-after: avoid;
+       text-align: center;
+     }
 
     .document-header h1 {
       font-size: 18pt;

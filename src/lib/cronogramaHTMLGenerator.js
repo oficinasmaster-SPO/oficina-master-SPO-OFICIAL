@@ -161,11 +161,12 @@ export function generateCronogramaHTML(cronogramaData, workshop) {
     }
 
     .stat-card {
-      padding: 12px;
-      border-radius: 4px;
-      text-align: center;
-      page-break-inside: avoid;
-    }
+       padding: 12px;
+       border-radius: 0;
+       text-align: center;
+       page-break-inside: avoid;
+       border: 1px solid #999;
+     }
 
     .stat-card h3 {
       font-size: 10pt;

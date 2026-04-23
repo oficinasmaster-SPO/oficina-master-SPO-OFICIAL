@@ -360,8 +360,9 @@ function generateAtaHTML(ata, workshop) {
       margin-bottom: 15px;
       page-break-inside: avoid;
       color: #000;
-      white-space: pre-wrap;
+      white-space: normal;
       word-wrap: break-word;
+      text-align: justify;
     }
 
     .info-table {
