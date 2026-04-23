@@ -87,8 +87,21 @@ export async function downloadAtaPDF(ata_id, options = {}) {
   } catch (error) {
     console.error(`[PDF-Manager-Error] ${error.message}`);
     
+    // Melhorar mensagem de erro
+    let friendlyError = error.message;
+    if (error.message?.includes('502') || error.message?.includes('503')) {
+      friendlyError = 'Serviço de geração de PDF temporariamente indisponível. Tente novamente em alguns momentos.';
+    } else if (error.message?.includes('timeout') || error.message?.includes('Timeout')) {
+      friendlyError = 'Tempo limite excedido. A geração do PDF está levando muito tempo. Tente novamente.';
+    } else if (error.message?.includes('404')) {
+      friendlyError = 'ATA não encontrada. Recarregue a página e tente novamente.';
+    }
+    
+    const enhancedError = new Error(friendlyError);
+    enhancedError.original = error;
+    
     if (onError) {
-      onError(error);
+      onError(enhancedError);
     } else {
       console.error('Erro ao gerar PDF:', error.message);
     }

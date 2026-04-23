@@ -58,31 +58,79 @@ Deno.serve(async (req) => {
     const htmlContent = generateAtaHTML(ata, workshop);
     console.log(`[PDF-External] HTML gerado: ${htmlContent.length} caracteres`);
 
-    // Chamar serviço externo de PDF
+    // Chamar serviço externo de PDF com retry
     console.log(`[PDF-External] Chamando serviço externo de geração de PDF`);
     const pdfServiceUrl = Deno.env.get('PDF_SERVICE_URL') || 'https://pdf-service2-production.up.railway.app/generate-pdf';
     
-    const externalResponse = await fetch(pdfServiceUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ 
-        html: htmlContent,
-        filename: `ATA-${ata.code || ata.id}.pdf`
-      }),
-      signal: AbortSignal.timeout(120000) // 2 minutos timeout
-    });
+    let externalResponse = null;
+    let lastError = null;
+    const maxRetries = 2;
+    
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`[PDF-External] Tentativa ${attempt + 1}/${maxRetries + 1} de contato com serviço externo`);
+        
+        const payloadJson = JSON.stringify({ 
+          html: htmlContent,
+          filename: `ATA-${ata.code || ata.id}.pdf`
+        });
+        
+        console.log(`[PDF-External] Tamanho do payload: ${payloadJson.length} bytes`);
+        
+        externalResponse = await fetch(pdfServiceUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: payloadJson,
+          signal: AbortSignal.timeout(60000) // 60 segundos timeout
+        });
+        
+        if (externalResponse.ok) {
+          console.log(`[PDF-External] Serviço respondeu com sucesso (status ${externalResponse.status})`);
+          break;
+        } else if (externalResponse.status >= 500 && attempt < maxRetries) {
+          // Erro de servidor, tentar novamente
+          const errorText = await externalResponse.text();
+          lastError = `Status ${externalResponse.status}: ${errorText.substring(0, 200)}`;
+          console.warn(`[PDF-External] Serviço retornou erro ${externalResponse.status}, tentando novamente...`);
+          
+          // Aguardar antes de retry
+          await new Promise(r => setTimeout(r, 2000 * (attempt + 1)));
+          continue;
+        } else {
+          // Erro de cliente ou último retry falhou
+          const errorText = await externalResponse.text();
+          lastError = `Status ${externalResponse.status}: ${errorText.substring(0, 200)}`;
+          console.error(`[PDF-External] Serviço retornou erro: ${lastError}`);
+          
+          // Se é erro de cliente (4xx), não fazer retry
+          if (externalResponse.status < 500 || attempt === maxRetries) {
+            break;
+          }
+          
+          await new Promise(r => setTimeout(r, 2000 * (attempt + 1)));
+          continue;
+        }
+      } catch (fetchError) {
+        lastError = fetchError.message;
+        console.error(`[PDF-External] Erro ao conectar com serviço: ${lastError}`);
+        
+        if (attempt < maxRetries) {
+          await new Promise(r => setTimeout(r, 2000 * (attempt + 1)));
+          continue;
+        }
+      }
+    }
 
-    if (!externalResponse.ok) {
-      const errorText = await externalResponse.text();
-      console.error(`[PDF-External] Serviço externo retornou erro: ${externalResponse.status} - ${errorText}`);
+    if (!externalResponse || !externalResponse.ok) {
+      console.error(`[PDF-External] Falha após ${maxRetries + 1} tentativas: ${lastError}`);
       return Response.json(
         { 
-          error: 'Erro no serviço externo de geração de PDF',
-          details: `Status ${externalResponse.status}`
+          error: 'Serviço de geração de PDF temporariamente indisponível. Tente novamente em alguns momentos.',
+          details: lastError || 'Não foi possível conectar ao serviço'
         },
-        { status: 502 }
+        { status: 503 } // Service Unavailable em vez de 502
       );
     }
 
