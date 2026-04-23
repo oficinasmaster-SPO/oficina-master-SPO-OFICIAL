@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
 
     // Chamar serviço externo de PDF com retry
     console.log(`[PDF-External] Chamando serviço externo de geração de PDF`);
-    const pdfServiceUrl = Deno.env.get('PDF_SERVICE_URL') || 'https://pdf-service2-production.up.railway.app/generate-pdf';
+    const pdfServiceUrl = Deno.env.get('PDF_SERVICE_URL') || 'https://pdf-service-production-37e0.up.railway.app/generate-pdf';
     
     let externalResponse = null;
     let lastError = null;
