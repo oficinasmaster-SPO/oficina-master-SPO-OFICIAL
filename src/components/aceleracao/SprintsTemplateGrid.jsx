@@ -9,6 +9,7 @@ import { Edit2, Save, X, Plus, Trash2, ChevronDown, ChevronUp, Link, ExternalLin
 import { getDefaultTasksForPhase } from './sprintMissionTasks';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import VideoUploadRecorder from './VideoUploadRecorder';
 
 const STORAGE_KEY = 'sprint_templates_v1';
 
@@ -58,7 +59,7 @@ const buildDefaultData = () =>
 // ──────────────────────────────────────────────
 function TaskEditor({ tasks, onUpdate }) {
   const addTask = () => {
-    onUpdate([...tasks, { description: '', instructions: '', link_url: '' }]);
+    onUpdate([...tasks, { description: '', instructions: '', link_url: '', video_url: '' }]);
   };
 
   const removeTask = (idx) => {
@@ -129,6 +130,14 @@ function TaskEditor({ tasks, onUpdate }) {
               value={task.link_url}
               onChange={e => updateTask(idx, 'link_url', e.target.value)}
               className="text-sm"
+            />
+          </div>
+          <div className="space-y-1">
+            <span className="text-xs font-semibold text-gray-500">🎬 Vídeo de instrução (micro aula)</span>
+            <VideoUploadRecorder
+              videoUrl={task.video_url}
+              onVideoSaved={(url) => updateTask(idx, 'video_url', url)}
+              onVideoRemoved={() => updateTask(idx, 'video_url', '')}
             />
           </div>
         </div>

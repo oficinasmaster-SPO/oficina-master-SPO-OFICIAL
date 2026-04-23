@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Upload, MessageSquare, Check, User, Link, ChevronDown, ChevronUp, Info, X, ArrowLeft } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { cn } from "@/lib/utils";
+import VideoPlayerButton from "@/components/aceleracao/VideoPlayerButton";
 
 export default function SprintTaskItem({ task, index, canComplete, canAddNotes, userRole, onToggle, onUpdateEvidence }) {
   const [showEvidenceForm, setShowEvidenceForm] = useState(false);
@@ -58,6 +59,9 @@ export default function SprintTaskItem({ task, index, canComplete, canAddNotes, 
             {task.description}
           </p>
         </div>
+        {task.video_url && (
+          <VideoPlayerButton videoUrl={task.video_url} taskDescription={task.description} />
+        )}
         {canAddNotes && !showEvidenceForm && (() => {
           const hasContent = !!(task.evidence_note || task.evidence_url || task.link_url);
           return (
@@ -192,12 +196,20 @@ export default function SprintTaskItem({ task, index, canComplete, canAddNotes, 
             </div>
           </DialogHeader>
           <div className="flex-1 overflow-y-auto p-6">
-            <div className="max-w-3xl mx-auto">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
-                {task.instructions}
-              </div>
+            <div className="max-w-3xl mx-auto space-y-6">
+              {task.video_url && (
+                <div>
+                  <p className="text-sm font-semibold text-gray-700 mb-2">🎬 Vídeo de instrução</p>
+                  <video src={task.video_url} controls className="w-full rounded-lg bg-black max-h-80" />
+                </div>
+              )}
+              {task.instructions && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
+                  {task.instructions}
+                </div>
+              )}
               {task.link_url && (
-                <div className="mt-6">
+                <div>
                   <p className="text-sm font-semibold text-gray-700 mb-2">Material complementar:</p>
                   <a
                     href={task.link_url}
