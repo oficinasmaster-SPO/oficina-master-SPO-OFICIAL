@@ -21,28 +21,8 @@ Deno.serve(async (req) => {
     const tone = ai_config?.tone || 'formal';
     const suggestNextSteps = ai_config?.suggestNextSteps !== undefined ? ai_config.suggestNextSteps : false;
 
+    // Consultores e admins não são bloqueados por checagem de plano — apenas oficinas em self-service
     const workshop_id_auth = user.data?.workshop_id || body.workshop_id;
-
-    if (workshop_id_auth) {
-      try {
-        const planCheck = await base44.functions.invoke('checkPlanAccess', {
-          tenantId: workshop_id_auth,
-          feature: 'integrations',
-          action: 'check_feature'
-        });
-        if (!planCheck.data?.success) {
-          return Response.json({
-            success: false,
-            error: { code: 'PLAN_RESTRICTION', message: 'Recurso de IA não disponível no plano atual.' }
-          }, { status: 403 });
-        }
-      } catch (e) {
-        if (e.response && e.response.status === 403) {
-          return Response.json(e.response.data, { status: 403 });
-        }
-        console.warn('Erro na validação do plano (integrations), continuando:', e.message);
-      }
-    }
 
     if (!atendimento_id) {
       return Response.json({ error: 'atendimento_id é obrigatório' }, { status: 400 });
@@ -58,24 +38,26 @@ Deno.serve(async (req) => {
     // Buscar dados da oficina
     const workshop = await base44.entities.Workshop.get(atendimento.workshop_id);
 
-    // Validação de Plano Global (Fonte de Verdade: Banco/Webhook)
-    try {
-      const planCheck = await base44.functions.invoke('checkPlanAccess', {
-        tenantId: workshop.id,
-        feature: 'reports',
-        action: 'check_feature'
-      });
-      if (!planCheck.data?.success) {
-        return Response.json({
-          success: false,
-          error: planCheck.data?.error?.message || "Recurso não disponível no seu plano."
-        }, { status: 403 });
+    // Checagem de plano apenas para oficinas acessando por conta própria (não consultores/admins)
+    if (!isConsultor && !isAdmin) {
+      try {
+        const planCheck = await base44.functions.invoke('checkPlanAccess', {
+          tenantId: workshop.id,
+          feature: 'reports',
+          action: 'check_feature'
+        });
+        if (!planCheck.data?.success) {
+          return Response.json({
+            success: false,
+            error: planCheck.data?.error?.message || "Recurso não disponível no seu plano."
+          }, { status: 403 });
+        }
+      } catch (e) {
+        if (e.response && e.response.status === 403) {
+          return Response.json(e.response.data, { status: 403 });
+        }
+        console.warn("Erro na validação do plano (reports), continuando:", e.message);
       }
-    } catch (e) {
-      if (e.response && e.response.status === 403) {
-        return Response.json(e.response.data, { status: 403 });
-      }
-      console.warn("Erro na validação do plano (reports), continuando:", e.message);
     }
 
     // Buscar inteligência do cliente vinculada
