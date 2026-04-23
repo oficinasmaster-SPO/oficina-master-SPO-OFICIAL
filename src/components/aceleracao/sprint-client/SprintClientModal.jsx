@@ -107,9 +107,10 @@ export default function SprintClientModal({ sprint, user, workshop, open, onClos
     const task = { 
       ...originalTask, 
       ...data,
-      // Garantir que instruções e link_url NÃO são removidas
+      // Garantir que campos do template NÃO são removidos ao salvar evidência
       instructions: originalTask.instructions,
-      link_url: originalTask.link_url
+      link_url: originalTask.link_url,
+      video_url: originalTask.video_url,
     };
     updated[currentPhaseIdx] = { ...updated[currentPhaseIdx], tasks: updated[currentPhaseIdx].tasks.map((t, i) => i === taskIdx ? task : t) };
     saveMutation.mutate(updated);

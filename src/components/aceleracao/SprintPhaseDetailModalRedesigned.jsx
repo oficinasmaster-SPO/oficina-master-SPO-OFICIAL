@@ -258,9 +258,10 @@ export default function SprintPhaseDetailModalRedesigned({
     updated[taskIdx] = { 
       ...originalTask, 
       ...data,
-      // Garantir que instruções e link_url NÃO são removidas
+      // Garantir que campos do template NÃO são removidos ao salvar evidência
       instructions: originalTask.instructions,
-      link_url: originalTask.link_url
+      link_url: originalTask.link_url,
+      video_url: originalTask.video_url,
     };
     setTasks(updated);
     // Auto-persist evidence — usa livePhases para preservar instructions/link_url
