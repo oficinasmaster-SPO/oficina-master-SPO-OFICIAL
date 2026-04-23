@@ -143,9 +143,14 @@ Deno.serve(async (req) => {
     const pdfBuffer = await externalResponse.arrayBuffer();
     console.log(`[PDF-External] PDF recebido: ${pdfBuffer.byteLength} bytes`);
 
-    // Converter para base64
+    // Converter para base64 (seguro para arquivos grandes)
     const uint8Array = new Uint8Array(pdfBuffer);
-    const base64PDF = btoa(String.fromCharCode(...uint8Array));
+    let base64PDF = '';
+    const chunkSize = 8192; // Processar em chunks para evitar stack overflow
+    for (let i = 0; i < uint8Array.length; i += chunkSize) {
+      const chunk = uint8Array.subarray(i, i + chunkSize);
+      base64PDF += btoa(String.fromCharCode(...chunk));
+    }
 
     console.log(`[PDF-External] Geração concluída com sucesso`);
     const meetingDate = ata.meeting_date ? new Date(ata.meeting_date) : new Date();
