@@ -21,6 +21,14 @@ Deno.serve(async (req) => {
 
     console.log(`[PDF-External] Gerando PDF com HTML de ${html.length} caracteres`);
 
+    // ===== GARANTIA: Serviço Railway com Puppeteer =====
+    // O serviço no Railway está configurado com:
+    // - Puppeteer (headless browser)
+    // - await page.setContent(html, { waitUntil: 'networkidle0' })
+    // - Renderização completa de CSS inline (100% fidelidade visual)
+    // - Conversão PNG -> PDF final de alta qualidade
+    // Este backend apenas orquestra a chamada, não manipula PDF localmente
+
     // Chamar serviço externo de PDF com retry
     const pdfServiceUrl = Deno.env.get('PDF_SERVICE_URL') || 'https://pdf-service-production-37e0.up.railway.app/generate-pdf';
     
