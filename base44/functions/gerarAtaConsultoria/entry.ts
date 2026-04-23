@@ -5,7 +5,11 @@ Deno.serve(async (req) => {
   
   try {
     const user = await base44.auth.me();
-    if (!user || user.role !== 'admin') {
+    // Permitir: admins, consultores (com consulting_firm_id) e usuários de oficina (com workshop_id)
+    const isAdmin = user?.role === 'admin';
+    const isConsultor = !!user?.data?.consulting_firm_id;
+    const isOficina = !!user?.data?.workshop_id;
+    if (!user || (!isAdmin && !isConsultor && !isOficina)) {
       return Response.json({ error: 'Acesso negado' }, { status: 403 });
     }
 
