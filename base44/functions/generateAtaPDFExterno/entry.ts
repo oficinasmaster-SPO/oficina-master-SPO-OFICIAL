@@ -70,9 +70,14 @@ Deno.serve(async (req) => {
       try {
         console.log(`[PDF-External] Tentativa ${attempt + 1}/${maxRetries + 1} de contato com serviço externo`);
         
+        const meetingDate = ata.meeting_date ? new Date(ata.meeting_date) : new Date();
+        const ddmmyyyy = String(meetingDate.getDate()).padStart(2, '0') + 
+                         String(meetingDate.getMonth() + 1).padStart(2, '0') + 
+                         String(meetingDate.getFullYear());
+        
         const payloadJson = JSON.stringify({ 
           html: htmlContent,
-          filename: `ATA-${ata.code || ata.id}.pdf`
+          filename: `${workshop?.name || 'Oficina'}_${ddmmyyyy}.pdf`
         });
         
         console.log(`[PDF-External] Tamanho do payload: ${payloadJson.length} bytes`);
@@ -143,10 +148,15 @@ Deno.serve(async (req) => {
     const base64PDF = btoa(String.fromCharCode(...uint8Array));
 
     console.log(`[PDF-External] Geração concluída com sucesso`);
+    const meetingDate = ata.meeting_date ? new Date(ata.meeting_date) : new Date();
+    const ddmmyyyy = String(meetingDate.getDate()).padStart(2, '0') + 
+                     String(meetingDate.getMonth() + 1).padStart(2, '0') + 
+                     String(meetingDate.getFullYear());
+
     return Response.json({
       success: true,
       pdf: base64PDF,
-      filename: `ATA-${ata.code || ata.id}.pdf`,
+      filename: `${workshop?.name || 'Oficina'}_${ddmmyyyy}.pdf`,
       size: pdfBuffer.byteLength
     });
 
