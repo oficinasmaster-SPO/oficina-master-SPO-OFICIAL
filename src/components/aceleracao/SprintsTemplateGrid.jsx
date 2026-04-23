@@ -389,58 +389,12 @@ export default function SprintsTemplateGrid() {
     load();
   }, []);
 
-  const propagateUpdates = async (missionId, phaseIdx, newTasks) => {
-    try {
-      const response = await base44.functions.invoke('propagateSprintTemplateUpdates', {
-        missionId,
-        phaseIdx,
-        newTasks,
-      });
-
-      if (response.data?.success) {
-        const count = response.data.updatedCount;
-        if (count > 0) {
-          toast.success(`Template propagado para ${count} sprint(s) de clientes`);
-        }
-        if (response.data.errors?.length > 0) {
-          console.warn('Alguns sprints falharam:', response.data.errors);
-          toast.warning(`Atualizados ${count} sprints, mas ${response.data.errors.length} tiveram erro`);
-        }
-      }
-    } catch (err) {
-      console.error('Erro ao propagar:', err);
-      toast.error('Erro ao propagar template para clientes');
-    }
-  };
-
-  // Sincronizar retroativamente sprints existentes com o template
-  const syncExistingSprints = async (missionId) => {
-    try {
-      const response = await base44.functions.invoke('syncClientSprintTasksWithTemplate', {
-        missionId,
-      });
-
-      if (response.data?.success) {
-        const count = response.data.updatedCount;
-        if (count > 0) {
-          toast.success(`Sincronizadas ${count} sprints existentes`);
-        }
-        if (response.data.errors?.length > 0) {
-          console.warn('Alguns sprints falharam:', response.data.errors);
-        }
-      }
-    } catch (err) {
-      console.error('Erro ao sincronizar:', err);
-      // Não mostrar erro se falhar, pois pode ser primeira vez
-    }
-  };
-
   const handleSprintSave = async (missionId, updatedSprint) => {
     const newData = data.map(m => m.mission_id === missionId ? { ...m, sprint: updatedSprint } : m);
     setData(newData);
-    // Persistir no banco
     setSaving(true);
     try {
+      // 1. Persistir template no banco
       const existing = await base44.entities.SystemSetting.filter({ key: STORAGE_KEY });
       const payload = { key: STORAGE_KEY, value: JSON.stringify(newData) };
       if (existing?.length > 0) {
@@ -448,35 +402,21 @@ export default function SprintsTemplateGrid() {
       } else {
         await base44.entities.SystemSetting.create(payload);
       }
-      
-      // Propagar atualizações para todos os sprints de clientes
-      const oldSprint = data.find(m => m.mission_id === missionId)?.sprint;
-      if (oldSprint?.phases && updatedSprint?.phases) {
-        toast.info("🔄 Sincronizando sprints antigas com novo template...");
-        
-        // Primeiro, sincronizar sprints existentes que possam estar desatualizados
-        try {
-          await syncExistingSprints(missionId);
-        } catch (err) {
-          console.warn("Sincronização retroativa parcial:", err);
-        }
-        
-        // Depois, propagar mudanças específicas da fase
-        for (let phaseIdx = 0; phaseIdx < updatedSprint.phases.length; phaseIdx++) {
-          const oldTasks = oldSprint.phases[phaseIdx]?.tasks || [];
-          const newTasks = updatedSprint.phases[phaseIdx]?.tasks || [];
-          
-          // Detectar se houve mudanças nessa fase
-          const hasChanges = JSON.stringify(oldTasks) !== JSON.stringify(newTasks);
-          if (hasChanges) {
-            await propagateUpdates(missionId, phaseIdx, newTasks);
-          }
-        }
-        
-        toast.success("✅ Template salvo e sprints antigas atualizadas!");
+
+      // 2. Sincronizar todos os sprints de clientes com o template atualizado
+      //    Uma única chamada cobre: adição, remoção, edição de description/instructions/link_url/video_url
+      toast.info('🔄 Propagando template para sprints de clientes...');
+      const response = await base44.functions.invoke('syncClientSprintTasksWithTemplate', { missionId });
+      const count = response.data?.updatedCount ?? 0;
+
+      if (response.data?.errors?.length > 0) {
+        console.warn('Erros parciais ao sincronizar:', response.data.errors);
+        toast.warning(`Template salvo. ${count} sprint(s) atualizados, mas ${response.data.errors.length} tiveram erro.`);
+      } else if (count > 0) {
+        toast.success(`✅ Template salvo e propagado para ${count} sprint(s) de clientes!`);
+      } else {
+        toast.success('✅ Template salvo com sucesso!');
       }
-      
-      toast.success('Template salvo com sucesso!');
     } catch (err) {
       console.error('Erro ao salvar:', err);
       toast.error('Erro ao salvar template');
