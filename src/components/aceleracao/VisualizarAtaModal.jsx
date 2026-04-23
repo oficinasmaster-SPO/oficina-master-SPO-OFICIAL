@@ -129,36 +129,14 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
 
     setIsGeneratingPDF(true);
     try {
-      const response = await base44.functions.invoke('generateAtaPDFPuppeteer', {
-        ata_id: ataAtualizada.id
+      const { downloadAtaPDF } = await import("@/lib/pdfDownloadManager");
+      await downloadAtaPDF(ataAtualizada.id, {
+        onSuccess: (result) => toast.success(`PDF "${result.filename}" baixado com sucesso!`),
+        onError: (error) => toast.error('Erro ao gerar PDF: ' + error.message)
       });
-
-      if (!response.data.success) {
-        throw new Error(response.data.error || 'Erro ao gerar PDF');
-      }
-
-      // Converter base64 para blob e fazer download
-      const binaryString = atob(response.data.pdf);
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
-      const blob = new Blob([bytes], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = response.data.filename || 'ata.pdf';
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-
-      toast.success(`PDF "${response.data.filename}" baixado com sucesso!`);
     } catch (error) {
       console.error('Erro ao gerar PDF:', error);
-      const errorMsg = error.response?.data?.error || error.message || 'Erro desconhecido ao gerar PDF';
-      const errorDetails = error.response?.data?.details ? ` - ${error.response.data.details}` : '';
-      toast.error('Erro ao gerar PDF: ' + errorMsg + errorDetails);
+      toast.error('Erro ao gerar PDF: ' + (error.message || 'Erro desconhecido'));
     } finally {
       setIsGeneratingPDF(false);
     }
