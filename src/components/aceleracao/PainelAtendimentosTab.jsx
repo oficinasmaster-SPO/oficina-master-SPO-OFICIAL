@@ -341,6 +341,7 @@ export default function PainelAtendimentosTab({ state }) {
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50/50">
                     <th className="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wider border-r border-gray-100">Cliente</th>
+                    <th className="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wider border-r border-gray-100" style={{ width: '90px' }}>Plano</th>
                     <th className="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wider border-r border-gray-100" style={{ width: '110px' }}>Tipo</th>
                     <th className="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wider border-r border-gray-100" style={{ width: '120px' }}>Consultor</th>
                     <th className="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wider border-r border-gray-100" style={{ width: '130px' }}>Data</th>
@@ -353,7 +354,7 @@ export default function PainelAtendimentosTab({ state }) {
                 <tbody className="divide-y divide-gray-100">
                   {paginatedAtendimentos.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="py-24 text-center">
+                      <td colSpan={9} className="py-24 text-center">
                         <div className="flex flex-col items-center justify-center max-w-md mx-auto space-y-4">
                           <div className="bg-gray-50 p-4 rounded-full">
                             <SearchX className="w-10 h-10 text-gray-400" />
@@ -398,7 +399,26 @@ export default function PainelAtendimentosTab({ state }) {
                         onClick={() => { setVisualizarAtendimentoId(atendimento.id); setShowVisualizarAtendimento(true); }}
                       >
                         <td className="py-3 px-3 text-sm text-gray-700 border-r border-gray-100 font-medium truncate" title={workshop?.name || '-'}>
-                          {workshop?.name || '-'}
+                         {workshop?.name || '-'}
+                        </td>
+                        <td className="py-3 px-3 border-r border-gray-100">
+                         {workshop?.planoAtual ? (
+                           <span className={`text-[11px] font-semibold px-2 py-1 rounded uppercase tracking-wide ${
+                             workshop.planoAtual === 'GOLD' || workshop.planoAtual === 'IOM' || workshop.planoAtual === 'MILLIONS'
+                               ? 'bg-yellow-100 text-yellow-800'
+                               : workshop.planoAtual === 'PRATA'
+                               ? 'bg-gray-100 text-gray-700'
+                               : workshop.planoAtual === 'BRONZE'
+                               ? 'bg-orange-100 text-orange-700'
+                               : workshop.planoAtual === 'START'
+                               ? 'bg-blue-100 text-blue-700'
+                               : 'bg-gray-100 text-gray-500'
+                           }`}>
+                             {workshop.planoAtual}
+                           </span>
+                         ) : (
+                           <span className="text-[11px] text-gray-400">—</span>
+                         )}
                         </td>
                         <td className="py-3 px-3 text-sm text-gray-600 border-r border-gray-100 capitalize truncate" title={atendimento.tipo_atendimento?.replace(/_/g, ' ') || '-'}>
                           {atendimento.tipo_atendimento?.replace(/_/g, ' ') || '-'}
