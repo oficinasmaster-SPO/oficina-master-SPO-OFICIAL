@@ -193,13 +193,33 @@ function generateAtaHTML(ata, workshop) {
       .replace(/'/g, '&#39;');
   };
 
+  const formatSectionText = (text) => {
+    if (!text) return '';
+    const sanitized = sanitize(text);
+    
+    // Dividir por quebras de linha e criar parágrafos ou listas
+    const lines = sanitized.split(/\n|<br\s*\/?>/gi).filter(line => line.trim());
+    
+    // Se tem múltiplas linhas que parecem ser itens de lista, usar <ul>
+    if (lines.length > 1 && lines.some(line => /^[-•*]\s/.test(line.trim()))) {
+      const items = lines.map(line => {
+        const cleaned = line.replace(/^[-•*]\s+/, '').trim();
+        return `<li>${cleaned}</li>`;
+      }).join('');
+      return `<ul>${items}</ul>`;
+    }
+    
+    // Caso contrário, criar parágrafos semânticos
+    return lines.map(line => `<p>${line.trim()}</p>`).join('');
+  };
+
   const d = ata || {};
 
   // Processar participantes
   const participantes = Array.isArray(d.participantes) 
     ? d.participantes.map(p => 
-        typeof p === 'string' ? p : `${p.name || ''} - ${p.role || ''}`
-      ).filter(Boolean).join('<br>')
+        typeof p === 'string' ? sanitize(p) : `${sanitize(p.name || '')} - ${sanitize(p.role || '')}`
+      ).filter(Boolean).map(p => `<li>${p}</li>`).join('')
     : '';
 
   // Processar responsável
@@ -265,12 +285,12 @@ function generateAtaHTML(ata, workshop) {
     }
 
     body {
-      font-family: 'Inter', Arial, sans-serif;
+      font-family: 'Arial', sans-serif;
       font-size: 14px;
-      line-height: 1.5;
+      line-height: 1.6;
       color: #1a1a1a;
       background: white;
-      padding: 32px;
+      padding: 20mm;
       margin: 0;
       width: 100%;
     }
@@ -281,7 +301,7 @@ function generateAtaHTML(ata, workshop) {
     }
 
     @media print {
-      body { margin: 0; padding: 0; }
+      body { margin: 0; padding: 20mm; }
       .no-break { page-break-inside: avoid !important; break-inside: avoid !important; }
       .page-break { page-break-before: always !important; break-before: page !important; }
     }
@@ -293,18 +313,32 @@ function generateAtaHTML(ata, workshop) {
       color: #1a1a1a;
     }
 
+    .section {
+      margin-top: 24px;
+      margin-bottom: 16px;
+    }
+
+    .card {
+      border: 1px solid #e5e5e5;
+      border-radius: 8px;
+      padding: 16px;
+      background: #fafafa;
+      margin-bottom: 12px;
+      page-break-inside: avoid;
+    }
+
     .document-header {
       border-bottom: 3px solid #CC0000;
-      padding: 0 0 12px 0;
-      margin-bottom: 20px;
+      padding-bottom: 16px;
+      margin-bottom: 24px;
       page-break-after: avoid;
     }
 
     .document-header h1 {
-      font-size: 22px;
+      font-size: 20px;
       font-weight: 700;
       color: #1a1a1a;
-      margin-bottom: 4px;
+      margin: 0 0 8px 0;
       text-align: center;
     }
 
@@ -318,62 +352,79 @@ function generateAtaHTML(ata, workshop) {
     .header-info {
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: flex-start;
       margin-top: 12px;
       flex-wrap: wrap;
-      gap: 15px;
+      gap: 12px;
       page-break-after: avoid;
     }
 
     .header-info-item {
       font-size: 13px;
+      flex: 1;
+      min-width: 150px;
     }
 
     .header-info-item strong {
-      display: inline-block;
-      min-width: 80px;
+      display: block;
       font-weight: 700;
+      margin-bottom: 4px;
     }
 
     .badge-status {
       display: inline-block;
-      padding: 4px 10px;
-      border: 1px solid #CC0000;
+      padding: 6px 12px;
+      border: 2px solid #CC0000;
       background: white;
       color: #CC0000;
-      font-weight: bold;
+      font-weight: 700;
       font-size: 12px;
-      border-radius: 6px;
+      border-radius: 4px;
     }
 
     .section-title {
-      font-size: 13px;
+      font-size: 14px;
       font-weight: 700;
       color: #1a1a1a;
-      margin-top: 18px;
-      margin-bottom: 10px;
-      padding-bottom: 6px;
-      border-bottom: 2px solid #333;
+      margin-top: 20px;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #CC0000;
       page-break-after: avoid;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
     .section-content {
       font-size: 14px;
       line-height: 1.6;
-      margin-bottom: 15px;
+      margin-bottom: 12px;
       page-break-inside: avoid;
       color: #1a1a1a;
-      white-space: normal;
-      word-wrap: break-word;
-      text-align: justify;
+    }
+
+    .section-content p {
+      margin: 0 0 10px 0;
+    }
+
+    .section-content ul,
+    .section-content ol {
+      margin: 10px 0;
+      padding-left: 20px;
+    }
+
+    .section-content li {
+      margin-bottom: 6px;
+      line-height: 1.6;
     }
 
     .info-table {
       width: 100%;
       border-collapse: collapse;
-      margin: 10px 0 15px 0;
+      margin: 12px 0 16px 0;
       page-break-inside: avoid;
       font-size: 13px;
+      background: white;
     }
 
     .info-table th {
@@ -396,37 +447,39 @@ function generateAtaHTML(ata, workshop) {
     }
 
     .info-table tbody tr:nth-child(even) td {
-      background-color: #f5f5f5;
+      background-color: #f9f9f9;
     }
 
     .accent-red {
       color: #CC0000;
-      font-weight: bold;
+      font-weight: 700;
       text-transform: uppercase;
     }
 
     .highlight-box {
-      background-color: #f0f0f0;
+      background-color: #f5f5f5;
       border-left: 4px solid #CC0000;
-      padding: 10px;
-      margin: 10px 0;
+      padding: 12px;
+      margin: 12px 0;
       page-break-inside: avoid;
+      border-radius: 4px;
     }
 
     .document-footer {
       border-top: 1px solid #ccc;
-      padding: 15px 0 0 0;
-      margin-top: 30px;
-      font-size: 8pt;
+      padding-top: 16px;
+      margin-top: 32px;
+      font-size: 11px;
       text-align: center;
       color: #666;
       page-break-before: avoid;
     }
 
     .document-footer p {
-      margin: 3px 0;
+      margin: 4px 0;
     }
 
+    p { margin: 0 0 10px 0; }
     strong { font-weight: 700; }
     em { font-style: italic; }
   </style>
@@ -453,143 +506,169 @@ function generateAtaHTML(ata, workshop) {
     </div>
 
     <!-- TIPO ACELERAÇÃO -->
-    ${d.tipo_aceleracao ? `
-      <div class="highlight-box">
-        <strong>Tipo de Aceleração:</strong> <span class="accent-red">${sanitize(d.tipo_aceleracao)}</span>
-      </div>
-    ` : ''}
+     ${d.tipo_aceleracao ? `
+       <div class="section">
+         <div class="card">
+           <strong>Tipo de Aceleração:</strong> <span class="accent-red">${sanitize(d.tipo_aceleracao)}</span>
+         </div>
+       </div>
+     ` : ''}
 
     <!-- PARTICIPANTES / RESPONSÁVEL / PLANO -->
-    <table class="info-table">
-      <thead>
-        <tr>
-          <th>PARTICIPANTES</th>
-          <th>RESPONSÁVEL</th>
-          <th>PLANO</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>${sanitize(participantes)}</td>
-          <td>${sanitize(responsavel)}</td>
-          <td>${sanitize(d.plano_nome || '-')}</td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="section">
+      <table class="info-table">
+        <thead>
+          <tr>
+            <th>PARTICIPANTES</th>
+            <th>RESPONSÁVEL</th>
+            <th>PLANO</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>${participantes ? `<ul>${participantes}</ul>` : '-'}</td>
+            <td>${sanitize(responsavel)}</td>
+            <td>${sanitize(d.plano_nome || '-')}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
     <!-- SEÇÃO 1: PAUTAS -->
-    ${d.pautas ? `
-      <div class="section-title">1. PAUTAS</div>
-      <div class="section-content">${sanitize(d.pautas)}</div>
-    ` : ''}
+     ${d.pautas ? `
+       <div class="section">
+         <h2 class="section-title">1. PAUTAS</h2>
+         <div class="card">
+           <div class="section-content">${formatSectionText(d.pautas)}</div>
+         </div>
+       </div>
+     ` : ''}
 
     <!-- SEÇÃO 2: OBJETIVOS DO ATENDIMENTO -->
-    ${d.objetivos_atendimento ? `
-      <div class="section-title">2. OBJETIVOS DO ATENDIMENTO</div>
-      <div class="section-content">${sanitize(d.objetivos_atendimento)}</div>
-    ` : ''}
+     ${d.objetivos_atendimento ? `
+       <div class="section">
+         <h2 class="section-title">2. OBJETIVOS DO ATENDIMENTO</h2>
+         <div class="card">
+           <div class="section-content">${formatSectionText(d.objetivos_atendimento)}</div>
+         </div>
+       </div>
+     ` : ''}
 
     <!-- SEÇÃO 3: OBSERVAÇÕES DO CONSULTOR -->
-    ${d.objetivos_consultor ? `
-      <div class="section-title">3. OBSERVAÇÕES E OBJETIVOS DO CONSULTOR</div>
-      <div class="section-content">${sanitize(d.objetivos_consultor)}</div>
-    ` : ''}
+     ${d.objetivos_consultor ? `
+       <div class="section">
+         <h2 class="section-title">3. OBSERVAÇÕES E OBJETIVOS DO CONSULTOR</h2>
+         <div class="card">
+           <div class="section-content">${formatSectionText(d.objetivos_consultor)}</div>
+         </div>
+       </div>
+     ` : ''}
 
     <!-- SEÇÃO 4: PRÓXIMOS PASSOS -->
-    ${proximosPassos ? `
-      <div class="section-title">4. PRÓXIMOS PASSOS</div>
-      <table class="info-table">
-        <thead>
-          <tr>
-            <th>Ação</th>
-            <th>Responsável</th>
-            <th>Prazo</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${proximosPassos}
-        </tbody>
-      </table>
-    ` : ''}
+     ${proximosPassos ? `
+       <div class="section">
+         <h2 class="section-title">4. PRÓXIMOS PASSOS</h2>
+         <table class="info-table">
+           <thead>
+             <tr>
+               <th>Ação</th>
+               <th>Responsável</th>
+               <th>Prazo</th>
+             </tr>
+           </thead>
+           <tbody>
+             ${proximosPassos}
+           </tbody>
+         </table>
+       </div>
+     ` : ''}
 
     <!-- SEÇÃO 5: RESUMO EXECUTIVO (IA) -->
-    ${d.ata_ia ? `
-      <div class="section-title">5. RESUMO EXECUTIVO</div>
-      <div class="highlight-box">
-        ${sanitize(d.ata_ia)}
-      </div>
-    ` : ''}
+     ${d.ata_ia ? `
+       <div class="section">
+         <h2 class="section-title">5. RESUMO EXECUTIVO</h2>
+         <div class="highlight-box">
+           <div class="section-content">${formatSectionText(d.ata_ia)}</div>
+         </div>
+       </div>
+     ` : ''}
 
     <!-- SEÇÃO 6: DECISÕES -->
-    ${decisoes ? `
-      <div class="section-title">6. DECISÕES TOMADAS</div>
-      <table class="info-table">
-        <thead>
-          <tr>
-            <th>Decisão</th>
-            <th>Responsável</th>
-            <th>Prazo</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${decisoes}
-        </tbody>
-      </table>
-    ` : ''}
+     ${decisoes ? `
+       <div class="section">
+         <h2 class="section-title">6. DECISÕES TOMADAS</h2>
+         <table class="info-table">
+           <thead>
+             <tr>
+               <th>Decisão</th>
+               <th>Responsável</th>
+               <th>Prazo</th>
+             </tr>
+           </thead>
+           <tbody>
+             ${decisoes}
+           </tbody>
+         </table>
+       </div>
+     ` : ''}
 
     <!-- SEÇÃO 7: AÇÕES -->
-    ${acoes ? `
-      <div class="section-title">7. AÇÕES DE ACOMPANHAMENTO</div>
-      <table class="info-table">
-        <thead>
-          <tr>
-            <th>Ação</th>
-            <th>Responsável</th>
-            <th>Prazo</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${acoes}
-        </tbody>
-      </table>
-    ` : ''}
+     ${acoes ? `
+       <div class="section">
+         <h2 class="section-title">7. AÇÕES DE ACOMPANHAMENTO</h2>
+         <table class="info-table">
+           <thead>
+             <tr>
+               <th>Ação</th>
+               <th>Responsável</th>
+               <th>Prazo</th>
+             </tr>
+           </thead>
+           <tbody>
+             ${acoes}
+           </tbody>
+         </table>
+       </div>
+     ` : ''}
 
     <!-- DADOS DA OFICINA -->
-    ${workshop ? `
-      <div class="section-title">DADOS DA OFICINA CLIENTE</div>
-      <table class="info-table">
-        <thead>
-          <tr>
-            <th>Campo</th>
-            <th>Informação</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><strong>Nome</strong></td>
-            <td>${sanitize(workshop.name || '-')}</td>
-          </tr>
-          <tr>
-            <td><strong>CNPJ</strong></td>
-            <td>${sanitize(workshop.cnpj || '-')}</td>
-          </tr>
-          <tr>
-            <td><strong>Localização</strong></td>
-            <td>${sanitize(workshop.city || '-')} / ${sanitize(workshop.state || '-')}</td>
-          </tr>
-          <tr>
-            <td><strong>Plano</strong></td>
-            <td>${sanitize(workshop.planoAtual || 'FREE')}</td>
-          </tr>
-          ${workshop.employees_count ? `
-            <tr>
-              <td><strong>Colaboradores</strong></td>
-              <td>${workshop.employees_count}</td>
-            </tr>
-          ` : ''}
-        </tbody>
-      </table>
-    ` : ''}
+     ${workshop ? `
+       <div class="section">
+         <h2 class="section-title">DADOS DA OFICINA CLIENTE</h2>
+         <table class="info-table">
+           <thead>
+             <tr>
+               <th>Campo</th>
+               <th>Informação</th>
+             </tr>
+           </thead>
+           <tbody>
+             <tr>
+               <td><strong>Nome</strong></td>
+               <td>${sanitize(workshop.name || '-')}</td>
+             </tr>
+             <tr>
+               <td><strong>CNPJ</strong></td>
+               <td>${sanitize(workshop.cnpj || '-')}</td>
+             </tr>
+             <tr>
+               <td><strong>Localização</strong></td>
+               <td>${sanitize(workshop.city || '-')} / ${sanitize(workshop.state || '-')}</td>
+             </tr>
+             <tr>
+               <td><strong>Plano</strong></td>
+               <td>${sanitize(workshop.planoAtual || 'FREE')}</td>
+             </tr>
+             ${workshop.employees_count ? `
+               <tr>
+                 <td><strong>Colaboradores</strong></td>
+                 <td>${workshop.employees_count}</td>
+               </tr>
+             ` : ''}
+           </tbody>
+         </table>
+       </div>
+     ` : ''}
 
     <!-- FOOTER -->
     <div class="document-footer">
