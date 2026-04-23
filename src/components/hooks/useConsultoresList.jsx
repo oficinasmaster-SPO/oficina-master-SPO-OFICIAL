@@ -7,21 +7,23 @@ export default function useConsultoresList(user) {
     queryFn: async () => {
       const consultoresMap = new Map();
 
+      const OFICINAS_MASTER_WORKSHOP_ID = '695408b3ed74bfeb60d708c0';
+
       const employees = await base44.entities.Employee.filter({
-        tipo_vinculo: 'interno',
+        workshop_id: OFICINAS_MASTER_WORKSHOP_ID,
         status: 'ativo'
       }, null, 1000);
 
-      // Consultores reais: tipo_vinculo interno e SEM workshop_id (pertencem à firma, não a uma oficina cliente)
+      // Listar todos os colaboradores da Oficinas Master com user_id vinculado
       employees
-        .filter(e => e.user_id && !e.workshop_id)
+        .filter(e => e.user_id)
         .forEach(e => {
           consultoresMap.set(e.user_id, e.full_name);
         });
 
-      // Garante que o usuário logado aparece se for consultor da firma (sem workshop_id)
+      // Garante que o usuário logado aparece se for da Oficinas Master
       if (user?.id && !consultoresMap.has(user.id)) {
-        const employeeByEmail = employees.find(e => e.email === user.email && !e.workshop_id);
+        const employeeByEmail = employees.find(e => e.email === user.email);
         if (employeeByEmail) {
           consultoresMap.set(user.id, employeeByEmail.full_name);
         }
