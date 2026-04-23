@@ -81,16 +81,41 @@ Deno.serve(async (req) => {
     console.log(`[PDF] Iniciando browser Puppeteer (chrome-aws-lambda)`);
     
     // VALIDAÇÃO OBRIGATÓRIA: executablePath deve estar disponível
-    const executablePath = await chromium.executablePath;
-    console.log(`[PDF] Chromium executable path: ${executablePath || 'NULL - ERRO!'}`);
+    let executablePath = await chromium.executablePath;
+    console.log(`[PDF] Tentando chrome-aws-lambda executablePath: ${executablePath || 'não encontrado'}`);
+    
+    // Fallback para ambiente local/desenvolvimento
+    if (!executablePath) {
+      console.log('[PDF] chrome-aws-lambda falhou, tentando fallback local...');
+      
+      // Tentar varredura local de Chrome/Chromium
+      const path = require('path');
+      const fs = require('fs');
+      
+      const possiblePaths = [
+        '/usr/bin/chromium-browser',           // Linux
+        '/usr/bin/chromium',                   // Linux alternativo
+        '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', // macOS
+        'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',  // Windows
+        'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe'
+      ];
+      
+      for (const p of possiblePaths) {
+        if (fs.existsSync(p)) {
+          executablePath = p;
+          console.log(`[PDF] Chrome encontrado em: ${executablePath}`);
+          break;
+        }
+      }
+    }
     
     if (!executablePath) {
-      throw new Error('Chromium executablePath não encontrado - ambiente incompatível com chrome-aws-lambda');
+      throw new Error('Chromium não encontrado - nem chrome-aws-lambda nem instalação local. Instale com: npm install puppeteer-core chrome-aws-lambda');
     }
     
     browser = await puppeteer.launch({
-      args: chromium.args,
-      defaultViewport: chromium.defaultViewport,
+      args: chromium.args || ['--no-sandbox', '--disable-setuid-sandbox'],
+      defaultViewport: chromium.defaultViewport || { width: 1024, height: 768 },
       executablePath: executablePath,
       headless: true
     });
