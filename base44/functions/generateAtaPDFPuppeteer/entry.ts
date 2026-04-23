@@ -88,10 +88,7 @@ Deno.serve(async (req) => {
     if (!executablePath) {
       console.log('[PDF] chrome-aws-lambda falhou, tentando fallback local...');
       
-      // Tentar varredura local de Chrome/Chromium
-      const path = require('path');
-      const fs = require('fs');
-      
+      // Tentar varredura local de Chrome/Chromium (Deno compatible)
       const possiblePaths = [
         '/usr/bin/chromium-browser',           // Linux
         '/usr/bin/chromium',                   // Linux alternativo
@@ -101,10 +98,14 @@ Deno.serve(async (req) => {
       ];
       
       for (const p of possiblePaths) {
-        if (fs.existsSync(p)) {
+        try {
+          // Deno.statSync verifica se arquivo existe
+          Deno.statSync(p);
           executablePath = p;
           console.log(`[PDF] Chrome encontrado em: ${executablePath}`);
           break;
+        } catch {
+          // Arquivo não encontrado, continua para próximo
         }
       }
     }
