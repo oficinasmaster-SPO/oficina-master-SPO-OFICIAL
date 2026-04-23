@@ -30,13 +30,18 @@ export async function downloadCronogramaPDFExterno(cronogramaData, workshop, opt
     console.log(`[PDF-Manager] PDF gerado com sucesso: ${response.data.size} bytes`);
 
     const base64PDF = response.data.pdf;
-    const binaryString = atob(base64PDF);
-    const bytes = new Uint8Array(binaryString.length);
-    
-    for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
+    if (!base64PDF || typeof base64PDF !== 'string') {
+      throw new Error('PDF inválido recebido do servidor');
     }
-    
+
+    let binaryString;
+    try {
+      binaryString = atob(base64PDF);
+    } catch (e) {
+      throw new Error('PDF corrompido ou mal codificado');
+    }
+
+    const bytes = Uint8Array.from(binaryString, c => c.charCodeAt(0));
     const blob = new Blob([bytes], { type: 'application/pdf' });
     const url = window.URL.createObjectURL(blob);
 
@@ -128,13 +133,18 @@ export async function downloadProcessPDFExterno(processDoc, its = [], workshop, 
     console.log(`[PDF-Manager] PDF gerado com sucesso: ${response.data.size} bytes`);
 
     const base64PDF = response.data.pdf;
-    const binaryString = atob(base64PDF);
-    const bytes = new Uint8Array(binaryString.length);
-    
-    for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
+    if (!base64PDF || typeof base64PDF !== 'string') {
+      throw new Error('PDF inválido recebido do servidor');
     }
-    
+
+    let binaryString;
+    try {
+      binaryString = atob(base64PDF);
+    } catch (e) {
+      throw new Error('PDF corrompido ou mal codificado');
+    }
+
+    const bytes = Uint8Array.from(binaryString, c => c.charCodeAt(0));
     const blob = new Blob([bytes], { type: 'application/pdf' });
     const url = window.URL.createObjectURL(blob);
 

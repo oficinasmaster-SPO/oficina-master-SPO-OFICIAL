@@ -30,13 +30,19 @@ export async function downloadAtaPDF(ata_id, options = {}) {
 
     // Converter base64 para blob
     const base64PDF = response.data.pdf;
-    const binaryString = atob(base64PDF);
-    const bytes = new Uint8Array(binaryString.length);
-    
-    for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
+    if (!base64PDF || typeof base64PDF !== 'string') {
+      throw new Error('PDF inválido recebido do servidor');
     }
-    
+
+    // Decodificar base64 com validação
+    let binaryString;
+    try {
+      binaryString = atob(base64PDF);
+    } catch (e) {
+      throw new Error('PDF corrompido ou mal codificado');
+    }
+
+    const bytes = Uint8Array.from(binaryString, c => c.charCodeAt(0));
     const blob = new Blob([bytes], { type: 'application/pdf' });
     const url = window.URL.createObjectURL(blob);
 
@@ -125,13 +131,18 @@ export async function getAtaPDFBlob(ata_id) {
     }
 
     const base64PDF = response.data.pdf;
-    const binaryString = atob(base64PDF);
-    const bytes = new Uint8Array(binaryString.length);
-    
-    for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
+    if (!base64PDF || typeof base64PDF !== 'string') {
+      throw new Error('PDF inválido recebido do servidor');
     }
-    
+
+    let binaryString;
+    try {
+      binaryString = atob(base64PDF);
+    } catch (e) {
+      throw new Error('PDF corrompido ou mal codificado');
+    }
+
+    const bytes = Uint8Array.from(binaryString, c => c.charCodeAt(0));
     return new Blob([bytes], { type: 'application/pdf' });
   } catch (error) {
     console.error('Erro ao obter PDF:', error.message);
