@@ -160,7 +160,7 @@ export default function SprintClientModal({ sprint, user, workshop, open, onClos
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-[95vw] w-[95vw] max-h-[95vh] h-[95vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-lg">{sprint.title}</DialogTitle>
           {sprint.objective && <p className="text-sm text-gray-500">{sprint.objective}</p>}
