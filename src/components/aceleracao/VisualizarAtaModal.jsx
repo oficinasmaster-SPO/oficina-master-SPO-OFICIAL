@@ -2,7 +2,7 @@ import React, { useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { FileText, Download, Building2, MapPin, Award, Loader2, Send } from "lucide-react";
+import { FileText, Download, Building2, MapPin, Award, Loader2, Send, Printer } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -131,12 +131,35 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
     try {
       const { downloadAtaPDF } = await import("@/lib/pdfDownloadManager");
       await downloadAtaPDF(ataAtualizada.id, {
+        action: 'download',
         onSuccess: (result) => toast.success(`PDF "${result.filename}" baixado com sucesso!`),
         onError: (error) => toast.error('Erro ao gerar PDF: ' + error.message)
       });
     } catch (error) {
       console.error('Erro ao gerar PDF:', error);
       toast.error('Erro ao gerar PDF: ' + (error.message || 'Erro desconhecido'));
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
+
+  const handlePrint = async () => {
+    if (isLoading) {
+      toast.warning('Aguarde o carregamento completo da ATA');
+      return;
+    }
+
+    setIsGeneratingPDF(true);
+    try {
+      const { downloadAtaPDF } = await import("@/lib/pdfDownloadManager");
+      await downloadAtaPDF(ataAtualizada.id, {
+        action: 'print',
+        onSuccess: () => toast.success('Diálogo de impressão aberto!'),
+        onError: (error) => toast.error('Erro ao gerar PDF: ' + error.message)
+      });
+    } catch (error) {
+      console.error('Erro ao imprimir PDF:', error);
+      toast.error('Erro ao imprimir PDF: ' + (error.message || 'Erro desconhecido'));
     } finally {
       setIsGeneratingPDF(false);
     }
@@ -224,7 +247,26 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
                        </>
                      )}
                    </Button>
-                 </div>
+                   <Button
+                     size="sm"
+                     variant="outline"
+                     onClick={handlePrint}
+                     disabled={isGeneratingPDF || isLoading || !hasValidContent}
+                     title={!hasValidContent ? 'Preencha pelo menos uma seção (Pautas, Objetivos, Próximos Passos ou Ações)' : isLoading ? 'Aguarde o carregamento da ATA' : 'Gerar PDF para impressão'}
+                   >
+                     {isGeneratingPDF ? (
+                       <>
+                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                         Gerando PDF...
+                       </>
+                     ) : (
+                       <>
+                         <Printer className="w-4 h-4 mr-2" />
+                         Imprimir
+                       </>
+                     )}
+                   </Button>
+                   </div>
               </div>
               </div>
               {!hasValidContent && !isLoading && (
