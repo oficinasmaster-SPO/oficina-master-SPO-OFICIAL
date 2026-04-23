@@ -80,12 +80,12 @@ export function generateCronogramaHTML(cronogramaData, workshop) {
     }
     
     body {
-      font-family: 'Segoe UI', Arial, sans-serif;
-      font-size: 11pt;
+      font-family: 'Inter', Arial, sans-serif;
+      font-size: 14px;
       line-height: 1.5;
-      color: #000;
+      color: #1a1a1a;
       background: white;
-      padding: 0;
+      padding: 32px;
       margin: 0;
       width: 100%;
     }
@@ -116,16 +116,18 @@ export function generateCronogramaHTML(cronogramaData, workshop) {
     }
 
     .document-header h1 {
-      font-size: 18pt;
-      font-weight: bold;
-      color: #000;
-      margin-bottom: 3px;
+      font-size: 22px;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin-bottom: 4px;
+      text-align: center;
     }
 
     .document-header p {
-      font-size: 10pt;
-      color: #333;
+      font-size: 13px;
+      color: #666;
       margin: 0;
+      text-align: center;
     }
 
     .header-info {
@@ -139,13 +141,13 @@ export function generateCronogramaHTML(cronogramaData, workshop) {
     }
 
     .header-info-item {
-      font-size: 10pt;
+      font-size: 13px;
     }
 
     .section-title {
-      font-size: 13pt;
-      font-weight: bold;
-      color: #000;
+      font-size: 13px;
+      font-weight: 700;
+      color: #1a1a1a;
       margin-top: 18px;
       margin-bottom: 10px;
       padding-bottom: 6px;
@@ -195,17 +197,19 @@ export function generateCronogramaHTML(cronogramaData, workshop) {
     table th {
       background-color: #CC0000;
       color: white;
-      border: 1px solid #333;
-      padding: 10px;
+      padding: 12px;
       text-align: left;
-      font-weight: bold;
+      font-weight: 700;
+      font-size: 13px;
+      border: none;
     }
 
     table td {
-      border: 1px solid #999;
-      padding: 10px;
+      border: 1px solid #e5e5e5;
+      padding: 12px;
       vertical-align: top;
-      color: #000;
+      color: #1a1a1a;
+      font-size: 13px;
       background: white;
     }
 

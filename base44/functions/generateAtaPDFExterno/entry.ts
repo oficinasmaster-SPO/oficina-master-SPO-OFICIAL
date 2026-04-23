@@ -265,12 +265,12 @@ function generateAtaHTML(ata, workshop) {
     }
 
     body {
-      font-family: 'Segoe UI', Arial, sans-serif;
-      font-size: 11pt;
+      font-family: 'Inter', Arial, sans-serif;
+      font-size: 14px;
       line-height: 1.5;
-      color: #000;
+      color: #1a1a1a;
       background: white;
-      padding: 0;
+      padding: 32px;
       margin: 0;
       width: 100%;
     }
@@ -290,27 +290,29 @@ function generateAtaHTML(ata, workshop) {
       position: relative;
       width: 100%;
       background: white;
-      color: #000;
+      color: #1a1a1a;
     }
 
     .document-header {
-      border-bottom: 3px solid #cc0000;
+      border-bottom: 3px solid #CC0000;
       padding: 0 0 12px 0;
       margin-bottom: 20px;
       page-break-after: avoid;
     }
 
     .document-header h1 {
-      font-size: 18pt;
-      font-weight: bold;
-      color: #000;
-      margin-bottom: 3px;
+      font-size: 22px;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin-bottom: 4px;
+      text-align: center;
     }
 
     .document-header p {
-      font-size: 10pt;
-      color: #333;
+      font-size: 13px;
+      color: #666;
       margin: 0;
+      text-align: center;
     }
 
     .header-info {
@@ -324,29 +326,30 @@ function generateAtaHTML(ata, workshop) {
     }
 
     .header-info-item {
-      font-size: 10pt;
+      font-size: 13px;
     }
 
     .header-info-item strong {
       display: inline-block;
       min-width: 80px;
+      font-weight: 700;
     }
 
     .badge-status {
       display: inline-block;
-      padding: 4px 12px;
-      border: 2px solid #cc0000;
+      padding: 4px 10px;
+      border: 1px solid #CC0000;
       background: white;
-      color: #cc0000;
+      color: #CC0000;
       font-weight: bold;
-      font-size: 10pt;
-      border-radius: 3px;
+      font-size: 12px;
+      border-radius: 6px;
     }
 
     .section-title {
-      font-size: 13pt;
-      font-weight: bold;
-      color: #000;
+      font-size: 13px;
+      font-weight: 700;
+      color: #1a1a1a;
       margin-top: 18px;
       margin-bottom: 10px;
       padding-bottom: 6px;
@@ -355,11 +358,11 @@ function generateAtaHTML(ata, workshop) {
     }
 
     .section-content {
-      font-size: 11pt;
+      font-size: 14px;
       line-height: 1.6;
       margin-bottom: 15px;
       page-break-inside: avoid;
-      color: #000;
+      color: #1a1a1a;
       white-space: normal;
       word-wrap: break-word;
       text-align: justify;
@@ -370,23 +373,25 @@ function generateAtaHTML(ata, workshop) {
       border-collapse: collapse;
       margin: 10px 0 15px 0;
       page-break-inside: avoid;
-      font-size: 10pt;
+      font-size: 13px;
     }
 
     .info-table th {
-      background-color: #e5e5e5;
-      border: 1px solid #333;
-      padding: 10px;
+      background-color: #CC0000;
+      color: white;
+      padding: 12px;
       text-align: left;
-      font-weight: bold;
-      color: #000;
+      font-weight: 700;
+      font-size: 13px;
+      border: none;
     }
 
     .info-table td {
-      border: 1px solid #999;
-      padding: 10px;
+      border: 1px solid #e5e5e5;
+      padding: 12px;
       vertical-align: top;
-      color: #000;
+      color: #1a1a1a;
+      font-size: 13px;
       background: white;
     }
 
@@ -395,14 +400,14 @@ function generateAtaHTML(ata, workshop) {
     }
 
     .accent-red {
-      color: #cc0000;
+      color: #CC0000;
       font-weight: bold;
       text-transform: uppercase;
     }
 
     .highlight-box {
       background-color: #f0f0f0;
-      border-left: 4px solid #cc0000;
+      border-left: 4px solid #CC0000;
       padding: 10px;
       margin: 10px 0;
       page-break-inside: avoid;
@@ -422,7 +427,7 @@ function generateAtaHTML(ata, workshop) {
       margin: 3px 0;
     }
 
-    strong { font-weight: bold; }
+    strong { font-weight: 700; }
     em { font-style: italic; }
   </style>
 </head>

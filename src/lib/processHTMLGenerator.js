@@ -79,12 +79,12 @@ export function generateProcessHTML(processDoc, its = [], workshop) {
     }
     
     body {
-      font-family: 'Segoe UI', Arial, sans-serif;
-      font-size: 11pt;
+      font-family: 'Inter', Arial, sans-serif;
+      font-size: 14px;
       line-height: 1.5;
-      color: #000;
+      color: #1a1a1a;
       background: white;
-      padding: 20mm;
+      padding: 32px;
       margin: 0;
       width: 100%;
     }
@@ -116,17 +116,17 @@ export function generateProcessHTML(processDoc, its = [], workshop) {
      }
 
     .document-header h1 {
-      font-size: 18pt;
-      font-weight: bold;
-      color: #000;
+      font-size: 22px;
+      font-weight: 700;
+      color: #1a1a1a;
       text-align: center;
-      margin-bottom: 5px;
+      margin-bottom: 4px;
     }
 
     .document-header h2 {
-      font-size: 14pt;
+      font-size: 13px;
       font-weight: normal;
-      color: #000;
+      color: #666;
       text-align: center;
       margin-bottom: 10px;
     }
@@ -139,13 +139,13 @@ export function generateProcessHTML(processDoc, its = [], workshop) {
       flex-wrap: wrap;
       gap: 15px;
       page-break-after: avoid;
-      font-size: 10pt;
+      font-size: 13px;
     }
 
     .section-title {
-      font-size: 13pt;
-      font-weight: bold;
-      color: #000;
+      font-size: 13px;
+      font-weight: 700;
+      color: #1a1a1a;
       margin-top: 18px;
       margin-bottom: 10px;
       padding-bottom: 6px;
@@ -154,12 +154,12 @@ export function generateProcessHTML(processDoc, its = [], workshop) {
     }
 
     .section-content {
-      font-size: 11pt;
+      font-size: 14px;
       line-height: 1.6;
       margin-bottom: 15px;
       page-break-inside: avoid;
-      color: #000;
-      white-space: pre-wrap;
+      color: #1a1a1a;
+      white-space: normal;
       word-wrap: break-word;
     }
 
@@ -172,19 +172,21 @@ export function generateProcessHTML(processDoc, its = [], workshop) {
     }
 
     table th {
-      background-color: #e5e5e5;
-      border: 1px solid #333;
-      padding: 10px;
+      background-color: #CC0000;
+      color: white;
+      padding: 12px;
       text-align: left;
-      font-weight: bold;
-      color: #000;
+      font-weight: 700;
+      font-size: 13px;
+      border: none;
     }
 
     table td {
-      border: 1px solid #999;
-      padding: 10px;
+      border: 1px solid #e5e5e5;
+      padding: 12px;
       vertical-align: top;
-      color: #000;
+      color: #1a1a1a;
+      font-size: 13px;
       background: white;
     }
 
@@ -207,14 +209,16 @@ export function generateProcessHTML(processDoc, its = [], workshop) {
     }
 
     h3 {
-      font-size: 12pt;
-      font-weight: bold;
+      font-size: 13px;
+      font-weight: 700;
       margin-top: 15px;
       margin-bottom: 8px;
+      color: #1a1a1a;
     }
 
     p {
       margin: 0 0 8px 0;
+      color: #1a1a1a;
     }
 
     hr {
