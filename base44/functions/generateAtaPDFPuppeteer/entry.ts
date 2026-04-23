@@ -1,4 +1,5 @@
-import puppeteer from 'npm:puppeteer@24.0.0';
+import chromium from 'npm:chrome-aws-lambda@10.1.0';
+import puppeteer from 'npm:puppeteer-core@19.11.1';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
@@ -77,16 +78,12 @@ Deno.serve(async (req) => {
     }
 
     // Usar Puppeteer para gerar PDF
-    console.log(`[PDF] Iniciando browser Puppeteer`);
+    console.log(`[PDF] Iniciando browser Puppeteer (chrome-aws-lambda)`);
     browser = await puppeteer.launch({
-      headless: 'new',
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-gpu',
-        '--disable-web-resources'
-      ]
+      args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
+      executablePath: await chromium.executablePath,
+      headless: true
     });
 
     console.log(`[PDF] Browser iniciado com sucesso`);
