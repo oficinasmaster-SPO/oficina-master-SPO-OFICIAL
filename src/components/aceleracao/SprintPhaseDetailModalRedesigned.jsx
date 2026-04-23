@@ -17,6 +17,7 @@ import SprintTaskItem from "./sprint-client/SprintTaskItem";
 import ConsultorReviewPanel from "./sprint-consultant/ConsultorReviewPanel";
 import SprintActivityTimeline from "./sprint-shared/SprintActivityTimeline";
 import SprintCompletionSummary from "./sprint-shared/SprintCompletionSummary";
+import VideoUploadRecorder from "./VideoUploadRecorder";
 
 const PHASES_CONFIG = [
   { name: "Planning", label: "Sprint Planning", icon: ListChecks, color: "text-blue-600", bg: "bg-blue-50" },
@@ -274,6 +275,7 @@ export default function SprintPhaseDetailModalRedesigned({
 
   const [newTaskInstructions, setNewTaskInstructions] = useState("");
   const [newTaskLink, setNewTaskLink] = useState("");
+  const [newTaskVideoUrl, setNewTaskVideoUrl] = useState("");
 
   const addTask = async () => {
     if (!newTask.trim()) return;
@@ -284,6 +286,7 @@ export default function SprintPhaseDetailModalRedesigned({
       };
       if (newTaskInstructions.trim()) newTaskObj.instructions = newTaskInstructions.trim();
       if (newTaskLink.trim()) newTaskObj.link_url = newTaskLink.trim();
+      if (newTaskVideoUrl) newTaskObj.video_url = newTaskVideoUrl;
       const updated = [...tasks, newTaskObj];
       setTasks(updated);
       const updatedPhases = phases.map((p, i) =>
@@ -295,6 +298,7 @@ export default function SprintPhaseDetailModalRedesigned({
         setNewTask("");
         setNewTaskInstructions("");
         setNewTaskLink("");
+        setNewTaskVideoUrl("");
       }
     } catch (error) {
       console.error("Erro ao adicionar tarefa:", error);
@@ -439,6 +443,14 @@ export default function SprintPhaseDetailModalRedesigned({
                 placeholder="Link material complementar (https://...)..."
                 className="text-sm bg-white"
               />
+              <div className="space-y-1">
+                <span className="text-xs font-semibold text-gray-500">🎬 Vídeo de instrução</span>
+                <VideoUploadRecorder
+                  videoUrl={newTaskVideoUrl}
+                  onVideoSaved={(url) => setNewTaskVideoUrl(url)}
+                  onVideoRemoved={() => setNewTaskVideoUrl("")}
+                />
+              </div>
             </div>
             <Button 
               size="sm" 
