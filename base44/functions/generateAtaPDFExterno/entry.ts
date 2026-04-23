@@ -143,15 +143,28 @@ Deno.serve(async (req) => {
     const pdfBuffer = await externalResponse.arrayBuffer();
     console.log(`[PDF-External] PDF recebido: ${pdfBuffer.byteLength} bytes`);
 
-    // Converter para base64 (seguro para arquivos grandes)
+    // Validar que é realmente um PDF (começa com %PDF)
     const uint8Array = new Uint8Array(pdfBuffer);
+    const pdfHeader = String.fromCharCode(...uint8Array.slice(0, 4));
+    if (pdfHeader !== '%PDF') {
+      console.error(`[PDF-External] Arquivo retornado não é PDF válido. Header: ${JSON.stringify(pdfHeader)}`);
+      const firstChunk = new TextDecoder().decode(pdfBuffer.slice(0, 500));
+      console.error(`[PDF-External] Primeiros 500 bytes: ${firstChunk}`);
+      return Response.json(
+        { error: 'Serviço retornou arquivo inválido' },
+        { status: 502 }
+      );
+    }
+
+    // Converter para base64 usando método seguro
     let base64PDF = '';
-    const chunkSize = 8192; // Processar em chunks para evitar stack overflow
+    const chunkSize = 8192;
     for (let i = 0; i < uint8Array.length; i += chunkSize) {
       const chunk = uint8Array.subarray(i, i + chunkSize);
       base64PDF += btoa(String.fromCharCode(...chunk));
     }
 
+    console.log(`[PDF-External] Base64 gerado: ${base64PDF.length} caracteres`);
     console.log(`[PDF-External] Geração concluída com sucesso`);
     const meetingDate = ata.meeting_date ? new Date(ata.meeting_date) : new Date();
     const ddmmyyyy = String(meetingDate.getDate()).padStart(2, '0') + 
