@@ -79,10 +79,19 @@ Deno.serve(async (req) => {
 
     // Usar Puppeteer para gerar PDF
     console.log(`[PDF] Iniciando browser Puppeteer (chrome-aws-lambda)`);
+    
+    // VALIDAÇÃO OBRIGATÓRIA: executablePath deve estar disponível
+    const executablePath = await chromium.executablePath;
+    console.log(`[PDF] Chromium executable path: ${executablePath || 'NULL - ERRO!'}`);
+    
+    if (!executablePath) {
+      throw new Error('Chromium executablePath não encontrado - ambiente incompatível com chrome-aws-lambda');
+    }
+    
     browser = await puppeteer.launch({
       args: chromium.args,
       defaultViewport: chromium.defaultViewport,
-      executablePath: await chromium.executablePath,
+      executablePath: executablePath,
       headless: true
     });
 
