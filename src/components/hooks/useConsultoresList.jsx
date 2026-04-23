@@ -12,20 +12,16 @@ export default function useConsultoresList(user) {
         status: 'ativo'
       }, null, 1000);
 
-      const CONSULTANT_ROLES = ['consultor', 'mentor', 'acelerador'];
-
-      // Listar apenas colaboradores internos ativos com job_role de consultor/mentor
+      // Consultores reais: tipo_vinculo interno e SEM workshop_id (pertencem à firma, não a uma oficina cliente)
       employees
-        .filter(e => e.user_id && CONSULTANT_ROLES.includes(e.job_role))
+        .filter(e => e.user_id && !e.workshop_id)
         .forEach(e => {
           consultoresMap.set(e.user_id, e.full_name);
         });
 
-      // Garante que o usuário logado aparece na lista.
-      // Tenta buscar pelo email também, caso o user_id não esteja vinculado.
-      // Garante que o usuário logado aparece apenas se tiver job_role de consultor
+      // Garante que o usuário logado aparece se for consultor da firma (sem workshop_id)
       if (user?.id && !consultoresMap.has(user.id)) {
-        const employeeByEmail = employees.find(e => e.email === user.email && CONSULTANT_ROLES.includes(e.job_role));
+        const employeeByEmail = employees.find(e => e.email === user.email && !e.workshop_id);
         if (employeeByEmail) {
           consultoresMap.set(user.id, employeeByEmail.full_name);
         }
