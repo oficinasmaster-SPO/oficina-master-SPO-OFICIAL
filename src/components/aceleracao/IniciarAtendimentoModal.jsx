@@ -183,8 +183,13 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
                 Follow-up {followUp?.sequence_number}/4 · {followUp?.consultor_nome}
               </p>
             </div>
-            <Badge className="bg-red-600 text-white border-0 ml-4">
-              <Clock className="w-3 h-3 mr-1" /> Em atendimento · {formatTimer()}
+            <Badge className="bg-gradient-to-r from-red-600 to-red-700 text-white border-0 ml-4 shadow-lg flex items-center gap-2 px-3 py-1.5">
+              <div className="relative flex items-center justify-center">
+                <div className="absolute inset-0 bg-red-500 rounded-full animate-pulse opacity-30"></div>
+                <Clock className="w-4 h-4 relative z-10" />
+              </div>
+              <span className="font-semibold">Em atendimento</span>
+              <span className="bg-red-800 rounded px-2 py-0.5 font-mono text-sm">{formatTimer()}</span>
             </Badge>
           </div>
           <div className="flex gap-3">
@@ -200,8 +205,8 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
         {/* CONTENT - SCROLLÁVEL */}
         <div className="flex-1 overflow-hidden flex min-h-0">
           {/* LEFT COLUMN - FORM */}
-          <div className="flex-1 overflow-y-auto border-r border-gray-200 p-6">
-            <div className="space-y-6 max-w-2xl">
+          <div className="flex-1 overflow-y-auto border-r border-gray-200 px-4 py-4">
+            <div className="space-y-6 max-w-2xl px-2 py-2 bg-white rounded-lg shadow-[inset_0_2px_8px_rgba(0,0,0,0.05)]">
               {/* Canal */}
               <div>
                 <label className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2 block">
@@ -379,15 +384,15 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
           </div>
 
           {/* RIGHT COLUMN - SIDEBAR */}
-          <div className="w-96 border-l border-gray-200 bg-gray-50 overflow-hidden flex flex-col">
+          <div className="w-96 border-l border-gray-200 bg-gradient-to-b from-white via-gray-50 to-gray-100 overflow-hidden flex flex-col shadow-[inset_-2px_0_8px_rgba(0,0,0,0.03)]">
             <Tabs defaultValue="atas" className="flex-1 flex flex-col">
-              <TabsList className="grid w-full grid-cols-3 rounded-none border-b">
+              <TabsList className="grid w-full grid-cols-3 rounded-none border-b bg-white">
                 <TabsTrigger value="atas">Atas</TabsTrigger>
                 <TabsTrigger value="followups">Follow-ups</TabsTrigger>
                 <TabsTrigger value="cliente">Cliente</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="atas" className="flex-1 overflow-y-auto p-4">
+              <TabsContent value="atas" className="flex-1 overflow-y-auto px-3 py-4">
                 <div className="space-y-2">
                   {atas.length === 0 ? (
                     <p className="text-xs text-gray-500 italic">Sem atas registradas</p>
@@ -444,7 +449,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
                 </div>
               </TabsContent>
 
-              <TabsContent value="followups" className="flex-1 overflow-y-auto p-4">
+              <TabsContent value="followups" className="flex-1 overflow-y-auto px-3 py-4">
                 <div className="space-y-3">
                   <div className="bg-white rounded-lg p-3 border border-red-200">
                     <Badge className="bg-red-600 text-white text-xs mb-1">Atual</Badge>
@@ -455,7 +460,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
                 </div>
               </TabsContent>
 
-              <TabsContent value="cliente" className="flex-1 overflow-y-auto p-4">
+              <TabsContent value="cliente" className="flex-1 overflow-y-auto px-3 py-4">
                 <div className="space-y-4 text-sm">
                   <div>
                     <p className="text-xs text-gray-500 font-semibold mb-1">Responsável</p>

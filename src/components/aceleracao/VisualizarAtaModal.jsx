@@ -523,9 +523,7 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
                 </div>
                 </div>
                 )}
-
                 </div>
-                )}
 
                 {/* FOOTER - FIXO */}
                 <div className="flex justify-end px-6 py-4 border-t print:hidden gap-2 flex-shrink-0 bg-white">
