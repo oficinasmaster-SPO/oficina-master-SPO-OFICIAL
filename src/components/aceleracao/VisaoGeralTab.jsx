@@ -11,6 +11,7 @@ import BucketARealizarCard from "./BucketARealizarCard";
 import ClientesDetalhesModal from "./ClientesDetalhesModal";
 import ReunioesDetalhesModal from "./ReunioesDetalhesModal";
 import GargalosConsultoresRealtime from "./GargalosConsultoresRealtime";
+import FollowUpPostIt from "./FollowUpPostIt";
 
 const STATUS_FINALIZADOS = ['realizado', 'concluido', 'cancelado', 'faltou', 'remarcado'];
 
@@ -32,7 +33,7 @@ function getMouseEnterSide(e) {
 }
 
 export default function VisaoGeralTab({ state, mode = "contextual" }) {
-  const { user, workshops, workshopMap, atendimentos, atendimentosPeriodo, setActiveTab, setPendingSubTab } = state;
+  const { user, workshops, workshopMap, atendimentos, atendimentosPeriodo, setActiveTab, setPendingSubTab, followUpReminders } = state;
   const [modalClientes, setModalClientes] = useState({ isOpen: false, tipo: null, clientes: [] });
   const [modalReunioes, setModalReunioes] = useState({ isOpen: false, tipo: null, reunioes: [] });
   const [hoverSides, setHoverSides] = useState({});
@@ -273,6 +274,12 @@ export default function VisaoGeralTab({ state, mode = "contextual" }) {
       </div>
 
       <GargalosConsultoresRealtime />
+
+      {followUpReminders && followUpReminders.length > 0 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+          <FollowUpPostIt reminders={followUpReminders} />
+        </div>
+      )}
     </div>
   );
 }

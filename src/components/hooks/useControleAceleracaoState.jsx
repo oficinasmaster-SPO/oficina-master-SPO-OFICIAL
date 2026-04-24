@@ -90,6 +90,21 @@ export default function useControleAceleracaoState() {
     enabled: !!user?.id,
   });
 
+  // ── 10b. Follow-up reminders ──
+  const { data: followUpReminders } = useQuery({
+    queryKey: ["follow-up-reminders", consultorEfetivo],
+    queryFn: async () => {
+      const query = { is_completed: false };
+      if (consultorEfetivo) query.consultor_id = consultorEfetivo;
+      const today = new Date().toISOString().split('T')[0];
+      const all = await base44.entities.FollowUpReminder.filter(query, "reminder_date", 100);
+      // Mostra apenas reminders de hoje ou passados (vencidos)
+      return all.filter(r => r.reminder_date <= today);
+    },
+    staleTime: 5 * 60 * 1000,
+    enabled: !!user?.id,
+  });
+
   // ── 10. Auto-mark atrasados (server-side, once per session) ──
   const queryClient = useQueryClient();
   const markAtrasadosRanRef = useRef(false);
@@ -123,5 +138,6 @@ export default function useControleAceleracaoState() {
     atas: atas || [],
     atasMap,
     planos: planos || [],
+    followUpReminders: followUpReminders || [],
   };
 }
