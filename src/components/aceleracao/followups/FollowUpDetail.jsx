@@ -161,6 +161,12 @@ export default function FollowUpDetail({ reminder, today, onBack }) {
     }
   };
 
+  const verificarRascunho = () => {
+    const storageKey = `draft_atendimento_${reminder.id}`;
+    const rascunho = localStorage.getItem(storageKey);
+    return !!rascunho;
+  };
+
   // ---- REGISTER VIEW (Modal) ----
   if (view === "register") {
     return (
@@ -343,16 +349,25 @@ export default function FollowUpDetail({ reminder, today, onBack }) {
 
           {/* CTA */}
           <div className="flex">
-            <Button
-              onClick={() => {
-                setView("register");
-                setRegisterStep("history");
-              }}
-              className="bg-green-600 hover:bg-green-700 text-white rounded-full font-semibold flex items-center gap-2 px-6"
-            >
-              <PlayCircle className="w-4 h-4" />
-              Iniciar Atendimento
-            </Button>
+            {(() => {
+              const temRascunho = verificarRascunho();
+              return (
+                <Button
+                  onClick={() => {
+                    setView("register");
+                    setRegisterStep("history");
+                  }}
+                  className={`rounded-full font-semibold flex items-center gap-2 px-6 transition-all ${
+                    temRascunho
+                      ? "bg-cyan-600 hover:bg-cyan-700 text-white"
+                      : "bg-green-600 hover:bg-green-700 text-white"
+                  }`}
+                >
+                  <PlayCircle className="w-4 h-4" />
+                  {temRascunho ? "Retomar Atendimento" : "Iniciar Atendimento"}
+                </Button>
+              );
+            })()}
           </div>
         </div>
 
