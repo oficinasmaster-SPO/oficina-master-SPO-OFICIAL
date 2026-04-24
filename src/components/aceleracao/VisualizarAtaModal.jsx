@@ -2,7 +2,7 @@ import React, { useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { FileText, Download, Building2, MapPin, Award, Loader2, Send, Printer } from "lucide-react";
+import { FileText, Download, Building2, MapPin, Award, Send, Loader2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -14,7 +14,7 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
   const ataContentRef = useRef(null);
   const [ataAtualizada, setAtaAtualizada] = React.useState(sanitizeAtaData(ata));
   const [isLoading, setIsLoading] = React.useState(true);
-  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+
   const [clientIntelligence, setClientIntelligence] = React.useState([]);
   const d = ataAtualizada;
 
@@ -121,49 +121,15 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
     }
   }, [ata?.id, atendimento]);
 
-  const handleDownload = async () => {
+  const handleDownload = () => {
     if (isLoading) {
       toast.warning('Aguarde o carregamento completo da ATA');
       return;
     }
-
-    setIsGeneratingPDF(true);
-    try {
-      const { downloadAtaPDF } = await import("@/lib/pdfDownloadManager");
-      await downloadAtaPDF(ataAtualizada.id, {
-        action: 'download',
-        onSuccess: (result) => toast.success(`PDF "${result.filename}" baixado com sucesso!`),
-        onError: (error) => toast.error('Erro ao gerar PDF: ' + error.message)
-      });
-    } catch (error) {
-      console.error('Erro ao gerar PDF:', error);
-      toast.error('Erro ao gerar PDF: ' + (error.message || 'Erro desconhecido'));
-    } finally {
-      setIsGeneratingPDF(false);
-    }
+    window.print();
   };
 
-  const handlePrint = async () => {
-    if (isLoading) {
-      toast.warning('Aguarde o carregamento completo da ATA');
-      return;
-    }
 
-    setIsGeneratingPDF(true);
-    try {
-      const { downloadAtaPDF } = await import("@/lib/pdfDownloadManager");
-      await downloadAtaPDF(ataAtualizada.id, {
-        action: 'print',
-        onSuccess: () => toast.success('Diálogo de impressão aberto!'),
-        onError: (error) => toast.error('Erro ao gerar PDF: ' + error.message)
-      });
-    } catch (error) {
-      console.error('Erro ao imprimir PDF:', error);
-      toast.error('Erro ao imprimir PDF: ' + (error.message || 'Erro desconhecido'));
-    } finally {
-      setIsGeneratingPDF(false);
-    }
-  };
 
   const handleFinalizar = async () => {
     try {
@@ -232,39 +198,10 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
                      size="sm"
                      variant="outline"
                      onClick={handleDownload}
-                     disabled={isGeneratingPDF || isLoading || !hasValidContent}
-                     title={!hasValidContent ? 'Preencha pelo menos uma seção (Pautas, Objetivos, Próximos Passos ou Ações)' : isLoading ? 'Aguarde o carregamento da ATA' : 'Gerar e baixar PDF'}
+                     disabled={isLoading}
                    >
-                     {isGeneratingPDF ? (
-                       <>
-                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                         Gerando PDF...
-                       </>
-                     ) : (
-                       <>
-                         <Download className="w-4 h-4 mr-2" />
-                         Download PDF
-                       </>
-                     )}
-                   </Button>
-                   <Button
-                     size="sm"
-                     variant="outline"
-                     onClick={handlePrint}
-                     disabled={isGeneratingPDF || isLoading || !hasValidContent}
-                     title={!hasValidContent ? 'Preencha pelo menos uma seção (Pautas, Objetivos, Próximos Passos ou Ações)' : isLoading ? 'Aguarde o carregamento da ATA' : 'Gerar PDF para impressão'}
-                   >
-                     {isGeneratingPDF ? (
-                       <>
-                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                         Gerando PDF...
-                       </>
-                     ) : (
-                       <>
-                         <Printer className="w-4 h-4 mr-2" />
-                         Imprimir
-                       </>
-                     )}
+                     <Download className="w-4 h-4 mr-2" />
+                     Download PDF
                    </Button>
                    </div>
               </div>
