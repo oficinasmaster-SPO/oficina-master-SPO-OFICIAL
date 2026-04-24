@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -60,6 +60,11 @@ export default function FollowUpDetail({ reminder, today, onBack }) {
   const [saving, setSaving] = useState(false);
   const [showLossModal, setShowLossModal] = useState(false);
   const [selectedAta, setSelectedAta] = useState(null);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    base44.auth.me().then(setUser).catch(() => {});
+  }, []);
 
   const isOverdue = !reminder.is_completed && reminder.reminder_date < today;
   const daysOver = reminder.reminder_date
@@ -567,28 +572,31 @@ export default function FollowUpDetail({ reminder, today, onBack }) {
                       </div>
                     </div>
 
-                    {future.length === 0 ? (
-                      <div className="text-center py-3 px-2 bg-gray-50 rounded-lg border border-dashed border-gray-200">
-                        <p className="text-[11px] text-gray-400">Sem futuros follow-ups</p>
-                      </div>
-                    ) : (
-                      <div className="relative">
-                        <div className="absolute left-1.5 top-0 bottom-0 w-px bg-gray-200" />
-                        <div className="space-y-3">
-                          {future.map((f, i) => (
-                            <div key={f.id} className="flex items-start gap-2 pl-5 relative">
-                              <div className="absolute left-0 top-1.5 w-3 h-3 rounded-full bg-gray-300 border-2 border-white shadow-sm flex-shrink-0" />
-                              <div className="min-w-0">
-                                <p className="text-[11px] font-semibold text-gray-500">FU {f.sequence_number || currentStep + i + 1}</p>
-                                <p className="text-[10px] text-gray-400 text-right">
-                                  {f.reminder_date ? format(new Date(f.reminder_date + "T00:00:00"), "dd/MM/yy") : "—"}
-                                </p>
-                              </div>
-                            </div>
-                          ))}
+                    {(() => {
+                      const futureFiltered = future.filter(f => f.consultor_id === user?.id);
+                      return futureFiltered.length === 0 ? (
+                        <div className="text-center py-3 px-2 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                          <p className="text-[11px] text-gray-400">Sem futuros follow-ups</p>
                         </div>
-                      </div>
-                    )}
+                      ) : (
+                        <div className="relative">
+                          <div className="absolute left-1.5 top-0 bottom-0 w-px bg-gray-200" />
+                          <div className="space-y-3">
+                            {futureFiltered.map((f, i) => (
+                              <div key={f.id} className="flex items-start gap-2 pl-5 relative">
+                                <div className="absolute left-0 top-1.5 w-3 h-3 rounded-full bg-gray-300 border-2 border-white shadow-sm flex-shrink-0" />
+                                <div className="min-w-0">
+                                  <p className="text-[11px] font-semibold text-gray-500">FU {f.sequence_number || currentStep + i + 1}</p>
+                                  <p className="text-[10px] text-gray-400 text-right">
+                                    {f.reminder_date ? format(new Date(f.reminder_date + "T00:00:00"), "dd/MM/yy") : "—"}
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>
