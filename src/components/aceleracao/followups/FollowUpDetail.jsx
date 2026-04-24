@@ -371,13 +371,15 @@ export default function FollowUpDetail({ reminder, today, onBack }) {
       )}
 
       {/* CTA button — green rounded */}
-      <Button
-        onClick={() => setView("register")}
-        className="w-full bg-green-600 hover:bg-green-700 text-white rounded-full font-semibold flex items-center justify-center gap-2 py-5 text-base"
-      >
-        <PlayCircle className="w-5 h-5" />
-        Iniciar Atendimento
-      </Button>
+      <div className="flex">
+        <Button
+          onClick={() => setView("register")}
+          className="bg-green-600 hover:bg-green-700 text-white rounded-full font-semibold flex items-center gap-2 px-6"
+        >
+          <PlayCircle className="w-4 h-4" />
+          Iniciar Atendimento
+        </Button>
+      </div>
     </div>
   );
 }
