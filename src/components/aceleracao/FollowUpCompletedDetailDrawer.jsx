@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { X, Download, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -33,8 +33,26 @@ const PROXIMO_PASSO_LABELS = {
 
 export default function FollowUpCompletedDetailDrawer({ followUp, open, onClose }) {
   const [selectedImage, setSelectedImage] = useState(null);
+  const [attendanceData, setAttendanceData] = useState(null);
+
+  // Carregar dados do atendimento do localStorage quando o follow-up for selecionado
+  React.useEffect(() => {
+    if (open && followUp?.id) {
+      const storageKey = `draft_atendimento_${followUp.id}`;
+      const savedData = localStorage.getItem(storageKey);
+      if (savedData) {
+        try {
+          setAttendanceData(JSON.parse(savedData));
+        } catch (err) {
+          console.error('Erro ao carregar dados do atendimento:', err);
+        }
+      }
+    }
+  }, [open, followUp?.id]);
 
   if (!followUp) return null;
+
+  const data = attendanceData || {};
 
   const handleDownloadImage = (image) => {
     const link = document.createElement("a");
@@ -75,7 +93,7 @@ export default function FollowUpCompletedDetailDrawer({ followUp, open, onClose 
               <p className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">
                 Consultor Responsável
               </p>
-              <p className="text-sm text-gray-900">{followUp.consultor_nome || "—"}</p>
+              <p className="text-sm text-gray-900">{followUp?.consultor_nome || "—"}</p>
             </div>
 
             {/* Data e Hora */}
@@ -84,13 +102,13 @@ export default function FollowUpCompletedDetailDrawer({ followUp, open, onClose 
                 <p className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">
                   Data do Contato
                 </p>
-                <p className="text-sm text-gray-900">{formatDate(followUp.data_contato)}</p>
+                <p className="text-sm text-gray-900">{formatDate(data.dataContato)}</p>
               </div>
               <div>
                 <p className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">
                   Tempo de Atendimento
                 </p>
-                <p className="text-sm text-gray-900">{followUp.duracao || "—"} min</p>
+                <p className="text-sm text-gray-900">{data.duracao || "—"} min</p>
               </div>
             </div>
 
@@ -100,7 +118,7 @@ export default function FollowUpCompletedDetailDrawer({ followUp, open, onClose 
                 Canal de Contato
               </p>
               <p className="text-sm text-gray-900">
-                {CANAL_LABELS[followUp.canal] || followUp.canal || "—"}
+                {CANAL_LABELS[data.canal] || data.canal || "—"}
               </p>
             </div>
 
@@ -110,7 +128,7 @@ export default function FollowUpCompletedDetailDrawer({ followUp, open, onClose 
                 Resultado do Contato
               </p>
               <p className="text-sm text-gray-900">
-                {RESULTADO_LABELS[followUp.resultado] || followUp.resultado || "—"}
+                {RESULTADO_LABELS[data.resultado] || data.resultado || "—"}
               </p>
             </div>
 
@@ -119,7 +137,7 @@ export default function FollowUpCompletedDetailDrawer({ followUp, open, onClose 
               <p className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">
                 Humor do Cliente
               </p>
-              <p className="text-sm text-gray-900">{followUp.humor || "—"}</p>
+              <p className="text-sm text-gray-900">{data.humor || "—"}</p>
             </div>
 
             {/* Engajamento */}
@@ -127,7 +145,7 @@ export default function FollowUpCompletedDetailDrawer({ followUp, open, onClose 
               <p className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">
                 Engajamento
               </p>
-              <p className="text-sm text-gray-900">{followUp.engajamento || "—"}</p>
+              <p className="text-sm text-gray-900">{data.engajamento || "—"}</p>
             </div>
 
             {/* Observações */}
@@ -136,7 +154,7 @@ export default function FollowUpCompletedDetailDrawer({ followUp, open, onClose 
                 Observações
               </p>
               <p className="text-sm text-gray-900 whitespace-pre-wrap">
-                {followUp.observacoes || "—"}
+                {data.observacoes || "—"}
               </p>
             </div>
 
@@ -146,7 +164,7 @@ export default function FollowUpCompletedDetailDrawer({ followUp, open, onClose 
                 Compromissos do Cliente
               </p>
               <p className="text-sm text-gray-900 whitespace-pre-wrap">
-                {followUp.compromissos || "—"}
+                {data.compromissos || "—"}
               </p>
             </div>
 
@@ -156,36 +174,36 @@ export default function FollowUpCompletedDetailDrawer({ followUp, open, onClose 
                 Próximo Passo
               </p>
               <p className="text-sm text-gray-900">
-                {PROXIMO_PASSO_LABELS[followUp.proximo_passo] || followUp.proximo_passo || "—"}
+                {PROXIMO_PASSO_LABELS[data.proximoPasso] || data.proximoPasso || "—"}
               </p>
             </div>
 
             {/* Data/Hora Próximo Contato */}
-            {(followUp.prox_data || followUp.prox_hora) && (
+            {(data.proxData || data.proxHora) && (
               <div className="grid grid-cols-2 gap-4 border-b pb-4">
                 <div>
                   <p className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">
                     Data Próx. Contato
                   </p>
-                  <p className="text-sm text-gray-900">{formatDate(followUp.prox_data) || "—"}</p>
+                  <p className="text-sm text-gray-900">{formatDate(data.proxData) || "—"}</p>
                 </div>
                 <div>
                   <p className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">
                     Hora
                   </p>
-                  <p className="text-sm text-gray-900">{followUp.prox_hora || "—"}</p>
+                  <p className="text-sm text-gray-900">{data.proxHora || "—"}</p>
                 </div>
               </div>
             )}
 
             {/* Documentos */}
-            {followUp.documentos && followUp.documentos.length > 0 && (
+            {data.documentos && data.documentos.length > 0 && (
               <div className="border-b pb-4">
                 <p className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-3">
                   Documentos Anexados
                 </p>
                 <div className="space-y-2">
-                  {followUp.documentos.map((doc, idx) => (
+                  {data.documentos.map((doc, idx) => (
                     <a
                       key={idx}
                       href={doc}
@@ -202,13 +220,13 @@ export default function FollowUpCompletedDetailDrawer({ followUp, open, onClose 
             )}
 
             {/* Screenshots/Imagens */}
-            {followUp.pastedImages && followUp.pastedImages.length > 0 && (
+            {data.pastedImages && data.pastedImages.length > 0 && (
               <div className="pb-4">
                 <p className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-3">
-                  Screenshots ({followUp.pastedImages.length})
+                  Screenshots ({data.pastedImages.length})
                 </p>
                 <div className="grid grid-cols-2 gap-2">
-                  {followUp.pastedImages.map((img, idx) => (
+                  {data.pastedImages.map((img, idx) => (
                     <div
                       key={idx}
                       className="relative group rounded-lg overflow-hidden border border-gray-200 bg-white cursor-pointer"
