@@ -8,12 +8,13 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Phone, MessageCircle, Mail, Video, MapPin, CheckCircle2, X, Clock, AlertCircle,
-  ChevronRight, Upload
+  ChevronRight, Upload, Check
 } from "lucide-react";
 import { format, addDays } from "date-fns";
 import { toast } from "sonner";
 import { base44 } from "@/api/base44Client";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
+import VisualizarAtaModal from "@/components/aceleracao/VisualizarAtaModal";
 
 function getInitials(name = "") {
   return name.split(" ").slice(0, 2).map(p => p[0]).join("").toUpperCase() || "?";
@@ -62,6 +63,21 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
   const [saving, setSaving] = useState(false);
   const [savingStep, setSavingStep] = useState(null);
   const [errors, setErrors] = useState({});
+  const [selectedAta, setSelectedAta] = useState(null);
+
+  // Fetch ATAs
+  const { data: atas = [] } = useQuery({
+    queryKey: ["atas-modal", followUp?.workshop_id],
+    queryFn: async () => {
+      if (!followUp?.workshop_id) return [];
+      return base44.entities.MeetingMinutes.filter(
+        { workshop_id: followUp.workshop_id },
+        "-meeting_date",
+        50
+      );
+    },
+    enabled: !!followUp?.workshop_id,
+  });
 
   // Timer in real-time
   useEffect(() => {
@@ -373,8 +389,58 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
 
               <TabsContent value="atas" className="flex-1 overflow-y-auto p-4">
                 <div className="space-y-2">
-                  {/* Placeholder for ATAs */}
-                  <p className="text-xs text-gray-500">Sem atas registradas</p>
+                  {atas.length === 0 ? (
+                    <p className="text-xs text-gray-500 italic">Sem atas registradas</p>
+                  ) : (
+                    atas.map(ata => {
+                      const isOrigin = ata.id === followUp?.ata_id;
+                      const tipo = (ata.tipo_aceleracao || ata.tipo_atendimento || "ATA").toLowerCase();
+                      const emojiMap = {
+                        "diagnóstico": "🔍",
+                        "diagnostico": "🔍",
+                        "acelera time": "⚡",
+                        "mentoria": "🎓",
+                        "onboarding": "🚀",
+                        "pontual": "📌",
+                      };
+                      const emoji = emojiMap[tipo] || "📄";
+                      
+                      return (
+                        <button
+                          key={ata.id}
+                          onClick={() => setSelectedAta(ata)}
+                          className={`w-full flex items-start gap-3 px-3 py-3 rounded-lg border transition-colors text-left ${
+                            isOrigin
+                              ? "border-green-300 bg-green-50 hover:bg-green-100"
+                              : "border-gray-200 bg-white hover:bg-gray-50"
+                          }`}
+                        >
+                          <span className="text-lg flex-shrink-0">{emoji}</span>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className={`text-xs font-semibold ${isOrigin ? "text-green-800" : "text-gray-800"}`}>
+                                {ata.tipo_aceleracao || ata.tipo_atendimento || "ATA"}
+                              </p>
+                              {isOrigin && (
+                                <Badge className="bg-green-600 text-white text-[10px] flex items-center gap-1">
+                                  <Check className="w-3 h-3" /> Origem
+                                </Badge>
+                              )}
+                            </div>
+                            {ata.proximos_passos && (
+                              <p className="text-[11px] text-gray-500 line-clamp-1 mt-1">{ata.proximos_passos}</p>
+                            )}
+                            {ata.meeting_date && (
+                              <p className="text-[10px] text-gray-400 mt-1">
+                                {format(new Date(ata.meeting_date), "dd/MM/yyyy")}
+                              </p>
+                            )}
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0 mt-1" />
+                        </button>
+                      );
+                    })
+                  )}
                 </div>
               </TabsContent>
 
@@ -428,6 +494,14 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
           </Button>
         </div>
       </DialogContent>
+
+      {/* ATA Modal */}
+      {selectedAta && (
+        <VisualizarAtaModal
+          ata={selectedAta}
+          onClose={() => setSelectedAta(null)}
+        />
+      )}
     </Dialog>
   );
 }
