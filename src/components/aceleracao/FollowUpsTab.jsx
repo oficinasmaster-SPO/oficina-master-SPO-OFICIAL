@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import FollowUpList from "./followups/FollowUpList";
 import FollowUpDetail from "./followups/FollowUpDetail";
+import FollowUpCompletedDetailDrawer from "./FollowUpCompletedDetailDrawer";
 
 const TABS = [
   { id: "crm",        label: "Fila CRM" },
@@ -32,6 +33,7 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
   // CRM sub-state
   const [selectedReminder, setSelectedReminder] = useState(null);
   const [crmFilterPill, setCrmFilterPill] = useState("todos");
+  const [selectedConcluido, setSelectedConcluido] = useState(null);
 
   const today = new Date().toISOString().split("T")[0];
 
@@ -240,7 +242,7 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
     </div>
   );
 
-  const FlatList = ({ items, showWorkshop = false, emptyLabel }) => (
+  const FlatList = ({ items, showWorkshop = false, emptyLabel, onSelect }) => (
     isLoading ? (
       <div className="py-16 text-center text-gray-400 text-sm">Carregando...</div>
     ) : items.length === 0 ? (
@@ -248,7 +250,15 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
     ) : (
       <Card className="overflow-hidden border-gray-200">
         <div className="divide-y divide-gray-100">
-          {items.map(r => <ReminderRow key={r.id} reminder={r} showWorkshop={showWorkshop} />)}
+          {items.map(r => (
+            <button
+              key={r.id}
+              onClick={() => onSelect && onSelect(r)}
+              className="w-full text-left hover:bg-gray-50 transition-colors"
+            >
+              <ReminderRow reminder={r} showWorkshop={showWorkshop} />
+            </button>
+          ))}
         </div>
       </Card>
     )
@@ -405,11 +415,11 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
       )}
 
       {activeTab === "abertos" && (
-        <FlatList items={listAbertos} showWorkshop emptyLabel="Nenhum follow-up aberto" />
+        <FlatList items={listAbertos} showWorkshop emptyLabel="Nenhum follow-up aberto" onSelect={setSelectedReminder} />
       )}
 
       {activeTab === "atrasados" && (
-        <FlatList items={listAtrasados} showWorkshop emptyLabel="Nenhum follow-up atrasado" />
+        <FlatList items={listAtrasados} showWorkshop emptyLabel="Nenhum follow-up atrasado" onSelect={setSelectedReminder} />
       )}
 
       {activeTab === "consultor" && (
@@ -441,7 +451,16 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
       )}
 
       {activeTab === "concluidos" && (
-        <FlatList items={listConcluidos} showWorkshop emptyLabel="Nenhum follow-up concluído" />
+        <>
+          <FlatList items={listConcluidos} showWorkshop emptyLabel="Nenhum follow-up concluído" onSelect={setSelectedConcluido} />
+          {selectedConcluido && (
+            <FollowUpCompletedDetailDrawer
+              followUp={selectedConcluido}
+              open={!!selectedConcluido}
+              onClose={() => setSelectedConcluido(null)}
+            />
+          )}
+        </>
       )}
     </div>
   );
