@@ -49,8 +49,9 @@ export default function SprintAtivaWidget({ workshopId }) {
       return Array.isArray(sprints) && sprints.length > 0 ? sprints[0] : null;
     },
     enabled: !!workshopId,
-    staleTime: 0,
-    refetchInterval: 15 * 1000,
+    staleTime: 60 * 1000, // 1min — subscribe WebSocket acima já atualiza em tempo real
+    refetchOnWindowFocus: false,
+    // Sem refetchInterval — o subscribe do useEffect acima garante atualização
   });
 
   if (!activeSprint) return null;

@@ -137,12 +137,11 @@ export default function VideoUploadRecorder({ videoUrl, onVideoSaved, onVideoRem
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { deviceId: { ideal: cameraId }, width: { ideal: 1280 }, height: { ideal: 720 } },
+        video: { deviceId: { exact: cameraId }, width: { ideal: 1280 }, height: { ideal: 720 } },
         audio: micId ? { deviceId: { ideal: micId } } : true,
       });
 
       if (!mountedRef.current) {
-        // Modal fechou enquanto aguardava
         stream.getTracks().forEach(t => t.stop());
         return;
       }
@@ -158,11 +157,36 @@ export default function VideoUploadRecorder({ videoUrl, onVideoSaved, onVideoRem
     } catch (err) {
       if (!mountedRef.current) return;
       console.warn("startLivePreview:", err);
-      toast.error(
-        err.name === "NotAllowedError"
-          ? "Permissão negada para a câmera/microfone."
-          : "Erro ao abrir câmera. Verifique se outro app está usando-a."
-      );
+
+      // Se falhou com deviceId exact, tentar sem restrição de deviceId (fallback)
+      if (err.name === "OverconstrainedError" || err.name === "ConstraintNotSatisfiedError") {
+        try {
+          const fallbackStream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: micId ? { deviceId: { ideal: micId } } : true,
+          });
+          if (!mountedRef.current) { fallbackStream.getTracks().forEach(t => t.stop()); return; }
+          streamRef.current = fallbackStream;
+          if (liveVideoRef.current) {
+            liveVideoRef.current.srcObject = fallbackStream;
+            try { await liveVideoRef.current.play(); } catch {}
+          }
+          if (mountedRef.current) setPreviewReady(true);
+          return;
+        } catch {}
+      }
+
+      const msg =
+        err.name === "NotAllowedError" || err.name === "PermissionDeniedError"
+          ? "Permissão negada. Clique no ícone de câmera na barra do navegador e permita o acesso."
+          : err.name === "NotReadableError" || err.name === "TrackStartError"
+          ? "Câmera em uso por outro aplicativo. Feche outros programas (Teams, Zoom, etc.) e tente novamente."
+          : err.name === "NotFoundError"
+          ? "Câmera não encontrada. Verifique se está conectada."
+          : `Erro ao abrir câmera: ${err.message || err.name}`;
+
+      toast.error(msg, { duration: 6000 });
+      if (mountedRef.current) setPermissionError(msg);
     }
   };
 
