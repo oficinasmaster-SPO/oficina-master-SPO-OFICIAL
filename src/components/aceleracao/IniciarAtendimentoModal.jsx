@@ -278,6 +278,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
           name: "Criando próximo follow-up...",
           action: async () => {
             setSavingStep("Criando próximo follow-up...");
+            const anotacoesAnterior = compromissos ? `Anotações do atendimento anterior:\n${compromissos}` : "";
             await base44.entities.FollowUpReminder.create({
               workshop_id: followUp.workshop_id,
               workshop_name: followUp.workshop_name,
@@ -286,6 +287,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
               sequence_number: (followUp.sequence_number || 1) + 1,
               reminder_date: proxData,
               is_completed: false,
+              observacoes: anotacoesAnterior,
             });
           }
         });
