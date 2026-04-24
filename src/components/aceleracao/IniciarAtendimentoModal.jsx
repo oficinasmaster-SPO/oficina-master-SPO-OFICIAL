@@ -52,7 +52,6 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
   const [canal, setCanal] = useState("");
   const [resultado, setResultado] = useState("");
   const [dataContato, setDataContato] = useState(format(new Date(), "yyyy-MM-dd"));
-  const [duracao, setDuracao] = useState("");
   const [humor, setHumor] = useState("");
   const [engajamento, setEngajamento] = useState("");
   const [observacoes, setObservacoes] = useState("");
@@ -65,6 +64,8 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
   const [errors, setErrors] = useState({});
   const [selectedAta, setSelectedAta] = useState(null);
   const [pastedImages, setPastedImages] = useState([]);
+  const [duracao, setDuracao] = useState(30);
+  const [inicioContagem, setInicioContagem] = useState(null);
 
   // Fetch ATAs
    const { data: atas = [] } = useQuery({
@@ -115,6 +116,25 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
     const interval = setInterval(() => setTimer(t => t + 1), 1000);
     return () => clearInterval(interval);
   }, []);
+
+  // Countdown duration from 30 minutes
+  useEffect(() => {
+    if (!inicioContagem) {
+      setInicioContagem(Date.now());
+    }
+  }, [inicioContagem]);
+
+  useEffect(() => {
+    if (!inicioContagem) return;
+    
+    const interval = setInterval(() => {
+      const decorrido = Math.floor((Date.now() - inicioContagem) / 1000 / 60);
+      const restante = Math.max(0, 30 - decorrido);
+      setDuracao(restante);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [inicioContagem]);
 
   const formatTimer = () => {
     const mins = String(Math.floor(timer / 60)).padStart(2, "0");
@@ -298,11 +318,11 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2 block">Data do contato</label>
-                  <Input type="date" value={dataContato} onChange={e => setDataContato(e.target.value)} />
+                  <Input type="date" value={dataContato} disabled className="bg-gray-100 cursor-not-allowed" />
                 </div>
                 <div>
                   <label className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2 block">Duração (min)</label>
-                  <Input type="number" placeholder="30" value={duracao} onChange={e => setDuracao(e.target.value)} />
+                  <Input type="number" value={duracao} disabled className="bg-gray-100 cursor-not-allowed text-center font-semibold" />
                 </div>
               </div>
 
