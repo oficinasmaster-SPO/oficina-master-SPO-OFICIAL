@@ -510,20 +510,18 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
                       {workshop.segment_auto && <div><p className="font-semibold text-gray-700">Segmento:</p><p>{workshop.segment_auto}</p></div>}
                       {workshop.employees_count && <div><p className="font-semibold text-gray-700">Funcionários:</p><p>{workshop.employees_count}</p></div>}
                     </div>
-                  </CardContent>
-                </Card>
-                )}
+                    </CardContent>
+                    </Card>
+                    )}
 
-                </div>
-
-                {/* FIXED FOOTER - Aparece em todas as páginas */}
-                <div className="document-footer">
-                <p>© 2026 Oficinas Master • {d.code || 'ATA'} • {d.meeting_date ? new Date(d.meeting_date).toLocaleDateString('pt-BR') : ''}</p>
-                <p>Documento gerado automaticamente pela Plataforma de Aceleração de Oficinas</p>
-                </div>
-                </div>
-                )}
-                </div>
+                    {/* FIXED FOOTER - Aparece em todas as páginas */}
+                    <div className="document-footer">
+                    <p>© 2026 Oficinas Master • {d.code || 'ATA'} • {d.meeting_date ? new Date(d.meeting_date).toLocaleDateString('pt-BR') : ''}</p>
+                    <p>Documento gerado automaticamente pela Plataforma de Aceleração de Oficinas</p>
+                    </div>
+                    </div>
+                    </div>
+                  )}
 
                 {/* FOOTER - FIXO */}
                 <div className="flex justify-end px-6 py-4 border-t print:hidden gap-2 flex-shrink-0 bg-white">
