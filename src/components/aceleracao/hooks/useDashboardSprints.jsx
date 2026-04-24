@@ -11,8 +11,9 @@ export default function useDashboardSprints(workshops = []) {
   const { data: sprints = [], isLoading, refetch } = useQuery({
     queryKey: ['dashboard-sprints', workshopIdsKey],
     queryFn: () => base44.entities.ConsultoriaSprint.filter({ workshop_id: { $in: workshopIdsKey.split(',').filter(Boolean) } }),
-    staleTime: 0,
-    refetchInterval: 10 * 1000,
+    staleTime: 30 * 1000, // 30s — dados do dashboard não precisam de polling agressivo
+    refetchOnWindowFocus: false,
+    // Sem refetchInterval — invalidateQueries após mutations garante atualização
     enabled: workshopIdsKey.length > 0
   });
 

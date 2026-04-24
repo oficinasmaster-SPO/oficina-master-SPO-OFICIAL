@@ -106,9 +106,10 @@ export default function PainelClienteAceleracao() {
     queryKey: ['progresso-implementacao', workshop?.id],
     queryFn: () => base44.entities.CronogramaImplementacao.filter({ workshop_id: workshop.id }),
     enabled: !!workshop?.id,
-    staleTime: 0, // Força sempre buscar do servidor
-    refetchInterval: 5000, // Refetch a cada 5 segundos enquanto página ativa
+    staleTime: 30 * 1000,
+    refetchOnWindowFocus: false,
     retry: false
+    // Sem refetchInterval — subscribe de MeetingMinutes e ConsultoriaSprint invalida quando necessário
   });
 
   // Hook: Escutar mudanças em ATAs e invalidar cache do cronograma
@@ -183,9 +184,10 @@ export default function PainelClienteAceleracao() {
       );
     },
     enabled: !!workshop?.id,
-    staleTime: 0, // Sempre buscar dados frescos
-    refetchInterval: 5000, // Refetch a cada 5 segundos
+    staleTime: 30 * 1000, // 30s — evitar flood (antes era 0 + refetchInterval)
+    refetchOnWindowFocus: false,
     retry: false
+    // Sem refetchInterval — subscribe abaixo garante atualização em tempo real
   });
 
 

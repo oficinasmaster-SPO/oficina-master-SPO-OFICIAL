@@ -21,17 +21,18 @@ export default function SprintClientSection({ workshopId, user, workshop }) {
       return Array.isArray(result) ? result : [];
     },
     enabled: !!workshopId,
-    staleTime: 0, // Sempre buscar dados frescos
-    refetchInterval: 5000, // Refetch a cada 5 segundos
+    staleTime: 30 * 1000, // 30s — evitar flood de requests (antes era 0)
+    refetchOnWindowFocus: false,
+    // Sem refetchInterval — usar WebSocket subscribe abaixo é mais eficiente
   });
 
-  // Sincronizar com mudanças em tempo real do banco
+  // Sincronizar com mudanças em tempo real via subscribe (sem polling)
   useEffect(() => {
     if (!workshopId) return;
     
     const unsubscribe = base44.entities.ConsultoriaSprint.subscribe((event) => {
       if (event.data?.workshop_id === workshopId) {
-        queryClient.refetchQueries({ queryKey: ['sprints-client', workshopId] });
+        queryClient.invalidateQueries({ queryKey: ['sprints-client', workshopId] });
       }
     });
 

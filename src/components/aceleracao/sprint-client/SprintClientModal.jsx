@@ -65,16 +65,18 @@ export default function SprintClientModal({ sprint, user, workshop, open, onClos
       });
     },
     onSuccess: () => {
+      // Invalidar query principal imediatamente; demais com delay para evitar 429
       queryClient.invalidateQueries({ queryKey: ["sprints-client"], exact: false });
-      queryClient.invalidateQueries({ queryKey: ["active-sprint-widget"], exact: false });
-      queryClient.invalidateQueries({ queryKey: ["dashboard-sprints"], exact: false });
-      queryClient.invalidateQueries({ queryKey: ["sprints-reais"], exact: false });
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["active-sprint-widget"], exact: false });
+        queryClient.invalidateQueries({ queryKey: ["dashboard-sprints"], exact: false });
+        queryClient.invalidateQueries({ queryKey: ["sprints-reais"], exact: false });
+      }, 1500);
     },
     onError: () => {
       // Rollback: ressincronizar com dado do banco
       if (sprint?.phases) setLocalPhases(sprint.phases);
-      queryClient.invalidateQueries({ queryKey: ["sprints-client"] });
-      queryClient.invalidateQueries({ queryKey: ["client-sprints"] });
+      queryClient.invalidateQueries({ queryKey: ["sprints-client"], exact: false });
       toast.error("Erro ao salvar. Tente novamente.");
     },
   });
