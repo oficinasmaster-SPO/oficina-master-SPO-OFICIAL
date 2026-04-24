@@ -262,10 +262,8 @@ export default function FollowUpDetail({ reminder, today, onBack }) {
               </Button>
             </div>
           ) : (
-            // Registration form
             <div className="space-y-4 py-4">
-
-            <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
+              <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
               <div>
                 <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2 block">Canal de contato</label>
                 <div className="flex flex-wrap gap-2">
@@ -336,20 +334,21 @@ export default function FollowUpDetail({ reminder, today, onBack }) {
             </Button>
             </div>
 
-            {showLossModal && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4 space-y-3">
-                <h3 className="font-bold text-red-900 text-sm">Confirmar perda</h3>
-                <p className="text-xs text-red-700">Este follow-up será encerrado como perda/desqualificação. Deseja confirmar?</p>
-                <div className="flex gap-3">
-                  <Button variant="outline" className="flex-1 text-xs" onClick={() => setShowLossModal(false)}>Cancelar</Button>
-                  <Button variant="destructive" className="flex-1 text-xs" onClick={handleLoss} disabled={saving}>
-                    {saving ? "..." : "Confirmar"}
-                  </Button>
+              {showLossModal && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 space-y-3">
+                  <h3 className="font-bold text-red-900 text-sm">Confirmar perda</h3>
+                  <p className="text-xs text-red-700">Este follow-up será encerrado como perda/desqualificação. Deseja confirmar?</p>
+                  <div className="flex gap-3">
+                    <Button variant="outline" className="flex-1 text-xs" onClick={() => setShowLossModal(false)}>Cancelar</Button>
+                    <Button variant="destructive" className="flex-1 text-xs" onClick={handleLoss} disabled={saving}>
+                      {saving ? "..." : "Confirmar"}
+                    </Button>
+                  </div>
                 </div>
+              )}
               </div>
-            )}
             </div>
-          </div>
+          )}
         </DialogContent>
       </Dialog>
     );
