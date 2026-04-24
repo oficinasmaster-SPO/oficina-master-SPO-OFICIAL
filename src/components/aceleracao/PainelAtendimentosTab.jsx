@@ -331,7 +331,7 @@ export default function PainelAtendimentosTab({ state }) {
       </div>
 
       {activeTab === 'followups' ? (
-        <FollowUpsTab consultorEfetivo={state.consultorEfetivo} consultores={state.consultores} />
+        <FollowUpsTab consultorEfetivo={state.consultorEfetivo} workshops={state.workshops} />
       ) : activeTab === 'bucket' ? (
         <BucketAtendimentosTab state={state} />
       ) : (

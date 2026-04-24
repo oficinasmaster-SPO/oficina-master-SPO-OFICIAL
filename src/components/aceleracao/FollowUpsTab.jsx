@@ -13,7 +13,7 @@ import {
 import { toast } from "sonner";
 import { format } from "date-fns";
 
-export default function FollowUpsTab({ consultorEfetivo }) {
+export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("pendentes");
@@ -67,25 +67,41 @@ export default function FollowUpsTab({ consultorEfetivo }) {
     return list;
   }, [reminders, filterStatus, filterSeq, searchTerm]);
 
-  // Group by workshop
+  // Group by workshop — include ALL workshops, even those without follow-ups
   const grouped = useMemo(() => {
     const map = {};
+
+    // Seed all workshops first (so they appear even with 0 follow-ups)
+    // Respect searchTerm so we don't show unrelated workshops when user is searching
+    const s = searchTerm.trim().toLowerCase();
+    workshops.forEach(w => {
+      if (!s || (w.name || "").toLowerCase().includes(s)) {
+        map[w.id] = { name: w.name || "Sem nome", consultor: null, items: [] };
+      }
+    });
+
+    // Fill with filtered reminders
     filtered.forEach(r => {
       const key = r.workshop_id || r.workshop_name || "sem-cliente";
       if (!map[key]) map[key] = { name: r.workshop_name || "Sem cliente", consultor: r.consultor_nome, items: [] };
+      if (!map[key].consultor) map[key].consultor = r.consultor_nome;
       map[key].items.push(r);
     });
+
     // Sort each group by sequence_number asc
     Object.values(map).forEach(g => g.items.sort((a, b) => a.sequence_number - b.sequence_number));
-    // Sort groups: those with overdue first
+
+    // Sort groups: overdue first, then with items, then alphabetical
     return Object.entries(map).sort(([, a], [, b]) => {
       const aOverdue = a.items.some(r => !r.is_completed && r.reminder_date < today);
       const bOverdue = b.items.some(r => !r.is_completed && r.reminder_date < today);
       if (aOverdue && !bOverdue) return -1;
       if (!aOverdue && bOverdue) return 1;
+      if (a.items.length > 0 && b.items.length === 0) return -1;
+      if (a.items.length === 0 && b.items.length > 0) return 1;
       return a.name.localeCompare(b.name);
     });
-  }, [filtered, today]);
+  }, [filtered, workshops, today]);
 
   const counts = useMemo(() => ({
     pendentes: reminders.filter(r => !r.is_completed).length,
@@ -213,15 +229,23 @@ export default function FollowUpsTab({ consultorEfetivo }) {
                     )}
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    {pendingCount > 0 && (
-                      <Badge className={`text-[11px] px-2 py-0.5 ${hasOverdue ? "bg-red-100 text-red-700 border-red-300" : "bg-amber-100 text-amber-700 border-amber-300"}`}>
-                        {pendingCount} pendente{pendingCount !== 1 ? "s" : ""}
+                    {group.items.length === 0 ? (
+                      <Badge className="text-[11px] px-2 py-0.5 bg-gray-100 text-gray-400 border-gray-200">
+                        0 follow-ups
                       </Badge>
-                    )}
-                    {completedCount > 0 && (
-                      <Badge className="text-[11px] px-2 py-0.5 bg-green-100 text-green-700 border-green-300">
-                        {completedCount} ok
-                      </Badge>
+                    ) : (
+                      <>
+                        {pendingCount > 0 && (
+                          <Badge className={`text-[11px] px-2 py-0.5 ${hasOverdue ? "bg-red-100 text-red-700 border-red-300" : "bg-amber-100 text-amber-700 border-amber-300"}`}>
+                            {pendingCount} pendente{pendingCount !== 1 ? "s" : ""}
+                          </Badge>
+                        )}
+                        {completedCount > 0 && (
+                          <Badge className="text-[11px] px-2 py-0.5 bg-green-100 text-green-700 border-green-300">
+                            {completedCount} ok
+                          </Badge>
+                        )}
+                      </>
                     )}
                     {isOpen
                       ? <ChevronDown className="w-4 h-4 text-gray-400" />
