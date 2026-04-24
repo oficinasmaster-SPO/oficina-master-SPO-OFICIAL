@@ -490,7 +490,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
                 </div>
               </TabsContent>
 
-              <TabsContent value="cliente" className="flex-1 overflow-y-auto px-3 py-4">
+              <TabsContent value="cliente" className="flex-1 overflow-y-auto px-3 py-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
                 <div className="space-y-6 text-sm">
                   {/* CONSULTOR RESPONSÁVEL */}
                   <div className="border-b pb-4">
