@@ -66,6 +66,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
   const [pastedImages, setPastedImages] = useState([]);
   const [duracao, setDuracao] = useState(30);
   const [inicioContagem, setInicioContagem] = useState(null);
+  const [cronometroAtivo, setCronometroAtivo] = useState(true);
 
   // Fetch ATAs
    const { data: atas = [] } = useQuery({
@@ -125,7 +126,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
   }, [inicioContagem]);
 
   useEffect(() => {
-    if (!inicioContagem) return;
+    if (!inicioContagem || !cronometroAtivo) return;
     
     const interval = setInterval(() => {
       const decorrido = Math.floor((Date.now() - inicioContagem) / 1000 / 60);
@@ -134,7 +135,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [inicioContagem]);
+  }, [inicioContagem, cronometroAtivo]);
 
   const formatTimer = () => {
     const mins = String(Math.floor(timer / 60)).padStart(2, "0");
@@ -150,6 +151,53 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
     if (!proximoPasso) newErrors.proximoPasso = "Obrigatório";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSaveDraft = async () => {
+    setSaving(true);
+    try {
+      setSavingStep("Salvando rascunho...");
+      
+      // Salvar dados em uma estrutura temporária
+      const draftData = {
+        followUp_id: followUp.id,
+        canal,
+        resultado,
+        dataContato,
+        duracao,
+        humor,
+        engajamento,
+        observacoes,
+        compromissos,
+        proximoPasso,
+        proxData,
+        proxHora,
+        pastedImages,
+        timer,
+        cronometroAtivo: false,
+        inicioContagem,
+        savedAt: new Date().toISOString()
+      };
+
+      // Salvar no localStorage ou como um record de draft
+      localStorage.setItem(`draft_atendimento_${followUp.id}`, JSON.stringify(draftData));
+      
+      await new Promise(r => setTimeout(r, 800));
+      setSavingStep("completed");
+      await new Promise(r => setTimeout(r, 1000));
+      
+      // Pausar cronômetro e fechar modal
+      setCronometroAtivo(false);
+      
+      toast.success("Rascunho salvo! Pronto para retomar.");
+      onSaved?.({ isDraft: true, draftData });
+      onClose();
+    } catch (err) {
+      toast.error("Erro ao salvar rascunho");
+      setSavingStep(null);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleSave = async () => {
@@ -682,8 +730,8 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
           <Button variant="outline" onClick={onClose} disabled={saving}>
             Cancelar
           </Button>
-          <Button variant="outline" onClick={() => toast.info("Rascunho salvo")} disabled={saving}>
-            Rascunho
+          <Button variant="outline" onClick={handleSaveDraft} disabled={saving} className="border-cyan-300 text-cyan-700 hover:bg-cyan-50">
+            {saving && savingStep ? savingStep : "Rascunho"}
           </Button>
           <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={handleSave} disabled={saving}>
             {saving ? savingStep : "Salvar e finalizar atendimento"}
