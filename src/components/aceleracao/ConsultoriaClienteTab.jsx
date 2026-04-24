@@ -103,7 +103,8 @@ function CamadaTrilhaCliente({ workshopId, missoesSelecionadas, setMissoesSeleci
     setMissoesSelecionadas(novasSelecionadas);
     setMudancasNaoSalvas(true);
     setSalvoRecentemente(false);
-    handleSetMissoesSelecionadas(novasSelecionadas);
+    // NÃO chamar handleSetMissoesSelecionadas aqui — só persiste ao clicar "Salvar Trilha"
+    // Evita dois saves concorrentes (optimistic local + API) por click
   };
 
   const missoesSelecionadasData = MISSOES.filter(m => missoesSelecionadas.includes(m.id));
@@ -567,19 +568,20 @@ function CamadaSprints({ workshopId, missoesSelecionadas, cronogramaTemplateId, 
   const sprintIdFromUrl = urlParams.get('sprint_id');
   const phaseIndexFromUrl = urlParams.get('phase_index') ? parseInt(urlParams.get('phase_index')) : null;
 
-  const loadSprints = useCallback(async () => {
+  const loadSprints = useCallback(async (signal) => {
     try {
       setLoadError(null);
-      // Em modo global, usa os sprints passados
-      // Em modo contextual, filtra por workshop_id
       if (isGlobalMode && globalSprints?.length > 0) {
+        if (signal?.aborted) return;
         setSprints(globalSprints);
       } else {
         const query = workshopId ? { workshop_id: workshopId } : {};
         const data = await base44.entities.ConsultoriaSprint.filter(query);
+        if (signal?.aborted) return; // Componente desmontou antes da resposta
         setSprints(data || []);
       }
     } catch (error) {
+      if (signal?.aborted) return;
       console.error('Erro ao carregar sprints:', error);
       setLoadError(error.message);
       setSprints([]);
@@ -587,7 +589,9 @@ function CamadaSprints({ workshopId, missoesSelecionadas, cronogramaTemplateId, 
   }, [workshopId, isGlobalMode, globalSprints]);
 
   useEffect(() => {
-    loadSprints();
+    const controller = new AbortController();
+    loadSprints(controller.signal);
+    return () => controller.abort(); // Cancela se workshopId mudar ou componente desmontar
   }, [loadSprints]);
 
   const getSprintForMission = (missionId, number) =>
@@ -662,7 +666,7 @@ function CamadaSprints({ workshopId, missoesSelecionadas, cronogramaTemplateId, 
       }
       await base44.entities.ConsultoriaSprint.create(sprintData);
       toast.success(`✓ Sprint ${numero} iniciado! (3 semanas)`);
-      await loadSprints();
+      await loadSprints(undefined);
     } catch (error) {
       toast.error('✗ Erro ao iniciar sprint');
     } finally {
@@ -857,29 +861,33 @@ export default function ConsultoriaClienteTab({ client, mode = "contextual", glo
   const [displaySprints, setDisplaySprints] = useState([]);
 
   useEffect(() => {
+    let cancelled = false;
     const loadSelectedMissions = async () => {
       try {
         if (workshopId) {
           const cronogramas = await base44.entities.CronogramaTemplate.filter(
             { workshop_id: workshopId }
           );
-          
+          if (cancelled) return;
           if (cronogramas?.length > 0) {
             const selecionadas = cronogramas[0].missoes_selecionadas || [];
             setMissoesSelecionadas(selecionadas);
             setCronogramaTemplateId(cronogramas[0].id);
           }
         } else {
-          // Modo global: carrega sprints sem filtro de cliente
+          if (cancelled) return;
           setMissoesSelecionadas([]);
         }
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       } catch (error) {
-        console.error('Erro ao carregar trilhas selecionadas:', error);
-        setLoading(false);
+        if (!cancelled) {
+          console.error('Erro ao carregar trilhas selecionadas:', error);
+          setLoading(false);
+        }
       }
     };
     loadSelectedMissions();
+    return () => { cancelled = true; }; // Cleanup: evita setState após desmontagem
   }, [workshopId]);
 
   // Se em modo global e globalSprints fornecidos, usa-os para exibição
