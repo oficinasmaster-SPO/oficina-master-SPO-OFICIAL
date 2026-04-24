@@ -66,6 +66,20 @@ export default function FollowUpDetail({ reminder, today, onBack }) {
     ? differenceInDays(new Date(today), new Date(reminder.reminder_date + "T00:00:00"))
     : 0;
 
+  const { data: allFollowUps = [] } = useQuery({
+    queryKey: ["all-followups-workshop", reminder.workshop_id],
+    queryFn: async () => {
+      if (!reminder.workshop_id) return [];
+      return base44.entities.FollowUpReminder.filter(
+        { workshop_id: reminder.workshop_id },
+        "reminder_date",
+        50
+      );
+    },
+    enabled: !!reminder.workshop_id,
+    staleTime: 3 * 60 * 1000,
+  });
+
   const { data: atas = [] } = useQuery({
     queryKey: ["atas-followup-detail", reminder.workshop_id],
     queryFn: async () => {
@@ -501,21 +515,85 @@ export default function FollowUpDetail({ reminder, today, onBack }) {
             </ul>
           </div>
 
-          {/* Date info */}
-          {reminder.reminder_date && (
-            <div className="bg-white border border-gray-200 rounded-xl p-4">
-              <p className="text-[10px] text-gray-400 uppercase tracking-wide font-semibold mb-2">Data do Follow-up</p>
-              <div className="flex items-center gap-2 text-sm text-gray-700">
-                <Calendar className="w-4 h-4 text-gray-400" />
-                <span className={`font-medium ${isOverdue ? "text-red-600" : "text-gray-800"}`}>
-                  {format(new Date(reminder.reminder_date + "T00:00:00"), "dd/MM/yyyy")}
-                </span>
-                {reminder.days_since_meeting > 0 && (
-                  <span className="text-xs text-gray-400">· {reminder.days_since_meeting}d após atendimento</span>
-                )}
+          {/* Follow-up Timeline */}
+          {(() => {
+            const past = allFollowUps.filter(f => f.is_completed && f.id !== reminder.id)
+              .sort((a, b) => new Date(b.reminder_date) - new Date(a.reminder_date));
+            const future = allFollowUps.filter(f => !f.is_completed && f.id !== reminder.id)
+              .sort((a, b) => new Date(a.reminder_date) - new Date(b.reminder_date));
+
+            return (
+              <div className="bg-white border border-gray-200 rounded-xl p-4">
+                <p className="text-[10px] text-gray-400 uppercase tracking-wide font-semibold mb-3">Timeline de Follow-ups</p>
+
+                <div className="grid grid-cols-2 divide-x divide-gray-100 gap-0">
+                  {/* Left: histórico */}
+                  <div className="pr-3">
+                    <p className="text-[10px] text-gray-400 font-semibold mb-2 uppercase tracking-wide">Histórico</p>
+                    {past.length === 0 ? (
+                      <p className="text-[11px] text-gray-400 italic">Sem histórico</p>
+                    ) : (
+                      <div className="relative">
+                        <div className="absolute left-1.5 top-0 bottom-0 w-px bg-gray-200" />
+                        <div className="space-y-3">
+                          {past.map((f, i) => (
+                            <div key={f.id} className="flex items-start gap-2 pl-5 relative">
+                              <div className="absolute left-0 top-1.5 w-3 h-3 rounded-full bg-green-400 border-2 border-white shadow-sm flex-shrink-0" />
+                              <div className="min-w-0">
+                                <p className="text-[11px] font-semibold text-gray-700">FU {f.sequence_number || i + 1}</p>
+                                <p className="text-[10px] text-gray-400 text-right">
+                                  {f.reminder_date ? format(new Date(f.reminder_date + "T00:00:00"), "dd/MM/yy") : "—"}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Right: futuros */}
+                  <div className="pl-3">
+                    <p className="text-[10px] text-gray-400 font-semibold mb-2 uppercase tracking-wide">Futuros</p>
+
+                    {/* Current (highlighted) */}
+                    <div className="flex items-start gap-2 mb-3 relative pl-5">
+                      <div className="absolute left-0 top-1.5 w-3 h-3 rounded-full bg-blue-500 border-2 border-white shadow ring-2 ring-blue-200 flex-shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-[11px] font-bold text-blue-700">FU {currentStep} · Atual</p>
+                        <p className="text-[10px] text-blue-500 text-right">
+                          {reminder.reminder_date ? format(new Date(reminder.reminder_date + "T00:00:00"), "dd/MM/yy") : "—"}
+                        </p>
+                      </div>
+                    </div>
+
+                    {future.length === 0 ? (
+                      <div className="text-center py-3 px-2 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                        <p className="text-[11px] text-gray-400">Sem futuros follow-ups</p>
+                      </div>
+                    ) : (
+                      <div className="relative">
+                        <div className="absolute left-1.5 top-0 bottom-0 w-px bg-gray-200" />
+                        <div className="space-y-3">
+                          {future.map((f, i) => (
+                            <div key={f.id} className="flex items-start gap-2 pl-5 relative">
+                              <div className="absolute left-0 top-1.5 w-3 h-3 rounded-full bg-gray-300 border-2 border-white shadow-sm flex-shrink-0" />
+                              <div className="min-w-0">
+                                <p className="text-[11px] font-semibold text-gray-500">FU {f.sequence_number || currentStep + i + 1}</p>
+                                <p className="text-[10px] text-gray-400 text-right">
+                                  {f.reminder_date ? format(new Date(f.reminder_date + "T00:00:00"), "dd/MM/yy") : "—"}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
         </div>
       </div>
 
