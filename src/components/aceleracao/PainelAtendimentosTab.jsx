@@ -74,6 +74,15 @@ export default function PainelAtendimentosTab({ state }) {
   // Auto-mark de atrasados agora é feito server-side via markAtrasados function
   // Chamado uma vez no ControleAceleracaoView ao montar
 
+  const verificarRascunho = (atendimentoId) => {
+    try {
+      const draftData = localStorage.getItem(`draft_atendimento_${atendimentoId}`);
+      return draftData ? JSON.parse(draftData) : null;
+    } catch {
+      return null;
+    }
+  };
+
   const iniciarMutation = useMutation({
     mutationFn: (id) => base44.entities.ConsultoriaAtendimento.update(id, { 
       status: ATENDIMENTO_STATUS.PARTICIPANDO,
@@ -491,10 +500,15 @@ export default function PainelAtendimentosTab({ state }) {
                                   atendimento.status === ATENDIMENTO_STATUS.ATRASADO ||
                                   !atendimento.status) && (
                                   <>
-                                    <DropdownMenuItem onClick={() => iniciarMutation.mutate(atendimento.id)} className="cursor-pointer">
-                                      <Play className="mr-2 h-4 w-4 text-blue-600" />
-                                      <span>Iniciar Atendimento</span>
-                                    </DropdownMenuItem>
+                                    {(() => {
+                                      const rascunho = verificarRascunho(atendimento.id);
+                                      return (
+                                        <DropdownMenuItem onClick={() => iniciarMutation.mutate(atendimento.id)} className="cursor-pointer">
+                                          <Play className={`mr-2 h-4 w-4 ${rascunho ? 'text-cyan-600' : 'text-blue-600'}`} />
+                                          <span>{rascunho ? 'Retomar Atendimento' : 'Iniciar Atendimento'}</span>
+                                        </DropdownMenuItem>
+                                      );
+                                    })()}
                                     <DropdownMenuItem onClick={() => { setSelectedAtendimento(atendimento); setShowReagendar(true); }} className="cursor-pointer">
                                       <CalendarClock className="mr-2 h-4 w-4 text-purple-600" />
                                       <span>Reagendar</span>
