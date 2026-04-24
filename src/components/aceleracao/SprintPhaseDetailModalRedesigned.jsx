@@ -145,7 +145,6 @@ export default function SprintPhaseDetailModalRedesigned({
         { action: "approved", date: now, actor: "consultor", feedback: "" },
       ],
     } : {};
-    // If moving away from completed, clear completion metadata
     const clearFields = !isNowCompleted && wasCompleted ? {
       completion_date: null,
     } : {};
@@ -157,10 +156,8 @@ export default function SprintPhaseDetailModalRedesigned({
       ...completionFields,
       ...clearFields,
     };
-    const ok = await persistPhases(updatedPhases);
-    if (ok) {
-      toast.success("Fase salva com sucesso!");
-    }
+    await persistPhases(updatedPhases);
+    // Nota: persistPhases já exibe toast.success — não duplicar aqui
   };
 
   // Review actions for consultant

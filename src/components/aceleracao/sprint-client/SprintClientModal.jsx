@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,7 @@ export default function SprintClientModal({ sprint, user, workshop, open, onClos
   const queryClient = useQueryClient();
   const permissions = useSprintPermissions(sprint, user, workshop);
   const sprintCompleted = sprint?.status === "completed";
+  const savingRef = React.useRef(false); // Guard contra saves concorrentes
 
   // Estado local de phases para evitar stale closure nos handlers de save
   const [localPhases, setLocalPhases] = useState(sprint?.phases || []);
@@ -51,6 +52,9 @@ export default function SprintClientModal({ sprint, user, workshop, open, onClos
 
   const saveMutation = useMutation({
     mutationFn: async (updatedPhases) => {
+      // Guard: descartar save se já há um em andamento (evita writes concorrentes)
+      if (savingRef.current) return;
+      savingRef.current = true;
       // Atualizar estado local imediatamente (optimistic update)
       setLocalPhases(updatedPhases);
 
@@ -65,6 +69,7 @@ export default function SprintClientModal({ sprint, user, workshop, open, onClos
       });
     },
     onSuccess: () => {
+      savingRef.current = false;
       // Invalidar query principal imediatamente; demais com delay para evitar 429
       queryClient.invalidateQueries({ queryKey: ["sprints-client"], exact: false });
       setTimeout(() => {
@@ -74,6 +79,7 @@ export default function SprintClientModal({ sprint, user, workshop, open, onClos
       }, 1500);
     },
     onError: () => {
+      savingRef.current = false;
       // Rollback: ressincronizar com dado do banco
       if (sprint?.phases) setLocalPhases(sprint.phases);
       queryClient.invalidateQueries({ queryKey: ["sprints-client"], exact: false });

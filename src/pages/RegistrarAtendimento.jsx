@@ -155,9 +155,12 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
     if (resolvedAtendimentoId && user) {
       // P6: Reset auto-save guard when switching between attendances
       autoSaveInitializedRef.current = false;
+      let cancelled = false; // Guard contra race condition: dois loads em voo simultâneos
+
       const loadAtendimento = async () => {
         try {
           const atendimento = await base44.entities.ConsultoriaAtendimento.get(resolvedAtendimentoId);
+          if (cancelled) return; // Componente desmontou ou ID mudou antes da resposta chegar
           if (atendimento) {
             const dataAgendada = toBrazilDate(atendimento.data_agendada);
             const yr = dataAgendada.getFullYear();
@@ -182,13 +185,13 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
               proximos_passos_list: atendimento.proximos_passos_list || [],
               checklist_respostas: atendimento.checklist_respostas || []
             });
-            // Timer removed
           }
         } catch (error) {
-          toast.error("Erro ao carregar atendimento");
+          if (!cancelled) toast.error("Erro ao carregar atendimento");
         }
       };
       loadAtendimento();
+      return () => { cancelled = true; }; // Cleanup: cancela se ID mudar ou componente desmontar
     }
   }, [user, resolvedAtendimentoId]);
 
@@ -320,6 +323,8 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
   // ── Mutation: create/update ──
   const createMutation = useMutation({
     mutationFn: async (data) => {
+      // Cancelar auto-save pendente para evitar dois writes simultâneos
+      if (autoSaveTimerRef.current) { clearTimeout(autoSaveTimerRef.current); autoSaveTimerRef.current = null; }
       if (!data.workshop_id) throw new Error("Selecione uma oficina");
       if (!data.data_agendada || !data.hora_agendada) throw new Error("Preencha data e horário");
 
