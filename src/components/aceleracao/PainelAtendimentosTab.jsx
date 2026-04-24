@@ -14,14 +14,15 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
+import { lazy, Suspense } from "react";
 import GerarAtaModal from "./GerarAtaModal";
 import VisualizarAtaModal from "./VisualizarAtaModal";
 import ReagendarAtendimentoModal from "./ReagendarAtendimentoModal";
 import CancelarAtendimentoDialog from "./CancelarAtendimentoDialog";
 import FaltouAtendimentoDialog from "./FaltouAtendimentoDialog";
 import ConcluirAtendimentoDialog from "./ConcluirAtendimentoDialog";
-import BucketAtendimentosTab from "./BucketAtendimentosTab";
-import FollowUpsTab from "./FollowUpsTab";
+const BucketAtendimentosTab = lazy(() => import("./BucketAtendimentosTab"));
+const FollowUpsTab = lazy(() => import("./FollowUpsTab"));
 import DashboardAtendimentos from "./DashboardAtendimentos";
 import { ATENDIMENTO_STATUS, ATENDIMENTO_STATUS_COLORS, ATENDIMENTO_STATUS_LABELS } from "@/components/lib/ataConstants";
 import { format } from "date-fns";
@@ -331,9 +332,13 @@ export default function PainelAtendimentosTab({ state }) {
       </div>
 
       {activeTab === 'followups' ? (
-        <FollowUpsTab consultorEfetivo={state.consultorEfetivo} workshops={state.workshops} />
+        <Suspense fallback={<div className="py-12 text-center text-gray-500">Carregando follow-ups...</div>}>
+          <FollowUpsTab consultorEfetivo={state.consultorEfetivo} workshops={state.workshops} />
+        </Suspense>
       ) : activeTab === 'bucket' ? (
-        <BucketAtendimentosTab state={state} />
+        <Suspense fallback={<div className="py-12 text-center text-gray-500">Carregando bucket...</div>}>
+          <BucketAtendimentosTab state={state} />
+        </Suspense>
       ) : (
       <>
 

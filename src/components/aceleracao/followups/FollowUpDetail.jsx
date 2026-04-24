@@ -349,11 +349,11 @@ export default function FollowUpDetail({ reminder, today, onBack }) {
                 </div>
               </div>
             )}
-            </div>
-            </DialogContent>
-            </Dialog>
-            );
-            }
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   // ---- DETAIL VIEW ----
   // Progress dots for 4 follow-ups
