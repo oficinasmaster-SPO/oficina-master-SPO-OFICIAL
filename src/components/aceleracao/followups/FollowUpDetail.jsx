@@ -61,6 +61,7 @@ export default function FollowUpDetail({ reminder, today, onBack }) {
   const [showLossModal, setShowLossModal] = useState(false);
   const [selectedAta, setSelectedAta] = useState(null);
   const [user, setUser] = useState(null);
+  const [registerStep, setRegisterStep] = useState("history");
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -160,14 +161,129 @@ export default function FollowUpDetail({ reminder, today, onBack }) {
 
   // ---- REGISTER VIEW ----
   if (view === "register") {
+    // Step 1: History preview
+    if (registerStep === "history") {
+      const pastFollowUps = allFollowUps
+        .filter(f => f.is_completed && f.id !== reminder.id)
+        .sort((a, b) => new Date(b.reminder_date) - new Date(a.reminder_date));
+
+      return (
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <button onClick={() => setView("detail")} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500">
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+            <div>
+              <p className="text-xs text-gray-400">Iniciar atendimento</p>
+              <p className="font-semibold text-sm text-gray-800">{reminder.workshop_name || "Sem cliente"}</p>
+            </div>
+            <Badge className="ml-auto text-[10px] bg-gray-100 text-gray-500 border-gray-200">
+              Follow-up {reminder.sequence_number}/4
+            </Badge>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* ATAs history */}
+            <div className="bg-white border border-gray-200 rounded-xl p-4 cursor-pointer hover:border-blue-300 hover:bg-blue-50 transition-colors"
+              onClick={() => {
+                // Scroll modal to top
+                const modal = document.querySelector('[role="dialog"]');
+                if (modal) modal.scrollTop = 0;
+              }}>
+              <p className="text-[10px] text-gray-400 uppercase tracking-wide font-semibold mb-3">
+                Histórico de ATAs ({atas.length})
+              </p>
+              <div className="space-y-2">
+                {atas.slice(0, 5).map(ata => {
+                  const dateStr = ata.meeting_date || ata.created_date;
+                  const tipo = (ata.tipo_aceleracao || ata.tipo_atendimento || "ata").toLowerCase();
+                  const emoji = ATA_ICONS[tipo] || "📄";
+                  return (
+                    <button
+                      key={ata.id}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedAta(ata);
+                      }}
+                      className="w-full flex items-start gap-2.5 px-3 py-2.5 rounded-lg border border-gray-100 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+                    >
+                      <span className="text-base flex-shrink-0 mt-0.5">{emoji}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-xs font-semibold text-gray-800">
+                            {ata.tipo_aceleracao || ata.tipo_atendimento || "ATA"}
+                          </span>
+                        </div>
+                        {ata.proximos_passos && (
+                          <p className="text-[11px] text-gray-500 line-clamp-2 mt-0.5">{ata.proximos_passos}</p>
+                        )}
+                      </div>
+                      {dateStr && (
+                        <span className="text-[11px] text-gray-400 flex-shrink-0">
+                          {format(new Date(dateStr), "dd/MM/yy")}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-[11px] text-blue-600 mt-3 flex items-center gap-1">
+                Clique para visualizar <ChevronRight className="w-3 h-3" />
+              </p>
+            </div>
+
+            {/* Follow-ups history */}
+            <div className="bg-white border border-gray-200 rounded-xl p-4">
+              <p className="text-[10px] text-gray-400 uppercase tracking-wide font-semibold mb-3">
+                Histórico de Follow-ups ({pastFollowUps.length})
+              </p>
+              {pastFollowUps.length === 0 ? (
+                <p className="text-[11px] text-gray-400 italic py-4">Sem histórico de follow-ups</p>
+              ) : (
+                <div className="space-y-2">
+                  {pastFollowUps.slice(0, 5).map((f, i) => (
+                    <div
+                      key={f.id}
+                      className="px-3 py-2.5 rounded-lg border border-gray-100 bg-gray-50 hover:bg-green-50 hover:border-green-200 transition-colors text-left"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold text-gray-700">FU {f.sequence_number || i + 1}</p>
+                          <p className="text-[10px] text-gray-400 mt-0.5">Concluído</p>
+                        </div>
+                        {f.reminder_date && (
+                          <span className="text-[10px] text-gray-400 flex-shrink-0">
+                            {format(new Date(f.reminder_date + "T00:00:00"), "dd/MM/yy")}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <p className="text-[11px] text-gray-400 mt-3">Referência de histórico</p>
+            </div>
+          </div>
+
+          <Button
+            onClick={() => setRegisterStep("form")}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-full font-semibold"
+          >
+            Prosseguir para Registro
+          </Button>
+        </div>
+      );
+    }
+
+    // Step 2: Registration form
     return (
       <div className="space-y-4">
         <div className="flex items-center gap-3">
-          <button onClick={() => setView("detail")} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500">
+          <button onClick={() => setRegisterStep("history")} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500">
             <ArrowLeft className="w-4 h-4" />
           </button>
           <div>
-            <p className="text-xs text-gray-400">Iniciar atendimento</p>
+            <p className="text-xs text-gray-400">Registrar atendimento</p>
             <p className="font-semibold text-sm text-gray-800">{reminder.workshop_name || "Sem cliente"}</p>
           </div>
           <Badge className="ml-auto text-[10px] bg-gray-100 text-gray-500 border-gray-200">
@@ -434,7 +550,10 @@ export default function FollowUpDetail({ reminder, today, onBack }) {
           {/* CTA */}
           <div className="flex">
             <Button
-              onClick={() => setView("register")}
+              onClick={() => {
+                setView("register");
+                setRegisterStep("history");
+              }}
               className="bg-green-600 hover:bg-green-700 text-white rounded-full font-semibold flex items-center gap-2 px-6"
             >
               <PlayCircle className="w-4 h-4" />
