@@ -45,6 +45,15 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
     staleTime: 2 * 60 * 1000,
   });
 
+  // Fetch dos atendimentos concluídos
+  const { data: concludedAttendances = [] } = useQuery({
+    queryKey: ["follow-up-concluidos-tab"],
+    queryFn: async () => {
+      return base44.entities.FollowUpConcluido.list("-completedAt", 500);
+    },
+    staleTime: 2 * 60 * 1000,
+  });
+
   const handleComplete = async (reminder) => {
     await base44.entities.FollowUpReminder.update(reminder.id, {
       is_completed: true,
@@ -68,8 +77,8 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
   const counts = useMemo(() => ({
     pendentes: reminders.filter(r => !r.is_completed).length,
     atrasados: reminders.filter(r => !r.is_completed && r.reminder_date < today).length,
-    concluidos: reminders.filter(r => r.is_completed).length,
-  }), [reminders, today]);
+    concluidos: reminders.filter(r => r.is_completed).length + concludedAttendances.length,
+  }), [reminders, concludedAttendances, today]);
 
   const applySearch = (list) => {
     if (!searchTerm.trim()) return list;
@@ -90,10 +99,50 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
       .sort((a, b) => (a.reminder_date || "").localeCompare(b.reminder_date || "")),
   [reminders, today, searchTerm]);
 
-  const listConcluidos = useMemo(() =>
-    applySearch(reminders.filter(r => r.is_completed))
-      .sort((a, b) => (b.completed_at || "").localeCompare(a.completed_at || "")),
-  [reminders, searchTerm]);
+  const listConcluidos = useMemo(() => {
+    // Combina reminders marcados como concluídos com os dados de FollowUpConcluido
+    const fromReminders = applySearch(reminders.filter(r => r.is_completed))
+      .map(r => ({ ...r, _source: 'reminder' }));
+    
+    const fromConcluded = applySearch(concludedAttendances)
+      .map(a => ({
+        id: a.id,
+        followup_id: a.followup_id,
+        workshop_id: a.workshop_id,
+        workshop_name: a.consultor_nome ? `Workshop #${a.followup_id}` : 'Sem workshop',
+        consultor_id: a.consultor_id,
+        consultor_nome: a.consultor_nome,
+        reminder_date: a.dataContato,
+        completed_at: a.completedAt,
+        is_completed: true,
+        sequence_number: 1,
+        _source: 'concluded',
+        _attendanceData: a
+      }));
+
+    // Remove duplicatas (mesmo followup_id em ambas as listas)
+    const combined = [...fromReminders];
+    concludedAttendances.forEach(a => {
+      if (!combined.find(r => r.followup_id === a.followup_id || r.id === a.followup_id)) {
+        combined.push({
+          id: a.id,
+          followup_id: a.followup_id,
+          workshop_id: a.workshop_id,
+          workshop_name: a.consultor_nome ? `Workshop #${a.followup_id}` : 'Sem workshop',
+          consultor_id: a.consultor_id,
+          consultor_nome: a.consultor_nome,
+          reminder_date: a.dataContato,
+          completed_at: a.completedAt,
+          is_completed: true,
+          sequence_number: 1,
+          _source: 'concluded',
+          _attendanceData: a
+        });
+      }
+    });
+
+    return combined.sort((a, b) => (b.completed_at || "").localeCompare(a.completed_at || ""));
+  }, [reminders, concludedAttendances, searchTerm]);
 
   const grouped = useMemo(() => {
     const map = {};
