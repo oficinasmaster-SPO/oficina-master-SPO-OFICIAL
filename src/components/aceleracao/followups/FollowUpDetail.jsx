@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import VisualizarAtaModal from "@/components/aceleracao/VisualizarAtaModal";
+import IniciarAtendimentoModal from "@/components/aceleracao/IniciarAtendimentoModal";
 
 function getInitials(name = "") {
   return name.split(" ").slice(0, 2).map(p => p[0]).join("").toUpperCase() || "?";
@@ -162,195 +163,15 @@ export default function FollowUpDetail({ reminder, today, onBack }) {
 
   // ---- REGISTER VIEW (Modal) ----
   if (view === "register") {
-    const pastFollowUps = allFollowUps
-      .filter(f => f.is_completed && f.id !== reminder.id)
-      .sort((a, b) => new Date(b.reminder_date) - new Date(a.reminder_date));
-
     return (
-      <Dialog open={view === "register"} onOpenChange={(open) => !open && setView("detail")}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-gray-400">Iniciar atendimento</p>
-                <DialogTitle className="text-lg">{reminder.workshop_name || "Sem cliente"}</DialogTitle>
-              </div>
-              <Badge className="text-[10px] bg-gray-100 text-gray-500 border-gray-200">
-                Follow-up {reminder.sequence_number}/4
-              </Badge>
-            </div>
-          </DialogHeader>
-
-          {registerStep === "history" ? (
-            // History view
-            <div className="space-y-4 py-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* ATAs history */}
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                  <p className="text-[10px] text-gray-400 uppercase tracking-wide font-semibold mb-3">
-                    Histórico de ATAs ({atas.length})
-                  </p>
-                  <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                    {atas.length === 0 ? (
-                      <p className="text-[11px] text-gray-400 italic py-2">Sem ATAs</p>
-                    ) : (
-                      atas.map(ata => {
-                        const dateStr = ata.meeting_date || ata.created_date;
-                        const tipo = (ata.tipo_aceleracao || ata.tipo_atendimento || "ata").toLowerCase();
-                        const emoji = ATA_ICONS[tipo] || "📄";
-                        return (
-                          <button
-                            key={ata.id}
-                            onClick={() => setSelectedAta(ata)}
-                            className="w-full flex items-start gap-2.5 px-3 py-2.5 rounded border border-gray-200 bg-white hover:bg-blue-50 hover:border-blue-300 transition-colors text-left"
-                          >
-                            <span className="text-base flex-shrink-0 mt-0.5">{emoji}</span>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs font-semibold text-gray-800">
-                                {ata.tipo_aceleracao || ata.tipo_atendimento || "ATA"}
-                              </p>
-                              {ata.proximos_passos && (
-                                <p className="text-[11px] text-gray-500 line-clamp-1 mt-0.5">{ata.proximos_passos}</p>
-                              )}
-                            </div>
-                            {dateStr && (
-                              <span className="text-[11px] text-gray-400 flex-shrink-0">
-                                {format(new Date(dateStr), "dd/MM/yy")}
-                              </span>
-                            )}
-                          </button>
-                        );
-                      })
-                    )}
-                  </div>
-                </div>
-
-                {/* Follow-ups history */}
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                  <p className="text-[10px] text-gray-400 uppercase tracking-wide font-semibold mb-3">
-                    Histórico de Follow-ups ({pastFollowUps.length})
-                  </p>
-                  <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                    {pastFollowUps.length === 0 ? (
-                      <p className="text-[11px] text-gray-400 italic py-2">Sem histórico</p>
-                    ) : (
-                      pastFollowUps.map((f, i) => (
-                        <div
-                          key={f.id}
-                          className="px-3 py-2.5 rounded border border-gray-200 bg-white text-left text-[11px]"
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="font-semibold text-gray-700">FU {f.sequence_number || i + 1}</span>
-                            {f.reminder_date && (
-                              <span className="text-gray-400">
-                                {format(new Date(f.reminder_date + "T00:00:00"), "dd/MM/yy")}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <Button
-                onClick={() => setRegisterStep("form")}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-full font-semibold"
-              >
-                Prosseguir para Registro
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-4 py-4">
-              <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
-              <div>
-                <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2 block">Canal de contato</label>
-                <div className="flex flex-wrap gap-2">
-              {CANAL_OPTIONS.map(opt => {
-                const Icon = opt.icon;
-                return (
-                  <button
-                    key={opt.id}
-                    onClick={() => setCanal(opt.id)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm font-medium transition-all ${
-                      canal === opt.id
-                        ? "bg-gray-900 text-white border-gray-900"
-                        : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"
-                    }`}
-                  >
-                    <Icon className="w-3.5 h-3.5" />
-                    {opt.label}
-                  </button>
-                );
-              })}
-            </div>
-            </div>
-
-            <div>
-            <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2 block">Resultado da conversa</label>
-            <Textarea
-              value={resultado}
-              onChange={e => setResultado(e.target.value)}
-              placeholder="Descreva o que foi dito, objeções encontradas, interesse demonstrado..."
-              className="min-h-[80px] text-sm resize-none"
-            />
-            </div>
-
-            <div>
-            <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2 block">Próximo passo</label>
-            <Select value={proximoPasso} onValueChange={setProximoPasso}>
-              <SelectTrigger className="text-sm">
-                <SelectValue placeholder="Selecionar próximo passo..." />
-              </SelectTrigger>
-              <SelectContent>
-                {PROXIMO_PASSO_OPTIONS.map(o => (
-                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            </div>
-
-            {proximoPasso === "reagendar" && (
-            <div>
-              <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2 block">Reagendar em</label>
-              <Select value={reagendarEm} onValueChange={setReagendarEm}>
-                <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {REAGENDAR_OPTIONS.map(o => (
-                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            )}
-
-            <div className="flex items-center gap-3">
-            <Button onClick={handleSave} disabled={saving} className="flex-1 bg-green-600 hover:bg-green-700 text-white rounded-full font-semibold">
-            {saving ? "Salvando..." : "Salvar e concluir"}
-            </Button>
-            <Button variant="destructive" size="sm" onClick={() => setShowLossModal(true)} disabled={saving}>
-            Perda / desq.
-            </Button>
-            </div>
-
-              {showLossModal && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4 space-y-3">
-                  <h3 className="font-bold text-red-900 text-sm">Confirmar perda</h3>
-                  <p className="text-xs text-red-700">Este follow-up será encerrado como perda/desqualificação. Deseja confirmar?</p>
-                  <div className="flex gap-3">
-                    <Button variant="outline" className="flex-1 text-xs" onClick={() => setShowLossModal(false)}>Cancelar</Button>
-                    <Button variant="destructive" className="flex-1 text-xs" onClick={handleLoss} disabled={saving}>
-                      {saving ? "..." : "Confirmar"}
-                    </Button>
-                  </div>
-                </div>
-              )}
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      <IniciarAtendimentoModal
+        followUp={reminder}
+        cliente={{ name: reminder.workshop_name }}
+        onClose={() => setView("detail")}
+        onSaved={() => {
+          queryClient.invalidateQueries({ queryKey: ["follow-up-reminders"] });
+        }}
+      />
     );
   }
 
