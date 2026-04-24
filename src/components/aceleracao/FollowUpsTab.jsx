@@ -11,8 +11,11 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import FollowUpList from "./followups/FollowUpList";
+import FollowUpDetail from "./followups/FollowUpDetail";
 
 const TABS = [
+  { id: "crm",        label: "Fila CRM" },
   { id: "pastas",     label: "Pastas" },
   { id: "abertos",    label: "Abertos" },
   { id: "atrasados",  label: "Atrasados" },
@@ -23,8 +26,12 @@ const TABS = [
 export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeTab, setActiveTab] = useState("pastas");
+  const [activeTab, setActiveTab] = useState("crm");
   const [openFolders, setOpenFolders] = useState({});
+
+  // CRM sub-state
+  const [selectedReminder, setSelectedReminder] = useState(null);
+  const [crmFilterPill, setCrmFilterPill] = useState("todos");
 
   const today = new Date().toISOString().split("T")[0];
 
@@ -64,7 +71,6 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
     concluidos: reminders.filter(r => r.is_completed).length,
   }), [reminders, today]);
 
-  // Apply search filter
   const applySearch = (list) => {
     if (!searchTerm.trim()) return list;
     const s = searchTerm.toLowerCase();
@@ -74,15 +80,14 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
     );
   };
 
-  // --- Lists per tab ---
   const listAbertos = useMemo(() =>
     applySearch(reminders.filter(r => !r.is_completed))
-      .sort((a, b) => a.reminder_date?.localeCompare(b.reminder_date)),
+      .sort((a, b) => (a.reminder_date || "").localeCompare(b.reminder_date || "")),
   [reminders, searchTerm]);
 
   const listAtrasados = useMemo(() =>
     applySearch(reminders.filter(r => !r.is_completed && r.reminder_date < today))
-      .sort((a, b) => a.reminder_date?.localeCompare(b.reminder_date)),
+      .sort((a, b) => (a.reminder_date || "").localeCompare(b.reminder_date || "")),
   [reminders, today, searchTerm]);
 
   const listConcluidos = useMemo(() =>
@@ -90,7 +95,6 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
       .sort((a, b) => (b.completed_at || "").localeCompare(a.completed_at || "")),
   [reminders, searchTerm]);
 
-  // --- Group by workshop (Pastas tab) ---
   const grouped = useMemo(() => {
     const map = {};
     const s = searchTerm.trim().toLowerCase();
@@ -118,7 +122,6 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
     });
   }, [reminders, workshops, today, searchTerm]);
 
-  // --- Group by consultor ---
   const groupedByConsultor = useMemo(() => {
     const map = {};
     applySearch(reminders.filter(r => !r.is_completed)).forEach(r => {
@@ -126,7 +129,7 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
       if (!map[key]) map[key] = [];
       map[key].push(r);
     });
-    Object.values(map).forEach(g => g.sort((a, b) => a.reminder_date?.localeCompare(b.reminder_date)));
+    Object.values(map).forEach(g => g.sort((a, b) => (a.reminder_date || "").localeCompare(b.reminder_date || "")));
     return Object.entries(map).sort(([a], [b]) => a.localeCompare(b));
   }, [reminders, searchTerm]);
 
@@ -138,7 +141,6 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
   };
   const collapseAll = () => setOpenFolders({});
 
-  // --- Shared row renderer ---
   const ReminderRow = ({ reminder, showWorkshop = false }) => {
     const isOverdue = !reminder.is_completed && reminder.reminder_date < today;
     return (
@@ -156,14 +158,10 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
             <span className="text-xs text-gray-600">Follow-up {reminder.sequence_number}/4</span>
             <span className="text-xs text-gray-400">·</span>
             <span className={`text-xs ${isOverdue ? "text-red-600 font-medium" : "text-gray-500"}`}>
-              {reminder.reminder_date
-                ? format(new Date(reminder.reminder_date + "T00:00:00"), "dd/MM/yyyy")
-                : "—"}
+              {reminder.reminder_date ? format(new Date(reminder.reminder_date + "T00:00:00"), "dd/MM/yyyy") : "—"}
             </span>
             {isOverdue && <AlertCircle className="w-3 h-3 text-red-500" />}
-            {reminder.consultor_nome && (
-              <span className="text-xs text-gray-400">· {reminder.consultor_nome}</span>
-            )}
+            {reminder.consultor_nome && <span className="text-xs text-gray-400">· {reminder.consultor_nome}</span>}
           </div>
           {reminder.is_completed && reminder.completed_at && (
             <p className="text-[11px] text-green-600 mt-0.5">
@@ -207,9 +205,11 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
     )
   );
 
+  const showSearchBar = activeTab !== "crm";
+
   return (
     <div className="space-y-4">
-      {/* Discrete stats row */}
+      {/* Discrete stats + search */}
       <div className="flex items-center gap-4 text-sm text-gray-500">
         <span className="flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-amber-400 inline-block" />
@@ -224,30 +224,34 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
           <span className="font-medium text-gray-700">{counts.concluidos}</span> concluídos
         </span>
 
-        {/* Search — right aligned */}
-        <div className="relative ml-auto">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
-          <Input
-            placeholder="Buscar cliente ou consultor..."
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-            className="h-8 pl-8 pr-7 text-sm w-60"
-          />
-          {searchTerm && (
-            <button onClick={() => setSearchTerm("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-              <X className="w-3.5 h-3.5" />
-            </button>
-          )}
-        </div>
+        {showSearchBar && (
+          <div className="relative ml-auto">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+            <Input
+              placeholder="Buscar cliente ou consultor..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="h-8 pl-8 pr-7 text-sm w-60"
+            />
+            {searchTerm && (
+              <button onClick={() => setSearchTerm("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Tab nav — grid of 5 */}
-      <div className="grid grid-cols-5 border border-gray-200 rounded-lg overflow-hidden text-sm">
+      {/* Tab nav — grid */}
+      <div className={`grid border border-gray-200 rounded-lg overflow-hidden text-sm`} style={{ gridTemplateColumns: `repeat(${TABS.length}, 1fr)` }}>
         {TABS.map((tab, i) => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`py-2 px-3 font-medium text-center transition-colors ${i > 0 ? "border-l border-gray-200" : ""} ${
+            onClick={() => {
+              setActiveTab(tab.id);
+              setSelectedReminder(null);
+            }}
+            className={`py-2 px-2 font-medium text-center transition-colors whitespace-nowrap ${i > 0 ? "border-l border-gray-200" : ""} ${
               activeTab === tab.id
                 ? "bg-gray-900 text-white"
                 : "bg-white text-gray-600 hover:bg-gray-50"
@@ -259,6 +263,28 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
       </div>
 
       {/* Tab content */}
+
+      {/* CRM Tab */}
+      {activeTab === "crm" && (
+        selectedReminder ? (
+          <FollowUpDetail
+            reminder={selectedReminder}
+            today={today}
+            onBack={() => setSelectedReminder(null)}
+          />
+        ) : (
+          <FollowUpList
+            reminders={reminders}
+            today={today}
+            isLoading={isLoading}
+            onSelect={setSelectedReminder}
+            filterPill={crmFilterPill}
+            onFilterPill={setCrmFilterPill}
+          />
+        )
+      )}
+
+      {/* Pastas Tab */}
       {activeTab === "pastas" && (
         isLoading ? (
           <div className="py-16 text-center text-gray-400 text-sm">Carregando...</div>
