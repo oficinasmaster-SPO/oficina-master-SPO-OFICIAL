@@ -153,7 +153,11 @@ Deno.serve(async (req) => {
         }
 
         // Assinatura segura para garantir que o plano não foi alterado pelo frontend
-        const tokenSecret = Deno.env.get("KIWIFY_CLIENT_SECRET") || "fallback_token_for_tests";
+        const tokenSecret = Deno.env.get("KIWIFY_CLIENT_SECRET");
+        if (!tokenSecret) {
+          console.error("⚠️ KIWIFY_CLIENT_SECRET não configurado — abortando atualização de plano");
+          throw new Error("KIWIFY_CLIENT_SECRET não configurado");
+        }
         const encoder = new TextEncoder();
         const key = await crypto.subtle.importKey("raw", encoder.encode(tokenSecret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
         const hashBuffer = await crypto.subtle.sign("HMAC", key, encoder.encode(mappedPlan + workshop.id + planStatus));
@@ -165,8 +169,7 @@ Deno.serve(async (req) => {
           planoAtual: String(mappedPlan).toUpperCase(),
           planStatus: planStatus === 'inactive' ? 'canceled' : planStatus,
           dataAssinatura: planStatus === 'active' ? new Date().toISOString() : workshop.dataAssinatura,
-          billing_secure_hash: hashHex,
-          billing_update_token: tokenSecret
+          billing_secure_hash: hashHex
         });
         
         processingMessage = `Oficina atualizada: Plano = ${mappedPlan}, Status = ${planStatus}`;

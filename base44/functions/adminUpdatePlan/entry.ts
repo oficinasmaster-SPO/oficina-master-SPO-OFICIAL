@@ -41,7 +41,10 @@ Deno.serve(async (req) => {
     }
 
     // Assinatura segura para garantir que o plano não foi alterado indevidamente
-    const tokenSecret = Deno.env.get("KIWIFY_CLIENT_SECRET") || "fallback_token_for_tests";
+    const tokenSecret = Deno.env.get("KIWIFY_CLIENT_SECRET");
+    if (!tokenSecret) {
+      return Response.json({ error: 'KIWIFY_CLIENT_SECRET não configurado' }, { status: 500 });
+    }
     const encoder = new TextEncoder();
     const key = await crypto.subtle.importKey("raw", encoder.encode(tokenSecret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
     
@@ -54,8 +57,7 @@ Deno.serve(async (req) => {
       planoAtual: plan.toUpperCase(),
       planStatus: newPlanStatus,
       plan_source: 'admin',
-      billing_secure_hash: hashHex,
-      billing_update_token: tokenSecret
+      billing_secure_hash: hashHex
     };
 
     const result = await base44.asServiceRole.entities.Workshop.update(workshop_id, updatePayload);
