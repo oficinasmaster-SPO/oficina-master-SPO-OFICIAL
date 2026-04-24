@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { X, Download, Eye } from "lucide-react";
+import { X, Download, Eye, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { format } from "date-fns";
@@ -87,7 +87,23 @@ export default function FollowUpCompletedDetailDrawer({ followUp, open, onClose 
             <SheetTitle>Detalhes do Follow-up Concluído</SheetTitle>
           </SheetHeader>
 
-          <div className="space-y-6">
+          {!attendanceData && (
+            <div className="flex flex-col items-center justify-center h-full py-12 text-center">
+              <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mb-4">
+                <CheckCircle2 className="w-8 h-8 text-blue-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Follow-up Concluído</h3>
+              <p className="text-sm text-gray-600">
+                Este follow-up foi completado, mas não contém dados de atendimento registrados.
+              </p>
+              <p className="text-xs text-gray-500 mt-4">
+                Dados de atendimento são registrados apenas para follow-ups concluídos após as novas atualizações do sistema.
+              </p>
+            </div>
+          )}
+
+          {attendanceData && (
+            <div className="space-y-6">
             {/* Consultor */}
             <div className="border-b pb-4">
               <p className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">
@@ -255,7 +271,8 @@ export default function FollowUpCompletedDetailDrawer({ followUp, open, onClose 
                 </div>
               </div>
             )}
-          </div>
+            </div>
+          )}
 
           <div className="mt-8 pt-4 border-t">
             <Button variant="outline" className="w-full" onClick={onClose}>
