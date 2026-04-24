@@ -259,8 +259,10 @@ export default function VideoUploadRecorder({ videoUrl, onVideoSaved, onVideoRem
     setRecordedUrl(null);
     setElapsed(0);
     elapsedRef.current = 0;
-    // Reinicia o preview ao vivo
-    startLivePreview(selectedCamera, selectedMic);
+    // Reinicia o preview ao vivo apenas se ainda montado
+    if (mountedRef.current) {
+      startLivePreview(selectedCamera, selectedMic);
+    }
   };
 
   const handleCloseRecorder = () => {

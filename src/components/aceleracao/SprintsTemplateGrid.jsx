@@ -49,6 +49,7 @@ const buildDefaultData = () =>
           description: t.description,
           instructions: '',
           link_url: '',
+          video_url: '',
         })),
       })),
     },
@@ -163,6 +164,12 @@ function TaskDetailModal({ task, open, onClose }) {
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 pt-2">
+          {task.video_url && (
+            <div>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">🎬 Vídeo de Instrução</p>
+              <video src={task.video_url} controls playsInline className="w-full rounded-lg bg-black max-h-64" />
+            </div>
+          )}
           {task.instructions && (
             <div>
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Instrução</p>
