@@ -31,8 +31,11 @@ export function useNotificationPush() {
       window.addEventListener('focus', checkPermission);
       window.addEventListener('notification-permission-refresh', handleRefresh);
       
-      // Verifica a cada 1 segundo para detectar mudanças
-      const interval = setInterval(checkPermission, 1000);
+      // BUGFIX: Intervalo de 1s era um memory leak contínuo.
+      // A permissão de notificação muda muito raramente (requer ação do usuário).
+      // Verificar no foco da janela é mais do que suficiente.
+      // Mantido apenas um intervalo longo (30s) para fallback em caso de mudança sem foco.
+      const interval = setInterval(checkPermission, 30000);
       
       return () => {
         window.removeEventListener('focus', checkPermission);

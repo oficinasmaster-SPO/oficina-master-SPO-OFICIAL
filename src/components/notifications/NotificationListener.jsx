@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNotificationPush } from './useNotificationPush';
@@ -8,7 +8,7 @@ import { Bell, Clock, CheckCircle2, AlertTriangle, FileText } from 'lucide-react
 export default function NotificationListener({ user }) {
   const queryClient = useQueryClient();
   const { permission, sendNotification } = useNotificationPush();
-  const [lastNotificationId, setLastNotificationId] = React.useState(null);
+  const [lastNotificationId, setLastNotificationId] = useState(null);
 
   const { data: notifications = [] } = useQuery({
     queryKey: ['notifications', user?.id],
@@ -28,12 +28,14 @@ export default function NotificationListener({ user }) {
 
     const latestNotification = notifications[0];
     
+    // Só disparar se já tivermos visto uma notificação anterior (evita toast no primeiro render)
     if (lastNotificationId && latestNotification.id !== lastNotificationId) {
       showNotification(latestNotification);
     }
     
-    setLastNotificationId(latestNotification.id);
-  }, [notifications]);
+    setLastNotificationId(prev => prev === latestNotification.id ? prev : latestNotification.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [notifications[0]?.id]); // Dep: somente o ID da última notificação — evita re-run em refetch sem mudança
 
   const showNotification = (notification) => {
     const icons = {
