@@ -158,29 +158,32 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
     try {
       setSavingStep("Salvando rascunho...");
       
-      // Salvar dados em uma estrutura temporária
-      const draftData = {
-        followUp_id: followUp.id,
-        canal,
-        resultado,
-        dataContato,
-        duracao,
-        humor,
-        engajamento,
-        observacoes,
-        compromissos,
-        proximoPasso,
-        proxData,
-        proxHora,
-        pastedImages,
-        timer,
-        cronometroAtivo: false,
-        inicioContagem,
-        savedAt: new Date().toISOString()
-      };
+      // Salvar dados em uma estrutura temporária (use atendimento_id se disponível, senão followUp_id)
+       const draftData = {
+         atendimento_id: followUp.atendimento_id || followUp.id,
+         followUp_id: followUp.id,
+         canal,
+         resultado,
+         dataContato,
+         duracao,
+         humor,
+         engajamento,
+         observacoes,
+         compromissos,
+         proximoPasso,
+         proxData,
+         proxHora,
+         pastedImages,
+         timer,
+         cronometroAtivo: false,
+         inicioContagem,
+         savedAt: new Date().toISOString()
+       };
 
-      // Salvar no localStorage ou como um record de draft
-      localStorage.setItem(`draft_atendimento_${followUp.id}`, JSON.stringify(draftData));
+       // Salvar no localStorage com a key correta
+       const storageKey = `draft_atendimento_${followUp.atendimento_id || followUp.id}`;
+       localStorage.setItem(storageKey, JSON.stringify(draftData));
+       console.log('Rascunho salvo em:', storageKey, draftData);
       
       await new Promise(r => setTimeout(r, 800));
       setSavingStep("completed");
