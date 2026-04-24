@@ -64,6 +64,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
   const [savingStep, setSavingStep] = useState(null);
   const [errors, setErrors] = useState({});
   const [selectedAta, setSelectedAta] = useState(null);
+  const [pastedImages, setPastedImages] = useState([]);
 
   // Fetch ATAs
    const { data: atas = [] } = useQuery({
@@ -404,11 +405,65 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
               {/* Documentos */}
               <div>
                 <label className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2 block">Documentos e anexos</label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition cursor-pointer">
+                
+                {/* Upload Area */}
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition cursor-pointer mb-3">
                   <Upload className="w-6 h-6 text-gray-400 mx-auto mb-2" />
                   <p className="text-xs text-gray-600">Arraste arquivos ou clique para selecionar</p>
                   <p className="text-xs text-gray-400 mt-1">PDF, XLSX, DOCX, PNG (máx 10MB)</p>
                 </div>
+
+                {/* Paste Screenshot Area */}
+                <div 
+                  onPaste={(e) => {
+                    e.preventDefault();
+                    const items = e.clipboardData.items;
+                    for (let item of items) {
+                      if (item.type.startsWith('image/')) {
+                        const file = item.getAsFile();
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                          setPastedImages(prev => [...prev, {
+                            id: Math.random(),
+                            src: event.target.result,
+                            name: `Screenshot ${new Date().toLocaleTimeString('pt-BR')}`
+                          }]);
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }
+                  }}
+                  className="border-2 border-blue-300 border-dashed rounded-lg p-6 bg-blue-50 text-center focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3 cursor-pointer transition"
+                  tabIndex="0"
+                >
+                  <p className="text-sm font-medium text-blue-700 mb-1">Colar screenshot aqui</p>
+                  <p className="text-xs text-blue-600">Use Ctrl+V (ou Cmd+V) para colar uma imagem da área de transferência</p>
+                </div>
+
+                {/* Pasted Images Preview */}
+                {pastedImages.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold text-gray-600">Screenshots coladas ({pastedImages.length})</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {pastedImages.map(img => (
+                        <div key={img.id} className="relative group rounded-lg overflow-hidden border border-gray-200 bg-white">
+                          <img 
+                            src={img.src} 
+                            alt={img.name}
+                            className="w-full h-24 object-cover"
+                          />
+                          <button
+                            onClick={() => setPastedImages(prev => prev.filter(p => p.id !== img.id))}
+                            className="absolute top-1 right-1 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                          <p className="text-xs text-gray-600 p-1 bg-white text-center truncate">{img.name}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
