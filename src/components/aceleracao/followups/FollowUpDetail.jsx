@@ -336,17 +336,27 @@ export default function FollowUpDetail({ reminder, today, onBack }) {
             {atas.slice(0, 8).map(ata => {
               const dateStr = ata.meeting_date || ata.created_date;
               const statusDot = STATUS_DOT[ata.status] || "bg-gray-300";
+              const isOrigin = ata.id === reminder.ata_id;
               return (
                 <button
                   key={ata.id}
                   onClick={() => setSelectedAta(ata)}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300 transition-colors text-left"
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg border transition-colors text-left ${
+                    isOrigin
+                      ? "border-green-400 bg-green-50 hover:bg-green-100"
+                      : "border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300"
+                  }`}
                 >
                   <span className={`w-2 h-2 rounded-full flex-shrink-0 ${statusDot}`} />
-                  <FileText className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-                  <span className="flex-1 text-xs font-medium text-gray-700 truncate">
+                  <FileText className={`w-3.5 h-3.5 flex-shrink-0 ${isOrigin ? "text-green-600" : "text-gray-400"}`} />
+                  <span className={`flex-1 text-xs font-medium truncate ${isOrigin ? "text-green-800" : "text-gray-700"}`}>
                     {ata.tipo_aceleracao || ata.tipo_atendimento || ata.code || "ATA"}
                   </span>
+                  {isOrigin && (
+                    <span className="text-[10px] font-semibold text-green-700 bg-green-100 border border-green-300 rounded px-1.5 py-0.5 flex-shrink-0">
+                      Origem
+                    </span>
+                  )}
                   {dateStr && (
                     <span className="text-[11px] text-gray-400 flex-shrink-0">
                       {format(new Date(dateStr), "dd/MM/yy")}
