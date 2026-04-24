@@ -171,8 +171,8 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
     <>
       <ClientIntelligenceCapturePanel workshopId={workshop?.id} ataId={ata?.id} />
       <Dialog open onOpenChange={onClose}>
-        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto print:max-w-full">
-          <DialogHeader className="print:hidden">
+        <DialogContent className="max-w-5xl max-h-[90vh] p-0 flex flex-col overflow-hidden print:max-w-full">
+          <DialogHeader className="print:hidden flex-shrink-0 px-6 py-4 border-b">
             <div className="space-y-4">
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <span className="flex items-center gap-2 font-semibold">
@@ -219,7 +219,7 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
              <p className="text-gray-500">Carregando dados da ATA...</p>
            </div>
           ) : (
-            <div ref={ataContentRef} className="document">
+            <div ref={ataContentRef} className="document flex-1 overflow-y-auto px-6">
                {/* FIXED HEADER - Aparece em todas as páginas */}
                <div className="document-header">
                  <h1>GESTÃO DE PROCESSOS</h1>
@@ -524,9 +524,13 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
                 </div>
                 )}
 
-              <div className="flex justify-end pt-4 border-t print:hidden gap-2">
-              <Button variant="outline" onClick={onClose}>Fechar</Button>
-              </div>
+                </div>
+                )}
+
+                {/* FOOTER - FIXO */}
+                <div className="flex justify-end px-6 py-4 border-t print:hidden gap-2 flex-shrink-0 bg-white">
+                <Button variant="outline" onClick={onClose}>Fechar</Button>
+                </div>
         </DialogContent>
       </Dialog>
     </>
