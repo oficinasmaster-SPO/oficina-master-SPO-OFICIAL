@@ -506,9 +506,12 @@ export default function PainelAtendimentosTab({ state }) {
                                     {(() => {
                                       const rascunho = verificarRascunho(atendimento.id);
                                       return (
-                                        <DropdownMenuItem onClick={() => iniciarMutation.mutate(atendimento.id)} className="cursor-pointer">
+                                        <DropdownMenuItem 
+                                          onClick={() => iniciarMutation.mutate(atendimento.id)} 
+                                          className={`cursor-pointer ${rascunho ? 'bg-cyan-50 focus:bg-cyan-100' : ''}`}
+                                        >
                                           <Play className={`mr-2 h-4 w-4 ${rascunho ? 'text-cyan-600' : 'text-blue-600'}`} />
-                                          <span>{rascunho ? 'Retomar Atendimento' : 'Iniciar Atendimento'}</span>
+                                          <span className={rascunho ? 'text-cyan-700 font-semibold' : ''}>{rascunho ? 'Retomar Atendimento' : 'Iniciar Atendimento'}</span>
                                         </DropdownMenuItem>
                                       );
                                     })()}
