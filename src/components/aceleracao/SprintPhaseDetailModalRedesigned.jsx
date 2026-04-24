@@ -103,15 +103,18 @@ export default function SprintPhaseDetailModalRedesigned({
       });
       // Invalidar query local do modal primeiro para forçar re-fetch imediato
       // NÃO usar await aqui para evitar bloqueio e fechamento automático
+      // Invalidar apenas o sprint atual imediatamente; demais queries em background com delay
+      // para evitar flood de requests e 429 Rate Limit que quebra a sessão do workshop
       queryClient.invalidateQueries({ queryKey: ['sprint-detail', sprint.id] });
-      // Invalidate all sprint queries across tabs (Dashboard, Cronograma, Client panels, EAP, Home)
-      queryClient.invalidateQueries({ queryKey: ['dashboard-sprints'], exact: false });
-      queryClient.invalidateQueries({ queryKey: ['sprints'], exact: false });
-      queryClient.invalidateQueries({ queryKey: ['sprints-client'], exact: false });
-      queryClient.invalidateQueries({ queryKey: ['client-sprints'], exact: false });
-      queryClient.invalidateQueries({ queryKey: ['sprints-reais'], exact: false });
-      queryClient.invalidateQueries({ queryKey: ['active-sprint-widget'], exact: false });
-      queryClient.invalidateQueries({ queryKey: ['ConsultoriaSprint'], exact: false });
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['dashboard-sprints'], exact: false });
+        queryClient.invalidateQueries({ queryKey: ['sprints'], exact: false });
+        queryClient.invalidateQueries({ queryKey: ['sprints-client'], exact: false });
+        queryClient.invalidateQueries({ queryKey: ['client-sprints'], exact: false });
+        queryClient.invalidateQueries({ queryKey: ['sprints-reais'], exact: false });
+        queryClient.invalidateQueries({ queryKey: ['active-sprint-widget'], exact: false });
+        queryClient.invalidateQueries({ queryKey: ['ConsultoriaSprint'], exact: false });
+      }, 1500);
       toast.success("Alteração salva com sucesso!");
       return true;
     } catch (error) {
@@ -283,19 +286,20 @@ export default function SprintPhaseDetailModalRedesigned({
       const newTaskObj = {
         description: newTask.trim(),
         status: "to_do",
+        instructions: newTaskInstructions.trim() || "",
+        link_url: newTaskLink.trim() || "",
+        video_url: newTaskVideoUrl || "",
       };
-      if (newTaskInstructions.trim()) newTaskObj.instructions = newTaskInstructions.trim();
-      if (newTaskLink.trim()) newTaskObj.link_url = newTaskLink.trim();
-      if (newTaskVideoUrl) newTaskObj.video_url = newTaskVideoUrl;
       const updated = [...tasks, newTaskObj];
-      setTasks(updated);
-      // BUGFIX: usa livePhases (estado local completo) para não descartar edições não salvas
-      // e para garantir consistência com handleToggleTask/handleUpdateEvidence/removeTask
-      const updatedPhases = livePhases.map((p, i) =>
-        i === phaseIndex ? { ...p, tasks: updated } : p
+      // BUGFIX CRÍTICO: setTasks é assíncrono — NÃO usar livePhases aqui pois
+      // ele ainda reflete o estado ANTERIOR (antes do setTasks ter efeito).
+      // Construir updatedPhases diretamente a partir de `updated` e `phases`.
+      const updatedPhases = phases.map((p, i) =>
+        i === phaseIndex ? { ...p, status, notes, tasks: updated } : p
       );
       const success = await persistPhases(updatedPhases);
       if (success) {
+        setTasks(updated);
         // Limpar campos APENAS após sucesso
         setNewTask("");
         setNewTaskInstructions("");
@@ -310,11 +314,12 @@ export default function SprintPhaseDetailModalRedesigned({
 
   const removeTask = async (idx) => {
     const updated = tasks.filter((_, i) => i !== idx);
-    setTasks(updated);
-    const updatedPhases = livePhases.map((p, i) =>
-      i === phaseIndex ? { ...p, tasks: updated } : p
+    // Mesmo fix do addTask: construir updatedPhases com `updated` diretamente
+    const updatedPhases = phases.map((p, i) =>
+      i === phaseIndex ? { ...p, status, notes, tasks: updated } : p
     );
-    await persistPhases(updatedPhases);
+    const success = await persistPhases(updatedPhases);
+    if (success) setTasks(updated);
   };
 
   const canGoBack = phaseIndex > 0;
