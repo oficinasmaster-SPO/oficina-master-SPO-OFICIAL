@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { AlertCircle, Clock, CheckCircle2, StickyNote } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
+import FollowUpCompletedDetailDrawer from "@/components/aceleracao/FollowUpCompletedDetailDrawer";
 
 function getInitials(name = "") {
   return name.split(" ").slice(0, 2).map(p => p[0]).join("").toUpperCase() || "?";
@@ -31,14 +32,18 @@ function getAvatarColor(name = "") {
 }
 
 export default function FollowUpList({ reminders, today, isLoading, onSelect, filterPill, onFilterPill }) {
+  const [selectedCompleted, setSelectedCompleted] = useState(null);
+
   const PILLS = [
     { id: "todos",     label: "Todos" },
     { id: "atrasados", label: "Vencidos" },
     { id: "hoje",      label: "Hoje" },
     { id: "urgentes",  label: "Urgentes" },
+    { id: "concluidos", label: "Concluídos" },
   ];
 
   const filtered = reminders.filter(r => {
+    if (filterPill === "concluidos") return r.is_completed;
     if (filterPill === "atrasados") return !r.is_completed && r.reminder_date < today;
     if (filterPill === "hoje")      return !r.is_completed && r.reminder_date === today;
     if (filterPill === "urgentes")  return !r.is_completed && getDaysOverdue(r.reminder_date, today) >= 3;
@@ -108,13 +113,14 @@ export default function FollowUpList({ reminders, today, isLoading, onSelect, fi
             const isTodayItem = isToday(r.reminder_date, today);
             const isUrgent = daysOver >= 3;
             const name = r.workshop_name || "Sem cliente";
+            const isConcluido = r.is_completed;
 
             return (
               <button
                 key={r.id}
-                onClick={() => onSelect(r)}
+                onClick={() => isConcluido ? setSelectedCompleted(r) : onSelect(r)}
                 className={`w-full text-left rounded-lg border bg-white hover:bg-gray-50 transition-all flex items-center gap-3 px-4 py-3 group ${
-                  isOverdue ? "border-l-4 border-l-red-500 border-t-red-100 border-r-red-100 border-b-red-100" : "border-gray-200"
+                  isConcluido ? "border-green-200 bg-green-50" : isOverdue ? "border-l-4 border-l-red-500 border-t-red-100 border-r-red-100 border-b-red-100" : "border-gray-200"
                 }`}
               >
                 {/* Avatar */}
@@ -140,7 +146,9 @@ export default function FollowUpList({ reminders, today, isLoading, onSelect, fi
 
                 {/* Right side */}
                 <div className="flex-shrink-0 flex flex-col items-end gap-1">
-                  {isOverdue ? (
+                  {isConcluido ? (
+                    <span className="text-xs font-semibold text-green-600">Concluído</span>
+                  ) : isOverdue ? (
                     <span className="text-xs font-semibold text-red-600">
                       {daysOver}d vencido
                     </span>
@@ -152,11 +160,12 @@ export default function FollowUpList({ reminders, today, isLoading, onSelect, fi
                     </span>
                   )}
                   <Badge className={`text-[10px] px-1.5 py-0 ${
+                    isConcluido ? "bg-green-100 text-green-700 border-green-200" :
                     isOverdue ? "bg-red-100 text-red-700 border-red-200" :
                     isTodayItem ? "bg-amber-100 text-amber-700 border-amber-200" :
                     "bg-gray-100 text-gray-500 border-gray-200"
                   }`}>
-                    {isOverdue ? "Vencido" : isTodayItem ? "Hoje" : "Pendente"}
+                    {isConcluido ? "Concluído" : isOverdue ? "Vencido" : isTodayItem ? "Hoje" : "Pendente"}
                   </Badge>
                 </div>
               </button>
@@ -164,6 +173,13 @@ export default function FollowUpList({ reminders, today, isLoading, onSelect, fi
           })}
         </div>
       )}
+
+      {/* Drawer for completed follow-ups */}
+      <FollowUpCompletedDetailDrawer
+        followUp={selectedCompleted}
+        open={!!selectedCompleted}
+        onClose={() => setSelectedCompleted(null)}
+      />
     </div>
   );
 }
