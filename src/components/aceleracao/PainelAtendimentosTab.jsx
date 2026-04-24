@@ -21,6 +21,7 @@ import CancelarAtendimentoDialog from "./CancelarAtendimentoDialog";
 import FaltouAtendimentoDialog from "./FaltouAtendimentoDialog";
 import ConcluirAtendimentoDialog from "./ConcluirAtendimentoDialog";
 import BucketAtendimentosTab from "./BucketAtendimentosTab";
+import FollowUpsTab from "./FollowUpsTab";
 import DashboardAtendimentos from "./DashboardAtendimentos";
 import { ATENDIMENTO_STATUS, ATENDIMENTO_STATUS_COLORS, ATENDIMENTO_STATUS_LABELS } from "@/components/lib/ataConstants";
 import { format } from "date-fns";
@@ -228,7 +229,7 @@ export default function PainelAtendimentosTab({ state }) {
         />
       )}
 
-      {activeTab !== 'bucket' && (
+      {activeTab !== 'bucket' && activeTab !== 'followups' && (
         <DashboardAtendimentos atendimentos={atendimentosFiltrados} onStatusClick={setActiveTab} />
       )}
 
@@ -243,6 +244,7 @@ export default function PainelAtendimentosTab({ state }) {
               { value: ATENDIMENTO_STATUS.REAGENDADO, label: 'Reagendados' },
               { value: ATENDIMENTO_STATUS.REALIZADO, label: 'Realizados' },
               { value: ATENDIMENTO_STATUS.CONCLUIDO, label: 'Concluídos' },
+              { value: 'followups', label: '📌 Follow up\'s' },
               { value: 'bucket', label: '📥 Bucket' },
             ].map(tab => (
               <button
@@ -328,7 +330,9 @@ export default function PainelAtendimentosTab({ state }) {
         </div>
       </div>
 
-      {activeTab === 'bucket' ? (
+      {activeTab === 'followups' ? (
+        <FollowUpsTab consultorEfetivo={state.consultorEfetivo} consultores={state.consultores} />
+      ) : activeTab === 'bucket' ? (
         <BucketAtendimentosTab state={state} />
       ) : (
       <>
