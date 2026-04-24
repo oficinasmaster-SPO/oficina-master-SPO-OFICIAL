@@ -326,7 +326,6 @@ export default function FollowUpDetail({ reminder, today, onBack }) {
               </Select>
             </div>
             )}
-            </div>
 
             <div className="flex items-center gap-3">
             <Button onClick={handleSave} disabled={saving} className="flex-1 bg-green-600 hover:bg-green-700 text-white rounded-full font-semibold">
@@ -349,6 +348,7 @@ export default function FollowUpDetail({ reminder, today, onBack }) {
                 </div>
               </div>
             )}
+            </div>
           </div>
         </DialogContent>
       </Dialog>
