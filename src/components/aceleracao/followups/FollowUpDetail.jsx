@@ -81,13 +81,14 @@ export default function FollowUpDetail({ reminder, today, onBack }) {
     staleTime: 3 * 60 * 1000,
   });
 
-  // Get suggested action from the most recent ATA's proximos_passos field
+  // Get proximos_passos from the origin ATA (the one that generated this follow-up)
   const suggestedAction = (() => {
+    const originAta = atas.find(a => a.id === reminder.ata_id);
+    if (originAta?.proximos_passos?.trim()) return originAta.proximos_passos;
+    // Fallback: most recent ATA with proximos_passos
     const withProxPassos = atas.find(a => a.proximos_passos && a.proximos_passos.trim());
     if (withProxPassos) return withProxPassos.proximos_passos;
-    if (daysOver >= 3) return "Ligue imediatamente — follow-up vencido há mais de 3 dias. Identifique objeções e reforce valor.";
-    if (reminder.reminder_date === today) return "Contato agendado para hoje. Prepare argumentos e verifique histórico de interações antes de ligar.";
-    return `Agende contato para ${reminder.reminder_date ? format(new Date(reminder.reminder_date + "T00:00:00"), "dd/MM/yyyy") : "a data prevista"}.`;
+    return null;
   })();
 
   const handleSave = async () => {
@@ -317,14 +318,16 @@ export default function FollowUpDetail({ reminder, today, onBack }) {
         </CardContent>
       </Card>
 
-      {/* Suggested action — reads from ATA proximos_passos */}
-      <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 flex gap-2">
-        <Zap className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
-        <div>
-          <p className="text-xs font-semibold text-amber-700 mb-0.5">Ação sugerida</p>
-          <p className="text-sm text-amber-800">{suggestedAction}</p>
+      {/* Last important note from origin ATA */}
+      {suggestedAction && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 flex gap-2">
+          <Zap className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-xs font-semibold text-amber-700 mb-0.5">Última anotação importante</p>
+            <p className="text-sm text-amber-800">{suggestedAction}</p>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Compact ATA history — click to open VisualizarAtaModal */}
       {atas.length > 0 && (
