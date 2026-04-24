@@ -68,6 +68,41 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
   const [inicioContagem, setInicioContagem] = useState(null);
   const [cronometroAtivo, setCronometroAtivo] = useState(true);
 
+  // Carregar rascunho ao abrir o modal
+  useEffect(() => {
+    if (!followUp?.id) return;
+    const storageKey = `draft_atendimento_${followUp.id}`;
+    const savedDraft = localStorage.getItem(storageKey);
+    
+    if (savedDraft) {
+      try {
+        const draft = JSON.parse(savedDraft);
+        console.log('✅ Rascunho carregado:', draft);
+        
+        // Restaurar todos os campos
+        setCanal(draft.canal || "");
+        setResultado(draft.resultado || "");
+        setDataContato(draft.dataContato || format(new Date(), "yyyy-MM-dd"));
+        setHumor(draft.humor || "");
+        setEngajamento(draft.engajamento || "");
+        setObservacoes(draft.observacoes || "");
+        setCompromissos(draft.compromissos || "");
+        setProximoPasso(draft.proximoPasso || "");
+        setProxData(draft.proxData || "");
+        setProxHora(draft.proxHora || "");
+        setPastedImages(draft.pastedImages || []);
+        setTimer(draft.timer || 0);
+        setDuracao(draft.duracao || 30);
+        setInicioContagem(draft.inicioContagem ? new Date(draft.inicioContagem).getTime() : null);
+        setCronometroAtivo(draft.cronometroAtivo !== false);
+        
+        toast.success("Rascunho restaurado! Pronto para continuar.");
+      } catch (err) {
+        console.error('Erro ao carregar rascunho:', err);
+      }
+    }
+  }, [followUp?.id]);
+
   // Fetch ATAs
    const { data: atas = [] } = useQuery({
      queryKey: ["atas-modal", followUp?.workshop_id],
@@ -156,12 +191,21 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
   const handleSaveDraft = async () => {
     setSaving(true);
     try {
+      console.log('Iniciando salvamento de rascunho...');
+      console.log('followUp:', followUp);
+      
+      if (!followUp || !followUp.id) {
+        toast.error("Erro: follow-up não identificado");
+        setSaving(false);
+        return;
+      }
+
       setSavingStep("Salvando rascunho...");
       
-      // Salvar dados em uma estrutura temporária (use atendimento_id se disponível, senão followUp_id)
+      // Salvar dados em uma estrutura temporária
        const draftData = {
-         atendimento_id: followUp.atendimento_id || followUp.id,
          followUp_id: followUp.id,
+         atendimento_id: followUp.atendimento_id,
          canal,
          resultado,
          dataContato,
@@ -180,41 +224,43 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
          savedAt: new Date().toISOString()
        };
 
-       // Salvar no localStorage com a key correta
-       const storageKey = `draft_atendimento_${followUp.atendimento_id || followUp.id}`;
+       // Salvar no localStorage com a key baseada em followUp.id
+       const storageKey = `draft_atendimento_${followUp.id}`;
        localStorage.setItem(storageKey, JSON.stringify(draftData));
-       console.log('Rascunho salvo em:', storageKey, draftData);
+       console.log('✅ Rascunho salvo em:', storageKey);
+       console.log('Dados salvos:', draftData);
       
       await new Promise(r => setTimeout(r, 800));
       setSavingStep("completed");
       await new Promise(r => setTimeout(r, 1000));
       
-      // Pausar cronômetro e fechar modal
+      // Pausar cronômetro
       setCronometroAtivo(false);
       
-      toast.success("Rascunho salvo! Pronto para retomar.");
-      onSaved?.({ isDraft: true, draftData });
+      toast.success("Rascunho salvo com sucesso!");
+      // Não limpar o localStorage aqui — para que o rascunho permaneça disponível
       onClose();
-    } catch (err) {
-      toast.error("Erro ao salvar rascunho");
+      } catch (err) {
+      console.error('Erro ao salvar rascunho:', err);
+      toast.error("Erro ao salvar rascunho: " + err.message);
       setSavingStep(null);
-    } finally {
+      } finally {
       setSaving(false);
-    }
-  };
+      }
+      };
 
-  const handleSave = async () => {
-    if (!validate()) {
+      const handleSaveAndFinalize = async () => {
+      if (!validate()) {
       toast.error("Preencha todos os campos obrigatórios");
       return;
-    }
+      }
 
-    setSaving(true);
-    try {
+      setSaving(true);
+      try {
+      // Primeiro executar o handleSave original
       const steps = [
         { name: "Gravando interação...", action: async () => {
           setSavingStep("Gravando interação...");
-          // Aqui você criaria um registro de Interacao
         }},
         { name: "Atualizando status do follow-up...", action: async () => {
           setSavingStep("Atualizando status do follow-up...");
@@ -257,18 +303,26 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
 
       setSavingStep("completed");
       await new Promise(r => setTimeout(r, 1500));
-      
+
+      // Limpar o rascunho ao finalizar com sucesso
+      const storageKey = `draft_atendimento_${followUp.id}`;
+      localStorage.removeItem(storageKey);
+      console.log('✅ Rascunho removido:', storageKey);
+
       queryClient.invalidateQueries({ queryKey: ["follow-up-reminders"] });
       onSaved?.();
       onClose();
       toast.success("Atendimento salvo com sucesso!");
-    } catch (err) {
+      } catch (err) {
+      console.error('Erro ao salvar:', err);
       toast.error("Erro ao salvar atendimento");
       setSavingStep(null);
-    } finally {
+      } finally {
       setSaving(false);
-    }
-  };
+      }
+      };
+
+
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
@@ -736,7 +790,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
           <Button variant="outline" onClick={handleSaveDraft} disabled={saving} className="border-cyan-300 text-cyan-700 hover:bg-cyan-50">
             {saving && savingStep ? savingStep : "Rascunho"}
           </Button>
-          <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={handleSave} disabled={saving}>
+          <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={handleSaveAndFinalize} disabled={saving}>
             {saving ? savingStep : "Salvar e finalizar atendimento"}
           </Button>
         </div>
