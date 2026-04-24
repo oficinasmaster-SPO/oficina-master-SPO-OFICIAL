@@ -7,11 +7,13 @@ import SprintClientCard from "./SprintClientCard";
 import SprintClientModal from "./SprintClientModal";
 import SprintCompletionSummary from "../sprint-shared/SprintCompletionSummary";
 
-export default function SprintClientSection({ workshopId, user, workshop }) {
+export default function SprintClientSection({ workshopId, user, workshop, sprintsExternal }) {
   const [selectedSprintId, setSelectedSprintId] = useState(null);
   const queryClient = useQueryClient();
 
-  const { data: sprints = [], isLoading } = useQuery({
+  // Se sprints foram passados externamente (para evitar N+1), usar eles.
+  // Caso contrário, buscar diretamente.
+  const { data: sprintsLocal = [], isLoading } = useQuery({
     queryKey: ["sprints-client", workshopId],
     queryFn: async () => {
       const result = await base44.entities.ConsultoriaSprint.filter(
@@ -20,15 +22,17 @@ export default function SprintClientSection({ workshopId, user, workshop }) {
       );
       return Array.isArray(result) ? result : [];
     },
-    enabled: !!workshopId,
-    staleTime: 30 * 1000, // 30s — evitar flood de requests (antes era 0)
+    enabled: !!workshopId && !sprintsExternal,
+    staleTime: 30 * 1000,
     refetchOnWindowFocus: false,
-    // Sem refetchInterval — usar WebSocket subscribe abaixo é mais eficiente
   });
 
+  const sprints = sprintsExternal || sprintsLocal;
+
   // Sincronizar com mudanças em tempo real via subscribe (sem polling)
+  // Só subscribir se não recebemos sprints externos (o pai já faz isso)
   useEffect(() => {
-    if (!workshopId) return;
+    if (!workshopId || sprintsExternal) return;
     
     const unsubscribe = base44.entities.ConsultoriaSprint.subscribe((event) => {
       if (event.data?.workshop_id === workshopId) {
@@ -37,7 +41,7 @@ export default function SprintClientSection({ workshopId, user, workshop }) {
     });
 
     return unsubscribe;
-  }, [workshopId, queryClient]);
+  }, [workshopId, queryClient, !!sprintsExternal]);
 
   // Always derive selectedSprint from fresh query data
   const selectedSprint = selectedSprintId ? sprints.find(s => s.id === selectedSprintId) || null : null;

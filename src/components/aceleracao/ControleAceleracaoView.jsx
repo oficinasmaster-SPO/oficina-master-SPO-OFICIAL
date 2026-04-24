@@ -304,9 +304,11 @@ export default function ControleAceleracaoView({ state }) {
           </TabsContent>
 
           <TabsContent value="dashboard-operacional" forceMount className={`mt-0 ${activeTab !== "dashboard-operacional" ? "hidden" : ""}`}>
-            <TabErrorBoundary tabName="Dashboard Sprints">
-              <DashboardOperacionalTabRedesigned user={user} workshops={workshops} />
-            </TabErrorBoundary>
+            {visitedTabs.has("dashboard-operacional") && (
+              <TabErrorBoundary tabName="Dashboard Sprints">
+                <DashboardOperacionalTabRedesigned user={user} workshops={workshops} />
+              </TabErrorBoundary>
+            )}
           </TabsContent>
 
           <TabsContent value="consultoria" forceMount className={`mt-0 ${activeTab !== "consultoria" ? "hidden" : ""}`}>

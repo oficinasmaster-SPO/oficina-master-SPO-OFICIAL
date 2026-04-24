@@ -25,6 +25,14 @@ export default function Home() {
 
   const tenant = workshop;
 
+  // Buscar diagnósticos separadamente — evita N+1 (query dentro de query)
+  const { data: userDiagnostics = [] } = useQuery({
+    queryKey: ['home-diagnostics', user?.id, tenant?.id],
+    queryFn: () => base44.entities.Diagnostic.filter({ user_id: user.id }),
+    enabled: !!user?.id && !!tenant?.id,
+    staleTime: 5 * 60 * 1000,
+  });
+
   const { data: userProgress, isLoading: isLoadingProgress, refetch: refetchProgress } = useQuery({
     queryKey: ['user-progress', tenant?.id, user?.id],
     queryFn: async () => {
@@ -51,33 +59,31 @@ export default function Home() {
         await base44.entities.UserProgress.update(progress.id, {
           last_login_date: nowBrazilISO()
         });
-
-        // Update checklist
-        const diagList = await base44.entities.Diagnostic.filter({ user_id: user.id });
-        const userDiagnostics = diagList || [];
-        
-        const updatedChecklist = {
-          cadastrou_oficina: !!tenant,
-          fez_primeiro_diagnostico: userDiagnostics.length > 0,
-          visualizou_resultado: userDiagnostics.some(d => d.completed),
-          acessou_plano_acao: progress.checklist_items?.acessou_plano_acao || false,
-          explorou_dashboard: progress.checklist_items?.explorou_dashboard || false
-        };
-
-        const hasChanges = Object.keys(updatedChecklist).some(
-          key => updatedChecklist[key] !== progress.checklist_items?.[key]
-        );
-
-        if (hasChanges) {
-          progress = await base44.entities.UserProgress.update(progress.id, {
-            checklist_items: updatedChecklist
-          });
-        }
       }
       return progress;
     },
     enabled: !!user?.id && !!tenant?.id
   });
+
+  // Sincronizar checklist com dados de diagnóstico (separado — sem N+1)
+  useEffect(() => {
+    if (!userProgress || !tenant) return;
+    const updatedChecklist = {
+      cadastrou_oficina: !!tenant,
+      fez_primeiro_diagnostico: userDiagnostics.length > 0,
+      visualizou_resultado: userDiagnostics.some(d => d.completed),
+      acessou_plano_acao: userProgress.checklist_items?.acessou_plano_acao || false,
+      explorou_dashboard: userProgress.checklist_items?.explorou_dashboard || false
+    };
+    const hasChanges = Object.keys(updatedChecklist).some(
+      key => updatedChecklist[key] !== userProgress.checklist_items?.[key]
+    );
+    if (hasChanges) {
+      base44.entities.UserProgress.update(userProgress.id, { checklist_items: updatedChecklist })
+        .then(() => refetchProgress())
+        .catch(() => {});
+    }
+  }, [userProgress?.id, userDiagnostics.length, !!tenant]);
 
   const showOnboarding = userProgress ? !userProgress.onboarding_completed : false;
 

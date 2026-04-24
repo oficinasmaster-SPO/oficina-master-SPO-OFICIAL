@@ -566,7 +566,7 @@ export default function PainelClienteAceleracao() {
 
       {/* Sprints de Aceleração - Colaborativo */}
       {(workshop?.id || workshopIdToUse) && user && (
-        <SprintClientSection key={workshop?.id || workshopIdToUse} workshopId={workshop?.id || workshopIdToUse} user={user} workshop={workshop} />
+        <SprintClientSection key={workshop?.id || workshopIdToUse} workshopId={workshop?.id || workshopIdToUse} user={user} workshop={workshop} sprintsExternal={sprints} />
       )}
 
       {/* EAP - sempre visível */}
