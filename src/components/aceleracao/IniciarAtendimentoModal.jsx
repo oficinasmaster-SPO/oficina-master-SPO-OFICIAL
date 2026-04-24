@@ -170,9 +170,9 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[95vh] p-0 flex flex-col">
-        {/* HEADER */}
-        <div className="bg-gray-900 text-white px-6 py-4 flex items-center justify-between border-b border-gray-800">
+      <DialogContent className="max-w-6xl max-h-[95vh] p-0 flex flex-col overflow-hidden">
+        {/* HEADER - FIXO */}
+        <div className="bg-gray-900 text-white px-6 py-4 flex items-center justify-between border-b border-gray-800 flex-shrink-0">
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center font-bold text-sm">
               {getInitials(cliente?.name || followUp?.workshop_name || "")}
@@ -197,8 +197,8 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
           </div>
         </div>
 
-        {/* CONTENT */}
-        <div className="flex-1 overflow-hidden flex">
+        {/* CONTENT - SCROLLÁVEL */}
+        <div className="flex-1 overflow-hidden flex min-h-0">
           {/* LEFT COLUMN - FORM */}
           <div className="flex-1 overflow-y-auto border-r border-gray-200 p-6">
             <div className="space-y-6 max-w-2xl">
@@ -481,8 +481,8 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
           </div>
         </div>
 
-        {/* FOOTER */}
-        <div className="bg-white border-t border-gray-200 px-6 py-4 flex gap-3 justify-end">
+        {/* FOOTER - FIXO */}
+        <div className="bg-white border-t border-gray-200 px-6 py-4 flex gap-3 justify-end flex-shrink-0">
           <Button variant="outline" onClick={onClose} disabled={saving}>
             Cancelar
           </Button>
