@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Phone, MessageCircle, Mail, Video, MapPin, CheckCircle2, X, Clock, AlertCircle,
@@ -67,6 +68,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
   const [duracao, setDuracao] = useState(30);
   const [inicioContagem, setInicioContagem] = useState(null);
   const [cronometroAtivo, setCronometroAtivo] = useState(true);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
   // Carregar rascunho ao abrir o modal
   useEffect(() => {
@@ -322,9 +324,18 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
       }
       };
 
+      const handleConfirmCancel = () => {
+      // Limpar rascunho do localStorage
+      const storageKey = `draft_atendimento_${followUp.id}`;
+      localStorage.removeItem(storageKey);
+      console.log('✅ Rascunho removido ao cancelar:', storageKey);
 
+      toast.success("Dados descartados!");
+      setShowCancelConfirm(false);
+      onClose();
+      };
 
-  return (
+      return (
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="max-w-6xl max-h-[95vh] p-0 flex flex-col overflow-hidden">
         {/* HEADER - FIXO */}
@@ -349,7 +360,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
             </Badge>
           </div>
           <div className="flex gap-3">
-            <Button variant="ghost" size="sm" onClick={onClose} className="text-gray-300 hover:text-white hover:bg-gray-800">
+            <Button variant="ghost" size="sm" onClick={() => setShowCancelConfirm(true)} className="text-gray-300 hover:text-white hover:bg-gray-800">
               Cancelar
             </Button>
             <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white">
@@ -803,6 +814,29 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
           onClose={() => setSelectedAta(null)}
         />
       )}
-    </Dialog>
-  );
-}
+
+      {/* Cancel Confirmation Dialog */}
+      <AlertDialog open={showCancelConfirm} onOpenChange={setShowCancelConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Descartar todos os dados?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você está prestes a cancelar o atendimento. Todos os dados não salvos serão perdidos permanentemente, incluindo o rascunho.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setShowCancelConfirm(false)}>
+              Manter e continuar
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleConfirmCancel}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Descartar tudo
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      </Dialog>
+      );
+      }
