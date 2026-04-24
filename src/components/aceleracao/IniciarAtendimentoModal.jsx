@@ -66,18 +66,48 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
   const [selectedAta, setSelectedAta] = useState(null);
 
   // Fetch ATAs
-  const { data: atas = [] } = useQuery({
-    queryKey: ["atas-modal", followUp?.workshop_id],
-    queryFn: async () => {
-      if (!followUp?.workshop_id) return [];
-      return base44.entities.MeetingMinutes.filter(
-        { workshop_id: followUp.workshop_id },
-        "-meeting_date",
-        50
-      );
-    },
-    enabled: !!followUp?.workshop_id,
-  });
+   const { data: atas = [] } = useQuery({
+     queryKey: ["atas-modal", followUp?.workshop_id],
+     queryFn: async () => {
+       if (!followUp?.workshop_id) return [];
+       return base44.entities.MeetingMinutes.filter(
+         { workshop_id: followUp.workshop_id },
+         "-meeting_date",
+         50
+       );
+     },
+     enabled: !!followUp?.workshop_id,
+   });
+
+   // Fetch Workshop
+   const { data: workshop = null } = useQuery({
+     queryKey: ["workshop-modal", followUp?.workshop_id],
+     queryFn: async () => {
+       if (!followUp?.workshop_id) return null;
+       const workshops = await base44.entities.Workshop.filter(
+         { id: followUp.workshop_id },
+         undefined,
+         1
+       );
+       return workshops[0] || null;
+     },
+     enabled: !!followUp?.workshop_id,
+   });
+
+   // Fetch Owner Employee
+   const { data: ownerEmployee = null } = useQuery({
+     queryKey: ["owner-employee-modal", workshop?.owner_id],
+     queryFn: async () => {
+       if (!workshop?.owner_id) return null;
+       const employees = await base44.entities.Employee.filter(
+         { user_id: workshop.owner_id },
+         undefined,
+         1
+       );
+       return employees[0] || null;
+     },
+     enabled: !!workshop?.owner_id,
+   });
 
   // Timer in real-time
   useEffect(() => {
@@ -461,20 +491,106 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
               </TabsContent>
 
               <TabsContent value="cliente" className="flex-1 overflow-y-auto px-3 py-4">
-                <div className="space-y-4 text-sm">
-                  <div>
-                    <p className="text-xs text-gray-500 font-semibold mb-1">Responsável</p>
-                    <p className="text-gray-900">{followUp?.consultor_nome || "—"}</p>
+                <div className="space-y-6 text-sm">
+                  {/* CONSULTOR RESPONSÁVEL */}
+                  <div className="border-b pb-4">
+                    <p className="text-xs text-gray-500 font-bold uppercase tracking-wide mb-3">Consultor Responsável</p>
+                    <div className="space-y-2">
+                      <div>
+                        <p className="text-xs text-gray-500 font-semibold mb-1">Nome</p>
+                        <p className="text-gray-900 font-medium">{followUp?.consultor_nome || "—"}</p>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xs text-gray-500 font-semibold mb-1">Telefone</p>
-                    <p className="text-gray-900">{cliente?.phone || "—"}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500 font-semibold mb-1">Setor</p>
-                    <p className="text-gray-900">{cliente?.sector || "—"}</p>
-                  </div>
-                  <div className="pt-3 border-t">
+
+                  {/* PROPRIETÁRIO DA OFICINA */}
+                  {ownerEmployee && (
+                    <div className="border-b pb-4">
+                      <p className="text-xs text-gray-500 font-bold uppercase tracking-wide mb-3">Proprietário da Oficina</p>
+                      <div className="space-y-2">
+                        <div>
+                          <p className="text-xs text-gray-500 font-semibold mb-1">Nome Completo</p>
+                          <p className="text-gray-900 font-medium">{ownerEmployee.full_name || "—"}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 font-semibold mb-1">E-mail</p>
+                          <p className="text-gray-900 break-all">{ownerEmployee.email || "—"}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 font-semibold mb-1">Telefone</p>
+                          <p className="text-gray-900">{ownerEmployee.telefone || "—"}</p>
+                        </div>
+                        {ownerEmployee.cpf && (
+                          <div>
+                            <p className="text-xs text-gray-500 font-semibold mb-1">CPF</p>
+                            <p className="text-gray-900">{ownerEmployee.cpf}</p>
+                          </div>
+                        )}
+                        {ownerEmployee.data_nascimento && (
+                          <div>
+                            <p className="text-xs text-gray-500 font-semibold mb-1">Data de Nascimento</p>
+                            <p className="text-gray-900">{format(new Date(ownerEmployee.data_nascimento), "dd/MM/yyyy")}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* DADOS DA OFICINA */}
+                  {workshop && (
+                    <div className="border-b pb-4">
+                      <p className="text-xs text-gray-500 font-bold uppercase tracking-wide mb-3">Dados da Oficina</p>
+                      <div className="space-y-2">
+                        <div>
+                          <p className="text-xs text-gray-500 font-semibold mb-1">Nome</p>
+                          <p className="text-gray-900 font-medium">{workshop.name || "—"}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 font-semibold mb-1">Razão Social</p>
+                          <p className="text-gray-900">{workshop.razao_social || "—"}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 font-semibold mb-1">CNPJ</p>
+                          <p className="text-gray-900">{workshop.cnpj || "—"}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 font-semibold mb-1">Localização</p>
+                          <p className="text-gray-900">{workshop.city || "—"} / {workshop.state || "—"}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 font-semibold mb-1">Endereço</p>
+                          <p className="text-gray-900 text-xs">{workshop.endereco_rua} {workshop.endereco_numero && `, ${workshop.endereco_numero}`} {workshop.endereco_complemento && `- ${workshop.endereco_complemento}`}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 font-semibold mb-1">Telefone</p>
+                          <p className="text-gray-900">{workshop.telefone || "—"}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 font-semibold mb-1">E-mail</p>
+                          <p className="text-gray-900 break-all">{workshop.email || "—"}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 font-semibold mb-1">Segmento</p>
+                          <p className="text-gray-900">{workshop.segment_auto || workshop.segment || "—"}</p>
+                        </div>
+                        {workshop.employees_count && (
+                          <div>
+                            <p className="text-xs text-gray-500 font-semibold mb-1">Colaboradores</p>
+                            <p className="text-gray-900">{workshop.employees_count}</p>
+                          </div>
+                        )}
+                        {workshop.planoAtual && (
+                          <div>
+                            <p className="text-xs text-gray-500 font-semibold mb-1">Plano</p>
+                            <p className="text-gray-900 font-medium">{workshop.planoAtual}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* AÇÃO SUGERIDA */}
+                  <div className="pt-3">
                     <div className="bg-amber-50 border border-amber-200 rounded p-3">
                       <AlertCircle className="w-4 h-4 text-amber-600 mb-2" />
                       <p className="text-xs text-amber-900">Ação sugerida: Confirmar disponibilidade</p>
