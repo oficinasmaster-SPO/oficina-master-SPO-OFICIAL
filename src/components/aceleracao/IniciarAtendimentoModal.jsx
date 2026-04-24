@@ -263,6 +263,26 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
       const steps = [
         { name: "Gravando interação...", action: async () => {
           setSavingStep("Gravando interação...");
+          // Salvar dados do atendimento na entidade FollowUpConcluido
+          await base44.entities.FollowUpConcluido.create({
+            followup_id: followUp.id,
+            workshop_id: followUp.workshop_id,
+            consultor_id: followUp.consultor_id,
+            consultor_nome: followUp.consultor_nome,
+            canal,
+            resultado,
+            dataContato,
+            duracao,
+            humor,
+            engajamento,
+            observacoes,
+            compromissos,
+            proximoPasso,
+            proxData,
+            proxHora,
+            pastedImages,
+            completedAt: new Date().toISOString(),
+          });
         }},
         { name: "Atualizando status do follow-up...", action: async () => {
           setSavingStep("Atualizando status do follow-up...");

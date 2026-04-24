@@ -1,0 +1,187 @@
+{
+  "name": "FollowUpConcluido",
+  "type": "object",
+  "properties": {
+    "followup_id": {
+      "type": "string",
+      "description": "ID do follow-up remind\u0631 original"
+    },
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "consultor_id": {
+      "type": "string",
+      "description": "ID do consultor"
+    },
+    "consultor_nome": {
+      "type": "string",
+      "description": "Nome do consultor"
+    },
+    "canal": {
+      "type": "string",
+      "enum": [
+        "ligacao",
+        "whatsapp",
+        "email",
+        "video",
+        "presencial"
+      ],
+      "description": "Canal de contato utilizado"
+    },
+    "resultado": {
+      "type": "string",
+      "enum": [
+        "atendeu",
+        "nao_atendeu",
+        "retornar",
+        "agendou",
+        "reagendou",
+        "desistiu"
+      ],
+      "description": "Resultado do contato"
+    },
+    "dataContato": {
+      "type": "string",
+      "format": "date",
+      "description": "Data do contato"
+    },
+    "duracao": {
+      "type": "integer",
+      "description": "Dura\u00e7\u00e3o do atendimento em minutos"
+    },
+    "humor": {
+      "type": "string",
+      "description": "Humor do cliente"
+    },
+    "engajamento": {
+      "type": "string",
+      "enum": [
+        "Alto",
+        "M\u00e9dio",
+        "Baixo"
+      ],
+      "description": "N\u00edvel de engajamento"
+    },
+    "observacoes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es do atendimento"
+    },
+    "compromissos": {
+      "type": "string",
+      "description": "Compromissos do cliente"
+    },
+    "proximoPasso": {
+      "type": "string",
+      "enum": [
+        "reagendar",
+        "agendar",
+        "enviar",
+        "escalar",
+        "concluir",
+        "cancelar"
+      ],
+      "description": "Pr\u00f3ximo passo"
+    },
+    "proxData": {
+      "type": "string",
+      "format": "date",
+      "description": "Data do pr\u00f3ximo contato"
+    },
+    "proxHora": {
+      "type": "string",
+      "description": "Hora do pr\u00f3ximo contato (HH:MM)"
+    },
+    "pastedImages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "src": {
+            "type": "string",
+            "description": "URL ou base64 da imagem"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Screenshots/imagens capturadas"
+    },
+    "completedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data e hora de conclus\u00e3o"
+    }
+  },
+  "required": [
+    "followup_id",
+    "workshop_id",
+    "canal",
+    "resultado",
+    "observacoes",
+    "proximoPasso"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

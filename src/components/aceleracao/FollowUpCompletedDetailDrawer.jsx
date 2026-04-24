@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { base44 } from "@/api/base44Client";
 
 const CANAL_LABELS = {
   ligacao: "Ligação",
@@ -35,19 +36,25 @@ export default function FollowUpCompletedDetailDrawer({ followUp, open, onClose 
   const [selectedImage, setSelectedImage] = useState(null);
   const [attendanceData, setAttendanceData] = useState(null);
 
-  // Carregar dados do atendimento do localStorage quando o follow-up for selecionado
-  React.useEffect(() => {
-    if (open && followUp?.id) {
-      const storageKey = `draft_atendimento_${followUp.id}`;
-      const savedData = localStorage.getItem(storageKey);
-      if (savedData) {
+  // Carregar dados do atendimento da entidade FollowUpConcluido
+  useEffect(() => {
+    const loadAttendanceData = async () => {
+      if (open && followUp?.id) {
         try {
-          setAttendanceData(JSON.parse(savedData));
+          const data = await base44.entities.FollowUpConcluido.filter(
+            { followup_id: followUp.id },
+            undefined,
+            1
+          );
+          if (data && data.length > 0) {
+            setAttendanceData(data[0]);
+          }
         } catch (err) {
           console.error('Erro ao carregar dados do atendimento:', err);
         }
       }
-    }
+    };
+    loadAttendanceData();
   }, [open, followUp?.id]);
 
   if (!followUp) return null;
