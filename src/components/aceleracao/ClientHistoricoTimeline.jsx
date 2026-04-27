@@ -64,19 +64,19 @@ function FollowUpRow({ fu, concluido }) {
               {fu.consultor_nome && ` · ${fu.consultor_nome}`}
             </p>
             {concluido?.canal && (
-              <span className="px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 text-[10px] font-medium">
+              <Badge className="text-[10px] bg-blue-100 text-blue-700 border-blue-200">
                 {CANAL_LABELS_HIST[concluido.canal] || concluido.canal}
-              </span>
+              </Badge>
             )}
             {concluido?.resultado && (
-              <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
-                concluido.resultado === 'atendeu' ? 'bg-green-100 text-green-700' :
-                concluido.resultado === 'nao_atendeu' ? 'bg-red-100 text-red-700' :
-                concluido.resultado === 'retornar' ? 'bg-amber-100 text-amber-700' :
+              <Badge className={`text-[10px] font-medium ${
+                concluido.resultado === 'atendeu' ? 'bg-green-100 text-green-700 border-green-300' :
+                concluido.resultado === 'nao_atendeu' ? 'bg-red-100 text-red-700 border-red-300' :
+                concluido.resultado === 'retornar' ? 'bg-amber-100 text-amber-700 border-amber-300' :
                 'bg-gray-100 text-gray-600'
               }`}>
                 {RESULTADO_LABELS_HIST[concluido.resultado] || concluido.resultado}
-              </span>
+              </Badge>
             )}
           </div>
           {fu.notes && !expanded && (
