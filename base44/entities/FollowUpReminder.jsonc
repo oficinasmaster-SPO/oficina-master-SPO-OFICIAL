@@ -56,6 +56,23 @@
     "notes": {
       "type": "string",
       "description": "Notas do consultor sobre o follow-up"
+    },
+    "sprint_id": {
+      "type": "string",
+      "description": "ID da sprint que originou o follow-up"
+    },
+    "origin_type": {
+      "type": "string",
+      "enum": [
+        "ata",
+        "sprint",
+        "manual"
+      ],
+      "description": "Origem do follow-up"
+    },
+    "consulting_firm_id": {
+      "type": "string",
+      "description": "ID da consultoria (para isolamento de tenant)"
     }
   },
   "required": [
@@ -79,7 +96,14 @@
           }
         },
         {
-          "consultor_id": "{{user.id}}"
+          "$and": [
+            {
+              "consultor_id": "{{user.id}}"
+            },
+            {
+              "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+            }
+          ]
         }
       ]
     },
@@ -91,7 +115,14 @@
           }
         },
         {
-          "consultor_id": "{{user.id}}"
+          "$and": [
+            {
+              "consultor_id": "{{user.id}}"
+            },
+            {
+              "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+            }
+          ]
         }
       ]
     },
