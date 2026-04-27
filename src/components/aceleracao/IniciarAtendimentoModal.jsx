@@ -76,7 +76,7 @@ const PROXIMO_PASSO_OPTIONS = [
   { id: "cancelar", label: "Cancelamento" },
 ];
 
-export default function IniciarAtendimentoModal({ followUp, cliente, onClose, onSaved, fusConcatenados = [] }) {
+export default function IniciarAtendimentoModal({ followUp, cliente, onClose, onSaved, fusConcatenados = [], proximoFU = null, onProximoFollowUp }) {
   const queryClient = useQueryClient();
   const [timer, setTimer] = useState(0);
   const [canal, setCanal] = useState("");
@@ -459,6 +459,34 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
               <Button variant="outline" className="flex-1" onClick={onClose}>
                 Voltar à lista
               </Button>
+              {proximoFU && (
+                <Button
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                  onClick={() => {
+                    setSaveSuccess(null);
+                    setCanal("");
+                    setResultado("");
+                    setHumor("");
+                    setEngajamento("");
+                    setObservacoes("");
+                    setCompromissos("");
+                    setProximoPasso("");
+                    setProxData("");
+                    setProxHora("");
+                    setPastedImages([]);
+                    setTimer(0);
+                    setDuracao(30);
+                    setInicioContagem(Date.now());
+                    setCronometroAtivo(true);
+                    setErrors({});
+                    setActiveStepIndex(-1);
+                    onProximoFollowUp?.(proximoFU);
+                    onClose();
+                  }}
+                >
+                  Próximo follow-up →
+                </Button>
+              )}
             </div>
           </div>
         </DialogContent>

@@ -54,7 +54,7 @@ const ATA_ICONS = {
   pontual: "📌",
 };
 
-export default function FollowUpDetail({ reminder, today, onBack }) {
+export default function FollowUpDetail({ reminder, today, onBack, filaReminders = [], onSelectReminder }) {
   const queryClient = useQueryClient();
   const [view, setView] = useState("detail");
   const [canal, setCanal] = useState("");
@@ -190,6 +190,9 @@ export default function FollowUpDetail({ reminder, today, onBack }) {
 
   const isSprintFU = reminder.origin_type === 'sprint';
   const sprintLabel = reminder.notes?.replace('Follow-up automático da sprint: ', '').trim() || null;
+  const proximoFU = filaReminders.find(f =>
+    f.id !== reminder.id && !f.is_completed
+  ) || null;
   const fusDaSprint = isSprintFU
     ? allFollowUps
         .filter(f =>
@@ -275,10 +278,14 @@ export default function FollowUpDetail({ reminder, today, onBack }) {
           .map(id => allFollowUps.find(f => f.id === id))
           .filter(Boolean)
         }
+        proximoFU={proximoFU}
         onClose={() => setView("detail")}
         onSaved={() => {
           queryClient.invalidateQueries({ queryKey: ["follow-up-reminders"] });
           setFusSelecionados([]);
+        }}
+        onProximoFollowUp={(fu) => {
+          if (onSelectReminder) onSelectReminder(fu);
         }}
       />
     );

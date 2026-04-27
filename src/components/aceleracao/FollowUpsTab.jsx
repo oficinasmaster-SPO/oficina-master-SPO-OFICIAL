@@ -341,6 +341,8 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
             reminder={selectedReminder}
             today={today}
             onBack={() => setSelectedReminder(null)}
+            filaReminders={listAbertos}
+            onSelectReminder={setSelectedReminder}
           />
         ) : (
           <FollowUpList
