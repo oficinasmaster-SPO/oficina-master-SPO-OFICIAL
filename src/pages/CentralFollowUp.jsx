@@ -52,9 +52,17 @@ export default function CentralFollowUp() {
             <p className="text-sm text-gray-400">{getGreeting()},</p>
             <p className="text-lg font-semibold text-white leading-tight">{firstName}</p>
           </div>
-          <div className="w-11 h-11 rounded-full bg-red-600 flex items-center justify-center font-bold text-white text-sm flex-shrink-0 ring-2 ring-red-500/30">
-            {getInitials(user?.full_name || user?.email)}
-          </div>
+          {user?.profile_picture_url ? (
+            <img 
+              src={user.profile_picture_url} 
+              alt={firstName}
+              className="w-11 h-11 rounded-full object-cover flex-shrink-0 ring-2 ring-red-500/30"
+            />
+          ) : (
+            <div className="w-11 h-11 rounded-full bg-red-600 flex items-center justify-center font-bold text-white text-sm flex-shrink-0 ring-2 ring-red-500/30">
+              {getInitials(user?.full_name || user?.email)}
+            </div>
+          )}
         </div>
 
       </div>
