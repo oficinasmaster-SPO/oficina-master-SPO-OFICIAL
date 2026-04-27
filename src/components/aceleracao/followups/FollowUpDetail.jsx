@@ -277,7 +277,8 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
           days_since_meeting: reminder.days_since_meeting,
           ata_id: reminder.ata_id || null,
           atendimento_id: reminder.atendimento_id || null,
-          origin_type: 'ata',
+          origin_type: reminder.origin_type === 'sprint' ? 'sprint' : 'ata',
+          sprint_id: reminder.origin_type === 'sprint' ? reminder.sprint_id : null,
           is_completed: false,
         });
         toast.success("Follow-up concluído e novo agendado!");
