@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Check, Search, X, StickyNote, Clock, CheckCircle2, AlertCircle,
-  ChevronDown, ChevronRight, Folder, FolderOpen, User,
+  ChevronDown, ChevronRight, Folder, FolderOpen, User, Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -82,14 +82,14 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
     concluidos: reminders.filter(r => r.is_completed).length + concludedAttendances.length,
   }), [reminders, concludedAttendances, today]);
 
-  const applySearch = (list) => {
+  const applySearch = useCallback((list) => {
     if (!searchTerm.trim()) return list;
     const s = searchTerm.toLowerCase();
     return list.filter(r =>
       (r.workshop_name || "").toLowerCase().includes(s) ||
       (r.consultor_nome || "").toLowerCase().includes(s)
     );
-  };
+  }, [searchTerm]);
 
   const listAbertos = useMemo(() =>
     applySearch(reminders.filter(r => !r.is_completed))
@@ -237,7 +237,10 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
 
   const FlatList = ({ items, showWorkshop = false, emptyLabel, onSelect }) => (
     isLoading ? (
-      <div className="py-16 text-center text-gray-400 text-sm">Carregando...</div>
+      <div className="py-16 flex items-center justify-center gap-2 text-gray-400 text-sm">
+        <Loader2 className="w-4 h-4 animate-spin" />
+        Carregando follow-ups...
+      </div>
     ) : items.length === 0 ? (
       <EmptyState label={emptyLabel} />
     ) : (
@@ -339,7 +342,10 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
       {/* Pastas Tab */}
       {activeTab === "pastas" && (
         isLoading ? (
-          <div className="py-16 text-center text-gray-400 text-sm">Carregando...</div>
+          <div className="py-16 flex items-center justify-center gap-2 text-gray-400 text-sm">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Carregando follow-ups...
+          </div>
         ) : grouped.length === 0 ? (
           <EmptyState label="Nenhum cliente encontrado" />
         ) : (
@@ -417,7 +423,10 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
 
       {activeTab === "consultor" && (
         isLoading ? (
-          <div className="py-16 text-center text-gray-400 text-sm">Carregando...</div>
+          <div className="py-16 flex items-center justify-center gap-2 text-gray-400 text-sm">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Carregando follow-ups...
+          </div>
         ) : groupedByConsultor.length === 0 ? (
           <EmptyState label="Nenhum follow-up encontrado" />
         ) : (

@@ -256,33 +256,39 @@ export default function ControleAceleracaoView({ state }) {
         </div>
 
         {/* Tab Content — forceMount + hidden on all tabs; lazy-mount on first visit */}
-        <Suspense fallback={<TabSkeleton variant="overview" />}>
+        <>
           <TabsContent value="visao-geral" forceMount className={`mt-0 ${activeTab !== "visao-geral" ? "hidden" : ""}`}>
             <TabErrorBoundary tabName="Visão Geral">
-              {loadingAtendimentos ? (
-                <TabSkeleton variant="overview" />
-              ) : (
-                <VisaoGeralTab state={state} />
-              )}
+              <Suspense fallback={<TabSkeleton variant="overview" />}>
+                {loadingAtendimentos ? (
+                  <TabSkeleton variant="overview" />
+                ) : (
+                  <VisaoGeralTab state={state} />
+                )}
+              </Suspense>
             </TabErrorBoundary>
           </TabsContent>
 
           <TabsContent value="atendimentos" forceMount className={`mt-0 ${activeTab !== "atendimentos" ? "hidden" : ""}`}>
             <TabErrorBoundary tabName="Atendimentos">
-              {loadingAtendimentos ? (
-                <TabSkeleton variant="table" />
-              ) : (
-                <PainelAtendimentosTab state={state} />
-              )}
+              <Suspense fallback={<TabSkeleton variant="table" />}>
+                {loadingAtendimentos ? (
+                  <TabSkeleton variant="table" />
+                ) : (
+                  <PainelAtendimentosTab state={state} />
+                )}
+              </Suspense>
             </TabErrorBoundary>
           </TabsContent>
 
           <TabsContent value="cronograma" forceMount className={`mt-0 ${activeTab !== "cronograma" ? "hidden" : ""}`}>
             {visitedTabs.has("cronograma") && (
               <TabErrorBoundary tabName="Cronograma">
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                  <CronogramaGeral isTab={true} />
-                </div>
+                <Suspense fallback={<TabSkeleton variant="table" />}>
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <CronogramaGeral isTab={true} />
+                  </div>
+                </Suspense>
               </TabErrorBoundary>
             )}
           </TabsContent>
@@ -290,7 +296,9 @@ export default function ControleAceleracaoView({ state }) {
           <TabsContent value="pedidos" forceMount className={`mt-0 ${activeTab !== "pedidos" ? "hidden" : ""}`}>
             {visitedTabs.has("pedidos") && (
               <TabErrorBoundary tabName="Pedidos & Backlog">
-                <PedidosInternosTab user={user} />
+                <Suspense fallback={<TabSkeleton />}>
+                  <PedidosInternosTab user={user} />
+                </Suspense>
               </TabErrorBoundary>
             )}
           </TabsContent>
@@ -298,7 +306,9 @@ export default function ControleAceleracaoView({ state }) {
           <TabsContent value="agenda-visual" forceMount className={`mt-0 ${activeTab !== "agenda-visual" ? "hidden" : ""}`}>
             {visitedTabs.has("agenda-visual") && (
               <TabErrorBoundary tabName="Agenda Visual">
-                <AgendaVisualTab state={state} />
+                <Suspense fallback={<TabSkeleton variant="overview" />}>
+                  <AgendaVisualTab state={state} />
+                </Suspense>
               </TabErrorBoundary>
             )}
           </TabsContent>
@@ -306,7 +316,9 @@ export default function ControleAceleracaoView({ state }) {
           <TabsContent value="dashboard-operacional" forceMount className={`mt-0 ${activeTab !== "dashboard-operacional" ? "hidden" : ""}`}>
             {visitedTabs.has("dashboard-operacional") && (
               <TabErrorBoundary tabName="Dashboard Sprints">
-                <DashboardOperacionalTabRedesigned user={user} workshops={workshops} />
+                <Suspense fallback={<TabSkeleton variant="overview" />}>
+                  <DashboardOperacionalTabRedesigned user={user} workshops={workshops} />
+                </Suspense>
               </TabErrorBoundary>
             )}
           </TabsContent>
@@ -318,7 +330,7 @@ export default function ControleAceleracaoView({ state }) {
               </Suspense>
             </TabErrorBoundary>
           </TabsContent>
-        </Suspense>
+        </>
       </Tabs>
     </div>
   );

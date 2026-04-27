@@ -507,7 +507,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
             <Button variant="ghost" size="sm" onClick={() => setShowCancelConfirm(true)} className="text-gray-300 hover:text-white hover:bg-gray-800">
               Cancelar
             </Button>
-            <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white">
+            <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white" onClick={handleSaveAndFinalize} disabled={saving}>
               Finalizar atendimento
             </Button>
           </div>
@@ -555,18 +555,20 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
                 </label>
                 <div className="grid grid-cols-3 gap-2">
                   {RESULTADO_OPTIONS.map(opt => (
-                    <button
-                      key={opt.id}
-                      onClick={() => {
-                        setResultado(opt.id);
-                        setErrors(e => ({ ...e, resultado: null }));
-                      }}
-                      className={`px-3 py-2 rounded-lg border-2 text-xs font-medium transition ${
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => {
+                      setResultado(opt.id);
+                      setErrors(e => ({ ...e, resultado: null }));
+                    }}
+                      className={`px-3 py-2 rounded-lg border-2 text-xs font-medium transition flex items-center justify-center gap-1 ${
                         resultado === opt.id
-                          ? `${opt.color} border-current`
+                          ? `${RESULTADO_COLORS[opt.id]} ring-2 ring-offset-1 ring-current`
                           : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"
-                      } ${errors.resultado ? "border-red-500 bg-red-50" : ""}`}
+                      } ${errors.resultado && !resultado ? "border-red-300" : ""}`}
                     >
+                      {resultado === opt.id && <Check className="w-3 h-3" />}
                       {opt.label}
                     </button>
                   ))}
