@@ -1,8 +1,9 @@
-import React, { useState, useMemo, useCallback, memo } from "react";
+import React, { useState, useMemo, useCallback, memo, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Tabs } from "@/components/ui/tabs";
 import { RedTabsList, RedTabsTrigger } from "@/components/ui/RedTabs";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -143,6 +144,29 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
     },
     staleTime: 2 * 60 * 1000,
   });
+
+  // Verificação defensiva de vazamento de tenant
+  useEffect(() => {
+    if (!reminders.length) return;
+    const { user } = useAuth();
+    if (!user?.consulting_firm_id) return;
+    
+    const vazamento = reminders.filter(r =>
+      r.consulting_firm_id &&
+      r.consulting_firm_id !== user.consulting_firm_id
+    );
+    
+    if (vazamento.length > 0) {
+      console.error(
+        '🚨 [TENANT LEAK] Follow-ups de outro tenant detectados:',
+        vazamento.map(r => ({ id: r.id, firm: r.consulting_firm_id }))
+      );
+      toast.error(
+        `Atenção: ${vazamento.length} follow-up(s) de outro tenant detectado(s). Contate o suporte.`,
+        { duration: 10000 }
+      );
+    }
+  }, [reminders]);
 
   // Fetch dos atendimentos concluídos
   const { data: concludedAttendances = [] } = useQuery({
