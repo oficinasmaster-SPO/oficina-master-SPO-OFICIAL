@@ -12,11 +12,14 @@ import { Calendar, Clock, Inbox, Loader2, CalendarPlus } from "lucide-react";
 import { toast } from "sonner";
 import { formatDateTimeBR } from "@/utils/timezone";
 
+const ITEMS_PER_PAGE = 15;
+
 export default function BucketAtendimentosTab({ state }) {
   const { workshops, workshopMap, consultores, user } = state;
   const queryClient = useQueryClient();
   const [agendarDialog, setAgendarDialog] = useState({ open: false, item: null });
   const [agendarForm, setAgendarForm] = useState({ data: '', hora: '', consultor_id: '' });
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Fetch pending ContractAttendances (bucket items)
   const { data: bucketItems = [], isLoading } = useQuery({
@@ -62,6 +65,7 @@ export default function BucketAtendimentosTab({ state }) {
       queryClient.invalidateQueries({ queryKey: ['atendimentos-acelerador'] });
       setAgendarDialog({ open: false, item: null });
       setAgendarForm({ data: '', hora: '', consultor_id: '' });
+      setCurrentPage(1);
     },
     onError: (err) => toast.error("Erro: " + err.message)
   });
@@ -99,36 +103,69 @@ export default function BucketAtendimentosTab({ state }) {
             <p className="text-sm text-gray-400">Atendimentos são gerados automaticamente ao ativar contratos com regras de frequência</p>
           </CardContent>
         </Card>
-      ) : (
-        <div className="grid gap-3">
-          {bucketItems.map((item) => {
-            const workshop = workshopMap?.[item.workshop_id];
-            return (
-              <Card key={item.id} className="border-l-4 border-l-indigo-500 hover:shadow-md transition-shadow">
-                <CardContent className="py-4 flex items-center justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-semibold text-gray-900 truncate">{workshop?.name || 'Oficina'}</span>
-                      <Badge variant="outline" className="text-xs shrink-0">#{item.sequence_number || '-'}</Badge>
-                    </div>
-                    <div className="flex items-center gap-4 text-sm text-gray-500">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="w-3.5 h-3.5" />
-                        {item.scheduled_date ? formatDateTimeBR(item.scheduled_date) : 'Sem data prevista'}
-                      </span>
-                      <span className="capitalize">{item.attendance_type_name?.replace(/_/g, ' ') || 'Tipo não definido'}</span>
-                    </div>
-                  </div>
-                  <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 shrink-0" onClick={() => openAgendar(item)}>
-                    <CalendarPlus className="w-4 h-4 mr-1.5" />
-                    Agendar
+      ) : (() => {
+        const totalPages = Math.ceil(bucketItems.length / ITEMS_PER_PAGE);
+        const paginated = bucketItems.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+        return (
+          <>
+            <div className="grid gap-3">
+              {paginated.map((item) => {
+                const workshop = workshopMap?.[item.workshop_id];
+                return (
+                  <Card key={item.id} className="border-l-4 border-l-indigo-500 hover:shadow-md transition-shadow">
+                    <CardContent className="py-4 flex items-center justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-semibold text-gray-900 truncate">{workshop?.name || 'Oficina'}</span>
+                          <Badge variant="outline" className="text-xs shrink-0">#{item.sequence_number || '-'}</Badge>
+                        </div>
+                        <div className="flex items-center gap-4 text-sm text-gray-500">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="w-3.5 h-3.5" />
+                            {item.scheduled_date ? formatDateTimeBR(item.scheduled_date) : 'Sem data prevista'}
+                          </span>
+                          <span className="capitalize">{item.attendance_type_name?.replace(/_/g, ' ') || 'Tipo não definido'}</span>
+                        </div>
+                      </div>
+                      <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 shrink-0" onClick={() => openAgendar(item)}>
+                        <CalendarPlus className="w-4 h-4 mr-1.5" />
+                        Agendar
+                      </Button>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+                <p className="text-sm text-gray-500">
+                  Mostrando {(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, bucketItems.length)} de {bucketItems.length}
+                </p>
+                <div className="flex items-center gap-1">
+                  <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>
+                    Anterior
                   </Button>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      )}
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                    <Button
+                      key={page}
+                      variant={page === currentPage ? "default" : "outline"}
+                      size="sm"
+                      className={`w-8 h-8 p-0 ${page === currentPage ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : ''}`}
+                      onClick={() => setCurrentPage(page)}
+                    >
+                      {page}
+                    </Button>
+                  ))}
+                  <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>
+                    Próxima
+                  </Button>
+                </div>
+              </div>
+            )}
+          </>
+        );
+      })()}
 
       {/* Agendar Dialog */}
       <Dialog open={agendarDialog.open} onOpenChange={(o) => setAgendarDialog({ open: o, item: o ? agendarDialog.item : null })}>
