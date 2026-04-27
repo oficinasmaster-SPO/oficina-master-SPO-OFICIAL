@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { BarChart3, Calendar, CalendarRange, FileText, Users, Activity, Plus, Loader2, Lightbulb, List } from "lucide-react";
+import { BarChart3, Calendar, CalendarRange, FileText, Users, Activity, Plus, Loader2, Lightbulb, List, Bell } from "lucide-react";
 import RegistroAtendimentoMassaModal from "@/components/aceleracao/RegistroAtendimentoMassaModal";
 import ActiveFiltersBar from "@/components/aceleracao/ActiveFiltersBar";
 import TabSkeleton from "@/components/aceleracao/TabSkeleton";
@@ -175,6 +175,14 @@ export default function ControleAceleracaoView({ state }) {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button
+            onClick={() => window.open('/ControleAceleracao?tab=followups', '_blank')}
+            size="sm"
+            className="bg-red-600 hover:bg-red-700 text-white shadow-sm"
+          >
+            <Bell className="w-4 h-4 mr-1.5" />
+            Central de Follow-up
+          </Button>
           <Button
             onClick={handleOpenMassRegistration}
             variant="outline"
