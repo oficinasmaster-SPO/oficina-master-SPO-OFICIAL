@@ -5,11 +5,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Phone, MessageCircle, Mail, Video, MapPin, CheckCircle2, X, Clock, AlertCircle,
-  ChevronRight, Upload, Check, ArrowRight, Calendar, User
+  ChevronRight, ChevronLeft, Upload, Check, ArrowRight, Calendar, User
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -76,7 +77,7 @@ const PROXIMO_PASSO_OPTIONS = [
   { id: "cancelar", label: "Cancelamento" },
 ];
 
-export default function IniciarAtendimentoModal({ followUp, cliente, onClose, onSaved, fusConcatenados = [], proximoFU = null, onProximoFollowUp }) {
+export default function IniciarAtendimentoModal({ followUp, cliente, onClose, onSaved, fusConcatenados = [], proximoFU = null, onProximoFollowUp, filaReminders = [], onNavegar }) {
   const queryClient = useQueryClient();
   const [timer, setTimer] = useState(0);
   const [canal, setCanal] = useState("");
@@ -104,6 +105,15 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
   }, []);
   const [cronometroAtivo, setCronometroAtivo] = useState(true);
   const [showAtaModal, setShowAtaModal] = useState(false);
+  const [showNavConfirm, setShowNavConfirm] = useState(false);
+  const [navTarget, setNavTarget] = useState(null);
+
+  const idxAtual = filaReminders.findIndex(f => f.id === followUp?.id);
+  const fuAnterior = idxAtual > 0 ? filaReminders[idxAtual - 1] : null;
+  const fuProximo = idxAtual >= 0 && idxAtual < filaReminders.length - 1
+    ? filaReminders[idxAtual + 1]
+    : null;
+  const isDirty = !!(canal || resultado || observacoes || compromissos || proximoPasso || pastedImages.length > 0);
 
   // Carregar rascunho ao abrir o modal
   useEffect(() => {
@@ -199,6 +209,26 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
     const mins = String(Math.floor(timer / 60)).padStart(2, "0");
     const secs = String(timer % 60).padStart(2, "0");
     return `${mins}:${secs}`;
+  };
+
+  const handleNavegar = (fu) => {
+    if (isDirty) {
+      setNavTarget(fu);
+      setShowNavConfirm(true);
+    } else {
+      onNavegar?.(fu);
+      onClose();
+    }
+  };
+
+  const confirmarNavegacao = () => {
+    const fu = navTarget;
+    const storageKey = `draft_atendimento_${followUp?.id}`;
+    localStorage.removeItem(storageKey);
+    setShowNavConfirm(false);
+    setNavTarget(null);
+    onNavegar?.(fu);
+    onClose();
   };
 
   const validate = () => {
@@ -541,6 +571,28 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
               <span className="font-semibold">Em atendimento</span>
               <span className="bg-red-800 rounded px-2 py-0.5 font-mono text-sm">{formatTimer()}</span>
             </Badge>
+          </div>
+
+          <div className="flex items-center gap-1 ml-4">
+            <button
+              onClick={() => fuAnterior && handleNavegar(fuAnterior)}
+              disabled={!fuAnterior}
+              title={fuAnterior ? `Anterior: ${fuAnterior.workshop_name}` : 'Sem anterior'}
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <span className="text-xs text-gray-500 min-w-[40px] text-center">
+              {idxAtual >= 0 ? `${idxAtual + 1}/${filaReminders.length}` : '—'}
+            </span>
+            <button
+              onClick={() => fuProximo && handleNavegar(fuProximo)}
+              disabled={!fuProximo}
+              title={fuProximo ? `Próximo: ${fuProximo.workshop_name}` : 'Sem próximo'}
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
           </div>
 
         </div>
@@ -996,6 +1048,27 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
       />
       )}
 
+      <AlertDialog open={showNavConfirm} onOpenChange={setShowNavConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Navegar para outro follow-up?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você preencheu campos neste atendimento. Ao navegar, os dados não salvos serão perdidos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => { setShowNavConfirm(false); setNavTarget(null); }}>
+              Ficar aqui
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmarNavegacao}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Navegar mesmo assim
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       </>
       );
