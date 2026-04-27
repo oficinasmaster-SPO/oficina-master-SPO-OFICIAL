@@ -278,6 +278,22 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
     enabled: !!resolvedAtendimentoId && isReadOnly
   });
 
+  const { data: followUpsConcluidos = [] } = useQuery({
+    queryKey: ['follow-ups-concluidos', resolvedAtendimentoId],
+    queryFn: async () => {
+      if (!resolvedAtendimentoId || !followUps?.length) return [];
+      return await base44.entities.FollowUpConcluido.filter({ atendimento_id: resolvedAtendimentoId }, '-completedAt', 10);
+    },
+    enabled: !!resolvedAtendimentoId && isReadOnly && !!followUps?.length,
+    staleTime: 3 * 60 * 1000,
+  });
+
+  const concluidosPorFollowupId = useMemo(() => {
+    const map = {};
+    followUpsConcluidos.forEach(c => { if (c.followup_id) map[c.followup_id] = c; });
+    return map;
+  }, [followUpsConcluidos]);
+
   const { data: clientIntelligences } = useQuery({
     queryKey: ['client-intelligences', resolvedAtendimentoId],
     queryFn: async () => {
@@ -881,7 +897,11 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
         <TabsContent value="followups" className="space-y-6">
           {followUps?.length > 0 ? (
             <div className="space-y-4 pt-2">
-              {followUps.map((followUp, idx) => (
+              {followUps.map((followUp, idx) => {
+                const concluido = concluidosPorFollowupId[followUp.id] || null;
+                const canalLabels = { ligacao: 'Ligação', whatsapp: 'WhatsApp', email: 'E-mail', video: 'Vídeo', presencial: 'Presencial' };
+                const resultadoLabels = { atendeu: 'Atendeu', nao_atendeu: 'Não atendeu', retornar: 'Retornar', agendou: 'Agendou', reagendou: 'Reagendou', desistiu: 'Desistiu' };
+                return (
                 <div key={idx} className={`border ${followUp.is_completed ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-white'} p-4 rounded-lg shadow-sm`}>
                   <div className="flex justify-between items-start mb-2">
                     <p className="font-semibold text-gray-900 flex items-center gap-2">
@@ -895,16 +915,33 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
                   <div className="text-sm text-gray-600 mb-2">
                     <p><strong>Data Prevista:</strong> {followUp.reminder_date ? toBrazilDate(followUp.reminder_date).toLocaleDateString('pt-BR') : '-'}</p>
                     {followUp.completed_at && <p><strong>Concluído em:</strong> {toBrazilDate(followUp.completed_at).toLocaleDateString('pt-BR')}</p>}
+                    {concluido?.canal && <p><strong>Canal:</strong> {canalLabels[concluido.canal] || concluido.canal}</p>}
+                    {concluido?.resultado && <p><strong>Resultado:</strong> {resultadoLabels[concluido.resultado] || concluido.resultado}</p>}
+                    {concluido?.humor && <p><strong>Humor do cliente:</strong> {concluido.humor}</p>}
+                    {concluido?.engajamento && <p><strong>Engajamento:</strong> {concluido.engajamento}</p>}
                   </div>
-                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{followUp.message}</p>
-                  {followUp.notes && (
+                  {followUp.message && <p className="text-sm text-gray-700 whitespace-pre-wrap">{followUp.message}</p>}
+                  {concluido?.observacoes && (
+                    <div className="mt-3 p-3 bg-white border border-gray-100 rounded">
+                      <p className="text-xs font-semibold text-gray-500 mb-1">Observações do atendimento:</p>
+                      <p className="text-sm text-gray-700 whitespace-pre-wrap">{concluido.observacoes}</p>
+                    </div>
+                  )}
+                  {concluido?.compromissos && (
+                    <div className="mt-2 p-3 bg-blue-50 border border-blue-100 rounded">
+                      <p className="text-xs font-semibold text-blue-600 mb-1">Comprometimentos do cliente:</p>
+                      <p className="text-sm text-gray-700 whitespace-pre-wrap">{concluido.compromissos}</p>
+                    </div>
+                  )}
+                  {followUp.notes && !concluido?.observacoes && (
                     <div className="mt-3 p-3 bg-white/50 border border-gray-100 rounded">
                       <p className="text-xs font-semibold text-gray-500 mb-1">Anotações do Retorno:</p>
                       <p className="text-sm text-gray-700 whitespace-pre-wrap">{followUp.notes}</p>
                     </div>
                   )}
                 </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-200 mt-4">

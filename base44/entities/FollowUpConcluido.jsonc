@@ -4,7 +4,7 @@
   "properties": {
     "followup_id": {
       "type": "string",
-      "description": "ID do follow-up remind\u0631 original"
+      "description": "ID do follow-up reminder original"
     },
     "workshop_id": {
       "type": "string",
@@ -129,53 +129,41 @@
     "create": {
       "$or": [
         {
-          "created_by": "{{user.email}}"
-        },
-        {
           "user_condition": {
             "role": "admin"
           }
         },
         {
-          "workshop_id": "{{user.data.workshop_id}}"
+          "consultor_id": "{{user.id}}"
         }
       ]
     },
     "read": {
       "$or": [
         {
-          "created_by": "{{user.email}}"
-        },
-        {
           "user_condition": {
             "role": "admin"
           }
         },
         {
-          "workshop_id": "{{user.data.workshop_id}}"
+          "consultor_id": "{{user.id}}"
         }
       ]
     },
     "update": {
       "$or": [
         {
-          "created_by": "{{user.email}}"
-        },
-        {
           "user_condition": {
             "role": "admin"
           }
         },
         {
-          "workshop_id": "{{user.data.workshop_id}}"
+          "consultor_id": "{{user.id}}"
         }
       ]
     },
     "delete": {
       "$or": [
-        {
-          "created_by": "{{user.email}}"
-        },
         {
           "user_condition": {
             "role": "admin"
