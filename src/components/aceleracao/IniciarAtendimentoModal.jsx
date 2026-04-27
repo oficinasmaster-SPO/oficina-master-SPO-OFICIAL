@@ -935,10 +935,8 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
             {saving ? "Salvando..." : "Salvar e finalizar atendimento"}
           </Button>
         </div>
-      </DialogContent>
-
-      </DialogContent>
-      </Dialog>
+        </DialogContent>
+        </Dialog>
 
       {/* ATA Modal - Fora do Dialog */}
       {selectedAta && (
