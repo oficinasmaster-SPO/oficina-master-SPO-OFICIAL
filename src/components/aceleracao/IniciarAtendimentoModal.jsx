@@ -458,7 +458,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="w-[95vw] max-w-6xl max-h-[92vh] p-0 flex flex-col overflow-hidden relative">
+      <DialogContent className="!w-[95vw] !max-w-[95vw] max-h-[92vh] p-0 flex flex-col overflow-hidden relative" style={{ width: "95vw", maxWidth: "95vw" }}>
         {/* OVERLAY DE SALVAMENTO */}
         {saving && (
           <div className="absolute inset-0 bg-white/90 z-50 flex flex-col items-center justify-center gap-6">
