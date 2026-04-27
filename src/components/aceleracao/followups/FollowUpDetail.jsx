@@ -68,6 +68,8 @@ export default function FollowUpDetail({ reminder, today, onBack }) {
   const [registerStep, setRegisterStep] = useState("history");
   const [fusSemanaExpandido, setFusSemanaExpandido] = useState(false);
   const [fusSelecionados, setFusSelecionados] = useState([]);
+  const [dicaIA, setDicaIA] = useState(null);
+  const [carregandoDica, setCarregandoDica] = useState(false);
 
   const isOverdue = !reminder.is_completed && reminder.reminder_date < today;
   const daysOver = reminder.reminder_date
@@ -102,6 +104,20 @@ export default function FollowUpDetail({ reminder, today, onBack }) {
     staleTime: 3 * 60 * 1000,
   });
 
+  const { data: concluidos = [] } = useQuery({
+    queryKey: ["concluidos-detail-ia", reminder.workshop_id],
+    queryFn: async () => {
+      if (!reminder.workshop_id) return [];
+      return base44.entities.FollowUpConcluido.filter(
+        { workshop_id: reminder.workshop_id },
+        "-completedAt",
+        5
+      );
+    },
+    enabled: !!reminder.workshop_id,
+    staleTime: 5 * 60 * 1000,
+  });
+
   const { data: atendimentosHoje = [] } = useQuery({
     queryKey: ["atendimentos-hoje-consultor", user?.id, today],
     queryFn: async () => {
@@ -125,6 +141,35 @@ export default function FollowUpDetail({ reminder, today, onBack }) {
   const suggestedAction = originAta?.proximos_passos?.trim()
     || atas.find(a => a.proximos_passos?.trim())?.proximos_passos
     || null;
+
+  const gerarDicaIA = async () => {
+    setCarregandoDica(true);
+    try {
+      const resumoAtas = atas.slice(0, 3).map(a =>
+        `Ata (${a.tipo_aceleracao || a.tipo_atendimento || 'reunião'} - ${a.meeting_date || ''}): próximos passos: ${a.proximos_passos || 'não registrado'}`
+      ).join('\n');
+
+      const resumoConcluidos = concluidos.slice(0, 3).map(c =>
+        `Atendimento via ${c.canal || '?'}: resultado=${c.resultado || '?'}, humor=${c.humor || '?'}, comprometimentos=${c.compromissos || 'nenhum'}`
+      ).join('\n');
+
+      const prompt = `Você é um coach de consultores de negócios. Com base nos dados abaixo sobre o cliente "${reminder.workshop_name}", gere UMA dica prática, direta e motivadora (máximo 3 linhas) para o consultor seguir neste atendimento de follow-up ${reminder.sequence_number}/4. Foque no que o cliente precisa agora.\n\nÚLTIMAS ATAS:\n${resumoAtas || 'Sem atas registradas'}\n\nÚLTIMOS ATENDIMENTOS:\n${resumoConcluidos || 'Sem atendimentos anteriores'}\n\nResponda apenas a dica, sem introdução.`;
+
+      const response = await base44.functions.invoke('invokeLLMUnlimited', { prompt });
+      setDicaIA(response?.result || response?.message || response || 'Não foi possível gerar a dica.');
+    } catch (err) {
+      console.error('Erro ao gerar dica:', err);
+      toast.error('Erro ao gerar dica de IA');
+    } finally {
+      setCarregandoDica(false);
+    }
+  };
+
+  useEffect(() => {
+    if ((atas.length > 0 || concluidos.length > 0) && !dicaIA && !carregandoDica) {
+      gerarDicaIA();
+    }
+  }, [atas.length, concluidos.length]);
 
   const inicioSemana = (() => {
     const d = new Date(today);
@@ -322,30 +367,41 @@ export default function FollowUpDetail({ reminder, today, onBack }) {
             </div>
           </div>
 
-          {/* Suggested action */}
-          {suggestedAction && (
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-2">
-              <div className="flex items-start gap-2">
-                <Zap className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-xs font-semibold text-amber-700 mb-1">Ação sugerida para este follow-up</p>
-                  <p className="text-sm text-amber-800 leading-relaxed">{suggestedAction}</p>
-                </div>
+          {/* Dica de IA */}
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Zap className="w-4 h-4 text-amber-500 flex-shrink-0" />
+                <p className="text-xs font-semibold text-amber-700">Dica de IA para este atendimento</p>
               </div>
-              {/* Quick action pills */}
-              <div className="flex flex-wrap gap-2 pt-1">
-                <button className="text-xs border border-amber-400 text-amber-700 rounded-full px-3 py-1 hover:bg-amber-100 transition-colors">
-                  Reagendar sessão
-                </button>
-                <button className="text-xs border border-amber-400 text-amber-700 rounded-full px-3 py-1 hover:bg-amber-100 transition-colors">
-                  Confirmar interesse
-                </button>
-                <button className="text-xs border border-amber-400 text-amber-700 rounded-full px-3 py-1 hover:bg-amber-100 transition-colors">
-                  Enviar resumo anterior
-                </button>
-              </div>
+              <button
+                onClick={gerarDicaIA}
+                disabled={carregandoDica}
+                title="Gerar nova dica"
+                className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-amber-100 transition-colors disabled:opacity-40"
+              >
+                <svg
+                  className={`w-4 h-4 text-amber-600 ${carregandoDica ? 'animate-spin' : ''}`}
+                  fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </button>
             </div>
-          )}
+            {carregandoDica ? (
+              <div className="flex items-center gap-2 py-2">
+                <div className="w-3 h-3 rounded-full bg-amber-400 animate-pulse" />
+                <p className="text-xs text-amber-600">Analisando histórico do cliente...</p>
+              </div>
+            ) : dicaIA ? (
+              <p className="text-sm text-amber-800 leading-relaxed">{dicaIA}</p>
+            ) : suggestedAction ? (
+              <p className="text-sm text-amber-800 leading-relaxed">{suggestedAction}</p>
+            ) : (
+              <p className="text-xs text-amber-600 italic">Clique em recarregar para gerar uma dica.</p>
+            )}
+          </div>
 
           {/* ATA history */}
           {atas.length > 0 && (
