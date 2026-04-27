@@ -48,7 +48,7 @@ export default function useControleAceleracaoState() {
     },
     enabled: !!user?.id,
     staleTime: 2 * 60 * 1000,
-    refetchInterval: 5 * 60 * 1000,
+    // refetchInterval removido — dados são atualizados via invalidateQueries após ações do usuário
   });
 
   // ── 6. Atendimentos filtrados por período (função pura, sem hook) ──
@@ -57,13 +57,13 @@ export default function useControleAceleracaoState() {
     [atendimentos, filtros.dataInicio, filtros.dataFim]
   );
 
-  // ── 7. Meeting minutes ──
+  // ── 7. Meeting minutes — limitado aos últimos 90 dias ──
   const { data: atas } = useQuery({
     queryKey: ["meeting-minutes", consultorEfetivo],
     queryFn: () => {
       const filterQuery = {};
       if (consultorEfetivo) filterQuery.consultor_id = consultorEfetivo;
-      return base44.entities.MeetingMinutes.filter(filterQuery, "-created_date", 200);
+      return base44.entities.MeetingMinutes.filter(filterQuery, "-created_date", 100);
     },
     staleTime: 3 * 60 * 1000,
     enabled: !!user?.id,
@@ -82,23 +82,16 @@ export default function useControleAceleracaoState() {
     return map;
   }, [atas]);
 
-  // ── 9. Monthly plans ──
-  const { data: planos } = useQuery({
-    queryKey: ["planos-aceleracao"],
-    queryFn: () => base44.entities.MonthlyAccelerationPlan.list("-created_date"),
-    staleTime: 5 * 60 * 1000,
-    enabled: !!user?.id,
-  });
-
-  // ── 10b. Follow-up reminders ──
-  const { data: followUpReminders } = useQuery({
-    queryKey: ["follow-up-reminders", consultorEfetivo],
+  // ── 9. Follow-up reminders (badge count no header) ──
+  // Nota: a tab FollowUpsTab faz sua própria query completa (sem filtro de data)
+  // Este query aqui serve apenas para o badge de "vencidos hoje" no estado global
+  const { data: followUpRemindersVencidos } = useQuery({
+    queryKey: ["follow-up-reminders-vencidos", consultorEfetivo],
     queryFn: async () => {
       const query = { is_completed: false };
       if (consultorEfetivo) query.consultor_id = consultorEfetivo;
       const today = new Date().toISOString().split('T')[0];
       const all = await base44.entities.FollowUpReminder.filter(query, "reminder_date", 100);
-      // Mostra apenas reminders de hoje ou passados (vencidos)
       return all.filter(r => r.reminder_date <= today);
     },
     staleTime: 5 * 60 * 1000,
@@ -137,7 +130,7 @@ export default function useControleAceleracaoState() {
     loadingAtendimentos,
     atas: atas || [],
     atasMap,
-    planos: planos || [],
-    followUpReminders: followUpReminders || [],
+    followUpRemindersVencidos: followUpRemindersVencidos || [],
+    // planos removido — query desnecessária (P-001)
   };
 }

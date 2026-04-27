@@ -5,6 +5,8 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
  * Triggered by connector automation (automation_type="connector", integration_type="googlecalendar")
  * Platform handles authentication — do NOT add custom auth checks.
  */
+const THROTTLE_MINUTES = 10;
+
 Deno.serve(async (req) => {
   const body = await req.json();
   const base44 = createClientFromRequest(req);
@@ -21,6 +23,15 @@ Deno.serve(async (req) => {
   // Load persisted syncToken (stored in SyncState entity, NOT env vars)
   const syncRecords = await base44.asServiceRole.entities.SyncState.filter({ key: 'googlecalendar_primary' });
   const syncRecord = syncRecords.length > 0 ? syncRecords[0] : null;
+
+  // Throttle — abort if last sync was less than THROTTLE_MINUTES ago (avoids 429 from burst webhooks)
+  if (syncRecord?.last_synced_at) {
+    const msSinceLast = Date.now() - new Date(syncRecord.last_synced_at).getTime();
+    if (msSinceLast < THROTTLE_MINUTES * 60 * 1000) {
+      console.log(`[throttle] Last sync was ${Math.round(msSinceLast / 1000)}s ago — skipping.`);
+      return Response.json({ status: 'throttled', next_allowed_in_seconds: Math.ceil((THROTTLE_MINUTES * 60 * 1000 - msSinceLast) / 1000) });
+    }
+  }
 
   let url = 'https://www.googleapis.com/calendar/v3/calendars/primary/events?maxResults=100';
   if (syncRecord?.sync_token) {
