@@ -206,7 +206,8 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
       const prompt = `Você é um coach de consultores de negócios. Com base nos dados abaixo sobre o cliente "${reminder.workshop_name}", gere UMA dica prática, direta e motivadora (máximo 3 linhas) para o consultor seguir neste atendimento de follow-up ${reminder.sequence_number}/4. Foque no que o cliente precisa agora.\n\nÚLTIMAS ATAS:\n${resumoAtas || 'Sem atas registradas'}\n\nÚLTIMOS ATENDIMENTOS:\n${resumoConcluidos || 'Sem atendimentos anteriores'}\n\nResponda apenas a dica, sem introdução.`;
 
       const response = await base44.functions.invoke('invokeLLMUnlimited', { prompt });
-      setDicaIA(response?.result || response?.message || response || 'Não foi possível gerar a dica.');
+      const dica = response?.data?.result || response?.data?.message || response?.data || response?.result || response?.message || 'Não foi possível gerar a dica.';
+      setDicaIA(typeof dica === 'string' ? dica : JSON.stringify(dica));
     } catch (err) {
       console.error('Erro ao gerar dica:', err);
       toast.error('Erro ao gerar dica de IA');
