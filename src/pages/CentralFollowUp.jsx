@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import FollowUpsTab from '@/components/aceleracao/FollowUpsTab';
@@ -6,6 +6,14 @@ import { useAuth } from '@/lib/AuthContext';
 import { Clock } from 'lucide-react';
 
 export default function CentralFollowUp() {
+  useEffect(() => {
+    const isCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
+    if (!isCollapsed) {
+      localStorage.setItem('sidebar-collapsed', 'true');
+      window.dispatchEvent(new CustomEvent('sidebar-toggle'));
+    }
+  }, []);
+
   const { user } = useAuth();
 
   const { data: userData } = useQuery({
