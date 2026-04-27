@@ -493,14 +493,9 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
               <span className="bg-red-800 rounded px-2 py-0.5 font-mono text-sm">{formatTimer()}</span>
             </Badge>
           </div>
-          <div className="flex gap-3">
-            <Button variant="ghost" size="sm" onClick={() => setShowCancelConfirm(true)} className="text-gray-300 hover:text-white hover:bg-gray-800">
-              Cancelar
-            </Button>
-            <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white" onClick={handleSaveAndFinalize} disabled={saving}>
-              Finalizar atendimento
-            </Button>
-          </div>
+          <Button variant="ghost" size="sm" onClick={() => setShowCancelConfirm(true)} className="text-gray-300 hover:text-white hover:bg-gray-800">
+            Cancelar
+          </Button>
         </div>
 
         {/* CONTENT - SCROLLÁVEL */}
