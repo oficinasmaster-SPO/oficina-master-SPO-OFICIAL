@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Phone, MessageCircle, Mail, Video, MapPin, CheckCircle2, X, Clock, AlertCircle,
@@ -103,7 +103,6 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
     setInicioContagem(prev => prev ?? Date.now());
   }, []);
   const [cronometroAtivo, setCronometroAtivo] = useState(true);
-  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [showAtaModal, setShowAtaModal] = useState(false);
 
   // Carregar rascunho ao abrir o modal
@@ -366,15 +365,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
     }
   };
 
-      const handleConfirmCancel = () => {
-      const storageKey = `draft_atendimento_${followUp.id}`;
-      localStorage.removeItem(storageKey);
-      toast.success("Dados descartados!");
-      setShowCancelConfirm(false);
-      onClose();
-      };
-
-  // Tela de confirmação pós-salvar
+      // Tela de confirmação pós-salvar
   if (saveSuccess) {
     const { clienteNome, sequenceNumber, canal: c, resultado: r, novoFollowUp, proxData: pd, proxHora: ph, consultor_nome } = saveSuccess;
     return (
@@ -492,9 +483,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
               <span className="bg-red-800 rounded px-2 py-0.5 font-mono text-sm">{formatTimer()}</span>
             </Badge>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => setShowCancelConfirm(true)} className="text-gray-300 hover:text-white hover:bg-gray-800">
-            Cancelar
-          </Button>
+
         </div>
 
         {/* CONTENT - SCROLLÁVEL */}
@@ -924,17 +913,14 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
         </div>
 
         {/* FOOTER - FIXO */}
-         <div className="bg-white border-t border-gray-200 px-6 py-4 flex gap-3 justify-end flex-shrink-0">
-           <Button variant="outline" onClick={() => setShowCancelConfirm(true)} disabled={saving}>
-             Cancelar
+         <div className="bg-white border-t border-gray-200 px-6 py-4 flex gap-3 justify-between flex-shrink-0">
+           <Button variant="outline" onClick={() => { localStorage.removeItem(`draft_atendimento_${followUp?.id}`); onClose(); }} disabled={saving}>
+             Fechar
            </Button>
-          <Button variant="outline" onClick={handleSaveDraft} disabled={saving} className="border-cyan-300 text-cyan-700 hover:bg-cyan-50">
-            {saving && savingStep ? savingStep : "Rascunho"}
-          </Button>
-          <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={handleSaveAndFinalize} disabled={saving}>
-            {saving ? "Salvando..." : "Salvar e finalizar atendimento"}
-          </Button>
-        </div>
+           <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={handleSaveAndFinalize} disabled={saving}>
+             {saving ? "Salvando..." : "Salvar e finalizar atendimento"}
+           </Button>
+         </div>
         </DialogContent>
         </Dialog>
 
@@ -946,28 +932,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
       />
       )}
 
-      {/* Cancel Confirmation Dialog - Fora do Dialog */}
-      <AlertDialog open={showCancelConfirm} onOpenChange={setShowCancelConfirm}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Descartar todos os dados?</AlertDialogTitle>
-          <AlertDialogDescription>
-            Você está prestes a cancelar o atendimento. Todos os dados não salvos serão perdidos permanentemente, incluindo o rascunho.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel onClick={() => setShowCancelConfirm(false)}>
-            Manter e continuar
-          </AlertDialogCancel>
-          <AlertDialogAction 
-            onClick={handleConfirmCancel}
-            className="bg-red-600 hover:bg-red-700"
-          >
-            Descartar tudo
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-      </AlertDialog>
+
       </>
       );
       }
