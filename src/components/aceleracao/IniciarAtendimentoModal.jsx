@@ -97,7 +97,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
   const [selectedAta, setSelectedAta] = useState(null);
   const [pastedImages, setPastedImages] = useState([]);
   const [duracao, setDuracao] = useState(30);
-  const [inicioContagem, setInicioContagem] = useState(null);
+  const [inicioContagem, setInicioContagem] = useState(() => Date.now());
   const [cronometroAtivo, setCronometroAtivo] = useState(true);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
@@ -180,28 +180,14 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
      enabled: !!workshop?.owner_id,
    });
 
-  // Timer in real-time
+  // Intervalo unificado — um único setInterval para timer e duração
   useEffect(() => {
-    const interval = setInterval(() => setTimer(t => t + 1), 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Countdown duration from 30 minutes
-  useEffect(() => {
-    if (!inicioContagem) {
-      setInicioContagem(Date.now());
-    }
-  }, [inicioContagem]);
-
-  useEffect(() => {
-    if (!inicioContagem || !cronometroAtivo) return;
-    
+    if (!cronometroAtivo) return;
     const interval = setInterval(() => {
+      setTimer(t => t + 1);
       const decorrido = Math.floor((Date.now() - inicioContagem) / 1000 / 60);
-      const restante = Math.max(0, 30 - decorrido);
-      setDuracao(restante);
+      setDuracao(Math.max(0, 30 - decorrido));
     }, 1000);
-
     return () => clearInterval(interval);
   }, [inicioContagem, cronometroAtivo]);
 

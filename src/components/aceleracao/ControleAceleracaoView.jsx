@@ -258,27 +258,23 @@ export default function ControleAceleracaoView({ state }) {
         {/* Tab Content — forceMount + hidden on all tabs; lazy-mount on first visit */}
         <>
           <TabsContent value="visao-geral" forceMount className={`mt-0 ${activeTab !== "visao-geral" ? "hidden" : ""}`}>
-            <TabErrorBoundary tabName="Visão Geral">
-              <Suspense fallback={<TabSkeleton variant="overview" />}>
-                {loadingAtendimentos ? (
-                  <TabSkeleton variant="overview" />
-                ) : (
-                  <VisaoGeralTab state={state} />
-                )}
-              </Suspense>
-            </TabErrorBoundary>
+            {visitedTabs.has("visao-geral") && (
+              <TabErrorBoundary tabName="Visão Geral">
+                <Suspense fallback={<TabSkeleton variant="overview" />}>
+                  {loadingAtendimentos ? <TabSkeleton variant="overview" /> : <VisaoGeralTab state={state} />}
+                </Suspense>
+              </TabErrorBoundary>
+            )}
           </TabsContent>
 
           <TabsContent value="atendimentos" forceMount className={`mt-0 ${activeTab !== "atendimentos" ? "hidden" : ""}`}>
-            <TabErrorBoundary tabName="Atendimentos">
-              <Suspense fallback={<TabSkeleton variant="table" />}>
-                {loadingAtendimentos ? (
-                  <TabSkeleton variant="table" />
-                ) : (
-                  <PainelAtendimentosTab state={state} />
-                )}
-              </Suspense>
-            </TabErrorBoundary>
+            {visitedTabs.has("atendimentos") && (
+              <TabErrorBoundary tabName="Atendimentos">
+                <Suspense fallback={<TabSkeleton variant="table" />}>
+                  {loadingAtendimentos ? <TabSkeleton variant="table" /> : <PainelAtendimentosTab state={state} />}
+                </Suspense>
+              </TabErrorBoundary>
+            )}
           </TabsContent>
 
           <TabsContent value="cronograma" forceMount className={`mt-0 ${activeTab !== "cronograma" ? "hidden" : ""}`}>

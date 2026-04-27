@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, memo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,6 +15,100 @@ import { format } from "date-fns";
 import FollowUpList from "./followups/FollowUpList";
 import FollowUpDetail from "./followups/FollowUpDetail";
 import FollowUpCompletedDetailDrawer from "./FollowUpCompletedDetailDrawer";
+
+// ── Componentes de módulo (fora do corpo do componente para evitar re-mount) ──
+
+const ReminderRow = memo(({ reminder, today, showWorkshop, onComplete, onReopen }) => {
+  const isOverdue = !reminder.is_completed && reminder.reminder_date < today;
+  return (
+    <div className={`flex items-center gap-3 px-4 py-3 ${reminder.is_completed ? "bg-white opacity-70" : isOverdue ? "bg-red-50/30" : "bg-white"}`}>
+      <div className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
+        reminder.is_completed ? "bg-green-100 text-green-700" : isOverdue ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"
+      }`}>
+        {reminder.sequence_number}
+      </div>
+      <div className="flex-1 min-w-0">
+        {showWorkshop && (
+          <span className="text-xs font-semibold text-gray-700 block truncate">{reminder.workshop_name || "Sem cliente"}</span>
+        )}
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs text-gray-600">Follow-up {reminder.sequence_number}/4</span>
+          <span className="text-xs text-gray-400">·</span>
+          <span className={`text-xs ${isOverdue ? "text-red-600 font-medium" : "text-gray-500"}`}>
+            {reminder.reminder_date ? format(new Date(reminder.reminder_date + "T00:00:00"), "dd/MM/yyyy") : "—"}
+          </span>
+          {isOverdue && <AlertCircle className="w-3 h-3 text-red-500" />}
+          {reminder.consultor_nome && <span className="text-xs text-gray-400">· {reminder.consultor_nome}</span>}
+        </div>
+        {reminder.is_completed && reminder.completed_at && (
+          <p className="text-[11px] text-green-600 mt-0.5">
+            Concluído em {format(new Date(reminder.completed_at), "dd/MM/yyyy")}
+          </p>
+        )}
+      </div>
+      <div className="flex-shrink-0">
+        {reminder.is_completed ? (
+          <Button size="sm" variant="ghost" className="h-7 text-xs text-gray-400 hover:text-gray-600" onClick={() => onReopen(reminder)}>
+            Reabrir
+          </Button>
+        ) : (
+          <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-green-600 hover:bg-green-100" onClick={() => onComplete(reminder)} title="Marcar como realizado">
+            <Check className="w-4 h-4" />
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+});
+
+const EmptyState = ({ label = "Nenhum follow-up encontrado" }) => (
+  <div className="py-16 flex flex-col items-center justify-center text-center space-y-2">
+    <StickyNote className="w-8 h-8 text-gray-300" />
+    <p className="text-gray-400 text-sm">{label}</p>
+  </div>
+);
+
+const FollowUpSkeleton = () => (
+  <Card className="overflow-hidden border-gray-200">
+    <div className="divide-y divide-gray-100">
+      {Array.from({ length: 6 }, (_, i) => `skeleton-${i}`).map(key => (
+        <div key={key} className="flex items-center gap-3 px-4 py-3">
+          <Skeleton className="w-7 h-7 rounded-full flex-shrink-0" />
+          <div className="flex-1 space-y-1.5">
+            <Skeleton className="h-3 w-32" />
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-3 w-20" />
+              <Skeleton className="h-3 w-16" />
+            </div>
+          </div>
+          <Skeleton className="h-7 w-16 rounded-md flex-shrink-0" />
+        </div>
+      ))}
+    </div>
+  </Card>
+);
+
+const FlatList = ({ items, isLoading, showWorkshop = false, emptyLabel, onSelect, today, onComplete, onReopen }) => (
+  isLoading ? (
+    <FollowUpSkeleton />
+  ) : items.length === 0 ? (
+    <EmptyState label={emptyLabel} />
+  ) : (
+    <Card className="overflow-hidden border-gray-200">
+      <div className="divide-y divide-gray-100">
+        {items.map(r => (
+          <button
+            key={r.id}
+            onClick={() => onSelect && onSelect(r)}
+            className="w-full text-left hover:bg-gray-50 transition-colors"
+          >
+            <ReminderRow reminder={r} today={today} showWorkshop={showWorkshop} onComplete={onComplete} onReopen={onReopen} />
+          </button>
+        ))}
+      </div>
+    </Card>
+  )
+);
 
 const TABS = [
   { id: "crm",        label: "Fila CRM" },
@@ -50,9 +144,11 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
 
   // Fetch dos atendimentos concluídos
   const { data: concludedAttendances = [] } = useQuery({
-    queryKey: ["follow-up-concluidos-tab"],
+    queryKey: ["follow-up-concluidos-tab", consultorEfetivo],
     queryFn: async () => {
-      return base44.entities.FollowUpConcluido.list("-completedAt", 500);
+      const query = {};
+      if (consultorEfetivo) query.consultor_id = consultorEfetivo;
+      return base44.entities.FollowUpConcluido.filter(query, "-completedAt", 500);
     },
     staleTime: 2 * 60 * 1000,
   });
@@ -185,98 +281,6 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
     setOpenFolders(all);
   };
   const collapseAll = () => setOpenFolders({});
-
-  const ReminderRow = ({ reminder, showWorkshop = false }) => {
-    const isOverdue = !reminder.is_completed && reminder.reminder_date < today;
-    return (
-      <div className={`flex items-center gap-3 px-4 py-3 ${reminder.is_completed ? "bg-white opacity-70" : isOverdue ? "bg-red-50/30" : "bg-white"}`}>
-        <div className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
-          reminder.is_completed ? "bg-green-100 text-green-700" : isOverdue ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"
-        }`}>
-          {reminder.sequence_number}
-        </div>
-        <div className="flex-1 min-w-0">
-          {showWorkshop && (
-            <span className="text-xs font-semibold text-gray-700 block truncate">{reminder.workshop_name || "Sem cliente"}</span>
-          )}
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs text-gray-600">Follow-up {reminder.sequence_number}/4</span>
-            <span className="text-xs text-gray-400">·</span>
-            <span className={`text-xs ${isOverdue ? "text-red-600 font-medium" : "text-gray-500"}`}>
-              {reminder.reminder_date ? format(new Date(reminder.reminder_date + "T00:00:00"), "dd/MM/yyyy") : "—"}
-            </span>
-            {isOverdue && <AlertCircle className="w-3 h-3 text-red-500" />}
-            {reminder.consultor_nome && <span className="text-xs text-gray-400">· {reminder.consultor_nome}</span>}
-          </div>
-          {reminder.is_completed && reminder.completed_at && (
-            <p className="text-[11px] text-green-600 mt-0.5">
-              Concluído em {format(new Date(reminder.completed_at), "dd/MM/yyyy")}
-            </p>
-          )}
-        </div>
-        <div className="flex-shrink-0">
-          {reminder.is_completed ? (
-            <Button size="sm" variant="ghost" className="h-7 text-xs text-gray-400 hover:text-gray-600" onClick={() => handleReopen(reminder)}>
-              Reabrir
-            </Button>
-          ) : (
-            <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-green-600 hover:bg-green-100" onClick={() => handleComplete(reminder)} title="Marcar como realizado">
-              <Check className="w-4 h-4" />
-            </Button>
-          )}
-        </div>
-      </div>
-    );
-  };
-
-  const EmptyState = ({ label = "Nenhum follow-up encontrado" }) => (
-    <div className="py-16 flex flex-col items-center justify-center text-center space-y-2">
-      <StickyNote className="w-8 h-8 text-gray-300" />
-      <p className="text-gray-400 text-sm">{label}</p>
-    </div>
-  );
-
-  const FollowUpSkeleton = () => (
-    <Card className="overflow-hidden border-gray-200">
-      <div className="divide-y divide-gray-100">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="flex items-center gap-3 px-4 py-3">
-            <Skeleton className="w-7 h-7 rounded-full flex-shrink-0" />
-            <div className="flex-1 space-y-1.5">
-              <Skeleton className="h-3 w-32" />
-              <div className="flex items-center gap-2">
-                <Skeleton className="h-3 w-20" />
-                <Skeleton className="h-3 w-16" />
-              </div>
-            </div>
-            <Skeleton className="h-7 w-16 rounded-md flex-shrink-0" />
-          </div>
-        ))}
-      </div>
-    </Card>
-  );
-
-  const FlatList = ({ items, showWorkshop = false, emptyLabel, onSelect }) => (
-    isLoading ? (
-      <FollowUpSkeleton />
-    ) : items.length === 0 ? (
-      <EmptyState label={emptyLabel} />
-    ) : (
-      <Card className="overflow-hidden border-gray-200">
-        <div className="divide-y divide-gray-100">
-          {items.map(r => (
-            <button
-              key={r.id}
-              onClick={() => onSelect && onSelect(r)}
-              className="w-full text-left hover:bg-gray-50 transition-colors"
-            >
-              <ReminderRow reminder={r} showWorkshop={showWorkshop} />
-            </button>
-          ))}
-        </div>
-      </Card>
-    )
-  );
 
   const showSearchBar = activeTab !== "crm";
 
@@ -411,7 +415,7 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
                   {isOpen && group.items.length > 0 && (
                     <CardContent className="p-0">
                       <div className="divide-y divide-gray-100">
-                        {group.items.map(r => <ReminderRow key={r.id} reminder={r} />)}
+                        {group.items.map(r => <ReminderRow key={r.id} reminder={r} today={today} onComplete={handleComplete} onReopen={handleReopen} />)}
                       </div>
                     </CardContent>
                   )}
@@ -429,11 +433,11 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
       )}
 
       {activeTab === "abertos" && (
-        <FlatList items={listAbertos} showWorkshop emptyLabel="Nenhum follow-up aberto" onSelect={setSelectedReminder} />
+        <FlatList items={listAbertos} isLoading={isLoading} showWorkshop emptyLabel="Nenhum follow-up aberto" onSelect={setSelectedReminder} today={today} onComplete={handleComplete} onReopen={handleReopen} />
       )}
 
       {activeTab === "atrasados" && (
-        <FlatList items={listAtrasados} showWorkshop emptyLabel="Nenhum follow-up atrasado" onSelect={setSelectedReminder} />
+        <FlatList items={listAtrasados} isLoading={isLoading} showWorkshop emptyLabel="Nenhum follow-up atrasado" onSelect={setSelectedReminder} today={today} onComplete={handleComplete} onReopen={handleReopen} />
       )}
 
       {activeTab === "consultor" && (
@@ -455,7 +459,7 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
                     </Badge>
                   </div>
                   <div className="divide-y divide-gray-100">
-                    {items.map(r => <ReminderRow key={r.id} reminder={r} showWorkshop />)}
+                    {items.map(r => <ReminderRow key={r.id} reminder={r} today={today} showWorkshop onComplete={handleComplete} onReopen={handleReopen} />)}
                   </div>
                 </Card>
               );
@@ -466,7 +470,7 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
 
       {activeTab === "concluidos" && (
         <>
-          <FlatList items={listConcluidos} showWorkshop emptyLabel="Nenhum follow-up concluído" onSelect={setSelectedConcluido} />
+          <FlatList items={listConcluidos} isLoading={isLoading} showWorkshop emptyLabel="Nenhum follow-up concluído" onSelect={setSelectedConcluido} today={today} onComplete={handleComplete} onReopen={handleReopen} />
           {selectedConcluido && (
             <FollowUpCompletedDetailDrawer
               followUp={selectedConcluido}
