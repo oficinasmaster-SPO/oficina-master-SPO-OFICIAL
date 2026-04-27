@@ -458,7 +458,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[95vh] p-0 flex flex-col overflow-hidden relative">
+      <DialogContent className="w-[95vw] max-w-6xl max-h-[92vh] p-0 flex flex-col overflow-hidden relative">
         {/* OVERLAY DE SALVAMENTO */}
         {saving && (
           <div className="absolute inset-0 bg-white/90 z-50 flex flex-col items-center justify-center gap-6">
@@ -751,7 +751,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
           </div>
 
           {/* RIGHT COLUMN - SIDEBAR */}
-          <div className="w-96 border-l border-gray-200 bg-gradient-to-b from-white via-gray-50 to-gray-100 overflow-hidden flex flex-col shadow-[inset_-2px_0_8px_rgba(0,0,0,0.03)]">
+          <div className="w-80 xl:w-96 flex-shrink-0 border-l border-gray-200 bg-gradient-to-b from-white via-gray-50 to-gray-100 overflow-hidden flex flex-col shadow-[inset_-2px_0_8px_rgba(0,0,0,0.03)]">
             <Tabs defaultValue="atas" className="flex-1 flex flex-col">
               <TabsList className="grid w-full grid-cols-3 rounded-none border-b bg-white">
                 <TabsTrigger value="atas">Atas</TabsTrigger>
