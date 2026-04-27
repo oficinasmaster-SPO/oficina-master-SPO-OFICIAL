@@ -78,6 +78,7 @@ const PROXIMO_PASSO_OPTIONS = [
 
 export default function IniciarAtendimentoModal({ followUp, cliente, onClose, onSaved }) {
   const queryClient = useQueryClient();
+  const [isModalOpen, setIsModalOpen] = useState(true);
   const [timer, setTimer] = useState(0);
   const [canal, setCanal] = useState("");
   const [resultado, setResultado] = useState("");
@@ -104,6 +105,11 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
   }, []);
   const [cronometroAtivo, setCronometroAtivo] = useState(true);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+
+  // Fecha o modal quando solicitar
+  useEffect(() => {
+    if (!isModalOpen) onClose();
+  }, [isModalOpen, onClose]);
 
   // Carregar rascunho ao abrir o modal
   useEffect(() => {
@@ -373,14 +379,14 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
 
       toast.success("Dados descartados!");
       setShowCancelConfirm(false);
-      onClose();
+      setIsModalOpen(false);
       };
 
   // Tela de confirmação pós-salvar
   if (saveSuccess) {
     const { clienteNome, sequenceNumber, canal: c, resultado: r, novoFollowUp, proxData: pd, proxHora: ph, consultor_nome } = saveSuccess;
     return (
-      <Dialog open={true} onOpenChange={onClose}>
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="max-w-lg p-0 overflow-hidden">
           <div className="bg-gradient-to-b from-green-50 to-white p-8 flex flex-col items-center text-center">
             <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-4">
@@ -447,7 +453,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
   }
 
   return (
-    <Dialog open={true} onOpenChange={(open) => { if (!open) setShowCancelConfirm(true); }}>
+    <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
       <DialogContent hideClose className="p-0 flex flex-col overflow-hidden relative" style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "96vw", maxWidth: "96vw", height: "94vh", maxHeight: "94vh", zIndex: 9999, margin: 0, borderRadius: "12px" }}>
         {/* OVERLAY DE SALVAMENTO */}
         {saving && (
@@ -926,7 +932,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
 
         {/* FOOTER - FIXO */}
          <div className="bg-white border-t border-gray-200 px-6 py-4 flex gap-3 justify-end flex-shrink-0">
-           <Button variant="outline" onClick={(e) => { e.stopPropagation(); setShowCancelConfirm(true); }} disabled={saving}>
+           <Button variant="outline" onClick={() => setShowCancelConfirm(true)} disabled={saving}>
              Cancelar
            </Button>
           <Button variant="outline" onClick={handleSaveDraft} disabled={saving} className="border-cyan-300 text-cyan-700 hover:bg-cyan-50">
