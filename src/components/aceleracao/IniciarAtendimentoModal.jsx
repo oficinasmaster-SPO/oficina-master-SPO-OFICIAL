@@ -106,11 +106,6 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
   const [cronometroAtivo, setCronometroAtivo] = useState(true);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
-  // Fecha o modal quando solicitar
-  useEffect(() => {
-    if (!isModalOpen) onClose();
-  }, [isModalOpen, onClose]);
-
   // Carregar rascunho ao abrir o modal
   useEffect(() => {
     if (!followUp?.id) return;
@@ -372,14 +367,11 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
   };
 
       const handleConfirmCancel = () => {
-      // Limpar rascunho do localStorage
       const storageKey = `draft_atendimento_${followUp.id}`;
       localStorage.removeItem(storageKey);
-      console.log('✅ Rascunho removido ao cancelar:', storageKey);
-
       toast.success("Dados descartados!");
       setShowCancelConfirm(false);
-      setIsModalOpen(false);
+      onClose();
       };
 
   // Tela de confirmação pós-salvar
@@ -453,7 +445,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
   }
 
   return (
-    <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+    <Dialog open={isModalOpen} onOpenChange={() => {}}>
       <DialogContent hideClose className="p-0 flex flex-col overflow-hidden relative" style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "96vw", maxWidth: "96vw", height: "94vh", maxHeight: "94vh", zIndex: 9999, margin: 0, borderRadius: "12px" }}>
         {/* OVERLAY DE SALVAMENTO */}
         {saving && (
