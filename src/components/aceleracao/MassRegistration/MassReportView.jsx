@@ -25,10 +25,19 @@ export default function MassReportView({ selectedClients, formData }) {
     queryKey: ["selected-clients-data", selectedClients],
     queryFn: async () => {
       if (selectedClients.length === 0) return [];
-      const data = await Promise.all(
-        selectedClients.map(id => base44.entities.Workshop.get(id).catch(() => null))
-      );
-      return data.filter(Boolean);
+      const BATCH_SIZE = 5;
+      const batches = [];
+      for (let i = 0; i < selectedClients.length; i += BATCH_SIZE) {
+        batches.push(selectedClients.slice(i, i + BATCH_SIZE));
+      }
+      const batchResults = [];
+      for (const batch of batches) {
+        const result = await Promise.all(
+          batch.map(id => base44.entities.Workshop.get(id).catch(() => null))
+        );
+        batchResults.push(...result);
+      }
+      return batchResults.filter(Boolean);
     },
     enabled: selectedClients.length > 0
   });

@@ -12,6 +12,7 @@ import { format, differenceInDays, addDays } from "date-fns";
 import { toast } from "sonner";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/lib/AuthContext";
 import VisualizarAtaModal from "@/components/aceleracao/VisualizarAtaModal";
 import IniciarAtendimentoModal from "@/components/aceleracao/IniciarAtendimentoModal";
 
@@ -62,12 +63,8 @@ export default function FollowUpDetail({ reminder, today, onBack }) {
   const [saving, setSaving] = useState(false);
   const [showLossModal, setShowLossModal] = useState(false);
   const [selectedAta, setSelectedAta] = useState(null);
-  const [user, setUser] = useState(null);
+  const { user } = useAuth();
   const [registerStep, setRegisterStep] = useState("history");
-
-  useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => {});
-  }, []);
 
   const isOverdue = !reminder.is_completed && reminder.reminder_date < today;
   const daysOver = reminder.reminder_date
@@ -163,7 +160,12 @@ export default function FollowUpDetail({ reminder, today, onBack }) {
 
   const verificarRascunho = () => {
     const storageKey = `draft_atendimento_${reminder.id}`;
-    const rascunho = localStorage.getItem(storageKey);
+    let rascunho = null;
+    try {
+      rascunho = localStorage.getItem(storageKey);
+    } catch (e) {
+      console.warn('localStorage indisponível:', e.message);
+    }
     return !!rascunho;
   };
 

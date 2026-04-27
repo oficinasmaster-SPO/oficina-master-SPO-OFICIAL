@@ -33,7 +33,7 @@ import { toast } from "sonner";
 import RegistrarAtendimento from "@/pages/RegistrarAtendimento";
 
 export default function PainelAtendimentosTab({ state }) {
-  const { user, workshops, workshopMap, atendimentos, consultores, atas, atasMap, planos, filtros, setFiltros } = state;
+  const { user, workshops, workshopMap, atendimentos, consultores, atas, atasMap, filtros, setFiltros } = state;
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
@@ -199,7 +199,7 @@ export default function PainelAtendimentosTab({ state }) {
         <GerarAtaModal
           atendimento={selectedAtendimento}
           workshop={workshops.find(w => w.id === selectedAtendimento.workshop_id)}
-          planoAceleracao={planos.find(p => p.workshop_id === selectedAtendimento.workshop_id)}
+          planoAceleracao={null}
           onClose={() => { setShowGerarAta(false); setSelectedAtendimento(null); }}
           onSaved={handleAtaSaved}
         />
