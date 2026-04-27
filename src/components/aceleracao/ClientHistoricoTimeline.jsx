@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
@@ -16,7 +16,11 @@ const statusAtendimentoConfig = {
   faltou:    { label: "Faltou",    color: "bg-orange-100 text-orange-700" },
 };
 
-function FollowUpRow({ fu }) {
+const CANAL_LABELS_HIST = { ligacao: "Ligação", whatsapp: "WhatsApp", email: "E-mail", video: "Vídeo", presencial: "Presencial" };
+const RESULTADO_LABELS_HIST = { atendeu: "Atendeu", nao_atendeu: "Não atendeu", retornar: "Retornar", agendou: "Agendou", reagendou: "Reagendou", desistiu: "Desistiu" };
+
+function FollowUpRow({ fu, concluido }) {
+  const [expanded, setExpanded] = useState(false);
   const date = new Date(fu.reminder_date + "T00:00:00");
   const isPast = date < new Date();
   const status = fu.is_completed
@@ -28,31 +32,75 @@ function FollowUpRow({ fu }) {
   const StatusIcon = status.icon;
 
   return (
-    <div className="flex items-start gap-3 py-2.5 px-3 rounded-lg hover:bg-gray-50 transition-colors">
-      <div className="mt-0.5 w-5 h-5 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
-        <Bell className="w-3 h-3 text-amber-600" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-sm font-medium text-gray-700">
-            Follow-up #{fu.sequence_number} 
-            <span className="font-normal text-gray-500 ml-1">
-              — {fu.days_since_meeting} dias após o atendimento
-            </span>
-          </span>
-          <Badge className={`text-xs shrink-0 flex items-center gap-1 ${status.color}`}>
-            <StatusIcon className="w-3 h-3" />
-            {status.label}
-          </Badge>
+    <div className="rounded-lg hover:bg-gray-50 transition-colors">
+      <button
+        onClick={() => concluido && setExpanded(e => !e)}
+        className={`w-full flex items-start gap-3 py-2.5 px-3 text-left ${concluido ? 'cursor-pointer' : 'cursor-default'}`}
+      >
+        <div className="mt-0.5 w-5 h-5 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+          <Bell className="w-3 h-3 text-amber-600" />
         </div>
-        <p className="text-xs text-gray-500 mt-0.5">
-          {format(date, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-          {fu.consultor_nome && ` · ${fu.consultor_nome}`}
-        </p>
-        {fu.notes && (
-          <p className="text-xs text-gray-500 mt-1 italic">"{fu.notes}"</p>
-        )}
-      </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-sm font-medium text-gray-700">
+              Follow-up #{fu.sequence_number}
+              <span className="font-normal text-gray-500 ml-1">
+                — {fu.days_since_meeting} dias após o atendimento
+              </span>
+            </span>
+            <div className="flex items-center gap-1.5 shrink-0">
+              {concluido && (
+                <span className="text-[10px] text-gray-400">{expanded ? '▲' : '▼'}</span>
+              )}
+              <Badge className={`text-xs flex items-center gap-1 ${status.color}`}>
+                <StatusIcon className="w-3 h-3" />
+                {status.label}
+              </Badge>
+            </div>
+          </div>
+          <p className="text-xs text-gray-500 mt-0.5">
+            {format(date, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+            {fu.consultor_nome && ` · ${fu.consultor_nome}`}
+            {concluido?.canal && ` · ${CANAL_LABELS_HIST[concluido.canal] || concluido.canal}`}
+            {concluido?.resultado && ` · ${RESULTADO_LABELS_HIST[concluido.resultado] || concluido.resultado}`}
+          </p>
+          {fu.notes && !expanded && (
+            <p className="text-xs text-gray-500 mt-1 italic">"{fu.notes}"</p>
+          )}
+        </div>
+      </button>
+      {expanded && concluido && (
+        <div className="mx-3 mb-2 px-3 py-2.5 bg-white border border-gray-100 rounded-lg space-y-2">
+          {concluido.observacoes && (
+            <div>
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Observações</p>
+              <p className="text-xs text-gray-700 whitespace-pre-wrap">{concluido.observacoes}</p>
+            </div>
+          )}
+          {concluido.compromissos && (
+            <div>
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Comprometimentos</p>
+              <p className="text-xs text-gray-700 whitespace-pre-wrap">{concluido.compromissos}</p>
+            </div>
+          )}
+          {(concluido.humor || concluido.engajamento) && (
+            <div className="flex gap-4">
+              {concluido.humor && (
+                <div><p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Humor</p><p className="text-xs text-gray-700">{concluido.humor}</p></div>
+              )}
+              {concluido.engajamento && (
+                <div><p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Engajamento</p><p className="text-xs text-gray-700">{concluido.engajamento}</p></div>
+              )}
+            </div>
+          )}
+          {concluido.proxData && (
+            <div>
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Próximo contato</p>
+              <p className="text-xs text-gray-700">{concluido.proxData}{concluido.proxHora ? ` às ${concluido.proxHora}` : ''}</p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -89,7 +137,7 @@ function AtaRow({ ata }) {
   );
 }
 
-function AtendimentoCard({ atendimento, atas, followups }) {
+function AtendimentoCard({ atendimento, atas, followups, concluidosMap = {} }) {
   const [open, setOpen] = useState(false);
 
   // Busca pelo ata_id salvo no atendimento OU pelo atendimento_id na ATA
@@ -164,7 +212,7 @@ function AtendimentoCard({ atendimento, atas, followups }) {
           {followupsVinculados.length > 0 && (
             <div className="border-t border-gray-100 pt-1 mt-1">
               {followupsVinculados.map(fu => (
-                <FollowUpRow key={fu.id} fu={fu} />
+                <FollowUpRow key={fu.id} fu={fu} concluido={concluidosMap[fu.id] || null} />
               ))}
             </div>
           )}
@@ -205,6 +253,22 @@ export default function ClientHistoricoTimeline({ client }) {
     staleTime: 5 * 60 * 1000,
   });
 
+  const { data: concluidos = [] } = useQuery({
+    queryKey: ["concluidos-historico", workshopId],
+    queryFn: async () => {
+      const query = { workshop_id: workshopId };
+      return base44.entities.FollowUpConcluido.filter(query, "-completedAt", 100);
+    },
+    enabled: !!workshopId,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const concluidosMap = useMemo(() => {
+    const map = {};
+    concluidos.forEach(c => { if (c.followup_id) map[c.followup_id] = c; });
+    return map;
+  }, [concluidos]);
+
   const clienteAtendimentos = [...atendimentos]
     .sort((a, b) => new Date(b.data_realizada || b.data_agendada) - new Date(a.data_realizada || a.data_agendada));
 
@@ -242,6 +306,7 @@ export default function ClientHistoricoTimeline({ client }) {
           atendimento={atendimento}
           atas={atas}
           followups={followups}
+          concluidosMap={concluidosMap}
         />
       ))}
     </div>
