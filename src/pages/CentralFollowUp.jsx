@@ -1,10 +1,22 @@
 import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
 import FollowUpsTab from '@/components/aceleracao/FollowUpsTab';
 import { useAuth } from '@/lib/AuthContext';
 import { Clock } from 'lucide-react';
 
 export default function CentralFollowUp() {
   const { user } = useAuth();
+
+  const { data: userData } = useQuery({
+    queryKey: ['user', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      return await base44.entities.User.get(user.id);
+    },
+    enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000,
+  });
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -16,7 +28,9 @@ export default function CentralFollowUp() {
   const getInitials = (name = '') =>
     name.split(' ').slice(0, 2).map(p => p[0]).join('').toUpperCase() || '?';
 
-  const firstName = (user?.full_name || user?.email || '').split(' ')[0];
+  const fullName = userData?.full_name || user?.full_name || user?.email || '';
+  const profilePicture = userData?.profile_picture_url || user?.profile_picture_url;
+  const firstName = fullName.split(' ')[0];
 
   return (
     <div className="space-y-6">
@@ -52,15 +66,15 @@ export default function CentralFollowUp() {
             <p className="text-sm text-gray-400">{getGreeting()},</p>
             <p className="text-lg font-semibold text-white leading-tight">{firstName}</p>
           </div>
-          {user?.profile_picture_url ? (
+          {profilePicture ? (
             <img 
-              src={user.profile_picture_url} 
+              src={profilePicture} 
               alt={firstName}
               className="w-11 h-11 rounded-full object-cover flex-shrink-0 ring-2 ring-red-500/30"
             />
           ) : (
             <div className="w-11 h-11 rounded-full bg-red-600 flex items-center justify-center font-bold text-white text-sm flex-shrink-0 ring-2 ring-red-500/30">
-              {getInitials(user?.full_name || user?.email)}
+              {getInitials(fullName)}
             </div>
           )}
         </div>
