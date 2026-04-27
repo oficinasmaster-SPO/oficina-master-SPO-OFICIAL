@@ -177,7 +177,7 @@ export default function ControleAceleracaoView({ state }) {
         </div>
         <div className="flex gap-2">
           <Button
-            onClick={() => { markVisited("followups"); setActiveTab("followups"); }}
+            onClick={() => navigate('/CentralFollowUp')}
             size="sm"
             className="bg-red-600 hover:bg-red-700 text-white shadow-sm"
           >

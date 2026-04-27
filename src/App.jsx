@@ -32,6 +32,7 @@ const PublicDISC = lazy(() => import('@/pages/PublicDISC'));
 const BemVindoPlanos = lazy(() => import('@/pages/BemVindoPlanos'));
 const ControleAceleracao = lazy(() => import('@/pages/ControleAceleracao'));
 const ConsultoriaGlobal = lazy(() => import('@/pages/ConsultoriaGlobal'));
+const CentralFollowUp = lazy(() => import('@/pages/CentralFollowUp'));
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -148,6 +149,11 @@ const AuthenticatedApp = () => {
       <Route path="/ConsultoriaGlobal" element={
         <LayoutWrapper currentPageName="ConsultoriaGlobal">
           <ConsultoriaGlobal />
+        </LayoutWrapper>
+      } />
+      <Route path="/CentralFollowUp" element={
+        <LayoutWrapper currentPageName="CentralFollowUp">
+          <CentralFollowUp />
         </LayoutWrapper>
       } />
       <Route path="/PublicNPS" element={<PublicNPS />} />
