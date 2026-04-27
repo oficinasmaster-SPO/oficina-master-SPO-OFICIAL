@@ -97,7 +97,11 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
   const [selectedAta, setSelectedAta] = useState(null);
   const [pastedImages, setPastedImages] = useState([]);
   const [duracao, setDuracao] = useState(30);
-  const [inicioContagem, setInicioContagem] = useState(() => Date.now());
+  const [inicioContagem, setInicioContagem] = useState(null);
+
+  useEffect(() => {
+    setInicioContagem(prev => prev ?? Date.now());
+  }, []);
   const [cronometroAtivo, setCronometroAtivo] = useState(true);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
