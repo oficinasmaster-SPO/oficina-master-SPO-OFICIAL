@@ -27,7 +27,7 @@ import DashboardAtendimentos from "./DashboardAtendimentos";
 import { ATENDIMENTO_STATUS, ATENDIMENTO_STATUS_COLORS, ATENDIMENTO_STATUS_LABELS } from "@/components/lib/ataConstants";
 import { format } from "date-fns";
 import { toBrazilDate, formatDateTimeBR } from "@/utils/timezone";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { toast } from "sonner";
 import RegistrarAtendimento from "@/pages/RegistrarAtendimento";
@@ -35,6 +35,7 @@ import RegistrarAtendimento from "@/pages/RegistrarAtendimento";
 export default function PainelAtendimentosTab({ state }) {
   const { user, workshops, workshopMap, atendimentos, consultores, atas, atasMap, planos, filtros, setFiltros } = state;
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
 
   // ── UI state (local only — not filter state) ──
@@ -70,6 +71,23 @@ export default function PainelAtendimentosTab({ state }) {
       state.setPendingSubTab(null);
     }
   }, [state.pendingSubTab]);
+
+  // Open ATA preview when navigated from FollowUpPostIt with ?viewAta=<ata_id>
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const ataId = params.get('viewAta');
+    if (!ataId) return;
+    const load = async () => {
+      try {
+        const ata = await base44.entities.MeetingMinutes.get(ataId);
+        if (ata) { setSelectedAta(ata); setShowVisualizarAta(true); }
+      } catch (e) { /* ignore */ }
+      // Remove param from URL without re-render loop
+      params.delete('viewAta');
+      navigate({ search: params.toString() }, { replace: true });
+    };
+    load();
+  }, [location.search]);
 
   // Auto-mark de atrasados agora é feito server-side via markAtrasados function
   // Chamado uma vez no ControleAceleracaoView ao montar

@@ -1,12 +1,16 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { StickyNote, Check, MessageCircle } from "lucide-react";
+import { StickyNote, Check, ExternalLink, User, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export default function FollowUpPostIt({ reminders, onUpdate }) {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   if (!reminders || reminders.length === 0) return null;
 
@@ -49,9 +53,23 @@ export default function FollowUpPostIt({ reminders, onUpdate }) {
               <p className="text-xs text-amber-800 mt-1 leading-relaxed">
                 {reminder.days_since_meeting} dias desde último atendimento. Retorne ao cliente para saber sobre sua evolução.
               </p>
-              <span className="inline-block mt-1 text-[10px] text-amber-600 font-medium">
-                Follow-up {reminder.sequence_number}/4
-              </span>
+              <div className="flex flex-col gap-0.5 mt-1.5">
+                {reminder.consultor_nome && (
+                  <span className="flex items-center gap-1 text-[10px] text-amber-700">
+                    <User className="w-2.5 h-2.5" />
+                    {reminder.consultor_nome}
+                  </span>
+                )}
+                {reminder.reminder_date && (
+                  <span className="flex items-center gap-1 text-[10px] text-amber-700">
+                    <Calendar className="w-2.5 h-2.5" />
+                    {format(new Date(reminder.reminder_date + "T00:00:00"), "dd/MM/yyyy", { locale: ptBR })}
+                  </span>
+                )}
+                <span className="inline-block text-[10px] text-amber-600 font-medium">
+                  Follow-up {reminder.sequence_number}/4
+                </span>
+              </div>
             </div>
             {!reminder.is_completed && (
               <Button
@@ -70,6 +88,20 @@ export default function FollowUpPostIt({ reminders, onUpdate }) {
           </div>
           {reminder.is_completed && (
             <p className="text-[10px] text-green-600 mt-1 font-medium">✓ Concluído</p>
+          )}
+          {reminder.ata_id && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="mt-2 w-full h-6 text-[10px] text-amber-700 border-amber-300 hover:bg-amber-100 gap-1"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/ControleAceleracao?tab=atendimentos&viewAta=${reminder.ata_id}`);
+              }}
+            >
+              <ExternalLink className="w-3 h-3" />
+              Visualizar ATA
+            </Button>
           )}
         </div>
       ))}
