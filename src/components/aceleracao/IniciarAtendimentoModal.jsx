@@ -925,10 +925,10 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
         </div>
 
         {/* FOOTER - FIXO */}
-        <div className="bg-white border-t border-gray-200 px-6 py-4 flex gap-3 justify-end flex-shrink-0">
-          <Button variant="outline" onClick={() => setShowCancelConfirm(true)} disabled={saving}>
-            Cancelar
-          </Button>
+         <div className="bg-white border-t border-gray-200 px-6 py-4 flex gap-3 justify-end flex-shrink-0">
+           <Button variant="outline" onClick={(e) => { e.stopPropagation(); setShowCancelConfirm(true); }} disabled={saving}>
+             Cancelar
+           </Button>
           <Button variant="outline" onClick={handleSaveDraft} disabled={saving} className="border-cyan-300 text-cyan-700 hover:bg-cyan-50">
             {saving && savingStep ? savingStep : "Rascunho"}
           </Button>
