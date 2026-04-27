@@ -78,7 +78,6 @@ const PROXIMO_PASSO_OPTIONS = [
 
 export default function IniciarAtendimentoModal({ followUp, cliente, onClose, onSaved }) {
   const queryClient = useQueryClient();
-  const [isModalOpen, setIsModalOpen] = useState(true);
   const [timer, setTimer] = useState(0);
   const [canal, setCanal] = useState("");
   const [resultado, setResultado] = useState("");
@@ -105,6 +104,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
   }, []);
   const [cronometroAtivo, setCronometroAtivo] = useState(true);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [showAtaModal, setShowAtaModal] = useState(false);
 
   // Carregar rascunho ao abrir o modal
   useEffect(() => {
@@ -378,7 +378,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
   if (saveSuccess) {
     const { clienteNome, sequenceNumber, canal: c, resultado: r, novoFollowUp, proxData: pd, proxHora: ph, consultor_nome } = saveSuccess;
     return (
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+      <Dialog open onOpenChange={() => {}}>
         <DialogContent className="max-w-lg p-0 overflow-hidden">
           <div className="bg-gradient-to-b from-green-50 to-white p-8 flex flex-col items-center text-center">
             <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-4">
@@ -445,8 +445,9 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
   }
 
   return (
-    <Dialog open={isModalOpen} onOpenChange={() => {}}>
-      <DialogContent hideClose className="p-0 flex flex-col overflow-hidden relative" style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "96vw", maxWidth: "96vw", height: "94vh", maxHeight: "94vh", zIndex: 9999, margin: 0, borderRadius: "12px" }}>
+    <>
+      <Dialog open onOpenChange={() => {}}>
+        <DialogContent hideClose className="p-0 flex flex-col overflow-hidden relative" style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "96vw", maxWidth: "96vw", height: "94vh", maxHeight: "94vh", zIndex: 9999, margin: 0, borderRadius: "12px" }}>
         {/* OVERLAY DE SALVAMENTO */}
         {saving && (
           <div className="absolute inset-0 bg-white/90 z-50 flex flex-col items-center justify-center gap-6">
@@ -936,36 +937,39 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
         </div>
       </DialogContent>
 
-      {/* ATA Modal */}
+      </DialogContent>
+      </Dialog>
+
+      {/* ATA Modal - Fora do Dialog */}
       {selectedAta && (
-        <VisualizarAtaModal
-          ata={selectedAta}
-          onClose={() => setSelectedAta(null)}
-        />
+      <VisualizarAtaModal
+        ata={selectedAta}
+        onClose={() => setSelectedAta(null)}
+      />
       )}
 
-      {/* Cancel Confirmation Dialog */}
+      {/* Cancel Confirmation Dialog - Fora do Dialog */}
       <AlertDialog open={showCancelConfirm} onOpenChange={setShowCancelConfirm}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Descartar todos os dados?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Você está prestes a cancelar o atendimento. Todos os dados não salvos serão perdidos permanentemente, incluindo o rascunho.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setShowCancelConfirm(false)}>
-              Manter e continuar
-            </AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleConfirmCancel}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              Descartar tudo
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Descartar todos os dados?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Você está prestes a cancelar o atendimento. Todos os dados não salvos serão perdidos permanentemente, incluindo o rascunho.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => setShowCancelConfirm(false)}>
+            Manter e continuar
+          </AlertDialogCancel>
+          <AlertDialogAction 
+            onClick={handleConfirmCancel}
+            className="bg-red-600 hover:bg-red-700"
+          >
+            Descartar tudo
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
       </AlertDialog>
-      </Dialog>
+      </>
       );
       }
