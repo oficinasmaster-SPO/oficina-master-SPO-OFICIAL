@@ -58,12 +58,27 @@ function FollowUpRow({ fu, concluido }) {
               </Badge>
             </div>
           </div>
-          <p className="text-xs text-gray-500 mt-0.5">
-            {format(date, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-            {fu.consultor_nome && ` · ${fu.consultor_nome}`}
-            {concluido?.canal && ` · ${CANAL_LABELS_HIST[concluido.canal] || concluido.canal}`}
-            {concluido?.resultado && ` · ${RESULTADO_LABELS_HIST[concluido.resultado] || concluido.resultado}`}
-          </p>
+          <div className="flex items-center flex-wrap gap-1.5 mt-0.5">
+            <p className="text-xs text-gray-500">
+              {format(date, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+              {fu.consultor_nome && ` · ${fu.consultor_nome}`}
+            </p>
+            {concluido?.canal && (
+              <span className="px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 text-[10px] font-medium">
+                {CANAL_LABELS_HIST[concluido.canal] || concluido.canal}
+              </span>
+            )}
+            {concluido?.resultado && (
+              <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                concluido.resultado === 'atendeu' ? 'bg-green-100 text-green-700' :
+                concluido.resultado === 'nao_atendeu' ? 'bg-red-100 text-red-700' :
+                concluido.resultado === 'retornar' ? 'bg-amber-100 text-amber-700' :
+                'bg-gray-100 text-gray-600'
+              }`}>
+                {RESULTADO_LABELS_HIST[concluido.resultado] || concluido.resultado}
+              </span>
+            )}
+          </div>
           {fu.notes && !expanded && (
             <p className="text-xs text-gray-500 mt-1 italic">"{fu.notes}"</p>
           )}
@@ -97,6 +112,12 @@ function FollowUpRow({ fu, concluido }) {
             <div>
               <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Próximo contato</p>
               <p className="text-xs text-gray-700">{concluido.proxData}{concluido.proxHora ? ` às ${concluido.proxHora}` : ''}</p>
+            </div>
+          )}
+          {concluido.proximoPasso && (
+            <div>
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Próximo passo</p>
+              <p className="text-xs text-gray-700 capitalize">{concluido.proximoPasso.replace(/_/g, ' ')}</p>
             </div>
           )}
         </div>
