@@ -917,9 +917,14 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
            <Button variant="outline" onClick={() => { localStorage.removeItem(`draft_atendimento_${followUp?.id}`); onClose(); }} disabled={saving}>
              Fechar
            </Button>
-           <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={handleSaveAndFinalize} disabled={saving}>
-             {saving ? "Salvando..." : "Salvar e finalizar atendimento"}
-           </Button>
+           <div className="flex gap-3">
+             <Button variant="outline" onClick={handleSaveDraft} disabled={saving} className="border-cyan-300 text-cyan-700 hover:bg-cyan-50">
+               {saving && savingStep ? savingStep : "Rascunho"}
+             </Button>
+             <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={handleSaveAndFinalize} disabled={saving}>
+               {saving ? "Salvando..." : "Salvar e finalizar atendimento"}
+             </Button>
+           </div>
          </div>
         </DialogContent>
         </Dialog>
