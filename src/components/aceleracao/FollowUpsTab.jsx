@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useCallback, memo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Tabs } from "@/components/ui/tabs";
 import { RedTabsList, RedTabsTrigger } from "@/components/ui/RedTabs";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -321,21 +322,15 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
       </div>
 
       {/* Tab nav — RedTabs */}
-      <RedTabsList>
-        {TABS.map(tab => (
-          <RedTabsTrigger
-            key={tab.id}
-            value={tab.id}
-            data-state={activeTab === tab.id ? "active" : "inactive"}
-            onClick={() => {
-              setActiveTab(tab.id);
-              setSelectedReminder(null);
-            }}
-          >
-            {tab.label}
-          </RedTabsTrigger>
-        ))}
-      </RedTabsList>
+      <Tabs value={activeTab} onValueChange={val => { setActiveTab(val); setSelectedReminder(null); }}>
+        <RedTabsList>
+          {TABS.map(tab => (
+            <RedTabsTrigger key={tab.id} value={tab.id}>
+              {tab.label}
+            </RedTabsTrigger>
+          ))}
+        </RedTabsList>
+      </Tabs>
 
       {/* Tab content */}
 
