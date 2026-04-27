@@ -188,12 +188,17 @@ export default function FollowUpDetail({ reminder, today, onBack }) {
     f.reminder_date <= fimSemana
   );
 
-  const fusDaSprint = allFollowUps
-    .filter(f => f.origin_type === 'sprint' && f.sprint_id === reminder.sprint_id && f.id !== reminder.id)
-    .sort((a, b) => (a.reminder_date || '').localeCompare(b.reminder_date || ''));
-
   const isSprintFU = reminder.origin_type === 'sprint';
   const sprintLabel = reminder.notes?.replace('Follow-up automático da sprint: ', '').trim() || null;
+  const fusDaSprint = isSprintFU
+    ? allFollowUps
+        .filter(f =>
+          f.origin_type === 'sprint' &&
+          f.sprint_id === reminder.sprint_id &&
+          f.id !== reminder.id
+        )
+        .sort((a, b) => (a.sequence_number || 0) - (b.sequence_number || 0))
+    : [];
 
   const handleSave = async () => {
     if (!canal) { toast.error("Selecione o canal de contato"); return; }
@@ -619,6 +624,65 @@ export default function FollowUpDetail({ reminder, today, onBack }) {
               <div className="bg-white border border-gray-200 rounded-xl p-4">
                 <p className="text-[10px] text-gray-400 uppercase tracking-wide font-semibold mb-3">Timeline de Follow-ups</p>
 
+                {isSprintFU && (
+                  <div className="mb-4 bg-orange-50 border border-orange-200 rounded-lg overflow-hidden">
+                    <div className="flex items-center gap-2 px-3 py-2 border-b border-orange-200">
+                      <span className="text-sm">🚀</span>
+                      <p className="text-[10px] font-bold text-orange-800 uppercase tracking-wide flex-1">
+                        Follow-ups desta sprint
+                      </p>
+                      <span className="text-[10px] text-orange-600 font-medium">
+                        {allFollowUps.filter(f => f.sprint_id === reminder.sprint_id && f.origin_type === 'sprint').filter(f => f.is_completed).length}
+                        /{allFollowUps.filter(f => f.sprint_id === reminder.sprint_id && f.origin_type === 'sprint').length} concluídos
+                      </span>
+                    </div>
+                    {sprintLabel && (
+                      <p className="text-[11px] text-orange-600 px-3 pt-2 pb-1 italic truncate">
+                        {sprintLabel}
+                      </p>
+                    )}
+                    <div className="px-3 pb-3 pt-1 space-y-1.5">
+                      {/* FU atual destacado */}
+                      <div className="flex items-center gap-2 bg-orange-100 border border-orange-200 rounded px-2 py-1.5">
+                        <div className="w-2.5 h-2.5 rounded-full bg-orange-500 flex-shrink-0 ring-2 ring-orange-300" />
+                        <span className="text-[11px] font-bold text-orange-800">
+                          FU {reminder.sequence_number} · Em andamento
+                        </span>
+                        <span className="ml-auto text-[10px] text-orange-600 font-medium">
+                          {reminder.reminder_date
+                            ? format(new Date(reminder.reminder_date + 'T00:00:00'), 'dd/MM')
+                            : '—'}
+                        </span>
+                      </div>
+                      {/* Demais FUs da sprint ordenados por sequence_number */}
+                      {fusDaSprint.map(f => (
+                        <div key={f.id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-orange-50 transition-colors">
+                          <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
+                            f.is_completed
+                              ? 'bg-green-400'
+                              : 'bg-gray-300'
+                          }`} />
+                          <span className={`text-[11px] font-semibold ${
+                            f.is_completed ? 'text-green-700' : 'text-gray-600'
+                          }`}>
+                            FU {f.sequence_number}
+                          </span>
+                          <span className={`text-[10px] ${
+                            f.is_completed ? 'text-green-500' : 'text-gray-400'
+                          }`}>
+                            {f.is_completed ? '✓ concluído' : 'pendente'}
+                          </span>
+                          <span className="ml-auto text-[10px] text-gray-400">
+                            {f.reminder_date
+                              ? format(new Date(f.reminder_date + 'T00:00:00'), 'dd/MM')
+                              : '—'}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {fusDaSemana.length > 0 && (
                   <div className="mb-4 border border-amber-200 bg-amber-50 rounded-lg overflow-hidden">
                     <button
@@ -676,52 +740,7 @@ export default function FollowUpDetail({ reminder, today, onBack }) {
                   </div>
                 )}
 
-                {isSprintFU && (
-                  <div className="mb-4 bg-orange-50 border border-orange-200 rounded-lg p-3">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-sm">🚀</span>
-                      <p className="text-[10px] font-bold text-orange-800 uppercase tracking-wide">
-                        Follow-ups desta sprint
-                      </p>
-                    </div>
-                    {sprintLabel && (
-                      <p className="text-[11px] text-orange-600 mb-2 italic truncate">{sprintLabel}</p>
-                    )}
-                    <div className="space-y-1.5">
-                      <div className="flex items-center gap-2 bg-orange-100 rounded px-2 py-1.5">
-                        <div className="w-2 h-2 rounded-full bg-orange-500 flex-shrink-0" />
-                        <span className="text-[11px] font-semibold text-orange-800">
-                          FU {reminder.sequence_number} · Atual
-                        </span>
-                        <span className="ml-auto text-[10px] text-orange-600">
-                          {reminder.reminder_date
-                            ? format(new Date(reminder.reminder_date + 'T00:00:00'), 'dd/MM')
-                            : '—'}
-                        </span>
-                      </div>
-                      {fusDaSprint.map(f => (
-                        <div key={f.id} className="flex items-center gap-2 px-2 py-1.5">
-                          <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                            f.is_completed ? 'bg-green-400' : 'bg-gray-300'
-                          }`} />
-                          <span className="text-[11px] text-gray-600">
-                            FU {f.sequence_number}
-                          </span>
-                          <span className={`text-[10px] ml-1 ${
-                            f.is_completed ? 'text-green-500' : 'text-gray-400'
-                          }`}>
-                            {f.is_completed ? '✓ concluído' : 'pendente'}
-                          </span>
-                          <span className="ml-auto text-[10px] text-gray-400">
-                            {f.reminder_date
-                              ? format(new Date(f.reminder_date + 'T00:00:00'), 'dd/MM')
-                              : '—'}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+
 
                 <div className="grid grid-cols-2 divide-x divide-gray-100 gap-0">
                   {/* Left: histórico */}
