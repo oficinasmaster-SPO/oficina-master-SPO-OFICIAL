@@ -124,6 +124,7 @@ const TABS = [
 
 export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("crm");
   const [openFolders, setOpenFolders] = useState({});
@@ -147,9 +148,7 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
 
   // Verificação defensiva de vazamento de tenant
   useEffect(() => {
-    if (!reminders.length) return;
-    const { user } = useAuth();
-    if (!user?.consulting_firm_id) return;
+    if (!reminders.length || !user?.consulting_firm_id) return;
     
     const vazamento = reminders.filter(r =>
       r.consulting_firm_id &&
@@ -166,7 +165,7 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
         { duration: 10000 }
       );
     }
-  }, [reminders]);
+  }, [reminders, user?.consulting_firm_id]);
 
   // Fetch dos atendimentos concluídos
   const { data: concludedAttendances = [] } = useQuery({
