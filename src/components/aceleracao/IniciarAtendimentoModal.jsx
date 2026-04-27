@@ -447,7 +447,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
   }
 
   return (
-    <Dialog open={true} onOpenChange={() => setShowCancelConfirm(true)}>
+    <Dialog open={true} onOpenChange={(open) => { if (!open) setShowCancelConfirm(true); }}>
       <DialogContent hideClose className="p-0 flex flex-col overflow-hidden relative" style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "96vw", maxWidth: "96vw", height: "94vh", maxHeight: "94vh", zIndex: 9999, margin: 0, borderRadius: "12px" }}>
         {/* OVERLAY DE SALVAMENTO */}
         {saving && (
