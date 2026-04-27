@@ -7,8 +7,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import {
   ArrowLeft, Phone, Mail, MessageCircle, Calendar, AlertCircle,
   ChevronRight, User, Zap, FileText, PlayCircle, ExternalLink, X,
+  Clock, Video, Bell,
 } from "lucide-react";
-import { format, differenceInDays, addDays } from "date-fns";
+import { format, differenceInDays, addDays, isToday, parseISO } from "date-fns";
 import { toast } from "sonner";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -97,6 +98,25 @@ export default function FollowUpDetail({ reminder, today, onBack }) {
     },
     enabled: !!reminder.workshop_id,
     staleTime: 3 * 60 * 1000,
+  });
+
+  const { data: atendimentosHoje = [] } = useQuery({
+    queryKey: ["atendimentos-hoje-consultor", user?.id, today],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const todos = await base44.entities.ConsultoriaAtendimento.filter(
+        { consultor_id: user.id },
+        "data_agendada",
+        50
+      );
+      return todos.filter(a => {
+        if (!a.data_agendada) return false;
+        if (!['agendado', 'confirmado', 'reagendado'].includes(a.status)) return false;
+        try { return isToday(parseISO(a.data_agendada)); } catch { return false; }
+      });
+    },
+    enabled: !!user?.id,
+    staleTime: 2 * 60 * 1000,
   });
 
   const originAta = atas.find(a => a.id === reminder.ata_id);
@@ -381,10 +401,56 @@ export default function FollowUpDetail({ reminder, today, onBack }) {
         </div>
 
         {/* ---- RIGHT COLUMN ---- */}
-        <div className="space-y-3">
+         <div className="space-y-3">
 
-          {/* Consultor */}
-          {reminder.consultor_nome && (
+           {/* Atendimentos do dia */}
+           {atendimentosHoje.length > 0 && (
+             <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+               <div className="flex items-center gap-2 mb-3">
+                 <Bell className="w-4 h-4 text-blue-600" />
+                 <p className="text-[10px] text-blue-700 uppercase tracking-wide font-bold">
+                   Seus atendimentos de hoje ({atendimentosHoje.length})
+                 </p>
+               </div>
+               <div className="space-y-2">
+                 {atendimentosHoje.map(at => (
+                   <div key={at.id} className="bg-white border border-blue-100 rounded-lg px-3 py-2.5 flex items-start gap-3">
+                     <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                       <Video className="w-4 h-4 text-blue-600" />
+                     </div>
+                     <div className="flex-1 min-w-0">
+                       <p className="text-xs font-semibold text-gray-800 truncate">
+                         {at.workshop_name || 'Cliente'}
+                       </p>
+                       <p className="text-[11px] text-gray-500 capitalize">
+                         {(at.tipo_atendimento || 'atendimento').replace(/_/g, ' ')}
+                       </p>
+                       <div className="flex items-center gap-1 mt-1">
+                         <Clock className="w-3 h-3 text-blue-500" />
+                         <span className="text-[11px] text-blue-600 font-medium">
+                           {at.data_agendada
+                             ? format(parseISO(at.data_agendada), 'HH:mm')
+                             : 'Horário não definido'}
+                         </span>
+                         <span className={`ml-auto text-[10px] px-1.5 py-0.5 rounded font-semibold ${
+                           at.status === 'confirmado'
+                             ? 'bg-green-100 text-green-700'
+                             : at.status === 'reagendado'
+                             ? 'bg-amber-100 text-amber-700'
+                             : 'bg-blue-100 text-blue-700'
+                         }`}>
+                           {at.status}
+                         </span>
+                       </div>
+                     </div>
+                   </div>
+                 ))}
+               </div>
+             </div>
+           )}
+
+           {/* Consultor */}
+           {reminder.consultor_nome && (
             <div className="bg-white border border-gray-200 rounded-xl p-4">
               <p className="text-[10px] text-gray-400 uppercase tracking-wide font-semibold mb-3">Consultor Responsável</p>
               <div className="flex items-center gap-3">
