@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Phone, MessageCircle, Mail, Video, MapPin, CheckCircle2, X, Clock, AlertCircle,
@@ -103,6 +103,8 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
     setInicioContagem(prev => prev ?? Date.now());
   }, []);
   const [cronometroAtivo, setCronometroAtivo] = useState(true);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [showAtaModal, setShowAtaModal] = useState(false);
 
   // Carregar rascunho ao abrir o modal
   useEffect(() => {
@@ -138,6 +140,8 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
       }
     }
   }, [followUp?.id]);
+
+  // Fetch ATAs
    const { data: atas = [] } = useQuery({
      queryKey: ["atas-modal", followUp?.workshop_id],
      queryFn: async () => {
@@ -208,7 +212,66 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
     return Object.keys(newErrors).length === 0;
   };
 
-  // Fetch ATAs
+  const handleSaveDraft = async () => {
+    setSaving(true);
+    try {
+      console.log('Iniciando salvamento de rascunho...');
+      console.log('followUp:', followUp);
+      
+      if (!followUp || !followUp.id) {
+        toast.error("Erro: follow-up não identificado");
+        setSaving(false);
+        return;
+      }
+
+      setSavingStep("Salvando rascunho...");
+      
+      // Salvar dados em uma estrutura temporária
+       const draftData = {
+         followUp_id: followUp.id,
+         atendimento_id: followUp.atendimento_id,
+         canal,
+         resultado,
+         dataContato,
+         duracao,
+         humor,
+         engajamento,
+         observacoes,
+         compromissos,
+         proximoPasso,
+         proxData,
+         proxHora,
+         pastedImages,
+         timer,
+         cronometroAtivo: false,
+         inicioContagem,
+         savedAt: new Date().toISOString()
+       };
+
+       // Salvar no localStorage com a key baseada em followUp.id
+       const storageKey = `draft_atendimento_${followUp.id}`;
+       localStorage.setItem(storageKey, JSON.stringify(draftData));
+       console.log('✅ Rascunho salvo em:', storageKey);
+       console.log('Dados salvos:', draftData);
+      
+      await new Promise(r => setTimeout(r, 800));
+      setSavingStep("completed");
+      await new Promise(r => setTimeout(r, 1000));
+      
+      // Pausar cronômetro
+      setCronometroAtivo(false);
+      
+      toast.success("Rascunho salvo com sucesso!");
+      // Não limpar o localStorage aqui — para que o rascunho permaneça disponível
+      onClose();
+      } catch (err) {
+      console.error('Erro ao salvar rascunho:', err);
+      toast.error("Erro ao salvar rascunho: " + err.message);
+      setSavingStep(null);
+      } finally {
+      setSaving(false);
+      }
+      };
 
   const handleSaveAndFinalize = async () => {
     if (!validate()) {
@@ -303,7 +366,13 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
     }
   };
 
-
+      const handleConfirmCancel = () => {
+      const storageKey = `draft_atendimento_${followUp.id}`;
+      localStorage.removeItem(storageKey);
+      toast.success("Dados descartados!");
+      setShowCancelConfirm(false);
+      onClose();
+      };
 
   // Tela de confirmação pós-salvar
   if (saveSuccess) {
@@ -423,7 +492,9 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
               <span className="bg-red-800 rounded px-2 py-0.5 font-mono text-sm">{formatTimer()}</span>
             </Badge>
           </div>
-
+          <Button variant="ghost" size="sm" onClick={() => setShowCancelConfirm(true)} className="text-gray-300 hover:text-white hover:bg-gray-800">
+            Cancelar
+          </Button>
         </div>
 
         {/* CONTENT - SCROLLÁVEL */}
@@ -853,10 +924,13 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
         </div>
 
         {/* FOOTER - FIXO */}
-         <div className="bg-white border-t border-gray-200 px-6 py-4 flex gap-3 justify-between flex-shrink-0">
-           <Button variant="outline" onClick={() => { localStorage.removeItem(`draft_atendimento_${followUp?.id}`); onClose(); }} disabled={saving}>
-             Fechar
+         <div className="bg-white border-t border-gray-200 px-6 py-4 flex gap-3 justify-end flex-shrink-0">
+           <Button variant="outline" onClick={() => setShowCancelConfirm(true)} disabled={saving}>
+             Cancelar
            </Button>
+          <Button variant="outline" onClick={handleSaveDraft} disabled={saving} className="border-cyan-300 text-cyan-700 hover:bg-cyan-50">
+            {saving && savingStep ? savingStep : "Rascunho"}
+          </Button>
           <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={handleSaveAndFinalize} disabled={saving}>
             {saving ? "Salvando..." : "Salvar e finalizar atendimento"}
           </Button>
@@ -865,12 +939,35 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
         </Dialog>
 
       {/* ATA Modal - Fora do Dialog */}
-       {selectedAta && (
-       <VisualizarAtaModal
-         ata={selectedAta}
-         onClose={() => setSelectedAta(null)}
-       />
-       )}
+      {selectedAta && (
+      <VisualizarAtaModal
+        ata={selectedAta}
+        onClose={() => setSelectedAta(null)}
+      />
+      )}
+
+      {/* Cancel Confirmation Dialog - Fora do Dialog */}
+      <AlertDialog open={showCancelConfirm} onOpenChange={setShowCancelConfirm}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Descartar todos os dados?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Você está prestes a cancelar o atendimento. Todos os dados não salvos serão perdidos permanentemente, incluindo o rascunho.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => setShowCancelConfirm(false)}>
+            Manter e continuar
+          </AlertDialogCancel>
+          <AlertDialogAction 
+            onClick={handleConfirmCancel}
+            className="bg-red-600 hover:bg-red-700"
+          >
+            Descartar tudo
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+      </AlertDialog>
       </>
       );
       }
