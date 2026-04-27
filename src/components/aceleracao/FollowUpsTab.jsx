@@ -9,6 +9,7 @@ import {
   Check, Search, X, StickyNote, Clock, CheckCircle2, AlertCircle,
   ChevronDown, ChevronRight, Folder, FolderOpen, User, Loader2,
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import FollowUpList from "./followups/FollowUpList";
@@ -235,12 +236,29 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
     </div>
   );
 
+  const FollowUpSkeleton = () => (
+    <Card className="overflow-hidden border-gray-200">
+      <div className="divide-y divide-gray-100">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="flex items-center gap-3 px-4 py-3">
+            <Skeleton className="w-7 h-7 rounded-full flex-shrink-0" />
+            <div className="flex-1 space-y-1.5">
+              <Skeleton className="h-3 w-32" />
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-3 w-20" />
+                <Skeleton className="h-3 w-16" />
+              </div>
+            </div>
+            <Skeleton className="h-7 w-16 rounded-md flex-shrink-0" />
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+
   const FlatList = ({ items, showWorkshop = false, emptyLabel, onSelect }) => (
     isLoading ? (
-      <div className="py-16 flex items-center justify-center gap-2 text-gray-400 text-sm">
-        <Loader2 className="w-4 h-4 animate-spin" />
-        Carregando follow-ups...
-      </div>
+      <FollowUpSkeleton />
     ) : items.length === 0 ? (
       <EmptyState label={emptyLabel} />
     ) : (
@@ -342,10 +360,7 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
       {/* Pastas Tab */}
       {activeTab === "pastas" && (
         isLoading ? (
-          <div className="py-16 flex items-center justify-center gap-2 text-gray-400 text-sm">
-            <Loader2 className="w-4 h-4 animate-spin" />
-            Carregando follow-ups...
-          </div>
+          <FollowUpSkeleton />
         ) : grouped.length === 0 ? (
           <EmptyState label="Nenhum cliente encontrado" />
         ) : (
@@ -423,10 +438,7 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
 
       {activeTab === "consultor" && (
         isLoading ? (
-          <div className="py-16 flex items-center justify-center gap-2 text-gray-400 text-sm">
-            <Loader2 className="w-4 h-4 animate-spin" />
-            Carregando follow-ups...
-          </div>
+          <FollowUpSkeleton />
         ) : groupedByConsultor.length === 0 ? (
           <EmptyState label="Nenhum follow-up encontrado" />
         ) : (
