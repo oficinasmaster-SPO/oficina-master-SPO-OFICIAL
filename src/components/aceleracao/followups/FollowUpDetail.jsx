@@ -66,6 +66,8 @@ export default function FollowUpDetail({ reminder, today, onBack }) {
   const [selectedAta, setSelectedAta] = useState(null);
   const { user } = useAuth();
   const [registerStep, setRegisterStep] = useState("history");
+  const [fusSemanaExpandido, setFusSemanaExpandido] = useState(false);
+  const [fusSelecionados, setFusSelecionados] = useState([]);
 
   const isOverdue = !reminder.is_completed && reminder.reminder_date < today;
   const daysOver = reminder.reminder_date
@@ -123,6 +125,23 @@ export default function FollowUpDetail({ reminder, today, onBack }) {
   const suggestedAction = originAta?.proximos_passos?.trim()
     || atas.find(a => a.proximos_passos?.trim())?.proximos_passos
     || null;
+
+  const inicioSemana = (() => {
+    const d = new Date(today);
+    d.setDate(d.getDate() - d.getDay());
+    return d.toISOString().split('T')[0];
+  })();
+  const fimSemana = (() => {
+    const d = new Date(today);
+    d.setDate(d.getDate() + (6 - d.getDay()));
+    return d.toISOString().split('T')[0];
+  })();
+  const fusDaSemana = allFollowUps.filter(f =>
+    !f.is_completed &&
+    f.id !== reminder.id &&
+    f.reminder_date >= inicioSemana &&
+    f.reminder_date <= fimSemana
+  );
 
   const fusDaSprint = allFollowUps
     .filter(f => f.origin_type === 'sprint' && f.sprint_id === reminder.sprint_id && f.id !== reminder.id)
@@ -202,9 +221,14 @@ export default function FollowUpDetail({ reminder, today, onBack }) {
       <IniciarAtendimentoModal
         followUp={reminder}
         cliente={{ name: reminder.workshop_name }}
+        fusConcatenados={fusSelecionados
+          .map(id => allFollowUps.find(f => f.id === id))
+          .filter(Boolean)
+        }
         onClose={() => setView("detail")}
         onSaved={() => {
           queryClient.invalidateQueries({ queryKey: ["follow-up-reminders"] });
+          setFusSelecionados([]);
         }}
       />
     );
@@ -394,6 +418,11 @@ export default function FollowUpDetail({ reminder, today, onBack }) {
                 >
                   <PlayCircle className="w-4 h-4" />
                   {temRascunho ? "Retomar Atendimento" : "Iniciar Atendimento"}
+                  {fusSelecionados.length > 0 && (
+                    <span className="bg-white text-red-600 text-[10px] font-bold rounded-full px-1.5 py-0.5 ml-1">
+                      +{fusSelecionados.length}
+                    </span>
+                  )}
                 </Button>
               );
             })()}
@@ -533,6 +562,63 @@ export default function FollowUpDetail({ reminder, today, onBack }) {
             return (
               <div className="bg-white border border-gray-200 rounded-xl p-4">
                 <p className="text-[10px] text-gray-400 uppercase tracking-wide font-semibold mb-3">Timeline de Follow-ups</p>
+
+                {fusDaSemana.length > 0 && (
+                  <div className="mb-4 border border-amber-200 bg-amber-50 rounded-lg overflow-hidden">
+                    <button
+                      onClick={() => setFusSemanaExpandido(v => !v)}
+                      className="w-full flex items-center justify-between px-3 py-2 text-left"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="w-4 h-4 rounded-full bg-amber-500 text-white text-[9px] font-bold flex items-center justify-center">
+                          {fusDaSemana.length}
+                        </span>
+                        <span className="text-[11px] font-semibold text-amber-800">
+                          {fusDaSemana.length} outro{fusDaSemana.length > 1 ? 's' : ''} FU{fusDaSemana.length > 1 ? 's' : ''} esta semana
+                        </span>
+                      </div>
+                      <ChevronRight className={`w-3.5 h-3.5 text-amber-600 transition-transform ${fusSemanaExpandido ? 'rotate-90' : ''}`} />
+                    </button>
+                    {fusSemanaExpandido && (
+                      <div className="border-t border-amber-200 bg-white">
+                        <p className="text-[10px] text-gray-500 px-3 pt-2 pb-1">
+                          Selecione para encerrar junto neste atendimento
+                        </p>
+                        {fusDaSemana.map(f => (
+                          <label key={f.id} className="flex items-center gap-2.5 px-3 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-0">
+                            <input
+                              type="checkbox"
+                              checked={fusSelecionados.includes(f.id)}
+                              onChange={e => {
+                                setFusSelecionados(prev =>
+                                  e.target.checked
+                                    ? [...prev, f.id]
+                                    : prev.filter(id => id !== f.id)
+                                );
+                              }}
+                              className="w-3.5 h-3.5 accent-red-600"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[11px] font-semibold text-gray-700">
+                                FU {f.sequence_number} · {f.reminder_date
+                                  ? format(new Date(f.reminder_date + 'T00:00:00'), 'dd/MM')
+                                  : '—'}
+                              </p>
+                              {f.consultor_nome && (
+                                <p className="text-[10px] text-gray-400">{f.consultor_nome}</p>
+                              )}
+                            </div>
+                          </label>
+                        ))}
+                        {fusSelecionados.length > 0 && (
+                          <p className="text-[10px] text-amber-700 bg-amber-50 px-3 py-2 font-medium">
+                            {fusSelecionados.length} FU{fusSelecionados.length > 1 ? 's' : ''} será{fusSelecionados.length > 1 ? 'ão' : ''} encerrado{fusSelecionados.length > 1 ? 's' : ''} com os mesmos dados deste atendimento
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {isSprintFU && (
                   <div className="mb-4 bg-orange-50 border border-orange-200 rounded-lg p-3">

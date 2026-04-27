@@ -76,7 +76,7 @@ const PROXIMO_PASSO_OPTIONS = [
   { id: "cancelar", label: "Cancelamento" },
 ];
 
-export default function IniciarAtendimentoModal({ followUp, cliente, onClose, onSaved }) {
+export default function IniciarAtendimentoModal({ followUp, cliente, onClose, onSaved, fusConcatenados = [] }) {
   const queryClient = useQueryClient();
   const [timer, setTimer] = useState(0);
   const [canal, setCanal] = useState("");
@@ -312,6 +312,37 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
         completed_at: new Date().toISOString(),
       });
       await new Promise(r => setTimeout(r, 650));
+
+      // STEP 1b — Encerrar FUs concatenados com os mesmos dados
+      if (fusConcatenados.length > 0) {
+        await Promise.all(fusConcatenados.map(fu =>
+          Promise.all([
+            base44.entities.FollowUpReminder.update(fu.id, {
+              is_completed: true,
+              completed_at: new Date().toISOString(),
+            }),
+            base44.entities.FollowUpConcluido.create({
+              followup_id: fu.id,
+              workshop_id: fu.workshop_id,
+              consultor_id: fu.consultor_id,
+              consultor_nome: fu.consultor_nome,
+              canal,
+              resultado,
+              dataContato,
+              duracao,
+              humor,
+              engajamento,
+              observacoes: `[Encerrado junto ao FU ${followUp.sequence_number}] ${observacoes}`,
+              compromissos,
+              proximoPasso,
+              proxData,
+              proxHora,
+              pastedImages: [],
+              completedAt: new Date().toISOString(),
+            }),
+          ])
+        ));
+      }
 
       // STEP 2 — Criar próximo follow-up (se reagendar)
       let novoFollowUp = null;
