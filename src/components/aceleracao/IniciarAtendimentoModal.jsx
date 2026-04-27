@@ -388,6 +388,8 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
           consultor_nome: followUp.consultor_nome,
           sequence_number: nextSeq,
           reminder_date: proxData,
+          origin_type: followUp.origin_type === 'sprint' ? 'sprint' : 'ata',
+          sprint_id: followUp.origin_type === 'sprint' ? followUp.sprint_id : null,
           is_completed: false,
           notes: compromissos ? `Comprometimentos anteriores:\n${compromissos}` : "",
         });
