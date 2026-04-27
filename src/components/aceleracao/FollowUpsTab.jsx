@@ -288,6 +288,15 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
 
   return (
     <div className="space-y-4">
+      <style>{`
+        @keyframes fuTabFadeIn {
+          from { opacity: 0; transform: translateY(4px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        .fu-tab-content {
+          animation: fuTabFadeIn 150ms ease-out forwards;
+        }
+      `}</style>
       {/* Discrete stats + search */}
       <div className="flex items-center gap-4 text-sm text-gray-500">
         <span className="flex items-center gap-1.5">
@@ -333,6 +342,7 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
       </Tabs>
 
       {/* Tab content */}
+      <div key={activeTab} className="fu-tab-content">
 
       {/* CRM Tab */}
       {activeTab === "crm" && (
@@ -475,6 +485,7 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
           )}
         </>
       )}
+      </div>
     </div>
   );
 }
