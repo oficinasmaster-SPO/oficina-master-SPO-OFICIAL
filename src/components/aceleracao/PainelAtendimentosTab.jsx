@@ -22,7 +22,6 @@ import CancelarAtendimentoDialog from "./CancelarAtendimentoDialog";
 import FaltouAtendimentoDialog from "./FaltouAtendimentoDialog";
 import ConcluirAtendimentoDialog from "./ConcluirAtendimentoDialog";
 const BucketAtendimentosTab = lazy(() => import("./BucketAtendimentosTab"));
-const FollowUpsTab = lazy(() => import("./FollowUpsTab"));
 import DashboardAtendimentos from "./DashboardAtendimentos";
 import { ATENDIMENTO_STATUS, ATENDIMENTO_STATUS_COLORS, ATENDIMENTO_STATUS_LABELS } from "@/components/lib/ataConstants";
 import { format } from "date-fns";
@@ -260,7 +259,7 @@ export default function PainelAtendimentosTab({ state }) {
         />
       )}
 
-      {activeTab !== 'bucket' && activeTab !== 'followups' && (
+      {activeTab !== 'bucket' && (
         <DashboardAtendimentos atendimentos={atendimentosFiltrados} onStatusClick={setActiveTab} />
       )}
 
@@ -275,7 +274,6 @@ export default function PainelAtendimentosTab({ state }) {
               { value: ATENDIMENTO_STATUS.REAGENDADO, label: 'Reagendados' },
               { value: ATENDIMENTO_STATUS.REALIZADO, label: 'Realizados' },
               { value: ATENDIMENTO_STATUS.CONCLUIDO, label: 'Concluídos' },
-              { value: 'followups', label: '📌 Follow up\'s' },
               { value: 'bucket', label: '📥 Bucket' },
             ].map(tab => (
               <button
@@ -361,11 +359,7 @@ export default function PainelAtendimentosTab({ state }) {
         </div>
       </div>
 
-      {activeTab === 'followups' ? (
-        <Suspense fallback={<div className="py-12 text-center text-gray-500">Carregando follow-ups...</div>}>
-          <FollowUpsTab consultorEfetivo={state.consultorEfetivo} workshops={state.workshops} />
-        </Suspense>
-      ) : activeTab === 'bucket' ? (
+      {activeTab === 'bucket' ? (
         <Suspense fallback={<div className="py-12 text-center text-gray-500">Carregando bucket...</div>}>
           <BucketAtendimentosTab state={state} />
         </Suspense>
