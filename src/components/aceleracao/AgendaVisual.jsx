@@ -56,7 +56,9 @@ export default function AgendaVisual({ atendimentos = [], workshops = [], user }
 
   const getFollowUpsForDay = (day) => {
     const dayStr = format(day, 'yyyy-MM-dd');
-    return followUpReminders.filter(r => r.reminder_date === dayStr && !r.is_completed);
+    return followUpReminders.filter(r => 
+      r.reminder_date === dayStr && !r.is_completed && (r.origin_type === 'ata' || !r.origin_type)
+    );
   };
 
   const getDateRange = () => {
