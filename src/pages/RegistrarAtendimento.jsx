@@ -47,13 +47,6 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
   };
 
   const handleClose = () => {
-    // E2: Confirm before discarding unsaved changes (also for new records with data filled)
-    const hasFilledData = formData.workshop_id || formData.data_agendada || formData.observacoes_consultor;
-    if (hasUnsavedChanges && formData.id) {
-      if (!window.confirm('Existem alterações não salvas. Deseja realmente sair?')) return;
-    } else if (!formData.id && hasFilledData) {
-      if (!window.confirm('Você preencheu dados que ainda não foram salvos. Deseja realmente sair?')) return;
-    }
     if (isModal) {
       setIsClosing(true);
       setTimeout(() => actualClose(), 250);
