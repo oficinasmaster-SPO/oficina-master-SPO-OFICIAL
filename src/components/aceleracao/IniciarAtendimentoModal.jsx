@@ -9,13 +9,42 @@ import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, A
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Phone, MessageCircle, Mail, Video, MapPin, CheckCircle2, X, Clock, AlertCircle,
-  ChevronRight, Upload, Check
+  ChevronRight, Upload, Check, ArrowRight, Calendar, User
 } from "lucide-react";
-import { format, addDays } from "date-fns";
+import { format } from "date-fns";
 import { toast } from "sonner";
 import { base44 } from "@/api/base44Client";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import VisualizarAtaModal from "@/components/aceleracao/VisualizarAtaModal";
+
+const RESULTADO_COLORS = {
+  atendeu: "bg-green-100 text-green-700 border-green-300",
+  nao_atendeu: "bg-red-100 text-red-700 border-red-300",
+  retornar: "bg-amber-100 text-amber-700 border-amber-300",
+  agendou: "bg-blue-100 text-blue-700 border-blue-300",
+  reagendou: "bg-purple-100 text-purple-700 border-purple-300",
+  desistiu: "bg-gray-100 text-gray-700 border-gray-300",
+};
+
+const RESULTADO_LABELS = {
+  atendeu: "Atendeu", nao_atendeu: "Não atendeu", retornar: "Retornar",
+  agendou: "Agendou", reagendou: "Reagendou", desistiu: "Desistiu",
+};
+const CANAL_LABELS = {
+  ligacao: "Ligação", whatsapp: "WhatsApp", email: "E-mail",
+  video: "Vídeo", presencial: "Presencial",
+};
+const PROXIMO_PASSO_LABELS = {
+  reagendar: "Reagendar follow-up", agendar: "Agendar sessão", enviar: "Enviar material",
+  escalar: "Escalar para gestor", concluir: "Concluir programa", cancelar: "Cancelamento",
+};
+
+const SAVE_STEPS = [
+  { key: "interacao",  label: "Gravando interação..." },
+  { key: "followup",   label: "Atualizando status do follow-up..." },
+  { key: "proximo",    label: "Criando próximo follow-up..." },
+  { key: "notificacao",label: "Notificando consultor..." },
+];
 
 function getInitials(name = "") {
   return name.split(" ").slice(0, 2).map(p => p[0]).join("").toUpperCase() || "?";
@@ -62,6 +91,8 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
   const [proxHora, setProxHora] = useState("");
   const [saving, setSaving] = useState(false);
   const [savingStep, setSavingStep] = useState(null);
+  const [activeStepIndex, setActiveStepIndex] = useState(-1);
+  const [saveSuccess, setSaveSuccess] = useState(null); // dados da tela de confirmação
   const [errors, setErrors] = useState({});
   const [selectedAta, setSelectedAta] = useState(null);
   const [pastedImages, setPastedImages] = useState([]);
@@ -251,100 +282,98 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
       }
       };
 
-      const handleSaveAndFinalize = async () => {
-      if (!validate()) {
+  const handleSaveAndFinalize = async () => {
+    if (!validate()) {
       toast.error("Preencha todos os campos obrigatórios");
       return;
-      }
+    }
 
-      setSaving(true);
-      try {
-      // Primeiro executar o handleSave original
-      const steps = [
-        { name: "Gravando interação...", action: async () => {
-          setSavingStep("Gravando interação...");
-          // Salvar dados do atendimento na entidade FollowUpConcluido
-          await base44.entities.FollowUpConcluido.create({
-            followup_id: followUp.id,
-            workshop_id: followUp.workshop_id,
-            consultor_id: followUp.consultor_id,
-            consultor_nome: followUp.consultor_nome,
-            canal,
-            resultado,
-            dataContato,
-            duracao,
-            humor,
-            engajamento,
-            observacoes,
-            compromissos,
-            proximoPasso,
-            proxData,
-            proxHora,
-            pastedImages,
-            completedAt: new Date().toISOString(),
-          });
-        }},
-        { name: "Atualizando status do follow-up...", action: async () => {
-          setSavingStep("Atualizando status do follow-up...");
-          await base44.entities.FollowUpReminder.update(followUp.id, {
-            is_completed: true,
-            completed_at: new Date().toISOString(),
-          });
-        }},
-      ];
+    setSaving(true);
+    setActiveStepIndex(0);
 
+    try {
+      // STEP 0 — Gravar interação (FollowUpConcluido)
+      setActiveStepIndex(0);
+      await base44.entities.FollowUpConcluido.create({
+        followup_id: followUp.id,
+        workshop_id: followUp.workshop_id,
+        consultor_id: followUp.consultor_id,
+        consultor_nome: followUp.consultor_nome,
+        canal,
+        resultado,
+        dataContato,
+        duracao,
+        humor,
+        engajamento,
+        observacoes,
+        compromissos,
+        proximoPasso,
+        proxData,
+        proxHora,
+        pastedImages,
+        completedAt: new Date().toISOString(),
+      });
+      await new Promise(r => setTimeout(r, 650));
+
+      // STEP 1 — Atualizar status do FollowUpReminder
+      setActiveStepIndex(1);
+      await base44.entities.FollowUpReminder.update(followUp.id, {
+        is_completed: true,
+        completed_at: new Date().toISOString(),
+      });
+      await new Promise(r => setTimeout(r, 650));
+
+      // STEP 2 — Criar próximo follow-up (se reagendar)
+      let novoFollowUp = null;
       if (proximoPasso === "reagendar" && proxData) {
-        steps.push({
-          name: "Criando próximo follow-up...",
-          action: async () => {
-            setSavingStep("Criando próximo follow-up...");
-            const anotacoesAnterior = compromissos ? `Anotações do atendimento anterior:\n${compromissos}` : "";
-            await base44.entities.FollowUpReminder.create({
-              workshop_id: followUp.workshop_id,
-              workshop_name: followUp.workshop_name,
-              consultor_id: followUp.consultor_id,
-              consultor_nome: followUp.consultor_nome,
-              sequence_number: (followUp.sequence_number || 1) + 1,
-              reminder_date: proxData,
-              is_completed: false,
-              observacoes: anotacoesAnterior,
-            });
-          }
+        setActiveStepIndex(2);
+        const nextSeq = (followUp.sequence_number || 1) + 1;
+        novoFollowUp = await base44.entities.FollowUpReminder.create({
+          workshop_id: followUp.workshop_id,
+          workshop_name: followUp.workshop_name,
+          atendimento_id: followUp.atendimento_id,
+          ata_id: followUp.ata_id,
+          consultor_id: followUp.consultor_id,
+          consultor_nome: followUp.consultor_nome,
+          sequence_number: nextSeq,
+          reminder_date: proxData,
+          is_completed: false,
+          notes: compromissos ? `Comprometimentos anteriores:\n${compromissos}` : "",
         });
+        await new Promise(r => setTimeout(r, 650));
       }
 
-      steps.push({
-        name: "Notificando consultor...",
-        action: async () => {
-          setSavingStep("Notificando consultor...");
-        }
+      // STEP 3 — Notificação (interna)
+      setActiveStepIndex(3);
+      await new Promise(r => setTimeout(r, 650));
+
+      // Limpar rascunho
+      localStorage.removeItem(`draft_atendimento_${followUp.id}`);
+
+      // Invalidar queries para refresh das listas
+      queryClient.invalidateQueries({ queryKey: ["follow-up-reminders"] });
+      queryClient.invalidateQueries({ queryKey: ["follow-up-reminders-tab"] });
+      queryClient.invalidateQueries({ queryKey: ["follow-up-concluidos-tab"] });
+
+      // Mostrar tela de confirmação
+      setSaveSuccess({
+        clienteNome: cliente?.name || followUp?.workshop_name || "Cliente",
+        sequenceNumber: followUp?.sequence_number || 1,
+        canal, resultado,
+        novoFollowUp,
+        proxData, proxHora,
+        consultor_nome: followUp?.consultor_nome,
       });
 
-      for (const step of steps) {
-        await step.action();
-        await new Promise(r => setTimeout(r, 600));
-      }
-
-      setSavingStep("completed");
-      await new Promise(r => setTimeout(r, 1500));
-
-      // Limpar o rascunho ao finalizar com sucesso
-      const storageKey = `draft_atendimento_${followUp.id}`;
-      localStorage.removeItem(storageKey);
-      console.log('✅ Rascunho removido:', storageKey);
-
-      queryClient.invalidateQueries({ queryKey: ["follow-up-reminders"] });
       onSaved?.();
-      onClose();
-      toast.success("Atendimento salvo com sucesso!");
-      } catch (err) {
-      console.error('Erro ao salvar:', err);
-      toast.error("Erro ao salvar atendimento");
-      setSavingStep(null);
-      } finally {
+    } catch (err) {
+      console.error("Erro ao salvar:", err);
+      toast.error("Erro ao salvar atendimento: " + err.message);
+      setActiveStepIndex(-1);
+    } finally {
       setSaving(false);
-      }
-      };
+    }
+  };
 
       const handleConfirmCancel = () => {
       // Limpar rascunho do localStorage
@@ -357,9 +386,102 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
       onClose();
       };
 
-      return (
+  // Tela de confirmação pós-salvar
+  if (saveSuccess) {
+    const { clienteNome, sequenceNumber, canal: c, resultado: r, novoFollowUp, proxData: pd, proxHora: ph, consultor_nome } = saveSuccess;
+    return (
+      <Dialog open={true} onOpenChange={onClose}>
+        <DialogContent className="max-w-lg p-0 overflow-hidden">
+          <div className="bg-gradient-to-b from-green-50 to-white p-8 flex flex-col items-center text-center">
+            <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-4">
+              <CheckCircle2 className="w-9 h-9 text-green-600" />
+            </div>
+            <h2 className="text-xl font-bold text-gray-900 mb-1">Atendimento salvo!</h2>
+            <p className="text-sm text-gray-500 mb-6">
+              {clienteNome} · Follow-up {sequenceNumber}/4 concluído
+            </p>
+
+            <div className="w-full space-y-2 text-left mb-6">
+              <div className="bg-white border border-gray-200 rounded-lg px-4 py-3 flex items-center gap-3">
+                <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
+                <span className="text-sm text-gray-700">
+                  Interação registrada · <span className="font-medium">{CANAL_LABELS[c] || c}</span> · 
+                  <span className={`ml-1 px-2 py-0.5 rounded-full text-xs font-medium border ${RESULTADO_COLORS[r] || "bg-gray-100 text-gray-700"}`}>
+                    {RESULTADO_LABELS[r] || r}
+                  </span>
+                </span>
+              </div>
+              <div className="bg-white border border-gray-200 rounded-lg px-4 py-3 flex items-center gap-3">
+                <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
+                <span className="text-sm text-gray-700">Follow-up {sequenceNumber}/4 marcado como realizado</span>
+              </div>
+              <div className="bg-white border border-gray-200 rounded-lg px-4 py-3 flex items-center gap-3">
+                <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
+                <span className="text-sm text-gray-700">Observações salvas no histórico</span>
+              </div>
+            </div>
+
+            {novoFollowUp && (
+              <div className="w-full bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <p className="text-xs font-bold text-blue-700 uppercase tracking-wide mb-2">Próximo follow-up criado automaticamente</p>
+                <div className="space-y-1 text-sm text-blue-900">
+                  <div className="flex items-center gap-2">
+                    <User className="w-3.5 h-3.5 text-blue-500" />
+                    <span>Follow-up {(sequenceNumber || 1) + 1}/4</span>
+                  </div>
+                  {pd && (
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-3.5 h-3.5 text-blue-500" />
+                      <span>Data: {format(new Date(pd + "T00:00:00"), "dd/MM/yyyy")}{ph ? ` às ${ph}` : ""}</span>
+                    </div>
+                  )}
+                  {consultor_nome && (
+                    <div className="flex items-center gap-2">
+                      <User className="w-3.5 h-3.5 text-blue-500" />
+                      <span>Consultor: {consultor_nome}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <div className="flex gap-3 w-full">
+              <Button variant="outline" className="flex-1" onClick={onClose}>
+                Voltar à lista
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[95vh] p-0 flex flex-col overflow-hidden">
+      <DialogContent className="max-w-6xl max-h-[95vh] p-0 flex flex-col overflow-hidden relative">
+        {/* OVERLAY DE SALVAMENTO */}
+        {saving && (
+          <div className="absolute inset-0 bg-white/90 z-50 flex flex-col items-center justify-center gap-6">
+            <div className="w-14 h-14 rounded-full border-4 border-gray-200 border-t-green-600 animate-spin" />
+            <div className="space-y-3 w-64">
+              {SAVE_STEPS.map((step, idx) => {
+                const done = idx < activeStepIndex;
+                const active = idx === activeStepIndex;
+                return (
+                  <div key={step.key} className={`flex items-center gap-3 transition-all ${active ? "opacity-100" : done ? "opacity-60" : "opacity-30"}`}>
+                    <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${done ? "bg-green-500" : active ? "bg-green-600 animate-pulse" : "bg-gray-200"}`}>
+                      {done ? <Check className="w-3 h-3 text-white" /> : <span className="w-2 h-2 rounded-full bg-white" />}
+                    </div>
+                    <span className={`text-sm font-medium ${active ? "text-gray-900" : done ? "text-green-600" : "text-gray-400"}`}>
+                      {step.label}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* HEADER - FIXO */}
         <div className="bg-gray-900 text-white px-6 py-4 flex items-center justify-between border-b border-gray-800 flex-shrink-0">
           <div className="flex items-center gap-4">
@@ -824,7 +946,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
             {saving && savingStep ? savingStep : "Rascunho"}
           </Button>
           <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={handleSaveAndFinalize} disabled={saving}>
-            {saving ? savingStep : "Salvar e finalizar atendimento"}
+            {saving ? "Salvando..." : "Salvar e finalizar atendimento"}
           </Button>
         </div>
       </DialogContent>

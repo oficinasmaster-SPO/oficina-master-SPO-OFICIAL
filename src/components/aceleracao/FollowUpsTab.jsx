@@ -102,47 +102,40 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
   [reminders, today, searchTerm]);
 
   const listConcluidos = useMemo(() => {
-    // Combina reminders marcados como concluídos com os dados de FollowUpConcluido
+    // Índice de reminders pelo id para enriquecer dados de concluded
+    const reminderById = {};
+    reminders.forEach(r => { reminderById[r.id] = r; });
+
+    // 1. Reminders já marcados como concluídos
     const fromReminders = applySearch(reminders.filter(r => r.is_completed))
       .map(r => ({ ...r, _source: 'reminder' }));
-    
-    const fromConcluded = applySearch(concludedAttendances)
-      .map(a => ({
+
+    // IDs de reminders que já estão na lista (evitar duplicatas)
+    const includedReminderIds = new Set(fromReminders.map(r => r.id));
+
+    // 2. Registros do FollowUpConcluido que não têm reminder duplicado
+    const extra = [];
+    concludedAttendances.forEach(a => {
+      const refId = a.followup_id;
+      if (refId && includedReminderIds.has(refId)) return; // já está via reminder
+      const parentReminder = refId ? reminderById[refId] : null;
+      extra.push({
         id: a.id,
         followup_id: a.followup_id,
-        workshop_id: a.workshop_id,
-        workshop_name: a.consultor_nome ? `Workshop #${a.followup_id}` : 'Sem workshop',
+        workshop_id: a.workshop_id || parentReminder?.workshop_id,
+        workshop_name: parentReminder?.workshop_name || a.workshop_id || "Sem workshop",
         consultor_id: a.consultor_id,
         consultor_nome: a.consultor_nome,
         reminder_date: a.dataContato,
         completed_at: a.completedAt,
         is_completed: true,
-        sequence_number: 1,
+        sequence_number: parentReminder?.sequence_number || 1,
         _source: 'concluded',
-        _attendanceData: a
-      }));
-
-    // Remove duplicatas (mesmo followup_id em ambas as listas)
-    const combined = [...fromReminders];
-    concludedAttendances.forEach(a => {
-      if (!combined.find(r => r.followup_id === a.followup_id || r.id === a.followup_id)) {
-        combined.push({
-          id: a.id,
-          followup_id: a.followup_id,
-          workshop_id: a.workshop_id,
-          workshop_name: a.consultor_nome ? `Workshop #${a.followup_id}` : 'Sem workshop',
-          consultor_id: a.consultor_id,
-          consultor_nome: a.consultor_nome,
-          reminder_date: a.dataContato,
-          completed_at: a.completedAt,
-          is_completed: true,
-          sequence_number: 1,
-          _source: 'concluded',
-          _attendanceData: a
-        });
-      }
+        _attendanceData: a,
+      });
     });
 
+    const combined = [...fromReminders, ...applySearch(extra)];
     return combined.sort((a, b) => (b.completed_at || "").localeCompare(a.completed_at || ""));
   }, [reminders, concludedAttendances, searchTerm]);
 

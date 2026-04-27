@@ -39,23 +39,45 @@ export default function FollowUpCompletedDetailDrawer({ followUp, open, onClose 
   // Carregar dados do atendimento da entidade FollowUpConcluido
   useEffect(() => {
     const loadAttendanceData = async () => {
-      if (open && followUp?.id) {
+      if (!open) return;
+
+      // Se o item já trouxe os dados embutidos (source: concluded), usa direto
+      if (followUp?._attendanceData) {
+        setAttendanceData(followUp._attendanceData);
+        return;
+      }
+
+      // Se é source: concluded e tem id próprio, busca pelo id
+      if (followUp?._source === 'concluded' && followUp?.id) {
         try {
           const data = await base44.entities.FollowUpConcluido.filter(
-            { followup_id: followUp.id },
+            { id: followUp.id },
             undefined,
             1
           );
-          if (data && data.length > 0) {
-            setAttendanceData(data[0]);
-          }
+          if (data?.[0]) { setAttendanceData(data[0]); return; }
+        } catch (err) {
+          console.error('Erro ao carregar por id:', err);
+        }
+      }
+
+      // Fallback: busca pelo followup_id
+      if (followUp?.id || followUp?.followup_id) {
+        const searchId = followUp.followup_id || followUp.id;
+        try {
+          const data = await base44.entities.FollowUpConcluido.filter(
+            { followup_id: searchId },
+            undefined,
+            1
+          );
+          if (data?.[0]) setAttendanceData(data[0]);
         } catch (err) {
           console.error('Erro ao carregar dados do atendimento:', err);
         }
       }
     };
     loadAttendanceData();
-  }, [open, followUp?.id]);
+  }, [open, followUp?.id, followUp?._source]);
 
   if (!followUp) return null;
 
