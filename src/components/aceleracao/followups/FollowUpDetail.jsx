@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import {
   ArrowLeft, Phone, Mail, MessageCircle, Calendar, AlertCircle,
   ChevronRight, User, Zap, FileText, PlayCircle, ExternalLink, X,
-  Clock, Video, Bell,
+  Clock, Video, Bell, MessageSquare, Send, Loader2,
 } from "lucide-react";
 import { format, differenceInDays, addDays, isToday, parseISO } from "date-fns";
 import { toast } from "sonner";
@@ -63,6 +63,12 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
   const [reagendarEm, setReagendarEm] = useState("7");
   const [saving, setSaving] = useState(false);
   const [showLossModal, setShowLossModal] = useState(false);
+  const [chatAberto, setChatAberto] = useState(false);
+  const [chatMensagens, setChatMensagens] = useState([]);
+  const [chatInput, setChatInput] = useState('');
+  const [chatEnviando, setChatEnviando] = useState(false);
+  const [chatConversa, setChatConversa] = useState(null);
+  const chatEndRef = useRef(null);
   const [selectedAta, setSelectedAta] = useState(null);
   const { user } = useAuth();
   const [registerStep, setRegisterStep] = useState("history");
@@ -141,6 +147,50 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
   const suggestedAction = originAta?.proximos_passos?.trim()
     || atas.find(a => a.proximos_passos?.trim())?.proximos_passos
     || null;
+
+  const iniciarChat = async () => {
+    setChatAberto(true);
+    if (chatConversa) return;
+    setChatEnviando(true);
+    try {
+      const resumoAtas = atas.slice(0, 5).map(a =>
+        `- ${a.tipo_aceleracao || a.tipo_atendimento || 'Reunião'} (${a.meeting_date || 'sem data'}): ${a.proximos_passos || 'sem próximos passos'}`
+      ).join('\n');
+      const resumoConcluidos = concluidos.slice(0, 3).map(c =>
+        `- Canal: ${c.canal || '?'} | Resultado: ${c.resultado || '?'} | Humor: ${c.humor || '?'} | Comprometimentos: ${c.compromissos || 'nenhum'}`
+      ).join('\n');
+      const contexto = `Você é um assistente de consultoria empresarial. Ajude o consultor a atender o cliente "${reminder.workshop_name}" (Follow-up ${reminder.sequence_number}/4).\n\nÚLTIMAS ATAS:\n${resumoAtas || 'Nenhuma ata registrada'}\n\nÚLTIMOS ATENDIMENTOS:\n${resumoConcluidos || 'Nenhum atendimento anterior'}\n\nResponda de forma direta e prática. Seja objetivo.`;
+      const conv = await base44.agents.createConversation({
+        agent_name: 'qgp_tecnico',
+        metadata: { name: `Chat ${reminder.workshop_name} - FU ${reminder.sequence_number}`, description: contexto },
+      });
+      setChatConversa(conv);
+      setChatMensagens([{ role: 'assistant', content: `Olá! Estou pronto para ajudar com o atendimento de **${reminder.workshop_name}**. Tenho acesso ao histórico de atas e atendimentos deste cliente. O que você precisa saber?` }]);
+      const unsubscribe = base44.agents.subscribeToConversation(conv.id, (data) => setChatMensagens(data.messages || []));
+      return () => unsubscribe();
+    } catch (err) {
+      console.error('Erro ao iniciar chat:', err);
+      toast.error('Erro ao iniciar chat');
+    } finally {
+      setChatEnviando(false);
+    }
+  };
+
+  const enviarMensagemChat = async () => {
+    if (!chatInput.trim() || !chatConversa || chatEnviando) return;
+    const texto = chatInput.trim();
+    setChatInput('');
+    setChatEnviando(true);
+    setChatMensagens(prev => [...prev, { role: 'user', content: texto }]);
+    try {
+      await base44.agents.addMessage(chatConversa, { role: 'user', content: texto });
+    } catch (err) {
+      console.error('Erro ao enviar mensagem:', err);
+      toast.error('Erro ao enviar mensagem');
+    } finally {
+      setChatEnviando(false);
+    }
+  };
 
   const gerarDicaIA = async () => {
     setCarregandoDica(true);
@@ -825,6 +875,102 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
             );
           })()}
         </div>
+      </div>
+
+      {/* Mini chat flutuante */}
+      <div className="fixed bottom-6 right-6 z-40">
+        {chatAberto && (
+          <div className="mb-3 w-80 bg-white border border-gray-200 rounded-2xl shadow-2xl flex flex-col overflow-hidden" style={{ height: '420px' }}>
+            {/* Header do chat */}
+            <div className="bg-gray-900 px-4 py-3 flex items-center justify-between flex-shrink-0">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-green-400" />
+                <span className="text-xs font-semibold text-white">Assistente IA</span>
+                <span className="text-[10px] text-gray-400 truncate max-w-[100px]">{reminder.workshop_name}</span>
+              </div>
+              <button
+                onClick={() => setChatAberto(false)}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Mensagens */}
+            <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3 bg-gray-50">
+              {chatMensagens.length === 0 && !chatEnviando && (
+                <div className="flex items-center justify-center h-full">
+                  <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+                </div>
+              )}
+              {chatMensagens.map((msg, idx) => (
+                <div
+                  key={idx}
+                  className={`flex ${
+                    msg.role === 'user' ? 'justify-end' : 'justify-start'
+                  }`}
+                >
+                  <div className={`max-w-[85%] rounded-xl px-3 py-2 text-xs leading-relaxed ${
+                    msg.role === 'user'
+                      ? 'bg-red-600 text-white rounded-br-sm'
+                      : 'bg-white border border-gray-200 text-gray-800 rounded-bl-sm'
+                  }`}>
+                    {msg.content}
+                  </div>
+                </div>
+              ))}
+              {chatEnviando && (
+                <div className="flex justify-start">
+                  <div className="bg-white border border-gray-200 rounded-xl rounded-bl-sm px-3 py-2">
+                    <div className="flex gap-1">
+                      <div className="w-1.5 h-1.5 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+                      <div className="w-1.5 h-1.5 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+                      <div className="w-1.5 h-1.5 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+                    </div>
+                  </div>
+                </div>
+              )}
+              <div ref={chatEndRef} />
+            </div>
+
+            {/* Input */}
+            <div className="border-t border-gray-200 px-3 py-2 flex gap-2 bg-white flex-shrink-0">
+              <input
+                type="text"
+                value={chatInput}
+                onChange={e => setChatInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && !e.shiftKey && enviarMensagemChat()}
+                placeholder="Pergunte sobre o cliente..."
+                disabled={chatEnviando}
+                className="flex-1 text-xs border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-red-400 disabled:opacity-50"
+              />
+              <button
+                onClick={enviarMensagemChat}
+                disabled={!chatInput.trim() || chatEnviando}
+                className="w-8 h-8 rounded-lg bg-red-600 hover:bg-red-700 text-white flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex-shrink-0"
+              >
+                <Send className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Botão flutuante */}
+        <button
+          onClick={chatAberto ? () => setChatAberto(false) : iniciarChat}
+          className="w-12 h-12 rounded-full bg-gray-900 hover:bg-gray-800 text-white flex items-center justify-center shadow-lg transition-all hover:scale-105 relative"
+          title="Assistente IA — pergunte sobre o cliente"
+        >
+          {chatAberto
+            ? <X className="w-5 h-5" />
+            : <MessageSquare className="w-5 h-5" />
+          }
+          {!chatAberto && (
+            <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-red-500 flex items-center justify-center">
+              <span className="text-[8px] text-white font-bold">IA</span>
+            </span>
+          )}
+        </button>
       </div>
 
       {/* ATA preview modal */}
