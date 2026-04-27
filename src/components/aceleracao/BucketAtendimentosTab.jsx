@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar, Clock, Inbox, Loader2, CalendarPlus } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { formatDateTimeBR } from "@/utils/timezone";
 
@@ -92,8 +93,24 @@ export default function BucketAtendimentosTab({ state }) {
       </div>
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+        <div className="grid gap-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Card key={i} className="border-l-4 border-l-indigo-200">
+              <CardContent className="py-4 flex items-center justify-between gap-4">
+                <div className="flex-1 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-4 w-40" />
+                    <Skeleton className="h-4 w-8 rounded-full" />
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <Skeleton className="h-3 w-32" />
+                    <Skeleton className="h-3 w-24" />
+                  </div>
+                </div>
+                <Skeleton className="h-8 w-24 rounded-md" />
+              </CardContent>
+            </Card>
+          ))}
         </div>
       ) : bucketItems.length === 0 ? (
         <Card className="border-dashed">
