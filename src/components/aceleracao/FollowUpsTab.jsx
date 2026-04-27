@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useCallback, memo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { RedTabsList, RedTabsTrigger } from "@/components/ui/RedTabs";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -319,25 +320,22 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
         )}
       </div>
 
-      {/* Tab nav — grid */}
-      <div className={`grid border border-gray-200 rounded-lg overflow-hidden text-sm`} style={{ gridTemplateColumns: `repeat(${TABS.length}, 1fr)` }}>
-        {TABS.map((tab, i) => (
-          <button
+      {/* Tab nav — RedTabs */}
+      <RedTabsList>
+        {TABS.map(tab => (
+          <RedTabsTrigger
             key={tab.id}
+            value={tab.id}
+            data-state={activeTab === tab.id ? "active" : "inactive"}
             onClick={() => {
               setActiveTab(tab.id);
               setSelectedReminder(null);
             }}
-            className={`py-2 px-2 font-medium text-center transition-colors whitespace-nowrap ${i > 0 ? "border-l border-gray-200" : ""} ${
-              activeTab === tab.id
-                ? "bg-gray-900 text-white"
-                : "bg-white text-gray-600 hover:bg-gray-50"
-            }`}
           >
             {tab.label}
-          </button>
+          </RedTabsTrigger>
         ))}
-      </div>
+      </RedTabsList>
 
       {/* Tab content */}
 
