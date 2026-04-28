@@ -281,28 +281,50 @@ export default function CronogramaGeral({ isTab = false }) {
     };
   });
 
+  // Calcular status do processo selecionado por cliente
+  const getClienteProcessStatus = (clienteId, codigoProcesso) => {
+    const implementacao = implementacoes.find(i => 
+      i.workshop_id === clienteId && (i.item_id === codigoProcesso || i.item_nome === codigoProcesso)
+    );
+    const progresso = progressos.find(p => 
+      p.workshop_id === clienteId && p.modulo_codigo === codigoProcesso
+    );
+
+    if (implementacao) {
+      if (implementacao.status === 'concluido') return 'concluido';
+      if (implementacao.status === 'em_andamento') {
+        return new Date(implementacao.data_termino_previsto) < new Date() ? 'atrasado' : 'em_andamento';
+      }
+      return 'a_fazer';
+    }
+    if (progresso) {
+      if (progresso.situacao === 'concluido') return 'concluido';
+      if (progresso.situacao === 'atrasado') return 'atrasado';
+      if (progresso.situacao === 'em_andamento') return 'em_andamento';
+    }
+    return 'a_fazer';
+  };
+
   // Aplicar filtros
   const clientesFiltrados = clientesComStatus.filter(cliente => {
-    // Filtro por processo selecionado - mostra TODOS os clientes com esse processo
-    if (selectedProcess) {
-      // Simplesmente verifica se existe progresso do processo para este workshop
-      const temProcesso = progressos.some(p => 
-        p.workshop_id === cliente.id && p.modulo_codigo === selectedProcess.codigo
-      );
-      
-      // Se não tem progresso registrado, ainda mostra (pois o cliente está no plano e deve fazer o processo)
-      // Isso garante que todos os clientes apareçam, independente do status
+    // Filtro por processo selecionado
+    if (selectedProcess && filterStatus !== 'todos') {
+      const processStatus = getClienteProcessStatus(cliente.id, selectedProcess.codigo);
+      if (filterStatus === 'ativo' && processStatus !== 'em_andamento') return false;
+      if (filterStatus === 'concluido' && processStatus !== 'concluido') return false;
+      if (filterStatus === 'a_fazer' && processStatus !== 'a_fazer') return false;
+    } else if (!selectedProcess) {
+      const matchStatus = filterStatus === 'todos' || 
+        (filterStatus === 'ativo' && cliente.statusGeral === 'ativo') ||
+        (filterStatus === 'concluido' && cliente.statusGeral === 'concluido') ||
+        (filterStatus === 'a_fazer' && cliente.statusGeral === 'a_fazer');
+      if (!matchStatus) return false;
     }
-
-    const matchStatus = filterStatus === 'todos' || 
-      (filterStatus === 'ativo' && cliente.statusGeral === 'ativo') ||
-      (filterStatus === 'concluido' && cliente.statusGeral === 'concluido') ||
-      (filterStatus === 'a_fazer' && cliente.statusGeral === 'a_fazer');
 
     const matchSearch = !searchTerm || 
       cliente.name.toLowerCase().includes(searchTerm.toLowerCase());
 
-    return matchStatus && matchSearch;
+    return matchSearch;
   });
 
   const getClientesPorStatus = (tipo) => {
