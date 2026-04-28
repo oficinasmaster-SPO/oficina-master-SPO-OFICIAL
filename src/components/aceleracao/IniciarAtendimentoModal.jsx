@@ -1116,7 +1116,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
           </div>
 
           {/* CENTER COLUMN */}
-          <div className="w-72 flex-shrink-0 border-r border-gray-100 bg-gray-50/50 overflow-y-auto flex flex-col">
+          <div className="w-72 flex-shrink-0 border-r border-gray-100 bg-gray-50/50 overflow-y-auto flex flex-col scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
 
             {/* FUs da semana */}
             {fusDaSemanaModal.length > 0 ? (
@@ -1217,7 +1217,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="atas" className="flex-1 overflow-y-auto px-3 py-4">
+              <TabsContent value="atas" className="flex-1 overflow-y-auto px-3 py-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
                 <div className="space-y-2">
                   {atas.length === 0 ? (
                     <p className="text-xs text-gray-500 italic">Sem atas registradas</p>
@@ -1274,7 +1274,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
                 </div>
               </TabsContent>
 
-              <TabsContent value="followups" className="flex-1 overflow-y-auto px-3 py-4">
+              <TabsContent value="followups" className="flex-1 overflow-y-auto px-3 py-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
                 <div className="space-y-3">
 
                   {/* Card atendimentos do dia */}
@@ -1545,7 +1545,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
                     </div>
                   ) : (
                     <>
-                      <div className="overflow-y-auto bg-gray-50 rounded-lg border border-gray-200 px-2.5 py-2 space-y-2" style={{ flex: '1 1 0', minHeight: 0, overflowY: 'auto' }}>
+                      <div className="overflow-y-auto bg-gray-50 rounded-lg border border-gray-200 px-2.5 py-2 space-y-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent" style={{ flex: '1 1 0', minHeight: 0 }}>
                         {chatMensagens.length === 0 && chatEnviando && (
                           <div className="flex items-center justify-center h-full">
                             <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
