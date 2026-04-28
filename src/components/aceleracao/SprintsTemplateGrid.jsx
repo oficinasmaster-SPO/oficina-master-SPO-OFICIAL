@@ -205,7 +205,7 @@ function PhaseRow({ phaseData, phaseConfig, editing, onUpdateTasks }) {
   const [selectedTask, setSelectedTask] = useState(null);
   const totalTasks = phaseData.tasks?.length || 0;
 
-  const hasDetail = (task) => !!(task.instructions || task.link_url);
+  const hasDetail = (task) => !!(task.instructions || task.link_url || task.video_url);
 
   return (
     <div className={`rounded-lg border p-3 ${phaseConfig.color}`}>
