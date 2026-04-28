@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Edit2, Save, X, Plus, Trash2, ChevronDown, ChevronUp, Link, ExternalLink, RefreshCw, BookOpen, ArrowUp, ArrowDown } from 'lucide-react';
+import { Edit2, Save, X, Plus, Trash2, ChevronDown, ChevronUp, Link, ExternalLink, RefreshCw, BookOpen, ArrowUp, ArrowDown, Zap } from 'lucide-react';
 import { getDefaultTasksForPhase } from './sprintMissionTasks';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
@@ -375,6 +375,7 @@ export default function SprintsTemplateGrid() {
   const [data, setData] = useState(buildDefaultData);
   const [expandedMission, setExpandedMission] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
   // Carregar templates salvos do banco ao montar
@@ -437,6 +438,27 @@ export default function SprintsTemplateGrid() {
     }
   };
 
+  const handleForceSyncAll = async () => {
+    setSyncing(true);
+    let total = 0;
+    let errors = 0;
+    for (const mission of data) {
+      try {
+        const response = await base44.functions.invoke('syncClientSprintTasksWithTemplate', { missionId: mission.mission_id });
+        total += response.data?.updatedCount ?? 0;
+        if (response.data?.errors?.length) errors += response.data.errors.length;
+      } catch {
+        errors++;
+      }
+    }
+    setSyncing(false);
+    if (errors > 0) {
+      toast.warning(`Sincronização concluída: ${total} sprint(s) atualizados, ${errors} erro(s).`);
+    } else {
+      toast.success(`✅ Todas as sprints de clientes sincronizadas! (${total} sprint(s) atualizados)`);
+    }
+  };
+
   const handleResetToDefault = async () => {
     const defaultData = buildDefaultData();
     setData(defaultData);
@@ -468,10 +490,16 @@ export default function SprintsTemplateGrid() {
               Configure as tarefas de cada fase clicando em ✏️. As edições são <strong>persistidas no banco</strong> e usadas ao criar novos sprints para clientes.
             </p>
           </div>
-          <Button size="sm" variant="outline" onClick={handleResetToDefault} disabled={saving} className="shrink-0 text-xs">
-            <RefreshCw className={`w-3.5 h-3.5 mr-1 ${saving ? 'animate-spin' : ''}`} />
-            Restaurar Padrão
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="outline" onClick={handleForceSyncAll} disabled={syncing || saving} className="shrink-0 text-xs bg-orange-50 border-orange-300 text-orange-700 hover:bg-orange-100">
+              <Zap className={`w-3.5 h-3.5 mr-1 ${syncing ? 'animate-pulse' : ''}`} />
+              {syncing ? 'Sincronizando...' : 'Forçar Sync para Clientes'}
+            </Button>
+            <Button size="sm" variant="outline" onClick={handleResetToDefault} disabled={saving} className="shrink-0 text-xs">
+              <RefreshCw className={`w-3.5 h-3.5 mr-1 ${saving ? 'animate-spin' : ''}`} />
+              Restaurar Padrão
+            </Button>
+          </div>
         </div>
         {!loaded && <p className="text-xs text-blue-600 mt-2">Carregando templates salvos...</p>}
         {saving && <p className="text-xs text-blue-600 mt-2">💾 Salvando...</p>}

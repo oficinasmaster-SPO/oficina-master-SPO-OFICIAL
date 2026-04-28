@@ -92,6 +92,7 @@ export default function SprintCreateForm({ open, onClose, workshops = [], user, 
         // BUG FIX 2: strings vazias ("") devem virar undefined para não poluir o banco
         instructions: t.instructions?.trim() || undefined,
         link_url: t.link_url?.trim() || undefined,
+        video_url: t.video_url?.trim() || undefined,
       }));
     });
 
