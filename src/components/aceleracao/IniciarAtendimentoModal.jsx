@@ -391,13 +391,44 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
       const resumoConcluidos = concluidosModal.slice(0, 3).map(c =>
         `Atendimento via ${c.canal || '?'}: resultado=${c.resultado || '?'}, humor=${c.humor || '?'}, comprometimentos=${c.compromissos || 'nenhum'}`
       ).join('\n');
-      const prompt = `Você é um coach de consultores de negócios. Com base nos dados abaixo sobre o cliente "${followUp?.workshop_name}", gere UMA dica prática, direta e motivadora (máximo 3 linhas) para o consultor seguir neste atendimento de follow-up ${followUp?.sequence_number}/4. Foque no que o cliente precisa agora.\n\nÚLTIMAS ATAS:\n${resumoAtas || 'Sem atas registradas'}\n\nÚLTIMOS ATENDIMENTOS:\n${resumoConcluidos || 'Sem atendimentos anteriores'}\n\nResponda apenas a dica, sem introdução.`;
-      const response = await base44.functions.invoke('invokeLLMUnlimited', { prompt });
-      const dicaRaw = response?.data?.result || response?.data?.message || (typeof response?.data === 'string' ? response.data : '') || 'Não foi possível gerar a dica.';
-      setDicaIA((typeof dicaRaw === 'string' ? dicaRaw : JSON.stringify(dicaRaw)).replace(/\\n/g, '\n').trim());
+
+      // Cria conversa dedicada para a dica — separada do chat principal
+      const convDica = await base44.agents.createConversation({
+        agent_name: 'followup_consultor',
+        metadata: {
+          name: `Dica ${followUp?.workshop_name} - FU ${followUp?.sequence_number}`,
+          description: 'Geração de dica pontual para o atendimento',
+        },
+      });
+
+      const mensagem = `Cliente: ${followUp?.workshop_name} | Follow-up ${followUp?.sequence_number}/4 | Consultor: ${followUp?.consultor_nome || 'não informado'}\n\nÚLTIMAS ATAS:\n${resumoAtas || 'Sem atas registradas'}\n\nÚLTIMOS ATENDIMENTOS:\n${resumoConcluidos || 'Sem atendimentos anteriores'}\n\nCom base neste histórico, gere UMA dica prática e direta (máximo 3 linhas) para o consultor seguir neste atendimento. Responda apenas a dica, sem introdução.`;
+
+      await base44.agents.addMessage(convDica, {
+        role: 'user',
+        content: mensagem,
+      });
+
+      // Aguarda a resposta via subscribe com timeout de 15s
+      const dica = await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => reject(new Error('Timeout')), 15000);
+        const unsubscribe = base44.agents.subscribeToConversation(
+          convDica.id,
+          (data) => {
+            const msgs = data.messages || [];
+            const resposta = msgs.find(m => m.role === 'assistant');
+            if (resposta?.content) {
+              clearTimeout(timeout);
+              unsubscribe();
+              resolve(resposta.content);
+            }
+          }
+        );
+      });
+
+      setDicaIA(dica.replace(/\\n/g, '\n').trim());
     } catch (err) {
       console.error('Erro ao gerar dica:', err);
-      toast.error('Erro ao gerar dica de IA');
+      toast.error('Erro ao gerar dica — tente recarregar');
     } finally {
       setCarregandoDica(false);
     }
