@@ -386,11 +386,28 @@ export default function SprintsTemplateGrid() {
         if (settings?.length > 0 && settings[0].value) {
           const saved = JSON.parse(settings[0].value);
           if (Array.isArray(saved) && saved.length > 0) {
+            // Garantir que TODAS as tarefas têm os 4 campos (video_url pode estar faltando em dados antigos)
+            const normalizeTask = (t) => ({
+              description: t.description || '',
+              instructions: t.instructions || '',
+              link_url: t.link_url || '',
+              video_url: t.video_url || '',
+            });
+            const normalized = saved.map(m => ({
+              ...m,
+              sprint: {
+                ...m.sprint,
+                phases: (m.sprint.phases || []).map(p => ({
+                  ...p,
+                  tasks: (p.tasks || []).map(normalizeTask),
+                })),
+              },
+            }));
             // Merge: preserva dados salvos, adiciona missões novas que não existem no banco
             const defaultData = buildDefaultData();
-            const savedIds = new Set(saved.map(m => m.mission_id));
+            const savedIds = new Set(normalized.map(m => m.mission_id));
             const newMissions = defaultData.filter(m => !savedIds.has(m.mission_id));
-            setData([...saved, ...newMissions]);
+            setData([...normalized, ...newMissions]);
           }
         }
       } catch {
