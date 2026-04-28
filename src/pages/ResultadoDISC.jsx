@@ -92,8 +92,8 @@ export default function ResultadoDISC() {
         return;
       }
 
-      const diagnostics = await base44.entities.DISCDiagnostic.list();
-      const currentDiagnostic = diagnostics.find(d => d.id === diagnosticId);
+      const diagnosticsList = await base44.entities.DISCDiagnostic.filter({ id: diagnosticId });
+      const currentDiagnostic = diagnosticsList[0];
 
       if (!currentDiagnostic) {
         toast.error("Diagnóstico não encontrado");
@@ -103,8 +103,11 @@ export default function ResultadoDISC() {
 
       setDiagnostic(currentDiagnostic);
 
-      const employees = await base44.entities.Employee.list();
-      const emp = employees.find(e => e.id === currentDiagnostic.employee_id);
+      let emp = null;
+      if (currentDiagnostic.employee_id) {
+        const empList = await base44.entities.Employee.filter({ id: currentDiagnostic.employee_id });
+        emp = empList[0] || null;
+      }
       setEmployee(emp);
       
       // Verification of access happens in the render block when permissions finish loading

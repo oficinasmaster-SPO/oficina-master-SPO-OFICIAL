@@ -29,7 +29,7 @@ export default function DiagnosticoDISC() {
   const [employees, setEmployees] = useState([]);
   
   const [searchParams] = useSearchParams();
-  const [selectedEmployee, setSelectedEmployee] = useState(searchParams.get('employeeId') || "");
+  const [selectedEmployee, setSelectedEmployee] = useState(searchParams.get('employee_id') || searchParams.get('employeeId') || "");
   const [isLeader, setIsLeader] = useState(false);
   const [teamName, setTeamName] = useState("");
   const [answers, setAnswers] = useState({});

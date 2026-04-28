@@ -78,8 +78,7 @@ export default function PublicDISC() {
       .filter(v => v !== "");
 
     if (value !== "" && usedNumbers.includes(value)) {
-      alert(`Número ${value} já foi usado neste conjunto. Escolha outro.`);
-      return;
+      return; // silently block — UI already prevents duplicates via validation
     }
 
     setAnswers({
@@ -110,8 +109,7 @@ export default function PublicDISC() {
 
   const handleSubmitTest = async () => {
     if (getFilledQuestions() < discQuestions.length) {
-      alert("Preencha todas as questões corretamente antes de enviar.");
-      return;
+      return; // button is already disabled in this state
     }
 
     setSubmitting(true);
@@ -265,7 +263,7 @@ export default function PublicDISC() {
                    <Card key={q.id} className={`border-2 transition-colors ${isComplete ? 'border-green-300' : 'border-slate-200 hover:border-indigo-300'}`}>
                      <CardHeader className="bg-slate-50 border-b border-slate-100 pb-4">
                        <CardTitle className="text-base flex justify-between">
-                         <span>{idx + 1}. {q.question}</span>
+                         <span>Conjunto {idx + 1}</span>
                          {isComplete && <CheckCircle2 className="w-5 h-5 text-green-500" />}
                        </CardTitle>
                      </CardHeader>
