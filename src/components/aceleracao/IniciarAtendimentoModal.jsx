@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -152,6 +152,11 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
   // States da aba IA
   const [dicaIA, setDicaIA] = useState(null);
   const [carregandoDica, setCarregandoDica] = useState(false);
+  const [postItPos, setPostItPos] = useState({ x: 24, y: 120 });
+  const [postItMinimizado, setPostItMinimizado] = useState(false);
+  const draggingRef = useRef(false);
+  const dragOffsetRef = useRef({ x: 0, y: 0 });
+  const postItRef = useRef(null);
   const [chatMensagens, setChatMensagens] = useState([]);
   const [chatInput, setChatInput] = useState('');
   const [chatEnviando, setChatEnviando] = useState(false);
@@ -350,6 +355,33 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
   };
 
   // ── Funções da aba IA ──
+  const handlePostItMouseDown = useCallback((e) => {
+    if (e.target.closest('button')) return;
+    draggingRef.current = true;
+    dragOffsetRef.current = {
+      x: e.clientX - postItPos.x,
+      y: e.clientY - postItPos.y,
+    };
+    e.preventDefault();
+
+    const handleMouseMove = (e) => {
+      if (!draggingRef.current) return;
+      setPostItPos({
+        x: e.clientX - dragOffsetRef.current.x,
+        y: e.clientY - dragOffsetRef.current.y,
+      });
+    };
+
+    const handleMouseUp = () => {
+      draggingRef.current = false;
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+  }, [postItPos]);
+
   const gerarDicaIA = async () => {
     setCarregandoDica(true);
     try {
@@ -361,8 +393,8 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
       ).join('\n');
       const prompt = `Você é um coach de consultores de negócios. Com base nos dados abaixo sobre o cliente "${followUp?.workshop_name}", gere UMA dica prática, direta e motivadora (máximo 3 linhas) para o consultor seguir neste atendimento de follow-up ${followUp?.sequence_number}/4. Foque no que o cliente precisa agora.\n\nÚLTIMAS ATAS:\n${resumoAtas || 'Sem atas registradas'}\n\nÚLTIMOS ATENDIMENTOS:\n${resumoConcluidos || 'Sem atendimentos anteriores'}\n\nResponda apenas a dica, sem introdução.`;
       const response = await base44.functions.invoke('invokeLLMUnlimited', { prompt });
-      const dica = response?.data?.result || response?.data?.message || response?.data || 'Não foi possível gerar a dica.';
-      setDicaIA(typeof dica === 'string' ? dica : JSON.stringify(dica));
+      const dicaRaw = response?.data?.result || response?.data?.message || (typeof response?.data === 'string' ? response.data : '') || 'Não foi possível gerar a dica.';
+      setDicaIA((typeof dicaRaw === 'string' ? dicaRaw : JSON.stringify(dicaRaw)).replace(/\\n/g, '\n').trim());
     } catch (err) {
       console.error('Erro ao gerar dica:', err);
       toast.error('Erro ao gerar dica de IA');
@@ -1349,36 +1381,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
                 </div>
               </TabsContent>
               <TabsContent value="ia" className="flex-1 overflow-hidden flex flex-col">
-                {/* Post-it IA */}
-                <div className="px-3 pt-3 pb-2 flex-shrink-0">
-                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-1.5">
-                        <Zap className="w-3.5 h-3.5 text-amber-500" />
-                        <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wide">Dica de IA</p>
-                      </div>
-                      <button
-                        onClick={gerarDicaIA}
-                        disabled={carregandoDica}
-                        className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-amber-100 transition-colors disabled:opacity-40"
-                      >
-                        <svg className={`w-3.5 h-3.5 text-amber-600 ${carregandoDica ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                        </svg>
-                      </button>
-                    </div>
-                    {carregandoDica ? (
-                      <div className="flex items-center gap-2 py-1">
-                        <Loader2 className="w-3 h-3 text-amber-500 animate-spin" />
-                        <p className="text-[11px] text-amber-600">Analisando histórico...</p>
-                      </div>
-                    ) : dicaIA ? (
-                      <div className="text-[12px] text-amber-800 leading-relaxed space-y-0.5">{renderMarkdown(dicaIA)}</div>
-                    ) : (
-                      <p className="text-[11px] text-amber-600 italic">Clique em recarregar para gerar uma dica.</p>
-                    )}
-                  </div>
-                </div>
+  
 
                 {/* Mini Chat embeddado */}
                 <div className="flex-1 flex flex-col min-h-0 px-3 pb-3">
@@ -1414,7 +1417,10 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
                                 ? 'bg-red-600 text-white rounded-br-sm'
                                 : 'bg-white border border-gray-200 text-gray-800 rounded-bl-sm'
                             }`}>
-                              {msg.role === 'user' ? msg.content : renderMarkdown(msg.content)}
+                              {msg.role === 'user'
+                            ? msg.content
+                            : <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>{renderMarkdown(msg.content)}</div>
+                          }
                             </div>
                           </div>
                         ))}
@@ -1454,6 +1460,79 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
                 </div>
               </TabsContent>
             </Tabs>
+          </div>
+        </div>
+
+        {/* POST-IT ARRASTÁVEL — dica de IA */}
+        <div
+          ref={postItRef}
+          onMouseDown={handlePostItMouseDown}
+          style={{
+            position: 'fixed',
+            left: postItPos.x,
+            top: postItPos.y,
+            zIndex: 99999,
+            width: '220px',
+            cursor: 'grab',
+            filter: 'drop-shadow(2px 6px 8px rgba(0,0,0,0.28))',
+            userSelect: 'none',
+          }}
+        >
+          {/* Pino vermelho */}
+          <div style={{ position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)', zIndex: 2, width: '22px', height: '22px' }}>
+            <div style={{ width: '14px', height: '14px', borderRadius: '50%', background: 'radial-gradient(circle at 35% 35%, #ff6b6b, #c0392b)', margin: '0 auto', boxShadow: '0 2px 4px rgba(0,0,0,0.4)' }} />
+            <div style={{ width: '2px', height: '10px', background: '#888', margin: '-2px auto 0', borderRadius: '1px' }} />
+          </div>
+
+          {/* Corpo do post-it */}
+          <div style={{ background: 'linear-gradient(135deg, #fef08a 0%, #fde047 60%, #facc15 100%)', borderRadius: '2px', padding: '20px 14px 20px 14px', position: 'relative', minHeight: '120px' }}>
+            {/* Canto dobrado */}
+            <div style={{ position: 'absolute', bottom: 0, right: 0, width: '28px', height: '28px', background: 'linear-gradient(225deg, #ca8a04 50%, transparent 50%)', borderRadius: '0 0 2px 0' }} />
+
+            {/* Linhas decorativas */}
+            {[36, 50, 64, 78, 92].map(top => (
+              <div key={top} style={{ position: 'absolute', top: `${top}px`, left: '14px', right: '14px', height: '1px', background: 'rgba(0,0,0,0.06)' }} />
+            ))}
+
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+              <span style={{ fontSize: '10px', fontWeight: '700', color: '#92400e', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Dica de IA</span>
+              <div style={{ display: 'flex', gap: '4px' }}>
+                <button
+                  onClick={gerarDicaIA}
+                  disabled={carregandoDica}
+                  title="Gerar nova dica"
+                  style={{ width: '20px', height: '20px', borderRadius: '50%', border: 'none', background: 'rgba(0,0,0,0.08)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: carregandoDica ? 0.4 : 1 }}
+                >
+                  <svg className={carregandoDica ? 'animate-spin' : ''} width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="#92400e" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => setPostItMinimizado(v => !v)}
+                  title={postItMinimizado ? 'Expandir' : 'Minimizar'}
+                  style={{ width: '20px', height: '20px', borderRadius: '50%', border: 'none', background: 'rgba(0,0,0,0.08)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  <span style={{ fontSize: '12px', color: '#92400e', lineHeight: 1 }}>{postItMinimizado ? '+' : '−'}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Conteúdo */}
+            {!postItMinimizado && (
+              <div style={{ fontSize: '11px', color: '#1c1917', lineHeight: '1.5', position: 'relative', zIndex: 1 }}>
+                {carregandoDica ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ca8a04' }} />
+                    <span style={{ color: '#92400e', fontStyle: 'italic' }}>Analisando histórico...</span>
+                  </div>
+                ) : dicaIA ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>{renderMarkdown(dicaIA)}</div>
+                ) : (
+                  <span style={{ color: '#92400e', fontStyle: 'italic' }}>Clique em ↺ para gerar uma dica.</span>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
