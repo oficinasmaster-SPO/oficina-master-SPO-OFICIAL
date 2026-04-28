@@ -79,6 +79,41 @@ const PROXIMO_PASSO_OPTIONS = [
   { id: "cancelar", label: "Cancelamento" },
 ];
 
+function renderMarkdown(text) {
+  if (!text) return null;
+  return text
+    .split('\n')
+    .filter(line => line !== null)
+    .map((line, idx) => {
+      if (line.trim() === '') return <div key={idx} className="h-2" />;
+      const parts = line.split(/(\*\*[^*]+\*\*)/);
+      const rendered = parts.map((part, i) => {
+        if (part.startsWith('**') && part.endsWith('**')) {
+          return <strong key={i}>{part.slice(2, -2)}</strong>;
+        }
+        return part;
+      });
+      if (line.trim().startsWith('* ') || line.trim().startsWith('- ')) {
+        return (
+          <div key={idx} className="flex gap-1.5 items-start">
+            <span className="text-red-500 mt-0.5 flex-shrink-0">•</span>
+            <span>{rendered}</span>
+          </div>
+        );
+      }
+      const numMatch = line.trim().match(/^(\d+)\.\s(.+)/);
+      if (numMatch) {
+        return (
+          <div key={idx} className="flex gap-1.5 items-start">
+            <span className="text-red-500 font-semibold flex-shrink-0">{numMatch[1]}.</span>
+            <span>{rendered}</span>
+          </div>
+        );
+      }
+      return <div key={idx}>{rendered}</div>;
+    });
+}
+
 export default function IniciarAtendimentoModal({ followUp, cliente, onClose, onSaved, fusConcatenados = [], proximoFU = null, onProximoFollowUp, filaReminders = [], onNavegar }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -374,8 +409,9 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
         .join('\n');
       const prompt = `${buildSystemPrompt()}\n\n---\nHISTÓRICO:\n${historico}\n\nResponda à última mensagem do Consultor.`;
       const response = await base44.functions.invoke('invokeLLMUnlimited', { prompt });
-      const resposta = response?.data?.result || response?.data?.message || response?.data || 'Não foi possível obter uma resposta.';
-      setChatMensagens(prev => [...prev, { role: 'assistant', content: typeof resposta === 'string' ? resposta : JSON.stringify(resposta) }]);
+      const respostaRaw = response?.data?.result || response?.data?.message || response?.data || 'Não foi possível obter uma resposta.';
+      const resposta = (typeof respostaRaw === 'string' ? respostaRaw : JSON.stringify(respostaRaw)).replace(/\\n/g, '\n').trim();
+      setChatMensagens(prev => [...prev, { role: 'assistant', content: resposta }]);
     } catch (err) {
       console.error('Erro ao enviar mensagem:', err);
       setChatMensagens(prev => [...prev, { role: 'assistant', content: 'Erro ao processar. Tente novamente.' }]);
@@ -1337,7 +1373,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
                         <p className="text-[11px] text-amber-600">Analisando histórico...</p>
                       </div>
                     ) : dicaIA ? (
-                      <p className="text-[12px] text-amber-800 leading-relaxed">{dicaIA}</p>
+                      <div className="text-[12px] text-amber-800 leading-relaxed space-y-0.5">{renderMarkdown(dicaIA)}</div>
                     ) : (
                       <p className="text-[11px] text-amber-600 italic">Clique em recarregar para gerar uma dica.</p>
                     )}
@@ -1373,12 +1409,12 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
                         )}
                         {chatMensagens.map((msg, idx) => (
                           <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                            <div className={`max-w-[88%] rounded-xl px-2.5 py-1.5 text-[11px] leading-relaxed ${
+                            <div className={`max-w-[88%] rounded-xl px-2.5 py-1.5 text-[11px] leading-relaxed space-y-0.5 ${
                               msg.role === 'user'
                                 ? 'bg-red-600 text-white rounded-br-sm'
                                 : 'bg-white border border-gray-200 text-gray-800 rounded-bl-sm'
                             }`}>
-                              {msg.content}
+                              {msg.role === 'user' ? msg.content : renderMarkdown(msg.content)}
                             </div>
                           </div>
                         ))}
