@@ -7,13 +7,13 @@ import { Clock } from 'lucide-react';
 
 export default function CentralFollowUp() {
   useEffect(() => {
-    // Force sidebar collapse ao entrar na página
-    localStorage.setItem('sidebar-collapsed', 'true');
-    window.dispatchEvent(new CustomEvent('sidebar-toggle'));
-    // Aguarda renderização e força novamente (falback para race conditions)
-    setTimeout(() => {
-      window.dispatchEvent(new CustomEvent('sidebar-toggle'));
-    }, 100);
+    const isCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
+    if (!isCollapsed) {
+      localStorage.setItem('sidebar-collapsed', 'true');
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('sidebar-toggle'));
+      }, 50);
+    }
   }, []);
 
   const { user } = useAuth();

@@ -223,6 +223,16 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       return false;
     }
   });
+
+  React.useEffect(() => {
+    const handleExternalToggle = () => {
+      try {
+        setIsCollapsed(localStorage.getItem('sidebar-collapsed') === 'true');
+      } catch {}
+    };
+    window.addEventListener('sidebar-toggle', handleExternalToggle);
+    return () => window.removeEventListener('sidebar-toggle', handleExternalToggle);
+  }, []);
   
   // Controle de acesso Admin Global (SPO)
   const [isGlobalContext, setIsGlobalContext] = React.useState(false);
