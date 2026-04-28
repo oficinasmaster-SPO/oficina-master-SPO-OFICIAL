@@ -1115,6 +1115,96 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
             </div>
           </div>
 
+          {/* CENTER COLUMN */}
+          <div className="w-72 flex-shrink-0 border-r border-gray-100 bg-gray-50/50 overflow-y-auto flex flex-col">
+
+            {/* FUs da semana */}
+            {fusDaSemanaModal.length > 0 ? (
+              <div className="p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                  <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Follow-ups desta semana</p>
+                  <span className="ml-auto bg-amber-100 text-amber-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                    {fusDaSemanaModal.length}
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  {fusDaSemanaModal.map(f => (
+                    <div
+                      key={f.id}
+                      className="bg-white border border-gray-200 rounded-xl p-3 hover:border-amber-300 hover:shadow-sm transition-all"
+                    >
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-lg bg-amber-50 border border-amber-200 flex items-center justify-center flex-shrink-0">
+                            <span className="text-[11px] font-bold text-amber-600">{f.sequence_number}</span>
+                          </div>
+                          <div>
+                            <p className="text-xs font-semibold text-gray-800 truncate max-w-[140px]">
+                              {f.workshop_name || 'Cliente'}
+                            </p>
+                            <p className="text-[10px] text-gray-400">
+                              {f.reminder_date
+                                ? format(new Date(f.reminder_date + 'T00:00:00'), 'dd/MM')
+                                : '—'}
+                            </p>
+                          </div>
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={fusSemanaLocal.includes(f.id)}
+                          onChange={e => {
+                            setFusSemanaLocal(prev =>
+                              e.target.checked
+                                ? [...prev, f.id]
+                                : prev.filter(id => id !== f.id)
+                            );
+                          }}
+                          className="w-3.5 h-3.5 accent-red-600 flex-shrink-0 mt-0.5"
+                        />
+                      </div>
+                      {f.consultor_nome && (
+                        <p className="text-[10px] text-gray-400 truncate">{f.consultor_nome}</p>
+                      )}
+                      {f.origin_type && (
+                        <span className={`inline-flex items-center text-[9px] font-semibold px-1.5 py-0.5 rounded mt-1 ${
+                          f.origin_type === 'sprint'
+                            ? 'bg-orange-100 text-orange-600'
+                            : 'bg-blue-100 text-blue-600'
+                        }`}>
+                          {f.origin_type === 'sprint' ? '🚀 Sprint' : '📋 Ata'}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {fusSemanaLocal.length > 0 && (
+                  <div className="mt-3 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                    <p className="text-[10px] text-amber-700 font-semibold">
+                      {fusSemanaLocal.length} FU{fusSemanaLocal.length > 1 ? 's' : ''} será{fusSemanaLocal.length > 1 ? 'ão' : ''} encerrado{fusSemanaLocal.length > 1 ? 's' : ''} junto
+                    </p>
+                    <p className="text-[9px] text-amber-600 mt-0.5">Herdam os dados deste atendimento</p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-1.5 h-1.5 rounded-full bg-gray-300" />
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Follow-ups desta semana</p>
+                </div>
+                <div className="bg-white border border-dashed border-gray-200 rounded-xl p-4 text-center">
+                  <p className="text-[11px] text-gray-400">Nenhum outro follow-up pendente esta semana</p>
+                </div>
+              </div>
+            )}
+
+            {/* Espaço reservado para futuras adições */}
+            <div className="flex-1" />
+
+          </div>
+
           {/* RIGHT COLUMN - SIDEBAR */}
           <div className="w-80 xl:w-96 flex-shrink-0 border-l border-gray-200 bg-gradient-to-b from-white via-gray-50 to-gray-100 overflow-hidden flex flex-col shadow-[inset_-2px_0_8px_rgba(0,0,0,0.03)]">
             <Tabs defaultValue="atas" className="flex-1 flex flex-col">
