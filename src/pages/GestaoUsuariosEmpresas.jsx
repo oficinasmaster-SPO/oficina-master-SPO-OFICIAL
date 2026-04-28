@@ -133,20 +133,30 @@ export default function GestaoUsuariosEmpresas() {
     onError: () => toast.error("Erro ao atualizar oficina")
   });
 
+  // Estado controlado para o form de edição de oficina
+  const [workshopFormData, setWorkshopFormData] = useState({});
+
+  // Sincronizar ao abrir o dialog
+  const openWorkshopEdit = (workshop) => {
+    setEditingWorkshop(workshop);
+    setWorkshopFormData({
+      plano: workshop.planoAtual || "FREE",
+      status: workshop.status || "ativo",
+      dataRenovacao: workshop.dataRenovacao ? format(new Date(workshop.dataRenovacao), 'yyyy-MM-dd') : ''
+    });
+    setIsWorkshopDialogOpen(true);
+  };
+
   const handleSaveWorkshop = async (e) => {
     e.preventDefault();
     if (!editingWorkshop) return;
 
-    const formData = new FormData(e.target);
-    const plano = formData.get('plano');
-    const status = formData.get('status');
-    const dataRenovacao = formData.get('dataRenovacao');
+    const { plano, status, dataRenovacao } = workshopFormData;
 
     const data = {
       planoAtual: plano,
       status: status,
       dataRenovacao: dataRenovacao ? new Date(dataRenovacao).toISOString() : null,
-      // Se mudou o plano, atualiza a data de assinatura para hoje
       ...(plano !== editingWorkshop.planoAtual ? { dataAssinatura: new Date().toISOString() } : {})
     };
 
@@ -582,10 +592,7 @@ export default function GestaoUsuariosEmpresas() {
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => {
-                                setEditingWorkshop(workshop.workshop);
-                                setIsWorkshopDialogOpen(true);
-                              }}
+                              onClick={() => openWorkshopEdit(workshop.workshop)}
                               title="Editar Plano/Empresa"
                             >
                               <Edit className="w-4 h-4" />
@@ -955,7 +962,7 @@ export default function GestaoUsuariosEmpresas() {
               <form onSubmit={handleSaveWorkshop} className="space-y-4">
                 <div>
                   <Label>Plano Atual</Label>
-                  <Select name="plano" defaultValue={editingWorkshop.planoAtual || "FREE"}>
+                  <Select value={workshopFormData.plano} onValueChange={(val) => setWorkshopFormData(prev => ({ ...prev, plano: val }))}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -969,7 +976,7 @@ export default function GestaoUsuariosEmpresas() {
 
                 <div>
                   <Label>Status</Label>
-                  <Select name="status" defaultValue={editingWorkshop.status || "ativo"}>
+                  <Select value={workshopFormData.status} onValueChange={(val) => setWorkshopFormData(prev => ({ ...prev, status: val }))}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -985,8 +992,8 @@ export default function GestaoUsuariosEmpresas() {
                   <Label>Data de Renovação</Label>
                   <Input 
                     type="date" 
-                    name="dataRenovacao" 
-                    defaultValue={editingWorkshop.dataRenovacao ? format(new Date(editingWorkshop.dataRenovacao), 'yyyy-MM-dd') : ''} 
+                    value={workshopFormData.dataRenovacao || ''} 
+                    onChange={(e) => setWorkshopFormData(prev => ({ ...prev, dataRenovacao: e.target.value }))}
                   />
                 </div>
 
