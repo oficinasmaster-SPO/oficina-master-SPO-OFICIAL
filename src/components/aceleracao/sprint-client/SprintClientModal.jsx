@@ -280,9 +280,12 @@ export default function SprintClientModal({ sprint, user, workshop, open, onClos
             </Button>
           </div>
 
-          {/* Shadow divider */}
-          <div className="h-px bg-gradient-to-b from-gray-200 to-transparent" />
-          <div className="h-3 bg-gradient-to-b from-black/[0.06] to-transparent" />
+          {/* Glow divider */}
+          <div className="relative h-[6px] mt-1">
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-blue-400/60 to-transparent" />
+            <div className="absolute inset-x-[10%] top-0 h-[3px] bg-gradient-to-r from-transparent via-blue-400/30 to-transparent blur-sm" />
+            <div className="absolute inset-x-[20%] top-[1px] h-[2px] bg-gradient-to-r from-transparent via-blue-500/20 to-transparent blur-md" />
+          </div>
         </div>
 
         {/* ═══ SCROLLABLE CONTENT ═══ */}
