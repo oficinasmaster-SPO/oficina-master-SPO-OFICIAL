@@ -119,6 +119,7 @@ export default function AdvancedOptionsSection({ formData, setFormData, workshop
 
       {showConsultoriasPanel && formData.workshop_id && (
         <ClientDetailPanel
+          key={formData.workshop_id}
           client={workshops?.find(w => w.id === formData.workshop_id) || null}
           isOpen={true}
           onClose={() => setShowConsultoriasPanel(false)}

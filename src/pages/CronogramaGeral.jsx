@@ -724,6 +724,7 @@ export default function CronogramaGeral({ isTab = false }) {
 
       {/* Modal de Detalhes do Cliente */}
       <ClientDetailPanel
+        key={selectedClient?.id}
         client={selectedClient}
         isOpen={showPanel}
         onClose={() => setShowPanel(false)}

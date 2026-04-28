@@ -914,6 +914,10 @@ export default function ConsultoriaClienteTab({ client, mode = "contextual", glo
 
   useEffect(() => {
     let cancelled = false;
+    // Resetar estado imediatamente ao trocar de cliente — evita flash de dados antigos
+    setMissoesSelecionadas([]);
+    setCronogramaTemplateId(null);
+    setLoading(true);
     const loadSelectedMissions = async () => {
       try {
         if (workshopId) {
@@ -939,7 +943,7 @@ export default function ConsultoriaClienteTab({ client, mode = "contextual", glo
       }
     };
     loadSelectedMissions();
-    return () => { cancelled = true; }; // Cleanup: evita setState após desmontagem
+    return () => { cancelled = true; };
   }, [workshopId]);
 
   // Se em modo global e globalSprints fornecidos, usa-os para exibição

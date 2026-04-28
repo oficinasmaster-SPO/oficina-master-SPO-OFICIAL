@@ -122,6 +122,7 @@ export default function ClientesDetalhesModal({ isOpen, onClose, clientes, tipo,
       </Dialog>
 
       <ClientDetailPanel
+        key={selectedClient?.id}
         client={selectedClient}
         isOpen={!!selectedClient}
         onClose={() => setSelectedClient(null)}
