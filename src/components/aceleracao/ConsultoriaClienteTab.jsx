@@ -4,7 +4,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { base44 } from "@/api/base44Client";
-import { CheckCircle2, X, Plus, Star, Map, Lock, ListChecks, Settings2, Zap, BookOpen, ExternalLink, PlayCircle, ChevronDown, ChevronUp, ChevronRight, RotateCcw, AlertTriangle, Lightbulb, PlaySquare, BarChart2, TrendingUp, MessageSquare, Circle, Clock } from "lucide-react";
+import { CheckCircle2, X, Plus, Star, Map, Lock, ListChecks, Settings2, Zap, BookOpen, ExternalLink, PlayCircle, ChevronDown, ChevronUp, ChevronRight, RotateCcw, AlertTriangle, Lightbulb, PlaySquare, BarChart2, TrendingUp, MessageSquare, Circle, Clock, RefreshCw } from "lucide-react";
 import CamadaEstrategica from './CamadaEstrategica';
 import SprintPhaseDetailModalRedesigned from './SprintPhaseDetailModalRedesigned';
 import { getDefaultPhasesForMission } from './sprintMissionTasks';
@@ -584,6 +584,7 @@ function CamadaSprints({ workshopId, missoesSelecionadas, cronogramaTemplateId, 
   const [sprints, setSprints] = useState([]);
   const [loadingCreate, setLoadingCreate] = useState(null);
   const [loadError, setLoadError] = useState(null);
+  const [syncing, setSyncing] = useState(false);
   const urlParams = new URLSearchParams(window.location.search);
   const sprintIdFromUrl = urlParams.get('sprint_id');
   const phaseIndexFromUrl = urlParams.get('phase_index') ? parseInt(urlParams.get('phase_index')) : null;
@@ -695,6 +696,25 @@ function CamadaSprints({ workshopId, missoesSelecionadas, cronogramaTemplateId, 
     }
   };
 
+  const syncWithGlobalTemplate = async () => {
+    if (!workshopId || sprints.length === 0) return;
+    setSyncing(true);
+    try {
+      const missionIds = [...new Set(sprints.map(s => s.mission_id))];
+      let totalUpdated = 0;
+      for (const missionId of missionIds) {
+        const res = await base44.functions.invoke('syncClientSprintTasksWithTemplate', { missionId, workshopId });
+        totalUpdated += res.data?.updatedCount || 0;
+      }
+      toast.success(`✓ ${totalUpdated} sprint(s) sincronizado(s) com o template global`);
+      await loadSprints(undefined);
+    } catch (error) {
+      toast.error('✗ Erro ao sincronizar com template global');
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="bg-gradient-to-r from-green-700 to-emerald-600 rounded-xl p-5 text-white">
@@ -705,6 +725,25 @@ function CamadaSprints({ workshopId, missoesSelecionadas, cronogramaTemplateId, 
         <h3 className="text-lg font-bold">Execução por Sprint</h3>
         <p className="text-sm text-green-100 mt-1">Cada missão vira um sprint com ciclo de 3-4 semanas definidas.</p>
       </div>
+
+      {workshopId && sprints.length > 0 && (
+        <div className="flex items-center gap-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
+          <RefreshCw className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-xs text-emerald-800">Sincronizar tarefas, instruções e vídeos com o template da <strong>Consultoria Global</strong>.</p>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-emerald-300 text-emerald-700 hover:bg-emerald-100 flex-shrink-0 gap-1.5"
+            disabled={syncing}
+            onClick={syncWithGlobalTemplate}
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin' : ''}`} />
+            {syncing ? 'Sincronizando...' : 'Sync Global'}
+          </Button>
+        </div>
+      )}
 
       <div className="grid grid-cols-5 gap-1 text-center">
         {[{ emoji: "📋", label: "Planejar" }, { emoji: "⚙️", label: "Executar" }, { emoji: "📊", label: "Medir" }, { emoji: "🔄", label: "Ajustar" }, { emoji: "🚀", label: "Próximo" }].map((item, idx) => (
