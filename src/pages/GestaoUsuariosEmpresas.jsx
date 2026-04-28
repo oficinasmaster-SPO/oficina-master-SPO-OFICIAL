@@ -409,12 +409,12 @@ export default function GestaoUsuariosEmpresas() {
               </div>
               <div>
                 <Label className="text-xs text-gray-600 mb-1">Plano</Label>
-                <Select value={filters.plano} onValueChange={(val) => setFilters({...filters, plano: val})}>
+                <Select value={filters.plano || "all"} onValueChange={(val) => setFilters({...filters, plano: val === "all" ? "" : val})}>
                   <SelectTrigger>
                     <SelectValue placeholder="Todos os planos" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={null}>Todos</SelectItem>
+                    <SelectItem value="all">Todos</SelectItem>
                     {uniquePlans.map(plan => (
                       <SelectItem key={plan} value={plan}>{plan}</SelectItem>
                     ))}
@@ -423,12 +423,12 @@ export default function GestaoUsuariosEmpresas() {
               </div>
               <div>
                 <Label className="text-xs text-gray-600 mb-1">Status</Label>
-                <Select value={filters.status} onValueChange={(val) => setFilters({...filters, status: val})}>
+                <Select value={filters.status || "all"} onValueChange={(val) => setFilters({...filters, status: val === "all" ? "" : val})}>
                   <SelectTrigger>
                     <SelectValue placeholder="Todos os status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={null}>Todos</SelectItem>
+                    <SelectItem value="all">Todos</SelectItem>
                     <SelectItem value="ativo">Ativo</SelectItem>
                     <SelectItem value="inativo">Inativo</SelectItem>
                     <SelectItem value="ferias">Férias</SelectItem>
@@ -437,12 +437,12 @@ export default function GestaoUsuariosEmpresas() {
               </div>
               <div>
                 <Label className="text-xs text-gray-600 mb-1">Estado</Label>
-                <Select value={filters.estado} onValueChange={(val) => setFilters({...filters, estado: val})}>
+                <Select value={filters.estado || "all"} onValueChange={(val) => setFilters({...filters, estado: val === "all" ? "" : val})}>
                   <SelectTrigger>
                     <SelectValue placeholder="Todos os estados" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={null}>Todos</SelectItem>
+                    <SelectItem value="all">Todos</SelectItem>
                     {uniqueStates.map(state => (
                       <SelectItem key={state} value={state}>{state}</SelectItem>
                     ))}
@@ -459,12 +459,12 @@ export default function GestaoUsuariosEmpresas() {
               </div>
               <div>
                 <Label className="text-xs text-gray-600 mb-1">Faturamento</Label>
-                <Select value={filters.faturamento} onValueChange={(val) => setFilters({...filters, faturamento: val})}>
+                <Select value={filters.faturamento || "all"} onValueChange={(val) => setFilters({...filters, faturamento: val === "all" ? "" : val})}>
                   <SelectTrigger>
                     <SelectValue placeholder="Todas as faixas" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={null}>Todos</SelectItem>
+                    <SelectItem value="all">Todos</SelectItem>
                     {revenueRanges.map(range => (
                       <SelectItem key={range} value={range}>{range.replace('_', ' - ').replace('k', 'mil')}</SelectItem>
                     ))}
