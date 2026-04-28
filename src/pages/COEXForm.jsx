@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -23,9 +23,11 @@ export default function COEXForm() {
   const employeeId = searchParams.get('employee_id');
   const contractId = searchParams.get('id');
 
+  const printMode = searchParams.get('print') === '1';
   const [user, setUser] = useState(null);
   const [workshop, setWorkshop] = useState(null);
   const [coexRestriction, setCoexRestriction] = useState({ restricted: false, nextDate: null });
+  const [printTriggered, setPrintTriggered] = useState(false);
   const [formData, setFormData] = useState({
     employee_id: employeeId || "",
     gestor_id: "",
@@ -97,6 +99,17 @@ export default function COEXForm() {
       setFormData(contract);
     }
   }, [contract]);
+
+  // Auto-dispara impressão quando modo print e dados prontos
+  const autoPrintDone = useRef(false);
+  useEffect(() => {
+    if (printMode && !autoPrintDone.current && contract && employee && workshop && user) {
+      autoPrintDone.current = true;
+      setTimeout(() => {
+        doPrint({ workshopData: workshop, userData: user, employeeData: employee, form: contract });
+      }, 800);
+    }
+  }, [printMode, contract, employee, workshop, user]);
 
   const saveMutation = useMutation({
     mutationFn: async (data) => {
@@ -211,17 +224,25 @@ export default function COEXForm() {
     setFormData({ ...formData, behavior_attitude: newBehaviors });
   };
 
-  const handleExportPDF = () => {
-    if (!workshop || !user) {
+  const doPrint = ({ workshopData, userData, employeeData, form }) => {
+    const ws = workshopData || workshop;
+    const u = userData || user;
+    const emp = employeeData || employee;
+    const fd = form || formData;
+    if (!ws || !u) {
       toast.error("Dados da oficina ou usuário não carregados para impressão.");
       return;
     }
     const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      toast.error("Pop-up bloqueado. Permita pop-ups para imprimir.");
+      return;
+    }
     printWindow.document.write(`
       <!DOCTYPE html>
       <html>
       <head>
-        <title>COEX - ${employee?.full_name}</title>
+        <title>COEX - ${emp?.full_name}</title>
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
           body { font-family: Arial, sans-serif; padding: 40px; color: #333; }
@@ -245,106 +266,70 @@ export default function COEXForm() {
           .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; margin-top: 60px; }
           .signature { text-align: center; }
           .signature-line { border-top: 1px solid #000; margin-top: 60px; padding-top: 15px; width: 80%; margin-left: auto; margin-right: auto; }
-          @media print { 
-            body { padding: 0; } 
-            .column { break-inside: avoid; }
-          }
+          @media print { body { padding: 0; } .column { break-inside: avoid; } }
         </style>
       </head>
       <body>
         <div class="header">
           <div class="logo-container">
-            ${workshop.logo_url ? `<img src="${workshop.logo_url}" alt="Logo da Oficina" class="logo-img"/>` : ''}
-            ${!workshop.logo_url ? `<div class="workshop-name">${workshop.name}</div>` : ''}
+            ${ws.logo_url ? `<img src="${ws.logo_url}" alt="Logo da Oficina" class="logo-img"/>` : ''}
+            ${!ws.logo_url ? `<div class="workshop-name">${ws.name}</div>` : ''}
           </div>
-          ${workshop.logo_url ? `<div class="workshop-name" style="font-size: 18px; margin-top: 5px;">${workshop.name}</div>` : ''}
+          ${ws.logo_url ? `<div class="workshop-name" style="font-size: 18px; margin-top: 5px;">${ws.name}</div>` : ''}
           <div class="slogan">Oficinas Master Educação Empresarial</div>
           <h1 style="margin-top: 20px; font-size: 26px; color: #E31837;">Contrato de Expectativa</h1>
         </div>
-        
         <div class="info-grid">
-          <div class="info-item">
-            <label>Colaborador:</label>
-            <div>${employee?.full_name || '-'}</div>
-          </div>
-          <div class="info-item">
-            <label>Gestor:</label>
-            <div>${user?.full_name || '-'}</div>
-          </div>
-          <div class="info-item">
-            <label>Dptº:</label>
-            <div>${formData.department || '-'}</div>
-          </div>
-          <div class="info-item">
-            <label>Período:</label>
-            <div>Início: ${formData.start_date || '-'}<br>Fim: ${formData.end_date || '-'}</div>
-          </div>
+          <div class="info-item"><label>Colaborador:</label><div>${emp?.full_name || '-'}</div></div>
+          <div class="info-item"><label>Gestor:</label><div>${u?.full_name || '-'}</div></div>
+          <div class="info-item"><label>Dptº:</label><div>${fd.department || '-'}</div></div>
+          <div class="info-item"><label>Período:</label><div>Início: ${fd.start_date || '-'}<br>Fim: ${fd.end_date || '-'}</div></div>
         </div>
-        
         <div class="columns">
           <div class="column">
             <div class="column-header">Entregáveis/Metas</div>
             <div class="column-content">
-              ${formData.deliverables_goals.map((item, i) => `
-                <div class="item">${item || '-'}</div>
-              `).join('')}
+              ${(fd.deliverables_goals || []).map(item => `<div class="item">${item || '-'}</div>`).join('')}
             </div>
           </div>
-          
           <div class="column">
             <div class="column-header">Comportamento/Atitude/Postura</div>
             <div class="column-content">
-              ${formData.behavior_attitude.map((item, i) => `
-                <div class="item">${item || '-'}</div>
-              `).join('')}
+              ${(fd.behavior_attitude || []).map(item => `<div class="item">${item || '-'}</div>`).join('')}
             </div>
           </div>
         </div>
-        
         <div class="footer-text">
           Espero que as expectativas acima alinhadas, possam ser cumpridas com responsabilidade a fim de mantermos a 
           qualidade em nossos serviços prestados, e para que possamos buscar constantemente o desenvolvimento alcançando 
           novos desafios e novas metas.
         </div>
-        
         <div style="margin-bottom: 10px;">
           <strong>Data:</strong> ${new Date().toLocaleDateString('pt-BR')}
           &nbsp;&nbsp;&nbsp;&nbsp;
-          <strong>Data do próximo alinhamento:</strong> ${formData.next_alignment_date ? new Date(formData.next_alignment_date).toLocaleDateString('pt-BR') : '-'}
+          <strong>Próximo alinhamento:</strong> ${fd.next_alignment_date ? new Date(fd.next_alignment_date).toLocaleDateString('pt-BR') : '-'}
         </div>
-        
         <div class="signatures">
-          <div class="signature">
-            <div class="signature-line">
-              Colaborador<br>
-              ${employee?.full_name || ''}
-            </div>
-          </div>
-          <div class="signature">
-            <div class="signature-line">
-              Gestor<br>
-              ${user?.full_name || ''}
-            </div>
-          </div>
+          <div class="signature"><div class="signature-line">Colaborador<br>${emp?.full_name || ''}</div></div>
+          <div class="signature"><div class="signature-line">Gestor<br>${u?.full_name || ''}</div></div>
         </div>
-        
-        <div class="logo-footer" style="text-align: center; margin-top: 30px;">
-          ${workshop.logo_url ? `<img src="${workshop.logo_url}" alt="Logo da Oficina" class="logo-img" style="max-height: 40px;"/>` : `<div class="workshop-name">${workshop.name}</div>`}
+        <div style="text-align: center; margin-top: 30px;">
+          ${ws.logo_url ? `<img src="${ws.logo_url}" style="max-height: 40px;"/>` : `<div style="font-weight:bold;">${ws.name}</div>`}
           <div style="font-size: 12px; color: #666; margin-top: 5px;">ACELERADORA</div>
         </div>
-        
-        <script>
-          window.onload = function() {
-            setTimeout(function() {
-              window.print();
-              window.close();
-            }, 500);
-          };
-        </script>
+        <script>window.onload = function() { setTimeout(function() { window.print(); window.close(); }, 500); };</script>
       </body>
       </html>
     `);
     printWindow.document.close();
+  };
+
+  const handleExportPDF = () => {
+    if (!workshop || !user) {
+      toast.error("Dados da oficina ou usuário não carregados para impressão.");
+      return;
+    }
+    doPrint({ workshopData: workshop, userData: user, employeeData: employee, form: formData });
   };
 
   const tourSteps = [

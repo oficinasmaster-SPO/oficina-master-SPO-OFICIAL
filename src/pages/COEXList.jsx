@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, FileText, Search, CheckCircle, Clock, User, Calendar, Filter } from "lucide-react";
+import { Loader2, FileText, Search, CheckCircle, Clock, User, Calendar, Filter, Printer, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import GuidedTour from "../components/help/GuidedTour";
@@ -281,22 +281,49 @@ export default function COEXList() {
                   )}
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  <Button
-                    onClick={() => navigate(createPageUrl("COEXForm") + `?employee_id=${employee.id}`)}
-                    className="w-full bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700"
-                  >
-                    <FileText className="w-4 h-4 mr-2" />
-                    {activeCOEX ? 'Ver/Renovar COEX' : 'Criar COEX'}
-                  </Button>
-                  
-                  {activeCOEX && (
+                  {activeCOEX ? (
+                    <>
+                      {/* Ver/Editar o contrato ativo */}
+                      <Button
+                        onClick={() => navigate(createPageUrl("COEXForm") + `?employee_id=${employee.id}&id=${activeCOEX.id}`)}
+                        className="w-full bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700"
+                      >
+                        <FileText className="w-4 h-4 mr-2" />
+                        Ver / Editar COEX
+                      </Button>
+
+                      {/* Linha de ações secundárias: Imprimir + Renovar */}
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => {
+                            // Abre janela de impressão direto, sem precisar entrar no form
+                            navigate(createPageUrl("COEXForm") + `?employee_id=${employee.id}&id=${activeCOEX.id}&print=1`);
+                          }}
+                        >
+                          <Printer className="w-4 h-4 mr-1" />
+                          Imprimir PDF
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1 text-orange-700 border-orange-400 hover:bg-orange-50"
+                          onClick={() => navigate(createPageUrl("COEXForm") + `?employee_id=${employee.id}`)}
+                        >
+                          <RefreshCw className="w-4 h-4 mr-1" />
+                          Renovar
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
                     <Button
-                      variant="outline"
-                      onClick={() => navigate(createPageUrl("COEXForm") + `?employee_id=${employee.id}&id=${activeCOEX.id}`)}
-                      className="w-full"
-                      size="sm"
+                      onClick={() => navigate(createPageUrl("COEXForm") + `?employee_id=${employee.id}`)}
+                      className="w-full bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700"
                     >
-                      Editar Contrato Atual
+                      <FileText className="w-4 h-4 mr-2" />
+                      Criar COEX
                     </Button>
                   )}
                 </CardContent>

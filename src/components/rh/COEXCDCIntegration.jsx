@@ -245,7 +245,7 @@ export default function COEXCDCIntegration({ employee }) {
                 Nenhum COEX ativo. Crie um contrato para alinhar expectativas e aumentar a retenção.
               </p>
               <Button
-                onClick={() => navigate(createPageUrl("COEXForm") + `?employeeId=${employee.id}`)}
+                onClick={() => navigate(createPageUrl("COEXForm") + `?employee_id=${employee.id}`)}
                 className="w-full bg-blue-600 hover:bg-blue-700"
                 disabled={coexLimits?.isLimitReached}
               >
