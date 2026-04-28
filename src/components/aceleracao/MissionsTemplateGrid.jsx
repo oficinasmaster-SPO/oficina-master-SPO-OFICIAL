@@ -91,7 +91,7 @@ export default function MissionsTemplateGrid() {
   const [saving, setSaving] = useState(false);
   const queryClient = useQueryClient();
 
-  // Carregar missões salvas do banco ao montar
+  // Carregar missões salvas do banco ao montar — e auto-persist se houver novas
   useEffect(() => {
     const load = async () => {
       try {
@@ -99,10 +99,16 @@ export default function MissionsTemplateGrid() {
         if (settings?.length > 0 && settings[0].value) {
           const saved = JSON.parse(settings[0].value);
           if (Array.isArray(saved) && saved.length > 0) {
-            // Merge: preserva dados salvos, adiciona missões novas que não existem no banco
             const savedIds = new Set(saved.map(m => m.id));
             const newMissions = DEFAULT_MISSIONS.filter(m => !savedIds.has(m.id));
-            setMissions([...saved, ...newMissions]);
+            const merged = [...saved, ...newMissions];
+            setMissions(merged);
+            // Se há missões novas que não estavam no banco, persistir automaticamente
+            if (newMissions.length > 0) {
+              const payload = { key: STORAGE_KEY, value: JSON.stringify(merged) };
+              await base44.entities.SystemSetting.update(settings[0].id, payload);
+              queryClient.invalidateQueries({ queryKey: ['missions_templates_for_picker'] });
+            }
             return;
           }
         }
@@ -111,7 +117,7 @@ export default function MissionsTemplateGrid() {
       }
     };
     load();
-  }, []);
+  }, [queryClient]);
 
   const persist = async (newMissions) => {
     setSaving(true);

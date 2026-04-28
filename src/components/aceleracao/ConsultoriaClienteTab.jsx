@@ -4,6 +4,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { base44 } from "@/api/base44Client";
+import { useQuery } from "@tanstack/react-query";
 import { CheckCircle2, X, Plus, Star, Map, Lock, ListChecks, Settings2, Zap, BookOpen, ExternalLink, PlayCircle, ChevronDown, ChevronUp, ChevronRight, RotateCcw, AlertTriangle, Lightbulb, PlaySquare, BarChart2, TrendingUp, MessageSquare, Circle, Clock, RefreshCw } from "lucide-react";
 import CamadaEstrategica from './CamadaEstrategica';
 import SprintPhaseDetailModalRedesigned from './SprintPhaseDetailModalRedesigned';
@@ -49,36 +50,26 @@ function convertSystemMissions(savedMissions) {
 
 /**
  * Hook para carregar missões dinâmicas do SystemSetting (missions_templates_v1)
- * Sempre busca do banco para refletir mudanças feitas na Consultoria Global
+ * Usa useQuery para se beneficiar de invalidação de cache quando missões são salvas na ConsultoriaGlobal
  */
 function useDynamicMissions() {
-  const [missoes, setMissoes] = useState(MISSOES_FALLBACK);
-  const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    const load = async () => {
-      try {
-        const settings = await base44.entities.SystemSetting.filter({ key: 'missions_templates_v1' });
-        if (cancelled) return;
-        if (settings?.length > 0 && settings[0].value) {
-          const saved = JSON.parse(settings[0].value);
-          if (Array.isArray(saved) && saved.length > 0) {
-            setMissoes(convertSystemMissions(saved));
-            setLoaded(true);
-            return;
-          }
+  const { data: missoes, isLoading } = useQuery({
+    queryKey: ['missions_templates_for_picker'],
+    queryFn: async () => {
+      const settings = await base44.entities.SystemSetting.filter({ key: 'missions_templates_v1' });
+      if (settings?.length > 0 && settings[0].value) {
+        const saved = JSON.parse(settings[0].value);
+        if (Array.isArray(saved) && saved.length > 0) {
+          return convertSystemMissions(saved);
         }
-      } catch {
-        // fallback silencioso
       }
-      if (!cancelled) setLoaded(true);
-    };
-    load();
-    return () => { cancelled = true; };
-  }, []);
+      return MISSOES_FALLBACK;
+    },
+    initialData: MISSOES_FALLBACK,
+    staleTime: 30 * 1000, // 30s — re-fetch ao reabrir painel
+  });
 
-  return { missoes, loaded };
+  return { missoes, loaded: !isLoading };
 }
 
 function CamadaTrilhaCliente({ workshopId, missoesSelecionadas, setMissoesSelecionadas, handleSetMissoesSelecionadas, onRefresh, missoes }) {
