@@ -11,19 +11,19 @@ export default function RecordDetails({ record, onEdit, onDelete }) {
         <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
           <p className="text-xs text-blue-700 mb-1">Faturamento Peças</p>
           <p className="text-lg font-bold text-blue-600">
-            R$ {formatCurrency(record.revenue_parts)}
+            {formatCurrency(record.revenue_parts)}
           </p>
         </div>
         <div className="bg-green-50 p-3 rounded-lg border border-green-200">
           <p className="text-xs text-green-700 mb-1">Faturamento Serviços</p>
           <p className="text-lg font-bold text-green-600">
-            R$ {formatCurrency(record.revenue_services)}
+            {formatCurrency(record.revenue_services)}
           </p>
         </div>
         <div className="bg-purple-50 p-3 rounded-lg border border-purple-200">
           <p className="text-xs text-purple-700 mb-1">Total Faturado</p>
           <p className="text-lg font-bold text-purple-600">
-            R$ {formatCurrency(record.revenue_total)}
+            {formatCurrency(record.revenue_total)}
           </p>
         </div>
       </div>
@@ -40,7 +40,7 @@ export default function RecordDetails({ record, onEdit, onDelete }) {
           <div className="bg-pink-50 p-3 rounded-lg border border-pink-200">
             <p className="text-xs text-pink-700 mb-1">Ticket Médio</p>
             <p className="text-lg font-bold text-pink-600">
-              R$ {formatCurrency(record.average_ticket || 0)}
+              {formatCurrency(record.average_ticket || 0)}
             </p>
           </div>
         </div>
@@ -61,19 +61,19 @@ export default function RecordDetails({ record, onEdit, onDelete }) {
             {record.kit_master > 0 && (
               <div>
                 <p className="text-gray-600">Kit Master:</p>
-                <p className="font-bold">R$ {formatCurrency(record.kit_master)}</p>
+                <p className="font-bold">{formatCurrency(record.kit_master)}</p>
               </div>
             )}
             {record.sales_base > 0 && (
               <div>
                 <p className="text-gray-600">Vendas Base:</p>
-                <p className="font-bold">R$ {formatCurrency(record.sales_base)}</p>
+                <p className="font-bold">{formatCurrency(record.sales_base)}</p>
               </div>
             )}
             {record.sales_marketing > 0 && (
               <div>
                 <p className="text-gray-600">Vendas Mkt:</p>
-                <p className="font-bold">R$ {formatCurrency(record.sales_marketing)}</p>
+                <p className="font-bold">{formatCurrency(record.sales_marketing)}</p>
               </div>
             )}
             {record.clients_delivered > 0 && (
@@ -144,11 +144,11 @@ export default function RecordDetails({ record, onEdit, onDelete }) {
             </div>
             <div>
               <p className="text-gray-600">Investido:</p>
-              <p className="font-bold">R$ {formatCurrency(record.marketing_data.invested_value || 0)}</p>
+              <p className="font-bold">{formatCurrency(record.marketing_data.invested_value || 0)}</p>
             </div>
             <div>
               <p className="text-gray-600">Custo/Venda:</p>
-              <p className="font-bold">R$ {formatCurrency(record.marketing_data.cost_per_sale || 0)}</p>
+              <p className="font-bold">{formatCurrency(record.marketing_data.cost_per_sale || 0)}</p>
             </div>
           </div>
         </div>

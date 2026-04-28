@@ -74,7 +74,7 @@ export default function WorkshopSummaryCard({ workshop, goalHistory }) {
               Meta Mensal (Previsto)
             </p>
             <p className="text-2xl font-bold text-blue-600">
-              R$ {formatCurrency(monthlyGoal)}
+              {formatCurrency(monthlyGoal)}
             </p>
             {monthlyGoal === 0 && (
               <p className="text-xs text-red-500 mt-1">⚠️ Meta não definida</p>
@@ -86,7 +86,7 @@ export default function WorkshopSummaryCard({ workshop, goalHistory }) {
               Realizado no Mês
             </p>
             <p className="text-2xl font-bold text-green-600">
-              R$ {formatCurrency(actualRevenue)}
+              {formatCurrency(actualRevenue)}
             </p>
             <p className="text-xs text-gray-500 mt-1">
               {currentMonthRecords.length} registro(s) no mês
@@ -98,7 +98,7 @@ export default function WorkshopSummaryCard({ workshop, goalHistory }) {
               Falta para Meta
             </p>
             <p className={`text-2xl font-bold ${achievementPercentage >= 100 ? 'text-green-600' : 'text-orange-600'}`}>
-              R$ {formatCurrency(missingToGoal)}
+              {formatCurrency(missingToGoal)}
             </p>
             {achievementPercentage >= 100 ? (
               <p className="text-xs text-green-600 mt-1 font-semibold">🎉 Meta batida!</p>
@@ -143,7 +143,7 @@ export default function WorkshopSummaryCard({ workshop, goalHistory }) {
                   </div>
                   <div className="flex justify-between text-xs pt-1 border-t border-blue-200">
                     <span className="text-gray-600">Vendas:</span>
-                    <span className="font-bold text-blue-700">R$ {formatCurrency(totalSalesBase)}</span>
+                    <span className="font-bold text-blue-700">{formatCurrency(totalSalesBase)}</span>
                   </div>
                 </div>
               </div>
@@ -162,7 +162,7 @@ export default function WorkshopSummaryCard({ workshop, goalHistory }) {
                   </div>
                   <div className="flex justify-between text-xs pt-1 border-t border-purple-200">
                     <span className="text-gray-600">Vendas:</span>
-                    <span className="font-bold text-purple-700">R$ {formatCurrency(totalSalesMarketing)}</span>
+                    <span className="font-bold text-purple-700">{formatCurrency(totalSalesMarketing)}</span>
                   </div>
                 </div>
               </div>

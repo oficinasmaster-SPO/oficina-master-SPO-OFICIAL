@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar, Eye, Plus, X, Trash2, Edit } from "lucide-react";
 import { toast } from "sonner";
 import { base44 } from "@/api/base44Client";
+import { formatCurrency } from "@/components/utils/formatters";
 import ManualGoalRegistration from "@/components/goals/ManualGoalRegistration";
 
 export default function HistoricoDiarioProducao({ employee, onUpdate }) {
@@ -150,7 +151,7 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
                           <div className="text-right bg-white px-3 py-2 rounded-lg border border-gray-200 shadow-sm">
                             <p className="text-xs text-gray-500 font-semibold mb-1">Faturamento Total</p>
                             <p className="text-lg font-bold text-blue-600">
-                              R$ {entry.total_revenue.toFixed(2)}
+                              {formatCurrency(entry.total_revenue)}
                             </p>
                           </div>
 
@@ -206,19 +207,19 @@ export default function HistoricoDiarioProducao({ employee, onUpdate }) {
                          <div className="bg-blue-50 p-3 rounded-lg">
                            <p className="text-xs text-blue-700 mb-1">Faturamento Peças</p>
                            <p className="text-lg font-bold text-blue-600">
-                             R$ {entry.parts_revenue.toFixed(2)}
+                             {formatCurrency(entry.parts_revenue)}
                            </p>
                          </div>
                          <div className="bg-green-50 p-3 rounded-lg">
                            <p className="text-xs text-green-700 mb-1">Faturamento Serviços</p>
                            <p className="text-lg font-bold text-green-600">
-                             R$ {entry.services_revenue.toFixed(2)}
+                             {formatCurrency(entry.services_revenue)}
                            </p>
                          </div>
                          <div className="bg-purple-50 p-3 rounded-lg">
                            <p className="text-xs text-purple-700 mb-1">Total do Dia</p>
                            <p className="text-lg font-bold text-purple-600">
-                             R$ {entry.total_revenue.toFixed(2)}
+                             {formatCurrency(entry.total_revenue)}
                            </p>
                          </div>
                        </div>

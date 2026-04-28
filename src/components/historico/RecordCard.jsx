@@ -88,7 +88,7 @@ export default function RecordCard({
               <div className="text-center bg-blue-50 px-4 py-2 rounded-lg shadow-sm min-w-[120px]">
                 <p className="text-xs text-blue-700 mb-1">Previsto</p>
                 <p className="text-xl font-bold text-blue-600">
-                  R$ {formatCurrency(record.projected_total || 0)}
+                  {formatCurrency(record.projected_total || 0)}
                 </p>
                 {(!record.projected_total || record.projected_total === 0) && (
                   <p className="text-xs text-orange-500 mt-1">Meta não definida</p>
@@ -97,7 +97,7 @@ export default function RecordCard({
               <div className="text-center bg-white px-4 py-2 rounded-lg shadow-sm min-w-[120px]">
                 <p className="text-xs text-purple-700 mb-1">Realizado</p>
                 <p className={`text-xl font-bold ${metaAchieved ? 'text-green-600' : 'text-orange-600'}`}>
-                  R$ {formatCurrency(record.achieved_total)}
+                  {formatCurrency(record.achieved_total)}
                 </p>
               </div>
             </div>
