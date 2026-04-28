@@ -454,11 +454,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
     }
   };
 
-  useEffect(() => {
-    if ((atas.length > 0 || concluidosModal.length > 0) && !dicaIA && !carregandoDica) {
-      gerarDicaIA();
-    }
-  }, [atas.length, concluidosModal.length]);
+  // Dica gerada apenas quando o usuário clicar no botão ↺ do post-it
 
   const buildSystemPrompt = () => {
     const resumoAtas = atas.slice(0, 5).map(a =>
