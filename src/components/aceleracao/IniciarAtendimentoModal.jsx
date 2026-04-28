@@ -349,7 +349,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
     const resumoConcluidos = concluidosModal.slice(0, 3).map(c =>
       `- Canal: ${c.canal || '?'} | Resultado: ${c.resultado || '?'} | Humor: ${c.humor || '?'} | Comprometimentos: ${c.compromissos || 'nenhum'}`
     ).join('\n');
-    return `Você é um assistente especializado em consultoria empresarial para oficinas mecânicas.\n\nCLIENTE: ${followUp?.workshop_name}\nFOLLOW-UP: ${followUp?.sequence_number}/4\n\nÚLTIMAS ATAS:\n${resumoAtas || 'Nenhuma'}\n\nÚLTIMOS ATENDIMENTOS:\n${resumoConcluidos || 'Nenhum'}\n\nRegras: responda em português, seja direto e prático, foque no contexto deste cliente.`;
+    return `Você é um assistente especializado em consultoria empresarial para oficinas mecânicas e negócios em aceleração. Seu papel é ajudar o consultor durante o atendimento de follow-up.\n\nCONTEXTO DO ATENDIMENTO\nCliente: ${followUp?.workshop_name}\nFollow-up: ${followUp?.sequence_number}/4\nConsultor: ${followUp?.consultor_nome || 'não informado'}\nData: ${followUp?.reminder_date || 'não informada'}\n\nÚLTIMAS ATAS:\n${resumoAtas || 'Nenhuma ata registrada'}\n\nÚLTIMOS ATENDIMENTOS:\n${resumoConcluidos || 'Nenhum atendimento anterior'}\n\nRegras:\n- Responda sempre em português brasileiro\n- Seja direto, prático e objetivo\n- Foque exclusivamente no cliente e contexto fornecido\n- Sugira abordagens e estratégias baseadas no histórico real do cliente\n- Seu escopo é: estratégia de atendimento, relacionamento com cliente, próximos passos, abordagem de follow-up, análise de humor e engajamento`;
   };
 
   const iniciarChat = () => {
@@ -357,7 +357,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
     setChatInicializado(true);
     setChatMensagens([{
       role: 'assistant',
-      content: `Olá! Estou pronto para ajudar com o atendimento de ${followUp?.workshop_name} (FU ${followUp?.sequence_number}/4). O que você precisa saber?`,
+      content: `Olá! Estou pronto para ajudar no atendimento de ${followUp?.workshop_name} — Follow-up ${followUp?.sequence_number}/4. Já analisei o histórico de atas e atendimentos deste cliente. Como posso ajudar?`,
     }]);
   };
 
