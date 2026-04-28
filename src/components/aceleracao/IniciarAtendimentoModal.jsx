@@ -392,30 +392,46 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
         `Atendimento via ${c.canal || '?'}: resultado=${c.resultado || '?'}, humor=${c.humor || '?'}, comprometimentos=${c.compromissos || 'nenhum'}`
       ).join('\n');
 
-      // Cria conversa dedicada para a dica — separada do chat principal
+      // Cria conversa pontual dedicada à dica
       const convDica = await base44.agents.createConversation({
         agent_name: 'followup_consultor',
         metadata: {
           name: `Dica ${followUp?.workshop_name} - FU ${followUp?.sequence_number}`,
-          description: 'Geração de dica pontual para o atendimento',
+          description: 'Geração pontual de dica para o atendimento',
         },
       });
 
-      const mensagem = `Cliente: ${followUp?.workshop_name} | Follow-up ${followUp?.sequence_number}/4 | Consultor: ${followUp?.consultor_nome || 'não informado'}\n\nÚLTIMAS ATAS:\n${resumoAtas || 'Sem atas registradas'}\n\nÚLTIMOS ATENDIMENTOS:\n${resumoConcluidos || 'Sem atendimentos anteriores'}\n\nCom base neste histórico, gere UMA dica prática e direta (máximo 3 linhas) para o consultor seguir neste atendimento. Responda apenas a dica, sem introdução.`;
+      // Injeta contexto + pedido de dica numa única mensagem
+      const mensagem = [
+        `Cliente: ${followUp?.workshop_name}`,
+        `Follow-up: ${followUp?.sequence_number}/4`,
+        `Consultor: ${followUp?.consultor_nome || 'não informado'}`,
+        ``,
+        `ÚLTIMAS ATAS:`,
+        resumoAtas || 'Sem atas registradas',
+        ``,
+        `ÚLTIMOS ATENDIMENTOS:`,
+        resumoConcluidos || 'Sem atendimentos anteriores',
+        ``,
+        `Com base neste histórico, gere UMA dica prática e direta (máximo 3 linhas) para o consultor seguir neste atendimento. Responda apenas a dica, sem introdução, sem saudação.`,
+      ].join('\n');
 
       await base44.agents.addMessage(convDica, {
         role: 'user',
         content: mensagem,
       });
 
-      // Aguarda a resposta via subscribe com timeout de 15s
+      // Aguarda resposta via subscribe com timeout de 20s
       const dica = await new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => reject(new Error('Timeout')), 15000);
+        const timeout = setTimeout(() => {
+          reject(new Error('Timeout — agente não respondeu em 20s'));
+        }, 20000);
+
         const unsubscribe = base44.agents.subscribeToConversation(
           convDica.id,
           (data) => {
             const msgs = data.messages || [];
-            const resposta = msgs.find(m => m.role === 'assistant');
+            const resposta = msgs.find(m => m.role === 'assistant' && m.content?.trim());
             if (resposta?.content) {
               clearTimeout(timeout);
               unsubscribe();
@@ -428,7 +444,11 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
       setDicaIA(dica.replace(/\\n/g, '\n').trim());
     } catch (err) {
       console.error('Erro ao gerar dica:', err);
-      toast.error('Erro ao gerar dica — tente recarregar');
+      if (err.message?.includes('Timeout')) {
+        toast.error('O agente demorou para responder. Tente recarregar.');
+      } else {
+        toast.error('Erro ao gerar dica de IA');
+      }
     } finally {
       setCarregandoDica(false);
     }
