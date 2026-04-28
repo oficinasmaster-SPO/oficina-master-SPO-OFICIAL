@@ -102,6 +102,18 @@ export default function RelatorioCDC() {
 
   const { employee, cdcRecord, scores, analysis } = report;
 
+  // Guard: se estrutura do relatório estiver incompleta (IA pode ter falhado parcialmente)
+  if (!scores || !analysis) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
+        <AlertTriangle className="w-12 h-12 text-amber-500 mb-4" />
+        <h1 className="text-xl font-bold text-gray-900 mb-2">Relatório incompleto</h1>
+        <p className="text-gray-600 mb-6">A análise por IA ainda não foi gerada para este CDC. Salve novamente o formulário para gerar o relatório.</p>
+        <Button onClick={() => navigate(createPageUrl("CDCForm") + `?employee_id=${employee?.id}`)}>Ir para o CDC</Button>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 print:bg-white print:p-0">
       <div className="max-w-5xl mx-auto space-y-6">

@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, CheckCircle2, Clock, FileText, Heart, Calendar, Printer } from "lucide-react";
+import { AlertCircle, CheckCircle2, Clock, FileText, Heart, Calendar, Printer, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { format, differenceInDays } from "date-fns";
@@ -87,7 +87,7 @@ export default function COEXCDCIntegration({ employee }) {
               )}
               <Button
                 variant="outline"
-                onClick={() => navigate(createPageUrl("CDCForm") + `?employeeId=${employee.id}`)}
+                onClick={() => navigate(createPageUrl("CDCForm") + `?employee_id=${employee.id}`)}
                 className="w-full"
               >
                 Atualizar CDC
@@ -108,9 +108,9 @@ export default function COEXCDCIntegration({ employee }) {
                                     variant="ghost" 
                                     size="sm" 
                                     className="h-6 px-2 text-xs text-gray-500 hover:text-gray-700"
-                                    onClick={() => navigate(createPageUrl("CDCForm") + `?employeeId=${employee.id}&recordId=${rec.id}`)}
+                                    onClick={() => navigate(createPageUrl("CDCForm") + `?employee_id=${employee.id}`)}
                                 >
-                                    Respostas
+                                    Editar
                                 </Button>
                                 <Button 
                                     variant="ghost" 
@@ -118,6 +118,7 @@ export default function COEXCDCIntegration({ employee }) {
                                     className="h-6 px-2 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                                     onClick={() => navigate(createPageUrl("RelatorioCDC") + `?record_id=${rec.id}`)}
                                 >
+                                    <Eye className="w-3 h-3 mr-1" />
                                     Ver Relatório
                                 </Button>
                             </div>
@@ -133,7 +134,7 @@ export default function COEXCDCIntegration({ employee }) {
                 O CDC ainda não foi realizado com este colaborador. Faça agora para melhorar o engajamento.
               </p>
               <Button
-                onClick={() => navigate(createPageUrl("CDCForm") + `?employeeId=${employee.id}`)}
+                onClick={() => navigate(createPageUrl("CDCForm") + `?employee_id=${employee.id}`)}
                 className="w-full bg-pink-600 hover:bg-pink-700"
                 disabled={cdcLimits?.isLimitReached}
               >
