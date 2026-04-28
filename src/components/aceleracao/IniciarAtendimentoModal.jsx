@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,7 +10,8 @@ import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, A
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Phone, MessageCircle, Mail, Video, MapPin, CheckCircle2, X, Clock, AlertCircle,
-  ChevronRight, ChevronLeft, Upload, Check, ArrowRight, Calendar, User, Bell
+  ChevronRight, ChevronLeft, Upload, Check, ArrowRight, Calendar, User, Bell,
+  MessageSquare, Send, Loader2, Zap
 } from "lucide-react";
 import { format, isToday, parseISO } from "date-fns";
 import { toast } from "sonner";
@@ -112,6 +113,16 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
   const [navTarget, setNavTarget] = useState(null);
   const [fusSemanaExpandido, setFusSemanaExpandido] = useState(false);
   const [fusSemanaLocal, setFusSemanaLocal] = useState([]);
+
+  // States da aba IA
+  const [dicaIA, setDicaIA] = useState(null);
+  const [carregandoDica, setCarregandoDica] = useState(false);
+  const [chatMensagens, setChatMensagens] = useState([]);
+  const [chatInput, setChatInput] = useState('');
+  const [chatEnviando, setChatEnviando] = useState(false);
+  const [chatConversa, setChatConversa] = useState(null);
+  const [chatInicializado, setChatInicializado] = useState(false);
+  const chatEndRef = useRef(null);
 
   const idxAtual = filaReminders.findIndex(f => f.id === followUp?.id);
   const fuAnterior = idxAtual > 0 ? filaReminders[idxAtual - 1] : null;
