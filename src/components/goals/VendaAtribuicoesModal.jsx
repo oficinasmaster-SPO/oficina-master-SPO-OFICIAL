@@ -2,11 +2,13 @@ import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { InputMoeda } from "@/components/ui/InputMoeda";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { Plus, Trash2, AlertCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { formatCurrency } from "../utils/formatters";
 
 const PAPEIS_DISPONIVEIS = [
   { value: "gerou_lead", label: "🎯 Gerou Lead", equipe: "marketing" },
@@ -135,7 +137,7 @@ export default function VendaAtribuicoesModal({
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-2">
             <p className="text-xs font-semibold text-blue-900 mb-1">💡 Como funciona:</p>
             <p className="text-xs text-blue-700">
-              Faturamento real = R$ {valorTotal.toFixed(2)}. Cada papel é independente - ajuste o valor conforme a participação real de cada um nesta venda.
+              Faturamento real = {formatCurrency(valorTotal)}. Cada papel é independente - ajuste o valor conforme a participação real de cada um nesta venda.
             </p>
           </div>
         </DialogHeader>
@@ -147,15 +149,15 @@ export default function VendaAtribuicoesModal({
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <p className="text-xs text-blue-700">Valor Total</p>
-                  <p className="text-lg font-bold text-blue-900">R$ {valorTotal.toFixed(2)}</p>
+                  <p className="text-lg font-bold text-blue-900">{formatCurrency(valorTotal)}</p>
                 </div>
                 <div>
                   <p className="text-xs text-blue-700">Peças</p>
-                  <p className="text-lg font-bold text-blue-900">R$ {valorPecas.toFixed(2)}</p>
+                  <p className="text-lg font-bold text-blue-900">{formatCurrency(valorPecas)}</p>
                 </div>
                 <div>
                   <p className="text-xs text-blue-700">Serviços</p>
-                  <p className="text-lg font-bold text-blue-900">R$ {valorServicos.toFixed(2)}</p>
+                  <p className="text-lg font-bold text-blue-900">{formatCurrency(valorServicos)}</p>
                 </div>
               </div>
             </CardContent>
@@ -220,15 +222,13 @@ export default function VendaAtribuicoesModal({
                       {/* Crédito (editável) */}
                       <div className="flex-shrink-0 bg-green-100 px-3 py-2 rounded-lg">
                         <Label className="text-xs text-green-700 mb-1 block">Crédito R$</Label>
-                        <Input
-                          type="number"
-                          step="0.01"
+                        <InputMoeda
                           value={atrib.valor_credito}
                           onChange={(e) => {
                             const novoValor = parseFloat(e.target.value) || 0;
                             atualizarAtribuicao(index, "valor_credito", novoValor);
                           }}
-                          className="h-8 w-28 font-semibold text-sm"
+                          className="h-8 w-32 font-semibold text-sm"
                         />
                         <p className="text-xs text-green-600 mt-1">
                           {((atrib.valor_credito / valorTotal) * 100).toFixed(1)}%
@@ -275,7 +275,7 @@ export default function VendaAtribuicoesModal({
                       ✅ {atribuicoes.length} participante(s) no funil
                     </p>
                     <p className="text-xs text-green-700 mt-1">
-                      Faturamento real: R$ {valorTotal.toFixed(2)} | Crédito total distribuído: R$ {(valorTotal * atribuicoes.length).toFixed(2)}
+                      Faturamento real: {formatCurrency(valorTotal)} | Crédito total distribuído: {formatCurrency(atribuicoes.reduce((sum, a) => sum + a.valor_credito, 0))}
                     </p>
                   </div>
                   <div className="text-right">
@@ -283,7 +283,7 @@ export default function VendaAtribuicoesModal({
                     <p className="text-lg font-bold text-green-900">
                       {atribuicoes.length > 0 
                         ? ((atribuicoes.reduce((sum, a) => sum + a.valor_credito, 0) / atribuicoes.length / valorTotal) * 100).toFixed(1)
-                        : 0}% = R$ {(atribuicoes.reduce((sum, a) => sum + a.valor_credito, 0) / (atribuicoes.length || 1)).toFixed(2)}
+                        : 0}% = {formatCurrency(atribuicoes.reduce((sum, a) => sum + a.valor_credito, 0) / (atribuicoes.length || 1))}
                     </p>
                   </div>
                 </div>
