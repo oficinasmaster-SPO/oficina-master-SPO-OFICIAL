@@ -154,10 +154,12 @@ export default function VisualEditAgent() {
 
 	// Handle element click
 	const handleElementClick = (e) => {
+		// Guard principal: nunca interferir fora do modo de edição visual
 		if (!isVisualEditModeRef.current) return;
 
 		// Close dropdowns when clicking anywhere in iframe if a dropdown is open
-		if (isDropdownOpenRef.current) {
+		// Guard duplo: só bloquear cliques se estiver ATIVAMENTE em modo edição
+		if (isDropdownOpenRef.current && isVisualEditModeRef.current) {
 			e.preventDefault();
 			e.stopPropagation();
 			e.stopImmediatePropagation();
@@ -349,6 +351,11 @@ export default function VisualEditAgent() {
 			selectedElementIdRef.current = null;
 			document.body.style.cursor = 'default';
 
+			// Resetar estado de dropdown ao sair do modo edição
+			// Evita que isDropdownOpenRef fique preso em true e bloqueie cliques
+			setIsDropdownOpen(false);
+			isDropdownOpenRef.current = false;
+
 			// Remove event listeners
 			document.removeEventListener('mouseover', handleMouseOver);
 			document.removeEventListener('mouseout', handleMouseOut);
@@ -517,6 +524,14 @@ export default function VisualEditAgent() {
 						// Clear hover overlays when dropdown opens
 						if (message.data.isOpen) {
 							clearHoverOverlays();
+							// Timeout de segurança: se em 10s não vier um false, resetar
+							// Evita travamento por mensagem perdida do iframe pai
+							setTimeout(() => {
+								if (isDropdownOpenRef.current) {
+									setIsDropdownOpen(false);
+									isDropdownOpenRef.current = false;
+								}
+							}, 10000);
 						}
 					}
 					break;
