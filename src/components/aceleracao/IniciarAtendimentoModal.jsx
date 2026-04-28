@@ -1208,13 +1208,22 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
           {/* RIGHT COLUMN - SIDEBAR */}
           <div className="w-80 xl:w-96 flex-shrink-0 border-l border-gray-200 bg-gradient-to-b from-white via-gray-50 to-gray-100 overflow-hidden flex flex-col shadow-[inset_-2px_0_8px_rgba(0,0,0,0.03)]">
             <Tabs defaultValue="atas" className="flex-1 flex flex-col">
-              <TabsList className="grid w-full grid-cols-4 rounded-none border-b bg-white">
-                <TabsTrigger value="atas">Atas</TabsTrigger>
-                <TabsTrigger value="followups">FUs</TabsTrigger>
-                <TabsTrigger value="cliente">Cliente</TabsTrigger>
-                <TabsTrigger value="ia" className="flex items-center gap-1">
-                  <Zap className="w-3 h-3" /> IA
-                </TabsTrigger>
+              <TabsList className="grid w-full grid-cols-4 rounded-none border-b bg-white p-0 h-auto">
+                {[
+                  { value: 'atas', label: 'Atas', onClick: undefined },
+                  { value: 'followups', label: 'FUs', onClick: undefined },
+                  { value: 'cliente', label: 'Cliente', onClick: undefined },
+                  { value: 'ia', label: '⚡ IA', onClick: () => { if (!chatInicializado) iniciarChat(); } },
+                ].map(tab => (
+                  <TabsTrigger
+                    key={tab.value}
+                    value={tab.value}
+                    onClick={tab.onClick}
+                    className="relative py-3 text-xs font-medium rounded-none border-0 transition-all duration-150 text-gray-400 bg-transparent hover:text-red-500 hover:bg-red-50 data-[state=active]:text-red-600 data-[state=active]:bg-white data-[state=active]:shadow-none data-[state=active]:font-semibold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-transparent data-[state=active]:after:bg-red-600"
+                  >
+                    {tab.label}
+                  </TabsTrigger>
+                ))}
               </TabsList>
 
               <TabsContent value="atas" className="flex-1 overflow-y-auto px-3 py-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
