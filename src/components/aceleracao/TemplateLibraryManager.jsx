@@ -27,14 +27,39 @@ const DEFAULT_MISSIONS_LIST = [
   { id: 'cultura_forte',        icon: '🌟', name: 'Cultura Forte' },
 ];
 
+/**
+ * Hook para carregar missões dinâmicas do SystemSetting, com fallback para DEFAULT_MISSIONS_LIST
+ */
+function useDynamicMissionsList() {
+  const { data: missionsList = DEFAULT_MISSIONS_LIST } = useQuery({
+    queryKey: ['missions_templates_for_picker'],
+    queryFn: async () => {
+      const settings = await base44.entities.SystemSetting.filter({ key: MISSIONS_STORAGE_KEY });
+      if (settings?.length > 0 && settings[0].value) {
+        const saved = JSON.parse(settings[0].value);
+        if (Array.isArray(saved) && saved.length > 0) {
+          // Merge: banco + defaults que não existem no banco
+          const savedIds = new Set(saved.map(m => m.id));
+          const newDefaults = DEFAULT_MISSIONS_LIST.filter(m => !savedIds.has(m.id));
+          return [...saved, ...newDefaults];
+        }
+      }
+      return DEFAULT_MISSIONS_LIST;
+    },
+    staleTime: 10 * 1000,
+  });
+  return missionsList;
+}
+
 function MissionPicker({ selected = [], onChange }) {
+  const missionsList = useDynamicMissionsList();
   const toggle = (id) => {
     if (selected.includes(id)) onChange(selected.filter(m => m !== id));
     else onChange([...selected, id]);
   };
   return (
     <div className="grid grid-cols-2 gap-2 mt-1">
-      {DEFAULT_MISSIONS_LIST.map(m => {
+      {missionsList.map(m => {
         const isSelected = selected.includes(m.id);
         return (
           <button
@@ -243,7 +268,8 @@ export default function TemplateLibraryManager() {
       const payload = { key: MISSIONS_STORAGE_KEY, value: JSON.stringify(updated) };
       if (existing?.length > 0) await base44.entities.SystemSetting.update(existing[0].id, payload);
       else await base44.entities.SystemSetting.create(payload);
-      toast.success('Missão criada! Recarregue a aba Missões para ver.');
+      queryClient.invalidateQueries({ queryKey: ['missions_templates_for_picker'] });
+      toast.success('Missão criada!');
       setShowNewMission(false);
       setNewMission({ icon: '🎯', name: '', description: '', linked_sprint_id: '' });
     } catch { toast.error('Erro ao criar missão'); }

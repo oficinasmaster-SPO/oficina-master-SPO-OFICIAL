@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 
 const STORAGE_KEY = 'missions_templates_v1';
 
@@ -88,6 +89,7 @@ export default function MissionsTemplateGrid() {
   const [editingId, setEditingId] = useState(null);
   const [editData, setEditData] = useState(null);
   const [saving, setSaving] = useState(false);
+  const queryClient = useQueryClient();
 
   // Carregar missões salvas do banco ao montar
   useEffect(() => {
@@ -121,6 +123,7 @@ export default function MissionsTemplateGrid() {
       } else {
         await base44.entities.SystemSetting.create(payload);
       }
+      queryClient.invalidateQueries({ queryKey: ['missions_templates_for_picker'] });
       toast.success('Missão salva!');
     } catch {
       toast.error('Erro ao salvar missão');
