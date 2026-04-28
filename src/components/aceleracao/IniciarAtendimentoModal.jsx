@@ -120,7 +120,6 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
   const [chatMensagens, setChatMensagens] = useState([]);
   const [chatInput, setChatInput] = useState('');
   const [chatEnviando, setChatEnviando] = useState(false);
-  const [chatConversa, setChatConversa] = useState(null);
   const [chatInicializado, setChatInicializado] = useState(false);
   const chatEndRef = useRef(null);
 
@@ -343,44 +342,43 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
     }
   }, [atas.length, concluidosModal.length]);
 
-  const iniciarChat = async () => {
-    if (chatConversa) return;
+  const buildSystemPrompt = () => {
+    const resumoAtas = atas.slice(0, 5).map(a =>
+      `- ${a.tipo_aceleracao || a.tipo_atendimento || 'Reunião'} (${a.meeting_date || ''}): próximos passos: ${a.proximos_passos || 'não registrado'}`
+    ).join('\n');
+    const resumoConcluidos = concluidosModal.slice(0, 3).map(c =>
+      `- Canal: ${c.canal || '?'} | Resultado: ${c.resultado || '?'} | Humor: ${c.humor || '?'} | Comprometimentos: ${c.compromissos || 'nenhum'}`
+    ).join('\n');
+    return `Você é um assistente especializado em consultoria empresarial para oficinas mecânicas.\n\nCLIENTE: ${followUp?.workshop_name}\nFOLLOW-UP: ${followUp?.sequence_number}/4\n\nÚLTIMAS ATAS:\n${resumoAtas || 'Nenhuma'}\n\nÚLTIMOS ATENDIMENTOS:\n${resumoConcluidos || 'Nenhum'}\n\nRegras: responda em português, seja direto e prático, foque no contexto deste cliente.`;
+  };
+
+  const iniciarChat = () => {
+    if (chatInicializado) return;
     setChatInicializado(true);
-    setChatEnviando(true);
-    try {
-      const resumoAtas = atas.slice(0, 5).map(a =>
-        `- ${a.tipo_aceleracao || a.tipo_atendimento || 'Reunião'} (${a.meeting_date || 'sem data'}): ${a.proximos_passos || 'sem próximos passos'}`
-      ).join('\n');
-      const resumoConcluidos = concluidosModal.slice(0, 3).map(c =>
-        `- Canal: ${c.canal || '?'} | Resultado: ${c.resultado || '?'} | Humor: ${c.humor || '?'} | Comprometimentos: ${c.compromissos || 'nenhum'}`
-      ).join('\n');
-      const contexto = `Você é um assistente de consultoria empresarial. Ajude o consultor a atender o cliente "${followUp?.workshop_name}" (Follow-up ${followUp?.sequence_number}/4).\n\nÚLTIMAS ATAS:\n${resumoAtas || 'Nenhuma'}\n\nÚLTIMOS ATENDIMENTOS:\n${resumoConcluidos || 'Nenhum'}\n\nResponda de forma direta e prática.`;
-      const conv = await base44.agents.createConversation({
-        agent_name: 'qgp_tecnico',
-        metadata: { name: `Chat ${followUp?.workshop_name} - FU ${followUp?.sequence_number}`, description: contexto },
-      });
-      setChatConversa(conv);
-      setChatMensagens([{ role: 'assistant', content: `Olá! Estou pronto para ajudar com o atendimento de **${followUp?.workshop_name}**. O que você precisa saber?` }]);
-      base44.agents.subscribeToConversation(conv.id, (data) => setChatMensagens(data.messages || []));
-    } catch (err) {
-      console.error('Erro ao iniciar chat:', err);
-      toast.error('Erro ao iniciar chat');
-    } finally {
-      setChatEnviando(false);
-    }
+    setChatMensagens([{
+      role: 'assistant',
+      content: `Olá! Estou pronto para ajudar com o atendimento de ${followUp?.workshop_name} (FU ${followUp?.sequence_number}/4). O que você precisa saber?`,
+    }]);
   };
 
   const enviarMensagemChat = async () => {
-    if (!chatInput.trim() || !chatConversa || chatEnviando) return;
+    if (!chatInput.trim() || chatEnviando) return;
     const texto = chatInput.trim();
     setChatInput('');
+    const novasMensagens = [...chatMensagens, { role: 'user', content: texto }];
+    setChatMensagens(novasMensagens);
     setChatEnviando(true);
-    setChatMensagens(prev => [...prev, { role: 'user', content: texto }]);
     try {
-      await base44.agents.addMessage(chatConversa, { role: 'user', content: texto });
+      const historico = novasMensagens.slice(-10)
+        .map(m => `${m.role === 'user' ? 'Consultor' : 'Assistente'}: ${m.content}`)
+        .join('\n');
+      const prompt = `${buildSystemPrompt()}\n\n---\nHISTÓRICO:\n${historico}\n\nResponda à última mensagem do Consultor.`;
+      const response = await base44.functions.invoke('invokeLLMUnlimited', { prompt });
+      const resposta = response?.data?.result || response?.data?.message || response?.data || 'Não foi possível obter uma resposta.';
+      setChatMensagens(prev => [...prev, { role: 'assistant', content: typeof resposta === 'string' ? resposta : JSON.stringify(resposta) }]);
     } catch (err) {
       console.error('Erro ao enviar mensagem:', err);
-      toast.error('Erro ao enviar mensagem');
+      setChatMensagens(prev => [...prev, { role: 'assistant', content: 'Erro ao processar. Tente novamente.' }]);
     } finally {
       setChatEnviando(false);
     }
