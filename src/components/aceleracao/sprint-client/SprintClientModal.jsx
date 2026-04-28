@@ -220,8 +220,8 @@ export default function SprintClientModal({ sprint, user, workshop, open, onClos
       >
         {/* ═══ FIXED HEADER ═══ */}
         <div className="shrink-0 bg-white z-10 relative">
-          {/* Title + Close */}
-          <div className="px-5 pt-5 pb-3 flex items-start justify-between gap-4">
+          {/* Title + Close — elevated card */}
+          <div className="mx-4 mt-4 mb-3 bg-white rounded-xl shadow-md border border-gray-100 px-5 py-4 flex items-start justify-between gap-4">
             <DialogHeader className="flex-1 min-w-0">
               <DialogTitle className="text-lg font-bold text-gray-900">{sprint.title}</DialogTitle>
               {sprint.objective && <p className="text-sm text-gray-500 mt-0.5">{sprint.objective}</p>}
