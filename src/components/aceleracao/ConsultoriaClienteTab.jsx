@@ -9,59 +9,79 @@ import CamadaEstrategica from './CamadaEstrategica';
 import SprintPhaseDetailModalRedesigned from './SprintPhaseDetailModalRedesigned';
 import { getDefaultPhasesForMission } from './sprintMissionTasks';
 
-const MISSOES = [
-  {
-    id: "agenda_cheia",
-    nome: "Agenda Cheia",
-    emoji: "📅",
-    descricao: "Preencher a agenda semanal com 100% de ocupação de vendas",
-    cor: "border-blue-400 bg-blue-50 text-blue-800"
-  },
-  {
-    id: "fechamento_imbativel",
-    nome: "Fechamento Imbatível",
-    emoji: "🎯",
-    descricao: "Aumentar taxa de conversão de propostas para vendas",
-    cor: "border-green-400 bg-green-50 text-green-800"
-  },
-  {
-    id: "caixa_forte",
-    nome: "Caixa Forte",
-    emoji: "💰",
-    descricao: "Fortalecer fluxo de caixa e gestão financeira",
-    cor: "border-yellow-400 bg-yellow-50 text-yellow-800"
-  },
-  {
-    id: "empresa_organizada",
-    nome: "Empresa Organizada",
-    emoji: "📊",
-    descricao: "Estruturar processos e operações da empresa",
-    cor: "border-purple-400 bg-purple-50 text-purple-800"
-  },
-  {
-    id: "funcoes_claras",
-    nome: "Funções Claras",
-    emoji: "👥",
-    descricao: "Definir papéis, responsabilidades e organograma",
-    cor: "border-pink-400 bg-pink-50 text-pink-800"
-  },
-  {
-    id: "contratacao_certa",
-    nome: "Contratação Certa",
-    emoji: "🎓",
-    descricao: "Otimizar processo de seleção e onboarding",
-    cor: "border-indigo-400 bg-indigo-50 text-indigo-800"
-  },
-  {
-    id: "cultura_forte",
-    nome: "Cultura Forte",
-    emoji: "🌟",
-    descricao: "Desenvolver cultura organizacional e engajamento",
-    cor: "border-red-400 bg-red-50 text-red-800"
-  },
-]
+// Cores rotativas para missões dinâmicas
+const MISSION_COLORS = [
+  "border-blue-400 bg-blue-50 text-blue-800",
+  "border-green-400 bg-green-50 text-green-800",
+  "border-yellow-400 bg-yellow-50 text-yellow-800",
+  "border-purple-400 bg-purple-50 text-purple-800",
+  "border-pink-400 bg-pink-50 text-pink-800",
+  "border-indigo-400 bg-indigo-50 text-indigo-800",
+  "border-red-400 bg-red-50 text-red-800",
+  "border-teal-400 bg-teal-50 text-teal-800",
+  "border-orange-400 bg-orange-50 text-orange-800",
+  "border-cyan-400 bg-cyan-50 text-cyan-800",
+];
 
-function CamadaTrilhaCliente({ workshopId, missoesSelecionadas, setMissoesSelecionadas, handleSetMissoesSelecionadas, onRefresh }) {
+// Fallback hardcoded — usado apenas se o SystemSetting não retornar nada
+const MISSOES_FALLBACK = [
+  { id: "agenda_cheia", nome: "Agenda Cheia", emoji: "📅", descricao: "Preencher a agenda semanal com 100% de ocupação de vendas", cor: MISSION_COLORS[0] },
+  { id: "fechamento_imbativel", nome: "Fechamento Imbatível", emoji: "🎯", descricao: "Aumentar taxa de conversão de propostas para vendas", cor: MISSION_COLORS[1] },
+  { id: "caixa_forte", nome: "Caixa Forte", emoji: "💰", descricao: "Fortalecer fluxo de caixa e gestão financeira", cor: MISSION_COLORS[2] },
+  { id: "empresa_organizada", nome: "Empresa Organizada", emoji: "📊", descricao: "Estruturar processos e operações da empresa", cor: MISSION_COLORS[3] },
+  { id: "funcoes_claras", nome: "Funções Claras", emoji: "👥", descricao: "Definir papéis, responsabilidades e organograma", cor: MISSION_COLORS[4] },
+  { id: "contratacao_certa", nome: "Contratação Certa", emoji: "🎓", descricao: "Otimizar processo de seleção e onboarding", cor: MISSION_COLORS[5] },
+  { id: "cultura_forte", nome: "Cultura Forte", emoji: "🌟", descricao: "Desenvolver cultura organizacional e engajamento", cor: MISSION_COLORS[6] },
+];
+
+/**
+ * Converte missões do formato SystemSetting (missions_templates_v1) para o formato usado neste componente
+ */
+function convertSystemMissions(savedMissions) {
+  return savedMissions.map((m, idx) => ({
+    id: m.id,
+    nome: m.name,
+    emoji: m.icon || "📋",
+    descricao: m.description || "",
+    cor: MISSION_COLORS[idx % MISSION_COLORS.length],
+  }));
+}
+
+/**
+ * Hook para carregar missões dinâmicas do SystemSetting (missions_templates_v1)
+ * Sempre busca do banco para refletir mudanças feitas na Consultoria Global
+ */
+function useDynamicMissions() {
+  const [missoes, setMissoes] = useState(MISSOES_FALLBACK);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const settings = await base44.entities.SystemSetting.filter({ key: 'missions_templates_v1' });
+        if (cancelled) return;
+        if (settings?.length > 0 && settings[0].value) {
+          const saved = JSON.parse(settings[0].value);
+          if (Array.isArray(saved) && saved.length > 0) {
+            setMissoes(convertSystemMissions(saved));
+            setLoaded(true);
+            return;
+          }
+        }
+      } catch {
+        // fallback silencioso
+      }
+      if (!cancelled) setLoaded(true);
+    };
+    load();
+    return () => { cancelled = true; };
+  }, []);
+
+  return { missoes, loaded };
+}
+
+function CamadaTrilhaCliente({ workshopId, missoesSelecionadas, setMissoesSelecionadas, handleSetMissoesSelecionadas, onRefresh, missoes }) {
   const [mostrarSeletor, setMostrarSeletor] = useState(false);
   const [salvando, setSalvando] = useState(false);
   const [salvoRecentemente, setSalvoRecentemente] = useState(false);
@@ -107,7 +127,7 @@ function CamadaTrilhaCliente({ workshopId, missoesSelecionadas, setMissoesSeleci
     // Evita dois saves concorrentes (optimistic local + API) por click
   };
 
-  const missoesSelecionadasData = MISSOES.filter(m => missoesSelecionadas.includes(m.id));
+  const missoesSelecionadasData = missoes.filter(m => missoesSelecionadas.includes(m.id));
 
   return (
     <div className="space-y-6">
@@ -245,7 +265,7 @@ function CamadaTrilhaCliente({ workshopId, missoesSelecionadas, setMissoesSeleci
             <p className="text-xs text-gray-500 ml-auto">Personalize conforme o diagnóstico do cliente</p>
           </div>
           <div className="space-y-2">
-            {MISSOES.map((missao) => {
+            {missoes.map((missao) => {
               const selecionada = missoesSelecionadas.includes(missao.id);
               return (
                 <button
@@ -559,8 +579,8 @@ function SprintCard({ numero, titulo, emoji, descricao, cor, isFixed, sprint, on
   );
 }
 
-function CamadaSprints({ workshopId, missoesSelecionadas, cronogramaTemplateId, isGlobalMode = false, globalSprints = [] }) {
-  const missoesSelecionadasData = MISSOES.filter(m => missoesSelecionadas.includes(m.id));
+function CamadaSprints({ workshopId, missoesSelecionadas, cronogramaTemplateId, isGlobalMode = false, globalSprints = [], missoes }) {
+  const missoesSelecionadasData = missoes.filter(m => missoesSelecionadas.includes(m.id));
   const [sprints, setSprints] = useState([]);
   const [loadingCreate, setLoadingCreate] = useState(null);
   const [loadError, setLoadError] = useState(null);
@@ -860,6 +880,7 @@ export default function ConsultoriaClienteTab({ client, mode = "contextual", glo
   const [cronogramaTemplateId, setCronogramaTemplateId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [displaySprints, setDisplaySprints] = useState([]);
+  const { missoes } = useDynamicMissions();
 
   useEffect(() => {
     let cancelled = false;
@@ -978,6 +999,7 @@ export default function ConsultoriaClienteTab({ client, mode = "contextual", glo
                missoesSelecionadas={missoesSelecionadas}
                setMissoesSelecionadas={setMissoesSelecionadas}
                handleSetMissoesSelecionadas={handleSetMissoesSelecionadas}
+               missoes={missoes}
                onRefresh={async () => {
                  const cronogramas = await base44.entities.CronogramaTemplate.filter({ workshop_id: workshopId });
                  if (cronogramas?.length > 0) {
@@ -1004,6 +1026,7 @@ export default function ConsultoriaClienteTab({ client, mode = "contextual", glo
              cronogramaTemplateId={cronogramaTemplateId}
              isGlobalMode={isGlobalMode}
              globalSprints={displaySprints}
+             missoes={missoes}
            />
          </TabsContent>
         <TabsContent value="consultor" className="mt-4">
