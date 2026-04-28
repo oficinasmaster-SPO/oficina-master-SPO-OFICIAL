@@ -124,6 +124,44 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
   const [chatInicializado, setChatInicializado] = useState(false);
   const chatEndRef = useRef(null);
 
+  // Fetch todos os follow-ups do cliente (must be before derived state that uses it)
+  const { data: allFollowUpsModal = [] } = useQuery({
+    queryKey: ["all-followups-modal", followUp?.workshop_id],
+    queryFn: async () => {
+      if (!followUp?.workshop_id) return [];
+      return base44.entities.FollowUpReminder.filter({ workshop_id: followUp.workshop_id }, "reminder_date", 50);
+    },
+    enabled: !!followUp?.workshop_id,
+    staleTime: 2 * 60 * 1000,
+  });
+
+  // Fetch atendimentos agendados do consultor hoje
+  const { data: atendimentosHojeModal = [] } = useQuery({
+    queryKey: ["atendimentos-hoje-modal", user?.id, today],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const todos = await base44.entities.ConsultoriaAtendimento.filter({ consultor_id: user.id }, "data_agendada", 50);
+      return todos.filter(a => {
+        if (!a.data_agendada) return false;
+        if (!['agendado', 'confirmado', 'reagendado'].includes(a.status)) return false;
+        try { return isToday(parseISO(a.data_agendada)); } catch { return false; }
+      });
+    },
+    enabled: !!user?.id,
+    staleTime: 2 * 60 * 1000,
+  });
+
+  // Fetch últimos atendimentos concluídos — contexto para IA
+  const { data: concluidosModal = [] } = useQuery({
+    queryKey: ["concluidos-ia-modal", followUp?.workshop_id],
+    queryFn: async () => {
+      if (!followUp?.workshop_id) return [];
+      return base44.entities.FollowUpConcluido.filter({ workshop_id: followUp.workshop_id }, "-completedAt", 5);
+    },
+    enabled: !!followUp?.workshop_id,
+    staleTime: 5 * 60 * 1000,
+  });
+
   const idxAtual = filaReminders.findIndex(f => f.id === followUp?.id);
   const fuAnterior = idxAtual > 0 ? filaReminders[idxAtual - 1] : null;
   const fuProximo = idxAtual >= 0 && idxAtual < filaReminders.length - 1
@@ -239,44 +277,6 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
      },
      enabled: !!workshop?.owner_id,
    });
-
-  // Fetch todos os follow-ups do cliente
-  const { data: allFollowUpsModal = [] } = useQuery({
-    queryKey: ["all-followups-modal", followUp?.workshop_id],
-    queryFn: async () => {
-      if (!followUp?.workshop_id) return [];
-      return base44.entities.FollowUpReminder.filter({ workshop_id: followUp.workshop_id }, "reminder_date", 50);
-    },
-    enabled: !!followUp?.workshop_id,
-    staleTime: 2 * 60 * 1000,
-  });
-
-  // Fetch atendimentos agendados do consultor hoje
-  const { data: atendimentosHojeModal = [] } = useQuery({
-    queryKey: ["atendimentos-hoje-modal", user?.id, today],
-    queryFn: async () => {
-      if (!user?.id) return [];
-      const todos = await base44.entities.ConsultoriaAtendimento.filter({ consultor_id: user.id }, "data_agendada", 50);
-      return todos.filter(a => {
-        if (!a.data_agendada) return false;
-        if (!['agendado', 'confirmado', 'reagendado'].includes(a.status)) return false;
-        try { return isToday(parseISO(a.data_agendada)); } catch { return false; }
-      });
-    },
-    enabled: !!user?.id,
-    staleTime: 2 * 60 * 1000,
-  });
-
-  // Fetch últimos atendimentos concluídos — contexto para IA
-  const { data: concluidosModal = [] } = useQuery({
-    queryKey: ["concluidos-ia-modal", followUp?.workshop_id],
-    queryFn: async () => {
-      if (!followUp?.workshop_id) return [];
-      return base44.entities.FollowUpConcluido.filter({ workshop_id: followUp.workshop_id }, "-completedAt", 5);
-    },
-    enabled: !!followUp?.workshop_id,
-    staleTime: 5 * 60 * 1000,
-  });
 
   // Intervalo unificado — um único setInterval para timer e duração
   useEffect(() => {
