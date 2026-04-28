@@ -12,7 +12,7 @@ import AvaliacaoProcessoModal from "@/components/aceleracao/AvaliacaoProcessoMod
 
 export default function CronogramaGeral({ isTab = false }) {
   const queryClient = useQueryClient();
-  const [selectedPlan, setSelectedPlan] = useState("GOLD");
+  const [selectedPlan, setSelectedPlan] = useState("TODOS");
   const [filterStatus, setFilterStatus] = useState("todos");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedClient, setSelectedClient] = useState(null);
@@ -607,9 +607,9 @@ export default function CronogramaGeral({ isTab = false }) {
               </Button>
             )}
           </div>
-          <div className="flex gap-2 mb-3">
+          <div className="flex gap-2 mb-3 bg-white rounded-xl shadow-md border border-gray-100 p-2.5">
             <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-[130px] h-9 text-sm">
+              <SelectTrigger className="w-[130px] h-9 text-sm bg-white border-gray-200">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -625,7 +625,7 @@ export default function CronogramaGeral({ isTab = false }) {
                 placeholder="Buscar oficina..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-8 h-9 text-sm"
+                className="pl-8 h-9 text-sm bg-white border-gray-200"
               />
             </div>
           </div>
