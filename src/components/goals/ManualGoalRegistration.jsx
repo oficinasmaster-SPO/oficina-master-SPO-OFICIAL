@@ -2358,6 +2358,7 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
@@ -2501,35 +2502,9 @@ export default function ManualGoalRegistration({ open, onClose, workshop, editin
           </div>
           </div>
           </DialogContent>
-
-          <RevenueDistributionModal
-          open={showDistribution}
-          onClose={() => setShowDistribution(false)}
-          revenue={getRevenueData().total}
-          employees={employees}
-          onConfirm={handleDistributionConfirm}
-          isLoading={isSaving}
-          onOpenEmployeeRegistration={(employeeId) => {
-            const emp = employees.find(e => e.id === employeeId);
-            if (emp) {
-              setShowDistribution(false);
-              setEntityType("employee");
-              setSelectedEmployee(emp);
-            }
-          }}
-          />
-
-          <VendaAtribuicoesModal
-            open={showAtribuicoes}
-            onClose={() => setShowAtribuicoes(false)}
-            valorTotal={getRevenueData().total}
-            valorPecas={getRevenueData().parts}
-            valorServicos={getRevenueData().services}
-            employees={employees}
-            onConfirm={handleAtribuicoesConfirm}
-            existingAtribuicoes={existingAtribuicoes}
-            isLoading={isSaving}
-          />
           </Dialog>
+          <RevenueDistributionModal open={showDistribution} onClose={() => setShowDistribution(false)} revenue={getRevenueData().total} employees={employees} onConfirm={handleDistributionConfirm} isLoading={isSaving} onOpenEmployeeRegistration={(employeeId) => { const emp = employees.find(e => e.id === employeeId); if (emp) { setShowDistribution(false); setEntityType("employee"); setSelectedEmployee(emp); } }} />
+          <VendaAtribuicoesModal open={showAtribuicoes} onClose={() => setShowAtribuicoes(false)} valorTotal={getRevenueData().total} valorPecas={getRevenueData().parts} valorServicos={getRevenueData().services} employees={employees} onConfirm={handleAtribuicoesConfirm} existingAtribuicoes={existingAtribuicoes} isLoading={isSaving} />
+          </>
           );
           }
