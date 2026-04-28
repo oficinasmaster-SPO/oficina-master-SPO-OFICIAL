@@ -490,7 +490,7 @@ export default function ClientDetailPanel({ client, isOpen, onClose, atendimento
         </Tabs>
           </>
         )}
-        <p className="text-[9px] text-gray-300 text-right mt-1 select-none">ClientDetailPanel</p>
+        <p className="text-[9px] text-white bg-black/70 inline-block px-1.5 py-0.5 rounded text-right mt-1 select-none ml-auto">ClientDetailPanel</p>
       </DialogContent>
     </Dialog>
   );
