@@ -280,9 +280,15 @@ export default function SprintClientModal({ sprint, user, workshop, open, onClos
             </Button>
           </div>
 
-          {/* Shadow divider */}
-          <div className="h-px bg-gradient-to-b from-gray-200 to-transparent" />
-          <div className="h-3 bg-gradient-to-b from-black/[0.06] to-transparent" />
+          {/* Grid separator */}
+          <div className="h-3 relative overflow-hidden">
+            <div className="absolute inset-0" style={{
+              backgroundImage: "radial-gradient(circle, rgba(0,0,0,0.12) 1px, transparent 1px)",
+              backgroundSize: "8px 8px",
+              maskImage: "linear-gradient(to bottom, black 0%, transparent 100%)",
+              WebkitMaskImage: "linear-gradient(to bottom, black 0%, transparent 100%)",
+            }} />
+          </div>
         </div>
 
         {/* ═══ SCROLLABLE CONTENT ═══ */}
