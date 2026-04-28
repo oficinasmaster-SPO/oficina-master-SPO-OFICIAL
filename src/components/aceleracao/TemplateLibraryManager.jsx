@@ -122,10 +122,17 @@ export default function TemplateLibraryManager() {
       return;
     }
 
+    const countTotalTasks = (phases) =>
+      (phases || []).reduce((acc, phase) => acc + (phase.tasks?.length || 0), 0);
+
+    const countCompletedTasks = (phases) =>
+      (phases || []).reduce((acc, phase) =>
+        acc + (phase.tasks?.filter(t => t.status === 'done').length || 0), 0);
+
     // Deduplica trilhas por missões selecionadas
     const trailsMap = new Map();
     allTrails.forEach(trail => {
-      const key = JSON.stringify(trail.missoes_selecionadas?.sort() || []);
+      const key = JSON.stringify([...(trail.missoes_selecionadas || [])].sort());
       if (!trailsMap.has(key)) {
         trailsMap.set(key, {
           id: trail.id,
@@ -175,15 +182,6 @@ export default function TemplateLibraryManager() {
       sprints: Array.from(sprintsMap.values()),
     });
   }, [allTrails, allSprints]);
-
-  const countTotalTasks = (phases) => {
-    return phases.reduce((acc, phase) => acc + (phase.tasks?.length || 0), 0);
-  };
-
-  const countCompletedTasks = (phases) => {
-    return phases.reduce((acc, phase) => 
-      acc + (phase.tasks?.filter(t => t.status === 'done').length || 0), 0);
-  };
 
   const handleDuplicateTrail = async (trail) => {
     // TODO: Implementar duplicação de trilha como template padrão
