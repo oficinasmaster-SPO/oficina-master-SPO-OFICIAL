@@ -292,7 +292,7 @@ export default function COEXList() {
                   {activeCOEX && (
                     <Button
                       variant="outline"
-                      onClick={() => navigate(createPageUrl("COEXForm") + `?id=${activeCOEX.id}`)}
+                      onClick={() => navigate(createPageUrl("COEXForm") + `?employee_id=${employee.id}&id=${activeCOEX.id}`)}
                       className="w-full"
                       size="sm"
                     >

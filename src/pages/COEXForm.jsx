@@ -157,7 +157,12 @@ export default function COEXForm() {
       queryClient.invalidateQueries(['coex-contracts']);
       queryClient.invalidateQueries(['employee', employeeId]);
       toast.success("COEX salvo com sucesso! +50 XP");
-      navigate(createPageUrl("DetalhesColaborador") + `?id=${employeeId}`);
+      const targetId = employeeId || (contract?.employee_id);
+      if (targetId) {
+        navigate(createPageUrl("DetalhesColaborador") + `?id=${targetId}`);
+      } else {
+        navigate(createPageUrl("COEXList"));
+      }
     },
     onError: (error) => {
       console.error(error);

@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, CheckCircle2, Clock, FileText, Heart, Calendar } from "lucide-react";
+import { AlertCircle, CheckCircle2, Clock, FileText, Heart, Calendar, Printer } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { format, differenceInDays } from "date-fns";
@@ -210,23 +210,32 @@ export default function COEXCDCIntegration({ employee }) {
                 </div>
               )}
 
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 <Button
                   variant="outline"
-                  onClick={() => navigate(createPageUrl("COEXForm") + `?employeeId=${employee.id}&contractId=${activeCOEX.id}`)}
-                  className="flex-1"
+                  onClick={() => navigate(createPageUrl("COEXForm") + `?employee_id=${employee.id}&id=${activeCOEX.id}`)}
+                   className="flex-1"
                 >
                   Ver/Editar COEX
                 </Button>
-                {daysUntilExpiry !== null && daysUntilExpiry <= 30 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate(createPageUrl("COEXForm") + `?employee_id=${employee.id}&id=${activeCOEX.id}&print=1`)}
+                  title="Visualizar/Imprimir COEX"
+                  className="px-3"
+                >
+                  <Printer className="w-4 h-4" />
+                </Button>
+                  {daysUntilExpiry !== null && daysUntilExpiry <= 30 && (
                   <Button
-                    onClick={() => navigate(createPageUrl("COEXForm") + `?employeeId=${employee.id}`)}
+                    onClick={() => navigate(createPageUrl("COEXForm") + `?employee_id=${employee.id}`)}
                     className="flex-1 bg-orange-600 hover:bg-orange-700"
                   >
                     <Calendar className="w-4 h-4 mr-2" />
                     Renovar
                   </Button>
-                )}
+                  )}
               </div>
             </div>
           ) : (
