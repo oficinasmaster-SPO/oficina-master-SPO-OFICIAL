@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ChevronLeft, ChevronRight, StickyNote, AlertCircle, ClipboardList, Zap, Eye, Star, RotateCcw } from "lucide-react";
+import { ChevronLeft, ChevronRight, StickyNote, AlertCircle, ClipboardList, Zap, Eye, Star, RotateCcw, X } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -181,6 +181,16 @@ export default function SprintClientModal({ sprint, user, workshop, open, onClos
     setEditingNotes(false);
   }, [currentPhaseIdx, phase.notes]);
 
+  const [isClosing, setIsClosing] = useState(false);
+
+  const handleClose = () => {
+    setIsClosing(true);
+    setTimeout(() => {
+      setIsClosing(false);
+      onClose(false);
+    }, 350);
+  };
+
   if (!sprint) return null;
 
   const PhaseIcon = phaseIcons[phase.name] || ClipboardList;
@@ -200,16 +210,29 @@ export default function SprintClientModal({ sprint, user, workshop, open, onClos
   };
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-[100vw] w-screen h-screen max-h-screen rounded-none p-0 flex flex-col overflow-hidden">
+    <Dialog open={open && !isClosing} onOpenChange={(v) => { if (!v) handleClose(); }}>
+      <DialogContent
+        className={cn(
+          "max-w-[100vw] w-screen h-screen max-h-screen rounded-none p-0 flex flex-col overflow-hidden origin-center transition-transform duration-300 ease-in-out",
+          isClosing ? "scale-y-0 opacity-0" : "scale-y-100 opacity-100"
+        )}
+        hideClose
+      >
         {/* ═══ FIXED HEADER ═══ */}
         <div className="shrink-0 bg-white z-10 relative">
-          {/* Title */}
-          <div className="px-5 pt-5 pb-3">
-            <DialogHeader>
+          {/* Title + Close */}
+          <div className="px-5 pt-5 pb-3 flex items-start justify-between gap-4">
+            <DialogHeader className="flex-1 min-w-0">
               <DialogTitle className="text-lg font-bold text-gray-900">{sprint.title}</DialogTitle>
               {sprint.objective && <p className="text-sm text-gray-500 mt-0.5">{sprint.objective}</p>}
             </DialogHeader>
+            <button
+              onClick={handleClose}
+              className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 transition-all duration-200 active:scale-90"
+              aria-label="Fechar"
+            >
+              <X className="w-6 h-6" />
+            </button>
           </div>
 
           {/* Phase progress bar */}
