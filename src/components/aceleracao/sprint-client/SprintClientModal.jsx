@@ -3,10 +3,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ChevronLeft, ChevronRight, StickyNote, AlertCircle } from "lucide-react";
+import { ChevronLeft, ChevronRight, StickyNote, AlertCircle, ClipboardList, Zap, Eye, Star, RotateCcw } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { useSprintPermissions } from "@/components/hooks/useSprintPermissions";
 import SprintPhaseProgress from "./SprintPhaseProgress";
 import SprintTaskItem from "./SprintTaskItem";
@@ -16,6 +17,7 @@ import SprintCompletionSummary from "../sprint-shared/SprintCompletionSummary";
 
 const phaseNames = ["Planning", "Execution", "Monitoring", "Review", "Retrospective"];
 const phaseLabels = { Planning: "Planejamento", Execution: "Execução", Monitoring: "Monitoramento", Review: "Revisão", Retrospective: "Retrospectiva" };
+const phaseIcons = { Planning: ClipboardList, Execution: Zap, Monitoring: Eye, Review: Star, Retrospective: RotateCcw };
 
 export default function SprintClientModal({ sprint, user, workshop, open, onClose }) {
   const queryClient = useQueryClient();
@@ -38,6 +40,8 @@ export default function SprintClientModal({ sprint, user, workshop, open, onClos
   
   // Start on the first non-completed phase
   const [currentPhaseIdx, setCurrentPhaseIdx] = useState(0);
+  const [slideDirection, setSlideDirection] = useState(null); // 'left' | 'right'
+  const [isAnimating, setIsAnimating] = useState(false);
   const phase = phases[currentPhaseIdx] || {};
   const tasks = phase.tasks || [];
   const allTasksDone = tasks.length > 0 && tasks.every(t => t.status === "done");
@@ -49,6 +53,17 @@ export default function SprintClientModal({ sprint, user, workshop, open, onClos
       setCurrentPhaseIdx(idx);
     }
   }, [sprint?.id]);
+
+  const navigatePhase = (direction) => {
+    const nextIdx = direction === "next" ? currentPhaseIdx + 1 : currentPhaseIdx - 1;
+    if (nextIdx < 0 || nextIdx >= phases.length) return;
+    setSlideDirection(direction === "next" ? "left" : "right");
+    setIsAnimating(true);
+    setTimeout(() => {
+      setCurrentPhaseIdx(nextIdx);
+      setIsAnimating(false);
+    }, 200);
+  };
 
   const saveMutation = useMutation({
     mutationFn: async (updatedPhases) => {
@@ -168,141 +183,192 @@ export default function SprintClientModal({ sprint, user, workshop, open, onClos
 
   if (!sprint) return null;
 
+  const PhaseIcon = phaseIcons[phase.name] || ClipboardList;
+
+  const statusBadgeStyles = {
+    not_started: "bg-gray-100 text-gray-600 border-gray-200",
+    in_progress: "bg-blue-50 text-blue-700 border-blue-200",
+    pending_review: "bg-amber-50 text-amber-700 border-amber-200",
+    completed: "bg-green-50 text-green-700 border-green-200",
+  };
+
+  const statusLabels = {
+    not_started: "Não iniciada",
+    in_progress: "Em andamento",
+    pending_review: "Aguardando revisão",
+    completed: "Concluída",
+  };
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-[100vw] w-screen h-screen max-h-screen rounded-none overflow-y-auto p-4 sm:p-6">
-        <DialogHeader>
-          <DialogTitle className="text-lg">{sprint.title}</DialogTitle>
-          {sprint.objective && <p className="text-sm text-gray-500">{sprint.objective}</p>}
-        </DialogHeader>
-
-        {/* Phase progress bar */}
-        <SprintPhaseProgress phases={phases} />
-
-        {/* Phase navigation */}
-        <div className="flex items-center justify-between border-b pb-3">
-          <Button
-            variant="ghost" size="sm"
-            disabled={currentPhaseIdx === 0}
-            onClick={() => setCurrentPhaseIdx(currentPhaseIdx - 1)}
-          >
-            <ChevronLeft className="w-4 h-4 mr-1" /> Anterior
-          </Button>
-          <div className="text-center">
-            <p className="font-semibold">{phaseLabels[phase.name] || phase.name}</p>
-            <Badge variant="outline" className="text-xs mt-1">
-              {phase.status === "not_started" && "Não iniciada"}
-              {phase.status === "in_progress" && "Em andamento"}
-              {phase.status === "pending_review" && "Aguardando revisão"}
-              {phase.status === "completed" && "Concluída"}
-            </Badge>
+      <DialogContent className="max-w-[100vw] w-screen h-screen max-h-screen rounded-none p-0 flex flex-col overflow-hidden">
+        {/* ═══ FIXED HEADER ═══ */}
+        <div className="shrink-0 bg-white z-10 relative">
+          {/* Title */}
+          <div className="px-5 pt-5 pb-3">
+            <DialogHeader>
+              <DialogTitle className="text-lg font-bold text-gray-900">{sprint.title}</DialogTitle>
+              {sprint.objective && <p className="text-sm text-gray-500 mt-0.5">{sprint.objective}</p>}
+            </DialogHeader>
           </div>
-          <Button
-            variant="ghost" size="sm"
-            disabled={currentPhaseIdx === phases.length - 1}
-            onClick={() => setCurrentPhaseIdx(currentPhaseIdx + 1)}
-          >
-            Próxima <ChevronRight className="w-4 h-4 ml-1" />
-          </Button>
-        </div>
 
-        {/* Consultant feedback banner - shown prominently when phase was returned
-             NOTE: SprintSubmitReview also shows feedback inline, so we only show this 
-             prominent banner and suppress the one inside SprintSubmitReview via prop */}
-        {phase.review_feedback && phase.status === "in_progress" && (
-          <div className="bg-orange-50 border-2 border-orange-300 rounded-lg p-4">
-            <div className="flex items-start gap-3">
-              <div className="bg-orange-100 rounded-full p-1.5 mt-0.5 shrink-0">
-                <AlertCircle className="w-4 h-4 text-orange-600" />
+          {/* Phase progress bar */}
+          <div className="px-5">
+            <SprintPhaseProgress phases={phases} currentPhaseIdx={currentPhaseIdx} onPhaseClick={(idx) => {
+              if (idx === currentPhaseIdx) return;
+              setSlideDirection(idx > currentPhaseIdx ? "left" : "right");
+              setIsAnimating(true);
+              setTimeout(() => { setCurrentPhaseIdx(idx); setIsAnimating(false); }, 200);
+            }} />
+          </div>
+
+          {/* Phase navigation bar */}
+          <div className="flex items-center justify-between px-5 py-3">
+            <Button
+              variant="outline" size="sm"
+              disabled={currentPhaseIdx === 0}
+              onClick={() => navigatePhase("prev")}
+              className={cn(
+                "gap-1.5 transition-all duration-200 border-gray-200",
+                currentPhaseIdx === 0 ? "opacity-40" : "hover:bg-gray-100 hover:border-gray-300 active:scale-95"
+              )}
+            >
+              <ChevronLeft className="w-4 h-4" /> Anterior
+            </Button>
+            <div className="text-center flex flex-col items-center gap-1.5">
+              <div className="flex items-center gap-2">
+                <PhaseIcon className="w-5 h-5 text-blue-600" />
+                <p className="font-semibold text-gray-900 text-base">{phaseLabels[phase.name] || phase.name}</p>
               </div>
-              <div>
-                <p className="text-sm font-semibold text-orange-900">Fase devolvida pelo Consultor</p>
-                <p className="text-sm text-orange-800 mt-1">{phase.review_feedback}</p>
-                {phase.reviewed_at && (
-                  <p className="text-xs text-orange-600 mt-2">
-                    Devolvida em {new Date(phase.reviewed_at).toLocaleDateString("pt-BR")}
-                  </p>
-                )}
-                <p className="text-xs text-orange-700 mt-2 font-medium">
-                  Corrija os pontos indicados e reenvie para revisão.
-                </p>
-              </div>
+              <span className={cn("text-xs px-2.5 py-0.5 rounded-full border font-medium", statusBadgeStyles[phase.status] || statusBadgeStyles.not_started)}>
+                {statusLabels[phase.status] || "Não iniciada"}
+              </span>
             </div>
+            <Button
+              variant="outline" size="sm"
+              disabled={currentPhaseIdx === phases.length - 1}
+              onClick={() => navigatePhase("next")}
+              className={cn(
+                "gap-1.5 transition-all duration-200 border-gray-200",
+                currentPhaseIdx === phases.length - 1 ? "opacity-40" : "hover:bg-gray-100 hover:border-gray-300 active:scale-95"
+              )}
+            >
+              Próxima <ChevronRight className="w-4 h-4" />
+            </Button>
           </div>
-        )}
 
-        {/* Tasks */}
-        <div className="space-y-2">
-          <h4 className="text-sm font-semibold text-gray-700">
-            Tarefas ({tasks.filter(t => t.status === "done").length}/{tasks.length})
-          </h4>
-          {tasks.length === 0 ? (
-            <p className="text-sm text-gray-500 text-center py-4">Nenhuma tarefa nesta fase.</p>
-          ) : (
-            tasks.map((task, idx) => (
-              <SprintTaskItem
-                key={idx}
-                task={task}
-                index={idx}
-                canComplete={(phase.status === "in_progress" || phase.status === "not_started") && !sprintCompleted}
-                canAddNotes={(phase.status === "in_progress" || phase.status === "not_started") && !sprintCompleted}
-                userRole={permissions.role}
-                onToggle={handleToggleTask}
-                onUpdateEvidence={handleUpdateEvidence}
-              />
-            ))
-          )}
+          {/* Shadow divider */}
+          <div className="h-px bg-gradient-to-b from-gray-200 to-transparent" />
+          <div className="h-3 bg-gradient-to-b from-black/[0.06] to-transparent" />
         </div>
 
-        {/* Notes section */}
-        <div className="border-t pt-3">
-          <div className="flex items-center justify-between mb-2">
-            <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-1">
-              <StickyNote className="w-4 h-4" /> Notas da Fase
-            </h4>
-            {(phase.status === "in_progress" || phase.status === "not_started") && !sprintCompleted && !editingNotes && (
-              <Button variant="ghost" size="sm" onClick={() => setEditingNotes(true)}>
-                Editar
-              </Button>
+        {/* ═══ SCROLLABLE CONTENT ═══ */}
+        <div className="flex-1 overflow-y-auto px-5 pb-6">
+          <div
+            className={cn(
+              "transition-all duration-200 ease-in-out",
+              isAnimating && slideDirection === "left" && "opacity-0 -translate-x-6",
+              isAnimating && slideDirection === "right" && "opacity-0 translate-x-6",
+              !isAnimating && "opacity-100 translate-x-0"
             )}
-          </div>
-          {editingNotes ? (
-            <div className="space-y-2">
-              <Textarea
-                value={notesValue}
-                onChange={(e) => setNotesValue(e.target.value)}
-                placeholder="Observações, anotações..."
-                rows={3}
-              />
-              <div className="flex gap-2 justify-end">
-                <Button variant="ghost" size="sm" onClick={() => setEditingNotes(false)}>Cancelar</Button>
-                <Button size="sm" onClick={() => { handleUpdateNotes(notesValue); setEditingNotes(false); }}>
-                  Salvar
-                </Button>
+          >
+            {/* Consultant feedback banner */}
+            {phase.review_feedback && phase.status === "in_progress" && (
+              <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 mb-4">
+                <div className="flex items-start gap-3">
+                  <div className="bg-orange-100 rounded-full p-1.5 mt-0.5 shrink-0">
+                    <AlertCircle className="w-4 h-4 text-orange-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-orange-900">Fase devolvida pelo Consultor</p>
+                    <p className="text-sm text-orange-800 mt-1">{phase.review_feedback}</p>
+                    {phase.reviewed_at && (
+                      <p className="text-xs text-orange-600 mt-2">
+                        Devolvida em {new Date(phase.reviewed_at).toLocaleDateString("pt-BR")}
+                      </p>
+                    )}
+                    <p className="text-xs text-orange-700 mt-2 font-medium">
+                      Corrija os pontos indicados e reenvie para revisão.
+                    </p>
+                  </div>
+                </div>
               </div>
+            )}
+
+            {/* Tasks */}
+            <div className="space-y-2 mt-2">
+              <h4 className="text-sm font-semibold text-gray-700">
+                Tarefas ({tasks.filter(t => t.status === "done").length}/{tasks.length})
+              </h4>
+              {tasks.length === 0 ? (
+                <p className="text-sm text-gray-500 text-center py-4">Nenhuma tarefa nesta fase.</p>
+              ) : (
+                tasks.map((task, idx) => (
+                  <SprintTaskItem
+                    key={`${currentPhaseIdx}-${idx}`}
+                    task={task}
+                    index={idx}
+                    canComplete={(phase.status === "in_progress" || phase.status === "not_started") && !sprintCompleted}
+                    canAddNotes={(phase.status === "in_progress" || phase.status === "not_started") && !sprintCompleted}
+                    userRole={permissions.role}
+                    onToggle={handleToggleTask}
+                    onUpdateEvidence={handleUpdateEvidence}
+                  />
+                ))
+              )}
             </div>
-          ) : (
-            <p className="text-sm text-gray-600 whitespace-pre-wrap">{phase.notes || "Sem notas."}</p>
-          )}
-        </div>
 
-        {/* Submit for review */}
-        <SprintSubmitReview
-          phase={phase}
-          canSubmit={permissions.canSubmitForReview}
-          allTasksDone={allTasksDone}
-          onSubmit={handleSubmitForReview}
-          isSubmitting={saveMutation.isPending}
-          hideFeedback={!!(phase.review_feedback && phase.status === "in_progress")}
-        />
+            {/* Notes section */}
+            <div className="border-t pt-4 mt-4">
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-1">
+                  <StickyNote className="w-4 h-4" /> Notas da Fase
+                </h4>
+                {(phase.status === "in_progress" || phase.status === "not_started") && !sprintCompleted && !editingNotes && (
+                  <Button variant="ghost" size="sm" onClick={() => setEditingNotes(true)}>
+                    Editar
+                  </Button>
+                )}
+              </div>
+              {editingNotes ? (
+                <div className="space-y-2">
+                  <Textarea
+                    value={notesValue}
+                    onChange={(e) => setNotesValue(e.target.value)}
+                    placeholder="Observações, anotações..."
+                    rows={3}
+                  />
+                  <div className="flex gap-2 justify-end">
+                    <Button variant="ghost" size="sm" onClick={() => setEditingNotes(false)}>Cancelar</Button>
+                    <Button size="sm" onClick={() => { handleUpdateNotes(notesValue); setEditingNotes(false); }}>
+                      Salvar
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-gray-600 whitespace-pre-wrap">{phase.notes || "Sem notas."}</p>
+              )}
+            </div>
 
-        {/* Completion summary */}
-        <SprintCompletionSummary sprint={sprint} />
+            {/* Submit for review */}
+            <SprintSubmitReview
+              phase={phase}
+              canSubmit={permissions.canSubmitForReview}
+              allTasksDone={allTasksDone}
+              onSubmit={handleSubmitForReview}
+              isSubmitting={saveMutation.isPending}
+              hideFeedback={!!(phase.review_feedback && phase.status === "in_progress")}
+            />
 
-        {/* Activity timeline */}
-        <div className="border-t pt-3">
-          <h4 className="text-sm font-semibold text-gray-700 mb-3">Histórico de Atividades</h4>
-          <SprintActivityTimeline sprint={sprint} maxItems={8} />
+            {/* Completion summary */}
+            <SprintCompletionSummary sprint={sprint} />
+
+            {/* Activity timeline */}
+            <div className="border-t pt-4 mt-4">
+              <h4 className="text-sm font-semibold text-gray-700 mb-3">Histórico de Atividades</h4>
+              <SprintActivityTimeline sprint={sprint} maxItems={8} />
+            </div>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
