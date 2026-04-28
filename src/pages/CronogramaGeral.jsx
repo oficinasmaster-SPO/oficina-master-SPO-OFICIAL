@@ -508,81 +508,90 @@ export default function CronogramaGeral({ isTab = false }) {
       {/* Conteúdo Principal */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 overflow-hidden">
         {/* Coluna Esquerda - Tabela de Processos */}
-        <div className="border-r border-gray-200 overflow-y-auto p-4 lg:p-5">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-sm font-semibold text-gray-900">
-                Processos — {selectedPlan === 'TODOS' ? 'Todos os Planos' : `Plano ${selectedPlan}`}
-              </h2>
-              <p className="text-xs text-gray-500 mt-0.5">
-                {processos.length} itens no cronograma
-              </p>
+        <div className="border-r border-gray-200 flex flex-col overflow-hidden">
+          {/* Header fixo */}
+          <div className="flex-shrink-0 px-4 lg:px-5 pt-4 lg:pt-5 pb-3 bg-white border-b border-gray-200 z-10">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <h2 className="text-sm font-semibold text-gray-900">
+                  Processos — {selectedPlan === 'TODOS' ? 'Todos os Planos' : `Plano ${selectedPlan}`}
+                </h2>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  {processos.length} itens no cronograma
+                </p>
+              </div>
+              <Badge variant="outline" className="bg-blue-50 text-blue-700 text-xs px-2 py-0.5">
+                {workshopsPorPlano.length} clientes
+              </Badge>
             </div>
-            <Badge variant="outline" className="bg-blue-50 text-blue-700 text-xs px-2 py-0.5">
-              {workshopsPorPlano.length} clientes
-            </Badge>
+            {/* Cabeçalho da tabela fixo */}
+            {processos.length > 0 && (
+              <div className="border border-gray-200 rounded-t-lg overflow-hidden">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-gray-50/60">
+                      <th className="text-left py-2.5 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Processos</th>
+                      <th className="text-center py-2.5 px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider w-20">A Fazer</th>
+                      <th className="text-center py-2.5 px-3 text-xs font-semibold text-red-500 uppercase tracking-wider w-20">Atrasado</th>
+                      <th className="text-center py-2.5 px-3 text-xs font-semibold text-green-600 uppercase tracking-wider w-24">Concluído</th>
+                    </tr>
+                  </thead>
+                </table>
+              </div>
+            )}
           </div>
 
-          <Card className="shadow-sm border-gray-200">
-            <CardContent className="p-0">
-              {processos.length === 0 ? (
-                <div className="text-center py-10 text-gray-500 px-4">
-                  <AlertCircle className="w-10 h-10 mx-auto mb-2 text-gray-300" />
-                  <p className="text-sm font-medium mb-1">Nenhum processo registrado para o plano {selectedPlan}.</p>
-                  <p className="text-xs text-gray-400">Configure os processos deste plano em PlanFeature ou CronogramaTemplate.</p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-gray-200 bg-gray-50/60">
-                        <th className="text-left py-2.5 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Processos</th>
-                        <th className="text-center py-2.5 px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider w-20">A Fazer</th>
-                        <th className="text-center py-2.5 px-3 text-xs font-semibold text-red-500 uppercase tracking-wider w-20">Atrasado</th>
-                        <th className="text-center py-2.5 px-3 text-xs font-semibold text-green-600 uppercase tracking-wider w-24">Concluído</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {processos.map((processo) => {
-                        const contagem = getContagemPorProcesso(processo.codigo);
-                        const isSelected = selectedProcess?.codigo === processo.codigo;
-                        return (
-                          <tr 
-                            key={processo.codigo} 
-                            onClick={() => setSelectedProcess(isSelected ? null : processo)}
-                            className={`cursor-pointer transition-colors ${
-                              isSelected 
-                                ? 'bg-blue-50 ring-1 ring-inset ring-blue-200' 
-                                : 'hover:bg-gray-50'
-                            }`}
-                          >
-                            <td className={`py-3 px-4 text-sm font-medium leading-tight ${isSelected ? 'text-blue-800' : 'text-gray-800'}`}>
-                              {processo.nome || processo.codigo}
-                            </td>
-                            <td className="text-center py-3 px-3">
-                              <span className="inline-flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                                {contagem.a_fazer + contagem.em_andamento}
-                              </span>
-                            </td>
-                            <td className="text-center py-3 px-3">
-                              <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold border ${contagem.atrasado > 0 ? 'bg-red-50 text-red-700 border-red-200' : 'bg-gray-50 text-gray-400 border-gray-200'}`}>
-                                {contagem.atrasado}
-                              </span>
-                            </td>
-                            <td className="text-center py-3 px-3">
-                              <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold border ${contagem.concluido > 0 ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-400 border-gray-200'}`}>
-                                {contagem.concluido}
-                              </span>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          {/* Corpo com rolagem */}
+          <div className="flex-1 overflow-y-auto px-4 lg:px-5 pb-4 lg:pb-5">
+            {processos.length === 0 ? (
+              <div className="text-center py-10 text-gray-500 px-4">
+                <AlertCircle className="w-10 h-10 mx-auto mb-2 text-gray-300" />
+                <p className="text-sm font-medium mb-1">Nenhum processo registrado para o plano {selectedPlan}.</p>
+                <p className="text-xs text-gray-400">Configure os processos deste plano em PlanFeature ou CronogramaTemplate.</p>
+              </div>
+            ) : (
+              <div className="border-x border-b border-gray-200 rounded-b-lg overflow-hidden">
+                <table className="w-full">
+                  <tbody className="divide-y divide-gray-100">
+                    {processos.map((processo) => {
+                      const contagem = getContagemPorProcesso(processo.codigo);
+                      const isSelected = selectedProcess?.codigo === processo.codigo;
+                      return (
+                        <tr 
+                          key={processo.codigo} 
+                          onClick={() => setSelectedProcess(isSelected ? null : processo)}
+                          className={`cursor-pointer transition-colors ${
+                            isSelected 
+                              ? 'bg-blue-50 ring-1 ring-inset ring-blue-200' 
+                              : 'hover:bg-gray-50'
+                          }`}
+                        >
+                          <td className={`py-3 px-4 text-sm font-medium leading-tight ${isSelected ? 'text-blue-800' : 'text-gray-800'}`}>
+                            {processo.nome || processo.codigo}
+                          </td>
+                          <td className="text-center py-3 px-3">
+                            <span className="inline-flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                              {contagem.a_fazer + contagem.em_andamento}
+                            </span>
+                          </td>
+                          <td className="text-center py-3 px-3">
+                            <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold border ${contagem.atrasado > 0 ? 'bg-red-50 text-red-700 border-red-200' : 'bg-gray-50 text-gray-400 border-gray-200'}`}>
+                              {contagem.atrasado}
+                            </span>
+                          </td>
+                          <td className="text-center py-3 px-3">
+                            <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold border ${contagem.concluido > 0 ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-400 border-gray-200'}`}>
+                              {contagem.concluido}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Coluna Direita - Lista de Clientes */}
