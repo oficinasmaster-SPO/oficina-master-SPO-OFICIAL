@@ -14,6 +14,7 @@ const STORAGE_KEY = 'missions_templates_v1';
  */
 const AVAILABLE_SPRINTS = [
   { id: 'sprint0',              icon: '🔍', name: 'Diagnóstico e Alinhamento' },
+  { id: 'chefe_patio',          icon: '🧭', name: 'Implementação do Chefe de Pátio' },
   { id: 'agenda_cheia',         icon: '📅', name: 'Agenda Cheia' },
   { id: 'fechamento_imbativel', icon: '🎯', name: 'Fechamento Imbatível' },
   { id: 'caixa_forte',          icon: '💰', name: 'Caixa Forte' },
@@ -72,6 +73,13 @@ const DEFAULT_MISSIONS = [
     name: 'Cultura Forte',
     description: 'Desenvolver cultura organizacional e engajamento',
     linked_sprint_id: 'cultura_forte',
+  },
+  {
+    id: 'chefe_patio',
+    icon: '🧭',
+    name: 'Implementação do Chefe de Pátio',
+    description: 'Estruturar a liderança do pátio para aumentar produtividade, controle operacional e resultados de faturamento.',
+    linked_sprint_id: 'chefe_patio',
   },
 ];
 
