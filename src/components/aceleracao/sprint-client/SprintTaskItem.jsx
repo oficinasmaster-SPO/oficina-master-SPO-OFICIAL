@@ -92,7 +92,7 @@ export default function SprintTaskItem({ task, index, canComplete, canAddNotes, 
               onClick={() => setShowInstructionsModal(true)}
             >
               <Info className="w-3 h-3 flex-shrink-0" />
-              Ver como fazer
+              {task.video_url && !task.instructions ? "Ver vídeo" : "Ver como fazer"}
             </button>
           ) : (
             <span className="text-gray-400 italic">Nenhuma instrução</span>
