@@ -240,6 +240,44 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
      enabled: !!workshop?.owner_id,
    });
 
+  // Fetch todos os follow-ups do cliente
+  const { data: allFollowUpsModal = [] } = useQuery({
+    queryKey: ["all-followups-modal", followUp?.workshop_id],
+    queryFn: async () => {
+      if (!followUp?.workshop_id) return [];
+      return base44.entities.FollowUpReminder.filter({ workshop_id: followUp.workshop_id }, "reminder_date", 50);
+    },
+    enabled: !!followUp?.workshop_id,
+    staleTime: 2 * 60 * 1000,
+  });
+
+  // Fetch atendimentos agendados do consultor hoje
+  const { data: atendimentosHojeModal = [] } = useQuery({
+    queryKey: ["atendimentos-hoje-modal", user?.id, today],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const todos = await base44.entities.ConsultoriaAtendimento.filter({ consultor_id: user.id }, "data_agendada", 50);
+      return todos.filter(a => {
+        if (!a.data_agendada) return false;
+        if (!['agendado', 'confirmado', 'reagendado'].includes(a.status)) return false;
+        try { return isToday(parseISO(a.data_agendada)); } catch { return false; }
+      });
+    },
+    enabled: !!user?.id,
+    staleTime: 2 * 60 * 1000,
+  });
+
+  // Fetch últimos atendimentos concluídos — contexto para IA
+  const { data: concluidosModal = [] } = useQuery({
+    queryKey: ["concluidos-ia-modal", followUp?.workshop_id],
+    queryFn: async () => {
+      if (!followUp?.workshop_id) return [];
+      return base44.entities.FollowUpConcluido.filter({ workshop_id: followUp.workshop_id }, "-completedAt", 5);
+    },
+    enabled: !!followUp?.workshop_id,
+    staleTime: 5 * 60 * 1000,
+  });
+
   // Intervalo unificado — um único setInterval para timer e duração
   useEffect(() => {
     if (!cronometroAtivo) return;
@@ -276,6 +314,81 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
     onNavegar?.(fu);
     onClose();
   };
+
+  // ── Funções da aba IA ──
+  const gerarDicaIA = async () => {
+    setCarregandoDica(true);
+    try {
+      const resumoAtas = atas.slice(0, 3).map(a =>
+        `Ata (${a.tipo_aceleracao || a.tipo_atendimento || 'reunião'} - ${a.meeting_date || ''}): próximos passos: ${a.proximos_passos || 'não registrado'}`
+      ).join('\n');
+      const resumoConcluidos = concluidosModal.slice(0, 3).map(c =>
+        `Atendimento via ${c.canal || '?'}: resultado=${c.resultado || '?'}, humor=${c.humor || '?'}, comprometimentos=${c.compromissos || 'nenhum'}`
+      ).join('\n');
+      const prompt = `Você é um coach de consultores de negócios. Com base nos dados abaixo sobre o cliente "${followUp?.workshop_name}", gere UMA dica prática, direta e motivadora (máximo 3 linhas) para o consultor seguir neste atendimento de follow-up ${followUp?.sequence_number}/4. Foque no que o cliente precisa agora.\n\nÚLTIMAS ATAS:\n${resumoAtas || 'Sem atas registradas'}\n\nÚLTIMOS ATENDIMENTOS:\n${resumoConcluidos || 'Sem atendimentos anteriores'}\n\nResponda apenas a dica, sem introdução.`;
+      const response = await base44.functions.invoke('invokeLLMUnlimited', { prompt });
+      const dica = response?.data?.result || response?.data?.message || response?.data || 'Não foi possível gerar a dica.';
+      setDicaIA(typeof dica === 'string' ? dica : JSON.stringify(dica));
+    } catch (err) {
+      console.error('Erro ao gerar dica:', err);
+      toast.error('Erro ao gerar dica de IA');
+    } finally {
+      setCarregandoDica(false);
+    }
+  };
+
+  useEffect(() => {
+    if ((atas.length > 0 || concluidosModal.length > 0) && !dicaIA && !carregandoDica) {
+      gerarDicaIA();
+    }
+  }, [atas.length, concluidosModal.length]);
+
+  const iniciarChat = async () => {
+    if (chatConversa) return;
+    setChatInicializado(true);
+    setChatEnviando(true);
+    try {
+      const resumoAtas = atas.slice(0, 5).map(a =>
+        `- ${a.tipo_aceleracao || a.tipo_atendimento || 'Reunião'} (${a.meeting_date || 'sem data'}): ${a.proximos_passos || 'sem próximos passos'}`
+      ).join('\n');
+      const resumoConcluidos = concluidosModal.slice(0, 3).map(c =>
+        `- Canal: ${c.canal || '?'} | Resultado: ${c.resultado || '?'} | Humor: ${c.humor || '?'} | Comprometimentos: ${c.compromissos || 'nenhum'}`
+      ).join('\n');
+      const contexto = `Você é um assistente de consultoria empresarial. Ajude o consultor a atender o cliente "${followUp?.workshop_name}" (Follow-up ${followUp?.sequence_number}/4).\n\nÚLTIMAS ATAS:\n${resumoAtas || 'Nenhuma'}\n\nÚLTIMOS ATENDIMENTOS:\n${resumoConcluidos || 'Nenhum'}\n\nResponda de forma direta e prática.`;
+      const conv = await base44.agents.createConversation({
+        agent_name: 'qgp_tecnico',
+        metadata: { name: `Chat ${followUp?.workshop_name} - FU ${followUp?.sequence_number}`, description: contexto },
+      });
+      setChatConversa(conv);
+      setChatMensagens([{ role: 'assistant', content: `Olá! Estou pronto para ajudar com o atendimento de **${followUp?.workshop_name}**. O que você precisa saber?` }]);
+      base44.agents.subscribeToConversation(conv.id, (data) => setChatMensagens(data.messages || []));
+    } catch (err) {
+      console.error('Erro ao iniciar chat:', err);
+      toast.error('Erro ao iniciar chat');
+    } finally {
+      setChatEnviando(false);
+    }
+  };
+
+  const enviarMensagemChat = async () => {
+    if (!chatInput.trim() || !chatConversa || chatEnviando) return;
+    const texto = chatInput.trim();
+    setChatInput('');
+    setChatEnviando(true);
+    setChatMensagens(prev => [...prev, { role: 'user', content: texto }]);
+    try {
+      await base44.agents.addMessage(chatConversa, { role: 'user', content: texto });
+    } catch (err) {
+      console.error('Erro ao enviar mensagem:', err);
+      toast.error('Erro ao enviar mensagem');
+    } finally {
+      setChatEnviando(false);
+    }
+  };
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatMensagens]);
 
   const validate = () => {
     const newErrors = {};
@@ -888,10 +1001,13 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
           {/* RIGHT COLUMN - SIDEBAR */}
           <div className="w-80 xl:w-96 flex-shrink-0 border-l border-gray-200 bg-gradient-to-b from-white via-gray-50 to-gray-100 overflow-hidden flex flex-col shadow-[inset_-2px_0_8px_rgba(0,0,0,0.03)]">
             <Tabs defaultValue="atas" className="flex-1 flex flex-col">
-              <TabsList className="grid w-full grid-cols-3 rounded-none border-b bg-white">
+              <TabsList className="grid w-full grid-cols-4 rounded-none border-b bg-white">
                 <TabsTrigger value="atas">Atas</TabsTrigger>
-                <TabsTrigger value="followups">Follow-ups</TabsTrigger>
+                <TabsTrigger value="followups">FUs</TabsTrigger>
                 <TabsTrigger value="cliente">Cliente</TabsTrigger>
+                <TabsTrigger value="ia" className="flex items-center gap-1">
+                  <Zap className="w-3 h-3" /> IA
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="atas" className="flex-1 overflow-y-auto px-3 py-4">
@@ -1196,6 +1312,111 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
                       <p className="text-xs text-amber-900">Ação sugerida: Confirmar disponibilidade</p>
                     </div>
                   </div>
+                </div>
+              </TabsContent>
+              <TabsContent value="ia" className="flex-1 overflow-hidden flex flex-col">
+                {/* Post-it IA */}
+                <div className="px-3 pt-3 pb-2 flex-shrink-0">
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-1.5">
+                        <Zap className="w-3.5 h-3.5 text-amber-500" />
+                        <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wide">Dica de IA</p>
+                      </div>
+                      <button
+                        onClick={gerarDicaIA}
+                        disabled={carregandoDica}
+                        className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-amber-100 transition-colors disabled:opacity-40"
+                      >
+                        <svg className={`w-3.5 h-3.5 text-amber-600 ${carregandoDica ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                      </button>
+                    </div>
+                    {carregandoDica ? (
+                      <div className="flex items-center gap-2 py-1">
+                        <Loader2 className="w-3 h-3 text-amber-500 animate-spin" />
+                        <p className="text-[11px] text-amber-600">Analisando histórico...</p>
+                      </div>
+                    ) : dicaIA ? (
+                      <p className="text-[12px] text-amber-800 leading-relaxed">{dicaIA}</p>
+                    ) : (
+                      <p className="text-[11px] text-amber-600 italic">Clique em recarregar para gerar uma dica.</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Mini Chat embeddado */}
+                <div className="flex-1 flex flex-col min-h-0 px-3 pb-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <MessageSquare className="w-3.5 h-3.5 text-gray-500" />
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">Chat com IA</p>
+                  </div>
+
+                  {!chatInicializado ? (
+                    <div className="flex-1 flex items-center justify-center">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={iniciarChat}
+                        className="text-xs gap-2"
+                      >
+                        <MessageSquare className="w-3.5 h-3.5" />
+                        Iniciar conversa com IA
+                      </Button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex-1 overflow-y-auto bg-gray-50 rounded-lg border border-gray-200 px-2.5 py-2 space-y-2 min-h-0">
+                        {chatMensagens.length === 0 && chatEnviando && (
+                          <div className="flex items-center justify-center h-full">
+                            <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                          </div>
+                        )}
+                        {chatMensagens.map((msg, idx) => (
+                          <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                            <div className={`max-w-[88%] rounded-xl px-2.5 py-1.5 text-[11px] leading-relaxed ${
+                              msg.role === 'user'
+                                ? 'bg-red-600 text-white rounded-br-sm'
+                                : 'bg-white border border-gray-200 text-gray-800 rounded-bl-sm'
+                            }`}>
+                              {msg.content}
+                            </div>
+                          </div>
+                        ))}
+                        {chatEnviando && chatMensagens.length > 0 && (
+                          <div className="flex justify-start">
+                            <div className="bg-white border border-gray-200 rounded-xl rounded-bl-sm px-2.5 py-1.5">
+                              <div className="flex gap-1">
+                                <div className="w-1.5 h-1.5 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+                                <div className="w-1.5 h-1.5 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+                                <div className="w-1.5 h-1.5 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        <div ref={chatEndRef} />
+                      </div>
+                      <div className="flex gap-1.5 mt-2 flex-shrink-0">
+                        <input
+                          type="text"
+                          value={chatInput}
+                          onChange={e => setChatInput(e.target.value)}
+                          onKeyDown={e => e.key === 'Enter' && !e.shiftKey && enviarMensagemChat()}
+                          placeholder="Pergunte sobre o cliente..."
+                          disabled={chatEnviando}
+                          className="flex-1 text-[11px] border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-red-400 disabled:opacity-50"
+                        />
+                        <button
+                          onClick={enviarMensagemChat}
+                          disabled={!chatInput.trim() || chatEnviando}
+                          className="w-7 h-7 rounded-lg bg-red-600 hover:bg-red-700 text-white flex items-center justify-center disabled:opacity-40 transition-colors flex-shrink-0"
+                        >
+                          <Send className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
               </TabsContent>
             </Tabs>
