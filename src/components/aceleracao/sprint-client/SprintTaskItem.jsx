@@ -86,7 +86,7 @@ export default function SprintTaskItem({ task, index, canComplete, canAddNotes, 
         {/* Como fazer */}
         <div className="flex flex-col gap-1">
           <span className="font-semibold text-gray-700">Instruções:</span>
-          {task.instructions ? (
+          {(task.instructions || task.video_url) ? (
             <button
               className="flex items-center gap-1 text-blue-600 hover:text-blue-800 font-medium text-left"
               onClick={() => setShowInstructionsModal(true)}
@@ -196,28 +196,46 @@ export default function SprintTaskItem({ task, index, canComplete, canAddNotes, 
             </div>
           </DialogHeader>
           <div className="flex-1 overflow-y-auto p-6">
-            <div className="max-w-3xl mx-auto space-y-6">
-              {task.video_url && (
-                <div>
-                  <p className="text-sm font-semibold text-gray-700 mb-2">🎬 Vídeo de instrução</p>
-                  <video src={task.video_url} controls className="w-full rounded-lg bg-black max-h-80" />
+            <div className="max-w-5xl mx-auto">
+              {/* Layout lado a lado quando ambos existem, empilhado quando só um */}
+              {task.video_url && task.instructions ? (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="flex flex-col gap-2">
+                    <p className="text-sm font-semibold text-gray-700">🎬 Vídeo de instrução</p>
+                    <video src={task.video_url} controls className="w-full rounded-lg bg-black" style={{maxHeight: '60vh'}} />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <p className="text-sm font-semibold text-gray-700">📋 Instruções</p>
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-5 text-sm text-gray-800 whitespace-pre-wrap leading-relaxed overflow-y-auto flex-1" style={{maxHeight: '60vh'}}>
+                      {task.instructions}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {task.video_url && (
+                    <div>
+                      <p className="text-sm font-semibold text-gray-700 mb-2">🎬 Vídeo de instrução</p>
+                      <video src={task.video_url} controls className="w-full rounded-lg bg-black max-h-[60vh]" />
+                    </div>
+                  )}
+                  {task.instructions && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
+                      {task.instructions}
+                    </div>
+                  )}
                 </div>
               )}
-              {task.instructions && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
-                  {task.instructions}
-                </div>
-              )}
+
               {task.link_url && (
-                <div>
-                  <p className="text-sm font-semibold text-gray-700 mb-2">Material complementar:</p>
+                <div className="mt-6">
                   <a
                     href={task.link_url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
                   >
-                    <Link className="w-4 h-4" /> Acessar material
+                    <Link className="w-4 h-4" /> Acessar material complementar
                   </a>
                 </div>
               )}
