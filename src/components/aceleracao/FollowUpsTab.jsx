@@ -133,6 +133,7 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
   const [selectedReminder, setSelectedReminder] = useState(null);
   const [crmFilterPill, setCrmFilterPill] = useState("todos");
   const [selectedConcluido, setSelectedConcluido] = useState(null);
+  const [animating, setAnimating] = useState(false);
 
   const today = new Date().toISOString().split("T")[0];
 
@@ -307,19 +308,17 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
   };
   const collapseAll = () => setOpenFolders({});
 
+  useEffect(() => {
+    setAnimating(true);
+    const t = setTimeout(() => setAnimating(false), 150);
+    return () => clearTimeout(t);
+  }, [activeTab]);
+
   const showSearchBar = activeTab !== "crm";
 
   return (
     <div className="space-y-4">
-      <style>{`
-        @keyframes fuTabFadeIn {
-          from { opacity: 0; transform: translateY(4px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        .fu-tab-content {
-          animation: fuTabFadeIn 150ms ease-out forwards;
-        }
-      `}</style>
+
       {/* Discrete stats + search */}
       <div className="flex items-center gap-4 text-sm text-gray-500">
         <span className="flex items-center gap-1.5">
@@ -354,10 +353,23 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
       </div>
 
       {/* Tab nav — RedTabs */}
-      <Tabs value={activeTab} onValueChange={val => { setActiveTab(val); setSelectedReminder(null); }}>
+      <Tabs value={activeTab}>
         <RedTabsList>
           {TABS.map(tab => (
-            <RedTabsTrigger key={tab.id} value={tab.id}>
+            <RedTabsTrigger
+              key={tab.id}
+              value={tab.id}
+              data-state={activeTab === tab.id ? "active" : "inactive"}
+              onClick={() => {
+                if (tab.id === activeTab) return;
+                setAnimating(true);
+                setTimeout(() => {
+                  setActiveTab(tab.id);
+                  setSelectedReminder(null);
+                  setAnimating(false);
+                }, 80);
+              }}
+            >
               {tab.label}
             </RedTabsTrigger>
           ))}
@@ -365,7 +377,13 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
       </Tabs>
 
       {/* Tab content */}
-      <div key={activeTab} className="fu-tab-content">
+      <div
+        style={{
+          opacity: animating ? 0 : 1,
+          transform: animating ? 'translateY(4px)' : 'translateY(0)',
+          transition: 'opacity 150ms ease-out, transform 150ms ease-out',
+        }}
+      >
 
       {/* CRM Tab */}
       {activeTab === "crm" && (
@@ -375,7 +393,13 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
             today={today}
             onBack={() => setSelectedReminder(null)}
             filaReminders={listAbertos}
-            onSelectReminder={setSelectedReminder}
+            onSelectReminder={(fu) => {
+              setAnimating(true);
+              setTimeout(() => {
+                setSelectedReminder(fu);
+                setAnimating(false);
+              }, 80);
+            }}
           />
         ) : (
           <FollowUpList
