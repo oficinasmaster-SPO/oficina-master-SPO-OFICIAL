@@ -637,6 +637,7 @@ function CamadaSprints({ workshopId, missoesSelecionadas, cronogramaTemplateId, 
                 description: t.description,
                 instructions: t.instructions || "",
                 link_url: t.link_url || "",
+                video_url: t.video_url || "",
                 status: "to_do",
               })),
             }));
