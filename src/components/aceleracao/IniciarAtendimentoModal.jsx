@@ -881,8 +881,8 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
         {/* CONTENT - SCROLLÁVEL */}
         <div className="flex-1 overflow-hidden flex min-h-0">
           {/* LEFT COLUMN - FORM */}
-          <div className="flex-1 overflow-y-auto border-r border-gray-200 px-4 py-4">
-            <div className="space-y-6 max-w-2xl px-2 py-2 bg-white rounded-lg shadow-[inset_0_2px_8px_rgba(0,0,0,0.05)]">
+          <div className="flex-1 overflow-y-auto border-r border-gray-200 px-6 py-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+            <div className="space-y-6 px-2 py-2 bg-white rounded-lg shadow-[inset_0_2px_8px_rgba(0,0,0,0.05)]">
               {/* Canal */}
               <div>
                 <label className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2 block">
