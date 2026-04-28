@@ -26,13 +26,13 @@ export default function SprintClientModal({ sprint, user, workshop, open, onClos
   // Estado local de phases para evitar stale closure nos handlers de save
   const [localPhases, setLocalPhases] = useState(sprint?.phases || []);
 
-  // Sincronizar localPhases APENAS quando abre um sprint diferente (sprint.id muda)
-  // Não sincronizar a cada refetch para evitar sobrescrever dados locais não persistidos ainda
+  // Sincronizar localPhases quando abre sprint diferente OU quando o conteúdo do sprint muda no banco
+  // updated_date muda toda vez que o backend atualiza o sprint (ex: sync de template com novo video_url)
   useEffect(() => {
     if (sprint?.phases) {
       setLocalPhases(sprint.phases);
     }
-  }, [sprint?.id]);
+  }, [sprint?.id, sprint?.updated_date]);
 
   const phases = localPhases;
   
@@ -93,18 +93,19 @@ export default function SprintClientModal({ sprint, user, workshop, open, onClos
     if (updated[currentPhaseIdx].status === "not_started") {
       updated[currentPhaseIdx] = { ...updated[currentPhaseIdx], status: "in_progress" };
     }
-    const task = { ...updated[currentPhaseIdx].tasks[taskIdx] };
-    const wasDone = task.status === "done";
-    task.status = wasDone ? "to_do" : "done";
-    if (!wasDone) {
-      task.completed_by = user.id;
-      task.completed_by_role = permissions.role;
-      task.completed_at = new Date().toISOString();
-    } else {
-      task.completed_by = null;
-      task.completed_by_role = null;
-      task.completed_at = null;
-    }
+    const originalTask = updated[currentPhaseIdx].tasks[taskIdx];
+    const wasDone = originalTask.status === "done";
+    const task = {
+      ...originalTask,
+      status: wasDone ? "to_do" : "done",
+      completed_by: wasDone ? null : user.id,
+      completed_by_role: wasDone ? null : permissions.role,
+      completed_at: wasDone ? null : new Date().toISOString(),
+      // Garantir que campos do template nunca são perdidos no toggle
+      instructions: originalTask.instructions,
+      link_url: originalTask.link_url,
+      video_url: originalTask.video_url,
+    };
     updated[currentPhaseIdx] = { ...updated[currentPhaseIdx], tasks: updated[currentPhaseIdx].tasks.map((t, i) => i === taskIdx ? task : t) };
     saveMutation.mutate(updated);
   };
