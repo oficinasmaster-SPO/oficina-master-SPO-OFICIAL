@@ -205,6 +205,13 @@
                   ],
                   "description": "URL do material complementar"
                 },
+                "video_url": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "URL do v\u00eddeo de instru\u00e7\u00e3o (micro aula) vinculado \u00e0 tarefa"
+                },
                 "completed_by": {
                   "type": "string",
                   "description": "ID do usu\u00e1rio que completou a tarefa"
