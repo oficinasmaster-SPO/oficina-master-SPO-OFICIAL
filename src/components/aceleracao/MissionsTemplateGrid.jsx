@@ -97,7 +97,11 @@ export default function MissionsTemplateGrid() {
         if (settings?.length > 0 && settings[0].value) {
           const saved = JSON.parse(settings[0].value);
           if (Array.isArray(saved) && saved.length > 0) {
-            setMissions(saved);
+            // Merge: preserva dados salvos, adiciona missões novas que não existem no banco
+            const savedIds = new Set(saved.map(m => m.id));
+            const newMissions = DEFAULT_MISSIONS.filter(m => !savedIds.has(m.id));
+            setMissions([...saved, ...newMissions]);
+            return;
           }
         }
       } catch {

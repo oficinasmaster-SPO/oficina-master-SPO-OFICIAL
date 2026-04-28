@@ -385,7 +385,11 @@ export default function SprintsTemplateGrid() {
         if (settings?.length > 0 && settings[0].value) {
           const saved = JSON.parse(settings[0].value);
           if (Array.isArray(saved) && saved.length > 0) {
-            setData(saved);
+            // Merge: preserva dados salvos, adiciona missões novas que não existem no banco
+            const defaultData = buildDefaultData();
+            const savedIds = new Set(saved.map(m => m.mission_id));
+            const newMissions = defaultData.filter(m => !savedIds.has(m.mission_id));
+            setData([...saved, ...newMissions]);
           }
         }
       } catch {
