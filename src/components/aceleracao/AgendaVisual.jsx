@@ -614,8 +614,8 @@ export default function AgendaVisual({ atendimentos = [], workshops = [], user }
                 </div>
               )}
               {detailsModal.date && getSprintFollowUpsForDay(detailsModal.date).length > 0 && (
-                <div className="flex-1 rounded-lg border-l-4 border-l-blue-500 bg-blue-50 p-3 overflow-hidden flex flex-col">
-                  <p className="text-xs font-bold text-blue-800 mb-2 flex-shrink-0">🚀 FUs de SPRINT ({getSprintFollowUpsForDay(detailsModal.date).length})</p>
+                <div className="flex-1 rounded-lg border-l-4 border-l-cyan-500 bg-cyan-50 p-3 overflow-hidden flex flex-col">
+                  <p className="text-xs font-bold text-cyan-800 mb-2 flex-shrink-0">🚀 FUs de SPRINT ({getSprintFollowUpsForDay(detailsModal.date).length})</p>
                   <div className="overflow-y-auto flex-1">
                     <FollowUpPostIt
                       reminders={getSprintFollowUpsForDay(detailsModal.date)}
