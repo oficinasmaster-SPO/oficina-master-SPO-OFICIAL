@@ -649,7 +649,7 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
 
               {/* Situação do cliente */}
               <div className="bg-white border border-gray-200 rounded-xl p-4">
-                <p className="text-[10px] text-gray-400 uppercase tracking-wide font-semibold mb-3">Situação do Cliente</p>
+                <h3 className="text-base font-bold text-gray-900 uppercase mb-4">Situação do Cliente</h3>
                 <div className="grid grid-cols-3 gap-2 mb-4">
                   <div className="text-center">
                     <p className="text-lg font-bold text-gray-800">{currentStep}/{totalSteps}</p>
