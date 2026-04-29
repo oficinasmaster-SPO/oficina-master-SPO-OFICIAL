@@ -382,7 +382,15 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
                     )}
                   </div>
                   {reminder.consultor_nome && (
-                    <span className="text-xs text-gray-500 font-medium flex-shrink-0">{reminder.consultor_nome}</span>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-red-100 text-red-700 flex items-center justify-center font-bold text-xs flex-shrink-0">
+                        {getInitials(reminder.consultor_nome)}
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs font-semibold text-gray-800 leading-tight">{reminder.consultor_nome}</p>
+                        <p className="text-[10px] text-gray-400 leading-tight">Consultor sênior</p>
+                      </div>
+                    </div>
                   )}
                 </div>
                 <div className="flex items-center gap-2 mt-0.5">
