@@ -374,10 +374,15 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
                 {getInitials(reminder.workshop_name)}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-bold text-gray-900 text-sm">{reminder.workshop_name || "Sem cliente"}</span>
-                  {isOverdue && (
-                    <Badge className="text-[10px] bg-red-100 text-red-700 border-red-200">Urgente</Badge>
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-gray-900 text-sm">{reminder.workshop_name || "Sem cliente"}</span>
+                    {isOverdue && (
+                      <Badge className="text-[10px] bg-red-100 text-red-700 border-red-200">Urgente</Badge>
+                    )}
+                  </div>
+                  {reminder.consultor_nome && (
+                    <span className="text-xs text-gray-500 font-medium flex-shrink-0">{reminder.consultor_nome}</span>
                   )}
                 </div>
                 <div className="flex items-center gap-2 mt-0.5">
@@ -605,21 +610,7 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
              </div>
            )}
 
-           {/* Consultor */}
-           {reminder.consultor_nome && (
-            <div className="bg-white border border-gray-200 rounded-xl p-4">
-              <p className="text-[10px] text-gray-400 uppercase tracking-wide font-semibold mb-3">Consultor Responsável</p>
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-red-100 text-red-700 flex items-center justify-center font-bold text-sm flex-shrink-0">
-                  {getInitials(reminder.consultor_nome)}
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-gray-800">{reminder.consultor_nome}</p>
-                  <p className="text-xs text-gray-400">Consultor sênior</p>
-                </div>
-              </div>
-            </div>
-          )}
+
 
           {/* Situação do cliente */}
           <div className="bg-white border border-gray-200 rounded-xl p-4">
