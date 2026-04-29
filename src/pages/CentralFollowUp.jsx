@@ -58,7 +58,7 @@ export default function CentralFollowUp() {
             <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
             <span className="text-xs font-semibold text-red-400 uppercase tracking-widest">Área de execução</span>
           </div>
-          <h1 className="text-3xl font-bold text-white leading-tight">Central de Follow-up</h1>
+          <h1 className="font-extrabold text-white leading-tight" style={{fontSize: '2.0rem'}}>Central de Follow-up</h1>
           <p className="text-gray-400 mt-1 text-sm">
             Gerencie e acompanhe todos os follow-ups dos clientes em aceleração
           </p>
@@ -74,7 +74,7 @@ export default function CentralFollowUp() {
               </span>
             </div>
             <p className="text-sm text-gray-400">{getGreeting()},</p>
-            <p className="text-lg font-semibold text-white leading-tight">{firstName}</p>
+            <p className="font-extrabold text-white leading-tight" style={{fontSize: '1.26rem'}}>{firstName}</p>
           </div>
           {profilePicture ? (
             <img 
