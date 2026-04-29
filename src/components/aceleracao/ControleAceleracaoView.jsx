@@ -175,32 +175,134 @@ export default function ControleAceleracaoView({ state }) {
             )}
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button
+        <div
+          role="group"
+          aria-label="Ações principais"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "1rem",
+            padding: "0.75rem",
+            borderRadius: "1.5rem",
+            background: "rgba(255,255,255,0.85)",
+            backdropFilter: "blur(12px)",
+            border: "1px solid hsl(0 84% 58% / 0.6)",
+            animation: "actionContainerGlow 3200ms ease-in-out infinite",
+          }}
+        >
+          <style>{`
+            @keyframes actionContainerGlow {
+              0%, 100% { box-shadow: 0 0 0 1px hsl(0 84% 58% / 0.55), 0 0 3px 0 hsl(0 84% 58% / 0.55); }
+              50%       { box-shadow: 0 0 0 1px hsl(0 84% 58% / 0.80), 0 0 5px 0 hsl(0 84% 58% / 0.85); }
+            }
+            @keyframes actionShine {
+              0%       { transform: translateX(-120%); }
+              60%, 100%{ transform: translateX(220%); }
+            }
+            .action-btn { position: relative; overflow: hidden; transition: all 300ms cubic-bezier(0.4,0,0.2,1); }
+            .action-btn:hover { transform: translateY(-2px); }
+            .action-btn:active { transform: translateY(0) scale(0.98); }
+            .action-btn:focus-visible { outline: 2px solid hsl(222 89% 58%); outline-offset: 2px; }
+            .action-btn::after {
+              content: "";
+              position: absolute; inset: 0;
+              background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.45) 50%, transparent 70%);
+              transform: translateX(-120%);
+              pointer-events: none;
+            }
+            .action-btn:hover::after { animation: actionShine 1100ms cubic-bezier(0.2,0.8,0.2,1) forwards; }
+            .action-btn-icon { transition: transform 300ms cubic-bezier(0.4,0,0.2,1); }
+            .action-btn:hover .action-btn-icon { transform: scale(1.1); }
+          `}</style>
+
+          {/* Botão vermelho — Central de Follow-up */}
+          <button
             onClick={() => navigate('/CentralFollowUp')}
-            size="sm"
-            className="bg-red-600 hover:bg-red-700 text-white shadow-sm"
+            className="action-btn"
+            style={{
+              height: "3.5rem",
+              padding: "0 1.75rem",
+              borderRadius: "1rem",
+              border: "none",
+              background: "linear-gradient(135deg, hsl(0 88% 62%), hsl(0 78% 48%))",
+              color: "#fff",
+              fontSize: "1rem",
+              fontWeight: 600,
+              letterSpacing: "-0.01em",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "0.625rem",
+              cursor: "pointer",
+              boxShadow: "0 14px 28px -8px hsl(0 84% 50% / 0.55), 0 6px 12px -4px hsl(0 84% 50% / 0.35), inset 0 1px 0 hsl(0 0% 100% / 0.22)",
+            }}
+            onMouseEnter={e => e.currentTarget.style.boxShadow = "0 22px 44px -10px hsl(0 84% 50% / 0.7), 0 10px 20px -6px hsl(0 84% 50% / 0.45), inset 0 1px 0 hsl(0 0% 100% / 0.30)"}
+            onMouseLeave={e => e.currentTarget.style.boxShadow = "0 14px 28px -8px hsl(0 84% 50% / 0.55), 0 6px 12px -4px hsl(0 84% 50% / 0.35), inset 0 1px 0 hsl(0 0% 100% / 0.22)"}
           >
-            <Zap className="w-4 h-4 mr-1.5" />
+            <Zap className="action-btn-icon" size={20} strokeWidth={2.5} />
             Central de Follow-up
-          </Button>
-          <Button
+          </button>
+
+          {/* Botão outline — Registro em Massa */}
+          <button
             onClick={handleOpenMassRegistration}
-            variant="outline"
-            size="sm"
-            className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300"
+            className="action-btn"
+            style={{
+              height: "3.5rem",
+              padding: "0 1.75rem",
+              borderRadius: "1rem",
+              border: "1px solid hsl(214 32% 91%)",
+              background: "#fff",
+              color: "hsl(222 47% 18%)",
+              fontSize: "1rem",
+              fontWeight: 600,
+              letterSpacing: "-0.01em",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "0.625rem",
+              cursor: "pointer",
+              boxShadow: "0 10px 22px -8px hsl(222 47% 30% / 0.28), 0 4px 8px -2px hsl(222 47% 30% / 0.14)",
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.color = "hsl(222 89% 58%)";
+              e.currentTarget.style.borderColor = "hsl(222 89% 58% / 0.5)";
+              e.currentTarget.style.boxShadow = "0 18px 32px -10px hsl(222 89% 40% / 0.4), 0 6px 14px -4px hsl(222 89% 40% / 0.25)";
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.color = "hsl(222 47% 18%)";
+              e.currentTarget.style.borderColor = "hsl(214 32% 91%)";
+              e.currentTarget.style.boxShadow = "0 10px 22px -8px hsl(222 47% 30% / 0.28), 0 4px 8px -2px hsl(222 47% 30% / 0.14)";
+            }}
           >
-            <Users className="w-4 h-4 mr-1.5" />
+            <Users className="action-btn-icon" size={20} strokeWidth={2.25} />
             Registro em Massa
-          </Button>
-          <Button
+          </button>
+
+          {/* Botão azul — Novo Atendimento */}
+          <button
             onClick={() => handleOpenModal()}
-            size="sm"
-            className="bg-blue-600 hover:bg-blue-700 shadow-sm"
+            className="action-btn"
+            style={{
+              height: "3.5rem",
+              padding: "0 1.75rem",
+              borderRadius: "1rem",
+              border: "none",
+              background: "linear-gradient(135deg, hsl(222 92% 62%), hsl(224 84% 46%))",
+              color: "#fff",
+              fontSize: "1rem",
+              fontWeight: 600,
+              letterSpacing: "-0.01em",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "0.625rem",
+              cursor: "pointer",
+              boxShadow: "0 14px 28px -8px hsl(222 89% 50% / 0.55), 0 6px 12px -4px hsl(222 89% 50% / 0.35), inset 0 1px 0 hsl(0 0% 100% / 0.22)",
+            }}
+            onMouseEnter={e => e.currentTarget.style.boxShadow = "0 22px 44px -10px hsl(222 89% 50% / 0.7), 0 10px 20px -6px hsl(222 89% 50% / 0.45), inset 0 1px 0 hsl(0 0% 100% / 0.30)"}
+            onMouseLeave={e => e.currentTarget.style.boxShadow = "0 14px 28px -8px hsl(222 89% 50% / 0.55), 0 6px 12px -4px hsl(222 89% 50% / 0.35), inset 0 1px 0 hsl(0 0% 100% / 0.22)"}
           >
-            <Plus className="w-4 h-4 mr-1.5" />
+            <Plus className="action-btn-icon" size={20} strokeWidth={2.75} />
             Novo Atendimento
-          </Button>
+          </button>
         </div>
       </div>
 
