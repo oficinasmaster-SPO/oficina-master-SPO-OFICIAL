@@ -152,11 +152,20 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
   // States da aba IA
   const [dicaIA, setDicaIA] = useState(null);
   const [carregandoDica, setCarregandoDica] = useState(false);
-  const [postItPos, setPostItPos] = useState({ x: 24, y: 120 });
+  const calcOriginPos = useCallback(() => {
+    return {
+      x: 16,
+      y: window.innerHeight - 72 - 210 + 18,
+    };
+  }, []);
+
+  const [postItPos, setPostItPos] = useState(() => calcOriginPos());
   const [postItMinimizado, setPostItMinimizado] = useState(false);
   const draggingRef = useRef(false);
   const dragOffsetRef = useRef({ x: 0, y: 0 });
   const postItRef = useRef(null);
+  const postItClickTimer = useRef(null);
+  const postItMoved = useRef(false);
   const [chatMensagens, setChatMensagens] = useState([]);
   const [chatInput, setChatInput] = useState('');
   const [chatEnviando, setChatEnviando] = useState(false);
@@ -355,8 +364,31 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
   };
 
   // ── Funções da aba IA ──
+  const snapToOrigin = useCallback(() => {
+    const origin = calcOriginPos();
+    if (postItRef.current) {
+      postItRef.current.style.transition = 'left 0.35s cubic-bezier(0.4,0,0.2,1), top 0.35s cubic-bezier(0.4,0,0.2,1)';
+      setTimeout(() => {
+        if (postItRef.current) postItRef.current.style.transition = '';
+      }, 380);
+    }
+    setPostItPos(origin);
+  }, [calcOriginPos]);
+
   const handlePostItMouseDown = useCallback((e) => {
     if (e.target.closest('button')) return;
+
+    postItMoved.current = false;
+    if (postItClickTimer.current) {
+      clearTimeout(postItClickTimer.current);
+      postItClickTimer.current = null;
+      snapToOrigin();
+      return;
+    }
+    postItClickTimer.current = setTimeout(() => {
+      postItClickTimer.current = null;
+    }, 320);
+
     draggingRef.current = true;
     dragOffsetRef.current = {
       x: e.clientX - postItPos.x,
@@ -366,6 +398,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
 
     const handleMouseMove = (e) => {
       if (!draggingRef.current) return;
+      postItMoved.current = true;
       setPostItPos({
         x: e.clientX - dragOffsetRef.current.x,
         y: e.clientY - dragOffsetRef.current.y,
@@ -374,13 +407,17 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
 
     const handleMouseUp = () => {
       draggingRef.current = false;
+      if (postItMoved.current && postItClickTimer.current) {
+        clearTimeout(postItClickTimer.current);
+        postItClickTimer.current = null;
+      }
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
 
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
-  }, [postItPos]);
+  }, [postItPos, snapToOrigin]);
 
   const gerarDicaIA = async () => {
     setCarregandoDica(true);
