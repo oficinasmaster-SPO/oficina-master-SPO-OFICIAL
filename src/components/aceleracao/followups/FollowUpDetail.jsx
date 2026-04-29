@@ -374,572 +374,515 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* ---- LEFT COLUMN ---- */}
             <div className="space-y-3">
-
-          {/* Identity card */}
-          <div className="bg-white border border-gray-200 rounded-xl p-4">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm flex-shrink-0">
-                {getInitials(reminder.workshop_name)}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-gray-900 text-sm">{reminder.workshop_name || "Sem cliente"}</span>
-                    {isOverdue && (
-                      <Badge className="text-[10px] bg-red-100 text-red-700 border-red-200">Urgente</Badge>
-                    )}
+              {/* Identity card */}
+              <div className="bg-white border border-gray-200 rounded-xl p-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm flex-shrink-0">
+                    {getInitials(reminder.workshop_name)}
                   </div>
-                  {reminder.consultor_nome && (
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <div className="w-8 h-8 rounded-full bg-red-100 text-red-700 flex items-center justify-center font-bold text-xs flex-shrink-0">
-                        {getInitials(reminder.consultor_nome)}
-                      </div>
-                      <div className="text-right">
-                        <p className="text-xs font-semibold text-gray-800 leading-tight">{reminder.consultor_nome}</p>
-                        <p className="text-[10px] text-gray-400 leading-tight">Consultor sênior</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <div className="flex items-center gap-2 mt-0.5">
-                  {isOverdue && daysOver > 0 && (
-                    <span className="text-xs font-semibold text-red-600 bg-red-50 border border-red-200 rounded px-1.5 py-0.5">
-                      {daysOver}d vencido
-                    </span>
-                  )}
-                  {reminder.reminder_date === today && !isOverdue && (
-                    <span className="text-xs font-semibold text-amber-600 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5">Hoje</span>
-                  )}
-                </div>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  Setor automotivo · Follow-up {currentStep}/{totalSteps}
-                </p>
-              </div>
-            </div>
-
-            {/* Progress bar */}
-            <div className="mt-3">
-              <p className="text-[10px] text-gray-400 uppercase tracking-wide font-semibold mb-1.5">Progresso dos follow-ups</p>
-              <div className="flex items-center gap-1.5">
-                {Array.from({ length: totalSteps }).map((_, i) => (
-                  <React.Fragment key={i}>
-                    <div className={`w-3 h-3 rounded-full border-2 flex-shrink-0 ${
-                      i < currentStep - 1
-                        ? "bg-red-500 border-red-500"
-                        : i === currentStep - 1
-                        ? "bg-red-500 border-red-500"
-                        : "bg-white border-gray-300"
-                    }`} />
-                    {i < totalSteps - 1 && (
-                      <div className={`flex-1 h-0.5 ${i < currentStep - 1 ? "bg-red-300" : "bg-gray-200"}`} />
-                    )}
-                  </React.Fragment>
-                ))}
-                <span className="text-[11px] text-gray-400 ml-1">{currentStep} de {totalSteps}</span>
-              </div>
-            </div>
-
-            {/* Quick contact icons */}
-            <div className="mt-3">
-              <p className="text-[10px] text-gray-400 uppercase tracking-wide font-semibold mb-1.5">Contato rápido</p>
-              <div className="flex gap-2">
-                {CANAL_OPTIONS.filter(c => c.id !== "sem_contato").map(opt => {
-                  const Icon = opt.icon;
-                  return (
-                    <button
-                      key={opt.id}
-                      title={opt.label}
-                      className="w-9 h-9 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100 flex items-center justify-center text-gray-500 transition-colors"
-                    >
-                      <Icon className="w-4 h-4" />
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          {/* Dica de IA */}
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <Zap className="w-4 h-4 text-amber-500 flex-shrink-0" />
-                <p className="text-xs font-semibold text-amber-700">Dica de IA para este atendimento</p>
-              </div>
-              <button
-                onClick={gerarDicaIA}
-                disabled={carregandoDica}
-                title="Gerar nova dica"
-                className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-amber-100 transition-colors disabled:opacity-40"
-              >
-                <svg
-                  className={`w-4 h-4 text-amber-600 ${carregandoDica ? 'animate-spin' : ''}`}
-                  fill="none" viewBox="0 0 24 24" stroke="currentColor"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-              </button>
-            </div>
-            {carregandoDica ? (
-              <div className="flex items-center gap-2 py-2">
-                <div className="w-3 h-3 rounded-full bg-amber-400 animate-pulse" />
-                <p className="text-xs text-amber-600">Analisando histórico do cliente...</p>
-              </div>
-            ) : dicaIA ? (
-              <p className="text-sm text-amber-800 leading-relaxed">{dicaIA}</p>
-            ) : suggestedAction ? (
-              <p className="text-sm text-amber-800 leading-relaxed">{suggestedAction}</p>
-            ) : (
-              <p className="text-xs text-amber-600 italic">Clique em recarregar para gerar uma dica.</p>
-            )}
-          </div>
-
-          {/* ATA history */}
-          {atas.length > 0 && (
-            <div className="bg-white border border-gray-200 rounded-xl p-4">
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-[10px] text-gray-400 uppercase tracking-wide font-semibold">
-                  Histórico de ATAs ({atas.length})
-                </p>
-                <button className="text-xs text-blue-600 hover:underline flex items-center gap-1">
-                  Ver todas <ChevronRight className="w-3 h-3" />
-                </button>
-              </div>
-              <div className="space-y-2">
-                {atas.slice(0, 5).map(ata => {
-                  const dateStr = ata.meeting_date || ata.created_date;
-                  const isOrigin = ata.id === reminder.ata_id;
-                  const tipo = (ata.tipo_aceleracao || ata.tipo_atendimento || "ata").toLowerCase();
-                  const emoji = ATA_ICONS[tipo] || "📄";
-                  return (
-                    <button
-                      key={ata.id}
-                      onClick={() => setSelectedAta(ata)}
-                      className={`w-full flex items-start gap-2.5 px-3 py-2.5 rounded-lg border transition-colors text-left ${
-                        isOrigin
-                          ? "border-green-300 bg-green-50 hover:bg-green-100"
-                          : "border-gray-100 bg-gray-50 hover:bg-gray-100"
-                      }`}
-                    >
-                      <span className="text-base flex-shrink-0 mt-0.5">{emoji}</span>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className={`text-xs font-semibold ${isOrigin ? "text-green-800" : "text-gray-800"}`}>
-                            {ata.tipo_aceleracao || ata.tipo_atendimento || "ATA"}
-                          </span>
-                          {isOrigin && (
-                            <span className="text-[9px] font-bold text-green-700 bg-green-200 rounded px-1 py-0.5">ORIGEM</span>
-                          )}
-                        </div>
-                        {ata.proximos_passos && (
-                          <p className="text-[11px] text-gray-500 line-clamp-2 mt-0.5">{ata.proximos_passos}</p>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-gray-900 text-sm">{reminder.workshop_name || "Sem cliente"}</span>
+                        {isOverdue && (
+                          <Badge className="text-[10px] bg-red-100 text-red-700 border-red-200">Urgente</Badge>
                         )}
                       </div>
-                      {dateStr && (
-                        <span className="text-[11px] text-gray-400 flex-shrink-0">
-                          {format(new Date(dateStr), "dd/MM/yy")}
+                      {reminder.consultor_nome && (
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <div className="w-8 h-8 rounded-full bg-red-100 text-red-700 flex items-center justify-center font-bold text-xs flex-shrink-0">
+                            {getInitials(reminder.consultor_nome)}
+                          </div>
+                          <div className="text-right">
+                            <p className="text-xs font-semibold text-gray-800 leading-tight">{reminder.consultor_nome}</p>
+                            <p className="text-[10px] text-gray-400 leading-tight">Consultor sênior</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      {isOverdue && daysOver > 0 && (
+                        <span className="text-xs font-semibold text-red-600 bg-red-50 border border-red-200 rounded px-1.5 py-0.5">
+                          {daysOver}d vencido
                         </span>
                       )}
-                    </button>
-                  );
-                })}
+                      {reminder.reminder_date === today && !isOverdue && (
+                        <span className="text-xs font-semibold text-amber-600 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5">Hoje</span>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      Setor automotivo · Follow-up {currentStep}/{totalSteps}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Progress bar */}
+                <div className="mt-3">
+                  <p className="text-[10px] text-gray-400 uppercase tracking-wide font-semibold mb-1.5">Progresso dos follow-ups</p>
+                  <div className="flex items-center gap-1.5">
+                    {Array.from({ length: totalSteps }).map((_, i) => (
+                      <React.Fragment key={i}>
+                        <div className={`w-3 h-3 rounded-full border-2 flex-shrink-0 ${
+                          i < currentStep - 1
+                            ? "bg-red-500 border-red-500"
+                            : i === currentStep - 1
+                            ? "bg-red-500 border-red-500"
+                            : "bg-white border-gray-300"
+                        }`} />
+                        {i < totalSteps - 1 && (
+                          <div className={`flex-1 h-0.5 ${i < currentStep - 1 ? "bg-red-300" : "bg-gray-200"}`} />
+                        )}
+                      </React.Fragment>
+                    ))}
+                    <span className="text-[11px] text-gray-400 ml-1">{currentStep} de {totalSteps}</span>
+                  </div>
+                </div>
+
+                {/* Quick contact icons */}
+                <div className="mt-3">
+                  <p className="text-[10px] text-gray-400 uppercase tracking-wide font-semibold mb-1.5">Contato rápido</p>
+                  <div className="flex gap-2">
+                    {CANAL_OPTIONS.filter(c => c.id !== "sem_contato").map(opt => {
+                      const Icon = opt.icon;
+                      return (
+                        <button
+                          key={opt.id}
+                          title={opt.label}
+                          className="w-9 h-9 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100 flex items-center justify-center text-gray-500 transition-colors"
+                        >
+                          <Icon className="w-4 h-4" />
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
-            </div>
-          )}
 
-
-
-              {/* Footer fixo */}
-              <div className="flex-shrink-0 px-4 py-3 border-t border-gray-200 bg-white">
-              {(() => {
-                const temRascunho = verificarRascunho();
-                return (
-                  <Button
-                    onClick={() => {
-                      setView("register");
-                      setRegisterStep("history");
-                    }}
-                    className={`w-full rounded-lg font-semibold flex items-center justify-center gap-2 transition-all ${
-                      temRascunho
-                        ? "bg-cyan-600 hover:bg-cyan-700 text-white"
-                        : "bg-green-600 hover:bg-green-700 text-white"
-                    }`}
+              {/* Dica de IA */}
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Zap className="w-4 h-4 text-amber-500 flex-shrink-0" />
+                    <p className="text-xs font-semibold text-amber-700">Dica de IA para este atendimento</p>
+                  </div>
+                  <button
+                    onClick={gerarDicaIA}
+                    disabled={carregandoDica}
+                    title="Gerar nova dica"
+                    className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-amber-100 transition-colors disabled:opacity-40"
                   >
-                    <PlayCircle className="w-4 h-4" />
-                    {temRascunho ? "Retomar Atendimento" : "Iniciar Atendimento"}
-                  </Button>
-                );
-              })()}
-               </div>
-              </div>
+                    <svg
+                      className={`w-4 h-4 text-amber-600 ${carregandoDica ? 'animate-spin' : ''}`}
+                      fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  </button>
+                </div>
+                {carregandoDica ? (
+                  <div className="flex items-center gap-2 py-2">
+                    <div className="w-3 h-3 rounded-full bg-amber-400 animate-pulse" />
+                    <p className="text-xs text-amber-600">Analisando histórico do cliente...</p>
+                  </div>
+                ) : dicaIA ? (
+                  <p className="text-sm text-amber-800 leading-relaxed">{dicaIA}</p>
+                ) : suggestedAction ? (
+                  <p className="text-sm text-amber-800 leading-relaxed">{suggestedAction}</p>
+                ) : (
+                  <p className="text-xs text-amber-600 italic">Clique em recarregar para gerar uma dica.</p>
+                )}
               </div>
 
-              {/* Footer fixo */}
-              <div className="flex-shrink-0 px-6 py-4 border-t border-gray-200 bg-white">
-              {(() => {
-               const temRascunho = verificarRascunho();
-               return (
-                 <Button
-                   onClick={() => {
-                     setView("register");
-                     setRegisterStep("history");
-                   }}
-                   className={`w-full rounded-lg font-semibold flex items-center justify-center gap-2 transition-all ${
-                     temRascunho
-                       ? "bg-cyan-600 hover:bg-cyan-700 text-white"
-                       : "bg-green-600 hover:bg-green-700 text-white"
-                   }`}
-                 >
-                   <PlayCircle className="w-4 h-4" />
-                   {temRascunho ? "Retomar Atendimento" : "Iniciar Atendimento"}
-                 </Button>
-               );
-              })()}
-              </div>
-              </div>
-              </div>
+              {/* ATA history */}
+              {atas.length > 0 && (
+                <div className="bg-white border border-gray-200 rounded-xl p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-[10px] text-gray-400 uppercase tracking-wide font-semibold">
+                      Histórico de ATAs ({atas.length})
+                    </p>
+                    <button className="text-xs text-blue-600 hover:underline flex items-center gap-1">
+                      Ver todas <ChevronRight className="w-3 h-3" />
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    {atas.slice(0, 5).map(ata => {
+                      const dateStr = ata.meeting_date || ata.created_date;
+                      const isOrigin = ata.id === reminder.ata_id;
+                      const tipo = (ata.tipo_aceleracao || ata.tipo_atendimento || "ata").toLowerCase();
+                      const emoji = ATA_ICONS[tipo] || "📄";
+                      return (
+                        <button
+                          key={ata.id}
+                          onClick={() => setSelectedAta(ata)}
+                          className={`w-full flex items-start gap-2.5 px-3 py-2.5 rounded-lg border transition-colors text-left ${
+                            isOrigin
+                              ? "border-green-300 bg-green-50 hover:bg-green-100"
+                              : "border-gray-100 bg-gray-50 hover:bg-gray-100"
+                          }`}
+                        >
+                          <span className="text-base flex-shrink-0 mt-0.5">{emoji}</span>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className={`text-xs font-semibold ${isOrigin ? "text-green-800" : "text-gray-800"}`}>
+                                {ata.tipo_aceleracao || ata.tipo_atendimento || "ATA"}
+                              </span>
+                              {isOrigin && (
+                                <span className="text-[9px] font-bold text-green-700 bg-green-200 rounded px-1 py-0.5">ORIGEM</span>
+                              )}
+                            </div>
+                            {ata.proximos_passos && (
+                              <p className="text-[11px] text-gray-500 line-clamp-2 mt-0.5">{ata.proximos_passos}</p>
+                            )}
+                          </div>
+                          {dateStr && (
+                            <span className="text-[11px] text-gray-400 flex-shrink-0">
+                              {format(new Date(dateStr), "dd/MM/yy")}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* ---- RIGHT COLUMN ---- */}
             <div className="space-y-3">
-
-           {/* Atendimentos do dia */}
-           {atendimentosHoje.length > 0 && (
-             <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-               <div className="flex items-center gap-2 mb-3">
-                 <Bell className="w-4 h-4 text-blue-600" />
-                 <p className="text-[10px] text-blue-700 uppercase tracking-wide font-bold">
-                   Seus atendimentos de hoje ({atendimentosHoje.length})
-                 </p>
-               </div>
-               <div className="space-y-2">
-                 {atendimentosHoje.map(at => (
-                   <div key={at.id} className="bg-white border border-blue-100 rounded-lg px-3 py-2.5 flex items-start gap-3">
-                     <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
-                       <Video className="w-4 h-4 text-blue-600" />
-                     </div>
-                     <div className="flex-1 min-w-0">
-                       <p className="text-xs font-semibold text-gray-800 truncate">
-                         {at.workshop_name || 'Cliente'}
-                       </p>
-                       <p className="text-[11px] text-gray-500 capitalize">
-                         {(at.tipo_atendimento || 'atendimento').replace(/_/g, ' ')}
-                       </p>
-                       <div className="flex items-center gap-1 mt-1">
-                         <Clock className="w-3 h-3 text-blue-500" />
-                         <span className="text-[11px] text-blue-600 font-medium">
-                           {at.data_agendada
-                             ? format(parseISO(at.data_agendada), 'HH:mm')
-                             : 'Horário não definido'}
-                         </span>
-                         <span className={`ml-auto text-[10px] px-1.5 py-0.5 rounded font-semibold ${
-                           at.status === 'confirmado'
-                             ? 'bg-green-100 text-green-700'
-                             : at.status === 'reagendado'
-                             ? 'bg-amber-100 text-amber-700'
-                             : 'bg-blue-100 text-blue-700'
-                         }`}>
-                           {at.status}
-                         </span>
-                       </div>
-                     </div>
-                   </div>
-                 ))}
-               </div>
-             </div>
-           )}
-
-
-
-          {/* Situação do cliente */}
-          <div className="bg-white border border-gray-200 rounded-xl p-4">
-            <p className="text-[10px] text-gray-400 uppercase tracking-wide font-semibold mb-3">Situação do Cliente</p>
-            <div className="grid grid-cols-3 gap-2 mb-4">
-              <div className="text-center">
-                <p className="text-lg font-bold text-gray-800">{currentStep}/{totalSteps}</p>
-                <p className="text-[10px] text-gray-400">Follow-ups</p>
-              </div>
-              <div className="text-center">
-                <p className={`text-lg font-bold ${isOverdue ? "text-red-600" : "text-gray-800"}`}>{daysOver > 0 ? `${daysOver}d` : "—"}</p>
-                <p className="text-[10px] text-gray-400">Vencido</p>
-              </div>
-              <div className="text-center">
-                <p className="text-lg font-bold text-gray-800">{atas.length}</p>
-                <p className="text-[10px] text-gray-400">Atas</p>
-              </div>
-            </div>
-
-            {/* Engagement bar */}
-            <div className="space-y-2">
-              <div>
-                <div className="flex justify-between text-[11px] text-gray-500 mb-1">
-                  <span>Engajamento</span>
-                  <span>70%</span>
-                </div>
-                <div className="h-1.5 bg-gray-100 rounded-full">
-                  <div className="h-1.5 bg-blue-500 rounded-full" style={{ width: "70%" }} />
-                </div>
-              </div>
-              <div>
-                <div className="flex justify-between text-[11px] text-gray-500 mb-1">
-                  <span>Progresso do programa</span>
-                  <span>{Math.round((currentStep / totalSteps) * 100)}%</span>
-                </div>
-                <div className="h-1.5 bg-gray-100 rounded-full">
-                  <div className="h-1.5 bg-green-500 rounded-full" style={{ width: `${Math.round((currentStep / totalSteps) * 100)}%` }} />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Próximas ações sugeridas */}
-          <div className="bg-white border border-gray-200 rounded-xl p-4">
-            <p className="text-[10px] text-gray-400 uppercase tracking-wide font-semibold mb-3">Próximas Ações Sugeridas</p>
-            <ul className="space-y-2">
-              {[
-                { text: "Confirmar disponibilidade do cliente", active: true },
-                { text: "Reagendar próxima sessão", active: true },
-                { text: "Enviar resumo das últimas atas", active: false },
-              ].map((item, i) => (
-                <li key={i} className="flex items-start gap-2">
-                  <span className={`w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0 ${item.active ? "bg-red-500" : "bg-gray-300"}`} />
-                  <span className={`text-sm ${item.active ? "text-gray-700" : "text-gray-400"}`}>{item.text}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Follow-up Timeline */}
-          {(() => {
-            const past = allFollowUps.filter(f => f.is_completed && f.id !== reminder.id)
-              .sort((a, b) => new Date(b.reminder_date) - new Date(a.reminder_date));
-            const future = allFollowUps.filter(f => !f.is_completed && f.id !== reminder.id)
-              .sort((a, b) => new Date(a.reminder_date) - new Date(b.reminder_date));
-
-            return (
-              <div className="bg-white border border-gray-200 rounded-xl p-4">
-                <p className="text-[10px] text-gray-400 uppercase tracking-wide font-semibold mb-3">Timeline de Follow-ups</p>
-
-                {isSprintFU && (
-                  <div className="mb-4 bg-orange-50 border border-orange-200 rounded-lg overflow-hidden">
-                    <div className="flex items-center gap-2 px-3 py-2 border-b border-orange-200">
-                      <span className="text-sm">🚀</span>
-                      <p className="text-[10px] font-bold text-orange-800 uppercase tracking-wide flex-1">
-                        Follow-ups desta sprint
-                      </p>
-                      <span className="text-[10px] text-orange-600 font-medium">
-                        {allFollowUps.filter(f => f.sprint_id === reminder.sprint_id && f.origin_type === 'sprint').filter(f => f.is_completed).length}
-                        /{allFollowUps.filter(f => f.sprint_id === reminder.sprint_id && f.origin_type === 'sprint').length} concluídos
-                      </span>
-                    </div>
-                    {sprintLabel && (
-                      <p className="text-[11px] text-orange-600 px-3 pt-2 pb-1 italic truncate">
-                        {sprintLabel}
-                      </p>
-                    )}
-                    <div className="px-3 pb-3 pt-1 space-y-1.5">
-                      {/* FU atual destacado */}
-                      <div className="flex items-center gap-2 bg-orange-100 border border-orange-200 rounded px-2 py-1.5">
-                        <div className="w-2.5 h-2.5 rounded-full bg-orange-500 flex-shrink-0 ring-2 ring-orange-300" />
-                        <span className="text-[11px] font-bold text-orange-800">
-                          FU {reminder.sequence_number} · Em andamento
-                        </span>
-                        <span className="ml-auto text-[10px] text-orange-600 font-medium">
-                          {reminder.reminder_date
-                            ? format(new Date(reminder.reminder_date + 'T00:00:00'), 'dd/MM')
-                            : '—'}
-                        </span>
+              {/* Atendimentos do dia */}
+              {atendimentosHoje.length > 0 && (
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Bell className="w-4 h-4 text-blue-600" />
+                    <p className="text-[10px] text-blue-700 uppercase tracking-wide font-bold">
+                      Seus atendimentos de hoje ({atendimentosHoje.length})
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    {atendimentosHoje.map(at => (
+                      <div key={at.id} className="bg-white border border-blue-100 rounded-lg px-3 py-2.5 flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                          <Video className="w-4 h-4 text-blue-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-semibold text-gray-800 truncate">
+                            {at.workshop_name || 'Cliente'}
+                          </p>
+                          <p className="text-[11px] text-gray-500 capitalize">
+                            {(at.tipo_atendimento || 'atendimento').replace(/_/g, ' ')}
+                          </p>
+                          <div className="flex items-center gap-1 mt-1">
+                            <Clock className="w-3 h-3 text-blue-500" />
+                            <span className="text-[11px] text-blue-600 font-medium">
+                              {at.data_agendada
+                                ? format(parseISO(at.data_agendada), 'HH:mm')
+                                : 'Horário não definido'}
+                            </span>
+                            <span className={`ml-auto text-[10px] px-1.5 py-0.5 rounded font-semibold ${
+                              at.status === 'confirmado'
+                                ? 'bg-green-100 text-green-700'
+                                : at.status === 'reagendado'
+                                ? 'bg-amber-100 text-amber-700'
+                                : 'bg-blue-100 text-blue-700'
+                            }`}>
+                              {at.status}
+                            </span>
+                          </div>
+                        </div>
                       </div>
-                      {/* Demais FUs da sprint ordenados por sequence_number */}
-                      {fusDaSprint.map(f => (
-                        <div key={f.id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-orange-50 transition-colors">
-                          <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
-                            f.is_completed
-                              ? 'bg-green-400'
-                              : 'bg-gray-300'
-                          }`} />
-                          <span className={`text-[11px] font-semibold ${
-                            f.is_completed ? 'text-green-700' : 'text-gray-600'
-                          }`}>
-                            FU {f.sequence_number}
-                          </span>
-                          <span className={`text-[10px] ${
-                            f.is_completed ? 'text-green-500' : 'text-gray-400'
-                          }`}>
-                            {f.is_completed ? '✓ concluído' : 'pendente'}
-                          </span>
-                          <span className="ml-auto text-[10px] text-gray-400">
-                            {f.reminder_date
-                              ? format(new Date(f.reminder_date + 'T00:00:00'), 'dd/MM')
-                              : '—'}
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Situação do cliente */}
+              <div className="bg-white border border-gray-200 rounded-xl p-4">
+                <p className="text-[10px] text-gray-400 uppercase tracking-wide font-semibold mb-3">Situação do Cliente</p>
+                <div className="grid grid-cols-3 gap-2 mb-4">
+                  <div className="text-center">
+                    <p className="text-lg font-bold text-gray-800">{currentStep}/{totalSteps}</p>
+                    <p className="text-[10px] text-gray-400">Follow-ups</p>
+                  </div>
+                  <div className="text-center">
+                    <p className={`text-lg font-bold ${isOverdue ? "text-red-600" : "text-gray-800"}`}>{daysOver > 0 ? `${daysOver}d` : "—"}</p>
+                    <p className="text-[10px] text-gray-400">Vencido</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-lg font-bold text-gray-800">{atas.length}</p>
+                    <p className="text-[10px] text-gray-400">Atas</p>
+                  </div>
+                </div>
+
+                {/* Engagement bar */}
+                <div className="space-y-2">
+                  <div>
+                    <div className="flex justify-between text-[11px] text-gray-500 mb-1">
+                      <span>Engajamento</span>
+                      <span>70%</span>
+                    </div>
+                    <div className="h-1.5 bg-gray-100 rounded-full">
+                      <div className="h-1.5 bg-blue-500 rounded-full" style={{ width: "70%" }} />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-[11px] text-gray-500 mb-1">
+                      <span>Progresso do programa</span>
+                      <span>{Math.round((currentStep / totalSteps) * 100)}%</span>
+                    </div>
+                    <div className="h-1.5 bg-gray-100 rounded-full">
+                      <div className="h-1.5 bg-green-500 rounded-full" style={{ width: `${Math.round((currentStep / totalSteps) * 100)}%` }} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Próximas ações sugeridas */}
+              <div className="bg-white border border-gray-200 rounded-xl p-4">
+                <p className="text-[10px] text-gray-400 uppercase tracking-wide font-semibold mb-3">Próximas Ações Sugeridas</p>
+                <ul className="space-y-2">
+                  {[
+                    { text: "Confirmar disponibilidade do cliente", active: true },
+                    { text: "Reagendar próxima sessão", active: true },
+                    { text: "Enviar resumo das últimas atas", active: false },
+                  ].map((item, i) => (
+                    <li key={i} className="flex items-start gap-2">
+                      <span className={`w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0 ${item.active ? "bg-red-500" : "bg-gray-300"}`} />
+                      <span className={`text-sm ${item.active ? "text-gray-700" : "text-gray-400"}`}>{item.text}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Follow-up Timeline */}
+              {(() => {
+                const past = allFollowUps.filter(f => f.is_completed && f.id !== reminder.id)
+                  .sort((a, b) => new Date(b.reminder_date) - new Date(a.reminder_date));
+                const future = allFollowUps.filter(f => !f.is_completed && f.id !== reminder.id)
+                  .sort((a, b) => new Date(a.reminder_date) - new Date(b.reminder_date));
+
+                return (
+                  <div className="bg-white border border-gray-200 rounded-xl p-4">
+                    <p className="text-[10px] text-gray-400 uppercase tracking-wide font-semibold mb-3">Timeline de Follow-ups</p>
+
+                    {isSprintFU && (
+                      <div className="mb-4 bg-orange-50 border border-orange-200 rounded-lg overflow-hidden">
+                        <div className="flex items-center gap-2 px-3 py-2 border-b border-orange-200">
+                          <span className="text-sm">🚀</span>
+                          <p className="text-[10px] font-bold text-orange-800 uppercase tracking-wide flex-1">
+                            Follow-ups desta sprint
+                          </p>
+                          <span className="text-[10px] text-orange-600 font-medium">
+                            {allFollowUps.filter(f => f.sprint_id === reminder.sprint_id && f.origin_type === 'sprint').filter(f => f.is_completed).length}
+                            /{allFollowUps.filter(f => f.sprint_id === reminder.sprint_id && f.origin_type === 'sprint').length} concluídos
                           </span>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {fusDaSemana.length > 0 && (
-                  <div className="mb-4 border border-amber-200 bg-amber-50 rounded-lg overflow-hidden">
-                    <button
-                      onClick={() => setFusSemanaExpandido(v => !v)}
-                      className="w-full flex items-center justify-between px-3 py-2 text-left"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="w-4 h-4 rounded-full bg-amber-500 text-white text-[9px] font-bold flex items-center justify-center">
-                          {fusDaSemana.length}
-                        </span>
-                        <span className="text-[11px] font-semibold text-amber-800">
-                          {fusDaSemana.length} outro{fusDaSemana.length > 1 ? 's' : ''} FU{fusDaSemana.length > 1 ? 's' : ''} esta semana
-                        </span>
-                      </div>
-                      <ChevronRight className={`w-3.5 h-3.5 text-amber-600 transition-transform ${fusSemanaExpandido ? 'rotate-90' : ''}`} />
-                    </button>
-                    {fusSemanaExpandido && (
-                      <div className="border-t border-amber-200 bg-white">
-                        <p className="text-[10px] text-gray-500 px-3 pt-2 pb-1">
-                          Selecione para encerrar junto neste atendimento
-                        </p>
-                        {fusDaSemana.map(f => (
-                          <label key={f.id} className="flex items-center gap-2.5 px-3 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-0">
-                            <input
-                              type="checkbox"
-                              checked={fusSelecionados.includes(f.id)}
-                              onChange={e => {
-                                setFusSelecionados(prev =>
-                                  e.target.checked
-                                    ? [...prev, f.id]
-                                    : prev.filter(id => id !== f.id)
-                                );
-                              }}
-                              className="w-3.5 h-3.5 accent-red-600"
-                            />
-                            <div className="flex-1 min-w-0">
-                              <p className="text-[11px] font-semibold text-gray-700">
-                                FU {f.sequence_number} · {f.reminder_date
-                                  ? format(new Date(f.reminder_date + 'T00:00:00'), 'dd/MM')
-                                  : '—'}
-                              </p>
-                              {f.consultor_nome && (
-                                <p className="text-[10px] text-gray-400">{f.consultor_nome}</p>
-                              )}
-                            </div>
-                          </label>
-                        ))}
-                        {fusSelecionados.length > 0 && (
-                          <p className="text-[10px] text-amber-700 bg-amber-50 px-3 py-2 font-medium">
-                            {fusSelecionados.length} FU{fusSelecionados.length > 1 ? 's' : ''} será{fusSelecionados.length > 1 ? 'ão' : ''} encerrado{fusSelecionados.length > 1 ? 's' : ''} com os mesmos dados deste atendimento
+                        {sprintLabel && (
+                          <p className="text-[11px] text-orange-600 px-3 pt-2 pb-1 italic truncate">
+                            {sprintLabel}
                           </p>
                         )}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-
-
-                <div className="grid grid-cols-2 divide-x divide-gray-100 gap-0">
-                  {/* Left: histórico */}
-                  <div className="pr-3">
-                    <p className="text-[10px] text-gray-400 font-semibold mb-2 uppercase tracking-wide">Histórico</p>
-                    {past.length === 0 ? (
-                      <p className="text-[11px] text-gray-400 italic">Sem histórico</p>
-                    ) : (
-                      <div className="relative">
-                        <div className="absolute left-1.5 top-0 bottom-0 w-px bg-gray-200" />
-                        <div className="space-y-3">
-                          {past.map((f, i) => (
-                            <div key={f.id} className="flex items-start gap-2 pl-5 relative">
-                              <div className="absolute left-0 top-1.5 w-3 h-3 rounded-full bg-green-400 border-2 border-white shadow-sm flex-shrink-0" />
-                              <div className="min-w-0">
-                                <p className="text-[11px] font-semibold text-gray-700">FU {f.sequence_number || i + 1}</p>
-                                <p className="text-[10px] text-gray-400 text-right">
-                                  {f.reminder_date ? format(new Date(f.reminder_date + "T00:00:00"), "dd/MM/yy") : "—"}
-                                </p>
-                              </div>
+                        <div className="px-3 pb-3 pt-1 space-y-1.5">
+                          {/* FU atual destacado */}
+                          <div className="flex items-center gap-2 bg-orange-100 border border-orange-200 rounded px-2 py-1.5">
+                            <div className="w-2.5 h-2.5 rounded-full bg-orange-500 flex-shrink-0 ring-2 ring-orange-300" />
+                            <span className="text-[11px] font-bold text-orange-800">
+                              FU {reminder.sequence_number} · Em andamento
+                            </span>
+                            <span className="ml-auto text-[10px] text-orange-600 font-medium">
+                              {reminder.reminder_date
+                                ? format(new Date(reminder.reminder_date + 'T00:00:00'), 'dd/MM')
+                                : '—'}
+                            </span>
+                          </div>
+                          {/* Demais FUs da sprint ordenados por sequence_number */}
+                          {fusDaSprint.map(f => (
+                            <div key={f.id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-orange-50 transition-colors">
+                              <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
+                                f.is_completed
+                                  ? 'bg-green-400'
+                                  : 'bg-gray-300'
+                              }`} />
+                              <span className={`text-[11px] font-semibold ${
+                                f.is_completed ? 'text-green-700' : 'text-gray-600'
+                              }`}>
+                                FU {f.sequence_number}
+                              </span>
+                              <span className={`text-[10px] ${
+                                f.is_completed ? 'text-green-500' : 'text-gray-400'
+                              }`}>
+                                {f.is_completed ? '✓ concluído' : 'pendente'}
+                              </span>
+                              <span className="ml-auto text-[10px] text-gray-400">
+                                {f.reminder_date
+                                  ? format(new Date(f.reminder_date + 'T00:00:00'), 'dd/MM')
+                                  : '—'}
+                              </span>
                             </div>
                           ))}
                         </div>
                       </div>
                     )}
-                  </div>
 
-                  {/* Right: futuros */}
-                  <div className="pl-3">
-                    <p className="text-[10px] text-gray-400 font-semibold mb-2 uppercase tracking-wide">Futuros</p>
-
-                    {/* Current (highlighted) */}
-                    <div className="flex items-start gap-2 mb-3 relative pl-5">
-                      <div className="absolute left-0 top-1.5 w-3 h-3 rounded-full bg-blue-500 border-2 border-white shadow ring-2 ring-blue-200 flex-shrink-0" />
-                      <div className="min-w-0">
-                        <p className="text-[11px] font-bold text-blue-700">FU {currentStep} · Atual</p>
-                        <p className="text-[10px] text-blue-500 text-right">
-                          {reminder.reminder_date ? format(new Date(reminder.reminder_date + "T00:00:00"), "dd/MM/yy") : "—"}
-                        </p>
-                      </div>
-                    </div>
-
-                    {(() => {
-                      const futureFiltered = future.filter(f => f.consultor_id === user?.id);
-                      return futureFiltered.length === 0 ? (
-                        <div className="text-center py-3 px-2 bg-gray-50 rounded-lg border border-dashed border-gray-200">
-                          <p className="text-[11px] text-gray-400">Sem futuros follow-ups</p>
-                        </div>
-                      ) : (
-                        <div className="relative">
-                          <div className="absolute left-1.5 top-0 bottom-0 w-px bg-gray-200" />
-                          <div className="space-y-3">
-                            {futureFiltered.map((f, i) => (
-                              <div key={f.id} className="flex items-start gap-2 pl-5 relative">
-                                <div className="absolute left-0 top-1.5 w-3 h-3 rounded-full bg-gray-300 border-2 border-white shadow-sm flex-shrink-0" />
-                                <div className="min-w-0">
-                                  <p className="text-[11px] font-semibold text-gray-500">FU {f.sequence_number || currentStep + i + 1}</p>
-                                  <p className="text-[10px] text-gray-400 text-right">
-                                    {f.reminder_date ? format(new Date(f.reminder_date + "T00:00:00"), "dd/MM/yy") : "—"}
+                    {fusDaSemana.length > 0 && (
+                      <div className="mb-4 border border-amber-200 bg-amber-50 rounded-lg overflow-hidden">
+                        <button
+                          onClick={() => setFusSemanaExpandido(v => !v)}
+                          className="w-full flex items-center justify-between px-3 py-2 text-left"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="w-4 h-4 rounded-full bg-amber-500 text-white text-[9px] font-bold flex items-center justify-center">
+                              {fusDaSemana.length}
+                            </span>
+                            <span className="text-[11px] font-semibold text-amber-800">
+                              {fusDaSemana.length} outro{fusDaSemana.length > 1 ? 's' : ''} FU{fusDaSemana.length > 1 ? 's' : ''} esta semana
+                            </span>
+                          </div>
+                          <ChevronRight className={`w-3.5 h-3.5 text-amber-600 transition-transform ${fusSemanaExpandido ? 'rotate-90' : ''}`} />
+                        </button>
+                        {fusSemanaExpandido && (
+                          <div className="border-t border-amber-200 bg-white">
+                            <p className="text-[10px] text-gray-500 px-3 pt-2 pb-1">
+                              Selecione para encerrar junto neste atendimento
+                            </p>
+                            {fusDaSemana.map(f => (
+                              <label key={f.id} className="flex items-center gap-2.5 px-3 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-0">
+                                <input
+                                  type="checkbox"
+                                  checked={fusSelecionados.includes(f.id)}
+                                  onChange={e => {
+                                    setFusSelecionados(prev =>
+                                      e.target.checked
+                                        ? [...prev, f.id]
+                                        : prev.filter(id => id !== f.id)
+                                    );
+                                  }}
+                                  className="w-3.5 h-3.5 accent-red-600"
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-[11px] font-semibold text-gray-700">
+                                    FU {f.sequence_number} · {f.reminder_date
+                                      ? format(new Date(f.reminder_date + 'T00:00:00'), 'dd/MM')
+                                      : '—'}
                                   </p>
+                                  {f.consultor_nome && (
+                                    <p className="text-[10px] text-gray-400">{f.consultor_nome}</p>
+                                  )}
                                 </div>
-                              </div>
+                              </label>
                             ))}
+                            {fusSelecionados.length > 0 && (
+                              <p className="text-[10px] text-amber-700 bg-amber-50 px-3 py-2 font-medium">
+                                {fusSelecionados.length} FU{fusSelecionados.length > 1 ? 's' : ''} será{fusSelecionados.length > 1 ? 'ão' : ''} encerrado{fusSelecionados.length > 1 ? 's' : ''} com os mesmos dados deste atendimento
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-2 divide-x divide-gray-100 gap-0">
+                      {/* Left: histórico */}
+                      <div className="pr-3">
+                        <p className="text-[10px] text-gray-400 font-semibold mb-2 uppercase tracking-wide">Histórico</p>
+                        {past.length === 0 ? (
+                          <p className="text-[11px] text-gray-400 italic">Sem histórico</p>
+                        ) : (
+                          <div className="relative">
+                            <div className="absolute left-1.5 top-0 bottom-0 w-px bg-gray-200" />
+                            <div className="space-y-3">
+                              {past.map((f, i) => (
+                                <div key={f.id} className="flex items-start gap-2 pl-5 relative">
+                                  <div className="absolute left-0 top-1.5 w-3 h-3 rounded-full bg-green-400 border-2 border-white shadow-sm flex-shrink-0" />
+                                  <div className="min-w-0">
+                                    <p className="text-[11px] font-semibold text-gray-700">FU {f.sequence_number || i + 1}</p>
+                                    <p className="text-[10px] text-gray-400 text-right">
+                                      {f.reminder_date ? format(new Date(f.reminder_date + "T00:00:00"), "dd/MM/yy") : "—"}
+                                    </p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Right: futuros */}
+                      <div className="pl-3">
+                        <p className="text-[10px] text-gray-400 font-semibold mb-2 uppercase tracking-wide">Futuros</p>
+
+                        {/* Current (highlighted) */}
+                        <div className="flex items-start gap-2 mb-3 relative pl-5">
+                          <div className="absolute left-0 top-1.5 w-3 h-3 rounded-full bg-blue-500 border-2 border-white shadow ring-2 ring-blue-200 flex-shrink-0" />
+                          <div className="min-w-0">
+                            <p className="text-[11px] font-bold text-blue-700">FU {currentStep} · Atual</p>
+                            <p className="text-[10px] text-blue-500 text-right">
+                              {reminder.reminder_date ? format(new Date(reminder.reminder_date + "T00:00:00"), "dd/MM/yy") : "—"}
+                            </p>
                           </div>
                         </div>
-                      );
-                    })()}
+
+                        {(() => {
+                          const futureFiltered = future.filter(f => f.consultor_id === user?.id);
+                          return futureFiltered.length === 0 ? (
+                            <div className="text-center py-3 px-2 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                              <p className="text-[11px] text-gray-400">Sem futuros follow-ups</p>
+                            </div>
+                          ) : (
+                            <div className="relative">
+                              <div className="absolute left-1.5 top-0 bottom-0 w-px bg-gray-200" />
+                              <div className="space-y-3">
+                                {futureFiltered.map((f, i) => (
+                                  <div key={f.id} className="flex items-start gap-2 pl-5 relative">
+                                    <div className="absolute left-0 top-1.5 w-3 h-3 rounded-full bg-gray-300 border-2 border-white shadow-sm flex-shrink-0" />
+                                    <div className="min-w-0">
+                                      <p className="text-[11px] font-semibold text-gray-500">FU {f.sequence_number || currentStep + i + 1}</p>
+                                      <p className="text-[10px] text-gray-400 text-right">
+                                        {f.reminder_date ? format(new Date(f.reminder_date + "T00:00:00"), "dd/MM/yy") : "—"}
+                                      </p>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
+                );
+              })()}
+            </div>
+          </div>
+        </div>
+
+        {/* Footer fixo */}
+        <div className="flex-shrink-0 px-6 py-4 border-t border-gray-200 bg-white">
+          {(() => {
+            const temRascunho = verificarRascunho();
+            return (
+              <Button
+                onClick={() => {
+                  setView("register");
+                  setRegisterStep("history");
+                }}
+                className={`w-full rounded-lg font-semibold flex items-center justify-center gap-2 transition-all ${
+                  temRascunho
+                    ? "bg-cyan-600 hover:bg-cyan-700 text-white"
+                    : "bg-green-600 hover:bg-green-700 text-white"
+                }`}
+              >
+                <PlayCircle className="w-4 h-4" />
+                {temRascunho ? "Retomar Atendimento" : "Iniciar Atendimento"}
+              </Button>
             );
           })()}
-           </div>
-          </div>
-          </div>
+        </div>
+      </div>
 
-          {/* Footer fixo */}
-          <div className="flex-shrink-0 px-6 py-4 border-t border-gray-200 bg-white">
-          {(() => {
-           const temRascunho = verificarRascunho();
-           return (
-             <Button
-               onClick={() => {
-                 setView("register");
-                 setRegisterStep("history");
-               }}
-               className={`w-full rounded-lg font-semibold flex items-center justify-center gap-2 transition-all ${
-                 temRascunho
-                   ? "bg-cyan-600 hover:bg-cyan-700 text-white"
-                   : "bg-green-600 hover:bg-green-700 text-white"
-               }`}
-             >
-               <PlayCircle className="w-4 h-4" />
-               {temRascunho ? "Retomar Atendimento" : "Iniciar Atendimento"}
-             </Button>
-           );
-          })()}
-          </div>
-          </div>
-
-          {/* Mini chat flutuante */}
-          <div className="fixed bottom-6 right-6 z-40">
-          {chatAberto && (
+      {/* Mini chat flutuante */}
+      <div className="fixed bottom-6 right-6 z-40">
+        {chatAberto && (
           <div className="mb-3 w-80 bg-white border border-gray-200 rounded-2xl shadow-2xl flex flex-col overflow-hidden" style={{ height: '420px' }}>
             {/* Header do chat */}
             <div className="bg-gray-900 px-4 py-3 flex items-center justify-between flex-shrink-0">
