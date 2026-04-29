@@ -540,37 +540,42 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
             </div>
           )}
 
-          {/* CTA */}
-          <div className="flex">
-            {(() => {
-              const temRascunho = verificarRascunho();
-              return (
-                <Button
-                  onClick={() => {
-                    setView("register");
-                    setRegisterStep("history");
-                  }}
-                  className={`rounded-full font-semibold flex items-center gap-2 px-6 transition-all ${
-                    temRascunho
-                      ? "bg-cyan-600 hover:bg-cyan-700 text-white"
-                      : "bg-green-600 hover:bg-green-700 text-white"
-                  }`}
-                >
-                  <PlayCircle className="w-4 h-4" />
-                  {temRascunho ? "Retomar Atendimento" : "Iniciar Atendimento"}
-                  {fusSelecionados.length > 0 && (
-                    <span className="bg-white text-red-600 text-[10px] font-bold rounded-full px-1.5 py-0.5 ml-1">
-                      +{fusSelecionados.length}
-                    </span>
-                  )}
-                </Button>
-              );
-            })()}
-          </div>
-        </div>
+
+
+              {/* Footer fixo */}
+              <div className="flex-shrink-0 px-4 py-3 border-t border-gray-200 bg-white">
+              {(() => {
+                const temRascunho = verificarRascunho();
+                return (
+                  <Button
+                    onClick={() => {
+                      setView("register");
+                      setRegisterStep("history");
+                    }}
+                    className={`w-full rounded-lg font-semibold flex items-center justify-center gap-2 transition-all ${
+                      temRascunho
+                        ? "bg-cyan-600 hover:bg-cyan-700 text-white"
+                        : "bg-green-600 hover:bg-green-700 text-white"
+                    }`}
+                  >
+                    <PlayCircle className="w-4 h-4" />
+                    {temRascunho ? "Retomar Atendimento" : "Iniciar Atendimento"}
+                  </Button>
+                );
+              })()}
+              </div>
+              </div>
+              </div>
 
         {/* ---- RIGHT COLUMN ---- */}
-         <div className="space-y-3">
+         <div className="flex flex-col h-screen bg-white rounded-xl border border-gray-200 overflow-hidden">
+           {/* Header fixo */}
+           <div className="flex-shrink-0 px-4 py-3 border-b border-gray-200 shadow-sm">
+             <h2 className="text-sm font-bold text-gray-900">Overview da oficina</h2>
+           </div>
+
+           {/* Conteúdo rolável */}
+           <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
 
            {/* Atendimentos do dia */}
            {atendimentosHoje.length > 0 && (
