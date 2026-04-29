@@ -44,7 +44,7 @@ export default function CentralFollowUp() {
 
   return (
     <div className="space-y-6">
-      <div className="relative rounded-2xl overflow-hidden bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 px-8 py-7 flex items-center justify-between shadow-lg">
+      <div className="relative rounded-2xl overflow-hidden bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 px-8 py-7 flex items-center justify-between shadow-[0_20px_60px_-10px_rgba(0,0,0,0.6),0_8px_24px_-4px_rgba(0,0,0,0.4)]" style={{transform: 'translateZ(0)'}}>
 
         {/* Detalhes decorativos de fundo */}
         <div className="absolute inset-0 pointer-events-none">
