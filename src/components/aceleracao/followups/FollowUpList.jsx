@@ -131,16 +131,23 @@ export default function FollowUpList({ reminders, today, isLoading, onSelect, fi
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-sm text-gray-800 truncate">{name}</span>
+                    <span className="font-semibold text-base text-gray-800 truncate">{name}</span>
                     {isUrgent && (
                       <span className="flex-shrink-0 text-[10px] font-bold uppercase tracking-wide text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded">
                         Urgente
                       </span>
                     )}
                   </div>
-                  <div className="text-xs text-gray-500 mt-0.5">
-                    Follow-up {r.sequence_number}/4
-                    {r.consultor_nome && <> · <span className="text-gray-400">{r.consultor_nome}</span></>}
+                  <div className="text-sm text-gray-500 mt-0.5 space-y-0.5">
+                    <div>
+                      Follow-up {r.sequence_number}/4
+                      {r.consultor_nome && <> · <span className="text-gray-400">{r.consultor_nome}</span></>}
+                    </div>
+                    <div className="text-xs text-gray-400">
+                      {r.created_date && <>Criado: {format(new Date(r.created_date), "dd/MM/yyyy")}</> }
+                      {r.created_date && r.reminder_date && " · "}
+                      {r.reminder_date && <>Agendado: {format(new Date(r.reminder_date + "T00:00:00"), "dd/MM/yyyy")}</>}
+                    </div>
                   </div>
                 </div>
 
