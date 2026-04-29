@@ -572,6 +572,7 @@ function SprintCard({ numero, titulo, emoji, descricao, cor, isFixed, sprint, on
 
 function CamadaSprints({ workshopId, missoesSelecionadas, cronogramaTemplateId, isGlobalMode = false, globalSprints = [], missoes }) {
   const missoesSelecionadasData = missoes.filter(m => missoesSelecionadas.includes(m.id));
+  const { data: currentUser } = useQuery({ queryKey: ['current-user'], queryFn: () => base44.auth.me() });
   const [sprints, setSprints] = useState([]);
   const [loadingCreate, setLoadingCreate] = useState(null);
   const [loadError, setLoadError] = useState(null);
@@ -673,8 +674,8 @@ function CamadaSprints({ workshopId, missoesSelecionadas, cronogramaTemplateId, 
         progress_percentage: 0,
         phases: defaultPhases,
         last_activity_date: new Date().toISOString(),
-        consultor_id: '',
-        consulting_firm_id: '',
+        consultor_id: currentUser?.id || '',
+        consulting_firm_id: currentUser?.data?.consulting_firm_id || '',
       };
       if (cronogramaTemplateId) {
         sprintData.cronograma_template_id = cronogramaTemplateId;
