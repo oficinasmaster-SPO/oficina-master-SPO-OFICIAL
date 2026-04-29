@@ -172,46 +172,32 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
       <ClientIntelligenceCapturePanel workshopId={workshop?.id} ataId={ata?.id} />
       <Dialog open onOpenChange={onClose}>
         <DialogContent className="max-w-5xl max-h-[90vh] p-0 flex flex-col overflow-hidden print:max-w-full">
-          <DialogHeader className="print:hidden flex-shrink-0 px-6 py-4 border-b">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                <span className="flex items-center gap-2 font-semibold">
-                  <FileText className="w-5 h-5" />
-                  ATA de Atendimento - {d.code || 'Sem código'}
-                </span>
-                <div className="flex gap-2">
-                   {d.status !== 'finalizada' && (
-                     <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white" onClick={handleFinalizar}>
-                       <FileText className="w-4 h-4 mr-2" />Finalizar ATA
-                     </Button>
-                   )}
-                   <Button
-                     size="sm"
-                     variant="outline"
-                     onClick={handleEnviarEmail}
-                     disabled={isLoading}
-                   >
-                     <Send className="w-4 h-4 mr-2" />
-                     Enviar E-mail
-                   </Button>
-                   <Button
-                     size="sm"
-                     variant="outline"
-                     onClick={handleDownload}
-                     disabled={isLoading}
-                   >
-                     <Download className="w-4 h-4 mr-2" />
-                     Download PDF
-                   </Button>
-                   </div>
+          <DialogHeader className="print:hidden flex-shrink-0 px-4 py-3 border-b">
+            <div className="flex items-center gap-3 min-w-0">
+              <FileText className="w-5 h-5 flex-shrink-0 text-gray-600" />
+              <span className="font-semibold text-sm truncate flex-1">
+                ATA de Atendimento - {d.code || 'Sem código'}
+              </span>
+              <div className="flex items-center gap-2 flex-shrink-0 ml-auto pr-6">
+                {d.status !== 'finalizada' && (
+                  <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white whitespace-nowrap" onClick={handleFinalizar}>
+                    <FileText className="w-4 h-4 mr-1.5" />Finalizar ATA
+                  </Button>
+                )}
+                <Button size="sm" variant="outline" onClick={handleEnviarEmail} disabled={isLoading} className="whitespace-nowrap">
+                  <Send className="w-4 h-4 mr-1.5" />Enviar E-mail
+                </Button>
+                <Button size="sm" variant="outline" onClick={handleDownload} disabled={isLoading} className="whitespace-nowrap">
+                  <Download className="w-4 h-4 mr-1.5" />Download PDF
+                </Button>
               </div>
-              </div>
-              {!hasValidContent && !isLoading && (
-              <div className="bg-amber-50 border border-amber-200 rounded p-3 text-sm text-amber-800">
+            </div>
+            {!hasValidContent && !isLoading && (
+              <div className="bg-amber-50 border border-amber-200 rounded p-3 text-sm text-amber-800 mt-2">
                 ⚠️ Preencha pelo menos uma seção (Pautas, Objetivos, Próximos Passos ou Ações) para gerar o PDF.
               </div>
-              )}
-              </DialogHeader>
+            )}
+          </DialogHeader>
 
               {isLoading ? (
            <div className="flex flex-col items-center justify-center py-16 gap-3">
