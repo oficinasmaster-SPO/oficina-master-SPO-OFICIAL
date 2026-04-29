@@ -235,7 +235,7 @@ export default function ControleAceleracaoView({ state }) {
             onMouseLeave={e => e.currentTarget.style.boxShadow = "0 14px 28px -8px hsl(0 84% 50% / 0.55), 0 6px 12px -4px hsl(0 84% 50% / 0.35), inset 0 1px 0 hsl(0 0% 100% / 0.22)"}
           >
             <Zap className="action-btn-icon" size={14} strokeWidth={2.5} />
-            Central de Follow-up
+            Central de Aceleração
           </button>
 
           {/* Botão outline — Registro em Massa */}
