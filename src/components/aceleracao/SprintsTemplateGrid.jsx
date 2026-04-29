@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Edit2, Save, X, Plus, Trash2, ChevronDown, ChevronUp, Link, ExternalLink, RefreshCw, BookOpen, ArrowUp, ArrowDown, Zap } from 'lucide-react';
+import { Edit2, Save, X, Plus, Trash2, ChevronDown, ChevronUp, Link, ExternalLink, RefreshCw, BookOpen, ArrowUp, ArrowDown, Zap, Check } from 'lucide-react';
 import { getDefaultTasksForPhase } from './sprintMissionTasks';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
@@ -369,13 +369,177 @@ function SprintEditor({ sprint, onSave }) {
 }
 
 // ──────────────────────────────────────────────
+// SyncButton — 3 estados: idle / syncing / success
+// ──────────────────────────────────────────────
+function SyncButton({ onClick, disabled }) {
+  const [state, setState] = React.useState('idle'); // idle | syncing | success
+
+  const handleClick = async () => {
+    if (state !== 'idle' || disabled) return;
+    setState('syncing');
+    try {
+      await onClick();
+      setState('success');
+      setTimeout(() => setState('idle'), 1800);
+    } catch {
+      setState('idle');
+    }
+  };
+
+  const isSyncing = state === 'syncing';
+  const isSuccess = state === 'success';
+
+  const label = isSyncing ? 'Sincronizando' : isSuccess ? 'Sincronizado' : 'Forçar Sync para Clientes';
+
+  return (
+    <>
+      <style>{`
+        @keyframes syncSpin    { to { transform: rotate(360deg); } }
+        @keyframes syncShimmer { 0% { transform: translateX(-120%); } 100% { transform: translateX(120%); } }
+        @keyframes syncProgress {
+          0%   { transform: translateX(-100%) scaleX(0.4); }
+          50%  { transform: translateX(20%)   scaleX(0.7); }
+          100% { transform: translateX(120%)  scaleX(0.4); }
+        }
+        @keyframes syncPulse {
+          0%   { transform: scale(1);    opacity: 0.55; }
+          70%  { transform: scale(1.18); opacity: 0; }
+          100% { transform: scale(1.18); opacity: 0; }
+        }
+        @keyframes syncDot {
+          0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+          40%           { transform: scale(1);   opacity: 1;   }
+        }
+        @keyframes syncCheckIn {
+          0%   { transform: scale(0.5); opacity: 0; }
+          100% { transform: scale(1);   opacity: 1; }
+        }
+        .sync-btn-root { position: relative; overflow: hidden; }
+        .sync-spin { animation: syncSpin 1000ms linear infinite; }
+        .sync-shimmer { animation: syncShimmer 1600ms ease-in-out infinite; }
+        .sync-progress { animation: syncProgress 1400ms cubic-bezier(0.4,0,0.2,1) infinite; }
+        .sync-pulse { animation: syncPulse 1800ms cubic-bezier(0.4,0,0.6,1) infinite; }
+        .sync-dot-0 { animation: syncDot 1200ms ease-in-out infinite 0ms; }
+        .sync-dot-1 { animation: syncDot 1200ms ease-in-out infinite 150ms; }
+        .sync-dot-2 { animation: syncDot 1200ms ease-in-out infinite 300ms; }
+        .sync-check { animation: syncCheckIn 300ms ease-out both; }
+        @media (prefers-reduced-motion: reduce) {
+          .sync-spin, .sync-shimmer, .sync-progress, .sync-pulse,
+          .sync-dot-0, .sync-dot-1, .sync-dot-2 { animation: none !important; }
+        }
+      `}</style>
+      <button
+        type="button"
+        onClick={handleClick}
+        disabled={isSyncing || disabled}
+        aria-busy={isSyncing}
+        aria-live="polite"
+        className="sync-btn-root shrink-0"
+        style={{
+          height: 'auto',
+          padding: '0.625rem 1rem',
+          borderRadius: '0.75rem',
+          border: isSuccess
+            ? '1px solid hsl(152 70% 45% / 0.4)'
+            : isSyncing
+              ? '1px solid transparent'
+              : '1px solid hsl(24 95% 53% / 0.45)',
+          background: isSuccess
+            ? 'hsl(150 84% 96%)'
+            : isSyncing
+              ? 'linear-gradient(135deg, hsl(32 97% 60%), hsl(20 90% 50%))'
+              : 'hsl(33 100% 96%)',
+          backgroundSize: isSyncing ? '200% 200%' : 'auto',
+          color: isSuccess ? 'hsl(152 65% 30%)' : isSyncing ? '#fff' : 'hsl(24 95% 53%)',
+          fontSize: '0.875rem',
+          fontWeight: 500,
+          cursor: isSyncing ? 'not-allowed' : 'pointer',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          boxShadow: isSuccess
+            ? '0 8px 22px -10px hsl(152 70% 40% / 0.5)'
+            : isSyncing
+              ? '0 10px 30px -8px hsl(24 95% 53% / 0.60), 0 0 0 4px hsl(32 97% 60% / 0.18)'
+              : '0 8px 22px -10px hsl(24 95% 53% / 0.55), 0 0 0 1px hsl(24 95% 53% / 0.20)',
+          transition: 'all 300ms ease',
+        }}
+      >
+        {/* Shimmer strip (syncing only) */}
+        {isSyncing && (
+          <span
+            className="sync-shimmer"
+            style={{
+              position: 'absolute', inset: 0, pointerEvents: 'none',
+              background: 'linear-gradient(110deg, transparent 20%, rgba(255,255,255,0.55) 50%, transparent 80%)',
+              width: '33%',
+            }}
+          />
+        )}
+
+        {/* Icon area */}
+        <span style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+          {/* Pulse ring */}
+          {isSyncing && (
+            <span
+              className="sync-pulse"
+              style={{
+                position: 'absolute', width: 20, height: 20, borderRadius: '50%',
+                background: 'rgba(255,255,255,0.4)', pointerEvents: 'none',
+              }}
+            />
+          )}
+          {isSuccess
+            ? <Check size={16} strokeWidth={3} className="sync-check" />
+            : isSyncing
+              ? <RefreshCw size={16} strokeWidth={2.5} className="sync-spin" />
+              : <Zap size={16} strokeWidth={2.5} />
+          }
+        </span>
+
+        {/* Label */}
+        <span>{label}</span>
+
+        {/* Animated dots (syncing only) */}
+        {isSyncing && (
+          <span style={{ display: 'inline-flex', gap: 2, alignItems: 'center' }}>
+            {[0,1,2].map(i => (
+              <span key={i} className={`sync-dot-${i}`} style={{
+                display: 'block', width: 4, height: 4, borderRadius: '50%', background: '#fff',
+              }} />
+            ))}
+          </span>
+        )}
+
+        {/* Progress bar (syncing only) */}
+        {isSyncing && (
+          <span
+            style={{
+              position: 'absolute', bottom: 0, left: 0, right: 0,
+              height: 3, overflow: 'hidden', borderRadius: 9999,
+            }}
+          >
+            <span
+              className="sync-progress"
+              style={{
+                display: 'block', height: '100%', width: '100%',
+                background: 'rgba(255,255,255,0.8)', borderRadius: 9999,
+              }}
+            />
+          </span>
+        )}
+      </button>
+    </>
+  );
+}
+
+// ──────────────────────────────────────────────
 // SprintsTemplateGrid — componente principal
 // ──────────────────────────────────────────────
 export default function SprintsTemplateGrid() {
   const [data, setData] = useState(buildDefaultData);
   const [expandedMission, setExpandedMission] = useState(null);
   const [saving, setSaving] = useState(false);
-  const [syncing, setSyncing] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
   // Carregar templates salvos do banco ao montar
@@ -456,7 +620,6 @@ export default function SprintsTemplateGrid() {
   };
 
   const handleForceSyncAll = async () => {
-    setSyncing(true);
     let total = 0;
     let errors = 0;
     for (const mission of data) {
@@ -468,7 +631,6 @@ export default function SprintsTemplateGrid() {
         errors++;
       }
     }
-    setSyncing(false);
     if (errors > 0) {
       toast.warning(`Sincronização concluída: ${total} sprint(s) atualizados, ${errors} erro(s).`);
     } else {
@@ -508,10 +670,7 @@ export default function SprintsTemplateGrid() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button size="sm" variant="outline" onClick={handleForceSyncAll} disabled={syncing || saving} className="shrink-0 text-xs bg-orange-50 border-orange-300 text-orange-700 hover:bg-orange-100">
-              <Zap className={`w-3.5 h-3.5 mr-1 ${syncing ? 'animate-pulse' : ''}`} />
-              {syncing ? 'Sincronizando...' : 'Forçar Sync para Clientes'}
-            </Button>
+            <SyncButton onClick={handleForceSyncAll} disabled={saving} />
             <Button size="sm" variant="outline" onClick={handleResetToDefault} disabled={saving} className="shrink-0 text-xs">
               <RefreshCw className={`w-3.5 h-3.5 mr-1 ${saving ? 'animate-spin' : ''}`} />
               Restaurar Padrão
