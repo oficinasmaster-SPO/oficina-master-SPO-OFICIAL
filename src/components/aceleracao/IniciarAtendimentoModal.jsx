@@ -1576,7 +1576,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
           }}
         >
           {/* Back sheet (folha de trás) */}
-             <div style={{ position: 'absolute', background: '#F4896B', border: '2.5px solid #1a2744', borderRadius: '6px', width: '260px', height: '220px', top: '12px', left: '18px', transform: 'rotate(6deg)', zIndex: 1 }} />
+          <div style={{ position: 'absolute', background: '#F4896B', border: '2.5px solid #1a2744', borderRadius: '6px', width: '260px', height: '220px', top: '12px', left: '18px', zIndex: 1 }} />
 
              {/* Front sheet (folha principal) */}
              <div style={{ position: 'relative', background: '#7DDFF0', border: '2.5px solid #1a2744', borderRadius: '6px', width: '260px', height: '220px', padding: '2rem 1.25rem 1.25rem', zIndex: 2 }}>
