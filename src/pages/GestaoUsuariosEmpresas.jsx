@@ -14,7 +14,7 @@ import {
   UserPlus, Loader2, Mail, Phone, Trash2, UserX, Building2, Eye, Edit, 
   ExternalLink, Filter, X, Users, Key, Copy, CheckCircle, ChevronDown,
   Home, BarChart3, Wrench, Calculator, Target, Brain, Package, FileCheck,
-  GraduationCap, Lightbulb, Briefcase, ArrowUpDown
+  GraduationCap, Lightbulb, Briefcase, ArrowUpDown, CalendarCheck, Package2
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -119,22 +119,44 @@ export default function GestaoUsuariosEmpresas() {
   });
 
   const updateWorkshopMutation = useMutation({
-    mutationFn: async ({ id, data }) => {
+    mutationFn: async ({ id, data, oldPlan, workshopName }) => {
       const response = await base44.functions.invoke("adminUpdateWorkshopPlan", { workshop_id: id, data });
       if (response.data.error) throw new Error(response.data.error);
-      return response.data.workshop;
+      
+      // Se o plano mudou para um plano pago, buscar atendimentos criados no bucket
+      const newPlan = data.planoAtual || data.planId;
+      const planChanged = newPlan && newPlan !== oldPlan;
+      const becameActive = data.planStatus === 'active' || (planChanged && newPlan !== 'FREE');
+      
+      let createdAttendances = [];
+      if (planChanged && becameActive) {
+        // Aguardar um momento para a automação processar
+        await new Promise(r => setTimeout(r, 2000));
+        createdAttendances = await base44.entities.ContractAttendance.filter({
+          workshop_id: id,
+          status: 'pendente'
+        });
+      }
+      
+      return { workshop: response.data.workshop, createdAttendances, oldPlan, newPlan, workshopName, planChanged };
     },
-    onSuccess: () => {
+    onSuccess: ({ createdAttendances, oldPlan, newPlan, workshopName, planChanged }) => {
       queryClient.invalidateQueries(['workshops']);
-      toast.success("Oficina atualizada com sucesso!");
       setIsWorkshopDialogOpen(false);
       setEditingWorkshop(null);
+      
+      if (planChanged && createdAttendances.length > 0) {
+        setAttendanceFeedback({ workshopName, oldPlan, newPlan, attendances: createdAttendances });
+      } else {
+        toast.success("Oficina atualizada com sucesso!");
+      }
     },
     onError: () => toast.error("Erro ao atualizar oficina")
   });
 
   // Estado controlado para o form de edição de oficina
   const [workshopFormData, setWorkshopFormData] = useState({});
+  const [attendanceFeedback, setAttendanceFeedback] = useState(null); // { workshopName, oldPlan, newPlan, attendances: [] }
 
   // Sincronizar ao abrir o dialog
   const openWorkshopEdit = (workshop) => {
@@ -160,7 +182,12 @@ export default function GestaoUsuariosEmpresas() {
       ...(plano !== editingWorkshop.planoAtual ? { dataAssinatura: new Date().toISOString() } : {})
     };
 
-    updateWorkshopMutation.mutate({ id: editingWorkshop.id, data });
+    updateWorkshopMutation.mutate({ 
+      id: editingWorkshop.id, 
+      data,
+      oldPlan: editingWorkshop.planoAtual || 'FREE',
+      workshopName: editingWorkshop.name
+    });
   };
 
   const handleSaveUser = async (e) => {
@@ -1006,6 +1033,61 @@ export default function GestaoUsuariosEmpresas() {
                   </Button>
                 </div>
               </form>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialog de Feedback de Atendimentos Criados */}
+        <Dialog open={!!attendanceFeedback} onOpenChange={() => setAttendanceFeedback(null)}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-green-700">
+                <CheckCircle className="w-5 h-5" />
+                Plano atualizado com sucesso!
+              </DialogTitle>
+            </DialogHeader>
+            {attendanceFeedback && (
+              <div className="space-y-4">
+                <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-800">
+                  <strong>{attendanceFeedback.workshopName}</strong> migrou de{' '}
+                  <span className="font-semibold bg-gray-200 px-1 rounded">{attendanceFeedback.oldPlan}</span>{' '}
+                  →{' '}
+                  <span className="font-semibold bg-blue-200 px-1 rounded">{attendanceFeedback.newPlan}</span>
+                </div>
+
+                <div>
+                  <p className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                    <CalendarCheck className="w-4 h-4 text-blue-600" />
+                    {attendanceFeedback.attendances.length} atendimento{attendanceFeedback.attendances.length !== 1 ? 's' : ''} disponíveis no bucket:
+                  </p>
+                  <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                    {attendanceFeedback.attendances.map((att, idx) => (
+                      <div key={att.id || idx} className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+                        <div className="flex items-center gap-2">
+                          <Package2 className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                          <div>
+                            <p className="text-sm font-medium text-gray-800">
+                              {att.attendance_type_name || 'Atendimento'}
+                            </p>
+                            {att.scheduled_date && (
+                              <p className="text-xs text-gray-500">
+                                Previsto: {format(new Date(att.scheduled_date), 'dd/MM/yyyy')}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <Badge className="bg-yellow-100 text-yellow-700 text-xs">
+                          #{att.sequence_number || idx + 1}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <Button className="w-full" onClick={() => setAttendanceFeedback(null)}>
+                  Entendido
+                </Button>
+              </div>
             )}
           </DialogContent>
         </Dialog>
