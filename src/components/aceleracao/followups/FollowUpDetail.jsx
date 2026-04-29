@@ -363,9 +363,17 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
         Voltar à lista
       </button>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* ---- LEFT COLUMN ---- */}
-        <div className="space-y-3">
+      <div className="flex flex-col h-[calc(100vh-200px)] bg-white rounded-xl border border-gray-200 overflow-hidden">
+        {/* Header fixo */}
+        <div className="flex-shrink-0 px-6 py-4 border-b border-gray-200 shadow-sm">
+          <h2 className="text-lg font-bold text-gray-900">Overview da oficina</h2>
+        </div>
+
+        {/* Conteúdo rolável */}
+        <div className="flex-1 overflow-y-auto px-6 py-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* ---- LEFT COLUMN ---- */}
+            <div className="space-y-3">
 
           {/* Identity card */}
           <div className="bg-white border border-gray-200 rounded-xl p-4">
@@ -563,19 +571,37 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
                   </Button>
                 );
               })()}
+               </div>
+              </div>
+              </div>
+
+              {/* Footer fixo */}
+              <div className="flex-shrink-0 px-6 py-4 border-t border-gray-200 bg-white">
+              {(() => {
+               const temRascunho = verificarRascunho();
+               return (
+                 <Button
+                   onClick={() => {
+                     setView("register");
+                     setRegisterStep("history");
+                   }}
+                   className={`w-full rounded-lg font-semibold flex items-center justify-center gap-2 transition-all ${
+                     temRascunho
+                       ? "bg-cyan-600 hover:bg-cyan-700 text-white"
+                       : "bg-green-600 hover:bg-green-700 text-white"
+                   }`}
+                 >
+                   <PlayCircle className="w-4 h-4" />
+                   {temRascunho ? "Retomar Atendimento" : "Iniciar Atendimento"}
+                 </Button>
+               );
+              })()}
               </div>
               </div>
               </div>
 
-        {/* ---- RIGHT COLUMN ---- */}
-         <div className="flex flex-col h-screen bg-white rounded-xl border border-gray-200 overflow-hidden">
-           {/* Header fixo */}
-           <div className="flex-shrink-0 px-4 py-3 border-b border-gray-200 shadow-sm">
-             <h2 className="text-sm font-bold text-gray-900">Overview da oficina</h2>
-           </div>
-
-           {/* Conteúdo rolável */}
-           <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+            {/* ---- RIGHT COLUMN ---- */}
+            <div className="space-y-3">
 
            {/* Atendimentos do dia */}
            {atendimentosHoje.length > 0 && (
@@ -883,10 +909,35 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
               </div>
             );
           })()}
-        </div>
-      </div>
+           </div>
+          </div>
+          </div>
 
-      {/* Mini chat flutuante */}
+          {/* Footer fixo */}
+          <div className="flex-shrink-0 px-6 py-4 border-t border-gray-200 bg-white">
+          {(() => {
+           const temRascunho = verificarRascunho();
+           return (
+             <Button
+               onClick={() => {
+                 setView("register");
+                 setRegisterStep("history");
+               }}
+               className={`w-full rounded-lg font-semibold flex items-center justify-center gap-2 transition-all ${
+                 temRascunho
+                   ? "bg-cyan-600 hover:bg-cyan-700 text-white"
+                   : "bg-green-600 hover:bg-green-700 text-white"
+               }`}
+             >
+               <PlayCircle className="w-4 h-4" />
+               {temRascunho ? "Retomar Atendimento" : "Iniciar Atendimento"}
+             </Button>
+           );
+          })()}
+          </div>
+          </div>
+
+          {/* Mini chat flutuante */}
       <div className="fixed bottom-6 right-6 z-40">
         {chatAberto && (
           <div className="mb-3 w-80 bg-white border border-gray-200 rounded-2xl shadow-2xl flex flex-col overflow-hidden" style={{ height: '420px' }}>
