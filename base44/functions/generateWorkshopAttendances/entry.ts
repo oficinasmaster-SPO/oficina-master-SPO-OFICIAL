@@ -76,7 +76,9 @@ Deno.serve(async (req) => {
       existingByType[key]++;
     }
 
+    // Inicia 7 dias a partir de hoje para dar tempo ao CS capturar o bucket e dar início com o cliente
     const startDate = new Date();
+    startDate.setDate(startDate.getDate() + 7);
     const created = [];
     const skipped = [];
 
