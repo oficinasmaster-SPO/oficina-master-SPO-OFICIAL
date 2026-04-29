@@ -77,7 +77,6 @@
   },
   "required": [
     "workshop_id",
-    "atendimento_id",
     "consultor_id",
     "reminder_date",
     "sequence_number"

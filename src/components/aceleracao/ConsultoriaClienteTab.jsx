@@ -673,6 +673,8 @@ function CamadaSprints({ workshopId, missoesSelecionadas, cronogramaTemplateId, 
         progress_percentage: 0,
         phases: defaultPhases,
         last_activity_date: new Date().toISOString(),
+        consultor_id: '',
+        consulting_firm_id: '',
       };
       if (cronogramaTemplateId) {
         sprintData.cronograma_template_id = cronogramaTemplateId;

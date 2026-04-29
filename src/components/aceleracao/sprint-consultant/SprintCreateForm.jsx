@@ -133,12 +133,6 @@ export default function SprintCreateForm({ open, onClose, workshops = [], user, 
     setPhaseTasks(updated);
   };
 
-  const addDays = (dateStr, days) => {
-    const d = new Date(dateStr + 'T00:00:00');
-    d.setDate(d.getDate() + days);
-    return d.toISOString().split('T')[0];
-  };
-
   const handleSubmit = async () => {
     if (!form.workshop_id || !form.title || !form.start_date || !form.end_date) {
       toast.error("Preencha todos os campos obrigatórios");
@@ -177,29 +171,7 @@ export default function SprintCreateForm({ open, onClose, workshops = [], user, 
       consultor_id: user?.id || "",
     });
 
-    // Gerar 4 follow-ups semanais vinculados à sprint
-    try {
-      await Promise.all(
-        [7, 14, 21, 28].map((diasOffset, idx) =>
-          base44.entities.FollowUpReminder.create({
-            workshop_id: form.workshop_id,
-            workshop_name: workshop?.name || '',
-            sprint_id: sprintCriada.id,
-            origin_type: 'sprint',
-            consultor_id: user?.id || '',
-            consultor_nome: user?.full_name || user?.email || '',
-            sequence_number: idx + 1,
-            reminder_date: addDays(form.start_date, diasOffset),
-            is_completed: false,
-            notes: `Follow-up automático da sprint: ${form.title}`,
-          })
-        )
-      );
-      toast.success(`Sprint criada e 4 follow-ups agendados para ${workshop?.name || 'o cliente'}!`);
-    } catch (fuErr) {
-      console.error('Erro ao criar follow-ups da sprint:', fuErr);
-      toast.warning(`Sprint criada para ${workshop?.name || 'o cliente'}, mas os follow-ups não foram gerados. Verifique se os campos sprint_id e origin_type existem no schema.`);
-    }
+    toast.success(`Sprint criada com sucesso para ${workshop?.name || 'o cliente'}!`);
     setSaving(false);
 
     // Invalidar todas as queries relacionadas a sprints para sincronismo imediato
