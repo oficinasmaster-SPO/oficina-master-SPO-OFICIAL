@@ -56,7 +56,12 @@ export default function AgendaVisual({ atendimentos = [], workshops = [], user }
 
   const getFollowUpsForDay = (day) => {
     const dayStr = format(day, 'yyyy-MM-dd');
-    return followUpReminders.filter(r => r.reminder_date === dayStr && !r.is_completed);
+    return followUpReminders.filter(r => r.reminder_date === dayStr && !r.is_completed && r.origin_type === 'ata');
+  };
+
+  const getSprintFollowUpsForDay = (day) => {
+    const dayStr = format(day, 'yyyy-MM-dd');
+    return followUpReminders.filter(r => r.reminder_date === dayStr && !r.is_completed && r.origin_type === 'sprint');
   };
 
   const getDateRange = () => {
@@ -420,12 +425,19 @@ export default function AgendaVisual({ atendimentos = [], workshops = [], user }
                     : format(day, 'd')}
                 </div>
                 <div className="flex flex-col gap-0.5">
-                  {getFollowUpsForDay(day).length > 0 && (
-                    <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1 py-0 rounded-full bg-amber-100 text-amber-700 border border-amber-300 w-fit" title={`${getFollowUpsForDay(day).length} follow-up(s) pendente(s)`}>
-                      📌 {getFollowUpsForDay(day).length}
-                    </span>
-                  )}
-                  {atendimentosDia.slice(0, maxVisible).map((atendimento) => (
+                   <div className="flex gap-2 flex-wrap">
+                     {getFollowUpsForDay(day).length > 0 && (
+                       <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1 py-0 rounded-full bg-amber-100 text-amber-700 border border-amber-300 w-fit" title={`${getFollowUpsForDay(day).length} follow-up(s) de ATA pendente(s)`}>
+                         📌 {getFollowUpsForDay(day).length}
+                       </span>
+                     )}
+                     {getSprintFollowUpsForDay(day).length > 0 && (
+                       <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1 py-0 rounded-full bg-cyan-100 text-cyan-700 border border-cyan-300 w-fit" title={`${getSprintFollowUpsForDay(day).length} follow-up(s) de SPRINT pendente(s)`}>
+                         🚀 {getSprintFollowUpsForDay(day).length}
+                       </span>
+                     )}
+                   </div>
+                   {atendimentosDia.slice(0, maxVisible).map((atendimento) => (
                     <span
                       key={atendimento.id}
                       className={`inline-flex items-center gap-0.5 text-[9px] font-semibold px-1.5 py-0 rounded-full border ${getChipColor(atendimento.id)} w-fit leading-4`}
@@ -471,7 +483,7 @@ export default function AgendaVisual({ atendimentos = [], workshops = [], user }
           </DialogHeader>
 
           <div className="mt-4 flex gap-4">
-          <div className="flex-1 space-y-3">
+          <div className={`${detailsModal.date && (getFollowUpsForDay(detailsModal.date).length > 0 || getSprintFollowUpsForDay(detailsModal.date).length > 0) ? 'flex-1' : 'flex-1'} space-y-3`}>
           {detailsModal.atendimentos.map((atendimento, idx) => {
               const workshop = atendimento.workshop;
               const podeIniciar = ['agendado', 'confirmado', 'reagendado'].includes(atendimento.status);
@@ -588,15 +600,27 @@ export default function AgendaVisual({ atendimentos = [], workshops = [], user }
               );
             })}
             </div>
-            {/* Follow-Up Post-It Panel */}
-            {detailsModal.date && getFollowUpsForDay(detailsModal.date).length > 0 && (
-              <div className="w-64 shrink-0">
-                <FollowUpPostIt
-                  reminders={getFollowUpsForDay(detailsModal.date)}
-                  onUpdate={() => loadDayModal(detailsModal.date)}
-                />
-              </div>
-            )}
+            {/* Follow-Up Panels - ATA e Sprint */}
+            <div className="flex flex-col gap-4 w-80 shrink-0">
+              {detailsModal.date && getFollowUpsForDay(detailsModal.date).length > 0 && (
+                <div className="rounded-lg border-2 border-amber-200 bg-amber-50 p-3">
+                  <p className="text-xs font-bold text-amber-800 mb-2">📌 FUs de ATA ({getFollowUpsForDay(detailsModal.date).length})</p>
+                  <FollowUpPostIt
+                    reminders={getFollowUpsForDay(detailsModal.date)}
+                    onUpdate={() => loadDayModal(detailsModal.date)}
+                  />
+                </div>
+              )}
+              {detailsModal.date && getSprintFollowUpsForDay(detailsModal.date).length > 0 && (
+                <div className="rounded-lg border-2 border-cyan-200 bg-cyan-50 p-3">
+                  <p className="text-xs font-bold text-cyan-800 mb-2">🚀 FUs de SPRINT ({getSprintFollowUpsForDay(detailsModal.date).length})</p>
+                  <FollowUpPostIt
+                    reminders={getSprintFollowUpsForDay(detailsModal.date)}
+                    onUpdate={() => loadDayModal(detailsModal.date)}
+                  />
+                </div>
+              )}
+            </div>
           </div>
         </DialogContent>
       </Dialog>
