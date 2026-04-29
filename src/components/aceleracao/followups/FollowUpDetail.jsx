@@ -77,6 +77,8 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
   const [dicaIA, setDicaIA] = useState(null);
   const [carregandoDica, setCarregandoDica] = useState(false);
   const [showAllAtas, setShowAllAtas] = useState(false);
+  const [fuAtaSelecionados, setFuAtaSelecionados] = useState([]);
+  const [fuSpSelecionados, setFuSpSelecionados] = useState([]);
 
   const isOverdue = !reminder.is_completed && reminder.reminder_date < today;
   const daysOver = reminder.reminder_date
@@ -832,72 +834,122 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
                       </div>
                     )}
 
-                    <div className="grid grid-cols-2 divide-x divide-gray-100 gap-0">
-                      {/* Left: histórico */}
-                      <div className="pr-3">
-                        <p className="text-[10px] text-gray-400 font-semibold mb-2 uppercase tracking-wide">Histórico</p>
-                        {past.length === 0 ? (
-                          <p className="text-[11px] text-gray-400 italic">Sem histórico</p>
-                        ) : (
-                          <div className="relative">
-                            <div className="absolute left-1.5 top-0 bottom-0 w-px bg-gray-200" />
-                            <div className="space-y-3">
-                              {past.map((f, i) => (
-                                <div key={f.id} className="flex items-start gap-2 pl-5 relative">
-                                  <div className="absolute left-0 top-1.5 w-3 h-3 rounded-full bg-green-400 border-2 border-white shadow-sm flex-shrink-0" />
-                                  <div className="min-w-0">
-                                    <p className="text-[11px] font-semibold text-gray-700">FU {f.sequence_number || i + 1}</p>
-                                    <p className="text-[10px] text-gray-400 text-right">
-                                      {f.reminder_date ? format(new Date(f.reminder_date + "T00:00:00"), "dd/MM/yy") : "—"}
-                                    </p>
+                    <div className="grid grid-cols-2 divide-x divide-gray-100 gap-0 h-80 overflow-hidden">
+                      {/* Left: FUAta */}
+                      <div className="overflow-y-auto pr-3 pl-0">
+                        <p className="text-[10px] text-gray-400 font-semibold mb-2 uppercase tracking-wide sticky top-0 bg-white py-2">FUAta</p>
+                        <div className="space-y-2 pb-3">
+                          {allFollowUps
+                            .filter(f => f.origin_type === 'ata' && !f.is_completed)
+                            .filter(f => {
+                              const fDate = new Date(f.reminder_date + 'T00:00:00');
+                              return fDate >= new Date(inicioSemana + 'T00:00:00') && fDate <= new Date(fimSemana + 'T23:59:59');
+                            })
+                            .sort((a, b) => new Date(a.reminder_date) - new Date(b.reminder_date))
+                            .map(f => (
+                              <div key={f.id} className="border border-gray-100 rounded-lg p-2.5 bg-gray-50 hover:bg-gray-100 transition-colors">
+                                <div className="flex items-start gap-2 mb-2">
+                                  <input
+                                    type="checkbox"
+                                    checked={fuAtaSelecionados.includes(f.id)}
+                                    onChange={e => {
+                                      setFuAtaSelecionados(prev =>
+                                        e.target.checked
+                                          ? [...prev, f.id]
+                                          : prev.filter(id => id !== f.id)
+                                      );
+                                    }}
+                                    className="w-3.5 h-3.5 accent-red-600 mt-0.5 flex-shrink-0"
+                                  />
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-[11px] font-semibold text-gray-800 line-clamp-1">{f.workshop_name}</p>
+                                    <p className="text-[10px] text-gray-500">Nº {f.sequence_number}</p>
                                   </div>
                                 </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
+                                <div className="space-y-1 pl-6">
+                                  <p className="text-[10px] text-gray-600">
+                                    <span className="font-semibold">Consultor:</span> {f.consultor_nome || '—'}
+                                  </p>
+                                  <p className="text-[10px] text-gray-600">
+                                    <span className="font-semibold">Tipo:</span> {f.origin_type || '—'}
+                                  </p>
+                                  {f.ata_id && (
+                                    <button
+                                      onClick={() => {
+                                        const ata = atas.find(a => a.id === f.ata_id);
+                                        if (ata) setSelectedAta(ata);
+                                      }}
+                                      className="text-[10px] text-blue-600 hover:underline font-medium"
+                                    >
+                                      Ver ATA →
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          {allFollowUps.filter(f => f.origin_type === 'ata' && !f.is_completed).filter(f => {
+                            const fDate = new Date(f.reminder_date + 'T00:00:00');
+                            return fDate >= new Date(inicioSemana + 'T00:00:00') && fDate <= new Date(fimSemana + 'T23:59:59');
+                          }).length === 0 && (
+                            <p className="text-[11px] text-gray-400 italic text-center py-4">Sem FUAta esta semana</p>
+                          )}
+                        </div>
                       </div>
 
-                      {/* Right: futuros */}
-                      <div className="pl-3">
-                        <p className="text-[10px] text-gray-400 font-semibold mb-2 uppercase tracking-wide">Futuros</p>
-
-                        {/* Current (highlighted) */}
-                        <div className="flex items-start gap-2 mb-3 relative pl-5">
-                          <div className="absolute left-0 top-1.5 w-3 h-3 rounded-full bg-blue-500 border-2 border-white shadow ring-2 ring-blue-200 flex-shrink-0" />
-                          <div className="min-w-0">
-                            <p className="text-[11px] font-bold text-blue-700">FU {currentStep} · Atual</p>
-                            <p className="text-[10px] text-blue-500 text-right">
-                              {reminder.reminder_date ? format(new Date(reminder.reminder_date + "T00:00:00"), "dd/MM/yy") : "—"}
-                            </p>
-                          </div>
-                        </div>
-
-                        {(() => {
-                          const futureFiltered = future.filter(f => f.consultor_id === user?.id);
-                          return futureFiltered.length === 0 ? (
-                            <div className="text-center py-3 px-2 bg-gray-50 rounded-lg border border-dashed border-gray-200">
-                              <p className="text-[11px] text-gray-400">Sem futuros follow-ups</p>
-                            </div>
-                          ) : (
-                            <div className="relative">
-                              <div className="absolute left-1.5 top-0 bottom-0 w-px bg-gray-200" />
-                              <div className="space-y-3">
-                                {futureFiltered.map((f, i) => (
-                                  <div key={f.id} className="flex items-start gap-2 pl-5 relative">
-                                    <div className="absolute left-0 top-1.5 w-3 h-3 rounded-full bg-gray-300 border-2 border-white shadow-sm flex-shrink-0" />
-                                    <div className="min-w-0">
-                                      <p className="text-[11px] font-semibold text-gray-500">FU {f.sequence_number || currentStep + i + 1}</p>
-                                      <p className="text-[10px] text-gray-400 text-right">
-                                        {f.reminder_date ? format(new Date(f.reminder_date + "T00:00:00"), "dd/MM/yy") : "—"}
-                                      </p>
-                                    </div>
+                      {/* Right: FUSp */}
+                      <div className="overflow-y-auto pl-3 pr-0">
+                        <p className="text-[10px] text-gray-400 font-semibold mb-2 uppercase tracking-wide sticky top-0 bg-white py-2">FUSp</p>
+                        <div className="space-y-2 pb-3">
+                          {allFollowUps
+                            .filter(f => f.origin_type === 'sprint' && !f.is_completed)
+                            .filter(f => {
+                              const fDate = new Date(f.reminder_date + 'T00:00:00');
+                              return fDate >= new Date(inicioSemana + 'T00:00:00') && fDate <= new Date(fimSemana + 'T23:59:59');
+                            })
+                            .sort((a, b) => new Date(a.reminder_date) - new Date(b.reminder_date))
+                            .map(f => (
+                              <div key={f.id} className="border border-gray-100 rounded-lg p-2.5 bg-gray-50 hover:bg-gray-100 transition-colors">
+                                <div className="flex items-start gap-2 mb-2">
+                                  <input
+                                    type="checkbox"
+                                    checked={fuSpSelecionados.includes(f.id)}
+                                    onChange={e => {
+                                      setFuSpSelecionados(prev =>
+                                        e.target.checked
+                                          ? [...prev, f.id]
+                                          : prev.filter(id => id !== f.id)
+                                      );
+                                    }}
+                                    className="w-3.5 h-3.5 accent-red-600 mt-0.5 flex-shrink-0"
+                                  />
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-[11px] font-semibold text-gray-800 line-clamp-1">{f.workshop_name}</p>
+                                    <p className="text-[10px] text-gray-500">FUSp {f.sequence_number}</p>
                                   </div>
-                                ))}
+                                </div>
+                                <div className="space-y-1 pl-6">
+                                  <p className="text-[10px] text-gray-600">
+                                    <span className="font-semibold">Sprint:</span> {sprintLabel ? sprintLabel.substring(0, 20) : '—'}
+                                  </p>
+                                  <p className="text-[10px] text-gray-600">
+                                    <span className="font-semibold">Criação:</span> {f.reminder_date ? format(new Date(f.reminder_date + 'T00:00:00'), 'dd/MM/yy') : '—'}
+                                  </p>
+                                  <p className="text-[10px] text-gray-500 italic">
+                                    Ult. acesso: —
+                                  </p>
+                                  <p className="text-[10px] text-gray-500 italic">
+                                    Ult. interação: —
+                                  </p>
+                                </div>
                               </div>
-                            </div>
-                          );
-                        })()}
+                            ))}
+                          {allFollowUps.filter(f => f.origin_type === 'sprint' && !f.is_completed).filter(f => {
+                            const fDate = new Date(f.reminder_date + 'T00:00:00');
+                            return fDate >= new Date(inicioSemana + 'T00:00:00') && fDate <= new Date(fimSemana + 'T23:59:59');
+                          }).length === 0 && (
+                            <p className="text-[11px] text-gray-400 italic text-center py-4">Sem FUSp esta semana</p>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
