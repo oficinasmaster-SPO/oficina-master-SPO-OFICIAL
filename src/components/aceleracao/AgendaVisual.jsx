@@ -482,8 +482,8 @@ export default function AgendaVisual({ atendimentos = [], workshops = [], user }
             </DialogDescription>
           </DialogHeader>
 
-          <div className="mt-4 flex gap-4">
-          <div className={`${detailsModal.date && (getFollowUpsForDay(detailsModal.date).length > 0 || getSprintFollowUpsForDay(detailsModal.date).length > 0) ? 'flex-1' : 'flex-1'} space-y-3`}>
+          <div className="mt-4 flex gap-4 min-h-0">
+          <div className={`flex-1 space-y-3 overflow-y-auto max-h-[calc(85vh-250px)]`}>
           {detailsModal.atendimentos.map((atendimento, idx) => {
               const workshop = atendimento.workshop;
               const podeIniciar = ['agendado', 'confirmado', 'reagendado'].includes(atendimento.status);
@@ -601,23 +601,27 @@ export default function AgendaVisual({ atendimentos = [], workshops = [], user }
             })}
             </div>
             {/* Follow-Up Panels - ATA e Sprint */}
-            <div className="flex flex-col gap-4 w-80 shrink-0">
+            <div className="flex gap-4 w-full flex-1 min-h-0 overflow-hidden">
               {detailsModal.date && getFollowUpsForDay(detailsModal.date).length > 0 && (
-                <div className="rounded-lg border-2 border-amber-200 bg-amber-50 p-3">
-                  <p className="text-xs font-bold text-amber-800 mb-2">📌 FUs de ATA ({getFollowUpsForDay(detailsModal.date).length})</p>
-                  <FollowUpPostIt
-                    reminders={getFollowUpsForDay(detailsModal.date)}
-                    onUpdate={() => loadDayModal(detailsModal.date)}
-                  />
+                <div className="flex-1 rounded-lg border-2 border-amber-200 bg-amber-50 p-3 overflow-hidden flex flex-col">
+                  <p className="text-xs font-bold text-amber-800 mb-2 flex-shrink-0">📌 FUs de ATA ({getFollowUpsForDay(detailsModal.date).length})</p>
+                  <div className="overflow-y-auto flex-1">
+                    <FollowUpPostIt
+                      reminders={getFollowUpsForDay(detailsModal.date)}
+                      onUpdate={() => loadDayModal(detailsModal.date)}
+                    />
+                  </div>
                 </div>
               )}
               {detailsModal.date && getSprintFollowUpsForDay(detailsModal.date).length > 0 && (
-                <div className="rounded-lg border-2 border-cyan-200 bg-cyan-50 p-3">
-                  <p className="text-xs font-bold text-cyan-800 mb-2">🚀 FUs de SPRINT ({getSprintFollowUpsForDay(detailsModal.date).length})</p>
-                  <FollowUpPostIt
-                    reminders={getSprintFollowUpsForDay(detailsModal.date)}
-                    onUpdate={() => loadDayModal(detailsModal.date)}
-                  />
+                <div className="flex-1 rounded-lg border-l-4 border-l-blue-500 bg-blue-50 p-3 overflow-hidden flex flex-col">
+                  <p className="text-xs font-bold text-blue-800 mb-2 flex-shrink-0">🚀 FUs de SPRINT ({getSprintFollowUpsForDay(detailsModal.date).length})</p>
+                  <div className="overflow-y-auto flex-1">
+                    <FollowUpPostIt
+                      reminders={getSprintFollowUpsForDay(detailsModal.date)}
+                      onUpdate={() => loadDayModal(detailsModal.date)}
+                    />
+                  </div>
                 </div>
               )}
             </div>
