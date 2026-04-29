@@ -460,7 +460,7 @@ export default function AgendaVisual({ atendimentos = [], workshops = [], user }
 
       {/* Modal de Detalhes do Dia */}
       <Dialog open={detailsModal.open} onOpenChange={(open) => setDetailsModal({ ...detailsModal, open })}>
-        <DialogContent className={`${detailsModal.date && getFollowUpsForDay(detailsModal.date).length > 0 ? 'max-w-3xl' : 'max-w-xl'} max-h-[85vh] overflow-y-auto scrollbar-hide rounded-2xl`} style={{scrollbarWidth: 'none', msOverflowStyle: 'none'}}>
+        <DialogContent className={`${detailsModal.date && (getFollowUpsForDay(detailsModal.date).length > 0 || getSprintFollowUpsForDay(detailsModal.date).length > 0) ? 'max-w-4xl' : 'max-w-2xl'} max-h-[85vh] overflow-y-auto scrollbar-hide rounded-2xl`} style={{scrollbarWidth: 'none', msOverflowStyle: 'none'}}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CalendarIcon className="w-5 h-5 text-blue-600" />
