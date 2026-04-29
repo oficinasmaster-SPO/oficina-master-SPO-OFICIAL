@@ -837,6 +837,12 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
                                         <p className="text-[10px] text-gray-600">
                                           <span className="font-semibold">Tipo:</span> {tipoAtendimento}
                                         </p>
+                                        <p className="text-[10px] text-gray-600">
+                                          <span className="font-semibold">Criado:</span> {f.created_date ? format(new Date(f.created_date), 'dd/MM/yyyy') : '—'}
+                                        </p>
+                                        <p className="text-[10px] text-gray-600">
+                                          <span className="font-semibold">Agendado:</span> {f.reminder_date ? format(new Date(f.reminder_date + 'T00:00:00'), 'dd/MM/yyyy') : '—'}
+                                        </p>
                                         <p className="text-[10px] text-orange-600 font-medium">
                                           Follow-up {f.sequence_number || '?'}/4
                                         </p>
