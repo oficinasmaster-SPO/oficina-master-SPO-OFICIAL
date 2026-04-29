@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, Clock, Inbox, Loader2, CalendarPlus } from "lucide-react";
+import { Calendar, Clock, Inbox, Loader2, CalendarPlus, Search, X } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { formatDateTimeBR } from "@/utils/timezone";
@@ -21,6 +21,7 @@ export default function BucketAtendimentosTab({ state }) {
   const [agendarDialog, setAgendarDialog] = useState({ open: false, item: null });
   const [agendarForm, setAgendarForm] = useState({ data: '', hora: '', consultor_id: '' });
   const [currentPage, setCurrentPage] = useState(1);
+  const [search, setSearch] = useState("");
 
   // Fetch pending ContractAttendances (bucket items)
   const { data: bucketItems = [], isLoading } = useQuery({
@@ -92,6 +93,22 @@ export default function BucketAtendimentosTab({ state }) {
         </Badge>
       </div>
 
+      {/* Busca por cliente */}
+      <div className="relative max-w-sm">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <Input
+          placeholder="Buscar por cliente..."
+          value={search}
+          onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+          className="pl-9 pr-8"
+        />
+        {search && (
+          <button onClick={() => { setSearch(""); setCurrentPage(1); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+            <X className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+
       {isLoading ? (
         <div className="grid gap-3">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -121,10 +138,24 @@ export default function BucketAtendimentosTab({ state }) {
           </CardContent>
         </Card>
       ) : (() => {
-        const totalPages = Math.ceil(bucketItems.length / ITEMS_PER_PAGE);
-        const paginated = bucketItems.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+        const filtered = search.trim()
+          ? bucketItems.filter(item => {
+              const name = workshopMap?.[item.workshop_id]?.name || '';
+              return name.toLowerCase().includes(search.toLowerCase());
+            })
+          : bucketItems;
+        const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+        const paginated = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
         return (
           <>
+            {filtered.length === 0 && (
+              <Card className="border-dashed">
+                <CardContent className="py-8 text-center">
+                  <Search className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+                  <p className="text-gray-500">Nenhum cliente encontrado para "{search}"</p>
+                </CardContent>
+              </Card>
+            )}
             <div className="grid gap-3">
               {paginated.map((item) => {
                 const workshop = workshopMap?.[item.workshop_id];
@@ -157,7 +188,7 @@ export default function BucketAtendimentosTab({ state }) {
             {totalPages > 1 && (
               <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
                 <p className="text-sm text-gray-500">
-                  Mostrando {(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, bucketItems.length)} de {bucketItems.length}
+                  Mostrando {(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)} de {filtered.length}
                 </p>
                 <div className="flex items-center gap-1">
                   <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>
