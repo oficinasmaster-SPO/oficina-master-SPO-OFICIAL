@@ -154,8 +154,8 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
   const [carregandoDica, setCarregandoDica] = useState(false);
   const calcOriginPos = useCallback(() => {
     return {
-      x: 16,
-      y: window.innerHeight - 72 - 210 + 18,
+      x: window.innerWidth / 2 - 110,
+      y: window.innerHeight - 131,
     };
   }, []);
 
