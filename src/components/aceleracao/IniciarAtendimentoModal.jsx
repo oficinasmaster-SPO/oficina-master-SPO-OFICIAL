@@ -57,7 +57,7 @@ const CANAL_OPTIONS = [
   { id: "ligacao", label: "Ligação", icon: Phone },
   { id: "whatsapp", label: "WhatsApp", icon: MessageCircle },
   { id: "email", label: "E-mail", icon: Mail },
-  { id: "video", label: "Vídeo", icon: Video },
+  { id: "meet", label: "Meet", icon: Video },
   { id: "presencial", label: "Presencial", icon: MapPin },
 ];
 
@@ -119,7 +119,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
   const queryClient = useQueryClient();
   const today = new Date().toISOString().split('T')[0];
   const [timer, setTimer] = useState(0);
-  const [canal, setCanal] = useState("");
+  const [canais, setCanais] = useState([]);
   const [resultado, setResultado] = useState("");
   const [dataContato, setDataContato] = useState(format(new Date(), "yyyy-MM-dd"));
   const [humor, setHumor] = useState("");
@@ -206,7 +206,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
   const fuProximo = idxAtual >= 0 && idxAtual < filaReminders.length - 1
     ? filaReminders[idxAtual + 1]
     : null;
-  const isDirty = !!(canal || resultado || observacoes || compromissos || proximoPasso || pastedImages.length > 0);
+  const isDirty = !!(canais.length > 0 || resultado || observacoes || compromissos || proximoPasso || pastedImages.length > 0);
 
   // Derivações da aba Follow-ups
   const isSprintFUModal = followUp?.origin_type === 'sprint';
@@ -250,7 +250,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
         console.log('✅ Rascunho carregado:', draft);
         
         // Restaurar todos os campos
-        setCanal(draft.canal || "");
+        setCanais(draft.canais || []);
         setResultado(draft.resultado || "");
         setDataContato(draft.dataContato || format(new Date(), "yyyy-MM-dd"));
         setHumor(draft.humor || "");
@@ -505,7 +505,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
 
   const validate = () => {
     const newErrors = {};
-    if (!canal) newErrors.canal = "Obrigatório";
+    if (canais.length === 0) newErrors.canais = "Selecione pelo menos um canal";
     if (!resultado) newErrors.resultado = "Obrigatório";
     if (!observacoes.trim() || observacoes.length < 10) newErrors.observacoes = "Mín. 10 caracteres";
     if (!proximoPasso) newErrors.proximoPasso = "Obrigatório";
@@ -531,9 +531,9 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
        const draftData = {
          followUp_id: followUp.id,
          atendimento_id: followUp.atendimento_id,
-         canal,
-         resultado,
-         dataContato,
+         canais,
+              resultado,
+              dataContato,
          duracao,
          humor,
          engajamento,
@@ -591,7 +591,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
         workshop_id: followUp.workshop_id,
         consultor_id: followUp.consultor_id,
         consultor_nome: followUp.consultor_nome,
-        canal,
+        canal: canais.join(', '),
         resultado,
         dataContato,
         duracao,
@@ -629,7 +629,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
               workshop_id: fu.workshop_id,
               consultor_id: fu.consultor_id,
               consultor_nome: fu.consultor_nome,
-              canal,
+              canal: canais.join(', '),
               resultado,
               dataContato,
               duracao,
@@ -687,7 +687,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
       setSaveSuccess({
         clienteNome: cliente?.name || followUp?.workshop_name || "Cliente",
         sequenceNumber: followUp?.sequence_number || 1,
-        canal, resultado,
+        canais, resultado,
         novoFollowUp,
         proxData, proxHora,
         consultor_nome: followUp?.consultor_nome,
@@ -705,7 +705,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
 
       // Tela de confirmação pós-salvar
   if (saveSuccess) {
-    const { clienteNome, sequenceNumber, canal: c, resultado: r, novoFollowUp, proxData: pd, proxHora: ph, consultor_nome } = saveSuccess;
+    const { clienteNome, sequenceNumber, canais: cs, resultado: r, novoFollowUp, proxData: pd, proxHora: ph, consultor_nome } = saveSuccess;
     return (
       <Dialog open onOpenChange={() => {}}>
         <DialogContent className="max-w-lg p-0 overflow-hidden">
@@ -722,7 +722,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
               <div className="bg-white border border-gray-200 rounded-lg px-4 py-3 flex items-center gap-3">
                 <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
                 <span className="text-sm text-gray-700">
-                  Interação registrada · <span className="font-medium">{CANAL_LABELS[c] || c}</span> · 
+                  Interação registrada · <span className="font-medium">{cs?.split(', ').map(c => CANAL_LABELS[c] || c).join(' + ') || '—'}</span> · 
                   <span className={`ml-1 px-2 py-0.5 rounded-full text-xs font-medium border ${RESULTADO_COLORS[r] || "bg-gray-100 text-gray-700"}`}>
                     {RESULTADO_LABELS[r] || r}
                   </span>
@@ -770,8 +770,8 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
                 <Button
                   className="flex-1 bg-red-600 hover:bg-red-700 text-white"
                   onClick={() => {
-                    setSaveSuccess(null);
-                    setCanal("");
+                          setSaveSuccess(null);
+                          setCanais([]);
                     setResultado("");
                     setHumor("");
                     setEngajamento("");
@@ -882,7 +882,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
               {/* Canal */}
               <div>
                 <label className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2 block">
-                  Canal de contato *
+                  Canais de contato *
                 </label>
                 <div className="grid grid-cols-5 gap-2">
                   {CANAL_OPTIONS.map(opt => {
@@ -891,14 +891,18 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
                       <button
                         key={opt.id}
                         onClick={() => {
-                          setCanal(opt.id);
-                          setErrors(e => ({ ...e, canal: null }));
+                          setCanais(prev =>
+                            prev.includes(opt.id)
+                              ? prev.filter(id => id !== opt.id)
+                              : [...prev, opt.id]
+                          );
+                          setErrors(e => ({ ...e, canais: null }));
                         }}
                         className={`flex flex-col items-center gap-1 px-3 py-3 rounded-lg border-2 text-xs font-medium transition ${
-                          canal === opt.id
+                          canais.includes(opt.id)
                             ? "bg-gray-900 text-white border-gray-900"
                             : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"
-                        } ${errors.canal ? "border-red-500 bg-red-50" : ""}`}
+                        } ${errors.canais ? "border-red-500 bg-red-50" : ""}`}
                       >
                         <Icon className="w-5 h-5" />
                         {opt.label}
@@ -906,7 +910,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
                     );
                   })}
                 </div>
-                {errors.canal && <p className="text-xs text-red-600 mt-1">{errors.canal}</p>}
+                {errors.canais && <p className="text-xs text-red-600 mt-1">{errors.canais}</p>}
               </div>
 
               {/* Resultado */}
