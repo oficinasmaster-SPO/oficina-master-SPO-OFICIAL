@@ -848,47 +848,56 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
                               })
                               .sort((a, b) => new Date(a.reminder_date) - new Date(b.reminder_date));
                             
-                            return fuAta.length > 0 ? fuAta.map(f => (
-                              <div key={f.id} className="border border-gray-100 rounded-lg p-2.5 bg-gray-50 hover:bg-gray-100 transition-colors">
-                                <div className="flex items-start gap-2 mb-2">
-                                  <input
-                                    type="checkbox"
-                                    checked={fuAtaSelecionados.includes(f.id)}
-                                    onChange={e => {
-                                      setFuAtaSelecionados(prev =>
-                                        e.target.checked
-                                          ? [...prev, f.id]
-                                          : prev.filter(id => id !== f.id)
-                                      );
-                                    }}
-                                    className="w-3.5 h-3.5 accent-red-600 mt-0.5 flex-shrink-0"
-                                  />
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-[11px] font-semibold text-gray-800 line-clamp-1">{f.workshop_name}</p>
-                                    <p className="text-[10px] text-gray-500">Nº {f.sequence_number}</p>
+                            return fuAta.length > 0 ? fuAta.map(f => {
+                              const originAta = atas.find(a => a.id === f.ata_id);
+                              const tipoAtendimento = originAta?.tipo_aceleracao || originAta?.tipo_atendimento || '—';
+                              return (
+                                <div key={f.id} className="border-l-4 border-l-orange-400 bg-orange-50 border border-orange-100 rounded-lg p-3 hover:bg-orange-100 transition-colors">
+                                  <div className="flex items-start gap-3">
+                                    <input
+                                      type="checkbox"
+                                      checked={fuAtaSelecionados.includes(f.id)}
+                                      onChange={e => {
+                                        setFuAtaSelecionados(prev =>
+                                          e.target.checked
+                                            ? [...prev, f.id]
+                                            : prev.filter(id => id !== f.id)
+                                        );
+                                      }}
+                                      className="w-4 h-4 accent-orange-600 mt-0.5 flex-shrink-0"
+                                    />
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-[12px] font-bold text-gray-900 mb-1">{f.workshop_name || 'Cliente'}</p>
+                                      <div className="space-y-0.5 mb-2">
+                                        <p className="text-[10px] text-gray-600">
+                                          <span className="font-semibold">Nº ATA:</span> {f.sequence_number || '—'}
+                                        </p>
+                                        <p className="text-[10px] text-gray-600">
+                                          <span className="font-semibold">Consultor Resp:</span> {f.consultor_nome || '—'}
+                                        </p>
+                                        <p className="text-[10px] text-gray-600">
+                                          <span className="font-semibold">Tipo:</span> {tipoAtendimento}
+                                        </p>
+                                        <p className="text-[10px] text-orange-600 font-medium">
+                                          Follow-up {f.sequence_number || '?'}/4
+                                        </p>
+                                      </div>
+                                      {f.ata_id && (
+                                        <button
+                                          onClick={() => {
+                                            const ata = atas.find(a => a.id === f.ata_id);
+                                            if (ata) setSelectedAta(ata);
+                                          }}
+                                          className="text-[10px] text-orange-600 hover:text-orange-700 font-semibold flex items-center gap-1 hover:underline"
+                                        >
+                                          📋 Visualizar ATA
+                                        </button>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
-                                <div className="space-y-1 pl-6">
-                                  <p className="text-[10px] text-gray-600">
-                                    <span className="font-semibold">Consultor:</span> {f.consultor_nome || '—'}
-                                  </p>
-                                  <p className="text-[10px] text-gray-600">
-                                    <span className="font-semibold">Tipo:</span> {f.origin_type || '—'}
-                                  </p>
-                                  {f.ata_id && (
-                                    <button
-                                      onClick={() => {
-                                        const ata = atas.find(a => a.id === f.ata_id);
-                                        if (ata) setSelectedAta(ata);
-                                      }}
-                                      className="text-[10px] text-blue-600 hover:underline font-medium"
-                                    >
-                                      Ver ATA →
-                                    </button>
-                                  )}
-                                </div>
-                              </div>
-                            )) : (
+                              );
+                            }) : (
                               <p className="text-[11px] text-gray-400 italic text-center py-4">Sem FUAta esta semana</p>
                             );
                           })()}
