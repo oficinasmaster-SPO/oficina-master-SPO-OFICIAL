@@ -6,13 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, CheckCircle2, ClipboardList } from "lucide-react";
 
 export default function CompletarPerfil() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [showDISCDialog, setShowDISCDialog] = useState(false);
   const [employee, setEmployee] = useState(null);
   const [workshop, setWorkshop] = useState(null);
   const [formData, setFormData] = useState({
@@ -101,15 +103,23 @@ export default function CompletarPerfil() {
       });
 
       toast.success(`Bem vindo! "${workshop ? workshop.name : 'Sua Oficina'}"`);
-      setTimeout(() => {
-        window.location.href = createPageUrl("Home");
-      }, 1500);
+      setShowDISCDialog(true);
     } catch (err) {
       console.error(err);
       toast.error("Erro ao salvar os dados.");
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleGoToDISC = () => {
+    setShowDISCDialog(false);
+    navigate("/DiagnosticoDISC");
+  };
+
+  const handleSkipDISC = () => {
+    setShowDISCDialog(false);
+    window.location.href = createPageUrl("Home");
   };
 
   if (loading) {
@@ -158,6 +168,29 @@ export default function CompletarPerfil() {
           </Button>
         </CardContent>
       </Card>
+
+      <Dialog open={showDISCDialog} onOpenChange={() => {}}>
+        <DialogContent className="max-w-sm" onPointerDownOutside={(e) => e.preventDefault()}>
+          <DialogHeader className="text-center items-center">
+            <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
+              <CheckCircle2 className="w-8 h-8 text-green-600" />
+            </div>
+            <DialogTitle className="text-xl">Cadastro Concluído!</DialogTitle>
+            <DialogDescription className="text-center">
+              Deseja realizar o teste comportamental DISC agora? Ele ajuda a identificar seu perfil profissional.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-3 mt-4">
+            <Button onClick={handleGoToDISC} className="w-full bg-blue-600 hover:bg-blue-700">
+              <ClipboardList className="w-4 h-4 mr-2" />
+              Fazer Teste DISC
+            </Button>
+            <Button variant="outline" onClick={handleSkipDISC} className="w-full">
+              Pular e Ir para o Sistema
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
