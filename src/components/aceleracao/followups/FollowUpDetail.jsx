@@ -938,8 +938,8 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
           </div>
 
           {/* Mini chat flutuante */}
-      <div className="fixed bottom-6 right-6 z-40">
-        {chatAberto && (
+          <div className="fixed bottom-6 right-6 z-40">
+          {chatAberto && (
           <div className="mb-3 w-80 bg-white border border-gray-200 rounded-2xl shadow-2xl flex flex-col overflow-hidden" style={{ height: '420px' }}>
             {/* Header do chat */}
             <div className="bg-gray-900 px-4 py-3 flex items-center justify-between flex-shrink-0">
