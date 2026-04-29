@@ -33,7 +33,19 @@ Deno.serve(async (req) => {
         const workshop = await base44.asServiceRole.entities.Workshop.get(sprint.workshop_id);
         workshopName = workshop?.name || '';
       } catch (e) {
-        console.warn('Não foi possível buscar workshop:', e.message);
+        console.warn('[onSprintCreated] Não foi possível buscar workshop:', e.message);
+      }
+    }
+
+    // Buscar nome real do consultor pelo consultor_id
+    // sprint.consultor_nome chega vazio pois o frontend não popula esse campo no create
+    let consultorNome = sprint.consultor_nome || '';
+    if (!consultorNome && sprint.consultor_id) {
+      try {
+        const consultor = await base44.asServiceRole.entities.User.get(sprint.consultor_id);
+        consultorNome = consultor?.full_name || consultor?.email || '';
+      } catch (e) {
+        console.warn('[onSprintCreated] Não foi possível buscar consultor:', e.message);
       }
     }
 
@@ -52,7 +64,7 @@ Deno.serve(async (req) => {
         sprint_id: sprint.id,
         origin_type: 'sprint',
         consultor_id: sprint.consultor_id || '',
-        consultor_nome: sprint.consultor_nome || '',
+        consultor_nome: consultorNome,
         consulting_firm_id: sprint.consulting_firm_id || '',
         sequence_number: idx + 1,
         days_since_meeting: diasOffset,
@@ -66,12 +78,13 @@ Deno.serve(async (req) => {
     // Criar os 4 follow-ups usando asServiceRole para contornar o RLS (create exige role admin)
     await base44.asServiceRole.entities.FollowUpReminder.bulkCreate(reminders);
 
-    console.log(`[onSprintCreated] ${reminders.length} follow-ups criados para sprint ${sprint.id} (${sprint.title})`);
+    console.log(`[onSprintCreated] ${reminders.length} follow-ups criados para sprint ${sprint.id} (${sprint.title}) — consultor: ${consultorNome}`);
 
     return Response.json({
       success: true,
       sprint_id: sprint.id,
       followups_criados: reminders.length,
+      consultor_nome: consultorNome,
       datas: reminders.map(r => r.reminder_date)
     });
 
