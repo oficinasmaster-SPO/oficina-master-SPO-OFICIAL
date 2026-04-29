@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { User, Shield, Search, Eye, AlertTriangle, CheckCircle2, Lock } from "lucide-react";
+import { User, Shield, Search, Eye, AlertTriangle, CheckCircle2, Lock, Users, Building2, UserCheck } from "lucide-react";
 import { systemRoles } from "@/components/lib/systemRoles";
 import { toast } from "sonner";
 
@@ -108,8 +108,97 @@ export default function UserPermissionsViewer() {
 
   const summary = getUserPermissionsSummary(selectedUser);
 
+  // Classificar usuários em internos / externos
+  const internalUsers = users.filter(u => {
+    if (u.role === 'admin') return true;
+    const emp = employees.find(e => e.user_id === u.id);
+    return emp?.tipo_vinculo === 'interno' || emp?.is_internal === true || emp?.job_role === 'socio' || emp?.job_role === 'socio_interno';
+  });
+  const externalUsers = users.filter(u => !internalUsers.includes(u));
+
   return (
     <div className="space-y-6">
+      {/* Listagem agrupada */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Internos */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Building2 className="w-4 h-4 text-blue-600" />
+              Usuários Internos
+              <Badge className="ml-auto bg-blue-100 text-blue-800">{internalUsers.length}</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="max-h-72 overflow-y-auto divide-y">
+              {internalUsers.length === 0 ? (
+                <p className="p-4 text-sm text-gray-500 text-center">Nenhum usuário interno</p>
+              ) : internalUsers.map(u => {
+                const emp = employees.find(e => e.user_id === u.id);
+                return (
+                  <button
+                    key={u.id}
+                    onClick={() => setSelectedUserId(u.id)}
+                    className={`w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-gray-50 transition-colors ${selectedUserId === u.id ? 'bg-blue-50' : ''}`}
+                  >
+                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                      <User className="w-4 h-4 text-blue-600" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-gray-900 truncate">{u.full_name || u.email}</p>
+                      <p className="text-xs text-gray-500 truncate">{u.email}</p>
+                    </div>
+                    {u.role === 'admin' ? (
+                      <Badge className="bg-red-100 text-red-700 text-xs flex-shrink-0">Admin</Badge>
+                    ) : emp?.position ? (
+                      <span className="text-xs text-gray-400 flex-shrink-0 max-w-[80px] truncate">{emp.position}</span>
+                    ) : null}
+                  </button>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Externos */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <UserCheck className="w-4 h-4 text-green-600" />
+              Usuários Externos / Clientes
+              <Badge className="ml-auto bg-green-100 text-green-800">{externalUsers.length}</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="max-h-72 overflow-y-auto divide-y">
+              {externalUsers.length === 0 ? (
+                <p className="p-4 text-sm text-gray-500 text-center">Nenhum usuário externo</p>
+              ) : externalUsers.map(u => {
+                const emp = employees.find(e => e.user_id === u.id);
+                return (
+                  <button
+                    key={u.id}
+                    onClick={() => setSelectedUserId(u.id)}
+                    className={`w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-gray-50 transition-colors ${selectedUserId === u.id ? 'bg-green-50' : ''}`}
+                  >
+                    <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                      <User className="w-4 h-4 text-green-600" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-gray-900 truncate">{u.full_name || u.email}</p>
+                      <p className="text-xs text-gray-500 truncate">{u.email}</p>
+                    </div>
+                    {emp?.position && (
+                      <span className="text-xs text-gray-400 flex-shrink-0 max-w-[80px] truncate">{emp.position}</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
