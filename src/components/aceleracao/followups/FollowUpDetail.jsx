@@ -456,24 +456,35 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
               </div>
 
               {/* Dica de IA - Post-it Style */}
-              <div className="relative bg-cyan-100 rounded-2xl p-5 shadow-lg" style={{ transform: 'rotate(-2deg)' }}>
-                {/* Corner decoration */}
-                <div className="absolute -top-2 -right-2 w-12 h-12 bg-orange-400 rounded-full opacity-80" />
+              <div 
+                className="relative rounded-2xl p-6 shadow-lg overflow-hidden"
+                style={{
+                  backgroundImage: 'url(https://media.base44.com/images/public/69540822472c4a70b54d47aa/11b1a16a9_6681441.png)',
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  minHeight: '180px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between'
+                }}
+              >
+                {/* Overlay for better text readability */}
+                <div className="absolute inset-0 bg-cyan-100 opacity-70" />
                 
                 <div className="relative z-10">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
-                      <Zap className="w-4 h-4 text-cyan-700 flex-shrink-0" />
+                      <Zap className="w-4 h-4 text-cyan-800 flex-shrink-0" />
                       <p className="text-xs font-semibold text-cyan-900">Dica de IA</p>
                     </div>
                     <button
                       onClick={gerarDicaIA}
                       disabled={carregandoDica}
                       title="Gerar nova dica"
-                      className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-cyan-200 transition-colors disabled:opacity-40"
+                      className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors disabled:opacity-40"
                     >
                       <svg
-                        className={`w-3.5 h-3.5 text-cyan-700 ${carregandoDica ? 'animate-spin' : ''}`}
+                        className={`w-3.5 h-3.5 text-cyan-800 ${carregandoDica ? 'animate-spin' : ''}`}
                         fill="none" viewBox="0 0 24 24" stroke="currentColor"
                       >
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -483,15 +494,15 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
                   </div>
                   {carregandoDica ? (
                     <div className="flex items-center gap-2 py-2">
-                      <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-                      <p className="text-xs text-cyan-700">Analisando histórico do cliente...</p>
+                      <div className="w-2 h-2 rounded-full bg-cyan-700 animate-pulse" />
+                      <p className="text-xs text-cyan-900">Analisando histórico do cliente...</p>
                     </div>
                   ) : dicaIA ? (
                     <p className="text-sm text-cyan-900 leading-relaxed font-medium">{dicaIA}</p>
                   ) : suggestedAction ? (
                     <p className="text-sm text-cyan-900 leading-relaxed font-medium">{suggestedAction}</p>
                   ) : (
-                    <p className="text-xs text-cyan-700 italic">Clique em recarregar para gerar uma dica.</p>
+                    <p className="text-xs text-cyan-900 italic">Clique em recarregar para gerar uma dica.</p>
                   )}
                 </div>
               </div>
