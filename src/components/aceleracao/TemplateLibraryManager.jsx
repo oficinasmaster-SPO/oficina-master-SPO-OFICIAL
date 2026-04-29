@@ -434,12 +434,24 @@ export default function TemplateLibraryManager() {
 
         {/* TAB: SPRINTS */}
         <TabsContent value="sprints" className="space-y-4">
-          <div className="flex justify-end">
-            <Button onClick={() => setShowNewSprint(true)}>
-              <Plus className="w-4 h-4 mr-2" /> Novo Sprint
-            </Button>
+          <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 bg-gray-50">
+              <div>
+                <p className="text-sm font-semibold text-gray-800">Templates de Sprint por Missão</p>
+                <p className="text-xs text-gray-500 mt-0.5">Configure as tarefas de cada fase. As edições são propagadas para os sprints dos clientes.</p>
+              </div>
+              <Button
+                size="sm"
+                onClick={() => setShowNewSprint(true)}
+                className="gap-1.5 text-sm font-medium"
+              >
+                <Plus className="w-4 h-4" /> Novo Sprint
+              </Button>
+            </div>
+            <div className="p-5">
+              <SprintsTemplateGrid />
+            </div>
           </div>
-          <SprintsTemplateGrid />
         </TabsContent>
       </Tabs>
 
