@@ -181,9 +181,9 @@ export default function ControleAceleracaoView({ state }) {
           style={{
             display: "inline-flex",
             alignItems: "center",
-            gap: "1rem",
-            padding: "0.75rem",
-            borderRadius: "1.5rem",
+            gap: "0.7rem",
+            padding: "0.525rem",
+            borderRadius: "1.05rem",
             background: "rgba(255,255,255,0.85)",
             backdropFilter: "blur(12px)",
             border: "1px solid hsl(0 84% 58% / 0.6)",
@@ -220,25 +220,25 @@ export default function ControleAceleracaoView({ state }) {
             onClick={() => navigate('/CentralFollowUp')}
             className="action-btn"
             style={{
-              height: "3.5rem",
-              padding: "0 1.75rem",
-              borderRadius: "1rem",
+              height: "2.45rem",
+              padding: "0 1.225rem",
+              borderRadius: "0.7rem",
               border: "none",
               background: "linear-gradient(135deg, hsl(0 88% 62%), hsl(0 78% 48%))",
               color: "#fff",
-              fontSize: "1rem",
+              fontSize: "0.7rem",
               fontWeight: 600,
               letterSpacing: "-0.01em",
               display: "inline-flex",
               alignItems: "center",
-              gap: "0.625rem",
+              gap: "0.44rem",
               cursor: "pointer",
               boxShadow: "0 14px 28px -8px hsl(0 84% 50% / 0.55), 0 6px 12px -4px hsl(0 84% 50% / 0.35), inset 0 1px 0 hsl(0 0% 100% / 0.22)",
             }}
             onMouseEnter={e => e.currentTarget.style.boxShadow = "0 22px 44px -10px hsl(0 84% 50% / 0.7), 0 10px 20px -6px hsl(0 84% 50% / 0.45), inset 0 1px 0 hsl(0 0% 100% / 0.30)"}
             onMouseLeave={e => e.currentTarget.style.boxShadow = "0 14px 28px -8px hsl(0 84% 50% / 0.55), 0 6px 12px -4px hsl(0 84% 50% / 0.35), inset 0 1px 0 hsl(0 0% 100% / 0.22)"}
           >
-            <Zap className="action-btn-icon" size={20} strokeWidth={2.5} />
+            <Zap className="action-btn-icon" size={14} strokeWidth={2.5} />
             Central de Follow-up
           </button>
 
@@ -247,18 +247,18 @@ export default function ControleAceleracaoView({ state }) {
             onClick={handleOpenMassRegistration}
             className="action-btn"
             style={{
-              height: "3.5rem",
-              padding: "0 1.75rem",
-              borderRadius: "1rem",
+              height: "2.45rem",
+              padding: "0 1.225rem",
+              borderRadius: "0.7rem",
               border: "1px solid hsl(214 32% 91%)",
               background: "#fff",
               color: "hsl(222 47% 18%)",
-              fontSize: "1rem",
+              fontSize: "0.7rem",
               fontWeight: 600,
               letterSpacing: "-0.01em",
               display: "inline-flex",
               alignItems: "center",
-              gap: "0.625rem",
+              gap: "0.44rem",
               cursor: "pointer",
               boxShadow: "0 10px 22px -8px hsl(222 47% 30% / 0.28), 0 4px 8px -2px hsl(222 47% 30% / 0.14)",
             }}
@@ -273,7 +273,7 @@ export default function ControleAceleracaoView({ state }) {
               e.currentTarget.style.boxShadow = "0 10px 22px -8px hsl(222 47% 30% / 0.28), 0 4px 8px -2px hsl(222 47% 30% / 0.14)";
             }}
           >
-            <Users className="action-btn-icon" size={20} strokeWidth={2.25} />
+            <Users className="action-btn-icon" size={14} strokeWidth={2.25} />
             Registro em Massa
           </button>
 
@@ -282,25 +282,25 @@ export default function ControleAceleracaoView({ state }) {
             onClick={() => handleOpenModal()}
             className="action-btn"
             style={{
-              height: "3.5rem",
-              padding: "0 1.75rem",
-              borderRadius: "1rem",
+              height: "2.45rem",
+              padding: "0 1.225rem",
+              borderRadius: "0.7rem",
               border: "none",
               background: "linear-gradient(135deg, hsl(222 92% 62%), hsl(224 84% 46%))",
               color: "#fff",
-              fontSize: "1rem",
+              fontSize: "0.7rem",
               fontWeight: 600,
               letterSpacing: "-0.01em",
               display: "inline-flex",
               alignItems: "center",
-              gap: "0.625rem",
+              gap: "0.44rem",
               cursor: "pointer",
               boxShadow: "0 14px 28px -8px hsl(222 89% 50% / 0.55), 0 6px 12px -4px hsl(222 89% 50% / 0.35), inset 0 1px 0 hsl(0 0% 100% / 0.22)",
             }}
             onMouseEnter={e => e.currentTarget.style.boxShadow = "0 22px 44px -10px hsl(222 89% 50% / 0.7), 0 10px 20px -6px hsl(222 89% 50% / 0.45), inset 0 1px 0 hsl(0 0% 100% / 0.30)"}
             onMouseLeave={e => e.currentTarget.style.boxShadow = "0 14px 28px -8px hsl(222 89% 50% / 0.55), 0 6px 12px -4px hsl(222 89% 50% / 0.35), inset 0 1px 0 hsl(0 0% 100% / 0.22)"}
           >
-            <Plus className="action-btn-icon" size={20} strokeWidth={2.75} />
+            <Plus className="action-btn-icon" size={14} strokeWidth={2.75} />
             Novo Atendimento
           </button>
         </div>
