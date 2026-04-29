@@ -690,7 +690,7 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
 
               {/* Próximas ações sugeridas */}
               <div className="bg-white border border-gray-200 rounded-xl p-4">
-                <p className="text-[10px] text-gray-400 uppercase tracking-wide font-semibold mb-3">Próximas Ações Sugeridas</p>
+                <h3 className="text-base font-bold text-gray-900 uppercase mb-4">Próximas Ações Sugeridas</h3>
                 <ul className="space-y-2">
                   {[
                     { text: "Confirmar disponibilidade do cliente", active: true },
@@ -714,7 +714,7 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
 
                 return (
                   <div className="bg-white border border-gray-200 rounded-xl p-4">
-                    <p className="text-[10px] text-gray-400 uppercase tracking-wide font-semibold mb-3">Timeline de Follow-ups</p>
+                    <h3 className="text-base font-bold text-gray-900 uppercase mb-4">Timeline de Follow-ups</h3>
 
                     {isSprintFU && (
                       <div className="mb-4 bg-orange-50 border border-orange-200 rounded-lg overflow-hidden">
