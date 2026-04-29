@@ -357,12 +357,6 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
 
   return (
     <div className="space-y-3">
-      {/* Back */}
-      <button onClick={onBack} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition-colors">
-        <ArrowLeft className="w-4 h-4" />
-        Voltar à lista
-      </button>
-
       <div className="flex flex-col h-[calc(100vh-200px)] bg-white rounded-xl border border-gray-200 overflow-hidden">
         {/* Header fixo */}
         <div className="flex-shrink-0 px-6 py-4 border-b border-gray-200 shadow-sm">
@@ -857,7 +851,7 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
         </div>
 
         {/* Footer fixo */}
-        <div className="flex-shrink-0 px-6 py-4 border-t border-gray-200 bg-white">
+        <div className="flex-shrink-0 px-6 py-4 border-t border-gray-200 bg-white space-y-2">
           {(() => {
             const temRascunho = verificarRascunho();
             return (
@@ -877,6 +871,14 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
               </Button>
             );
           })()}
+          <Button
+            onClick={onBack}
+            variant="outline"
+            className="w-full rounded-lg font-semibold flex items-center justify-center gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Voltar à lista
+          </Button>
         </div>
       </div>
 
