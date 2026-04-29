@@ -778,59 +778,13 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
                     )}
 
                     {fusDaSemana.length > 0 && (
-                      <div className="mb-4 border border-amber-200 bg-amber-50 rounded-lg overflow-hidden">
-                        <button
-                          onClick={() => setFusSemanaExpandido(v => !v)}
-                          className="w-full flex items-center justify-between px-3 py-2 text-left"
-                        >
-                          <div className="flex items-center gap-2">
-                            <span className="w-4 h-4 rounded-full bg-amber-500 text-white text-[9px] font-bold flex items-center justify-center">
-                              {fusDaSemana.length}
-                            </span>
-                            <span className="text-[11px] font-semibold text-amber-800">
-                              {fusDaSemana.length} outro{fusDaSemana.length > 1 ? 's' : ''} FU{fusDaSemana.length > 1 ? 's' : ''} esta semana
-                            </span>
-                          </div>
-                          <ChevronRight className={`w-3.5 h-3.5 text-amber-600 transition-transform ${fusSemanaExpandido ? 'rotate-90' : ''}`} />
-                        </button>
-                        {fusSemanaExpandido && (
-                          <div className="border-t border-amber-200 bg-white">
-                            <p className="text-[10px] text-gray-500 px-3 pt-2 pb-1">
-                              Selecione para encerrar junto neste atendimento
-                            </p>
-                            {fusDaSemana.map(f => (
-                              <label key={f.id} className="flex items-center gap-2.5 px-3 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-0">
-                                <input
-                                  type="checkbox"
-                                  checked={fusSelecionados.includes(f.id)}
-                                  onChange={e => {
-                                    setFusSelecionados(prev =>
-                                      e.target.checked
-                                        ? [...prev, f.id]
-                                        : prev.filter(id => id !== f.id)
-                                    );
-                                  }}
-                                  className="w-3.5 h-3.5 accent-red-600"
-                                />
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-[11px] font-semibold text-gray-700">
-                                    FU {f.sequence_number} · {f.reminder_date
-                                      ? format(new Date(f.reminder_date + 'T00:00:00'), 'dd/MM')
-                                      : '—'}
-                                  </p>
-                                  {f.consultor_nome && (
-                                    <p className="text-[10px] text-gray-400">{f.consultor_nome}</p>
-                                  )}
-                                </div>
-                              </label>
-                            ))}
-                            {fusSelecionados.length > 0 && (
-                              <p className="text-[10px] text-amber-700 bg-amber-50 px-3 py-2 font-medium">
-                                {fusSelecionados.length} FU{fusSelecionados.length > 1 ? 's' : ''} será{fusSelecionados.length > 1 ? 'ão' : ''} encerrado{fusSelecionados.length > 1 ? 's' : ''} com os mesmos dados deste atendimento
-                              </p>
-                            )}
-                          </div>
-                        )}
+                      <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl p-3">
+                        <div className="flex items-start gap-2">
+                          <span className="text-lg flex-shrink-0">💡</span>
+                          <p className="text-[11px] text-amber-800 leading-relaxed">
+                            Hey, temos outros <span className="font-bold">{fusDaSemana.length}</span> atendimento{fusDaSemana.length > 1 ? 's' : ''} de follow up esta semana, confira se não é possível também atendê-lo{fusDaSemana.length > 1 ? 's' : ''}!
+                          </p>
+                        </div>
                       </div>
                     )}
 
