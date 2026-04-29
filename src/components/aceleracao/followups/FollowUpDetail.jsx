@@ -841,7 +841,7 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
                         <div className="space-y-2 pb-3">
                           {(() => {
                             const fuAta = allFollowUps
-                              .filter(f => f.origin_type === 'ata' && !f.is_completed)
+                              .filter(f => (f.origin_type === 'ata' || !f.origin_type) && !f.is_completed && f.ata_id)
                               .filter(f => {
                                 const fDate = new Date(f.reminder_date + 'T00:00:00');
                                 return fDate >= new Date(inicioSemana + 'T00:00:00') && fDate <= new Date(fimSemana + 'T23:59:59');
@@ -901,7 +901,7 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
                         <div className="space-y-2 pb-3">
                           {(() => {
                             const fuSp = allFollowUps
-                              .filter(f => f.origin_type === 'sprint' && !f.is_completed)
+                              .filter(f => f.origin_type === 'sprint' && !f.is_completed && f.sprint_id)
                               .filter(f => {
                                 const fDate = new Date(f.reminder_date + 'T00:00:00');
                                 return fDate >= new Date(inicioSemana + 'T00:00:00') && fDate <= new Date(fimSemana + 'T23:59:59');
