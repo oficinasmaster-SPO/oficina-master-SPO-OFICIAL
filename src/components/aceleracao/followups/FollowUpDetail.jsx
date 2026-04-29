@@ -778,10 +778,10 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
                     )}
 
                     {fusDaSemana.length > 0 && (
-                      <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl p-3">
+                      <div className="mb-4 bg-cyan-50 border border-cyan-200 rounded-xl p-3 shadow-lg">
                         <div className="flex items-start gap-2">
-                          <span className="text-lg flex-shrink-0">💡</span>
-                          <p className="text-[11px] text-amber-800 leading-relaxed">
+                          <span className="text-sm flex-shrink-0">💡</span>
+                          <p className="text-[11px] text-cyan-800 leading-relaxed">
                             Hey, temos outros <span className="font-bold">{fusDaSemana.length}</span> atendimento{fusDaSemana.length > 1 ? 's' : ''} de follow up esta semana, confira se não é possível também atendê-lo{fusDaSemana.length > 1 ? 's' : ''}!
                           </p>
                         </div>
