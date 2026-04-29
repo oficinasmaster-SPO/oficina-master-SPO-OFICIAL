@@ -91,12 +91,12 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
       if (!reminder.workshop_id) return [];
       return base44.entities.FollowUpReminder.filter(
         { workshop_id: reminder.workshop_id },
-        "reminder_date",
-        50
+        "-reminder_date",
+        100
       );
     },
     enabled: !!reminder.workshop_id,
-    staleTime: 3 * 60 * 1000,
+    staleTime: 2 * 60 * 1000,
   });
 
   const { data: atas = [] } = useQuery({
@@ -839,14 +839,16 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
                       <div className="overflow-y-auto pr-3 pl-0">
                         <p className="text-[10px] text-gray-400 font-semibold mb-2 uppercase tracking-wide sticky top-0 bg-white py-2">FUAta</p>
                         <div className="space-y-2 pb-3">
-                          {allFollowUps
-                            .filter(f => f.origin_type === 'ata' && !f.is_completed)
-                            .filter(f => {
-                              const fDate = new Date(f.reminder_date + 'T00:00:00');
-                              return fDate >= new Date(inicioSemana + 'T00:00:00') && fDate <= new Date(fimSemana + 'T23:59:59');
-                            })
-                            .sort((a, b) => new Date(a.reminder_date) - new Date(b.reminder_date))
-                            .map(f => (
+                          {(() => {
+                            const fuAta = allFollowUps
+                              .filter(f => f.origin_type === 'ata' && !f.is_completed)
+                              .filter(f => {
+                                const fDate = new Date(f.reminder_date + 'T00:00:00');
+                                return fDate >= new Date(inicioSemana + 'T00:00:00') && fDate <= new Date(fimSemana + 'T23:59:59');
+                              })
+                              .sort((a, b) => new Date(a.reminder_date) - new Date(b.reminder_date));
+                            
+                            return fuAta.length > 0 ? fuAta.map(f => (
                               <div key={f.id} className="border border-gray-100 rounded-lg p-2.5 bg-gray-50 hover:bg-gray-100 transition-colors">
                                 <div className="flex items-start gap-2 mb-2">
                                   <input
@@ -886,13 +888,10 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
                                   )}
                                 </div>
                               </div>
-                            ))}
-                          {allFollowUps.filter(f => f.origin_type === 'ata' && !f.is_completed).filter(f => {
-                            const fDate = new Date(f.reminder_date + 'T00:00:00');
-                            return fDate >= new Date(inicioSemana + 'T00:00:00') && fDate <= new Date(fimSemana + 'T23:59:59');
-                          }).length === 0 && (
-                            <p className="text-[11px] text-gray-400 italic text-center py-4">Sem FUAta esta semana</p>
-                          )}
+                            )) : (
+                              <p className="text-[11px] text-gray-400 italic text-center py-4">Sem FUAta esta semana</p>
+                            );
+                          })()}
                         </div>
                       </div>
 
@@ -900,14 +899,16 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
                       <div className="overflow-y-auto pl-3 pr-0">
                         <p className="text-[10px] text-gray-400 font-semibold mb-2 uppercase tracking-wide sticky top-0 bg-white py-2">FUSp</p>
                         <div className="space-y-2 pb-3">
-                          {allFollowUps
-                            .filter(f => f.origin_type === 'sprint' && !f.is_completed)
-                            .filter(f => {
-                              const fDate = new Date(f.reminder_date + 'T00:00:00');
-                              return fDate >= new Date(inicioSemana + 'T00:00:00') && fDate <= new Date(fimSemana + 'T23:59:59');
-                            })
-                            .sort((a, b) => new Date(a.reminder_date) - new Date(b.reminder_date))
-                            .map(f => (
+                          {(() => {
+                            const fuSp = allFollowUps
+                              .filter(f => f.origin_type === 'sprint' && !f.is_completed)
+                              .filter(f => {
+                                const fDate = new Date(f.reminder_date + 'T00:00:00');
+                                return fDate >= new Date(inicioSemana + 'T00:00:00') && fDate <= new Date(fimSemana + 'T23:59:59');
+                              })
+                              .sort((a, b) => new Date(a.reminder_date) - new Date(b.reminder_date));
+                            
+                            return fuSp.length > 0 ? fuSp.map(f => (
                               <div key={f.id} className="border border-gray-100 rounded-lg p-2.5 bg-gray-50 hover:bg-gray-100 transition-colors">
                                 <div className="flex items-start gap-2 mb-2">
                                   <input
@@ -942,13 +943,10 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
                                   </p>
                                 </div>
                               </div>
-                            ))}
-                          {allFollowUps.filter(f => f.origin_type === 'sprint' && !f.is_completed).filter(f => {
-                            const fDate = new Date(f.reminder_date + 'T00:00:00');
-                            return fDate >= new Date(inicioSemana + 'T00:00:00') && fDate <= new Date(fimSemana + 'T23:59:59');
-                          }).length === 0 && (
-                            <p className="text-[11px] text-gray-400 italic text-center py-4">Sem FUSp esta semana</p>
-                          )}
+                            )) : (
+                              <p className="text-[11px] text-gray-400 italic text-center py-4">Sem FUSp esta semana</p>
+                            );
+                          })()}
                         </div>
                       </div>
                     </div>
