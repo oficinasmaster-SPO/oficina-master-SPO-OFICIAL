@@ -186,15 +186,11 @@ export default function ControleAceleracaoView({ state }) {
             borderRadius: "1.05rem",
             background: "rgba(255,255,255,0.85)",
             backdropFilter: "blur(12px)",
-            border: "1px solid hsl(0 84% 58% / 0.6)",
-            animation: "actionContainerGlow 3200ms ease-in-out infinite",
+            border: "1px solid hsl(220 15% 82% / 0.6)",
+            boxShadow: "0 8px 32px -6px hsl(220 30% 10% / 0.22), 0 2px 8px -2px hsl(220 30% 10% / 0.12)",
           }}
         >
           <style>{`
-            @keyframes actionContainerGlow {
-              0%, 100% { box-shadow: 0 0 0 1px hsl(0 84% 58% / 0.55), 0 0 3px 0 hsl(0 84% 58% / 0.55); }
-              50%       { box-shadow: 0 0 0 1px hsl(0 84% 58% / 0.80), 0 0 5px 0 hsl(0 84% 58% / 0.85); }
-            }
             @keyframes actionShine {
               0%       { transform: translateX(-120%); }
               60%, 100%{ transform: translateX(220%); }
