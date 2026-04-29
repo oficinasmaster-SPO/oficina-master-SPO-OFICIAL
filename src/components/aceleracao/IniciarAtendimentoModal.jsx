@@ -1628,58 +1628,56 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
             userSelect: 'none',
           }}
         >
-          {/* Pino vermelho */}
-          <div style={{ position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)', zIndex: 2, width: '22px', height: '22px' }}>
-            <div style={{ width: '14px', height: '14px', borderRadius: '50%', background: 'radial-gradient(circle at 35% 35%, #ff6b6b, #c0392b)', margin: '0 auto', boxShadow: '0 2px 4px rgba(0,0,0,0.4)' }} />
-            <div style={{ width: '2px', height: '10px', background: '#888', margin: '-2px auto 0', borderRadius: '1px' }} />
-          </div>
+          {/* Clipe de papel */}
+             <div style={{ position: 'absolute', top: '-8px', right: '20px', zIndex: 2, width: '40px', height: '40px' }}>
+               <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+                 {/* Clipe em coral */}
+                 <path d="M24 8C24 8 24 12 24 20C24 28 20 32 16 32C12 32 8 28 8 20C8 12 12 8 16 8C20 8 24 12 24 20" stroke="#FF8A65" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                 <path d="M28 12C28 12 32 12 36 12C40 12 44 16 44 20C44 24 40 28 36 28C32 28 28 24 28 20C28 16 32 12 36 12C40 12 44 16 44 20" stroke="#FF8A65" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+               </svg>
+             </div>
 
-          {/* Corpo do post-it */}
-          <div style={{ background: 'linear-gradient(135deg, #fef08a 0%, #fde047 60%, #facc15 100%)', borderRadius: '2px', padding: '20px 14px 20px 14px', position: 'relative', minHeight: '120px' }}>
-            {/* Canto dobrado */}
-            <div style={{ position: 'absolute', bottom: 0, right: 0, width: '28px', height: '28px', background: 'linear-gradient(225deg, #ca8a04 50%, transparent 50%)', borderRadius: '0 0 2px 0' }} />
-
-            {/* Linhas decorativas */}
-            {[36, 50, 64, 78, 92].map(top => (
-              <div key={top} style={{ position: 'absolute', top: `${top}px`, left: '14px', right: '14px', height: '1px', background: 'rgba(0,0,0,0.06)' }} />
-            ))}
+             {/* Corpo do post-it */}
+             <div style={{ background: 'linear-gradient(135deg, #87CEEB 0%, #6DD5ED 100%)', border: '4px solid #003d7a', borderRadius: '12px', padding: '20px 14px 20px 14px', position: 'relative', minHeight: '120px', boxShadow: '0 4px 12px rgba(0, 61, 122, 0.2)' }}>
+               {/* Decoração de canto inferior direito */}
+               <div style={{ position: 'absolute', bottom: '-8px', right: '-8px', width: '50px', height: '50px', background: '#FF8A65', borderRadius: '8px', opacity: 0.3, zIndex: -1, transform: 'rotate(15deg)' }} />
 
             {/* Header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-              <span style={{ fontSize: '10px', fontWeight: '700', color: '#92400e', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Dica de IA</span>
+              <span style={{ fontSize: '10px', fontWeight: '700', color: '#003d7a', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Dica de IA</span>
               <div style={{ display: 'flex', gap: '4px' }}>
                 <button
                   onClick={gerarDicaIA}
                   disabled={carregandoDica}
                   title="Gerar nova dica"
-                  style={{ width: '20px', height: '20px', borderRadius: '50%', border: 'none', background: 'rgba(0,0,0,0.08)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: carregandoDica ? 0.4 : 1 }}
+                  style={{ width: '20px', height: '20px', borderRadius: '50%', border: 'none', background: 'rgba(0,61,122,0.1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: carregandoDica ? 0.4 : 1 }}
                 >
-                  <svg className={carregandoDica ? 'animate-spin' : ''} width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="#92400e" strokeWidth={2.5}>
+                  <svg className={carregandoDica ? 'animate-spin' : ''} width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="#003d7a" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                   </svg>
                 </button>
                 <button
                   onClick={() => setPostItMinimizado(v => !v)}
                   title={postItMinimizado ? 'Expandir' : 'Minimizar'}
-                  style={{ width: '20px', height: '20px', borderRadius: '50%', border: 'none', background: 'rgba(0,0,0,0.08)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  style={{ width: '20px', height: '20px', borderRadius: '50%', border: 'none', background: 'rgba(0,61,122,0.1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 >
-                  <span style={{ fontSize: '12px', color: '#92400e', lineHeight: 1 }}>{postItMinimizado ? '+' : '−'}</span>
+                  <span style={{ fontSize: '12px', color: '#003d7a', lineHeight: 1 }}>{postItMinimizado ? '+' : '−'}</span>
                 </button>
               </div>
             </div>
 
             {/* Conteúdo */}
             {!postItMinimizado && (
-              <div style={{ fontSize: '11px', color: '#1c1917', lineHeight: '1.5', position: 'relative', zIndex: 1 }}>
+              <div style={{ fontSize: '11px', color: '#003d7a', lineHeight: '1.5', position: 'relative', zIndex: 1 }}>
                 {carregandoDica ? (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ca8a04' }} />
-                    <span style={{ color: '#92400e', fontStyle: 'italic' }}>Analisando histórico...</span>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#003d7a' }} />
+                    <span style={{ color: '#003d7a', fontStyle: 'italic' }}>Analisando histórico...</span>
                   </div>
                 ) : dicaIA ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>{renderMarkdown(dicaIA)}</div>
                 ) : (
-                  <span style={{ color: '#92400e', fontStyle: 'italic' }}>Clique em ↺ para gerar uma dica.</span>
+                  <span style={{ color: '#003d7a', fontStyle: 'italic' }}>Clique em ↺ para gerar uma dica.</span>
                 )}
               </div>
             )}
