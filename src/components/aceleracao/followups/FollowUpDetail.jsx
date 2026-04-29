@@ -76,6 +76,7 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
   const [fusSelecionados, setFusSelecionados] = useState([]);
   const [dicaIA, setDicaIA] = useState(null);
   const [carregandoDica, setCarregandoDica] = useState(false);
+  const [showAllAtas, setShowAllAtas] = useState(false);
 
   const isOverdue = !reminder.is_completed && reminder.reminder_date < today;
   const daysOver = reminder.reminder_date
@@ -491,12 +492,15 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
               {/* ATA history */}
               {atas.length > 0 && (
                 <div className="bg-white border border-gray-200 rounded-xl p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <p className="text-[10px] text-gray-400 uppercase tracking-wide font-semibold">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-base font-bold text-gray-900 uppercase">
                       Histórico de ATAs ({atas.length})
-                    </p>
-                    <button className="text-xs text-blue-600 hover:underline flex items-center gap-1">
-                      Ver todas <ChevronRight className="w-3 h-3" />
+                    </h3>
+                    <button 
+                      onClick={() => setShowAllAtas(true)}
+                      className="text-sm font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 transition-colors"
+                    >
+                      Ver todas <ChevronRight className="w-4 h-4" />
                     </button>
                   </div>
                   <div className="space-y-2">
@@ -539,6 +543,59 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
                     })}
                   </div>
                 </div>
+              )}
+
+              {/* Modal Ver Todas as ATAs */}
+              {showAllAtas && (
+                <Dialog open={showAllAtas} onOpenChange={setShowAllAtas}>
+                  <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>Todas as ATAs - {reminder.workshop_name}</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-2">
+                      {atas.map(ata => {
+                        const dateStr = ata.meeting_date || ata.created_date;
+                        const isOrigin = ata.id === reminder.ata_id;
+                        const tipo = (ata.tipo_aceleracao || ata.tipo_atendimento || "ata").toLowerCase();
+                        const emoji = ATA_ICONS[tipo] || "📄";
+                        return (
+                          <button
+                            key={ata.id}
+                            onClick={() => {
+                              setSelectedAta(ata);
+                              setShowAllAtas(false);
+                            }}
+                            className={`w-full flex items-start gap-2.5 px-4 py-3 rounded-lg border transition-colors text-left ${
+                              isOrigin
+                                ? "border-green-300 bg-green-50 hover:bg-green-100"
+                                : "border-gray-100 bg-gray-50 hover:bg-gray-100"
+                            }`}
+                          >
+                            <span className="text-base flex-shrink-0 mt-0.5">{emoji}</span>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1.5 flex-wrap mb-1">
+                                <span className={`text-sm font-semibold ${isOrigin ? "text-green-800" : "text-gray-800"}`}>
+                                  {ata.tipo_aceleracao || ata.tipo_atendimento || "ATA"}
+                                </span>
+                                {isOrigin && (
+                                  <span className="text-[9px] font-bold text-green-700 bg-green-200 rounded px-1.5 py-0.5">ORIGEM</span>
+                                )}
+                              </div>
+                              {ata.proximos_passos && (
+                                <p className="text-sm text-gray-600 mb-1">{ata.proximos_passos}</p>
+                              )}
+                            </div>
+                            {dateStr && (
+                              <span className="text-xs text-gray-400 flex-shrink-0">
+                                {format(new Date(dateStr), "dd/MM/yyyy")}
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </DialogContent>
+                </Dialog>
               )}
             </div>
 
