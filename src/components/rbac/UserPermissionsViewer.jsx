@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { User, Shield, Search, Eye, AlertTriangle, CheckCircle2, Lock, Users, Building2, UserCheck } from "lucide-react";
 import { systemRoles } from "@/components/lib/systemRoles";
 import { toast } from "sonner";
+import UserPermissionsEditor from "./UserPermissionsEditor";
 
 export default function UserPermissionsViewer() {
   const [searchEmail, setSearchEmail] = useState("");
@@ -283,157 +284,12 @@ export default function UserPermissionsViewer() {
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
-            {summary.isAdmin ? (
-              <Alert className="bg-red-50 border-red-200">
-                <AlertTriangle className="w-4 h-4 text-red-600" />
-                <AlertDescription className="text-red-900">
-                  <strong>Administrador do Sistema:</strong> Este usuário tem acesso total e irrestrito a todas as funcionalidades, dados e configurações da plataforma.
-                </AlertDescription>
-              </Alert>
-            ) : (
-              <>
-                {/* Perfil Principal */}
-                <div className="border rounded-lg p-4 bg-purple-50">
-                  <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                    <Shield className="w-4 h-4 text-purple-600" />
-                    Perfil Principal
-                  </h3>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-600">Nome:</span>
-                      <Badge variant="outline" className="bg-white">
-                        {summary.profileName}
-                      </Badge>
-                    </div>
-                    {summary.profileType && (
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-600">Tipo:</span>
-                        <Badge variant="outline" className="bg-white">
-                          {summary.profileType === 'interno' ? 'Interno' : 'Externo'}
-                        </Badge>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Job Roles */}
-                {summary.jobRoles.length > 0 && (
-                  <div className="border rounded-lg p-4">
-                    <h3 className="font-semibold text-gray-900 mb-3">
-                      Funções Vinculadas ({summary.jobRoles.length})
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                      {summary.jobRoles.map((jr) => (
-                        <Badge key={jr} variant="outline" className="bg-blue-50">
-                          {jr}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* System Roles */}
-                {summary.allRoles.length > 0 && (
-                  <div className="border rounded-lg p-4">
-                    <h3 className="font-semibold text-gray-900 mb-3">
-                      Permissões do Sistema ({summary.allRoles.length})
-                    </h3>
-                    <div className="space-y-4">
-                      {systemRoles.map((module) => {
-                        const moduleRoles = module.roles.filter(r => 
-                          summary.allRoles.includes(r.id)
-                        );
-                        
-                        if (moduleRoles.length === 0) return null;
-
-                        const Icon = module.icon;
-                        return (
-                          <div key={module.id} className="pl-4 border-l-2 border-purple-200">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Icon className="w-4 h-4 text-purple-600" />
-                              <h4 className="font-medium text-gray-800">{module.name}</h4>
-                              <Badge variant="outline" className="text-xs">
-                                {moduleRoles.length} permissões
-                              </Badge>
-                            </div>
-                            <div className="space-y-1">
-                              {moduleRoles.map((role) => (
-                                <div key={role.id} className="flex items-start gap-2 text-sm">
-                                  <CheckCircle2 className="w-3.5 h-3.5 text-green-600 mt-0.5 flex-shrink-0" />
-                                  <div>
-                                    <p className="font-medium text-gray-700">{role.name}</p>
-                                    <p className="text-xs text-gray-500">{role.description}</p>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {/* Custom Roles */}
-                {summary.customRoles.length > 0 && (
-                  <div className="border rounded-lg p-4 bg-amber-50">
-                    <h3 className="font-semibold text-gray-900 mb-3">
-                      Roles Customizadas ({summary.customRoles.length})
-                    </h3>
-                    <div className="space-y-2">
-                      {summary.customRoles.map((cr) => (
-                        <div key={cr.id} className="bg-white p-3 rounded border">
-                          <p className="font-medium text-gray-900">{cr.name}</p>
-                          {cr.description && (
-                            <p className="text-sm text-gray-600 mt-1">{cr.description}</p>
-                          )}
-                          {cr.system_roles && cr.system_roles.length > 0 && (
-                            <div className="mt-2 flex flex-wrap gap-1">
-                              {cr.system_roles.slice(0, 5).map((roleId) => (
-                                <Badge key={roleId} variant="outline" className="text-xs">
-                                  {roleId}
-                                </Badge>
-                              ))}
-                              {cr.system_roles.length > 5 && (
-                                <Badge variant="outline" className="text-xs">
-                                  +{cr.system_roles.length - 5} mais
-                                </Badge>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Módulos Permitidos */}
-                {Array.isArray(summary.modules) && summary.modules.length > 0 && (
-                  <div className="border rounded-lg p-4">
-                    <h3 className="font-semibold text-gray-900 mb-3">
-                      Módulos/Páginas Acessíveis ({summary.modules.length})
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                      {summary.modules.map((mod) => (
-                        <Badge key={mod} variant="outline" className="bg-green-50">
-                          {mod}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Sem Permissões */}
-                {summary.allRoles.length === 0 && summary.customRoles.length === 0 && (
-                  <Alert>
-                    <Lock className="w-4 h-4" />
-                    <AlertDescription>
-                      Este usuário não possui permissões configuradas. Configure um perfil ou role customizada para liberar acessos.
-                    </AlertDescription>
-                  </Alert>
-                )}
-              </>
-            )}
+            <UserPermissionsEditor
+              user={selectedUser}
+              employees={employees}
+              profiles={profiles}
+              customRoles={customRoles}
+            />
           </CardContent>
         </Card>
       )}
