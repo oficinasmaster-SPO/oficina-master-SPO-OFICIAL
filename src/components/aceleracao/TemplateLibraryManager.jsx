@@ -50,6 +50,25 @@ function useDynamicMissionsList() {
   return missionsList;
 }
 
+/**
+ * Hook para carregar templates de sprint
+ */
+function useSprintTemplates() {
+  const { data: templates = [] } = useQuery({
+    queryKey: ['sprint_templates_entities'],
+    queryFn: async () => {
+      try {
+        return await base44.entities.SprintTemplate.list('-updated_date', 100);
+      } catch (error) {
+        console.error('Erro ao carregar sprint templates:', error);
+        return [];
+      }
+    },
+    staleTime: 30 * 1000,
+  });
+  return templates;
+}
+
 function MissionPicker({ selected = [], onChange }) {
   const missionsList = useDynamicMissionsList();
   const toggle = (id) => {
@@ -146,17 +165,12 @@ export default function TemplateLibraryManager() {
       return;
     }
 
-    const countTotalTasks = (phases) =>
-      (phases || []).reduce((acc, phase) => acc + (phase.tasks?.length || 0), 0);
 
-    const countCompletedTasks = (phases) =>
-      (phases || []).reduce((acc, phase) =>
-        acc + (phase.tasks?.filter(t => t.status === 'done').length || 0), 0);
 
-    // Deduplica trilhas por missões selecionadas
+    // Deduplica trilhas por missões selecionadas (P2: usar join em vez de JSON.stringify)
     const trailsMap = new Map();
     allTrails.forEach(trail => {
-      const key = JSON.stringify([...(trail.missoes_selecionadas || [])].sort());
+      const key = [...(trail.missoes_selecionadas || [])].sort().join(',');
       if (!trailsMap.has(key)) {
         trailsMap.set(key, {
           id: trail.id,
@@ -194,8 +208,6 @@ export default function TemplateLibraryManager() {
           end_date: sprint.end_date,
           progress_percentage: sprint.progress_percentage,
           status: sprint.status,
-          total_tasks: countTotalTasks(sprint.phases),
-          completed_tasks: countCompletedTasks(sprint.phases),
         });
       }
     });
