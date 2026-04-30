@@ -30,7 +30,7 @@ export default function SprintPhaseProgress({ phases = [], currentPhaseIdx = -1,
         const isCompleted = phase.status === "completed";
 
         return (
-          <React.Fragment key={idx}>
+          <React.Fragment key={`${phase.name}-${idx}`}>
             <div
               className={cn(
                 "flex flex-col items-center gap-1.5 shrink-0 cursor-pointer group transition-transform duration-150",

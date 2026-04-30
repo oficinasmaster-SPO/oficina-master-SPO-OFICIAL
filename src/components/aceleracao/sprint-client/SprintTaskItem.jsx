@@ -17,12 +17,14 @@ export default function SprintTaskItem({ task, index, canComplete, canAddNotes, 
   const [evidenceNote, setEvidenceNote] = useState(task.evidence_note || "");
   const [uploading, setUploading] = useState(false);
 
-  // Sincronizar estado local APENAS quando a task em si troca (nova tarefa/fase)
+  // Sincronizar estado local quando a task troca (usa description + index como chave estável)
+  // Inclui task.evidence_note para refletir atualizações externas (ex: salvo por outro usuário)
   useEffect(() => {
     setEvidenceNote(task.evidence_note || "");
     setShowEvidenceForm(false);
     setShowDetails(false);
-  }, [task.description, index]);
+    setShowInstructionsModal(false);
+  }, [task.description, index, task.evidence_note]);
 
   const isDone = task.status === "done";
 

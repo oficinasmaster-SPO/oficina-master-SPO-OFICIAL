@@ -44,13 +44,19 @@ export default function SprintPhaseDetailModalRedesigned({
   const queryClient = useQueryClient();
   const [modalOpen, setModalOpen] = useState(true);
   const isSavingRef = useRef(false);
+  const isMountedRef = useRef(true);
 
-  // Sempre buscar dados frescos do banco para evitar uso de cache stale
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => { isMountedRef.current = false; };
+  }, []);
+
+  // Buscar dados frescos do banco — staleTime curto para evitar stale closure sem flood de requests
   const { data: freshSprint } = useQuery({
     queryKey: ['sprint-detail', sprintProp?.id],
     queryFn: () => base44.entities.ConsultoriaSprint.get(sprintProp.id),
     enabled: !!sprintProp?.id,
-    staleTime: 0,
+    staleTime: 5 * 1000, // 5s — suficiente para não refetch em cada render
     refetchOnWindowFocus: false,
   });
 
@@ -87,13 +93,16 @@ export default function SprintPhaseDetailModalRedesigned({
   };
 
   const persistPhases = async (updatedPhases) => {
+    if (isSavingRef.current) return false; // Guard duplo-save
     isSavingRef.current = true;
     setSaving(true);
+
     const totalTasks = updatedPhases.reduce((sum, p) => sum + (p.tasks?.length || 0), 0);
     const doneTasks = updatedPhases.reduce((sum, p) => sum + (p.tasks?.filter(t => t.status === "done").length || 0), 0);
     const taskProgress = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
     const allCompleted = updatedPhases.every(p => p.status === "completed");
 
+    let success = false;
     try {
       await base44.entities.ConsultoriaSprint.update(sprint.id, {
         phases: updatedPhases,
@@ -101,32 +110,24 @@ export default function SprintPhaseDetailModalRedesigned({
         status: allCompleted ? "completed" : "in_progress",
         last_activity_date: new Date().toISOString(),
       });
-      // Invalidar query local do modal primeiro para forçar re-fetch imediato
-      // NÃO usar await aqui para evitar bloqueio e fechamento automático
-      // Invalidar apenas o sprint atual imediatamente; demais queries em background com delay
-      // para evitar flood de requests e 429 Rate Limit que quebra a sessão do workshop
       queryClient.invalidateQueries({ queryKey: ['sprint-detail', sprint.id] });
       setTimeout(() => {
+        if (!isMountedRef.current) return;
         queryClient.invalidateQueries({ queryKey: ['dashboard-sprints'], exact: false });
-        queryClient.invalidateQueries({ queryKey: ['sprints'], exact: false });
         queryClient.invalidateQueries({ queryKey: ['sprints-client'], exact: false });
-        queryClient.invalidateQueries({ queryKey: ['client-sprints'], exact: false });
         queryClient.invalidateQueries({ queryKey: ['sprints-reais'], exact: false });
         queryClient.invalidateQueries({ queryKey: ['active-sprint-widget'], exact: false });
-        queryClient.invalidateQueries({ queryKey: ['ConsultoriaSprint'], exact: false });
       }, 1500);
       toast.success("Alteração salva com sucesso!");
-      return true;
+      success = true;
     } catch (error) {
       console.error("Erro ao salvar:", error);
       toast.error("Erro ao salvar fase");
-      return false;
     } finally {
-      setSaving(false);
-      // Libera o bloqueio após um tick para garantir que o useEffect não rode
-      // imediatamente após o invalidateQueries retornar
-      setTimeout(() => { isSavingRef.current = false; }, 500);
+      if (isMountedRef.current) setSaving(false);
+      setTimeout(() => { isSavingRef.current = false; }, 200);
     }
+    return success;
   };
 
   const handleSave = async () => {
@@ -180,17 +181,17 @@ export default function SprintPhaseDetailModalRedesigned({
       };
       const ok = await persistPhases(updatedPhases);
       if (ok) {
-        toast.success("Fase aprovada!");
-        base44.functions.invoke("notifySprintPhaseChange", {
-          sprint_id: sprint.id,
-          phase_name: currentPhase.name,
-          action: "approved",
-          feedback: feedback || "",
-        }).catch(() => {});
-        // Navegar sem fechar o modal (será fechado manualmente pelo usuário)
-        if (canGoForward) {
-          onNavigateToPhase(phaseIndex + 1);
-        } else if (onSaved) {
+      toast.success("Fase aprovada!");
+      base44.functions.invoke("notifySprintPhaseChange", {
+        sprint_id: sprint.id,
+        phase_name: currentPhase.name,
+        action: "approved",
+        feedback: feedback || "",
+      }).catch(() => {});
+      // canGoForward é declarado abaixo mas só usado após o render — safe
+      if (phaseIndex < phases.length - 1) {
+        onNavigateToPhase(phaseIndex + 1);
+      } else if (onSaved) {
           // Só chamar onSaved se explicitamente necessário
           onSaved();
         }
@@ -246,9 +247,9 @@ export default function SprintPhaseDetailModalRedesigned({
       ...((!wasDone) ? { completed_by_role: "consultor", completed_at: new Date().toISOString() } : { completed_by_role: null, completed_at: null }),
     };
     setTasks(updated);
-    // Auto-persist immediately — usa livePhases para garantir tasks locais (com instructions/link_url)
-    const updatedPhases = livePhases.map((p, i) =>
-      i === phaseIndex ? { ...p, tasks: updated } : p
+    // BUG FIX: livePhases é declarado ABAIXO — construir updatedPhases diretamente
+    const updatedPhases = phases.map((p, i) =>
+      i === phaseIndex ? { ...p, status, notes, tasks: updated } : p
     );
     await persistPhases(updatedPhases);
   };
@@ -265,9 +266,9 @@ export default function SprintPhaseDetailModalRedesigned({
       video_url: originalTask.video_url,
     };
     setTasks(updated);
-    // Auto-persist evidence — usa livePhases para preservar instructions/link_url
-    const updatedPhases = livePhases.map((p, i) =>
-      i === phaseIndex ? { ...p, tasks: updated } : p
+    // BUG FIX: livePhases é declarado ABAIXO — construir updatedPhases diretamente
+    const updatedPhases = phases.map((p, i) =>
+      i === phaseIndex ? { ...p, status, notes, tasks: updated } : p
     );
     await persistPhases(updatedPhases);
     toast.success("Evidência salva!");

@@ -54,16 +54,25 @@ export default function SprintClientModal({ sprint, user, workshop, open, onClos
     }
   }, [sprint?.id]);
 
+  const animationTimerRef = React.useRef(null);
   const navigatePhase = (direction) => {
     const nextIdx = direction === "next" ? currentPhaseIdx + 1 : currentPhaseIdx - 1;
     if (nextIdx < 0 || nextIdx >= phases.length) return;
     setSlideDirection(direction === "next" ? "left" : "right");
     setIsAnimating(true);
-    setTimeout(() => {
+    if (animationTimerRef.current) clearTimeout(animationTimerRef.current);
+    animationTimerRef.current = setTimeout(() => {
       setCurrentPhaseIdx(nextIdx);
       setIsAnimating(false);
     }, 200);
   };
+
+  // Cleanup timers on unmount to prevent memory leaks
+  React.useEffect(() => {
+    return () => {
+      if (animationTimerRef.current) clearTimeout(animationTimerRef.current);
+    };
+  }, []);
 
   const saveMutation = useMutation({
     mutationFn: async (updatedPhases) => {
@@ -92,6 +101,7 @@ export default function SprintClientModal({ sprint, user, workshop, open, onClos
         queryClient.invalidateQueries({ queryKey: ["dashboard-sprints"], exact: false });
         queryClient.invalidateQueries({ queryKey: ["sprints-reais"], exact: false });
       }, 1500);
+      // Nota: setTimeout acima é fire-and-forget (queryClient é estável), sem risco de leak
     },
     onError: () => {
       savingRef.current = false;
@@ -182,14 +192,25 @@ export default function SprintClientModal({ sprint, user, workshop, open, onClos
   }, [currentPhaseIdx, phase.notes]);
 
   const [isClosing, setIsClosing] = useState(false);
+  const closeTimerRef = React.useRef(null);
 
   const handleClose = () => {
+    // Guard: não fechar durante save em andamento para evitar perda de dados
+    if (savingRef.current) return;
     setIsClosing(true);
-    setTimeout(() => {
+    if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+    closeTimerRef.current = setTimeout(() => {
       setIsClosing(false);
-      onClose(false);
+      onClose();
     }, 350);
   };
+
+  // Cleanup close timer on unmount
+  React.useEffect(() => {
+    return () => {
+      if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+    };
+  }, []);
 
   if (!sprint) return null;
 

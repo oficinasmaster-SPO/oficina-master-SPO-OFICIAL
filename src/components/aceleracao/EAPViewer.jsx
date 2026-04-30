@@ -105,7 +105,7 @@ export default function EAPViewer({ trilhas = [], sprints = [], tarefas = [], wo
         })
       };
     });
-  }, [trilhasArray, sprintsArray, tarefasArray]);
+  }, [trilhasArray, sprintsArray]);
 
   // Toggle functions
   const toggleMissao = (trilhaId) => {

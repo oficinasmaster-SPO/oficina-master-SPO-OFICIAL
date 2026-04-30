@@ -23,16 +23,18 @@ export default function SprintClientSection({ workshopId, user, workshop, sprint
       return Array.isArray(result) ? result : [];
     },
     enabled: !!workshopId && !sprintsExternal,
-    staleTime: 30 * 1000,
-    refetchOnWindowFocus: false,
+    staleTime: 15 * 1000,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
   });
 
   const sprints = sprintsExternal || sprintsLocal;
 
   // Sincronizar com mudanças em tempo real via subscribe (sem polling)
   // Só subscribir se não recebemos sprints externos (o pai já faz isso)
+  const hasExternalSprints = !!sprintsExternal;
   useEffect(() => {
-    if (!workshopId || sprintsExternal) return;
+    if (!workshopId || hasExternalSprints) return;
     
     const unsubscribe = base44.entities.ConsultoriaSprint.subscribe((event) => {
       if (event.data?.workshop_id === workshopId) {
@@ -41,7 +43,7 @@ export default function SprintClientSection({ workshopId, user, workshop, sprint
     });
 
     return unsubscribe;
-  }, [workshopId, queryClient, !!sprintsExternal]);
+  }, [workshopId, queryClient, hasExternalSprints]);
 
   // Always derive selectedSprint from fresh query data
   const selectedSprint = selectedSprintId ? sprints.find(s => s.id === selectedSprintId) || null : null;

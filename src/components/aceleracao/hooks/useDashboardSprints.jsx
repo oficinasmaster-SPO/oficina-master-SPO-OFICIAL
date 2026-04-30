@@ -9,8 +9,6 @@ export default function useDashboardSprints(workshops = []) {
   // stable string key to avoid re-creating queries when array reference changes
   const workshopIdsKey = workshopIds.join(',');
 
-  const workshopIdSet = useMemo(() => new Set(workshopIdsKey.split(',').filter(Boolean)), [workshopIdsKey]);
-
   const { data: sprints = [], isLoading, refetch } = useQuery({
     queryKey: ['dashboard-sprints', workshopIdsKey],
     queryFn: async () => {
@@ -29,16 +27,19 @@ export default function useDashboardSprints(workshops = []) {
   });
 
   // Subscribe em tempo real: qualquer sprint de qualquer workshop gerenciado invalida o cache
+  // Dep: workshopIdsKey (string) — Set não tem referential equality e causaria reinit a cada render
   useEffect(() => {
-    if (!workshopIdSet.size) return;
+    const ids = workshopIdsKey.split(',').filter(Boolean);
+    if (!ids.length) return;
+    const idSet = new Set(ids);
     const unsubscribe = base44.entities.ConsultoriaSprint.subscribe((event) => {
-      if (event.data?.workshop_id && workshopIdSet.has(event.data.workshop_id)) {
+      if (event.data?.workshop_id && idSet.has(event.data.workshop_id)) {
         queryClient.invalidateQueries({ queryKey: ['dashboard-sprints'] });
         queryClient.invalidateQueries({ queryKey: ['active-sprint-widget'] });
       }
     });
     return unsubscribe;
-  }, [workshopIdsKey, queryClient, workshopIdSet]);
+  }, [workshopIdsKey, queryClient]);
 
   const workshopMap = useMemo(
     () => Object.fromEntries(workshops.map(w => [w.id, w])),

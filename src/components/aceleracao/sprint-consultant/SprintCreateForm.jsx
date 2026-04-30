@@ -155,7 +155,7 @@ export default function SprintCreateForm({ open, onClose, workshops = [], user, 
 
     const missionId = (form.mission_id && form.mission_id !== "custom") ? form.mission_id : "custom";
 
-    const sprintCriada = await base44.entities.ConsultoriaSprint.create({
+    await base44.entities.ConsultoriaSprint.create({
       workshop_id: form.workshop_id,
       cronograma_template_id: templateId,
       mission_id: missionId,
