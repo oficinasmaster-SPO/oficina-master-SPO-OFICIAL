@@ -318,7 +318,8 @@ export default function Layout({ children, currentPageName }) {
                     {showLoading ? <WheelLoader size="lg" text="Carregando dados..." /> : null}
                   </div>
                 ) : (
-                  isAuthenticated && !isPublicPage && !isPendingOnboarding && !workshopId && !isGlobalAdminPage && !isPageWithoutWorkshopRequired ? (
+                  // FIX-02: Mostrar "Nenhuma oficina" apenas se: (a) não carregando, (b) sem workshop, E (c) sem ID no perfil
+                  isAuthenticated && !isPublicPage && !isPendingOnboarding && !workshopId && !userHasWorkshopId && !isGlobalAdminPage && !isPageWithoutWorkshopRequired ? (
                     <div className="min-h-[60vh] flex flex-col items-center justify-center text-center p-6">
                       <AlertCircle className="w-12 h-12 text-amber-500 mb-4" />
                       <h2 className="text-xl font-bold text-gray-900">Nenhuma oficina vinculada</h2>

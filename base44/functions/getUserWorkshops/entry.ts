@@ -57,6 +57,9 @@ Deno.serve(withAuth(async (req, { base44, user }) => {
         let availableWorkshops = [];
         const seenIds = new Set();
 
+        // FIX-01: Adicionar workshop do perfil como fallback se nenhum for encontrado
+        const userProfileWorkshopId = user.data?.workshop_id || user.workshop_id;
+
         const [owned, partnered] = await Promise.all([
             base44.entities.Workshop.filter({ owner_id: user.id }),
             base44.entities.Workshop.filter({ partner_ids: user.id })
@@ -107,11 +110,30 @@ Deno.serve(withAuth(async (req, { base44, user }) => {
             }
         }
 
+        // FIX-01: Fallback final — se nenhum workshop foi encontrado mas o usuário tem um no perfil, buscar diretamente
+        if (availableWorkshops.length === 0 && userProfileWorkshopId && !seenIds.has(userProfileWorkshopId)) {
+            try {
+                const profileWorkshop = await base44.asServiceRole.entities.Workshop.get(userProfileWorkshopId).catch(() => null);
+                if (profileWorkshop) {
+                    availableWorkshops.push(profileWorkshop);
+                    seenIds.add(profileWorkshop.id);
+                    console.warn(`FIX-01: Adicionado workshop do perfil ${userProfileWorkshopId} como fallback`);
+                }
+            } catch (e) {
+                console.warn(`FIX-01: Falha ao buscar workshop do perfil:`, e.message);
+            }
+        }
+
         availableWorkshops.sort((a, b) => {
             if (!a.company_id && b.company_id) return -1;
             if (a.company_id && !b.company_id) return 1;
             return (a.name || '').localeCompare(b.name || '');
         });
+
+        // FIX-06: Debug logging
+        if (availableWorkshops.length === 0) {
+            console.warn(`FIX-06: getUserWorkshops retornou vazio para user ${user.id} (${user.email})`);
+        }
 
         // Salvar no cache
         setCachedData(user.id, availableWorkshops);

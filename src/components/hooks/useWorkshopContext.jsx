@@ -52,6 +52,7 @@ export function useWorkshopContext() {
   });
 
   // 2. Determina o workshop atual DE FORMA SÍNCRONA baseado na lista 'available'
+  // FIX-03: Priorizar selectedCompanyId > available > profile.workshop_id
   let userWorkshop = null;
   let missingWorkshopIdToFetch = null;
 
@@ -60,14 +61,16 @@ export function useWorkshopContext() {
     if (!userWorkshop) missingWorkshopIdToFetch = adminWorkshopId;
   } else if (selectedCompanyId) {
     userWorkshop = available.find(w => w.id === selectedCompanyId);
+    // FIX-03: Se selectedCompanyId não está em available, buscar mesmo que seja diferente do perfil
     if (!userWorkshop) missingWorkshopIdToFetch = selectedCompanyId;
   } else if (available.length > 0) {
     userWorkshop = available.find(w => !w.company_id) || available[0];
   } else if (tenantUser) {
+    // FIX-03: Se BFF retornou vazio, tentar profile.workshop_id como fallback
     const userWorkshopId = tenantUser?.data?.workshop_id || tenantUser?.workshop_id;
     if (userWorkshopId) {
-      userWorkshop = available.find(w => w.id === userWorkshopId);
-      if (!userWorkshop) missingWorkshopIdToFetch = userWorkshopId;
+      // Sempre buscar do perfil se BFF não retornou nada
+      missingWorkshopIdToFetch = userWorkshopId;
     }
   }
 
@@ -93,7 +96,9 @@ export function useWorkshopContext() {
     enabled: !!missingWorkshopIdToFetch && !isAvailableLoading,
     staleTime: 10 * 60 * 1000,
     gcTime: 15 * 60 * 1000,
-    retry: 1, // Apenas 1 retry para não ficar em loop
+    // FIX-04: Retry mais agressivo para fallback do perfil (RLS pode estar bloqueando)
+    retry: 3,
+    retryDelay: (attempt) => Math.min(1000 * Math.pow(2, attempt), 5000),
     refetchOnWindowFocus: false,
     refetchOnMount: false,
   });
@@ -104,6 +109,21 @@ export function useWorkshopContext() {
   // Se o fetch do workshop individual terminou (mesmo sem resultado), não estamos mais loading
   const isFetchingMissing = !!missingWorkshopIdToFetch && isFetchedLoading && !userWorkshop;
   const isLoading = isTenantLoading || isAvailableLoading || isFetchingMissing;
+
+  // FIX-05: Debug logging para auxiliar diagnóstico
+  useEffect(() => {
+    if (!workshop && !isLoading) {
+      console.warn('DEBUG [useWorkshopContext]:', {
+        available: available.length,
+        selectedCompanyId,
+        missingWorkshopIdToFetch,
+        fetchedWorkshop: fetchedWorkshop?.id || null,
+        userProfileWorkshopId: tenantUser?.data?.workshop_id || tenantUser?.workshop_id || null,
+        isLoadingBFF: isAvailableLoading,
+        isLoadingFallback: isFetchedLoading,
+      });
+    }
+  }, [workshop, isLoading, available, selectedCompanyId, missingWorkshopIdToFetch, fetchedWorkshop, tenantUser, isAvailableLoading, isFetchedLoading]);
 
   const setCurrentWorkshop = (id) => {
     if (changeCompany) {
