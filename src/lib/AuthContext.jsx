@@ -124,12 +124,24 @@ export const AuthProvider = ({ children }) => {
       setIsLoadingAuth(false);
       setIsAuthenticated(false);
       
-      // If user auth fails, it might be an expired token
-      if (error.status === 401 || error.status === 403) {
+      // SYNC-03: distinguir 403 de sessão expirada vs 403 de rate limit ou permissão
+      // Só deslogar em 401 ou em 403 com reason: auth_required
+      if (error.status === 401) {
         setAuthError({
           type: 'auth_required',
           message: 'Authentication required'
         });
+      } else if (error.status === 403) {
+        // Verificar se é realmente problema de auth ou apenas permissão/rate limit
+        const reason = error.data?.extra_data?.reason || error.data?.error || '';
+        const isAuthError = reason === 'auth_required' || reason === 'token_expired' || reason === 'invalid_token';
+        if (isAuthError) {
+          setAuthError({
+            type: 'auth_required',
+            message: 'Authentication required'
+          });
+        }
+        // 403 de rate limit ou admin-only: ignorar — não deslogar
       }
     }
   };
