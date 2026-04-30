@@ -167,8 +167,8 @@ export default function SprintCreateForm({ open, onClose, workshops = [], user, 
       phases,
       status: "in_progress",
       progress_percentage: 0,
-      consulting_firm_id: user?.data?.consulting_firm_id || "",
-      consultor_id: user?.id || "",
+      consulting_firm_id: user?.data?.consulting_firm_id || undefined,
+      consultor_id: user?.id || undefined,
     });
 
     toast.success(`Sprint criada com sucesso para ${workshop?.name || 'o cliente'}!`);
