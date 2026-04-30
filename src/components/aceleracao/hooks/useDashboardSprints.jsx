@@ -20,8 +20,8 @@ export default function useDashboardSprints(workshops = []) {
       );
       return results.flat();
     },
-    staleTime: 15 * 1000, // 15s
-    refetchOnWindowFocus: true,
+    staleTime: 2 * 60 * 1000, // 2 min
+    refetchOnWindowFocus: false,
     refetchOnMount: true,
     enabled: workshopIds.length > 0,
     placeholderData: []

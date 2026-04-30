@@ -96,6 +96,14 @@ function buildTimeline(sprint) {
   return events;
 }
 
+const PHASE_NAMES = {
+  Planning: "Planejamento",
+  Execution: "Execução",
+  Monitoring: "Monitoramento",
+  Review: "Revisão",
+  Retrospective: "Retrospectiva",
+};
+
 const EVENT_CONFIG = {
   submitted: { icon: Send, color: "text-amber-600", bg: "bg-amber-100", label: "Enviada" },
   approved: { icon: CheckCircle, color: "text-green-600", bg: "bg-green-100", label: "Aprovada" },
@@ -138,11 +146,11 @@ export default function SprintActivityTimeline({ sprint, maxItems = 10 }) {
             {/* Content */}
             <div className="pb-4 min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs font-semibold text-gray-800">{event.phase_name}</span>
-                <Badge variant="outline" className="text-[10px] py-0">
-                  {event.actor === "oficina" ? "Oficina" : "Consultor"}
-                </Badge>
-              </div>
+                 <span className="text-xs font-semibold text-gray-800">{PHASE_NAMES[event.phase_name] || event.phase_name}</span>
+                 <Badge variant="outline" className="text-[10px] py-0">
+                   {event.actor === "oficina" ? "Oficina" : "Consultor"}
+                 </Badge>
+               </div>
               <p className="text-sm text-gray-700 mt-0.5 truncate">{event.description}</p>
               {event.feedback && (
                 <p className="text-xs text-orange-700 italic mt-1 bg-orange-50 rounded px-2 py-1 border border-orange-100">

@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/lib/AuthContext";
 import {
   ChevronLeft, ChevronRight, CheckCircle2, Circle, Clock, Send,
   ListChecks, PlaySquare, BarChart2, TrendingUp, MessageSquare,
@@ -41,6 +42,7 @@ export default function SprintPhaseDetailModalRedesigned({
   onNavigateToPhase,
   onNavigateToNextSprint,
 }) {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [modalOpen, setModalOpen] = useState(true);
   const isSavingRef = useRef(false);
@@ -82,7 +84,7 @@ export default function SprintPhaseDetailModalRedesigned({
       setNotes(phase.notes || "");
       setTasks(phase.tasks || []);
     }
-  }, [phaseIndex, sprint?.id]);
+  }, [phaseIndex, sprint?.id, sprint?.updated_date]);
 
   // Proteger contra fechamento acidental do modal
   const handleModalOpenChange = (open) => {
@@ -143,7 +145,7 @@ export default function SprintPhaseDetailModalRedesigned({
     const completionFields = isNowCompleted && !wasCompleted ? {
       completion_date: now,
       reviewed_at: now,
-      reviewed_by: "consultor",
+      reviewed_by: user?.id || "consultor",
       review_history: [
         ...existingHistory,
         { action: "approved", date: now, actor: "consultor", feedback: "" },
@@ -175,7 +177,7 @@ export default function SprintPhaseDetailModalRedesigned({
         status: "completed",
         completion_date: now,
         reviewed_at: now,
-        reviewed_by: "consultor",
+        reviewed_by: user?.id || "consultor",
         review_feedback: feedback || "",
         review_history: [
           ...existingHistory,
@@ -217,7 +219,7 @@ export default function SprintPhaseDetailModalRedesigned({
         submitted_for_review_at: null,
         submitted_for_review_by: null,
         reviewed_at: now,
-        reviewed_by: "consultor",
+        reviewed_by: user?.id || "consultor",
         review_feedback: feedback,
         review_history: [
           ...existingHistory,
@@ -418,7 +420,7 @@ export default function SprintPhaseDetailModalRedesigned({
           <div className="space-y-2 max-h-60 overflow-y-auto">
             {tasks.map((task, idx) => (
               <SprintTaskItem
-                key={idx}
+                key={`${phaseIndex}-${idx}`}
                 task={task}
                 index={idx}
                 canComplete={true}

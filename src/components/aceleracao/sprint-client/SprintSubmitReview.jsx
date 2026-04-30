@@ -46,21 +46,21 @@ export default function SprintSubmitReview({ phase, canSubmit, allTasksDone, onS
       )}
 
       {canSubmit && (
-        <Button
-          onClick={onSubmit}
-          disabled={!allTasksDone || isSubmitting}
-          className="w-full bg-blue-600 hover:bg-blue-700 gap-2"
-        >
-          <Send className="w-4 h-4" />
-          {isSubmitting ? "Enviando..." : "Enviar Fase para Revisão"}
-        </Button>
-      )}
+         <Button
+           onClick={onSubmit}
+           disabled={!allTasksDone || isSubmitting}
+           className="w-full bg-blue-600 hover:bg-blue-700 gap-2"
+         >
+           <Send className="w-4 h-4" />
+           {isSubmitting ? "Enviando..." : "Enviar Fase para Revisão"}
+         </Button>
+       )}
 
-      {!allTasksDone && canSubmit && (
-        <p className="text-xs text-gray-500 text-center">
-          Complete todas as tarefas antes de enviar para revisão.
-        </p>
-      )}
+       {!allTasksDone && canSubmit && phase.tasks?.length > 0 && (
+         <p className="text-xs text-gray-500 text-center">
+           Complete todas as tarefas antes de enviar para revisão.
+         </p>
+       )}
     </div>
   );
 }
