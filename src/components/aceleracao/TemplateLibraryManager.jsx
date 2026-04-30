@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useGlobalMissions } from './contexts/TemplateLibraryContext';
+import { useDebounce } from '@/hooks/useDebounce';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -69,12 +71,33 @@ function useSprintTemplates() {
   return templates;
 }
 
+// P1-B01: MissionPicker usa context global (sem query N+1)
 function MissionPicker({ selected = [], onChange }) {
-  const missionsList = useDynamicMissionsList();
-  const toggle = (id) => {
+  const globalMissions = useGlobalMissions();
+  const DEFAULT_MISSIONS = [
+    { id: 'agenda_cheia',         icon: '📅', name: 'Agenda Cheia' },
+    { id: 'fechamento_imbativel', icon: '🎯', name: 'Fechamento Imbatível' },
+    { id: 'caixa_forte',          icon: '💰', name: 'Caixa Forte' },
+    { id: 'empresa_organizada',   icon: '📊', name: 'Empresa Organizada' },
+    { id: 'funcoes_claras',       icon: '👥', name: 'Funções Claras' },
+    { id: 'contratacao_certa',    icon: '🎓', name: 'Contratação Certa' },
+    { id: 'cultura_forte',        icon: '🌟', name: 'Cultura Forte' },
+  ];
+  
+  const missionsList = useMemo(() => {
+    if (globalMissions.length > 0) {
+      const savedIds = new Set(globalMissions.map(m => m.id));
+      const newDefaults = DEFAULT_MISSIONS.filter(m => !savedIds.has(m.id));
+      return [...globalMissions, ...newDefaults];
+    }
+    return DEFAULT_MISSIONS;
+  }, [globalMissions]);
+
+  const toggle = useCallback((id) => {
     if (selected.includes(id)) onChange(selected.filter(m => m !== id));
     else onChange([...selected, id]);
-  };
+  }, [selected, onChange]);
+
   return (
     <div className="grid grid-cols-2 gap-2 mt-1">
       {missionsList.map(m => {
@@ -119,43 +142,61 @@ export default function TemplateLibraryManager() {
   const [showNewMission, setShowNewMission] = useState(false);
   const [showNewSprint, setShowNewSprint] = useState(false);
 
+  // P1-B02: Debounce para inputs
+  const debouncedSetNewTrail = useDebounce((data) => setNewTrail(data), 300);
+  
   const [newTrail, setNewTrail] = useState({ nome_fase: '', objetivo_geral: '', missoes_selecionadas: [] });
   const [newMission, setNewMission] = useState({ icon: '🎯', name: '', description: '', linked_sprint_id: '' });
   const [newSprint, setNewSprint] = useState({ mission_icon: '🚀', mission_name: '', objective: '' });
   const [creating, setCreating] = useState(false);
 
+  // P1-B03: Cleanup ao fechar modais
+  useEffect(() => {
+    if (!showNewTrail) setNewTrail({ nome_fase: '', objetivo_geral: '', missoes_selecionadas: [] });
+  }, [showNewTrail]);
+
+  useEffect(() => {
+    if (!showNewMission) setNewMission({ icon: '🎯', name: '', description: '', linked_sprint_id: '' });
+  }, [showNewMission]);
+
+  useEffect(() => {
+    if (!showNewSprint) setNewSprint({ mission_icon: '🚀', mission_name: '', objective: '' });
+  }, [showNewSprint]);
+
   // ── Modal de edição de trilha ──
   const [editingTrail, setEditingTrail] = useState(null); // { id, nome_fase, objetivo_geral }
   const [saving, setSaving] = useState(false);
 
-  // Busca todas as trilhas (CronogramaTemplate)
-  const { data: allTrails = [], isLoading: loadingTrails } = useQuery({
+  // P0-A02: Busca trilhas com paginação (limit=50)
+  const { data: allTrails = [], isLoading: loadingTrails, error: trailsError } = useQuery({
     queryKey: ['allCronogramaTemplates'],
     queryFn: async () => {
       try {
-        const data = await base44.entities.CronogramaTemplate.list('-updated_date');
+        const data = await base44.entities.CronogramaTemplate.list('-updated_date', 50);
         return data || [];
       } catch (error) {
         console.error('Erro ao carregar trilhas:', error);
+        toast.error('Erro ao carregar trilhas');
         return [];
       }
     },
-    staleTime: 30 * 1000,
+    staleTime: 5 * 1000,
   });
 
-  // Busca todos os sprints (ConsultoriaSprint)
-  const { data: allSprints = [], isLoading: loadingSprints } = useQuery({
+  // P0-A02: Busca sprints com paginação (limit=50)
+  const { data: allSprints = [], isLoading: loadingSprints, error: sprintsError } = useQuery({
     queryKey: ['allConsultoriaSprints'],
     queryFn: async () => {
       try {
-        const data = await base44.entities.ConsultoriaSprint.list('-updated_date');
+        const data = await base44.entities.ConsultoriaSprint.list('-updated_date', 50);
         return data || [];
       } catch (error) {
         console.error('Erro ao carregar sprints:', error);
+        toast.error('Erro ao carregar sprints');
         return [];
       }
     },
-    staleTime: 30 * 1000,
+    staleTime: 5 * 1000,
   });
 
   // Processa e consolida os dados em um formato de matriz única
@@ -359,6 +400,19 @@ export default function TemplateLibraryManager() {
     }
     finally { setCreating(false); }
   };
+
+  // P0-A02: Error handling para timeout
+  if (trailsError || sprintsError) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <p className="text-red-600 font-semibold">Erro ao carregar templates</p>
+          <p className="text-gray-600 text-sm mt-1">Tente recarregar a página</p>
+        </div>
+      </div>
+    );
+  }
 
   if (loadingTrails || loadingSprints) {
     return (
