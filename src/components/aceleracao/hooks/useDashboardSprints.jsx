@@ -27,11 +27,12 @@ export default function useDashboardSprints(workshops = []) {
       }
       return allResults.flat();
     },
-    staleTime: 5 * 60 * 1000, // 5 min (foi 2 min)
+    staleTime: 5 * 60 * 1000, // 5 min
     refetchOnWindowFocus: false,
-    refetchOnMount: 'stale', // só refetch se dados estão stale
+    refetchOnMount: 'stale',
     enabled: workshopIds.length > 0,
-    placeholderData: []
+    // FIX: Usar initialData ao invés de placeholderData para preservar dados durante transição
+    initialData: []
   });
 
   // Subscribe em tempo real: qualquer sprint de qualquer workshop gerenciado invalida o cache

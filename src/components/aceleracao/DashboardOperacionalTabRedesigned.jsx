@@ -60,7 +60,9 @@ export default function DashboardOperacionalTabRedesigned({ user, workshops = []
     setSelectedPhaseIndex(pendingIdx >= 0 ? pendingIdx : 0);
   };
 
-  if (isLoading) return <LoadingSkeleton />;
+  // FIX: Mostrar skeleton APENAS se workshops não carregaram ainda
+  // Quando há workshops mas dados estão carregando, manter UI anterior
+  if (isLoading && (!workshops || workshops.length === 0)) return <LoadingSkeleton />;
 
   const hasAnyData = stats.total > 0;
 
