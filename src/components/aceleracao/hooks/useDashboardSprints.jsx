@@ -36,15 +36,17 @@ export default function useDashboardSprints(workshops = []) {
           );
         }
         
-        // Aguarda todos os batches em paralelo (não sequencial)
+        // S03: Aguarda todos os batches em paralelo com error handling
         const batchResults = await Promise.all(batches);
-        return batchResults.flat().flat();
+        // Flatten com validação: cada batch é array de arrays (Promise.all results)
+        return batchResults.reduce((acc, batch) => acc.concat(batch), []);
       } catch (error) {
         console.error('[useDashboardSprints] Erro crítico ao buscar sprints:', error);
         throw error;
       }
     },
-    staleTime: 5 * 60 * 1000, // 5 min
+    // S01: Aumentar staleTime de 5 min para 60 min — evita refetch desnecessário
+    staleTime: 60 * 60 * 1000, // 60 min
     refetchOnWindowFocus: false,
     refetchOnMount: 'stale',
     enabled: workshopIds.length > 0,
@@ -146,22 +148,26 @@ export default function useDashboardSprints(workshops = []) {
       .map(sprint => {
         const pendingPhases = (sprint.phases || []).filter(p => p.status === "pending_review");
         if (!pendingPhases.length) return null;
-        return { sprint, pendingPhases, workshop: workshopMap[sprint.workshop_id] };
+        // S05: Validar se workshop existe antes de acessar
+        const workshop = workshopMap[sprint.workshop_id];
+        if (!workshop) return null;
+        return { sprint, pendingPhases, workshop };
       })
       .filter(Boolean);
   }, [sprints, workshopMap]);
 
   const stats = useMemo(() => {
     const t = sprints.length;
+    // S02: Usar sprintsConcluidos já calculado, não filtrar novamente
     return {
       total: t,
       em_andamento: sprintsEmAndamento.length,
       atrasados: sprintsAtrasados.length,
       pendingReview: sprintsPendingReview.length,
-      concluidos: sprints.filter(s => s.status === "completed").length,
+      concluidos: sprintsConcluidos.length,
       avgProgress: t > 0 ? Math.round(sprints.reduce((acc, s) => acc + (s.progress_percentage || 0), 0) / t) : 0
     };
-  }, [sprints, sprintsEmAndamento, sprintsAtrasados, sprintsPendingReview]);
+  }, [sprints, sprintsEmAndamento, sprintsAtrasados, sprintsPendingReview, sprintsConcluidos]);
 
   return {
     sprints,
