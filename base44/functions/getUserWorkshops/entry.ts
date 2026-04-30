@@ -2,7 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
 // Cache em memória no servidor (persiste entre requests no mesmo isolate Deno)
 const workshopCache = new Map();
-const CACHE_TTL_MS = 60 * 1000; // 60 segundos
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutos
 
 function getCachedData(userId) {
   const entry = workshopCache.get(userId);
@@ -44,7 +44,7 @@ Deno.serve(withAuth(async (req, { base44, user }) => {
         if (cached) {
             const headers = new Headers({
                 'Content-Type': 'application/json',
-                'Cache-Control': 'max-age=60',
+                'Cache-Control': 'max-age=300',
                 'X-Cache': 'HIT'
             });
             return new Response(JSON.stringify({ 
@@ -118,7 +118,7 @@ Deno.serve(withAuth(async (req, { base44, user }) => {
 
         const headers = new Headers({
             'Content-Type': 'application/json',
-            'Cache-Control': 'max-age=60',
+            'Cache-Control': 'max-age=300',
             'X-Cache': 'MISS'
         });
 

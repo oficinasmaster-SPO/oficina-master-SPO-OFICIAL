@@ -26,27 +26,17 @@ export function useWorkshopContext() {
           return response.data.workshops;
         }
       } catch (err) {
-        console.warn('Erro ao buscar workshops via BFF:', err);
-        const fallbackWorkshopId = user?.data?.workshop_id || user?.workshop_id || selectedCompanyId;
-        if (fallbackWorkshopId) {
-          try {
-            const fallbackWorkshops = await base44.entities.Workshop.filter({ id: fallbackWorkshopId });
-            if (fallbackWorkshops && fallbackWorkshops.length > 0) {
-              return fallbackWorkshops;
-            }
-          } catch (fallbackErr) {
-            console.warn('Fallback de workshop também falhou (possível rate limit):', fallbackErr);
-            return [];
-          }
-        }
+        // Não disparar queries adicionais em caso de rate limit (429) — retornar [] e aguardar retry
+        console.warn('Erro ao buscar workshops via BFF:', err?.status || err?.message);
+        return [];
       }
       return [];
     },
     enabled: !isTenantLoading,
-    staleTime: 10 * 60 * 1000,
-    gcTime: 15 * 60 * 1000,
-    retry: 2,
-    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10000),
+    staleTime: 15 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    retry: 1,
+    retryDelay: 5000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
   });
