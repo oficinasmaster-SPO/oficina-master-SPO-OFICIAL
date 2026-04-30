@@ -47,8 +47,9 @@ export default function useControleAceleracaoState() {
       return await base44.entities.ConsultoriaAtendimento.filter(query, "-data_agendada", 500);
     },
     enabled: !!user?.id,
-    staleTime: 2 * 60 * 1000,
-    // refetchInterval removido — dados são atualizados via invalidateQueries após ações do usuário
+    staleTime: 3 * 60 * 1000, // 3 min (foi 2 min)
+    refetchOnWindowFocus: false, // evita refetch ao trocar de aba
+    refetchOnMount: 'stale' // só refetch se dados estão stale
   });
 
   // ── 6. Atendimentos filtrados por período (função pura, sem hook) ──
@@ -65,7 +66,9 @@ export default function useControleAceleracaoState() {
       if (consultorEfetivo) filterQuery.consultor_id = consultorEfetivo;
       return base44.entities.MeetingMinutes.filter(filterQuery, "-created_date", 100);
     },
-    staleTime: 3 * 60 * 1000,
+    staleTime: 5 * 60 * 1000, // 5 min (foi 3 min)
+    refetchOnWindowFocus: false,
+    refetchOnMount: 'stale',
     enabled: !!user?.id,
   });
 
@@ -94,7 +97,9 @@ export default function useControleAceleracaoState() {
       const all = await base44.entities.FollowUpReminder.filter(query, "reminder_date", 100);
       return all.filter(r => r.reminder_date <= today);
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 8 * 60 * 1000, // 8 min (foi 5 min)
+    refetchOnWindowFocus: false,
+    refetchOnMount: 'stale',
     enabled: !!user?.id,
   });
 

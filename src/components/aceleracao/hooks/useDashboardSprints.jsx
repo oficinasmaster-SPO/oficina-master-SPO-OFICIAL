@@ -14,15 +14,22 @@ export default function useDashboardSprints(workshops = []) {
     queryFn: async () => {
       const ids = workshopIdsKey.split(',').filter(Boolean);
       if (!ids.length) return [];
-      // Buscar por cada workshop individualmente e mesclar — mais confiável que $in
-      const results = await Promise.all(
-        ids.map(id => base44.entities.ConsultoriaSprint.filter({ workshop_id: id }).catch(() => []))
-      );
-      return results.flat();
+      // BUG FIX: Limitar Promise.all() a máximo 3 requisições simultâneas para evitar 429
+      // Ao invés de fazer N requests em paralelo, fazer em batches
+      const batchSize = 3;
+      const allResults = [];
+      for (let i = 0; i < ids.length; i += batchSize) {
+        const batch = ids.slice(i, i + batchSize);
+        const batchResults = await Promise.all(
+          batch.map(id => base44.entities.ConsultoriaSprint.filter({ workshop_id: id }).catch(() => []))
+        );
+        allResults.push(...batchResults);
+      }
+      return allResults.flat();
     },
-    staleTime: 2 * 60 * 1000, // 2 min
+    staleTime: 5 * 60 * 1000, // 5 min (foi 2 min)
     refetchOnWindowFocus: false,
-    refetchOnMount: true,
+    refetchOnMount: 'stale', // só refetch se dados estão stale
     enabled: workshopIds.length > 0,
     placeholderData: []
   });

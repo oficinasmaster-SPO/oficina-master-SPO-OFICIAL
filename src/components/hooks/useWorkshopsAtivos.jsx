@@ -8,6 +8,8 @@ export default function useWorkshopsAtivos() {
       const all = await base44.entities.Workshop.filter({ status: 'ativo' }, 'name', 5000);
       return all.filter(w => w.planoAtual && w.planoAtual !== 'FREE');
     },
-    staleTime: 10 * 60 * 1000
+    staleTime: 15 * 60 * 1000, // 15 min (foi 10 min)
+    refetchOnWindowFocus: false, // evita refetch ao trocar de aba
+    refetchOnMount: 'stale' // só refetch se dados estão stale
   });
 }
