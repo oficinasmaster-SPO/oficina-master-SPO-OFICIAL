@@ -69,6 +69,9 @@ export default function AdminModeBanner({ workshop }) {
           boxShadow: '0 6px 20px -8px hsl(18 92% 40% / 0.55), inset 0 1px 0 0 rgba(255,255,255,0.18), inset 0 -1px 0 0 hsl(18 92% 30% / 0.4)',
           borderBottom: '1px solid rgba(255,255,255,0.10)',
           zIndex: 50,
+          width: '100vw',
+          position: 'relative',
+          left: 'calc(-1 * var(--sidebar-width, 0px))',
         }}
       >
         {/* Diagonal pattern overlay */}
