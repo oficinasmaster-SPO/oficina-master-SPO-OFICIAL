@@ -1,21 +1,44 @@
-import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMemo, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { differenceInDays } from "date-fns";
 
 export default function useDashboardSprints(workshops = []) {
+  const queryClient = useQueryClient();
   const workshopIds = useMemo(() => workshops.map(w => w.id), [workshops]);
   // stable string key to avoid re-creating queries when array reference changes
   const workshopIdsKey = workshopIds.join(',');
 
+  const workshopIdSet = useMemo(() => new Set(workshopIdsKey.split(',').filter(Boolean)), [workshopIdsKey]);
+
   const { data: sprints = [], isLoading, refetch } = useQuery({
     queryKey: ['dashboard-sprints', workshopIdsKey],
-    queryFn: () => base44.entities.ConsultoriaSprint.filter({ workshop_id: { $in: workshopIdsKey.split(',').filter(Boolean) } }),
-    staleTime: 30 * 1000, // 30s — dados do dashboard não precisam de polling agressivo
-    refetchOnWindowFocus: false,
-    // Sem refetchInterval — invalidateQueries após mutations garante atualização
+    queryFn: async () => {
+      const ids = workshopIdsKey.split(',').filter(Boolean);
+      if (!ids.length) return [];
+      // Buscar por cada workshop individualmente e mesclar — mais confiável que $in
+      const results = await Promise.all(
+        ids.map(id => base44.entities.ConsultoriaSprint.filter({ workshop_id: id }).catch(() => []))
+      );
+      return results.flat();
+    },
+    staleTime: 15 * 1000, // 15s
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
     enabled: workshopIdsKey.length > 0
   });
+
+  // Subscribe em tempo real: qualquer sprint de qualquer workshop gerenciado invalida o cache
+  useEffect(() => {
+    if (!workshopIdSet.size) return;
+    const unsubscribe = base44.entities.ConsultoriaSprint.subscribe((event) => {
+      if (event.data?.workshop_id && workshopIdSet.has(event.data.workshop_id)) {
+        queryClient.invalidateQueries({ queryKey: ['dashboard-sprints'] });
+        queryClient.invalidateQueries({ queryKey: ['active-sprint-widget'] });
+      }
+    });
+    return unsubscribe;
+  }, [workshopIdsKey, queryClient, workshopIdSet]);
 
   const workshopMap = useMemo(
     () => Object.fromEntries(workshops.map(w => [w.id, w])),

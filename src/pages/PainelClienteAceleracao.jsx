@@ -184,10 +184,10 @@ export default function PainelClienteAceleracao() {
       );
     },
     enabled: !!workshop?.id,
-    staleTime: 30 * 1000, // 30s — evitar flood (antes era 0 + refetchInterval)
-    refetchOnWindowFocus: false,
+    staleTime: 15 * 1000,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
     retry: false
-    // Sem refetchInterval — subscribe abaixo garante atualização em tempo real
   });
 
 
@@ -198,8 +198,9 @@ export default function PainelClienteAceleracao() {
     
     const unsubscribe = base44.entities.ConsultoriaSprint.subscribe((event) => {
       if (event.data?.workshop_id === workshop.id) {
-        queryClient.refetchQueries({ queryKey: ['sprints-reais', workshop.id] });
-        queryClient.refetchQueries({ queryKey: ['progresso-implementacao', workshop.id] });
+        queryClient.invalidateQueries({ queryKey: ['sprints-reais', workshop.id] });
+        queryClient.invalidateQueries({ queryKey: ['progresso-implementacao', workshop.id] });
+        queryClient.invalidateQueries({ queryKey: ['active-sprint-widget', workshop.id] });
       }
     });
 

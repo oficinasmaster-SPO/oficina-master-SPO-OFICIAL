@@ -172,7 +172,10 @@ export default function SprintCreateForm({ open, onClose, workshops = [], user, 
     });
 
     toast.success(`Sprint criada com sucesso para ${workshop?.name || 'o cliente'}!`);
-    setSaving(false);
+
+    // Aguardar o onSprintCreated (automation) processar o status pending→in_progress
+    // antes de buscar novamente — evita race condition onde o front busca antes da atualização
+    await new Promise(resolve => setTimeout(resolve, 1500));
 
     // Invalidar todas as queries relacionadas a sprints para sincronismo imediato
     queryClient.invalidateQueries({ queryKey: ["dashboard-sprints"], exact: false });
@@ -182,6 +185,7 @@ export default function SprintCreateForm({ open, onClose, workshops = [], user, 
     queryClient.invalidateQueries({ queryKey: ["follow-up-reminders"], exact: false });
     queryClient.invalidateQueries({ queryKey: ["follow-up-reminders-tab"], exact: false });
 
+    setSaving(false);
     onCreated?.();
     onClose();
 
