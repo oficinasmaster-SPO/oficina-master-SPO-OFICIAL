@@ -1,0 +1,97 @@
+{
+  "name": "SprintTemplate",
+  "type": "object",
+  "properties": {
+    "mission_id": {
+      "type": "string",
+      "description": "ID da miss\u00e3o a qual este template pertence"
+    },
+    "mission_icon": {
+      "type": "string",
+      "description": "Emoji da miss\u00e3o (c\u00f3pia para performance)"
+    },
+    "mission_name": {
+      "type": "string",
+      "description": "Nome da miss\u00e3o (c\u00f3pia para performance)"
+    },
+    "sprint_number": {
+      "type": "integer",
+      "default": 1,
+      "description": "N\u00famero do sprint dentro da miss\u00e3o"
+    },
+    "title": {
+      "type": "string",
+      "description": "T\u00edtulo do sprint (ex: Sprint 1 \u2014 Agenda Cheia)"
+    },
+    "objective": {
+      "type": "string",
+      "description": "Objetivo do sprint"
+    },
+    "phases": {
+      "type": "array",
+      "description": "Fases padr\u00e3o (Planning, Execution, Monitoring, Review, Retrospective)",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "enum": [
+              "Planning",
+              "Execution",
+              "Monitoring",
+              "Review",
+              "Retrospective"
+            ]
+          },
+          "tasks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "description": {
+                  "type": "string"
+                },
+                "instructions": {
+                  "type": "string"
+                },
+                "link_url": {
+                  "type": "string"
+                },
+                "video_url": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "is_template": {
+      "type": "boolean",
+      "default": true,
+      "description": "Marca como template reutiliz\u00e1vel"
+    }
+  },
+  "required": [
+    "mission_id",
+    "title"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": true,
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

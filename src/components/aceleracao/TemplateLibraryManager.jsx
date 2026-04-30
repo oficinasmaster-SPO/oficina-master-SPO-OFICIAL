@@ -8,14 +8,11 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { AlertCircle, Copy, ChevronDown, ChevronUp, Plus, Pencil } from 'lucide-react';
+import { AlertCircle, Copy, ChevronDown, ChevronUp, Plus, Pencil, Loader2 } from 'lucide-react';
 import WheelLoader from '@/components/ui/WheelLoader';
 import MissionsTemplateGrid from './MissionsTemplateGrid';
 import SprintsTemplateGrid from './SprintsTemplateGrid';
 import { toast } from 'sonner';
-
-const MISSIONS_STORAGE_KEY = 'missions_templates_v1';
-const SPRINTS_STORAGE_KEY = 'sprint_templates_v1';
 
 const DEFAULT_MISSIONS_LIST = [
   { id: 'agenda_cheia',         icon: '📅', name: 'Agenda Cheia' },
@@ -28,23 +25,25 @@ const DEFAULT_MISSIONS_LIST = [
 ];
 
 /**
- * Hook para carregar missões dinâmicas do SystemSetting, com fallback para DEFAULT_MISSIONS_LIST
+ * Hook para carregar missões da entidade Mission
  */
 function useDynamicMissionsList() {
   const { data: missionsList = DEFAULT_MISSIONS_LIST } = useQuery({
     queryKey: ['missions_templates_for_picker'],
     queryFn: async () => {
-      const settings = await base44.entities.SystemSetting.filter({ key: MISSIONS_STORAGE_KEY });
-      if (settings?.length > 0 && settings[0].value) {
-        const saved = JSON.parse(settings[0].value);
-        if (Array.isArray(saved) && saved.length > 0) {
+      try {
+        const missions = await base44.entities.Mission.list('-updated_date', 100);
+        if (missions?.length > 0) {
           // Merge: banco + defaults que não existem no banco
-          const savedIds = new Set(saved.map(m => m.id));
+          const savedIds = new Set(missions.map(m => m.id));
           const newDefaults = DEFAULT_MISSIONS_LIST.filter(m => !savedIds.has(m.id));
-          return [...saved, ...newDefaults];
+          return [...missions, ...newDefaults];
         }
+        return DEFAULT_MISSIONS_LIST;
+      } catch (error) {
+        console.error('Erro ao carregar missões:', error);
+        return DEFAULT_MISSIONS_LIST;
       }
-      return DEFAULT_MISSIONS_LIST;
     },
     staleTime: 10 * 1000,
   });
@@ -209,13 +208,50 @@ export default function TemplateLibraryManager() {
   }, [allTrails, allSprints]);
 
   const handleDuplicateTrail = async (trail) => {
-    // TODO: Implementar duplicação de trilha como template padrão
-    console.log('Duplicando trilha:', trail);
+    setCreating(true);
+    try {
+      const newTrail = {
+        nome_fase: `${trail.name} (cópia)`,
+        objetivo_geral: trail.objetivo_geral,
+        missoes_selecionadas: trail.missions,
+        fase_oficina: 1,
+        ativo: true,
+      };
+      await base44.entities.CronogramaTemplate.create(newTrail);
+      queryClient.invalidateQueries({ queryKey: ['allCronogramaTemplates'] });
+      toast.success('Trilha duplicada com sucesso!');
+    } catch (error) {
+      console.error('Erro ao duplicar trilha:', error);
+      toast.error('Erro ao duplicar trilha');
+    } finally {
+      setCreating(false);
+    }
   };
 
   const handleDuplicateSprint = async (sprint) => {
-    // TODO: Implementar duplicação de sprint como template padrão
-    console.log('Duplicando sprint:', sprint);
+    setCreating(true);
+    try {
+      const newSprint = {
+        mission_id: sprint.mission_id,
+        title: `${sprint.title} (cópia)`,
+        objective: sprint.objective,
+        sprint_number: sprint.sprint_number + 1,
+        phases: sprint.phases.map(p => ({ name: p.name, tasks: [...(p.tasks || [])] })),
+        workshop_id: 'template',
+        cronograma_template_id: 'template',
+        consulting_firm_id: '',
+        start_date: sprint.start_date,
+        end_date: sprint.end_date,
+      };
+      await base44.entities.ConsultoriaSprint.create(newSprint);
+      queryClient.invalidateQueries({ queryKey: ['allConsultoriaSprints'] });
+      toast.success('Sprint duplicado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao duplicar sprint:', error);
+      toast.error('Erro ao duplicar sprint');
+    } finally {
+      setCreating(false);
+    }
   };
 
   // ── Editar Trilha ──
@@ -255,55 +291,54 @@ export default function TemplateLibraryManager() {
     finally { setCreating(false); }
   };
 
-  // ── Criar nova Missão (persiste no SystemSetting) ──
+  // ── Criar nova Missão ──
   const handleCreateMission = async () => {
     if (!newMission.name.trim()) { toast.error('Informe o nome da missão'); return; }
     setCreating(true);
     try {
-      const existing = await base44.entities.SystemSetting.filter({ key: MISSIONS_STORAGE_KEY });
-      const current = existing?.length > 0 && existing[0].value ? JSON.parse(existing[0].value) : [];
       const id = newMission.name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
-      const newItem = { id, icon: newMission.icon, name: newMission.name, description: newMission.description, linked_sprint_id: newMission.linked_sprint_id };
-      const updated = [...current, newItem];
-      const payload = { key: MISSIONS_STORAGE_KEY, value: JSON.stringify(updated) };
-      if (existing?.length > 0) await base44.entities.SystemSetting.update(existing[0].id, payload);
-      else await base44.entities.SystemSetting.create(payload);
+      await base44.entities.Mission.create({
+        id,
+        icon: newMission.icon,
+        name: newMission.name,
+        description: newMission.description,
+        is_default: false
+      });
       queryClient.invalidateQueries({ queryKey: ['missions_templates_for_picker'] });
       toast.success('Missão criada!');
       setShowNewMission(false);
       setNewMission({ icon: '🎯', name: '', description: '', linked_sprint_id: '' });
-    } catch { toast.error('Erro ao criar missão'); }
+    } catch (error) {
+      console.error('Erro ao criar missão:', error);
+      toast.error('Erro ao criar missão');
+    }
     finally { setCreating(false); }
   };
 
-  // ── Criar novo Sprint template (persiste no SystemSetting) ──
+  // ── Criar novo Sprint template ──
   const handleCreateSprint = async () => {
     if (!newSprint.mission_name.trim()) { toast.error('Informe o nome da missão do sprint'); return; }
     setCreating(true);
     try {
-      const existing = await base44.entities.SystemSetting.filter({ key: SPRINTS_STORAGE_KEY });
-      const current = existing?.length > 0 && existing[0].value ? JSON.parse(existing[0].value) : [];
       const mission_id = newSprint.mission_name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
-      const newItem = {
+      await base44.entities.SprintTemplate.create({
         mission_id,
         mission_icon: newSprint.mission_icon,
         mission_name: newSprint.mission_name,
-        sprint: {
-          id: `${mission_id}_sprint1`,
-          sprint_number: 1,
-          title: `Sprint 1 — ${newSprint.mission_name}`,
-          objective: newSprint.objective,
-          phases: ['Planning','Execution','Monitoring','Review','Retrospective'].map(name => ({ name, tasks: [] })),
-        },
-      };
-      const updated = [...current, newItem];
-      const payload = { key: SPRINTS_STORAGE_KEY, value: JSON.stringify(updated) };
-      if (existing?.length > 0) await base44.entities.SystemSetting.update(existing[0].id, payload);
-      else await base44.entities.SystemSetting.create(payload);
-      toast.success('Sprint criado! Recarregue a aba Sprints para ver.');
+        sprint_number: 1,
+        title: `Sprint 1 — ${newSprint.mission_name}`,
+        objective: newSprint.objective,
+        phases: ['Planning', 'Execution', 'Monitoring', 'Review', 'Retrospective'].map(name => ({ name, tasks: [] })),
+        is_template: true
+      });
+      queryClient.invalidateQueries({ queryKey: ['allConsultoriaSprints'] });
+      toast.success('Sprint criado!');
       setShowNewSprint(false);
       setNewSprint({ mission_icon: '🚀', mission_name: '', objective: '' });
-    } catch { toast.error('Erro ao criar sprint'); }
+    } catch (error) {
+      console.error('Erro ao criar sprint:', error);
+      toast.error('Erro ao criar sprint');
+    }
     finally { setCreating(false); }
   };
 
@@ -393,8 +428,9 @@ export default function TemplateLibraryManager() {
                         size="sm"
                         variant="outline"
                         onClick={() => handleDuplicateTrail(trail)}
+                        disabled={creating}
                       >
-                        <Copy className="w-4 h-4" />
+                        {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Copy className="w-4 h-4" />}
                       </Button>
                     </div>
                   </div>
