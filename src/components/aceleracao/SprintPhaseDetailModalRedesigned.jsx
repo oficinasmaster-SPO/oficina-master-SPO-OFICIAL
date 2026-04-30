@@ -92,7 +92,7 @@ export default function SprintPhaseDetailModalRedesigned({
     }
   };
 
-  const persistPhases = async (updatedPhases) => {
+  const persistPhases = async (updatedPhases, { suppressToast = false } = {}) => {
     if (isSavingRef.current) return false; // Guard duplo-save
     isSavingRef.current = true;
     setSaving(true);
@@ -121,7 +121,7 @@ export default function SprintPhaseDetailModalRedesigned({
         queryClient.invalidateQueries({ queryKey: ['sprints-reais'], exact: false });
         queryClient.invalidateQueries({ queryKey: ['active-sprint-widget'], exact: false });
       }, 1500);
-      toast.success("Alteração salva com sucesso!");
+      if (!suppressToast) toast.success("Alteração salva com sucesso!");
       success = true;
     } catch (error) {
       console.error("Erro ao salvar:", error);
@@ -182,7 +182,7 @@ export default function SprintPhaseDetailModalRedesigned({
           { action: "approved", date: now, actor: "consultor", feedback: feedback || "" },
         ],
       };
-      const ok = await persistPhases(updatedPhases);
+      const ok = await persistPhases(updatedPhases, { suppressToast: true });
       if (ok) {
       toast.success("Fase aprovada!");
       base44.functions.invoke("notifySprintPhaseChange", {
@@ -224,7 +224,7 @@ export default function SprintPhaseDetailModalRedesigned({
           { action: "returned", date: now, actor: "consultor", feedback },
         ],
       };
-      const ok = await persistPhases(updatedPhases);
+      const ok = await persistPhases(updatedPhases, { suppressToast: true });
       if (ok) {
         toast.success("Fase devolvida para a oficina com feedback.");
         base44.functions.invoke("notifySprintPhaseChange", {

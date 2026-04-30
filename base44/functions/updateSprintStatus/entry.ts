@@ -11,9 +11,14 @@ Deno.serve(async (req) => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  // Buscar todos os sprints não concluídos
-  const sprints = await base44.asServiceRole.entities.ConsultoriaSprint.filter({});
-  const ativos = sprints.filter(s => s.status !== 'completed');
+  // Buscar apenas sprints não concluídos diretamente no banco (evita buscar completed desnecessariamente)
+  const pendingSprints = await base44.asServiceRole.entities.ConsultoriaSprint.filter(
+    { status: 'in_progress' }
+  );
+  const overdueSprints = await base44.asServiceRole.entities.ConsultoriaSprint.filter(
+    { status: 'overdue' }
+  );
+  const ativos = [...pendingSprints, ...overdueSprints];
 
   let updated = 0;
 

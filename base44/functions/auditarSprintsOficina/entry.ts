@@ -1,9 +1,18 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
+  const isProduction = Deno.env.get('ENVIRONMENT') === 'production';
+  if (isProduction) {
+    return Response.json({ error: 'Função exclusiva de desenvolvimento.' }, { status: 403 });
+  }
+
   try {
     const base44 = createClientFromRequest(req);
-    
+    const user = await base44.auth.me();
+    if (!user || user.role !== 'admin') {
+      return Response.json({ error: 'Apenas admins podem executar esta função.' }, { status: 403 });
+    }
+
     const workshopId = "69ab04376ca4c22324455582";
     
     // Buscar TODAS as sprints sem filtro de status
