@@ -29,7 +29,7 @@ export default function useControleAceleracaoState() {
   const { user, isLoadingAuth: loadingUser } = useAuth();
 
   // ── 3. Shared reference data ──
-  const { data: workshops } = useWorkshopsAtivos();
+  const { data: workshops } = useWorkshopsAtivos(user?.id); // DS-01: pass userId to guard query
   const { data: consultores } = useConsultoresList(user);
 
   // ── 4. Consultor efetivo (função pura, sem hook) ──

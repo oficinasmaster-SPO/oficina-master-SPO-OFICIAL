@@ -48,8 +48,8 @@ export default function useDashboardSprints(workshops = []) {
     refetchOnWindowFocus: false,
     refetchOnMount: 'stale',
     enabled: workshopIds.length > 0,
-    // FIX: Usar initialData ao invés de placeholderData para preservar dados durante transição
-    initialData: []
+    // DS-02: placeholderData não polui o cache — apenas fallback visual durante loading
+    placeholderData: []
   });
 
   // FIX #1: Evitar infinite loop com debounce e guardrail
