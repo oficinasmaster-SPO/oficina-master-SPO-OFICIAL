@@ -29,23 +29,14 @@ const DEFAULT_MISSIONS_LIST = [
 // P1-B01: MissionPicker usa context global (sem query N+1)
 function MissionPicker({ selected = [], onChange }) {
   const globalMissions = useGlobalMissions();
-  const DEFAULT_MISSIONS = [
-    { id: 'agenda_cheia',         icon: '📅', name: 'Agenda Cheia' },
-    { id: 'fechamento_imbativel', icon: '🎯', name: 'Fechamento Imbatível' },
-    { id: 'caixa_forte',          icon: '💰', name: 'Caixa Forte' },
-    { id: 'empresa_organizada',   icon: '📊', name: 'Empresa Organizada' },
-    { id: 'funcoes_claras',       icon: '👥', name: 'Funções Claras' },
-    { id: 'contratacao_certa',    icon: '🎓', name: 'Contratação Certa' },
-    { id: 'cultura_forte',        icon: '🌟', name: 'Cultura Forte' },
-  ];
   
   const missionsList = useMemo(() => {
     if (globalMissions.length > 0) {
       const savedIds = new Set(globalMissions.map(m => m.id));
-      const newDefaults = DEFAULT_MISSIONS.filter(m => !savedIds.has(m.id));
+      const newDefaults = DEFAULT_MISSIONS_LIST.filter(m => !savedIds.has(m.id));
       return [...globalMissions, ...newDefaults];
     }
-    return DEFAULT_MISSIONS;
+    return DEFAULT_MISSIONS_LIST;
   }, [globalMissions]);
 
   const toggle = useCallback((id) => {
@@ -121,12 +112,12 @@ export default function TemplateLibraryManager() {
   const [editingTrail, setEditingTrail] = useState(null); // { id, nome_fase, objetivo_geral }
   const [saving, setSaving] = useState(false);
 
-  // P0-A02: Busca trilhas com paginação (limit=50)
+  // P0-A02: Busca trilhas com paginação (limit=100 para A02-validate)
   const { data: allTrails = [], isLoading: loadingTrails, error: trailsError } = useQuery({
     queryKey: ['allCronogramaTemplates'],
     queryFn: async () => {
       try {
-        const data = await base44.entities.CronogramaTemplate.list('-updated_date', 50);
+        const data = await base44.entities.CronogramaTemplate.list('-updated_date', 100);
         return data || [];
       } catch (error) {
         console.error('Erro ao carregar trilhas:', error);
@@ -137,12 +128,12 @@ export default function TemplateLibraryManager() {
     staleTime: 5 * 1000,
   });
 
-  // P0-A02: Busca sprints com paginação (limit=50)
+  // P0-A02: Busca sprints com paginação (limit=100 para A02-validate)
   const { data: allSprints = [], isLoading: loadingSprints, error: sprintsError } = useQuery({
     queryKey: ['allConsultoriaSprints'],
     queryFn: async () => {
       try {
-        const data = await base44.entities.ConsultoriaSprint.list('-updated_date', 50);
+        const data = await base44.entities.ConsultoriaSprint.list('-updated_date', 100);
         return data || [];
       } catch (error) {
         console.error('Erro ao carregar sprints:', error);
