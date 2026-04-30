@@ -12,20 +12,37 @@ export default function useDashboardSprints(workshops = []) {
   const { data: sprints = [], isLoading, refetch } = useQuery({
     queryKey: ['dashboard-sprints', workshopIdsKey],
     queryFn: async () => {
-      const ids = workshopIdsKey.split(',').filter(Boolean);
-      if (!ids.length) return [];
-      // BUG FIX: Limitar Promise.all() a máximo 3 requisições simultâneas para evitar 429
-      // Ao invés de fazer N requests em paralelo, fazer em batches
-      const batchSize = 3;
-      const allResults = [];
-      for (let i = 0; i < ids.length; i += batchSize) {
-        const batch = ids.slice(i, i + batchSize);
-        const batchResults = await Promise.all(
-          batch.map(id => base44.entities.ConsultoriaSprint.filter({ workshop_id: id }).catch(() => []))
-        );
-        allResults.push(...batchResults);
+      try {
+        const ids = workshopIdsKey.split(',').filter(Boolean);
+        if (!ids.length) return [];
+        
+        // FIX #4: Paralelizar batching (ao invés de sequencial)
+        // Cria promises para todos os batches em paralelo
+        const batchSize = 3;
+        const batches = [];
+        for (let i = 0; i < ids.length; i += batchSize) {
+          const batch = ids.slice(i, i + batchSize);
+          batches.push(
+            Promise.all(
+              batch.map(id => 
+                base44.entities.ConsultoriaSprint
+                  .filter({ workshop_id: id })
+                  .catch(err => {
+                    console.warn(`[Sprint Fetch] Erro ao buscar sprint para workshop ${id}:`, err.message);
+                    return [];
+                  })
+              )
+            )
+          );
+        }
+        
+        // Aguarda todos os batches em paralelo (não sequencial)
+        const batchResults = await Promise.all(batches);
+        return batchResults.flat().flat();
+      } catch (error) {
+        console.error('[useDashboardSprints] Erro crítico ao buscar sprints:', error);
+        throw error;
       }
-      return allResults.flat();
     },
     staleTime: 5 * 60 * 1000, // 5 min
     refetchOnWindowFocus: false,
@@ -35,19 +52,39 @@ export default function useDashboardSprints(workshops = []) {
     initialData: []
   });
 
+  // FIX #1: Evitar infinite loop com debounce e guardrail
   // Subscribe em tempo real: qualquer sprint de qualquer workshop gerenciado invalida o cache
   // Dep: workshopIdsKey (string) — Set não tem referential equality e causaria reinit a cada render
   useEffect(() => {
     const ids = workshopIdsKey.split(',').filter(Boolean);
     if (!ids.length) return;
+    
     const idSet = new Set(ids);
+    let debounceTimer;
+    let refetchPending = false;
+    
     const unsubscribe = base44.entities.ConsultoriaSprint.subscribe((event) => {
       if (event.data?.workshop_id && idSet.has(event.data.workshop_id)) {
-        queryClient.invalidateQueries({ queryKey: ['dashboard-sprints'] });
-        queryClient.invalidateQueries({ queryKey: ['active-sprint-widget'] });
+        // Guardrail: evita múltiplas invalidações em cascata
+        if (refetchPending) return;
+        
+        // Debounce: aguarda 500ms de inatividade antes de invalidar
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          refetchPending = true;
+          queryClient.invalidateQueries({ queryKey: ['dashboard-sprints'] });
+          queryClient.invalidateQueries({ queryKey: ['active-sprint-widget'] });
+          
+          // Reseta guardrail após 1s (evita mais invalidações)
+          setTimeout(() => { refetchPending = false; }, 1000);
+        }, 500);
       }
     });
-    return unsubscribe;
+    
+    return () => {
+      clearTimeout(debounceTimer);
+      unsubscribe();
+    };
   }, [workshopIdsKey, queryClient]);
 
   const workshopMap = useMemo(
@@ -71,10 +108,20 @@ export default function useDashboardSprints(workshops = []) {
     [sprints]
   );
 
+  // FIX #5: Cache com Map para evitar O(n²) filter
+  const sprintsByWorkshop = useMemo(() => {
+    const map = new Map();
+    sprints.forEach(s => {
+      if (!map.has(s.workshop_id)) map.set(s.workshop_id, []);
+      map.get(s.workshop_id).push(s);
+    });
+    return map;
+  }, [sprints]);
+
   const clientesComTrilha = useMemo(() => {
     return workshops
       .map(w => {
-        const ws = sprints.filter(s => s.workshop_id === w.id);
+        const ws = sprintsByWorkshop.get(w.id) || [];
         if (!ws.length) return null;
         const avg = Math.round(ws.reduce((a, s) => a + (s.progress_percentage || 0), 0) / ws.length);
         const hasOverdue = ws.some(s => s.status === "overdue");
@@ -85,7 +132,7 @@ export default function useDashboardSprints(workshops = []) {
       })
       .filter(Boolean)
       .sort((a, b) => b.sprints.length - a.sprints.length);
-  }, [workshops, sprints]);
+  }, [workshops, sprintsByWorkshop]);
 
   const sprintsConcluidos = useMemo(
     () => sprints
