@@ -27,16 +27,16 @@ export default function CronogramaGeral({ isTab = false }) {
     queryFn: () => base44.auth.me()
   });
 
-  // Sincronizar sprints com cronograma em tempo real
+  // Sincronizar sprints com cronograma em tempo real via invalidate (não refetch direto)
   useEffect(() => {
-    const unsubscribeSprints = base44.entities.ConsultoriaSprint.subscribe((event) => {
-      queryClient.refetchQueries(['cronograma-progressos']);
-      queryClient.refetchQueries(['cronograma-implementacoes-all']);
+    const unsubscribeSprints = base44.entities.ConsultoriaSprint.subscribe(() => {
+      queryClient.invalidateQueries({ queryKey: ['cronograma-progressos'] });
+      queryClient.invalidateQueries({ queryKey: ['cronograma-implementacoes-all'] });
     });
 
-    const unsubscribeImplementacoes = base44.entities.CronogramaImplementacao.subscribe((event) => {
-      queryClient.refetchQueries(['cronograma-progressos']);
-      queryClient.refetchQueries(['cronograma-implementacoes-all']);
+    const unsubscribeImplementacoes = base44.entities.CronogramaImplementacao.subscribe(() => {
+      queryClient.invalidateQueries({ queryKey: ['cronograma-progressos'] });
+      queryClient.invalidateQueries({ queryKey: ['cronograma-implementacoes-all'] });
     });
 
     return () => {
@@ -62,7 +62,8 @@ export default function CronogramaGeral({ isTab = false }) {
   const { data: progressos = [] } = useQuery({
     queryKey: ['cronograma-progressos'],
     queryFn: () => base44.entities.CronogramaProgresso.list(),
-    refetchInterval: 5000 // Refetch a cada 5 segundos para capturar atualizações
+    staleTime: 30 * 1000,
+    refetchOnWindowFocus: true,
   });
 
   // Carregar implementações para sincronizar com progressos
@@ -76,7 +77,8 @@ export default function CronogramaGeral({ isTab = false }) {
         return [];
       }
     },
-    refetchInterval: 5000
+    staleTime: 30 * 1000,
+    refetchOnWindowFocus: true,
   });
 
   // Carregar templates de cronograma

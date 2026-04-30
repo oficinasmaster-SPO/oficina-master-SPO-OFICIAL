@@ -4,7 +4,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, X, Plus, Star, Map, Lock, ListChecks, Settings2, Zap, BookOpen, ExternalLink, PlayCircle, ChevronDown, ChevronUp, ChevronRight, RotateCcw, AlertTriangle, Lightbulb, PlaySquare, BarChart2, TrendingUp, MessageSquare, Circle, Clock, RefreshCw } from "lucide-react";
 import CamadaEstrategica from './CamadaEstrategica';
 import SprintPhaseDetailModalRedesigned from './SprintPhaseDetailModalRedesigned';
@@ -573,44 +573,52 @@ function SprintCard({ numero, titulo, emoji, descricao, cor, isFixed, sprint, on
 function CamadaSprints({ workshopId, missoesSelecionadas, cronogramaTemplateId, isGlobalMode = false, globalSprints = [], missoes }) {
   const missoesSelecionadasData = missoes.filter(m => missoesSelecionadas.includes(m.id));
   const { data: currentUser } = useQuery({ queryKey: ['current-user'], queryFn: () => base44.auth.me() });
-  const [sprints, setSprints] = useState([]);
+  const queryClient = useQueryClient();
   const [loadingCreate, setLoadingCreate] = useState(null);
-  const [loadError, setLoadError] = useState(null);
   const [syncing, setSyncing] = useState(false);
   const urlParams = new URLSearchParams(window.location.search);
   const sprintIdFromUrl = urlParams.get('sprint_id');
   const phaseIndexFromUrl = urlParams.get('phase_index') ? parseInt(urlParams.get('phase_index')) : null;
 
-  const loadSprints = useCallback(async (signal) => {
-    try {
-      setLoadError(null);
-      if (isGlobalMode && globalSprints?.length > 0) {
-        if (signal?.aborted) return;
-        setSprints(globalSprints);
-      } else {
-        const query = workshopId ? { workshop_id: workshopId } : {};
-        const data = await base44.entities.ConsultoriaSprint.filter(query);
-        if (signal?.aborted) return; // Componente desmontou antes da resposta
-        setSprints(data || []);
-      }
-    } catch (error) {
-      if (signal?.aborted) return;
-      console.error('Erro ao carregar sprints:', error);
-      setLoadError(error.message);
-      setSprints([]);
-    }
-  }, [workshopId, isGlobalMode, globalSprints]);
+  // BUG-05: Migrado de useState+useCallback para useQuery para que invalidateQueries
+  // funcione corretamente após criação de sprint (sprint não aparecia após criar).
+  const { data: sprintsLocal = [], isLoading: loadingLocal, error: loadErrorObj } = useQuery({
+    queryKey: ['camada-sprints', workshopId],
+    queryFn: async () => {
+      if (isGlobalMode && globalSprints?.length > 0) return globalSprints;
+      const query = workshopId ? { workshop_id: workshopId } : {};
+      const data = await base44.entities.ConsultoriaSprint.filter(query);
+      return data || [];
+    },
+    enabled: !isGlobalMode || !globalSprints?.length,
+    staleTime: 15 * 1000,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+  });
 
+  const sprints = (isGlobalMode && globalSprints?.length > 0) ? globalSprints : sprintsLocal;
+  const loadError = loadErrorObj?.message || null;
+
+  // Invalidar cache local quando sprint muda externamente
   useEffect(() => {
-    const controller = new AbortController();
-    loadSprints(controller.signal);
-    return () => controller.abort(); // Cancela se workshopId mudar ou componente desmontar
-  }, [loadSprints]);
+    if (!workshopId || isGlobalMode) return;
+    const unsubscribe = base44.entities.ConsultoriaSprint.subscribe((event) => {
+      if (event.data?.workshop_id === workshopId) {
+        queryClient.invalidateQueries({ queryKey: ['camada-sprints', workshopId] });
+      }
+    });
+    return unsubscribe;
+  }, [workshopId, isGlobalMode, queryClient]);
 
   const getSprintForMission = (missionId, number) =>
     sprints.find(s => s.mission_id === missionId && s.sprint_number === number);
 
   const initializeSprint = async (mission, numero) => {
+    // BUG-02: Guard — só inicializar se workshopId estiver disponível
+    if (!workshopId) {
+      toast.error('⚠️ Selecione um cliente antes de iniciar um sprint.');
+      return;
+    }
     // Regra: só pode ter 2 sprints se o primeiro foi CONCLUÍDO
     const sprintDaMissao = sprints.filter(s => s.mission_id === mission.id);
     
@@ -682,7 +690,10 @@ function CamadaSprints({ workshopId, missoesSelecionadas, cronogramaTemplateId, 
       }
       await base44.entities.ConsultoriaSprint.create(sprintData);
       toast.success(`✓ Sprint ${numero} iniciado! (3 semanas)`);
-      await loadSprints(undefined);
+      // BUG-05: invalidar query em vez de chamar loadSprints manual
+      queryClient.invalidateQueries({ queryKey: ['camada-sprints', workshopId] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-sprints'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['sprints-client'], exact: false });
     } catch (error) {
       toast.error('✗ Erro ao iniciar sprint');
     } finally {
@@ -701,7 +712,7 @@ function CamadaSprints({ workshopId, missoesSelecionadas, cronogramaTemplateId, 
         totalUpdated += res.data?.updatedCount || 0;
       }
       toast.success(`✓ ${totalUpdated} sprint(s) sincronizado(s) com o template global`);
-      await loadSprints(undefined);
+      queryClient.invalidateQueries({ queryKey: ['camada-sprints', workshopId] });
     } catch (error) {
       toast.error('✗ Erro ao sincronizar com template global');
     } finally {
@@ -778,7 +789,7 @@ function CamadaSprints({ workshopId, missoesSelecionadas, cronogramaTemplateId, 
                 cor="border-gray-400 bg-gray-50 text-gray-800"
                 isFixed={true}
                 sprint={sprint0}
-                onSprintUpdated={loadSprints}
+                onSprintUpdated={() => queryClient.invalidateQueries({ queryKey: ['camada-sprints', workshopId] })}
                 shouldExpand={shouldExpandSprint0}
                 initialPhaseIndex={shouldExpandSprint0 ? phaseIndexFromUrl : null}
               />
@@ -812,7 +823,7 @@ function CamadaSprints({ workshopId, missoesSelecionadas, cronogramaTemplateId, 
                 cor={`${missao.cor}`}
                 isFixed={false}
                 sprint={sprint}
-                onSprintUpdated={loadSprints}
+                onSprintUpdated={() => queryClient.invalidateQueries({ queryKey: ['camada-sprints', workshopId] })}
                 shouldExpand={shouldExpandSprint}
                 initialPhaseIndex={shouldExpandSprint ? phaseIndexFromUrl : null}
               />

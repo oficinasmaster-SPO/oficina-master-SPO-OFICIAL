@@ -59,7 +59,7 @@ export default function PainelClienteAceleracao() {
       }
       return null;
     },
-    enabled: !!(workshopIdToUse || user?.id),
+    enabled: !loadingUser && !!(workshopIdToUse || user?.id),
     staleTime: 5 * 60 * 1000,
     retry: false
   });
