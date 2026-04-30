@@ -427,11 +427,13 @@ export default function ControleAceleracaoView({ state }) {
           </TabsContent>
 
           <TabsContent value="consultoria" forceMount className={`mt-0 ${activeTab !== "consultoria" ? "hidden" : ""}`}>
-            <TabErrorBoundary tabName="Consultoria Global">
-              <Suspense fallback={<TabSkeleton variant="overview" />}>
-                <ConsultoriaGlobalTab />
-              </Suspense>
-            </TabErrorBoundary>
+            {visitedTabs.has("consultoria") && (
+              <TabErrorBoundary tabName="Consultoria Global">
+                <Suspense fallback={<TabSkeleton variant="overview" />}>
+                  <ConsultoriaGlobalTab />
+                </Suspense>
+              </TabErrorBoundary>
+            )}
           </TabsContent>
         </>
       </Tabs>

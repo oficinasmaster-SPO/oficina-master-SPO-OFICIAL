@@ -25,7 +25,7 @@ export default function ConsultoriaGlobalTab() {
         return [];
       }
     },
-    staleTime: 30 * 1000,
+    staleTime: 5 * 60 * 1000, // CON-04: 5 min (era 30s — causava refetch constante de 500 sprints)
   });
 
   // Em modo global, passamos workshopId=null para buscar TODOS os dados agregados

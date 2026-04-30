@@ -5,7 +5,7 @@ import { appParams } from '@/lib/app-params';
 const originalFetch = window.fetch;
 
 class RequestQueue {
-    constructor(concurrency = 5) {
+    constructor(concurrency = 8) { // CON-02: aumentado de 5 para 8 — reduz batches de 3 para 2 no boot
         this.concurrency = concurrency;
         this.running = 0;
         this.queue = [];

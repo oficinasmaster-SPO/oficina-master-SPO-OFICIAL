@@ -17,7 +17,9 @@ export default function VoucherPendingDialog({ user }) {
     queryKey: ["voucherPendingAlert", user?.id],
     queryFn: () => base44.entities.VoucherUse.filter({ status: "pending" }, "-created_date", 50),
     enabled: !!user?.id && user?.role === "admin",
-    staleTime: 60 * 1000,
+    // CON-03: aumentado para 10min + desabilitar refetch automático — query desnecessária em cada navegação
+    staleTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   if (!user || user.role !== "admin" || pendingUses.length === 0 || dismissed) {
