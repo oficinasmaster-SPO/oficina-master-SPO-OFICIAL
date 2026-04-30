@@ -39,6 +39,22 @@ const withAuth = (handler) => async (req) => {
 
 Deno.serve(withAuth(async (req, { base44, user }) => {
     try {
+        // GAP-01: Se workshopId específico foi solicitado, buscar diretamente com asServiceRole
+        let body = {};
+        try {
+            body = await req.json();
+        } catch {
+            // Request sem body — continuar com lista completa
+        }
+
+        if (body?.workshopId) {
+            const ws = await base44.asServiceRole.entities.Workshop.get(body.workshopId).catch(() => null);
+            return new Response(JSON.stringify({ 
+                workshops: ws ? [ws] : [],
+                user: user 
+            }), { status: 200 });
+        }
+
         // Verificar cache primeiro
         const cached = getCachedData(user.id);
         if (cached) {

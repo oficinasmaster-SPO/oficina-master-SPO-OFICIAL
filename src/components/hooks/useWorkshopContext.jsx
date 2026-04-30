@@ -80,15 +80,18 @@ export function useWorkshopContext() {
     queryFn: async () => {
       if (!missingWorkshopIdToFetch) return null;
       try {
+        // GAP-01: chamar BFF que tem asServiceRole — evita bloqueio por RLS no frontend
+        const response = await base44.functions.invoke('getUserWorkshops', {
+          workshopId: missingWorkshopIdToFetch
+        });
+        if (response?.data?.workshops?.length > 0) {
+          const found = response.data.workshops.find(w => w.id === missingWorkshopIdToFetch);
+          if (found) return found;
+          return response.data.workshops[0];
+        }
+        // Fallback local apenas se BFF também não encontrar
         const wsList = await base44.entities.Workshop.filter({ id: missingWorkshopIdToFetch });
-        if (wsList && wsList.length > 0) return wsList[0];
-
-        const workshops = await base44.entities.Workshop.filter({ company_id: missingWorkshopIdToFetch });
-        if (workshops && workshops.length > 0) return workshops[0];
-
-        const ws = await base44.entities.Workshop.get(missingWorkshopIdToFetch).catch(() => null);
-        // Retorna null explicitamente se não encontrou - NÃO vai retentar
-        return ws || null;
+        return wsList?.[0] || null;
       } catch (e) {
         return null;
       }
@@ -96,9 +99,7 @@ export function useWorkshopContext() {
     enabled: !!missingWorkshopIdToFetch && !isAvailableLoading,
     staleTime: 10 * 60 * 1000,
     gcTime: 15 * 60 * 1000,
-    // FIX-04: Retry mais agressivo para fallback do perfil (RLS pode estar bloqueando)
-    retry: 3,
-    retryDelay: (attempt) => Math.min(1000 * Math.pow(2, attempt), 5000),
+    retry: 1,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
   });
