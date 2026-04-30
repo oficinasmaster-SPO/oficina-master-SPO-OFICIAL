@@ -284,9 +284,9 @@ export default function SprintPhaseDetailModalRedesigned({
       const newTaskObj = {
         description: newTask.trim(),
         status: "to_do",
-        instructions: newTaskInstructions.trim() || "",
-        link_url: newTaskLink.trim() || "",
-        video_url: newTaskVideoUrl || "",
+        instructions: newTaskInstructions.trim() || undefined,
+        link_url: newTaskLink.trim() || undefined,
+        video_url: newTaskVideoUrl || undefined,
       };
       const updated = [...tasks, newTaskObj];
       // BUGFIX CRÍTICO: setTasks é assíncrono — NÃO usar livePhases aqui pois

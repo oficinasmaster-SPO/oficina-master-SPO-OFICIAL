@@ -41,12 +41,14 @@ export default function SprintAtivaWidget({ workshopId }) {
   const { data: activeSprint } = useQuery({
     queryKey: ["active-sprint-widget", workshopId],
     queryFn: async () => {
+      // Buscar todos os sprints do workshop e filtrar localmente
+      // ($in não é suportado de forma confiável no filter do base44)
       const sprints = await base44.entities.ConsultoriaSprint.filter(
-        { workshop_id: workshopId, status: { $in: ["in_progress", "pending"] } },
-        "-updated_date",
-        1
+        { workshop_id: workshopId },
+        "-updated_date"
       );
-      return Array.isArray(sprints) && sprints.length > 0 ? sprints[0] : null;
+      if (!Array.isArray(sprints)) return null;
+      return sprints.find(s => s.status === "in_progress" || s.status === "pending") || null;
     },
     enabled: !!workshopId,
     staleTime: 15 * 1000,
