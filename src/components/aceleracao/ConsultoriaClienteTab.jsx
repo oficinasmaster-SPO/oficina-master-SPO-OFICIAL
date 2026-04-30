@@ -591,9 +591,9 @@ function CamadaSprints({ workshopId, missoesSelecionadas, cronogramaTemplateId, 
       return data || [];
     },
     enabled: !isGlobalMode || !globalSprints?.length,
-    staleTime: 15 * 1000,
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
+    staleTime: 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 
   const sprints = (isGlobalMode && globalSprints?.length > 0) ? globalSprints : sprintsLocal;
