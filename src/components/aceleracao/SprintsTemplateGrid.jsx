@@ -584,23 +584,28 @@ export default function SprintsTemplateGrid() {
   }, []);
 
   const handleSprintSave = async (missionId, updatedSprint) => {
-    const newData = data.map(m => m.mission_id === missionId ? { ...m, sprint: updatedSprint } : m);
-    setData(newData);
-    setSaving(true);
-    try {
-      // 1. Persistir template no banco
-      const existing = await base44.entities.SystemSetting.filter({ key: STORAGE_KEY });
-      const payload = { key: STORAGE_KEY, value: JSON.stringify(newData) };
-      if (existing?.length > 0) {
-        await base44.entities.SystemSetting.update(existing[0].id, payload);
-      } else {
-        await base44.entities.SystemSetting.create(payload);
-      }
+   const newData = data.map(m => m.mission_id === missionId ? { ...m, sprint: updatedSprint } : m);
+   setData(newData);
+   setSaving(true);
+   try {
+     // 1. Persistir template no banco
+     const existing = await base44.entities.SystemSetting.filter({ key: STORAGE_KEY });
+     const payload = { key: STORAGE_KEY, value: JSON.stringify(newData) };
+     if (existing?.length > 0) {
+       await base44.entities.SystemSetting.update(existing[0].id, payload);
+     } else {
+       await base44.entities.SystemSetting.create(payload);
+     }
 
-      // 2. Sincronizar todos os sprints de clientes com o template atualizado
-      //    Uma única chamada cobre: adição, remoção, edição de description/instructions/link_url/video_url
-      toast.info('🔄 Propagando template para sprints de clientes...');
-      const response = await base44.functions.invoke('syncClientSprintTasksWithTemplate', { missionId });
+     // 2. Sincronizar todos os sprints de clientes com o template atualizado
+     //    Uma única chamada cobre: adição, remoção, edição de description/instructions/link_url/video_url
+     toast.info('🔄 Propagando template para sprints de clientes...');
+     const user = await base44.auth.me();
+     const workshopId = user?.data?.workshop_id;
+     const response = await base44.functions.invoke('syncClientSprintTasksWithTemplate', { 
+       missionId,
+       workshopId // BUG-FIX: enviar workshopId obrigatório
+     });
       const count = response.data?.updatedCount ?? 0;
 
       if (response.data?.errors?.length > 0) {
@@ -620,11 +625,22 @@ export default function SprintsTemplateGrid() {
   };
 
   const handleForceSyncAll = async () => {
+    // BUG-FIX: Obter workshopId do usuário autenticado
+    const user = await base44.auth.me();
+    const workshopId = user?.data?.workshop_id;
+    if (!workshopId) {
+      toast.error('Erro: não foi possível determinar a oficina');
+      return;
+    }
+
     let total = 0;
     let errors = 0;
     for (const mission of data) {
       try {
-        const response = await base44.functions.invoke('syncClientSprintTasksWithTemplate', { missionId: mission.mission_id });
+        const response = await base44.functions.invoke('syncClientSprintTasksWithTemplate', { 
+          missionId: mission.mission_id,
+          workshopId // BUG-FIX: enviar workshopId
+        });
         total += response.data?.updatedCount ?? 0;
         if (response.data?.errors?.length) errors += response.data.errors.length;
       } catch {

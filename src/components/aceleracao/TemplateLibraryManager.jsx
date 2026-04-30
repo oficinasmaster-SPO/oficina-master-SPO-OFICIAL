@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useGlobalMissions } from './contexts/TemplateLibraryContext';
-import { useDebounce } from '@/hooks/useDebounce';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -308,7 +307,7 @@ export default function TemplateLibraryManager() {
         description: newMission.description,
         is_default: false
       });
-      queryClient.invalidateQueries({ queryKey: ['missions_templates_for_picker'] });
+      queryClient.invalidateQueries({ queryKey: ['global_missions_list'] });
       toast.success('Missão criada!');
       setShowNewMission(false);
       setNewMission({ icon: '🎯', name: '', description: '', linked_sprint_id: '' });
