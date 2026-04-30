@@ -107,7 +107,7 @@ export default function MissionsTemplateGrid() {
             if (newMissions.length > 0) {
               const payload = { key: STORAGE_KEY, value: JSON.stringify(merged) };
               await base44.entities.SystemSetting.update(settings[0].id, payload);
-              queryClient.invalidateQueries({ queryKey: ['missions_templates_for_picker'] });
+              queryClient.invalidateQueries({ queryKey: ['global_missions_list'] });
             }
             return;
           }
