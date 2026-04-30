@@ -711,15 +711,23 @@ function CamadaSprints({ workshopId, missoesSelecionadas, cronogramaTemplateId, 
     setSyncing(true);
     try {
       const missionIds = [...new Set(sprints.map(s => s.mission_id))];
-      let totalUpdated = 0;
-      for (const missionId of missionIds) {
-        const res = await base44.functions.invoke('syncClientSprintTasksWithTemplate', { missionId, workshopId });
-        totalUpdated += res.data?.updatedCount || 0;
-      }
+      // SYNC-01: Uma única chamada com todos os missionIds — evita N invocações que causam rate limit
+      const res = await base44.functions.invoke('syncClientSprintTasksWithTemplate', {
+        missionIds,
+        workshopId
+      });
+      const totalUpdated = res.data?.updatedCount || 0;
       toast.success(`✓ ${totalUpdated} sprint(s) sincronizado(s) com o template global`);
+      // Delay pequeno antes de invalidar para evitar rate limit no refetch
+      await new Promise(r => setTimeout(r, 800));
       queryClient.invalidateQueries({ queryKey: ['camada-sprints', workshopId] });
     } catch (error) {
-      toast.error('✗ Erro ao sincronizar com template global');
+      const msg = error?.message || '';
+      if (msg.includes('rate') || msg.includes('limit') || msg.includes('429')) {
+        toast.error('✗ Muitas requisições simultâneas. Aguarde alguns segundos e tente novamente.');
+      } else {
+        toast.error('✗ Erro ao sincronizar com template global');
+      }
     } finally {
       setSyncing(false);
     }

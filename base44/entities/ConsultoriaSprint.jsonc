@@ -279,11 +279,6 @@
           }
         },
         {
-          "user_condition": {
-            "role": "user"
-          }
-        },
-        {
           "consulting_firm_id": "{{user.data.consulting_firm_id}}"
         },
         {
