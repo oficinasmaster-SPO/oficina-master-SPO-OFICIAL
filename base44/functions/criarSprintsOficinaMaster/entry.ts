@@ -1,6 +1,15 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
+  // FUNÇÃO DE USO EXCLUSIVO EM DESENVOLVIMENTO — nunca invocar em produção
+  const isProduction = Deno.env.get('ENVIRONMENT') === 'production';
+  if (isProduction) {
+    return Response.json(
+      { error: 'Esta função é exclusiva de ambiente de desenvolvimento e não pode ser executada em produção.' },
+      { status: 403 }
+    );
+  }
+
   try {
     const base44 = createClientFromRequest(req);
 
