@@ -133,7 +133,7 @@ export default function TemplateLibraryManager() {
     queryKey: ['allCronogramaTemplates'],
     queryFn: async () => {
       try {
-        const data = await base44.entities.CronogramaTemplate.list('-updated_date', 500);
+        const data = await base44.entities.CronogramaTemplate.list('-updated_date');
         return data || [];
       } catch (error) {
         console.error('Erro ao carregar trilhas:', error);
@@ -148,7 +148,7 @@ export default function TemplateLibraryManager() {
     queryKey: ['allConsultoriaSprints'],
     queryFn: async () => {
       try {
-        const data = await base44.entities.ConsultoriaSprint.list('-updated_date', 500);
+        const data = await base44.entities.ConsultoriaSprint.list('-updated_date');
         return data || [];
       } catch (error) {
         console.error('Erro ao carregar sprints:', error);
