@@ -45,11 +45,9 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Forbidden: Acesso negado a este sprint' }, { status: 403 });
     }
 
-    // B01: Atualizar sprint com progresso calculado
+    // NEW-B: Atualizar apenas progress_percentage — total_tasks e completed_tasks não existem no schema
     const updated = await base44.asServiceRole.entities.ConsultoriaSprint.update(sprint_id, {
       progress_percentage: progressPercentage,
-      total_tasks: totalTasks,
-      completed_tasks: completedTasks,
       last_activity_date: new Date().toISOString()
     });
 

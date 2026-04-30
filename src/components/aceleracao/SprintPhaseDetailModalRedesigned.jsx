@@ -31,9 +31,9 @@ const PHASES_CONFIG = [
 const STATUS_OPTIONS = [
   { value: "not_started", label: "Não iniciado", icon: <Circle className="w-4 h-4 text-gray-400" /> },
   { value: "in_progress", label: "Em andamento", icon: <Clock className="w-4 h-4 text-blue-500" /> },
-  // B03: Adicionar status "pending_review" para consultor submeter para revisão
-  { value: "pending_review", label: "Aguardando revisão", icon: <Send className="w-4 h-4 text-amber-500" /> },
   { value: "completed", label: "Concluído", icon: <CheckCircle2 className="w-4 h-4 text-green-500" /> },
+  // NEW-A: pending_review NÃO é opção do consultor — é setado exclusivamente pelo cliente via 'Enviar para Revisão'
+  // O consultor responde a pending_review via ConsultorReviewPanel (Aprovar/Devolver)
 ];
 
 export default function SprintPhaseDetailModalRedesigned({
@@ -299,13 +299,13 @@ export default function SprintPhaseDetailModalRedesigned({
   const addTask = async () => {
     if (!newTask.trim()) return;
     try {
-      // B05: Sanitizar newTaskVideoUrl — null em vez de undefined
+      // NEW-C: Padronizar video_url para undefined (alinha com instructions e link_url)
       const newTaskObj = {
         description: newTask.trim(),
         status: "to_do",
         instructions: newTaskInstructions.trim() || undefined,
         link_url: newTaskLink.trim() || undefined,
-        video_url: newTaskVideoUrl?.trim() || null,
+        video_url: newTaskVideoUrl?.trim() || undefined,
       };
       const updated = [...tasks, newTaskObj];
       // BUGFIX CRÍTICO: setTasks é assíncrono — NÃO usar livePhases aqui pois
