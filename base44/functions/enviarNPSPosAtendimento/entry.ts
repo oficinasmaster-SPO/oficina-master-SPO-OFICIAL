@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 /**
  * Envia NPS automático pós-atendimento de consultoria.
@@ -86,12 +86,33 @@ Deno.serve(async (req) => {
     </div>
   </div>`;
 
+  // Usar Resend diretamente para evitar restrição "only app users" do SendEmail nativo
+  const resendApiKey = Deno.env.get('RESEND_API_KEY');
+  if (!resendApiKey) {
+    return Response.json({ status: 'error', reason: 'RESEND_API_KEY não configurado' }, { status: 500 });
+  }
+
   try {
-    await base44.asServiceRole.integrations.Core.SendEmail({
-      to: emailDestino,
-      subject: `⭐ Como foi seu atendimento de consultoria? — ${workshop.name}`,
-      body: html,
+    const resendRes = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${resendApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: 'Oficinas Master <noreply@oficinasmaster.com.br>',
+        to: [emailDestino],
+        subject: `⭐ Como foi seu atendimento de consultoria? — ${workshop.name}`,
+        html,
+      }),
     });
+
+    if (!resendRes.ok) {
+      const errBody = await resendRes.text();
+      console.error(`[NPS] Resend erro ${resendRes.status}:`, errBody);
+      return Response.json({ status: 'error', reason: `Resend: ${resendRes.status} ${errBody}` }, { status: 500 });
+    }
+
     console.log(`[NPS] Pesquisa enviada para ${emailDestino} | Workshop: ${workshop.name} | Atendimento: ${atendimento.id}`);
   } catch (err) {
     console.error(`[NPS] Falha ao enviar e-mail para ${emailDestino}:`, err.message);
