@@ -718,8 +718,8 @@ function CamadaSprints({ workshopId, missoesSelecionadas, cronogramaTemplateId, 
       });
       const totalUpdated = res.data?.updatedCount || 0;
       toast.success(`✓ ${totalUpdated} sprint(s) sincronizado(s) com o template global`);
-      // SYNC-01: Delay maior antes de invalidar para evitar rate limit no refetch (múltiplas escritas podem saturar API)
-      await new Promise(r => setTimeout(r, 2000));
+      // Delay pequeno antes de invalidar para evitar rate limit no refetch
+      await new Promise(r => setTimeout(r, 800));
       queryClient.invalidateQueries({ queryKey: ['camada-sprints', workshopId] });
     } catch (error) {
       const msg = error?.message || '';
