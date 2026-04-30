@@ -155,7 +155,7 @@ export default function SprintCreateForm({ open, onClose, workshops = [], user, 
 
     const missionId = (form.mission_id && form.mission_id !== "custom") ? form.mission_id : "custom";
 
-    await base44.entities.ConsultoriaSprint.create({
+    const sprintCriada = await base44.entities.ConsultoriaSprint.create({
       workshop_id: form.workshop_id,
       cronograma_template_id: templateId,
       mission_id: missionId,
@@ -169,6 +169,11 @@ export default function SprintCreateForm({ open, onClose, workshops = [], user, 
       progress_percentage: 0,
       consulting_firm_id: user?.data?.consulting_firm_id || undefined,
       consultor_id: user?.id || undefined,
+    });
+
+    // Disparar follow-ups automáticos (fire-and-forget — não bloqueia o fluxo)
+    base44.functions.invoke('onSprintCreated', { data: sprintCriada }).catch(err => {
+      console.warn('[SprintCreateForm] onSprintCreated falhou (não crítico):', err.message);
     });
 
     toast.success(`Sprint criada com sucesso para ${workshop?.name || 'o cliente'}!`);

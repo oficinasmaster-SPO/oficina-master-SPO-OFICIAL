@@ -688,7 +688,11 @@ function CamadaSprints({ workshopId, missoesSelecionadas, cronogramaTemplateId, 
       if (cronogramaTemplateId) {
         sprintData.cronograma_template_id = cronogramaTemplateId;
       }
-      await base44.entities.ConsultoriaSprint.create(sprintData);
+      const sprintCriada = await base44.entities.ConsultoriaSprint.create(sprintData);
+      // Disparar follow-ups automáticos (fire-and-forget — não bloqueia o fluxo)
+      base44.functions.invoke('onSprintCreated', { data: sprintCriada }).catch(err => {
+        console.warn('[CamadaSprints] onSprintCreated falhou (não crítico):', err.message);
+      });
       toast.success(`✓ Sprint ${numero} iniciado! (3 semanas)`);
       // BUG-05: invalidar query em vez de chamar loadSprints manual
       queryClient.invalidateQueries({ queryKey: ['camada-sprints', workshopId] });
