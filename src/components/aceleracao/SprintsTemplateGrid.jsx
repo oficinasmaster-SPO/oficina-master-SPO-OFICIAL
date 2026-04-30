@@ -536,7 +536,7 @@ function SyncButton({ onClick, disabled }) {
 // ──────────────────────────────────────────────
 // SprintsTemplateGrid — componente principal
 // ──────────────────────────────────────────────
-export default function SprintsTemplateGrid() {
+export default function SprintsTemplateGrid({ onAudit }) {
   const [data, setData] = useState(buildDefaultData);
   const [expandedMission, setExpandedMission] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -612,6 +612,7 @@ export default function SprintsTemplateGrid() {
         console.warn('Erros parciais ao sincronizar:', response.data.errors);
         toast.warning(`Template salvo. ${count} sprint(s) atualizados, mas ${response.data.errors.length} tiveram erro.`);
       } else if (count > 0) {
+        onAudit?.('update_sprint_template', { mission_id: missionId, sprints_updated: count });
         toast.success(`✅ Template salvo e propagado para ${count} sprint(s) de clientes!`);
       } else {
         toast.success('✅ Template salvo com sucesso!');
@@ -644,11 +645,14 @@ export default function SprintsTemplateGrid() {
         total += response.data?.updatedCount ?? 0;
         if (response.data?.errors?.length) errors += response.data.errors.length;
       } catch {
-        errors++;
+         errors++;
+       }
       }
-    }
-    if (errors > 0) {
-      toast.warning(`Sincronização concluída: ${total} sprint(s) atualizados, ${errors} erro(s).`);
+      if (total > 0) {
+       onAudit?.('force_sync_sprints', { missions_synced: data.length, sprints_updated: total });
+      }
+      if (errors > 0) {
+       toast.warning(`Sincronização concluída: ${total} sprint(s) atualizados, ${errors} erro(s).`);
     } else {
       toast.success(`✅ Todas as sprints de clientes sincronizadas! (${total} sprint(s) atualizados)`);
     }
