@@ -572,7 +572,7 @@ function SprintCard({ numero, titulo, emoji, descricao, cor, isFixed, sprint, on
 
 function CamadaSprints({ workshopId, missoesSelecionadas, cronogramaTemplateId, isGlobalMode = false, globalSprints = [], missoes }) {
   const missoesSelecionadasData = missoes.filter(m => missoesSelecionadas.includes(m.id));
-  const { data: currentUser } = useQuery({ queryKey: ['current-user'], queryFn: () => base44.auth.me() });
+  const { data: currentUser } = useQuery({ queryKey: ['current-user'], queryFn: () => base44.auth.me(), staleTime: 5 * 60 * 1000 });
   const queryClient = useQueryClient();
   const [loadingCreate, setLoadingCreate] = useState(null);
   const [syncing, setSyncing] = useState(false);
@@ -586,14 +586,15 @@ function CamadaSprints({ workshopId, missoesSelecionadas, cronogramaTemplateId, 
     queryKey: ['camada-sprints', workshopId],
     queryFn: async () => {
       if (isGlobalMode && globalSprints?.length > 0) return globalSprints;
-      const query = workshopId ? { workshop_id: workshopId } : {};
-      const data = await base44.entities.ConsultoriaSprint.filter(query);
+      if (!workshopId) return [];
+      const data = await base44.entities.ConsultoriaSprint.filter({ workshop_id: workshopId });
       return data || [];
     },
-    enabled: !isGlobalMode || !globalSprints?.length,
-    staleTime: 60 * 1000,
+    enabled: !!workshopId && (!isGlobalMode || !globalSprints?.length),
+    staleTime: 2 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
+    retry: 1,
   });
 
   const sprints = (isGlobalMode && globalSprints?.length > 0) ? globalSprints : sprintsLocal;
