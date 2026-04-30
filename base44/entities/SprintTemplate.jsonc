@@ -4,7 +4,7 @@
   "properties": {
     "mission_id": {
       "type": "string",
-      "description": "ID da miss\u00e3o a qual este template pertence"
+      "description": "ID da miss\u00e3o"
     },
     "mission_icon": {
       "type": "string",
@@ -17,11 +17,11 @@
     "sprint_number": {
       "type": "integer",
       "default": 1,
-      "description": "N\u00famero do sprint dentro da miss\u00e3o"
+      "description": "N\u00famero do sprint"
     },
     "title": {
       "type": "string",
-      "description": "T\u00edtulo do sprint (ex: Sprint 1 \u2014 Agenda Cheia)"
+      "description": "T\u00edtulo do sprint"
     },
     "objective": {
       "type": "string",
@@ -29,7 +29,6 @@
     },
     "phases": {
       "type": "array",
-      "description": "Fases padr\u00e3o (Planning, Execution, Monitoring, Review, Retrospective)",
       "items": {
         "type": "object",
         "properties": {
@@ -64,12 +63,13 @@
             }
           }
         }
-      }
+      },
+      "description": "Fases padr\u00e3o com tarefas"
     },
     "is_template": {
       "type": "boolean",
       "default": true,
-      "description": "Marca como template reutiliz\u00e1vel"
+      "description": "Marca como template"
     }
   },
   "required": [

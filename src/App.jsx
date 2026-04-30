@@ -13,6 +13,7 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { TenantProvider } from '@/components/contexts/TenantContext';
 import { AttendanceTypeProvider } from '@/components/contexts/AttendanceTypeContext';
+import { TemplateLibraryProvider } from '@/components/aceleracao/contexts/TemplateLibraryContext';
 import PageAccessControl from '@/components/auth/PageAccessControl';
 import { pagePermissions } from '@/components/lib/pagePermissions';
 import { PermissionsProvider } from '@/components/contexts/PermissionsContext';
@@ -205,12 +206,14 @@ function App() {
         <QueryClientProvider client={queryClientInstance}>
           <TenantProvider>
             <AttendanceTypeProvider>
+              <TemplateLibraryProvider>
               <Router>
                 <PermissionsProvider>
                   <NavigationTracker />
                   <AuthenticatedApp />
                 </PermissionsProvider>
               </Router>
+              </TemplateLibraryProvider>
               <Toaster />
               <SonnerToaster />
               <VisualEditAgent />

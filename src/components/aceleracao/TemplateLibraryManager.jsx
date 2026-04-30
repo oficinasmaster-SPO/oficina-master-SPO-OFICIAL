@@ -26,51 +26,6 @@ const DEFAULT_MISSIONS_LIST = [
   { id: 'cultura_forte',        icon: '🌟', name: 'Cultura Forte' },
 ];
 
-/**
- * C05: Hook para carregar missões da entidade Mission
- * Renderizado dentro do escopo correto do MissionPicker
- */
-function useDynamicMissionsList() {
-  const { data: missionsList = DEFAULT_MISSIONS_LIST } = useQuery({
-    queryKey: ['missions_templates_for_picker'],
-    queryFn: async () => {
-      try {
-        const missions = await base44.entities.Mission.list('-updated_date', 100);
-        if (missions?.length > 0) {
-          const savedIds = new Set(missions.map(m => m.id));
-          const newDefaults = DEFAULT_MISSIONS_LIST.filter(m => !savedIds.has(m.id));
-          return [...missions, ...newDefaults];
-        }
-        return DEFAULT_MISSIONS_LIST;
-      } catch (error) {
-        console.error('Erro ao carregar missões:', error);
-        return DEFAULT_MISSIONS_LIST;
-      }
-    },
-    staleTime: 10 * 1000,
-  });
-  return missionsList;
-}
-
-/**
- * Hook para carregar templates de sprint
- */
-function useSprintTemplates() {
-  const { data: templates = [] } = useQuery({
-    queryKey: ['sprint_templates_entities'],
-    queryFn: async () => {
-      try {
-        return await base44.entities.SprintTemplate.list('-updated_date', 100);
-      } catch (error) {
-        console.error('Erro ao carregar sprint templates:', error);
-        return [];
-      }
-    },
-    staleTime: 30 * 1000,
-  });
-  return templates;
-}
-
 // P1-B01: MissionPicker usa context global (sem query N+1)
 function MissionPicker({ selected = [], onChange }) {
   const globalMissions = useGlobalMissions();
@@ -142,8 +97,7 @@ export default function TemplateLibraryManager() {
   const [showNewMission, setShowNewMission] = useState(false);
   const [showNewSprint, setShowNewSprint] = useState(false);
 
-  // P1-B02: Debounce para inputs
-  const debouncedSetNewTrail = useDebounce((data) => setNewTrail(data), 300);
+  
   
   const [newTrail, setNewTrail] = useState({ nome_fase: '', objetivo_geral: '', missoes_selecionadas: [] });
   const [newMission, setNewMission] = useState({ icon: '🎯', name: '', description: '', linked_sprint_id: '' });
@@ -612,13 +566,16 @@ export default function TemplateLibraryManager() {
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div>
-              <label className="text-sm font-semibold text-gray-700">Nome da Trilha *</label>
-              <Input
-                className="mt-1"
-                placeholder="Ex: Trilha Crescimento Fase 1"
-                value={newTrail.nome_fase}
-                onChange={e => setNewTrail({ ...newTrail, nome_fase: e.target.value })}
-              />
+               <label className="text-sm font-semibold text-gray-700">Nome da Trilha *</label>
+               <Input
+                 className="mt-1"
+                 placeholder="Ex: Trilha Crescimento Fase 1"
+                 value={newTrail.nome_fase}
+                 onChange={e => {
+                   const newValue = { ...newTrail, nome_fase: e.target.value };
+                   setNewTrail(newValue);
+                 }}
+               />
             </div>
             <div>
               <label className="text-sm font-semibold text-gray-700">Objetivo Geral</label>
@@ -626,7 +583,10 @@ export default function TemplateLibraryManager() {
                 className="mt-1 resize-none h-20"
                 placeholder="Descreva o objetivo desta trilha..."
                 value={newTrail.objetivo_geral}
-                onChange={e => setNewTrail({ ...newTrail, objetivo_geral: e.target.value })}
+                onChange={e => {
+                  const newValue = { ...newTrail, objetivo_geral: e.target.value };
+                  setNewTrail(newValue);
+                }}
               />
             </div>
             <div>
