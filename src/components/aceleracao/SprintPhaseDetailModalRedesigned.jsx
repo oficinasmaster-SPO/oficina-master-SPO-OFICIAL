@@ -281,7 +281,6 @@ export default function SprintPhaseDetailModalRedesigned({
       // Garantir que campos do template NÃO são removidos ao salvar evidência
       instructions: originalTask.instructions,
       link_url: originalTask.link_url,
-      video_url: originalTask.video_url,
     };
     setTasks(updated);
     // BUG FIX: livePhases é declarado ABAIXO — construir updatedPhases diretamente
@@ -350,7 +349,7 @@ export default function SprintPhaseDetailModalRedesigned({
 
   return (
     <Dialog open={modalOpen} onOpenChange={handleModalOpenChange}>
-      <DialogContent className="max-w-[100vw] w-screen h-screen max-h-screen rounded-none overflow-y-auto p-4 sm:p-6">
+      <DialogContent className="max-w-4xl max-h-[90vh] rounded-lg overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <div className={`w-8 h-8 rounded-full ${config.bg} flex items-center justify-center`}>

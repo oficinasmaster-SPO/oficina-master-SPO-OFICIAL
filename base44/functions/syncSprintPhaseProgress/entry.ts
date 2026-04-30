@@ -9,6 +9,12 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'sprint_id e workshop_id são obrigatórios' }, { status: 400 });
     }
 
+    // R03: Validar se workshop_id existe antes de acessar
+    const workshop = await base44.asServiceRole.entities.Workshop.get(workshop_id).catch(() => null);
+    if (!workshop) {
+      return Response.json({ error: 'Workshop não encontrado' }, { status: 404 });
+    }
+
     // Buscar sprint completa
     const sprint = await base44.asServiceRole.entities.ConsultoriaSprint.get(sprint_id);
     
