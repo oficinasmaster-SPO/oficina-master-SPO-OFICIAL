@@ -29,44 +29,43 @@ export default function SprintPhaseProgress({ phases = [], currentPhaseIdx = -1,
         const isActive = idx === currentPhaseIdx;
         const isCompleted = phase.status === "completed";
 
-        return (
-          <React.Fragment key={`${phase.name}-${idx}`}>
-            <div
-              className={cn(
-                "flex flex-col items-center gap-1.5 shrink-0 cursor-pointer group transition-transform duration-150",
-                isActive && "scale-110",
-                !isActive && "hover:scale-105"
-              )}
-              onClick={() => onPhaseClick?.(idx)}
-            >
-              <span className={cn(
-                "text-[10px] text-center leading-tight max-w-[72px] font-medium transition-colors",
-                isActive ? "text-blue-700" : "text-gray-500 group-hover:text-gray-700"
-              )}>
-                {phaseLabels[phase.name] || phase.name}
-              </span>
-              <div className={cn(
-                "w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-200",
-                config.bg, config.border,
-                isActive && config.ring,
-                isActive && "shadow-md",
-                !isActive && "group-hover:shadow-sm"
-              )}>
-                {isCompleted ? (
-                  <CheckCircle className="w-5 h-5 text-green-600" />
-                ) : (
-                  <Icon className={cn("w-4 h-4 transition-colors", isActive ? config.color : "text-gray-400 group-hover:text-gray-600")} />
-                )}
-              </div>
-            </div>
-            {!isLast && (
-              <div className={cn(
-                "h-0.5 flex-1 self-end mb-5 rounded-full transition-colors",
-                isCompleted ? "bg-green-400" : idx < currentPhaseIdx ? "bg-blue-300" : "bg-gray-200"
-              )} />
+        return [
+          <div
+            key={`phase-${idx}`}
+            className={cn(
+              "flex flex-col items-center gap-1.5 shrink-0 cursor-pointer group transition-transform duration-150",
+              isActive && "scale-110",
+              !isActive && "hover:scale-105"
             )}
-          </React.Fragment>
-        );
+            onClick={() => onPhaseClick?.(idx)}
+          >
+            <span className={cn(
+              "text-[10px] text-center leading-tight max-w-[72px] font-medium transition-colors",
+              isActive ? "text-blue-700" : "text-gray-500 group-hover:text-gray-700"
+            )}>
+              {phaseLabels[phase.name] || phase.name}
+            </span>
+            <div className={cn(
+              "w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-200",
+              config.bg, config.border,
+              isActive && config.ring,
+              isActive && "shadow-md",
+              !isActive && "group-hover:shadow-sm"
+            )}>
+              {isCompleted ? (
+                <CheckCircle className="w-5 h-5 text-green-600" />
+              ) : (
+                <Icon className={cn("w-4 h-4 transition-colors", isActive ? config.color : "text-gray-400 group-hover:text-gray-600")} />
+              )}
+            </div>
+          </div>,
+          !isLast && (
+            <div key={`connector-${idx}`} className={cn(
+              "h-0.5 flex-1 self-end mb-5 rounded-full transition-colors",
+              isCompleted ? "bg-green-400" : idx < currentPhaseIdx ? "bg-blue-300" : "bg-gray-200"
+            )} />
+          ),
+        ];
       })}
     </div>
   );
