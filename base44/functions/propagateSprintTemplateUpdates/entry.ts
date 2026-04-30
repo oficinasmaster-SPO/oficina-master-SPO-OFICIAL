@@ -41,9 +41,9 @@ Deno.serve(async (req) => {
           return {
             // Campos do template sempre sobrescrevem
             description:  templateTask.description  ?? clientTask.description  ?? '',
-            instructions: templateTask.instructions ?? '',   // '' apaga se template removeu
-            link_url:     templateTask.link_url     ?? '',   // '' apaga se template removeu
-            video_url:    templateTask.video_url    ?? '',   // '' apaga se template removeu
+            instructions: templateTask.instructions?.trim() || undefined,
+            link_url:     templateTask.link_url?.trim()     || undefined,
+            video_url:    templateTask.video_url?.trim()    || undefined,
             // Dados do cliente são preservados
             status:             clientTask.status             || 'to_do',
             completed_by:       clientTask.completed_by       || null,
