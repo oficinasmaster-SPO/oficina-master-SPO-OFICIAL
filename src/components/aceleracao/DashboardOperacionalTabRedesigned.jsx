@@ -151,12 +151,13 @@ export default function DashboardOperacionalTabRedesigned({ user, workshops = []
           onClose={() => {
             setSelectedSprint(null);
             setSelectedPhaseIndex(0);
-            refetch();
+            // APR-01: NÃO chamar refetch() — o subscribe do useDashboardSprints já invalida
+            // o cache automaticamente quando ConsultoriaSprint muda (debounce 500ms)
           }}
           onSaved={() => {
             setSelectedSprint(null);
             setSelectedPhaseIndex(0);
-            refetch();
+            // APR-01: NÃO chamar refetch() — mesmo motivo acima
           }}
           onNavigateToPhase={(idx) => setSelectedPhaseIndex(idx)}
         />

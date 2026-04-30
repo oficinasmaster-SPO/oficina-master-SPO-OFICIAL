@@ -58,7 +58,7 @@ export default function SprintPhaseDetailModalRedesigned({
     queryKey: ['sprint-detail', sprintProp?.id],
     queryFn: () => base44.entities.ConsultoriaSprint.get(sprintProp.id),
     enabled: !!sprintProp?.id,
-    staleTime: 5 * 1000, // 5s — suficiente para não refetch em cada render
+    staleTime: 60 * 1000, // APR-03: 60s — invalidateQueries em persistPhases já garante refresh quando há mudança real
     refetchOnWindowFocus: false,
   });
 
@@ -116,13 +116,10 @@ export default function SprintPhaseDetailModalRedesigned({
         last_activity_date: new Date().toISOString(),
       });
       queryClient.invalidateQueries({ queryKey: ['sprint-detail', sprint.id] });
-      setTimeout(() => {
-        if (!isMountedRef.current) return;
-        queryClient.invalidateQueries({ queryKey: ['dashboard-sprints'], exact: false });
-        queryClient.invalidateQueries({ queryKey: ['sprints-client'], exact: false });
-        queryClient.invalidateQueries({ queryKey: ['sprints-reais'], exact: false });
-        queryClient.invalidateQueries({ queryKey: ['active-sprint-widget'], exact: false });
-      }, 1500);
+      // APR-02: sprints-client e camada-sprints invalidados imediatamente (não disparam flood de 30 workshops)
+      // dashboard-sprints e active-sprint-widget são cobertos pelo subscribe do useDashboardSprints (debounce 500ms)
+      queryClient.invalidateQueries({ queryKey: ['sprints-client'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['camada-sprints'], exact: false });
       if (!suppressToast) toast.success("Alteração salva com sucesso!");
       success = true;
     } catch (error) {
