@@ -62,9 +62,7 @@ Deno.serve(async (req) => {
       sprint: {
         id: updated.id,
         title: updated.title,
-        progress_percentage: updated.progress_percentage,
-        total_tasks: updated.total_tasks,
-        completed_tasks: updated.completed_tasks
+        progress_percentage: updated.progress_percentage
       }
     });
   } catch (error) {

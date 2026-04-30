@@ -279,8 +279,6 @@ export default function SprintPhaseDetailModalRedesigned({
       ...originalTask, 
       ...data,
       // Garantir que campos do template NÃO são removidos ao salvar evidência
-      instructions: originalTask.instructions,
-      link_url: originalTask.link_url,
     };
     setTasks(updated);
     // BUG FIX: livePhases é declarado ABAIXO — construir updatedPhases diretamente
