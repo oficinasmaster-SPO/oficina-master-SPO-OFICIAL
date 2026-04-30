@@ -264,6 +264,9 @@
           "consulting_firm_id": "{{user.data.consulting_firm_id}}"
         },
         {
+          "consultor_id": "{{user.id}}"
+        },
+        {
           "created_by": "{{user.email}}"
         }
       ]

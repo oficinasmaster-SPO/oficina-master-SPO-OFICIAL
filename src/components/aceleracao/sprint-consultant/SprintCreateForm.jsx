@@ -181,6 +181,7 @@ export default function SprintCreateForm({ open, onClose, workshops = [], user, 
     queryClient.invalidateQueries({ queryKey: ["dashboard-sprints"], exact: false });
     queryClient.invalidateQueries({ queryKey: ["sprints-client"], exact: false });
     queryClient.invalidateQueries({ queryKey: ["sprints-reais"], exact: false });
+    queryClient.invalidateQueries({ queryKey: ["camada-sprints"], exact: false });
     queryClient.invalidateQueries({ queryKey: ["active-sprint-widget"], exact: false });
     queryClient.invalidateQueries({ queryKey: ["follow-up-reminders"], exact: false });
     queryClient.invalidateQueries({ queryKey: ["follow-up-reminders-tab"], exact: false });
