@@ -2,7 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
 // Cache em memória no servidor (persiste entre requests no mesmo isolate Deno)
 const workshopCache = new Map();
-const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutos
+const CACHE_TTL_MS = 2 * 60 * 1000; // 2 minutos
 
 function getCachedData(userId) {
   const entry = workshopCache.get(userId);
