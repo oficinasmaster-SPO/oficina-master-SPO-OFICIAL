@@ -104,10 +104,13 @@ export default function SprintPhaseDetailModalRedesigned({
 
     let success = false;
     try {
+      // R3-01: Preservar status 'overdue' — não sobrescrever com 'in_progress' se sprint está atrasado
+      const currentStatus = sprint.status;
+      const newStatus = allCompleted ? "completed" : (currentStatus === "overdue" ? "overdue" : "in_progress");
       await base44.entities.ConsultoriaSprint.update(sprint.id, {
         phases: updatedPhases,
         progress_percentage: taskProgress,
-        status: allCompleted ? "completed" : "in_progress",
+        status: newStatus,
         last_activity_date: new Date().toISOString(),
       });
       queryClient.invalidateQueries({ queryKey: ['sprint-detail', sprint.id] });

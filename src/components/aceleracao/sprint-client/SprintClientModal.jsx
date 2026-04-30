@@ -100,6 +100,8 @@ export default function SprintClientModal({ sprint, user, workshop, open, onClos
         queryClient.invalidateQueries({ queryKey: ["active-sprint-widget"], exact: false });
         queryClient.invalidateQueries({ queryKey: ["dashboard-sprints"], exact: false });
         queryClient.invalidateQueries({ queryKey: ["sprints-reais"], exact: false });
+        // R3-06: Invalidar CamadaSprints para refletir progresso atualizado pelo cliente
+        queryClient.invalidateQueries({ queryKey: ["camada-sprints"], exact: false });
       }, 1500);
       // Nota: setTimeout acima é fire-and-forget (queryClient é estável), sem risco de leak
     },
@@ -171,8 +173,9 @@ export default function SprintClientModal({ sprint, user, workshop, open, onClos
         { action: "submitted", date: now, actor: "oficina", actor_id: user.id },
       ],
     };
+    // R3-07: suppressToast — saveMutation.onSuccess não deve exibir toast aqui pois já temos o abaixo
     saveMutation.mutate(updated);
-    toast.success("Fase enviada para revisão do consultor!");
+    toast.success("Fase enviada para revisão do consultor! ✅");
 
     // Fire-and-forget notification
     base44.functions.invoke("notifySprintPhaseChange", {

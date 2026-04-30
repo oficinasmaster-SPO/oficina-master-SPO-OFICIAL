@@ -62,10 +62,11 @@ Deno.serve(async (req) => {
           const mergedTasks = templateTasks.map((templateTask, taskIdx) => {
             const clientTask = clientTasks[taskIdx] || {};
             return {
+              // R3-04: usar undefined em vez de '' para campos opcionais
               description:  templateTask.description  ?? clientTask.description  ?? '',
-              instructions: templateTask.instructions ?? '',
-              link_url:     templateTask.link_url     ?? '',
-              video_url:    templateTask.video_url    ?? '',
+              instructions: templateTask.instructions?.trim() || undefined,
+              link_url:     templateTask.link_url?.trim()     || undefined,
+              video_url:    templateTask.video_url?.trim()    || undefined,
               // Dados do cliente preservados
               status:             clientTask.status             || 'to_do',
               completed_by:       clientTask.completed_by       || null,

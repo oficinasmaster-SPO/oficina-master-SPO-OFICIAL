@@ -18,9 +18,9 @@ Deno.serve(async (req) => {
       }, { status: 400 });
     }
 
-    // Buscar template do sistema
+    // Buscar template do sistema — R3-02: chave correta é 'sprint_templates_v1'
     const systemSettings = await base44.entities.SystemSetting.filter(
-      { key: 'sprint_templates_data' },
+      { key: 'sprint_templates_v1' },
       '-created_date',
       1
     );
@@ -31,8 +31,10 @@ Deno.serve(async (req) => {
       }, { status: 404 });
     }
 
-    const templatesData = systemSettings[0].value || {};
-    const template = templatesData[mission_id];
+    // R3-02: sprint_templates_v1 é um array JSON, não um objeto por chave
+    const templatesData = JSON.parse(systemSettings[0].value || '[]');
+    const templateObj = templatesData.find(m => m.mission_id === mission_id);
+    const template = templateObj?.sprint;
 
     if (!template?.phases) {
       return Response.json({ 
@@ -82,9 +84,10 @@ Deno.serve(async (req) => {
         
         return {
           ...currentTask,
-          // Atualizar instruções e link sempre que template muda
-          instructions: templateTask.instructions || currentTask.instructions,
-          link_url: templateTask.link_url || currentTask.link_url,
+          // R3-04: usar undefined em vez de '' para campos opcionais
+          instructions: templateTask.instructions?.trim() || currentTask.instructions || undefined,
+          link_url: templateTask.link_url?.trim() || currentTask.link_url || undefined,
+          video_url: templateTask.video_url?.trim() || currentTask.video_url || undefined,
           // Preservar status de conclusão
           status: wasDone ? 'done' : (currentTask.status || 'to_do'),
           // Se foi concluída, manter dados de conclusão
@@ -104,8 +107,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Persistir atualização
-    await base44.entities.ConsultoriaSprint.update(sprint.id, {
+    // Persistir atualização — R3-05 padrão: usar asServiceRole para evitar falha por RLS
+    await base44.asServiceRole.entities.ConsultoriaSprint.update(sprint.id, {
       phases: updatedPhases,
       last_activity_date: new Date().toISOString()
     });

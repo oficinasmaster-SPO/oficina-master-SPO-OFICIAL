@@ -9,8 +9,8 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'workshop_id é obrigatório' }, { status: 400 });
     }
 
-    // Buscar todos os sprints do workshop
-    const sprints = await base44.entities.ConsultoriaSprint.filter({
+    // R3-05: usar asServiceRole para contornar RLS — sem isso, o delete falha silenciosamente
+    const sprints = await base44.asServiceRole.entities.ConsultoriaSprint.filter({
       workshop_id: workshop_id
     });
 
@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
         if (primeiro.status !== 'completed') {
           for (let i = 1; i < ordenados.length; i++) {
             const sprint = ordenados[i];
-            await base44.entities.ConsultoriaSprint.delete(sprint.id);
+            await base44.asServiceRole.entities.ConsultoriaSprint.delete(sprint.id);
             deletados++;
             duplicadosEncontrados.push({
               missao_id: missaoId,
@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
           // Se primeiro foi concluído, manter apenas o segundo mais recente
           for (let i = 2; i < ordenados.length; i++) {
             const sprint = ordenados[i];
-            await base44.entities.ConsultoriaSprint.delete(sprint.id);
+            await base44.asServiceRole.entities.ConsultoriaSprint.delete(sprint.id);
             deletados++;
             duplicadosEncontrados.push({
               missao_id: missaoId,

@@ -55,17 +55,18 @@ Deno.serve(async (req) => {
       ? new Date(sprint.start_date + 'T00:00:00')
       : new Date();
 
+    // R3-03: usar undefined em vez de '' para campos opcionais — evita poluição do banco
     const reminders = [7, 14, 21, 28].map((diasOffset, idx) => {
       const reminderDate = new Date(baseDate);
       reminderDate.setDate(reminderDate.getDate() + diasOffset);
       return {
-        workshop_id: sprint.workshop_id || '',
-        workshop_name: workshopName,
+        workshop_id: sprint.workshop_id || undefined,
+        workshop_name: workshopName || undefined,
         sprint_id: sprint.id,
         origin_type: 'sprint',
-        consultor_id: sprint.consultor_id || '',
-        consultor_nome: consultorNome,
-        consulting_firm_id: sprint.consulting_firm_id || '',
+        consultor_id: sprint.consultor_id || undefined,
+        consultor_nome: consultorNome || undefined,
+        consulting_firm_id: sprint.consulting_firm_id || undefined,
         sequence_number: idx + 1,
         days_since_meeting: diasOffset,
         reminder_date: reminderDate.toISOString().split('T')[0],
