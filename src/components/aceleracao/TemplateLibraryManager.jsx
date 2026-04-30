@@ -25,7 +25,8 @@ const DEFAULT_MISSIONS_LIST = [
 ];
 
 /**
- * Hook para carregar missões da entidade Mission
+ * C05: Hook para carregar missões da entidade Mission
+ * Renderizado dentro do escopo correto do MissionPicker
  */
 function useDynamicMissionsList() {
   const { data: missionsList = DEFAULT_MISSIONS_LIST } = useQuery({
@@ -34,7 +35,6 @@ function useDynamicMissionsList() {
       try {
         const missions = await base44.entities.Mission.list('-updated_date', 100);
         if (missions?.length > 0) {
-          // Merge: banco + defaults que não existem no banco
           const savedIds = new Set(missions.map(m => m.id));
           const newDefaults = DEFAULT_MISSIONS_LIST.filter(m => !savedIds.has(m.id));
           return [...missions, ...newDefaults];
@@ -167,12 +167,11 @@ export default function TemplateLibraryManager() {
 
 
 
-    // Deduplica trilhas por missões selecionadas (P2: usar join em vez de JSON.stringify)
+    // C01: Deduplica trilhas por ID único (não por missões = mais confiável)
     const trailsMap = new Map();
     allTrails.forEach(trail => {
-      const key = [...(trail.missoes_selecionadas || [])].sort().join(',');
-      if (!trailsMap.has(key)) {
-        trailsMap.set(key, {
+      if (!trailsMap.has(trail.id)) {
+        trailsMap.set(trail.id, {
           id: trail.id,
           name: trail.nome_fase,
           objetivo_geral: trail.objetivo_geral || '',
@@ -192,12 +191,11 @@ export default function TemplateLibraryManager() {
       if (sprint.mission_id) missionsSet.add(sprint.mission_id);
     });
 
-    // Consolida sprints por missão e cronograma_template_id
+    // C01: Consolida sprints por ID único (fonte de verdade = database)
     const sprintsMap = new Map();
     allSprints.forEach(sprint => {
-      const key = `${sprint.cronograma_template_id}_${sprint.mission_id}`;
-      if (!sprintsMap.has(key)) {
-        sprintsMap.set(key, {
+      if (!sprintsMap.has(sprint.id)) {
+        sprintsMap.set(sprint.id, {
           id: sprint.id,
           title: sprint.title,
           objective: sprint.objective,
@@ -219,6 +217,7 @@ export default function TemplateLibraryManager() {
     });
   }, [allTrails, allSprints]);
 
+  // C03: Implementado - Duplicar trilha
   const handleDuplicateTrail = async (trail) => {
     setCreating(true);
     try {
@@ -233,13 +232,14 @@ export default function TemplateLibraryManager() {
       queryClient.invalidateQueries({ queryKey: ['allCronogramaTemplates'] });
       toast.success('Trilha duplicada com sucesso!');
     } catch (error) {
-      console.error('Erro ao duplicar trilha:', error);
+      console.error('C03 - Erro ao duplicar trilha:', error);
       toast.error('Erro ao duplicar trilha');
     } finally {
       setCreating(false);
     }
   };
 
+  // C03: Implementado - Duplicar sprint
   const handleDuplicateSprint = async (sprint) => {
     setCreating(true);
     try {
@@ -259,14 +259,14 @@ export default function TemplateLibraryManager() {
       queryClient.invalidateQueries({ queryKey: ['allConsultoriaSprints'] });
       toast.success('Sprint duplicado com sucesso!');
     } catch (error) {
-      console.error('Erro ao duplicar sprint:', error);
+      console.error('C03 - Erro ao duplicar sprint:', error);
       toast.error('Erro ao duplicar sprint');
     } finally {
       setCreating(false);
     }
   };
 
-  // ── Editar Trilha ──
+  // C04: Editar Trilha com tratamento de erro
   const handleSaveTrail = async () => {
     if (!editingTrail?.nome_fase?.trim()) { toast.error('Informe o nome da trilha'); return; }
     setSaving(true);
@@ -279,11 +279,14 @@ export default function TemplateLibraryManager() {
       queryClient.invalidateQueries({ queryKey: ['allCronogramaTemplates'] });
       toast.success('Trilha atualizada!');
       setEditingTrail(null);
-    } catch { toast.error('Erro ao salvar trilha'); }
+    } catch (error) { 
+      console.error('C04 - Erro ao salvar trilha:', error);
+      toast.error('Erro ao salvar trilha');
+    }
     finally { setSaving(false); }
   };
 
-  // ── Criar nova Trilha ──
+  // C04: Criar trilha com tratamento de erro
   const handleCreateTrail = async () => {
     if (!newTrail.nome_fase.trim()) { toast.error('Informe o nome da trilha'); return; }
     setCreating(true);
@@ -299,11 +302,14 @@ export default function TemplateLibraryManager() {
       toast.success('Trilha criada!');
       setShowNewTrail(false);
       setNewTrail({ nome_fase: '', objetivo_geral: '', missoes_selecionadas: [] });
-    } catch { toast.error('Erro ao criar trilha'); }
+    } catch (error) {
+      console.error('C04 - Erro ao criar trilha:', error);
+      toast.error('Erro ao criar trilha');
+    }
     finally { setCreating(false); }
   };
 
-  // ── Criar nova Missão ──
+  // C04: Criar missão com tratamento de erro
   const handleCreateMission = async () => {
     if (!newMission.name.trim()) { toast.error('Informe o nome da missão'); return; }
     setCreating(true);
@@ -321,13 +327,13 @@ export default function TemplateLibraryManager() {
       setShowNewMission(false);
       setNewMission({ icon: '🎯', name: '', description: '', linked_sprint_id: '' });
     } catch (error) {
-      console.error('Erro ao criar missão:', error);
+      console.error('C04 - Erro ao criar missão:', error);
       toast.error('Erro ao criar missão');
     }
     finally { setCreating(false); }
   };
 
-  // ── Criar novo Sprint template ──
+  // C04: Criar sprint com tratamento de erro
   const handleCreateSprint = async () => {
     if (!newSprint.mission_name.trim()) { toast.error('Informe o nome da missão do sprint'); return; }
     setCreating(true);
@@ -348,7 +354,7 @@ export default function TemplateLibraryManager() {
       setShowNewSprint(false);
       setNewSprint({ mission_icon: '🚀', mission_name: '', objective: '' });
     } catch (error) {
-      console.error('Erro ao criar sprint:', error);
+      console.error('C04 - Erro ao criar sprint:', error);
       toast.error('Erro ao criar sprint');
     }
     finally { setCreating(false); }
