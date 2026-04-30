@@ -19,7 +19,7 @@ Deno.serve(async (req) => {
     }
 
     // Buscar template do sistema — R3-02: chave correta é 'sprint_templates_v1'
-    const systemSettings = await base44.entities.SystemSetting.filter(
+    const systemSettings = await base44.asServiceRole.entities.SystemSetting.filter(
       { key: 'sprint_templates_v1' },
       '-created_date',
       1
@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
     }
 
     // Buscar sprint antiga do cliente
-    const sprints = await base44.entities.ConsultoriaSprint.filter({
+    const sprints = await base44.asServiceRole.entities.ConsultoriaSprint.filter({
       workshop_id,
       mission_id
     });
