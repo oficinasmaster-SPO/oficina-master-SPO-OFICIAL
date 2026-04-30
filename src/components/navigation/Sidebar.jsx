@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Badge } from "@/components/ui/badge";
@@ -71,40 +72,37 @@ import TenantSelector from "./TenantSelector";
 
 function UserProfileSection({ user, collapsed, workshop }) {
   const { workshopId } = useWorkshopContext();
-  const [employee, setEmployee] = useState(null);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (user?.id) {
-      loadEmployee();
-    }
-  }, [user?.id, workshopId]);
-
-  const loadEmployee = async () => {
-    try {
-      let employees = [];
-      if (workshopId) {
-        employees = await base44.entities.Employee.filter({ user_id: user.id, workshop_id: workshopId });
+  // LOAD-02: useQuery com cache, deduplicação e fallback — substitui useState/useEffect manual
+  const { data: employee, isLoading: loading } = useQuery({
+    queryKey: ['sidebar-employee', user?.id, workshopId],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      // Timeout de 5s para evitar loading infinito
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 5000);
+      try {
+        let employees = [];
+        if (workshopId) {
+          employees = await base44.entities.Employee.filter({ user_id: user.id, workshop_id: workshopId });
+        }
+        if (!employees?.length) {
+          employees = await base44.entities.Employee.filter({ user_id: user.id });
+        }
+        return employees?.[0] || null;
+      } finally {
+        clearTimeout(timer);
       }
-      
-      if (!employees || employees.length === 0) {
-        employees = await base44.entities.Employee.filter({ user_id: user.id });
-      }
-      
-      // Fallback: tentar por email se não encontrar por ID
-      if (!employees || employees.length === 0) {
-        employees = await base44.entities.Employee.filter({ email: user.email });
-      }
-
-      if (employees && employees.length > 0) {
-        setEmployee(employees[0]);
-      }
-    } catch (error) {
-      console.error("Erro ao carregar employee:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    enabled: !!user?.id,
+    staleTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    retry: 1,
+    retryDelay: 3000,
+    // LOAD-02: fallback imediato com dados do authUser — perfil nunca fica em branco
+    placeholderData: null,
+  });
 
   const getInitials = () => {
     if (employee?.full_name) {
@@ -179,7 +177,7 @@ function UserProfileSection({ user, collapsed, workshop }) {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5">
               <p className="text-sm font-semibold text-gray-900 truncate">
-                {employee?.full_name || user?.full_name || user?.email}
+                {employee?.full_name || user?.full_name || user?.name || user?.email?.split('@')[0] || 'Usuário'}
               </p>
               {(user?.role === 'admin' || workshop?.owner_id === user?.id || employee?.is_partner || employee?.job_role === 'socio') && (
                 <img 
