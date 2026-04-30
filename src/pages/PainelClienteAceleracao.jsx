@@ -184,10 +184,11 @@ export default function PainelClienteAceleracao() {
       );
     },
     enabled: !!workshop?.id,
-    staleTime: 15 * 1000,
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
-    retry: false
+    // PAI-01: staleTime maior + sem refetch automático — subscribe invalida quando há mudança real
+    staleTime: 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    retry: 1
   });
 
 

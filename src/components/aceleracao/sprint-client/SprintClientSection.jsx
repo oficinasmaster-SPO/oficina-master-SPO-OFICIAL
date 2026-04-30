@@ -23,9 +23,10 @@ export default function SprintClientSection({ workshopId, user, workshop, sprint
       return Array.isArray(result) ? result : [];
     },
     enabled: !!workshopId && !sprintsExternal,
-    staleTime: 15 * 1000,
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
+    // PAI-02: staleTime maior + sem refetch automático — subscribe invalida quando há mudança real
+    staleTime: 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 
   const sprints = sprintsExternal || sprintsLocal;
