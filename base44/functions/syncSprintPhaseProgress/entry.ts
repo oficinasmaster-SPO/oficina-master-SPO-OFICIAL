@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
       if (phase.tasks && Array.isArray(phase.tasks)) {
         phase.tasks.forEach(task => {
           totalTasks++;
-          if (task.status === 'done' || task.completed_at) {
+          if (task.status === 'done') {
             completedTasks++;
           }
         });
