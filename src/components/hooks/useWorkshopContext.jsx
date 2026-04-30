@@ -26,8 +26,12 @@ export function useWorkshopContext() {
           return response.data.workshops;
         }
       } catch (err) {
-        // Não disparar queries adicionais em caso de rate limit (429) — retornar [] e aguardar retry
-        console.warn('Erro ao buscar workshops via BFF:', err?.status || err?.message);
+        const status = err?.status || err?.response?.status;
+        if (status === 429) {
+          // LOAD-04: rate limit — lançar erro para que o React Query mantenha o cache anterior (keepPreviousData)
+          throw new Error('rate_limit');
+        }
+        console.warn('Erro ao buscar workshops via BFF:', status || err?.message);
         return [];
       }
       return [];
@@ -35,10 +39,16 @@ export function useWorkshopContext() {
     enabled: !isTenantLoading,
     staleTime: 15 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
-    retry: 1,
-    retryDelay: 5000,
+    retry: (failureCount, error) => {
+      // LOAD-04: retry automático após rate limit (aguarda 8s)
+      if (error?.message === 'rate_limit') return failureCount < 2;
+      return failureCount < 1;
+    },
+    retryDelay: (attempt, error) => error?.message === 'rate_limit' ? 8000 : 5000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
+    // LOAD-04: manter dados anteriores em caso de erro — não limpar workshop em erros transitórios
+    placeholderData: (previousData) => previousData,
   });
 
   // 2. Determina o workshop atual DE FORMA SÍNCRONA baseado na lista 'available'

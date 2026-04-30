@@ -21,7 +21,6 @@ export function TenantProvider({ children }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isSwitching, setIsSwitching] = useState(false);
   const loadAttemptRef = useRef(0);
-  const hasCleanedProfileRef = useRef(false); // garante cleanup único por sessão
   const switchingToIdRef = useRef(null); // evita race condition em cliques rápidos
   const [companySwitch, setCompanySwitch] = useState(0);
 
@@ -65,73 +64,18 @@ export function TenantProvider({ children }) {
              if (!cancelled) setConsultingFirm(null);
           }
           
+          // LOAD-03: usar apenas o ID do localStorage/perfil sem validar via query
+          // A validação real acontece em useWorkshopContext via getUserWorkshops (BFF)
           const storedCompanyId = localStorage.getItem('selected_company_id');
-          let compIdToLoad = null;
+          const compIdToLoad = storedCompanyId
+            || currentUser.data?.workshop_id
+            || currentUser.data?.company_id
+            || null;
 
-          if (storedCompanyId) {
-            let validWorkshop = null;
-            try {
-              const wsList = await base44.entities.Workshop.filter({ id: storedCompanyId });
-              if (wsList && wsList.length > 0) validWorkshop = wsList[0];
-              if (!validWorkshop) {
-                const cpList = await base44.entities.Company.filter({ id: storedCompanyId });
-                if (cpList && cpList.length > 0) validWorkshop = cpList[0];
-              }
-            } catch(e) {}
-
-            if (validWorkshop) {
-              compIdToLoad = storedCompanyId;
-            } else {
-              localStorage.removeItem('selected_company_id');
-            }
-          }
-
-          if (!compIdToLoad) {
-            compIdToLoad = currentUser.data?.workshop_id || currentUser.data?.company_id || null;
-            // Não salva no localStorage ainda - será validado abaixo
-          }
-          
-          if (!cancelled) setSelectedCompanyId(compIdToLoad);
-
-          if (compIdToLoad) {
-             // Tenta buscar como Workshop primeiro (novo padrão), se falhar tenta como Company (padrão legado)
-             let compOrWorkshop = null;
-             
-             try {
-                const wsList = await base44.entities.Workshop.filter({ id: compIdToLoad });
-                if (wsList && wsList.length > 0) {
-                   compOrWorkshop = wsList[0];
-                } else {
-                   const cpList = await base44.entities.Company.filter({ id: compIdToLoad });
-                   if (cpList && cpList.length > 0) compOrWorkshop = cpList[0];
-                }
-             } catch(err) {}
-
-             if (compOrWorkshop && !cancelled) {
-                 setCompany(compOrWorkshop);
-                 localStorage.setItem('selected_company_id', compIdToLoad);
-             } else if (!compOrWorkshop && !cancelled) {
-                 // Workshop/Company não encontrado - limpa TUDO e marca como inválido
-                 console.warn(`Workshop/Company com ID ${compIdToLoad} não encontrado. Limpando referência.`);
-                 localStorage.removeItem('selected_company_id');
-                 setSelectedCompanyId(null);
-                 setCompany(null);
-                 
-                 // Se o ID inválido veio do perfil do usuário, limpa no perfil também
-                 const userWsId = currentUser.data?.workshop_id;
-                 if (userWsId && userWsId === compIdToLoad && !hasCleanedProfileRef.current) {
-                   hasCleanedProfileRef.current = true;
-                   console.warn('Workshop do perfil do usuário é inválido. Limpando workshop_id do perfil.');
-                   try {
-                     await base44.auth.updateMe({ workshop_id: null });
-                   } catch (e) {
-                     hasCleanedProfileRef.current = false;
-                     console.warn('Não foi possível limpar workshop_id do perfil:', e);
-                   }
-                 }
-             }
-          } else {
-             if (!cancelled) setCompany(null);
+          if (!cancelled) {
+            setSelectedCompanyId(compIdToLoad);
+            // Não buscar o workshop aqui — useWorkshopContext fará isso via getUserWorkshops
+            // Isso elimina 4 queries sequenciais do boot (Workshop.filter x2 + Company.filter x2)
           }
       } catch(err) {
         console.error('Erro ao carregar TenantContext:', err);
