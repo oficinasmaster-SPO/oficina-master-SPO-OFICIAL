@@ -620,6 +620,7 @@ export default function AgendaVisual({ atendimentos = [], workshops = [], user }
                     <FollowUpPostIt
                       reminders={getSprintFollowUpsForDay(detailsModal.date)}
                       onUpdate={() => loadDayModal(detailsModal.date)}
+                      variant="cyan"
                     />
                   </div>
                 </div>

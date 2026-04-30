@@ -8,7 +8,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-export default function FollowUpPostIt({ reminders, onUpdate }) {
+export default function FollowUpPostIt({ reminders, onUpdate, variant = "amber" }) {
+  const isCyan = variant === "cyan";
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -33,8 +34,8 @@ export default function FollowUpPostIt({ reminders, onUpdate }) {
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2 mb-2">
-        <StickyNote className="w-4 h-4 text-amber-600" />
-        <span className="text-sm font-semibold text-amber-800">Lembretes de Follow-Up</span>
+        <StickyNote className={`w-4 h-4 ${isCyan ? "text-cyan-600" : "text-amber-600"}`} />
+        <span className={`text-sm font-semibold ${isCyan ? "text-cyan-800" : "text-amber-800"}`}>Lembretes de Follow-Up</span>
       </div>
       {reminders.map((reminder) => (
         <div
@@ -42,31 +43,33 @@ export default function FollowUpPostIt({ reminders, onUpdate }) {
           className={`p-3 rounded-lg border-l-4 shadow-sm transition-all ${
             reminder.is_completed
               ? "bg-green-50 border-green-400 opacity-60"
-              : "bg-amber-50 border-amber-400 hover:shadow-md"
+              : isCyan
+                ? "bg-cyan-50 border-cyan-400 hover:shadow-md"
+                : "bg-amber-50 border-amber-400 hover:shadow-md"
           }`}
         >
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-bold text-amber-900 truncate">
-                📌 {reminder.workshop_name || "Cliente"}
+              <p className={`text-xs font-bold truncate ${isCyan ? "text-cyan-900" : "text-amber-900"}`}>
+                {isCyan ? "🚀" : "📌"} {reminder.workshop_name || "Cliente"}
               </p>
-              <p className="text-xs text-amber-800 mt-1 leading-relaxed">
+              <p className={`text-xs mt-1 leading-relaxed ${isCyan ? "text-cyan-800" : "text-amber-800"}`}>
                 {reminder.days_since_meeting} dias desde último atendimento. Retorne ao cliente para saber sobre sua evolução.
               </p>
               <div className="flex flex-col gap-0.5 mt-1.5">
                 {reminder.consultor_nome && (
-                  <span className="flex items-center gap-1 text-[10px] text-amber-700">
+                  <span className={`flex items-center gap-1 text-[10px] ${isCyan ? "text-cyan-700" : "text-amber-700"}`}>
                     <User className="w-2.5 h-2.5" />
                     {reminder.consultor_nome}
                   </span>
                 )}
                 {reminder.reminder_date && (
-                  <span className="flex items-center gap-1 text-[10px] text-amber-700">
+                  <span className={`flex items-center gap-1 text-[10px] ${isCyan ? "text-cyan-700" : "text-amber-700"}`}>
                     <Calendar className="w-2.5 h-2.5" />
                     {format(new Date(reminder.reminder_date + "T00:00:00"), "dd/MM/yyyy", { locale: ptBR })}
                   </span>
                 )}
-                <span className="inline-block text-[10px] text-amber-600 font-medium">
+                <span className={`inline-block text-[10px] font-medium ${isCyan ? "text-cyan-600" : "text-amber-600"}`}>
                   Follow-up {reminder.sequence_number}/4
                 </span>
               </div>
@@ -93,7 +96,7 @@ export default function FollowUpPostIt({ reminders, onUpdate }) {
             <Button
               size="sm"
               variant="outline"
-              className="mt-2 w-full h-6 text-[10px] text-amber-700 border-amber-300 hover:bg-amber-100 gap-1"
+              className={`mt-2 w-full h-6 text-[10px] gap-1 ${isCyan ? "text-cyan-700 border-cyan-300 hover:bg-cyan-100" : "text-amber-700 border-amber-300 hover:bg-amber-100"}`}
               onClick={(e) => {
                 e.stopPropagation();
                 navigate(`/ControleAceleracao?tab=atendimentos&viewAta=${reminder.ata_id}`);
