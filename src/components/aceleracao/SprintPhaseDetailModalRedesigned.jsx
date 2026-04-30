@@ -31,6 +31,8 @@ const PHASES_CONFIG = [
 const STATUS_OPTIONS = [
   { value: "not_started", label: "Não iniciado", icon: <Circle className="w-4 h-4 text-gray-400" /> },
   { value: "in_progress", label: "Em andamento", icon: <Clock className="w-4 h-4 text-blue-500" /> },
+  // B03: Adicionar status "pending_review" para consultor submeter para revisão
+  { value: "pending_review", label: "Aguardando revisão", icon: <Send className="w-4 h-4 text-amber-500" /> },
   { value: "completed", label: "Concluído", icon: <CheckCircle2 className="w-4 h-4 text-green-500" /> },
 ];
 
@@ -133,11 +135,25 @@ export default function SprintPhaseDetailModalRedesigned({
   };
 
   const handleSave = async () => {
+    // B04: Bloquear save se fase está em pending_review (contraditório com edição)
+    if (isPendingReview) {
+      toast.error("Fase em revisão não pode ser editada. Aguarde feedback do consultor.");
+      return;
+    }
+
     const updatedPhases = [...phases];
     const now = new Date().toISOString();
     const existingHistory = updatedPhases[phaseIndex].review_history || [];
     const wasCompleted = updatedPhases[phaseIndex].status === "completed";
     const isNowCompleted = status === "completed";
+
+    // B07: Avisar se completando após prazo
+    if (isNowCompleted && !wasCompleted && currentPhase?.due_date) {
+      const dueDate = new Date(currentPhase.due_date);
+      if (new Date() > dueDate) {
+        toast.warning("Esta fase foi completada após o prazo definido.");
+      }
+    }
 
     const completionFields = isNowCompleted && !wasCompleted ? {
       completion_date: now,
@@ -283,12 +299,13 @@ export default function SprintPhaseDetailModalRedesigned({
   const addTask = async () => {
     if (!newTask.trim()) return;
     try {
+      // B05: Sanitizar newTaskVideoUrl — null em vez de undefined
       const newTaskObj = {
         description: newTask.trim(),
         status: "to_do",
         instructions: newTaskInstructions.trim() || undefined,
         link_url: newTaskLink.trim() || undefined,
-        video_url: newTaskVideoUrl || undefined,
+        video_url: newTaskVideoUrl?.trim() || null,
       };
       const updated = [...tasks, newTaskObj];
       // BUGFIX CRÍTICO: setTasks é assíncrono — NÃO usar livePhases aqui pois
@@ -376,27 +393,28 @@ export default function SprintPhaseDetailModalRedesigned({
           isSaving={saving}
         />
 
-        {/* Status (consultant can change directly) */}
-        {!isPendingReview && (
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-gray-700">Status</label>
-            <div className="flex flex-wrap gap-2">
-              {STATUS_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  onClick={() => setStatus(opt.value)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${
-                    status === opt.value
-                      ? "border-blue-400 bg-blue-50 text-blue-700"
+        {/* Status (consultant can change directly) — B04: disabled quando pending_review */}
+        <div className="space-y-1">
+          <label className="text-xs font-semibold text-gray-700">Status</label>
+          <div className="flex flex-wrap gap-2">
+            {STATUS_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => setStatus(opt.value)}
+                disabled={isPendingReview}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${
+                  status === opt.value
+                    ? "border-blue-400 bg-blue-50 text-blue-700"
+                    : isPendingReview
+                      ? "border-gray-100 bg-gray-50 text-gray-400 cursor-not-allowed"
                       : "border-gray-200 hover:border-gray-300 text-gray-600"
-                  }`}
-                >
-                  {opt.icon} {opt.label}
-                </button>
-              ))}
-            </div>
+                }`}
+              >
+                {opt.icon} {opt.label}
+              </button>
+            ))}
           </div>
-        )}
+        </div>
 
         {/* Notes */}
         <div className="space-y-1">

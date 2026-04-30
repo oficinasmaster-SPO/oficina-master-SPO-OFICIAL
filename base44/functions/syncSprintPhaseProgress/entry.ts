@@ -34,7 +34,18 @@ Deno.serve(async (req) => {
 
     const progressPercentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
-    // Atualizar sprint com progresso calculado
+    // B06: Validar permissão antes de atualizar
+    const user = await base44.auth.me();
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    
+    // Verificar se usuário tem acesso ao workshop (evitar alteração não autorizada)
+    if (user.role !== 'admin' && user.data?.workshop_id !== workshop_id && user.id !== sprint.consultor_id) {
+      return Response.json({ error: 'Forbidden: Acesso negado a este sprint' }, { status: 403 });
+    }
+
+    // B01: Atualizar sprint com progresso calculado
     const updated = await base44.asServiceRole.entities.ConsultoriaSprint.update(sprint_id, {
       progress_percentage: progressPercentage,
       total_tasks: totalTasks,
