@@ -23,8 +23,8 @@ export default function useDashboardSprints(workshops = []) {
     staleTime: 15 * 1000, // 15s
     refetchOnWindowFocus: true,
     refetchOnMount: true,
-    enabled: workshopIdsKey.length > 0,
-    refetchOnMount: true
+    enabled: workshopIds.length > 0,
+    placeholderData: []
   });
 
   // Subscribe em tempo real: qualquer sprint de qualquer workshop gerenciado invalida o cache
