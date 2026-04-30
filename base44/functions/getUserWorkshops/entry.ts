@@ -76,9 +76,11 @@ Deno.serve(withAuth(async (req, { base44, user }) => {
         // FIX-01: Adicionar workshop do perfil como fallback se nenhum for encontrado
         const userProfileWorkshopId = user.data?.workshop_id || user.workshop_id;
 
+        // GAP-01: usar asServiceRole em todas as queries — base44.entities usa RLS que pode bloquear
+        // consultores sem consulting_firm_id no perfil ou sem owner_id/partner_ids nos workshops
         const [owned, partnered] = await Promise.all([
-            base44.entities.Workshop.filter({ owner_id: user.id }),
-            base44.entities.Workshop.filter({ partner_ids: user.id })
+            base44.asServiceRole.entities.Workshop.filter({ owner_id: user.id }),
+            base44.asServiceRole.entities.Workshop.filter({ partner_ids: user.id })
         ]);
 
         if (owned?.length > 0) {
@@ -99,10 +101,11 @@ Deno.serve(withAuth(async (req, { base44, user }) => {
             }
         }
 
-        let employees = await base44.entities.Employee.filter({ user_id: user.id });
+        // GAP-01: Employee.filter também com asServiceRole — evita bloqueio por RLS
+        let employees = await base44.asServiceRole.entities.Employee.filter({ user_id: user.id });
         
         if (!employees || employees.length === 0) {
-            employees = await base44.entities.Employee.filter({ email: user.email });
+            employees = await base44.asServiceRole.entities.Employee.filter({ email: user.email });
         }
 
         if (employees?.length > 0) {
@@ -123,6 +126,31 @@ Deno.serve(withAuth(async (req, { base44, user }) => {
                         seenIds.add(ws.id);
                     }
                 }
+            }
+        }
+
+        // GAP-01: Buscar workshops via consulting_firm_id para consultores (ex: Rafael Marrafon)
+        // Consultores têm consulting_firm_id no perfil mas NÃO têm workshop_id
+        const userConsultingFirmId = user.data?.consulting_firm_id;
+        if (availableWorkshops.length === 0 && userConsultingFirmId) {
+            try {
+                // Buscar workshops gerenciados pela empresa de consultoria do usuário
+                const firmWorkshops = await base44.asServiceRole.entities.Workshop.filter(
+                    { consulting_firm_id: userConsultingFirmId },
+                    'name',
+                    500
+                );
+                for (const ws of (firmWorkshops || [])) {
+                    if (!seenIds.has(ws.id)) {
+                        availableWorkshops.push(ws);
+                        seenIds.add(ws.id);
+                    }
+                }
+                if (firmWorkshops?.length > 0) {
+                    console.log(`GAP-01: ${firmWorkshops.length} workshops encontrados via consulting_firm_id para ${user.email}`);
+                }
+            } catch (e) {
+                console.warn('GAP-01: Falha ao buscar workshops via consulting_firm_id:', e.message);
             }
         }
 
