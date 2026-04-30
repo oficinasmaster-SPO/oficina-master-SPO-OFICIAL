@@ -59,9 +59,9 @@ export default function PainelClienteAceleracao() {
       }
       return null;
     },
-    enabled: !loadingUser && !!(workshopIdToUse || user?.id),
+    enabled: !loadingUser && !!user?.id,
     staleTime: 5 * 60 * 1000,
-    retry: false
+    retry: 1
   });
 
   const { data: atendimentos, isLoading: loadingAtendimentos } = useQuery({
@@ -282,6 +282,15 @@ export default function PainelClienteAceleracao() {
   });
 
   if (loadingUser) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
+  // user carregou mas workshop ainda não chegou — aguardar antes de verificar plano
+  if (user && !workshop && (workshopIdToUse || user?.id)) {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
