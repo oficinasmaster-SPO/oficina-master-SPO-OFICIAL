@@ -23,9 +23,14 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Contrato não encontrado' }, { status: 404 });
     }
 
-    // Buscar regras de atendimento do plano
+    // Buscar regras de atendimento do plano (suporta plan_type ou plan_id no contrato)
+    const planId = contract.plan_type || contract.plan_id || contract.plano;
+    if (!planId) {
+      return Response.json({ error: 'Contrato não possui plan_type definido' }, { status: 400 });
+    }
+
     const planRules = await base44.asServiceRole.entities.PlanAttendanceRule.filter({
-      plan_id: contract.plan_id,
+      plan_id: planId,
       is_active: true
     });
 
@@ -60,7 +65,7 @@ Deno.serve(async (req) => {
           attendancesToCreate.push({
             contract_id: contract.id,
             workshop_id: contract.workshop_id,
-            plan_id: contract.plan_id,
+            plan_id: planId,
             attendance_type_id: rule.attendance_type_id,
             attendance_type_name: rule.attendance_type_name,
             event_calendar_id: event.id,
@@ -88,7 +93,7 @@ Deno.serve(async (req) => {
           attendancesToCreate.push({
             contract_id: contract.id,
             workshop_id: contract.workshop_id,
-            plan_id: contract.plan_id,
+            plan_id: planId,
             attendance_type_id: rule.attendance_type_id,
             attendance_type_name: rule.attendance_type_name,
             scheduled_date: scheduledDate.toISOString(),
