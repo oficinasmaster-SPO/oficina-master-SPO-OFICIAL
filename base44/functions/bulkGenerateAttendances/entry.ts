@@ -1,10 +1,18 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
+/**
+ * Gera ContractAttendances em massa para todas as oficinas ativas de um plano.
+ *
+ * Delega para generateWorkshopAttendances (via SDK) para garantir:
+ *   - Idempotência
+ *   - Normalização do planId
+ *   - Criação APENAS em ContractAttendance (bucket), nunca em ConsultoriaAtendimento
+ */
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
-    
+
     if (user?.role !== 'admin') {
       return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
@@ -14,97 +22,80 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'plan_id is required' }, { status: 400 });
     }
 
-    const planUpper = plan_id.toUpperCase();
-    const planLower = plan_id.toLowerCase();
+    // Normalizar planId — sempre UPPERCASE
+    const planId = plan_id.toUpperCase().trim();
+    console.log(`[bulkGenerateAttendances] Iniciando para plano "${planId}"`);
 
-    // Fetch all active workshops for both case variants
-    const workshopsUpper = await base44.asServiceRole.entities.Workshop.filter({ planoAtual: planUpper, status: 'ativo' });
-    const workshopsLower = await base44.asServiceRole.entities.Workshop.filter({ planoAtual: planLower, status: 'ativo' });
-    
-    // Deduplicate by ID
-    const workshopMap = {};
-    for (const w of [...workshopsUpper, ...workshopsLower]) {
-      workshopMap[w.id] = w;
-    }
-    const workshops = Object.values(workshopMap);
-
-    console.log(`Found ${workshops.length} active workshops with plan ${plan_id}`);
-
-    // Fetch plan rules (try both cases)
-    let planRules = await base44.asServiceRole.entities.PlanAttendanceRule.filter({ plan_id: planUpper, is_active: true });
-    if (!planRules || planRules.length === 0) {
-      planRules = await base44.asServiceRole.entities.PlanAttendanceRule.filter({ plan_id: planLower, is_active: true });
-    }
+    // ── Step 2: Verificar que existem regras antes de processar ──────────────
+    const planRules = await base44.asServiceRole.entities.PlanAttendanceRule.filter({
+      plan_id: planId,
+      is_active: true
+    });
 
     if (!planRules || planRules.length === 0) {
-      return Response.json({ error: `No active rules found for plan ${plan_id}` });
+      return Response.json({ error: `Nenhuma regra ativa encontrada para o plano "${planId}"` }, { status: 400 });
     }
 
-    // Only frequency-based rules
-    const frequencyRules = planRules.filter(r => r.scheduling_type === 'frequency');
-    console.log(`Found ${frequencyRules.length} frequency rules for plan ${plan_id}`);
+    console.log(`[bulkGenerateAttendances] ${planRules.length} regras encontradas para "${planId}"`);
+
+    // Buscar oficinas ativas com este plano (planoAtual é sempre UPPERCASE no sistema)
+    const workshops = await base44.asServiceRole.entities.Workshop.filter({
+      planoAtual: planId,
+      status: 'ativo',
+      planStatus: 'active'
+    });
+
+    console.log(`[bulkGenerateAttendances] ${workshops.length} oficinas ativas encontradas`);
+
+    if (workshops.length === 0) {
+      return Response.json({ message: `Nenhuma oficina ativa com plano "${planId}"`, workshops_processed: 0 });
+    }
 
     const results = [];
 
+    // ── Step 4: Delegar para generateWorkshopAttendances — sem insert direto ─
     for (const workshop of workshops) {
-      const workshopResult = { workshop_id: workshop.id, name: workshop.name, created: 0, skipped: 0, details: [] };
-      const startDate = new Date();
-
-      for (const rule of frequencyRules) {
-        const typeName = rule.attendance_type_name || rule.attendance_type_id;
-        
-        // Check existing attendances for this type
-        const existing = await base44.asServiceRole.entities.ConsultoriaAtendimento.filter({
-          workshop_id: workshop.id,
-          tipo_atendimento: typeName
+      try {
+        const res = await base44.asServiceRole.functions.invoke('generateWorkshopAttendances', {
+          workshop_id: workshop.id
         });
 
-        if (existing.length >= rule.total_allowed) {
-          workshopResult.skipped++;
-          workshopResult.details.push(`${typeName}: já existe (${existing.length}/${rule.total_allowed})`);
-          continue;
-        }
+        results.push({
+          workshop_id: workshop.id,
+          name: workshop.name,
+          success: true,
+          attendances_created: res?.attendances_created || 0,
+          skipped: res?.skipped || 0
+        });
 
-        const remainingToCreate = rule.total_allowed - existing.length;
-        const frequencyDays = rule.frequency_days || 30;
-
-        for (let i = 0; i < remainingToCreate; i++) {
-          const scheduledDate = new Date(startDate);
-          scheduledDate.setDate(scheduledDate.getDate() + (frequencyDays * (i + existing.length)));
-
-          await base44.asServiceRole.entities.ConsultoriaAtendimento.create({
-            workshop_id: workshop.id,
-            consultor_id: workshop.owner_id || 'system',
-            consultor_nome: 'A Definir',
-            tipo_atendimento: typeName,
-            data_agendada: scheduledDate.toISOString(),
-            status: 'agendado',
-            fase_oficina: 1,
-          });
-          workshopResult.created++;
-        }
-        workshopResult.details.push(`${typeName}: criados ${remainingToCreate} (existiam ${existing.length})`);
+        console.log(`[bulkGenerateAttendances] ${workshop.name}: ${res?.attendances_created || 0} criados`);
+      } catch (err) {
+        console.error(`[bulkGenerateAttendances] Falha para ${workshop.name}:`, err.message);
+        results.push({
+          workshop_id: workshop.id,
+          name: workshop.name,
+          success: false,
+          error: err.message
+        });
       }
-
-      results.push(workshopResult);
-      console.log(`Workshop ${workshop.name}: ${workshopResult.created} criados, ${workshopResult.skipped} pulados`);
     }
 
-    const totalCreated = results.reduce((sum, r) => sum + r.created, 0);
-    const totalSkipped = results.reduce((sum, r) => sum + r.skipped, 0);
+    const totalCreated = results.reduce((sum, r) => sum + (r.attendances_created || 0), 0);
+    const totalFailed = results.filter(r => !r.success).length;
 
     return Response.json({
       success: true,
+      plan_id: planId,
       summary: {
         workshops_processed: workshops.length,
-        total_attendances_created: totalCreated,
-        total_types_skipped: totalSkipped,
+        workshops_failed: totalFailed,
+        total_attendances_created: totalCreated
       },
       details: results
     });
 
   } catch (error) {
-    console.error('Bulk generate error:', error);
+    console.error('[bulkGenerateAttendances] Fatal error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });

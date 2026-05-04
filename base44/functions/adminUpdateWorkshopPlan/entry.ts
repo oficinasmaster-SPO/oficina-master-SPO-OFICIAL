@@ -1,5 +1,11 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
+/**
+ * Atualiza o plano de uma oficina e dispara geração de bucket de atendimentos.
+ *
+ * Após o update do Workshop, chama generateWorkshopAttendances diretamente
+ * (sem depender de automação entity ou changed_fields).
+ */
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -21,39 +27,38 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Workshop not found' }, { status: 404 });
     }
 
-    // Determinar planId e planStatus corretos
-    let planId = data.planId !== undefined ? data.planId : workshop.planId;
-    if (data.planId === undefined && data.planoAtual) {
-        planId = data.planoAtual.toLowerCase();
-    }
-    
+    // ── Normalizar planId — UPPERCASE, imutável como identificador ───────────
+    let rawPlanId = data.planId !== undefined ? data.planId : workshop.planId;
+    if (!rawPlanId && data.planoAtual) rawPlanId = data.planoAtual;
+    const planId = rawPlanId ? rawPlanId.toUpperCase().trim() : null;
+
     let planStatus = data.planStatus !== undefined ? data.planStatus : workshop.planStatus;
     if (data.planStatus === undefined && data.status) {
-        planStatus = data.status === 'ativo' ? 'active' : (data.status === 'inativo' ? 'canceled' : workshop.planStatus);
+      planStatus = data.status === 'ativo' ? 'active' : (data.status === 'inativo' ? 'canceled' : workshop.planStatus);
     }
 
-    // Assinatura segura para garantir que o plano não foi alterado indevidamente
+    // Assinatura segura
     const tokenSecret = Deno.env.get("KIWIFY_CLIENT_SECRET") || "fallback_token_for_tests";
-    
     const encoder = new TextEncoder();
     const key = await crypto.subtle.importKey("raw", encoder.encode(tokenSecret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
-    const hashBuffer = await crypto.subtle.sign("HMAC", key, encoder.encode(planId + workshop_id + planStatus));
+    const hashBuffer = await crypto.subtle.sign("HMAC", key, encoder.encode((planId || '') + workshop_id + (planStatus || '')));
     const hashHex = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
 
     const updatePayload = {
       ...data,
-      planId,
+      planId: planId || workshop.planId,
+      planoAtual: planId || workshop.planoAtual, // sempre UPPERCASE
       planStatus,
       plan_source: user.role === 'super_admin' ? 'admin' : workshop.plan_source,
       billing_secure_hash: hashHex,
-      billing_update_token: tokenSecret // Requisito para passar pela automação preventPlanBypass
+      billing_update_token: tokenSecret
     };
 
     const result = await base44.asServiceRole.entities.Workshop.update(workshop_id, updatePayload);
 
-    // Logs obrigatórios
+    // Log obrigatório
     await base44.asServiceRole.entities.PlanChangeLog.create({
-      workshop_id: workshop_id,
+      workshop_id,
       admin_id: user.id,
       admin_email: user.email,
       old_plan: workshop.planId,
@@ -63,7 +68,27 @@ Deno.serve(async (req) => {
       timestamp: new Date().toISOString()
     });
 
-    return Response.json({ success: true, workshop: result });
+    // ── Step 5: Disparar geração de bucket diretamente após atualização ───────
+    let attendanceResult = null;
+    if (planId && planStatus === 'active') {
+      console.log(`[adminUpdateWorkshopPlan] Disparando geração de bucket para ${workshop_id} plano "${planId}"`);
+      try {
+        attendanceResult = await base44.asServiceRole.functions.invoke('generateWorkshopAttendances', {
+          workshop_id
+        });
+        console.log(`[adminUpdateWorkshopPlan] Bucket: ${attendanceResult?.attendances_created || 0} atendimentos criados`);
+      } catch (attErr) {
+        console.error(`[adminUpdateWorkshopPlan] Falha ao gerar bucket:`, attErr.message);
+        attendanceResult = { error: attErr.message };
+      }
+    }
+
+    return Response.json({
+      success: true,
+      workshop: result,
+      attendance_generation: attendanceResult
+    });
+
   } catch (error) {
     console.error("Erro no adminUpdateWorkshopPlan:", error);
     return Response.json({ error: error.message }, { status: 500 });

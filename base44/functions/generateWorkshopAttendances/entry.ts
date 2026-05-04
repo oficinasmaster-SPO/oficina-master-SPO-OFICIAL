@@ -2,22 +2,38 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 /**
  * Gera ContractAttendances (bucket) para uma oficina quando ela ativa plano.
- * 
- * Disparada pela automação entity em Workshop (create/update).
- * Trigger conditions: planStatus = 'active' AND changed_fields contains 'planStatus'
- * (ou create com planStatus = 'active')
- * 
+ *
+ * PODE ser chamada de duas formas:
+ *   1. Pela automação entity em Workshop (create/update) — payload tem { event, data, ... }
+ *   2. Diretamente por adminUpdateWorkshopPlan/adminUpdatePlan — payload tem { workshop_id }
+ *
  * Regras:
- * - Cria apenas registros em ContractAttendance (status 'pendente') — o bucket
- * - Verifica duplicatas por workshop_id + attendance_type_id + status pendente
- * - Processa apenas regras scheduling_type = 'frequency' (event_based requer datas de calendário)
- * - Idempotente: não recria se já existem pendentes do mesmo tipo
+ *   - Cria APENAS em ContractAttendance (status 'pendente') — o bucket
+ *   - NUNCA cria diretamente em ConsultoriaAtendimento
+ *   - Idempotente: não recria se já existem pendentes do mesmo tipo para o mesmo plan_id
+ *   - Case-insensitive: planId é sempre normalizado para UPPERCASE
+ *   - Não depende de changed_fields — verifica estado atual diretamente
  */
 Deno.serve(async (req) => {
+  const log = (event, msg, data = {}) => {
+    console.log(JSON.stringify({ event, msg, ...data, ts: new Date().toISOString() }));
+  };
+
   try {
     const base44 = createClientFromRequest(req);
     const payload = await req.json();
-    const { event, data, old_data, changed_fields, payload_too_large } = payload;
+
+    // ── Suporte a chamada direta (não via automação) ──────────────────────────
+    if (payload.workshop_id && !payload.event) {
+      const workshop = await base44.asServiceRole.entities.Workshop.get(payload.workshop_id);
+      if (!workshop) {
+        return Response.json({ error: 'Workshop not found' }, { status: 404 });
+      }
+      return await generateForWorkshop(base44, workshop, log);
+    }
+
+    // ── Chamada via automação entity ──────────────────────────────────────────
+    const { event, data, payload_too_large } = payload;
 
     if (!event || event.entity_name !== 'Workshop') {
       return Response.json({ message: 'Not a Workshop event' });
@@ -28,86 +44,97 @@ Deno.serve(async (req) => {
       workshop = await base44.asServiceRole.entities.Workshop.get(event.entity_id);
     }
 
-    // Só processa quando planStatus muda para 'active' ou na criação com planStatus active
-    const isCreate = event.type === 'create';
-    const planStatusChangedToActive = changed_fields?.includes('planStatus') && workshop.planStatus === 'active';
-    const isNewActiveWorkshop = isCreate && workshop.planStatus === 'active';
-
-    if (!planStatusChangedToActive && !isNewActiveWorkshop) {
-      return Response.json({ message: 'Workshop planStatus did not become active — skipping bucket generation' });
+    // Processar se planStatus === 'active' — independente de changed_fields
+    if (workshop.planStatus !== 'active') {
+      log('attendance_generation_skipped', 'planStatus não é active', { workshop_id: workshop.id, planStatus: workshop.planStatus });
+      return Response.json({ message: 'planStatus not active — skipping' });
     }
 
-    // Normalizar o plan_id
-    const rawPlanId = workshop.planId || workshop.planoAtual;
-    if (!rawPlanId) {
-      return Response.json({ message: 'Workshop has no plan — skipping' });
+    return await generateForWorkshop(base44, workshop, log);
+
+  } catch (error) {
+    console.error('[generateWorkshopAttendances] Fatal error:', error);
+    return Response.json({ error: error.message, details: error.toString() }, { status: 500 });
+  }
+});
+
+async function generateForWorkshop(base44, workshop, log) {
+  // ── Step 1: Normalizar planId — case-insensitive, trim ────────────────────
+  const rawPlanId = workshop.plan_type || workshop.plan_id || workshop.planId || workshop.planoAtual || workshop.plano;
+  if (!rawPlanId) {
+    log('attendance_generation_skipped', 'Nenhum plan_id encontrado no workshop', { workshop_id: workshop.id });
+    return Response.json({ message: 'Workshop has no plan — skipping' });
+  }
+
+  const planId = rawPlanId.toUpperCase().trim();
+  log('plan_id_normalized', `planId normalizado: "${rawPlanId}" → "${planId}"`, { workshop_id: workshop.id });
+
+  // ── Step 2: Buscar regras do plano (sempre com planId normalizado) ─────────
+  log('attendance_generation_started', 'Iniciando geração de bucket', { workshop_id: workshop.id, plan_id: planId });
+
+  const planRules = await base44.asServiceRole.entities.PlanAttendanceRule.filter({
+    plan_id: planId,
+    is_active: true
+  });
+
+  if (!planRules || planRules.length === 0) {
+    log('attendance_generation_skipped', `Nenhuma regra encontrada para plano "${planId}"`, { workshop_id: workshop.id });
+    return Response.json({ message: `Nenhuma regra de atendimento para o plano ${planId}` });
+  }
+
+  // ── Step 6: Idempotência — buscar pendentes já existentes ─────────────────
+  // Verifica por workshop_id + plan_id para garantir que não regera se o plano mudou
+  const existingPending = await base44.asServiceRole.entities.ContractAttendance.filter({
+    workshop_id: workshop.id,
+    plan_id: planId,
+    status: 'pendente'
+  });
+
+  // Indexar por attendance_type_id → contagem
+  const existingByType = {};
+  for (const item of existingPending) {
+    const key = item.attendance_type_id;
+    if (key) {
+      existingByType[key] = (existingByType[key] || 0) + 1;
+    }
+  }
+
+  // Inicia 7 dias a partir de hoje para dar tempo ao CS
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() + 7);
+
+  const created = [];
+  const skipped = [];
+
+  for (const rule of planRules) {
+    if (rule.scheduling_type !== 'frequency') {
+      skipped.push({ type: rule.attendance_type_name, reason: 'event_based — requer calendário' });
+      log('attendance_skipped_existing', 'Regra event_based ignorada', { type: rule.attendance_type_name });
+      continue;
     }
 
-    const planIdVariants = [...new Set([rawPlanId, rawPlanId.toUpperCase(), rawPlanId.toLowerCase()])];
+    const typeKey = rule.attendance_type_id;
+    const alreadyExists = existingByType[typeKey] || 0;
 
-    let planRules = [];
-    for (const variant of planIdVariants) {
-      const rules = await base44.asServiceRole.entities.PlanAttendanceRule.filter({
-        plan_id: variant,
-        is_active: true
-      });
-      if (rules?.length > 0) {
-        planRules = rules;
-        console.log(`[generateWorkshopAttendances] Found ${rules.length} rules for plan_id="${variant}"`);
-        break;
-      }
+    if (alreadyExists >= rule.total_allowed) {
+      skipped.push({ type: rule.attendance_type_name, reason: `já existem ${alreadyExists}/${rule.total_allowed} pendentes` });
+      log('attendance_skipped_existing', `Tipo já tem cobertura total`, { type: rule.attendance_type_name, existing: alreadyExists, allowed: rule.total_allowed });
+      continue;
     }
 
-    if (planRules.length === 0) {
-      return Response.json({ message: `Nenhuma regra de atendimento para o plano ${rawPlanId}` });
-    }
+    const toCreate = rule.total_allowed - alreadyExists;
+    const frequencyDays = rule.frequency_days || 30;
 
-    // Buscar pendentes já existentes para este workshop (anti-duplicata)
-    const existingPending = await base44.asServiceRole.entities.ContractAttendance.filter({
-      workshop_id: workshop.id,
-      status: 'pendente'
-    });
+    for (let i = 0; i < toCreate; i++) {
+      const scheduledDate = new Date(startDate);
+      scheduledDate.setDate(scheduledDate.getDate() + (frequencyDays * (i + alreadyExists)));
 
-    // Indexar por attendance_type_id para lookup O(1)
-    const existingByType = {};
-    for (const item of existingPending) {
-      const key = item.attendance_type_id || item.attendance_type_name;
-      if (!existingByType[key]) existingByType[key] = 0;
-      existingByType[key]++;
-    }
-
-    // Inicia 7 dias a partir de hoje para dar tempo ao CS capturar o bucket e dar início com o cliente
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() + 7);
-    const created = [];
-    const skipped = [];
-
-    for (const rule of planRules) {
-      // Apenas frequency — event_based requer datas de calendário (tratado separadamente)
-      if (rule.scheduling_type !== 'frequency') {
-        skipped.push({ type: rule.attendance_type_name, reason: 'event_based — requer calendário' });
-        continue;
-      }
-
-      const typeKey = rule.attendance_type_id || rule.attendance_type_name;
-      const alreadyExists = existingByType[typeKey] || 0;
-
-      if (alreadyExists >= rule.total_allowed) {
-        skipped.push({ type: rule.attendance_type_name, reason: `já existem ${alreadyExists} pendentes` });
-        continue;
-      }
-
-      const toCreate = rule.total_allowed - alreadyExists;
-      const frequencyDays = rule.frequency_days || 30;
-
-      for (let i = 0; i < toCreate; i++) {
-        const scheduledDate = new Date(startDate);
-        scheduledDate.setDate(scheduledDate.getDate() + (frequencyDays * (i + alreadyExists)));
-
+      try {
+        // ── Step 3/7: APENAS ContractAttendance — NUNCA ConsultoriaAtendimento ──
         const attendance = await base44.asServiceRole.entities.ContractAttendance.create({
-          contract_id: 'plan_activation', // sem contrato formal — gerado por ativação de plano
+          contract_id: workshop.contract_id || 'plan_activation',
           workshop_id: workshop.id,
-          plan_id: rawPlanId,
+          plan_id: planId, // sempre normalizado UPPERCASE
           attendance_type_id: rule.attendance_type_id,
           attendance_type_name: rule.attendance_type_name,
           scheduled_date: scheduledDate.toISOString(),
@@ -117,21 +144,33 @@ Deno.serve(async (req) => {
           consultoria_atendimento_id: null
         });
         created.push(attendance);
+        log('attendance_created', `Criado: ${rule.attendance_type_name} #${i + alreadyExists + 1}`, {
+          workshop_id: workshop.id,
+          plan_id: planId,
+          attendance_type: rule.attendance_type_name,
+          sequence: i + alreadyExists + 1
+        });
+      } catch (createErr) {
+        log('attendance_failed', `Falha ao criar: ${rule.attendance_type_name}`, {
+          workshop_id: workshop.id,
+          error: createErr.message
+        });
       }
     }
-
-    console.log(`[generateWorkshopAttendances] Workshop ${workshop.id} (${rawPlanId}): ${created.length} criados, ${skipped.length} pulados`);
-
-    return Response.json({
-      success: true,
-      message: `${created.length} atendimentos bucket gerados para ${workshop.name || workshop.id}`,
-      attendances_created: created.length,
-      skipped: skipped.length,
-      skipped_detail: skipped
-    });
-
-  } catch (error) {
-    console.error('[generateWorkshopAttendances] Error:', error);
-    return Response.json({ error: error.message }, { status: 500 });
   }
-});
+
+  log('attendance_generation_started', `Concluído: ${created.length} criados, ${skipped.length} pulados`, {
+    workshop_id: workshop.id,
+    plan_id: planId
+  });
+
+  return Response.json({
+    success: true,
+    message: `${created.length} atendimentos bucket gerados para ${workshop.name || workshop.id}`,
+    workshop_id: workshop.id,
+    plan_id: planId,
+    attendances_created: created.length,
+    skipped: skipped.length,
+    skipped_detail: skipped
+  });
+}
