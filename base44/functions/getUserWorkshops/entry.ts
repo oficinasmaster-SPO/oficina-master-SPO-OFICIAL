@@ -47,12 +47,26 @@ Deno.serve(withAuth(async (req, { base44, user }) => {
             // Request sem body — continuar com lista completa
         }
 
+        // ATEND-01 FIX-COMPLEMENTAR: Batch — aceita array de workshopIds para buscar múltiplos de uma vez
+        if (body?.workshopIds && Array.isArray(body.workshopIds)) {
+            const results = await Promise.all(
+                body.workshopIds.map(id =>
+                    base44.asServiceRole.entities.Workshop.get(id).catch(() => null)
+                )
+            );
+            return new Response(JSON.stringify({
+                workshops: results.filter(Boolean),
+                user: user
+            }), { status: 200, headers: new Headers({ 'Content-Type': 'application/json' }) });
+        }
+
+        // Singular: retrocompatibilidade
         if (body?.workshopId) {
             const ws = await base44.asServiceRole.entities.Workshop.get(body.workshopId).catch(() => null);
             return new Response(JSON.stringify({ 
                 workshops: ws ? [ws] : [],
                 user: user 
-            }), { status: 200 });
+            }), { status: 200, headers: new Headers({ 'Content-Type': 'application/json' }) });
         }
 
         // Verificar cache primeiro

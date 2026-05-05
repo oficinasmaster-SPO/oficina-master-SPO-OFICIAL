@@ -97,23 +97,26 @@ export default function useControleAceleracaoState() {
     return Array.from(missing);
   }, [atendimentos, baseWorkshopMap]);
 
-  // Fetch missing workshops via BFF (bypasses RLS)
+  // ATEND-01 FIX-COMPLEMENTAR: UMA chamada batch em vez de N chamadas individuais (evita rate limit)
   const { data: missingWorkshops = [] } = useQuery({
     queryKey: ['workshops-missing', missingWorkshopIds.join(',')],
     queryFn: async () => {
       if (!missingWorkshopIds.length) return [];
-      const results = await Promise.all(
-        missingWorkshopIds.map(id =>
-          base44.functions.invoke('getUserWorkshops', { workshopId: id })
-            .then(r => r?.data?.workshops?.[0] || null)
-            .catch(() => null)
-        )
-      );
-      return results.filter(Boolean);
+      try {
+        const response = await base44.functions.invoke('getUserWorkshops', {
+          workshopIds: missingWorkshopIds
+        });
+        return response?.data?.workshops || [];
+      } catch (err) {
+        console.warn('[workshopMap] Falha ao buscar workshops faltantes:', err?.message);
+        return [];
+      }
     },
     enabled: missingWorkshopIds.length > 0,
     staleTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
+    retry: 1,
+    retryDelay: 2000,
   });
 
   // Merge base + missing into final workshopMap
