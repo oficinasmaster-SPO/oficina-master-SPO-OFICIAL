@@ -50,6 +50,11 @@ export default function GestaoUsuariosEmpresas() {
     queryFn: () => base44.auth.me()
   });
 
+  const { data: platformPlans = [] } = useQuery({
+    queryKey: ['platform-plans'],
+    queryFn: () => base44.entities.PlatformPlan.list()
+  });
+
   const { data: workshops = [] } = useQuery({
     queryKey: ['workshops'],
     queryFn: async () => {
@@ -364,7 +369,15 @@ export default function GestaoUsuariosEmpresas() {
     return [...new Set(states)].sort();
   }, [workshops]);
 
-  const uniquePlans = ["FREE", "START", "BRONZE", "PRATA", "GOLD", "IOM", "MILLIONS"];
+  const uniquePlans = useMemo(() => ["FREE", "START", "BRONZE", "PRATA", "GOLD", "IOM", "MILLIONS"], []);
+
+  // Somente planos marcados como ativos no PlatformPlan (campo active !== false)
+  const filteredUniquePlans = useMemo(() => {
+    if (!platformPlans.length) return uniquePlans;
+    const activeIds = platformPlans.filter(p => p.active !== false).map(p => (p.internal_id || p.name || "").toUpperCase());
+    if (!activeIds.length) return uniquePlans;
+    return uniquePlans.filter(p => activeIds.includes(p));
+  }, [platformPlans, uniquePlans]);
   
   const revenueRanges = [
     "0_20k", "20k_40k", "40k_60k", "60k_80k", "80k_100k", "100k_130k",
@@ -1021,7 +1034,7 @@ export default function GestaoUsuariosEmpresas() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {uniquePlans.map(plan => (
+                      {filteredUniquePlans.map(plan => (
                         <SelectItem key={plan} value={plan}>{plan}</SelectItem>
                       ))}
                     </SelectContent>
