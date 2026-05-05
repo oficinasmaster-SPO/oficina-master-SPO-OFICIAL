@@ -50,9 +50,9 @@ export default function GestaoUsuariosEmpresas() {
     queryFn: () => base44.auth.me()
   });
 
-  const { data: platformPlans = [] } = useQuery({
-    queryKey: ['platform-plans'],
-    queryFn: () => base44.entities.PlatformPlan.list()
+  const { data: planFeatures = [] } = useQuery({
+    queryKey: ['planFeatures-gestao'],
+    queryFn: () => base44.entities.PlanFeature.list()
   });
 
   const { data: workshops = [] } = useQuery({
@@ -371,13 +371,13 @@ export default function GestaoUsuariosEmpresas() {
 
   const uniquePlans = useMemo(() => ["FREE", "START", "BRONZE", "PRATA", "GOLD", "IOM", "MILLIONS"], []);
 
-  // Somente planos marcados como ativos no PlatformPlan (campo active !== false)
+  // Somente planos marcados como ativos em PlanFeature (campo active !== false)
   const filteredUniquePlans = useMemo(() => {
-    if (!platformPlans.length) return uniquePlans;
-    const activeIds = platformPlans.filter(p => p.active !== false).map(p => (p.internal_id || p.name || "").toUpperCase());
+    if (!planFeatures.length) return uniquePlans;
+    const activeIds = planFeatures.filter(p => p.active !== false).map(p => (p.plan_id || "").toUpperCase());
     if (!activeIds.length) return uniquePlans;
     return uniquePlans.filter(p => activeIds.includes(p));
-  }, [platformPlans, uniquePlans]);
+  }, [planFeatures, uniquePlans]);
   
   const revenueRanges = [
     "0_20k", "20k_40k", "40k_60k", "60k_80k", "80k_100k", "100k_130k",
