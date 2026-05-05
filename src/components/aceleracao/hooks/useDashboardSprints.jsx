@@ -15,6 +15,7 @@ export default function useDashboardSprints(workshops = []) {
       try {
         const ids = workshopIdsKey.split(',').filter(Boolean);
         if (!ids.length) return [];
+        console.log(`[useDashboardSprints] Buscando sprints para ${ids.length} workshops`);
         
         // FIX #4: Paralelizar batching (ao invés de sequencial)
         // Cria promises para todos os batches em paralelo
@@ -39,7 +40,16 @@ export default function useDashboardSprints(workshops = []) {
         // S03: Aguarda todos os batches em paralelo com error handling
         const batchResults = await Promise.all(batches);
         // Flatten com validação: cada batch é array de arrays (Promise.all results)
-        return batchResults.reduce((acc, batch) => acc.concat(batch), []);
+        const allSprints = batchResults.reduce((acc, batch) => acc.concat(batch), []);
+        
+        // Debug: logar distribuição de status para diagnóstico
+        const statusCounts = allSprints.reduce((acc, s) => {
+          acc[s.status || 'sem_status'] = (acc[s.status || 'sem_status'] || 0) + 1;
+          return acc;
+        }, {});
+        console.log(`[useDashboardSprints] ${allSprints.length} sprints carregados. Status:`, statusCounts);
+        
+        return allSprints;
       } catch (error) {
         console.error('[useDashboardSprints] Erro crítico ao buscar sprints:', error);
         throw error;
@@ -106,7 +116,8 @@ export default function useDashboardSprints(workshops = []) {
   );
 
   const sprintsEmAndamento = useMemo(
-    () => sprints.filter(s => s.status === "in_progress"),
+    // Inclui "in_progress" e "pending" — ambos representam sprints ativos no pipeline
+    () => sprints.filter(s => s.status === "in_progress" || s.status === "pending"),
     [sprints]
   );
 
@@ -121,18 +132,22 @@ export default function useDashboardSprints(workshops = []) {
   }, [sprints]);
 
   const clientesComTrilha = useMemo(() => {
-    return workshops
-      .map(w => {
-        const ws = sprintsByWorkshop.get(w.id) || [];
-        if (!ws.length) return null;
-        const avg = Math.round(ws.reduce((a, s) => a + (s.progress_percentage || 0), 0) / ws.length);
-        const hasOverdue = ws.some(s => s.status === "overdue");
-        const hasInProgress = ws.some(s => s.status === "in_progress");
-        return { workshop: w, sprints: ws, avgProgress: avg, hasOverdue, hasInProgress };
-      })
-      .filter(Boolean)
-      .sort((a, b) => b.sprints.length - a.sprints.length);
-  }, [workshops, sprintsByWorkshop]);
+    // Itera sobre TODOS os workshop_ids que têm sprints, não apenas os da lista de workshops
+    // Isso garante que workshops presentes nos sprints mas não na lista ainda apareçam
+    const result = [];
+    sprintsByWorkshop.forEach((ws, workshopId) => {
+      if (!ws.length) return;
+      // Tenta encontrar o workshop na lista, senão cria um placeholder com o ID
+      const workshop = workshopMap[workshopId] || { id: workshopId, name: `Oficina ${workshopId.slice(0, 8)}...` };
+      const avg = Math.round(ws.reduce((a, s) => a + (s.progress_percentage || 0), 0) / ws.length);
+      const hasOverdue = ws.some(s => s.status === "overdue");
+      const hasInProgress = ws.some(s => s.status === "in_progress");
+      const pendingCount = ws.filter(s => s.status === "pending").length;
+      const hasPending = pendingCount > 0;
+      result.push({ workshop, sprints: ws, avgProgress: avg, hasOverdue, hasInProgress, hasPending, pendingCount });
+    });
+    return result.sort((a, b) => b.sprints.length - a.sprints.length);
+  }, [sprintsByWorkshop, workshopMap]);
 
   const sprintsConcluidos = useMemo(
     () => sprints
@@ -156,10 +171,9 @@ export default function useDashboardSprints(workshops = []) {
 
   const stats = useMemo(() => {
     const t = sprints.length;
-    // S02: Usar sprintsConcluidos já calculado, não filtrar novamente
     return {
       total: t,
-      em_andamento: sprintsEmAndamento.length,
+      em_andamento: sprintsEmAndamento.length, // inclui pending + in_progress
       atrasados: sprintsAtrasados.length,
       pendingReview: sprintsPendingReview.length,
       concluidos: sprintsConcluidos.length,

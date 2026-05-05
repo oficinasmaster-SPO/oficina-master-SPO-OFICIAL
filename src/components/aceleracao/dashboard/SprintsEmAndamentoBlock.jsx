@@ -27,7 +27,7 @@ export default function SprintsEmAndamentoBlock({ sprints, workshopMap, onSprint
             <Zap className="w-5 h-5 text-blue-600" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-gray-900">Em execução</h3>
+            <h3 className="text-sm font-bold text-gray-900">Em execução / Pendentes</h3>
             <p className="text-xs text-gray-500 mt-0.5">
               {sprints.length} sprint{sprints.length > 1 ? 's' : ''} ativo{sprints.length > 1 ? 's' : ''}
             </p>
@@ -68,8 +68,13 @@ export default function SprintsEmAndamentoBlock({ sprints, workshopMap, onSprint
                     <p className="text-sm font-semibold text-gray-900 truncate">
                       {workshop?.name || 'Cliente'}
                     </p>
-                    <div className="flex items-center gap-2 mt-0.5">
+                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                       <p className="text-xs text-gray-500 truncate">{sprint.title}</p>
+                      {sprint.status === "pending" && (
+                        <Badge className="bg-gray-100 text-gray-600 text-[10px] shrink-0">
+                          Pendente
+                        </Badge>
+                      )}
                       {pendingReviewCount > 0 && (
                         <Badge className="bg-amber-100 text-amber-700 text-[10px] gap-0.5 shrink-0">
                           <Send className="w-2.5 h-2.5" /> {pendingReviewCount} revisão

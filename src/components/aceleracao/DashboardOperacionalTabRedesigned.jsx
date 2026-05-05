@@ -92,7 +92,7 @@ export default function DashboardOperacionalTabRedesigned({ user, workshops = []
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         <StatPill icon={Activity} label="Total" value={stats.total} color="text-gray-700" bgColor="bg-gray-50" />
-        <StatPill icon={Clock} label="Em andamento" value={stats.em_andamento} color="text-blue-600" bgColor="bg-blue-50/60" />
+        <StatPill icon={Clock} label="Ativos" value={stats.em_andamento} color="text-blue-600" bgColor="bg-blue-50/60" />
         <StatPill icon={Send} label="P/ Revisar" value={stats.pendingReview} color="text-amber-600" bgColor={stats.pendingReview > 0 ? "bg-amber-50/80" : "bg-gray-50"} />
         <StatPill icon={AlertTriangle} label="Atrasados" value={stats.atrasados} color="text-red-600" bgColor={stats.atrasados > 0 ? "bg-red-50/80" : "bg-gray-50"} />
         <StatPill icon={Check} label="Concluídos" value={stats.concluidos} color="text-green-600" bgColor="bg-green-50/60" />
