@@ -136,8 +136,7 @@ export default function useDashboardSprints(workshops = []) {
     // Isso garante que workshops presentes nos sprints mas não na lista ainda apareçam
     const result = [];
     sprintsByWorkshop.forEach((ws, workshopId) => {
-      if (!ws.length) return;
-      // Tenta encontrar o workshop na lista, senão cria um placeholder com o ID
+      if (!ws.length || !workshopId) return;
       const workshop = workshopMap[workshopId] || { id: workshopId, name: `Oficina ${workshopId.slice(0, 8)}...` };
       const avg = Math.round(ws.reduce((a, s) => a + (s.progress_percentage || 0), 0) / ws.length);
       const hasOverdue = ws.some(s => s.status === "overdue");
