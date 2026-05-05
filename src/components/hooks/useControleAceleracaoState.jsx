@@ -78,11 +78,50 @@ export default function useControleAceleracaoState() {
   });
 
   // ── 8. Lookup maps O(1) ──
-  const workshopMap = useMemo(() => {
+  // Base map from workshopsDisponiveis
+  const baseWorkshopMap = useMemo(() => {
     const map = {};
     (workshops || []).forEach((w) => { map[w.id] = w; });
     return map;
   }, [workshops]);
+
+  // Detect missing workshop_ids from atendimentos (clients not in the base list)
+  const missingWorkshopIds = useMemo(() => {
+    if (!atendimentos?.length) return [];
+    const missing = new Set();
+    atendimentos.forEach(a => {
+      if (a.workshop_id && !baseWorkshopMap[a.workshop_id]) {
+        missing.add(a.workshop_id);
+      }
+    });
+    return Array.from(missing);
+  }, [atendimentos, baseWorkshopMap]);
+
+  // Fetch missing workshops via BFF (bypasses RLS)
+  const { data: missingWorkshops = [] } = useQuery({
+    queryKey: ['workshops-missing', missingWorkshopIds.join(',')],
+    queryFn: async () => {
+      if (!missingWorkshopIds.length) return [];
+      const results = await Promise.all(
+        missingWorkshopIds.map(id =>
+          base44.functions.invoke('getUserWorkshops', { workshopId: id })
+            .then(r => r?.data?.workshops?.[0] || null)
+            .catch(() => null)
+        )
+      );
+      return results.filter(Boolean);
+    },
+    enabled: missingWorkshopIds.length > 0,
+    staleTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+  // Merge base + missing into final workshopMap
+  const workshopMap = useMemo(() => {
+    const map = { ...baseWorkshopMap };
+    missingWorkshops.forEach(w => { if (w?.id) map[w.id] = w; });
+    return map;
+  }, [baseWorkshopMap, missingWorkshops]);
 
   const atasMap = useMemo(() => {
     const map = {};
