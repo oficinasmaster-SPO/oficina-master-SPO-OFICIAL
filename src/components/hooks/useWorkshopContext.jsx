@@ -37,8 +37,8 @@ export function useWorkshopContext() {
       return [];
     },
     enabled: !isTenantLoading,
-    staleTime: 15 * 60 * 1000,
-    gcTime: 30 * 60 * 1000,
+    staleTime: 2 * 60 * 1000, // DS-SINGLE-02: 2min (era 15min) — permite que fixes de backend reflitam mais rápido
+    gcTime: 10 * 60 * 1000,
     retry: (failureCount, error) => {
       // LOAD-04: retry automático após rate limit (aguarda 8s)
       if (error?.message === 'rate_limit') return failureCount < 2;

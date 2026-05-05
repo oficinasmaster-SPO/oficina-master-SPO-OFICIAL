@@ -54,7 +54,7 @@ export default function DashboardOperacionalTabRedesigned({ user, workshops = []
     stats,
     isLoading,
     refetch
-  } = useDashboardSprints(workshops);
+  } = useDashboardSprints(workshops, user); // DS-SINGLE-02: user para consulting_firm_id
 
   const handleRefetch = () => {
     // Invalida também o cache de workshops para forçar re-fetch do BFF (getUserWorkshops tem cache 15min)
