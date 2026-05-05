@@ -2,8 +2,8 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
-import useWorkshopsAtivos from "./useWorkshopsAtivos";
 import useConsultoresList from "./useConsultoresList";
+import { useWorkshopContext } from "./useWorkshopContext";
 import useControleAceleracaoURLState from "./useControleAceleracaoURLState";
 import { getConsultorEfetivo, filterAtendimentosPeriodo } from "./useFiltrosControle";
 
@@ -29,7 +29,12 @@ export default function useControleAceleracaoState() {
   const { user, isLoadingAuth: loadingUser } = useAuth();
 
   // ── 3. Shared reference data ──
-  const { data: workshops } = useWorkshopsAtivos(user?.id); // DS-01: pass userId to guard query
+  // DS-EMPTY-01: usar workshopsDisponiveis do BFF (asServiceRole) em vez de Workshop.filter com RLS
+  // useWorkshopsAtivos usa base44.entities com RLS que pode retornar [] silenciosamente quando
+  // consulting_firm_id dos workshops não bate com o do usuário.
+  // workshopsDisponiveis vem de getUserWorkshops (asServiceRole) e retorna lista completa correta.
+  const { workshopsDisponiveis } = useWorkshopContext();
+  const workshops = workshopsDisponiveis || [];
   const { data: consultores } = useConsultoresList(user);
 
   // ── 4. Consultor efetivo (função pura, sem hook) ──

@@ -55,8 +55,7 @@ export default function useDashboardSprints(workshops = []) {
         throw error;
       }
     },
-    // S01: Aumentar staleTime de 5 min para 60 min — evita refetch desnecessário
-    staleTime: 60 * 60 * 1000, // 60 min
+    staleTime: 5 * 60 * 1000, // 5 min — subscribe invalida em mudanças reais
     refetchOnWindowFocus: false,
     refetchOnMount: 'stale',
     enabled: workshopIds.length > 0,
