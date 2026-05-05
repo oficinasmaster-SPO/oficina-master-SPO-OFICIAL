@@ -19,6 +19,7 @@ import {
 import { toast } from "sonner";
 import { format } from "date-fns";
 import AIProfileSuggestions from "@/components/admin/users/AIProfileSuggestions";
+import RelatorioPlanos from "@/components/admin/RelatorioPlanos";
 
 export default function GestaoUsuariosEmpresas() {
   const navigate = useNavigate();
@@ -32,6 +33,7 @@ export default function GestaoUsuariosEmpresas() {
   const [expandedRow, setExpandedRow] = useState(null);
   const [aiFormData, setAiFormData] = useState({ cargo: "", area: "" });
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+  const [showRelatorioPlanos, setShowRelatorioPlanos] = useState(false);
   
   // Filtros avançados
   const [filters, setFilters] = useState({
@@ -411,13 +413,17 @@ export default function GestaoUsuariosEmpresas() {
             <h1 className="text-3xl font-bold text-gray-900 mb-1">Gestão de Usuários e Empresas</h1>
             <p className="text-gray-600">Central única para gerenciar usuários, oficinas e acessos do sistema</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <Badge variant="outline" className="text-lg px-4 py-2">
               {filteredWorkshops.length} empresa{filteredWorkshops.length !== 1 ? 's' : ''}
             </Badge>
             <Badge variant="outline" className="text-lg px-4 py-2 bg-blue-50">
               {filteredWorkshops.reduce((sum, w) => sum + w.totalEmployees, 0)} colaboradores
             </Badge>
+            <Button variant="outline" size="sm" onClick={() => setShowRelatorioPlanos(true)} className="gap-2">
+              <BarChart3 className="w-4 h-4 text-blue-600" />
+              Relatório de Planos
+            </Button>
             {activeFiltersCount > 0 && (
               <Button variant="outline" size="sm" onClick={clearFilters}>
                 <X className="w-4 h-4 mr-1" />
@@ -998,6 +1004,8 @@ export default function GestaoUsuariosEmpresas() {
             </div>
           </Card>
         )}
+
+        <RelatorioPlanos open={showRelatorioPlanos} onClose={() => setShowRelatorioPlanos(false)} />
 
         <Dialog open={isWorkshopDialogOpen} onOpenChange={setIsWorkshopDialogOpen}>
           <DialogContent>
