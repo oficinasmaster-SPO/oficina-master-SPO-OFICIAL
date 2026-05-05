@@ -3,23 +3,29 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { differenceInDays } from "date-fns";
 
-export default function useDashboardSprints(workshops = [], user = null) {
+export default function useDashboardSprints(workshops = [], user = null, consultingFirmId = null) {
   const queryClient = useQueryClient();
   const workshopIds = useMemo(() => workshops.map(w => w.id), [workshops]);
   const workshopIdsKey = workshopIds.join(',');
 
-  // DS-SINGLE-02: Buscar por consulting_firm_id (1 request) em vez de por workshop (N requests)
-  const consultingFirmId = user?.data?.consulting_firm_id || null;
+  // DS-SINGLE-02: consultingFirmId vem direto do BFF (via useWorkshopContext → getUserWorkshops)
+  // Fallbacks adicionais caso não seja passado explicitamente
+  const resolvedFirmId = useMemo(() => {
+    if (consultingFirmId) return consultingFirmId;
+    if (user?.data?.consulting_firm_id) return user.data.consulting_firm_id;
+    const ws = workshops.find(w => w.consulting_firm_id);
+    return ws?.consulting_firm_id || null;
+  }, [consultingFirmId, user, workshops]);
 
   const { data: sprints = [], isLoading, refetch } = useQuery({
-    queryKey: ['dashboard-sprints', consultingFirmId || workshopIdsKey],
+    queryKey: ['dashboard-sprints', resolvedFirmId || workshopIdsKey],
     queryFn: async () => {
       try {
         // CAMINHO 1 (preferencial): 1 request por consulting_firm_id
-        if (consultingFirmId) {
-          console.log(`[useDashboardSprints] Buscando por consulting_firm_id: ${consultingFirmId}`);
+        if (resolvedFirmId) {
+          console.log(`[useDashboardSprints] Buscando por consulting_firm_id: ${resolvedFirmId}`);
           const sprintsByFirm = await base44.entities.ConsultoriaSprint
-            .filter({ consulting_firm_id: consultingFirmId })
+            .filter({ consulting_firm_id: resolvedFirmId })
             .catch(err => {
               console.warn('[useDashboardSprints] Erro na query por consulting_firm_id:', err.message);
               return null;
@@ -64,7 +70,7 @@ export default function useDashboardSprints(workshops = [], user = null) {
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: 'stale',
-    enabled: !!consultingFirmId || workshopIds.length > 0,
+    enabled: !!resolvedFirmId || workshopIds.length > 0,
     placeholderData: []
   });
 
@@ -76,7 +82,7 @@ export default function useDashboardSprints(workshops = [], user = null) {
     const unsubscribe = base44.entities.ConsultoriaSprint.subscribe((event) => {
       const eventFirmId = event.data?.consulting_firm_id;
       const eventWorkshopId = event.data?.workshop_id;
-      const isRelevant = (consultingFirmId && eventFirmId === consultingFirmId) ||
+      const isRelevant = (resolvedFirmId && eventFirmId === resolvedFirmId) ||
                          (eventWorkshopId && idSet.has(eventWorkshopId));
 
       if (!isRelevant || refetchPending) return;
@@ -94,7 +100,7 @@ export default function useDashboardSprints(workshops = [], user = null) {
       clearTimeout(debounceTimer);
       unsubscribe();
     };
-  }, [consultingFirmId, workshopIdsKey, queryClient]);
+  }, [resolvedFirmId, workshopIdsKey, queryClient]);
 
   const workshopMap = useMemo(
     () => Object.fromEntries(workshops.map(w => [w.id, w])),

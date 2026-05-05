@@ -14,7 +14,7 @@ export function useWorkshopContext() {
   const { selectedFirmId, selectedCompanyId, changeCompany, isLoading: isTenantLoading, user: tenantUser } = useTenant();
 
   // 1. Busca a lista de workshops disponíveis do usuário. Isso ocorre apenas uma vez e é cacheado.
-  const { data: available = [], isLoading: isAvailableLoading } = useQuery({
+  const { data: availableData = {}, isLoading: isAvailableLoading } = useQuery({
     queryKey: ['workshops-available', tenantUser?.id],
     queryFn: async () => {
       const user = tenantUser || await base44.auth.me().catch(() => null);
@@ -23,18 +23,22 @@ export function useWorkshopContext() {
       try {
         const response = await base44.functions.invoke('getUserWorkshops', {});
         if (response?.data?.workshops) {
-          return response.data.workshops;
+          // DS-SINGLE-02: guardar consulting_firm_id resolvido junto com os workshops
+          return {
+            workshops: response.data.workshops,
+            consulting_firm_id: response.data.consulting_firm_id || null,
+          };
         }
       } catch (err) {
         const status = err?.status || err?.response?.status;
-        if (status === 429) {
+        if (status === 429) { // eslint-disable-line
           // LOAD-04: rate limit — lançar erro para que o React Query mantenha o cache anterior (keepPreviousData)
           throw new Error('rate_limit');
         }
         console.warn('Erro ao buscar workshops via BFF:', status || err?.message);
         return [];
       }
-      return [];
+      return { workshops: [], consulting_firm_id: null };
     },
     enabled: !isTenantLoading,
     staleTime: 2 * 60 * 1000, // DS-SINGLE-02: 2min (era 15min) — permite que fixes de backend reflitam mais rápido
@@ -50,6 +54,9 @@ export function useWorkshopContext() {
     // LOAD-04: manter dados anteriores em caso de erro — não limpar workshop em erros transitórios
     placeholderData: (previousData) => previousData,
   });
+
+  const available = availableData?.workshops || [];
+  const resolvedConsultingFirmId = availableData?.consulting_firm_id || null;
 
   // 2. Determina o workshop atual DE FORMA SÍNCRONA baseado na lista 'available'
   // FIX-03: Priorizar selectedCompanyId > available > profile.workshop_id
@@ -136,6 +143,7 @@ export function useWorkshopContext() {
     workshop,
     workshopId: workshop?.id || null,
     workshopsDisponiveis,
+    consultingFirmId: resolvedConsultingFirmId,
     setCurrentWorkshop,
     isLoading,
     isAdminMode

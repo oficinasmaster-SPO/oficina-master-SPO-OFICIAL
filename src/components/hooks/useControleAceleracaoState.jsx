@@ -33,7 +33,7 @@ export default function useControleAceleracaoState() {
   // useWorkshopsAtivos usa base44.entities com RLS que pode retornar [] silenciosamente quando
   // consulting_firm_id dos workshops não bate com o do usuário.
   // workshopsDisponiveis vem de getUserWorkshops (asServiceRole) e retorna lista completa correta.
-  const { workshopsDisponiveis } = useWorkshopContext();
+  const { workshopsDisponiveis, consultingFirmId } = useWorkshopContext();
   const workshops = workshopsDisponiveis || [];
   const { data: consultores } = useConsultoresList(user);
 
@@ -125,6 +125,7 @@ export default function useControleAceleracaoState() {
     // Auth
     user,
     loadingUser,
+    consultingFirmId,
     // URL-synced
     activeTab, setActiveTab,
     pendingSubTab, setPendingSubTab,

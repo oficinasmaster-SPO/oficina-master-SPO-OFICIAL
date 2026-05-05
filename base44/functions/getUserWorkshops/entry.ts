@@ -47,6 +47,11 @@ Deno.serve(withAuth(async (req, { base44, user }) => {
             // Request sem body — continuar com lista completa
         }
 
+        // DS-SINGLE-02: permitir bust do cache server-side pelo botão "Atualizar"
+        if (body?.bustCache) {
+            workshopCache.delete(user.id);
+        }
+
         if (body?.workshopId) {
             const ws = await base44.asServiceRole.entities.Workshop.get(body.workshopId).catch(() => null);
             return new Response(JSON.stringify({ 
@@ -186,8 +191,19 @@ Deno.serve(withAuth(async (req, { base44, user }) => {
             'X-Cache': 'MISS'
         });
 
+        // DS-SINGLE-02: expor o consulting_firm_id resolvido para o frontend
+        // O user.data pode não ter esse campo se o perfil foi criado antes do campo existir
+        // Nesse caso, pegar do primeiro workshop da lista que tenha o campo
+        const resolvedConsultingFirmId = userConsultingFirmId ||
+            availableWorkshops.find(w => w.consulting_firm_id)?.consulting_firm_id || null;
+
+        if (resolvedConsultingFirmId) {
+            console.log(`[getUserWorkshops] consulting_firm_id resolvido: ${resolvedConsultingFirmId} para ${user.email}`);
+        }
+
         return new Response(JSON.stringify({ 
             workshops: availableWorkshops,
+            consulting_firm_id: resolvedConsultingFirmId,
             user: user 
         }), { status: 200, headers });
 
