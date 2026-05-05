@@ -73,10 +73,15 @@ Deno.serve(async (req) => {
     if (planId && planStatus === 'active') {
       console.log(`[adminUpdateWorkshopPlan] Disparando geração de bucket para ${workshop_id} plano "${planId}"`);
       try {
-        attendanceResult = await base44.asServiceRole.functions.invoke('generateWorkshopAttendances', {
+        const raw = await base44.asServiceRole.functions.invoke('generateWorkshopAttendances', {
           workshop_id
         });
-        console.log(`[adminUpdateWorkshopPlan] Bucket: ${attendanceResult?.attendances_created || 0} atendimentos criados`);
+        // Extract only serializable data (avoid circular Axios response objects)
+        attendanceResult = {
+          attendances_created: raw?.attendances_created ?? raw?.data?.attendances_created ?? 0,
+          success: raw?.success ?? raw?.data?.success ?? true
+        };
+        console.log(`[adminUpdateWorkshopPlan] Bucket: ${attendanceResult.attendances_created} atendimentos criados`);
       } catch (attErr) {
         console.error(`[adminUpdateWorkshopPlan] Falha ao gerar bucket:`, attErr.message);
         attendanceResult = { error: attErr.message };
@@ -85,7 +90,7 @@ Deno.serve(async (req) => {
 
     return Response.json({
       success: true,
-      workshop: result,
+      workshop: { id: result?.id, planId: result?.planId, planoAtual: result?.planoAtual, planStatus: result?.planStatus },
       attendance_generation: attendanceResult
     });
 
