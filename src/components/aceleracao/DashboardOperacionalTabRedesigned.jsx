@@ -63,7 +63,7 @@ export default function DashboardOperacionalTabRedesigned({ user, workshops = []
       await base44.functions.invoke('getUserWorkshops', { bustCache: true });
     } catch { /* non-critical */ }
     queryClient.invalidateQueries({ queryKey: ['workshops-available'] });
-    queryClient.invalidateQueries({ queryKey: ['dashboard-sprints'] }, { exact: false });
+    queryClient.invalidateQueries({ queryKey: ['dashboard-sprints'] });
     refetch();
   };
 
