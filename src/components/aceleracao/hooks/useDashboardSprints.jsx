@@ -17,30 +17,30 @@ export default function useDashboardSprints(workshops = []) {
         if (!ids.length) return [];
         console.log(`[useDashboardSprints] Buscando sprints para ${ids.length} workshops`);
         
-        // FIX #4: Paralelizar batching (ao invés de sequencial)
-        // Cria promises para todos os batches em paralelo
-        const batchSize = 3;
-        const batches = [];
+        // Busca sequencial em batches pequenos para evitar rate limit (429)
+        const batchSize = 5;
+        const allSprints = [];
         for (let i = 0; i < ids.length; i += batchSize) {
           const batch = ids.slice(i, i + batchSize);
-          batches.push(
-            Promise.all(
-              batch.map(id => 
-                base44.entities.ConsultoriaSprint
-                  .filter({ workshop_id: id })
-                  .catch(err => {
-                    console.warn(`[Sprint Fetch] Erro ao buscar sprint para workshop ${id}:`, err.message);
-                    return [];
-                  })
-              )
+          const results = await Promise.all(
+            batch.map(id =>
+              base44.entities.ConsultoriaSprint
+                .filter({ workshop_id: id })
+                .catch(err => {
+                  console.warn(`[Sprint Fetch] Erro ao buscar sprint para workshop ${id}:`, err.message);
+                  return [];
+                })
             )
           );
+          // Flatten: results é array de arrays, cada item é array de sprints
+          results.forEach(arr => {
+            if (Array.isArray(arr)) allSprints.push(...arr);
+          });
+          // Pequeno delay entre batches para evitar rate limit
+          if (i + batchSize < ids.length) {
+            await new Promise(resolve => setTimeout(resolve, 200));
+          }
         }
-        
-        // S03: Aguarda todos os batches em paralelo com error handling
-        const batchResults = await Promise.all(batches);
-        // Flatten com validação: cada batch é array de arrays (Promise.all results)
-        const allSprints = batchResults.reduce((acc, batch) => acc.concat(batch), []);
         
         // Debug: logar distribuição de status para diagnóstico
         const statusCounts = allSprints.reduce((acc, s) => {
