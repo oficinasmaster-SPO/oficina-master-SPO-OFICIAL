@@ -189,11 +189,16 @@ export default function GestaoUsuariosEmpresas() {
 
     const { plano, status, dataRenovacao } = workshopFormData;
 
+    const planChanged = plano !== (editingWorkshop.planoAtual || 'FREE');
     const data = {
       planoAtual: plano,
+      planId: plano,
       status: status,
       dataRenovacao: dataRenovacao ? new Date(dataRenovacao).toISOString() : null,
-      ...(plano !== editingWorkshop.planoAtual ? { dataAssinatura: new Date().toISOString() } : {})
+      // Se o plano mudou ou o status é ativo, forçar planStatus = 'active'
+      // Isso garante que o backend dispare a geração do bucket de atendimentos
+      planStatus: status === 'ativo' ? 'active' : (status === 'inativo' ? 'canceled' : editingWorkshop.planStatus),
+      ...(planChanged ? { dataAssinatura: new Date().toISOString() } : {})
     };
 
     updateWorkshopMutation.mutate({ 
