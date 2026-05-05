@@ -377,6 +377,7 @@ export default function PainelAtendimentosTab({ state }) {
                     <th className="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wider border-r border-gray-100" style={{ width: '90px' }}>Plano</th>
                     <th className="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wider border-r border-gray-100" style={{ width: '110px' }}>Tipo</th>
                     <th className="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wider border-r border-gray-100" style={{ width: '120px' }}>Consultor</th>
+                    <th className="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wider border-r border-gray-100" style={{ width: '120px' }}>Criado por</th>
                     <th className="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wider border-r border-gray-100" style={{ width: '130px' }}>Data</th>
                     <th className="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wider border-r border-gray-100" style={{ width: '130px' }}>Criado em</th>
                     <th className="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wider border-r border-gray-100" style={{ width: '110px' }}>ID ATA</th>
@@ -387,7 +388,7 @@ export default function PainelAtendimentosTab({ state }) {
                 <tbody className="divide-y divide-gray-100">
                   {paginatedAtendimentos.length === 0 ? (
                     <tr>
-                      <td colSpan={9} className="py-24 text-center">
+                      <td colSpan={10} className="py-24 text-center">
                         <div className="flex flex-col items-center justify-center max-w-md mx-auto space-y-4">
                           <div className="bg-gray-50 p-4 rounded-full">
                             <SearchX className="w-10 h-10 text-gray-400" />
@@ -458,6 +459,17 @@ export default function PainelAtendimentosTab({ state }) {
                         </td>
                         <td className="py-3 px-3 text-sm text-gray-700 border-r border-gray-100 font-medium truncate" title={atendimento.consultor_nome || '-'}>
                           {atendimento.consultor_nome || '-'}
+                        </td>
+                        <td className="py-3 px-3 border-r border-gray-100">
+                          {atendimento.created_by?.startsWith('service+') || atendimento.created_by?.startsWith('service_') ? (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded bg-violet-50 text-violet-700 border border-violet-200 whitespace-nowrap">
+                              ⚙️ Sistema (auto)
+                            </span>
+                          ) : (
+                            <span className="text-sm text-gray-600 truncate block max-w-[110px]" title={atendimento.created_by || '-'}>
+                              {atendimento.created_by?.split('@')[0] || '-'}
+                            </span>
+                          )}
                         </td>
                         <td className="py-3 px-3 text-sm text-gray-600 border-r border-gray-100 whitespace-nowrap">
                           {formatDateTimeBR(atendimento.data_agendada)}
