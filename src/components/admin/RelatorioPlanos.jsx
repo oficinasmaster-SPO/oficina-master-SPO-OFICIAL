@@ -30,8 +30,15 @@ export default function RelatorioPlanos({ open, onClose }) {
     staleTime: 2 * 60 * 1000,
   });
 
-  const metrics = data?.metrics || {};
-  const byPlan = data?.by_plan || {};
+  // A função retorna: total, porPlano, porPlanStatus, porStatusOficina, detalhes
+  const metrics = {
+    total: data?.total || 0,
+    active: data?.porStatusOficina?.ativo || 0,
+    inactive: data?.porStatusOficina?.inativo || 0,
+    paying: Object.entries(data?.porPlano || {}).filter(([plan]) => plan !== "FREE").reduce((sum, [, c]) => sum + c, 0),
+    by_plan_status: data?.porPlanStatus || {},
+  };
+  const byPlan = data?.detalhes || {};
   const plans = Object.keys(byPlan);
 
   return (
@@ -101,8 +108,15 @@ export default function RelatorioPlanos({ open, onClose }) {
             <div className="space-y-2">
               <h3 className="text-sm font-semibold text-gray-700 mb-3">Oficinas por Plano</h3>
               {plans.map((plan) => {
-                const group = byPlan[plan];
+                const group = byPlan[plan]; // array de oficinas
+                const count = Array.isArray(group) ? group.length : 0;
                 const isExpanded = expandedPlan === plan;
+                // Calcular contagem por statusOficina
+                const byStatus = Array.isArray(group) ? group.reduce((acc, ws) => {
+                  const st = ws.statusOficina || "ativo";
+                  acc[st] = (acc[st] || 0) + 1;
+                  return acc;
+                }, {}) : {};
                 return (
                   <div key={plan} className="border rounded-lg overflow-hidden">
                     <button
@@ -114,10 +128,10 @@ export default function RelatorioPlanos({ open, onClose }) {
                           {plan}
                         </Badge>
                         <span className="text-sm font-medium text-gray-700">
-                          {group.count} oficina{group.count !== 1 ? "s" : ""}
+                          {count} oficina{count !== 1 ? "s" : ""}
                         </span>
                         <div className="flex gap-1">
-                          {group.by_status && Object.entries(group.by_status).map(([st, ct]) => (
+                          {Object.entries(byStatus).map(([st, ct]) => (
                             <span key={st} className={`text-[11px] px-1.5 py-0.5 rounded ${
                               st === "ativo" ? "bg-green-100 text-green-700" :
                               st === "inativo" ? "bg-red-100 text-red-700" :
@@ -131,29 +145,29 @@ export default function RelatorioPlanos({ open, onClose }) {
                       {isExpanded ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronRight className="w-4 h-4 text-gray-400" />}
                     </button>
 
-                    {isExpanded && group.workshops?.length > 0 && (
+                    {isExpanded && group?.length > 0 && (
                       <div className="divide-y divide-gray-100">
-                        {group.workshops.map((ws) => (
+                        {group.map((ws) => (
                           <div key={ws.id} className="flex items-center justify-between px-4 py-2.5 hover:bg-gray-50">
                             <div className="flex items-center gap-2 min-w-0">
                               <Building2 className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
                               <div className="min-w-0">
-                                <p className="text-sm font-medium text-gray-800 truncate">{ws.name}</p>
-                                {(ws.city || ws.state) && (
-                                  <p className="text-xs text-gray-500">{[ws.city, ws.state].filter(Boolean).join(" - ")}</p>
+                                <p className="text-sm font-medium text-gray-800 truncate">{ws.nome || ws.name}</p>
+                                {(ws.cidade || ws.estado) && (
+                                  <p className="text-xs text-gray-500">{[ws.cidade, ws.estado].filter(Boolean).join(" - ")}</p>
                                 )}
                               </div>
                             </div>
                             <div className="flex items-center gap-2 flex-shrink-0 ml-2">
                               <Badge className={
-                                ws.status === "ativo" ? "bg-green-100 text-green-700" :
-                                ws.status === "inativo" ? "bg-red-100 text-red-700" :
+                                ws.statusOficina === "ativo" ? "bg-green-100 text-green-700" :
+                                ws.statusOficina === "inativo" ? "bg-red-100 text-red-700" :
                                 "bg-gray-100 text-gray-600"
                               } variant="outline">
-                                {ws.status || "—"}
+                                {ws.statusOficina || "—"}
                               </Badge>
-                              {ws.plan_status && (
-                                <span className="text-[11px] text-gray-400">{ws.plan_status}</span>
+                              {ws.planStatus && (
+                                <span className="text-[11px] text-gray-400">{ws.planStatus}</span>
                               )}
                             </div>
                           </div>
