@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { RefreshCw, Zap, AlertTriangle, Check, Clock, Activity, Send } from "lucide-react";
 import useDashboardSprints from "./hooks/useDashboardSprints";
 import SprintsAtrasadosBlock from "./dashboard/SprintsAtrasadosBlock";
@@ -41,6 +42,8 @@ export default function DashboardOperacionalTabRedesigned({ user, workshops = []
   const [selectedPhaseIndex, setSelectedPhaseIndex] = useState(0);
 
 
+  const queryClient = useQueryClient();
+
   const {
     sprintsAtrasados,
     sprintsEmAndamento,
@@ -52,6 +55,13 @@ export default function DashboardOperacionalTabRedesigned({ user, workshops = []
     isLoading,
     refetch
   } = useDashboardSprints(workshops);
+
+  const handleRefetch = () => {
+    // Invalida também o cache de workshops para forçar re-fetch do BFF (getUserWorkshops tem cache 15min)
+    queryClient.invalidateQueries({ queryKey: ['workshops-available'] });
+    queryClient.invalidateQueries({ queryKey: ['dashboard-sprints'] });
+    refetch();
+  };
 
   const handleSprintClick = (sprint) => {
     // If sprint has a pending_review phase, open directly on it
@@ -82,7 +92,7 @@ export default function DashboardOperacionalTabRedesigned({ user, workshops = []
           <p className="text-sm text-gray-400 mt-0.5">O que precisa da sua atenção agora</p>
         </div>
         <button
-          onClick={() => refetch()}
+          onClick={handleRefetch}
           className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-700 border border-gray-200 rounded-lg px-3 py-2 hover:bg-gray-50 hover:border-gray-300 transition-all"
         >
           <RefreshCw className="w-3.5 h-3.5" /> Atualizar
