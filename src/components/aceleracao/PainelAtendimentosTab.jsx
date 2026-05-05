@@ -467,7 +467,7 @@ export default function PainelAtendimentosTab({ state }) {
                             </span>
                           ) : (
                             <span className="text-sm text-gray-600 truncate block max-w-[110px]" title={atendimento.created_by || '-'}>
-                              {atendimento.created_by?.split('@')[0] || '-'}
+                              {consultores.find(c => c.email === atendimento.created_by)?.full_name || atendimento.created_by?.split('@')[0] || '-'}
                             </span>
                           )}
                         </td>
