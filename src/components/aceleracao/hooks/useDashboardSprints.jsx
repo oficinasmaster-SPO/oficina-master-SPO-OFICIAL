@@ -3,48 +3,21 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { differenceInDays } from "date-fns";
 
-export default function useDashboardSprints(workshops = [], user = null, consultingFirmId = null) {
+export default function useDashboardSprints(workshops = []) {
   const queryClient = useQueryClient();
   const workshopIds = useMemo(() => workshops.map(w => w.id), [workshops]);
+  // stable string key to avoid re-creating queries when array reference changes
   const workshopIdsKey = workshopIds.join(',');
 
-  // DS-SINGLE-02: consultingFirmId vem direto do BFF (via useWorkshopContext → getUserWorkshops)
-  // Fallbacks adicionais caso não seja passado explicitamente
-  const resolvedFirmId = useMemo(() => {
-    if (consultingFirmId) return consultingFirmId;
-    if (user?.data?.consulting_firm_id) return user.data.consulting_firm_id;
-    const ws = workshops.find(w => w.consulting_firm_id);
-    return ws?.consulting_firm_id || null;
-  }, [consultingFirmId, user, workshops]);
-
   const { data: sprints = [], isLoading, refetch } = useQuery({
-    queryKey: ['dashboard-sprints', resolvedFirmId || workshopIdsKey],
+    queryKey: ['dashboard-sprints', workshopIdsKey],
     queryFn: async () => {
       try {
-        // CAMINHO 1 (preferencial): 1 request por consulting_firm_id
-        if (resolvedFirmId) {
-          console.log(`[useDashboardSprints] Buscando por consulting_firm_id: ${resolvedFirmId}`);
-          const sprintsByFirm = await base44.entities.ConsultoriaSprint
-            .filter({ consulting_firm_id: resolvedFirmId })
-            .catch(err => {
-              console.warn('[useDashboardSprints] Erro na query por consulting_firm_id:', err.message);
-              return null;
-            });
-
-          if (sprintsByFirm !== null) {
-            console.log(`[useDashboardSprints] ${sprintsByFirm.length} sprints carregados via consulting_firm_id`);
-            return sprintsByFirm;
-          }
-        }
-
-        // CAMINHO 2 (fallback): buscar por workshop_id individualmente
         const ids = workshopIdsKey.split(',').filter(Boolean);
-        if (!ids.length) {
-          console.warn('[useDashboardSprints] Sem consulting_firm_id e sem workshops — retornando []');
-          return [];
-        }
-
-        console.log(`[useDashboardSprints] Fallback: buscando por ${ids.length} workshop_ids`);
+        if (!ids.length) return [];
+        console.log(`[useDashboardSprints] Buscando sprints para ${ids.length} workshops`);
+        
+        // Busca sequencial em batches pequenos para evitar rate limit (429)
         const batchSize = 5;
         const allSprints = [];
         for (let i = 0; i < ids.length; i += batchSize) {
@@ -53,54 +26,77 @@ export default function useDashboardSprints(workshops = [], user = null, consult
             batch.map(id =>
               base44.entities.ConsultoriaSprint
                 .filter({ workshop_id: id })
-                .catch(() => [])
+                .catch(err => {
+                  console.warn(`[Sprint Fetch] Erro ao buscar sprint para workshop ${id}:`, err.message);
+                  return [];
+                })
             )
           );
-          results.forEach(arr => { if (Array.isArray(arr)) allSprints.push(...arr); });
+          // Flatten: results é array de arrays, cada item é array de sprints
+          results.forEach(arr => {
+            if (Array.isArray(arr)) allSprints.push(...arr);
+          });
+          // Pequeno delay entre batches para evitar rate limit
           if (i + batchSize < ids.length) {
             await new Promise(resolve => setTimeout(resolve, 200));
           }
         }
+        
+        // Debug: logar distribuição de status para diagnóstico
+        const statusCounts = allSprints.reduce((acc, s) => {
+          acc[s.status || 'sem_status'] = (acc[s.status || 'sem_status'] || 0) + 1;
+          return acc;
+        }, {});
+        console.log(`[useDashboardSprints] ${allSprints.length} sprints carregados. Status:`, statusCounts);
+        
         return allSprints;
       } catch (error) {
-        console.error('[useDashboardSprints] Erro crítico:', error);
+        console.error('[useDashboardSprints] Erro crítico ao buscar sprints:', error);
         throw error;
       }
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 5 * 60 * 1000, // 5 min — subscribe invalida em mudanças reais
     refetchOnWindowFocus: false,
     refetchOnMount: 'stale',
-    enabled: !!resolvedFirmId || workshopIds.length > 0,
+    enabled: workshopIds.length > 0,
+    // DS-02: placeholderData não polui o cache — apenas fallback visual durante loading
     placeholderData: []
   });
 
+  // FIX #1: Evitar infinite loop com debounce e guardrail
+  // Subscribe em tempo real: qualquer sprint de qualquer workshop gerenciado invalida o cache
+  // Dep: workshopIdsKey (string) — Set não tem referential equality e causaria reinit a cada render
   useEffect(() => {
+    const ids = workshopIdsKey.split(',').filter(Boolean);
+    if (!ids.length) return;
+    
+    const idSet = new Set(ids);
     let debounceTimer;
     let refetchPending = false;
-    const idSet = new Set(workshopIdsKey.split(',').filter(Boolean));
-
+    
     const unsubscribe = base44.entities.ConsultoriaSprint.subscribe((event) => {
-      const eventFirmId = event.data?.consulting_firm_id;
-      const eventWorkshopId = event.data?.workshop_id;
-      const isRelevant = (resolvedFirmId && eventFirmId === resolvedFirmId) ||
-                         (eventWorkshopId && idSet.has(eventWorkshopId));
-
-      if (!isRelevant || refetchPending) return;
-
-      clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(() => {
-        refetchPending = true;
-        queryClient.invalidateQueries({ queryKey: ['dashboard-sprints'] });
-        queryClient.invalidateQueries({ queryKey: ['active-sprint-widget'] });
-        setTimeout(() => { refetchPending = false; }, 1000);
-      }, 500);
+      if (event.data?.workshop_id && idSet.has(event.data.workshop_id)) {
+        // Guardrail: evita múltiplas invalidações em cascata
+        if (refetchPending) return;
+        
+        // Debounce: aguarda 500ms de inatividade antes de invalidar
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          refetchPending = true;
+          queryClient.invalidateQueries({ queryKey: ['dashboard-sprints'] });
+          queryClient.invalidateQueries({ queryKey: ['active-sprint-widget'] });
+          
+          // Reseta guardrail após 1s (evita mais invalidações)
+          setTimeout(() => { refetchPending = false; }, 1000);
+        }, 500);
+      }
     });
-
+    
     return () => {
       clearTimeout(debounceTimer);
       unsubscribe();
     };
-  }, [resolvedFirmId, workshopIdsKey, queryClient]);
+  }, [workshopIdsKey, queryClient]);
 
   const workshopMap = useMemo(
     () => Object.fromEntries(workshops.map(w => [w.id, w])),

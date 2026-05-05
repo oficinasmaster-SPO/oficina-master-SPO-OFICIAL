@@ -52,8 +52,7 @@ export default function ControleAceleracaoView({ state }) {
     activeTab, setActiveTab,
     isModalOpen, atendimentoId, openModal, closeModal,
     filtros, setFiltros, consultores,
-    workshops, atendimentos, atendimentosPeriodo, loadingAtendimentos,
-    consultingFirmId
+    workshops, atendimentos, atendimentosPeriodo, loadingAtendimentos
   } = state;
 
   const [showMassRegistration, setShowMassRegistration] = useState(false);
@@ -421,7 +420,7 @@ export default function ControleAceleracaoView({ state }) {
             {visitedTabs.has("dashboard-operacional") && (
               <TabErrorBoundary tabName="Dashboard Sprints">
                 <Suspense fallback={<TabSkeleton variant="overview" />}>
-                  <DashboardOperacionalTabRedesigned user={user} workshops={workshops} consultingFirmId={consultingFirmId} />
+                  <DashboardOperacionalTabRedesigned user={user} workshops={workshops} />
                 </Suspense>
               </TabErrorBoundary>
             )}

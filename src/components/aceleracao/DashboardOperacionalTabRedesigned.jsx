@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
 import { RefreshCw, Zap, AlertTriangle, Check, Clock, Activity, Send } from "lucide-react";
 import useDashboardSprints from "./hooks/useDashboardSprints";
 import SprintsAtrasadosBlock from "./dashboard/SprintsAtrasadosBlock";
@@ -38,7 +37,7 @@ function LoadingSkeleton() {
   );
 }
 
-export default function DashboardOperacionalTabRedesigned({ user, workshops = [], consultingFirmId = null }) {
+export default function DashboardOperacionalTabRedesigned({ user, workshops = [] }) {
   const [selectedSprint, setSelectedSprint] = useState(null);
   const [selectedPhaseIndex, setSelectedPhaseIndex] = useState(0);
 
@@ -55,13 +54,10 @@ export default function DashboardOperacionalTabRedesigned({ user, workshops = []
     stats,
     isLoading,
     refetch
-  } = useDashboardSprints(workshops, user, consultingFirmId); // DS-SINGLE-02: consultingFirmId direto do BFF
+  } = useDashboardSprints(workshops);
 
-  const handleRefetch = async () => {
-    // Bust do cache server-side (Deno in-memory cache de 2min no getUserWorkshops)
-    try {
-      await base44.functions.invoke('getUserWorkshops', { bustCache: true });
-    } catch { /* non-critical */ }
+  const handleRefetch = () => {
+    // Invalida também o cache de workshops para forçar re-fetch do BFF (getUserWorkshops tem cache 15min)
     queryClient.invalidateQueries({ queryKey: ['workshops-available'] });
     queryClient.invalidateQueries({ queryKey: ['dashboard-sprints'] });
     refetch();
