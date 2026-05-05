@@ -129,12 +129,12 @@ Deno.serve(withAuth(async (req, { base44, user }) => {
             }
         }
 
-        // GAP-01: Buscar workshops via consulting_firm_id para consultores (ex: Rafael Marrafon)
-        // Consultores têm consulting_firm_id no perfil mas NÃO têm workshop_id
+        // DS-SINGLE-01: SEMPRE buscar workshops via consulting_firm_id quando disponível
+        // Removida a condição 'availableWorkshops.length === 0' — o dono da firma também
+        // precisa ver os workshops dos clientes (não só o próprio workshop)
         const userConsultingFirmId = user.data?.consulting_firm_id;
-        if (availableWorkshops.length === 0 && userConsultingFirmId) {
+        if (userConsultingFirmId) {
             try {
-                // Buscar workshops gerenciados pela empresa de consultoria do usuário
                 const firmWorkshops = await base44.asServiceRole.entities.Workshop.filter(
                     { consulting_firm_id: userConsultingFirmId },
                     'name',
@@ -146,11 +146,9 @@ Deno.serve(withAuth(async (req, { base44, user }) => {
                         seenIds.add(ws.id);
                     }
                 }
-                if (firmWorkshops?.length > 0) {
-                    console.log(`GAP-01: ${firmWorkshops.length} workshops encontrados via consulting_firm_id para ${user.email}`);
-                }
+                console.log(`[getUserWorkshops] ${firmWorkshops?.length || 0} workshops via consulting_firm_id para ${user.email}`);
             } catch (e) {
-                console.warn('GAP-01: Falha ao buscar workshops via consulting_firm_id:', e.message);
+                console.warn('[getUserWorkshops] Falha ao buscar workshops via consulting_firm_id:', e.message);
             }
         }
 
