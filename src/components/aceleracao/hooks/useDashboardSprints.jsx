@@ -18,7 +18,7 @@ export default function useDashboardSprints(workshops = [], user = null, consult
   }, [consultingFirmId, user, workshops]);
 
   const { data: sprints = [], isLoading, refetch } = useQuery({
-    queryKey: ['dashboard-sprints', resolvedFirmId || workshopIdsKey],
+    queryKey: ['dashboard-sprints', resolvedFirmId, workshopIdsKey],
     queryFn: async () => {
       try {
         // CAMINHO 1 (preferencial): 1 request por consulting_firm_id
@@ -70,8 +70,9 @@ export default function useDashboardSprints(workshops = [], user = null, consult
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: 'stale',
+    // Aguardar até ter resolvedFirmId OU lista de workshops carregada (não vazia)
     enabled: !!resolvedFirmId || workshopIds.length > 0,
-    placeholderData: []
+    placeholderData: (prev) => prev || []
   });
 
   useEffect(() => {
@@ -90,7 +91,7 @@ export default function useDashboardSprints(workshops = [], user = null, consult
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(() => {
         refetchPending = true;
-        queryClient.invalidateQueries({ queryKey: ['dashboard-sprints'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard-sprints', resolvedFirmId, workshopIdsKey] });
         queryClient.invalidateQueries({ queryKey: ['active-sprint-widget'] });
         setTimeout(() => { refetchPending = false; }, 1000);
       }, 500);

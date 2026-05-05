@@ -41,7 +41,7 @@ export function useWorkshopContext() {
       return { workshops: [], consulting_firm_id: null };
     },
     enabled: !isTenantLoading,
-    staleTime: 2 * 60 * 1000, // DS-SINGLE-02: 2min (era 15min) — permite que fixes de backend reflitam mais rápido
+    staleTime: 0, // Sempre buscar fresh para garantir consulting_firm_id atualizado
     gcTime: 10 * 60 * 1000,
     retry: (failureCount, error) => {
       // LOAD-04: retry automático após rate limit (aguarda 8s)
@@ -50,7 +50,7 @@ export function useWorkshopContext() {
     },
     retryDelay: (attempt, error) => error?.message === 'rate_limit' ? 8000 : 5000,
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    refetchOnMount: true,
     // LOAD-04: manter dados anteriores em caso de erro — não limpar workshop em erros transitórios
     placeholderData: (previousData) => previousData,
   });

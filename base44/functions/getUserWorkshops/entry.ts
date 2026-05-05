@@ -52,17 +52,21 @@ Deno.serve(withAuth(async (req, { base44, user }) => {
             workshopCache.delete(user.id);
         }
 
-        if (body?.workshopId) {
+        if (body?.workshopId && !body?.bustCache) {
             const ws = await base44.asServiceRole.entities.Workshop.get(body.workshopId).catch(() => null);
+            const firmId = user.data?.consulting_firm_id || (ws?.consulting_firm_id) || null;
             return new Response(JSON.stringify({ 
                 workshops: ws ? [ws] : [],
+                consulting_firm_id: firmId,
                 user: user 
             }), { status: 200 });
         }
 
         // Verificar cache primeiro
         const cached = getCachedData(user.id);
-        if (cached) {
+        if (cached && !body?.bustCache) {
+            const userConsultingFirmIdCached = user.data?.consulting_firm_id ||
+                cached.find(w => w.consulting_firm_id)?.consulting_firm_id || null;
             const headers = new Headers({
                 'Content-Type': 'application/json',
                 'Cache-Control': 'max-age=300',
@@ -70,6 +74,7 @@ Deno.serve(withAuth(async (req, { base44, user }) => {
             });
             return new Response(JSON.stringify({ 
                 workshops: cached,
+                consulting_firm_id: userConsultingFirmIdCached,
                 user: user 
             }), { status: 200, headers });
         }
