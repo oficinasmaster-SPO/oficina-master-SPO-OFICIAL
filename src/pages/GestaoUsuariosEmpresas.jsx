@@ -120,38 +120,52 @@ export default function GestaoUsuariosEmpresas() {
 
   const updateWorkshopMutation = useMutation({
     mutationFn: async ({ id, data, oldPlan, workshopName }) => {
-      const response = await base44.functions.invoke("adminUpdateWorkshopPlan", { workshop_id: id, data });
+      let response;
+      try {
+        response = await base44.functions.invoke("adminUpdateWorkshopPlan", { workshop_id: id, data });
+      } catch (invokeErr) {
+        throw new Error(invokeErr?.message || 'Erro ao comunicar com o servidor');
+      }
+      if (!response?.data) throw new Error('Resposta inválida do servidor');
       if (response.data.error) throw new Error(response.data.error);
-      
-      // Se o plano mudou para um plano pago, buscar atendimentos criados no bucket
+      if (response.data.attendance_generation?.error) {
+        console.warn('[adminUpdateWorkshopPlan] Atendimentos não gerados:', response.data.attendance_generation.error);
+      }
+
       const newPlan = data.planoAtual || data.planId;
       const planChanged = newPlan && newPlan !== oldPlan;
-      const becameActive = data.planStatus === 'active' || (planChanged && newPlan !== 'FREE');
-      
+      const becameActive = data.planStatus === 'active' || data.status === 'ativo' || (planChanged && newPlan !== 'FREE');
+      const attendanceError = response.data.attendance_generation?.error || null;
+
       let createdAttendances = [];
       if (planChanged && becameActive) {
-        // Aguardar um momento para a automação processar
         await new Promise(r => setTimeout(r, 2000));
-        createdAttendances = await base44.entities.ContractAttendance.filter({
-          workshop_id: id,
-          status: 'pendente'
-        });
+        try {
+          createdAttendances = await base44.entities.ContractAttendance.filter({
+            workshop_id: id,
+            status: 'pendente'
+          });
+        } catch (err) {
+          console.warn('Erro ao buscar atendimentos criados:', err);
+        }
       }
-      
-      return { workshop: response.data.workshop, createdAttendances, oldPlan, newPlan, workshopName, planChanged };
+
+      const renewalDate = data.dataRenovacao ? new Date(data.dataRenovacao) : null;
+      return { workshop: response.data.workshop, createdAttendances, oldPlan, newPlan, workshopName, planChanged, becameActive, attendanceError, renewalDate };
     },
-    onSuccess: ({ createdAttendances, oldPlan, newPlan, workshopName, planChanged }) => {
-      queryClient.invalidateQueries(['workshops']);
+    onSuccess: ({ createdAttendances, oldPlan, newPlan, workshopName, planChanged, becameActive, attendanceError, renewalDate }) => {
+      queryClient.invalidateQueries({ queryKey: ['workshops'] });
+      queryClient.invalidateQueries({ queryKey: ['bucket-atendimentos'] });
       setIsWorkshopDialogOpen(false);
       setEditingWorkshop(null);
-      
-      if (planChanged && createdAttendances.length > 0) {
-        setAttendanceFeedback({ workshopName, oldPlan, newPlan, attendances: createdAttendances });
+
+      if (planChanged) {
+        setAttendanceFeedback({ workshopName, oldPlan, newPlan, attendances: createdAttendances, attendanceError, renewalDate, becameActive });
       } else {
         toast.success("Oficina atualizada com sucesso!");
       }
     },
-    onError: () => toast.error("Erro ao atualizar oficina")
+    onError: (err) => toast.error(err?.message || "Erro ao atualizar oficina")
   });
 
   // Estado controlado para o form de edição de oficina
@@ -1043,49 +1057,71 @@ export default function GestaoUsuariosEmpresas() {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-green-700">
                 <CheckCircle className="w-5 h-5" />
-                Plano atualizado com sucesso!
+                Plano Atualizado
               </DialogTitle>
             </DialogHeader>
             {attendanceFeedback && (
               <div className="space-y-4">
-                <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-800">
-                  <strong>{attendanceFeedback.workshopName}</strong> migrou de{' '}
-                  <span className="font-semibold bg-gray-200 px-1 rounded">{attendanceFeedback.oldPlan}</span>{' '}
-                  →{' '}
-                  <span className="font-semibold bg-blue-200 px-1 rounded">{attendanceFeedback.newPlan}</span>
+                <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                  <h3 className="font-medium text-gray-900">{attendanceFeedback.workshopName}</h3>
+                  <div className="flex items-center gap-3 text-sm">
+                    <span className="text-gray-500">Plano:</span>
+                    <span className="line-through text-gray-400">{attendanceFeedback.oldPlan || 'FREE'}</span>
+                    <span>→</span>
+                    <span className="font-semibold text-green-700 bg-green-100 px-2 py-0.5 rounded">{attendanceFeedback.newPlan}</span>
+                  </div>
+                  {attendanceFeedback.renewalDate && (
+                    <div className="flex items-center gap-3 text-sm">
+                      <span className="text-gray-500">Renovação:</span>
+                      <span className="font-medium">{format(new Date(attendanceFeedback.renewalDate), 'dd/MM/yyyy')}</span>
+                    </div>
+                  )}
                 </div>
 
-                <div>
-                  <p className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                    <CalendarCheck className="w-4 h-4 text-blue-600" />
-                    {attendanceFeedback.attendances.length} atendimento{attendanceFeedback.attendances.length !== 1 ? 's' : ''} disponíveis no bucket:
-                  </p>
-                  <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-                    {attendanceFeedback.attendances.map((att, idx) => (
-                      <div key={att.id || idx} className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
-                        <div className="flex items-center gap-2">
-                          <Package2 className="w-4 h-4 text-blue-500 flex-shrink-0" />
-                          <div>
-                            <p className="text-sm font-medium text-gray-800">
-                              {att.attendance_type_name || 'Atendimento'}
-                            </p>
-                            {att.scheduled_date && (
-                              <p className="text-xs text-gray-500">
-                                Previsto: {format(new Date(att.scheduled_date), 'dd/MM/yyyy')}
+                {attendanceFeedback.attendances?.length > 0 ? (
+                  <div>
+                    <p className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                      <CalendarCheck className="w-4 h-4 text-blue-600" />
+                      {attendanceFeedback.attendances.length} atendimento{attendanceFeedback.attendances.length !== 1 ? 's' : ''} adicionado{attendanceFeedback.attendances.length !== 1 ? 's' : ''} ao bucket:
+                    </p>
+                    <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
+                      {attendanceFeedback.attendances.slice(0, 10).map((att, idx) => (
+                        <div key={att.id || idx} className="flex items-center justify-between bg-white border border-gray-200 rounded-lg px-3 py-2">
+                          <div className="flex items-center gap-2">
+                            <Package2 className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                            <div>
+                              <p className="text-sm font-medium text-gray-800">
+                                {att.attendance_type_name || 'Atendimento'} #{att.sequence_number || idx + 1}
                               </p>
-                            )}
+                              {att.scheduled_date && (
+                                <p className="text-xs text-gray-500">
+                                  Previsto: {format(new Date(att.scheduled_date), 'dd/MM/yyyy')}
+                                </p>
+                              )}
+                            </div>
                           </div>
+                          <Badge className="bg-yellow-100 text-yellow-700 text-xs">pendente</Badge>
                         </div>
-                        <Badge className="bg-yellow-100 text-yellow-700 text-xs">
-                          #{att.sequence_number || idx + 1}
-                        </Badge>
-                      </div>
-                    ))}
+                      ))}
+                      {attendanceFeedback.attendances.length > 10 && (
+                        <p className="text-xs text-gray-400 text-center pt-1">+ {attendanceFeedback.attendances.length - 10} mais no bucket</p>
+                      )}
+                    </div>
                   </div>
-                </div>
+                ) : attendanceFeedback.attendanceError ? (
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-800">
+                    <p className="font-medium">⚠️ Atendimentos não gerados automaticamente</p>
+                    <p className="mt-1 text-xs text-amber-600">Motivo: {attendanceFeedback.attendanceError}</p>
+                    <p className="mt-1 text-xs">Cadastre as regras do plano <strong>{attendanceFeedback.newPlan}</strong> em PlanAttendanceRule e execute a geração manualmente.</p>
+                  </div>
+                ) : (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
+                    <p>📥 Plano atualizado. Verifique o bucket de atendimentos em Controle de Aceleração.</p>
+                  </div>
+                )}
 
                 <Button className="w-full" onClick={() => setAttendanceFeedback(null)}>
-                  Entendido
+                  Fechar
                 </Button>
               </div>
             )}

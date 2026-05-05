@@ -11,8 +11,12 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
 
-    if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
-      return Response.json({ error: 'Forbidden: Admin or Super Admin access required' }, { status: 403 });
+    const isAdmin = user.role === 'admin' || user.role === 'super_admin';
+    const isPlatformAdmin = user.data?.is_platform_admin === true;
+    const isConsultingFirmAdmin = !!(user.data?.consulting_firm_id);
+
+    if (!user || (!isAdmin && !isPlatformAdmin && !isConsultingFirmAdmin)) {
+      return Response.json({ error: 'Forbidden: Acesso insuficiente para alterar planos' }, { status: 403 });
     }
 
     const payload = await req.json();
