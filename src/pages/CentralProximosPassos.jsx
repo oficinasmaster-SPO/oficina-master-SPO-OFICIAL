@@ -238,13 +238,15 @@ export default function CentralProximosPassos() {
       ) : (
         <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
           {/* Header da tabela */}
-          <div className="hidden lg:grid grid-cols-[2fr_1.5fr_1fr_1fr_1fr_1fr_auto] gap-3 px-4 py-2 bg-gray-50 border-b border-gray-100 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <div className="hidden lg:grid grid-cols-[2fr_1.5fr_1fr_1fr_1fr_1fr_1fr_1fr_auto] gap-3 px-4 py-2 bg-gray-50 border-b border-gray-100 text-xs font-semibold text-gray-500 uppercase tracking-wide">
             <span>Ação / Cliente</span>
             <span>Responsável</span>
             <span>Prazo</span>
             <span>Status</span>
             <span>Progresso</span>
             <span>Prioridade</span>
+            <span>Consultor</span>
+            <span>Data Criação</span>
             <span></span>
           </div>
 
@@ -256,10 +258,10 @@ export default function CentralProximosPassos() {
 
               return (
                 <div
-                  key={passo.id}
-                  className="grid grid-cols-1 lg:grid-cols-[2fr_1.5fr_1fr_1fr_1fr_1fr_auto] gap-3 items-center px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer"
-                  onClick={() => setSelectedPasso(passo)}
-                >
+                   key={passo.id}
+                   className="grid grid-cols-1 lg:grid-cols-[2fr_1.5fr_1fr_1fr_1fr_1fr_1fr_1fr_auto] gap-3 items-center px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer"
+                   onClick={() => setSelectedPasso(passo)}
+                 >
                   {/* Título + cliente */}
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-gray-900 truncate">{passo.titulo}</p>
@@ -296,23 +298,35 @@ export default function CentralProximosPassos() {
                   </div>
 
                   {/* Prioridade */}
-                  <div>
-                    <span className={`text-xs font-semibold ${PRIORIDADE_CONFIG[passo.prioridade]?.color || "text-gray-500"}`}>
-                      {PRIORIDADE_CONFIG[passo.prioridade]?.label || "—"}
-                    </span>
-                  </div>
+                   <div>
+                     <span className={`text-xs font-semibold ${PRIORIDADE_CONFIG[passo.prioridade]?.color || "text-gray-500"}`}>
+                       {PRIORIDADE_CONFIG[passo.prioridade]?.label || "—"}
+                     </span>
+                   </div>
 
-                  {/* Ação */}
-                  <div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="text-xs h-7 px-3"
-                      onClick={e => { e.stopPropagation(); setSelectedPasso(passo); }}
-                    >
-                      Abrir
-                    </Button>
-                  </div>
+                   {/* Consultor */}
+                   <div>
+                     <p className="text-sm text-gray-700 truncate">{passo.consultor_nome || passo.consultor_id?.slice(0, 8) || "—"}</p>
+                   </div>
+
+                   {/* Data Criação */}
+                   <div>
+                     <span className="text-xs text-gray-600">
+                       {passo.created_date ? format(new Date(passo.created_date), "dd/MM/yy", { locale: ptBR }) : "—"}
+                     </span>
+                   </div>
+
+                   {/* Ação */}
+                   <div>
+                     <Button
+                       size="sm"
+                       variant="outline"
+                       className="text-xs h-7 px-3"
+                       onClick={e => { e.stopPropagation(); setSelectedPasso(passo); }}
+                     >
+                       Abrir
+                     </Button>
+                   </div>
                 </div>
               );
             })}
