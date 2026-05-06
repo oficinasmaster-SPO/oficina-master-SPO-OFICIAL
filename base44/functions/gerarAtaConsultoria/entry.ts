@@ -97,9 +97,37 @@ Deno.serve(async (req) => {
       sectionBlocks.push(`**AÇÕES DE ACOMPANHAMENTO:**\n${atendimento.acoes_geradas?.map(a => `- ${a.acao} (Responsável: ${a.responsavel}, Prazo: ${a.prazo})`).join('\n') || 'Nenhuma ação registrada'}`);
     }
     if (selectedSections.includes('proximos_passos')) {
-      const passosTexto = atendimento.proximos_passos || '';
-      const passosLista = (atendimento.proximos_passos_list || []).filter(p => p.descricao).map((p, i) => `${i + 1}. ${p.descricao} (Responsável: ${p.responsavel || 'N/A'}, Prazo: ${p.prazo || 'N/A'})`).join('\n');
-      sectionBlocks.push(`**PRÓXIMOS PASSOS:**\n${passosLista || passosTexto || 'A definir'}`);
+      // FASE 5: Buscar primeiro em ConsultoriaProximoPasso (entidade centralizada)
+      // Fallback para array legado se não houver registros na entidade
+      let passosTexto = '';
+      try {
+        const proximosPassosEntidade = await base44.entities.ConsultoriaProximoPasso.filter({
+          consultoria_atendimento_id: atendimento_id
+        });
+        if (proximosPassosEntidade && proximosPassosEntidade.length > 0) {
+          passosTexto = proximosPassosEntidade
+            .filter(p => p.titulo)
+            .map((p, i) => {
+              const statusLabel = p.status === 'finalizado' ? ' ✅' : p.status === 'atrasado' ? ' ⚠️' : '';
+              return `${i + 1}. ${p.titulo}${statusLabel} (Responsável: ${p.responsavel_nome || 'N/A'}, Prazo: ${p.prazo || 'N/A'}, Progresso: ${p.percentual_execucao || 0}%)`;
+            })
+            .join('\n');
+          console.log(`✅ Próximos passos carregados da entidade ConsultoriaProximoPasso (${proximosPassosEntidade.length} registros)`);
+        }
+      } catch (e) {
+        console.warn('⚠️ Erro ao buscar ConsultoriaProximoPasso, usando fallback legado:', e.message);
+      }
+
+      // Fallback: array legado proximos_passos_list / texto livre
+      if (!passosTexto) {
+        const passosLegado = (atendimento.proximos_passos_list || []).filter(p => p.descricao).map((p, i) => `${i + 1}. ${p.descricao} (Responsável: ${p.responsavel || 'N/A'}, Prazo: ${p.prazo || 'N/A'})`).join('\n');
+        passosTexto = passosLegado || atendimento.proximos_passos || 'A definir';
+        if (passosTexto !== 'A definir') {
+          console.log('📋 Próximos passos carregados do array legado (proximos_passos_list)');
+        }
+      }
+
+      sectionBlocks.push(`**PRÓXIMOS PASSOS:**\n${passosTexto}`);
     }
     if (selectedSections.includes('checklist') && atendimento.checklist_respostas?.length > 0) {
       const checklistText = atendimento.checklist_respostas.map(bloco => {
