@@ -90,9 +90,9 @@ Deno.serve(async (req) => {
     // -------------------------------------------------------
     const createdPassos = [];
     if (consulting_firm_id || workshop_id) {
-      // Buscar registros existentes para este atendimento
+      // Buscar registros existentes para esta ATA
       const existingPassos = await base44.asServiceRole.entities.ConsultoriaProximoPasso.filter({
-        consultoria_atendimento_id: ata_id
+        ata_id: ata_id  // ✅ Procurar por ata_id, não consultoria_atendimento_id
       }).catch(() => []);
 
       const existingByHash = {};
