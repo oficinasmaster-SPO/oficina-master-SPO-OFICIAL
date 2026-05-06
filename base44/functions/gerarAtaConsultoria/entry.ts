@@ -35,8 +35,8 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Atendimento não encontrado' }, { status: 404 });
     }
 
-    // Buscar dados da oficina
-    const workshop = await base44.entities.Workshop.get(atendimento.workshop_id);
+    // Buscar dados da oficina (service role para garantir acesso)
+    const workshop = await base44.asServiceRole.entities.Workshop.get(atendimento.workshop_id);
 
     // Checagem de plano apenas para oficinas acessando por conta própria (não consultores/admins)
     if (!isConsultor && !isAdmin) {
@@ -255,17 +255,22 @@ Formate em Markdown para fácil leitura. ${toneText} NÃO adicione saudações f
     });
 
     // 🔗 HOOK: Sincronizar próximos passos com ConsultoriaProximoPasso + CronogramaImplementacao
-    try {
-      await base44.functions.invoke('syncProximosPassosToTasks', {
-        ata_id: novaAta.id,
-        ata_data: dataAta,
-        workshop_id: atendimento.workshop_id,
-        consultor_id: atendimento.consultor_id || null,
-        consulting_firm_id: workshop?.consulting_firm_id || user?.data?.consulting_firm_id || null
-      });
-      console.log("✅ Próximos passos sincronizados com ConsultoriaProximoPasso");
-    } catch (syncError) {
-      console.warn("⚠️ Erro ao sincronizar próximos passos (não bloqueia):", syncError.message);
+    if ((atendimento.proximos_passos_list || []).length > 0) {
+      try {
+        const resolvedConsultingFirmId = workshop?.consulting_firm_id || user?.data?.consulting_firm_id || null;
+        const syncRes = await base44.asServiceRole.functions.invoke('syncProximosPassosToTasks', {
+          ata_id: novaAta.id,
+          ata_data: dataAta,
+          workshop_id: atendimento.workshop_id,
+          consultor_id: atendimento.consultor_id || null,
+          consulting_firm_id: resolvedConsultingFirmId
+        });
+        console.log("✅ Próximos passos sincronizados:", syncRes?.message || "ok");
+      } catch (syncError) {
+        console.warn("⚠️ Erro ao sincronizar próximos passos (não bloqueia):", syncError.message);
+      }
+    } else {
+      console.log("ℹ️ Nenhum próximo passo para sincronizar.");
     }
 
     // Se suggestNextSteps, extrair sugestões da IA

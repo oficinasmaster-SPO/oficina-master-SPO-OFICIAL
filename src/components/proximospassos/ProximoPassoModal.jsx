@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
+import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
@@ -32,6 +33,7 @@ const PRIORIDADE_OPTIONS = [
 
 export default function ProximoPassoModal({ passo, onClose, onSaved }) {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("detalhes");
 
@@ -91,6 +93,7 @@ export default function ProximoPassoModal({ passo, onClose, onSaved }) {
     });
 
     setSaving(false);
+    queryClient.invalidateQueries({ queryKey: ["central-proximos-passos"] });
     onSaved();
   };
 
@@ -107,6 +110,7 @@ export default function ProximoPassoModal({ passo, onClose, onSaved }) {
         created_at: now,
       }],
     });
+    queryClient.invalidateQueries({ queryKey: ["central-proximos-passos"] });
     onSaved();
   };
 

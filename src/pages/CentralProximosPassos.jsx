@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
@@ -79,7 +79,6 @@ export default function CentralProximosPassos() {
     queryKey: ["central-proximos-passos", consultingFirmId, isAdmin],
     queryFn: async () => {
       if (isAdmin) {
-        // admin vê todos
         return base44.entities.ConsultoriaProximoPasso.filter({}, "-created_date", 500);
       }
       if (consultingFirmId) {
@@ -94,6 +93,16 @@ export default function CentralProximosPassos() {
     enabled: !!user,
     staleTime: 2 * 60 * 1000,
   });
+
+  // Buscar nomes dos workshops referenciados
+  const workshopIds = useMemo(() => [...new Set(passos.map(p => p.workshop_id).filter(Boolean))], [passos]);
+  const { data: workshops = [] } = useQuery({
+    queryKey: ["workshops-proximos-passos", workshopIds.join(",")],
+    queryFn: () => Promise.all(workshopIds.map(id => base44.entities.Workshop.get(id))).then(ws => ws.filter(Boolean)),
+    enabled: workshopIds.length > 0,
+    staleTime: 5 * 60 * 1000,
+  });
+  const workshopMap = useMemo(() => Object.fromEntries(workshops.map(w => [w.id, w.name])), [workshops]);
 
   const filtered = passos.filter(p => {
     const statusOk = filters.status === "todos" || p.status === filters.status;
@@ -110,7 +119,7 @@ export default function CentralProximosPassos() {
 
   const handleSaved = () => {
     setSelectedPasso(null);
-    queryClient.invalidateQueries({ queryKey: ["proximos-passos-central"] });
+    queryClient.invalidateQueries({ queryKey: ["central-proximos-passos"] });
   };
 
   if (!isAdmin && !consultingFirmId) {
@@ -229,7 +238,9 @@ export default function CentralProximosPassos() {
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-gray-900 truncate">{passo.titulo}</p>
                     {passo.workshop_id && (
-                      <p className="text-xs text-gray-400 truncate mt-0.5">ID: {passo.workshop_id.slice(0, 8)}...</p>
+                      <p className="text-xs text-gray-400 truncate mt-0.5">
+                        {workshopMap[passo.workshop_id] || `ID: ${passo.workshop_id.slice(0, 8)}...`}
+                      </p>
                     )}
                   </div>
 
