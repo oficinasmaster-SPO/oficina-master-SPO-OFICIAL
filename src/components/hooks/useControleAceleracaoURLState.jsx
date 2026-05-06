@@ -4,7 +4,8 @@ import { computeDatesForPreset } from "@/utils/aceleracaoDates";
 
 const VALID_TABS = [
   "visao-geral", "atendimentos", "cronograma",
-  "pedidos", "agenda-visual", "dashboard-operacional", "followups"
+  "pedidos", "agenda-visual", "dashboard-operacional", "followups",
+  "consultoria", "proximos-passos"
 ];
 
 const VALID_PRESETS = ["7d", "15d", "30d", "mes_atual", "custom"];
