@@ -104,11 +104,37 @@ export default function CentralProximosPassos() {
   });
   const workshopMap = useMemo(() => Object.fromEntries(workshops.map(w => [w.id, w.name])), [workshops]);
 
-  const filtered = passos.filter(p => {
-    const statusOk = filters.status === "todos" || p.status === filters.status;
-    const prioOk = filters.prioridade === "todas" || p.prioridade === filters.prioridade;
-    return statusOk && prioOk;
-  });
+  const filtered = useMemo(() => {
+    const now = new Date();
+    
+    return passos
+      .filter(p => {
+        const statusOk = filters.status === "todos" || p.status === filters.status;
+        const prioOk = filters.prioridade === "todas" || p.prioridade === filters.prioridade;
+        return statusOk && prioOk;
+      })
+      .sort((a, b) => {
+        const prazoA = a.prazo ? new Date(a.prazo) : null;
+        const prazoB = b.prazo ? new Date(b.prazo) : null;
+        
+        // Finalizados sempre por último
+        if (a.status === "finalizado" && b.status !== "finalizado") return 1;
+        if (b.status === "finalizado" && a.status !== "finalizado") return -1;
+        
+        // Atrasados em primeiro
+        const isAtrasoA = prazoA && prazoA < now && a.status !== "finalizado" && a.status !== "cancelado";
+        const isAtrasoB = prazoB && prazoB < now && b.status !== "finalizado" && b.status !== "cancelado";
+        if (isAtrasoA && !isAtrasoB) return -1;
+        if (!isAtrasoA && isAtrasoB) return 1;
+        
+        // Depois por prazo (mais próximo primeiro)
+        if (prazoA && prazoB) return prazoA - prazoB;
+        if (prazoA) return -1;
+        if (prazoB) return 1;
+        
+        return 0;
+      });
+  }, [passos, filters]);
 
   const stats = {
     total: passos.length,
