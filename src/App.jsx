@@ -34,6 +34,7 @@ const BemVindoPlanos = lazy(() => import('@/pages/BemVindoPlanos'));
 const ControleAceleracao = lazy(() => import('@/pages/ControleAceleracao'));
 const ConsultoriaGlobal = lazy(() => import('@/pages/ConsultoriaGlobal'));
 const CentralFollowUp = lazy(() => import('@/pages/CentralFollowUp'));
+const ListagemClientesSprints = lazy(() => import('@/pages/ListagemClientesSprints'));
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -160,6 +161,11 @@ const AuthenticatedApp = () => {
       <Route path="/PublicNPS" element={<PublicNPS />} />
       <Route path="/PublicDISC" element={<PublicDISC />} />
       <Route path="/BemVindoPlanos" element={<BemVindoPlanos />} />
+      <Route path="/ListagemClientesSprints" element={
+        <LayoutWrapper currentPageName="ListagemClientesSprints">
+          <ListagemClientesSprints />
+        </LayoutWrapper>
+      } />
       <Route path="/AdminQADashboard" element={
         <PageAccessControl adminOnly={true}>
           <LayoutWrapper currentPageName="AdminQADashboard">
