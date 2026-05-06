@@ -53,12 +53,27 @@ export default function ProximoPassoModal({ passo, onClose, onSaved }) {
       const historicoAtual = passo.historico || [];
       const novasEntradas = [];
 
-      if (status !== passo.status) {
+      // Auto-finalizar se progresso = 100%
+      let statusFinal = status;
+      if (percentual === 100 && status !== "finalizado") {
+        statusFinal = "finalizado";
         novasEntradas.push({
           tipo: "status_alterado",
-          descricao: `Status alterado de "${passo.status}" para "${status}"`,
+          descricao: "Auto-finalizado ao atingir 100% de execução",
+          de: status,
+          para: "finalizado",
+          usuario_id: user?.id,
+          usuario_nome: user?.full_name || user?.email,
+          created_at: now,
+        });
+      }
+
+      if (statusFinal !== passo.status && !novasEntradas.some(e => e.tipo === "status_alterado")) {
+        novasEntradas.push({
+          tipo: "status_alterado",
+          descricao: `Status alterado de "${passo.status}" para "${statusFinal}"`,
           de: passo.status,
-          para: status,
+          para: statusFinal,
           usuario_id: user?.id,
           usuario_nome: user?.full_name || user?.email,
           created_at: now,
@@ -86,14 +101,14 @@ export default function ProximoPassoModal({ passo, onClose, onSaved }) {
       }
 
       await base44.entities.ConsultoriaProximoPasso.update(passo.id, {
-        status,
+        status: statusFinal,
         percentual_execucao: percentual,
         prioridade,
         observacoes_consultor: observacoes,
         evidencias,
         historico: [...historicoAtual, ...novasEntradas],
-        ...(status === "finalizado" && !passo.data_finalizacao ? { data_finalizacao: now } : {}),
-        ...(status === "em_andamento" && !passo.data_inicio ? { data_inicio: now } : {}),
+        ...(statusFinal === "finalizado" && !passo.data_finalizacao ? { data_finalizacao: now } : {}),
+        ...(statusFinal === "em_andamento" && !passo.data_inicio ? { data_inicio: now } : {}),
       });
 
       queryClient.invalidateQueries({ queryKey: ["central-proximos-passos"] });
