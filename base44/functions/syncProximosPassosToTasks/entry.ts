@@ -116,6 +116,7 @@ Deno.serve(async (req) => {
           workshop_id,
           consulting_firm_id: consulting_firm_id || null,
           consultoria_atendimento_id: ata_id,
+          ata_id: ata_id,
           consultor_id: consultor_id || null,
           titulo: passo.descricao,
           responsavel_nome: passo.responsavel || null,

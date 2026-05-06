@@ -21,17 +21,32 @@ export default function AtaViewTab({ passo }) {
           return;
         }
 
-        const atendimento = await base44.entities.ConsultoriaAtendimento.get(
-          passo.consultoria_atendimento_id
-        );
-        
-        if (!atendimento?.ata_id) {
+        let ataId = null;
+
+        // Tentar buscar atendimento
+        try {
+          const atendimento = await base44.entities.ConsultoriaAtendimento.get(
+            passo.consultoria_atendimento_id
+          );
+          ataId = atendimento?.ata_id;
+        } catch (atendimentoErr) {
+          // Atendimento não existe, mas pode ter ata_id salvo no passo
+          if (passo.ata_id) {
+            ataId = passo.ata_id;
+          } else {
+            setErro("Atendimento foi deletado e ATA não está mais vinculada");
+            setLoading(false);
+            return;
+          }
+        }
+
+        if (!ataId) {
           setErro("ATA não foi gerada para este atendimento");
           setLoading(false);
           return;
         }
 
-        const ataData = await base44.entities.MeetingMinutes.get(atendimento.ata_id);
+        const ataData = await base44.entities.MeetingMinutes.get(ataId);
         if (!ataData) {
           setErro("Registro da ATA foi removido ou não está acessível");
           setLoading(false);
@@ -41,14 +56,14 @@ export default function AtaViewTab({ passo }) {
         setAta(ataData);
       } catch (err) {
         console.error('Erro ao buscar ATA:', err);
-        setErro(`Erro ao carregar ATA: ${err.message}`);
+        setErro(`Erro ao carregar ATA: ${err.message || 'Desconhecido'}`);
       } finally {
         setLoading(false);
       }
     };
 
     fetchAta();
-  }, [passo.consultoria_atendimento_id]);
+  }, [passo.consultoria_atendimento_id, passo.ata_id]);
 
   if (loading) {
     return (
