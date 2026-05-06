@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { BarChart3, Calendar, CalendarRange, FileText, Users, Activity, Plus, Loader2, Lightbulb, List, Zap } from "lucide-react";
+import { BarChart3, Calendar, CalendarRange, FileText, Users, Activity, Plus, Loader2, Lightbulb, List, Zap, ClipboardCheck } from "lucide-react";
 import RegistroAtendimentoMassaModal from "@/components/aceleracao/RegistroAtendimentoMassaModal";
 import ActiveFiltersBar from "@/components/aceleracao/ActiveFiltersBar";
 import TabSkeleton from "@/components/aceleracao/TabSkeleton";
@@ -21,6 +21,7 @@ const CronogramaGeral = lazy(() => import("@/pages/CronogramaGeral"));
 const PedidosInternosTab = lazy(() => import("@/components/aceleracao/PedidosInternosTab"));
 const DashboardOperacionalTabRedesigned = lazy(() => import("@/components/aceleracao/DashboardOperacionalTabRedesigned"));
 const ConsultoriaGlobalTab = lazy(() => import("@/components/aceleracao/ConsultoriaGlobalTab"));
+const CentralProximosPassos = lazy(() => import("@/pages/CentralProximosPassos"));
 
 
 const TAB_BASE = "flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200";
@@ -359,6 +360,11 @@ export default function ControleAceleracaoView({ state }) {
               <span className="hidden sm:inline">Consultoria</span>
               <span className="sm:hidden">Cons.</span>
             </TabsTrigger>
+            <TabsTrigger value="proximos-passos" className={TAB_CLASS}>
+              <ClipboardCheck className="w-4 h-4" />
+              <span className="hidden sm:inline">Próx. Passos</span>
+              <span className="sm:hidden">Passos</span>
+            </TabsTrigger>
           </TabsList>
         </div>
 
@@ -431,6 +437,16 @@ export default function ControleAceleracaoView({ state }) {
               <TabErrorBoundary tabName="Consultoria Global">
                 <Suspense fallback={<TabSkeleton variant="overview" />}>
                   <ConsultoriaGlobalTab />
+                </Suspense>
+              </TabErrorBoundary>
+            )}
+          </TabsContent>
+
+          <TabsContent value="proximos-passos" forceMount className={`mt-0 ${activeTab !== "proximos-passos" ? "hidden" : ""}`}>
+            {visitedTabs.has("proximos-passos") && (
+              <TabErrorBoundary tabName="Próximos Passos">
+                <Suspense fallback={<TabSkeleton variant="table" />}>
+                  <CentralProximosPassos isTab={true} />
                 </Suspense>
               </TabErrorBoundary>
             )}

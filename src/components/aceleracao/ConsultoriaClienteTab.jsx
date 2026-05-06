@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, X, Plus, Star, Map, Lock, ListChecks, Settings2, Zap, BookOpen, ExternalLink, PlayCircle, ChevronDown, ChevronUp, ChevronRight, RotateCcw, AlertTriangle, Lightbulb, PlaySquare, BarChart2, TrendingUp, MessageSquare, Circle, Clock, RefreshCw, ClipboardCheck } from "lucide-react";
+import { CheckCircle2, X, Plus, Star, Map, Lock, ListChecks, Settings2, Zap, BookOpen, ExternalLink, PlayCircle, ChevronDown, ChevronUp, ChevronRight, RotateCcw, AlertTriangle, Lightbulb, PlaySquare, BarChart2, TrendingUp, MessageSquare, Circle, Clock, RefreshCw } from "lucide-react";
 import CamadaEstrategica from './CamadaEstrategica';
 import SprintPhaseDetailModalRedesigned from './SprintPhaseDetailModalRedesigned';
 import { getDefaultPhasesForMission } from './sprintMissionTasks';
@@ -930,82 +930,6 @@ function CamadaConsultor({ workshopId }) {
   );
 }
 
-function ProximosPassosTab({ workshopId }) {
-  const queryClient = useQueryClient();
-  const { data: passos = [], isLoading, refetch } = useQuery({
-    queryKey: ['proximos-passos-tab', workshopId],
-    queryFn: () => workshopId
-      ? base44.entities.ConsultoriaProximoPasso.filter({ workshop_id: workshopId }, '-created_date', 100)
-      : [],
-    enabled: !!workshopId,
-    staleTime: 2 * 60 * 1000,
-  });
-
-  const STATUS_CONFIG = {
-    pendente:             { label: "Pendente",      color: "bg-gray-100 text-gray-700",    dot: "bg-gray-400" },
-    em_andamento:         { label: "Em andamento",  color: "bg-blue-100 text-blue-700",    dot: "bg-blue-500" },
-    aguardando_cliente:   { label: "Ag. Cliente",   color: "bg-yellow-100 text-yellow-700",dot: "bg-yellow-500" },
-    aguardando_consultor: { label: "Ag. Consultor", color: "bg-purple-100 text-purple-700",dot: "bg-purple-500" },
-    validacao:            { label: "Validação",     color: "bg-indigo-100 text-indigo-700",dot: "bg-indigo-500" },
-    finalizado:           { label: "Finalizado",    color: "bg-green-100 text-green-700",  dot: "bg-green-500" },
-    atrasado:             { label: "Atrasado",      color: "bg-red-100 text-red-700",      dot: "bg-red-500" },
-    cancelado:            { label: "Cancelado",     color: "bg-gray-100 text-gray-400",    dot: "bg-gray-300" },
-  };
-
-  if (!workshopId) return (
-    <div className="text-center py-8 text-gray-400 border-2 border-dashed border-gray-200 rounded-xl">
-      <ClipboardCheck className="w-10 h-10 mx-auto mb-2 text-gray-300" />
-      <p className="text-sm">Selecione um cliente para ver os próximos passos</p>
-    </div>
-  );
-
-  if (isLoading) return <div className="space-y-2 animate-pulse">{[1,2,3].map(i => <div key={i} className="h-14 bg-gray-100 rounded-xl" />)}</div>;
-
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-gray-500">{passos.length} registro{passos.length !== 1 ? 's' : ''}</span>
-        <button onClick={() => refetch()} className="text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1">
-          <RefreshCw className="w-3 h-3" /> Atualizar
-        </button>
-      </div>
-
-      {passos.length === 0 ? (
-        <div className="text-center py-8 border-2 border-dashed border-gray-200 rounded-xl">
-          <ClipboardCheck className="w-10 h-10 mx-auto mb-2 text-gray-300" />
-          <p className="text-sm text-gray-400">Nenhum próximo passo cadastrado para este cliente</p>
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {passos.map(p => {
-            const cfg = STATUS_CONFIG[p.status] || STATUS_CONFIG.pendente;
-            const pct = Math.min(100, Math.max(0, p.percentual_execucao || 0));
-            return (
-              <div key={p.id} className="bg-white border border-gray-200 rounded-xl p-3">
-                <div className="flex items-start justify-between gap-2">
-                  <p className="text-sm font-semibold text-gray-900 flex-1 truncate">{p.titulo}</p>
-                  <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0 ${cfg.color}`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
-                    {cfg.label}
-                  </span>
-                </div>
-                {p.responsavel_nome && <p className="text-xs text-gray-500 mt-0.5">Responsável: {p.responsavel_nome}</p>}
-                {p.prazo && <p className="text-xs text-gray-400 mt-0.5">Prazo: {new Date(p.prazo).toLocaleDateString('pt-BR')}</p>}
-                <div className="mt-2 flex items-center gap-2">
-                  <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                    <div className={`h-full rounded-full ${pct === 100 ? 'bg-green-500' : 'bg-blue-500'}`} style={{ width: `${pct}%` }} />
-                  </div>
-                  <span className="text-xs text-gray-400 w-8 text-right">{pct}%</span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
-
 export default function ConsultoriaClienteTab({ client, mode = "contextual", globalSprints = [], isLoadingGlobal = false }) {
   const workshopId = client?.id;
   const isGlobalMode = mode === "global" || !workshopId;
@@ -1107,7 +1031,7 @@ export default function ConsultoriaClienteTab({ client, mode = "contextual", glo
       </div>
 
       <Tabs defaultValue="estrategico">
-        <TabsList className="grid w-full grid-cols-5 h-auto">
+        <TabsList className="grid w-full grid-cols-4 h-auto">
           <TabsTrigger value="estrategico" className="text-xs py-2 px-1 flex flex-col gap-0.5 h-auto">
             <Settings2 className="w-3.5 h-3.5" />
             Estratégico
@@ -1123,10 +1047,6 @@ export default function ConsultoriaClienteTab({ client, mode = "contextual", glo
           <TabsTrigger value="consultor" className="text-xs py-2 px-1 flex flex-col gap-0.5 h-auto">
             <BookOpen className="w-3.5 h-3.5" />
             Guia
-          </TabsTrigger>
-          <TabsTrigger value="proximos" className="text-xs py-2 px-1 flex flex-col gap-0.5 h-auto">
-            <ClipboardCheck className="w-3.5 h-3.5" />
-            Próx. Passos
           </TabsTrigger>
         </TabsList>
 
@@ -1172,9 +1092,6 @@ export default function ConsultoriaClienteTab({ client, mode = "contextual", glo
          </TabsContent>
         <TabsContent value="consultor" className="mt-4">
           <CamadaConsultor workshopId={workshopId} />
-        </TabsContent>
-        <TabsContent value="proximos" className="mt-4">
-          <ProximosPassosTab workshopId={workshopId} />
         </TabsContent>
       </Tabs>
     </div>
