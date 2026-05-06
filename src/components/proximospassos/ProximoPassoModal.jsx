@@ -8,6 +8,10 @@ import {
   X, Clock, CheckCircle2, AlertTriangle, MessageSquare,
   Paperclip, History, Save, Bell, Phone, FileText
 } from "lucide-react";
+
+// Validar que todos os imports foram feitos corretamente
+if (!ClienteDataTab) console.error("❌ ClienteDataTab não foi importado");
+if (!AtaViewTab) console.error("❌ AtaViewTab não foi importado");
 import { Button } from "@/components/ui/button";
 import ProximoPassoTimeline from "./ProximoPassoTimeline";
 import EvidenciasUploader from "./EvidenciasUploader";
