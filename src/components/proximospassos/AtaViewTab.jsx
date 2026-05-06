@@ -16,28 +16,28 @@ export default function AtaViewTab({ passo }) {
       try {
         setErro(null);
         
-        if (!passo.consultoria_atendimento_id) {
-          setLoading(false);
-          return;
-        }
-
         let ataId = null;
 
-        // Tentar buscar atendimento
-        try {
-          const atendimento = await base44.entities.ConsultoriaAtendimento.get(
-            passo.consultoria_atendimento_id
-          );
-          ataId = atendimento?.ata_id;
-        } catch (atendimentoErr) {
-          // Atendimento não existe, mas pode ter ata_id salvo no passo
-          if (passo.ata_id) {
-            ataId = passo.ata_id;
-          } else {
-            setErro("Atendimento foi deletado e ATA não está mais vinculada");
+        // PRIORIDADE 1: ata_id direto no passo (novo/resiliente)
+        if (passo.ata_id) {
+          ataId = passo.ata_id;
+        }
+        // PRIORIDADE 2: buscar do atendimento (fallback legado)
+        else if (passo.consultoria_atendimento_id) {
+          try {
+            const atendimento = await base44.entities.ConsultoriaAtendimento.get(
+              passo.consultoria_atendimento_id
+            );
+            ataId = atendimento?.ata_id;
+          } catch (atendimentoErr) {
+            setErro("Atendimento foi deletado e ATA não está vinculada a este passo");
             setLoading(false);
             return;
           }
+        } else {
+          setErro("Nenhuma ATA vinculada a este próximo passo");
+          setLoading(false);
+          return;
         }
 
         if (!ataId) {
@@ -63,7 +63,7 @@ export default function AtaViewTab({ passo }) {
     };
 
     fetchAta();
-  }, [passo.consultoria_atendimento_id, passo.ata_id]);
+  }, [passo.ata_id, passo.consultoria_atendimento_id]);
 
   if (loading) {
     return (
