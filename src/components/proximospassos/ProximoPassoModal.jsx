@@ -6,12 +6,14 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   X, Clock, CheckCircle2, AlertTriangle, MessageSquare,
-  Paperclip, History, Save, Bell
+  Paperclip, History, Save, Bell, Phone, FileText
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ProximoPassoTimeline from "./ProximoPassoTimeline";
 import EvidenciasUploader from "./EvidenciasUploader";
 import ProgressBarExecucao from "./ProgressBarExecucao";
+import ClienteDataTab from "./ClienteDataTab";
+import AtaViewTab from "./AtaViewTab";
 
 const STATUS_OPTIONS = [
   { value: "pendente",             label: "Pendente" },
@@ -118,6 +120,8 @@ export default function ProximoPassoModal({ passo, onClose, onSaved }) {
     { id: "detalhes", label: "Detalhes", icon: CheckCircle2 },
     { id: "evidencias", label: "Evidências", icon: Paperclip },
     { id: "historico", label: "Histórico", icon: History },
+    { id: "cliente", label: "Cliente", icon: Phone },
+    { id: "ata", label: "ATA", icon: FileText },
   ];
 
   return (
@@ -230,6 +234,14 @@ export default function ProximoPassoModal({ passo, onClose, onSaved }) {
 
           {activeTab === "historico" && (
             <ProximoPassoTimeline historico={passo.historico || []} />
+          )}
+
+          {activeTab === "cliente" && (
+            <ClienteDataTab passo={passo} />
+          )}
+
+          {activeTab === "ata" && (
+            <AtaViewTab passo={passo} />
           )}
         </div>
 
