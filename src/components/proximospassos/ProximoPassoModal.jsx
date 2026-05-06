@@ -9,6 +9,7 @@ import {
   Paperclip, History, Save, Bell, Phone, FileText, AlertCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
 import ProximoPassoTimeline from "./ProximoPassoTimeline";
 import EvidenciasUploader from "./EvidenciasUploader";
 import ProgressBarExecucao from "./ProgressBarExecucao";
@@ -122,6 +123,23 @@ export default function ProximoPassoModal({ passo, onClose, onSaved }) {
       onSaved();
     } catch (err) {
       console.error("Erro ao registrar cobrança:", err);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm(`Deseja deletar "${passo.titulo}"?\n\nEsta ação não pode ser desfeita.`)) {
+      return;
+    }
+    try {
+      setSaving(true);
+      await base44.entities.ConsultoriaProximoPasso.delete(passo.id);
+      queryClient.invalidateQueries({ queryKey: ["central-proximos-passos"] });
+      onSaved();
+    } catch (err) {
+      console.error("Erro ao deletar próximo passo:", err);
+      alert("Erro ao deletar próximo passo");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -264,14 +282,25 @@ export default function ProximoPassoModal({ passo, onClose, onSaved }) {
 
         {/* Footer */}
         <div className="flex items-center justify-between gap-3 p-4 border-t border-gray-100 bg-gray-50">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleCobrar}
-            className="text-xs gap-1.5"
-          >
-            <Bell className="w-3.5 h-3.5" /> Registrar Cobrança
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleCobrar}
+              className="text-xs gap-1.5"
+            >
+              <Bell className="w-3.5 h-3.5" /> Registrar Cobrança
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDelete}
+              disabled={saving}
+              className="text-xs gap-1.5 text-red-600 hover:bg-red-50 hover:border-red-200"
+            >
+              <Trash2 className="w-3.5 h-3.5" /> Deletar
+            </Button>
+          </div>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={onClose} className="text-xs">
               Cancelar
