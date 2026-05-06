@@ -6,7 +6,7 @@ import { format, isPast, isToday } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   CheckCircle2, Clock, AlertTriangle, Activity, Filter,
-  RefreshCw, ListChecks, TrendingUp, Users, XCircle
+  RefreshCw, ListChecks, TrendingUp, Users, XCircle, FileText
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ProximoPassoModal from "@/components/proximospassos/ProximoPassoModal";
@@ -235,13 +235,23 @@ export default function CentralProximosPassos() {
                   onClick={() => setSelectedPasso(passo)}
                 >
                   {/* Título + cliente */}
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 truncate">{passo.titulo}</p>
-                    {passo.workshop_id && (
-                      <p className="text-xs text-gray-400 truncate mt-0.5">
-                        {workshopMap[passo.workshop_id] || `ID: ${passo.workshop_id.slice(0, 8)}...`}
-                      </p>
-                    )}
+                  <div className="min-w-0 flex items-start gap-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-sm font-semibold text-gray-900 truncate">{passo.titulo}</p>
+                        {passo.origem === "ata" && (
+                          <span className="flex items-center gap-0.5 px-2 py-0.5 bg-blue-50 border border-blue-200 rounded text-xs text-blue-700 font-medium flex-shrink-0" title="Gerado a partir de uma ATA">
+                            <FileText className="w-2.5 h-2.5" />
+                            ATA
+                          </span>
+                        )}
+                      </div>
+                      {passo.workshop_id && (
+                        <p className="text-xs text-gray-400 truncate mt-0.5">
+                          {workshopMap[passo.workshop_id] || `ID: ${passo.workshop_id.slice(0, 8)}...`}
+                        </p>
+                      )}
+                    </div>
                   </div>
 
                   {/* Responsável */}
