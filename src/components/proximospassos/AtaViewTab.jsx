@@ -13,15 +13,18 @@ export default function AtaViewTab({ passo }) {
   useEffect(() => {
     const fetchAta = async () => {
       try {
-        if (passo.consultoria_atendimento_id) {
-          const atendimento = await base44.entities.ConsultoriaAtendimento.get(
-            passo.consultoria_atendimento_id
-          );
-          
-          if (atendimento.ata_id) {
-            const ataData = await base44.entities.MeetingMinutes.get(atendimento.ata_id);
-            setAta(ataData);
-          }
+        if (!passo.consultoria_atendimento_id) {
+          setLoading(false);
+          return;
+        }
+
+        const atendimento = await base44.entities.ConsultoriaAtendimento.get(
+          passo.consultoria_atendimento_id
+        );
+        
+        if (atendimento?.ata_id) {
+          const ataData = await base44.entities.MeetingMinutes.get(atendimento.ata_id);
+          setAta(ataData);
         }
       } catch (err) {
         console.warn('Erro ao buscar ATA:', err);
