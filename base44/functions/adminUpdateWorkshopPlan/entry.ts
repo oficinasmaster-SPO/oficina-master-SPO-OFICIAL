@@ -48,6 +48,12 @@ Deno.serve(async (req) => {
     const hashBuffer = await crypto.subtle.sign("HMAC", key, encoder.encode((planId || '') + workshop_id + (planStatus || '')));
     const hashHex = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
 
+    // DS-FIX-B: garantir que consulting_firm_id seja propagado ao criar/atualizar workshop
+    const adminFirmId = user.data?.consulting_firm_id;
+    const consultingFirmId = data.consulting_firm_id
+      || workshop.consulting_firm_id
+      || (adminFirmId || undefined);
+
     const updatePayload = {
       ...data,
       planId: planId || workshop.planId,
@@ -55,7 +61,8 @@ Deno.serve(async (req) => {
       planStatus,
       plan_source: user.role === 'super_admin' ? 'admin' : workshop.plan_source,
       billing_secure_hash: hashHex,
-      billing_update_token: tokenSecret
+      billing_update_token: tokenSecret,
+      ...(consultingFirmId ? { consulting_firm_id: consultingFirmId } : {})
     };
 
     const result = await base44.asServiceRole.entities.Workshop.update(workshop_id, updatePayload);

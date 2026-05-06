@@ -3,21 +3,52 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { differenceInDays } from "date-fns";
 
+/**
+ * DS-FIX-C: Arquitetura melhorada.
+ * Quando o usuário tem consulting_firm_id, busca sprints diretamente por esse campo
+ * com 1 único request — elimina dependência da lista completa de workshops.
+ * Fallback: busca por workshop_id (comportamento original) para usuários sem firm_id.
+ */
 export default function useDashboardSprints(workshops = []) {
   const queryClient = useQueryClient();
   const workshopIds = useMemo(() => workshops.map(w => w.id), [workshops]);
-  // stable string key to avoid re-creating queries when array reference changes
   const workshopIdsKey = workshopIds.join(',');
 
+  // Extrair consulting_firm_id dos workshops disponíveis (todos deveriam ter o mesmo)
+  const consultingFirmId = useMemo(() => {
+    const firmId = workshops.find(w => w.consulting_firm_id)?.consulting_firm_id;
+    return firmId || null;
+  }, [workshops]);
+
   const { data: sprints = [], isLoading, refetch } = useQuery({
-    queryKey: ['dashboard-sprints', workshopIdsKey],
+    queryKey: ['dashboard-sprints', consultingFirmId || workshopIdsKey],
     queryFn: async () => {
       try {
+        // DS-FIX-C1: Se temos consulting_firm_id, buscar todos os sprints da firma de uma vez
+        if (consultingFirmId) {
+          console.log(`[useDashboardSprints] DS-FIX-C: Buscando sprints por consulting_firm_id=${consultingFirmId}`);
+          const allSprints = await base44.entities.ConsultoriaSprint
+            .filter({ consulting_firm_id: consultingFirmId }, '-updated_date', 1000)
+            .catch(err => {
+              console.warn('[useDashboardSprints] Falha ao buscar por consulting_firm_id, fallback para workshop_ids:', err.message);
+              return null; // null = fallback
+            });
+
+          if (allSprints !== null) {
+            const statusCounts = allSprints.reduce((acc, s) => {
+              acc[s.status || 'sem_status'] = (acc[s.status || 'sem_status'] || 0) + 1;
+              return acc;
+            }, {});
+            console.log(`[useDashboardSprints] DS-FIX-C: ${allSprints.length} sprints carregados por firm_id. Status:`, statusCounts);
+            return allSprints;
+          }
+        }
+
+        // DS-FIX-C2: Fallback — busca por workshop_id (comportamento original)
         const ids = workshopIdsKey.split(',').filter(Boolean);
         if (!ids.length) return [];
-        console.log(`[useDashboardSprints] Buscando sprints para ${ids.length} workshops`);
+        console.log(`[useDashboardSprints] Fallback: Buscando sprints para ${ids.length} workshops`);
         
-        // Busca sequencial em batches pequenos para evitar rate limit (429)
         const batchSize = 5;
         const allSprints = [];
         for (let i = 0; i < ids.length; i += batchSize) {
@@ -32,17 +63,14 @@ export default function useDashboardSprints(workshops = []) {
                 })
             )
           );
-          // Flatten: results é array de arrays, cada item é array de sprints
           results.forEach(arr => {
             if (Array.isArray(arr)) allSprints.push(...arr);
           });
-          // Pequeno delay entre batches para evitar rate limit
           if (i + batchSize < ids.length) {
             await new Promise(resolve => setTimeout(resolve, 200));
           }
         }
         
-        // Debug: logar distribuição de status para diagnóstico
         const statusCounts = allSprints.reduce((acc, s) => {
           acc[s.status || 'sem_status'] = (acc[s.status || 'sem_status'] || 0) + 1;
           return acc;
@@ -55,27 +83,29 @@ export default function useDashboardSprints(workshops = []) {
         throw error;
       }
     },
-    staleTime: 5 * 60 * 1000, // 5 min — subscribe invalida em mudanças reais
+    staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: 'stale',
-    enabled: workshopIds.length > 0,
-    // DS-02: placeholderData não polui o cache — apenas fallback visual durante loading
+    enabled: consultingFirmId != null || workshopIds.length > 0,
     placeholderData: []
   });
 
-  // FIX #1: Evitar infinite loop com debounce e guardrail
-  // Subscribe em tempo real: qualquer sprint de qualquer workshop gerenciado invalida o cache
-  // Dep: workshopIdsKey (string) — Set não tem referential equality e causaria reinit a cada render
+  // Subscribe em tempo real: invalida cache quando qualquer sprint relevante muda
   useEffect(() => {
     const ids = workshopIdsKey.split(',').filter(Boolean);
-    if (!ids.length) return;
+    // DS-FIX-C3: se temos firm_id, qualquer sprint dela é relevante — não filtrar por workshop_id
+    const usesFirmId = !!consultingFirmId;
+    if (!usesFirmId && !ids.length) return;
     
     const idSet = new Set(ids);
     let debounceTimer;
     let refetchPending = false;
     
     const unsubscribe = base44.entities.ConsultoriaSprint.subscribe((event) => {
-      if (event.data?.workshop_id && idSet.has(event.data.workshop_id)) {
+      const isRelevant = usesFirmId
+        ? (event.data?.consulting_firm_id === consultingFirmId || event.data?.workshop_id)
+        : (event.data?.workshop_id && idSet.has(event.data.workshop_id));
+      if (isRelevant) {
         // Guardrail: evita múltiplas invalidações em cascata
         if (refetchPending) return;
         
@@ -96,7 +126,7 @@ export default function useDashboardSprints(workshops = []) {
       clearTimeout(debounceTimer);
       unsubscribe();
     };
-  }, [workshopIdsKey, queryClient]);
+  }, [workshopIdsKey, consultingFirmId, queryClient]);
 
   const workshopMap = useMemo(
     () => Object.fromEntries(workshops.map(w => [w.id, w])),
