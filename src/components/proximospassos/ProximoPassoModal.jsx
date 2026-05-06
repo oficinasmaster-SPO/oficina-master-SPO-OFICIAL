@@ -6,12 +6,8 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   X, Clock, CheckCircle2, AlertTriangle, MessageSquare,
-  Paperclip, History, Save, Bell, Phone, FileText
+  Paperclip, History, Save, Bell, Phone, FileText, AlertCircle
 } from "lucide-react";
-
-// Validar que todos os imports foram feitos corretamente
-if (!ClienteDataTab) console.error("❌ ClienteDataTab não foi importado");
-if (!AtaViewTab) console.error("❌ AtaViewTab não foi importado");
 import { Button } from "@/components/ui/button";
 import ProximoPassoTimeline from "./ProximoPassoTimeline";
 import EvidenciasUploader from "./EvidenciasUploader";
@@ -51,73 +47,82 @@ export default function ProximoPassoModal({ passo, onClose, onSaved }) {
 
   const handleSave = async () => {
     setSaving(true);
-    const now = new Date().toISOString();
-    const historicoAtual = passo.historico || [];
-    const novasEntradas = [];
+    try {
+      const now = new Date().toISOString();
+      const historicoAtual = passo.historico || [];
+      const novasEntradas = [];
 
-    if (status !== passo.status) {
-      novasEntradas.push({
-        tipo: "status_alterado",
-        descricao: `Status alterado de "${passo.status}" para "${status}"`,
-        de: passo.status,
-        para: status,
-        usuario_id: user?.id,
-        usuario_nome: user?.full_name || user?.email,
-        created_at: now,
+      if (status !== passo.status) {
+        novasEntradas.push({
+          tipo: "status_alterado",
+          descricao: `Status alterado de "${passo.status}" para "${status}"`,
+          de: passo.status,
+          para: status,
+          usuario_id: user?.id,
+          usuario_nome: user?.full_name || user?.email,
+          created_at: now,
+        });
+      }
+
+      if (percentual !== passo.percentual_execucao) {
+        novasEntradas.push({
+          tipo: "comentario",
+          descricao: `Progresso atualizado para ${percentual}%`,
+          usuario_id: user?.id,
+          usuario_nome: user?.full_name || user?.email,
+          created_at: now,
+        });
+      }
+
+      if (evidencias.length > (passo.evidencias || []).length) {
+        novasEntradas.push({
+          tipo: "evidencia",
+          descricao: "Nova evidência anexada",
+          usuario_id: user?.id,
+          usuario_nome: user?.full_name || user?.email,
+          created_at: now,
+        });
+      }
+
+      await base44.entities.ConsultoriaProximoPasso.update(passo.id, {
+        status,
+        percentual_execucao: percentual,
+        prioridade,
+        observacoes_consultor: observacoes,
+        evidencias,
+        historico: [...historicoAtual, ...novasEntradas],
+        ...(status === "finalizado" && !passo.data_finalizacao ? { data_finalizacao: now } : {}),
+        ...(status === "em_andamento" && !passo.data_inicio ? { data_inicio: now } : {}),
       });
+
+      queryClient.invalidateQueries({ queryKey: ["central-proximos-passos"] });
+      onSaved();
+    } catch (err) {
+      console.error("Erro ao salvar próximo passo:", err);
+    } finally {
+      setSaving(false);
     }
-
-    if (percentual !== passo.percentual_execucao) {
-      novasEntradas.push({
-        tipo: "comentario",
-        descricao: `Progresso atualizado para ${percentual}%`,
-        usuario_id: user?.id,
-        usuario_nome: user?.full_name || user?.email,
-        created_at: now,
-      });
-    }
-
-    if (evidencias.length > (passo.evidencias || []).length) {
-      novasEntradas.push({
-        tipo: "evidencia",
-        descricao: "Nova evidência anexada",
-        usuario_id: user?.id,
-        usuario_nome: user?.full_name || user?.email,
-        created_at: now,
-      });
-    }
-
-    await base44.entities.ConsultoriaProximoPasso.update(passo.id, {
-      status,
-      percentual_execucao: percentual,
-      prioridade,
-      observacoes_consultor: observacoes,
-      evidencias,
-      historico: [...historicoAtual, ...novasEntradas],
-      ...(status === "finalizado" && !passo.data_finalizacao ? { data_finalizacao: now } : {}),
-      ...(status === "em_andamento" && !passo.data_inicio ? { data_inicio: now } : {}),
-    });
-
-    setSaving(false);
-    queryClient.invalidateQueries({ queryKey: ["central-proximos-passos"] });
-    onSaved();
   };
 
   const handleCobrar = async () => {
-    const now = new Date().toISOString();
-    const historicoAtual = passo.historico || [];
-    await base44.entities.ConsultoriaProximoPasso.update(passo.id, {
-      ultima_cobranca_em: now,
-      historico: [...historicoAtual, {
-        tipo: "cobranca",
-        descricao: "Consultor registrou cobrança ao responsável",
-        usuario_id: user?.id,
-        usuario_nome: user?.full_name || user?.email,
-        created_at: now,
-      }],
-    });
-    queryClient.invalidateQueries({ queryKey: ["central-proximos-passos"] });
-    onSaved();
+    try {
+      const now = new Date().toISOString();
+      const historicoAtual = passo.historico || [];
+      await base44.entities.ConsultoriaProximoPasso.update(passo.id, {
+        ultima_cobranca_em: now,
+        historico: [...historicoAtual, {
+          tipo: "cobranca",
+          descricao: "Consultor registrou cobrança ao responsável",
+          usuario_id: user?.id,
+          usuario_nome: user?.full_name || user?.email,
+          created_at: now,
+        }],
+      });
+      queryClient.invalidateQueries({ queryKey: ["central-proximos-passos"] });
+      onSaved();
+    } catch (err) {
+      console.error("Erro ao registrar cobrança:", err);
+    }
   };
 
   const tabs = [
@@ -136,7 +141,7 @@ export default function ProximoPassoModal({ passo, onClose, onSaved }) {
         <div className="flex items-start justify-between p-5 border-b border-gray-100">
           <div className="flex-1 min-w-0 pr-4">
             <h2 className="text-base font-bold text-gray-900 truncate">{passo.titulo}</h2>
-            <div className="flex items-center gap-3 mt-1 text-xs text-gray-400">
+            <div className="flex items-center gap-3 mt-1 text-xs text-gray-400 flex-wrap">
               {passo.responsavel_nome && <span>👤 {passo.responsavel_nome}</span>}
               {passo.prazo && (
                 <span className="flex items-center gap-1">
@@ -152,14 +157,14 @@ export default function ProximoPassoModal({ passo, onClose, onSaved }) {
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-gray-100 px-5 gap-1">
+        <div className="flex border-b border-gray-100 px-5 gap-1 overflow-x-auto">
           {tabs.map(tab => {
             const Icon = tab.icon;
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-1.5 text-xs font-medium px-3 py-2.5 border-b-2 transition-colors ${
+                className={`flex items-center gap-1.5 text-xs font-medium px-3 py-2.5 border-b-2 transition-colors whitespace-nowrap ${
                   activeTab === tab.id
                     ? "border-blue-500 text-blue-600"
                     : "border-transparent text-gray-500 hover:text-gray-700"
@@ -244,7 +249,15 @@ export default function ProximoPassoModal({ passo, onClose, onSaved }) {
             <ClienteDataTab passo={passo} />
           )}
 
-          {activeTab === "ata" && (
+          {activeTab === "ata" && !passo.consultoria_atendimento_id && (
+            <div className="text-center py-8">
+              <AlertCircle className="w-12 h-12 text-amber-400 mx-auto mb-3" />
+              <p className="text-gray-600 text-sm font-medium">ATA não vinculada</p>
+              <p className="text-gray-400 text-xs mt-1">Este próximo passo não tem um atendimento associado</p>
+            </div>
+          )}
+
+          {activeTab === "ata" && passo.consultoria_atendimento_id && (
             <AtaViewTab passo={passo} />
           )}
         </div>

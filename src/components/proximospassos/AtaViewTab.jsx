@@ -4,15 +4,18 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import ReactMarkdown from "react-markdown";
 import { Button } from "@/components/ui/button";
-import { FileText, ExternalLink } from "lucide-react";
+import { FileText, ExternalLink, AlertTriangle } from "lucide-react";
 
 export default function AtaViewTab({ passo }) {
   const [ata, setAta] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState(null);
 
   useEffect(() => {
     const fetchAta = async () => {
       try {
+        setErro(null);
+        
         if (!passo.consultoria_atendimento_id) {
           setLoading(false);
           return;
@@ -22,12 +25,23 @@ export default function AtaViewTab({ passo }) {
           passo.consultoria_atendimento_id
         );
         
-        if (atendimento?.ata_id) {
-          const ataData = await base44.entities.MeetingMinutes.get(atendimento.ata_id);
-          setAta(ataData);
+        if (!atendimento?.ata_id) {
+          setErro("ATA não foi gerada para este atendimento");
+          setLoading(false);
+          return;
         }
+
+        const ataData = await base44.entities.MeetingMinutes.get(atendimento.ata_id);
+        if (!ataData) {
+          setErro("Registro da ATA foi removido ou não está acessível");
+          setLoading(false);
+          return;
+        }
+
+        setAta(ataData);
       } catch (err) {
-        console.warn('Erro ao buscar ATA:', err);
+        console.error('Erro ao buscar ATA:', err);
+        setErro(`Erro ao carregar ATA: ${err.message}`);
       } finally {
         setLoading(false);
       }
@@ -40,6 +54,15 @@ export default function AtaViewTab({ passo }) {
     return (
       <div className="space-y-3 animate-pulse">
         {[1, 2, 3].map(i => <div key={i} className="h-20 bg-gray-100 rounded-lg" />)}
+      </div>
+    );
+  }
+
+  if (erro) {
+    return (
+      <div className="text-center py-8 px-4">
+        <AlertTriangle className="w-12 h-12 text-red-400 mx-auto mb-3" />
+        <p className="text-red-600 text-sm font-medium">{erro}</p>
       </div>
     );
   }
