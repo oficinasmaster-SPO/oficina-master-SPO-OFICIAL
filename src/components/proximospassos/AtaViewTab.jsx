@@ -14,48 +14,58 @@ export default function AtaViewTab({ passo }) {
   useEffect(() => {
     const fetchAta = async () => {
       try {
+        console.log('🔍 AtaViewTab: Iniciando busca de ATA', { passo_id: passo.id, ata_id: passo.ata_id, atendimento_id: passo.consultoria_atendimento_id });
         setErro(null);
         
         let ataId = null;
 
         // PRIORIDADE 1: ata_id direto no passo (novo/resiliente)
         if (passo.ata_id) {
+          console.log('✅ AtaViewTab: Usando ata_id direto:', passo.ata_id);
           ataId = passo.ata_id;
         }
         // PRIORIDADE 2: buscar do atendimento (fallback legado)
         else if (passo.consultoria_atendimento_id) {
+          console.log('⚠️ AtaViewTab: Tentando fallback via consultoria_atendimento_id:', passo.consultoria_atendimento_id);
           try {
             const atendimento = await base44.entities.ConsultoriaAtendimento.get(
               passo.consultoria_atendimento_id
             );
+            console.log('✅ AtaViewTab: Atendimento encontrado, ata_id:', atendimento?.ata_id);
             ataId = atendimento?.ata_id;
           } catch (atendimentoErr) {
+            console.error('❌ AtaViewTab: Atendimento não encontrado:', atendimentoErr.message);
             setErro("Atendimento foi deletado e ATA não está vinculada a este passo");
             setLoading(false);
             return;
           }
         } else {
+          console.warn('❌ AtaViewTab: Nenhuma ATA vinculada');
           setErro("Nenhuma ATA vinculada a este próximo passo");
           setLoading(false);
           return;
         }
 
         if (!ataId) {
+          console.warn('❌ AtaViewTab: ataId não resolvido');
           setErro("ATA não foi gerada para este atendimento");
           setLoading(false);
           return;
         }
 
+        console.log('📥 AtaViewTab: Buscando MeetingMinutes com ID:', ataId);
         const ataData = await base44.entities.MeetingMinutes.get(ataId);
         if (!ataData) {
+          console.error('❌ AtaViewTab: MeetingMinutes não encontrado');
           setErro("Registro da ATA foi removido ou não está acessível");
           setLoading(false);
           return;
         }
 
+        console.log('✅ AtaViewTab: ATA carregada com sucesso:', ataData.code);
         setAta(ataData);
       } catch (err) {
-        console.error('Erro ao buscar ATA:', err);
+        console.error('❌ AtaViewTab: Erro ao buscar ATA:', err);
         setErro(`Erro ao carregar ATA: ${err.message || 'Desconhecido'}`);
       } finally {
         setLoading(false);
