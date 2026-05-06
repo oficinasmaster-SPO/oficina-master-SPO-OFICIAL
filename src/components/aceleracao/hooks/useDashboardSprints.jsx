@@ -9,16 +9,15 @@ import { differenceInDays } from "date-fns";
  * com 1 único request — elimina dependência da lista completa de workshops.
  * Fallback: busca por workshop_id (comportamento original) para usuários sem firm_id.
  */
-export default function useDashboardSprints(workshops = []) {
+export default function useDashboardSprints(workshops = [], user = null) {
   const queryClient = useQueryClient();
   const workshopIds = useMemo(() => workshops.map(w => w.id), [workshops]);
   const workshopIdsKey = workshopIds.join(',');
 
-  // Extrair consulting_firm_id dos workshops disponíveis (todos deveriam ter o mesmo)
-  const consultingFirmId = useMemo(() => {
-    const firmId = workshops.find(w => w.consulting_firm_id)?.consulting_firm_id;
-    return firmId || null;
-  }, [workshops]);
+  // DS-FIX-C-URGENTE: ler consulting_firm_id do user.data — independente do estado de workshops
+  const consultingFirmId = user?.data?.consulting_firm_id ||
+    workshops.find(w => w.consulting_firm_id)?.consulting_firm_id ||
+    null;
 
   const { data: sprints = [], isLoading, refetch } = useQuery({
     queryKey: ['dashboard-sprints', consultingFirmId || workshopIdsKey],
@@ -128,10 +127,48 @@ export default function useDashboardSprints(workshops = []) {
     };
   }, [workshopIdsKey, consultingFirmId, queryClient]);
 
-  const workshopMap = useMemo(
+  // DS-NAME-01: detectar workshops dos sprints que não estão na prop workshops[]
+  const baseWorkshopMap = useMemo(
     () => Object.fromEntries(workshops.map(w => [w.id, w])),
     [workshops]
   );
+
+  const missingSprintWorkshopIds = useMemo(() => {
+    const missing = new Set();
+    sprints.forEach(s => {
+      if (s.workshop_id && !baseWorkshopMap[s.workshop_id]) {
+        missing.add(s.workshop_id);
+      }
+    });
+    return Array.from(missing);
+  }, [sprints, baseWorkshopMap]);
+
+  // Buscar workshops faltantes em batch via BFF (asServiceRole — sem RLS)
+  const { data: extraWorkshops = [] } = useQuery({
+    queryKey: ['dashboard-missing-workshops', missingSprintWorkshopIds.join(',')],
+    queryFn: async () => {
+      if (!missingSprintWorkshopIds.length) return [];
+      try {
+        const response = await base44.functions.invoke('getUserWorkshops', {
+          workshopIds: missingSprintWorkshopIds
+        });
+        return response?.data?.workshops || [];
+      } catch (err) {
+        console.warn('[useDashboardSprints] Falha ao buscar workshops faltantes:', err?.message);
+        return [];
+      }
+    },
+    enabled: missingSprintWorkshopIds.length > 0,
+    staleTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+  // workshopMap final: base + extras dos sprints
+  const workshopMap = useMemo(() => {
+    const map = { ...baseWorkshopMap };
+    extraWorkshops.forEach(w => { if (w?.id) map[w.id] = w; });
+    return map;
+  }, [baseWorkshopMap, extraWorkshops]);
 
   const sprintsAtrasados = useMemo(
     () => sprints
