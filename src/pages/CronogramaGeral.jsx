@@ -50,10 +50,11 @@ export default function CronogramaGeral({ isTab = false }) {
     queryKey: ['workshops-cronograma'],
     queryFn: async () => {
       const all = await base44.entities.Workshop.list();
-      // Se o plano selecionado for "TODOS" ou "FREE", mostra todos ou filtra por FREE
-      if (selectedPlan === 'TODOS') return all;
-      if (selectedPlan === 'FREE') return all.filter(w => w.planoAtual === 'FREE');
-      return all.filter(w => w.planoAtual && w.planoAtual !== 'FREE');
+      // Apenas clientes ativos
+      const ativos = all.filter(w => w.status === 'ativo');
+      if (selectedPlan === 'TODOS') return ativos;
+      if (selectedPlan === 'FREE') return ativos.filter(w => w.planoAtual === 'FREE');
+      return ativos.filter(w => w.planoAtual && w.planoAtual !== 'FREE');
     },
     enabled: !!selectedPlan
   });
