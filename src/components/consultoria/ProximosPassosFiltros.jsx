@@ -30,9 +30,10 @@ export default function ProximosPassosFiltros({ filtros, onChange, passos }) {
       .map(p => [p.consultor_id, { id: p.consultor_id, nome: p.consultor_nome }])
   ).values()];
 
+  // workshop_nome não existe na entidade — usar workshop_id como identificador
   const workshops = [...new Map(
-    passos.filter(p => p.workshop_id && p.workshop_nome)
-      .map(p => [p.workshop_id, { id: p.workshop_id, nome: p.workshop_nome }])
+    passos.filter(p => p.workshop_id)
+      .map(p => [p.workshop_id, { id: p.workshop_id, nome: p.workshop_id.slice(0, 8) }])
   ).values()];
 
   const hasActiveFilters =

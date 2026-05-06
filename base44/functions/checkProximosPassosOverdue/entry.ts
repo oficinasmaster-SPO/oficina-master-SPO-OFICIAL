@@ -15,35 +15,31 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const agora = new Date().toISOString();
+    // Limite: fim do dia de ontem — prazo expirado = prazo anterior a hoje (início do dia)
+    const inicioDiaHoje = new Date();
+    inicioDiaHoje.setHours(0, 0, 0, 0);
 
-    // Busca passos com prazo vencido que ainda não estão finalizados/cancelados/atrasados
-    const ativos = await base44.asServiceRole.entities.ConsultoriaProximoPasso.filter({
-      status: 'pendente'
-    }, '-prazo', 1000);
-
-    const emAndamento = await base44.asServiceRole.entities.ConsultoriaProximoPasso.filter({
-      status: 'em_andamento'
-    }, '-prazo', 1000);
-
-    const aguardandoCliente = await base44.asServiceRole.entities.ConsultoriaProximoPasso.filter({
-      status: 'aguardando_cliente'
-    }, '-prazo', 1000);
+    // Busca passos nos status que podem ficar atrasados
+    const [ativos, emAndamento, aguardandoCliente] = await Promise.all([
+      base44.asServiceRole.entities.ConsultoriaProximoPasso.filter({ status: 'pendente' }, '-prazo', 1000),
+      base44.asServiceRole.entities.ConsultoriaProximoPasso.filter({ status: 'em_andamento' }, '-prazo', 1000),
+      base44.asServiceRole.entities.ConsultoriaProximoPasso.filter({ status: 'aguardando_cliente' }, '-prazo', 1000),
+    ]);
 
     const candidatos = [...ativos, ...emAndamento, ...aguardandoCliente];
 
-    const agora = new Date().toISOString();
     let marcadosAtrasado = 0;
     let notificacoesCriadas = 0;
 
     for (const passo of candidatos) {
       if (!passo.prazo) continue;
 
+      // prazo é "YYYY-MM-DD" — vencido se o início desse dia < início de hoje
       const prazoDate = new Date(passo.prazo);
-      prazoDate.setHours(23, 59, 59, 999);
+      prazoDate.setHours(0, 0, 0, 0);
 
-      if (prazoDate < today) {
+      if (prazoDate < inicioDiaHoje) {
         // Marcar como atrasado
         const historicoAtual = passo.historico || [];
         await base44.asServiceRole.entities.ConsultoriaProximoPasso.update(passo.id, {

@@ -25,7 +25,7 @@ export default function ProximosPassosConsultoria() {
   const consultingFirmId = user?.data?.consulting_firm_id;
 
   const { data: passos = [], isLoading } = useQuery({
-    queryKey: ["proximos-passos-central", consultingFirmId],
+    queryKey: ["proximos-passos-consultoria", consultingFirmId, user?.role],
     queryFn: async () => {
       if (!consultingFirmId && user?.role !== "admin") return [];
       const filter = user?.role === "admin" ? {} : { consulting_firm_id: consultingFirmId };
@@ -58,7 +58,7 @@ export default function ProximosPassosConsultoria() {
   });
 
   const handleSaved = () => {
-    queryClient.invalidateQueries({ queryKey: ["proximos-passos-central"] });
+    queryClient.invalidateQueries({ queryKey: ["proximos-passos-consultoria"] });
     setSelectedPasso(null);
   };
 

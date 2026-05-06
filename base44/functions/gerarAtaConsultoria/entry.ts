@@ -70,13 +70,12 @@ Deno.serve(async (req) => {
         console.error("Erro ao buscar inteligência:", e);
     }
 
-    // Buscar próximos passos operacionais pendentes desta oficina (contexto para IA)
+    // Buscar próximos passos operacionais desta ATA (contexto para IA)
     let proximosPassosPendentes = [];
     try {
-      proximosPassosPendentes = await base44.asServiceRole.entities.ConsultoriaProximoPasso.filter({
-        workshop_id: atendimento.workshop_id,
+      proximosPassosPendentes = await base44.entities.ConsultoriaProximoPasso.filter({
         consultoria_atendimento_id: atendimento_id
-      }, '-created_date', 50).catch(() => []);
+      }, '-created_date', 50);
     } catch (e) {
       console.warn("Aviso: não foi possível buscar ConsultoriaProximoPasso:", e.message);
     }

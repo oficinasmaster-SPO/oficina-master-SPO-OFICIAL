@@ -73,10 +73,15 @@ export default function CentralProximosPassos() {
   const [filters, setFilters] = useState({ status: "todos", prioridade: "todas" });
 
   const consultingFirmId = user?.data?.consulting_firm_id;
+  const isAdmin = user?.role === "admin";
 
   const { data: passos = [], isLoading, refetch } = useQuery({
-    queryKey: ["proximos-passos-central", consultingFirmId],
+    queryKey: ["central-proximos-passos", consultingFirmId, isAdmin],
     queryFn: async () => {
+      if (isAdmin) {
+        // admin vê todos
+        return base44.entities.ConsultoriaProximoPasso.filter({}, "-created_date", 500);
+      }
       if (consultingFirmId) {
         return base44.entities.ConsultoriaProximoPasso.filter(
           { consulting_firm_id: consultingFirmId },
@@ -86,7 +91,7 @@ export default function CentralProximosPassos() {
       }
       return [];
     },
-    enabled: !!consultingFirmId,
+    enabled: !!user,
     staleTime: 2 * 60 * 1000,
   });
 
@@ -108,7 +113,7 @@ export default function CentralProximosPassos() {
     queryClient.invalidateQueries({ queryKey: ["proximos-passos-central"] });
   };
 
-  if (!consultingFirmId) {
+  if (!isAdmin && !consultingFirmId) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-8">
         <Users className="w-12 h-12 text-gray-300 mb-3" />
