@@ -70,6 +70,17 @@ Deno.serve(async (req) => {
         console.error("Erro ao buscar inteligência:", e);
     }
 
+    // Buscar próximos passos operacionais pendentes desta oficina (contexto para IA)
+    let proximosPassosPendentes = [];
+    try {
+      proximosPassosPendentes = await base44.asServiceRole.entities.ConsultoriaProximoPasso.filter({
+        workshop_id: atendimento.workshop_id,
+        consultoria_atendimento_id: atendimento_id
+      }, '-created_date', 50).catch(() => []);
+    } catch (e) {
+      console.warn("Aviso: não foi possível buscar ConsultoriaProximoPasso:", e.message);
+    }
+
     // Mapear tom para instrução
     const toneInstructions = {
       formal: 'Use linguagem corporativa, técnica e profissional.',
@@ -97,37 +108,19 @@ Deno.serve(async (req) => {
       sectionBlocks.push(`**AÇÕES DE ACOMPANHAMENTO:**\n${atendimento.acoes_geradas?.map(a => `- ${a.acao} (Responsável: ${a.responsavel}, Prazo: ${a.prazo})`).join('\n') || 'Nenhuma ação registrada'}`);
     }
     if (selectedSections.includes('proximos_passos')) {
-      // FASE 5: Buscar primeiro em ConsultoriaProximoPasso (entidade centralizada)
-      // Fallback para array legado se não houver registros na entidade
-      let passosTexto = '';
-      try {
-        const proximosPassosEntidade = await base44.entities.ConsultoriaProximoPasso.filter({
-          consultoria_atendimento_id: atendimento_id
-        });
-        if (proximosPassosEntidade && proximosPassosEntidade.length > 0) {
-          passosTexto = proximosPassosEntidade
-            .filter(p => p.titulo)
-            .map((p, i) => {
-              const statusLabel = p.status === 'finalizado' ? ' ✅' : p.status === 'atrasado' ? ' ⚠️' : '';
-              return `${i + 1}. ${p.titulo}${statusLabel} (Responsável: ${p.responsavel_nome || 'N/A'}, Prazo: ${p.prazo || 'N/A'}, Progresso: ${p.percentual_execucao || 0}%)`;
-            })
-            .join('\n');
-          console.log(`✅ Próximos passos carregados da entidade ConsultoriaProximoPasso (${proximosPassosEntidade.length} registros)`);
-        }
-      } catch (e) {
-        console.warn('⚠️ Erro ao buscar ConsultoriaProximoPasso, usando fallback legado:', e.message);
-      }
+      const passosTexto = atendimento.proximos_passos || '';
+      const passosLista = (atendimento.proximos_passos_list || []).filter(p => p.descricao).map((p, i) => `${i + 1}. ${p.descricao} (Responsável: ${p.responsavel || 'N/A'}, Prazo: ${p.prazo || 'N/A'})`).join('\n');
 
-      // Fallback: array legado proximos_passos_list / texto livre
-      if (!passosTexto) {
-        const passosLegado = (atendimento.proximos_passos_list || []).filter(p => p.descricao).map((p, i) => `${i + 1}. ${p.descricao} (Responsável: ${p.responsavel || 'N/A'}, Prazo: ${p.prazo || 'N/A'})`).join('\n');
-        passosTexto = passosLegado || atendimento.proximos_passos || 'A definir';
-        if (passosTexto !== 'A definir') {
-          console.log('📋 Próximos passos carregados do array legado (proximos_passos_list)');
-        }
-      }
+      // Enriquecer com dados do ConsultoriaProximoPasso (status operacional real)
+      const passosOperacionaisBloco = proximosPassosPendentes.length > 0
+        ? '\n\n**ACOMPANHAMENTO OPERACIONAL (ConsultoriaProximoPasso):**\n' +
+          proximosPassosPendentes.map(p => {
+            const statusLabel = { pendente: 'Pendente', em_andamento: 'Em andamento', aguardando_cliente: 'Ag. Cliente', aguardando_consultor: 'Ag. Consultor', validacao: 'Validação', finalizado: 'Finalizado ✅', atrasado: '⚠️ Atrasado', cancelado: 'Cancelado' }[p.status] || p.status;
+            return `- ${p.titulo} | ${statusLabel} | ${p.percentual_execucao || 0}% | Resp: ${p.responsavel_nome || 'N/A'} | Prazo: ${p.prazo || 'N/A'}`;
+          }).join('\n')
+        : '';
 
-      sectionBlocks.push(`**PRÓXIMOS PASSOS:**\n${passosTexto}`);
+      sectionBlocks.push(`**PRÓXIMOS PASSOS:**\n${passosLista || passosTexto || 'A definir'}${passosOperacionaisBloco}`);
     }
     if (selectedSections.includes('checklist') && atendimento.checklist_respostas?.length > 0) {
       const checklistText = atendimento.checklist_respostas.map(bloco => {
@@ -262,14 +255,16 @@ Formate em Markdown para fácil leitura. ${toneText} NÃO adicione saudações f
       ata_gerada_em: new Date().toISOString()
     });
 
-    // 🔗 HOOK: Sincronizar próximos passos com tarefas pendentes
+    // 🔗 HOOK: Sincronizar próximos passos com ConsultoriaProximoPasso + CronogramaImplementacao
     try {
       await base44.functions.invoke('syncProximosPassosToTasks', {
         ata_id: novaAta.id,
         ata_data: dataAta,
-        workshop_id: atendimento.workshop_id
+        workshop_id: atendimento.workshop_id,
+        consultor_id: atendimento.consultor_id || null,
+        consulting_firm_id: workshop?.consulting_firm_id || user?.data?.consulting_firm_id || null
       });
-      console.log("✅ Próximos passos sincronizados com tarefas pendentes");
+      console.log("✅ Próximos passos sincronizados com ConsultoriaProximoPasso");
     } catch (syncError) {
       console.warn("⚠️ Erro ao sincronizar próximos passos (não bloqueia):", syncError.message);
     }
