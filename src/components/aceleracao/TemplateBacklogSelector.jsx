@@ -143,19 +143,29 @@ export default function TemplateBacklogSelector({ isOpen, onClose, onSelect, wor
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data) => base44.entities.TemplateBacklog.update(data.id, {
-      titulo: data.titulo,
-      descricao: data.descricao,
-      prioridade: data.prioridade,
-      impacto: data.impacto,
-      categoria: data.categoria
-    }),
+    mutationFn: async (data) => {
+      // Validação antes de enviar
+      if (!data.id) throw new Error('ID do template ausente');
+      if (data.id.startsWith('template-')) throw new Error('Não é possível atualizar template padrão');
+      
+      const result = await base44.entities.TemplateBacklog.update(data.id, {
+        titulo: data.titulo,
+        descricao: data.descricao,
+        prioridade: data.prioridade,
+        impacto: data.impacto,
+        categoria: data.categoria
+      });
+      
+      if (!result) throw new Error('Falha ao atualizar no banco de dados');
+      return result;
+    },
     onSuccess: () => {
       toast.success('Template atualizado com sucesso!');
       queryClient.invalidateQueries({ queryKey: ['template-backlog', workshopId] });
       setEditingTemplate(null);
     },
     onError: (error) => {
+      console.error('Update mutation error:', error);
       toast.error(error?.message || 'Erro ao atualizar template');
     }
   });
@@ -188,6 +198,14 @@ export default function TemplateBacklogSelector({ isOpen, onClose, onSelect, wor
     e.preventDefault();
     if (!editingTemplate.titulo || !editingTemplate.descricao) {
       toast.error('Título e descrição são obrigatórios');
+      return;
+    }
+    if (editingTemplate.isDefault) {
+      toast.error('Templates padrão não podem ser editados');
+      return;
+    }
+    if (!editingTemplate.id || editingTemplate.id.startsWith('template-')) {
+      toast.error('ID de template inválido. Recarregue a página.');
       return;
     }
     updateMutation.mutate(editingTemplate);
