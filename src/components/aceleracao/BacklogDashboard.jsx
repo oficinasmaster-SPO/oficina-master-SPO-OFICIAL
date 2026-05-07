@@ -11,7 +11,7 @@ import BacklogFilters from "./BacklogFilters";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-export default function BacklogDashboard({ user }) {
+export default function BacklogDashboard({ workshopId, user }) {
   const [showForm, setShowForm] = useState(false);
   const [editingTarefa, setEditingTarefa] = useState(null);
   const [viewingTarefa, setViewingTarefa] = useState(null);
@@ -26,11 +26,14 @@ export default function BacklogDashboard({ user }) {
   const queryClient = useQueryClient();
 
   const { data: tarefas = [], isLoading } = useQuery({
-    queryKey: ['tarefas-backlog'],
+    queryKey: ['tarefas-backlog', workshopId],
     queryFn: async () => {
-      const all = await base44.entities.TarefaBacklog.list('-prazo');
+      const all = workshopId
+        ? await base44.entities.TarefaBacklog.filter({ cliente_id: workshopId }, '-prazo')
+        : await base44.entities.TarefaBacklog.list('-prazo');
       return all || [];
-    }
+    },
+    enabled: !!workshopId,
   });
 
   const { data: workshops = [] } = useQuery({

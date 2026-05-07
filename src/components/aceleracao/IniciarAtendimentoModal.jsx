@@ -25,6 +25,7 @@ import TrailsTab from "@/components/aceleracao/TrailsTab";
 import SprintsTab from "@/components/aceleracao/SprintsTab";
 import PedidosInternosTab from "@/components/aceleracao/PedidosInternosTab";
 import BacklogDashboard from "@/components/aceleracao/BacklogDashboard";
+import ProximosPassosAbaTab from "@/components/aceleracao/ProximosPassosAbaTab";
 
 const RESULTADO_COLORS = {
   atendeu: "bg-green-100 text-green-700 border-green-300",
@@ -1437,7 +1438,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
 
               <TabsContent value="trilhas" className="flex-1 overflow-y-auto px-3 py-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
                 {followUp?.workshop_id ? (
-                  <TrailsTab workshopId={followUp.workshop_id} />
+                  <TrailsTab workshopId={followUp.workshop_id} onAudit={() => {}} />
                 ) : (
                   <p className="text-xs text-gray-500 italic">Sem trilhas disponíveis</p>
                 )}
@@ -1445,25 +1446,23 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
 
               <TabsContent value="sprints" className="flex-1 overflow-y-auto px-3 py-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
                 {followUp?.workshop_id ? (
-                  <SprintsTab workshopId={followUp.workshop_id} />
+                  <SprintsTab workshopId={followUp.workshop_id} onAudit={() => {}} />
                 ) : (
                   <p className="text-xs text-gray-500 italic">Sem sprints disponíveis</p>
                 )}
               </TabsContent>
 
               <TabsContent value="proximospassos" className="flex-1 overflow-y-auto px-3 py-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-                <div className="space-y-3">
-                  {proximoFU ? (
-                    <div className="text-xs text-gray-600 italic">Próximos passos associados ao cliente</div>
-                  ) : (
-                    <p className="text-xs text-gray-500 italic">Sem próximos passos registrados</p>
-                  )}
-                </div>
+                {followUp?.workshop_id ? (
+                  <ProximosPassosAbaTab workshopId={followUp.workshop_id} />
+                ) : (
+                  <p className="text-xs text-gray-500 italic">Sem próximos passos registrados</p>
+                )}
               </TabsContent>
 
               <TabsContent value="pedidos" className="flex-1 overflow-y-auto px-3 py-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
                 {followUp?.workshop_id ? (
-                  <PedidosInternosTab workshopId={followUp.workshop_id} />
+                  <PedidosInternosTab workshopId={followUp.workshop_id} user={user} />
                 ) : (
                   <p className="text-xs text-gray-500 italic">Sem pedidos internos</p>
                 )}

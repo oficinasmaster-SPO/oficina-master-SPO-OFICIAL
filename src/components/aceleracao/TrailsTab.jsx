@@ -10,7 +10,7 @@ import WheelLoader from '@/components/ui/WheelLoader';
 import TrailEditModal from './modals/TrailEditModal';
 import TrailCreateModal from './modals/TrailCreateModal';
 
-export default function TrailsTab({ onAudit }) {
+export default function TrailsTab({ workshopId, onAudit }) {
   const [trails, setTrails] = useState([]);
   const [expandedTrail, setExpandedTrail] = useState(null);
   const [editingTrail, setEditingTrail] = useState(null);
@@ -19,12 +19,14 @@ export default function TrailsTab({ onAudit }) {
   const [saving, setSaving] = useState(false);
   const queryClient = useQueryClient();
 
-  // P0-A02: Busca trilhas com paginação
+  // P0-A02: Busca trilhas filtradas por workshop
   const { data: allTrails = [], isLoading, error } = useQuery({
-    queryKey: ['allCronogramaTemplates'],
+    queryKey: ['allCronogramaTemplates', workshopId],
     queryFn: async () => {
       try {
-        const data = await base44.entities.CronogramaTemplate.list('-updated_date', 100);
+        const data = workshopId 
+          ? await base44.entities.CronogramaTemplate.filter({ workshop_id: workshopId }, '-updated_date', 100)
+          : await base44.entities.CronogramaTemplate.list('-updated_date', 100);
         return data || [];
       } catch (error) {
         console.error('Erro ao carregar trilhas:', error);
@@ -33,6 +35,7 @@ export default function TrailsTab({ onAudit }) {
       }
     },
     staleTime: 5 * 1000,
+    enabled: !!workshopId,
   });
 
   // Consolidar trilhas

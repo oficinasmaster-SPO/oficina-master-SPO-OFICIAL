@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import SprintsTemplateGrid from './SprintsTemplateGrid';
 import SprintCreateModal from './modals/SprintCreateModal';
 
-export default function SprintsTab({ onAudit }) {
+export default function SprintsTab({ workshopId, onAudit }) {
   const [showNewSprint, setShowNewSprint] = useState(false);
   const [creating, setCreating] = useState(false);
   const queryClient = useQueryClient();
@@ -55,7 +55,7 @@ export default function SprintsTab({ onAudit }) {
           </Button>
         </div>
         <div className="p-5">
-          <SprintsTemplateGrid onAudit={onAudit} />
+          <SprintsTemplateGrid workshopId={workshopId} onAudit={onAudit} />
         </div>
       </div>
 

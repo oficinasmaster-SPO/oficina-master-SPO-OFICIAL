@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-export default function PedidosInternosTab({ user }) {
+export default function PedidosInternosTab({ workshopId, user }) {
   const [showForm, setShowForm] = useState(false);
   const [editingPedido, setEditingPedido] = useState(null);
   const [filters, setFilters] = useState({
@@ -26,11 +26,14 @@ export default function PedidosInternosTab({ user }) {
   const queryClient = useQueryClient();
 
   const { data: pedidos = [], isLoading } = useQuery({
-    queryKey: ['pedidos-internos'],
+    queryKey: ['pedidos-internos', workshopId],
     queryFn: async () => {
-      const all = await base44.entities.PedidoInterno.list('-created_date');
+      const all = workshopId
+        ? await base44.entities.PedidoInterno.filter({ cliente_id: workshopId }, '-created_date')
+        : await base44.entities.PedidoInterno.list('-created_date');
       return all || [];
-    }
+    },
+    enabled: !!workshopId,
   });
 
   const { data: usuarios = [] } = useQuery({
@@ -339,7 +342,7 @@ export default function PedidosInternosTab({ user }) {
         </TabsContent>
 
         <TabsContent value="backlog">
-          <BacklogDashboard user={user} />
+          <BacklogDashboard workshopId={workshopId} user={user} />
         </TabsContent>
       </Tabs>
     </div>
