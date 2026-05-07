@@ -15,6 +15,7 @@ import EvidenciasUploader from "./EvidenciasUploader";
 import ProgressBarExecucao from "./ProgressBarExecucao";
 import ClienteDataTab from "./ClienteDataTab";
 import AtaViewTab from "./AtaViewTab";
+import AtendimentoModal from "@/components/aceleracao/AtendimentoModal";
 
 const STATUS_OPTIONS = [
   { value: "pendente",             label: "Pendente" },
@@ -45,6 +46,7 @@ export default function ProximoPassoModal({ passo, onClose, onSaved }) {
   const [prioridade, setPrioridade] = useState(passo.prioridade || "media");
   const [observacoes, setObservacoes] = useState(passo.observacoes_consultor || "");
   const [evidencias, setEvidencias] = useState(passo.evidencias || []);
+  const [showAtendimentoModal, setShowAtendimentoModal] = useState(false);
 
   const handleSave = async () => {
     setSaving(true);
@@ -167,6 +169,7 @@ export default function ProximoPassoModal({ passo, onClose, onSaved }) {
   ];
 
   return (
+    <>
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
 
@@ -282,7 +285,7 @@ export default function ProximoPassoModal({ passo, onClose, onSaved }) {
             <ClienteDataTab passo={passo} />
           )}
 
-          {activeTab === "ata" && !passo.consultoria_atendimento_id && (
+          {activeTab === "ata" && !passo.consultoria_atendimento_id && !passo.ata_id && (
             <div className="text-center py-8">
               <AlertCircle className="w-12 h-12 text-amber-400 mx-auto mb-3" />
               <p className="text-gray-600 text-sm font-medium">ATA não vinculada</p>
@@ -290,8 +293,22 @@ export default function ProximoPassoModal({ passo, onClose, onSaved }) {
             </div>
           )}
 
-          {activeTab === "ata" && passo.consultoria_atendimento_id && (
+          {activeTab === "ata" && !passo.consultoria_atendimento_id && passo.ata_id && (
             <AtaViewTab passo={passo} />
+          )}
+
+          {activeTab === "ata" && passo.consultoria_atendimento_id && (
+            <div className="flex flex-col items-center justify-center py-8 gap-4">
+              <FileText className="w-12 h-12 text-blue-300" />
+              <p className="text-gray-600 text-sm text-center">Clique para abrir o atendimento completo com a ATA, follow-ups e detalhes.</p>
+              <Button
+                onClick={() => setShowAtendimentoModal(true)}
+                className="bg-blue-600 hover:bg-blue-700 text-white gap-2"
+              >
+                <FileText className="w-4 h-4" />
+                Abrir Atendimento / ATA
+              </Button>
+            </div>
           )}
         </div>
 
@@ -328,5 +345,13 @@ export default function ProximoPassoModal({ passo, onClose, onSaved }) {
         </div>
       </div>
     </div>
+
+    {showAtendimentoModal && passo.consultoria_atendimento_id && (
+      <AtendimentoModal
+        atendimentoId={passo.consultoria_atendimento_id}
+        onClose={() => setShowAtendimentoModal(false)}
+      />
+    )}
+    </>
   );
 }
