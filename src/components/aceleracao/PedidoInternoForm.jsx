@@ -42,19 +42,6 @@ export default function PedidoInternoForm({ pedido, user, usuarios, onCancel, on
     }
   });
 
-  const { data: colaboradoresInternos = [] } = useQuery({
-    queryKey: ['colaboradores-internos', user?.data?.consulting_firm_id],
-    queryFn: async () => {
-      if (!user?.data?.consulting_firm_id) return [];
-      const employees = await base44.entities.Employee.filter({
-        tipo_vinculo: 'interno',
-        consulting_firm_id: user.data.consulting_firm_id
-      });
-      return employees || [];
-    },
-    enabled: !!user?.data?.consulting_firm_id
-  });
-
   const saveMutation = useMutation({
     mutationFn: async (data) => {
       if (pedido?.id) {
@@ -84,11 +71,11 @@ export default function PedidoInternoForm({ pedido, user, usuarios, onCancel, on
   };
 
   const handleResponsavelChange = (userId) => {
-    const emp = colaboradoresInternos.find(e => (e.user_id || e.id) === userId);
+    const usuario = usuarios.find(u => u.id === userId);
     setFormData({
       ...formData,
       responsavel_id: userId,
-      responsavel_nome: emp?.full_name || ''
+      responsavel_nome: usuario?.full_name || ''
     });
   };
 
@@ -174,9 +161,9 @@ export default function PedidoInternoForm({ pedido, user, usuarios, onCancel, on
                   <SelectValue placeholder="Selecione o responsável" />
                 </SelectTrigger>
                 <SelectContent>
-                  {colaboradoresInternos.map(emp => (
-                    <SelectItem key={emp.user_id || emp.id} value={emp.user_id || emp.id}>
-                      {emp.full_name} {emp.position ? `— ${emp.position}` : ''}
+                  {usuarios.filter(u => u.role === 'admin').map(u => (
+                    <SelectItem key={u.id} value={u.id}>
+                      {u.full_name}
                     </SelectItem>
                   ))}
                 </SelectContent>
