@@ -121,12 +121,30 @@ export default function TemplateBacklogSelector({ isOpen, onClose, onSelect, wor
   );
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.TemplateBacklog.create({
-      ...data,
-      ativo: true
-    }),
-    onSuccess: () => {
-      toast.success('Template criado com sucesso!');
+    mutationFn: async (data) => {
+      // Validação antes de enviar
+      if (!data.titulo?.trim()) throw new Error('Título é obrigatório');
+      if (!data.descricao?.trim()) throw new Error('Descrição é obrigatória');
+      
+      const payload = {
+        titulo: data.titulo.trim(),
+        descricao: data.descricao.trim(),
+        categoria: data.categoria?.trim() || '',
+        prioridade: data.prioridade || 'media',
+        impacto: data.impacto || 'entrega',
+        ativo: true,
+        workshop_id: workshopId || null
+      };
+      
+      console.log('Criando template:', payload);
+      const result = await base44.entities.TemplateBacklog.create(payload);
+      console.log('Template criado:', result);
+      
+      if (!result?.id) throw new Error('Falha ao salvar template no banco de dados');
+      return result;
+    },
+    onSuccess: (data) => {
+      toast.success(`Template "${data.titulo}" criado com sucesso!`);
       queryClient.invalidateQueries({ queryKey: ['template-backlog', workshopId] });
       setShowCreateForm(false);
       setNewTemplate({
@@ -138,7 +156,8 @@ export default function TemplateBacklogSelector({ isOpen, onClose, onSelect, wor
       });
     },
     onError: (error) => {
-      toast.error(error?.message || 'Erro ao criar template');
+      console.error('Erro na criação:', error);
+      toast.error(error?.message || 'Erro ao criar template. Tente novamente.');
     }
   });
 
@@ -183,10 +202,15 @@ export default function TemplateBacklogSelector({ isOpen, onClose, onSelect, wor
 
   const handleCreateTemplate = (e) => {
     e.preventDefault();
-    if (!newTemplate.titulo || !newTemplate.descricao) {
-      toast.error('Título e descrição são obrigatórios');
+    if (!newTemplate.titulo?.trim()) {
+      toast.error('Título é obrigatório');
       return;
     }
+    if (!newTemplate.descricao?.trim()) {
+      toast.error('Descrição é obrigatória');
+      return;
+    }
+    console.log('Iniciando criação com dados:', newTemplate);
     createMutation.mutate(newTemplate);
   };
 
