@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import PedidoInternoMediaUpload from "./PedidoInternoMediaUpload";
 
 export default function PedidoInternoForm({ pedido, user, usuarios = [], onCancel, onSuccess }) {
   const [formData, setFormData] = useState({
@@ -31,7 +32,8 @@ export default function PedidoInternoForm({ pedido, user, usuarios = [], onCance
     status: pedido?.status || 'pendente',
     prioridade: pedido?.prioridade || 'media',
     impacto_cliente: pedido?.impacto_cliente || 'medio',
-    resposta: pedido?.resposta || ''
+    resposta: pedido?.resposta || '',
+    midias_anexas: pedido?.midias_anexas || []
   });
 
   const { data: workshops = [] } = useQuery({
@@ -244,6 +246,11 @@ export default function PedidoInternoForm({ pedido, user, usuarios = [], onCance
               />
             </div>
           )}
+
+          <PedidoInternoMediaUpload
+            medias={formData.midias_anexas}
+            onMediasChange={(midias) => setFormData({...formData, midias_anexas: midias})}
+          />
 
           <div className="flex gap-3 justify-end pt-4 border-t">
             <Button type="button" variant="outline" onClick={onCancel}>
