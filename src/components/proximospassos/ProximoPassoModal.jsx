@@ -15,7 +15,7 @@ import EvidenciasUploader from "./EvidenciasUploader";
 import ProgressBarExecucao from "./ProgressBarExecucao";
 import ClienteDataTab from "./ClienteDataTab";
 import AtaViewTab from "./AtaViewTab";
-import AtendimentoModal from "@/components/aceleracao/AtendimentoModal";
+import AtaLeituraModal from "./AtaLeituraModal";
 
 const STATUS_OPTIONS = [
   { value: "pendente",             label: "Pendente" },
@@ -300,13 +300,13 @@ export default function ProximoPassoModal({ passo, onClose, onSaved }) {
           {activeTab === "ata" && passo.consultoria_atendimento_id && (
             <div className="flex flex-col items-center justify-center py-8 gap-4">
               <FileText className="w-12 h-12 text-blue-300" />
-              <p className="text-gray-600 text-sm text-center">Clique para abrir o atendimento completo com a ATA, follow-ups e detalhes.</p>
+              <p className="text-gray-600 text-sm text-center">Clique para visualizar a ATA desta reunião.</p>
               <Button
                 onClick={() => setShowAtendimentoModal(true)}
                 className="bg-blue-600 hover:bg-blue-700 text-white gap-2"
               >
                 <FileText className="w-4 h-4" />
-                Abrir Atendimento / ATA
+                Visualizar ATA
               </Button>
             </div>
           )}
@@ -346,8 +346,9 @@ export default function ProximoPassoModal({ passo, onClose, onSaved }) {
       </div>
     </div>
 
-    {showAtendimentoModal && passo.consultoria_atendimento_id && (
-      <AtendimentoModal
+    {showAtendimentoModal && (
+      <AtaLeituraModal
+        ataId={passo.ata_id}
         atendimentoId={passo.consultoria_atendimento_id}
         onClose={() => setShowAtendimentoModal(false)}
       />
