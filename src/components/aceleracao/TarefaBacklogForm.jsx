@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Zap } from "lucide-react";
 import { toast } from "sonner";
+import TemplateBacklogSelector from "./TemplateBacklogSelector";
 import {
   Select,
   SelectContent,
@@ -17,6 +18,7 @@ import {
 } from "@/components/ui/select";
 
 export default function TarefaBacklogForm({ tarefa, user, workshops, onCancel, onSuccess }) {
+  const [showTemplateSelector, setShowTemplateSelector] = useState(false);
   const [formData, setFormData] = useState({
     cliente_id: tarefa?.cliente_id || '',
     cliente_nome: tarefa?.cliente_nome || '',
@@ -93,14 +95,38 @@ export default function TarefaBacklogForm({ tarefa, user, workshops, onCancel, o
     });
   };
 
+  const handleTemplateSelect = (templateData) => {
+    setFormData({
+      ...formData,
+      titulo: templateData.titulo,
+      descricao: templateData.descricao,
+      prioridade: templateData.prioridade,
+      impacto: templateData.impacto
+    });
+    toast.success('Template aplicado com sucesso!');
+  };
+
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" onClick={onCancel}>
-            <ArrowLeft className="w-4 h-4" />
-          </Button>
-          <CardTitle>{tarefa ? 'Editar Tarefa' : 'Nova Tarefa no Backlog'}</CardTitle>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="sm" onClick={onCancel}>
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
+            <CardTitle>{tarefa ? 'Editar Tarefa' : 'Nova Tarefa no Backlog'}</CardTitle>
+          </div>
+          {!tarefa && (
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setShowTemplateSelector(true)}
+              className="gap-2"
+            >
+              <Zap className="w-4 h-4" />
+              Usar Template
+            </Button>
+          )}
         </div>
       </CardHeader>
       <CardContent>
@@ -279,6 +305,13 @@ export default function TarefaBacklogForm({ tarefa, user, workshops, onCancel, o
           </div>
         </form>
       </CardContent>
+
+      <TemplateBacklogSelector
+        isOpen={showTemplateSelector}
+        onClose={() => setShowTemplateSelector(false)}
+        onSelect={handleTemplateSelect}
+        workshopId={formData.cliente_id}
+      />
     </Card>
   );
 }

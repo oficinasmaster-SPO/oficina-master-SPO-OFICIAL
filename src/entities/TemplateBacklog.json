@@ -1,0 +1,57 @@
+{
+  "name": "TemplateBacklog",
+  "type": "object",
+  "properties": {
+    "titulo": {
+      "type": "string",
+      "description": "Título do template de tarefa"
+    },
+    "descricao": {
+      "type": "string",
+      "description": "Descrição padrão da tarefa"
+    },
+    "prioridade": {
+      "type": "string",
+      "enum": ["baixa", "media", "alta", "critica"],
+      "default": "media",
+      "description": "Prioridade padrão"
+    },
+    "impacto": {
+      "type": "string",
+      "enum": ["financeiro", "entrega", "satisfacao", "multiplo"],
+      "description": "Tipo de impacto padrão"
+    },
+    "categoria": {
+      "type": "string",
+      "description": "Categoria/tema do template (ex: Processos, Comercial, RH)"
+    },
+    "workshop_id": {
+      "type": "string",
+      "description": "ID do workshop (deixar em branco para template geral)"
+    },
+    "ativo": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se o template está ativo"
+    }
+  },
+  "required": ["titulo", "descricao", "prioridade"],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": true,
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
