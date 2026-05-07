@@ -10,6 +10,7 @@ import { ArrowLeft, History, CheckCircle, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import PedidoInternoVisualizador from "./PedidoInternoVisualizador";
 
 const STATUS_LABELS = {
   pendente: { label: "Pendente", className: "bg-gray-100 text-gray-800" },
@@ -178,6 +179,9 @@ export default function PedidoInternoResponder({ pedido, user, onCancel, onSucce
           )}
         </CardContent>
       </Card>
+
+      {/* Anexos */}
+      <PedidoInternoVisualizador pedido={pedido} />
 
       {/* Histórico */}
       {pedido?.historico?.length > 0 && (

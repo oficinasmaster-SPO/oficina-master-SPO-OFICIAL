@@ -96,6 +96,8 @@ export default function PedidoInternoMediaUpload({ medias = [], onMediasChange }
     }
   };
 
+  const isImage = (tipo) => tipo === 'imagem';
+
   return (
     <div className="space-y-4">
       <Label>Anexos e Links (Imagens, Documentos, Links)</Label>
@@ -121,7 +123,7 @@ export default function PedidoInternoMediaUpload({ medias = [], onMediasChange }
             />
           </label>
         </p>
-        <p className="text-xs text-gray-500">Ou copie e cole imagens diretamente aqui</p>
+        <p className="text-xs text-gray-500">Ou copie e cole imagens direto aqui (Ctrl+V / Cmd+V)</p>
       </div>
 
       <div className="flex gap-2">
@@ -144,36 +146,70 @@ export default function PedidoInternoMediaUpload({ medias = [], onMediasChange }
 
       {medias.length > 0 && (
         <Card className="p-4">
-          <p className="text-sm font-semibold mb-3">
+          <p className="text-sm font-semibold mb-4">
             Anexos ({medias.length})
           </p>
-          <div className="space-y-2">
-            {medias.map((media, idx) => (
-              <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 rounded border">
-                <div className="flex items-center gap-2 min-w-0">
-                  {getIcon(media.type)}
-                  <a
-                    href={media.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-primary hover:underline truncate"
-                    title={media.nome}
-                  >
-                    {media.nome}
-                  </a>
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => removeMedia(idx)}
-                  className="text-red-500 hover:text-red-700"
-                >
-                  <X className="w-4 h-4" />
-                </Button>
+          
+          {/* Grid de imagens */}
+          {medias.filter(m => isImage(m.type)).length > 0 && (
+            <div className="mb-6">
+              <p className="text-xs text-gray-600 mb-2 font-medium">Imagens</p>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {medias.filter(m => isImage(m.type)).map((media, idx) => (
+                  <div key={idx} className="relative group">
+                    <img
+                      src={media.url}
+                      alt={media.nome}
+                      className="w-full h-24 object-cover rounded border border-gray-200"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeMedia(medias.indexOf(media))}
+                      className="absolute top-1 right-1 bg-red-500 hover:bg-red-700 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X className="w-3 h-3" />
+                    </Button>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+          )}
+
+          {/* Lista de outros anexos */}
+          {medias.filter(m => !isImage(m.type)).length > 0 && (
+            <div>
+              <p className="text-xs text-gray-600 mb-2 font-medium">Documentos e Links</p>
+              <div className="space-y-2">
+                {medias.filter(m => !isImage(m.type)).map((media, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 rounded border">
+                    <div className="flex items-center gap-2 min-w-0">
+                      {getIcon(media.type)}
+                      <a
+                        href={media.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary hover:underline truncate"
+                        title={media.nome}
+                      >
+                        {media.nome}
+                      </a>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeMedia(medias.indexOf(media))}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </Card>
       )}
     </div>
