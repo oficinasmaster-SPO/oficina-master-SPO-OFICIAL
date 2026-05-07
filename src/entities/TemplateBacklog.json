@@ -10,11 +10,15 @@
       "type": "string",
       "description": "Descrição detalhada do template"
     },
+    "categoria": {
+      "type": "string",
+      "description": "Categoria da tarefa (ex: Cursos, Processos, etc)"
+    },
     "prioridade": {
       "type": "string",
       "enum": ["baixa", "media", "alta", "critica"],
       "default": "media",
-      "description": "Prioridade padrão do template"
+      "description": "Nível de prioridade"
     },
     "impacto": {
       "type": "string",
@@ -24,40 +28,50 @@
     "passos": {
       "type": "array",
       "items": {
-        "type": "string"
+        "type": "object",
+        "properties": {
+          "ordem": {
+            "type": "integer"
+          },
+          "descricao": {
+            "type": "string"
+          },
+          "tempo_estimado_horas": {
+            "type": "number"
+          }
+        }
       },
       "default": [],
-      "description": "Lista de passos/checklist do template"
+      "description": "Passos procedurais do template"
     },
     "workshop_id": {
       "type": "string",
-      "description": "ID da oficina (se template específico de cliente)"
+      "description": "ID da oficina (para templates customizados)"
+    },
+    "isDefault": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se é um template padrão do sistema"
+    },
+    "ativo": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se o template está ativo"
     }
   },
-  "required": ["titulo", "descricao", "prioridade"],
+  "required": ["titulo", "descricao"],
   "rls": {
-    "create": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "workshop_id": "{{user.data.workshop_id}}"
-        }
-      ]
-    },
+    "create": true,
     "read": true,
     "update": {
       "$or": [
         {
+          "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
           "user_condition": {
             "role": "admin"
           }
-        },
-        {
-          "created_by": "{{user.email}}"
         }
       ]
     },
