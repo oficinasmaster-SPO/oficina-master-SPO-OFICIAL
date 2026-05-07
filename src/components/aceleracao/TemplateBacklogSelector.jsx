@@ -257,12 +257,13 @@ export default function TemplateBacklogSelector({ isOpen, onClose, onSelect, wor
                       </button>
                       {template.id && !template.id.startsWith('template-') && (
                         <Button
-                          variant="ghost"
+                          variant="outline"
                           size="sm"
                           onClick={() => handleEditTemplate(template)}
-                          className="gap-2 flex-shrink-0"
+                          className="gap-2 flex-shrink-0 hover:bg-amber-50 hover:border-amber-300"
                         >
                           <Edit2 className="w-4 h-4" />
+                          <span className="hidden sm:inline text-xs">Editar</span>
                         </Button>
                       )}
                     </div>
@@ -274,8 +275,8 @@ export default function TemplateBacklogSelector({ isOpen, onClose, onSelect, wor
         </div>
 
         {/* Form de Edição */}
-        {editingTemplate && !updateMutation.isPending && (
-          <div className="border-t pt-4 mt-4 max-h-[500px] overflow-y-auto">
+        {editingTemplate && (
+          <div className="border-t pt-4 mt-4 max-h-[500px] overflow-y-auto bg-amber-50 p-4 rounded">
             <h3 className="font-semibold mb-3">Editar Template</h3>
             <form onSubmit={handleSaveTemplate} className="space-y-3">
               <div>
