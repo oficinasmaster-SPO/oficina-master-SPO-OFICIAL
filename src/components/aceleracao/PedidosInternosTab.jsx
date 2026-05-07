@@ -152,6 +152,7 @@ export default function PedidosInternosTab({ user }) {
       <PedidoInternoForm
         pedido={editingPedido}
         user={user}
+        usuarios={usuarios}
         onCancel={() => { setShowForm(false); setEditingPedido(null); }}
         onSuccess={onFormClose}
       />

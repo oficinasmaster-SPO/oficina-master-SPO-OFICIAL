@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-export default function PedidoInternoForm({ pedido, user, usuarios, onCancel, onSuccess }) {
+export default function PedidoInternoForm({ pedido, user, usuarios = [], onCancel, onSuccess }) {
   const [formData, setFormData] = useState({
     tipo: pedido?.tipo || 'apoio_tecnico',
     titulo: pedido?.titulo || '',
