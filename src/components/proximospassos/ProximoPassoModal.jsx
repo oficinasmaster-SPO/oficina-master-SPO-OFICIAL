@@ -14,8 +14,7 @@ import ProximoPassoTimeline from "./ProximoPassoTimeline";
 import EvidenciasUploader from "./EvidenciasUploader";
 import ProgressBarExecucao from "./ProgressBarExecucao";
 import ClienteDataTab from "./ClienteDataTab";
-import AtaViewTab from "./AtaViewTab";
-import AtaLeituraModal from "./AtaLeituraModal";
+import VisualizarAtaModal from "@/components/aceleracao/VisualizarAtaModal";
 
 const STATUS_OPTIONS = [
   { value: "pendente",             label: "Pendente" },
@@ -46,7 +45,7 @@ export default function ProximoPassoModal({ passo, onClose, onSaved }) {
   const [prioridade, setPrioridade] = useState(passo.prioridade || "media");
   const [observacoes, setObservacoes] = useState(passo.observacoes_consultor || "");
   const [evidencias, setEvidencias] = useState(passo.evidencias || []);
-  const [showAtendimentoModal, setShowAtendimentoModal] = useState(false);
+  const [ataParaVisualizar, setAtaParaVisualizar] = useState(null);
 
   const handleSave = async () => {
     setSaving(true);
@@ -293,16 +292,27 @@ export default function ProximoPassoModal({ passo, onClose, onSaved }) {
             </div>
           )}
 
-          {activeTab === "ata" && !passo.consultoria_atendimento_id && passo.ata_id && (
-            <AtaViewTab passo={passo} />
-          )}
-
-          {activeTab === "ata" && passo.consultoria_atendimento_id && (
+          {activeTab === "ata" && (passo.ata_id || passo.consultoria_atendimento_id) && (
             <div className="flex flex-col items-center justify-center py-8 gap-4">
               <FileText className="w-12 h-12 text-blue-300" />
               <p className="text-gray-600 text-sm text-center">Clique para visualizar a ATA desta reunião.</p>
               <Button
-                onClick={() => setShowAtendimentoModal(true)}
+                onClick={async () => {
+                  try {
+                    let ataData = null;
+                    if (passo.ata_id) {
+                      ataData = await base44.entities.MeetingMinutes.get(passo.ata_id);
+                    } else {
+                      const results = await base44.entities.MeetingMinutes.filter(
+                        { atendimento_id: passo.consultoria_atendimento_id }, '-created_date', 1
+                      );
+                      if (results?.length > 0) ataData = results[0];
+                    }
+                    if (ataData) setAtaParaVisualizar(ataData);
+                  } catch (e) {
+                    console.error("Erro ao carregar ATA:", e);
+                  }
+                }}
                 className="bg-blue-600 hover:bg-blue-700 text-white gap-2"
               >
                 <FileText className="w-4 h-4" />
@@ -346,11 +356,10 @@ export default function ProximoPassoModal({ passo, onClose, onSaved }) {
       </div>
     </div>
 
-    {showAtendimentoModal && (
-      <AtaLeituraModal
-        ataId={passo.ata_id}
-        atendimentoId={passo.consultoria_atendimento_id}
-        onClose={() => setShowAtendimentoModal(false)}
+    {ataParaVisualizar && (
+      <VisualizarAtaModal
+        ata={ataParaVisualizar}
+        onClose={() => setAtaParaVisualizar(null)}
       />
     )}
     </>
