@@ -7,11 +7,18 @@ import { base44 } from "@/api/base44Client";
 import NotificationSchedulerModal from "@/components/aceleracao/NotificationSchedulerModal";
 import TemplateAtendimentoModal from "@/components/aceleracao/TemplateAtendimentoModal";
 import ClientDetailPanel from "@/components/aceleracao/ClientDetailPanel";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerClose } from "@/components/ui/drawer";
+import TarefaBacklogForm from "@/components/aceleracao/TarefaBacklogForm";
+import PedidoInternoForm from "@/components/aceleracao/PedidoInternoForm";
 
 export default function AdvancedOptionsSection({ formData, setFormData, workshops }) {
   const [showNotificationModal, setShowNotificationModal] = useState(false);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [showConsultoriasPanel, setShowConsultoriasPanel] = useState(false);
+  const [showTarefaDrawer, setShowTarefaDrawer] = useState(false);
+  const [showPedidoDrawer, setShowPedidoDrawer] = useState(false);
+  const [tarefasVinculadas, setTarefasVinculadas] = useState([]);
+  const [pedidosVinculados, setPedidosVinculados] = useState([]);
 
   return (
     <>
@@ -54,6 +61,36 @@ export default function AdvancedOptionsSection({ formData, setFormData, workshop
           >
             <ExternalLink className="w-4 h-4 mr-2" />
             📋 Ver Detalhes da Oficina
+          </Button>
+
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full justify-start"
+            onClick={() => {
+              if (!formData.workshop_id) {
+                toast.error("Selecione uma oficina primeiro");
+                return;
+              }
+              setShowPedidoDrawer(true);
+            }}
+          >
+            📌 + Novo Pedido Interno
+          </Button>
+
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full justify-start"
+            onClick={() => {
+              if (!formData.workshop_id) {
+                toast.error("Selecione uma oficina primeiro");
+                return;
+              }
+              setShowTarefaDrawer(true);
+            }}
+          >
+            ✅ + Nova Tarefa
           </Button>
 
           {formData.workshop_id && (
@@ -127,6 +164,60 @@ export default function AdvancedOptionsSection({ formData, setFormData, workshop
           processos={[]}
           defaultTab="consultoria"
         />
+      )}
+
+      {/* Drawer Tarefa Backlog */}
+      {showTarefaDrawer && (
+        <Drawer open={showTarefaDrawer} onOpenChange={setShowTarefaDrawer}>
+          <DrawerContent className="max-h-[90vh]">
+            <DrawerHeader>
+              <DrawerTitle>Criar Nova Tarefa</DrawerTitle>
+              <DrawerClose />
+            </DrawerHeader>
+            <div className="overflow-y-auto p-4">
+              <TarefaBacklogForm
+                defaultValues={{
+                  cliente_id: formData.workshop_id,
+                  consultor_id: formData.consultor_id,
+                  origem: formData.status === 'em_andamento' ? 'reuniao' : 'manual',
+                }}
+                onSuccess={(tarefaId) => {
+                  setTarefasVinculadas([...tarefasVinculadas, tarefaId]);
+                  setShowTarefaDrawer(false);
+                  toast.success(`✅ Tarefa vinculada ao atendimento!`);
+                }}
+                onCancel={() => setShowTarefaDrawer(false)}
+              />
+            </div>
+          </DrawerContent>
+        </Drawer>
+      )}
+
+      {/* Drawer Pedido Interno */}
+      {showPedidoDrawer && (
+        <Drawer open={showPedidoDrawer} onOpenChange={setShowPedidoDrawer}>
+          <DrawerContent className="max-h-[90vh]">
+            <DrawerHeader>
+              <DrawerTitle>Criar Novo Pedido Interno</DrawerTitle>
+              <DrawerClose />
+            </DrawerHeader>
+            <div className="overflow-y-auto p-4">
+              <PedidoInternoForm
+                defaultValues={{
+                  cliente_id: formData.workshop_id,
+                  cliente_nome: workshops?.find(w => w.id === formData.workshop_id)?.name,
+                  responsavel_id: formData.consultor_id,
+                }}
+                onSuccess={(pedidoId) => {
+                  setPedidosVinculados([...pedidosVinculados, pedidoId]);
+                  setShowPedidoDrawer(false);
+                  toast.success(`📋 Pedido vinculado ao atendimento!`);
+                }}
+                onCancel={() => setShowPedidoDrawer(false)}
+              />
+            </div>
+          </DrawerContent>
+        </Drawer>
       )}
     </>
   );
