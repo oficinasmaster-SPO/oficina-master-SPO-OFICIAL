@@ -354,16 +354,25 @@ export default function BacklogDashboard({ user }) {
                           </Badge>
                         </td>
                         <td className="p-3">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              setEditingTarefa(tarefa);
-                              setShowForm(true);
-                            }}
-                          >
-                            Editar
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => setViewingTarefa(tarefa)}
+                            >
+                              Ver
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setEditingTarefa(tarefa);
+                                setShowForm(true);
+                              }}
+                            >
+                              Editar
+                            </Button>
+                          </div>
                         </td>
                       </tr>
                     );
