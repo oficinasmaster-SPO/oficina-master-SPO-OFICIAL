@@ -1,16 +1,42 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import { X, ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function PedidoInternoVisualizador({ pedido }) {
   const [imagemExpandida, setImagemExpandida] = useState(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const medias = pedido?.midias_anexas || [];
-  
-  if (!medias || medias.length === 0) return null;
-
   const imagens = medias.filter(m => m.type === 'imagem');
   const documentos = medias.filter(m => m.type !== 'imagem');
+
+  // Navegação com setas do teclado
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (!imagemExpandida) return;
+      if (e.key === 'ArrowLeft') irParaAnterior();
+      if (e.key === 'ArrowRight') irProxima();
+      if (e.key === 'Escape') setImagemExpandida(null);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [imagemExpandida, currentImageIndex]);
+
+  if (!medias || medias.length === 0) return null;
+
+  const irProxima = () => {
+    if (currentImageIndex < imagens.length - 1) {
+      setCurrentImageIndex(currentImageIndex + 1);
+      setImagemExpandida(imagens[currentImageIndex + 1]);
+    }
+  };
+
+  const irParaAnterior = () => {
+    if (currentImageIndex > 0) {
+      setCurrentImageIndex(currentImageIndex - 1);
+      setImagemExpandida(imagens[currentImageIndex - 1]);
+    }
+  };
 
   return (
     <Card className="mt-6">
@@ -26,7 +52,10 @@ export default function PedidoInternoVisualizador({ pedido }) {
               {imagens.map((media, idx) => (
                 <button
                   key={idx}
-                  onClick={() => setImagemExpandida(media)}
+                  onClick={() => {
+                    setCurrentImageIndex(idx);
+                    setImagemExpandida(media);
+                  }}
                   className="relative group rounded border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow"
                 >
                   <img
@@ -74,28 +103,69 @@ export default function PedidoInternoVisualizador({ pedido }) {
         )}
       </CardContent>
 
-      {/* Modal de imagem expandida */}
-      {imagemExpandida && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={() => setImagemExpandida(null)}>
-          <Card className="max-w-2xl max-h-[90vh] overflow-hidden">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-sm truncate">{imagemExpandida.nome}</CardTitle>
+      {/* Modal de galeria com navegação */}
+      {imagemExpandida && imagens.length > 0 && (
+        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => setImagemExpandida(null)}>
+          <div className="relative w-full h-full max-w-4xl max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="text-white">
+                <h3 className="font-semibold truncate max-w-xs">{imagemExpandida.nome}</h3>
+                <p className="text-sm text-gray-300">{currentImageIndex + 1} / {imagens.length}</p>
+              </div>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setImagemExpandida(null)}
+                className="text-white hover:bg-white/10"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </Button>
-            </CardHeader>
-            <CardContent>
+            </div>
+
+            {/* Imagem */}
+            <div className="flex-1 flex items-center justify-center overflow-auto">
               <img
                 src={imagemExpandida.url}
                 alt={imagemExpandida.nome}
-                className="w-full h-auto rounded"
+                className="max-w-full max-h-full object-contain"
               />
-            </CardContent>
-          </Card>
+            </div>
+
+            {/* Navegação */}
+            {imagens.length > 1 && (
+              <div className="flex items-center justify-center gap-4 mt-4">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={irParaAnterior}
+                  disabled={currentImageIndex === 0}
+                  className="text-white hover:bg-white/10 disabled:opacity-50"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </Button>
+
+                <span className="text-white text-sm font-medium min-w-12 text-center">
+                  {currentImageIndex + 1}/{imagens.length}
+                </span>
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={irProxima}
+                  disabled={currentImageIndex === imagens.length - 1}
+                  className="text-white hover:bg-white/10 disabled:opacity-50"
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </Button>
+              </div>
+            )}
+
+            {/* Dica de teclado */}
+            <p className="text-center text-xs text-gray-400 mt-3">
+              Use ← → para navegar ou ESC para fechar
+            </p>
+          </div>
         </div>
       )}
     </Card>
