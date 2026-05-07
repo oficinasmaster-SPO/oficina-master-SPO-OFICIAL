@@ -27,6 +27,7 @@ export default function AtaViewTab({ passo }) {
         // PRIORIDADE 2: buscar do atendimento (fallback legado)
         else if (passo.consultoria_atendimento_id) {
           console.log('⚠️ AtaViewTab: Tentando fallback via consultoria_atendimento_id:', passo.consultoria_atendimento_id);
+          // Tenta via ConsultoriaAtendimento primeiro
           try {
             const atendimento = await base44.entities.ConsultoriaAtendimento.get(
               passo.consultoria_atendimento_id
@@ -34,8 +35,27 @@ export default function AtaViewTab({ passo }) {
             console.log('✅ AtaViewTab: Atendimento encontrado, ata_id:', atendimento?.ata_id);
             ataId = atendimento?.ata_id;
           } catch (atendimentoErr) {
-            console.error('❌ AtaViewTab: Atendimento não encontrado:', atendimentoErr.message);
-            setErro("Atendimento foi deletado e ATA não está vinculada a este passo");
+            console.warn('⚠️ AtaViewTab: Atendimento deletado, tentando buscar ATA direto no MeetingMinutes...');
+          }
+
+          // Fallback: buscar direto no MeetingMinutes pelo atendimento_id
+          if (!ataId) {
+            try {
+              const atas = await base44.entities.MeetingMinutes.filter(
+                { atendimento_id: passo.consultoria_atendimento_id },
+                '-created_date',
+                1
+              );
+              if (atas?.length > 0) {
+                console.log('✅ AtaViewTab: ATA encontrada direto no MeetingMinutes:', atas[0].id);
+                setAta(atas[0]);
+                setLoading(false);
+                return;
+              }
+            } catch (e) {
+              console.warn('⚠️ AtaViewTab: Fallback MeetingMinutes também falhou:', e.message);
+            }
+            setErro("ATA não encontrada — o atendimento foi removido e nenhuma ATA está vinculada a este passo.");
             setLoading(false);
             return;
           }
