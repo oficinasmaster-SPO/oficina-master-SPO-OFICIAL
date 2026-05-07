@@ -169,18 +169,13 @@ export default function AdvancedOptionsSection({ formData, setFormData, workshop
       {/* Drawer Tarefa Backlog */}
       {showTarefaDrawer && (
         <Drawer open={showTarefaDrawer} onOpenChange={setShowTarefaDrawer}>
-          <DrawerContent className="max-h-[90vh]">
+          <DrawerContent className="max-h-[90vh] flex flex-col">
             <DrawerHeader>
               <DrawerTitle>Criar Nova Tarefa</DrawerTitle>
               <DrawerClose />
             </DrawerHeader>
-            <div className="overflow-y-auto p-4">
+            <div className="overflow-y-auto flex-1 px-4">
               <TarefaBacklogForm
-                defaultValues={{
-                  cliente_id: formData.workshop_id,
-                  consultor_id: formData.consultor_id,
-                  origem: formData.status === 'em_andamento' ? 'reuniao' : 'manual',
-                }}
                 onSuccess={(tarefaId) => {
                   setTarefasVinculadas([...tarefasVinculadas, tarefaId]);
                   setShowTarefaDrawer(false);
@@ -196,18 +191,15 @@ export default function AdvancedOptionsSection({ formData, setFormData, workshop
       {/* Drawer Pedido Interno */}
       {showPedidoDrawer && (
         <Drawer open={showPedidoDrawer} onOpenChange={setShowPedidoDrawer}>
-          <DrawerContent className="max-h-[90vh]">
+          <DrawerContent className="max-h-[90vh] flex flex-col">
             <DrawerHeader>
               <DrawerTitle>Criar Novo Pedido Interno</DrawerTitle>
               <DrawerClose />
             </DrawerHeader>
-            <div className="overflow-y-auto p-4">
+            <div className="overflow-y-auto flex-1 px-4">
               <PedidoInternoForm
-                defaultValues={{
-                  cliente_id: formData.workshop_id,
-                  cliente_nome: workshops?.find(w => w.id === formData.workshop_id)?.name,
-                  responsavel_id: formData.consultor_id,
-                }}
+                user={formData}
+                usuarios={[]}
                 onSuccess={(pedidoId) => {
                   setPedidosVinculados([...pedidosVinculados, pedidoId]);
                   setShowPedidoDrawer(false);

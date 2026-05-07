@@ -58,9 +58,9 @@ export default function TarefaBacklogForm({ tarefa, user, workshops, onCancel, o
       }
       return await base44.entities.TarefaBacklog.create(data);
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast.success(tarefa?.id ? 'Tarefa atualizada!' : 'Tarefa criada!');
-      onSuccess();
+      onSuccess(data?.id);
     },
     onError: (error) => {
       toast.error('Erro ao salvar tarefa');

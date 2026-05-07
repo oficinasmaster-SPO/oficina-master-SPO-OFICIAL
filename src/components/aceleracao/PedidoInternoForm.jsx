@@ -51,9 +51,9 @@ export default function PedidoInternoForm({ pedido, user, usuarios = [], onCance
       }
       return await base44.entities.PedidoInterno.create(data);
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast.success(pedido?.id ? 'Pedido atualizado!' : 'Pedido criado!');
-      onSuccess();
+      onSuccess(data?.id);
     },
     onError: (error) => {
       toast.error('Erro ao salvar pedido');
