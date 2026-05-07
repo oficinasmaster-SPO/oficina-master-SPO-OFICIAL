@@ -120,17 +120,54 @@
     "notas": {
       "type": "string",
       "description": "Notas adicionais"
+    },
+    "notificacao_criacao_enviada": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se notifica\u00e7\u00e3o de cria\u00e7\u00e3o foi enviada ao respons\u00e1vel"
+    },
+    "notificacao_atribuicao_enviada": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se notifica\u00e7\u00e3o de mudan\u00e7a de atribui\u00e7\u00e3o foi enviada"
+    },
+    "notificacao_status_enviada": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se notifica\u00e7\u00e3o de mudan\u00e7a de status foi enviada ao criador"
+    },
+    "notificacao_bloqueio_enviada": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se notifica\u00e7\u00e3o de bloqueio foi enviada ao criador"
+    },
+    "notificacao_conclusao_enviada": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se notifica\u00e7\u00e3o de conclus\u00e3o foi enviada ao criador"
+    },
+    "notificacao_prazo_proximo_enviada": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se notifica\u00e7\u00e3o de prazo pr\u00f3ximo foi enviada ao respons\u00e1vel"
+    },
+    "notificacao_vencimento_enviada": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se notifica\u00e7\u00e3o de vencimento foi enviada ao respons\u00e1vel"
+    },
+    "ultima_notificacao_status_em": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data da \u00faltima notifica\u00e7\u00e3o de status para debounce"
     }
   },
   "required": [
     "cliente_id",
     "consultor_id",
-    "criado_por_id",
-    "atribuido_para_id",
     "titulo",
     "origem",
     "prazo",
-    "status",
     "prioridade",
     "tempo_estimado_horas"
   ],
