@@ -12,73 +12,50 @@
     },
     "categoria": {
       "type": "string",
-      "description": "Categoria da tarefa (ex: Cursos, Processos, etc)"
+      "description": "Categoria da tarefa"
     },
     "prioridade": {
       "type": "string",
       "enum": ["baixa", "media", "alta", "critica"],
-      "default": "media",
-      "description": "Nível de prioridade"
+      "default": "media"
     },
     "impacto": {
       "type": "string",
       "enum": ["financeiro", "entrega", "satisfacao", "multiplo"],
-      "description": "Tipo de impacto no cliente"
+      "default": "entrega"
     },
     "passos": {
       "type": "array",
       "items": {
         "type": "object",
         "properties": {
-          "ordem": {
-            "type": "integer"
-          },
-          "descricao": {
-            "type": "string"
-          },
-          "tempo_estimado_horas": {
-            "type": "number"
-          }
+          "ordem": {"type": "integer"},
+          "descricao": {"type": "string"},
+          "tempo_estimado_horas": {"type": "number"}
         }
       },
-      "default": [],
-      "description": "Passos procedurais do template"
+      "default": []
     },
     "workshop_id": {
       "type": "string",
-      "description": "ID da oficina (para templates customizados)"
+      "description": "ID da oficina (customizado)"
     },
     "isDefault": {
       "type": "boolean",
-      "default": false,
-      "description": "Se é um template padrão do sistema"
+      "default": false
     },
     "ativo": {
       "type": "boolean",
-      "default": true,
-      "description": "Se o template está ativo"
+      "default": true
     }
   },
   "required": ["titulo", "descricao"],
   "rls": {
     "create": true,
     "read": true,
-    "update": {
-      "$or": [
-        {
-          "workshop_id": "{{user.data.workshop_id}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    },
+    "update": true,
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "user_condition": {"role": "admin"}
     }
   }
 }
