@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Clock, CheckCircle, AlertTriangle, FileText } from "lucide-react";
 import PedidoInternoForm from "./PedidoInternoForm";
+import PedidoInternoResponder from "./PedidoInternoResponder";
 import BacklogDashboard from "./BacklogDashboard";
 import PedidosFilters from "./PedidosFilters";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -97,6 +98,10 @@ export default function PedidosInternosTab({ user }) {
     setShowForm(true);
   };
 
+  // Responsável vê tela de resposta; solicitante/admin vê tela de edição
+  const isResponsavel = (pedido) =>
+    pedido.responsavel_id === user?.id && pedido.solicitante_id !== user?.id;
+
   const handleChangeStatus = async (pedidoId, newStatus) => {
     const updateData = { status: newStatus };
     if (newStatus === 'concluido') {
@@ -124,21 +129,31 @@ export default function PedidosInternosTab({ user }) {
     concluido: filteredPedidos.filter(p => p.status === 'concluido')
   };
 
+  const onFormClose = () => {
+    setShowForm(false);
+    setEditingPedido(null);
+    queryClient.invalidateQueries({ queryKey: ['pedidos-internos'] });
+  };
+
+  // Responsável (não solicitante) vê tela de resposta
+  if (showForm && editingPedido && editingPedido.responsavel_id === user?.id && editingPedido.solicitante_id !== user?.id) {
+    return (
+      <PedidoInternoResponder
+        pedido={editingPedido}
+        user={user}
+        onCancel={() => { setShowForm(false); setEditingPedido(null); }}
+        onSuccess={onFormClose}
+      />
+    );
+  }
+
   if (showForm) {
     return (
       <PedidoInternoForm
         pedido={editingPedido}
         user={user}
-        usuarios={usuarios}
-        onCancel={() => {
-          setShowForm(false);
-          setEditingPedido(null);
-        }}
-        onSuccess={() => {
-          setShowForm(false);
-          setEditingPedido(null);
-          queryClient.invalidateQueries({ queryKey: ['pedidos-internos'] });
-        }}
+        onCancel={() => { setShowForm(false); setEditingPedido(null); }}
+        onSuccess={onFormClose}
       />
     );
   }
