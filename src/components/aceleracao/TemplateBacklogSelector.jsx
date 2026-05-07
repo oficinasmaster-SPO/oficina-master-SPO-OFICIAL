@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, Edit2 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
@@ -81,6 +81,7 @@ export default function TemplateBacklogSelector({ isOpen, onClose, onSelect, wor
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState(null);
   const [newTemplate, setNewTemplate] = useState({
     titulo: '',
     descricao: '',
@@ -138,6 +139,24 @@ export default function TemplateBacklogSelector({ isOpen, onClose, onSelect, wor
     }
   });
 
+  const updateMutation = useMutation({
+    mutationFn: (data) => base44.entities.TemplateBacklog.update(data.id, {
+      titulo: data.titulo,
+      descricao: data.descricao,
+      prioridade: data.prioridade,
+      impacto: data.impacto,
+      categoria: data.categoria
+    }),
+    onSuccess: () => {
+      toast.success('Template atualizado com sucesso!');
+      queryClient.invalidateQueries({ queryKey: ['template-backlog', workshopId] });
+      setEditingTemplate(null);
+    },
+    onError: (error) => {
+      toast.error(error?.message || 'Erro ao atualizar template');
+    }
+  });
+
   const handleSelect = (template) => {
     onSelect({
       titulo: template.titulo,
@@ -156,6 +175,19 @@ export default function TemplateBacklogSelector({ isOpen, onClose, onSelect, wor
       return;
     }
     createMutation.mutate(newTemplate);
+  };
+
+  const handleEditTemplate = (template) => {
+    setEditingTemplate({ ...template });
+  };
+
+  const handleSaveTemplate = (e) => {
+    e.preventDefault();
+    if (!editingTemplate.titulo || !editingTemplate.descricao) {
+      toast.error('Título e descrição são obrigatórios');
+      return;
+    }
+    updateMutation.mutate(editingTemplate);
   };
 
   return (
@@ -202,13 +234,15 @@ export default function TemplateBacklogSelector({ isOpen, onClose, onSelect, wor
             ) : (
               <div className="space-y-3">
                 {filtered.map((template) => (
-                  <button
+                  <div
                     key={template.id}
-                    onClick={() => handleSelect(template)}
-                    className="w-full p-4 border rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-all text-left"
+                    className="p-4 border rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-all"
                   >
                     <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
+                      <button
+                        onClick={() => handleSelect(template)}
+                        className="flex-1 text-left"
+                      >
                         <h3 className="font-semibold text-gray-900">{template.titulo}</h3>
                         <p className="text-sm text-gray-600 line-clamp-2">{template.descricao}</p>
                         <div className="flex gap-2 mt-2">
@@ -220,14 +254,112 @@ export default function TemplateBacklogSelector({ isOpen, onClose, onSelect, wor
                             <Badge className="bg-purple-100 text-purple-700">{template.impacto}</Badge>
                           )}
                         </div>
-                      </div>
+                      </button>
+                      {template.id && !template.id.startsWith('template-') && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditTemplate(template)}
+                          className="gap-2 flex-shrink-0"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </Button>
+                      )}
                     </div>
-                  </button>
+                  </div>
                 ))}
               </div>
             )}
           </ScrollArea>
         </div>
+
+        {/* Form de Edição */}
+        {editingTemplate && !updateMutation.isPending && (
+          <div className="border-t pt-4 mt-4 max-h-[500px] overflow-y-auto">
+            <h3 className="font-semibold mb-3">Editar Template</h3>
+            <form onSubmit={handleSaveTemplate} className="space-y-3">
+              <div>
+                <Label className="text-xs">Título *</Label>
+                <Input
+                  placeholder="Ex: Diagnosticar Processo de Vendas"
+                  value={editingTemplate.titulo}
+                  onChange={(e) => setEditingTemplate({...editingTemplate, titulo: e.target.value})}
+                  className="text-sm"
+                />
+              </div>
+
+              <div>
+                <Label className="text-xs">Descrição *</Label>
+                <Textarea
+                  placeholder="Descrição detalhada da tarefa..."
+                  value={editingTemplate.descricao}
+                  onChange={(e) => setEditingTemplate({...editingTemplate, descricao: e.target.value})}
+                  rows={3}
+                  className="text-sm"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-xs">Categoria</Label>
+                  <Input
+                    placeholder="Ex: Processos"
+                    value={editingTemplate.categoria || ''}
+                    onChange={(e) => setEditingTemplate({...editingTemplate, categoria: e.target.value})}
+                    className="text-sm"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Prioridade</Label>
+                  <Select value={editingTemplate.prioridade} onValueChange={(value) => setEditingTemplate({...editingTemplate, prioridade: value})}>
+                    <SelectTrigger className="text-sm h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="baixa">Baixa</SelectItem>
+                      <SelectItem value="media">Média</SelectItem>
+                      <SelectItem value="alta">Alta</SelectItem>
+                      <SelectItem value="critica">Crítica</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-xs">Impacto</Label>
+                <Select value={editingTemplate.impacto} onValueChange={(value) => setEditingTemplate({...editingTemplate, impacto: value})}>
+                  <SelectTrigger className="text-sm h-9">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="financeiro">Financeiro</SelectItem>
+                    <SelectItem value="entrega">Entrega</SelectItem>
+                    <SelectItem value="satisfacao">Satisfação</SelectItem>
+                    <SelectItem value="multiplo">Múltiplo</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex gap-2 justify-end pt-2">
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => setEditingTemplate(null)}
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  type="submit" 
+                  size="sm"
+                  disabled={updateMutation.isPending}
+                >
+                  {updateMutation.isPending ? 'Salvando...' : 'Salvar'}
+                </Button>
+              </div>
+            </form>
+          </div>
+        )}
 
         {/* Form de Criação Rápida */}
         {showCreateForm && !createMutation.isPending && (
