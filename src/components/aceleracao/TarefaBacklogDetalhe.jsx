@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, User, Calendar, Clock, Tag, AlertCircle, FileText } from "lucide-react";
+import { ArrowLeft, User, Calendar, Clock, Tag, AlertCircle, FileText, CheckCircle } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
 
 const STATUS_CONFIG = {
   aberta:      { label: "Aberta",       className: "bg-gray-100 text-gray-800" },
@@ -76,7 +77,7 @@ function TimelineItem({ evento }) {
   );
 }
 
-export default function TarefaBacklogDetalhe({ tarefa, onVoltar, onEditar }) {
+export default function TarefaBacklogDetalhe({ tarefa, onVoltar, onEditar, onConcluir }) {
   const [criadoPorNome, setCriadoPorNome] = useState(null);
 
   // Buscar nome de quem criou a tarefa
@@ -94,6 +95,25 @@ export default function TarefaBacklogDetalhe({ tarefa, onVoltar, onEditar }) {
     };
     buscarNomeCriador();
   }, [tarefa.criado_por_id]);
+
+  // Mutation para concluir tarefa
+  const concludirMutation = useMutation({
+    mutationFn: async () => {
+      return await base44.entities.TarefaBacklog.update(tarefa.id, {
+        status: 'concluida',
+        data_conclusao: new Date().toISOString()
+      });
+    },
+    onSuccess: () => {
+      toast.success('Tarefa concluída com sucesso!');
+      if (onConcluir) onConcluir();
+      onVoltar();
+    },
+    onError: (error) => {
+      toast.error('Erro ao concluir tarefa');
+      console.error(error);
+    }
+  });
 
   const { data: historico = [], isLoading: loadingHistorico } = useQuery({
     queryKey: ["tarefa-historico", tarefa.id],
@@ -121,11 +141,25 @@ export default function TarefaBacklogDetalhe({ tarefa, onVoltar, onEditar }) {
           <h2 className="text-xl font-bold">{tarefa.titulo}</h2>
           <p className="text-sm text-gray-500">ID: {tarefa.id}</p>
         </div>
-        {onEditar && (
-          <Button variant="outline" size="sm" onClick={() => onEditar(tarefa)}>
-            Editar
-          </Button>
-        )}
+        <div className="flex gap-2">
+          {tarefa.status !== 'concluida' && (
+            <Button 
+              variant="default" 
+              size="sm"
+              onClick={() => concludirMutation.mutate()}
+              disabled={concludirMutation.isPending}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              <CheckCircle className="w-4 h-4 mr-1" />
+              {concludirMutation.isPending ? 'Concluindo...' : 'Concluir Tarefa'}
+            </Button>
+          )}
+          {onEditar && (
+            <Button variant="outline" size="sm" onClick={() => onEditar(tarefa)}>
+              Editar
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="grid md:grid-cols-3 gap-6">
