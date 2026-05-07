@@ -50,7 +50,10 @@ export default function TemplateBacklogSelector({ isOpen, onClose, onSelect, wor
   );
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.TemplateBacklog.create(data),
+    mutationFn: (data) => base44.entities.TemplateBacklog.create({
+      ...data,
+      ativo: true
+    }),
     onSuccess: () => {
       toast.success('Template criado com sucesso!');
       queryClient.invalidateQueries({ queryKey: ['template-backlog', workshopId] });
@@ -63,8 +66,8 @@ export default function TemplateBacklogSelector({ isOpen, onClose, onSelect, wor
         categoria: ''
       });
     },
-    onError: () => {
-      toast.error('Erro ao criar template');
+    onError: (error) => {
+      toast.error(error?.message || 'Erro ao criar template');
     }
   });
 
@@ -117,10 +120,16 @@ export default function TemplateBacklogSelector({ isOpen, onClose, onSelect, wor
           </div>
 
           <ScrollArea className="h-[400px] border rounded-lg p-4">
-            {filtered.length === 0 ? (
+            {templates.length === 0 && !showCreateForm ? (
               <div className="flex flex-col items-center justify-center h-full text-gray-500">
                 <Search className="w-8 h-8 mb-2 opacity-50" />
                 <p>Nenhum template encontrado</p>
+                <p className="text-xs mt-2">Clique em "Criar" para adicionar um novo</p>
+              </div>
+            ) : filtered.length === 0 && templates.length > 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-gray-500">
+                <Search className="w-8 h-8 mb-2 opacity-50" />
+                <p>Nenhum resultado para sua busca</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -153,8 +162,8 @@ export default function TemplateBacklogSelector({ isOpen, onClose, onSelect, wor
         </div>
 
         {/* Form de Criação Rápida */}
-        {showCreateForm && (
-          <div className="border-t pt-4 mt-4">
+        {showCreateForm && !createMutation.isPending && (
+          <div className="border-t pt-4 mt-4 max-h-[500px] overflow-y-auto">
             <h3 className="font-semibold mb-3">Criar Novo Template</h3>
             <form onSubmit={handleCreateTemplate} className="space-y-3">
               <div>
