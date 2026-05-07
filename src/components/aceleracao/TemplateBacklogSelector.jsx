@@ -92,12 +92,12 @@ export default function TemplateBacklogSelector({ isOpen, onClose, onSelect, wor
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto flex flex-col">
         <DialogHeader>
           <DialogTitle>Selecionar Template de Tarefa</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-4 flex-1 overflow-y-auto">
           <div className="flex gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
