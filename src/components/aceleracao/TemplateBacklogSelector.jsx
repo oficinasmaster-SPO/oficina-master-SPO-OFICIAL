@@ -26,6 +26,7 @@ const TEMPLATES_PADRAO = [
     descricao: "Garantir que o cliente tenha acesso completo ao curso PPR na plataforma Quizify.",
     prioridade: "media",
     impacto: "entrega",
+    isDefault: true,
     passos: [
       "Validar se o acesso foi liberado corretamente",
       "Confirmar se o cliente conseguiu logar na plataforma",
@@ -42,6 +43,7 @@ const TEMPLATES_PADRAO = [
     descricao: "Entrar em contato com o cliente para entender a percepção dele sobre o projeto/programa e identificar oportunidades de melhoria.",
     prioridade: "alta",
     impacto: "satisfacao",
+    isDefault: true,
     passos: [
       "Entrar em contato com o cliente (ligação ou WhatsApp)",
       "Perguntar como está a experiência com o programa",
@@ -58,6 +60,7 @@ const TEMPLATES_PADRAO = [
     descricao: "Atender o cliente de forma consultiva, entendendo profundamente sua necessidade e direcionando a melhor solução.",
     prioridade: "media",
     impacto: "satisfacao",
+    isDefault: true,
     passos: [
       "Entrar em contato com o cliente",
       "Escutar ativamente a demanda",
@@ -255,7 +258,7 @@ export default function TemplateBacklogSelector({ isOpen, onClose, onSelect, wor
                           )}
                         </div>
                       </button>
-                      {template.id && !template.id.startsWith('template-') && (
+                      {!template.isDefault && (
                         <Button
                           variant="outline"
                           size="sm"
