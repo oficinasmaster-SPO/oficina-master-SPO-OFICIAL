@@ -125,9 +125,12 @@
   "required": [
     "cliente_id",
     "consultor_id",
+    "criado_por_id",
+    "atribuido_para_id",
     "titulo",
     "origem",
     "prazo",
+    "status",
     "prioridade",
     "tempo_estimado_horas"
   ],

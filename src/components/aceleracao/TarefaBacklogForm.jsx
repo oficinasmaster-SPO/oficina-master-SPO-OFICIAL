@@ -22,6 +22,8 @@ export default function TarefaBacklogForm({ tarefa, user, workshops, onCancel, o
     cliente_nome: tarefa?.cliente_nome || '',
     consultor_id: tarefa?.consultor_id || user?.id,
     consultor_nome: tarefa?.consultor_nome || user?.full_name,
+    criado_por_id: tarefa?.criado_por_id || user?.id,
+    atribuido_para_id: tarefa?.atribuido_para_id || user?.id,
     titulo: tarefa?.titulo || '',
     descricao: tarefa?.descricao || '',
     origem: tarefa?.origem || 'manual',

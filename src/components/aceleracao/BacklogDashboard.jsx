@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, AlertCircle, TrendingUp, Clock } from "lucide-react";
 import TarefaBacklogForm from "./TarefaBacklogForm";
+import TarefaBacklogDetalhe from "./TarefaBacklogDetalhe";
 import BacklogFilters from "./BacklogFilters";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -13,6 +14,7 @@ import { ptBR } from "date-fns/locale";
 export default function BacklogDashboard({ user }) {
   const [showForm, setShowForm] = useState(false);
   const [editingTarefa, setEditingTarefa] = useState(null);
+  const [viewingTarefa, setViewingTarefa] = useState(null);
   const [filters, setFilters] = useState({
     search: '',
     consultor: 'all',
@@ -139,6 +141,20 @@ export default function BacklogDashboard({ user }) {
     };
     return badges[status] || badges.aberta;
   };
+
+  if (viewingTarefa) {
+    return (
+      <TarefaBacklogDetalhe
+        tarefa={viewingTarefa}
+        onVoltar={() => setViewingTarefa(null)}
+        onEditar={(t) => {
+          setViewingTarefa(null);
+          setEditingTarefa(t);
+          setShowForm(true);
+        }}
+      />
+    );
+  }
 
   if (showForm) {
     return (
