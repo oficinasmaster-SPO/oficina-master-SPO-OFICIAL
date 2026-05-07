@@ -13,16 +13,29 @@ Deno.serve(async (req) => {
     const ata_id = event.entity_id;
     const ata_data = data;
     const workshop_id = ata_data?.workshop_id;
+    const consulting_firm_id = ata_data?.consulting_firm_id || null;
+    const consultor_id = ata_data?.consultor_id || null;
 
     if (!ata_id || !workshop_id) {
       return Response.json({ error: 'Missing ata_id or workshop_id' }, { status: 400 });
     }
 
-    // Chamar funcao de sincronizacao
+    // Buscar consulting_firm_id via Workshop se não vier na ATA
+    let resolved_consulting_firm_id = consulting_firm_id;
+    if (!resolved_consulting_firm_id && workshop_id) {
+      try {
+        const workshops = await base44.asServiceRole.entities.Workshop.filter({ id: workshop_id });
+        resolved_consulting_firm_id = workshops?.[0]?.consulting_firm_id || null;
+      } catch (_) {}
+    }
+
+    // Chamar funcao de sincronizacao com todos os campos necessários
     await base44.functions.invoke('syncProximosPassosToTasks', {
       ata_id,
       ata_data,
-      workshop_id
+      workshop_id,
+      consulting_firm_id: resolved_consulting_firm_id,
+      consultor_id
     });
 
     return Response.json({
