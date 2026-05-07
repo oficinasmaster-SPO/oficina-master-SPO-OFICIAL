@@ -786,7 +786,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
   return (
     <>
       <Dialog open onOpenChange={() => {}}>
-        <DialogContent hideClose className="p-0 flex flex-col overflow-hidden relative" style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "50vw", maxWidth: "50vw", height: "94vh", maxHeight: "94vh", zIndex: 9999, margin: 0, borderRadius: "12px" }}>
+        <DialogContent hideClose className="p-0 flex flex-col overflow-hidden relative" style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "96vw", maxWidth: "96vw", height: "94vh", maxHeight: "94vh", zIndex: 9999, margin: 0, borderRadius: "12px" }}>
         {/* OVERLAY DE SALVAMENTO */}
         {saving && (
           <div className="absolute inset-0 bg-white/90 z-50 flex flex-col items-center justify-center gap-6">
@@ -1097,8 +1097,8 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
             </div>
           </div>
 
-          {/* RIGHT COLUMN - SIDEBAR (FULL WIDTH) */}
-          <div className="flex-1 border-l border-gray-200 bg-gradient-to-b from-white via-gray-50 to-gray-100 overflow-hidden flex flex-col shadow-[inset_-2px_0_8px_rgba(0,0,0,0.03)]">
+          {/* RIGHT COLUMN - SIDEBAR */}
+          <div className="w-80 xl:w-96 flex-shrink-0 border-l border-gray-200 bg-gradient-to-b from-white via-gray-50 to-gray-100 overflow-hidden flex flex-col shadow-[inset_-2px_0_8px_rgba(0,0,0,0.03)]">
             <Tabs defaultValue="atas" className="flex-1 flex flex-col">
               <TabsList className="grid w-full grid-cols-6 rounded-none border-b bg-white p-0 h-auto overflow-x-auto">
                 {[
