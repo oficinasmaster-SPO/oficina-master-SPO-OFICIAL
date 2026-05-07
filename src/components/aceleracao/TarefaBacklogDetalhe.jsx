@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -77,6 +77,24 @@ function TimelineItem({ evento }) {
 }
 
 export default function TarefaBacklogDetalhe({ tarefa, onVoltar, onEditar }) {
+  const [criadoPorNome, setCriadoPorNome] = useState(null);
+
+  // Buscar nome de quem criou a tarefa
+  useEffect(() => {
+    const buscarNomeCriador = async () => {
+      if (!tarefa.criado_por_id) return;
+      try {
+        const usuarios = await base44.entities.User.filter({ id: tarefa.criado_por_id });
+        if (usuarios.length > 0) {
+          setCriadoPorNome(usuarios[0].full_name || usuarios[0].email);
+        }
+      } catch (err) {
+        console.error("Erro ao buscar criador:", err);
+      }
+    };
+    buscarNomeCriador();
+  }, [tarefa.criado_por_id]);
+
   const { data: historico = [], isLoading: loadingHistorico } = useQuery({
     queryKey: ["tarefa-historico", tarefa.id],
     queryFn: async () => {
@@ -190,9 +208,12 @@ export default function TarefaBacklogDetalhe({ tarefa, onVoltar, onEditar }) {
                   <p className="text-sm font-medium">{tarefa.atribuido_para_id || "—"}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">Criado por</p>
-                  <p className="text-sm">{tarefa.criado_por_id || tarefa.created_by || "—"}</p>
-                </div>
+                    <p className="text-xs text-gray-500 mb-1">Criado por</p>
+                    <Badge variant="secondary" className="text-xs">
+                      <User className="w-3 h-3 mr-1" />
+                      {criadoPorNome || tarefa.created_by?.split('@')[0] || "—"}
+                    </Badge>
+                  </div>
                 <div>
                   <p className="text-xs text-gray-500 mb-1">Solicitante</p>
                   <p className="text-sm">{tarefa.solicitante_id || "—"}</p>
