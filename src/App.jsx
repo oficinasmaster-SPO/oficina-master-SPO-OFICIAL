@@ -37,6 +37,7 @@ const CentralFollowUp = lazy(() => import('@/pages/CentralFollowUp'));
 const ListagemClientesSprints = lazy(() => import('@/pages/ListagemClientesSprints'));
 const CentralProximosPassos = lazy(() => import('@/pages/CentralProximosPassos'));
 const ProximosPassosConsultoria = lazy(() => import('@/pages/ProximosPassosConsultoria'));
+const AdminTemplatesBacklog = lazy(() => import('@/pages/AdminTemplatesBacklog'));
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -177,6 +178,13 @@ const AuthenticatedApp = () => {
         <PageAccessControl adminOnly={true}>
           <LayoutWrapper currentPageName="AdminQADashboard">
             <QADashboard />
+          </LayoutWrapper>
+        </PageAccessControl>
+      } />
+      <Route path="/AdminTemplatesBacklog" element={
+        <PageAccessControl adminOnly={true}>
+          <LayoutWrapper currentPageName="AdminTemplatesBacklog">
+            <AdminTemplatesBacklog />
           </LayoutWrapper>
         </PageAccessControl>
       } />
