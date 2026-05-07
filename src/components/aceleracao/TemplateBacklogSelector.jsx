@@ -18,6 +18,65 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 
+// Templates padrão do sistema
+const TEMPLATES_PADRAO = [
+  {
+    id: 'template-ppr',
+    titulo: "Liberação do curso PPR na Quizify",
+    descricao: "Garantir que o cliente tenha acesso completo ao curso PPR na plataforma Quizify.",
+    prioridade: "media",
+    impacto: "entrega",
+    passos: [
+      "Validar se o acesso foi liberado corretamente",
+      "Confirmar se o cliente conseguiu logar na plataforma",
+      "Validar se ele está conseguindo navegar e utilizar 100%",
+      "Solicitar um print do acesso ao curso e anexar na tarefa como evidência",
+      "Confirmar se o cliente irá participar do Acelera Time",
+      "Orientar o cliente sobre o horário de atendimento (horário comercial) para suporte",
+      "Reforçar que, caso vá reunir a equipe, deve se antecipar caso precise de ajuda"
+    ]
+  },
+  {
+    id: 'template-posvenda',
+    titulo: "Pós-venda — Percepção do cliente",
+    descricao: "Entrar em contato com o cliente para entender a percepção dele sobre o projeto/programa e identificar oportunidades de melhoria.",
+    prioridade: "alta",
+    impacto: "satisfacao",
+    passos: [
+      "Entrar em contato com o cliente (ligação ou WhatsApp)",
+      "Perguntar como está a experiência com o programa",
+      "Entender o que ele mais gostou até agora",
+      "Identificar pontos de melhoria ou insatisfação",
+      "Perguntar como podemos contribuir mais com o resultado dele",
+      "Registrar feedback detalhado na tarefa",
+      "Sinalizar possíveis riscos ou oportunidades para o time"
+    ]
+  },
+  {
+    id: 'template-suporte',
+    titulo: "Suporte da consultoria",
+    descricao: "Atender o cliente de forma consultiva, entendendo profundamente sua necessidade e direcionando a melhor solução.",
+    prioridade: "media",
+    impacto: "satisfacao",
+    passos: [
+      "Entrar em contato com o cliente",
+      "Escutar ativamente a demanda",
+      "Utilizar o Mapa 3D (Dor, Dúvida, Desejo)",
+      "Aplicar os 5 porquês para encontrar a raiz do problema",
+      "Registrar detalhadamente a necessidade",
+      "🔧 SUPORTE DE TI: Entrar em contato via ligação ou WhatsApp",
+      "🔧 Se necessário, realizar call via Meet",
+      "🔧 Gravar a call",
+      "🔧 Ajudar o cliente com acesso, plataforma ou dificuldades técnicas",
+      "📈 SUPORTE DE TRÁFEGO: Agendar reunião com o cliente",
+      "📈 Realizar call via Meet",
+      "📈 Gravar a reunião",
+      "📈 Tirar dúvidas da equipe",
+      "📈 Alinhar estratégia e execução de tráfego"
+    ]
+  }
+];
+
 export default function TemplateBacklogSelector({ isOpen, onClose, onSelect, workshopId }) {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
@@ -33,12 +92,20 @@ export default function TemplateBacklogSelector({ isOpen, onClose, onSelect, wor
   const { data: templates = [] } = useQuery({
     queryKey: ['template-backlog', workshopId],
     queryFn: async () => {
-      const allTemplates = await base44.entities.TemplateBacklog.filter({
-        ativo: true
-      });
-      
-      // Filtrar: templates gerais OU específicos do workshop
-      return allTemplates.filter(t => !t.workshop_id || t.workshop_id === workshopId);
+      try {
+        const allTemplates = await base44.entities.TemplateBacklog.filter({
+          ativo: true
+        });
+        
+        // Filtrar: templates gerais OU específicos do workshop
+        const resultado = allTemplates.filter(t => !t.workshop_id || t.workshop_id === workshopId);
+        
+        // Se não houver, usar templates padrão
+        return resultado.length > 0 ? resultado : TEMPLATES_PADRAO;
+      } catch {
+        // Se BD falhar, usar templates padrão
+        return TEMPLATES_PADRAO;
+      }
     },
     enabled: isOpen
   });
@@ -76,7 +143,8 @@ export default function TemplateBacklogSelector({ isOpen, onClose, onSelect, wor
       titulo: template.titulo,
       descricao: template.descricao,
       prioridade: template.prioridade,
-      impacto: template.impacto
+      impacto: template.impacto,
+      ...(template.passos && { notas: template.passos.join('\n• ') })
     });
     onClose();
   };

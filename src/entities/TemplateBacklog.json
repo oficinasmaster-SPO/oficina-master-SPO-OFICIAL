@@ -8,45 +8,58 @@
     },
     "descricao": {
       "type": "string",
-      "description": "Descrição padrão da tarefa"
+      "description": "Descrição detalhada do template"
     },
     "prioridade": {
       "type": "string",
       "enum": ["baixa", "media", "alta", "critica"],
       "default": "media",
-      "description": "Prioridade padrão"
+      "description": "Prioridade padrão do template"
     },
     "impacto": {
       "type": "string",
       "enum": ["financeiro", "entrega", "satisfacao", "multiplo"],
-      "description": "Tipo de impacto padrão"
+      "description": "Tipo de impacto no cliente"
     },
-    "categoria": {
-      "type": "string",
-      "description": "Categoria/tema do template (ex: Processos, Comercial, RH)"
+    "passos": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Lista de passos/checklist do template"
     },
     "workshop_id": {
       "type": "string",
-      "description": "ID do workshop (deixar em branco para template geral)"
-    },
-    "ativo": {
-      "type": "boolean",
-      "default": true,
-      "description": "Se o template está ativo"
+      "description": "ID da oficina (se template específico de cliente)"
     }
   },
   "required": ["titulo", "descricao", "prioridade"],
   "rls": {
     "create": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        }
+      ]
     },
     "read": true,
     "update": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "created_by": "{{user.email}}"
+        }
+      ]
     },
     "delete": {
       "user_condition": {
