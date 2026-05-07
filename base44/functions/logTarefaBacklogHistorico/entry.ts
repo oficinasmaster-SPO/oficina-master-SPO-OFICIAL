@@ -100,6 +100,76 @@ Deno.serve(async (req) => {
           data_hora: now
         });
       }
+
+      // Mudança de título
+      if (old_data.titulo !== data?.titulo) {
+        historicos.push({
+          tarefa_id: tarefaId,
+          usuario_id: usuarioId,
+          usuario_nome: usuarioNome,
+          acao: 'EDICAO',
+          campo: 'titulo',
+          valor_anterior: old_data.titulo || null,
+          valor_novo: data?.titulo || null,
+          data_hora: now
+        });
+      }
+
+      // Mudança de descrição
+      if (old_data.descricao !== data?.descricao) {
+        historicos.push({
+          tarefa_id: tarefaId,
+          usuario_id: usuarioId,
+          usuario_nome: usuarioNome,
+          acao: 'EDICAO',
+          campo: 'descricao',
+          valor_anterior: old_data.descricao ? old_data.descricao.substring(0, 200) : null,
+          valor_novo: data?.descricao ? data.descricao.substring(0, 200) : null,
+          data_hora: now
+        });
+      }
+
+      // Mudança de impacto
+      if (old_data.impacto !== data?.impacto) {
+        historicos.push({
+          tarefa_id: tarefaId,
+          usuario_id: usuarioId,
+          usuario_nome: usuarioNome,
+          acao: 'EDICAO',
+          campo: 'impacto',
+          valor_anterior: old_data.impacto || null,
+          valor_novo: data?.impacto || null,
+          data_hora: now
+        });
+      }
+
+      // Mudança de tempo estimado
+      if (old_data.tempo_estimado_horas !== data?.tempo_estimado_horas) {
+        historicos.push({
+          tarefa_id: tarefaId,
+          usuario_id: usuarioId,
+          usuario_nome: usuarioNome,
+          acao: 'EDICAO',
+          campo: 'tempo_estimado_horas',
+          valor_anterior: old_data.tempo_estimado_horas != null ? String(old_data.tempo_estimado_horas) : null,
+          valor_novo: data?.tempo_estimado_horas != null ? String(data.tempo_estimado_horas) : null,
+          data_hora: now
+        });
+      }
+
+      // Mudança de motivo de bloqueio
+      if (old_data.motivo_bloqueio !== data?.motivo_bloqueio) {
+        historicos.push({
+          tarefa_id: tarefaId,
+          usuario_id: usuarioId,
+          usuario_nome: usuarioNome,
+          acao: 'EDICAO',
+          campo: 'motivo_bloqueio',
+          valor_anterior: old_data.motivo_bloqueio || null,
+          valor_novo: data?.motivo_bloqueio || null,
+          data_hora: now
+        });
+      }
     }
 
     // Persiste todos os registros de histórico
