@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft, Zap } from "lucide-react";
 import { toast } from "sonner";
 import TemplateBacklogSelector from "./TemplateBacklogSelector";
+import TarefaBacklogMediaUpload from "./TarefaBacklogMediaUpload";
 import {
   Select,
   SelectContent,
@@ -35,7 +36,8 @@ export default function TarefaBacklogForm({ tarefa, user, workshops, onCancel, o
     impacto: tarefa?.impacto || 'entrega',
     tempo_estimado_horas: tarefa?.tempo_estimado_horas || 0,
     motivo_bloqueio: tarefa?.motivo_bloqueio || '',
-    notas: tarefa?.notas || ''
+    notas: tarefa?.notas || '',
+    anexos: tarefa?.anexos || []
   });
 
   const { data: usuarios = [] } = useQuery({
@@ -294,6 +296,11 @@ export default function TarefaBacklogForm({ tarefa, user, workshops, onCancel, o
               rows={2}
             />
           </div>
+
+          <TarefaBacklogMediaUpload
+            anexos={formData.anexos}
+            onAnexosChange={(anexos) => setFormData({...formData, anexos})}
+          />
 
           <div className="flex gap-3 justify-end pt-4 border-t">
             <Button type="button" variant="outline" onClick={onCancel}>

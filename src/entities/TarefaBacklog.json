@@ -1,0 +1,258 @@
+{
+  "name": "TarefaBacklog",
+  "type": "object",
+  "properties": {
+    "cliente_id": {
+      "type": "string",
+      "description": "ID do cliente/workshop"
+    },
+    "cliente_nome": {
+      "type": "string",
+      "description": "Nome do cliente"
+    },
+    "consultor_id": {
+      "type": "string",
+      "description": "ID do consultor responsável"
+    },
+    "consultor_nome": {
+      "type": "string",
+      "description": "Nome do consultor"
+    },
+    "criado_por_id": {
+      "type": "string",
+      "description": "ID do usuário que criou a tarefa"
+    },
+    "solicitante_id": {
+      "type": "string",
+      "description": "ID do usuário solicitante (quem pediu a tarefa)"
+    },
+    "atribuido_para_id": {
+      "type": "string",
+      "description": "ID do usuário ao qual a tarefa foi atribuída"
+    },
+    "data_criacao": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data de criação da tarefa"
+    },
+    "data_atribuicao": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data em que a tarefa foi atribuída ao responsável"
+    },
+    "titulo": {
+      "type": "string",
+      "description": "Título da tarefa"
+    },
+    "descricao": {
+      "type": "string",
+      "description": "Descrição detalhada"
+    },
+    "origem": {
+      "type": "string",
+      "enum": [
+        "reuniao",
+        "contrato",
+        "pedido",
+        "diagnostico",
+        "manual"
+      ],
+      "description": "Origem da tarefa"
+    },
+    "origem_id": {
+      "type": "string",
+      "description": "ID do registro de origem (atendimento, pedido, etc)"
+    },
+    "prazo": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de prazo"
+    },
+    "prioridade": {
+      "type": "string",
+      "enum": [
+        "baixa",
+        "media",
+        "alta",
+        "critica"
+      ],
+      "default": "media",
+      "description": "Prioridade da tarefa"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "aberta",
+        "em_execucao",
+        "bloqueada",
+        "concluida"
+      ],
+      "default": "aberta",
+      "description": "Status atual"
+    },
+    "impacto": {
+      "type": "string",
+      "enum": [
+        "financeiro",
+        "entrega",
+        "satisfacao",
+        "multiplo"
+      ],
+      "description": "Tipo de impacto no cliente"
+    },
+    "motivo_bloqueio": {
+      "type": "string",
+      "description": "Motivo do bloqueio se status = bloqueada"
+    },
+    "data_conclusao": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data de conclusão"
+    },
+    "tempo_estimado_horas": {
+      "type": "number",
+      "description": "Tempo estimado em horas - OBRIGATÓRIO para cálculo de saturação"
+    },
+    "tempo_real_horas": {
+      "type": "number",
+      "description": "Tempo real gasto em horas"
+    },
+    "notas": {
+      "type": "string",
+      "description": "Notas adicionais"
+    },
+    "anexos": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "imagem",
+              "arquivo",
+              "link"
+            ],
+            "description": "Tipo do anexo"
+          },
+          "url": {
+            "type": "string",
+            "description": "URL do anexo"
+          },
+          "nome": {
+            "type": "string",
+            "description": "Nome amigável do anexo"
+          },
+          "uploaded_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data de upload/adição"
+          }
+        },
+        "required": [
+          "type",
+          "url",
+          "nome"
+        ]
+      },
+      "default": [],
+      "description": "Array de anexos: imagens, documentos e links"
+    },
+    "notificacao_criacao_enviada": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se notificação de criação foi enviada ao responsável"
+    },
+    "notificacao_atribuicao_enviada": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se notificação de mudança de atribuição foi enviada"
+    },
+    "notificacao_status_enviada": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se notificação de mudança de status foi enviada ao criador"
+    },
+    "notificacao_bloqueio_enviada": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se notificação de bloqueio foi enviada ao criador"
+    },
+    "notificacao_conclusao_enviada": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se notificação de conclusão foi enviada ao criador"
+    },
+    "notificacao_prazo_proximo_enviada": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se notificação de prazo próximo foi enviada ao responsável"
+    },
+    "notificacao_vencimento_enviada": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se notificação de vencimento foi enviada ao responsável"
+    },
+    "ultima_notificacao_status_em": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data da última notificação de status para debounce"
+    }
+  },
+  "required": [
+    "cliente_id",
+    "consultor_id",
+    "titulo",
+    "origem",
+    "prazo",
+    "prioridade",
+    "tempo_estimado_horas"
+  ],
+  "rls": {
+    "create": true,
+    "read": {
+      "$or": [
+        {
+          "consultor_id": "{{user.id}}"
+        },
+        {
+          "criado_por_id": "{{user.id}}"
+        },
+        {
+          "solicitante_id": "{{user.id}}"
+        },
+        {
+          "atribuido_para_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "consultor_id": "{{user.id}}"
+        },
+        {
+          "criado_por_id": "{{user.id}}"
+        },
+        {
+          "atribuido_para_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
