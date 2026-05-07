@@ -6,17 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, History, CheckCircle, XCircle, Clock } from "lucide-react";
+import { ArrowLeft, History, CheckCircle, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 const STATUS_LABELS = {
   pendente: { label: "Pendente", className: "bg-gray-100 text-gray-800" },
@@ -43,7 +36,6 @@ const PRIORIDADE_LABELS = {
 
 export default function PedidoInternoResponder({ pedido, user, onCancel, onSuccess }) {
   const [resposta, setResposta] = useState(pedido.resposta || "");
-  const [status, setStatus] = useState(pedido.status === 'pendente' ? 'em_analise' : pedido.status);
 
   const isReadOnly = pedido.status === 'concluido';
   const statusBadge = STATUS_LABELS[pedido.status] || STATUS_LABELS.pendente;
@@ -55,41 +47,35 @@ export default function PedidoInternoResponder({ pedido, user, onCancel, onSucce
       const historicoAtual = pedido.historico || [];
       const novasEntradas = [];
 
-      if (status !== pedido.status) {
-        novasEntradas.push({
-          acao: 'STATUS_CHANGE',
-          campo: 'status',
-          valor_anterior: pedido.status,
-          valor_novo: status,
-          usuario_id: user?.id,
-          usuario_nome: user?.full_name,
-          timestamp: now
-        });
-      }
+      novasEntradas.push({
+        acao: 'STATUS_CHANGE',
+        campo: 'status',
+        valor_anterior: pedido.status,
+        valor_novo: 'concluido',
+        usuario_id: user?.id,
+        usuario_nome: user?.full_name,
+        timestamp: now
+      });
 
-      if (resposta && resposta !== pedido.resposta) {
-        novasEntradas.push({
-          acao: 'RESPONSE',
-          campo: 'resposta',
-          valor_anterior: '',
-          valor_novo: resposta,
-          usuario_id: user?.id,
-          usuario_nome: user?.full_name,
-          timestamp: now
-        });
-      }
+      novasEntradas.push({
+        acao: 'RESPONSE',
+        campo: 'resposta',
+        valor_anterior: pedido.resposta || '',
+        valor_novo: resposta,
+        usuario_id: user?.id,
+        usuario_nome: user?.full_name,
+        timestamp: now
+      });
 
       const updateData = {
         resposta,
-        status,
+        status: 'concluido',
         historico: [...historicoAtual, ...novasEntradas],
+        data_conclusao: now,
       };
 
-      if (!pedido.data_primeira_resposta && resposta) {
+      if (!pedido.data_primeira_resposta) {
         updateData.data_primeira_resposta = now;
-      }
-      if (status === 'concluido' && pedido.status !== 'concluido') {
-        updateData.data_conclusao = now;
       }
 
       await base44.entities.PedidoInterno.update(pedido.id, updateData);
@@ -167,21 +153,6 @@ export default function PedidoInternoResponder({ pedido, user, onCancel, onSucce
             </div>
           ) : (
             <>
-              <div>
-                <Label>Decisão / Status</Label>
-                <Select value={status} onValueChange={setStatus}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="em_analise">Em Análise</SelectItem>
-                    <SelectItem value="aprovado">Aprovado</SelectItem>
-                    <SelectItem value="recusado">Recusado</SelectItem>
-                    <SelectItem value="concluido">Concluído</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
               <div>
                 <Label>Resposta / Resolução *</Label>
                 <Textarea
