@@ -188,6 +188,8 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
   // Alias para compatibilidade com código existente
   const allFollowUpsModal = allFollowUps;
 
+
+
   const idxAtual = filaReminders.findIndex(f => f.id === followUp?.id);
   const fuAnterior = idxAtual > 0 ? filaReminders[idxAtual - 1] : null;
   const fuProximo = idxAtual >= 0 && idxAtual < filaReminders.length - 1

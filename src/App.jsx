@@ -14,6 +14,7 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { TenantProvider } from '@/components/contexts/TenantContext';
 import { AttendanceTypeProvider } from '@/components/contexts/AttendanceTypeContext';
 import { TemplateLibraryProvider } from '@/components/aceleracao/contexts/TemplateLibraryContext';
+import { DraftPersistenceProvider } from '@/components/contexts/DraftPersistenceContext';
 import PageAccessControl from '@/components/auth/PageAccessControl';
 import { pagePermissions } from '@/components/lib/pagePermissions';
 import { PermissionsProvider } from '@/components/contexts/PermissionsContext';
@@ -228,12 +229,14 @@ function App() {
           <TenantProvider>
             <AttendanceTypeProvider>
               <TemplateLibraryProvider>
-              <Router>
-                <PermissionsProvider>
-                  <NavigationTracker />
-                  <AuthenticatedApp />
-                </PermissionsProvider>
-              </Router>
+                <DraftPersistenceProvider>
+                  <Router>
+                    <PermissionsProvider>
+                      <NavigationTracker />
+                      <AuthenticatedApp />
+                    </PermissionsProvider>
+                  </Router>
+                </DraftPersistenceProvider>
               </TemplateLibraryProvider>
               <Toaster />
               <SonnerToaster />
