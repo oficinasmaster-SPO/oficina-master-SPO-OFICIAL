@@ -20,6 +20,11 @@ import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/lib/AuthContext";
 import VisualizarAtaModal from "@/components/aceleracao/VisualizarAtaModal";
 import { useOperationalSync } from "@/hooks/useOperationalSync";
+import CronogramaTab from "@/components/aceleracao/CronogramaTab";
+import TrailsTab from "@/components/aceleracao/TrailsTab";
+import SprintsTab from "@/components/aceleracao/SprintsTab";
+import PedidosInternosTab from "@/components/aceleracao/PedidosInternosTab";
+import BacklogDashboard from "@/components/aceleracao/BacklogDashboard";
 
 const RESULTADO_COLORS = {
   atendeu: "bg-green-100 text-green-700 border-green-300",
@@ -1094,12 +1099,18 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
           {/* RIGHT COLUMN - SIDEBAR */}
           <div className="w-80 xl:w-96 flex-shrink-0 border-l border-gray-200 bg-gradient-to-b from-white via-gray-50 to-gray-100 overflow-hidden flex flex-col shadow-[inset_-2px_0_8px_rgba(0,0,0,0.03)]">
             <Tabs defaultValue="atas" className="flex-1 flex flex-col">
-              <TabsList className="grid w-full grid-cols-4 rounded-none border-b bg-white p-0 h-auto">
+              <TabsList className="grid w-full grid-cols-6 rounded-none border-b bg-white p-0 h-auto overflow-x-auto">
                 {[
                   { value: 'atas', label: 'Atas', onClick: undefined },
                   { value: 'followups', label: 'FUs', onClick: undefined },
                   { value: 'cliente', label: 'Cliente', onClick: undefined },
-                  { value: 'ia', label: '⚡ IA', onClick: () => { if (!chatInicializado) iniciarChat(); } },
+                  { value: 'cronograma', label: '📊 Cronograma', onClick: undefined },
+                  { value: 'trilhas', label: '🚀 Trilhas', onClick: undefined },
+                  { value: 'sprints', label: '⚡ Sprints', onClick: undefined },
+                  { value: 'proximospassos', label: '✓ Próximos Passos', onClick: undefined },
+                  { value: 'pedidos', label: '📋 Pedidos', onClick: undefined },
+                  { value: 'backlog', label: '📝 Backlog', onClick: undefined },
+                  { value: 'ia', label: '🤖 IA', onClick: () => { if (!chatInicializado) iniciarChat(); } },
                 ].map(tab => (
                   <TabsTrigger
                     key={tab.value}
@@ -1416,6 +1427,56 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
                   </div>
                 </div>
               </TabsContent>
+              <TabsContent value="cronograma" className="flex-1 overflow-y-auto px-3 py-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+                {followUp?.workshop_id ? (
+                  <CronogramaTab workshopId={followUp.workshop_id} />
+                ) : (
+                  <p className="text-xs text-gray-500 italic">Sem cronograma disponível</p>
+                )}
+              </TabsContent>
+
+              <TabsContent value="trilhas" className="flex-1 overflow-y-auto px-3 py-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+                {followUp?.workshop_id ? (
+                  <TrailsTab workshopId={followUp.workshop_id} />
+                ) : (
+                  <p className="text-xs text-gray-500 italic">Sem trilhas disponíveis</p>
+                )}
+              </TabsContent>
+
+              <TabsContent value="sprints" className="flex-1 overflow-y-auto px-3 py-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+                {followUp?.workshop_id ? (
+                  <SprintsTab workshopId={followUp.workshop_id} />
+                ) : (
+                  <p className="text-xs text-gray-500 italic">Sem sprints disponíveis</p>
+                )}
+              </TabsContent>
+
+              <TabsContent value="proximospassos" className="flex-1 overflow-y-auto px-3 py-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+                <div className="space-y-3">
+                  {proximoFU ? (
+                    <div className="text-xs text-gray-600 italic">Próximos passos associados ao cliente</div>
+                  ) : (
+                    <p className="text-xs text-gray-500 italic">Sem próximos passos registrados</p>
+                  )}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="pedidos" className="flex-1 overflow-y-auto px-3 py-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+                {followUp?.workshop_id ? (
+                  <PedidosInternosTab workshopId={followUp.workshop_id} />
+                ) : (
+                  <p className="text-xs text-gray-500 italic">Sem pedidos internos</p>
+                )}
+              </TabsContent>
+
+              <TabsContent value="backlog" className="flex-1 overflow-y-auto px-3 py-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+                {followUp?.workshop_id ? (
+                  <BacklogDashboard workshopId={followUp.workshop_id} consultorId={followUp.consultor_id} />
+                ) : (
+                  <p className="text-xs text-gray-500 italic">Sem backlog disponível</p>
+                )}
+              </TabsContent>
+
               <TabsContent value="ia" className="flex-1 overflow-hidden flex flex-col">
   
 
