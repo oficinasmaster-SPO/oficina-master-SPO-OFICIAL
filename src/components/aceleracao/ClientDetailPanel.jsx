@@ -15,8 +15,18 @@ import {
 import CloseButton from "@/components/ui/CloseButton";
 import ConsultoriaClienteTab from "./ConsultoriaClienteTab";
 import ClientHistoricoTimeline from "./ClientHistoricoTimeline";
+import { useOperationalSync } from "@/hooks/useOperationalSync";
 
 export default function ClientDetailPanel({ client, isOpen, onClose, atendimentos = [], processos = [], defaultTab = "geral" }) {
+  // Sincronizar com OperationalSyncManager
+  const { 
+    allSprints,
+    cronograma,
+    backlogTasks,
+    allFollowUps,
+    atas,
+  } = useOperationalSync(client?.id, null, null);
+
   const atendimentosCliente = client ? atendimentos.filter(a => a.workshop_id === client.id)
     .sort((a, b) => new Date(b.data_realizada || b.data_agendada) - new Date(a.data_realizada || a.data_agendada)) : [];
 

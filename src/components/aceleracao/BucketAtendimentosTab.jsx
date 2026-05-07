@@ -12,6 +12,7 @@ import { Calendar, Clock, Inbox, Loader2, CalendarPlus, Search, X } from "lucide
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { formatDateTimeBR } from "@/utils/timezone";
+import { useOperationalSync } from "@/hooks/useOperationalSync";
 
 const ITEMS_PER_PAGE = 15;
 
@@ -22,6 +23,9 @@ export default function BucketAtendimentosTab({ state }) {
   const [agendarForm, setAgendarForm] = useState({ data: '', hora: '', consultor_id: '' });
   const [currentPage, setCurrentPage] = useState(1);
   const [search, setSearch] = useState("");
+
+  // Sincronizar com OperationalSyncManager para workshops selecionados
+  const { invalidate: invalidateAll } = useOperationalSync(null, user?.id, user);
 
   // Fetch pending ContractAttendances (bucket items)
   const { data: bucketItems = [], isLoading } = useQuery({
@@ -65,6 +69,8 @@ export default function BucketAtendimentosTab({ state }) {
       toast.success("Atendimento agendado com sucesso!");
       queryClient.invalidateQueries({ queryKey: ['bucket-atendimentos'] });
       queryClient.invalidateQueries({ queryKey: ['atendimentos-acelerador'] });
+      // Sincronizar todos os dados operacionais
+      invalidateAll();
       setAgendarDialog({ open: false, item: null });
       setAgendarForm({ data: '', hora: '', consultor_id: '' });
       setCurrentPage(1);

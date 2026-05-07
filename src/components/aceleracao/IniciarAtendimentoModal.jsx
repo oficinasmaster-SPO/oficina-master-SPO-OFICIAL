@@ -16,8 +16,9 @@ import {
 import { format, isToday, parseISO } from "date-fns";
 import { toast } from "sonner";
 import { base44 } from "@/api/base44Client";
-import { useQueryClient, useQuery } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/AuthContext";
+import { useOperationalSync, OPERATIONAL_QUERY_KEYS } from "@/hooks/useOperationalSync";
 import VisualizarAtaModal from "@/components/aceleracao/VisualizarAtaModal";
 
 const RESULTADO_COLORS = {
@@ -172,43 +173,15 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
   const [chatInicializado, setChatInicializado] = useState(false);
   const chatEndRef = useRef(null);
 
-  // Fetch todos os follow-ups do cliente (must be before derived state that uses it)
-  const { data: allFollowUpsModal = [] } = useQuery({
-    queryKey: ["all-followups-modal", followUp?.workshop_id],
-    queryFn: async () => {
-      if (!followUp?.workshop_id) return [];
-      return base44.entities.FollowUpReminder.filter({ workshop_id: followUp.workshop_id }, "reminder_date", 50);
-    },
-    enabled: !!followUp?.workshop_id,
-    staleTime: 2 * 60 * 1000,
-  });
-
-  // Fetch atendimentos agendados do consultor hoje
-  const { data: atendimentosHojeModal = [] } = useQuery({
-    queryKey: ["atendimentos-hoje-modal", user?.id, today],
-    queryFn: async () => {
-      if (!user?.id) return [];
-      const todos = await base44.entities.ConsultoriaAtendimento.filter({ consultor_id: user.id }, "data_agendada", 50);
-      return todos.filter(a => {
-        if (!a.data_agendada) return false;
-        if (!['agendado', 'confirmado', 'reagendado'].includes(a.status)) return false;
-        try { return isToday(parseISO(a.data_agendada)); } catch { return false; }
-      });
-    },
-    enabled: !!user?.id,
-    staleTime: 2 * 60 * 1000,
-  });
-
-  // Fetch últimos atendimentos concluídos — contexto para IA
-  const { data: concluidosModal = [] } = useQuery({
-    queryKey: ["concluidos-ia-modal", followUp?.workshop_id],
-    queryFn: async () => {
-      if (!followUp?.workshop_id) return [];
-      return base44.entities.FollowUpConcluido.filter({ workshop_id: followUp.workshop_id }, "-completedAt", 5);
-    },
-    enabled: !!followUp?.workshop_id,
-    staleTime: 5 * 60 * 1000,
-  });
+  // Use centralized operational sync — single source of truth for all data
+  const {
+    allFollowUps,
+    completedFollowUps,
+    consultorAttendances,
+    atas,
+    workshop,
+    workshopOwner,
+  } = useOperationalSync(followUp?.workshop_id, user?.id, user);
 
   const idxAtual = filaReminders.findIndex(f => f.id === followUp?.id);
   const fuAnterior = idxAtual > 0 ? filaReminders[idxAtual - 1] : null;
@@ -221,7 +194,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
   const isSprintFUModal = followUp?.origin_type === 'sprint';
   const sprintLabelModal = followUp?.notes?.replace('Follow-up automático da sprint: ', '').trim() || null;
   const fusDaSprintModal = isSprintFUModal
-    ? allFollowUpsModal
+    ? allFollowUps
         .filter(f =>
           f.origin_type === 'sprint' &&
           f.sprint_id === followUp?.sprint_id &&
@@ -240,7 +213,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
     d.setDate(d.getDate() + (6 - d.getDay()));
     return d.toISOString().split('T')[0];
   })();
-  const fusDaSemanaModal = allFollowUpsModal.filter(f =>
+  const fusDaSemanaModal = allFollowUps.filter(f =>
     !f.is_completed &&
     f.id !== followUp?.id &&
     f.reminder_date >= inicioSemana &&
@@ -282,49 +255,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
     }
   }, [followUp?.id]);
 
-  // Fetch ATAs
-   const { data: atas = [] } = useQuery({
-     queryKey: ["atas-modal", followUp?.workshop_id],
-     queryFn: async () => {
-       if (!followUp?.workshop_id) return [];
-       return base44.entities.MeetingMinutes.filter(
-         { workshop_id: followUp.workshop_id },
-         "-meeting_date",
-         50
-       );
-     },
-     enabled: !!followUp?.workshop_id,
-   });
 
-   // Fetch Workshop
-   const { data: workshop = null } = useQuery({
-     queryKey: ["workshop-modal", followUp?.workshop_id],
-     queryFn: async () => {
-       if (!followUp?.workshop_id) return null;
-       const workshops = await base44.entities.Workshop.filter(
-         { id: followUp.workshop_id },
-         undefined,
-         1
-       );
-       return workshops[0] || null;
-     },
-     enabled: !!followUp?.workshop_id,
-   });
-
-   // Fetch Owner Employee
-   const { data: ownerEmployee = null } = useQuery({
-     queryKey: ["owner-employee-modal", workshop?.owner_id],
-     queryFn: async () => {
-       if (!workshop?.owner_id) return null;
-       const employees = await base44.entities.Employee.filter(
-         { user_id: workshop.owner_id },
-         undefined,
-         1
-       );
-       return employees[0] || null;
-     },
-     enabled: !!workshop?.owner_id,
-   });
 
   // Intervalo unificado — um único setInterval para timer e duração
   useEffect(() => {
@@ -423,11 +354,11 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
     setCarregandoDica(true);
     try {
       const resumoAtas = atas.slice(0, 3).map(a =>
-        `Ata (${a.tipo_aceleracao || a.tipo_atendimento || 'reunião'} - ${a.meeting_date || ''}): próximos passos: ${a.proximos_passos || 'não registrado'}`
-      ).join('\n');
-      const resumoConcluidos = concluidosModal.slice(0, 3).map(c =>
-        `Atendimento via ${c.canal || '?'}: resultado=${c.resultado || '?'}, humor=${c.humor || '?'}, comprometimentos=${c.compromissos || 'nenhum'}`
-      ).join('\n');
+         `Ata (${a.tipo_aceleracao || a.tipo_atendimento || 'reunião'} - ${a.meeting_date || ''}): próximos passos: ${a.proximos_passos || 'não registrado'}`
+       ).join('\n');
+       const resumoConcluidos = completedFollowUps.slice(0, 3).map(c =>
+         `Atendimento via ${c.canal || '?'}: resultado=${c.resultado || '?'}, humor=${c.humor || '?'}, comprometimentos=${c.compromissos || 'nenhum'}`
+       ).join('\n');
 
       // Cria conversa pontual dedicada à dica
       const convDica = await base44.agents.createConversation({
@@ -495,10 +426,10 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
 
   const buildSystemPrompt = () => {
     const resumoAtas = atas.slice(0, 5).map(a =>
-      `- ${a.tipo_aceleracao || a.tipo_atendimento || 'Reunião'} (${a.meeting_date || ''}): próximos passos: ${a.proximos_passos || 'não registrado'}`
+    `- ${a.tipo_aceleracao || a.tipo_atendimento || 'Reunião'} (${a.meeting_date || ''}): próximos passos: ${a.proximos_passos || 'não registrado'}`
     ).join('\n');
-    const resumoConcluidos = concluidosModal.slice(0, 3).map(c =>
-      `- Canal: ${c.canal || '?'} | Resultado: ${c.resultado || '?'} | Humor: ${c.humor || '?'} | Comprometimentos: ${c.compromissos || 'nenhum'}`
+    const resumoConcluidos = completedFollowUps.slice(0, 3).map(c =>
+    `- Canal: ${c.canal || '?'} | Resultado: ${c.resultado || '?'} | Humor: ${c.humor || '?'} | Comprometimentos: ${c.compromissos || 'nenhum'}`
     ).join('\n');
     return `Você é um assistente especializado em consultoria empresarial para oficinas mecânicas e negócios em aceleração. Seu papel é ajudar o consultor durante o atendimento de follow-up.\n\nCONTEXTO DO ATENDIMENTO\nCliente: ${followUp?.workshop_name}\nFollow-up: ${followUp?.sequence_number}/4\nConsultor: ${followUp?.consultor_nome || 'não informado'}\nData: ${followUp?.reminder_date || 'não informada'}\n\nÚLTIMAS ATAS:\n${resumoAtas || 'Nenhuma ata registrada'}\n\nÚLTIMOS ATENDIMENTOS:\n${resumoConcluidos || 'Nenhum atendimento anterior'}\n\nRegras:\n- Responda sempre em português brasileiro\n- Seja direto, prático e objetivo\n- Foque exclusivamente no cliente e contexto fornecido\n- Sugira abordagens e estratégias baseadas no histórico real do cliente\n- Seu escopo é: estratégia de atendimento, relacionamento com cliente, próximos passos, abordagem de follow-up, análise de humor e engajamento`;
   };
@@ -653,7 +584,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
       await new Promise(r => setTimeout(r, 650));
 
       // STEP 1b — Encerrar FUs concatenados com os mesmos dados
-      const fusParaConcatenar = fusConcatenados.length > 0 ? fusConcatenados : fusSemanaLocal.map(id => allFollowUpsModal.find(f => f.id === id)).filter(Boolean);
+      const fusParaConcatenar = fusConcatenados.length > 0 ? fusConcatenados : fusSemanaLocal.map(id => allFollowUps.find(f => f.id === id)).filter(Boolean);
       if (fusParaConcatenar.length > 0) {
         await Promise.all(fusParaConcatenar.map(fu =>
           Promise.all([
@@ -715,10 +646,9 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
       // Limpar rascunho
       localStorage.removeItem(`draft_atendimento_${followUp.id}`);
 
-      // Invalidar queries para refresh das listas
-      queryClient.invalidateQueries({ queryKey: ["follow-up-reminders"] });
-      queryClient.invalidateQueries({ queryKey: ["follow-up-reminders-tab"] });
-      queryClient.invalidateQueries({ queryKey: ["follow-up-concluidos-tab"] });
+      // Invalidar queries centralizadas para refresh
+      queryClient.invalidateQueries({ queryKey: OPERATIONAL_QUERY_KEYS.allFollowUps(followUp.workshop_id) });
+      queryClient.invalidateQueries({ queryKey: OPERATIONAL_QUERY_KEYS.completedFollowUps(followUp.workshop_id) });
 
       // Mostrar tela de confirmação
       setSaveSuccess({
@@ -1234,16 +1164,16 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
                 <div className="space-y-3">
 
                   {/* Card atendimentos do dia */}
-                  {atendimentosHojeModal.length > 0 && (
+                  {consultorAttendances.length > 0 && (
                     <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
                       <div className="flex items-center gap-2 mb-2">
                         <Bell className="w-3.5 h-3.5 text-blue-600" />
                         <p className="text-[10px] text-blue-700 uppercase tracking-wide font-bold">
-                          Seus atendimentos hoje ({atendimentosHojeModal.length})
+                          Seus atendimentos hoje ({consultorAttendances.length})
                         </p>
                       </div>
                       <div className="space-y-1.5">
-                        {atendimentosHojeModal.map(at => (
+                        {consultorAttendances.map(at => (
                           <div key={at.id} className="bg-white border border-blue-100 rounded-lg px-2.5 py-2 flex items-start gap-2">
                             <Video className="w-3.5 h-3.5 text-blue-500 flex-shrink-0 mt-0.5" />
                             <div className="flex-1 min-w-0">
@@ -1281,8 +1211,8 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
                         <span className="text-sm">🚀</span>
                         <p className="text-[10px] font-bold text-orange-800 uppercase tracking-wide flex-1">Follow-ups desta sprint</p>
                         <span className="text-[10px] text-orange-600 font-medium">
-                          {allFollowUpsModal.filter(f => f.sprint_id === followUp?.sprint_id && f.origin_type === 'sprint' && f.is_completed).length}
-                          /{allFollowUpsModal.filter(f => f.sprint_id === followUp?.sprint_id && f.origin_type === 'sprint').length} concluídos
+                          {allFollowUps.filter(f => f.sprint_id === followUp?.sprint_id && f.origin_type === 'sprint' && f.is_completed).length}
+                          /{allFollowUps.filter(f => f.sprint_id === followUp?.sprint_id && f.origin_type === 'sprint').length} concluídos
                         </span>
                       </div>
                       {sprintLabelModal && (
@@ -1383,32 +1313,32 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
                   </div>
 
                   {/* PROPRIETÁRIO DA OFICINA */}
-                  {ownerEmployee && (
+                  {workshopOwner && (
                     <div className="border-b pb-4">
                       <p className="text-xs text-gray-500 font-bold uppercase tracking-wide mb-3">Proprietário da Oficina</p>
                       <div className="space-y-2">
                         <div>
                           <p className="text-xs text-gray-500 font-semibold mb-1">Nome Completo</p>
-                          <p className="text-gray-900 font-medium">{ownerEmployee.full_name || "—"}</p>
+                          <p className="text-gray-900 font-medium">{workshopOwner.full_name || "—"}</p>
                         </div>
                         <div>
                           <p className="text-xs text-gray-500 font-semibold mb-1">E-mail</p>
-                          <p className="text-gray-900 break-all">{ownerEmployee.email || "—"}</p>
+                          <p className="text-gray-900 break-all">{workshopOwner.email || "—"}</p>
                         </div>
                         <div>
                           <p className="text-xs text-gray-500 font-semibold mb-1">Telefone</p>
-                          <p className="text-gray-900">{ownerEmployee.telefone || "—"}</p>
+                          <p className="text-gray-900">{workshopOwner.telefone || "—"}</p>
                         </div>
-                        {ownerEmployee.cpf && (
+                        {workshopOwner.cpf && (
                           <div>
                             <p className="text-xs text-gray-500 font-semibold mb-1">CPF</p>
-                            <p className="text-gray-900">{ownerEmployee.cpf}</p>
+                            <p className="text-gray-900">{workshopOwner.cpf}</p>
                           </div>
                         )}
-                        {ownerEmployee.data_nascimento && (
+                        {workshopOwner.data_nascimento && (
                           <div>
                             <p className="text-xs text-gray-500 font-semibold mb-1">Data de Nascimento</p>
-                            <p className="text-gray-900">{format(new Date(ownerEmployee.data_nascimento), "dd/MM/yyyy")}</p>
+                            <p className="text-gray-900">{format(new Date(workshopOwner.data_nascimento), "dd/MM/yyyy")}</p>
                           </div>
                         )}
                       </div>
