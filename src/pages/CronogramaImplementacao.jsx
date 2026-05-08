@@ -72,6 +72,26 @@ export default function CronogramaImplementacao() {
     enabled: !!workshop?.id
   });
 
+  // Automação: Sincronizar cronograma quando atendimento for realizado
+  const syncCronogramaOnAtendimentoMutation = useMutation({
+    mutationFn: async (atendimento) => {
+      const response = await base44.functions.invoke('syncCronogramaOnAtendimento', {
+        atendimento_id: atendimento.id,
+        atendimento_data: atendimento
+      });
+      return response.data;
+    },
+    onSuccess: (data) => {
+      if (data.updated > 0) {
+        queryClient.invalidateQueries({ queryKey: ['cronograma-implementacao'] });
+        toast.success(`${data.message}`);
+      }
+    },
+    onError: (error) => {
+      console.warn('Aviso: Não foi possível sincronizar cronograma:', error.message);
+    }
+  });
+
   // Carregar regras de atendimento do plano
   const { data: planAttendanceRules = [] } = useQuery({
     queryKey: ['plan-attendance-rules', workshop?.planoAtual],
