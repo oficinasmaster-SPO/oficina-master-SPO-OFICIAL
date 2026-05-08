@@ -127,6 +127,43 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
     staleTime: 5 * 60 * 1000,
   });
 
+  // Query dos sprints referenciados pelos FUSp da semana
+  const { data: sprintsMap = {} } = useQuery({
+    queryKey: ["sprints-fusp-detail", reminder.workshop_id],
+    queryFn: async () => {
+      if (!reminder.workshop_id) return {};
+      const sprints = await base44.entities.ConsultoriaSprint.filter(
+        { workshop_id: reminder.workshop_id },
+        "-updated_date",
+        50
+      );
+      return Object.fromEntries(sprints.map(s => [s.id, s]));
+    },
+    enabled: !!reminder.workshop_id,
+    staleTime: 2 * 60 * 1000,
+  });
+
+  const FASE_LABELS = {
+    Planning: "Planejamento",
+    Execution: "Implementação",
+    Monitoring: "Acompanhamento",
+    Review: "Revisão",
+    Retrospective: "Melhoria",
+  };
+
+  const getSprintFaseETarefa = (sprintId) => {
+    const sprint = sprintsMap[sprintId];
+    if (!sprint?.phases?.length) return { fase: null, tarefa: null };
+    const faseAtiva = sprint.phases.find(p => p.status === 'in_progress' || p.status === 'pending_review')
+      || sprint.phases.find(p => p.status === 'not_started');
+    if (!faseAtiva) return { fase: null, tarefa: null };
+    const tarefa = faseAtiva.tasks?.find(t => t.status === 'to_do') || null;
+    return {
+      fase: FASE_LABELS[faseAtiva.name] || faseAtiva.name,
+      tarefa: tarefa?.description || null,
+    };
+  };
+
   const { data: atendimentosHoje = [] } = useQuery({
     queryKey: ["atendimentos-hoje-consultor", user?.id, today],
     queryFn: async () => {
@@ -882,42 +919,58 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
                               })
                               .sort((a, b) => new Date(a.reminder_date) - new Date(b.reminder_date));
                             
-                            return fuSp.length > 0 ? fuSp.map(f => (
-                              <div key={f.id} className="border border-gray-100 rounded-lg p-2.5 bg-gray-50 hover:bg-gray-100 transition-colors">
-                                <div className="flex items-start gap-2 mb-2">
-                                  <input
-                                    type="checkbox"
-                                    checked={fuSpSelecionados.includes(f.id)}
-                                    onChange={e => {
-                                      setFuSpSelecionados(prev =>
-                                        e.target.checked
-                                          ? [...prev, f.id]
-                                          : prev.filter(id => id !== f.id)
-                                      );
-                                    }}
-                                    className="w-3.5 h-3.5 accent-red-600 mt-0.5 flex-shrink-0"
-                                  />
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-[11px] font-semibold text-gray-800 line-clamp-1">{f.workshop_name}</p>
-                                    <p className="text-[10px] text-gray-500">FUSp {f.sequence_number}</p>
+                            return fuSp.length > 0 ? fuSp.map(f => {
+                              const { fase, tarefa } = getSprintFaseETarefa(f.sprint_id);
+                              const sprintNome = f.notes ? f.notes.replace('Follow-up automático da sprint: ', '').trim() : null;
+                              return (
+                                <div key={f.id} className="border border-gray-100 rounded-lg p-2.5 bg-gray-50 hover:bg-gray-100 transition-colors">
+                                  <div className="flex items-start gap-2 mb-2">
+                                    <input
+                                      type="checkbox"
+                                      checked={fuSpSelecionados.includes(f.id)}
+                                      onChange={e => {
+                                        setFuSpSelecionados(prev =>
+                                          e.target.checked
+                                            ? [...prev, f.id]
+                                            : prev.filter(id => id !== f.id)
+                                        );
+                                      }}
+                                      className="w-3.5 h-3.5 accent-red-600 mt-0.5 flex-shrink-0"
+                                    />
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-[11px] font-semibold text-gray-800 line-clamp-1">{f.workshop_name}</p>
+                                      <p className="text-[10px] text-gray-500">FUSp {f.sequence_number} · Agendado: {f.reminder_date ? format(new Date(f.reminder_date + 'T00:00:00'), 'dd/MM/yy') : '—'}</p>
+                                    </div>
+                                  </div>
+                                  <div className="space-y-1 pl-6">
+                                    {sprintNome && (
+                                      <p className="text-[10px] text-gray-600">
+                                        <span className="font-semibold">Sprint:</span> {sprintNome.length > 22 ? sprintNome.substring(0, 22) + '…' : sprintNome}
+                                      </p>
+                                    )}
+                                    <p className="text-[10px] text-gray-600">
+                                      <span className="font-semibold">Consultor:</span> {f.consultor_nome || '—'}
+                                    </p>
+                                    {fase ? (
+                                      <p className="text-[10px] text-blue-700 font-semibold bg-blue-50 rounded px-1.5 py-0.5 inline-block">
+                                        📍 Fase: {fase}
+                                      </p>
+                                    ) : (
+                                      <p className="text-[10px] text-gray-400 italic">Fase: —</p>
+                                    )}
+                                    {tarefa ? (
+                                      <p className="text-[10px] text-amber-700 bg-amber-50 rounded px-1.5 py-0.5 leading-relaxed">
+                                        ✅ Tarefa: {tarefa.length > 40 ? tarefa.substring(0, 40) + '…' : tarefa}
+                                      </p>
+                                    ) : fase ? (
+                                      <p className="text-[10px] text-green-600 italic">✓ Todas as tarefas concluídas</p>
+                                    ) : (
+                                      <p className="text-[10px] text-gray-400 italic">Tarefa: —</p>
+                                    )}
                                   </div>
                                 </div>
-                                <div className="space-y-1 pl-6">
-                                  <p className="text-[10px] text-gray-600">
-                                    <span className="font-semibold">Sprint:</span> {f.notes ? f.notes.replace('Follow-up automático da sprint: ', '').trim().substring(0, 20) : '—'}
-                                  </p>
-                                  <p className="text-[10px] text-gray-600">
-                                    <span className="font-semibold">Criação:</span> {f.reminder_date ? format(new Date(f.reminder_date + 'T00:00:00'), 'dd/MM/yy') : '—'}
-                                  </p>
-                                  <p className="text-[10px] text-gray-500 italic">
-                                    Ult. acesso: —
-                                  </p>
-                                  <p className="text-[10px] text-gray-500 italic">
-                                    Ult. interação: —
-                                  </p>
-                                </div>
-                              </div>
-                            )) : (
+                              );
+                            }) : (
                               <p className="text-[11px] text-gray-400 italic text-center py-4">Sem FUSp esta semana</p>
                             );
                           })()}
