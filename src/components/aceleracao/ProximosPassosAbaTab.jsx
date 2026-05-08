@@ -1,16 +1,17 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Clock, AlertCircle } from "lucide-react";
+import { CheckCircle2, Clock, AlertCircle, ChevronRight, User } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import WheelLoader from "@/components/ui/WheelLoader";
+import ProximoPassoModal from "@/components/proximospassos/ProximoPassoModal";
 
 export default function ProximosPassosAbaTab({ workshopId }) {
   const queryClient = useQueryClient();
+  const [passoSelecionado, setPassoSelecionado] = useState(null);
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
 
@@ -25,15 +26,6 @@ export default function ProximosPassosAbaTab({ workshopId }) {
       return data || [];
     },
     enabled: !!workshopId,
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: async ({ id, status }) => {
-      return await base44.entities.ConsultoriaProximoPasso.update(id, { status });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["proximos-passos-cliente", workshopId] });
-    },
   });
 
   const getStatusBadge = (status) => {
@@ -83,6 +75,7 @@ export default function ProximosPassosAbaTab({ workshopId }) {
   }
 
   return (
+    <>
     <div className="space-y-6">
       <div className="grid grid-cols-3 gap-4">
         <Card>
@@ -122,63 +115,79 @@ export default function ProximosPassosAbaTab({ workshopId }) {
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Próximos Passos do Cliente</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b">
-                <tr>
-                  <th className="text-left p-3 text-sm font-semibold">Título</th>
-                  <th className="text-left p-3 text-sm font-semibold">Responsável</th>
-                  <th className="text-center p-3 text-sm font-semibold">Prazo</th>
-                  <th className="text-center p-3 text-sm font-semibold">Prioridade</th>
-                  <th className="text-center p-3 text-sm font-semibold">Status</th>
-                  <th className="text-center p-3 text-sm font-semibold">Execução</th>
-                </tr>
-              </thead>
-              <tbody>
-                {proximosPassos.map((pp) => {
-                  const statusBadge = getStatusBadge(pp.status);
-                  const prioridadeBadge = getPrioridadeBadge(pp.prioridade);
-                  const isVencido = new Date(pp.prazo) < hoje && !["finalizado", "cancelado"].includes(pp.status);
+      <div className="space-y-2">
+        {proximosPassos.map((pp) => {
+          const statusBadge = getStatusBadge(pp.status);
+          const prioridadeBadge = getPrioridadeBadge(pp.prioridade);
+          const isVencido = pp.prazo && new Date(pp.prazo) < hoje && !["finalizado", "cancelado"].includes(pp.status);
+          const pct = pp.percentual_execucao || 0;
 
-                  return (
-                    <tr key={pp.id} className={`border-b hover:bg-gray-50 ${isVencido ? "bg-red-50" : ""}`}>
-                      <td className="p-3">
-                        <p className="font-medium">{pp.titulo}</p>
-                      </td>
-                      <td className="p-3 text-sm">{pp.responsavel_nome || "—"}</td>
-                      <td className="p-3 text-center">
-                        <span className={`text-sm ${isVencido ? "text-red-600 font-semibold" : ""}`}>
-                          {format(new Date(pp.prazo), "dd/MM/yyyy", { locale: ptBR })}
-                        </span>
-                      </td>
-                      <td className="p-3 text-center">
-                        <Badge className={prioridadeBadge.className}>{prioridadeBadge.label}</Badge>
-                      </td>
-                      <td className="p-3 text-center">
-                        <Badge className={statusBadge.className}>{statusBadge.label}</Badge>
-                      </td>
-                      <td className="p-3 text-center">
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div
-                            className="bg-blue-600 h-2 rounded-full transition-all"
-                            style={{ width: `${pp.percentual_execucao || 0}%` }}
-                          />
-                        </div>
-                        <span className="text-xs text-gray-600">{pp.percentual_execucao || 0}%</span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+          return (
+            <button
+              key={pp.id}
+              onClick={() => setPassoSelecionado(pp)}
+              className={`w-full text-left rounded-xl border px-4 py-3 transition-all hover:shadow-md group ${
+                isVencido
+                  ? "bg-red-50 border-red-200 hover:bg-red-100"
+                  : pp.status === "finalizado"
+                  ? "bg-green-50 border-green-200 hover:bg-green-100"
+                  : "bg-white border-gray-200 hover:bg-gray-50"
+              }`}
+            >
+              {/* Linha 1: título + responsável + prazo */}
+              <div className="flex items-center gap-3 min-w-0">
+                <p className="flex-1 text-sm font-semibold text-gray-900 truncate" title={pp.titulo}>
+                  {pp.titulo}
+                </p>
+                {pp.responsavel_nome && (
+                  <span className="flex items-center gap-1 text-xs text-gray-500 flex-shrink-0">
+                    <User className="w-3 h-3" />
+                    {pp.responsavel_nome}
+                  </span>
+                )}
+                {pp.prazo && (
+                  <span className={`flex items-center gap-1 text-xs flex-shrink-0 ${isVencido ? "text-red-600 font-semibold" : "text-gray-500"}`}>
+                    <Clock className="w-3 h-3" />
+                    {format(new Date(pp.prazo + "T00:00:00"), "dd/MM/yyyy", { locale: ptBR })}
+                  </span>
+                )}
+                <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-gray-500 flex-shrink-0 transition-colors" />
+              </div>
+
+              {/* Linha 2: barra + % + badges */}
+              <div className="flex items-center gap-3 mt-2">
+                <div className="flex-1 bg-gray-200 rounded-full h-1.5">
+                  <div
+                    className={`h-1.5 rounded-full transition-all ${
+                      pct === 100 ? "bg-green-500" : isVencido ? "bg-red-400" : "bg-blue-500"
+                    }`}
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+                <span className="text-[11px] text-gray-500 flex-shrink-0 w-8 text-right">{pct}%</span>
+                <Badge className={`text-[10px] px-1.5 py-0.5 flex-shrink-0 ${prioridadeBadge.className}`}>
+                  {prioridadeBadge.label}
+                </Badge>
+                <Badge className={`text-[10px] px-1.5 py-0.5 flex-shrink-0 ${statusBadge.className}`}>
+                  {statusBadge.label}
+                </Badge>
+              </div>
+            </button>
+          );
+        })}
+      </div>
     </div>
+
+    {passoSelecionado && (
+      <ProximoPassoModal
+        passo={passoSelecionado}
+        onClose={() => setPassoSelecionado(null)}
+        onSaved={() => {
+          setPassoSelecionado(null);
+          queryClient.invalidateQueries({ queryKey: ["proximos-passos-cliente", workshopId] });
+        }}
+      />
+    )}
+    </>
   );
 }
