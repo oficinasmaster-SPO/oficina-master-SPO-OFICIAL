@@ -253,88 +253,72 @@ export default function PedidosInternosTab({ workshopId, user }) {
               ) : filteredPedidos.length === 0 ? (
                 <p className="text-center text-gray-500 py-8">Nenhum pedido cadastrado</p>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-gray-50 border-b">
-                      <tr>
-                        <th className="text-left p-3 text-sm font-semibold">Tipo</th>
-                        <th className="text-left p-3 text-sm font-semibold">Título</th>
-                        <th className="text-left p-3 text-sm font-semibold">Solicitante</th>
-                        <th className="text-left p-3 text-sm font-semibold">Responsável</th>
-                        <th className="text-center p-3 text-sm font-semibold">Prazo</th>
-                        <th className="text-center p-3 text-sm font-semibold">Prioridade</th>
-                        <th className="text-center p-3 text-sm font-semibold">Impacto</th>
-                        <th className="text-center p-3 text-sm font-semibold">Status</th>
-                        <th className="text-center p-3 text-sm font-semibold">Ações</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredPedidos.map((pedido) => {
-                        const statusBadge = getStatusBadge(pedido.status);
-                        const prioridadeBadge = getPrioridadeBadge(pedido.prioridade);
-                        const impactoBadge = getImpactoBadge(pedido.impacto_cliente);
-                        const isVencido = new Date(pedido.prazo) < new Date() && pedido.status !== 'concluido';
+                <div className="space-y-2">
+                  {[...filteredPedidos].sort((a, b) => {
+                    const hoje = new Date();
+                    const isFimA = ['concluido', 'recusado'].includes(a.status);
+                    const isFimB = ['concluido', 'recusado'].includes(b.status);
+                    const isVencidoA = a.prazo && new Date(a.prazo) < hoje && !isFimA;
+                    const isVencidoB = b.prazo && new Date(b.prazo) < hoje && !isFimB;
+                    if (isFimA !== isFimB) return isFimA ? 1 : -1;
+                    if (isVencidoA !== isVencidoB) return isVencidoA ? -1 : 1;
+                    if (a.prazo && b.prazo) return new Date(a.prazo) - new Date(b.prazo);
+                    return 0;
+                  }).map((pedido) => {
+                    const statusBadge = getStatusBadge(pedido.status);
+                    const prioridadeBadge = getPrioridadeBadge(pedido.prioridade);
+                    const impactoBadge = getImpactoBadge(pedido.impacto_cliente);
+                    const hoje = new Date();
+                    const isConcluido = ['concluido', 'recusado'].includes(pedido.status);
+                    const isVencido = pedido.prazo && new Date(pedido.prazo) < hoje && !isConcluido;
 
-                        return (
-                          <tr key={pedido.id} className="border-b hover:bg-gray-50">
-                            <td className="p-3">
-                              <span className="text-sm font-medium">{getTipoLabel(pedido.tipo)}</span>
-                            </td>
-                            <td className="p-3">
-                              <div>
-                                <p className="font-medium">{pedido.titulo}</p>
-                                {pedido.cliente_nome && (
-                                  <p className="text-xs text-gray-600">Cliente: {pedido.cliente_nome}</p>
-                                )}
-                              </div>
-                            </td>
-                            <td className="p-3 text-sm">{pedido.solicitante_nome}</td>
-                            <td className="p-3 text-sm">{pedido.responsavel_nome}</td>
-                            <td className="p-3 text-center">
-                              <span className={`text-sm ${isVencido ? 'text-red-600 font-semibold' : ''}`}>
-                                {format(new Date(pedido.prazo), 'dd/MM/yyyy', { locale: ptBR })}
-                              </span>
-                            </td>
-                            <td className="p-3 text-center">
-                              <Badge className={prioridadeBadge.className}>
-                                {prioridadeBadge.label}
-                              </Badge>
-                            </td>
-                            <td className="p-3 text-center">
-                              <Badge className={impactoBadge.className}>
-                                {impactoBadge.label}
-                              </Badge>
-                            </td>
-                            <td className="p-3 text-center">
-                              <Badge className={statusBadge.className}>
-                                {statusBadge.label}
-                              </Badge>
-                            </td>
-                            <td className="p-3">
-                              <div className="flex gap-2 justify-center">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => handleEdit(pedido)}
-                                >
-                                  Ver
-                                </Button>
-                                {pedido.status !== 'concluido' && (
-                                  <Button
-                                    size="sm"
-                                    onClick={() => handleChangeStatus(pedido.id, 'concluido')}
-                                    className="bg-green-600 hover:bg-green-700"
-                                  >
-                                    Concluir
-                                  </Button>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                    return (
+                      <button
+                        key={pedido.id}
+                        onClick={() => handleEdit(pedido)}
+                        className={`w-full text-left rounded-xl border px-4 py-3 transition-all hover:shadow-md group ${
+                          isVencido
+                            ? "bg-red-50 border-red-200 hover:bg-red-100"
+                            : isConcluido
+                            ? "bg-gray-50 border-gray-200 hover:bg-gray-100"
+                            : "bg-white border-gray-200 hover:bg-gray-50"
+                        }`}
+                      >
+                        {/* Linha 1 */}
+                        <div className="flex items-center gap-3 min-w-0">
+                          <Badge className="text-[10px] px-1.5 py-0.5 flex-shrink-0 bg-gray-100 text-gray-700">
+                            {getTipoLabel(pedido.tipo)}
+                          </Badge>
+                          <p className="flex-1 text-sm font-semibold text-gray-900 truncate" title={pedido.titulo}>
+                            {pedido.titulo}
+                          </p>
+                          {pedido.solicitante_nome && (
+                            <span className="text-xs text-gray-500 flex-shrink-0">{pedido.solicitante_nome}</span>
+                          )}
+                          {pedido.prazo && (
+                            <span className={`flex items-center gap-1 text-xs flex-shrink-0 ${isVencido ? "text-red-600 font-semibold" : "text-gray-500"}`}>
+                              <Clock className="w-3 h-3" />
+                              {format(new Date(pedido.prazo), "dd/MM/yyyy", { locale: ptBR })}
+                            </span>
+                          )}
+                          <span className="text-gray-300 group-hover:text-gray-500 text-xs flex-shrink-0">›</span>
+                        </div>
+                        {/* Linha 2 */}
+                        <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                          {pedido.cliente_nome && (
+                            <span className="text-[11px] text-gray-500">Cliente: {pedido.cliente_nome}</span>
+                          )}
+                          {pedido.responsavel_nome && (
+                            <span className="text-[11px] text-gray-500">· {pedido.responsavel_nome}</span>
+                          )}
+                          <span className="flex-1" />
+                          <Badge className={`text-[10px] px-1.5 py-0.5 ${prioridadeBadge.className}`}>{prioridadeBadge.label}</Badge>
+                          <Badge className={`text-[10px] px-1.5 py-0.5 ${impactoBadge.className}`}>{impactoBadge.label}</Badge>
+                          <Badge className={`text-[10px] px-1.5 py-0.5 ${statusBadge.className}`}>{statusBadge.label}</Badge>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </CardContent>

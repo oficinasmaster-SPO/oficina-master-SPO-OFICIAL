@@ -306,82 +306,62 @@ export default function BacklogDashboard({ workshopId, user }) {
           ) : filteredTarefas.length === 0 ? (
             <p className="text-center text-gray-500 py-8">Nenhuma tarefa encontrada</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b">
-                  <tr>
-                    <th className="text-left p-3 text-sm font-semibold">Título</th>
-                    <th className="text-left p-3 text-sm font-semibold">Cliente</th>
-                    <th className="text-left p-3 text-sm font-semibold">Consultor</th>
-                    <th className="text-center p-3 text-sm font-semibold">Origem</th>
-                    <th className="text-center p-3 text-sm font-semibold">Prazo</th>
-                    <th className="text-center p-3 text-sm font-semibold">Prioridade</th>
-                    <th className="text-center p-3 text-sm font-semibold">Status</th>
-                    <th className="text-center p-3 text-sm font-semibold">Ações</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredTarefas.map((tarefa) => {
-                    const prioridadeBadge = getPrioridadeBadge(tarefa.prioridade);
-                    const statusBadge = getStatusBadge(tarefa.status);
-                    const isVencida = new Date(tarefa.prazo) < hoje && tarefa.status !== 'concluida';
+            <div className="space-y-2">
+              {[...filteredTarefas].sort((a, b) => {
+                const isVencidaA = a.prazo && new Date(a.prazo) < hoje;
+                const isVencidaB = b.prazo && new Date(b.prazo) < hoje;
+                if (isVencidaA !== isVencidaB) return isVencidaA ? -1 : 1;
+                if (a.prazo && b.prazo) return new Date(a.prazo) - new Date(b.prazo);
+                return 0;
+              }).map((tarefa) => {
+                const prioridadeBadge = getPrioridadeBadge(tarefa.prioridade);
+                const statusBadge = getStatusBadge(tarefa.status);
+                const isVencida = tarefa.prazo && new Date(tarefa.prazo) < hoje;
 
-                    return (
-                      <tr key={tarefa.id} className={`border-b hover:bg-gray-50 ${isVencida ? 'bg-red-50' : ''}`}>
-                        <td className="p-3">
-                          <p className="font-medium">{tarefa.titulo}</p>
-                          {tarefa.impacto && (
-                            <p className="text-xs text-gray-600">Impacto: {tarefa.impacto}</p>
-                          )}
-                        </td>
-                        <td className="p-3 text-sm">{tarefa.cliente_nome}</td>
-                        <td className="p-3 text-sm">{tarefa.consultor_nome}</td>
-                        <td className="p-3 text-center">
-                          <Badge variant="outline" className="text-xs">
-                            {tarefa.origem}
-                          </Badge>
-                        </td>
-                        <td className="p-3 text-center">
-                          <span className={`text-sm ${isVencida ? 'text-red-600 font-semibold' : ''}`}>
-                            {format(new Date(tarefa.prazo), 'dd/MM/yyyy', { locale: ptBR })}
-                          </span>
-                        </td>
-                        <td className="p-3 text-center">
-                          <Badge className={prioridadeBadge.className}>
-                            {prioridadeBadge.label}
-                          </Badge>
-                        </td>
-                        <td className="p-3 text-center">
-                          <Badge className={statusBadge.className}>
-                            {statusBadge.label}
-                          </Badge>
-                        </td>
-                        <td className="p-3">
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => setViewingTarefa(tarefa)}
-                            >
-                              Ver
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                setEditingTarefa(tarefa);
-                                setShowForm(true);
-                              }}
-                            >
-                              Editar
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                return (
+                  <button
+                    key={tarefa.id}
+                    onClick={() => setViewingTarefa(tarefa)}
+                    className={`w-full text-left rounded-xl border px-4 py-3 transition-all hover:shadow-md group ${
+                      isVencida
+                        ? "bg-red-50 border-red-200 hover:bg-red-100"
+                        : "bg-white border-gray-200 hover:bg-gray-50"
+                    }`}
+                  >
+                    {/* Linha 1 */}
+                    <div className="flex items-center gap-3 min-w-0">
+                      <p className="flex-1 text-sm font-semibold text-gray-900 truncate" title={tarefa.titulo}>
+                        {tarefa.titulo}
+                      </p>
+                      {tarefa.cliente_nome && (
+                        <span className="text-xs text-gray-500 flex-shrink-0">{tarefa.cliente_nome}</span>
+                      )}
+                      {tarefa.prazo && (
+                        <span className={`flex items-center gap-1 text-xs flex-shrink-0 ${isVencida ? "text-red-600 font-semibold" : "text-gray-500"}`}>
+                          <Clock className="w-3 h-3" />
+                          {format(new Date(tarefa.prazo), "dd/MM/yyyy", { locale: ptBR })}
+                        </span>
+                      )}
+                      <span className="text-gray-300 group-hover:text-gray-500 text-xs flex-shrink-0">›</span>
+                    </div>
+                    {/* Linha 2 */}
+                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                      {tarefa.consultor_nome && (
+                        <span className="text-[11px] text-gray-500">{tarefa.consultor_nome}</span>
+                      )}
+                      {tarefa.impacto && (
+                        <span className="text-[11px] text-gray-400">· {tarefa.impacto}</span>
+                      )}
+                      <span className="flex-1" />
+                      {tarefa.origem && (
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0.5">{tarefa.origem}</Badge>
+                      )}
+                      <Badge className={`text-[10px] px-1.5 py-0.5 ${prioridadeBadge.className}`}>{prioridadeBadge.label}</Badge>
+                      <Badge className={`text-[10px] px-1.5 py-0.5 ${statusBadge.className}`}>{statusBadge.label}</Badge>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           )}
         </CardContent>
