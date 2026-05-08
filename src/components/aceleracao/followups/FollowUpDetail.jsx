@@ -859,14 +859,12 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
                                             📋 Visualizar ATA
                                           </button>
                                         )}
-                                        {f.id !== reminder.id && onSelectReminder && (
-                                         <button
-                                           onClick={() => onSelectReminder(f)}
-                                           className="text-[10px] text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-1 hover:underline"
-                                         >
-                                           👁 Ver detalhes
-                                         </button>
-                                        )}
+                                        <button
+                                          onClick={() => onSelectReminder && onSelectReminder(f)}
+                                          className="text-[10px] text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-1 hover:underline"
+                                        >
+                                          👁 Ver detalhes
+                                        </button>
                                       </div>
                                     </div>
                                   </div>
