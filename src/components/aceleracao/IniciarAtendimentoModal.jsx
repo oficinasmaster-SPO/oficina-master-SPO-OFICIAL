@@ -22,7 +22,7 @@ import VisualizarAtaModal from "@/components/aceleracao/VisualizarAtaModal";
 import { useOperationalSync } from "@/hooks/useOperationalSync";
 import CronogramaTab from "@/components/aceleracao/CronogramaTab";
 import TrailsTab from "@/components/aceleracao/TrailsTab";
-import SprintsTab from "@/components/aceleracao/SprintsTab";
+import SprintClientSection from "@/components/aceleracao/sprint-client/SprintClientSection";
 import PedidosInternosTab from "@/components/aceleracao/PedidosInternosTab";
 import BacklogDashboard from "@/components/aceleracao/BacklogDashboard";
 import ProximosPassosAbaTab from "@/components/aceleracao/ProximosPassosAbaTab";
@@ -1350,7 +1350,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
                       {/* SPRINTS */}
                       {activePanel === 'sprints' && (
                         <div className="px-3 py-4">
-                          {followUp?.workshop_id ? <SprintsTab workshopId={followUp.workshop_id} onAudit={() => {}} /> : <p className="text-xs text-gray-500 italic">Sem sprints disponíveis</p>}
+                          {followUp?.workshop_id ? <SprintClientSection workshopId={followUp.workshop_id} user={user} workshop={workshop} /> : <p className="text-xs text-gray-500 italic">Sem sprints disponíveis</p>}
                         </div>
                       )}
 
