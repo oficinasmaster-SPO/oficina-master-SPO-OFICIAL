@@ -104,6 +104,16 @@ export default function CronogramaImplementacao() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data, isNew }) => {
+      // BUG FIX #1: Validar ID antes de processar
+      if (!id || id.startsWith('virtual-')) {
+        throw new Error('ID inválido. Recarregue a página e tente novamente.');
+      }
+
+      // BUG FIX #2: Validar dados obrigatórios
+      if (!data.item_nome || !data.item_id) {
+        throw new Error('Nome e ID do item são obrigatórios.');
+      }
+
       // Se é item novo (virtual), criar ao invés de atualizar
       if (isNew) {
         const created = await base44.entities.CronogramaImplementacao.create({
@@ -115,7 +125,7 @@ export default function CronogramaImplementacao() {
           status: data.status || 'a_fazer',
           data_inicio_real: data.data_inicio_real || new Date().toISOString(),
           data_termino_previsto: data.data_termino_previsto,
-          progresso_percentual: data.progresso_percentual || 0,
+          progresso_percentual: Math.max(0, Math.min(100, data.progresso_percentual || 0)),
           observacoes: data.observacoes || '',
           dependencias: data.dependencias || [],
           historico_alteracoes: [{
@@ -130,30 +140,43 @@ export default function CronogramaImplementacao() {
         return created;
       }
 
-      // Se é item existente, atualizar normalmente
+      // BUG FIX #3: Buscar item atual com fallback
       const item = cronograma.find(c => c.id === id);
+      if (!item) {
+        throw new Error('Item não encontrado no cronograma local.');
+      }
+
       const historicoAtualizado = [...(item.historico_alteracoes || [])];
       
-      // Registrar alterações no histórico
+      // BUG FIX #4: Comparação segura de valores
       Object.keys(data).forEach(campo => {
-        if (campo !== 'historico_alteracoes' && item[campo] !== data[campo]) {
-          historicoAtualizado.push({
-            data_alteracao: new Date().toISOString(),
-            campo_alterado: campo,
-            valor_anterior: String(item[campo] || ''),
-            valor_novo: String(data[campo] || ''),
-            usuario_id: user.id,
-            usuario_nome: user.full_name
-          });
+        if (campo !== 'historico_alteracoes') {
+          const valorAnterior = item[campo];
+          const valorNovo = data[campo];
+          // Comparar apenas se valores forem diferentes (considerando null vs undefined)
+          if (JSON.stringify(valorAnterior) !== JSON.stringify(valorNovo)) {
+            historicoAtualizado.push({
+              data_alteracao: new Date().toISOString(),
+              campo_alterado: campo,
+              valor_anterior: String(valorAnterior || ''),
+              valor_novo: String(valorNovo || ''),
+              usuario_id: user.id,
+              usuario_nome: user.full_name
+            });
+          }
         }
       });
 
-      const updated = await base44.entities.CronogramaImplementacao.update(id, {
+      // BUG FIX #5: Validar valores antes de salvar
+      const dataToUpdate = {
         ...data,
+        progresso_percentual: Math.max(0, Math.min(100, data.progresso_percentual || 0)),
         historico_alteracoes: historicoAtualizado
-      });
+      };
 
-      // Sincronizar com CronogramaProgresso
+      const updated = await base44.entities.CronogramaImplementacao.update(id, dataToUpdate);
+
+      // Sincronizar com CronogramaProgresso com melhor tratamento de erro
       try {
         await base44.functions.invoke('syncCronogramaProgress', {
           workshop_id: workshop.id,
@@ -162,23 +185,28 @@ export default function CronogramaImplementacao() {
           status: data.status,
           data_termino_real: data.data_termino_real,
           data_termino_previsto: data.data_termino_previsto,
-          progresso_percentual: data.progresso_percentual
+          progresso_percentual: dataToUpdate.progresso_percentual
         });
       } catch (syncError) {
-        console.error('Erro ao sincronizar com CronogramaProgresso:', syncError);
+        console.warn('Aviso: Sincronização com CronogramaProgresso falhou:', syncError.message);
+        // Não lançar erro aqui - já salvou na entidade principal
       }
 
       return updated;
     },
     onSuccess: () => {
-      // Aguardar um tick para garantir que queries antigas foram limpas
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ['cronograma-implementacao'] });
-        queryClient.invalidateQueries({ queryKey: ['cronograma-implementacao', workshop?.id] });
-        queryClient.invalidateQueries({ queryKey: ['cronograma-progressos'] });
-      }, 100);
+      // BUG FIX #6: Invalidar queries de forma mais agressiva
+      queryClient.invalidateQueries({ queryKey: ['cronograma-implementacao'] });
+      queryClient.invalidateQueries({ queryKey: ['cronograma-implementacao', workshop?.id] });
+      queryClient.invalidateQueries({ queryKey: ['cronograma-progressos'] });
+      
       toast.success('Item atualizado com sucesso!');
       setEditingItem(null);
+    },
+    onError: (error) => {
+      // BUG FIX #7: Melhor tratamento de erros
+      console.error('Erro ao salvar item:', error);
+      toast.error(error.message || 'Erro ao atualizar item. Tente novamente.');
     }
   });
 
@@ -658,28 +686,24 @@ export default function CronogramaImplementacao() {
                 </Button>
                 <Button 
                   onClick={() => {
-                    if (!editingItem.id || editingItem.id.startsWith('virtual-')) {
-                      toast.error('ID inválido. Recarregue a página e tente novamente.');
-                      return;
-                    }
                     updateMutation.mutate({ 
                       id: editingItem.id,
                       isNew: editingItem.not_started,
                       data: {
-                      item_tipo: editingItem.item_tipo,
-                      item_id: editingItem.item_id,
-                      item_nome: editingItem.item_nome,
-                      status: editingItem.status,
-                      data_inicio_real: editingItem.data_inicio_real || new Date().toISOString(),
-                      data_termino_previsto: editingItem.data_termino_previsto,
-                      data_termino_real: editingItem.data_termino_real,
-                      progresso_percentual: editingItem.progresso_percentual,
-                      observacoes: editingItem.observacoes,
-                      dependencias: editingItem.dependencias || []
+                        item_tipo: editingItem.item_tipo,
+                        item_id: editingItem.item_id,
+                        item_nome: editingItem.item_nome,
+                        status: editingItem.status,
+                        data_inicio_real: editingItem.data_inicio_real || new Date().toISOString(),
+                        data_termino_previsto: editingItem.data_termino_previsto,
+                        data_termino_real: editingItem.data_termino_real,
+                        progresso_percentual: editingItem.progresso_percentual,
+                        observacoes: editingItem.observacoes,
+                        dependencias: editingItem.dependencias || []
                       }
-                      });
-                      }}
-                      disabled={updateMutation.isPending}
+                    });
+                  }}
+                  disabled={updateMutation.isPending}
                 >
                   {updateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Salvar'}
                 </Button>
