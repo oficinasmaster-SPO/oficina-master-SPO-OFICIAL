@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { useQueryClient } from "@tanstack/react-query";
-import { format } from "date-fns";
+import { format, startOfWeek, endOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   X, Clock, CheckCircle2, AlertTriangle, MessageSquare,
@@ -34,18 +34,110 @@ const PRIORIDADE_OPTIONS = [
   { value: "critica", label: "Crítica" },
 ];
 
+const CANAL_OPTIONS = [
+  { value: "ligacao",     label: "Ligação" },
+  { value: "whatsapp",    label: "WhatsApp" },
+  { value: "email",       label: "E-mail" },
+  { value: "video",       label: "Vídeo" },
+  { value: "presencial",  label: "Presencial" },
+];
+
+const RESULTADO_OPTIONS = [
+  { value: "atendeu",    label: "Atendeu" },
+  { value: "nao_atendeu", label: "Não atendeu" },
+  { value: "retornar",   label: "Retornar" },
+  { value: "agendou",    label: "Agendou" },
+  { value: "reagendou",  label: "Reagendou" },
+  { value: "desistiu",   label: "Desistiu" },
+];
+
+const PROXIMO_PASSO_OPTIONS = [
+  { value: "reagendar",  label: "Reagendar" },
+  { value: "agendar",    label: "Agendar" },
+  { value: "enviar",     label: "Enviar" },
+  { value: "escalar",    label: "Escalar" },
+  { value: "concluir",   label: "Concluir" },
+  { value: "cancelar",   label: "Cancelar" },
+];
+
 export default function ProximoPassoModal({ passo, onClose, onSaved }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("detalhes");
 
+  // Estado principal do próximo passo
   const [status, setStatus] = useState(passo.status || "pendente");
   const [percentual, setPercentual] = useState(passo.percentual_execucao || 0);
   const [prioridade, setPrioridade] = useState(passo.prioridade || "media");
   const [observacoes, setObservacoes] = useState(passo.observacoes_consultor || "");
   const [evidencias, setEvidencias] = useState(passo.evidencias || []);
   const [ataParaVisualizar, setAtaParaVisualizar] = useState(null);
+
+  // Estado dos FUs da semana vinculados
+  const [fusDaSemana, setFusDaSemana] = useState([]);
+  const [encerrarFUs, setEncerrarFUs] = useState(true);
+  const [fuCanal, setFuCanal] = useState("whatsapp");
+  const [fuResultado, setFuResultado] = useState("atendeu");
+  const [fuObservacoes, setFuObservacoes] = useState("");
+  const [fuProximoPasso, setFuProximoPasso] = useState("reagendar");
+
+  // Buscar FUs pendentes da semana vinculados a esta ATA
+  useEffect(() => {
+    const ataId = passo.ata_id || passo.consultoria_atendimento_id;
+    if (!ataId) return;
+
+    const hoje = new Date();
+    const inicioSemana = format(startOfWeek(hoje, { weekStartsOn: 1 }), "yyyy-MM-dd");
+    const fimSemana = format(endOfWeek(hoje, { weekStartsOn: 1 }), "yyyy-MM-dd");
+
+    base44.entities.FollowUpReminder.filter({ ata_id: ataId, is_completed: false })
+      .then(fus => {
+        const fusSemana = (fus || []).filter(f =>
+          f.reminder_date >= inicioSemana && f.reminder_date <= fimSemana
+        );
+        setFusDaSemana(fusSemana);
+      })
+      .catch(() => setFusDaSemana([]));
+  }, [passo.ata_id, passo.consultoria_atendimento_id]);
+
+  const temFusSemana = fusDaSemana.length > 0;
+
+  // Dar baixa nos FUs da semana
+  const darBaixaFUs = async (resultadoOverride) => {
+    if (!temFusSemana || !encerrarFUs) return;
+
+    const now = new Date().toISOString();
+    const hoje = format(new Date(), "yyyy-MM-dd");
+    const resultadoFinal = resultadoOverride || fuResultado;
+
+    await Promise.all(fusDaSemana.map(async (fu) => {
+      await base44.entities.FollowUpReminder.update(fu.id, {
+        is_completed: true,
+        completed_at: now,
+      });
+
+      await base44.entities.FollowUpConcluido.create({
+        followup_id: fu.id,
+        workshop_id: fu.workshop_id,
+        consultor_id: fu.consultor_id || user?.id,
+        consultor_nome: fu.consultor_nome || user?.full_name,
+        canal: fuCanal,
+        resultado: resultadoFinal,
+        dataContato: hoje,
+        duracao: 0,
+        observacoes: fuObservacoes || observacoes || `Encerrado via Próximo Passo: ${passo.titulo}`,
+        compromissos: "",
+        proximoPasso: fuProximoPasso,
+        completedAt: now,
+      });
+    }));
+
+    // Invalida queries de follow-ups em todas as telas
+    queryClient.invalidateQueries({ queryKey: ["followup-reminders"] });
+    queryClient.invalidateQueries({ queryKey: ["followups"] });
+    queryClient.invalidateQueries({ queryKey: ["central-follow-up"] });
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -54,18 +146,14 @@ export default function ProximoPassoModal({ passo, onClose, onSaved }) {
       const historicoAtual = passo.historico || [];
       const novasEntradas = [];
 
-      // Auto-finalizar se progresso = 100%
       let statusFinal = status;
       if (percentual === 100 && status !== "finalizado") {
         statusFinal = "finalizado";
         novasEntradas.push({
           tipo: "status_alterado",
           descricao: "Auto-finalizado ao atingir 100% de execução",
-          de: status,
-          para: "finalizado",
-          usuario_id: user?.id,
-          usuario_nome: user?.full_name || user?.email,
-          created_at: now,
+          de: status, para: "finalizado",
+          usuario_id: user?.id, usuario_nome: user?.full_name || user?.email, created_at: now,
         });
       }
 
@@ -73,11 +161,8 @@ export default function ProximoPassoModal({ passo, onClose, onSaved }) {
         novasEntradas.push({
           tipo: "status_alterado",
           descricao: `Status alterado de "${passo.status}" para "${statusFinal}"`,
-          de: passo.status,
-          para: statusFinal,
-          usuario_id: user?.id,
-          usuario_nome: user?.full_name || user?.email,
-          created_at: now,
+          de: passo.status, para: statusFinal,
+          usuario_id: user?.id, usuario_nome: user?.full_name || user?.email, created_at: now,
         });
       }
 
@@ -85,19 +170,14 @@ export default function ProximoPassoModal({ passo, onClose, onSaved }) {
         novasEntradas.push({
           tipo: "comentario",
           descricao: `Progresso atualizado para ${percentual}%`,
-          usuario_id: user?.id,
-          usuario_nome: user?.full_name || user?.email,
-          created_at: now,
+          usuario_id: user?.id, usuario_nome: user?.full_name || user?.email, created_at: now,
         });
       }
 
       if (evidencias.length > (passo.evidencias || []).length) {
         novasEntradas.push({
-          tipo: "evidencia",
-          descricao: "Nova evidência anexada",
-          usuario_id: user?.id,
-          usuario_nome: user?.full_name || user?.email,
-          created_at: now,
+          tipo: "evidencia", descricao: "Nova evidência anexada",
+          usuario_id: user?.id, usuario_nome: user?.full_name || user?.email, created_at: now,
         });
       }
 
@@ -112,7 +192,11 @@ export default function ProximoPassoModal({ passo, onClose, onSaved }) {
         ...(statusFinal === "em_andamento" && !passo.data_inicio ? { data_inicio: now } : {}),
       });
 
+      // Dar baixa nos FUs da semana
+      await darBaixaFUs();
+
       queryClient.invalidateQueries({ queryKey: ["central-proximos-passos"] });
+      queryClient.invalidateQueries({ queryKey: ["proximos-passos-consultoria"] });
       onSaved();
     } catch (err) {
       console.error("Erro ao salvar próximo passo:", err);
@@ -130,12 +214,15 @@ export default function ProximoPassoModal({ passo, onClose, onSaved }) {
         historico: [...historicoAtual, {
           tipo: "cobranca",
           descricao: "Consultor registrou cobrança ao responsável",
-          usuario_id: user?.id,
-          usuario_nome: user?.full_name || user?.email,
-          created_at: now,
+          usuario_id: user?.id, usuario_nome: user?.full_name || user?.email, created_at: now,
         }],
       });
+
+      // Cobrança: resultado padrão = retornar
+      await darBaixaFUs("retornar");
+
       queryClient.invalidateQueries({ queryKey: ["central-proximos-passos"] });
+      queryClient.invalidateQueries({ queryKey: ["proximos-passos-consultoria"] });
       onSaved();
     } catch (err) {
       console.error("Erro ao registrar cobrança:", err);
@@ -143,9 +230,7 @@ export default function ProximoPassoModal({ passo, onClose, onSaved }) {
   };
 
   const handleDelete = async () => {
-    if (!window.confirm(`Deseja deletar "${passo.titulo}"?\n\nEsta ação não pode ser desfeita.`)) {
-      return;
-    }
+    if (!window.confirm(`Deseja deletar "${passo.titulo}"?\n\nEsta ação não pode ser desfeita.`)) return;
     try {
       setSaving(true);
       await base44.entities.ConsultoriaProximoPasso.delete(passo.id);
@@ -160,11 +245,11 @@ export default function ProximoPassoModal({ passo, onClose, onSaved }) {
   };
 
   const tabs = [
-    { id: "detalhes", label: "Detalhes", icon: CheckCircle2 },
-    { id: "evidencias", label: "Evidências", icon: Paperclip },
-    { id: "historico", label: "Histórico", icon: History },
-    { id: "cliente", label: "Cliente", icon: Phone },
-    { id: "ata", label: "ATA", icon: FileText },
+    { id: "detalhes",   label: "Detalhes",   icon: CheckCircle2 },
+    { id: "evidencias", label: "Evidências",  icon: Paperclip },
+    { id: "historico",  label: "Histórico",   icon: History },
+    { id: "cliente",    label: "Cliente",     icon: Phone },
+    { id: "ata",        label: "ATA",         icon: FileText },
   ];
 
   return (
@@ -226,9 +311,7 @@ export default function ProximoPassoModal({ passo, onClose, onSaved }) {
                     onChange={e => setStatus(e.target.value)}
                     className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
                   >
-                    {STATUS_OPTIONS.map(o => (
-                      <option key={o.value} value={o.value}>{o.label}</option>
-                    ))}
+                    {STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                   </select>
                 </div>
                 <div>
@@ -238,9 +321,7 @@ export default function ProximoPassoModal({ passo, onClose, onSaved }) {
                     onChange={e => setPrioridade(e.target.value)}
                     className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
                   >
-                    {PRIORIDADE_OPTIONS.map(o => (
-                      <option key={o.value} value={o.value}>{o.label}</option>
-                    ))}
+                    {PRIORIDADE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                   </select>
                 </div>
               </div>
@@ -268,6 +349,81 @@ export default function ProximoPassoModal({ passo, onClose, onSaved }) {
                   <Bell className="w-3.5 h-3.5" />
                   Última cobrança: {format(new Date(passo.ultima_cobranca_em), "dd/MM/yyyy HH:mm", { locale: ptBR })}
                 </p>
+              )}
+
+              {/* ── BLOCO DE FU DA SEMANA ── */}
+              {temFusSemana && (
+                <div className="border border-amber-300 bg-amber-50 rounded-xl p-4 space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <Bell className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                      <div>
+                        <p className="text-xs font-bold text-amber-800">
+                          {fusDaSemana.length} follow-up{fusDaSemana.length > 1 ? "s" : ""} pendente{fusDaSemana.length > 1 ? "s" : ""} desta semana
+                        </p>
+                        <p className="text-[11px] text-amber-600 mt-0.5">
+                          {fusDaSemana.map(f => `FU ${f.sequence_number} · ${f.reminder_date ? format(new Date(f.reminder_date + "T00:00:00"), "dd/MM") : "—"}`).join(" · ")}
+                        </p>
+                      </div>
+                    </div>
+                    <label className="flex items-center gap-1.5 cursor-pointer flex-shrink-0">
+                      <input
+                        type="checkbox"
+                        checked={encerrarFUs}
+                        onChange={e => setEncerrarFUs(e.target.checked)}
+                        className="w-3.5 h-3.5 accent-amber-600"
+                      />
+                      <span className="text-[11px] text-amber-700 font-medium whitespace-nowrap">Encerrar ao salvar</span>
+                    </label>
+                  </div>
+
+                  {encerrarFUs && (
+                    <div className="space-y-2.5 pt-1">
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[11px] font-semibold text-amber-700 block mb-1">Canal *</label>
+                          <select
+                            value={fuCanal}
+                            onChange={e => setFuCanal(e.target.value)}
+                            className="w-full text-xs border border-amber-300 bg-white rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                          >
+                            {CANAL_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-semibold text-amber-700 block mb-1">Resultado *</label>
+                          <select
+                            value={fuResultado}
+                            onChange={e => setFuResultado(e.target.value)}
+                            className="w-full text-xs border border-amber-300 bg-white rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                          >
+                            {RESULTADO_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                          </select>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-[11px] font-semibold text-amber-700 block mb-1">Próximo passo *</label>
+                        <select
+                          value={fuProximoPasso}
+                          onChange={e => setFuProximoPasso(e.target.value)}
+                          className="w-full text-xs border border-amber-300 bg-white rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                        >
+                          {PROXIMO_PASSO_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-[11px] font-semibold text-amber-700 block mb-1">Observações do contato</label>
+                        <textarea
+                          value={fuObservacoes}
+                          onChange={e => setFuObservacoes(e.target.value)}
+                          rows={2}
+                          placeholder="Deixe em branco para usar as observações do consultor..."
+                          className="w-full text-xs border border-amber-300 bg-white rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           )}
