@@ -155,6 +155,8 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
   const [navTarget, setNavTarget] = useState(null);
   const [fusSemanaExpandido, setFusSemanaExpandido] = useState(false);
   const [fusSemanaLocal, setFusSemanaLocal] = useState([]);
+  const [fuAtaSelecionados, setFuAtaSelecionados] = useState([]);
+  const [fuSpSelecionados, setFuSpSelecionados] = useState([]);
   const [activePanel, setActivePanel] = useState('atas');
 
   // States da aba IA
@@ -601,7 +603,17 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
       invalidate.followUps();
 
       // STEP 1b — Encerrar FUs concatenados com os mesmos dados
-      const fusParaConcatenar = fusConcatenados.length > 0 ? fusConcatenados : fusSemanaLocal.map(id => allFollowUpsModal.find(f => f.id === id)).filter(Boolean);
+      // Combina: externos (fusConcatenados do FollowUpDetail) + internos FUAta + internos FUSp + fusSemanaLocal legado
+      const fusInternos = [
+        ...fuAtaSelecionados.map(id => allFollowUpsModal.find(f => f.id === id)),
+        ...fuSpSelecionados.map(id => allFollowUpsModal.find(f => f.id === id)),
+        ...fusSemanaLocal.map(id => allFollowUpsModal.find(f => f.id === id)),
+      ].filter(Boolean);
+      const todosIds = new Set([...fusConcatenados.map(f => f.id), ...fusInternos.map(f => f.id)]);
+      const fusParaConcatenar = [...fusConcatenados, ...fusInternos].filter((f, _, arr) => {
+        if (todosIds.has(f.id)) { todosIds.delete(f.id); return true; }
+        return false;
+      });
       if (fusParaConcatenar.length > 0) {
         await Promise.all(fusParaConcatenar.map(fu =>
           Promise.all([
@@ -633,6 +645,8 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
       }
       // Limpar seleção local após salvar
       setFusSemanaLocal([]);
+      setFuAtaSelecionados([]);
+      setFuSpSelecionados([]);
 
       // STEP 2 — Criar próximo follow-up (se reagendar)
       let novoFollowUp = null;
@@ -1201,91 +1215,212 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
                         </div>
                       )}
 
-                      {/* FOLLOW-UPS */}
-                      {activePanel === 'followups' && (
-                        <div className="px-3 py-4 space-y-3">
-                          {atendimentosHojeModal.length > 0 && (
-                            <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
-                              <div className="flex items-center gap-2 mb-2">
-                                <Bell className="w-3.5 h-3.5 text-blue-600" />
-                                <p className="text-[10px] text-blue-700 uppercase tracking-wide font-bold">Seus atendimentos hoje ({atendimentosHojeModal.length})</p>
-                              </div>
-                              <div className="space-y-1.5">
-                                {atendimentosHojeModal.map(at => (
-                                  <div key={at.id} className="bg-white border border-blue-100 rounded-lg px-2.5 py-2 flex items-start gap-2">
-                                    <Video className="w-3.5 h-3.5 text-blue-500 flex-shrink-0 mt-0.5" />
-                                    <div className="flex-1 min-w-0">
-                                      <p className="text-[11px] font-semibold text-gray-800 truncate">{at.workshop_name || 'Cliente'}</p>
-                                      <p className="text-[10px] text-gray-500 capitalize">{(at.tipo_atendimento || 'atendimento').replace(/_/g, ' ')}</p>
-                                      <div className="flex items-center gap-1 mt-0.5">
-                                        <Clock className="w-3 h-3 text-blue-400" />
-                                        <span className="text-[10px] text-blue-600 font-medium">{at.data_agendada ? format(parseISO(at.data_agendada), 'HH:mm') : '—'}</span>
-                                        <span className={`ml-auto text-[9px] px-1.5 py-0.5 rounded font-semibold ${at.status === 'confirmado' ? 'bg-green-100 text-green-700' : at.status === 'reagendado' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'}`}>{at.status}</span>
-                                      </div>
+                      {/* FOLLOW-UPS — Timeline 2 colunas */}
+                      {activePanel === 'followups' && (() => {
+                        // Calcula semana atual (domingo–sábado)
+                        const _hoje = new Date(today);
+                        const _inicioSem = new Date(_hoje); _inicioSem.setDate(_hoje.getDate() - _hoje.getDay());
+                        const _fimSem = new Date(_hoje); _fimSem.setDate(_hoje.getDate() + (6 - _hoje.getDay()));
+                        const _inicioStr = _inicioSem.toISOString().split('T')[0];
+                        const _fimStr = _fimSem.toISOString().split('T')[0];
+
+                        // FUAta: origem ata, pendente, com ata_id, dentro da semana
+                        const fuAtaSemana = allFollowUpsModal.filter(f =>
+                          (f.origin_type === 'ata' || !f.origin_type) &&
+                          !f.is_completed &&
+                          f.ata_id &&
+                          f.reminder_date >= _inicioStr &&
+                          f.reminder_date <= _fimStr
+                        ).sort((a, b) => new Date(a.reminder_date) - new Date(b.reminder_date));
+
+                        // FUSp: origem sprint, pendente, com sprint_id, dentro da semana
+                        const fuSpSemana = allFollowUpsModal.filter(f =>
+                          f.origin_type === 'sprint' &&
+                          !f.is_completed &&
+                          f.sprint_id &&
+                          f.reminder_date >= _inicioStr &&
+                          f.reminder_date <= _fimStr
+                        ).sort((a, b) => new Date(a.reminder_date) - new Date(b.reminder_date));
+
+                        const totalSelecionados = fuAtaSelecionados.length + fuSpSelecionados.length;
+
+                        return (
+                          <div className="px-3 py-4 space-y-3">
+                            {/* Card atual */}
+                            <div className="bg-white rounded-lg p-3 border border-red-200">
+                              <Badge className="bg-red-600 text-white text-xs mb-1">Atual</Badge>
+                              <p className="text-sm font-semibold text-gray-900">FU {followUp?.sequence_number || 1}</p>
+                              <p className="text-xs text-gray-500 mt-1">{followUp?.reminder_date}</p>
+                            </div>
+
+                            {/* Bloco sprint (se FU atual for de sprint) */}
+                            {isSprintFUModal && (
+                              <div className="bg-orange-50 border border-orange-200 rounded-lg overflow-hidden">
+                                <div className="flex items-center gap-2 px-3 py-2 border-b border-orange-200">
+                                  <span className="text-sm">🚀</span>
+                                  <p className="text-[10px] font-bold text-orange-800 uppercase tracking-wide flex-1">Follow-ups desta sprint</p>
+                                  <span className="text-[10px] text-orange-600 font-medium">
+                                    {allFollowUpsModal.filter(f => f.sprint_id === followUp?.sprint_id && f.origin_type === 'sprint' && f.is_completed).length}
+                                    /{allFollowUpsModal.filter(f => f.sprint_id === followUp?.sprint_id && f.origin_type === 'sprint').length} concluídos
+                                  </span>
+                                </div>
+                                {sprintLabelModal && <p className="text-[11px] text-orange-600 px-3 pt-2 pb-1 italic truncate">{sprintLabelModal}</p>}
+                                <div className="px-3 pb-3 pt-1 space-y-1.5">
+                                  <div className="flex items-center gap-2 bg-orange-100 border border-orange-200 rounded px-2 py-1.5">
+                                    <div className="w-2 h-2 rounded-full bg-orange-500 flex-shrink-0 ring-2 ring-orange-300" />
+                                    <span className="text-[11px] font-bold text-orange-800">FU {followUp?.sequence_number} · Em andamento</span>
+                                    <span className="ml-auto text-[10px] text-orange-600">{followUp?.reminder_date ? format(new Date(followUp.reminder_date + 'T00:00:00'), 'dd/MM') : '—'}</span>
+                                  </div>
+                                  {fusDaSprintModal.map(f => (
+                                    <div key={f.id} className="flex items-center gap-2 px-2 py-1.5">
+                                      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${f.is_completed ? 'bg-green-400' : 'bg-gray-300'}`} />
+                                      <span className={`text-[11px] ${f.is_completed ? 'text-green-700 font-semibold' : 'text-gray-600'}`}>FU {f.sequence_number}</span>
+                                      <span className={`text-[10px] ${f.is_completed ? 'text-green-500' : 'text-gray-400'}`}>{f.is_completed ? '✓ concluído' : 'pendente'}</span>
+                                      <span className="ml-auto text-[10px] text-gray-400">{f.reminder_date ? format(new Date(f.reminder_date + 'T00:00:00'), 'dd/MM') : '—'}</span>
                                     </div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                          <div className="bg-white rounded-lg p-3 border border-red-200">
-                            <Badge className="bg-red-600 text-white text-xs mb-1">Atual</Badge>
-                            <p className="text-sm font-semibold text-gray-900">FU {followUp?.sequence_number || 1}</p>
-                            <p className="text-xs text-gray-500 mt-1">{followUp?.reminder_date}</p>
-                          </div>
-                          {isSprintFUModal && (
-                            <div className="bg-orange-50 border border-orange-200 rounded-lg overflow-hidden">
-                              <div className="flex items-center gap-2 px-3 py-2 border-b border-orange-200">
-                                <span className="text-sm">🚀</span>
-                                <p className="text-[10px] font-bold text-orange-800 uppercase tracking-wide flex-1">Follow-ups desta sprint</p>
-                                <span className="text-[10px] text-orange-600 font-medium">{allFollowUpsModal.filter(f => f.sprint_id === followUp?.sprint_id && f.origin_type === 'sprint' && f.is_completed).length}/{allFollowUpsModal.filter(f => f.sprint_id === followUp?.sprint_id && f.origin_type === 'sprint').length} concluídos</span>
-                              </div>
-                              {sprintLabelModal && <p className="text-[11px] text-orange-600 px-3 pt-2 pb-1 italic truncate">{sprintLabelModal}</p>}
-                              <div className="px-3 pb-3 pt-1 space-y-1.5">
-                                <div className="flex items-center gap-2 bg-orange-100 border border-orange-200 rounded px-2 py-1.5">
-                                  <div className="w-2 h-2 rounded-full bg-orange-500 flex-shrink-0 ring-2 ring-orange-300" />
-                                  <span className="text-[11px] font-bold text-orange-800">FU {followUp?.sequence_number} · Em andamento</span>
-                                  <span className="ml-auto text-[10px] text-orange-600">{followUp?.reminder_date ? format(new Date(followUp.reminder_date + 'T00:00:00'), 'dd/MM') : '—'}</span>
-                                </div>
-                                {fusDaSprintModal.map(f => (
-                                  <div key={f.id} className="flex items-center gap-2 px-2 py-1.5">
-                                    <div className={`w-2 h-2 rounded-full flex-shrink-0 ${f.is_completed ? 'bg-green-400' : 'bg-gray-300'}`} />
-                                    <span className={`text-[11px] ${f.is_completed ? 'text-green-700 font-semibold' : 'text-gray-600'}`}>FU {f.sequence_number}</span>
-                                    <span className={`text-[10px] ${f.is_completed ? 'text-green-500' : 'text-gray-400'}`}>{f.is_completed ? '✓ concluído' : 'pendente'}</span>
-                                    <span className="ml-auto text-[10px] text-gray-400">{f.reminder_date ? format(new Date(f.reminder_date + 'T00:00:00'), 'dd/MM') : '—'}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                          {fusDaSemanaModal.length > 0 && (
-                            <div className="border border-amber-200 bg-amber-50 rounded-lg overflow-hidden">
-                              <button onClick={() => setFusSemanaExpandido(v => !v)} className="w-full flex items-center justify-between px-3 py-2 text-left">
-                                <div className="flex items-center gap-2">
-                                  <span className="w-4 h-4 rounded-full bg-amber-500 text-white text-[9px] font-bold flex items-center justify-center">{fusDaSemanaModal.length}</span>
-                                  <span className="text-[11px] font-semibold text-amber-800">{fusDaSemanaModal.length} outro{fusDaSemanaModal.length > 1 ? 's' : ''} FU{fusDaSemanaModal.length > 1 ? 's' : ''} esta semana</span>
-                                </div>
-                                <ChevronRight className={`w-3.5 h-3.5 text-amber-600 transition-transform ${fusSemanaExpandido ? 'rotate-90' : ''}`} />
-                              </button>
-                              {fusSemanaExpandido && (
-                                <div className="border-t border-amber-200 bg-white">
-                                  <p className="text-[10px] text-gray-500 px-3 pt-2 pb-1">Selecione para encerrar junto neste atendimento</p>
-                                  {fusDaSemanaModal.map(f => (
-                                    <label key={f.id} className="flex items-center gap-2.5 px-3 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-0">
-                                      <input type="checkbox" checked={fusSemanaLocal.includes(f.id)} onChange={e => { setFusSemanaLocal(prev => e.target.checked ? [...prev, f.id] : prev.filter(id => id !== f.id)); }} className="w-3.5 h-3.5 accent-red-600" />
-                                      <div className="flex-1 min-w-0">
-                                        <p className="text-[11px] font-semibold text-gray-700">FU {f.sequence_number} · {f.reminder_date ? format(new Date(f.reminder_date + 'T00:00:00'), 'dd/MM') : '—'}</p>
-                                        {f.consultor_nome && <p className="text-[10px] text-gray-400">{f.consultor_nome}</p>}
-                                      </div>
-                                    </label>
                                   ))}
-                                  {fusSemanaLocal.length > 0 && <p className="text-[10px] text-amber-700 bg-amber-50 px-3 py-2 font-medium">{fusSemanaLocal.length} FU{fusSemanaLocal.length > 1 ? 's' : ''} será{fusSemanaLocal.length > 1 ? 'ão' : ''} encerrado{fusSemanaLocal.length > 1 ? 's' : ''} com os mesmos dados</p>}
                                 </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      )}
+                              </div>
+                            )}
+
+                            {/* Banner aviso semana */}
+                            {fusDaSemanaModal.length > 0 && (
+                              <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 flex items-center gap-2">
+                                <span className="w-5 h-5 rounded-full bg-amber-500 text-white text-[9px] font-bold flex items-center justify-center flex-shrink-0">{fusDaSemanaModal.length}</span>
+                                <p className="text-[11px] text-amber-800 font-medium">
+                                  {fusDaSemanaModal.length} outro{fusDaSemanaModal.length > 1 ? 's' : ''} FU{fusDaSemanaModal.length > 1 ? 's' : ''} pendente{fusDaSemanaModal.length > 1 ? 's' : ''} esta semana — selecione abaixo para encerrar em conjunto
+                                </p>
+                              </div>
+                            )}
+
+                            {/* Badge de selecionados */}
+                            {totalSelecionados > 0 && (
+                              <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                                <p className="text-[11px] text-green-700 font-semibold">
+                                  ✓ {totalSelecionados} FU{totalSelecionados > 1 ? 's' : ''} selecionado{totalSelecionados > 1 ? 's' : ''} para encerrar junto
+                                </p>
+                              </div>
+                            )}
+
+                            {/* Timeline 2 colunas */}
+                            {(fuAtaSemana.length > 0 || fuSpSemana.length > 0) && (
+                              <div className="border border-gray-200 rounded-lg overflow-hidden">
+                                {/* Cabeçalho das colunas */}
+                                <div className="grid grid-cols-2 divide-x divide-gray-200 bg-gray-50 border-b border-gray-200">
+                                  <div className="px-3 py-2 flex items-center gap-1.5">
+                                    <span className="text-sm">📄</span>
+                                    <span className="text-[10px] font-bold text-orange-700 uppercase tracking-wide">FUAta ({fuAtaSemana.length})</span>
+                                  </div>
+                                  <div className="px-3 py-2 flex items-center gap-1.5">
+                                    <span className="text-sm">⚡</span>
+                                    <span className="text-[10px] font-bold text-gray-600 uppercase tracking-wide">FUSp ({fuSpSemana.length})</span>
+                                  </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 divide-x divide-gray-200" style={{ maxHeight: '360px' }}>
+                                  {/* Coluna FUAta */}
+                                  <div className="overflow-y-auto">
+                                    {fuAtaSemana.length === 0 ? (
+                                      <p className="text-[11px] text-gray-400 italic text-center py-6">Sem FUAta esta semana</p>
+                                    ) : fuAtaSemana.map(f => {
+                                      const originAta = atas.find(a => a.id === f.ata_id);
+                                      const tipoAtendimento = originAta?.tipo_aceleracao || originAta?.tipo_atendimento || '—';
+                                      const isChecked = fuAtaSelecionados.includes(f.id);
+                                      const isAtual = f.id === followUp?.id;
+                                      return (
+                                        <div key={f.id} className={`border-b border-gray-100 last:border-0 p-2.5 ${isAtual ? 'bg-red-50' : isChecked ? 'bg-orange-50' : 'bg-white hover:bg-gray-50'} transition-colors`}>
+                                          <div className="flex items-start gap-2">
+                                            {!isAtual && (
+                                              <input
+                                                type="checkbox"
+                                                checked={isChecked}
+                                                onChange={e => setFuAtaSelecionados(prev =>
+                                                  e.target.checked ? [...prev, f.id] : prev.filter(id => id !== f.id)
+                                                )}
+                                                className="w-3.5 h-3.5 accent-orange-600 mt-0.5 flex-shrink-0"
+                                              />
+                                            )}
+                                            {isAtual && <div className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />}
+                                            <div className="flex-1 min-w-0">
+                                              <div className="flex items-center gap-1 flex-wrap mb-1">
+                                                <p className="text-[11px] font-bold text-gray-900 truncate">{f.workshop_name}</p>
+                                                {isAtual && <span className="text-[9px] bg-red-600 text-white rounded px-1 font-bold">ATUAL</span>}
+                                              </div>
+                                              <div className="space-y-0.5 text-[10px] text-gray-600">
+                                                <p><span className="font-semibold">FU:</span> {f.sequence_number}/4</p>
+                                                <p><span className="font-semibold">Consultor:</span> {f.consultor_nome || '—'}</p>
+                                                <p><span className="font-semibold">Tipo:</span> {tipoAtendimento}</p>
+                                                <p><span className="font-semibold">Criado:</span> {f.created_date ? format(new Date(f.created_date), 'dd/MM/yy') : '—'}</p>
+                                                <p><span className="font-semibold">Agendado:</span> {f.reminder_date ? format(new Date(f.reminder_date + 'T00:00:00'), 'dd/MM/yy') : '—'}</p>
+                                              </div>
+                                              {f.ata_id && (
+                                                <button
+                                                  onClick={() => {
+                                                    if (originAta) setSelectedAta(originAta);
+                                                  }}
+                                                  className="mt-1.5 text-[10px] text-orange-600 hover:text-orange-700 font-semibold flex items-center gap-1 hover:underline"
+                                                >
+                                                  📋 Visualizar ATA
+                                                </button>
+                                              )}
+                                            </div>
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+
+                                  {/* Coluna FUSp */}
+                                  <div className="overflow-y-auto">
+                                    {fuSpSemana.length === 0 ? (
+                                      <p className="text-[11px] text-gray-400 italic text-center py-6">Sem FUSp esta semana</p>
+                                    ) : fuSpSemana.map(f => {
+                                      const isChecked = fuSpSelecionados.includes(f.id);
+                                      const isAtual = f.id === followUp?.id;
+                                      const sprintLabel = f.notes?.replace('Follow-up automático da sprint: ', '').trim() || '—';
+                                      return (
+                                        <div key={f.id} className={`border-b border-gray-100 last:border-0 p-2.5 ${isAtual ? 'bg-red-50' : isChecked ? 'bg-blue-50' : 'bg-white hover:bg-gray-50'} transition-colors`}>
+                                          <div className="flex items-start gap-2">
+                                            {!isAtual && (
+                                              <input
+                                                type="checkbox"
+                                                checked={isChecked}
+                                                onChange={e => setFuSpSelecionados(prev =>
+                                                  e.target.checked ? [...prev, f.id] : prev.filter(id => id !== f.id)
+                                                )}
+                                                className="w-3.5 h-3.5 accent-blue-600 mt-0.5 flex-shrink-0"
+                                              />
+                                            )}
+                                            {isAtual && <div className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />}
+                                            <div className="flex-1 min-w-0">
+                                              <div className="flex items-center gap-1 flex-wrap mb-1">
+                                                <p className="text-[11px] font-bold text-gray-900 truncate">{f.workshop_name}</p>
+                                                {isAtual && <span className="text-[9px] bg-red-600 text-white rounded px-1 font-bold">ATUAL</span>}
+                                              </div>
+                                              <div className="space-y-0.5 text-[10px] text-gray-600">
+                                                <p><span className="font-semibold">FUSp:</span> {f.sequence_number}/4</p>
+                                                <p><span className="font-semibold">Consultor:</span> {f.consultor_nome || '—'}</p>
+                                                <p><span className="font-semibold">Sprint:</span> <span className="truncate">{sprintLabel.length > 25 ? sprintLabel.substring(0, 25) + '…' : sprintLabel}</span></p>
+                                                <p><span className="font-semibold">Criado:</span> {f.created_date ? format(new Date(f.created_date), 'dd/MM/yy') : '—'}</p>
+                                                <p><span className="font-semibold">Agendado:</span> {f.reminder_date ? format(new Date(f.reminder_date + 'T00:00:00'), 'dd/MM/yy') : '—'}</p>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Estado vazio */}
+                            {fuAtaSemana.length === 0 && fuSpSemana.length === 0 && (
+                              <p className="text-[11px] text-gray-400 italic text-center py-4">Nenhum outro follow-up pendente esta semana</p>
+                            )}
+                          </div>
+                        );
+                      })()}
 
                       {/* CLIENTE */}
                       {activePanel === 'cliente' && (
