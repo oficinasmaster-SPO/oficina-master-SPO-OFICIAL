@@ -1,8 +1,24 @@
 import React, { useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, Clock, CheckCircle2, StickyNote } from "lucide-react";
+import { AlertCircle, Clock, CheckCircle2, StickyNote, ArrowRight, User, CalendarCheck } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import FollowUpCompletedDetailDrawer from "@/components/aceleracao/FollowUpCompletedDetailDrawer";
+import { useQuery } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
+
+const PROXIMO_PASSO_LABELS = {
+  reagendar: "Reagendar FU",
+  agendar: "Agendar reunião",
+  enviar: "Enviar material",
+  cancelar: "Cancelado",
+  concluir: "Concluído",
+  negociacao: "Avançar negociação",
+  fechamento: "Avançar fechamento",
+  nova_proposta: "Nova proposta",
+  agendar_reuniao: "Agendar reunião",
+  perdido: "Perdido",
+  nurturing: "Nurturing",
+};
 
 function getInitials(name = "") {
   return name.split(" ").slice(0, 2).map(p => p[0]).join("").toUpperCase() || "?";
@@ -31,8 +47,28 @@ function getAvatarColor(name = "") {
   return avatarColors[idx];
 }
 
+// Busca todos os FollowUpConcluidos de uma vez para enriquecer os cards
+function useConcluidosIndex() {
+  const { data = [] } = useQuery({
+    queryKey: ["follow-up-concluidos-list-index"],
+    queryFn: () => base44.entities.FollowUpConcluido.list("-completedAt", 500),
+    staleTime: 3 * 60 * 1000,
+  });
+  // índice por workshop_id: último concluído por workshop
+  const byWorkshop = {};
+  data.forEach(c => {
+    const wid = c.workshop_id;
+    if (!wid) return;
+    if (!byWorkshop[wid] || new Date(c.completedAt) > new Date(byWorkshop[wid].completedAt)) {
+      byWorkshop[wid] = c;
+    }
+  });
+  return byWorkshop;
+}
+
 export default function FollowUpList({ reminders, today, isLoading, onSelect, filterPill, onFilterPill }) {
   const [selectedCompleted, setSelectedCompleted] = useState(null);
+  const concluidosIndex = useConcluidosIndex();
 
   const PILLS = [
     { id: "todos",     label: "Todos" },
@@ -115,14 +151,18 @@ export default function FollowUpList({ reminders, today, isLoading, onSelect, fi
             const name = r.workshop_name || "Sem cliente";
             const isConcluido = r.is_completed;
 
+            const ultimoConcluido = concluidosIndex[r.workshop_id];
+            const hasProximoPasso = ultimoConcluido?.proximoPasso && ultimoConcluido.proximoPasso !== 'cancelar';
+
             return (
               <button
                 key={r.id}
                 onClick={() => isConcluido ? setSelectedCompleted(r) : onSelect(r)}
-                className={`w-full text-left rounded-lg border bg-white hover:bg-gray-50 transition-all flex items-center gap-3 px-4 py-3 group ${
+                className={`w-full text-left rounded-lg border bg-white hover:bg-gray-50 transition-all flex flex-col gap-0 group ${
                   isConcluido ? "border-green-200 bg-green-50" : isOverdue ? "border-l-4 border-l-red-500 border-t-red-100 border-r-red-100 border-b-red-100" : "border-gray-200"
                 }`}
               >
+                <div className="flex items-center gap-3 px-4 py-3">
                 {/* Avatar */}
                 <div className={`flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold ${getAvatarColor(name)}`}>
                   {getInitials(name)}
@@ -175,6 +215,30 @@ export default function FollowUpList({ reminders, today, isLoading, onSelect, fi
                     {isConcluido ? "Concluído" : isOverdue ? "Vencido" : isTodayItem ? "Hoje" : "Pendente"}
                   </Badge>
                 </div>
+                </div>
+
+                {/* Próximo passo acordado no último atendimento */}
+                {hasProximoPasso && !isConcluido && (
+                  <div className="mx-4 mb-2.5 flex items-start gap-2 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">
+                    <CalendarCheck className="w-3.5 h-3.5 text-blue-500 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-[11px] font-semibold text-blue-700">
+                          {PROXIMO_PASSO_LABELS[ultimoConcluido.proximoPasso] || ultimoConcluido.proximoPasso}
+                        </span>
+                        {ultimoConcluido.proxData && (
+                          <span className="text-[10px] text-blue-500">
+                            · {format(new Date(ultimoConcluido.proxData + "T00:00:00"), "dd/MM/yyyy")}
+                            {ultimoConcluido.proxHora && ` às ${ultimoConcluido.proxHora}`}
+                          </span>
+                        )}
+                      </div>
+                      {ultimoConcluido.compromissos && (
+                        <p className="text-[10px] text-blue-600 truncate mt-0.5">{ultimoConcluido.compromissos}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
               </button>
             );
           })}

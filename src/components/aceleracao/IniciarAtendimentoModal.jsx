@@ -1099,8 +1099,6 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
 
           {/* RIGHT SIDE - RAIL + CONTEXTUAL PANEL */}
           {(() => {
-            const [activePanel, setActivePanel] = React.useState('atas');
-
             const NAV_ITEMS = [
               { id: 'atas',         emoji: '📄', label: 'Atas',           group: 1 },
               { id: 'followups',    emoji: '👥', label: 'Follow-ups',     group: 1 },
