@@ -847,17 +847,25 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
                                           Follow-up {f.sequence_number || '?'}/4
                                         </p>
                                       </div>
-                                      {f.ata_id && (
+                                      <div className="flex items-center gap-3">
+                                        {f.ata_id && (
+                                          <button
+                                            onClick={() => {
+                                              const ata = atas.find(a => a.id === f.ata_id);
+                                              if (ata) setSelectedAta(ata);
+                                            }}
+                                            className="text-[10px] text-orange-600 hover:text-orange-700 font-semibold flex items-center gap-1 hover:underline"
+                                          >
+                                            📋 Visualizar ATA
+                                          </button>
+                                        )}
                                         <button
-                                          onClick={() => {
-                                            const ata = atas.find(a => a.id === f.ata_id);
-                                            if (ata) setSelectedAta(ata);
-                                          }}
-                                          className="text-[10px] text-orange-600 hover:text-orange-700 font-semibold flex items-center gap-1 hover:underline"
+                                          onClick={() => onSelectReminder && onSelectReminder(f)}
+                                          className="text-[10px] text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-1 hover:underline"
                                         >
-                                          📋 Visualizar ATA
+                                          👁 Ver detalhes
                                         </button>
-                                      )}
+                                      </div>
                                     </div>
                                   </div>
                                 </div>
