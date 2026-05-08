@@ -180,11 +180,7 @@ export default function BacklogDashboard({ workshopId, user }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold">Backlog de Tarefas</h2>
-          <p className="text-gray-600">Acompanhe todas as tarefas abertas e vencidas</p>
-        </div>
+      <div className="flex justify-end">
         <Button onClick={() => setShowForm(true)} className="gap-2">
           <Plus className="w-4 h-4" />
           Nova Tarefa
@@ -247,54 +243,6 @@ export default function BacklogDashboard({ workshopId, user }) {
           </CardContent>
         </Card>
       </div>
-
-      <div className="grid md:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Backlog por Consultor</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {Object.entries(backlogPorConsultor).map(([consultor, stats]) => (
-                <div key={consultor} className="flex justify-between items-center p-3 bg-gray-50 rounded">
-                  <span className="font-medium">{consultor}</span>
-                  <div className="flex gap-4 text-sm">
-                    <span className="text-blue-600">Total: {stats.total}</span>
-                    <span className="text-red-600">Vencidas: {stats.vencidas}</span>
-                    <span className="text-orange-600">Críticas: {stats.criticas}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Backlog por Cliente</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {Object.entries(backlogPorCliente).slice(0, 10).map(([cliente, stats]) => (
-                <div key={cliente} className="flex justify-between items-center p-3 bg-gray-50 rounded">
-                  <span className="font-medium truncate max-w-[200px]">{cliente}</span>
-                  <div className="flex gap-4 text-sm">
-                    <span className="text-blue-600">Total: {stats.total}</span>
-                    <span className="text-red-600">Vencidas: {stats.vencidas}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <BacklogFilters 
-        filters={filters} 
-        onFilterChange={setFilters}
-        consultores={consultoresUnicos}
-        clientes={clientesUnicos}
-      />
 
       <Card>
         <CardHeader>
