@@ -150,7 +150,6 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
     setInicioContagem(prev => prev ?? Date.now());
   }, []);
   const [cronometroAtivo, setCronometroAtivo] = useState(true);
-  const [activePanel, setActivePanel] = useState('atas');
   const [showAtaModal, setShowAtaModal] = useState(false);
   const [showNavConfirm, setShowNavConfirm] = useState(false);
   const [navTarget, setNavTarget] = useState(null);
@@ -859,8 +858,8 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
 
         {/* CONTENT - SCROLLÁVEL */}
         <div className="flex-1 overflow-hidden flex min-h-0">
-          {/* LEFT COLUMN - FORM (40%) */}
-          <div className="overflow-y-auto border-r border-gray-200 px-4 py-4" style={{ flex: '2 1 0', minWidth: 0 }}>
+          {/* LEFT COLUMN - FORM (~40%) */}
+          <div className="overflow-y-auto border-r border-gray-200 px-4 py-4" style={{ flex: '2 1 0%', minWidth: '320px', maxWidth: '42%' }}>
             <div className="space-y-6 max-w-2xl px-2 py-2 bg-white rounded-lg shadow-[inset_0_2px_8px_rgba(0,0,0,0.05)]">
               {/* Canal */}
               <div>
@@ -1100,6 +1099,8 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
 
           {/* RIGHT SIDE - RAIL + CONTEXTUAL PANEL */}
           {(() => {
+            const [activePanel, setActivePanel] = React.useState('atas');
+
             const NAV_ITEMS = [
               { id: 'atas',         emoji: '📄', label: 'Atas',           group: 1 },
               { id: 'followups',    emoji: '👥', label: 'Follow-ups',     group: 1 },
@@ -1155,7 +1156,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
                 {activePanel && (
                   <div
                     className="border-l border-gray-200 bg-white overflow-hidden flex flex-col"
-                    style={{ flex: '3 1 0', minWidth: 0, animation: 'slideInRight 0.25s ease-out' }}
+                    style={{ flex: '3 1 0%', minWidth: '340px', animation: 'slideInRight 0.25s ease-out' }}
                   >
                     {/* Panel Header */}
                     <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50 flex-shrink-0">
