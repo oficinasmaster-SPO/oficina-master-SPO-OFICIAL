@@ -165,28 +165,13 @@ export default function PedidosInternosTab({ workshopId, user }) {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="pedidos" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="pedidos">Pedidos Internos</TabsTrigger>
-          <TabsTrigger value="backlog">Backlog de Tarefas</TabsTrigger>
-        </TabsList>
-
         <TabsContent value="pedidos" className="space-y-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h2 className="text-2xl font-bold">Pedidos Internos</h2>
-              <p className="text-gray-600">Gerencie solicitações entre equipes e áreas</p>
-            </div>
+          <div className="flex justify-end">
             <Button onClick={() => setShowForm(true)} className="gap-2">
               <Plus className="w-4 h-4" />
               Novo Pedido
             </Button>
           </div>
-
-          <PedidosFilters 
-            filters={filters} 
-            onFilterChange={setFilters}
-            responsaveis={[...new Set(pedidos.map(p => p.responsavel_nome).filter(Boolean))].sort()}
-          />
 
           <div className="grid grid-cols-4 gap-4">
             <Card>
@@ -323,10 +308,6 @@ export default function PedidosInternosTab({ workshopId, user }) {
               )}
             </CardContent>
           </Card>
-        </TabsContent>
-
-        <TabsContent value="backlog">
-          <BacklogDashboard workshopId={workshopId} user={user} />
         </TabsContent>
       </Tabs>
     </div>
