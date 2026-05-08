@@ -155,6 +155,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
   const [navTarget, setNavTarget] = useState(null);
   const [fusSemanaExpandido, setFusSemanaExpandido] = useState(false);
   const [fusSemanaLocal, setFusSemanaLocal] = useState([]);
+  const [activePanel, setActivePanel] = useState('atas');
 
   // States da aba IA
   const [dicaIA, setDicaIA] = useState(null);
