@@ -124,18 +124,17 @@ export default function CronogramaImplementacao() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data, isNew }) => {
-      // BUG FIX #1: Validar ID antes de processar
-      if (!id || id.startsWith('virtual-')) {
-        throw new Error('ID inválido. Recarregue a página e tente novamente.');
-      }
+      // BUG FIX #1: Detectar itens virtuais e forçar criação
+      const isVirtualItem = id && id.startsWith('virtual-');
+      const shouldCreate = isNew || isVirtualItem;
 
       // BUG FIX #2: Validar dados obrigatórios
       if (!data.item_nome || !data.item_id) {
         throw new Error('Nome e ID do item são obrigatórios.');
       }
 
-      // Se é item novo (virtual), criar ao invés de atualizar
-      if (isNew) {
+      // Se é item novo ou virtual, criar ao invés de atualizar
+      if (shouldCreate) {
         const created = await base44.entities.CronogramaImplementacao.create({
           workshop_id: workshop.id,
           consulting_firm_id: workshop.consulting_firm_id,
