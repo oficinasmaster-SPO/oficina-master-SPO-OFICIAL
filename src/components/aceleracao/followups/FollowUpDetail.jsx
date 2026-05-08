@@ -830,7 +830,7 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
                       </div>
                     )}
 
-                    <div className="grid grid-cols-2 divide-x divide-gray-100 gap-0 max-h-[520px] overflow-hidden">
+                    <div className="grid grid-cols-2 divide-x divide-gray-100 gap-0 max-h-[520px] overflow-y-auto">
                       {/* Left: FUAta */}
                       <div className="overflow-y-auto pr-3 pl-0">
                         <p className="text-[10px] text-gray-400 font-semibold mb-2 uppercase tracking-wide sticky top-0 bg-white py-2">FUAta</p>
