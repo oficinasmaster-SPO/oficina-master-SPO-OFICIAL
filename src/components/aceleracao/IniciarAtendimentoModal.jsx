@@ -21,7 +21,7 @@ import { useAuth } from "@/lib/AuthContext";
 import VisualizarAtaModal from "@/components/aceleracao/VisualizarAtaModal";
 import { useOperationalSync } from "@/hooks/useOperationalSync";
 import CronogramaTab from "@/components/aceleracao/CronogramaTab";
-import TrailsTab from "@/components/aceleracao/TrailsTab";
+import TrilhaClientePanel from "@/components/aceleracao/TrilhaClientePanel";
 import SprintClientSection from "@/components/aceleracao/sprint-client/SprintClientSection";
 import PedidosInternosTab from "@/components/aceleracao/PedidosInternosTab";
 import BacklogDashboard from "@/components/aceleracao/BacklogDashboard";
@@ -1343,7 +1343,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
                       {/* TRILHAS */}
                       {activePanel === 'trilhas' && (
                         <div className="px-3 py-4">
-                          {followUp?.workshop_id ? <TrailsTab workshopId={followUp.workshop_id} onAudit={() => {}} /> : <p className="text-xs text-gray-500 italic">Sem trilhas disponíveis</p>}
+                          {followUp?.workshop_id ? <TrilhaClientePanel workshopId={followUp.workshop_id} /> : <p className="text-xs text-gray-500 italic">Sem trilhas disponíveis</p>}
                         </div>
                       )}
 
