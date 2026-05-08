@@ -26,6 +26,7 @@ import SprintClientSection from "@/components/aceleracao/sprint-client/SprintCli
 import PedidosInternosTab from "@/components/aceleracao/PedidosInternosTab";
 import BacklogDashboard from "@/components/aceleracao/BacklogDashboard";
 import ProximosPassosAbaTab from "@/components/aceleracao/ProximosPassosAbaTab";
+import SprintClientModal from "@/components/aceleracao/sprint-client/SprintClientModal";
 
 const RESULTADO_COLORS = {
   atendeu: "bg-green-100 text-green-700 border-green-300",
@@ -158,6 +159,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
   const [fuAtaSelecionados, setFuAtaSelecionados] = useState([]);
   const [fuSpSelecionados, setFuSpSelecionados] = useState([]);
   const [activePanel, setActivePanel] = useState('atas');
+  const [selectedSprintId, setSelectedSprintId] = useState(null);
 
   // States da aba IA
   const [dicaIA, setDicaIA] = useState(null);
@@ -1416,6 +1418,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
                                       const isAtual = f.id === followUp?.id;
                                       const sprintLabel = f.notes?.replace('Follow-up automático da sprint: ', '').trim() || '—';
                                       const { fase, tarefa } = getSprintFaseETarefaModal(f.sprint_id);
+                                      const sprintObj = sprintsMapModal[f.sprint_id] || null;
                                       return (
                                         <div key={f.id} className={`border-b border-gray-100 last:border-0 p-2.5 ${isAtual ? 'bg-red-50' : isChecked ? 'bg-blue-50' : 'bg-white hover:bg-gray-50'} transition-colors`}>
                                           <div className="flex items-start gap-2">
@@ -1456,13 +1459,21 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
                                                 ) : fase ? (
                                                   <p className="text-[10px] text-green-600 italic">✓ Todas as tarefas concluídas</p>
                                                 ) : null}
-                                              </div>
-                                            </div>
-                                          </div>
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
+                                                {sprintObj && (
+                                                  <button
+                                                    onClick={() => setSelectedSprintId(f.sprint_id)}
+                                                    className="mt-1.5 text-[10px] text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-1 hover:underline"
+                                                  >
+                                                    🚀 Abrir Sprint →
+                                                  </button>
+                                                )}
+                                                </div>
+                                                </div>
+                                                </div>
+                                                </div>
+                                                );
+                                                })}
+                                                </div>
                                 </div>
                               </div>
                             )}
@@ -1644,6 +1655,15 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
         onClose={() => setSelectedAta(null)}
       />
       )}
+
+      {/* Sprint Modal — aberto ao clicar em "Abrir Sprint" na aba Follow-ups */}
+      <SprintClientModal
+        sprint={selectedSprintId ? (sprintsMapModal[selectedSprintId] || null) : null}
+        user={user}
+        workshop={workshop}
+        open={!!selectedSprintId}
+        onClose={() => setSelectedSprintId(null)}
+      />
 
       <AlertDialog open={showNavConfirm} onOpenChange={setShowNavConfirm}>
         <AlertDialogContent>
