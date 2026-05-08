@@ -657,10 +657,15 @@ export default function CronogramaImplementacao() {
                   Cancelar
                 </Button>
                 <Button 
-                  onClick={() => updateMutation.mutate({ 
-                    id: editingItem.id,
-                    isNew: editingItem.not_started,
-                    data: {
+                  onClick={() => {
+                    if (!editingItem.id || editingItem.id.startsWith('virtual-')) {
+                      toast.error('ID inválido. Recarregue a página e tente novamente.');
+                      return;
+                    }
+                    updateMutation.mutate({ 
+                      id: editingItem.id,
+                      isNew: editingItem.not_started,
+                      data: {
                       item_tipo: editingItem.item_tipo,
                       item_id: editingItem.item_id,
                       item_nome: editingItem.item_nome,
@@ -671,9 +676,10 @@ export default function CronogramaImplementacao() {
                       progresso_percentual: editingItem.progresso_percentual,
                       observacoes: editingItem.observacoes,
                       dependencias: editingItem.dependencias || []
-                    }
-                  })}
-                  disabled={updateMutation.isPending}
+                      }
+                      });
+                      }}
+                      disabled={updateMutation.isPending}
                 >
                   {updateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Salvar'}
                 </Button>
