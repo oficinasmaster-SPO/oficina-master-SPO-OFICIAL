@@ -829,7 +829,7 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
                                       <p className="text-[12px] font-bold text-gray-900 mb-1">{f.workshop_name || 'Cliente'}</p>
                                       <div className="space-y-0.5 mb-2">
                                         <p className="text-[10px] text-gray-600">
-                                          <span className="font-semibold">Nº ATA:</span> {f.sequence_number || '—'}
+                                          <span className="font-semibold">FU:</span> {f.sequence_number || '—'}/4
                                         </p>
                                         <p className="text-[10px] text-gray-600">
                                           <span className="font-semibold">Consultor Resp:</span> {f.consultor_nome || '—'}
@@ -904,7 +904,7 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
                                 </div>
                                 <div className="space-y-1 pl-6">
                                   <p className="text-[10px] text-gray-600">
-                                    <span className="font-semibold">Sprint:</span> {sprintLabel ? sprintLabel.substring(0, 20) : '—'}
+                                    <span className="font-semibold">Sprint:</span> {f.notes ? f.notes.replace('Follow-up automático da sprint: ', '').trim().substring(0, 20) : '—'}
                                   </p>
                                   <p className="text-[10px] text-gray-600">
                                     <span className="font-semibold">Criação:</span> {f.reminder_date ? format(new Date(f.reminder_date + 'T00:00:00'), 'dd/MM/yy') : '—'}
