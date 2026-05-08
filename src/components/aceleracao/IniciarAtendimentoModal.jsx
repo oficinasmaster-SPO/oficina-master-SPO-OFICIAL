@@ -7,11 +7,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import {
   Phone, MessageCircle, Mail, Video, MapPin, CheckCircle2, X, Clock, AlertCircle,
-  ChevronRight, ChevronLeft, Upload, Check, ArrowRight, Calendar, User, Bell,
-  MessageSquare, Send, Loader2, Zap
+  ChevronRight, ChevronLeft, Upload, Check, Calendar, User, Bell,
+  MessageSquare, Send, Loader2
 } from "lucide-react";
 import { format, isToday, parseISO } from "date-fns";
 import { toast } from "sonner";
@@ -1097,537 +1097,341 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
             </div>
           </div>
 
-          {/* RIGHT COLUMN - SIDEBAR */}
-          <div className="w-80 xl:w-96 flex-shrink-0 border-l border-gray-200 bg-gradient-to-b from-white via-gray-50 to-gray-100 overflow-hidden flex flex-col shadow-[inset_-2px_0_8px_rgba(0,0,0,0.03)]">
-            <Tabs defaultValue="atas" className="flex-1 flex flex-col">
-              <TabsList className="grid w-full grid-cols-6 rounded-none border-b bg-white p-0 h-auto overflow-x-auto">
-                {[
-                  { value: 'atas', label: 'Atas', onClick: undefined },
-                  { value: 'followups', label: 'FUs', onClick: undefined },
-                  { value: 'cliente', label: 'Cliente', onClick: undefined },
-                  { value: 'cronograma', label: '📊 Cronograma', onClick: undefined },
-                  { value: 'trilhas', label: '🚀 Trilhas', onClick: undefined },
-                  { value: 'sprints', label: '⚡ Sprints', onClick: undefined },
-                  { value: 'proximospassos', label: '✓ Próximos Passos', onClick: undefined },
-                  { value: 'pedidos', label: '📋 Pedidos', onClick: undefined },
-                  { value: 'backlog', label: '📝 Backlog', onClick: undefined },
-                  { value: 'ia', label: '🤖 IA', onClick: () => { if (!chatInicializado) iniciarChat(); } },
-                ].map(tab => (
-                  <TabsTrigger
-                    key={tab.value}
-                    value={tab.value}
-                    onClick={tab.onClick}
-                    className="relative py-3 text-xs font-medium rounded-none border-0 transition-all duration-150 text-gray-400 bg-transparent hover:text-red-500 hover:bg-red-50 data-[state=active]:text-red-600 data-[state=active]:bg-white data-[state=active]:shadow-none data-[state=active]:font-semibold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-transparent data-[state=active]:after:bg-red-600"
-                  >
-                    {tab.label}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
+          {/* RIGHT SIDE - RAIL + CONTEXTUAL PANEL */}
+          {(() => {
+            const [activePanel, setActivePanel] = React.useState('atas');
 
-              <TabsContent value="atas" className="flex-1 overflow-y-auto px-3 py-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-                <div className="space-y-2">
-                  {atas.length === 0 ? (
-                    <p className="text-xs text-gray-500 italic">Sem atas registradas</p>
-                  ) : (
-                    atas.map(ata => {
-                      const isOrigin = ata.id === followUp?.ata_id;
-                      const tipo = (ata.tipo_aceleracao || ata.tipo_atendimento || "ATA").toLowerCase();
-                      const emojiMap = {
-                        "diagnóstico": "🔍",
-                        "diagnostico": "🔍",
-                        "acelera time": "⚡",
-                        "mentoria": "🎓",
-                        "onboarding": "🚀",
-                        "pontual": "📌",
-                      };
-                      const emoji = emojiMap[tipo] || "📄";
-                      
-                      return (
-                        <button
-                          key={ata.id}
-                          onClick={() => setSelectedAta(ata)}
-                          className={`w-full flex items-start gap-3 px-3 py-3 rounded-lg border transition-colors text-left ${
-                            isOrigin
-                              ? "border-green-300 bg-green-50 hover:bg-green-100"
-                              : "border-gray-200 bg-white hover:bg-gray-50"
-                          }`}
-                        >
-                          <span className="text-lg flex-shrink-0">{emoji}</span>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <p className={`text-xs font-semibold ${isOrigin ? "text-green-800" : "text-gray-800"}`}>
-                                {ata.tipo_aceleracao || ata.tipo_atendimento || "ATA"}
-                              </p>
-                              {isOrigin && (
-                                <Badge className="bg-green-600 text-white text-[10px] flex items-center gap-1">
-                                  <Check className="w-3 h-3" /> Origem
-                                </Badge>
+            const NAV_ITEMS = [
+              { id: 'atas',         emoji: '📄', label: 'Atas',           group: 1 },
+              { id: 'followups',    emoji: '👥', label: 'Follow-ups',     group: 1 },
+              { id: 'cliente',      emoji: '🏢', label: 'Cliente',        group: 1 },
+              { id: 'cronograma',   emoji: '📊', label: 'Cronograma',     group: 2 },
+              { id: 'trilhas',      emoji: '🚀', label: 'Trilhas',        group: 2 },
+              { id: 'sprints',      emoji: '⚡', label: 'Sprints',        group: 2 },
+              { id: 'proximospassos', emoji: '✅', label: 'Próximos Passos', group: 2 },
+              { id: 'pedidos',      emoji: '📋', label: 'Pedidos',        group: 2 },
+              { id: 'backlog',      emoji: '📝', label: 'Backlog',        group: 2 },
+              { id: 'ia',           emoji: '🤖', label: 'IA',             group: 3 },
+            ];
+
+            const handleRailClick = (id) => {
+              if (id === 'ia' && !chatInicializado) iniciarChat();
+              setActivePanel(prev => prev === id ? null : id);
+            };
+
+            return (
+              <>
+                {/* RAIL VERTICAL */}
+                <div className="w-12 flex-shrink-0 border-l border-gray-200 bg-gray-900 flex flex-col items-center py-2 gap-0.5">
+                  {NAV_ITEMS.map((item, idx) => {
+                    const prevItem = NAV_ITEMS[idx - 1];
+                    const showDivider = idx > 0 && item.group !== prevItem?.group;
+                    return (
+                      <React.Fragment key={item.id}>
+                        {showDivider && <div className="w-8 h-px bg-gray-600 my-1" />}
+                        <div className="relative group">
+                          <button
+                            onClick={() => handleRailClick(item.id)}
+                            title={item.label}
+                            className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg transition-all duration-150 ${
+                              activePanel === item.id
+                                ? 'bg-red-600 shadow-lg ring-2 ring-red-400'
+                                : 'hover:bg-gray-700'
+                            }`}
+                          >
+                            {item.emoji}
+                          </button>
+                          {/* Tooltip */}
+                          <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 border border-gray-700">
+                            {item.label}
+                            <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-800" />
+                          </div>
+                        </div>
+                      </React.Fragment>
+                    );
+                  })}
+                </div>
+
+                {/* CONTEXTUAL PANEL */}
+                {activePanel && (
+                  <div
+                    className="flex-shrink-0 border-l border-gray-200 bg-white overflow-hidden flex flex-col"
+                    style={{ width: '380px', animation: 'slideInRight 0.25s ease-out' }}
+                  >
+                    {/* Panel Header */}
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50 flex-shrink-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-base">{NAV_ITEMS.find(n => n.id === activePanel)?.emoji}</span>
+                        <span className="text-sm font-semibold text-gray-800">{NAV_ITEMS.find(n => n.id === activePanel)?.label}</span>
+                      </div>
+                      <button onClick={() => setActivePanel(null)} className="w-6 h-6 rounded flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-200 transition-colors">
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    {/* Panel Content */}
+                    <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+
+                      {/* ATAS */}
+                      {activePanel === 'atas' && (
+                        <div className="px-3 py-4 space-y-2">
+                          {atas.length === 0 ? (
+                            <p className="text-xs text-gray-500 italic">Sem atas registradas</p>
+                          ) : atas.map(ata => {
+                            const isOrigin = ata.id === followUp?.ata_id;
+                            const tipo = (ata.tipo_aceleracao || ata.tipo_atendimento || "ATA").toLowerCase();
+                            const emojiMap = { "diagnóstico": "🔍", "diagnostico": "🔍", "acelera time": "⚡", "mentoria": "🎓", "onboarding": "🚀", "pontual": "📌" };
+                            const emoji = emojiMap[tipo] || "📄";
+                            return (
+                              <button key={ata.id} onClick={() => setSelectedAta(ata)}
+                                className={`w-full flex items-start gap-3 px-3 py-3 rounded-lg border transition-colors text-left ${isOrigin ? "border-green-300 bg-green-50 hover:bg-green-100" : "border-gray-200 bg-white hover:bg-gray-50"}`}
+                              >
+                                <span className="text-lg flex-shrink-0">{emoji}</span>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <p className={`text-xs font-semibold ${isOrigin ? "text-green-800" : "text-gray-800"}`}>{ata.tipo_aceleracao || ata.tipo_atendimento || "ATA"}</p>
+                                    {isOrigin && <Badge className="bg-green-600 text-white text-[10px] flex items-center gap-1"><Check className="w-3 h-3" /> Origem</Badge>}
+                                  </div>
+                                  {ata.proximos_passos && <p className="text-[11px] text-gray-500 line-clamp-1 mt-1">{ata.proximos_passos}</p>}
+                                  {ata.meeting_date && <p className="text-[10px] text-gray-400 mt-1">{format(new Date(ata.meeting_date), "dd/MM/yyyy")}</p>}
+                                </div>
+                                <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0 mt-1" />
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {/* FOLLOW-UPS */}
+                      {activePanel === 'followups' && (
+                        <div className="px-3 py-4 space-y-3">
+                          {atendimentosHojeModal.length > 0 && (
+                            <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
+                              <div className="flex items-center gap-2 mb-2">
+                                <Bell className="w-3.5 h-3.5 text-blue-600" />
+                                <p className="text-[10px] text-blue-700 uppercase tracking-wide font-bold">Seus atendimentos hoje ({atendimentosHojeModal.length})</p>
+                              </div>
+                              <div className="space-y-1.5">
+                                {atendimentosHojeModal.map(at => (
+                                  <div key={at.id} className="bg-white border border-blue-100 rounded-lg px-2.5 py-2 flex items-start gap-2">
+                                    <Video className="w-3.5 h-3.5 text-blue-500 flex-shrink-0 mt-0.5" />
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-[11px] font-semibold text-gray-800 truncate">{at.workshop_name || 'Cliente'}</p>
+                                      <p className="text-[10px] text-gray-500 capitalize">{(at.tipo_atendimento || 'atendimento').replace(/_/g, ' ')}</p>
+                                      <div className="flex items-center gap-1 mt-0.5">
+                                        <Clock className="w-3 h-3 text-blue-400" />
+                                        <span className="text-[10px] text-blue-600 font-medium">{at.data_agendada ? format(parseISO(at.data_agendada), 'HH:mm') : '—'}</span>
+                                        <span className={`ml-auto text-[9px] px-1.5 py-0.5 rounded font-semibold ${at.status === 'confirmado' ? 'bg-green-100 text-green-700' : at.status === 'reagendado' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'}`}>{at.status}</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          <div className="bg-white rounded-lg p-3 border border-red-200">
+                            <Badge className="bg-red-600 text-white text-xs mb-1">Atual</Badge>
+                            <p className="text-sm font-semibold text-gray-900">FU {followUp?.sequence_number || 1}</p>
+                            <p className="text-xs text-gray-500 mt-1">{followUp?.reminder_date}</p>
+                          </div>
+                          {isSprintFUModal && (
+                            <div className="bg-orange-50 border border-orange-200 rounded-lg overflow-hidden">
+                              <div className="flex items-center gap-2 px-3 py-2 border-b border-orange-200">
+                                <span className="text-sm">🚀</span>
+                                <p className="text-[10px] font-bold text-orange-800 uppercase tracking-wide flex-1">Follow-ups desta sprint</p>
+                                <span className="text-[10px] text-orange-600 font-medium">{allFollowUpsModal.filter(f => f.sprint_id === followUp?.sprint_id && f.origin_type === 'sprint' && f.is_completed).length}/{allFollowUpsModal.filter(f => f.sprint_id === followUp?.sprint_id && f.origin_type === 'sprint').length} concluídos</span>
+                              </div>
+                              {sprintLabelModal && <p className="text-[11px] text-orange-600 px-3 pt-2 pb-1 italic truncate">{sprintLabelModal}</p>}
+                              <div className="px-3 pb-3 pt-1 space-y-1.5">
+                                <div className="flex items-center gap-2 bg-orange-100 border border-orange-200 rounded px-2 py-1.5">
+                                  <div className="w-2 h-2 rounded-full bg-orange-500 flex-shrink-0 ring-2 ring-orange-300" />
+                                  <span className="text-[11px] font-bold text-orange-800">FU {followUp?.sequence_number} · Em andamento</span>
+                                  <span className="ml-auto text-[10px] text-orange-600">{followUp?.reminder_date ? format(new Date(followUp.reminder_date + 'T00:00:00'), 'dd/MM') : '—'}</span>
+                                </div>
+                                {fusDaSprintModal.map(f => (
+                                  <div key={f.id} className="flex items-center gap-2 px-2 py-1.5">
+                                    <div className={`w-2 h-2 rounded-full flex-shrink-0 ${f.is_completed ? 'bg-green-400' : 'bg-gray-300'}`} />
+                                    <span className={`text-[11px] ${f.is_completed ? 'text-green-700 font-semibold' : 'text-gray-600'}`}>FU {f.sequence_number}</span>
+                                    <span className={`text-[10px] ${f.is_completed ? 'text-green-500' : 'text-gray-400'}`}>{f.is_completed ? '✓ concluído' : 'pendente'}</span>
+                                    <span className="ml-auto text-[10px] text-gray-400">{f.reminder_date ? format(new Date(f.reminder_date + 'T00:00:00'), 'dd/MM') : '—'}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {fusDaSemanaModal.length > 0 && (
+                            <div className="border border-amber-200 bg-amber-50 rounded-lg overflow-hidden">
+                              <button onClick={() => setFusSemanaExpandido(v => !v)} className="w-full flex items-center justify-between px-3 py-2 text-left">
+                                <div className="flex items-center gap-2">
+                                  <span className="w-4 h-4 rounded-full bg-amber-500 text-white text-[9px] font-bold flex items-center justify-center">{fusDaSemanaModal.length}</span>
+                                  <span className="text-[11px] font-semibold text-amber-800">{fusDaSemanaModal.length} outro{fusDaSemanaModal.length > 1 ? 's' : ''} FU{fusDaSemanaModal.length > 1 ? 's' : ''} esta semana</span>
+                                </div>
+                                <ChevronRight className={`w-3.5 h-3.5 text-amber-600 transition-transform ${fusSemanaExpandido ? 'rotate-90' : ''}`} />
+                              </button>
+                              {fusSemanaExpandido && (
+                                <div className="border-t border-amber-200 bg-white">
+                                  <p className="text-[10px] text-gray-500 px-3 pt-2 pb-1">Selecione para encerrar junto neste atendimento</p>
+                                  {fusDaSemanaModal.map(f => (
+                                    <label key={f.id} className="flex items-center gap-2.5 px-3 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-0">
+                                      <input type="checkbox" checked={fusSemanaLocal.includes(f.id)} onChange={e => { setFusSemanaLocal(prev => e.target.checked ? [...prev, f.id] : prev.filter(id => id !== f.id)); }} className="w-3.5 h-3.5 accent-red-600" />
+                                      <div className="flex-1 min-w-0">
+                                        <p className="text-[11px] font-semibold text-gray-700">FU {f.sequence_number} · {f.reminder_date ? format(new Date(f.reminder_date + 'T00:00:00'), 'dd/MM') : '—'}</p>
+                                        {f.consultor_nome && <p className="text-[10px] text-gray-400">{f.consultor_nome}</p>}
+                                      </div>
+                                    </label>
+                                  ))}
+                                  {fusSemanaLocal.length > 0 && <p className="text-[10px] text-amber-700 bg-amber-50 px-3 py-2 font-medium">{fusSemanaLocal.length} FU{fusSemanaLocal.length > 1 ? 's' : ''} será{fusSemanaLocal.length > 1 ? 'ão' : ''} encerrado{fusSemanaLocal.length > 1 ? 's' : ''} com os mesmos dados</p>}
+                                </div>
                               )}
                             </div>
-                            {ata.proximos_passos && (
-                              <p className="text-[11px] text-gray-500 line-clamp-1 mt-1">{ata.proximos_passos}</p>
-                            )}
-                            {ata.meeting_date && (
-                              <p className="text-[10px] text-gray-400 mt-1">
-                                {format(new Date(ata.meeting_date), "dd/MM/yyyy")}
-                              </p>
-                            )}
-                          </div>
-                          <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0 mt-1" />
-                        </button>
-                      );
-                    })
-                  )}
-                </div>
-              </TabsContent>
-
-              <TabsContent value="followups" className="flex-1 overflow-y-auto px-3 py-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-                <div className="space-y-3">
-
-                  {/* Card atendimentos do dia */}
-                  {atendimentosHojeModal.length > 0 && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Bell className="w-3.5 h-3.5 text-blue-600" />
-                        <p className="text-[10px] text-blue-700 uppercase tracking-wide font-bold">
-                          Seus atendimentos hoje ({atendimentosHojeModal.length})
-                        </p>
-                      </div>
-                      <div className="space-y-1.5">
-                        {atendimentosHojeModal.map(at => (
-                          <div key={at.id} className="bg-white border border-blue-100 rounded-lg px-2.5 py-2 flex items-start gap-2">
-                            <Video className="w-3.5 h-3.5 text-blue-500 flex-shrink-0 mt-0.5" />
-                            <div className="flex-1 min-w-0">
-                              <p className="text-[11px] font-semibold text-gray-800 truncate">{at.workshop_name || 'Cliente'}</p>
-                              <p className="text-[10px] text-gray-500 capitalize">{(at.tipo_atendimento || 'atendimento').replace(/_/g, ' ')}</p>
-                              <div className="flex items-center gap-1 mt-0.5">
-                                <Clock className="w-3 h-3 text-blue-400" />
-                                <span className="text-[10px] text-blue-600 font-medium">
-                                  {at.data_agendada ? format(parseISO(at.data_agendada), 'HH:mm') : '—'}
-                                </span>
-                                <span className={`ml-auto text-[9px] px-1.5 py-0.5 rounded font-semibold ${
-                                  at.status === 'confirmado' ? 'bg-green-100 text-green-700' :
-                                  at.status === 'reagendado' ? 'bg-amber-100 text-amber-700' :
-                                  'bg-blue-100 text-blue-700'
-                                }`}>{at.status}</span>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* FU atual destacado */}
-                  <div className="bg-white rounded-lg p-3 border border-red-200">
-                    <Badge className="bg-red-600 text-white text-xs mb-1">Atual</Badge>
-                    <p className="text-sm font-semibold text-gray-900">FU {followUp?.sequence_number || 1}</p>
-                    <p className="text-xs text-gray-500 mt-1">{followUp?.reminder_date}</p>
-                  </div>
-
-                  {/* Timeline de sprint */}
-                  {isSprintFUModal && (
-                    <div className="bg-orange-50 border border-orange-200 rounded-lg overflow-hidden">
-                      <div className="flex items-center gap-2 px-3 py-2 border-b border-orange-200">
-                        <span className="text-sm">🚀</span>
-                        <p className="text-[10px] font-bold text-orange-800 uppercase tracking-wide flex-1">Follow-ups desta sprint</p>
-                        <span className="text-[10px] text-orange-600 font-medium">
-                          {allFollowUpsModal.filter(f => f.sprint_id === followUp?.sprint_id && f.origin_type === 'sprint' && f.is_completed).length}
-                          /{allFollowUpsModal.filter(f => f.sprint_id === followUp?.sprint_id && f.origin_type === 'sprint').length} concluídos
-                        </span>
-                      </div>
-                      {sprintLabelModal && (
-                        <p className="text-[11px] text-orange-600 px-3 pt-2 pb-1 italic truncate">{sprintLabelModal}</p>
-                      )}
-                      <div className="px-3 pb-3 pt-1 space-y-1.5">
-                        <div className="flex items-center gap-2 bg-orange-100 border border-orange-200 rounded px-2 py-1.5">
-                          <div className="w-2 h-2 rounded-full bg-orange-500 flex-shrink-0 ring-2 ring-orange-300" />
-                          <span className="text-[11px] font-bold text-orange-800">FU {followUp?.sequence_number} · Em andamento</span>
-                          <span className="ml-auto text-[10px] text-orange-600">
-                            {followUp?.reminder_date ? format(new Date(followUp.reminder_date + 'T00:00:00'), 'dd/MM') : '—'}
-                          </span>
-                        </div>
-                        {fusDaSprintModal.map(f => (
-                          <div key={f.id} className="flex items-center gap-2 px-2 py-1.5">
-                            <div className={`w-2 h-2 rounded-full flex-shrink-0 ${f.is_completed ? 'bg-green-400' : 'bg-gray-300'}`} />
-                            <span className={`text-[11px] ${f.is_completed ? 'text-green-700 font-semibold' : 'text-gray-600'}`}>
-                              FU {f.sequence_number}
-                            </span>
-                            <span className={`text-[10px] ${f.is_completed ? 'text-green-500' : 'text-gray-400'}`}>
-                              {f.is_completed ? '✓ concluído' : 'pendente'}
-                            </span>
-                            <span className="ml-auto text-[10px] text-gray-400">
-                              {f.reminder_date ? format(new Date(f.reminder_date + 'T00:00:00'), 'dd/MM') : '—'}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* FUs da semana com concatenação */}
-                  {fusDaSemanaModal.length > 0 && (
-                    <div className="border border-amber-200 bg-amber-50 rounded-lg overflow-hidden">
-                      <button
-                        onClick={() => setFusSemanaExpandido(v => !v)}
-                        className="w-full flex items-center justify-between px-3 py-2 text-left"
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="w-4 h-4 rounded-full bg-amber-500 text-white text-[9px] font-bold flex items-center justify-center">
-                            {fusDaSemanaModal.length}
-                          </span>
-                          <span className="text-[11px] font-semibold text-amber-800">
-                            {fusDaSemanaModal.length} outro{fusDaSemanaModal.length > 1 ? 's' : ''} FU{fusDaSemanaModal.length > 1 ? 's' : ''} esta semana
-                          </span>
-                        </div>
-                        <ChevronRight className={`w-3.5 h-3.5 text-amber-600 transition-transform ${fusSemanaExpandido ? 'rotate-90' : ''}`} />
-                      </button>
-                      {fusSemanaExpandido && (
-                        <div className="border-t border-amber-200 bg-white">
-                          <p className="text-[10px] text-gray-500 px-3 pt-2 pb-1">Selecione para encerrar junto neste atendimento</p>
-                          {fusDaSemanaModal.map(f => (
-                            <label key={f.id} className="flex items-center gap-2.5 px-3 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-0">
-                              <input
-                                type="checkbox"
-                                checked={fusSemanaLocal.includes(f.id)}
-                                onChange={e => {
-                                  setFusSemanaLocal(prev =>
-                                    e.target.checked
-                                      ? [...prev, f.id]
-                                      : prev.filter(id => id !== f.id)
-                                  );
-                                }}
-                                className="w-3.5 h-3.5 accent-red-600"
-                              />
-                              <div className="flex-1 min-w-0">
-                                <p className="text-[11px] font-semibold text-gray-700">
-                                  FU {f.sequence_number} · {f.reminder_date ? format(new Date(f.reminder_date + 'T00:00:00'), 'dd/MM') : '—'}
-                                </p>
-                                {f.consultor_nome && <p className="text-[10px] text-gray-400">{f.consultor_nome}</p>}
-                              </div>
-                            </label>
-                          ))}
-                          {fusSemanaLocal.length > 0 && (
-                            <p className="text-[10px] text-amber-700 bg-amber-50 px-3 py-2 font-medium">
-                              {fusSemanaLocal.length} FU{fusSemanaLocal.length > 1 ? 's' : ''} será{fusSemanaLocal.length > 1 ? 'ão' : ''} encerrado{fusSemanaLocal.length > 1 ? 's' : ''} com os mesmos dados
-                            </p>
                           )}
                         </div>
                       )}
-                    </div>
-                  )}
 
-                </div>
-              </TabsContent>
-
-              <TabsContent value="cliente" className="flex-1 overflow-y-auto px-3 py-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-                <div className="space-y-6 text-sm">
-                  {/* CONSULTOR RESPONSÁVEL */}
-                  <div className="border-b pb-4">
-                    <p className="text-xs text-gray-500 font-bold uppercase tracking-wide mb-3">Consultor Responsável</p>
-                    <div className="space-y-2">
-                      <div>
-                        <p className="text-xs text-gray-500 font-semibold mb-1">Nome</p>
-                        <p className="text-gray-900 font-medium">{followUp?.consultor_nome || "—"}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* PROPRIETÁRIO DA OFICINA */}
-                  {ownerEmployee && (
-                    <div className="border-b pb-4">
-                      <p className="text-xs text-gray-500 font-bold uppercase tracking-wide mb-3">Proprietário da Oficina</p>
-                      <div className="space-y-2">
-                        <div>
-                          <p className="text-xs text-gray-500 font-semibold mb-1">Nome Completo</p>
-                          <p className="text-gray-900 font-medium">{ownerEmployee.full_name || "—"}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500 font-semibold mb-1">E-mail</p>
-                          <p className="text-gray-900 break-all">{ownerEmployee.email || "—"}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500 font-semibold mb-1">Telefone</p>
-                          <p className="text-gray-900">{ownerEmployee.telefone || "—"}</p>
-                        </div>
-                        {ownerEmployee.cpf && (
-                          <div>
-                            <p className="text-xs text-gray-500 font-semibold mb-1">CPF</p>
-                            <p className="text-gray-900">{ownerEmployee.cpf}</p>
+                      {/* CLIENTE */}
+                      {activePanel === 'cliente' && (
+                        <div className="px-3 py-4 space-y-6 text-sm">
+                          <div className="border-b pb-4">
+                            <p className="text-xs text-gray-500 font-bold uppercase tracking-wide mb-3">Consultor Responsável</p>
+                            <p className="text-xs text-gray-500 font-semibold mb-1">Nome</p>
+                            <p className="text-gray-900 font-medium">{followUp?.consultor_nome || "—"}</p>
                           </div>
-                        )}
-                        {ownerEmployee.data_nascimento && (
-                          <div>
-                            <p className="text-xs text-gray-500 font-semibold mb-1">Data de Nascimento</p>
-                            <p className="text-gray-900">{format(new Date(ownerEmployee.data_nascimento), "dd/MM/yyyy")}</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* DADOS DA OFICINA */}
-                  {workshop && (
-                    <div className="border-b pb-4">
-                      <p className="text-xs text-gray-500 font-bold uppercase tracking-wide mb-3">Dados da Oficina</p>
-                      <div className="space-y-2">
-                        <div>
-                          <p className="text-xs text-gray-500 font-semibold mb-1">Nome</p>
-                          <p className="text-gray-900 font-medium">{workshop.name || "—"}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500 font-semibold mb-1">Razão Social</p>
-                          <p className="text-gray-900">{workshop.razao_social || "—"}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500 font-semibold mb-1">CNPJ</p>
-                          <p className="text-gray-900">{workshop.cnpj || "—"}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500 font-semibold mb-1">Localização</p>
-                          <p className="text-gray-900">{workshop.city || "—"} / {workshop.state || "—"}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500 font-semibold mb-1">Endereço</p>
-                          <p className="text-gray-900 text-xs">{workshop.endereco_rua} {workshop.endereco_numero && `, ${workshop.endereco_numero}`} {workshop.endereco_complemento && `- ${workshop.endereco_complemento}`}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500 font-semibold mb-1">Telefone</p>
-                          <p className="text-gray-900">{workshop.telefone || "—"}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500 font-semibold mb-1">E-mail</p>
-                          <p className="text-gray-900 break-all">{workshop.email || "—"}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500 font-semibold mb-1">Segmento</p>
-                          <p className="text-gray-900">{workshop.segment_auto || workshop.segment || "—"}</p>
-                        </div>
-                        {workshop.employees_count && (
-                          <div>
-                            <p className="text-xs text-gray-500 font-semibold mb-1">Colaboradores</p>
-                            <p className="text-gray-900">{workshop.employees_count}</p>
-                          </div>
-                        )}
-                        {workshop.planoAtual && (
-                          <div>
-                            <p className="text-xs text-gray-500 font-semibold mb-1">Plano</p>
-                            <p className="text-gray-900 font-medium">{workshop.planoAtual}</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* AÇÃO SUGERIDA */}
-                  <div className="pt-3">
-                    <div className="bg-amber-50 border border-amber-200 rounded p-3">
-                      <AlertCircle className="w-4 h-4 text-amber-600 mb-2" />
-                      <p className="text-xs text-amber-900">Ação sugerida: Confirmar disponibilidade</p>
-                    </div>
-                  </div>
-                </div>
-              </TabsContent>
-              <TabsContent value="cronograma" className="flex-1 overflow-y-auto px-3 py-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-                {followUp?.workshop_id ? (
-                  <CronogramaTab workshopId={followUp.workshop_id} />
-                ) : (
-                  <p className="text-xs text-gray-500 italic">Sem cronograma disponível</p>
-                )}
-              </TabsContent>
-
-              <TabsContent value="trilhas" className="flex-1 overflow-y-auto px-3 py-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-                {followUp?.workshop_id ? (
-                  <TrailsTab workshopId={followUp.workshop_id} onAudit={() => {}} />
-                ) : (
-                  <p className="text-xs text-gray-500 italic">Sem trilhas disponíveis</p>
-                )}
-              </TabsContent>
-
-              <TabsContent value="sprints" className="flex-1 overflow-y-auto px-3 py-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-                {followUp?.workshop_id ? (
-                  <SprintsTab workshopId={followUp.workshop_id} onAudit={() => {}} />
-                ) : (
-                  <p className="text-xs text-gray-500 italic">Sem sprints disponíveis</p>
-                )}
-              </TabsContent>
-
-              <TabsContent value="proximospassos" className="flex-1 overflow-y-auto px-3 py-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-                {followUp?.workshop_id ? (
-                  <ProximosPassosAbaTab workshopId={followUp.workshop_id} />
-                ) : (
-                  <p className="text-xs text-gray-500 italic">Sem próximos passos registrados</p>
-                )}
-              </TabsContent>
-
-              <TabsContent value="pedidos" className="flex-1 overflow-y-auto px-3 py-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-                {followUp?.workshop_id ? (
-                  <PedidosInternosTab workshopId={followUp.workshop_id} user={user} />
-                ) : (
-                  <p className="text-xs text-gray-500 italic">Sem pedidos internos</p>
-                )}
-              </TabsContent>
-
-              <TabsContent value="backlog" className="flex-1 overflow-y-auto px-3 py-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-                {followUp?.workshop_id ? (
-                  <BacklogDashboard workshopId={followUp.workshop_id} consultorId={followUp.consultor_id} />
-                ) : (
-                  <p className="text-xs text-gray-500 italic">Sem backlog disponível</p>
-                )}
-              </TabsContent>
-
-              <TabsContent value="ia" className="flex-1 overflow-hidden flex flex-col">
-  
-
-                {/* Mini Chat embeddado */}
-                <div className="flex-1 flex flex-col min-h-0 px-3 pb-3">
-                  <div className="flex items-center gap-2 mb-2">
-                    <MessageSquare className="w-3.5 h-3.5 text-gray-500" />
-                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">Chat com IA</p>
-                  </div>
-
-                  {!chatInicializado ? (
-                    <div className="flex-1 flex items-center justify-center">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={iniciarChat}
-                        className="text-xs gap-2"
-                      >
-                        <MessageSquare className="w-3.5 h-3.5" />
-                        Iniciar conversa com IA
-                      </Button>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="overflow-y-auto bg-gray-50 rounded-lg border border-gray-200 px-2.5 py-2 space-y-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent" style={{ flex: '1 1 0', minHeight: 0 }}>
-                        {chatMensagens.length === 0 && chatEnviando && (
-                          <div className="flex items-center justify-center h-full">
-                            <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
-                          </div>
-                        )}
-                        {chatMensagens.map((msg, idx) => (
-                          <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                            <div className={`max-w-[88%] rounded-xl px-2.5 py-1.5 text-[11px] leading-relaxed space-y-0.5 ${
-                              msg.role === 'user'
-                                ? 'bg-red-600 text-white rounded-br-sm'
-                                : 'bg-white border border-gray-200 text-gray-800 rounded-bl-sm'
-                            }`}>
-                              {msg.role === 'user'
-                            ? msg.content
-                            : <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>{renderMarkdown(msg.content)}</div>
-                          }
-                            </div>
-                          </div>
-                        ))}
-                        {chatEnviando && chatMensagens.length > 0 && (
-                          <div className="flex justify-start">
-                            <div className="bg-white border border-gray-200 rounded-xl rounded-bl-sm px-2.5 py-1.5">
-                              <div className="flex gap-1">
-                                <div className="w-1.5 h-1.5 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '0ms' }} />
-                                <div className="w-1.5 h-1.5 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '150ms' }} />
-                                <div className="w-1.5 h-1.5 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+                          {ownerEmployee && (
+                            <div className="border-b pb-4">
+                              <p className="text-xs text-gray-500 font-bold uppercase tracking-wide mb-3">Proprietário da Oficina</p>
+                              <div className="space-y-2">
+                                <div><p className="text-xs text-gray-500 font-semibold mb-1">Nome Completo</p><p className="text-gray-900 font-medium">{ownerEmployee.full_name || "—"}</p></div>
+                                <div><p className="text-xs text-gray-500 font-semibold mb-1">E-mail</p><p className="text-gray-900 break-all">{ownerEmployee.email || "—"}</p></div>
+                                <div><p className="text-xs text-gray-500 font-semibold mb-1">Telefone</p><p className="text-gray-900">{ownerEmployee.telefone || "—"}</p></div>
+                                {ownerEmployee.cpf && <div><p className="text-xs text-gray-500 font-semibold mb-1">CPF</p><p className="text-gray-900">{ownerEmployee.cpf}</p></div>}
+                                {ownerEmployee.data_nascimento && <div><p className="text-xs text-gray-500 font-semibold mb-1">Data de Nascimento</p><p className="text-gray-900">{format(new Date(ownerEmployee.data_nascimento), "dd/MM/yyyy")}</p></div>}
                               </div>
                             </div>
+                          )}
+                          {workshop && (
+                            <div className="border-b pb-4">
+                              <p className="text-xs text-gray-500 font-bold uppercase tracking-wide mb-3">Dados da Oficina</p>
+                              <div className="space-y-2">
+                                <div><p className="text-xs text-gray-500 font-semibold mb-1">Nome</p><p className="text-gray-900 font-medium">{workshop.name || "—"}</p></div>
+                                <div><p className="text-xs text-gray-500 font-semibold mb-1">Razão Social</p><p className="text-gray-900">{workshop.razao_social || "—"}</p></div>
+                                <div><p className="text-xs text-gray-500 font-semibold mb-1">CNPJ</p><p className="text-gray-900">{workshop.cnpj || "—"}</p></div>
+                                <div><p className="text-xs text-gray-500 font-semibold mb-1">Localização</p><p className="text-gray-900">{workshop.city || "—"} / {workshop.state || "—"}</p></div>
+                                <div><p className="text-xs text-gray-500 font-semibold mb-1">Endereço</p><p className="text-gray-900 text-xs">{workshop.endereco_rua} {workshop.endereco_numero && `, ${workshop.endereco_numero}`} {workshop.endereco_complemento && `- ${workshop.endereco_complemento}`}</p></div>
+                                <div><p className="text-xs text-gray-500 font-semibold mb-1">Telefone</p><p className="text-gray-900">{workshop.telefone || "—"}</p></div>
+                                <div><p className="text-xs text-gray-500 font-semibold mb-1">E-mail</p><p className="text-gray-900 break-all">{workshop.email || "—"}</p></div>
+                                <div><p className="text-xs text-gray-500 font-semibold mb-1">Segmento</p><p className="text-gray-900">{workshop.segment_auto || workshop.segment || "—"}</p></div>
+                                {workshop.employees_count && <div><p className="text-xs text-gray-500 font-semibold mb-1">Colaboradores</p><p className="text-gray-900">{workshop.employees_count}</p></div>}
+                                {workshop.planoAtual && <div><p className="text-xs text-gray-500 font-semibold mb-1">Plano</p><p className="text-gray-900 font-medium">{workshop.planoAtual}</p></div>}
+                              </div>
+                            </div>
+                          )}
+                          <div className="pt-3">
+                            <div className="bg-amber-50 border border-amber-200 rounded p-3">
+                              <AlertCircle className="w-4 h-4 text-amber-600 mb-2" />
+                              <p className="text-xs text-amber-900">Ação sugerida: Confirmar disponibilidade</p>
+                            </div>
                           </div>
-                        )}
-                        <div ref={chatEndRef} />
-                      </div>
-                      <div className="flex gap-1.5 mt-2 flex-shrink-0">
-                        <input
-                          type="text"
-                          value={chatInput}
-                          onChange={e => setChatInput(e.target.value)}
-                          onKeyDown={e => e.key === 'Enter' && !e.shiftKey && enviarMensagemChat()}
-                          placeholder="Pergunte sobre o cliente..."
-                          disabled={chatEnviando}
-                          className="flex-1 text-[11px] border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-red-400 disabled:opacity-50"
-                        />
-                        <button
-                          onClick={enviarMensagemChat}
-                          disabled={!chatInput.trim() || chatEnviando}
-                          className="w-7 h-7 rounded-lg bg-red-600 hover:bg-red-700 text-white flex items-center justify-center disabled:opacity-40 transition-colors flex-shrink-0"
-                        >
-                          <Send className="w-3 h-3" />
-                        </button>
-                      </div>
+                        </div>
+                      )}
+
+                      {/* CRONOGRAMA */}
+                      {activePanel === 'cronograma' && (
+                        <div className="px-3 py-4">
+                          {followUp?.workshop_id ? <CronogramaTab workshopId={followUp.workshop_id} /> : <p className="text-xs text-gray-500 italic">Sem cronograma disponível</p>}
+                        </div>
+                      )}
+
+                      {/* TRILHAS */}
+                      {activePanel === 'trilhas' && (
+                        <div className="px-3 py-4">
+                          {followUp?.workshop_id ? <TrailsTab workshopId={followUp.workshop_id} onAudit={() => {}} /> : <p className="text-xs text-gray-500 italic">Sem trilhas disponíveis</p>}
+                        </div>
+                      )}
+
+                      {/* SPRINTS */}
+                      {activePanel === 'sprints' && (
+                        <div className="px-3 py-4">
+                          {followUp?.workshop_id ? <SprintsTab workshopId={followUp.workshop_id} onAudit={() => {}} /> : <p className="text-xs text-gray-500 italic">Sem sprints disponíveis</p>}
+                        </div>
+                      )}
+
+                      {/* PRÓXIMOS PASSOS */}
+                      {activePanel === 'proximospassos' && (
+                        <div className="px-3 py-4">
+                          {followUp?.workshop_id ? <ProximosPassosAbaTab workshopId={followUp.workshop_id} /> : <p className="text-xs text-gray-500 italic">Sem próximos passos registrados</p>}
+                        </div>
+                      )}
+
+                      {/* PEDIDOS */}
+                      {activePanel === 'pedidos' && (
+                        <div className="px-3 py-4">
+                          {followUp?.workshop_id ? <PedidosInternosTab workshopId={followUp.workshop_id} user={user} /> : <p className="text-xs text-gray-500 italic">Sem pedidos internos</p>}
+                        </div>
+                      )}
+
+                      {/* BACKLOG */}
+                      {activePanel === 'backlog' && (
+                        <div className="px-3 py-4">
+                          {followUp?.workshop_id ? <BacklogDashboard workshopId={followUp.workshop_id} consultorId={followUp.consultor_id} /> : <p className="text-xs text-gray-500 italic">Sem backlog disponível</p>}
+                        </div>
+                      )}
+
+                      {/* IA */}
+                      {activePanel === 'ia' && (
+                        <div className="flex flex-col h-full px-3 pb-3 pt-3" style={{ minHeight: 0 }}>
+                          <div className="flex items-center gap-2 mb-2">
+                            <MessageSquare className="w-3.5 h-3.5 text-gray-500" />
+                            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">Chat com IA</p>
+                          </div>
+                          {!chatInicializado ? (
+                            <div className="flex-1 flex items-center justify-center">
+                              <Button size="sm" variant="outline" onClick={iniciarChat} className="text-xs gap-2">
+                                <MessageSquare className="w-3.5 h-3.5" />
+                                Iniciar conversa com IA
+                              </Button>
+                            </div>
+                          ) : (
+                            <>
+                              <div className="overflow-y-auto bg-gray-50 rounded-lg border border-gray-200 px-2.5 py-2 space-y-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent" style={{ flex: '1 1 0', minHeight: 0 }}>
+                                {chatMensagens.length === 0 && chatEnviando && <div className="flex items-center justify-center h-full"><Loader2 className="w-4 h-4 animate-spin text-gray-400" /></div>}
+                                {chatMensagens.map((msg, idx) => (
+                                  <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                    <div className={`max-w-[88%] rounded-xl px-2.5 py-1.5 text-[11px] leading-relaxed space-y-0.5 ${msg.role === 'user' ? 'bg-red-600 text-white rounded-br-sm' : 'bg-white border border-gray-200 text-gray-800 rounded-bl-sm'}`}>
+                                      {msg.role === 'user' ? msg.content : <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>{renderMarkdown(msg.content)}</div>}
+                                    </div>
+                                  </div>
+                                ))}
+                                {chatEnviando && chatMensagens.length > 0 && (
+                                  <div className="flex justify-start">
+                                    <div className="bg-white border border-gray-200 rounded-xl rounded-bl-sm px-2.5 py-1.5">
+                                      <div className="flex gap-1">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+                                        <div className="w-1.5 h-1.5 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+                                        <div className="w-1.5 h-1.5 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                                <div ref={chatEndRef} />
+                              </div>
+                              <div className="flex gap-1.5 mt-2 flex-shrink-0">
+                                <input type="text" value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && !e.shiftKey && enviarMensagemChat()} placeholder="Pergunte sobre o cliente..." disabled={chatEnviando} className="flex-1 text-[11px] border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-red-400 disabled:opacity-50" />
+                                <button onClick={enviarMensagemChat} disabled={!chatInput.trim() || chatEnviando} className="w-7 h-7 rounded-lg bg-red-600 hover:bg-red-700 text-white flex items-center justify-center disabled:opacity-40 transition-colors flex-shrink-0">
+                                  <Send className="w-3 h-3" />
+                                </button>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      )}
+
+                    </div>
+                    </div>
+                    )}
                     </>
-                  )}
-                </div>
-              </TabsContent>
-            </Tabs>
-          </div>
-        </div>
-
-        {/* POST-IT ARRASTÁVEL — dica de IA */}
-        <div
-          ref={postItRef}
-          onMouseDown={handlePostItMouseDown}
-          style={{
-            position: 'fixed',
-            left: postItPos.x,
-            top: postItPos.y,
-            zIndex: 99999,
-            width: '220px',
-            cursor: 'grab',
-            filter: 'drop-shadow(2px 6px 8px rgba(0,0,0,0.28))',
-            userSelect: 'none',
-          }}
-        >
-          {/* Back sheet (folha de trás) */}
-          <div style={{ position: 'absolute', background: '#F4896B', border: '2.5px solid #1a2744', borderRadius: '6px', width: '260px', height: '220px', top: '12px', left: '18px', zIndex: 1 }} />
-
-             {/* Front sheet (folha principal) */}
-             <div style={{ position: 'relative', background: '#7DDFF0', border: '2.5px solid #1a2744', borderRadius: '6px', width: '260px', height: '220px', padding: '2rem 1.25rem 1.25rem', zIndex: 2 }}>
-
-               {/* Clipe de papel */}
-               <div style={{ position: 'absolute', top: '-28px', right: '24px', zIndex: 3, width: '40px', height: '54px' }}>
-                 <svg viewBox="0 0 40 54" width="40" height="54" fill="none" xmlns="http://www.w3.org/2000/svg">
-                   <path d="M28 6C28 3.79 26.21 2 24 2C21.79 2 20 3.79 20 6V36C20 39.31 22.69 42 26 42C29.31 42 32 39.31 32 36V12C32 7.58 28.42 4 24 4C19.58 4 16 7.58 16 12V38C16 43.52 20.48 48 26 48C31.52 48 36 43.52 36 38V14" stroke="#1a2744" strokeWidth="3" strokeLinecap="round" fill="none" />
-                 </svg>
-               </div>
-
-            {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-              <span style={{ fontSize: '11px', fontWeight: 600, color: '#1a2744', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Dica de IA</span>
-              <div style={{ display: 'flex', gap: '4px' }}>
-                <button
-                  onClick={gerarDicaIA}
-                  disabled={carregandoDica}
-                  title="Gerar nova dica"
-                  style={{ width: '26px', height: '26px', borderRadius: '50%', border: '1.5px solid rgba(26,39,68,0.38)', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: carregandoDica ? 0.4 : 1 }}
-                >
-                  <svg className={carregandoDica ? 'animate-spin' : ''} width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="#1a2744" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                </button>
-                <button
-                  onClick={() => setPostItMinimizado(v => !v)}
-                  title={postItMinimizado ? 'Expandir' : 'Minimizar'}
-                  style={{ width: '26px', height: '26px', borderRadius: '50%', border: '1.5px solid rgba(26,39,68,0.38)', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                >
-                  <span style={{ fontSize: '13px', color: '#1a2744', lineHeight: 1 }}>{postItMinimizado ? '+' : '−'}</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Conteúdo */}
-            {!postItMinimizado && (
-              <div style={{ fontSize: '12px', color: '#1a2744', lineHeight: 1.6, position: 'relative', zIndex: 1, fontStyle: 'italic', opacity: 0.85 }}>
-                {carregandoDica ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#1a2744' }} />
-                    <span>Analisando histórico...</span>
-                  </div>
-                ) : dicaIA ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>{renderMarkdown(dicaIA)}</div>
-                ) : (
-                  <span>Clique em ↺ para gerar uma dica.</span>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
+                    );
+                    })()}
+                    </div>
 
         {/* FOOTER - FIXO */}
          <div className="bg-white border-t border-gray-200 px-6 py-4 flex gap-3 justify-between flex-shrink-0">
