@@ -830,10 +830,10 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
                       </div>
                     )}
 
-                    <div className="grid grid-cols-2 divide-x divide-gray-100 gap-0 max-h-[520px] overflow-y-auto">
+                    <div className="grid grid-cols-2 divide-x divide-gray-100 gap-0">
                       {/* Left: FUAta */}
-                      <div className="overflow-y-auto pr-3 pl-0">
-                        <p className="text-[10px] text-gray-400 font-semibold mb-2 uppercase tracking-wide sticky top-0 bg-white py-2">FUAta</p>
+                      <div className="overflow-y-auto max-h-[600px] pr-3 pl-0">
+                        <p className="text-[10px] text-gray-400 font-semibold mb-2 uppercase tracking-wide sticky top-0 bg-white py-2 z-10">FUAta</p>
                         <div className="space-y-2 pb-3">
                           {(() => {
                             const fuAta = allFollowUps
@@ -904,8 +904,8 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
                       </div>
 
                       {/* Right: FUSp */}
-                      <div className="overflow-y-auto pl-3 pr-0">
-                        <p className="text-[10px] text-gray-400 font-semibold mb-2 uppercase tracking-wide sticky top-0 bg-white py-2">FUSp</p>
+                      <div className="overflow-y-auto max-h-[600px] pl-3 pr-0">
+                        <p className="text-[10px] text-gray-400 font-semibold mb-2 uppercase tracking-wide sticky top-0 bg-white py-2 z-10">FUSp</p>
                         <div className="space-y-2 pb-3">
                           {(() => {
                             const fuSp = allFollowUps
