@@ -116,7 +116,19 @@ export default function ProximosPassosAbaTab({ workshopId }) {
       </div>
 
       <div className="space-y-2">
-        {proximosPassos.map((pp) => {
+        {[...proximosPassos].sort((a, b) => {
+          const isFinA = ["finalizado", "cancelado"].includes(a.status);
+          const isFinB = ["finalizado", "cancelado"].includes(b.status);
+          const isVencidoA = a.prazo && new Date(a.prazo) < hoje && !isFinA;
+          const isVencidoB = b.prazo && new Date(b.prazo) < hoje && !isFinB;
+          // finalizados/cancelados sempre por último
+          if (isFinA !== isFinB) return isFinA ? 1 : -1;
+          // atrasados antes dos em dia
+          if (isVencidoA !== isVencidoB) return isVencidoA ? -1 : 1;
+          // dentro de cada grupo, ordena por prazo mais próximo
+          if (a.prazo && b.prazo) return new Date(a.prazo) - new Date(b.prazo);
+          return 0;
+        }).map((pp) => {
           const statusBadge = getStatusBadge(pp.status);
           const prioridadeBadge = getPrioridadeBadge(pp.prioridade);
           const isVencido = pp.prazo && new Date(pp.prazo) < hoje && !["finalizado", "cancelado"].includes(pp.status);
