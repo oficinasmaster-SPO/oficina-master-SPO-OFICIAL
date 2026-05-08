@@ -180,68 +180,34 @@ export default function BacklogDashboard({ workshopId, user }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-end">
-        <Button onClick={() => setShowForm(true)} className="gap-2">
-          <Plus className="w-4 h-4" />
-          Nova Tarefa
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Clock className="w-4 h-4 text-blue-600" />
-              Backlog Total
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{backlogTotal.length}</div>
-            <p className="text-xs text-gray-600">Tarefas não concluídas</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-red-600" />
-              Backlog Crítico
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">{backlogCritico.length}</div>
-            <p className="text-xs text-gray-600">Tarefas vencidas</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-orange-600" />
-              % Crítico
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-600">
-              {backlogTotal.length > 0 
-                ? ((backlogCritico.length / backlogTotal.length) * 100).toFixed(0)
-                : 0}%
-            </div>
-            <p className="text-xs text-gray-600">Do backlog total</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Bloqueadas</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {tarefas.filter(t => t.status === 'bloqueada').length}
-            </div>
-            <p className="text-xs text-gray-600">Tarefas impedidas</p>
-          </CardContent>
-        </Card>
+      <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5">
+        <div className="flex items-center gap-1.5 pr-4 border-r border-gray-200">
+          <Clock className="w-3.5 h-3.5 text-blue-400" />
+          <span className="text-xs text-gray-500">Total</span>
+          <span className="text-sm font-bold text-blue-600">{backlogTotal.length}</span>
+        </div>
+        <div className="flex items-center gap-1.5 px-4 border-r border-gray-200">
+          <AlertCircle className="w-3.5 h-3.5 text-red-400" />
+          <span className="text-xs text-gray-500">Crítico</span>
+          <span className="text-sm font-bold text-red-600">{backlogCritico.length}</span>
+        </div>
+        <div className="flex items-center gap-1.5 px-4 border-r border-gray-200">
+          <TrendingUp className="w-3.5 h-3.5 text-orange-400" />
+          <span className="text-xs text-gray-500">% Crítico</span>
+          <span className="text-sm font-bold text-orange-600">
+            {backlogTotal.length > 0 ? ((backlogCritico.length / backlogTotal.length) * 100).toFixed(0) : 0}%
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5 px-4">
+          <span className="text-xs text-gray-500">Bloqueadas</span>
+          <span className="text-sm font-bold text-gray-800">{tarefas.filter(t => t.status === 'bloqueada').length}</span>
+        </div>
+        <div className="ml-auto">
+          <Button onClick={() => setShowForm(true)} variant="outline" size="sm" className="gap-1.5 h-7 text-xs">
+            <Plus className="w-3.5 h-3.5" />
+            Nova Tarefa
+          </Button>
+        </div>
       </div>
 
       <Card>

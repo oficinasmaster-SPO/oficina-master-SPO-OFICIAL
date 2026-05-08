@@ -166,66 +166,35 @@ export default function PedidosInternosTab({ workshopId, user }) {
     <div className="space-y-6">
       <Tabs defaultValue="pedidos" className="w-full">
         <TabsContent value="pedidos" className="space-y-6">
-          <div className="flex justify-end">
-            <Button onClick={() => setShowForm(true)} className="gap-2">
-              <Plus className="w-4 h-4" />
-              Novo Pedido
-            </Button>
-          </div>
-
-          <div className="grid grid-cols-4 gap-4">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-gray-600" />
-                  Pendentes
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{pedidosPorStatus.pendente.length}</div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-blue-600" />
-                  Em Análise
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-blue-600">{pedidosPorStatus.em_analise.length}</div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-600" />
-                  Aprovados
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-green-600">{pedidosPorStatus.aprovado.length}</div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 text-orange-600" />
-                  Vencidos
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-orange-600">
-                  {filteredPedidos.filter(p => 
-                    p.status !== 'concluido' && p.prazo &&
-                    new Date(p.prazo) < new Date()
-                  ).length}
-                </div>
-              </CardContent>
-            </Card>
+          <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5">
+            <div className="flex items-center gap-1.5 pr-4 border-r border-gray-200">
+              <Clock className="w-3.5 h-3.5 text-gray-400" />
+              <span className="text-xs text-gray-500">Pendentes</span>
+              <span className="text-sm font-bold text-gray-800">{pedidosPorStatus.pendente.length}</span>
+            </div>
+            <div className="flex items-center gap-1.5 px-4 border-r border-gray-200">
+              <FileText className="w-3.5 h-3.5 text-blue-400" />
+              <span className="text-xs text-gray-500">Em Análise</span>
+              <span className="text-sm font-bold text-blue-600">{pedidosPorStatus.em_analise.length}</span>
+            </div>
+            <div className="flex items-center gap-1.5 px-4 border-r border-gray-200">
+              <CheckCircle className="w-3.5 h-3.5 text-green-400" />
+              <span className="text-xs text-gray-500">Aprovados</span>
+              <span className="text-sm font-bold text-green-600">{pedidosPorStatus.aprovado.length}</span>
+            </div>
+            <div className="flex items-center gap-1.5 px-4">
+              <AlertTriangle className="w-3.5 h-3.5 text-orange-400" />
+              <span className="text-xs text-gray-500">Vencidos</span>
+              <span className="text-sm font-bold text-orange-600">
+                {filteredPedidos.filter(p => p.status !== 'concluido' && p.prazo && new Date(p.prazo) < new Date()).length}
+              </span>
+            </div>
+            <div className="ml-auto">
+              <Button onClick={() => setShowForm(true)} variant="outline" size="sm" className="gap-1.5 h-7 text-xs">
+                <Plus className="w-3.5 h-3.5" />
+                Novo Pedido
+              </Button>
+            </div>
           </div>
 
           <Card>
