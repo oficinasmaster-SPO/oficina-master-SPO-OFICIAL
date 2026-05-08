@@ -33,7 +33,6 @@ export default function BacklogDashboard({ workshopId, user }) {
         : await base44.entities.TarefaBacklog.list('-prazo');
       return all || [];
     },
-    enabled: !!workshopId,
   });
 
   const { data: workshops = [] } = useQuery({

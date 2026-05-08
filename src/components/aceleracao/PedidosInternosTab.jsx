@@ -33,7 +33,6 @@ export default function PedidosInternosTab({ workshopId, user }) {
         : await base44.entities.PedidoInterno.list('-created_date');
       return all || [];
     },
-    enabled: !!workshopId,
   });
 
   const { data: usuarios = [] } = useQuery({
@@ -165,6 +164,19 @@ export default function PedidosInternosTab({ workshopId, user }) {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="pedidos" className="w-full">
+        <TabsList className="mb-4 bg-gray-100 rounded-lg p-1">
+          <TabsTrigger value="pedidos" className="text-sm rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm">
+            Pedidos Internos
+          </TabsTrigger>
+          <TabsTrigger value="backlog" className="text-sm rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm">
+            Backlog de Tarefas
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="backlog">
+          <BacklogDashboard workshopId={workshopId} user={user} />
+        </TabsContent>
+
         <TabsContent value="pedidos" className="space-y-6">
           <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5">
             <div className="flex items-center gap-1.5 pr-4 border-r border-gray-200">
