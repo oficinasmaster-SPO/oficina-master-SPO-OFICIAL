@@ -332,7 +332,7 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
       <IniciarAtendimentoModal
         followUp={reminder}
         cliente={{ name: reminder.workshop_name }}
-        fusConcatenados={fusSelecionados
+        fusConcatenados={[...fuAtaSelecionados, ...fuSpSelecionados]
           .map(id => allFollowUps.find(f => f.id === id))
           .filter(Boolean)
         }
