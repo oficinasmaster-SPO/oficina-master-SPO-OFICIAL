@@ -197,6 +197,43 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
   // Alias para compatibilidade com código existente
   const allFollowUpsModal = allFollowUps;
 
+  // Query dos sprints do workshop para exibir Fase e Tarefa nos cards FUSp
+  const { data: sprintsMapModal = {} } = useQuery({
+    queryKey: ["sprints-modal-fusp", followUp?.workshop_id],
+    queryFn: async () => {
+      if (!followUp?.workshop_id) return {};
+      const sprints = await base44.entities.ConsultoriaSprint.filter(
+        { workshop_id: followUp.workshop_id },
+        "-updated_date",
+        50
+      );
+      return Object.fromEntries(sprints.map(s => [s.id, s]));
+    },
+    enabled: !!followUp?.workshop_id,
+    staleTime: 2 * 60 * 1000,
+  });
+
+  const FASE_LABELS_MODAL = {
+    Planning: "Planejamento",
+    Execution: "Implementação",
+    Monitoring: "Acompanhamento",
+    Review: "Revisão",
+    Retrospective: "Melhoria",
+  };
+
+  const getSprintFaseETarefaModal = (sprintId) => {
+    const sprint = sprintsMapModal[sprintId];
+    if (!sprint?.phases?.length) return { fase: null, tarefa: null };
+    const faseAtiva = sprint.phases.find(p => p.status === 'in_progress' || p.status === 'pending_review')
+      || sprint.phases.find(p => p.status === 'not_started');
+    if (!faseAtiva) return { fase: null, tarefa: null };
+    const tarefa = faseAtiva.tasks?.find(t => t.status === 'to_do') || null;
+    return {
+      fase: FASE_LABELS_MODAL[faseAtiva.name] || faseAtiva.name,
+      tarefa: tarefa?.description || null,
+    };
+  };
+
 
 
   const idxAtual = filaReminders.findIndex(f => f.id === followUp?.id);
@@ -1378,6 +1415,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
                                       const isChecked = fuSpSelecionados.includes(f.id);
                                       const isAtual = f.id === followUp?.id;
                                       const sprintLabel = f.notes?.replace('Follow-up automático da sprint: ', '').trim() || '—';
+                                      const { fase, tarefa } = getSprintFaseETarefaModal(f.sprint_id);
                                       return (
                                         <div key={f.id} className={`border-b border-gray-100 last:border-0 p-2.5 ${isAtual ? 'bg-red-50' : isChecked ? 'bg-blue-50' : 'bg-white hover:bg-gray-50'} transition-colors`}>
                                           <div className="flex items-start gap-2">
@@ -1399,10 +1437,25 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
                                               </div>
                                               <div className="space-y-0.5 text-[10px] text-gray-600">
                                                 <p><span className="font-semibold">FUSp:</span> {f.sequence_number}/4</p>
-                                                <p><span className="font-semibold">Consultor:</span> {f.consultor_nome || '—'}</p>
-                                                <p><span className="font-semibold">Sprint:</span> <span className="truncate">{sprintLabel.length > 25 ? sprintLabel.substring(0, 25) + '…' : sprintLabel}</span></p>
-                                                <p><span className="font-semibold">Criado:</span> {f.created_date ? format(new Date(f.created_date), 'dd/MM/yy') : '—'}</p>
                                                 <p><span className="font-semibold">Agendado:</span> {f.reminder_date ? format(new Date(f.reminder_date + 'T00:00:00'), 'dd/MM/yy') : '—'}</p>
+                                                <p><span className="font-semibold">Sprint:</span> <span className="truncate">{sprintLabel.length > 25 ? sprintLabel.substring(0, 25) + '…' : sprintLabel}</span></p>
+                                                <p><span className="font-semibold">Consultor:</span> {f.consultor_nome || '—'}</p>
+                                              </div>
+                                              <div className="mt-1.5 space-y-1">
+                                                {fase ? (
+                                                  <p className="text-[10px] text-blue-700 font-semibold bg-blue-50 border border-blue-100 rounded px-1.5 py-0.5 inline-block">
+                                                    📍 Fase: {fase}
+                                                  </p>
+                                                ) : (
+                                                  <p className="text-[10px] text-gray-400 italic">Fase: —</p>
+                                                )}
+                                                {tarefa ? (
+                                                  <p className="text-[10px] text-amber-700 bg-amber-50 border border-amber-100 rounded px-1.5 py-0.5 leading-relaxed">
+                                                    ✅ Tarefa: {tarefa.length > 35 ? tarefa.substring(0, 35) + '…' : tarefa}
+                                                  </p>
+                                                ) : fase ? (
+                                                  <p className="text-[10px] text-green-600 italic">✓ Todas as tarefas concluídas</p>
+                                                ) : null}
                                               </div>
                                             </div>
                                           </div>
