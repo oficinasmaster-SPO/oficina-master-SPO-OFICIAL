@@ -2,6 +2,12 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { jsPDF } from 'npm:jspdf@2.5.2';
 import 'npm:jspdf-autotable@3.8.2';
 
+// Função para normalizar texto UTF-8
+const normalizarTexto = (texto) => {
+  if (!texto) return '—';
+  return String(texto).normalize('NFC');
+};
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -90,7 +96,7 @@ Deno.serve(async (req) => {
     yPos += 10;
     doc.setFontSize(10);
     doc.setTextColor(100, 100, 100);
-    doc.text(`Consultor: ${user.full_name || user.email}`, 15, yPos);
+    doc.text(`Consultor: ${normalizarTexto(user.full_name || user.email)}`, 15, yPos);
     yPos += 10;
     doc.setTextColor(0, 0, 0);
 
@@ -148,11 +154,11 @@ Deno.serve(async (req) => {
         return [
           data,
           hora,
-          c.workshop_name || '—',
-          c.canal || '—',
-          c.resultado || '—',
-          c.consultor_nome || user.full_name || '—',
-          c.observacoes ? c.observacoes.substring(0, 20) + '...' : '—'
+          normalizarTexto(c.workshop_name),
+          normalizarTexto(c.canal),
+          normalizarTexto(c.resultado),
+          normalizarTexto(c.consultor_nome || user.full_name),
+          normalizarTexto(c.observacoes ? c.observacoes.substring(0, 20) : '') + (c.observacoes ? '...' : '')
         ];
       });
 
@@ -189,9 +195,9 @@ Deno.serve(async (req) => {
         return [
           reminderDate.toLocaleDateString('pt-BR'),
           diasText,
-          r.workshop_name || '—',
+          normalizarTexto(r.workshop_name),
           r.sequence_number ? `${r.sequence_number}` : '—',
-          r.message ? r.message.substring(0, 35) : '—'
+          normalizarTexto(r.message ? r.message.substring(0, 35) : '')
         ];
       });
 
