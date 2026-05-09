@@ -1,0 +1,209 @@
+{
+  "name": "FollowUpConcluido",
+  "type": "object",
+  "properties": {
+    "followup_id": {
+      "type": "string",
+      "description": "ID do follow-up reminder original"
+    },
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "consultor_id": {
+      "type": "string",
+      "description": "ID do consultor"
+    },
+    "consultor_nome": {
+      "type": "string",
+      "description": "Nome do consultor"
+    },
+    "canal": {
+      "type": "string",
+      "enum": [
+        "ligacao",
+        "whatsapp",
+        "email",
+        "video",
+        "presencial"
+      ],
+      "description": "Canal de contato utilizado"
+    },
+    "resultado": {
+      "type": "string",
+      "enum": [
+        "atendeu",
+        "nao_atendeu",
+        "retornar",
+        "agendou",
+        "reagendou",
+        "desistiu"
+      ],
+      "description": "Resultado do contato"
+    },
+    "dataContato": {
+      "type": "string",
+      "format": "date",
+      "description": "Data do contato"
+    },
+    "duracao": {
+      "type": "integer",
+      "description": "Duração do atendimento em minutos"
+    },
+    "humor": {
+      "type": "string",
+      "description": "Humor do cliente"
+    },
+    "engajamento": {
+      "type": "string",
+      "enum": [
+        "Alto",
+        "Médio",
+        "Baixo"
+      ],
+      "description": "Nível de engajamento"
+    },
+    "observacoes": {
+      "type": "string",
+      "description": "Observações do atendimento"
+    },
+    "compromissos": {
+      "type": "string",
+      "description": "Compromissos do cliente"
+    },
+    "proximoPasso": {
+      "type": "string",
+      "enum": [
+        "reagendar",
+        "agendar",
+        "enviar",
+        "escalar",
+        "concluir",
+        "cancelar"
+      ],
+      "description": "Próximo passo"
+    },
+    "proxData": {
+      "type": "string",
+      "format": "date",
+      "description": "Data do próximo contato"
+    },
+    "proxHora": {
+      "type": "string",
+      "description": "Hora do próximo contato (HH:MM)"
+    },
+    "pastedImages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "src": {
+            "type": "string",
+            "description": "URL ou base64 da imagem"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Screenshots/imagens capturadas"
+    },
+    "completedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data e hora de conclusão"
+    },
+    "tipo": {
+      "type": "string",
+      "enum": [
+        "tarefa",
+        "followup",
+        "backlog",
+        "pedido",
+        "sprint"
+      ],
+      "description": "Tipo do follow-up/atendimento"
+    },
+    "atendimento_tipo": {
+      "type": "string",
+      "enum": [
+        "cs",
+        "secretario",
+        "consultor_outro"
+      ],
+      "description": "Tipo de atendimento realizado"
+    },
+    "tempo_atendimento_minutos": {
+      "type": "integer",
+      "description": "Duração do atendimento em minutos"
+    },
+    "sequencia": {
+      "type": "integer",
+      "enum": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "description": "Número sequencial do follow-up (1º, 2º, 3º ou 4º da série)"
+    }
+  },
+  "required": [
+    "followup_id",
+    "workshop_id",
+    "canal",
+    "resultado",
+    "observacoes",
+    "proximoPasso"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "consultor_id": "{{user.id}}"
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "consultor_id": "{{user.id}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "consultor_id": "{{user.id}}"
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}
