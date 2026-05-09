@@ -14,30 +14,33 @@ Deno.serve(async (req) => {
     let startDate = null;
     let endDate = null;
 
-    // Calcular datas baseado no período
+    // Validar data
+    if (!data || isNaN(new Date(data))) {
+      return Response.json({ error: 'Data inválida' }, { status: 400 });
+    }
+
+    // Calcular datas baseado no período (corrigindo parsing com UTC)
     if (periodo) {
-      const refDate = new Date(data || today);
-      const year = refDate.getFullYear();
-      const month = refDate.getMonth();
+      const [year, month, day] = (data || today).split('-').map(Number);
+      const refMonth = month - 1; // JS months são 0-indexed
 
       if (periodo === 'mensal') {
-        startDate = new Date(year, month, 1);
-        endDate = new Date(year, month + 1, 0);
+        startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+        endDate = new Date(year, refMonth + 1, 0).toISOString().split('T')[0];
       } else if (periodo === 'trimestral') {
-        const trimestre = Math.floor(month / 3);
-        startDate = new Date(year, trimestre * 3, 1);
-        endDate = new Date(year, trimestre * 3 + 3, 0);
+        const trimestre = Math.floor(refMonth / 3);
+        const triStart = trimestre * 3;
+        startDate = `${year}-${String(triStart + 1).padStart(2, '0')}-01`;
+        endDate = new Date(year, triStart + 3, 0).toISOString().split('T')[0];
       } else if (periodo === 'semestral') {
-        const semestre = month < 6 ? 0 : 1;
-        startDate = new Date(year, semestre * 6, 1);
-        endDate = new Date(year, semestre * 6 + 6, 0);
+        const semestre = refMonth < 6 ? 0 : 1;
+        const semiStart = semestre * 6;
+        startDate = `${year}-${String(semiStart + 1).padStart(2, '0')}-01`;
+        endDate = new Date(year, semiStart + 6, 0).toISOString().split('T')[0];
       } else if (periodo === 'anual') {
-        startDate = new Date(year, 0, 1);
-        endDate = new Date(year, 11, 31);
+        startDate = `${year}-01-01`;
+        endDate = `${year}-12-31`;
       }
-
-      startDate = startDate.toISOString().split('T')[0];
-      endDate = endDate.toISOString().split('T')[0];
     }
 
     let reminders = [];
@@ -98,11 +101,16 @@ Deno.serve(async (req) => {
       ).then(items => items.slice(0, 50));
     }
 
-    // Calcular métricas
+    // Calcular métricas (validar booleano is_completed corretamente)
     const realizados = concludidos.length;
-    const pendentes = reminders.filter(r => !r.is_completed).length;
+    const pendentes = reminders.filter(r => r.is_completed !== true).length;
     const total = realizados + pendentes;
     const taxaRealizacao = total > 0 ? Math.round((realizados / total) * 100) : 0;
+    
+    // Validação de sanidade
+    if (realizados < 0 || pendentes < 0) {
+      return Response.json({ error: 'Cálculo de métricas inválido' }, { status: 500 });
+    }
 
     // Retornar dados calculados
     return Response.json({

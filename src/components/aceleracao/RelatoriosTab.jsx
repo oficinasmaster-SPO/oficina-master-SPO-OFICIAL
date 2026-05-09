@@ -28,12 +28,12 @@ export default function RelatoriosTab() {
   weekStart.setDate(weekStart.getDate() - weekStart.getDay());
 
   // Buscar métricas quando alterar período ou data
-  React.useEffect(() => {
+  useEffect(() => {
     const buscarMetricas = async () => {
       setLoadingMetricas(true);
       try {
         const response = await base44.functions.invoke('getRelatorioFollowUpMetricas', {
-          tipo: 'mensal',
+          tipo: periodoSelecionado,
           data: dataSelecionada,
           periodo: periodoSelecionado,
         });
@@ -43,6 +43,7 @@ export default function RelatoriosTab() {
         }
       } catch (error) {
         console.error('Erro ao buscar métricas:', error);
+        toast.error('Erro ao carregar métricas');
       } finally {
         setLoadingMetricas(false);
       }
