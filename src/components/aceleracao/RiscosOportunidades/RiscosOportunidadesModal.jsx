@@ -26,7 +26,9 @@ export default function RiscosOportunidadesModal({ isOpen, onClose, workshopId }
       }
     },
     enabled: isOpen && !!workshopId,
-    staleTime: 10 * 60 * 1000
+    staleTime: 0,           // FASE 2 FIX: Sem cache
+    gcTime: 0,              // FASE 2 FIX: Não guardar resultado
+    refetchOnMount: true    // FASE 2 FIX: Refetch sempre ao abrir
   });
 
   const handleAcao = (risco, cliente) => {

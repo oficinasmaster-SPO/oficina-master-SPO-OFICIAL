@@ -223,12 +223,38 @@ Deno.serve(async (req) => {
     const totalRiscos = riscos.reduce((sum, r) => sum + r.total, 0);
     const totalOportunidades = oportunidades.reduce((sum, o) => sum + o.total, 0);
 
-    // FASE 4: VALIDAÇÃO - Garantir dados seguros antes do retorno
+    // FASE 2 FIX #5: CONSOLIDAÇÃO POR CLIENTE (elimina duplicatas)
     console.log('[getRiscosOportunidadesAnalise] Riscos encontrados:', riscos.length);
-    riscos.forEach((r, idx) => {
-      console.log(`  [${idx}] ${r.titulo}: ${r.clientes?.length || 0} clientes`);
+    
+    // Mapear clientes únicos com risco
+    const clientesMap = {};
+    
+    riscos.forEach((risco, idx) => {
+      console.log(`  [${idx}] ${risco.titulo}: ${risco.clientes?.length || 0} clientes`);
+      
+      // Agregar cada cliente com risco
+      if (risco.clientes && risco.clientes.length > 0) {
+        risco.clientes.forEach(cliente => {
+          const key = cliente.id; // Usar ID único do cliente
+          if (!clientesMap[key]) {
+            clientesMap[key] = { 
+              id: cliente.id, 
+              name: cliente.name,
+              riscos: [],
+              detalhes: {}
+            };
+          }
+          clientesMap[key].riscos.push({
+            tipo: risco.categoria,
+            titulo: risco.titulo,
+            detalhe: cliente.detalhes || cliente.dias_atrasado || cliente.dias_restantes
+          });
+        });
+      }
     });
 
+    const clientesEmRiscoUnicos = Object.keys(clientesMap).length;
+    
     // Validar que riscos com dados realmente têm clientes
     const riscosValidos = riscos.filter(r => r.clientes && r.clientes.length > 0);
     const oportunidadesValidas = oportunidades.filter(o => o.total > 0);
@@ -236,22 +262,20 @@ Deno.serve(async (req) => {
     // Contar clientes ativos com planos (Contratos ativos)
     const clientesAtivosPlanos = await base44.asServiceRole.entities.Contract.filter({
       workshop_id,
-      status: 'ativo'
+      status: { '$in': ['ativo', 'efetivado'] }
     }, '', 1000);
     const totalClientesAtivos = clientesAtivosPlanos.length;
 
-    // Calcular taxa de risco: (clientes_em_risco + oportunidades) / clientes_ativos = %
-    const clientesEmRisco = riscosValidos.reduce((sum, r) => sum + (r.clientes?.length || 0), 0);
-    const clientesComIssues = clientesEmRisco + oportunidadesValidas.length;
+    // Calcular taxa de risco: (clientes_únicos_em_risco) / clientes_ativos = %
     const taxaRisco = totalClientesAtivos > 0 
-      ? Math.round((clientesComIssues / totalClientesAtivos) * 100)
+      ? Math.round((clientesEmRiscoUnicos / totalClientesAtivos) * 100)
       : 0;
 
     console.log('[getRiscosOportunidadesAnalise] Validação final:', {
       riscos_totais: riscos.length,
       riscos_validos: riscosValidos.length,
       clientes_ativos: totalClientesAtivos,
-      clientes_em_risco: clientesEmRisco,
+      clientes_unicos_em_risco: clientesEmRiscoUnicos,
       oportunidades: oportunidadesValidas.length,
       taxa_risco_pct: taxaRisco,
       status: 'success'
@@ -262,10 +286,11 @@ Deno.serve(async (req) => {
       oportunidades: oportunidadesValidas,
       estatisticas: {
         clientes_ativos_planos: totalClientesAtivos,
-        clientes_em_risco: clientesEmRisco,
+        clientes_em_risco: clientesEmRiscoUnicos,
         total_oportunidades: oportunidadesValidas.length,
         taxa_risco_percentual: taxaRisco
-      }
+      },
+      consolidacao: clientesMap
     });
 
   } catch (error) {

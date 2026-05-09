@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import DiagnosticoRiscosPanel from '@/components/diagnostico/DiagnosticoRiscosPanel';
+import TesteQueriesRiscos from '@/components/diagnostico/TesteQueriesRiscos';
 import { useAuth } from '@/lib/AuthContext';
 import { useWorkshopContext } from '@/components/hooks/useWorkshopContext';
 
@@ -34,6 +35,11 @@ export default function DiagnosticoRiscos() {
         </div>
 
         <DiagnosticoRiscosPanel workshopId={workshopId} />
+
+        <div className="mt-12 pt-8 border-t">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">📋 Testes de Queries (QA)</h2>
+          <TesteQueriesRiscos workshopId={workshopId} />
+        </div>
       </div>
     </div>
   );
