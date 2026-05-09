@@ -169,8 +169,8 @@ Deno.serve(async (req) => {
         body: tableData,
         margin: { left: 15, right: 15 },
         theme: 'striped',
-        headStyles: { fillColor: [34, 197, 94], textColor: 255, fontSize: 9, fontStyle: 'bold' },
-        bodyStyles: { fontSize: 8, textColor: 51 },
+        headStyles: { fillColor: [34, 197, 94], textColor: 255, fontSize: 9, fontStyle: 'bold', font: 'Helvetica' },
+        bodyStyles: { fontSize: 8, textColor: 51, font: 'Helvetica' },
         alternateRowStyles: { fillColor: [245, 250, 245] },
         columnStyles: { 0: { cellWidth: 18 }, 1: { cellWidth: 16 }, 2: { cellWidth: 40 }, 3: { cellWidth: 24 }, 4: { cellWidth: 24 }, 5: { cellWidth: 35 }, 6: { cellWidth: 30 } }
       });
@@ -208,8 +208,8 @@ Deno.serve(async (req) => {
         body: pendingData,
         margin: { left: 15, right: 15 },
         theme: 'striped',
-        headStyles: { fillColor: [217, 119, 6], textColor: 255, fontSize: 9, fontStyle: 'bold' },
-        bodyStyles: { fontSize: 8, textColor: 51 },
+        headStyles: { fillColor: [217, 119, 6], textColor: 255, fontSize: 9, fontStyle: 'bold', font: 'Helvetica' },
+        bodyStyles: { fontSize: 8, textColor: 51, font: 'Helvetica' },
         alternateRowStyles: { fillColor: [255, 250, 240] },
         columnStyles: { 0: { cellWidth: 25 }, 1: { cellWidth: 30 }, 2: { cellWidth: 60 }, 3: { cellWidth: 20 }, 4: { cellWidth: 50 } }
       });
