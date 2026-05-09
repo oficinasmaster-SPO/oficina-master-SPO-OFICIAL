@@ -202,6 +202,8 @@ Deno.serve(async (req) => {
           item_nome: `${attendanceTypeName} (${rule.total_allowed}x)`,
           item_categoria: 'atendimentos',
           engine_version: 'legacy_v1',
+          engine_source: 'generateFullCronograma',
+          created_by_flow: flowLabel,
           status: 'a_fazer',
           data_inicio_real: dataInicioItem.toISOString(),
           data_termino_previsto: dataTermino.toISOString(),

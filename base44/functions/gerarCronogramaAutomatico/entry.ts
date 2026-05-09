@@ -570,6 +570,8 @@ Deno.serve(async (req) => {
       const dataConclusaoPrevisto = new Date(dataAtual);
       dataConclusaoPrevisto.setDate(dataConclusaoPrevisto.getDate() + modulo.duracao_estimada_dias);
 
+      // LEGACY: escreve em CronogramaProgresso (Engine A read model)
+      // NÃO adicionar novos campos aqui — ver docs/LEGACY_ENGINE_A.md
       const progresso = await base44.asServiceRole.entities.CronogramaProgresso.create({
         workshop_id,
         fase_oficina: diagnosticoAtual.phase,
@@ -582,7 +584,9 @@ Deno.serve(async (req) => {
         atividades_previstas: modulo.atividades_previstas,
         atividades_realizadas: 0,
         tarefas_solicitadas: modulo.tarefas_previstas,
-        tarefas_entregues: 0
+        tarefas_entregues: 0,
+        engine_version: 'legacy_v0',
+        engine_source: 'gerarCronogramaAutomatico'
       });
 
       progressos.push(progresso);
