@@ -940,7 +940,17 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
              </Badge>
            </div>
 
-          <div className="flex items-center gap-1 ml-auto flex-shrink-0">
+          <div className="flex items-center gap-2 ml-auto flex-shrink-0">
+            {/* Badge de status/prioridade do FU atual */}
+            {(() => {
+              const rd = followUp?.reminder_date;
+              if (!rd) return null;
+              const diffDays = Math.floor((new Date(today) - new Date(rd + 'T00:00:00')) / 86400000);
+              if (diffDays >= 3) return <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-600 text-white uppercase tracking-wide">🔴 Urgente</span>;
+              if (diffDays >= 1) return <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-orange-500 text-white uppercase tracking-wide">🟠 Vencido</span>;
+              if (diffDays === 0) return <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-400 text-gray-900 uppercase tracking-wide">🟡 Hoje</span>;
+              return <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-600 text-gray-200 uppercase tracking-wide">📅 Futuro</span>;
+            })()}
             <button
               onClick={() => fuAnterior && handleNavegar(fuAnterior)}
               disabled={!fuAnterior}
