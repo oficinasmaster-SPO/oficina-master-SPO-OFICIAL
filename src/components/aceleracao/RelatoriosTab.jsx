@@ -17,7 +17,7 @@ import jsPDF from 'npm:jspdf@2.5.2';
 export default function RelatoriosTab() {
   const { user } = useAuth();
   const [loadingPdf, setLoadingPdf] = useState(null);
-  const [pdfPreview, setPdfPreview] = useState(null);
+  const [pdfPreview, setPdfPreview] = useState({ tipo: null, url: null });
   const [periodoSelecionado, setPeriodoSelecionado] = useState('mensal');
   const [dataSelecionada, setDataSelecionada] = useState(new Date().toISOString().split('T')[0]);
   const [metricas, setMetricas] = useState({});
@@ -119,10 +119,32 @@ export default function RelatoriosTab() {
     }
   };
 
-  const handleVerPDF = (tipo) => {
-    // Simula visualização — em produção, abrir modal com PDFViewer
-    toast.info(`Abrindo visualização do relatório ${tipo}...`);
-    setPdfPreview(tipo);
+  const handleVerPDF = async (tipo) => {
+    setLoadingPdf(tipo);
+    try {
+      const payload = {
+        tipo,
+        data: dataSelecionada,
+      };
+
+      if ((tipo === 'mensal' || tipo === 'riscos') && periodoSelecionado) {
+        payload.periodo = periodoSelecionado;
+      }
+
+      const response = await base44.functions.invoke('gerarRelatorioFollowUpPDF', payload);
+
+      if (response.data) {
+        const blob = new Blob([response.data], { type: 'application/pdf' });
+        const pdfUrl = window.URL.createObjectURL(blob);
+        setPdfPreview({ tipo, url: pdfUrl });
+        toast.success('Relatório carregado');
+      }
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
+      toast.error('Erro ao gerar relatório');
+    } finally {
+      setLoadingPdf(null);
+    }
   };
 
   return (
@@ -208,13 +230,18 @@ export default function RelatoriosTab() {
                       PDF
                     </Button>
                     <Button
-                      size="sm"
-                      className="flex-1 h-8 text-xs gap-1.5 bg-red-600 hover:bg-red-700"
-                      onClick={() => handleVerPDF(rel.id)}
-                    >
-                      <Eye className="w-3 h-3" />
-                      Ver
-                    </Button>
+                       size="sm"
+                       className="flex-1 h-8 text-xs gap-1.5 bg-red-600 hover:bg-red-700"
+                       onClick={() => handleVerPDF(rel.id)}
+                       disabled={loadingPdf === rel.id}
+                     >
+                       {loadingPdf === rel.id ? (
+                         <Loader2 className="w-3 h-3 animate-spin" />
+                       ) : (
+                         <Eye className="w-3 h-3" />
+                       )}
+                       Ver
+                     </Button>
                   </div>
                 </div>
               </CardContent>
@@ -223,22 +250,24 @@ export default function RelatoriosTab() {
         </div>
       </div>
 
-      {pdfPreview && (
+      {pdfPreview.url && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-auto">
             <div className="sticky top-0 bg-gray-50 border-b p-4 flex items-center justify-between">
-              <h3 className="font-semibold text-gray-900">Visualizar Relatório</h3>
+              <h3 className="font-semibold text-gray-900">Visualizar Relatório {pdfPreview.tipo}</h3>
               <button
-                onClick={() => setPdfPreview(null)}
+                onClick={() => setPdfPreview({ tipo: null, url: null })}
                 className="text-gray-400 hover:text-gray-600"
               >
                 ✕
               </button>
             </div>
             <div className="p-6">
-              <p className="text-gray-600 text-sm">
-                Relatório {pdfPreview} — Implementação do PDFViewer em produção
-              </p>
+              <iframe
+                src={pdfPreview.url}
+                className="w-full h-[70vh] border border-gray-300 rounded"
+                title="PDF Preview"
+              />
             </div>
           </div>
         </div>
