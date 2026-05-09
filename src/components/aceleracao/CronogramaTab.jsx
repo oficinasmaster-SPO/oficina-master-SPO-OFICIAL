@@ -33,66 +33,82 @@ function getIcon(status) {
 
 // ─── Modal de Edição ──────────────────────────────────────────────────────────
 function EditarItemModal({ item, onClose, onSaved, user }) {
-  const [status, setStatus]                     = useState(item.status || 'a_fazer');
-  const [progresso, setProgresso]               = useState(item.progresso_percentual || 0);
-  const [observacoes, setObservacoes]           = useState(item.observacoes || '');
-  const [dataTerminoReal, setDataTerminoReal]   = useState(
+  const [status, setStatus]                           = useState(item.status || 'a_fazer');
+  const [progresso, setProgresso]                     = useState(item.progresso_percentual || 0);
+  const [observacoes, setObservacoes]                 = useState(item.observacoes || '');
+  const [dataInicioReal, setDataInicioReal]           = useState(
+    item.data_inicio_real ? item.data_inicio_real.split('T')[0] : ''
+  );
+  const [dataTerminoPrevisto, setDataTerminoPrevisto] = useState(
+    item.data_termino_previsto ? item.data_termino_previsto.split('T')[0] : ''
+  );
+  const [dataTerminoReal, setDataTerminoReal]         = useState(
     item.data_termino_real ? item.data_termino_real.split('T')[0] : ''
   );
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
     setSaving(true);
-    const agora = new Date().toISOString();
-    const historico = [...(item.historico_alteracoes || [])];
+    try {
+      const agora = new Date().toISOString();
+      const historico = [...(item.historico_alteracoes || [])];
 
-    // Registrar cada campo alterado
-    const campos = [
-      { campo: 'status',              anterior: item.status,               novo: status },
-      { campo: 'progresso_percentual',anterior: String(item.progresso_percentual || 0), novo: String(progresso) },
-      { campo: 'observacoes',         anterior: item.observacoes || '',    novo: observacoes },
-      { campo: 'data_termino_real',   anterior: item.data_termino_real || '', novo: dataTerminoReal },
-    ];
-    campos.forEach(({ campo, anterior, novo }) => {
-      if (String(anterior) !== String(novo)) {
-        historico.push({
-          data_alteracao: agora,
-          campo_alterado: campo,
-          valor_anterior: String(anterior),
-          valor_novo:     String(novo),
-          usuario_id:     user?.id || '',
-          usuario_nome:   user?.full_name || user?.email || 'Usuário',
-        });
+      const campos = [
+        { campo: 'status',                anterior: item.status || '',                   novo: status },
+        { campo: 'progresso_percentual',  anterior: String(item.progresso_percentual || 0), novo: String(progresso) },
+        { campo: 'observacoes',           anterior: item.observacoes || '',              novo: observacoes },
+        { campo: 'data_inicio_real',      anterior: item.data_inicio_real ? item.data_inicio_real.split('T')[0] : '', novo: dataInicioReal },
+        { campo: 'data_termino_previsto', anterior: item.data_termino_previsto ? item.data_termino_previsto.split('T')[0] : '', novo: dataTerminoPrevisto },
+        { campo: 'data_termino_real',     anterior: item.data_termino_real ? item.data_termino_real.split('T')[0] : '', novo: dataTerminoReal },
+      ];
+      campos.forEach(({ campo, anterior, novo }) => {
+        if (String(anterior) !== String(novo)) {
+          historico.push({
+            data_alteracao: agora,
+            campo_alterado: campo,
+            valor_anterior: String(anterior),
+            valor_novo:     String(novo),
+            usuario_id:     user?.id || '',
+            usuario_nome:   user?.full_name || user?.email || 'Usuário',
+          });
+        }
+      });
+
+      const updates = {
+        status,
+        progresso_percentual: status === 'concluido' ? 100 : Number(progresso),
+        observacoes,
+        historico_alteracoes: historico,
+      };
+
+      // Data de início — campo editável OU automático ao sair de a_fazer
+      if (dataInicioReal) {
+        updates.data_inicio_real = new Date(dataInicioReal + 'T00:00:00').toISOString();
+      } else if (item.status === 'a_fazer' && status !== 'a_fazer' && !item.data_inicio_real) {
+        updates.data_inicio_real = agora;
       }
-    });
 
-    const updates = {
-      status,
-      progresso_percentual: Number(progresso),
-      observacoes,
-      historico_alteracoes: historico,
-    };
+      // Data prevista de conclusão
+      if (dataTerminoPrevisto) {
+        updates.data_termino_previsto = new Date(dataTerminoPrevisto + 'T00:00:00').toISOString();
+      }
 
-    // Setar data_inicio_real na primeira vez que sai de a_fazer
-    if (item.status === 'a_fazer' && status !== 'a_fazer' && !item.data_inicio_real) {
-      updates.data_inicio_real = agora;
+      // Data real de conclusão
+      if (dataTerminoReal) {
+        updates.data_termino_real = new Date(dataTerminoReal + 'T00:00:00').toISOString();
+      } else if (status === 'concluido' && !item.data_termino_real) {
+        updates.data_termino_real = agora;
+      }
+
+      await base44.entities.CronogramaImplementacao.update(item.id, updates);
+      toast.success("Item atualizado com sucesso!");
+      onSaved();
+      onClose();
+    } catch (err) {
+      toast.error("Erro ao salvar: " + err.message);
+    } finally {
+      setSaving(false);
     }
-
-    if (dataTerminoReal) {
-      updates.data_termino_real = new Date(dataTerminoReal).toISOString();
-    } else if (status === 'concluido' && !item.data_termino_real) {
-      updates.data_termino_real = agora;
-    }
-
-    if (status === 'concluido') {
-      updates.progresso_percentual = 100;
-    }
-
-    await base44.entities.CronogramaImplementacao.update(item.id, updates);
-    toast.success("Item atualizado com sucesso!");
-    onSaved();
-    onClose();
-    setSaving(false);
   };
 
   return (
@@ -149,6 +165,34 @@ function EditarItemModal({ item, onClose, onSaved, user }) {
             </div>
           )}
 
+          {/* Datas — início e previsão */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-1.5 block">
+                Data de início
+              </label>
+              <Input
+                type="date"
+                value={dataInicioReal}
+                onChange={e => setDataInicioReal(e.target.value)}
+                className="text-sm"
+              />
+              <p className="text-[10px] text-gray-400 mt-0.5">Quando iniciou / vai iniciar</p>
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-1.5 block">
+                Prev. conclusão
+              </label>
+              <Input
+                type="date"
+                value={dataTerminoPrevisto}
+                onChange={e => setDataTerminoPrevisto(e.target.value)}
+                className="text-sm"
+              />
+              <p className="text-[10px] text-gray-400 mt-0.5">Prazo estimado</p>
+            </div>
+          </div>
+
           {/* Data conclusão real */}
           <div>
             <label className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-1.5 block">
@@ -197,8 +241,9 @@ function HistoricoModal({ item, onClose }) {
     status:               'Status',
     progresso_percentual: 'Progresso',
     observacoes:          'Observações',
-    data_termino_real:    'Data de conclusão',
     data_inicio_real:     'Data de início',
+    data_termino_previsto:'Prev. conclusão',
+    data_termino_real:    'Data de conclusão real',
   };
 
   const formatValor = (campo, valor) => {
