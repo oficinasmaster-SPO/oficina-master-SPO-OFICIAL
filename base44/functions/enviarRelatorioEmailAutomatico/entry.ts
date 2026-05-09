@@ -117,15 +117,7 @@ Deno.serve(async (req) => {
     }
 
     const { emailsDestino, tipo = 'diario', data } = await req.json();
-    
-    // Relatório é do DIA ANTERIOR (enviado às 07h da manhã)
-    let dataRelatorio = data;
-    if (!data) {
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      dataRelatorio = yesterday.toISOString().split('T')[0];
-    }
-    const today = dataRelatorio;
+    const today = data || new Date().toISOString().split('T')[0];
 
     // Buscar dados do relatório
     let metricasResponse;

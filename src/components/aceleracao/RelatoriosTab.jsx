@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Download, Eye, Loader2, Calendar, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import EnviarEmailModal from './EnviarEmailModal';
-import ClientesPendentesFollowUp from './ClientesPendentesFollowUp';
 import {
   Select,
   SelectContent,
@@ -153,8 +152,6 @@ export default function RelatoriosTab() {
 
   return (
     <div className="space-y-6">
-      <ClientesPendentesFollowUp />
-
       <div>
         <h2 className="text-sm font-semibold text-gray-700 mb-4">Relatórios de Follow-up</h2>
         
