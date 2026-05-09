@@ -294,6 +294,14 @@ export default function RelatoriosTab() {
         tipoRelatorio={emailModalTipo}
         data={dataSelecionada}
       />
+
+      <RelatorioDetalhado
+        isOpen={relatorioDetalhado.isOpen}
+        onClose={() => setRelatorioDetalhado({ isOpen: false, tipo: null })}
+        tipo={relatorioDetalhado.tipo || 'diario'}
+        periodo={periodoSelecionado}
+        data={dataSelecionada}
+      />
     </div>
   );
 }

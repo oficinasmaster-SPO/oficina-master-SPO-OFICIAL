@@ -6,21 +6,21 @@ export default function KPIBar({ realizados = 0, pendentes = 0, taxaRealizacao =
   const kpis = [
     {
       label: 'Realizados',
-      valor: realizados,
+      valor: Math.max(0, Number(realizados) || 0),
       icon: CheckCircle2,
       color: 'text-green-600',
       bg: 'bg-green-50'
     },
     {
       label: 'Pendentes',
-      valor: pendentes,
+      valor: Math.max(0, Number(pendentes) || 0),
       icon: Clock,
       color: 'text-amber-600',
       bg: 'bg-amber-50'
     },
     {
       label: 'Taxa de Realização',
-      valor: `${taxaRealizacao}%`,
+      valor: `${Math.min(100, Math.max(0, Number(taxaRealizacao) || 0))}%`,
       icon: TrendingUp,
       color: 'text-blue-600',
       bg: 'bg-blue-50'
@@ -28,11 +28,11 @@ export default function KPIBar({ realizados = 0, pendentes = 0, taxaRealizacao =
   ];
 
   return (
-    <div className="grid grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       {kpis.map((kpi, idx) => {
         const Icon = kpi.icon;
         return (
-          <Card key={idx} className="border-gray-200">
+          <Card key={`kpi-${idx}`} className="border-gray-200">
             <CardContent className="p-4">
               <div className={`inline-flex p-2 rounded-lg ${kpi.bg} mb-3`}>
                 <Icon className={`w-5 h-5 ${kpi.color}`} />

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { X } from 'lucide-react';
@@ -9,39 +9,46 @@ import Filtros from './Filtros';
 import WheelLoader from '@/components/ui/WheelLoader';
 
 export default function RelatorioDetailModal({ isOpen, onClose, tipo = 'diario', periodo = 'mensal', data }) {
-  const [filters, setFilters] = useState({
-    consultor: null,
-    tipo: null,
-    status: 'realizado'
-  });
+  const [filters, setFilters] = useState({ consultor: null, tipo: null, status: 'realizado' });
   const [page, setPage] = useState(0);
   const itemsPerPage = 10;
+  const referenceDate = data || new Date().toISOString().split('T')[0];
 
-  // Buscar métricas e dados via getRelatorioFollowUpMetricas
-  const { data: relatorioData = {}, isLoading: loadingMetricas } = useQuery({
-    queryKey: ['relatorioCompleto', tipo, periodo, data, filters],
+  // Buscar métricas e dados
+  const { data: relatorioData = { metricas: {}, followups: [] }, isLoading: loadingMetricas } = useQuery({
+    queryKey: ['relatorioCompleto', tipo, periodo, referenceDate, filters],
     queryFn: async () => {
+      if (!isOpen) return { metricas: {}, followups: [] };
       try {
-        const result = await base44.functions.invoke('getRelatorioFollowUpMetricas', {
-          tipo: tipo,
-          periodo: periodo,
-          data: data || new Date().toISOString().split('T')[0],
-          includeDetails: true,
-          filtros: filters
-        });
-        return result.data || { kpis: {}, linhas: [] };
+        // Buscar follow-ups concluídos com filtros
+        const queryFilter = { consultor_id: filters.consultor, canal: filters.tipo };
+        Object.keys(queryFilter).forEach(k => queryFilter[k] === null && delete queryFilter[k]);
+
+        const followups = await base44.entities.FollowUpConcluido.filter(queryFilter, '-completedAt', 100);
+
+        // Chamar função de métricas (pode ser incrementada depois)
+        const metricas = {
+          realizados: followups.filter(f => f.resultado === 'atendeu').length || 0,
+          pendentes: followups.filter(f => f.resultado === 'nao_atendeu').length || 0,
+          taxaRealizacao: followups.length > 0 
+            ? Math.round((followups.filter(f => f.resultado === 'atendeu').length / followups.length) * 100)
+            : 0
+        };
+
+        return { metricas, followups: followups || [] };
       } catch (error) {
         console.error('Erro ao buscar relatório:', error);
-        return { kpis: { realizados: 0, pendentes: 0, taxaRealizacao: 0 }, linhas: [] };
+        return { metricas: { realizados: 0, pendentes: 0, taxaRealizacao: 0 }, followups: [] };
       }
     },
-    enabled: isOpen
+    enabled: isOpen,
+    staleTime: 5 * 60 * 1000
   });
 
-  const metricas = relatorioData.kpis || { realizados: 0, pendentes: 0, taxaRealizacao: 0 };
-  const linhas = relatorioData.linhas || [];
+  const metricas = relatorioData.metricas || { realizados: 0, pendentes: 0, taxaRealizacao: 0 };
+  const linhas = relatorioData.followups || [];
   const paginatedData = linhas.slice(page * itemsPerPage, (page + 1) * itemsPerPage);
-  const totalPages = Math.ceil(linhas.length / itemsPerPage);
+  const totalPages = Math.ceil((linhas.length || 1) / itemsPerPage);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>

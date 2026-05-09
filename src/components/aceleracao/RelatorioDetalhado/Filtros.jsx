@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import {
@@ -12,21 +12,19 @@ import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 
 export default function Filtros({ filters, onChange }) {
-  // Buscar consultores
+  // Buscar consultores (admins)
   const { data: consultores = [] } = useQuery({
     queryKey: ['consultoresRelatorio'],
     queryFn: async () => {
       try {
-        // Buscar usuários com role admin/consultor
-        const users = await base44.entities.User.filter({
-          role: 'admin'
-        }, '-created_date', 100);
-        return users || [];
+        const users = await base44.entities.User.filter({ role: 'admin' }, '-created_date', 50);
+        return (Array.isArray(users) ? users : []).filter(u => u.full_name && u.id);
       } catch (error) {
         console.error('Erro ao buscar consultores:', error);
         return [];
       }
-    }
+    },
+    staleTime: 10 * 60 * 1000
   });
 
   const handleClearFilters = () => {

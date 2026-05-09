@@ -1,6 +1,4 @@
 import React from 'react';
-import { formatDistanceToNow } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 
 const statusColor = {
   'atendeu': 'bg-green-50 text-green-700',
@@ -16,10 +14,19 @@ const engajamentoColor = {
   'Baixo': 'text-red-600'
 };
 
+const formatData = (dateString) => {
+  if (!dateString) return '-';
+  try {
+    return new Date(dateString).toLocaleDateString('pt-BR');
+  } catch {
+    return dateString;
+  }
+};
+
 export default function Tabela({ dados = [] }) {
-  if (dados.length === 0) {
+  if (!dados || dados.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-500">
+      <div className="text-center py-8 text-gray-500 border rounded-lg bg-gray-50">
         Nenhum registro encontrado para os filtros selecionados.
       </div>
     );
@@ -42,21 +49,21 @@ export default function Tabela({ dados = [] }) {
         <tbody>
           {dados.map((row, idx) => (
             <tr 
-              key={row.id || idx} 
+              key={row.id || `row-${idx}`} 
               className="border-b hover:bg-gray-50 transition-colors"
             >
               <td className="px-4 py-3 text-gray-900">
-                {new Date(row.dataContato).toLocaleDateString('pt-BR')}
+                {formatData(row.dataContato)}
               </td>
               <td className="px-4 py-3 text-gray-700">{row.consultor_nome || '-'}</td>
               <td className="px-4 py-3">
                 <span className="inline-block px-2 py-1 bg-gray-100 rounded text-xs font-medium">
-                  {row.canal}
+                  {row.canal || 'N/A'}
                 </span>
               </td>
               <td className="px-4 py-3">
-                <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${statusColor[row.resultado] || 'bg-gray-50'}`}>
-                  {row.resultado?.replace('_', ' ')}
+                <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${statusColor[row.resultado] || 'bg-gray-50 text-gray-700'}`}>
+                  {row.resultado?.replace(/_/g, ' ') || 'N/A'}
                 </span>
               </td>
               <td className="px-4 py-3 text-gray-700">
@@ -67,7 +74,7 @@ export default function Tabela({ dados = [] }) {
                   {row.engajamento || '-'}
                 </span>
               </td>
-              <td className="px-4 py-3 text-gray-600 max-w-xs truncate">
+              <td className="px-4 py-3 text-gray-600 max-w-xs truncate" title={row.observacoes}>
                 {row.observacoes || '-'}
               </td>
             </tr>
