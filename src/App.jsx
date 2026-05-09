@@ -39,6 +39,7 @@ const ListagemClientesSprints = lazy(() => import('@/pages/ListagemClientesSprin
 const CentralProximosPassos = lazy(() => import('@/pages/CentralProximosPassos'));
 const ProximosPassosConsultoria = lazy(() => import('@/pages/ProximosPassosConsultoria'));
 const AdminTemplatesBacklog = lazy(() => import('@/pages/AdminTemplatesBacklog'));
+const DiagnosticoRiscos = lazy(() => import('@/pages/DiagnosticoRiscos'));
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -188,6 +189,11 @@ const AuthenticatedApp = () => {
             <AdminTemplatesBacklog />
           </LayoutWrapper>
         </PageAccessControl>
+      } />
+      <Route path="/DiagnosticoRiscos" element={
+        <LayoutWrapper currentPageName="DiagnosticoRiscos">
+          <DiagnosticoRiscos />
+        </LayoutWrapper>
       } />
       {Object.entries(Pages).map(([path, Page]) => {
         const reqPerm = pagePermissions[path];
