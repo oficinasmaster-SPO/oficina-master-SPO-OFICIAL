@@ -106,11 +106,7 @@ export default function ClientSelectorGrid({ onSelect, onClose }) {
               type="text"
               placeholder="🔍 Buscar cliente..."
               value={searchTerm}
-              onChange={(e) => {
-                e.preventDefault();
-                setSearchTerm(e.target.value);
-              }}
-              onKeyDown={(e) => e.stopPropagation()}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="flex-1"
               autoFocus
               aria-label="Buscar cliente"
