@@ -29,6 +29,12 @@ export default function RelatoriosTab() {
   const [emailModalTipo, setEmailModalTipo] = useState(null);
   const [relatorioDetalhado, setRelatorioDetalhado] = useState({ isOpen: false, tipo: null });
   const [riscosOportunidadesOpen, setRiscosOportunidadesOpen] = useState(false);
+  const [riscosData, setRiscosData] = useState({
+    total_oportunidades: 0,
+    clientes_em_risco: 0,
+    taxa_risco_percentual: 0
+  });
+  const [loadingRiscos, setLoadingRiscos] = useState(false);
 
   const today = new Date().toISOString().split('T')[0];
   const weekStart = new Date();
@@ -58,6 +64,30 @@ export default function RelatoriosTab() {
 
     buscarMetricas();
   }, [periodoSelecionado, dataSelecionada]);
+
+  // Buscar dados de riscos quando modal abrir
+  useEffect(() => {
+    if (riscosOportunidadesOpen && user?.data?.workshop_id) {
+      const buscarRiscos = async () => {
+        setLoadingRiscos(true);
+        try {
+          const response = await base44.functions.invoke('getRiscosOportunidadesAnalise', {
+            workshop_id: user.data.workshop_id
+          });
+
+          if (response.data?.estatisticas) {
+            setRiscosData(response.data.estatisticas);
+          }
+        } catch (error) {
+          console.error('Erro ao buscar riscos:', error);
+        } finally {
+          setLoadingRiscos(false);
+        }
+      };
+
+      buscarRiscos();
+    }
+  }, [riscosOportunidadesOpen, user?.data?.workshop_id]);
 
   const relatorios = [
     {
@@ -89,8 +119,9 @@ export default function RelatoriosTab() {
       titulo: '⚠️ Riscos & Oportunidades',
       data: today,
       descricao: 'Análise de performance',
-      metricasLabels: ['Atrasados', 'Taxa baixa', 'Em risco'],
-      metricasChave: ['pendentes', 'taxaRealizacao', 'total'],
+      metricasLabels: ['Oportunidades', 'Em Risco', 'Taxa de Risco'],
+      metricasChave: ['total_oportunidades', 'clientes_em_risco', 'taxa_risco_percentual'],
+      isRiscos: true
     },
   ];
 
@@ -208,13 +239,14 @@ export default function RelatoriosTab() {
                   <div className="grid grid-cols-3 gap-3">
                     {rel.metricasLabels.map((metrica, idx) => {
                       const chave = rel.metricasChave[idx];
-                      const valor = metricas[chave];
-                      const display = valor !== undefined ? (chave === 'taxaRealizacao' ? `${valor}%` : valor) : '—';
+                      const isLoading = rel.isRiscos ? loadingRiscos : loadingMetricas;
+                      const valor = rel.isRiscos ? riscosData[chave] : metricas[chave];
+                      const display = valor !== undefined ? (chave === 'taxa_risco_percentual' ? `${valor}%` : valor) : '—';
                       return (
                         <div key={idx} className="bg-gray-50 rounded p-2 text-center">
                           <p className="text-xs text-gray-600">{metrica}</p>
-                          <p className={`text-sm font-semibold mt-1 ${loadingMetricas ? 'text-gray-400' : 'text-gray-900'}`}>
-                            {loadingMetricas ? '...' : display}
+                          <p className={`text-sm font-semibold mt-1 ${isLoading ? 'text-gray-400' : 'text-gray-900'}`}>
+                            {isLoading ? '...' : display}
                           </p>
                         </div>
                       );
