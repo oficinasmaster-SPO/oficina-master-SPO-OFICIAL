@@ -27,6 +27,7 @@ import PedidosInternosTab from "@/components/aceleracao/PedidosInternosTab";
 import BacklogDashboard from "@/components/aceleracao/BacklogDashboard";
 import ProximosPassosAbaTab from "@/components/aceleracao/ProximosPassosAbaTab";
 import SprintClientModal from "@/components/aceleracao/sprint-client/SprintClientModal";
+import ClientSelectorGrid from "@/components/aceleracao/ClientSelectorGrid";
 
 const RESULTADO_COLORS = {
   atendeu: "bg-green-100 text-green-700 border-green-300",
@@ -164,6 +165,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
   const [fuSpSelecionados, setFuSpSelecionados] = useState([]);
   const [activePanel, setActivePanel] = useState('atas');
   const [selectedSprintId, setSelectedSprintId] = useState(null);
+  const [showClientSelector, setShowClientSelector] = useState(false);
 
   // States da aba IA
   const [dicaIA, setDicaIA] = useState(null);
@@ -268,6 +270,43 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
     // Notificar o pai (opcional, só para sincronia de estado externo)
     onNavegar?.(novoFU);
   }, [followUp?.id, onNavegar]);
+
+  // ── Carregador de cliente (sem follow-ups = cria atendimento ad-hoc) ──
+  const carregarCliente = useCallback(async (clientData) => {
+    try {
+      // Buscar primeiro follow-up pendente do cliente
+      const followUps = await base44.entities.FollowUpReminder.filter({
+        workshop_id: clientData.id,
+        is_completed: false
+      }, 'reminder_date', 1);
+
+      if (followUps && followUps.length > 0) {
+        // Carrega o primeiro follow-up
+        trocarFollowUp(followUps[0]);
+      } else {
+        // Cliente sem follow-ups — criar atendimento ad-hoc
+        const novoFUadHoc = {
+          id: `adhoc_${clientData.id}_${Date.now()}`,
+          workshop_id: clientData.id,
+          workshop_name: clientData.name,
+          consultor_id: user?.id,
+          consultor_nome: user?.full_name || "Consultor",
+          sequence_number: 0,
+          reminder_date: new Date().toISOString().split('T')[0],
+          origin_type: 'manual',
+          is_completed: false,
+          atendimento_id: null,
+          ata_id: null,
+          notes: 'Atendimento ad-hoc (sem follow-up associado)',
+        };
+        trocarFollowUp(novoFUadHoc);
+      }
+      setShowClientSelector(false);
+    } catch (err) {
+      console.error('Erro ao carregar cliente:', err);
+      toast.error('Erro ao carregar cliente');
+    }
+  }, [user?.id, user?.full_name, trocarFollowUp]);
 
   // Derivações da aba Follow-ups
   const isSprintFUModal = followUp?.origin_type === 'sprint';
@@ -872,28 +911,36 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
         )}
 
         {/* HEADER - FIXO */}
-        <div className="bg-gray-900 text-white px-6 py-4 flex items-center justify-between border-b border-gray-800 flex-shrink-0">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center font-bold text-sm">
-              {getInitials(cliente?.name || followUp?.workshop_name || "")}
-            </div>
-            <div>
-              <p className="font-semibold">{cliente?.name || followUp?.workshop_name || "Cliente"}</p>
-              <p className="text-xs text-gray-400">
-                Follow-up {followUp?.sequence_number}/4 · {followUp?.consultor_nome}
-              </p>
-            </div>
-            <Badge className="bg-gradient-to-r from-red-600 to-red-700 text-white border-0 ml-4 shadow-lg flex items-center gap-2 px-3 py-1.5">
-              <div className="relative flex items-center justify-center">
-                <div className="absolute inset-0 bg-red-500 rounded-full animate-pulse opacity-30"></div>
-                <Clock className="w-4 h-4 relative z-10" />
-              </div>
-              <span className="font-semibold">Em atendimento</span>
-              <span className="bg-red-800 rounded px-2 py-0.5 font-mono text-sm">{formatTimer()}</span>
-            </Badge>
-          </div>
+         <div className="bg-gray-900 text-white px-6 py-4 flex items-center justify-between border-b border-gray-800 flex-shrink-0">
+           <div className="flex items-center gap-4 flex-1">
+             {/* Cliente Selector Button */}
+             <button
+               onClick={() => setShowClientSelector(true)}
+               className="flex items-center gap-3 px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors group min-w-fit"
+             >
+               <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center font-bold text-xs">
+                 {getInitials(cliente?.name || followUp?.workshop_name || "")}
+               </div>
+               <div className="text-left">
+                 <p className="font-semibold text-sm group-hover:text-red-400 transition-colors">
+                   {cliente?.name || followUp?.workshop_name || "Selecionar cliente"}
+                 </p>
+                 <p className="text-[10px] text-gray-400">Follow-up {followUp?.sequence_number}/4</p>
+               </div>
+               <span className="text-gray-400 ml-2">▼</span>
+             </button>
 
-          <div className="flex items-center gap-1 ml-4">
+             <Badge className="bg-gradient-to-r from-red-600 to-red-700 text-white border-0 shadow-lg flex items-center gap-2 px-3 py-1.5 flex-shrink-0">
+               <div className="relative flex items-center justify-center">
+                 <div className="absolute inset-0 bg-red-500 rounded-full animate-pulse opacity-30"></div>
+                 <Clock className="w-4 h-4 relative z-10" />
+               </div>
+               <span className="font-semibold text-sm">Em atendimento</span>
+               <span className="bg-red-800 rounded px-2 py-0.5 font-mono text-sm">{formatTimer()}</span>
+             </Badge>
+           </div>
+
+          <div className="flex items-center gap-1 ml-auto flex-shrink-0">
             <button
               onClick={() => fuAnterior && handleNavegar(fuAnterior)}
               disabled={!fuAnterior}
@@ -1657,20 +1704,28 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
 
       {/* ATA Modal - Fora do Dialog */}
       {selectedAta && (
-      <VisualizarAtaModal
-        ata={selectedAta}
-        onClose={() => setSelectedAta(null)}
-      />
-      )}
+       <VisualizarAtaModal
+         ata={selectedAta}
+         onClose={() => setSelectedAta(null)}
+       />
+       )}
 
-      {/* Sprint Modal — aberto ao clicar em "Abrir Sprint" na aba Follow-ups */}
-      <SprintClientModal
-        sprint={selectedSprintId ? (sprintsMapModal[selectedSprintId] || null) : null}
-        user={user}
-        workshop={workshop}
-        open={!!selectedSprintId}
-        onClose={() => setSelectedSprintId(null)}
-      />
+       {/* Sprint Modal — aberto ao clicar em "Abrir Sprint" na aba Follow-ups */}
+       <SprintClientModal
+         sprint={selectedSprintId ? (sprintsMapModal[selectedSprintId] || null) : null}
+         user={user}
+         workshop={workshop}
+         open={!!selectedSprintId}
+         onClose={() => setSelectedSprintId(null)}
+       />
+
+       {/* Client Selector Modal */}
+       {showClientSelector && (
+         <ClientSelectorGrid
+           onSelect={carregarCliente}
+           onClose={() => setShowClientSelector(false)}
+         />
+       )}
 
       <AlertDialog open={showNavConfirm} onOpenChange={setShowNavConfirm}>
         <AlertDialogContent>
