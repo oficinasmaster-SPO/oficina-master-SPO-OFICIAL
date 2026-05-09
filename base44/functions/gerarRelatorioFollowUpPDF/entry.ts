@@ -57,7 +57,6 @@ Deno.serve(async (req) => {
         '-completedAt'
       );
     } else if (tipo === 'riscos') {
-      // Relatório de riscos: follow-ups vencidos + clientes com baixa realização
       reminders = await base44.entities.FollowUpReminder.filter(
         { consultor_id: user.id, is_completed: false },
         'reminder_date'
@@ -79,7 +78,7 @@ Deno.serve(async (req) => {
     let yPos = 15;
 
     // Cabeçalho
-    doc.setFont('Helvetica', 'normal'); // Garante encoding UTF-8 nativo
+    doc.setFont('Helvetica', 'normal');
     doc.setFillColor(51, 51, 51);
     doc.rect(0, 0, pageWidth, 30, 'F');
     doc.setTextColor(255, 255, 255);
@@ -178,7 +177,7 @@ Deno.serve(async (req) => {
       yPos = doc.lastAutoTable.finalY + 10;
     }
 
-    // Tabela de PENDENTES (desde quando está pendente)
+    // Tabela de PENDENTES
     if (reminders.filter(r => !r.is_completed).length > 0) {
       doc.addPage();
       yPos = 15;

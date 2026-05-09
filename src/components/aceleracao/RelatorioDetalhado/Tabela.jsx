@@ -77,8 +77,8 @@ export default function Tabela({ dados = [] }) {
               className="border-b hover:bg-gray-50 transition-colors text-sm"
             >
               <td className="px-3 py-3 text-gray-900 whitespace-nowrap">
-                {formatData(row.dataContato)} {formatHora(row.completedAt)}
-              </td>
+                 {formatData(row.completedAt || row.dataContato)} {formatHora(row.completedAt || row.dataContato)}
+               </td>
               <td className="px-3 py-3 text-gray-700">{row.workshop_name || '-'}</td>
               <td className="px-3 py-3 text-gray-700">{row.consultor_nome || '-'}</td>
               <td className="px-3 py-3">
@@ -102,8 +102,8 @@ export default function Tabela({ dados = [] }) {
                 </span>
               </td>
               <td className="px-3 py-3">
-                <span className={`font-medium ${engajamentoColor[row.engajamento] || 'text-gray-600'}`}>
-                  {row.engajamento || '-'}
+                <span className={`font-medium text-xs ${engajamentoColor[row.engajamento] || 'text-gray-600'}`}>
+                  {row.engajamento ? `${row.engajamento}` : '-'}
                 </span>
               </td>
               <td className="px-3 py-3 text-xs">
