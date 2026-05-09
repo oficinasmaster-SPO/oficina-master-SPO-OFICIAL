@@ -223,20 +223,31 @@ Deno.serve(async (req) => {
     const totalRiscos = riscos.reduce((sum, r) => sum + r.total, 0);
     const totalOportunidades = oportunidades.reduce((sum, o) => sum + o.total, 0);
 
-    console.log('[getRiscosOportunidadesAnalise] Resultado final:', {
-      total_riscos: riscos.length,
-      clientes_em_risco: totalRiscos,
-      total_oportunidades: oportunidades.length
+    // FASE 4: VALIDAÇÃO - Garantir dados seguros antes do retorno
+    console.log('[getRiscosOportunidadesAnalise] Riscos encontrados:', riscos.length);
+    riscos.forEach((r, idx) => {
+      console.log(`  [${idx}] ${r.titulo}: ${r.clientes?.length || 0} clientes`);
+    });
+
+    // Validar que riscos com dados realmente têm clientes
+    const riscosValidos = riscos.filter(r => r.clientes && r.clientes.length > 0);
+    const oportunidadesValidas = oportunidades.filter(o => o.total > 0);
+
+    console.log('[getRiscosOportunidadesAnalise] Validação final:', {
+      riscos_totais: riscos.length,
+      riscos_validos: riscosValidos.length,
+      oportunidades: oportunidadesValidas.length,
+      status: 'success'
     });
 
     return Response.json({
-      riscos,
-      oportunidades,
+      riscos: riscosValidos,
+      oportunidades: oportunidadesValidas,
       estatisticas: {
-        total_riscos: riscos.length,
-        clientes_em_risco: totalRiscos,
-        total_oportunidades: oportunidades.length,
-        taxa_risco: totalRiscos > 0 ? 'alto' : 'baixo'
+        total_riscos: riscosValidos.length,
+        clientes_em_risco: riscosValidos.reduce((sum, r) => sum + (r.clientes?.length || 0), 0),
+        total_oportunidades: oportunidadesValidas.length,
+        taxa_risco: riscosValidos.length > 0 ? 'alto' : 'baixo'
       }
     });
 
