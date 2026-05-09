@@ -79,6 +79,7 @@ Deno.serve(async (req) => {
     let yPos = 15;
 
     // Cabeçalho
+    doc.setFont('Helvetica', 'normal'); // Garante encoding UTF-8 nativo
     doc.setFillColor(51, 51, 51);
     doc.rect(0, 0, pageWidth, 30, 'F');
     doc.setTextColor(255, 255, 255);
