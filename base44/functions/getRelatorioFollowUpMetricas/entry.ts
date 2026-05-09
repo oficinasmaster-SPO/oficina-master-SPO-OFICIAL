@@ -102,28 +102,44 @@ Deno.serve(async (req) => {
     }
 
     // Calcular métricas (validar booleano is_completed corretamente)
-    const realizados = concludidos.length;
-    const pendentes = reminders.filter(r => r.is_completed !== true).length;
-    const total = realizados + pendentes;
-    const taxaRealizacao = total > 0 ? Math.round((realizados / total) * 100) : 0;
-    
-    // Validação de sanidade
-    if (realizados < 0 || pendentes < 0) {
-      return Response.json({ error: 'Cálculo de métricas inválido' }, { status: 500 });
-    }
+     const realizados = concludidos.length;
+     const pendentes = reminders.filter(r => r.is_completed !== true).length;
+     const total = realizados + pendentes;
+     const taxaRealizacao = total > 0 ? Math.round((realizados / total) * 100) : 0;
 
-    // Retornar dados calculados
-    return Response.json({
-      realizados,
-      pendentes,
-      total,
-      taxaRealizacao,
-      tipo,
-      periodo,
-      data,
-      startDate,
-      endDate
-    });
+     // Validação de sanidade
+     if (realizados < 0 || pendentes < 0) {
+       return Response.json({ error: 'Cálculo de métricas inválido' }, { status: 500 });
+     }
+
+     // Retornar dados calculados + lista detalhada
+     return Response.json({
+       metricas: {
+         realizados,
+         pendentes,
+         total,
+         taxaRealizacao
+       },
+       followups: concludidos.map(c => ({
+         id: c.id,
+         completedAt: c.completedAt,
+         workshop_name: c.workshop_name,
+         consultor_nome: c.consultor_nome,
+         canal: c.canal,
+         resultado: c.resultado,
+         humor: c.humor,
+         engajamento: c.engajamento,
+         suporte: c.suporte || 'Consultor',
+         tipo: c.tipo || 'Follow-up',
+         observacoes: c.observacoes,
+         duracao: c.duracao
+       })),
+       tipo,
+       periodo,
+       data,
+       startDate,
+       endDate
+     });
   } catch (error) {
     console.error('Erro ao calcular métricas:', error);
     return Response.json({ error: error.message }, { status: 500 });

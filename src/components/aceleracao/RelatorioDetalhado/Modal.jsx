@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { X } from 'lucide-react';
@@ -15,35 +15,32 @@ export default function RelatorioDetailModal({ isOpen, onClose, tipo = 'diario',
   const referenceDate = data || new Date().toISOString().split('T')[0];
 
   // Buscar métricas e dados
-  const { data: relatorioData = { metricas: {}, followups: [] }, isLoading: loadingMetricas } = useQuery({
-    queryKey: ['relatorioCompleto', tipo, periodo, referenceDate, filters],
-    queryFn: async () => {
-      if (!isOpen) return { metricas: {}, followups: [] };
-      try {
-        // Buscar follow-ups concluídos com filtros
-        const queryFilter = { consultor_id: filters.consultor, canal: filters.tipo };
-        Object.keys(queryFilter).forEach(k => queryFilter[k] === null && delete queryFilter[k]);
+   const { data: relatorioData = { metricas: {}, followups: [] }, isLoading: loadingMetricas } = useQuery({
+     queryKey: ['relatorioCompleto', tipo, periodo, referenceDate, filters],
+     queryFn: async () => {
+       if (!isOpen) return { metricas: {}, followups: [] };
+       try {
+         // Chamar função backend que retorna métricas + dados detalhados
+         const response = await base44.functions.invoke('getRelatorioFollowUpMetricas', {
+           tipo,
+           data: referenceDate,
+           periodo
+         });
 
-        const followups = await base44.entities.FollowUpConcluido.filter(queryFilter, '-completedAt', 100);
+         if (response.data?.followups) {
+           const { metricas, followups } = response.data;
+           return { metricas: metricas || {}, followups: followups || [] };
+         }
 
-        // Chamar função de métricas (pode ser incrementada depois)
-        const metricas = {
-          realizados: followups.filter(f => f.resultado === 'atendeu').length || 0,
-          pendentes: followups.filter(f => f.resultado === 'nao_atendeu').length || 0,
-          taxaRealizacao: followups.length > 0 
-            ? Math.round((followups.filter(f => f.resultado === 'atendeu').length / followups.length) * 100)
-            : 0
-        };
-
-        return { metricas, followups: followups || [] };
-      } catch (error) {
-        console.error('Erro ao buscar relatório:', error);
-        return { metricas: { realizados: 0, pendentes: 0, taxaRealizacao: 0 }, followups: [] };
-      }
-    },
-    enabled: isOpen,
-    staleTime: 5 * 60 * 1000
-  });
+         return { metricas: {}, followups: [] };
+       } catch (error) {
+         console.error('Erro ao buscar relatório:', error);
+         return { metricas: { realizados: 0, pendentes: 0, taxaRealizacao: 0 }, followups: [] };
+       }
+     },
+     enabled: isOpen,
+     staleTime: 5 * 60 * 1000
+   });
 
   const metricas = relatorioData.metricas || { realizados: 0, pendentes: 0, taxaRealizacao: 0 };
   const linhas = relatorioData.followups || [];
