@@ -127,31 +127,72 @@ Deno.serve(async (req) => {
 
     yPos += 15;
 
-    // Tabela de detalhes
+    // Tabela de detalhes - REALIZADOS
     if (concludidos.length > 0) {
       doc.setFontSize(12);
-      doc.text('Atendimentos Realizados', 15, yPos);
+      doc.text('✓ Atendimentos Realizados', 15, yPos);
       yPos += 8;
 
-      const tableData = concludidos.slice(0, 10).map(c => [
-        new Date(c.completedAt || '').toLocaleDateString('pt-BR'),
-        c.workshop_name || '—',
-        c.canal || '—',
-        c.resultado || '—'
-      ]);
+      const tableData = concludidos.slice(0, 10).map(c => {
+        const dateObj = new Date(c.completedAt || '');
+        const data = dateObj.toLocaleDateString('pt-BR');
+        const hora = dateObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        return [
+          data,
+          hora,
+          c.workshop_name || '—',
+          c.canal || '—',
+          c.resultado || '—',
+          c.observacoes ? c.observacoes.substring(0, 25) + '...' : '—'
+        ];
+      });
 
       doc.autoTable({
         startY: yPos,
-        head: [['Data', 'Cliente', 'Canal', 'Resultado']],
+        head: [['Data', 'Hora', 'Cliente', 'Canal', 'Resultado', 'Observações']],
         body: tableData,
         margin: { left: 15, right: 15 },
         theme: 'grid',
-        headStyles: { fillColor: [51, 51, 51], textColor: 255, fontSize: 10 },
-        bodyStyles: { fontSize: 9 },
-        columnStyles: { 0: { cellWidth: 30 }, 1: { cellWidth: 60 }, 2: { cellWidth: 35 }, 3: { cellWidth: 40 } }
+        headStyles: { fillColor: [51, 51, 51], textColor: 255, fontSize: 9 },
+        bodyStyles: { fontSize: 8 },
+        columnStyles: { 0: { cellWidth: 20 }, 1: { cellWidth: 18 }, 2: { cellWidth: 45 }, 3: { cellWidth: 28 }, 4: { cellWidth: 28 }, 5: { cellWidth: 35 } }
       });
 
-      yPos = doc.internal.pageSize.getHeight() - 20;
+      yPos = doc.lastAutoTable.finalY + 10;
+    }
+
+    // Tabela de PENDENTES (desde quando está pendente)
+    if (reminders.filter(r => !r.is_completed).length > 0) {
+      doc.addPage();
+      yPos = 15;
+      
+      doc.setFontSize(12);
+      doc.text('⏳ Follow-ups Pendentes', 15, yPos);
+      yPos += 8;
+
+      const pendingData = reminders.filter(r => !r.is_completed).slice(0, 10).map(r => {
+        const reminderDate = new Date(r.reminder_date);
+        const today = new Date();
+        const daysAgo = Math.floor((today - reminderDate) / (1000 * 60 * 60 * 24));
+        return [
+          reminderDate.toLocaleDateString('pt-BR'),
+          `${daysAgo} dias`,
+          r.workshop_name || '—',
+          `#${r.sequence_number}` || '—',
+          r.message ? r.message.substring(0, 30) + '...' : '—'
+        ];
+      });
+
+      doc.autoTable({
+        startY: yPos,
+        head: [['Data Prevista', 'Tempo Pendente', 'Cliente', 'Seq.', 'Descrição']],
+        body: pendingData,
+        margin: { left: 15, right: 15 },
+        theme: 'grid',
+        headStyles: { fillColor: [217, 119, 6], textColor: 255, fontSize: 9 },
+        bodyStyles: { fontSize: 8 },
+        columnStyles: { 0: { cellWidth: 25 }, 1: { cellWidth: 30 }, 2: { cellWidth: 60 }, 3: { cellWidth: 20 }, 4: { cellWidth: 50 } }
+      });
     }
 
     // Rodapé
