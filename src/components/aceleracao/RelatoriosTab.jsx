@@ -7,6 +7,7 @@ import { Download, Eye, Loader2, Calendar, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import EnviarEmailModal from './EnviarEmailModal';
 import RelatorioDetalhado from './RelatorioDetalhado/Modal';
+import RiscosOportunidadesModal from './RiscosOportunidades/RiscosOportunidadesModal';
 import {
   Select,
   SelectContent,
@@ -27,6 +28,7 @@ export default function RelatoriosTab() {
   const [emailModalOpen, setEmailModalOpen] = useState(false);
   const [emailModalTipo, setEmailModalTipo] = useState(null);
   const [relatorioDetalhado, setRelatorioDetalhado] = useState({ isOpen: false, tipo: null });
+  const [riscosOportunidadesOpen, setRiscosOportunidadesOpen] = useState(false);
 
   const today = new Date().toISOString().split('T')[0];
   const weekStart = new Date();
@@ -236,8 +238,8 @@ export default function RelatoriosTab() {
                     </Button>
                     <Button
                        size="sm"
-                       className="flex-1 h-8 text-xs gap-1.5 bg-red-600 hover:bg-red-700"
-                       onClick={() => setRelatorioDetalhado({ isOpen: true, tipo: rel.id })}
+                       className={`flex-1 h-8 text-xs gap-1.5 ${rel.id === 'riscos' ? 'bg-red-600 hover:bg-red-700' : 'bg-primary hover:bg-primary/90'}`}
+                       onClick={() => rel.id === 'riscos' ? setRiscosOportunidadesOpen(true) : setRelatorioDetalhado({ isOpen: true, tipo: rel.id })}
                      >
                        <Eye className="w-3 h-3" />
                        Ver
@@ -302,6 +304,14 @@ export default function RelatoriosTab() {
         periodo={periodoSelecionado}
         data={dataSelecionada}
       />
+
+      {user?.data?.workshop_id && (
+        <RiscosOportunidadesModal
+          isOpen={riscosOportunidadesOpen}
+          onClose={() => setRiscosOportunidadesOpen(false)}
+          workshopId={user.data.workshop_id}
+        />
+      )}
     </div>
   );
 }
