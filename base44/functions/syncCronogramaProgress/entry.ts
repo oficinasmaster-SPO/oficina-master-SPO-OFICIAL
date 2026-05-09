@@ -1,18 +1,19 @@
 /**
  * @deprecated ENGINE A — LEGACY COMPATIBILITY LAYER
  *
- * Status: CONGELADO — apenas manutenção crítica de compatibilidade.
+ * Status: CONGELADO — manutenção crítica apenas.
  *
- * Este arquivo escreve em CronogramaProgresso, que é o READ MODEL legado.
- * A source of truth operacional é CronogramaImplementacao.
+ * Este endpoint AINDA é chamado por markCronogramaCompleted para compatibilidade.
+ * O fluxo definitivo é syncImplementacaoToProgresso (unidirecional, derivado).
  *
- * Fluxo correto (atual):
- *   markCronogramaCompleted → syncCronogramaProgress (escreve no legado para compatibilidade)
+ * SUBSTITUIÇÃO GRADUAL:
+ *   Antigo: markCronogramaCompleted → syncCronogramaProgress
+ *   Novo:   CronogramaImplementacao (update) → syncImplementacaoToProgresso
  *
- * Fluxo futuro:
- *   CronogramaImplementacao → (projeta para) → CronogramaProgresso
+ * Quando TODOS os consumidores migrarem para syncImplementacaoToProgresso,
+ * este arquivo pode ser removido.
  *
- * DO NOT ADD:
+ * PROIBIDO adicionar:
  *   - novas regras de status
  *   - nova lógica de SLA
  *   - novos campos operacionais
