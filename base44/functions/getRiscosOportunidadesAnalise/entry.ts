@@ -233,10 +233,27 @@ Deno.serve(async (req) => {
     const riscosValidos = riscos.filter(r => r.clientes && r.clientes.length > 0);
     const oportunidadesValidas = oportunidades.filter(o => o.total > 0);
 
+    // Contar clientes ativos com planos (Contratos ativos)
+    const clientesAtivosPlanos = await base44.asServiceRole.entities.Contract.filter({
+      workshop_id,
+      status: 'ativo'
+    }, '', 1000);
+    const totalClientesAtivos = clientesAtivosPlanos.length;
+
+    // Calcular taxa de risco: (clientes_em_risco + oportunidades) / clientes_ativos = %
+    const clientesEmRisco = riscosValidos.reduce((sum, r) => sum + (r.clientes?.length || 0), 0);
+    const clientesComIssues = clientesEmRisco + oportunidadesValidas.length;
+    const taxaRisco = totalClientesAtivos > 0 
+      ? Math.round((clientesComIssues / totalClientesAtivos) * 100)
+      : 0;
+
     console.log('[getRiscosOportunidadesAnalise] Validação final:', {
       riscos_totais: riscos.length,
       riscos_validos: riscosValidos.length,
+      clientes_ativos: totalClientesAtivos,
+      clientes_em_risco: clientesEmRisco,
       oportunidades: oportunidadesValidas.length,
+      taxa_risco_pct: taxaRisco,
       status: 'success'
     });
 
@@ -244,10 +261,10 @@ Deno.serve(async (req) => {
       riscos: riscosValidos,
       oportunidades: oportunidadesValidas,
       estatisticas: {
-        total_riscos: riscosValidos.length,
-        clientes_em_risco: riscosValidos.reduce((sum, r) => sum + (r.clientes?.length || 0), 0),
+        clientes_ativos_planos: totalClientesAtivos,
+        clientes_em_risco: clientesEmRisco,
         total_oportunidades: oportunidadesValidas.length,
-        taxa_risco: riscosValidos.length > 0 ? 'alto' : 'baixo'
+        taxa_risco_percentual: taxaRisco
       }
     });
 

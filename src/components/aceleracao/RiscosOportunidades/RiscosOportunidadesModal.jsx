@@ -65,17 +65,17 @@ export default function RiscosOportunidadesModal({ isOpen, onClose, workshopId }
           <div className="space-y-6 p-4">
             {/* Estatísticas */}
             <div className="grid grid-cols-3 gap-4">
-              <div className="bg-red-50 border border-red-300 rounded-lg p-4">
-                <p className="text-sm text-gray-600">Categorias de Risco</p>
-                <p className="text-3xl font-bold text-red-700">{analise.estatisticas.total_riscos || 0}</p>
-              </div>
-              <div className="bg-orange-50 border border-orange-300 rounded-lg p-4">
-                <p className="text-sm text-gray-600">Clientes em Risco</p>
-                <p className="text-3xl font-bold text-orange-700">{analise.estatisticas.clientes_em_risco || 0}</p>
-              </div>
               <div className="bg-blue-50 border border-blue-300 rounded-lg p-4">
                 <p className="text-sm text-gray-600">Oportunidades</p>
                 <p className="text-3xl font-bold text-blue-700">{analise.estatisticas.total_oportunidades || 0}</p>
+              </div>
+              <div className="bg-red-50 border border-red-300 rounded-lg p-4">
+                <p className="text-sm text-gray-600">Em Risco</p>
+                <p className="text-3xl font-bold text-red-700">{analise.estatisticas.clientes_em_risco || 0}</p>
+              </div>
+              <div className="bg-purple-50 border border-purple-300 rounded-lg p-4">
+                <p className="text-sm text-gray-600">Taxa de Risco</p>
+                <p className="text-3xl font-bold text-purple-700">{analise.estatisticas.taxa_risco_percentual || 0}%</p>
               </div>
             </div>
 
