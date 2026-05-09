@@ -9,66 +9,56 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Buscar contratos ativos do consultor
-    const contracts = await base44.entities.Contract.filter({
-      consultor_id: user.id,
-      status: { $in: ['ativo', 'efetivado'] }
-    }, '-updated_date', 1000);
+    // ESTRATÉGIA: Buscar workshops onde o user é owner, partner ou é admin
+    const workshops = user.role === 'admin' 
+      ? await base44.asServiceRole.entities.Workshop.list('-updated_date', 1000)
+      : await base44.entities.Workshop.filter({}, '-updated_date', 1000);
 
-    if (!contracts || contracts.length === 0) {
+    if (!workshops || workshops.length === 0) {
       return Response.json({ clients: [] });
     }
 
-    const workshopIds = contracts.map(c => c.workshop_id).filter(Boolean);
+    const workshopIds = workshops.map(w => w.id);
 
-    // Buscar workshops
-    const workshops = await Promise.all(
-      workshopIds.map(id => base44.entities.Workshop.filter({ id }, null, 1).then(res => res?.[0]))
-    );
-
-    // Buscar follow-ups pendentes por cliente
+    // Buscar follow-ups pendentes
     const allFollowUps = await base44.entities.FollowUpReminder.filter({
       workshop_id: { $in: workshopIds },
       is_completed: false
     }, null, 5000);
 
-    // Buscar PlanAttendanceRules para contar backlog potencial
-    const planIds = contracts.map(c => c.plan_type).filter(Boolean);
-    const planRules = await base44.entities.PlanAttendanceRule.filter(
-      { plan_id: { $in: planIds } },
-      null,
-      1000
-    );
+    // Buscar tarefas backlog pendentes
+    const allBacklogTasks = await base44.entities.TarefaBacklog.filter({
+      cliente_id: { $in: workshopIds },
+      status: { $in: ['aberta', 'em_execucao'] }
+    }, null, 5000);
 
-    // Montar grid
+    // Montar grid com dados completos
     const clients = workshops
       .filter(Boolean)
       .map(workshop => {
-        const contract = contracts.find(c => c.workshop_id === workshop.id);
         const followUpsCount = allFollowUps.filter(f => f.workshop_id === workshop.id).length;
-        const planRulesCount = planRules.filter(pr => pr.plan_id === contract?.plan_type).length;
+        const backlogCount = allBacklogTasks.filter(t => t.cliente_id === workshop.id).length;
 
         return {
           id: workshop.id,
           name: workshop.name,
-          plano: contract?.plan_type || 'SEM PLANO',
+          plano: workshop.planoAtual || 'FREE',
           status: workshop.status || 'ativo',
-          planStatus: contract?.planStatus || 'trial',
+          planStatus: workshop.planStatus || 'trial',
           followUpsCount,
-          backlogCount: planRulesCount, // proxy para tarefas potenciais
-          contractId: contract?.id,
+          backlogCount,
           segment: workshop.segment_auto || workshop.segment || '—',
           city: workshop.city,
         };
       })
       .sort((a, b) => {
-        // Ordenação: plano premium primeiro → status ativo → nome
+        // Ordenação: status ativo primeiro → plano premium → nome
         const planoOrder = { 'MILLIONS': 0, 'IOM': 1, 'GOLD': 2, 'PRATA': 3, 'BRONZE': 4, 'START': 5, 'FREE': 6 };
         const aOrder = planoOrder[a.plano] ?? 99;
         const bOrder = planoOrder[b.plano] ?? 99;
 
-        if (aOrder !== bOrder) return aOrder - bOrder;
         if (a.status !== b.status) return a.status === 'ativo' ? -1 : 1;
+        if (aOrder !== bOrder) return aOrder - bOrder;
         return a.name.localeCompare(b.name);
       });
 

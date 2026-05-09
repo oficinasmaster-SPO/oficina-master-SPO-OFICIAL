@@ -22,14 +22,20 @@ export default function ClientSelectorGrid({ onSelect, onClose }) {
   const [showOnlyActive, setShowOnlyActive] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState('all');
 
-  // Buscar clientes
-  const { data = { clients: [] }, isLoading } = useQuery({
+  // Buscar clientes com retry
+  const { data = { clients: [] }, isLoading, error } = useQuery({
     queryKey: ['clientsWithPlans'],
     queryFn: async () => {
-      const res = await base44.functions.invoke('getClientsWithPlans', {});
-      return res.data;
+      try {
+        const res = await base44.functions.invoke('getClientsWithPlans', {});
+        return res?.data || { clients: [] };
+      } catch (err) {
+        console.error('Erro ao buscar clientes:', err);
+        return { clients: [] };
+      }
     },
-    staleTime: 2 * 60 * 1000, // 2 min
+    staleTime: 2 * 60 * 1000,
+    retry: 2,
   });
 
   // Filtrar
@@ -117,24 +123,42 @@ export default function ClientSelectorGrid({ onSelect, onClose }) {
 
         {/* Grid de Clientes */}
         <div className="flex-1 overflow-y-auto px-6 py-4">
-          {isLoading ? (
-            <div className="flex items-center justify-center h-full">
-              <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+        {isLoading ? (
+          <div className="flex items-center justify-center h-full">
+            <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+          </div>
+        ) : error ? (
+          <div className="flex items-center justify-center h-full text-center">
+            <div>
+              <p className="text-red-500 font-medium">⚠️ Erro ao carregar clientes</p>
+              <p className="text-xs text-gray-400 mt-1">Verifique sua conexão e tente novamente</p>
             </div>
-          ) : filtered.length === 0 ? (
-            <div className="flex items-center justify-center h-full text-center">
-              <div>
-                <p className="text-gray-500 font-medium">Nenhum cliente encontrado</p>
-                <p className="text-xs text-gray-400 mt-1">Tente outro filtro ou busca</p>
-              </div>
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="flex items-center justify-center h-full text-center">
+            <div>
+              <p className="text-gray-500 font-medium">Nenhum cliente encontrado</p>
+              <p className="text-xs text-gray-400 mt-1">Tente outro filtro ou busca</p>
             </div>
-          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {filtered.map(client => (
                 <button
                   key={client.id}
-                  onClick={() => onSelect(client)}
-                  className="p-4 rounded-lg border border-gray-200 bg-white hover:shadow-lg hover:border-red-300 transition-all group text-left"
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onSelect(client);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onSelect(client);
+                    }
+                  }}
+                  className="p-4 rounded-lg border border-gray-200 bg-white hover:shadow-lg hover:border-red-300 transition-all group text-left cursor-pointer"
                 >
                   {/* Plano */}
                   <Badge className={`${PLANO_COLORS[client.plano] || PLANO_COLORS['FREE']} text-[10px] mb-2`}>
