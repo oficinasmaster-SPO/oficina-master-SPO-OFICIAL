@@ -130,21 +130,24 @@ Deno.serve(async (req) => {
      }
 
      // Mapear follow-ups com nomes de cliente
-     const followupsProntos = concludidos.map((c) => ({
-       id: c.id,
-       completedAt: c.completedAt,
-       dataContato: c.dataContato,
-       workshop_name: workshopsMap[c.workshop_id] || c.workshop_name || 'Desconhecido',
-       consultor_nome: c.consultor_nome,
-       canal: c.canal,
-       resultado: c.resultado,
-       humor: c.humor || 'neutro',
-       engajamento: c.engajamento || 'Médio',
-       suporte: c.atendimento_tipo === 'cs' ? 'CS' : 'Consultor',
-       tipo: c.tipo === 'followup' ? 'Follow-up' : (c.tipo || 'Follow-up'),
-       observacoes: c.observacoes,
-       duracao: c.duracao || c.tempo_atendimento_minutos
-     }));
+     const followupsProntos = concludidos.map((c) => {
+       const workshop = workshopsMap[c.workshop_id];
+       return {
+         id: c.id,
+         completedAt: c.completedAt,
+         dataContato: c.dataContato,
+         workshop_name: workshop || c.workshop_name || 'Desconhecido',
+         consultor_nome: c.consultor_nome,
+         canal: c.canal,
+         resultado: c.resultado,
+         humor: c.humor || 'neutro',
+         engajamento: c.engajamento || 'Médio',
+         suporte: c.atendimento_tipo === 'cs' ? 'CS' : 'Consultor',
+         tipo: c.tipo === 'followup' ? 'Follow-up' : (c.tipo || 'Follow-up'),
+         observacoes: c.observacoes,
+         duracao: c.duracao || c.tempo_atendimento_minutos
+       };
+     });
 
      // Retornar dados calculados + lista detalhada
      return Response.json({

@@ -26,10 +26,11 @@ Deno.serve(async (req) => {
     console.log('[getRiscosOportunidadesAnalise] Data de referência:', hojeDate);
 
     // 1. FollowUps Atrasados - CORRIGIDO: Comparar DATE, não DATETIME
+    // FASE 2 FIX: reminder_date é DATE (YYYY-MM-DD), não DATETIME
     const followupsAtrasados = await base44.asServiceRole.entities.FollowUpReminder.filter({
-      workshop_id,
-      is_completed: false,
-      reminder_date: { '$lt': hojeDate }
+     workshop_id,
+     is_completed: false,
+     reminder_date: { '$lt': hojeDate }  // hojeDate = YYYY-MM-DD format ✅
     }, '-reminder_date', 100);
 
     // 2. Contratos recém ativados sem ATA - CORRIGIDO: Usar DATE correto
@@ -42,11 +43,15 @@ Deno.serve(async (req) => {
       workshop_id
     }, '-meeting_date', 500);
 
-    // CORRIGIDO BUG #5: Join correto - contratos recentes sem ATA vinculada
-    const contratos_sem_ata = contratos_recentes.filter(c => 
-      !atas_por_workshop.some(a => a.workshop_id === c.workshop_id && 
-        new Date(a.meeting_date) >= new Date(c.activated_at))
-    );
+    // FASE 2 FIX BUG #2: Join correto com filter em vez de some()
+    // Filtra ATAs do workshop, não por atendimento_id
+    const contratos_sem_ata = contratos_recentes.filter(c => {
+      const atas_do_contrato = atas_por_workshop.filter(a => 
+        a.workshop_id === workshop_id &&
+        new Date(a.meeting_date) >= new Date(c.activated_at)
+      );
+      return atas_do_contrato.length === 0;  // sem ATA vinculada ✅
+    });
     
     console.log('[getRiscosOportunidadesAnalise] Contratos recentes:', contratos_recentes.length, 'Sem ATA:', contratos_sem_ata.length);
 
