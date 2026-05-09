@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
-import { X, TrendingDown, Lightbulb } from 'lucide-react';
+import { X, TrendingDown, Lightbulb, List } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import RiscoCard from './RiscoCard';
+import ClientesRiscoTabela from './ClientesRiscoTabela';
 import WheelLoader from '@/components/ui/WheelLoader';
 
 export default function RiscosOportunidadesModal({ isOpen, onClose, workshopId }) {
   const [activeTab, setActiveTab] = useState('riscos');
+  const [viewType, setViewType] = useState('cards'); // 'cards' ou 'tabela'
 
   const { data: analise = { riscos: [], oportunidades: [], estatisticas: {} }, isLoading } = useQuery({
     queryKey: ['riscosOportunidades', workshopId],
@@ -32,7 +34,6 @@ export default function RiscosOportunidadesModal({ isOpen, onClose, workshopId }
   });
 
   const handleAcao = (risco, cliente) => {
-    // Mapa de ações por categoria
     const acoes = {
       'followup_atrasado': () => window.location.href = '/CentralFollowUp',
       'onboarding_risco': () => window.location.href = '/ControleAceleracao',
@@ -44,6 +45,24 @@ export default function RiscosOportunidadesModal({ isOpen, onClose, workshopId }
 
     const acao = acoes[risco.categoria];
     if (acao) acao();
+  };
+
+  // Consolidar todos os clientes em risco com detalhes
+  const clientesConsolidados = () => {
+    const map = {};
+    if (analise.consolidacao) {
+      Object.values(analise.consolidacao).forEach(cliente => {
+        if (!map[cliente.id]) {
+          map[cliente.id] = {
+            id: cliente.id,
+            name: cliente.name,
+            riscos: cliente.riscos || []
+          };
+        }
+      });
+      return Object.values(map);
+    }
+    return [];
   };
 
   return (
@@ -82,7 +101,7 @@ export default function RiscosOportunidadesModal({ isOpen, onClose, workshopId }
             </div>
 
             {/* Abas */}
-            <div className="flex gap-2 border-b">
+            <div className="flex gap-2 border-b flex-wrap">
               <Button
                 variant={activeTab === 'riscos' ? 'default' : 'outline'}
                 onClick={() => setActiveTab('riscos')}
@@ -99,12 +118,35 @@ export default function RiscosOportunidadesModal({ isOpen, onClose, workshopId }
                 <Lightbulb className="w-4 h-4" />
                 Oportunidades ({analise.oportunidades.length})
               </Button>
+              
+              {activeTab === 'riscos' && (
+                <div className="ml-auto flex gap-2">
+                  <Button
+                    size="sm"
+                    variant={viewType === 'cards' ? 'default' : 'outline'}
+                    onClick={() => setViewType('cards')}
+                  >
+                    Cards
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={viewType === 'tabela' ? 'default' : 'outline'}
+                    onClick={() => setViewType('tabela')}
+                    className="gap-1"
+                  >
+                    <List className="w-4 h-4" />
+                    Tabela Detalhada
+                  </Button>
+                </div>
+              )}
             </div>
 
             {/* Conteúdo */}
             <div className="space-y-4">
               {activeTab === 'riscos' ? (
-                analise.riscos.length > 0 ? (
+                viewType === 'tabela' ? (
+                  <ClientesRiscoTabela clientes={clientesConsolidados()} />
+                ) : analise.riscos.length > 0 ? (
                   analise.riscos.map((risco) => (
                     <RiscoCard
                       key={risco.id}
