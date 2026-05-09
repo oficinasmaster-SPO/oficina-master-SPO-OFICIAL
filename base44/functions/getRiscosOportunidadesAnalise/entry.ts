@@ -93,6 +93,12 @@ Deno.serve(async (req) => {
       data_termino_previsto: { '$lt': hojeDate }
     }, '-data_termino_previsto', 100);
 
+    // 9. Sprints em Atraso
+    const sprints_atrasadas = await base44.asServiceRole.entities.ConsultoriaSprint.filter({
+      workshop_id,
+      status: { '$in': ['overdue', 'atrasada'] }
+    }, '-end_date', 100);
+
     // 8. Sem colaboradores NÃO-SÓCIOS
     const employees = await base44.asServiceRole.entities.Employee.filter({
       workshop_id
@@ -218,6 +224,22 @@ Deno.serve(async (req) => {
           item: c.item_nome,
           dias_atrasado: Math.floor((hoje - new Date(c.data_termino_previsto)) / (1000 * 60 * 60 * 24)),
           tipo: c.item_tipo
+        }))
+      },
+      {
+        id: 'sprints_atrasadas',
+        categoria: 'sprints_atrasadas',
+        titulo: 'Sprints em Atraso',
+        descricao: 'Sprints de consultoria com data de fim vencida',
+        severidade: 'critico',
+        total: sprints_atrasadas.length,
+        clientes: sprints_atrasadas.map(s => ({
+          id: s.workshop_id,
+          name: workshopsMap[workshop_id] || 'Workshop',
+          sprint_title: s.title,
+          dias_atrasado: Math.floor((hoje - new Date(s.end_date)) / (1000 * 60 * 60 * 24)),
+          mission: s.mission_id,
+          sprint_number: s.sprint_number
         }))
       }
     ].filter(r => r.total > 0);
