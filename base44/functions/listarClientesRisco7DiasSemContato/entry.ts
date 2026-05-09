@@ -10,77 +10,108 @@ Deno.serve(async (req) => {
     }
 
     const hoje = new Date();
-    const sete_dias_atras = new Date(hoje.getTime() - 7 * 24 * 60 * 60 * 1000);
-
+    const seteUmasDiasAtras = new Date(hoje.getTime() - 7 * 24 * 60 * 60 * 1000);
+    
     console.log('[listarClientesRisco7DiasSemContato] Iniciando busca');
+    console.log('[listarClientesRisco7DiasSemContato] Data base (7 dias atrás):', seteUmasDiasAtras.toISOString());
 
-    // 1. Buscar todos os contratos ATIVOS com planos que contemplam atendimentos
+    // Buscar contratos ativos elegíveis
     const contratosAtivos = await base44.asServiceRole.entities.Contract.filter({
       status: { '$in': ['ativo', 'efetivado'] },
       plan_type: { '$in': ['START', 'BRONZE', 'PRATA', 'GOLD', 'IOM', 'MILLIONS'] }
-    }, '-created_date', 1000);
+    }, '-created_date', 500);
 
     console.log('[listarClientesRisco7DiasSemContato] Contratos ativos encontrados:', contratosAtivos.length);
 
-    const workshopIds = contratosAtivos.map(c => c.workshop_id);
-    const clientesEmRiscoMap = {};
+    const clientesEmRisco = [];
 
-    // 2. Para cada workshop, buscar follow-ups e atendimentos antigos
-    for (const workshop_id of workshopIds) {
+    for (const contrato of contratosAtivos) {
       try {
-        // Follow-ups não completados com mais de 7 dias
-        const followupsSemContato = await base44.asServiceRole.entities.FollowUpReminder.filter({
-          workshop_id,
-          is_completed: false,
-          reminder_date: { '$lte': sete_dias_atras.toISOString().split('T')[0] }
-        }, '-reminder_date', 100);
+        const workshopId = contrato.workshop_id;
 
-        // Atendimentos realizados há mais de 7 dias
-        const atendimentosAntigos = await base44.asServiceRole.entities.ConsultoriaAtendimento.filter({
-          workshop_id,
-          status: { '$in': ['realizado', 'concluido'] },
-          data_realizada: { '$lte': sete_dias_atras.toISOString() }
-        }, '-data_realizada', 100);
+        // Buscar última reunião (MeetingMinutes)
+        const atas = await base44.asServiceRole.entities.MeetingMinutes.filter({
+          workshop_id: workshopId
+        }, '-meeting_date', 1);
 
-        // Se tem follow-ups em atraso ou atendimentos antigos, marcar cliente em risco
-        if (followupsSemContato.length > 0 || atendimentosAntigos.length > 0) {
-          const workshopInfo = contratosAtivos.find(c => c.workshop_id === workshop_id);
+        const dataUltimaReuniaoDate = atas.length > 0 ? new Date(atas[0].meeting_date) : null;
+
+        // Buscar último follow-up completado
+        const followups = await base44.asServiceRole.entities.FollowUpConcluido.filter({
+          workshop_id: workshopId
+        }, '-completedAt', 1);
+
+        const dataUltimoFollowupDate = followups.length > 0 ? new Date(followups[0].completedAt) : null;
+
+        // Buscar última sprint
+        const sprints = await base44.asServiceRole.entities.ConsultoriaSprint.filter({
+          workshop_id: workshopId
+        }, '-created_date', 1);
+
+        const dataUltimaSprintDate = sprints.length > 0 ? new Date(sprints[0].created_date) : null;
+
+        // Buscar último próximo passo (ConsultoriaProximoPasso)
+        const proximosPassos = await base44.asServiceRole.entities.ConsultoriaProximoPasso.filter({
+          workshop_id: workshopId
+        }, '-created_date', 1);
+
+        const dataUltimoProximoPassoDate = proximosPassos.length > 0 ? new Date(proximosPassos[0].created_date) : null;
+
+        // Buscar último atendimento (ConsultoriaAtendimento)
+        const atendimentos = await base44.asServiceRole.entities.ConsultoriaAtendimento.filter({
+          workshop_id: workshopId
+        }, '-data_realizada', 1);
+
+        const dataUltimoAtendimentoDate = atendimentos.length > 0 ? new Date(atendimentos[0].data_realizada) : null;
+
+        // Pegar a data mais recente de QUALQUER atividade
+        const datas = [
+          dataUltimaReuniaoDate,
+          dataUltimoFollowupDate,
+          dataUltimaSprintDate,
+          dataUltimoProximoPassoDate,
+          dataUltimoAtendimentoDate,
+          new Date(contrato.created_date) // Data de criação do contrato como fallback
+        ].filter(Boolean);
+
+        const dataUltimaAtividadeDate = datas.length > 0 ? new Date(Math.max(...datas.map(d => d.getTime()))) : null;
+
+        // Verificar se está em risco (>7 dias)
+        if (dataUltimaAtividadeDate && dataUltimaAtividadeDate < seteUmasDiasAtras) {
+          const diasSemAtividade = Math.floor((hoje - dataUltimaAtividadeDate) / (1000 * 60 * 60 * 24));
           
-          if (!clientesEmRiscoMap[workshop_id]) {
-            clientesEmRiscoMap[workshop_id] = {
-              id: workshop_id,
-              name: workshopInfo?.workshop_name || 'Workshop',
-              plano: workshopInfo?.plan_type || 'N/A',
-              followup_atrasados: followupsSemContato.length,
-              dias_sem_contato: Math.floor((hoje - sete_dias_atras) / (1000 * 60 * 60 * 24)),
-              ultimo_atendimento: atendimentosAntigos.length > 0 ? atendimentosAntigos[0].data_realizada : 'Sem registros',
-              detalhes_followup: followupsSemContato.map(f => ({
-                message: f.message,
-                reminder_date: f.reminder_date,
-                dias_atrasado: Math.floor((hoje - new Date(f.reminder_date)) / (1000 * 60 * 60 * 24))
-              }))
-            };
-          }
+          clientesEmRisco.push({
+            nome_cliente: contrato.workshop_name,
+            plano: contrato.plan_type,
+            data_ultima_atividade: dataUltimaAtividadeDate.toISOString().split('T')[0],
+            dias_sem_atividade: diasSemAtividade,
+            ultima_reuniao: dataUltimaReuniaoDate ? dataUltimaReuniaoDate.toISOString().split('T')[0] : '—',
+            ultimo_followup: dataUltimoFollowupDate ? dataUltimoFollowupDate.toISOString().split('T')[0] : '—',
+            ultimo_atendimento: dataUltimoAtendimentoDate ? dataUltimoAtendimentoDate.toISOString().split('T')[0] : '—',
+            ultima_sprint: dataUltimaSprintDate ? dataUltimaSprintDate.toISOString().split('T')[0] : '—',
+            ultimo_prox_passo: dataUltimoProximoPassoDate ? dataUltimoProximoPassoDate.toISOString().split('T')[0] : '—',
+            data_criacao_contrato: new Date(contrato.created_date).toISOString().split('T')[0]
+          });
         }
+
       } catch (error) {
-        console.warn(`[listarClientesRisco7DiasSemContato] Erro ao processar workshop ${workshop_id}:`, error.message);
+        console.warn(`[listarClientesRisco7DiasSemContato] Erro ao processar contrato ${contrato.id}:`, error.message);
       }
     }
 
-    const clientesLista = Object.values(clientesEmRiscoMap).sort((a, b) => 
-      b.dias_sem_contato - a.dias_sem_contato
-    );
+    // Ordenar por dias sem atividade (descendente)
+    clientesEmRisco.sort((a, b) => b.dias_sem_atividade - a.dias_sem_atividade);
 
-    console.log('[listarClientesRisco7DiasSemContato] Total de clientes em risco (7+ dias):', clientesLista.length);
+    console.log('[listarClientesRisco7DiasSemContato] Total de clientes em risco (7+ dias):', clientesEmRisco.length);
 
     return Response.json({
-      clientes: clientesLista,
+      clientes: clientesEmRisco,
       estatisticas: {
         total_contratos_ativos: contratosAtivos.length,
-        total_clientes_em_risco: clientesLista.length,
-        percentual_risco: contratosAtivos.length > 0 ? Math.round((clientesLista.length / contratosAtivos.length) * 100) : 0,
-        data_filtro: sete_dias_atras.toISOString().split('T')[0],
-        criterio: 'Mais de 7 dias sem contato / follow-up'
+        total_clientes_em_risco: clientesEmRisco.length,
+        percentual_risco: contratosAtivos.length > 0 ? ((clientesEmRisco.length / contratosAtivos.length) * 100).toFixed(2) : 0,
+        data_filtro: seteUmasDiasAtras.toISOString().split('T')[0],
+        criterio: 'Mais de 7 dias sem nenhuma atividade (reunião, atendimento, follow-up, sprint ou próximo passo)'
       },
       timestamp: new Date().toISOString()
     });
@@ -90,10 +121,10 @@ Deno.serve(async (req) => {
     return Response.json({ 
       error: error.message,
       clientes: [],
-      estatisticas: { 
-        total_contratos_ativos: 0, 
-        total_clientes_em_risco: 0, 
-        percentual_risco: 0 
+      estatisticas: {
+        total_contratos_ativos: 0,
+        total_clientes_em_risco: 0,
+        percentual_risco: 0
       }
     }, { status: 500 });
   }
