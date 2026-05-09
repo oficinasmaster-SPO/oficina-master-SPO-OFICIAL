@@ -3,8 +3,9 @@ import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Download, Eye, Loader2, Calendar } from 'lucide-react';
+import { Download, Eye, Loader2, Calendar, Mail } from 'lucide-react';
 import { toast } from 'sonner';
+import EnviarEmailModal from './EnviarEmailModal';
 import {
   Select,
   SelectContent,
@@ -22,6 +23,8 @@ export default function RelatoriosTab() {
   const [dataSelecionada, setDataSelecionada] = useState(new Date().toISOString().split('T')[0]);
   const [metricas, setMetricas] = useState({});
   const [loadingMetricas, setLoadingMetricas] = useState(false);
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
+  const [emailModalTipo, setEmailModalTipo] = useState(null);
 
   const today = new Date().toISOString().split('T')[0];
   const weekStart = new Date();
@@ -242,6 +245,18 @@ export default function RelatoriosTab() {
                        )}
                        Ver
                      </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1 h-8 text-xs gap-1.5"
+                      onClick={() => {
+                        setEmailModalTipo(rel.id);
+                        setEmailModalOpen(true);
+                      }}
+                    >
+                      <Mail className="w-3 h-3" />
+                      Email
+                    </Button>
                   </div>
                 </div>
               </CardContent>
@@ -272,6 +287,16 @@ export default function RelatoriosTab() {
           </div>
         </div>
       )}
+
+      <EnviarEmailModal
+        isOpen={emailModalOpen}
+        onClose={() => {
+          setEmailModalOpen(false);
+          setEmailModalTipo(null);
+        }}
+        tipoRelatorio={emailModalTipo}
+        data={dataSelecionada}
+      />
     </div>
   );
 }
