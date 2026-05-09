@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
@@ -20,10 +20,36 @@ export default function RelatoriosTab() {
   const [pdfPreview, setPdfPreview] = useState(null);
   const [periodoSelecionado, setPeriodoSelecionado] = useState('mensal');
   const [dataSelecionada, setDataSelecionada] = useState(new Date().toISOString().split('T')[0]);
+  const [metricas, setMetricas] = useState({});
+  const [loadingMetricas, setLoadingMetricas] = useState(false);
 
   const today = new Date().toISOString().split('T')[0];
   const weekStart = new Date();
   weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+
+  // Buscar métricas quando alterar período ou data
+  React.useEffect(() => {
+    const buscarMetricas = async () => {
+      setLoadingMetricas(true);
+      try {
+        const response = await base44.functions.invoke('getRelatorioFollowUpMetricas', {
+          tipo: 'mensal',
+          data: dataSelecionada,
+          periodo: periodoSelecionado,
+        });
+
+        if (response.data) {
+          setMetricas(response.data);
+        }
+      } catch (error) {
+        console.error('Erro ao buscar métricas:', error);
+      } finally {
+        setLoadingMetricas(false);
+      }
+    };
+
+    buscarMetricas();
+  }, [periodoSelecionado, dataSelecionada]);
 
   const relatorios = [
     {
@@ -31,28 +57,32 @@ export default function RelatoriosTab() {
       titulo: '📊 Relatório Diário',
       data: today,
       descricao: 'Resumo do dia',
-      metricas: ['Realizados', 'Pendentes', 'Taxa de realização'],
+      metricasLabels: ['Realizados', 'Pendentes', 'Taxa de realização'],
+      metricasChave: ['realizados', 'pendentes', 'taxaRealizacao'],
     },
     {
       id: 'semanal',
       titulo: '📊 Relatório Semanal',
       data: weekStart.toISOString().split('T')[0],
       descricao: `Semana ${Math.ceil((new Date().getDate()) / 7)}`,
-      metricas: ['Total semana', 'Comparativo dias', 'Taxa média'],
+      metricasLabels: ['Total semana', 'Comparativo dias', 'Taxa média'],
+      metricasChave: ['total', 'realizados', 'taxaRealizacao'],
     },
     {
       id: 'mensal',
       titulo: '📊 Relatório Mensal',
       data: `${today.substring(0, 7)}-01`,
       descricao: 'Mês completo',
-      metricas: ['Total mês', 'Evolução semanal', 'Taxa mensal'],
+      metricasLabels: ['Total mês', 'Evolução semanal', 'Taxa mensal'],
+      metricasChave: ['total', 'realizados', 'taxaRealizacao'],
     },
     {
       id: 'riscos',
       titulo: '⚠️ Riscos & Oportunidades',
       data: today,
       descricao: 'Análise de performance',
-      metricas: ['Atrasados', 'Taxa baixa', 'Em risco'],
+      metricasLabels: ['Atrasados', 'Taxa baixa', 'Em risco'],
+      metricasChave: ['pendentes', 'taxaRealizacao', 'total'],
     },
   ];
 
@@ -146,12 +176,19 @@ export default function RelatoriosTab() {
                   </div>
 
                   <div className="grid grid-cols-3 gap-3">
-                    {rel.metricas.map((metrica, idx) => (
-                      <div key={idx} className="bg-gray-50 rounded p-2 text-center">
-                        <p className="text-xs text-gray-600">{metrica}</p>
-                        <p className="text-sm font-semibold text-gray-900 mt-1">—</p>
-                      </div>
-                    ))}
+                    {rel.metricasLabels.map((metrica, idx) => {
+                      const chave = rel.metricasChave[idx];
+                      const valor = metricas[chave];
+                      const display = valor !== undefined ? (chave === 'taxaRealizacao' ? `${valor}%` : valor) : '—';
+                      return (
+                        <div key={idx} className="bg-gray-50 rounded p-2 text-center">
+                          <p className="text-xs text-gray-600">{metrica}</p>
+                          <p className={`text-sm font-semibold mt-1 ${loadingMetricas ? 'text-gray-400' : 'text-gray-900'}`}>
+                            {loadingMetricas ? '...' : display}
+                          </p>
+                        </div>
+                      );
+                    })}
                   </div>
 
                   <div className="flex gap-2 pt-2">
