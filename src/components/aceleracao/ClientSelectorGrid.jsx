@@ -54,18 +54,22 @@ export default function ClientSelectorGrid({ onSelect, onClose }) {
 
   const handleBackdropClick = (e) => {
     if (e.target === e.currentTarget) {
+      e.preventDefault();
+      e.stopPropagation();
       onClose();
     }
   };
 
   const content = (
     <div 
-      className="fixed inset-0 bg-black/40 flex items-center justify-center" 
+      className="fixed inset-0 bg-black/40 flex items-center justify-center pointer-events-auto" 
       style={{ zIndex: 99999 }}
-      onClick={handleBackdropClick}
+      role="dialog"
+      onMouseDown={handleBackdropClick}
     >
       <div 
-        className="bg-white rounded-lg shadow-2xl w-[90vw] max-w-4xl max-h-[85vh] flex flex-col"
+        className="bg-white rounded-lg shadow-2xl w-[90vw] max-w-4xl max-h-[85vh] flex flex-col pointer-events-auto"
+        onMouseDown={(e) => e.stopPropagation()}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -75,8 +79,21 @@ export default function ClientSelectorGrid({ onSelect, onClose }) {
             <h2 className="text-lg font-bold text-gray-900">Selecionar Cliente</h2>
           </div>
           <button
-            onClick={onClose}
-            className="w-8 h-8 rounded flex items-center justify-center text-gray-400 hover:bg-gray-100 transition-colors"
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onClose();
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape' || e.key === 'Enter') {
+                e.preventDefault();
+                onClose();
+              }
+            }}
+            className="w-8 h-8 rounded flex items-center justify-center text-gray-400 hover:bg-gray-100 active:bg-gray-200 transition-colors"
+            title="Fechar"
+            aria-label="Fechar seletor de clientes"
           >
             <X className="w-5 h-5" />
           </button>
@@ -86,18 +103,27 @@ export default function ClientSelectorGrid({ onSelect, onClose }) {
         <div className="px-6 py-4 border-b border-gray-200 flex-shrink-0 space-y-3">
           <div className="flex items-center gap-3">
             <Input
+              type="text"
               placeholder="🔍 Buscar cliente..."
               value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                e.preventDefault();
+                setSearchTerm(e.target.value);
+              }}
+              onKeyDown={(e) => e.stopPropagation()}
               className="flex-1"
               autoFocus
+              aria-label="Buscar cliente"
             />
-            <label className="flex items-center gap-2 px-3 py-2 rounded border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors">
+            <label className="flex items-center gap-2 px-3 py-2 rounded border border-gray-200 cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition-colors select-none">
               <input
                 type="checkbox"
                 checked={showOnlyActive}
-                onChange={e => setShowOnlyActive(e.target.checked)}
-                className="w-4 h-4"
+                onChange={(e) => {
+                  e.preventDefault();
+                  setShowOnlyActive(e.target.checked);
+                }}
+                className="w-4 h-4 cursor-pointer"
               />
               <span className="text-sm text-gray-700">Apenas ativos</span>
             </label>
@@ -107,8 +133,12 @@ export default function ClientSelectorGrid({ onSelect, onClose }) {
             <span className="text-xs font-semibold text-gray-600">Plano:</span>
             {uniquePlans.map(plan => (
               <button
+                type="button"
                 key={plan}
-                onClick={() => setSelectedPlan(plan)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setSelectedPlan(plan);
+                }}
                 className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
                   selectedPlan === plan
                     ? 'bg-red-600 text-white border-red-600'
