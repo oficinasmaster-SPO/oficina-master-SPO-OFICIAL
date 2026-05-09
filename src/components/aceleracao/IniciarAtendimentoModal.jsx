@@ -122,10 +122,14 @@ function renderMarkdown(text) {
     });
 }
 
-export default function IniciarAtendimentoModal({ followUp, cliente, onClose, onSaved, fusConcatenados = [], proximoFU = null, onProximoFollowUp, filaReminders = [], onNavegar }) {
+export default function IniciarAtendimentoModal({ followUp: followUpInicial, cliente, onClose, onSaved, fusConcatenados = [], proximoFU = null, onProximoFollowUp, filaReminders = [], onNavegar }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const today = new Date().toISOString().split('T')[0];
+
+  // ── Estado interno do follow-up atual (permite navegação sem fechar o modal) ──
+  const [followUp, setFollowUp] = useState(followUpInicial);
+
   const [timer, setTimer] = useState(0);
   const [canais, setCanais] = useState([]);
   const [resultado, setResultado] = useState("");
@@ -236,6 +240,35 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
     : null;
   const isDirty = !!(canais.length > 0 || resultado || observacoes || compromissos || proximoPasso || pastedImages.length > 0);
 
+  // ── Função central de troca de follow-up (sem fechar o modal) ──
+  const trocarFollowUp = useCallback((novoFU) => {
+    // Limpar rascunho do anterior
+    localStorage.removeItem(`draft_atendimento_${followUp?.id}`);
+    // Atualizar FU interno
+    setFollowUp(novoFU);
+    // Resetar formulário
+    setCanais([]);
+    setResultado("");
+    setHumor("");
+    setEngajamento("");
+    setObservacoes("");
+    setCompromissos("");
+    setProximoPasso("");
+    setProxData("");
+    setProxHora("");
+    setPastedImages([]);
+    setErrors({});
+    setSaveSuccess(null);
+    setActiveStepIndex(-1);
+    // Resetar timer para o novo cliente
+    setTimer(0);
+    setDuracao(30);
+    setInicioContagem(Date.now());
+    setCronometroAtivo(true);
+    // Notificar o pai (opcional, só para sincronia de estado externo)
+    onNavegar?.(novoFU);
+  }, [followUp?.id, onNavegar]);
+
   // Derivações da aba Follow-ups
   const isSprintFUModal = followUp?.origin_type === 'sprint';
   const sprintLabelModal = followUp?.notes?.replace('Follow-up automático da sprint: ', '').trim() || null;
@@ -325,19 +358,15 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
       setNavTarget(fu);
       setShowNavConfirm(true);
     } else {
-      onNavegar?.(fu);
-      onClose();
+      trocarFollowUp(fu);
     }
   };
 
   const confirmarNavegacao = () => {
     const fu = navTarget;
-    const storageKey = `draft_atendimento_${followUp?.id}`;
-    localStorage.removeItem(storageKey);
     setShowNavConfirm(false);
     setNavTarget(null);
-    onNavegar?.(fu);
-    onClose();
+    trocarFollowUp(fu);
   };
 
   // ── Funções da aba IA ──
@@ -710,17 +739,24 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
       // Invalidar todos os dados operacionais para sincronização em tempo real
       invalidate.all();
 
-      // Mostrar tela de confirmação
-      setSaveSuccess({
-        clienteNome: cliente?.name || followUp?.workshop_name || "Cliente",
-        sequenceNumber: followUp?.sequence_number || 1,
-        canais, resultado,
-        novoFollowUp,
-        proxData, proxHora,
-        consultor_nome: followUp?.consultor_nome,
-      });
-
       onSaved?.();
+
+      // Se houver próximo na fila, avança automaticamente sem fechar o modal
+      const proximoNaFila = fuProximo;
+      if (proximoNaFila) {
+        toast.success(`✅ Salvo! Carregando próximo: ${proximoNaFila.workshop_name}`);
+        trocarFollowUp(proximoNaFila);
+      } else {
+        // Sem próximo — mostra tela de confirmação final
+        setSaveSuccess({
+          clienteNome: cliente?.name || followUp?.workshop_name || "Cliente",
+          sequenceNumber: followUp?.sequence_number || 1,
+          canais, resultado,
+          novoFollowUp,
+          proxData, proxHora,
+          consultor_nome: followUp?.consultor_nome,
+        });
+      }
     } catch (err) {
       console.error("Erro ao salvar:", err);
       toast.error("Erro ao salvar atendimento: " + err.message);
@@ -796,27 +832,7 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
               {proximoFU && (
                 <Button
                   className="flex-1 bg-red-600 hover:bg-red-700 text-white"
-                  onClick={() => {
-                          setSaveSuccess(null);
-                          setCanais([]);
-                    setResultado("");
-                    setHumor("");
-                    setEngajamento("");
-                    setObservacoes("");
-                    setCompromissos("");
-                    setProximoPasso("");
-                    setProxData("");
-                    setProxHora("");
-                    setPastedImages([]);
-                    setTimer(0);
-                    setDuracao(30);
-                    setInicioContagem(Date.now());
-                    setCronometroAtivo(true);
-                    setErrors({});
-                    setActiveStepIndex(-1);
-                    onProximoFollowUp?.(proximoFU);
-                    onClose();
-                  }}
+                  onClick={() => trocarFollowUp(proximoFU)}
                 >
                   Próximo follow-up →
                 </Button>
