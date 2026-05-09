@@ -3,14 +3,23 @@ import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Download, Eye, Loader2 } from 'lucide-react';
+import { Download, Eye, Loader2, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import jsPDF from 'npm:jspdf@2.5.2';
 
 export default function RelatoriosTab() {
   const { user } = useAuth();
   const [loadingPdf, setLoadingPdf] = useState(null);
   const [pdfPreview, setPdfPreview] = useState(null);
+  const [periodoSelecionado, setPeriodoSelecionado] = useState('mensal');
+  const [dataSelecionada, setDataSelecionada] = useState(new Date().toISOString().split('T')[0]);
 
   const today = new Date().toISOString().split('T')[0];
   const weekStart = new Date();
@@ -50,17 +59,24 @@ export default function RelatoriosTab() {
   const handleGerarPDF = async (tipo) => {
     setLoadingPdf(tipo);
     try {
-      const response = await base44.functions.invoke('gerarRelatorioFollowUpPDF', {
+      const payload = {
         tipo,
-        data: tipo === 'diario' ? today : tipo === 'semanal' ? weekStart.toISOString().split('T')[0] : null,
-      });
+        data: dataSelecionada,
+      };
+
+      // Adicionar período para relatórios que suportam (mensal, trimestral, semestral, anual)
+      if ((tipo === 'mensal' || tipo === 'riscos') && periodoSelecionado) {
+        payload.periodo = periodoSelecionado;
+      }
+
+      const response = await base44.functions.invoke('gerarRelatorioFollowUpPDF', payload);
 
       if (response.data) {
         const blob = new Blob([response.data], { type: 'application/pdf' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `relatorio-followup-${tipo}-${today}.pdf`;
+        a.download = `relatorio-followup-${tipo}-${dataSelecionada}.pdf`;
         a.click();
         toast.success('PDF baixado com sucesso!');
       }
@@ -82,6 +98,43 @@ export default function RelatoriosTab() {
     <div className="space-y-6">
       <div>
         <h2 className="text-sm font-semibold text-gray-700 mb-4">Relatórios de Follow-up</h2>
+        
+        {/* Seletores de Período e Data */}
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
+            <div className="flex-1 min-w-[200px]">
+              <label className="text-xs font-medium text-gray-700 block mb-2 flex items-center gap-2">
+                <Calendar className="w-3.5 h-3.5" />
+                Período
+              </label>
+              <Select value={periodoSelecionado} onValueChange={setPeriodoSelecionado}>
+                <SelectTrigger className="h-9 text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="mensal">Mensal</SelectItem>
+                  <SelectItem value="trimestral">Trimestral</SelectItem>
+                  <SelectItem value="semestral">Semestral</SelectItem>
+                  <SelectItem value="anual">Anual</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="flex-1 min-w-[200px]">
+              <label className="text-xs font-medium text-gray-700 block mb-2">Data de Referência</label>
+              <input
+                type="date"
+                value={dataSelecionada}
+                onChange={(e) => setDataSelecionada(e.target.value)}
+                className="w-full h-9 px-3 border border-gray-300 rounded text-sm"
+              />
+            </div>
+          </div>
+          <p className="text-xs text-gray-500 mt-3">
+            Selecione o período e a data para gerar relatórios com filtros específicos
+          </p>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {relatorios.map(rel => (
             <Card key={rel.id} className="border-gray-200 hover:shadow-md transition-shadow">
