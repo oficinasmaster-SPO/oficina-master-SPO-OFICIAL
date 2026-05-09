@@ -63,10 +63,9 @@ export default function CronogramaImplementacao() {
   const { data: cronograma = [], isLoading } = useQuery({
     queryKey: ['cronograma-implementacao', workshop?.id],
     queryFn: async () => {
-      // Buscar sprints (trilhas de implementação)
-      return await base44.entities.ConsultoriaSprint.filter(
+      return await base44.entities.CronogramaImplementacao.filter(
         { workshop_id: workshop.id },
-        '-start_date'
+        '-created_date'
       );
     },
     enabled: !!workshop?.id
@@ -535,7 +534,7 @@ export default function CronogramaImplementacao() {
                         />
                       </td>
                       <td className="py-3 px-4 text-center text-sm text-gray-500">
-                        {item.not_started ? '-' : format(new Date(new Date(item.data_inicio_real).setDate(new Date(item.data_inicio_real).getDate() - 1)), "dd/MM/yyyy", { locale: ptBR })}
+                        {item.not_started || !item.data_inicio_previsto ? '-' : format(new Date(item.data_inicio_previsto), "dd/MM/yyyy", { locale: ptBR })}
                       </td>
                       <td className="py-3 px-4 text-center text-sm font-medium">
                         {item.not_started ? '-' : format(new Date(item.data_inicio_real), "dd/MM/yyyy", { locale: ptBR })}
@@ -652,28 +651,54 @@ export default function CronogramaImplementacao() {
                 </Select>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-2">Data Término Previsto</label>
-                <Input
-                  type="date"
-                  value={editingItem.data_termino_previsto?.split('T')[0]}
-                  onChange={(e) => setEditingItem({ 
-                    ...editingItem, 
-                    data_termino_previsto: new Date(e.target.value).toISOString() 
-                  })}
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Início Previsto</label>
+                  <Input
+                    type="date"
+                    value={editingItem.data_inicio_previsto?.split('T')[0] || ''}
+                    onChange={(e) => setEditingItem({ 
+                      ...editingItem, 
+                      data_inicio_previsto: e.target.value ? new Date(e.target.value).toISOString() : null
+                    })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Início Real</label>
+                  <Input
+                    type="date"
+                    value={editingItem.data_inicio_real?.split('T')[0] || ''}
+                    onChange={(e) => setEditingItem({ 
+                      ...editingItem, 
+                      data_inicio_real: e.target.value ? new Date(e.target.value).toISOString() : null
+                    })}
+                  />
+                </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-2">Data Término Real</label>
-                <Input
-                  type="date"
-                  value={editingItem.data_termino_real?.split('T')[0] || ''}
-                  onChange={(e) => setEditingItem({ 
-                    ...editingItem, 
-                    data_termino_real: e.target.value ? new Date(e.target.value).toISOString() : null
-                  })}
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Término Previsto</label>
+                  <Input
+                    type="date"
+                    value={editingItem.data_termino_previsto?.split('T')[0] || ''}
+                    onChange={(e) => setEditingItem({ 
+                      ...editingItem, 
+                      data_termino_previsto: new Date(e.target.value).toISOString() 
+                    })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Término Real</label>
+                  <Input
+                    type="date"
+                    value={editingItem.data_termino_real?.split('T')[0] || ''}
+                    onChange={(e) => setEditingItem({ 
+                      ...editingItem, 
+                      data_termino_real: e.target.value ? new Date(e.target.value).toISOString() : null
+                    })}
+                  />
+                </div>
               </div>
 
               <div>
@@ -713,7 +738,8 @@ export default function CronogramaImplementacao() {
                         item_id: editingItem.item_id,
                         item_nome: editingItem.item_nome,
                         status: editingItem.status,
-                        data_inicio_real: editingItem.data_inicio_real || new Date().toISOString(),
+                        data_inicio_previsto: editingItem.data_inicio_previsto,
+                        data_inicio_real: editingItem.data_inicio_real,
                         data_termino_previsto: editingItem.data_termino_previsto,
                         data_termino_real: editingItem.data_termino_real,
                         progresso_percentual: editingItem.progresso_percentual,
