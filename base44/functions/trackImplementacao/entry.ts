@@ -1,5 +1,14 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
+/**
+ * trackImplementacao — TELEMETRIA PURA
+ *
+ * NÃO cria cronograma. NÃO inicializa itens.
+ * Apenas registra: visualizações, último acesso, progresso parcial.
+ *
+ * Quem cria o cronograma estrutural: generateFullCronograma()
+ * Quem marca conclusão: markCronogramaCompleted()
+ */
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -9,70 +18,59 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { workshop_id, item_tipo, item_id, item_nome, item_categoria } = await req.json();
+    const { workshop_id, item_tipo, item_id, item_nome, progresso_percentual } = await req.json();
 
-    if (!workshop_id || !item_tipo || !item_id || !item_nome) {
-      return Response.json({ 
-        error: 'Parâmetros obrigatórios: workshop_id, item_tipo, item_id, item_nome' 
+    if (!workshop_id || !item_id) {
+      return Response.json({
+        error: 'Parâmetros obrigatórios: workshop_id, item_id'
       }, { status: 400 });
     }
 
-    // Buscar registro existente
+    // Buscar item existente no cronograma estrutural
     const existingRecords = await base44.entities.CronogramaImplementacao.filter({
       workshop_id,
-      item_tipo,
-      item_id
+      item_id,
+      ...(item_tipo ? { item_tipo } : {})
     });
 
-    if (existingRecords && existingRecords.length > 0) {
-      // Já existe, apenas incrementar visualizações
-      const record = existingRecords[0];
-      await base44.entities.CronogramaImplementacao.update(record.id, {
-        total_visualizacoes: (record.total_visualizacoes || 0) + 1
-      });
-
-      return Response.json({ 
-        success: true, 
-        message: 'Visualização registrada',
-        record_id: record.id,
-        is_new: false
+    if (!existingRecords || existingRecords.length === 0) {
+      // Item não existe no cronograma — apenas registrar telemetria, NÃO criar
+      console.log(`[trackImplementacao] Item ${item_id} não encontrado no cronograma. Telemetria ignorada (aguardando generateFullCronograma).`);
+      return Response.json({
+        success: true,
+        tracked: false,
+        reason: 'item_nao_encontrado_no_cronograma',
+        message: 'Item ainda não gerado pelo generateFullCronograma. Nenhum registro criado.'
       });
     }
 
-    // Criar novo registro
-    const dataInicio = new Date();
-    const dataTerminoPrevisto = new Date(dataInicio);
-    dataTerminoPrevisto.setDate(dataTerminoPrevisto.getDate() + 30);
+    const record = existingRecords[0];
 
-    const newRecord = await base44.entities.CronogramaImplementacao.create({
-      workshop_id,
-      item_tipo,
-      item_id,
-      item_nome,
-      item_categoria: item_categoria || '',
-      data_inicio_real: dataInicio.toISOString(),
-      data_termino_previsto: dataTerminoPrevisto.toISOString(),
-      status: 'em_andamento',
-      total_visualizacoes: 1,
-      historico_alteracoes: []
-    });
+    // Atualizar apenas campos de telemetria — nunca alterar status nem prazo
+    const updateData = {
+      total_visualizacoes: (record.total_visualizacoes || 0) + 1,
+      data_ultimo_acesso: new Date().toISOString(),
+      ...(progresso_percentual !== undefined && progresso_percentual > (record.progresso_percentual || 0)
+        ? { progresso_percentual }
+        : {})
+    };
 
-    return Response.json({ 
-      success: true, 
-      message: 'Item iniciado no cronograma',
-      record_id: newRecord.id,
-      is_new: true,
-      data_inicio: dataInicio.toISOString(),
-      data_termino_previsto: dataTerminoPrevisto.toISOString()
+    await base44.entities.CronogramaImplementacao.update(record.id, updateData);
+
+    return Response.json({
+      success: true,
+      tracked: true,
+      record_id: record.id,
+      total_visualizacoes: updateData.total_visualizacoes,
+      status_atual: record.status,
+      engine_version: record.engine_version || 'legacy_v1'
     });
 
   } catch (error) {
     console.error('❌ [trackImplementacao] Erro:', error);
-    console.error('❌ [trackImplementacao] Stack:', error.stack);
-    return Response.json({ 
-      error: 'Erro ao registrar tracking',
-      details: error.message,
-      stack: error.stack 
+    return Response.json({
+      error: 'Erro ao registrar telemetria',
+      details: error.message
     }, { status: 500 });
   }
 });

@@ -1,5 +1,15 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
+/**
+ * generateFullCronograma — ÚNICA SOURCE DE CRIAÇÃO ESTRUTURAL DO CRONOGRAMA
+ *
+ * Engine híbrida:
+ * - v2: usa CronogramaTemplateItem (prazo dinâmico, fase, ordem, dependências)
+ * - v1 fallback: usa arrays legados de PlanFeature + PlanAttendanceRule
+ *
+ * NÃO deve ser chamado pela UI diretamente.
+ * Disparado por: adminUpdateWorkshopPlan, processKiwifyPaymentWebhook
+ */
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -9,152 +19,202 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Usuário não autenticado' }, { status: 401 });
     }
 
-    const { workshop_id, contract_id } = await req.json();
+    const { workshop_id, contract_id, plan_id: planIdParam } = await req.json();
 
     if (!workshop_id) {
       return Response.json({ error: 'workshop_id é obrigatório' }, { status: 400 });
     }
 
-    // Buscar workshop e contrato
     const workshop = await base44.asServiceRole.entities.Workshop.get(workshop_id);
-    const planId = workshop.planoAtual || 'FREE';
-
-    // Buscar configuração do plano
-    const planFeatures = await base44.asServiceRole.entities.PlanFeature.filter({ plan_id: planId });
-    const planConfig = planFeatures[0];
-
-    if (!planConfig) {
-      return Response.json({ error: 'Plano não configurado' }, { status: 404 });
-    }
-
-    // Buscar regras de atendimento
-    const attendanceRules = await base44.asServiceRole.entities.PlanAttendanceRule.filter({
-      plan_id: planId,
-      is_active: true
-    });
+    const planId = (planIdParam || workshop.planoAtual || 'FREE').toUpperCase().trim();
 
     const dataInicio = new Date();
-    const dataFim = new Date(dataInicio);
-    dataFim.setDate(dataFim.getDate() + 30); // 30 dias de prazo
-
     const itemsCriados = [];
+    let engineUsed = 'legacy_v1';
 
-    // 1. ADICIONAR FUNCIONALIDADES
-    if (planConfig.cronograma_features && planConfig.cronograma_features.length > 0) {
-      for (let i = 0; i < planConfig.cronograma_features.length; i++) {
-        const feature = planConfig.cronograma_features[i];
-        
-        // Distribuir uniformemente ao longo dos 30 dias
-        const diasOffset = Math.floor((30 / planConfig.cronograma_features.length) * i);
-        const dataInicioItem = new Date(dataInicio);
-        dataInicioItem.setDate(dataInicioItem.getDate() + diasOffset);
+    // ── Tentar engine v2: CronogramaTemplateItem ──────────────────────────────
+    const templateItems = await base44.asServiceRole.entities.CronogramaTemplateItem.filter({
+      plan_id: planId,
+      ativo: true
+    });
 
+    if (templateItems && templateItems.length > 0) {
+      engineUsed = 'template_v2';
+      console.log(`[generateFullCronograma] Engine v2 ativada — ${templateItems.length} template items para plano ${planId}`);
+
+      for (const tpl of templateItems) {
         const existing = await base44.asServiceRole.entities.CronogramaImplementacao.filter({
-          workshop_id: workshop_id,
-          item_id: feature,
-          item_tipo: 'funcionalidade'
+          workshop_id,
+          item_id: tpl.item_id || tpl.id,
+          item_tipo: tpl.item_tipo
         });
 
         if (existing && existing.length > 0) continue;
 
+        const diasInicio = tpl.dias_para_inicio || 0;
+        const diasPrazo = tpl.prazo_conclusao_dias || tpl.metadata?.frequency_days * (tpl.metadata?.total_allowed || 1) || 7;
+
+        const dataInicioItem = new Date(dataInicio);
+        dataInicioItem.setDate(dataInicioItem.getDate() + diasInicio);
+
+        const dataTermino = new Date(dataInicioItem);
+        dataTermino.setDate(dataTermino.getDate() + diasPrazo);
+
         const item = await base44.asServiceRole.entities.CronogramaImplementacao.create({
-          workshop_id: workshop_id,
-          item_tipo: 'funcionalidade',
-          item_id: feature,
-          item_nome: feature.replace(/_/g, ' ').toUpperCase(),
-          item_categoria: 'funcionalidades',
+          workshop_id,
+          item_tipo: tpl.item_tipo,
+          item_id: tpl.item_id || tpl.id,
+          item_nome: tpl.titulo,
+          item_categoria: tpl.fase || '',
+          fase: tpl.fase || '',
+          ordem: tpl.ordem || 0,
+          obrigatorio: tpl.obrigatorio || false,
+          template_item_id: tpl.id,
+          engine_version: 'template_v2',
           status: 'a_fazer',
           data_inicio_real: dataInicioItem.toISOString(),
-          data_termino_previsto: dataFim.toISOString(),
+          data_termino_previsto: dataTermino.toISOString(),
+          dependencias: tpl.depends_on_item_ids || [],
+          sessoes_total: tpl.metadata?.total_allowed || 0,
+          sessoes_realizadas: 0,
           progresso_percentual: 0,
           total_visualizacoes: 0
         });
 
         itemsCriados.push(item);
+
+        // ContractAttendances para atendimentos por frequência
+        if (
+          contract_id &&
+          tpl.item_tipo === 'atendimento' &&
+          tpl.metadata?.scheduling_type === 'frequency' &&
+          tpl.metadata?.frequency_days &&
+          tpl.metadata?.total_allowed
+        ) {
+          for (let j = 0; j < tpl.metadata.total_allowed; j++) {
+            const scheduledDate = new Date(dataInicio);
+            scheduledDate.setDate(scheduledDate.getDate() + (tpl.metadata.frequency_days * j));
+            await base44.asServiceRole.entities.ContractAttendance.create({
+              contract_id,
+              workshop_id,
+              plan_id: planId,
+              attendance_type_id: tpl.item_id,
+              attendance_type_name: tpl.titulo,
+              scheduled_date: scheduledDate.toISOString(),
+              status: 'pendente',
+              generated_by: 'system',
+              sequence_number: j + 1
+            });
+          }
+        }
       }
-    }
 
-    // 2. ADICIONAR MÓDULOS
-    if (planConfig.cronograma_modules && planConfig.cronograma_modules.length > 0) {
-      for (let i = 0; i < planConfig.cronograma_modules.length; i++) {
-        const module = planConfig.cronograma_modules[i];
-        
-        const diasOffset = Math.floor((30 / planConfig.cronograma_modules.length) * i);
-        const dataInicioItem = new Date(dataInicio);
-        dataInicioItem.setDate(dataInicioItem.getDate() + diasOffset);
+    } else {
+      // ── Fallback engine v1: arrays legados de PlanFeature ─────────────────
+      console.log(`[generateFullCronograma] Nenhum CronogramaTemplateItem para ${planId} — usando fallback legacy_v1`);
 
+      const planFeatures = await base44.asServiceRole.entities.PlanFeature.filter({ plan_id: planId });
+      const planConfig = planFeatures[0];
+
+      if (!planConfig) {
+        return Response.json({ error: `Plano "${planId}" não configurado e sem CronogramaTemplateItem` }, { status: 404 });
+      }
+
+      const attendanceRules = await base44.asServiceRole.entities.PlanAttendanceRule.filter({
+        plan_id: planId,
+        is_active: true
+      });
+
+      const allLegacyItems = [
+        ...(planConfig.cronograma_features || []).map((f, i) => ({ tipo: 'funcionalidade', id: f, nome: f.replace(/_/g, ' ').toUpperCase(), i, total: (planConfig.cronograma_features || []).length })),
+        ...(planConfig.cronograma_modules || []).map((m, i) => ({ tipo: 'modulo', id: m, nome: m, i, total: (planConfig.cronograma_modules || []).length }))
+      ];
+
+      for (const entry of allLegacyItems) {
         const existing = await base44.asServiceRole.entities.CronogramaImplementacao.filter({
-          workshop_id: workshop_id,
-          item_id: module,
-          item_tipo: 'modulo'
+          workshop_id,
+          item_id: entry.id,
+          item_tipo: entry.tipo
         });
-
         if (existing && existing.length > 0) continue;
 
+        // Prazo dinâmico: distribuir linearmente, mínimo 7 dias por item
+        const diasPorItem = Math.max(7, Math.floor(60 / entry.total));
+        const dataInicioItem = new Date(dataInicio);
+        dataInicioItem.setDate(dataInicioItem.getDate() + diasPorItem * entry.i);
+        const dataTermino = new Date(dataInicioItem);
+        dataTermino.setDate(dataTermino.getDate() + diasPorItem);
+
         const item = await base44.asServiceRole.entities.CronogramaImplementacao.create({
-          workshop_id: workshop_id,
-          item_tipo: 'modulo',
-          item_id: module,
-          item_nome: module,
-          item_categoria: 'modulos',
+          workshop_id,
+          item_tipo: entry.tipo,
+          item_id: entry.id,
+          item_nome: entry.nome,
+          item_categoria: entry.tipo === 'funcionalidade' ? 'funcionalidades' : 'modulos',
+          engine_version: 'legacy_v1',
           status: 'a_fazer',
           data_inicio_real: dataInicioItem.toISOString(),
-          data_termino_previsto: dataFim.toISOString(),
+          data_termino_previsto: dataTermino.toISOString(),
           progresso_percentual: 0,
           total_visualizacoes: 0
         });
-
         itemsCriados.push(item);
       }
-    }
 
-    // 3. ADICIONAR ATENDIMENTOS
-    if (attendanceRules && attendanceRules.length > 0) {
-      for (let i = 0; i < attendanceRules.length; i++) {
+      // Atendimentos via PlanAttendanceRule
+      for (let i = 0; i < (attendanceRules || []).length; i++) {
         const rule = attendanceRules[i];
-        
-        const attendanceType = await base44.asServiceRole.entities.AttendanceType.get(rule.attendance_type_id);
 
         const existing = await base44.asServiceRole.entities.CronogramaImplementacao.filter({
-          workshop_id: workshop_id,
+          workshop_id,
           item_id: rule.attendance_type_id,
           item_tipo: 'atendimento'
         });
-
         if (existing && existing.length > 0) continue;
 
-        // Distribuir atendimentos ao longo dos 30 dias
-        const diasOffset = Math.floor((30 / attendanceRules.length) * i);
+        let attendanceTypeName = rule.attendance_type_name || rule.attendance_type_id;
+        try {
+          const at = await base44.asServiceRole.entities.TipoAtendimentoConsultoria.get(rule.attendance_type_id);
+          if (at?.name) attendanceTypeName = at.name;
+        } catch (_) { /* continua com cache */ }
+
+        // Prazo real: frequency_days × total_allowed (nunca hardcoded)
+        const prazo = rule.frequency_days && rule.total_allowed
+          ? rule.frequency_days * rule.total_allowed
+          : Math.max(7, 30);
+
         const dataInicioItem = new Date(dataInicio);
-        dataInicioItem.setDate(dataInicioItem.getDate() + diasOffset);
+        dataInicioItem.setDate(dataInicioItem.getDate() + Math.floor((30 / (attendanceRules.length || 1)) * i));
+        const dataTermino = new Date(dataInicioItem);
+        dataTermino.setDate(dataTermino.getDate() + prazo);
 
         const item = await base44.asServiceRole.entities.CronogramaImplementacao.create({
-          workshop_id: workshop_id,
+          workshop_id,
           item_tipo: 'atendimento',
           item_id: rule.attendance_type_id,
-          item_nome: `${attendanceType.name} (${rule.total_allowed}x)`,
+          item_nome: `${attendanceTypeName} (${rule.total_allowed}x)`,
           item_categoria: 'atendimentos',
+          engine_version: 'legacy_v1',
           status: 'a_fazer',
           data_inicio_real: dataInicioItem.toISOString(),
-          data_termino_previsto: dataFim.toISOString(),
+          data_termino_previsto: dataTermino.toISOString(),
+          sessoes_total: rule.total_allowed || 0,
+          sessoes_realizadas: 0,
           progresso_percentual: 0,
           total_visualizacoes: 0
         });
-
         itemsCriados.push(item);
 
-        // Criar ContractAttendances se tiver contrato
         if (contract_id && rule.scheduling_type === 'frequency' && rule.frequency_days) {
           for (let j = 0; j < rule.total_allowed; j++) {
             const scheduledDate = new Date(dataInicio);
             scheduledDate.setDate(scheduledDate.getDate() + (rule.frequency_days * j));
-
             await base44.asServiceRole.entities.ContractAttendance.create({
-              contract_id: contract_id,
-              workshop_id: workshop_id,
+              contract_id,
+              workshop_id,
               plan_id: planId,
               attendance_type_id: rule.attendance_type_id,
-              attendance_type_name: attendanceType.name,
+              attendance_type_name: attendanceTypeName,
               scheduled_date: scheduledDate.toISOString(),
               status: 'pendente',
               generated_by: 'system',
@@ -167,14 +227,15 @@ Deno.serve(async (req) => {
 
     return Response.json({
       success: true,
-      message: `Cronograma completo gerado: ${itemsCriados.length} itens criados`,
-      items_count: itemsCriados.length,
-      prazo_dias: 30
+      engine: engineUsed,
+      plan_id: planId,
+      items_created: itemsCriados.length,
+      message: `Cronograma gerado: ${itemsCriados.length} itens (engine: ${engineUsed})`
     });
 
   } catch (error) {
-    console.error('Error generating full cronograma:', error);
-    return Response.json({ 
+    console.error('[generateFullCronograma] Erro:', error);
+    return Response.json({
       error: error.message,
       details: error.toString()
     }, { status: 500 });

@@ -1,0 +1,191 @@
+{
+  "name": "CronogramaImplementacao",
+  "type": "object",
+  "properties": {
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "item_tipo": {
+      "type": "string",
+      "enum": [
+        "processo",
+        "funcionalidade",
+        "ferramenta",
+        "teste",
+        "diagnostico",
+        "modulo",
+        "atendimento",
+        "treinamento"
+      ],
+      "description": "Tipo do item rastreado"
+    },
+    "item_id": {
+      "type": "string",
+      "description": "ID do item espec\u00edfico"
+    },
+    "item_nome": {
+      "type": "string",
+      "description": "Nome do item para exibi\u00e7\u00e3o"
+    },
+    "item_categoria": {
+      "type": "string",
+      "description": "Categoria do item (ex: vendas, processos, etc)"
+    },
+    "template_item_id": {
+      "type": "string",
+      "description": "ID do CronogramaTemplateItem origem (se gerado via engine v2)"
+    },
+    "engine_version": {
+      "type": "string",
+      "enum": [
+        "legacy_v1",
+        "template_v2"
+      ],
+      "default": "legacy_v1",
+      "description": "Vers\u00e3o da engine que gerou este item (legacy_v1 = arrays PlanFeature, template_v2 = CronogramaTemplateItem)"
+    },
+    "ordem": {
+      "type": "integer",
+      "default": 0,
+      "description": "Ordem de exibi\u00e7\u00e3o dentro da fase"
+    },
+    "fase": {
+      "type": "string",
+      "description": "Fase da jornada (ex: estrutura, crescimento, escala)"
+    },
+    "obrigatorio": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se o item \u00e9 obrigat\u00f3rio no plano"
+    },
+    "sessoes_realizadas": {
+      "type": "integer",
+      "default": 0,
+      "description": "Para item_tipo=atendimento: quantas sess\u00f5es j\u00e1 foram realizadas (vinculado ao ContractAttendance)"
+    },
+    "sessoes_total": {
+      "type": "integer",
+      "default": 0,
+      "description": "Para item_tipo=atendimento: total de sess\u00f5es previstas (cache do PlanAttendanceRule.total_allowed)"
+    },
+    "data_inicio_real": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data que o cliente iniciou/visualizou pela primeira vez (autom\u00e1tico)"
+    },
+    "data_termino_previsto": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data prevista de conclus\u00e3o"
+    },
+    "data_termino_real": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data real de conclus\u00e3o (edit\u00e1vel pelo cliente)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "a_fazer",
+        "em_andamento",
+        "concluido"
+      ],
+      "default": "a_fazer",
+      "description": "Status atual do item"
+    },
+    "progresso_percentual": {
+      "type": "number",
+      "default": 0,
+      "description": "Progresso em percentual (0-100)"
+    },
+    "dependencias": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "IDs dos CronogramaImplementacao que devem ser conclu\u00eddos antes deste iniciar"
+    },
+    "historico_alteracoes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "data_alteracao": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "campo_alterado": {
+            "type": "string"
+          },
+          "valor_anterior": {
+            "type": "string"
+          },
+          "valor_novo": {
+            "type": "string"
+          },
+          "usuario_id": {
+            "type": "string"
+          },
+          "usuario_nome": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Hist\u00f3rico de altera\u00e7\u00f5es manuais"
+    },
+    "observacoes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es do cliente"
+    },
+    "total_visualizacoes": {
+      "type": "integer",
+      "default": 0,
+      "description": "Contador de visualiza\u00e7\u00f5es"
+    }
+  },
+  "required": [
+    "workshop_id",
+    "item_tipo",
+    "item_id",
+    "item_nome"
+  ],
+  "rls": {
+    "create": true,
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

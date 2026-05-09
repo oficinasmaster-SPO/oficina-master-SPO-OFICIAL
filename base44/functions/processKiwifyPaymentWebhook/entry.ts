@@ -56,6 +56,20 @@ Deno.serve(async (req) => {
           description: `Pagamento confirmado via Kiwify`,
           user: 'Sistema'
         });
+
+        // Disparar cronograma automaticamente ao confirmar pagamento
+        if (contract.workshop_id && contract.plan_type) {
+          console.log(`[Kiwify] Disparando cronograma para workshop ${contract.workshop_id} plano ${contract.plan_type}`);
+          try {
+            await base44.asServiceRole.functions.invoke('generateFullCronograma', {
+              workshop_id: contract.workshop_id,
+              plan_id: contract.plan_type
+            });
+            console.log(`[Kiwify] Cronograma gerado com sucesso`);
+          } catch (cronErr) {
+            console.error(`[Kiwify] Falha ao gerar cronograma:`, cronErr.message);
+          }
+        }
         break;
 
       case 'refused':

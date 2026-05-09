@@ -79,15 +79,15 @@ Deno.serve(async (req) => {
       timestamp: new Date().toISOString()
     });
 
-    // ── Step 5: Disparar geração de bucket diretamente após atualização ───────
+    // ── Step 5: Disparar geração de bucket + cronograma após atualização ────────
     let attendanceResult = null;
+    let cronogramaResult = null;
     if (planId && planStatus === 'active') {
       console.log(`[adminUpdateWorkshopPlan] Disparando geração de bucket para ${workshop_id} plano "${planId}"`);
       try {
         const raw = await base44.asServiceRole.functions.invoke('generateWorkshopAttendances', {
           workshop_id
         });
-        // Extract only serializable data (avoid circular Axios response objects)
         attendanceResult = {
           attendances_created: raw?.attendances_created ?? raw?.data?.attendances_created ?? 0,
           success: raw?.success ?? raw?.data?.success ?? true
@@ -97,12 +97,31 @@ Deno.serve(async (req) => {
         console.error(`[adminUpdateWorkshopPlan] Falha ao gerar bucket:`, attErr.message);
         attendanceResult = { error: attErr.message };
       }
+
+      // Disparar geração de cronograma de implementação
+      console.log(`[adminUpdateWorkshopPlan] Disparando generateFullCronograma para ${workshop_id}`);
+      try {
+        const cronRaw = await base44.asServiceRole.functions.invoke('generateFullCronograma', {
+          workshop_id,
+          plan_id: planId
+        });
+        cronogramaResult = {
+          items_created: cronRaw?.items_created ?? cronRaw?.data?.items_created ?? 0,
+          success: cronRaw?.success ?? cronRaw?.data?.success ?? true,
+          engine: cronRaw?.engine ?? cronRaw?.data?.engine ?? 'unknown'
+        };
+        console.log(`[adminUpdateWorkshopPlan] Cronograma: ${cronogramaResult.items_created} itens criados (${cronogramaResult.engine})`);
+      } catch (cronErr) {
+        console.error(`[adminUpdateWorkshopPlan] Falha ao gerar cronograma:`, cronErr.message);
+        cronogramaResult = { error: cronErr.message };
+      }
     }
 
     return Response.json({
       success: true,
       workshop: { id: result?.id, planId: result?.planId, planoAtual: result?.planoAtual, planStatus: result?.planStatus },
-      attendance_generation: attendanceResult
+      attendance_generation: attendanceResult,
+      cronograma_generation: cronogramaResult
     });
 
   } catch (error) {
