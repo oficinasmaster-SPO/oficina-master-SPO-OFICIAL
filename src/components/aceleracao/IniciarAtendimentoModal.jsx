@@ -890,7 +890,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
   return (
     <>
       <Dialog open onOpenChange={() => {}}>
-        <DialogContent hideClose className="p-0 flex flex-col overflow-hidden relative" style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "96vw", maxWidth: "96vw", height: "94vh", maxHeight: "94vh", zIndex: 9999, margin: 0, borderRadius: "12px" }}>
+        <DialogContent hideClose className="p-0 flex flex-col overflow-hidden relative" style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "96vw", maxWidth: "96vw", height: "94vh", maxHeight: "94vh", zIndex: showClientSelector ? 9998 : 9999, margin: 0, borderRadius: "12px" }}>
         {/* OVERLAY DE SALVAMENTO */}
         {saving && (
           <div className="absolute inset-0 bg-white/90 z-50 flex flex-col items-center justify-center gap-6">
