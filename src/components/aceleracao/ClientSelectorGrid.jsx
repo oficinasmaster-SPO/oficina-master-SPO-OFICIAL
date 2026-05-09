@@ -101,24 +101,21 @@ export default function ClientSelectorGrid({ onSelect, onClose }) {
 
         {/* Controles */}
         <div className="px-6 py-4 border-b border-gray-200 flex-shrink-0 space-y-3">
-          <div className="flex items-center gap-3">
-            <Input
-              type="text"
-              placeholder="🔍 Buscar cliente..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="flex-1"
-              autoFocus
-              aria-label="Buscar cliente"
-            />
+          <div className="flex items-center gap-3 w-full">
+             <Input
+               type="text"
+               placeholder="🔍 Buscar cliente..."
+               value={searchTerm}
+               onChange={(e) => setSearchTerm(e.target.value)}
+               className="flex-1 w-full"
+               autoFocus
+               aria-label="Buscar cliente"
+             />
             <label className="flex items-center gap-2 px-3 py-2 rounded border border-gray-200 cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition-colors select-none">
               <input
                 type="checkbox"
                 checked={showOnlyActive}
-                onChange={(e) => {
-                  e.preventDefault();
-                  setShowOnlyActive(e.target.checked);
-                }}
+                onChange={(e) => setShowOnlyActive(e.target.checked)}
                 className="w-4 h-4 cursor-pointer"
               />
               <span className="text-sm text-gray-700">Apenas ativos</span>
@@ -131,10 +128,7 @@ export default function ClientSelectorGrid({ onSelect, onClose }) {
               <button
                 type="button"
                 key={plan}
-                onClick={(e) => {
-                  e.preventDefault();
-                  setSelectedPlan(plan);
-                }}
+                onClick={() => setSelectedPlan(plan)}
                 className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
                   selectedPlan === plan
                     ? 'bg-red-600 text-white border-red-600'
