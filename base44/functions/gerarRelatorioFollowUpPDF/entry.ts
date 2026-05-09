@@ -95,28 +95,29 @@ Deno.serve(async (req) => {
     doc.setTextColor(0, 0, 0);
 
     // KPIs
-    doc.setFontSize(11);
-    doc.setFillColor(240, 240, 240);
+    doc.setFontSize(10);
+    doc.setFillColor(240, 248, 245);
     doc.rect(15, yPos, 60, 25, 'F');
-    doc.text('✓ Realizados', 18, yPos + 8);
+    doc.setTextColor(51, 51, 51);
+    doc.text('Realizados', 18, yPos + 8);
     doc.setFontSize(18);
     doc.setTextColor(34, 197, 94);
     doc.text(totalRealizado.toString(), 18, yPos + 20);
     
-    doc.setFillColor(245, 245, 245);
+    doc.setFillColor(255, 250, 240);
     doc.rect(80, yPos, 60, 25, 'F');
-    doc.setFontSize(11);
-    doc.setTextColor(0, 0, 0);
-    doc.text('⏳ Pendentes', 83, yPos + 8);
+    doc.setFontSize(10);
+    doc.setTextColor(51, 51, 51);
+    doc.text('Pendentes', 83, yPos + 8);
     doc.setFontSize(18);
     doc.setTextColor(217, 119, 6);
     doc.text(totalPendente.toString(), 83, yPos + 20);
 
-    doc.setFillColor(254, 240, 240);
+    doc.setFillColor(254, 245, 245);
     doc.rect(145, yPos, 60, 25, 'F');
-    doc.setFontSize(11);
-    doc.setTextColor(0, 0, 0);
-    doc.text('⚠ Atrasados', 148, yPos + 8);
+    doc.setFontSize(10);
+    doc.setTextColor(51, 51, 51);
+    doc.text('Atrasados', 148, yPos + 8);
     doc.setFontSize(18);
     doc.setTextColor(239, 68, 68);
     doc.text(totalAtrasado.toString(), 148, yPos + 20);
@@ -136,7 +137,8 @@ Deno.serve(async (req) => {
     // Tabela de detalhes - REALIZADOS
     if (concludidos.length > 0) {
       doc.setFontSize(12);
-      doc.text('✓ Atendimentos Realizados', 15, yPos);
+      doc.setTextColor(51, 51, 51);
+      doc.text('Atendimentos Realizados', 15, yPos);
       yPos += 8;
 
       const tableData = concludidos.slice(0, 10).map(c => {
@@ -156,12 +158,13 @@ Deno.serve(async (req) => {
 
       doc.autoTable({
         startY: yPos,
-        head: [['Data', 'Hora', 'Cliente', 'Canal', 'Resultado', 'Consultor', 'Obs.']],
+        head: [['Data', 'Hora', 'Cliente', 'Canal', 'Resultado', 'Consultor', 'Observação']],
         body: tableData,
         margin: { left: 15, right: 15 },
-        theme: 'grid',
-        headStyles: { fillColor: [51, 51, 51], textColor: 255, fontSize: 9 },
-        bodyStyles: { fontSize: 8 },
+        theme: 'striped',
+        headStyles: { fillColor: [34, 197, 94], textColor: 255, fontSize: 9, fontStyle: 'bold' },
+        bodyStyles: { fontSize: 8, textColor: 51 },
+        alternateRowStyles: { fillColor: [245, 250, 245] },
         columnStyles: { 0: { cellWidth: 18 }, 1: { cellWidth: 16 }, 2: { cellWidth: 40 }, 3: { cellWidth: 24 }, 4: { cellWidth: 24 }, 5: { cellWidth: 35 }, 6: { cellWidth: 30 } }
       });
 
@@ -174,30 +177,33 @@ Deno.serve(async (req) => {
       yPos = 15;
       
       doc.setFontSize(12);
-      doc.text('⏳ Follow-ups Pendentes', 15, yPos);
+      doc.setTextColor(51, 51, 51);
+      doc.text('Follow-ups Pendentes', 15, yPos);
       yPos += 8;
 
       const pendingData = reminders.filter(r => !r.is_completed).slice(0, 10).map(r => {
         const reminderDate = new Date(r.reminder_date);
         const today = new Date();
         const daysAgo = Math.floor((today - reminderDate) / (1000 * 60 * 60 * 24));
+        const diasText = daysAgo === 0 ? 'Hoje' : daysAgo === 1 ? '1 dia' : `${daysAgo} dias`;
         return [
           reminderDate.toLocaleDateString('pt-BR'),
-          `${daysAgo} dias`,
+          diasText,
           r.workshop_name || '—',
-          `#${r.sequence_number}` || '—',
-          r.message ? r.message.substring(0, 30) + '...' : '—'
+          r.sequence_number ? `${r.sequence_number}` : '—',
+          r.message ? r.message.substring(0, 35) : '—'
         ];
       });
 
       doc.autoTable({
         startY: yPos,
-        head: [['Data Prevista', 'Tempo Pendente', 'Cliente', 'Seq.', 'Descrição']],
+        head: [['Data Prevista', 'Tempo Decorrido', 'Cliente', 'Sequência', 'Descrição']],
         body: pendingData,
         margin: { left: 15, right: 15 },
-        theme: 'grid',
-        headStyles: { fillColor: [217, 119, 6], textColor: 255, fontSize: 9 },
-        bodyStyles: { fontSize: 8 },
+        theme: 'striped',
+        headStyles: { fillColor: [217, 119, 6], textColor: 255, fontSize: 9, fontStyle: 'bold' },
+        bodyStyles: { fontSize: 8, textColor: 51 },
+        alternateRowStyles: { fillColor: [255, 250, 240] },
         columnStyles: { 0: { cellWidth: 25 }, 1: { cellWidth: 30 }, 2: { cellWidth: 60 }, 3: { cellWidth: 20 }, 4: { cellWidth: 50 } }
       });
     }
