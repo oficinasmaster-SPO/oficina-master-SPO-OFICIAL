@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { CheckCircle2, Clock, AlertCircle, Pencil, History, X, Save, Loader2 } from "lucide-react";
+import { CheckCircle2, Clock, AlertCircle, Pencil, History, X, Save, Loader2, RefreshCw } from "lucide-react";
 import { useAuth } from "@/lib/AuthContext";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -272,6 +272,7 @@ export default function CronogramaTab({ workshopId }) {
   const queryClient = useQueryClient();
   const [editingItem, setEditingItem]     = useState(null);
   const [historicoItem, setHistoricoItem] = useState(null);
+  const [gerando, setGerando]             = useState(false);
 
   const { data: cronograma = [], isLoading } = useQuery({
     queryKey: ['cronograma-implementacao', workshopId],
@@ -290,6 +291,24 @@ export default function CronogramaTab({ workshopId }) {
 
   const handleSaved = () => {
     queryClient.invalidateQueries({ queryKey: ['cronograma-implementacao', workshopId] });
+  };
+
+  const handleGerarItens = async () => {
+    setGerando(true);
+    try {
+      const res = await base44.functions.invoke('generateFullCronograma', { workshop_id: workshopId });
+      const data = res?.data;
+      if (data?.items_created === 0) {
+        toast.info('Todos os itens já estavam gerados. Nenhum novo item criado.');
+      } else {
+        toast.success(`${data?.items_created || 0} item(s) criado(s) com sucesso!`);
+      }
+      queryClient.invalidateQueries({ queryKey: ['cronograma-implementacao', workshopId] });
+    } catch (err) {
+      toast.error('Erro ao gerar itens: ' + err.message);
+    } finally {
+      setGerando(false);
+    }
   };
 
   if (isLoading) {
@@ -333,7 +352,19 @@ export default function CronogramaTab({ workshopId }) {
         {/* Lista de itens */}
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Itens do Cronograma</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm">Itens do Cronograma</CardTitle>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleGerarItens}
+                disabled={gerando}
+                className="h-7 text-xs gap-1.5 text-blue-600 border-blue-200 hover:bg-blue-50"
+              >
+                {gerando ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                {gerando ? 'Gerando...' : 'Gerar itens faltantes'}
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             {cronograma.length === 0 ? (
