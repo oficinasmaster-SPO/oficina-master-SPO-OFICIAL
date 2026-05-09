@@ -382,7 +382,7 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
         onProximoFollowUp={(fu) => {
           if (onSelectReminder) onSelectReminder(fu);
         }}
-        filaReminders={allFollowUps}
+        filaReminders={filaReminders}
         onNavegar={(fu) => {
           if (onSelectReminder) onSelectReminder(fu);
         }}

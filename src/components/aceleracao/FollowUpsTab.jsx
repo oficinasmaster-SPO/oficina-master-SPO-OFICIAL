@@ -214,10 +214,20 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
     );
   }, [searchTerm]);
 
-  const listAbertos = useMemo(() =>
-    applySearch(reminders.filter(r => !r.is_completed))
-      .sort((a, b) => (a.reminder_date || "").localeCompare(b.reminder_date || "")),
-  [reminders, searchTerm]);
+  const listAbertos = useMemo(() => {
+    const pending = applySearch(reminders.filter(r => !r.is_completed));
+    // Ordenação por prioridade: vencidos → hoje → futuros (dentro de cada grupo, por data)
+    return pending.sort((a, b) => {
+      const aVencido = a.reminder_date < today;
+      const bVencido = b.reminder_date < today;
+      const aHoje = a.reminder_date === today;
+      const bHoje = b.reminder_date === today;
+      const prioridade = (r) => r.reminder_date < today ? 0 : r.reminder_date === today ? 1 : 2;
+      const pa = prioridade(a), pb = prioridade(b);
+      if (pa !== pb) return pa - pb;
+      return (a.reminder_date || "").localeCompare(b.reminder_date || "");
+    });
+  }, [reminders, today, searchTerm]);
 
   const listAtrasados = useMemo(() =>
     applySearch(reminders.filter(r => !r.is_completed && r.reminder_date < today))
