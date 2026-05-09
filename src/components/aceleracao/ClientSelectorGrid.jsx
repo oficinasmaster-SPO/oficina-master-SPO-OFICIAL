@@ -46,9 +46,22 @@ export default function ClientSelectorGrid({ onSelect, onClose }) {
     return ['all', ...new Set(data.clients.map(c => c.plano))];
   }, [data.clients]);
 
+  const handleBackdropClick = (e) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
   const content = (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center" style={{ zIndex: 99999 }}>
-      <div className="bg-white rounded-lg shadow-2xl w-[90vw] max-w-4xl max-h-[85vh] flex flex-col">
+    <div 
+      className="fixed inset-0 bg-black/40 flex items-center justify-center" 
+      style={{ zIndex: 99999 }}
+      onClick={handleBackdropClick}
+    >
+      <div 
+        className="bg-white rounded-lg shadow-2xl w-[90vw] max-w-4xl max-h-[85vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center gap-2">
