@@ -18,6 +18,7 @@ import { format } from "date-fns";
 import FollowUpList from "./followups/FollowUpList";
 import FollowUpDetail from "./followups/FollowUpDetail";
 import FollowUpCompletedDetailDrawer from "./FollowUpCompletedDetailDrawer";
+import RelatoriosTab from "./RelatoriosTab";
 
 // ── Componentes de módulo (fora do corpo do componente para evitar re-mount) ──
 
@@ -120,6 +121,7 @@ const TABS = [
   { id: "atrasados",  label: "Atrasados" },
   { id: "consultor",  label: "Por Consultor" },
   { id: "concluidos", label: "Concluídos" },
+  { id: "relatorios", label: "Relatórios" },
 ];
 
 export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
@@ -542,7 +544,11 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
           )}
         </>
       )}
+
+      {activeTab === "relatorios" && (
+        <RelatoriosTab />
+      )}
       </div>
-    </div>
-  );
-}
+      </div>
+      );
+      }
