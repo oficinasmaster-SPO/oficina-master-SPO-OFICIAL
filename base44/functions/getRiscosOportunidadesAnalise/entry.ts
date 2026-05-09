@@ -93,11 +93,24 @@ Deno.serve(async (req) => {
       data_termino_previsto: { '$lt': hojeDate }
     }, '-data_termino_previsto', 100);
 
-    // 8. Sem colaboradores
+    // 8. Sem colaboradores NÃO-SÓCIOS
     const employees = await base44.asServiceRole.entities.Employee.filter({
       workshop_id
     }, '-created_date', 1000);
-    const tem_colaboradores = employees.length > 0;
+    
+    // Buscar workshop para pegar owner_id
+    const ws = await base44.asServiceRole.entities.Workshop.filter(
+      { id: workshop_id },
+      '',
+      1
+    );
+    const workshop = ws && ws.length > 0 ? ws[0] : null;
+    
+    // Colaboradores não-sócios são aqueles cujo user_id !== workshop.owner_id
+    const colaboradoresNaoSocios = employees.filter(emp => 
+      emp.user_id && workshop && emp.user_id !== workshop.owner_id
+    );
+    const tem_colaboradores = colaboradoresNaoSocios.length > 0;
 
     // CORRIGIDO BUG #3 e #4: Buscar nomes dos workshops de forma eficiente
     const workshopsMap = {};
@@ -214,9 +227,10 @@ Deno.serve(async (req) => {
         id: 'sem_colaboradores',
         categoria: 'sem_colaboradores',
         titulo: 'Cadastro de Colaboradores',
-        descricao: 'Workshop sem colaboradores cadastrados - oportunidade de onboarding RH',
+        descricao: `Workshop com plano ativo mas sem colaboradores não-sócios. Atualmente: ${colaboradoresNaoSocios.length}`,
         total: tem_colaboradores ? 0 : 1,
-        acao: 'Iniciar processo de cadastro de colaboradores'
+        workshop_name: workshopsMap[workshop_id] || 'Workshop',
+        acao: 'Convidar colaboradores para potencializar o time'
       }
     ].filter(o => o.total > 0);
 
