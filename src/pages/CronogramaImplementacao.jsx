@@ -123,26 +123,28 @@ export default function CronogramaImplementacao() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data, isNew }) => {
-      // BUG FIX #1: Detectar itens virtuais e forçar criação
-      const isVirtualItem = id && id.startsWith('virtual-');
+      // Detectar se deve criar ou atualizar
+      const isVirtualItem = !id || id.startsWith('virtual-');
       const shouldCreate = isNew || isVirtualItem;
 
-      // BUG FIX #2: Validar dados obrigatórios
+      // Validar dados obrigatórios
       if (!data.item_nome || !data.item_id) {
         throw new Error('Nome e ID do item são obrigatórios.');
       }
 
-      // Se é item novo ou virtual, criar ao invés de atualizar
+      // Criar novo registro (item ainda não existe no banco)
       if (shouldCreate) {
         const created = await base44.entities.CronogramaImplementacao.create({
           workshop_id: workshop.id,
-          consulting_firm_id: workshop.consulting_firm_id,
+          consulting_firm_id: workshop.consulting_firm_id || null,
           item_id: data.item_id,
           item_nome: data.item_nome,
-          item_tipo: data.item_tipo,
+          item_tipo: data.item_tipo || 'funcionalidade',
           status: data.status || 'a_fazer',
-          data_inicio_real: data.data_inicio_real || new Date().toISOString(),
+          data_inicio_previsto: data.data_inicio_previsto || null,
+          data_inicio_real: data.data_inicio_real || null,
           data_termino_previsto: data.data_termino_previsto,
+          data_termino_real: data.data_termino_real || null,
           progresso_percentual: Math.max(0, Math.min(100, data.progresso_percentual || 0)),
           observacoes: data.observacoes || '',
           dependencias: data.dependencias || [],
@@ -150,67 +152,42 @@ export default function CronogramaImplementacao() {
             data_alteracao: new Date().toISOString(),
             campo_alterado: 'criacao',
             valor_anterior: '',
-            valor_novo: 'Item iniciado pelo cliente',
-            usuario_id: user.id,
-            usuario_nome: user.full_name
+            valor_novo: 'Item criado',
+            usuario_id: user?.id,
+            usuario_nome: user?.full_name
           }]
         });
         return created;
       }
 
-      // BUG FIX #3: Buscar item atual com fallback
-      const item = cronograma.find(c => c.id === id);
-      if (!item) {
-        throw new Error('Item não encontrado no cronograma local.');
-      }
-
+      // Atualizar registro existente — buscar dados atuais para histórico
+      const item = cronograma.find(c => c.id === id) || {};
       const historicoAtualizado = [...(item.historico_alteracoes || [])];
       
-      // BUG FIX #4: Comparação segura de valores
       Object.keys(data).forEach(campo => {
         if (campo !== 'historico_alteracoes') {
           const valorAnterior = item[campo];
           const valorNovo = data[campo];
-          // Comparar apenas se valores forem diferentes (considerando null vs undefined)
           if (JSON.stringify(valorAnterior) !== JSON.stringify(valorNovo)) {
             historicoAtualizado.push({
               data_alteracao: new Date().toISOString(),
               campo_alterado: campo,
-              valor_anterior: String(valorAnterior || ''),
-              valor_novo: String(valorNovo || ''),
-              usuario_id: user.id,
-              usuario_nome: user.full_name
+              valor_anterior: String(valorAnterior ?? ''),
+              valor_novo: String(valorNovo ?? ''),
+              usuario_id: user?.id,
+              usuario_nome: user?.full_name
             });
           }
         }
       });
 
-      // BUG FIX #5: Validar valores antes de salvar
       const dataToUpdate = {
         ...data,
         progresso_percentual: Math.max(0, Math.min(100, data.progresso_percentual || 0)),
         historico_alteracoes: historicoAtualizado
       };
 
-      const updated = await base44.entities.CronogramaImplementacao.update(id, dataToUpdate);
-
-      // Sincronizar com CronogramaProgresso com melhor tratamento de erro
-      try {
-        await base44.functions.invoke('syncCronogramaProgress', {
-          workshop_id: workshop.id,
-          item_id: item.item_id,
-          item_nome: item.item_nome,
-          status: data.status,
-          data_termino_real: data.data_termino_real,
-          data_termino_previsto: data.data_termino_previsto,
-          progresso_percentual: dataToUpdate.progresso_percentual
-        });
-      } catch (syncError) {
-        console.warn('Aviso: Sincronização com CronogramaProgresso falhou:', syncError.message);
-        // Não lançar erro aqui - já salvou na entidade principal
-      }
-
-      return updated;
+      return await base44.entities.CronogramaImplementacao.update(id, dataToUpdate);
     },
     onSuccess: () => {
       // BUG FIX #6: Invalidar queries de forma mais agressiva
