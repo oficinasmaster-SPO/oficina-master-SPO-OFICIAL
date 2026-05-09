@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
+import ReactDOM from 'react-dom';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { X, Search, Loader2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -46,8 +46,8 @@ export default function ClientSelectorGrid({ onSelect, onClose }) {
     return ['all', ...new Set(data.clients.map(c => c.plano))];
   }, [data.clients]);
 
-  return (
-    <div className="fixed inset-0 bg-black/40 z-[9998] flex items-center justify-center">
+  const content = (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center" style={{ zIndex: 99999 }}>
       <div className="bg-white rounded-lg shadow-2xl w-[90vw] max-w-4xl max-h-[85vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 flex-shrink-0">
@@ -165,4 +165,6 @@ export default function ClientSelectorGrid({ onSelect, onClose }) {
       </div>
     </div>
   );
+
+  return ReactDOM.createPortal(content, document.body);
 }
