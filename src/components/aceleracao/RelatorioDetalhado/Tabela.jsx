@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Eye } from 'lucide-react';
 
 const statusColor = {
   'atendeu': 'bg-green-50 text-green-700',
@@ -44,7 +46,9 @@ const formatHora = (dateString) => {
   }
 };
 
-export default function Tabela({ dados = [] }) {
+export default function Tabela({ dados = [], expandObservacoes = false }) {
+  const [selectedObservacao, setSelectedObservacao] = useState(null);
+
   if (!dados || dados.length === 0) {
     return (
       <div className="text-center py-8 text-gray-500 border rounded-lg bg-gray-50">
@@ -54,70 +58,97 @@ export default function Tabela({ dados = [] }) {
   }
 
   return (
-    <div className="overflow-x-auto border rounded-lg">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="bg-gray-50 border-b">
-            <th className="px-3 py-3 text-left font-semibold text-gray-700 text-xs">Data/Hora</th>
-            <th className="px-3 py-3 text-left font-semibold text-gray-700 text-xs">Cliente</th>
-            <th className="px-3 py-3 text-left font-semibold text-gray-700 text-xs">Consultor</th>
-            <th className="px-3 py-3 text-left font-semibold text-gray-700 text-xs">Tipo</th>
-            <th className="px-3 py-3 text-left font-semibold text-gray-700 text-xs">Canal</th>
-            <th className="px-3 py-3 text-left font-semibold text-gray-700 text-xs">Resultado</th>
-            <th className="px-3 py-3 text-left font-semibold text-gray-700 text-xs">Humor</th>
-            <th className="px-3 py-3 text-left font-semibold text-gray-700 text-xs">Engajamento</th>
-            <th className="px-3 py-3 text-left font-semibold text-gray-700 text-xs">Suporte</th>
-            <th className="px-3 py-3 text-left font-semibold text-gray-700 text-xs">Observações</th>
-          </tr>
-        </thead>
-        <tbody>
-          {dados.map((row, idx) => (
-            <tr 
-              key={row.id || `row-${idx}`} 
-              className="border-b hover:bg-gray-50 transition-colors text-sm"
-            >
-              <td className="px-3 py-3 text-gray-900 whitespace-nowrap">
-                 {formatData(row.completedAt || row.dataContato)} {formatHora(row.completedAt || row.dataContato)}
-               </td>
-              <td className="px-3 py-3 text-gray-700">{row.workshop_name || '-'}</td>
-              <td className="px-3 py-3 text-gray-700">{row.consultor_nome || '-'}</td>
-              <td className="px-3 py-3">
-                <span className="text-xs bg-gray-100 rounded px-2 py-1">
-                  {row.tipo || 'Follow-up'}
-                </span>
-              </td>
-              <td className="px-3 py-3">
-                <span className="inline-block px-2 py-1 bg-gray-100 rounded text-xs font-medium">
-                  {row.canal || 'N/A'}
-                </span>
-              </td>
-              <td className="px-3 py-3">
-                <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${statusColor[row.resultado] || 'bg-gray-50 text-gray-700'}`}>
+    <>
+      <div className="space-y-1">
+        {dados.map((row, idx) => (
+          <div key={row.id || `row-${idx}`} className="border border-gray-200 rounded-lg bg-white hover:shadow-sm transition-shadow">
+            {/* Linha Principal */}
+            <div className="grid grid-cols-12 gap-2 p-3 text-sm items-center print:grid-cols-11">
+              <div className="col-span-1 font-medium text-gray-900 whitespace-nowrap">
+                {formatData(row.completedAt || row.dataContato)} {formatHora(row.completedAt || row.dataContato)}
+              </div>
+              <div className="col-span-2 text-gray-700 font-medium">{row.workshop_name || '-'}</div>
+              <div className="col-span-1 text-xs text-gray-600">{row.consultor_nome || '-'}</div>
+              <div className="col-span-1">
+                <span className="text-xs bg-gray-100 rounded px-2 py-1">{row.tipo || 'Follow-up'}</span>
+              </div>
+              <div className="col-span-1">
+                <span className="text-xs bg-gray-100 rounded px-2 py-1">{row.canal || 'N/A'}</span>
+              </div>
+              <div className="col-span-1">
+                <span className={`text-xs rounded px-2 py-1 font-medium ${statusColor[row.resultado] || 'bg-gray-50 text-gray-700'}`}>
                   {row.resultado?.replace(/_/g, ' ') || 'N/A'}
                 </span>
-              </td>
-              <td className="px-3 py-3 text-center">
-                <span className={`text-lg ${humorColor[row.humor] || 'text-gray-400'}`}>
+              </div>
+              <div className="col-span-1 text-center text-lg">
+                <span className={humorColor[row.humor] || 'text-gray-400'}>
                   {humorEmoji[row.humor] || '—'}
                 </span>
-              </td>
-              <td className="px-3 py-3">
-                <span className={`font-medium text-xs ${engajamentoColor[row.engajamento] || 'text-gray-600'}`}>
-                  {row.engajamento ? `${row.engajamento}` : '-'}
+              </div>
+              <div className="col-span-1">
+                <span className={`text-xs font-medium ${engajamentoColor[row.engajamento] || 'text-gray-600'}`}>
+                  {row.engajamento || '-'}
                 </span>
-              </td>
-              <td className="px-3 py-3 text-xs">
-                <span className="bg-blue-50 text-blue-700 rounded px-2 py-1">
-                  {row.suporte || 'Consultor'}
-                </span>
-              </td>
-              <td className="px-3 py-3 text-gray-600 max-w-xs truncate" title={row.observacoes}>
-                {row.observacoes || '-'}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+              </div>
+              <div className="col-span-1">
+                <span className="text-xs bg-blue-50 text-blue-700 rounded px-2 py-1">{row.suporte || 'Consultor'}</span>
+              </div>
+              {row.observacoes && !expandObservacoes && (
+                <div className="col-span-2 flex items-center justify-between gap-1">
+                  <span className="text-xs text-gray-600 truncate">{row.observacoes.substring(0, 25)}...</span>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-6 w-6 flex-shrink-0"
+                    onClick={() => setSelectedObservacao(row.observacoes)}
+                  >
+                    <Eye className="w-3 h-3" />
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            {/* Observações Expandidas (para PDF/Print) */}
+            {expandObservacoes && row.observacoes && (
+              <div className="border-t border-gray-100 bg-gray-50 p-3">
+                <p className="text-xs text-gray-700">
+                  <span className="font-semibold">Observações:</span> {row.observacoes}
+                </p>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Modal de Observações */}
+      {selectedObservacao && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div className="border-b p-4 flex items-center justify-between">
+              <h3 className="font-semibold text-gray-900">Observações Completas</h3>
+              <button
+                onClick={() => setSelectedObservacao(null)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-4 max-h-[60vh] overflow-auto">
+              <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+                {selectedObservacao}
+              </p>
+            </div>
+            <div className="border-t p-4 flex gap-2">
+              <Button
+                className="flex-1"
+                onClick={() => setSelectedObservacao(null)}
+              >
+                Fechar
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

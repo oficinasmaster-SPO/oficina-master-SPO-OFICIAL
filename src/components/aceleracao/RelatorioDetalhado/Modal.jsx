@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
-import { X } from 'lucide-react';
+import { X, Printer, Download } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import KPIBar from './KPIBar';
 import Tabela from './Tabela';
 import Filtros from './Filtros';
@@ -10,6 +11,7 @@ import WheelLoader from '@/components/ui/WheelLoader';
 
 export default function RelatorioDetailModal({ isOpen, onClose, tipo = 'diario', periodo = 'mensal', data }) {
   const [filters, setFilters] = useState({ consultor: null, tipo: null, status: 'realizado' });
+  const [expandObservacoes, setExpandObservacoes] = useState(false);
   const [page, setPage] = useState(0);
   const itemsPerPage = 10;
   const referenceDate = data || new Date().toISOString().split('T')[0];
@@ -60,14 +62,39 @@ export default function RelatorioDetailModal({ isOpen, onClose, tipo = 'diario',
         </DialogHeader>
 
         <div className="space-y-6 p-4">
-          {/* Filtros */}
-          <Filtros 
-            filters={filters} 
-            onChange={(newFilters) => {
-              setFilters(newFilters);
-              setPage(0);
-            }} 
-          />
+           {/* Ações de Print/PDF */}
+           <div className="flex gap-2 justify-end">
+             <Button
+               size="sm"
+               variant="outline"
+               onClick={() => {
+                 setExpandObservacoes(true);
+                 setTimeout(() => window.print(), 100);
+               }}
+               className="gap-2"
+             >
+               <Printer className="w-4 h-4" />
+               Imprimir com Observações
+             </Button>
+             <Button
+               size="sm"
+               variant="outline"
+               onClick={() => setExpandObservacoes(!expandObservacoes)}
+               className="gap-2"
+             >
+               <Download className="w-4 h-4" />
+               {expandObservacoes ? 'Visualização Normal' : 'Expandir Observações'}
+             </Button>
+           </div>
+
+           {/* Filtros */}
+           <Filtros 
+             filters={filters} 
+             onChange={(newFilters) => {
+               setFilters(newFilters);
+               setPage(0);
+             }} 
+           />
 
           {/* KPIs */}
           <KPIBar 
@@ -83,7 +110,7 @@ export default function RelatorioDetailModal({ isOpen, onClose, tipo = 'diario',
             </div>
           ) : (
             <>
-              <Tabela dados={paginatedData} />
+               <Tabela dados={paginatedData} expandObservacoes={expandObservacoes} />
               
               {/* Paginação */}
               {totalPages > 1 && (
