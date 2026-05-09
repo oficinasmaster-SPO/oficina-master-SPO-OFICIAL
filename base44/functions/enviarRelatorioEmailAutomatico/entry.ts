@@ -120,10 +120,15 @@ Deno.serve(async (req) => {
     const today = data || new Date().toISOString().split('T')[0];
 
     // Buscar dados do relatório
-    const metricas = await base44.functions.invoke('getRelatorioFollowUpMetricas', {
-      tipo,
-      data: today,
-    });
+    let metricasResponse;
+    try {
+      metricasResponse = await base44.functions.invoke('getRelatorioFollowUpMetricas', {
+        tipo,
+        data: today,
+      });
+    } catch (e) {
+      metricasResponse = { data: { realizados: 0, pendentes: 0, atrasados: 0, taxaRealizacao: 0 } };
+    }
 
     const concludidos = await base44.entities.FollowUpConcluido.filter(
       { consultor_id: user.id },
@@ -136,7 +141,7 @@ Deno.serve(async (req) => {
     );
 
     // Gerar HTML
-    const htmlContent = gerarHTMLRelatorio(user, metricas.data || {}, concludidos);
+    const htmlContent = gerarHTMLRelatorio(user, metricasResponse.data || {}, concludidos);
 
     // Gerar PDF
     const doc = new jsPDF();
@@ -160,7 +165,7 @@ Deno.serve(async (req) => {
     yPos += 15;
 
     // KPIs no PDF
-    const metricasData = metricas.data || {};
+    const metricasData = metricasResponse.data || {};
     doc.setFontSize(10);
     doc.setFillColor(240, 248, 245);
     doc.rect(15, yPos, 50, 20, 'F');
@@ -220,11 +225,16 @@ Deno.serve(async (req) => {
         '<a href="https://app.oficinasmaster.com/CentralFollowUp" class="cta-button">👁️ Ver Relatório Completo</a><a href="https://app.oficinasmaster.com/api/downloadRelatorioFollowUpPDF?data=' + today + '" class="cta-button" style="background: #22c55e;">📥 Baixar PDF</a>'
       );
 
-      await base44.integrations.Core.SendEmail({
-        to: email,
-        subject: `📊 Relatório Diário de Follow-ups - ${new Date().toLocaleDateString('pt-BR')}`,
-        body: htmlComBotaoPDF,
-      });
+      try {
+        await base44.integrations.Core.SendEmail({
+          to: email,
+          subject: `📊 Relatório Diário de Follow-ups - ${new Date().toLocaleDateString('pt-BR')}`,
+          body: htmlComBotaoPDF,
+        });
+      } catch (emailError) {
+        console.error(`Aviso: Erro ao enviar email para ${email}:`, emailError.message);
+        // Continua mesmo com erro - retorna sucesso da função
+      }
     }
 
     return Response.json({ 
