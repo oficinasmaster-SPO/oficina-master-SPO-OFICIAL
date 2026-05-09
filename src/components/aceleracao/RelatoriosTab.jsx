@@ -43,8 +43,8 @@ export default function RelatoriosTab() {
           periodo: periodoSelecionado,
         });
 
-        if (response.data) {
-          setMetricas(response.data);
+        if (response.data?.metricas) {
+          setMetricas(response.data.metricas);
         }
       } catch (error) {
         console.error('Erro ao buscar métricas:', error);
