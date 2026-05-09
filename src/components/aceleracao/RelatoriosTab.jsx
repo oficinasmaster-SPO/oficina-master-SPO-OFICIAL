@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Download, Eye, Loader2, Calendar, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import EnviarEmailModal from './EnviarEmailModal';
+import RelatorioDetalhado from './RelatorioDetalhado/Modal';
 import {
   Select,
   SelectContent,
@@ -25,6 +26,7 @@ export default function RelatoriosTab() {
   const [loadingMetricas, setLoadingMetricas] = useState(false);
   const [emailModalOpen, setEmailModalOpen] = useState(false);
   const [emailModalTipo, setEmailModalTipo] = useState(null);
+  const [relatorioDetalhado, setRelatorioDetalhado] = useState({ isOpen: false, tipo: null });
 
   const today = new Date().toISOString().split('T')[0];
   const weekStart = new Date();
@@ -235,14 +237,9 @@ export default function RelatoriosTab() {
                     <Button
                        size="sm"
                        className="flex-1 h-8 text-xs gap-1.5 bg-red-600 hover:bg-red-700"
-                       onClick={() => handleVerPDF(rel.id)}
-                       disabled={loadingPdf === rel.id}
+                       onClick={() => setRelatorioDetalhado({ isOpen: true, tipo: rel.id })}
                      >
-                       {loadingPdf === rel.id ? (
-                         <Loader2 className="w-3 h-3 animate-spin" />
-                       ) : (
-                         <Eye className="w-3 h-3" />
-                       )}
+                       <Eye className="w-3 h-3" />
                        Ver
                      </Button>
                     <Button
