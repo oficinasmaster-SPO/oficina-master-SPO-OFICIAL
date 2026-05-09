@@ -1,5 +1,24 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
+/**
+ * @deprecated ENGINE A — LEGACY COMPATIBILITY LAYER
+ *
+ * Status: CONGELADO — apenas manutenção crítica de estabilidade.
+ *
+ * DO NOT ADD:
+ *   - novos módulos ou fases
+ *   - novas regras de SLA ou jornada
+ *   - novos templates hardcoded
+ *   - novas automações
+ *
+ * Toda nova implementação DEVE usar:
+ *   → CronogramaTemplateItem  (templates dinâmicos)
+ *   → generateFullCronograma  (engine de criação)
+ *   → CronogramaImplementacao (source of truth operacional)
+ *
+ * Ver: docs/LEGACY_ENGINE_A.md
+ */
+
 // Templates de cronograma por fase
 const CRONOGRAMAS_POR_FASE = {
   1: {

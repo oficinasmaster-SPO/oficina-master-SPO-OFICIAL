@@ -64,7 +64,10 @@ Deno.serve(async (req) => {
         item_categoria: 'atendimentos',
         status: 'a_fazer',
         progresso_percentual: 0,
-        total_visualizacoes: 0
+        total_visualizacoes: 0,
+        engine_version: 'legacy_v1',
+        engine_source: 'syncPlanAttendancesToCronograma',
+        created_by_flow: 'attendance_sync'
       };
 
       const created = await base44.asServiceRole.entities.CronogramaImplementacao.create(cronogramaItem);

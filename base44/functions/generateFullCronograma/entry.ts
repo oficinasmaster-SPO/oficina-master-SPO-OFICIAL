@@ -32,6 +32,9 @@ Deno.serve(async (req) => {
     const itemsCriados = [];
     let engineUsed = 'legacy_v1';
 
+    // Inferir fluxo de criação pelo contexto da chamada
+    const flowLabel = contract_id ? 'auto_plan_activation' : 'admin_manual';
+
     // ── Tentar engine v2: CronogramaTemplateItem ──────────────────────────────
     const templateItems = await base44.asServiceRole.entities.CronogramaTemplateItem.filter({
       plan_id: planId,
@@ -71,6 +74,8 @@ Deno.serve(async (req) => {
           obrigatorio: tpl.obrigatorio || false,
           template_item_id: tpl.id,
           engine_version: 'template_v2',
+          engine_source: 'generateFullCronograma',
+          created_by_flow: flowLabel,
           status: 'a_fazer',
           data_inicio_real: dataInicioItem.toISOString(),
           data_termino_previsto: dataTermino.toISOString(),
@@ -152,6 +157,8 @@ Deno.serve(async (req) => {
           item_nome: entry.nome,
           item_categoria: entry.tipo === 'funcionalidade' ? 'funcionalidades' : 'modulos',
           engine_version: 'legacy_v1',
+          engine_source: 'generateFullCronograma',
+          created_by_flow: flowLabel,
           status: 'a_fazer',
           data_inicio_real: dataInicioItem.toISOString(),
           data_termino_previsto: dataTermino.toISOString(),

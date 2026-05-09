@@ -50,6 +50,9 @@ Deno.serve(async (req) => {
     const updateData = {
       total_visualizacoes: (record.total_visualizacoes || 0) + 1,
       data_ultimo_acesso: new Date().toISOString(),
+      engine_version: record.engine_version || 'tracking_v1',
+      engine_source: 'trackImplementacao',
+      created_by_flow: record.created_by_flow || 'ui_tracking',
       ...(progresso_percentual !== undefined && progresso_percentual > (record.progresso_percentual || 0)
         ? { progresso_percentual }
         : {})

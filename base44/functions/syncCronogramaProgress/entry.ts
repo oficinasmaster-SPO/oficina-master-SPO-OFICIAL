@@ -1,3 +1,24 @@
+/**
+ * @deprecated ENGINE A — LEGACY COMPATIBILITY LAYER
+ *
+ * Status: CONGELADO — apenas manutenção crítica de compatibilidade.
+ *
+ * Este arquivo escreve em CronogramaProgresso, que é o READ MODEL legado.
+ * A source of truth operacional é CronogramaImplementacao.
+ *
+ * Fluxo correto (atual):
+ *   markCronogramaCompleted → syncCronogramaProgress (escreve no legado para compatibilidade)
+ *
+ * Fluxo futuro:
+ *   CronogramaImplementacao → (projeta para) → CronogramaProgresso
+ *
+ * DO NOT ADD:
+ *   - novas regras de status
+ *   - nova lógica de SLA
+ *   - novos campos operacionais
+ *
+ * Ver: docs/LEGACY_ENGINE_A.md
+ */
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { differenceInDays } from 'npm:date-fns@3.6.0';
 

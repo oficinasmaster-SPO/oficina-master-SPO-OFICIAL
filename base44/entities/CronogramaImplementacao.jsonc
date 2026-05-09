@@ -39,11 +39,43 @@
     "engine_version": {
       "type": "string",
       "enum": [
+        "legacy_v0",
         "legacy_v1",
-        "template_v2"
+        "template_v2",
+        "tracking_v1"
       ],
       "default": "legacy_v1",
-      "description": "Vers\u00e3o da engine que gerou este item (legacy_v1 = arrays PlanFeature, template_v2 = CronogramaTemplateItem)"
+      "description": "Vers\u00e3o da engine que gerou este item. legacy_v0=gerarCronogramaAutomatico, legacy_v1=generateFullCronograma arrays PlanFeature, template_v2=CronogramaTemplateItem, tracking_v1=trackImplementacao"
+    },
+    "engine_source": {
+      "type": "string",
+      "enum": [
+        "gerarCronogramaAutomatico",
+        "generateFullCronograma",
+        "trackImplementacao",
+        "syncCronogramaOnAtendimento",
+        "manual_admin",
+        "unknown"
+      ],
+      "default": "unknown",
+      "description": "Fun\u00e7\u00e3o/processo que criou este item. Usado para auditoria e migra\u00e7\u00e3o."
+    },
+    "created_by_flow": {
+      "type": "string",
+      "enum": [
+        "auto_plan_activation",
+        "ui_tracking",
+        "attendance_sync",
+        "manual_admin",
+        "unknown"
+      ],
+      "default": "unknown",
+      "description": "Fluxo de neg\u00f3cio que originou a cria\u00e7\u00e3o. auto_plan_activation=webhook/admin plan update, ui_tracking=navega\u00e7\u00e3o UI, attendance_sync=sincroniza\u00e7\u00e3o atendimento, manual_admin=a\u00e7\u00e3o direta admin"
+    },
+    "data_ultimo_acesso": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u00daltima vez que o usu\u00e1rio acessou este item (atualizado pelo trackImplementacao)"
     },
     "ordem": {
       "type": "integer",
