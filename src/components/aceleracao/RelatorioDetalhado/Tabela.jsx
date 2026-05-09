@@ -59,24 +59,45 @@ export default function Tabela({ dados = [], expandObservacoes = false }) {
 
   return (
     <>
-      <div className="space-y-1">
+      {/* Header da Tabela */}
+      <div className="border-b border-gray-300 bg-gray-50 rounded-t-lg">
+        <div className="grid grid-cols-14 gap-1 p-3 text-xs font-bold text-gray-700 print:grid-cols-12">
+          <div className="col-span-1">Data</div>
+          <div className="col-span-1">Hora</div>
+          <div className="col-span-2">Oficina</div>
+          <div className="col-span-1">Consultor</div>
+          <div className="col-span-1">Tipo</div>
+          <div className="col-span-1">Canal</div>
+          <div className="col-span-1">Resultado</div>
+          <div className="col-span-1">Humor</div>
+          <div className="col-span-1">Engajamento</div>
+          <div className="col-span-1">Suporte</div>
+          {!expandObservacoes && <div className="col-span-2">Observações</div>}
+        </div>
+      </div>
+
+      {/* Dados */}
+      <div className="space-y-1 border border-t-0 border-gray-200 rounded-b-lg divide-y">
         {dados.map((row, idx) => (
-          <div key={row.id || `row-${idx}`} className="border border-gray-200 rounded-lg bg-white hover:shadow-sm transition-shadow">
+          <div key={row.id || `row-${idx}`} className="bg-white hover:bg-gray-50 transition-colors">
             {/* Linha Principal */}
-            <div className="grid grid-cols-12 gap-2 p-3 text-sm items-center print:grid-cols-11">
-              <div className="col-span-1 font-medium text-gray-900 whitespace-nowrap">
-                {formatData(row.completedAt || row.dataContato)} {formatHora(row.completedAt || row.dataContato)}
+            <div className="grid grid-cols-14 gap-1 p-3 text-sm items-center print:grid-cols-12">
+              <div className="col-span-1 font-medium text-gray-900 whitespace-nowrap text-xs">
+                {formatData(row.completedAt || row.dataContato)}
               </div>
-              <div className="col-span-2 text-gray-700 font-medium">{row.workshop_name || '-'}</div>
-              <div className="col-span-1 text-xs text-gray-600">{row.consultor_nome || '-'}</div>
+              <div className="col-span-1 font-medium text-gray-900 whitespace-nowrap text-xs">
+                {formatHora(row.completedAt || row.dataContato)}
+              </div>
+              <div className="col-span-2 text-gray-700 font-medium text-xs truncate">{row.workshop_name || '-'}</div>
+              <div className="col-span-1 text-xs text-gray-600 truncate">{row.consultor_nome || '-'}</div>
               <div className="col-span-1">
-                <span className="text-xs bg-gray-100 rounded px-2 py-1">{row.tipo || 'Follow-up'}</span>
+                <span className="text-xs bg-gray-100 rounded px-2 py-1 whitespace-nowrap">{row.tipo || 'Follow-up'}</span>
               </div>
               <div className="col-span-1">
-                <span className="text-xs bg-gray-100 rounded px-2 py-1">{row.canal || 'N/A'}</span>
+                <span className="text-xs bg-gray-100 rounded px-2 py-1 whitespace-nowrap">{row.canal || 'N/A'}</span>
               </div>
               <div className="col-span-1">
-                <span className={`text-xs rounded px-2 py-1 font-medium ${statusColor[row.resultado] || 'bg-gray-50 text-gray-700'}`}>
+                <span className={`text-xs rounded px-2 py-1 font-medium whitespace-nowrap ${statusColor[row.resultado] || 'bg-gray-50 text-gray-700'}`}>
                   {row.resultado?.replace(/_/g, ' ') || 'N/A'}
                 </span>
               </div>
@@ -86,16 +107,16 @@ export default function Tabela({ dados = [], expandObservacoes = false }) {
                 </span>
               </div>
               <div className="col-span-1">
-                <span className={`text-xs font-medium ${engajamentoColor[row.engajamento] || 'text-gray-600'}`}>
+                <span className={`text-xs font-medium whitespace-nowrap ${engajamentoColor[row.engajamento] || 'text-gray-600'}`}>
                   {row.engajamento || '-'}
                 </span>
               </div>
               <div className="col-span-1">
-                <span className="text-xs bg-blue-50 text-blue-700 rounded px-2 py-1">{row.suporte || 'Consultor'}</span>
+                <span className="text-xs bg-blue-50 text-blue-700 rounded px-2 py-1 whitespace-nowrap">{row.suporte || 'Consultor'}</span>
               </div>
               {row.observacoes && !expandObservacoes && (
                 <div className="col-span-2 flex items-center justify-between gap-1">
-                  <span className="text-xs text-gray-600 truncate">{row.observacoes.substring(0, 25)}...</span>
+                  <span className="text-xs text-gray-600 truncate line-clamp-1">{row.observacoes.substring(0, 30)}...</span>
                   <Button
                     size="icon"
                     variant="ghost"
@@ -111,7 +132,7 @@ export default function Tabela({ dados = [], expandObservacoes = false }) {
             {/* Observações Expandidas (para PDF/Print) */}
             {expandObservacoes && row.observacoes && (
               <div className="border-t border-gray-100 bg-gray-50 p-3">
-                <p className="text-xs text-gray-700">
+                <p className="text-xs text-gray-700 leading-relaxed">
                   <span className="font-semibold">Observações:</span> {row.observacoes}
                 </p>
               </div>
