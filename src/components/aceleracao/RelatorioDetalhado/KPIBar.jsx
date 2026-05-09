@@ -1,20 +1,48 @@
 import React from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { TrendingUp, Clock, CheckCircle2 } from 'lucide-react';
 
-export default function KPIBar({ metricas }) {
+export default function KPIBar({ realizados = 0, pendentes = 0, taxaRealizacao = 0 }) {
+  const kpis = [
+    {
+      label: 'Realizados',
+      valor: realizados,
+      icon: CheckCircle2,
+      color: 'text-green-600',
+      bg: 'bg-green-50'
+    },
+    {
+      label: 'Pendentes',
+      valor: pendentes,
+      icon: Clock,
+      color: 'text-amber-600',
+      bg: 'bg-amber-50'
+    },
+    {
+      label: 'Taxa de Realização',
+      valor: `${taxaRealizacao}%`,
+      icon: TrendingUp,
+      color: 'text-blue-600',
+      bg: 'bg-blue-50'
+    }
+  ];
+
   return (
     <div className="grid grid-cols-3 gap-4">
-      <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg p-4">
-        <p className="text-xs text-green-700 font-medium">✅ Realizados</p>
-        <p className="text-2xl font-bold text-green-900 mt-2">{metricas.realizados || 0}</p>
-      </div>
-      <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 border border-yellow-200 rounded-lg p-4">
-        <p className="text-xs text-yellow-700 font-medium">⏳ Pendentes</p>
-        <p className="text-2xl font-bold text-yellow-900 mt-2">{metricas.pendentes || 0}</p>
-      </div>
-      <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-4">
-        <p className="text-xs text-blue-700 font-medium">📈 Taxa de Realização</p>
-        <p className="text-2xl font-bold text-blue-900 mt-2">{metricas.taxaRealizacao || 0}%</p>
-      </div>
+      {kpis.map((kpi, idx) => {
+        const Icon = kpi.icon;
+        return (
+          <Card key={idx} className="border-gray-200">
+            <CardContent className="p-4">
+              <div className={`inline-flex p-2 rounded-lg ${kpi.bg} mb-3`}>
+                <Icon className={`w-5 h-5 ${kpi.color}`} />
+              </div>
+              <p className="text-sm text-gray-600 font-medium">{kpi.label}</p>
+              <p className={`text-2xl font-bold ${kpi.color} mt-1`}>{kpi.valor}</p>
+            </CardContent>
+          </Card>
+        );
+      })}
     </div>
   );
 }

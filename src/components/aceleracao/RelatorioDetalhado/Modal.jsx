@@ -1,147 +1,114 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useAuth } from '@/lib/AuthContext';
-import { X, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { useQuery } from '@tanstack/react-query';
+import { X } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import KPIBar from './KPIBar';
 import Tabela from './Tabela';
 import Filtros from './Filtros';
+import WheelLoader from '@/components/ui/WheelLoader';
 
-export default function RelatorioDetalhado({ isOpen, onClose, tipo, periodo, data }) {
-  const { user } = useAuth();
-  const [metricas, setMetricas] = useState({});
-  const [dados, setDados] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [filtros, setFiltros] = useState({
-    consultor: '',
-    tipo: '',
-    status: '',
+export default function RelatorioDetailModal({ isOpen, onClose, tipo = 'diario', periodo = 'mensal', data }) {
+  const [filters, setFilters] = useState({
+    consultor: null,
+    tipo: null,
+    status: 'realizado'
   });
-  const [pagina, setPagina] = useState(1);
-  const ITENS_POR_PAGINA = 15;
+  const [page, setPage] = useState(0);
+  const itemsPerPage = 10;
 
-  useEffect(() => {
-    if (isOpen) {
-      buscarDados();
-    }
-  }, [isOpen, tipo, periodo, data, filtros]);
-
-  const buscarDados = async () => {
-    setLoading(true);
-    try {
-      // Buscar métricas
-      const metricsResponse = await base44.functions.invoke('getRelatorioFollowUpMetricas', {
-        tipo: periodo,
-        data,
-      });
-
-      if (metricsResponse.data) {
-        setMetricas(metricsResponse.data);
+  // Buscar métricas e dados via getRelatorioFollowUpMetricas
+  const { data: relatorioData = {}, isLoading: loadingMetricas } = useQuery({
+    queryKey: ['relatorioCompleto', tipo, periodo, data, filters],
+    queryFn: async () => {
+      try {
+        const result = await base44.functions.invoke('getRelatorioFollowUpMetricas', {
+          tipo: tipo,
+          periodo: periodo,
+          data: data || new Date().toISOString().split('T')[0],
+          includeDetails: true,
+          filtros: filters
+        });
+        return result.data || { kpis: {}, linhas: [] };
+      } catch (error) {
+        console.error('Erro ao buscar relatório:', error);
+        return { kpis: { realizados: 0, pendentes: 0, taxaRealizacao: 0 }, linhas: [] };
       }
+    },
+    enabled: isOpen
+  });
 
-      // Buscar dados detalhados
-      const dadosResponse = await base44.entities.FollowUpConcluido.filter(
-        { consultor_id: user.id },
-        '-completedAt',
-        100
-      );
-
-      // Filtrar por data se for diário
-      let filtered = dadosResponse;
-      if (periodo === 'diario') {
-        filtered = filtered.filter(d => d.completedAt?.startsWith(data));
-      }
-
-      // Aplicar filtros
-      if (filtros.consultor) {
-        filtered = filtered.filter(d => d.consultor_id === filtros.consultor);
-      }
-      if (filtros.tipo) {
-        filtered = filtered.filter(d => d.tipo === filtros.tipo);
-      }
-
-      setDados(filtered);
-      setPagina(1);
-    } catch (error) {
-      console.error('Erro ao buscar dados:', error);
-      toast.error('Erro ao carregar relatório');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (!isOpen) return null;
-
-  const dadosPaginados = dados.slice(
-    (pagina - 1) * ITENS_POR_PAGINA,
-    pagina * ITENS_POR_PAGINA
-  );
-  const totalPaginas = Math.ceil(dados.length / ITENS_POR_PAGINA);
+  const metricas = relatorioData.kpis || { realizados: 0, pendentes: 0, taxaRealizacao: 0 };
+  const linhas = relatorioData.linhas || [];
+  const paginatedData = linhas.slice(page * itemsPerPage, (page + 1) * itemsPerPage);
+  const totalPages = Math.ceil(linhas.length / itemsPerPage);
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] flex flex-col">
-        {/* Header */}
-        <div className="sticky top-0 bg-gradient-to-r from-gray-50 to-gray-100 border-b p-4 flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-bold text-gray-900">
-              Relatório Detalhado - {tipo === 'riscos' ? '⚠️ Riscos & Oportunidades' : `📊 ${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`}
-            </h2>
-            <p className="text-xs text-gray-600 mt-1">Período: {periodo} | Data: {data}</p>
-          </div>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-          >
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="flex items-center justify-between">
+          <DialogTitle className="text-xl font-bold">
+            Relatório Detalhado - {tipo.toUpperCase()}
+          </DialogTitle>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
             <X className="w-5 h-5" />
           </button>
-        </div>
+        </DialogHeader>
 
-        {/* Conteúdo */}
-        <div className="flex-1 overflow-auto">
-          {loading ? (
-            <div className="flex items-center justify-center h-96">
-              <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+        <div className="space-y-6 p-4">
+          {/* Filtros */}
+          <Filtros 
+            filters={filters} 
+            onChange={(newFilters) => {
+              setFilters(newFilters);
+              setPage(0);
+            }} 
+          />
+
+          {/* KPIs */}
+          <KPIBar 
+            realizados={metricas.realizados || 0} 
+            pendentes={metricas.pendentes || 0} 
+            taxaRealizacao={metricas.taxaRealizacao || 0} 
+          />
+
+          {/* Tabela */}
+          {loadingMetricas ? (
+            <div className="flex justify-center py-12">
+              <WheelLoader size="md" text="Carregando dados..." />
             </div>
           ) : (
-            <div className="p-6 space-y-6">
-              {/* KPI Bar */}
-              <KPIBar metricas={metricas} />
-
-              {/* Filtros */}
-              <Filtros filtros={filtros} onFiltrosChange={setFiltros} />
-
-              {/* Tabela */}
-              <Tabela dados={dadosPaginados} />
-
+            <>
+              <Tabela dados={paginatedData} />
+              
               {/* Paginação */}
-              {totalPaginas > 1 && (
+              {totalPages > 1 && (
                 <div className="flex items-center justify-between border-t pt-4">
-                  <p className="text-sm text-gray-600">
-                    Página {pagina} de {totalPaginas} ({dados.length} registros)
-                  </p>
+                  <span className="text-sm text-gray-600">
+                    Página {page + 1} de {totalPages} ({linhas.length} registros)
+                  </span>
                   <div className="flex gap-2">
                     <button
-                      onClick={() => setPagina(p => Math.max(1, p - 1))}
-                      disabled={pagina === 1}
-                      className="px-3 py-1 text-sm border rounded disabled:opacity-50"
+                      onClick={() => setPage(Math.max(0, page - 1))}
+                      disabled={page === 0}
+                      className="px-3 py-1 border rounded text-sm hover:bg-gray-50 disabled:opacity-50"
                     >
                       Anterior
                     </button>
                     <button
-                      onClick={() => setPagina(p => Math.min(totalPaginas, p + 1))}
-                      disabled={pagina === totalPaginas}
-                      className="px-3 py-1 text-sm border rounded disabled:opacity-50"
+                      onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
+                      disabled={page === totalPages - 1}
+                      className="px-3 py-1 border rounded text-sm hover:bg-gray-50 disabled:opacity-50"
                     >
                       Próxima
                     </button>
                   </div>
                 </div>
               )}
-            </div>
+            </>
           )}
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
