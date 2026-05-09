@@ -112,33 +112,38 @@ Deno.serve(async (req) => {
        return Response.json({ error: 'Cálculo de métricas inválido' }, { status: 500 });
      }
 
-     // Buscar workshop_name para cada follow-up (relação N-1)
-     const followupsProntos = await Promise.all(concludidos.map(async (c) => {
-       let workshopName = c.workshop_name;
-       if (!workshopName && c.workshop_id) {
-         try {
-           const ws = await base44.entities.Workshop.filter({ id: c.workshop_id });
-           workshopName = ws[0]?.name || 'Desconhecido';
-         } catch {
-           workshopName = 'Desconhecido';
-         }
+     // Buscar workshop_names em bulk para performance
+     const workshopIds = [...new Set(concludidos.map(c => c.workshop_id).filter(Boolean))];
+     const workshopsMap = {};
+
+     if (workshopIds.length > 0) {
+       try {
+         const workshops = await Promise.all(
+           workshopIds.map(id => base44.entities.Workshop.filter({ id }).then(ws => ws[0]))
+         );
+         workshops.forEach((ws, idx) => {
+           if (ws) workshopsMap[workshopIds[idx]] = ws.name;
+         });
+       } catch (err) {
+         console.warn('Erro ao buscar workshops:', err);
        }
-       
-       return {
-         id: c.id,
-         completedAt: c.completedAt,
-         dataContato: c.dataContato,
-         workshop_name: workshopName,
-         consultor_nome: c.consultor_nome,
-         canal: c.canal,
-         resultado: c.resultado,
-         humor: c.humor || 'neutro',
-         engajamento: c.engajamento || 'Médio',
-         suporte: c.atendimento_tipo === 'cs' ? 'CS' : 'Consultor',
-         tipo: c.tipo === 'followup' ? 'Follow-up' : (c.tipo || 'Follow-up'),
-         observacoes: c.observacoes,
-         duracao: c.duracao || c.tempo_atendimento_minutos
-       };
+     }
+
+     // Mapear follow-ups com nomes de cliente
+     const followupsProntos = concludidos.map((c) => ({
+       id: c.id,
+       completedAt: c.completedAt,
+       dataContato: c.dataContato,
+       workshop_name: workshopsMap[c.workshop_id] || c.workshop_name || 'Desconhecido',
+       consultor_nome: c.consultor_nome,
+       canal: c.canal,
+       resultado: c.resultado,
+       humor: c.humor || 'neutro',
+       engajamento: c.engajamento || 'Médio',
+       suporte: c.atendimento_tipo === 'cs' ? 'CS' : 'Consultor',
+       tipo: c.tipo === 'followup' ? 'Follow-up' : (c.tipo || 'Follow-up'),
+       observacoes: c.observacoes,
+       duracao: c.duracao || c.tempo_atendimento_minutos
      }));
 
      // Retornar dados calculados + lista detalhada
