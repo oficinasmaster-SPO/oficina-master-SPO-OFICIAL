@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,7 +16,7 @@ import {
 import { format, isToday, parseISO } from "date-fns";
 import { toast } from "sonner";
 import { base44 } from "@/api/base44Client";
-import { useQueryClient, useQuery } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/AuthContext";
 import VisualizarAtaModal from "@/components/aceleracao/VisualizarAtaModal";
 import { useOperationalSync } from "@/hooks/useOperationalSync";
@@ -193,27 +193,18 @@ export default function IniciarAtendimentoModal({ followUp, cliente, onClose, on
     atas,
     workshop,
     workshopOwner: ownerEmployee,
+    allSprints,
     invalidate,
   } = useOperationalSync(followUp?.workshop_id, user?.id, user);
 
   // Alias para compatibilidade com código existente
   const allFollowUpsModal = allFollowUps;
 
-  // Query dos sprints do workshop para exibir Fase e Tarefa nos cards FUSp
-  const { data: sprintsMapModal = {} } = useQuery({
-    queryKey: ["sprints-modal-fusp", followUp?.workshop_id],
-    queryFn: async () => {
-      if (!followUp?.workshop_id) return {};
-      const sprints = await base44.entities.ConsultoriaSprint.filter(
-        { workshop_id: followUp.workshop_id },
-        "-updated_date",
-        50
-      );
-      return Object.fromEntries(sprints.map(s => [s.id, s]));
-    },
-    enabled: !!followUp?.workshop_id,
-    staleTime: 2 * 60 * 1000,
-  });
+  // Usar sprints já carregados pelo useOperationalSync (evita query duplicada → 429)
+  const sprintsMapModal = useMemo(
+    () => Object.fromEntries(allSprints.map(s => [s.id, s])),
+    [allSprints]
+  );
 
   const FASE_LABELS_MODAL = {
     Planning: "Planejamento",
