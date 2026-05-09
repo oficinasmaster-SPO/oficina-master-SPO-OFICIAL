@@ -166,6 +166,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
   const [activePanel, setActivePanel] = useState('atas');
   const [selectedSprintId, setSelectedSprintId] = useState(null);
   const [showClientSelector, setShowClientSelector] = useState(false);
+  const [clienteAtual, setClienteAtual] = useState(cliente);
 
   // States da aba IA
   const [dicaIA, setDicaIA] = useState(null);
@@ -274,6 +275,9 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
   // ── Carregador de cliente (sem follow-ups = cria atendimento ad-hoc) ──
   const carregarCliente = useCallback(async (clientData) => {
     try {
+      // Guardar cliente atual
+      setClienteAtual(clientData);
+      
       // Buscar primeiro follow-up pendente do cliente
       const followUps = await base44.entities.FollowUpReminder.filter({
         workshop_id: clientData.id,
@@ -919,11 +923,11 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
                className="flex items-center gap-3 px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors group min-w-fit"
              >
                <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center font-bold text-xs">
-                 {getInitials(cliente?.name || followUp?.workshop_name || "")}
+                 {getInitials(clienteAtual?.name || followUp?.workshop_name || "")}
                </div>
                <div className="text-left">
                  <p className="font-semibold text-sm group-hover:text-red-400 transition-colors">
-                   {cliente?.name || followUp?.workshop_name || "Selecionar cliente"}
+                   {clienteAtual?.name || followUp?.workshop_name || "Selecionar cliente"}
                  </p>
                  <p className="text-[10px] text-gray-400">Follow-up {followUp?.sequence_number}/4</p>
                </div>
