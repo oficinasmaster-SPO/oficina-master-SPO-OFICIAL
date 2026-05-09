@@ -83,10 +83,15 @@ Deno.serve(async (req) => {
     doc.setTextColor(0, 0, 0);
     yPos = 40;
 
-    // Título
+    // Título e Consultor
     doc.setFontSize(16);
     doc.text(`Relatório ${tipo.toUpperCase()} - ${new Date().toLocaleDateString('pt-BR')}`, 15, yPos);
-    yPos += 12;
+    yPos += 10;
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Consultor: ${user.full_name || user.email}`, 15, yPos);
+    yPos += 10;
+    doc.setTextColor(0, 0, 0);
 
     // KPIs
     doc.setFontSize(11);
@@ -143,19 +148,20 @@ Deno.serve(async (req) => {
           c.workshop_name || '—',
           c.canal || '—',
           c.resultado || '—',
-          c.observacoes ? c.observacoes.substring(0, 25) + '...' : '—'
+          c.consultor_nome || user.full_name || '—',
+          c.observacoes ? c.observacoes.substring(0, 20) + '...' : '—'
         ];
       });
 
       doc.autoTable({
         startY: yPos,
-        head: [['Data', 'Hora', 'Cliente', 'Canal', 'Resultado', 'Observações']],
+        head: [['Data', 'Hora', 'Cliente', 'Canal', 'Resultado', 'Consultor', 'Obs.']],
         body: tableData,
         margin: { left: 15, right: 15 },
         theme: 'grid',
         headStyles: { fillColor: [51, 51, 51], textColor: 255, fontSize: 9 },
         bodyStyles: { fontSize: 8 },
-        columnStyles: { 0: { cellWidth: 20 }, 1: { cellWidth: 18 }, 2: { cellWidth: 45 }, 3: { cellWidth: 28 }, 4: { cellWidth: 28 }, 5: { cellWidth: 35 } }
+        columnStyles: { 0: { cellWidth: 18 }, 1: { cellWidth: 16 }, 2: { cellWidth: 40 }, 3: { cellWidth: 24 }, 4: { cellWidth: 24 }, 5: { cellWidth: 35 }, 6: { cellWidth: 30 } }
       });
 
       yPos = doc.lastAutoTable.finalY + 10;
