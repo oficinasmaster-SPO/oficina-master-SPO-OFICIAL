@@ -128,29 +128,19 @@ export default function RelatorioDetailModal({ isOpen, onClose, tipo = 'diario',
           <KPIBar 
             realizados={metricas.realizados || 0} 
             pendentes={metricas.pendentes || 0} 
-            taxaRealizacao={metricas.taxaRealizacao || 0} 
+            pendentesNoPrazo={metricas.pendentesNoPrazo || 0}
+            taxaRealizacao={metricas.taxaRealizacao || 0}
+            taxaAtraso={metricas.taxaAtraso ?? null}
           />
 
-          {/* Barra de benchmark */}
-          {(tipo === 'diario' || tipo === 'semanal') && (
-            <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2.5 text-xs text-amber-800">
-              <span className="text-base leading-none mt-0.5">⚠️</span>
-              <span>Pendentes acumulados — use o <strong>Mensal</strong> para avaliar a saúde do ciclo de gestão.</span>
-            </div>
-          )}
-
-          {/* Régua de benchmark com marcador dinâmico */}
+          {/* Régua de benchmark com marcador dinâmico — usa taxaAtraso do backend (só vencidos) */}
           {(() => {
-            const total = (metricas.realizados || 0) + (metricas.pendentes || 0);
-            const taxaAtraso = total > 0 ? Math.round(((metricas.pendentes || 0) / total) * 100) : 0;
-            // A régua vai de 0% a 40%+ (acima de 40% fica no fim)
-            // Segmentos: 0-5% (verde, 12.5%), 5-10% (azul, 12.5%), 10-20% (amarelo, 25%), 20-40%+ (vermelho, 50%)
+            const taxaAtraso = metricas.taxaAtraso ?? 0;
             const posPercent = Math.min(taxaAtraso / 40 * 100, 98);
             return (
               <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
-                <p className="text-xs text-gray-500 font-medium mb-2">Régua de Saúde — Taxa de Atraso (pendentes / total)</p>
+                <p className="text-xs text-gray-500 font-medium mb-2">Régua de Saúde — Taxa de Atraso (vencidos / total do período)</p>
                 <div className="relative mb-5">
-                  {/* Seta + label dinâmica */}
                   <div
                     className="absolute -top-0.5 flex flex-col items-center"
                     style={{ left: `${posPercent}%`, transform: 'translateX(-50%)' }}
@@ -160,7 +150,6 @@ export default function RelatorioDetailModal({ isOpen, onClose, tipo = 'diario',
                       <polygon points="6,10 0,0 12,0" />
                     </svg>
                   </div>
-                  {/* Barra colorida */}
                   <div className="flex rounded-full overflow-hidden h-3 mt-5">
                     <div className="w-[12.5%] bg-green-400" />
                     <div className="w-[12.5%] bg-blue-400" />

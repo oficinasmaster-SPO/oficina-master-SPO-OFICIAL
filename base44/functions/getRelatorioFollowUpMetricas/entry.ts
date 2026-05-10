@@ -107,11 +107,25 @@ Deno.serve(async (req) => {
     const allConcluidos = Array.from(concluidosMap.values());
 
     // Métricas
+    // "today" para separar itens já vencidos dos ainda no prazo
+    const todayStr = new Date().toISOString().split('T')[0];
+
     const realizados = allConcluidos.length;
-    const pendentesItems = allReminders.filter(r => r.is_completed !== true);
-    const pendentes = pendentesItems.length;
-    const total = realizados + pendentes;
+    const allPendentesItems = allReminders.filter(r => r.is_completed !== true);
+
+    // Pendentes atrasados = prazo já passou (reminder_date < hoje)
+    const pendentesAtrasados = allPendentesItems.filter(r => (r.reminder_date || '') < todayStr);
+    // Pendentes no prazo = prazo ainda não chegou (reminder_date >= hoje)
+    const pendentesNoPrazo  = allPendentesItems.filter(r => (r.reminder_date || '') >= todayStr);
+
+    // "pendentes" para KPI = apenas os atrasados (é o que indica problema real)
+    const pendentesItems = pendentesAtrasados;
+    const pendentes = pendentesAtrasados.length;
+    const total = realizados + allPendentesItems.length; // total real do período
     const taxaRealizacao = total > 0 ? Math.round((realizados / total) * 100) : 0;
+
+    // Taxa de atraso correta: só conta vencidos sobre total do período
+    const taxaAtraso = total > 0 ? Math.round((pendentes / total) * 100) : 0;
 
     // Resolver nomes de workshops em bulk (uma query por ID único)
     const workshopIds = [...new Set([
@@ -160,8 +174,9 @@ Deno.serve(async (req) => {
       days_since_meeting: null
     }));
 
-    // Mapear pendentes
-    const followupsPendentes = pendentesItems.map((r) => ({
+    // Mapear pendentes — todos (atrasados + no prazo) para exibição na tabela
+    const followupsPendentes = allPendentesItems.map((r) => ({
+      atrasado: (r.reminder_date || '') < todayStr,
       id: r.id,
       status: 'pendente',
       completedAt: null,
@@ -194,7 +209,14 @@ Deno.serve(async (req) => {
     });
 
     return Response.json({
-      metricas: { realizados, pendentes, total, taxaRealizacao },
+      metricas: {
+        realizados,
+        pendentes,           // apenas atrasados (vencidos)
+        pendentesNoPrazo: pendentesNoPrazo.length, // no prazo (ainda não venceu)
+        total,
+        taxaRealizacao,
+        taxaAtraso           // % real de atraso (vencidos / total)
+      },
       followups: todosFollowups,
       tipo,
       periodo: periodo || null,

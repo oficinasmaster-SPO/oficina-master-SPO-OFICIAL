@@ -9,9 +9,10 @@ function getSaudeConfig(taxaAtraso) {
   return                       { label: 'Crítico',   cor: 'bg-red-100 text-red-800',    dot: 'bg-red-500' };
 }
 
-export default function KPIBar({ realizados = 0, pendentes = 0, taxaRealizacao = 0 }) {
-  const total = Math.max(0, Number(realizados) || 0) + Math.max(0, Number(pendentes) || 0);
-  const taxaAtraso = total > 0 ? Math.round((Math.max(0, Number(pendentes) || 0) / total) * 100) : 0;
+export default function KPIBar({ realizados = 0, pendentes = 0, pendentesNoPrazo = 0, taxaRealizacao = 0, taxaAtraso: taxaAtrasoProp = null }) {
+  const total = Math.max(0, Number(realizados) || 0) + Math.max(0, Number(pendentes) || 0) + Math.max(0, Number(pendentesNoPrazo) || 0);
+  // Usa taxaAtraso do backend se disponível (correta), senão calcula localmente como fallback
+  const taxaAtraso = taxaAtrasoProp !== null ? taxaAtrasoProp : (total > 0 ? Math.round((Math.max(0, Number(pendentes) || 0) / total) * 100) : 0);
   const saude = getSaudeConfig(taxaAtraso);
 
   const kpis = [
@@ -23,11 +24,12 @@ export default function KPIBar({ realizados = 0, pendentes = 0, taxaRealizacao =
       bg: 'bg-green-50'
     },
     {
-      label: 'Pendentes',
+      label: 'Pendentes Vencidos',
       valor: Math.max(0, Number(pendentes) || 0),
       icon: Clock,
       color: 'text-amber-600',
-      bg: 'bg-amber-50'
+      bg: 'bg-amber-50',
+      sub: pendentesNoPrazo > 0 ? `+ ${pendentesNoPrazo} no prazo` : null
     },
     {
       label: 'Taxa de Realização',
@@ -51,6 +53,7 @@ export default function KPIBar({ realizados = 0, pendentes = 0, taxaRealizacao =
               </div>
               <p className="text-sm text-gray-600 font-medium">{kpi.label}</p>
               <p className={`text-2xl font-bold ${kpi.color} mt-1`}>{kpi.valor}</p>
+              {kpi.sub && <p className="text-xs text-gray-400 mt-0.5">{kpi.sub}</p>}
               {kpi.isTaxa && total > 0 && (
                 <div className="mt-2 space-y-1">
                   <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold ${saude.cor}`}>
