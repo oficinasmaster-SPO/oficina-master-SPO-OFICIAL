@@ -231,7 +231,12 @@ Deno.serve(async (req) => {
           name: getName(c.id) || c.workshop_name,
           consultor_nome: c.consultor_nome,
           dias_followup_atrasado: c.pior_atraso,
-          detalhes: `${c.qtd_followups} FUP(s) em atraso`
+          detalhes: `${c.qtd_followups} FUP(s) em atraso`,
+          // Dados extras: data do FUP mais antigo (hoje - pior_atraso)
+          data_followup_mais_antigo: (() => {
+            const d = new Date(hoje.getTime() - c.pior_atraso * 24 * 60 * 60 * 1000);
+            return d.toISOString().split('T')[0];
+          })()
         }))
       },
       {
@@ -244,7 +249,10 @@ Deno.serve(async (req) => {
           id: c.workshop_id,
           name: getName(c.workshop_id),
           dias_restantes: 2 - Math.floor((hoje - new Date(c.activated_at)) / (1000 * 60 * 60 * 24)),
-          contrato_id: c.id
+          contrato_id: c.id,
+          data_ativacao: c.activated_at,
+          consultor_nome: c.consultor_nome || null,
+          plano: c.plan_type || null
         }))
       },
       {
@@ -258,7 +266,11 @@ Deno.serve(async (req) => {
           name: getName(a.workshop_id),
           tipo: a.tipo_atendimento,
           status: a.status,
-          data_agendada: a.data_agendada
+          data_agendada: a.data_agendada,
+          consultor_nome: a.consultor_nome || null,
+          dias_atrasado: a.data_agendada
+            ? Math.floor((hoje - new Date(a.data_agendada)) / (1000 * 60 * 60 * 24))
+            : null
         }))
       },
       {
@@ -272,8 +284,11 @@ Deno.serve(async (req) => {
           name: getName(p.workshop_id),
           titulo: p.titulo,
           prazo: p.prazo,
-          responsavel: p.responsavel_nome,
-          dias_atrasado: p.prazo ? Math.floor((hoje - new Date(p.prazo)) / (1000 * 60 * 60 * 24)) : 0
+          responsavel: p.responsavel_nome || null,
+          consultor_nome: p.consultor_id || null, // consultor_id como fallback — frontend pode resolver
+          dias_atrasado: p.prazo ? Math.floor((hoje - new Date(p.prazo)) / (1000 * 60 * 60 * 24)) : 0,
+          origem: p.origem || null,
+          status: p.status || null
         })),
         engajamento_cliente: true
       },
@@ -287,7 +302,11 @@ Deno.serve(async (req) => {
           id: c.workshop_id,
           name: getName(c.workshop_id),
           item: c.item_nome,
+          item_tipo: c.item_tipo || null,
+          fase: c.fase || null,
           dias_atrasado: Math.floor((hoje - new Date(c.data_termino_previsto)) / (1000 * 60 * 60 * 24)),
+          data_termino_previsto: c.data_termino_previsto,
+          data_inicio_real: c.data_inicio_real || null,
           status: c.status
         }))
       },
@@ -301,8 +320,11 @@ Deno.serve(async (req) => {
           id: c.workshop_id,
           name: getName(c.workshop_id),
           item: c.item_nome,
+          item_tipo: c.item_tipo || null,
+          fase: c.fase || null,
           dias_atrasado: Math.floor((hoje - new Date(c.data_termino_previsto)) / (1000 * 60 * 60 * 24)),
-          tipo: c.item_tipo
+          data_deveria_ter_iniciado: c.data_termino_previsto, // prazo que já venceu sem iniciar
+          data_criacao: c.created_date || null
         }))
       },
       {
@@ -315,9 +337,17 @@ Deno.serve(async (req) => {
           id: s.workshop_id,
           name: getName(s.workshop_id),
           sprint_title: s.title,
-          dias_atrasado: Math.floor((hoje - new Date(s.end_date)) / (1000 * 60 * 60 * 24)),
+          sprint_number: s.sprint_number,
           mission: s.mission_id,
-          sprint_number: s.sprint_number
+          dias_atrasado: Math.floor((hoje - new Date(s.end_date)) / (1000 * 60 * 60 * 24)),
+          end_date: s.end_date,
+          start_date: s.start_date || null,
+          last_activity_date: s.last_activity_date || null,
+          dias_sem_atividade: s.last_activity_date
+            ? Math.floor((hoje - new Date(s.last_activity_date)) / (1000 * 60 * 60 * 24))
+            : null,
+          consultor_id: s.consultor_id || null,
+          status: s.status
         })),
         engajamento_cliente: true
       }
