@@ -126,7 +126,17 @@ Deno.serve(async (req) => {
     const followupClientesUnicos = Object.values(followupPorCliente)
       .sort((a, b) => b.pior_atraso - a.pior_atraso);
 
-    // ── BATCH LOOKUP de workshops (apenas para entidades sem nome em cache) ──
+    // ── LOOKUP de workshops ──
+    const workshopsMap = {};
+
+    // 1. Pré-popular com nomes dos follow-ups (que já têm workshop_name em cache)
+    for (const [wsId, data] of Object.entries(followupPorCliente)) {
+      if (data.workshop_name && data.workshop_name !== wsId) {
+        workshopsMap[wsId] = data.workshop_name;
+      }
+    }
+
+    // 2. Coletar IDs que ainda não têm nome
     const wsIdsParaBuscar = [...new Set([
       ...contratos_sem_ata.map(c => c.workshop_id),
       ...atendimentos_atrasados.map(a => a.workshop_id),
@@ -135,44 +145,28 @@ Deno.serve(async (req) => {
       ...cronograma_nao_iniciado.map(c => c.workshop_id),
       ...sprints_atrasadas.map(s => s.workshop_id),
       ...(workshop_id ? [workshop_id] : [])
-    ].filter(Boolean))];
+    ].filter(Boolean))].filter(id => !workshopsMap[id]);
 
-    // Busca workshops em lotes de 50 para evitar limite de query
-    const workshopsMap = {};
-    
-    // Adicionar nomes dos follow-ups (que já têm workshop_name em cache)
-    for (const [wsId, data] of Object.entries(followupPorCliente)) {
-      if (data.workshop_name && data.workshop_name !== wsId) {
-        workshopsMap[wsId] = data.workshop_name;
-      }
-    }
-
-    // Buscar demais workshops por lote
-    const BATCH_SIZE = 50;
-    for (let i = 0; i < wsIdsParaBuscar.length; i += BATCH_SIZE) {
-      const batch = wsIdsParaBuscar.slice(i, i + BATCH_SIZE);
+    // 3. Buscar todos os workshops de uma vez (até 500) e mapear por ID
+    if (wsIdsParaBuscar.length > 0) {
       try {
-        const workshops = await base44.asServiceRole.entities.Workshop.list('', BATCH_SIZE);
-        // list retorna todos → filtrar pelo batch
-        workshops.forEach(w => {
-          if (batch.includes(w.id)) {
-            workshopsMap[w.id] = w.name || w.id;
-          }
+        const todosWorkshops = await base44.asServiceRole.entities.Workshop.list('name', 500);
+        todosWorkshops.forEach(w => {
+          if (w.id && w.name) workshopsMap[w.id] = w.name;
         });
       } catch (e) {
-        console.warn('Workshop batch lookup error:', e.message);
+        console.warn('Workshop lookup error:', e.message);
       }
-    }
 
-    // Se ainda tiver IDs sem nome, buscar individualmente
-    for (const wsId of wsIdsParaBuscar) {
-      if (!workshopsMap[wsId]) {
-        try {
-          const ws = await base44.asServiceRole.entities.Workshop.list('', 1000);
-          const found = ws.find(w => w.id === wsId);
-          if (found) workshopsMap[wsId] = found.name || wsId;
-        } catch (e) {
-          workshopsMap[wsId] = wsId;
+      // 4. Para IDs que ainda não foram resolvidos, buscar individualmente
+      for (const wsId of wsIdsParaBuscar) {
+        if (!workshopsMap[wsId]) {
+          try {
+            const ws = await base44.asServiceRole.entities.Workshop.get(wsId);
+            if (ws?.name) workshopsMap[wsId] = ws.name;
+          } catch (e) {
+            // mantém o ID como fallback
+          }
         }
       }
     }
