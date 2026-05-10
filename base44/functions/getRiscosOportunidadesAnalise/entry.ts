@@ -93,14 +93,25 @@ Deno.serve(async (req) => {
       cronogramaNaoIniciadoFilter, '-data_termino_previsto', 200
     );
 
-    // 7. Sprints em Atraso — calcula por data real (end_date < hoje e não completed)
-    const sprintsFilter = isGlobal
-      ? { status: { '$nin': ['completed'] }, end_date: { '$lt': hojeDate } }
-      : { workshop_id, status: { '$nin': ['completed'] }, end_date: { '$lt': hojeDate } };
+    // 7. Sprints em Atraso — combina: status=overdue OU (end_date vencido e não completed)
+    // Busca em duas passagens para cobrir ambos os casos
+    const sprintsOverdueFilter = isGlobal
+      ? { status: 'overdue' }
+      : { workshop_id, status: 'overdue' };
 
-    const sprints_atrasadas = await base44.asServiceRole.entities.ConsultoriaSprint.filter(
-      sprintsFilter, '-end_date', 500
-    );
+    const sprintsByDateFilter = isGlobal
+      ? { status: { '$nin': ['completed', 'overdue'] }, end_date: { '$lt': hojeDate } }
+      : { workshop_id, status: { '$nin': ['completed', 'overdue'] }, end_date: { '$lt': hojeDate } };
+
+    const [sprintsOverdue, sprintsByDate] = await Promise.all([
+      base44.asServiceRole.entities.ConsultoriaSprint.filter(sprintsOverdueFilter, '-end_date', 500),
+      base44.asServiceRole.entities.ConsultoriaSprint.filter(sprintsByDateFilter, '-end_date', 500).catch(() => [])
+    ]);
+
+    // Deduplicar por ID
+    const sprintsMap = new Map();
+    [...sprintsOverdue, ...sprintsByDate].forEach(s => sprintsMap.set(s.id, s));
+    const sprints_atrasadas = Array.from(sprintsMap.values());
 
     // ── DEDUPLICAR follow-ups por cliente (1 entrada por workshop) ──
     const followupPorCliente = {};
@@ -340,7 +351,10 @@ Deno.serve(async (req) => {
           : { workshop_id, status: { '$in': ['ativo', 'efetivado'] } },
         '', 1000
       );
-      totalClientesAtivos = totalAtivos.length;
+      // Deduplicar por workshop_id para contar clientes únicos ativos, não contratos
+      const workshopsAtivos = new Set(totalAtivos.map(c => c.workshop_id).filter(Boolean));
+      totalClientesAtivos = workshopsAtivos.size || totalAtivos.length;
+      console.log(`[getRiscosOportunidadesAnalise] Contratos ativos: ${totalAtivos.length}, Clientes únicos: ${totalClientesAtivos}`);
       if (totalClientesAtivos > 0) {
         taxaRisco = Math.round((clientesEmRiscoUnicos / totalClientesAtivos) * 100);
 
