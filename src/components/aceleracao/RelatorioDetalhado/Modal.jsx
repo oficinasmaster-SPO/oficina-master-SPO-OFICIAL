@@ -139,22 +139,44 @@ export default function RelatorioDetailModal({ isOpen, onClose, tipo = 'diario',
             </div>
           )}
 
-          {/* Régua de benchmark */}
-          <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
-            <p className="text-xs text-gray-500 font-medium mb-2">Régua de Saúde — Taxa de Atraso (pendentes / total)</p>
-            <div className="flex rounded-full overflow-hidden h-3">
-              <div className="flex-1 bg-green-400" title="Excelente: até 5%" />
-              <div className="flex-1 bg-blue-400"  title="Saudável: 5–10%" />
-              <div className="flex-1 bg-yellow-400" title="Atenção: 10–20%" />
-              <div className="flex-[2] bg-red-400"  title="Crítico: >20%" />
-            </div>
-            <div className="flex justify-between text-xs text-gray-500 mt-1">
-              <span>🟢 Excelente (≤5%)</span>
-              <span>🔵 Saudável (≤10%)</span>
-              <span>🟡 Atenção (≤20%)</span>
-              <span>🔴 Crítico (&gt;20%)</span>
-            </div>
-          </div>
+          {/* Régua de benchmark com marcador dinâmico */}
+          {(() => {
+            const total = (metricas.realizados || 0) + (metricas.pendentes || 0);
+            const taxaAtraso = total > 0 ? Math.round(((metricas.pendentes || 0) / total) * 100) : 0;
+            // A régua vai de 0% a 40%+ (acima de 40% fica no fim)
+            // Segmentos: 0-5% (verde, 12.5%), 5-10% (azul, 12.5%), 10-20% (amarelo, 25%), 20-40%+ (vermelho, 50%)
+            const posPercent = Math.min(taxaAtraso / 40 * 100, 98);
+            return (
+              <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+                <p className="text-xs text-gray-500 font-medium mb-2">Régua de Saúde — Taxa de Atraso (pendentes / total)</p>
+                <div className="relative mb-5">
+                  {/* Seta + label dinâmica */}
+                  <div
+                    className="absolute -top-0.5 flex flex-col items-center"
+                    style={{ left: `${posPercent}%`, transform: 'translateX(-50%)' }}
+                  >
+                    <span className="text-xs font-bold text-red-600 whitespace-nowrap">{taxaAtraso}% atraso</span>
+                    <svg width="12" height="10" viewBox="0 0 12 10" className="text-red-600 fill-red-600">
+                      <polygon points="6,10 0,0 12,0" />
+                    </svg>
+                  </div>
+                  {/* Barra colorida */}
+                  <div className="flex rounded-full overflow-hidden h-3 mt-5">
+                    <div className="w-[12.5%] bg-green-400" />
+                    <div className="w-[12.5%] bg-blue-400" />
+                    <div className="w-[25%] bg-yellow-400" />
+                    <div className="w-[50%] bg-red-400" />
+                  </div>
+                </div>
+                <div className="flex justify-between text-xs text-gray-500">
+                  <span>🟢 Excelente (≤5%)</span>
+                  <span>🔵 Saudável (≤10%)</span>
+                  <span>🟡 Atenção (≤20%)</span>
+                  <span>🔴 Crítico (&gt;20%)</span>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Tabela */}
           {loadingMetricas ? (
