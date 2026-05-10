@@ -183,11 +183,30 @@ export default function RelatoriosTab() {
   // Follow-ups gerados no período: usa o valor direto do backend (fonte da verdade)
   const followupsGeradosMes = metricas.totalGeradosPeriodo ?? 0;
 
-  // Taxa mensal: realizados / followups gerados × 100 (% de cobertura simples)
+  // Taxa mensal: índice de ritmo = realizados / esperado_até_hoje × 100
   const realizadosMes = metricas.realizados || 0;
-  const taxaMensalNova = followupsGeradosMes > 0
-    ? Math.round((realizadosMes / followupsGeradosMes) * 100)
-    : 0;
+
+  const calcIndiceRitmoMensal = (followupsGerados, realizados) => {
+    if (!followupsGerados || followupsGerados === 0) return 0;
+    const hoje = new Date();
+    const ano = hoje.getFullYear();
+    const mes = hoje.getMonth();
+    const totalDiasNoMes = new Date(ano, mes + 1, 0).getDate();
+    let diasUteisMes = 0;
+    for (let d = 1; d <= totalDiasNoMes; d++) {
+      if (isDiaUtil(ano, mes, d)) diasUteisMes++;
+    }
+    let diasUteisPassados = 0;
+    for (let d = 1; d <= hoje.getDate(); d++) {
+      if (isDiaUtil(ano, mes, d)) diasUteisPassados++;
+    }
+    if (diasUteisMes === 0 || diasUteisPassados === 0) return 0;
+    const esperadoAteHoje = (followupsGerados / diasUteisMes) * diasUteisPassados;
+    if (esperadoAteHoje === 0) return 0;
+    return Math.round((realizados / esperadoAteHoje) * 100);
+  };
+
+  const taxaMensalNova = calcIndiceRitmoMensal(followupsGeradosMes, realizadosMes);
 
   // Badge mensal com nova lógica de ritmo
   const badgeMensal = getSaudeBadgeMensal(followupsGeradosMes, realizadosMes);
