@@ -137,8 +137,9 @@ Deno.serve(async (req) => {
     const followupClientesUnicos = Object.values(followupPorCliente)
       .sort((a, b) => b.pior_atraso - a.pior_atraso);
 
-    // ── LOOKUP de workshops ──
-    const workshopsMap = {};
+    // ── LOOKUP de workshops + validação de plano elegível ──
+    const workshopsMap = {};      // wsId → nome
+    const workshopsPlanoMap = {}; // wsId → planoAtual
 
     // 1. Pré-popular com nomes dos follow-ups (que já têm workshop_name em cache)
     for (const [wsId, data] of Object.entries(followupPorCliente)) {
@@ -147,7 +148,35 @@ Deno.serve(async (req) => {
       }
     }
 
-    // 2. Coletar IDs que ainda não têm nome
+    // 2. Buscar planos com PlanAttendanceRule ativa (planos elegíveis)
+    let planosElegiveis = new Set();
+    try {
+      const planRules = await base44.asServiceRole.entities.PlanAttendanceRule.filter(
+        { is_active: true }, '', 500
+      );
+      planRules.forEach(r => { if (r.plan_id) planosElegiveis.add(r.plan_id); });
+    } catch (e) {
+      console.warn('PlanAttendanceRule lookup error:', e.message);
+    }
+    console.log(`[getRiscosOportunidadesAnalise] Planos elegíveis: ${[...planosElegiveis].join(',')}`);
+
+    // 3. Buscar todos os workshops ativos de uma vez e mapear nome + plano
+    try {
+      const workshopsFilter = isGlobal
+        ? { status: 'ativo', planStatus: { '$in': ['active', 'trial'] } }
+        : { id: workshop_id };
+      const todosWorkshops = await base44.asServiceRole.entities.Workshop.filter(workshopsFilter, 'name', 1000);
+      todosWorkshops.forEach(w => {
+        if (w.id && w.name && w.name.trim() !== '') {
+          workshopsMap[w.id] = w.name;
+          workshopsPlanoMap[w.id] = w.planoAtual;
+        }
+      });
+    } catch (e) {
+      console.warn('Workshop lookup error:', e.message);
+    }
+
+    // 4. Para IDs que ainda não foram resolvidos (registros órfãos/deletados), tentar busca individual
     const wsIdsParaBuscar = [...new Set([
       ...contratos_sem_ata.map(c => c.workshop_id),
       ...atendimentos_atrasados.map(a => a.workshop_id),
@@ -155,48 +184,40 @@ Deno.serve(async (req) => {
       ...cronograma_atrasado.map(c => c.workshop_id),
       ...cronograma_nao_iniciado.map(c => c.workshop_id),
       ...sprints_atrasadas.map(s => s.workshop_id),
-      ...(workshop_id ? [workshop_id] : [])
     ].filter(Boolean))].filter(id => !workshopsMap[id]);
 
-    // 3. Buscar todos os workshops de uma vez (até 500) e mapear por ID
-    if (wsIdsParaBuscar.length > 0) {
+    for (const wsId of wsIdsParaBuscar) {
       try {
-        const todosWorkshops = await base44.asServiceRole.entities.Workshop.list('name', 500);
-        todosWorkshops.forEach(w => {
-          if (w.id && w.name) workshopsMap[w.id] = w.name;
-        });
-      } catch (e) {
-        console.warn('Workshop lookup error:', e.message);
-      }
-
-      // 4. Para IDs que ainda não foram resolvidos, buscar individualmente
-      for (const wsId of wsIdsParaBuscar) {
-        if (!workshopsMap[wsId]) {
-          try {
-            const ws = await base44.asServiceRole.entities.Workshop.get(wsId);
-            if (ws?.name) workshopsMap[wsId] = ws.name;
-          } catch (e) {
-            // mantém o ID como fallback
-          }
+        const ws = await base44.asServiceRole.entities.Workshop.get(wsId);
+        if (ws?.name && ws.name.trim() !== '') {
+          workshopsMap[wsId] = ws.name;
+          workshopsPlanoMap[wsId] = ws.planoAtual;
         }
+      } catch (e) {
+        // workshop deletado/inexistente — descartado pelo filtro temNome/temPlanoElegivel
       }
     }
 
-    // Função que retorna nome real ou null se não resolvido
+    // Retorna nome real ou null se não resolvido
     const getName = (wsId) => {
       const nome = workshopsMap[wsId];
-      // Se não existe no mapa, ou o "nome" é o próprio ID (fallback anterior), retorna null
       if (!nome || nome === wsId) return null;
       return nome;
     };
 
-    // Helper: retorna true apenas se tiver nome real
+    // true apenas se tiver nome real E plano com atendimento/reunião
     const temNome = (wsId) => getName(wsId) !== null;
+    const temPlanoElegivel = (wsId) => {
+      const plano = workshopsPlanoMap[wsId];
+      return !!plano && planosElegiveis.has(plano);
+    };
+    // Combinado: nome resolvível + plano elegível
+    const elegivel = (wsId) => temNome(wsId) && temPlanoElegivel(wsId);
 
-    console.log(`[getRiscosOportunidadesAnalise] Workshops no cache: ${Object.keys(workshopsMap).length}`);
+    console.log(`[getRiscosOportunidadesAnalise] Workshops no cache: ${Object.keys(workshopsMap).length}, com plano elegível: ${Object.keys(workshopsPlanoMap).filter(id => temPlanoElegivel(id)).length}`);
 
-    // FUP atrasados — só clientes com nome real
-    const followupClientesUnicosComNome = followupClientesUnicos.filter(c => temNome(c.id));
+    // FUP atrasados — só clientes com nome real E plano elegível
+    const followupClientesUnicosComNome = followupClientesUnicos.filter(c => elegivel(c.id));
 
     const riscos = [
       {
@@ -219,7 +240,7 @@ Deno.serve(async (req) => {
         titulo: 'Recém Cadastrados sem Reunião',
         descricao: 'Contratos ativados recentemente sem ATA',
         severidade: 'critico',
-        clientes: contratos_sem_ata.filter(c => temNome(c.workshop_id)).map(c => ({
+        clientes: contratos_sem_ata.filter(c => elegivel(c.workshop_id)).map(c => ({
           id: c.workshop_id,
           name: getName(c.workshop_id),
           dias_restantes: 2 - Math.floor((hoje - new Date(c.activated_at)) / (1000 * 60 * 60 * 24)),
@@ -232,7 +253,7 @@ Deno.serve(async (req) => {
         titulo: 'Atendimentos Atrasados',
         descricao: 'Atendimentos não realizados no prazo',
         severidade: 'alto',
-        clientes: atendimentos_atrasados.filter(a => temNome(a.workshop_id)).map(a => ({
+        clientes: atendimentos_atrasados.filter(a => elegivel(a.workshop_id)).map(a => ({
           id: a.workshop_id,
           name: getName(a.workshop_id),
           tipo: a.tipo_atendimento,
@@ -246,7 +267,7 @@ Deno.serve(async (req) => {
         titulo: 'Próximos Passos Atrasados',
         descricao: 'Tarefas de ação com prazo vencido — responsabilidade do cliente',
         severidade: 'alto',
-        clientes: proximos_atrasados.filter(p => temNome(p.workshop_id)).map(p => ({
+        clientes: proximos_atrasados.filter(p => elegivel(p.workshop_id)).map(p => ({
           id: p.workshop_id,
           name: getName(p.workshop_id),
           titulo: p.titulo,
@@ -262,7 +283,7 @@ Deno.serve(async (req) => {
         titulo: 'Cronograma Atrasado',
         descricao: 'Itens do cronograma com prazo vencido',
         severidade: 'alto',
-        clientes: cronograma_atrasado.filter(c => temNome(c.workshop_id)).map(c => ({
+        clientes: cronograma_atrasado.filter(c => elegivel(c.workshop_id)).map(c => ({
           id: c.workshop_id,
           name: getName(c.workshop_id),
           item: c.item_nome,
@@ -276,7 +297,7 @@ Deno.serve(async (req) => {
         titulo: 'Cronograma não Iniciado',
         descricao: 'Itens que não foram iniciados e estão atrasados',
         severidade: 'alto',
-        clientes: cronograma_nao_iniciado.filter(c => temNome(c.workshop_id)).map(c => ({
+        clientes: cronograma_nao_iniciado.filter(c => elegivel(c.workshop_id)).map(c => ({
           id: c.workshop_id,
           name: getName(c.workshop_id),
           item: c.item_nome,
@@ -290,7 +311,7 @@ Deno.serve(async (req) => {
         titulo: 'Sprints em Atraso',
         descricao: 'Sprints de consultoria com data de fim vencida — responsabilidade do cliente',
         severidade: 'critico',
-        clientes: sprints_atrasadas.filter(s => temNome(s.workshop_id)).map(s => ({
+        clientes: sprints_atrasadas.filter(s => elegivel(s.workshop_id)).map(s => ({
           id: s.workshop_id,
           name: getName(s.workshop_id),
           sprint_title: s.title,
@@ -430,34 +451,19 @@ Deno.serve(async (req) => {
     }
 
     // ── TAXA DE RISCO GERAL ──
-    // Base: workshops ativos com plano que contempla atendimento (tem PlanAttendanceRule)
+    // Reusa workshopsMap e planosElegiveis já calculados acima
     let taxaRisco = 0;
     let totalClientesAtivos = 0;
     try {
-      // Buscar planos que têm pelo menos 1 regra de atendimento
-      const planRules = await base44.asServiceRole.entities.PlanAttendanceRule.filter(
-        { is_active: true }, '', 500
-      );
-      const planosComAtendimento = [...new Set(planRules.map(r => r.plan_id).filter(Boolean))];
+      // Contar workshops com nome resolvido + plano elegível (já estão no workshopsPlanoMap)
+      totalClientesAtivos = Object.keys(workshopsPlanoMap).filter(id =>
+        temNome(id) && planosElegiveis.has(workshopsPlanoMap[id])
+      ).length;
 
-      // Workshops ativos cujo plano está na lista
-      const workshopsAtivosArr = await base44.asServiceRole.entities.Workshop.filter(
-        isGlobal
-          ? { status: 'ativo', planStatus: { '$in': ['active', 'trial'] } }
-          : { id: workshop_id },
-        '', 1000
-      );
-
-      // Filtrar apenas os que têm plano com atendimento E nome resolvido no banco
-      const clientesComPlano = workshopsAtivosArr.filter(w =>
-        planosComAtendimento.includes(w.planoAtual) && w.name && w.name.trim() !== ''
-      );
-
-      totalClientesAtivos = clientesComPlano.length;
       if (totalClientesAtivos > 0) {
         taxaRisco = Math.min(100, Math.round((clientesEmRiscoUnicos / totalClientesAtivos) * 100));
       }
-      console.log(`[Taxa Risco] Planos com atendimento: ${planosComAtendimento.join(',')}, Clientes ativos: ${totalClientesAtivos}, Em risco: ${clientesEmRiscoUnicos}, Taxa: ${taxaRisco}%`);
+      console.log(`[Taxa Risco] Planos elegíveis: ${[...planosElegiveis].join(',')}, Clientes ativos: ${totalClientesAtivos}, Em risco: ${clientesEmRiscoUnicos}, Taxa: ${taxaRisco}%`);
     } catch (e) {
       console.warn('Taxa risco error:', e.message);
     }
