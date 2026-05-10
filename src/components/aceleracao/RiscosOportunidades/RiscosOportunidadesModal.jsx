@@ -48,22 +48,20 @@ export default function RiscosOportunidadesModal({ isOpen, onClose, workshopId }
     if (acao) acao();
   };
 
-  // Consolidar todos os clientes em risco com detalhes
+  // Consolidar clientes únicos com consultor extraído dos riscos de follow-up
   const clientesConsolidados = () => {
-    const map = {};
-    if (analise.consolidacao) {
-      Object.values(analise.consolidacao).forEach(cliente => {
-        if (!map[cliente.id]) {
-          map[cliente.id] = {
-            id: cliente.id,
-            name: cliente.name,
-            riscos: cliente.riscos || []
-          };
-        }
-      });
-      return Object.values(map);
-    }
-    return [];
+    if (!analise.consolidacao) return [];
+    return Object.values(analise.consolidacao).map(cliente => {
+      // Tentar extrair consultor do risco de followup
+      const riscoFUP = analise.riscos?.find(r => r.categoria === 'followup_atrasado');
+      const clienteFUP = riscoFUP?.clientes?.find(c => c.id === cliente.id);
+      return {
+        id: cliente.id,
+        name: cliente.name,
+        consultor: clienteFUP?.consultor_nome || '',
+        riscos: cliente.riscos || []
+      };
+    });
   };
 
   return (

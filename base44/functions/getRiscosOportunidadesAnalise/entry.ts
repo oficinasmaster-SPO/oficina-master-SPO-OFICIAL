@@ -130,19 +130,44 @@ Deno.serve(async (req) => {
     console.log(`[getRiscosOportunidadesAnalise] Workshops carregados: ${workshopsData.length}`);
     // ──────────────────────────────────────────────────────────
 
+    // ── DEDUPLICAR follow-ups por cliente (1 entrada por workshop) ──
+    const followupPorCliente = {};
+    for (const f of followupsAtrasados) {
+      const wsId = f.workshop_id;
+      const dias = Math.floor((hoje - new Date(f.reminder_date)) / (1000 * 60 * 60 * 24));
+      if (!followupPorCliente[wsId]) {
+        followupPorCliente[wsId] = {
+          id: wsId,
+          name: getName(wsId),
+          qtd_followups: 0,
+          pior_atraso: 0,
+          consultor_nome: f.consultor_nome || ''
+        };
+      }
+      followupPorCliente[wsId].qtd_followups += 1;
+      if (dias > followupPorCliente[wsId].pior_atraso) {
+        followupPorCliente[wsId].pior_atraso = dias;
+        followupPorCliente[wsId].consultor_nome = f.consultor_nome || followupPorCliente[wsId].consultor_nome;
+      }
+    }
+    const followupClientesUnicos = Object.values(followupPorCliente)
+      .sort((a, b) => b.pior_atraso - a.pior_atraso);
+    // ─────────────────────────────────────────────────────────────
+
     const riscos = [
       {
         id: 'followup_atrasado',
         categoria: 'followup_atrasado',
-        titulo: 'FollowUps Atrasados',
-        descricao: 'Follow-ups vencidos na fila CRM',
+        titulo: 'FUP Atrasados',
+        descricao: 'Clientes com follow-ups vencidos na fila CRM',
         severidade: 'critico',
-        total: followupsAtrasados.length,
-        clientes: followupsAtrasados.map(f => ({
-          id: f.workshop_id,
-          name: getName(f.workshop_id),
-          dias_atrasado: Math.floor((hoje - new Date(f.reminder_date)) / (1000 * 60 * 60 * 24)),
-          detalhes: f.message
+        total: followupClientesUnicos.length,
+        clientes: followupClientesUnicos.map(c => ({
+          id: c.id,
+          name: c.name,
+          consultor_nome: c.consultor_nome,
+          dias_followup_atrasado: c.pior_atraso,
+          detalhes: `${c.qtd_followups} FUP(s) em atraso`
         }))
       },
       {
