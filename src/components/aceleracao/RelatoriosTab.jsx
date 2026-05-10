@@ -104,7 +104,50 @@ export default function RelatoriosTab() {
     return semanas.size;
   };
 
-  // Badge de saúde para taxa de atraso
+  // Badge de saúde baseado em ritmo esperado vs realizado (Relatório Mensal)
+  const getSaudeBadgeMensal = (followupsGerados, realizados) => {
+    if (!followupsGerados || !realizados) return null;
+
+    // Calcular dia útil atual e dias úteis do mês
+    const hoje = new Date();
+    const anoMes = hoje.getFullYear();
+    const mes = hoje.getMonth();
+    const totalDiasNoMes = new Date(anoMes, mes + 1, 0).getDate();
+
+    // Conta dias úteis do mês inteiro
+    let diasUteisMes = 0;
+    for (let d = 1; d <= totalDiasNoMes; d++) {
+      const dow = new Date(anoMes, mes, d).getDay();
+      if (dow !== 0 && dow !== 6) diasUteisMes++;
+    }
+
+    // Conta dia útil atual (quantos dias úteis já passaram incluindo hoje)
+    let diaUtilAtual = 0;
+    for (let d = 1; d <= hoje.getDate(); d++) {
+      const dow = new Date(anoMes, mes, d).getDay();
+      if (dow !== 0 && dow !== 6) diaUtilAtual++;
+    }
+
+    if (diasUteisMes === 0 || diaUtilAtual === 0) return null;
+
+    // total_followups_mes = followupsGerados (meta do mês = total gerado até agora projetado)
+    // Usamos followupsGerados como total planejado e realizados como realizado
+    const esperado = (followupsGerados / diasUteisMes) * diaUtilAtual;
+    if (esperado === 0) return null;
+
+    const indiceRitmo = realizados / esperado;
+
+    // Exceção: primeiros 3 dias úteis → no máximo Atenção
+    const limitarCritico = diaUtilAtual <= 3;
+
+    if (indiceRitmo >= 1.0) return { label: 'Excelente', bg: 'bg-green-100 text-green-700' };
+    if (indiceRitmo >= 0.9) return { label: 'Saudável', bg: 'bg-blue-100 text-blue-700' };
+    if (indiceRitmo >= 0.7) return { label: 'Atenção', bg: 'bg-yellow-100 text-yellow-700' };
+    if (limitarCritico)     return { label: 'Atenção', bg: 'bg-yellow-100 text-yellow-700' };
+    return { label: 'Crítico', bg: 'bg-red-100 text-red-700' };
+  };
+
+  // Badge original para diário/semanal (mantém lógica anterior)
   const getSaudeBadge = (taxaAtraso) => {
     if (taxaAtraso === undefined || taxaAtraso === null) return null;
     if (taxaAtraso <= 5) return { label: 'Excelente', bg: 'bg-green-100 text-green-700' };
@@ -115,6 +158,24 @@ export default function RelatoriosTab() {
 
   const followups = metricas._followups || [];
   const totalGeral = (metricas.realizados || 0) + (metricas.pendentes || 0);
+
+  // Follow-ups gerados no mês atual (created_date dentro do mês)
+  const inicioMes = new Date();
+  inicioMes.setDate(1);
+  inicioMes.setHours(0, 0, 0, 0);
+  const followupsGeradosMes = followups.filter(f => {
+    const criado = new Date(f.created_date || f.reminder_date || '');
+    return !isNaN(criado) && criado >= inicioMes;
+  }).length;
+
+  // Taxa mensal: followups gerados / atendimentos realizados
+  const realizadosMes = metricas.realizados || 0;
+  const taxaMensalNova = realizadosMes > 0
+    ? Math.round((followupsGeradosMes / realizadosMes) * 100)
+    : 0;
+
+  // Badge mensal com nova lógica de ritmo
+  const badgeMensal = getSaudeBadgeMensal(followupsGeradosMes, realizadosMes);
 
   const relatorios = [
     {
@@ -146,8 +207,8 @@ export default function RelatoriosTab() {
       descricao: 'Mês completo',
       metricas: [
         { label: 'Total mês', valor: metricas.realizados, tipo: 'realizados' },
-        { label: 'Evolução semanal', valor: calcEvolucaoSemanal(followups), tipo: 'neutro' },
-        { label: 'Taxa mensal', valor: metricas.taxaRealizacao, tipo: 'taxa', taxaAtraso: metricas.taxaAtraso },
+        { label: 'Followups gerados', valor: followupsGeradosMes, tipo: 'neutro' },
+        { label: 'Taxa mensal', valor: taxaMensalNova, tipo: 'taxa_mensal', badgeMensal },
       ],
     },
     {
@@ -279,9 +340,9 @@ export default function RelatoriosTab() {
                     {rel.metricas.map((m, idx) => {
                       const isLoading = rel.isRiscos ? loadingRiscos : loadingMetricas;
                       const display = m.valor !== undefined && m.valor !== null
-                        ? (m.tipo === 'taxa' ? `${m.valor}%` : m.valor)
+                        ? (m.tipo === 'taxa' || m.tipo === 'taxa_mensal' ? `${m.valor}%` : m.valor)
                         : '—';
-                      const badge = m.tipo === 'taxa' ? getSaudeBadge(m.taxaAtraso) : null;
+                      const badge = m.tipo === 'taxa_mensal' ? m.badgeMensal : (m.tipo === 'taxa' ? getSaudeBadge(m.taxaAtraso) : null);
 
                       let bgClass = 'bg-gray-50';
                       let textClass = 'text-gray-900';
