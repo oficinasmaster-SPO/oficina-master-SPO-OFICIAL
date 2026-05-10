@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
-import { X, TrendingDown, Lightbulb, List } from 'lucide-react';
+import { X, TrendingDown, Users, List } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import RiscoCard from './RiscoCard';
 import ClientesRiscoTabela from './ClientesRiscoTabela';
+import ClientesAtivosTabela from './ClientesAtivosTabela';
 import WheelLoader from '@/components/ui/WheelLoader';
 
 // Card de estatística com cor baseada em nível (usa classes literais, Tailwind-safe)
@@ -95,9 +96,9 @@ export default function RiscosOportunidadesModal({ isOpen, onClose, workshopId }
           <div className="space-y-6 p-4">
             {/* Estatísticas */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-              <div className="bg-blue-50 border border-blue-300 rounded-lg p-4">
-                <p className="text-xs font-semibold text-blue-500 uppercase tracking-wide">Oportunidades</p>
-                <p className="text-3xl font-bold text-blue-700">{analise.estatisticas.total_oportunidades || 0}</p>
+              <div className="bg-blue-50 border border-blue-300 rounded-lg p-4 cursor-pointer hover:bg-blue-100 transition-colors" onClick={() => setActiveTab('oportunidades')}>
+                <p className="text-xs font-semibold text-blue-500 uppercase tracking-wide">Clientes Ativos</p>
+                <p className="text-3xl font-bold text-blue-700">{analise.estatisticas.total_clientes_ativos || 0}</p>
               </div>
               <div className="bg-red-50 border border-red-300 rounded-lg p-4">
                 <p className="text-xs font-semibold text-red-500 uppercase tracking-wide">Clientes em Risco</p>
@@ -138,8 +139,8 @@ export default function RiscosOportunidadesModal({ isOpen, onClose, workshopId }
                 onClick={() => setActiveTab('oportunidades')}
                 className="gap-2"
               >
-                <Lightbulb className="w-4 h-4" />
-                Oportunidades ({analise.oportunidades.length})
+                <Users className="w-4 h-4" />
+                Clientes Ativos ({analise.estatisticas.total_clientes_ativos || 0})
               </Button>
               
               {activeTab === 'riscos' && (
@@ -209,19 +210,7 @@ export default function RiscosOportunidadesModal({ isOpen, onClose, workshopId }
                   </div>
                 )
               ) : (
-                analise.oportunidades.length > 0 ? (
-                  analise.oportunidades.map((oport, idx) => (
-                    <div key={idx} className="bg-blue-50 border border-blue-300 rounded-lg p-4">
-                      <h3 className="font-bold text-blue-700">💡 {oport.titulo}</h3>
-                      <p className="text-sm text-gray-600 mt-1">{oport.descricao}</p>
-                      <p className="text-sm text-blue-600 mt-2 font-semibold">{oport.acao}</p>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center py-8 text-gray-500 border rounded-lg bg-gray-50">
-                    Nenhuma oportunidade identificada no momento.
-                  </div>
-                )
+                <ClientesAtivosTabela isOpen={isOpen && activeTab === 'oportunidades'} />
               )}
             </div>
           </div>
