@@ -30,7 +30,7 @@ export default function RelatoriosTab() {
   const [relatorioDetalhado, setRelatorioDetalhado] = useState({ isOpen: false, tipo: null });
   const [riscosOportunidadesOpen, setRiscosOportunidadesOpen] = useState(false);
   const [riscosData, setRiscosData] = useState({
-    total_oportunidades: 0,
+    total_clientes_ativos: 0,
     clientes_em_risco: 0,
     taxa_risco_percentual: 0
   });
@@ -156,7 +156,7 @@ export default function RelatoriosTab() {
       data: today,
       descricao: 'Análise de performance',
       metricas: [
-        { label: 'Oportunidades', valor: riscosData.total_oportunidades, tipo: 'neutro' },
+        { label: 'Clientes Ativos', valor: riscosData.total_clientes_ativos, tipo: 'neutro' },
         { label: 'Em Risco', valor: riscosData.clientes_em_risco, tipo: 'pendentes' },
         { label: 'Taxa de Risco', valor: riscosData.taxa_risco_percentual, tipo: 'taxa', taxaAtraso: riscosData.taxa_risco_percentual },
       ],

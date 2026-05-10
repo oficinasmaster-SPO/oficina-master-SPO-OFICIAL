@@ -425,17 +425,34 @@ Deno.serve(async (req) => {
     }
 
     // ── TAXA DE RISCO GERAL ──
+    // Base: workshops ativos com plano que contempla atendimento (tem PlanAttendanceRule)
     let taxaRisco = 0;
     let totalClientesAtivos = 0;
     try {
+      // Buscar planos que têm pelo menos 1 regra de atendimento
+      const planRules = await base44.asServiceRole.entities.PlanAttendanceRule.filter(
+        { is_active: true }, '', 500
+      );
+      const planosComAtendimento = [...new Set(planRules.map(r => r.plan_id).filter(Boolean))];
+
+      // Workshops ativos cujo plano está na lista
       const workshopsAtivosArr = await base44.asServiceRole.entities.Workshop.filter(
-        isGlobal ? { status: 'ativo' } : { id: workshop_id },
+        isGlobal
+          ? { status: 'ativo', planStatus: { '$in': ['active', 'trial'] } }
+          : { id: workshop_id },
         '', 1000
       );
-      totalClientesAtivos = workshopsAtivosArr.length;
+
+      // Filtrar apenas os que têm plano com atendimento
+      const clientesComPlano = workshopsAtivosArr.filter(w =>
+        planosComAtendimento.includes(w.planoAtual)
+      );
+
+      totalClientesAtivos = clientesComPlano.length;
       if (totalClientesAtivos > 0) {
         taxaRisco = Math.min(100, Math.round((clientesEmRiscoUnicos / totalClientesAtivos) * 100));
       }
+      console.log(`[Taxa Risco] Planos com atendimento: ${planosComAtendimento.join(',')}, Clientes ativos: ${totalClientesAtivos}, Em risco: ${clientesEmRiscoUnicos}, Taxa: ${taxaRisco}%`);
     } catch (e) {
       console.warn('Taxa risco error:', e.message);
     }
