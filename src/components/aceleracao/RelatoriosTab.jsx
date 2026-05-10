@@ -104,46 +104,42 @@ export default function RelatoriosTab() {
     return semanas.size;
   };
 
-  // Badge de saúde baseado em ritmo esperado vs realizado (Relatório Mensal)
+  // Badge de saúde baseado em ritmo: realizados vs esperado até hoje (por dias úteis passados)
   const getSaudeBadgeMensal = (followupsGerados, realizados) => {
-    if (!followupsGerados || !realizados) return null;
+    if (!followupsGerados || followupsGerados === 0) return null;
 
-    // Calcular dia útil atual e dias úteis do mês
     const hoje = new Date();
     const anoMes = hoje.getFullYear();
     const mes = hoje.getMonth();
     const totalDiasNoMes = new Date(anoMes, mes + 1, 0).getDate();
 
-    // Conta dias úteis do mês inteiro
+    // Dias úteis totais do mês
     let diasUteisMes = 0;
     for (let d = 1; d <= totalDiasNoMes; d++) {
       const dow = new Date(anoMes, mes, d).getDay();
       if (dow !== 0 && dow !== 6) diasUteisMes++;
     }
 
-    // Conta dia útil atual (quantos dias úteis já passaram incluindo hoje)
-    let diaUtilAtual = 0;
+    // Dias úteis já passados (incluindo hoje)
+    let diasUteisPassados = 0;
     for (let d = 1; d <= hoje.getDate(); d++) {
       const dow = new Date(anoMes, mes, d).getDay();
-      if (dow !== 0 && dow !== 6) diaUtilAtual++;
+      if (dow !== 0 && dow !== 6) diasUteisPassados++;
     }
 
-    if (diasUteisMes === 0 || diaUtilAtual === 0) return null;
+    if (diasUteisMes === 0 || diasUteisPassados === 0) return null;
 
-    // total_followups_mes = followupsGerados (meta do mês = total gerado até agora projetado)
-    // Usamos followupsGerados como total planejado e realizados como realizado
-    const esperado = (followupsGerados / diasUteisMes) * diaUtilAtual;
-    if (esperado === 0) return null;
+    // Média diária esperada × dias já passados = o que deveria ter sido feito até hoje
+    const mediaDiaria = followupsGerados / diasUteisMes;
+    const esperadoAteHoje = mediaDiaria * diasUteisPassados;
 
-    const indiceRitmo = realizados / esperado;
+    if (esperadoAteHoje === 0) return null;
 
-    // Exceção: primeiros 3 dias úteis → no máximo Atenção
-    const limitarCritico = diaUtilAtual <= 3;
+    const indiceRitmo = realizados / esperadoAteHoje;
 
     if (indiceRitmo >= 1.0) return { label: 'Excelente', bg: 'bg-green-100 text-green-700' };
     if (indiceRitmo >= 0.9) return { label: 'Saudável', bg: 'bg-blue-100 text-blue-700' };
     if (indiceRitmo >= 0.7) return { label: 'Atenção', bg: 'bg-yellow-100 text-yellow-700' };
-    if (limitarCritico)     return { label: 'Atenção', bg: 'bg-yellow-100 text-yellow-700' };
     return { label: 'Crítico', bg: 'bg-red-100 text-red-700' };
   };
 
@@ -162,10 +158,10 @@ export default function RelatoriosTab() {
   // Follow-ups gerados no período: usa o valor direto do backend (fonte da verdade)
   const followupsGeradosMes = metricas.totalGeradosPeriodo ?? 0;
 
-  // Taxa mensal: followups gerados / atendimentos realizados
+  // Taxa mensal: realizados / followups gerados × 100 (% de cobertura simples)
   const realizadosMes = metricas.realizados || 0;
-  const taxaMensalNova = realizadosMes > 0
-    ? Math.round((followupsGeradosMes / realizadosMes) * 100)
+  const taxaMensalNova = followupsGeradosMes > 0
+    ? Math.round((realizadosMes / followupsGeradosMes) * 100)
     : 0;
 
   // Badge mensal com nova lógica de ritmo
