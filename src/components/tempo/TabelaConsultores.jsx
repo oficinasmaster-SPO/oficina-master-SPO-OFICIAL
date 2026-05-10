@@ -45,16 +45,16 @@ export default function TabelaConsultores({ porConsultor, capacidadePeriodo }) {
                   <p className="text-sm font-semibold text-gray-900 truncate">{c.consultor_nome}</p>
                   <p className="text-xs text-gray-500">{c.clientes_count} clientes • {c.reunioes_count} reuniões • {c.followups_count} FUPs</p>
                 </div>
-                <div className="text-right ml-4 flex-shrink-0 flex items-center gap-2">
-                  <BadgeSaturacao consultor={c} capacidadePeriodo={capacidadePeriodo || 4800} />
-                  <div>
-                  <p className="text-base font-bold text-gray-900">{fmt(c.total_minutos)}</p>
+                <div className="ml-4 flex-shrink-0 flex flex-col items-end gap-1">
+                  <div className="flex items-center gap-2">
+                    <BadgeSaturacao consultor={c} capacidadePeriodo={capacidadePeriodo || 4800} />
+                    <p className="text-base font-bold text-gray-900">{fmt(c.total_minutos)}</p>
+                  </div>
                   <p className="text-xs text-gray-400">
                     <span className="text-blue-500">{fmt(c.minutos_reuniao)}</span>
                     {" + "}
                     <span className="text-orange-400">{fmt(c.minutos_followup)}</span>
                   </p>
-                  </div>
                 </div>
               </div>
               <BarPercent value={c.minutos_reuniao} total={c.total_minutos} color="bg-blue-400" />

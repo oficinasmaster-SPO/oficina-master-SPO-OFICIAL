@@ -16,20 +16,20 @@ const META_PLANO = {
 };
 
 export function useAlertas({ porCliente, porConsultor, periodo }) {
-  // Clientes sem atenção (sem contato há +7 dias, só relevante em período >= semana)
-  const clientesSemAtencao = (porCliente || []).filter(c => {
-    if (!c.ultimo_contato) return true;
-    const dias = Math.floor((Date.now() - new Date(c.ultimo_contato).getTime()) / (1000 * 60 * 60 * 24));
-    return dias > 7;
-  });
+  const clientesSemAtencao = React.useMemo(() => {
+    return (porCliente || []).filter(c => {
+      if (!c.ultimo_contato) return true;
+      const dias = Math.floor((Date.now() - new Date(c.ultimo_contato).getTime()) / (1000 * 60 * 60 * 24));
+      return dias > 7;
+    });
+  }, [porCliente]);
 
-  // Consultores saturados (total horas no período > capacidade proporcional)
   const fatorPeriodo = periodo === 'semana' ? 0.25 : periodo === 'trimestre' ? 3 : periodo === 'ano' ? 12 : 1;
-  const capacidadePeriodo = CAPACIDADE_HORAS_MES * fatorPeriodo * 60; // em minutos
+  const capacidadePeriodo = CAPACIDADE_HORAS_MES * fatorPeriodo * 60;
 
-  const consultoresSaturados = (porConsultor || []).filter(c =>
-    c.total_minutos > capacidadePeriodo
-  );
+  const consultoresSaturados = React.useMemo(() => {
+    return (porConsultor || []).filter(c => c.total_minutos > capacidadePeriodo);
+  }, [porConsultor, capacidadePeriodo]);
 
   return { clientesSemAtencao, consultoresSaturados, capacidadePeriodo };
 }

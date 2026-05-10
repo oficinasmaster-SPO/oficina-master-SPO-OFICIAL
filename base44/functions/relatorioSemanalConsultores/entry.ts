@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
     base44.asServiceRole.entities.User.list(),
     base44.asServiceRole.entities.Workshop.list(),
     base44.asServiceRole.entities.FollowUpConcluido.filter({
-      completedAt: { '$gte': dataInicioStr }
+      completedAt: { '$gte': dataInicioStr, '$lte': dataFimStr }
     }, '-completedAt', 5000).catch(() => []),
   ]);
 
@@ -79,10 +79,9 @@ Deno.serve(async (req) => {
   let emailsSent = 0;
   const erros = [];
 
-  await Promise.all(Object.entries(porConsultor).map(async ([, consultor]) => {
+  await Promise.all(Object.entries(porConsultor).map(async ([cId, consultor]) => {
     try {
     const ats = consultor.atendimentos;
-    const cId = Object.entries(porConsultor).find(([, v]) => v === consultor)?.[0];
     const realizados  = ats.filter(a => a.status === 'realizado').length;
     const agendados   = ats.filter(a => ['agendado', 'confirmado'].includes(a.status)).length;
     const faltaram    = ats.filter(a => a.status === 'faltou').length;
