@@ -176,7 +176,7 @@ Deno.serve(async (req) => {
       console.warn('Workshop lookup error:', e.message);
     }
 
-    // 4. Para IDs que ainda não foram resolvidos (registros órfãos/deletados), tentar busca individual
+    // 4. Para IDs que ainda não foram resolvidos (registros órfãos/deletados), tentar busca em paralelo
     const wsIdsParaBuscar = [...new Set([
       ...contratos_sem_ata.map(c => c.workshop_id),
       ...atendimentos_atrasados.map(a => a.workshop_id),
@@ -186,16 +186,21 @@ Deno.serve(async (req) => {
       ...sprints_atrasadas.map(s => s.workshop_id),
     ].filter(Boolean))].filter(id => !workshopsMap[id]);
 
-    for (const wsId of wsIdsParaBuscar) {
-      try {
-        const ws = await base44.asServiceRole.entities.Workshop.get(wsId);
-        if (ws?.name && ws.name.trim() !== '') {
-          workshopsMap[wsId] = ws.name;
-          workshopsPlanoMap[wsId] = ws.planoAtual;
+    // Paralelo em lotes de 10 para evitar sobrecarga
+    const BATCH_SIZE = 10;
+    for (let i = 0; i < wsIdsParaBuscar.length; i += BATCH_SIZE) {
+      const lote = wsIdsParaBuscar.slice(i, i + BATCH_SIZE);
+      await Promise.all(lote.map(async (wsId) => {
+        try {
+          const ws = await base44.asServiceRole.entities.Workshop.get(wsId);
+          if (ws?.name && ws.name.trim() !== '') {
+            workshopsMap[wsId] = ws.name;
+            workshopsPlanoMap[wsId] = ws.planoAtual;
+          }
+        } catch (e) {
+          // workshop deletado/inexistente — descartado pelo filtro temNome/temPlanoElegivel
         }
-      } catch (e) {
-        // workshop deletado/inexistente — descartado pelo filtro temNome/temPlanoElegivel
-      }
+      }));
     }
 
     // Retorna nome real ou null se não resolvido
