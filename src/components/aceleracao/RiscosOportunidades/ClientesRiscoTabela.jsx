@@ -49,7 +49,7 @@ export default function ClientesRiscoTabela({ clientes = [] }) {
     { key: 'd_sem_cont', label: 'D. S/ Cont.', title: 'Dias sem contato', center: true },
     { key: 'd_pp', label: 'D. S/ P. Passos', title: 'Dias com Próximos Passos atrasados', center: true },
     { key: 'd_sprints', label: 'D. S/ Sprints', title: 'Dias com Sprints atrasados', center: true },
-    { key: 'd_spo', label: 'D. S/ SPO', title: 'Dias sem onboarding (contrato sem ATA)', center: true },
+    { key: 'd_spo', label: 'D. S/ SPO', title: 'Dias Sem Acesso ao SPO', center: true },
     { key: 'd_cron', label: 'D. Cron. Atr.', title: 'Dias de Cronograma Atrasado', center: true },
     { key: 'd_backlog', label: 'D. Backlog Atr.', title: 'Dias com Backlog Atrasado', center: true },
     { key: 'd_fup', label: 'D. Follow-up Atr.', title: 'Dias com Follow-up Atrasado', center: true },
@@ -121,7 +121,7 @@ export default function ClientesRiscoTabela({ clientes = [] }) {
         </tbody>
       </table>
       <div className="px-3 py-2 bg-gray-50 border-t text-xs text-gray-400">
-        D. = Dias · S/ = Sem · Atr. = Atrasado · SPO = Sem Onboarding · P.Passos = Próximos Passos · — = sem dados
+        D. = Dias · S/ = Sem · Atr. = Atrasado · SPO = Sistema/Plataforma Oficina · P.Passos = Próximos Passos · — = sem dados
       </div>
     </div>
   );
