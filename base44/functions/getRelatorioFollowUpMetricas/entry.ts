@@ -17,7 +17,6 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Data inválida' }, { status: 400 });
     }
 
-    // Admins veem todos os consultores; não-admins veem apenas os próprios
     const isAdmin = user.role === 'admin';
     const filtroConsultor = consultor_id || (!isAdmin ? user.id : null);
 
@@ -31,7 +30,7 @@ Deno.serve(async (req) => {
     } else if (tipo === 'semanal') {
       const [y, m, d] = refDate.split('-').map(Number);
       const ref = new Date(y, m - 1, d);
-      const dow = ref.getDay(); // 0=Dom
+      const dow = ref.getDay();
       const weekStart = new Date(ref);
       weekStart.setDate(ref.getDate() - dow);
       const weekEnd = new Date(weekStart);
@@ -60,7 +59,6 @@ Deno.serve(async (req) => {
       endDate = `${year}-12-31`;
     }
 
-    // Buscar dados — admin usa asServiceRole para ver todos
     const entityClient = isAdmin ? base44.asServiceRole.entities : base44.entities;
 
     const reminderFilter = { reminder_date: { '$gte': startDate, '$lte': endDate } };
@@ -83,8 +81,10 @@ Deno.serve(async (req) => {
     const total = realizados + pendentes;
     const taxaRealizacao = total > 0 ? Math.round((realizados / total) * 100) : 0;
 
-    // Buscar workshop names em bulk
-    const workshopIds = [...new Set(allConcluidos.map(c => c.workshop_id).filter(Boolean))];
+    // Buscar workshop names em bulk (para realizados e pendentes)
+    const workshopIdsConcluidos = allConcluidos.map(c => c.workshop_id).filter(Boolean);
+    const workshopIdsReminders = allReminders.map(r => r.workshop_id).filter(Boolean);
+    const workshopIds = [...new Set([...workshopIdsConcluidos, ...workshopIdsReminders])];
     const workshopsMap = {};
 
     if (workshopIds.length > 0) {
@@ -100,10 +100,14 @@ Deno.serve(async (req) => {
       }
     }
 
-    const followupsProntos = allConcluidos.map((c) => ({
+    // Mapear realizados
+    const followupsRealizados = allConcluidos.map((c) => ({
       id: c.id,
+      status: 'realizado',
       completedAt: c.completedAt,
       dataContato: c.dataContato,
+      reminder_date: null,
+      workshop_id: c.workshop_id,
       workshop_name: workshopsMap[c.workshop_id] || c.workshop_name || 'Desconhecido',
       consultor_nome: c.consultor_nome,
       canal: c.canal,
@@ -111,14 +115,45 @@ Deno.serve(async (req) => {
       humor: c.humor || 'neutro',
       engajamento: c.engajamento || 'Médio',
       suporte: c.atendimento_tipo === 'cs' ? 'CS' : 'Consultor',
-      tipo: c.tipo === 'followup' ? 'Follow-up' : (c.tipo || 'Follow-up'),
+      tipo: 'Follow-up',
       observacoes: c.observacoes,
       duracao: c.duracao || c.tempo_atendimento_minutos
     }));
 
+    // Mapear pendentes (FollowUpReminder não concluídos)
+    const followupsPendentes = allReminders
+      .filter(r => r.is_completed !== true)
+      .map((r) => ({
+        id: r.id,
+        status: 'pendente',
+        completedAt: null,
+        dataContato: null,
+        reminder_date: r.reminder_date,
+        workshop_id: r.workshop_id,
+        workshop_name: workshopsMap[r.workshop_id] || r.workshop_name || 'Desconhecido',
+        consultor_nome: r.consultor_nome,
+        canal: null,
+        resultado: null,
+        humor: null,
+        engajamento: null,
+        suporte: 'Consultor',
+        tipo: 'Follow-up',
+        observacoes: r.message || null,
+        duracao: null,
+        sequence_number: r.sequence_number,
+        days_since_meeting: r.days_since_meeting
+      }));
+
+    // Combinar e ordenar por data desc
+    const todosFollowups = [...followupsRealizados, ...followupsPendentes].sort((a, b) => {
+      const dateA = a.completedAt || a.reminder_date || '';
+      const dateB = b.completedAt || b.reminder_date || '';
+      return dateB.localeCompare(dateA);
+    });
+
     return Response.json({
       metricas: { realizados, pendentes, total, taxaRealizacao },
-      followups: followupsProntos,
+      followups: todosFollowups,
       tipo,
       periodo,
       data: refDate,

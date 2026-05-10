@@ -46,7 +46,17 @@ export default function RelatorioDetailModal({ isOpen, onClose, tipo = 'diario',
    });
 
   const metricas = relatorioData.metricas || { realizados: 0, pendentes: 0, taxaRealizacao: 0 };
-  const linhas = relatorioData.followups || [];
+  const todasLinhas = relatorioData.followups || [];
+
+  // Aplicar filtros de status e canal no frontend
+  const linhas = todasLinhas.filter(row => {
+    const statusOk = !filters.status || filters.status === 'todos'
+      ? true
+      : filters.status === 'realizado' ? row.status === 'realizado' : row.status === 'pendente';
+    const canalOk = !filters.tipo || row.canal === filters.tipo;
+    return statusOk && canalOk;
+  });
+
   const paginatedData = linhas.slice(page * itemsPerPage, (page + 1) * itemsPerPage);
   const totalPages = Math.ceil((linhas.length || 1) / itemsPerPage);
 

@@ -46,6 +46,11 @@ const formatHora = (dateString) => {
   }
 };
 
+const statusBadge = {
+  'realizado': 'bg-green-50 text-green-700 border border-green-200',
+  'pendente': 'bg-orange-50 text-orange-700 border border-orange-200'
+};
+
 export default function Tabela({ dados = [], expandObservacoes = false }) {
   const [selectedObservacao, setSelectedObservacao] = useState(null);
 
@@ -66,7 +71,7 @@ export default function Tabela({ dados = [], expandObservacoes = false }) {
           <div className="col-span-1">Hora</div>
           <div className="col-span-2">Oficina</div>
           <div className="col-span-1">Consultor</div>
-          <div className="col-span-1">Tipo</div>
+          <div className="col-span-1">Status</div>
           <div className="col-span-1">Canal</div>
           <div className="col-span-1">Resultado</div>
           <div className="col-span-1">Humor</div>
@@ -79,19 +84,21 @@ export default function Tabela({ dados = [], expandObservacoes = false }) {
       {/* Dados */}
       <div className="space-y-1 border border-t-0 border-gray-200 rounded-b-lg divide-y">
         {dados.map((row, idx) => (
-          <div key={row.id || `row-${idx}`} className="bg-white hover:bg-gray-50 transition-colors">
+          <div key={row.id || `row-${idx}`} className={`transition-colors ${row.status === 'pendente' ? 'bg-orange-50/30 hover:bg-orange-50/50' : 'bg-white hover:bg-gray-50'}`}>
             {/* Linha Principal */}
             <div className="grid grid-cols-14 gap-1 p-3 text-sm items-center print:grid-cols-12">
               <div className="col-span-1 font-medium text-gray-900 whitespace-nowrap text-xs">
-                {formatData(row.completedAt || row.dataContato)}
+                {formatData(row.completedAt || row.dataContato || row.reminder_date)}
               </div>
               <div className="col-span-1 font-medium text-gray-900 whitespace-nowrap text-xs">
-                {formatHora(row.completedAt || row.dataContato)}
+                {row.completedAt || row.dataContato ? formatHora(row.completedAt || row.dataContato) : '—'}
               </div>
               <div className="col-span-2 text-gray-700 font-medium text-xs truncate">{row.workshop_name || '-'}</div>
               <div className="col-span-1 text-xs text-gray-600 truncate">{row.consultor_nome || '-'}</div>
               <div className="col-span-1">
-                <span className="text-xs bg-gray-100 rounded px-2 py-1 whitespace-nowrap">{row.tipo || 'Follow-up'}</span>
+                <span className={`text-xs rounded px-2 py-1 whitespace-nowrap font-medium ${statusBadge[row.status] || 'bg-gray-100 text-gray-700'}`}>
+                  {row.status === 'pendente' ? '⏳ Pendente' : '✓ Realizado'}
+                </span>
               </div>
               <div className="col-span-1">
                 <span className="text-xs bg-gray-100 rounded px-2 py-1 whitespace-nowrap">{row.canal || 'N/A'}</span>
