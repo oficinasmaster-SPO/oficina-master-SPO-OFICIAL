@@ -65,7 +65,8 @@ import {
   Network,
   AlertCircle,
   HelpCircle,
-  UserPlus
+  UserPlus,
+  Clock
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import TenantSelector from "./TenantSelector";
@@ -827,6 +828,15 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           href: createPageUrl('RelatoriosAceleracao'), 
           icon: FileText,
           description: 'Testes, diagnósticos e desempenho',
+          globalAdminOnly: true,
+          aceleradorOnly: true,
+          requiredPermission: 'acceleration.manage'
+        },
+        { 
+          name: '⏱️ Tempo de Atenção', 
+          href: createPageUrl('DashboardTempoAtencao'), 
+          icon: Clock,
+          description: 'Horas dedicadas por consultor e cliente',
           globalAdminOnly: true,
           aceleradorOnly: true,
           requiredPermission: 'acceleration.manage'
