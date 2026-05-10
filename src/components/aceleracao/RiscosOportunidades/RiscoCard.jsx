@@ -32,13 +32,17 @@ const engajamentoConfig = {
   critico:  { label: '🔴 Crítico',  bar: 'bg-red-500',   text: 'text-red-700',   bg: 'bg-red-50 border-red-200' }
 };
 
-export default function RiscoCard({ risco, onAcao, engajamentoStatus, taxaEngajamento, totalAtivos }) {
+export default function RiscoCard({ risco, onAcao, engajamentoStatus, taxaEngajamento, totalAtivos, desengajados }) {
   const [expanded, setExpanded] = useState(false);
   const config = severidadeConfig[risco.severidade] || severidadeConfig.medio;
   const Icon = config.icon;
 
   const showEngajamento = risco.engajamento_cliente && engajamentoStatus && taxaEngajamento !== undefined;
   const engConf = showEngajamento ? (engajamentoConfig[engajamentoStatus.nivel] || engajamentoConfig.saudavel) : null;
+
+  // Label de contexto diferente para PP vs Sprints
+  const isSprints = risco.categoria === 'sprints_atrasadas';
+  const isPP = risco.categoria === 'proximos_passos_atrasados';
 
   return (
     <div className={`border-2 rounded-lg p-4 ${config.color}`}>
@@ -65,7 +69,9 @@ export default function RiscoCard({ risco, onAcao, engajamentoStatus, taxaEngaja
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <Users className={`w-4 h-4 ${engConf.text}`} />
-              <span className={`text-xs font-semibold ${engConf.text}`}>Engajamento do Cliente</span>
+              <span className={`text-xs font-semibold ${engConf.text}`}>
+                {isSprints ? 'Engajamento nas Sprints' : 'Cumprimento de Prazo'}
+              </span>
             </div>
             <span className={`text-xs font-bold ${engConf.text}`}>{engajamentoStatus.label} — {taxaEngajamento}%</span>
           </div>
@@ -77,12 +83,15 @@ export default function RiscoCard({ risco, onAcao, engajamentoStatus, taxaEngaja
           </div>
           <div className="flex justify-between text-xs text-gray-500 mt-1">
             <span>Saudável ≤15%</span>
-            <span>Alerta 15-25%</span>
-            <span>Crítico &gt;25%</span>
+            <span>Alerta ≤40%</span>
+            <span>Crítico &gt;40%</span>
           </div>
           {totalAtivos > 0 && (
             <p className="text-xs text-gray-500 mt-1">
-              {risco.total} de {totalAtivos} clientes ativos com atraso
+              {isSprints
+                ? `${desengajados || 0} de ${totalAtivos} clientes sem atividade nos últimos 7 dias`
+                : `${desengajados || 0} de ${totalAtivos} clientes com PP possuem prazo vencido`
+              }
             </p>
           )}
         </div>

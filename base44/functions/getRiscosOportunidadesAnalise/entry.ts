@@ -340,44 +340,114 @@ Deno.serve(async (req) => {
 
     const clientesEmRiscoUnicos = Object.keys(clientesMap).length;
 
-    // Taxa de risco + Taxa de engajamento do cliente
+    // ── TAXA PRÓXIMOS PASSOS ──
+    // Base: clientes que têm PELO MENOS 1 próximo passo (atrasado ou não)
+    // Métrica: % de clientes com PP atrasado / total de clientes com PP
+    let taxaProximosPassos = 0;
+    let totalClientesComPP = 0;
+    let clientesComPPAtrasado = 0;
+    try {
+      const todosPPFilter = isGlobal
+        ? { status: { '$nin': ['finalizado', 'cancelado'] } }
+        : { workshop_id, status: { '$nin': ['finalizado', 'cancelado'] } };
+
+      const todosPP = await base44.asServiceRole.entities.ConsultoriaProximoPasso.filter(
+        todosPPFilter, '', 1000
+      );
+
+      // Clientes únicos que TÊM pelo menos 1 PP ativo
+      const clientesComPPSet = new Set(todosPP.map(p => p.workshop_id).filter(Boolean));
+      totalClientesComPP = clientesComPPSet.size;
+
+      // Clientes únicos que têm PP atrasado
+      const clientesPPAtrasadoSet = new Set(proximos_atrasados.map(p => p.workshop_id).filter(Boolean));
+      clientesComPPAtrasado = clientesPPAtrasadoSet.size;
+
+      if (totalClientesComPP > 0) {
+        taxaProximosPassos = Math.min(100, Math.round((clientesComPPAtrasado / totalClientesComPP) * 100));
+      }
+      console.log(`[PP] Total com PP: ${totalClientesComPP}, Atrasados: ${clientesComPPAtrasado}, Taxa: ${taxaProximosPassos}%`);
+    } catch (e) {
+      console.warn('Taxa PP error:', e.message);
+    }
+
+    // ── TAXA SPRINTS ENGAJAMENTO ──
+    // Base: clientes que têm sprint ativa (não completed)
+    // Desengajado = sem last_activity_date OU last_activity_date há mais de 7 dias
+    // Métrica: % de clientes desengajados / total de clientes com sprint ativa
+    let taxaSprintsDesengajamento = 0;
+    let totalClientesComSprint = 0;
+    let clientesSprintDesengajados = 0;
+    try {
+      const seteDiasAtras = new Date(hoje.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+      const sprintsAtivasFilter = isGlobal
+        ? { status: { '$nin': ['completed'] } }
+        : { workshop_id, status: { '$nin': ['completed'] } };
+
+      const sprintsAtivas = await base44.asServiceRole.entities.ConsultoriaSprint.filter(
+        sprintsAtivasFilter, '', 1000
+      );
+
+      // Uma sprint ativa por workshop — pegar a mais recente por workshop
+      const sprintPorWorkshop = {};
+      for (const s of sprintsAtivas) {
+        if (!s.workshop_id) continue;
+        if (!sprintPorWorkshop[s.workshop_id]) {
+          sprintPorWorkshop[s.workshop_id] = s;
+        } else {
+          // Manter a sprint com last_activity_date mais recente (ou a mais nova)
+          const existente = sprintPorWorkshop[s.workshop_id];
+          const dataExistente = existente.last_activity_date ? new Date(existente.last_activity_date) : new Date(0);
+          const dataAtual = s.last_activity_date ? new Date(s.last_activity_date) : new Date(0);
+          if (dataAtual > dataExistente) {
+            sprintPorWorkshop[s.workshop_id] = s;
+          }
+        }
+      }
+
+      totalClientesComSprint = Object.keys(sprintPorWorkshop).length;
+
+      // Desengajado: sem atividade nos últimos 7 dias
+      for (const [wsId, sprint] of Object.entries(sprintPorWorkshop)) {
+        const ultimaAtividade = sprint.last_activity_date ? new Date(sprint.last_activity_date) : null;
+        if (!ultimaAtividade || ultimaAtividade < seteDiasAtras) {
+          clientesSprintDesengajados++;
+        }
+      }
+
+      if (totalClientesComSprint > 0) {
+        taxaSprintsDesengajamento = Math.min(100, Math.round((clientesSprintDesengajados / totalClientesComSprint) * 100));
+      }
+      console.log(`[Sprints] Total com sprint ativa: ${totalClientesComSprint}, Desengajados (+7d): ${clientesSprintDesengajados}, Taxa: ${taxaSprintsDesengajamento}%`);
+    } catch (e) {
+      console.warn('Taxa sprints error:', e.message);
+    }
+
+    // ── TAXA DE RISCO GERAL ──
     let taxaRisco = 0;
-    let taxaEngajamentoCliente = 0;
     let totalClientesAtivos = 0;
     try {
-      // Usa Workshops ativos como base de clientes — mais confiável que contratos
       const workshopsAtivosArr = await base44.asServiceRole.entities.Workshop.filter(
-        isGlobal
-          ? { status: 'ativo' }
-          : { id: workshop_id },
+        isGlobal ? { status: 'ativo' } : { id: workshop_id },
         '', 1000
       );
       totalClientesAtivos = workshopsAtivosArr.length;
-      console.log(`[getRiscosOportunidadesAnalise] Workshops ativos: ${totalClientesAtivos}`);
-
       if (totalClientesAtivos > 0) {
         taxaRisco = Math.min(100, Math.round((clientesEmRiscoUnicos / totalClientesAtivos) * 100));
-
-        // Clientes únicos com sprint ou próximo passo atrasado
-        const clientesEngajamentoSet = new Set([
-          ...sprints_atrasadas.map(s => s.workshop_id),
-          ...proximos_atrasados.map(p => p.workshop_id)
-        ].filter(Boolean));
-        taxaEngajamentoCliente = Math.min(100, Math.round((clientesEngajamentoSet.size / totalClientesAtivos) * 100));
       }
     } catch (e) {
       console.warn('Taxa risco error:', e.message);
     }
 
-    // Determinar severidade do engajamento do cliente
-    const getEngajamentoStatus = (taxa) => {
+    // Severidade por taxa
+    const getSeveridade = (taxa) => {
       if (taxa <= 15) return { label: 'Saudável', nivel: 'saudavel' };
-      if (taxa <= 25) return { label: 'Alerta', nivel: 'alerta' };
+      if (taxa <= 40) return { label: 'Alerta', nivel: 'alerta' };
       return { label: 'Crítico', nivel: 'critico' };
     };
-    const engajamentoStatus = getEngajamentoStatus(taxaEngajamentoCliente);
 
-    console.log(`[getRiscosOportunidadesAnalise] FINAL: ${riscos.length} categorias, ${clientesEmRiscoUnicos} clientes únicos em risco, taxa ${taxaRisco}%`);
+    console.log(`[getRiscosOportunidadesAnalise] FINAL: ${riscos.length} categorias, ${clientesEmRiscoUnicos} clientes únicos em risco, taxa geral ${taxaRisco}%`);
 
     return Response.json({
       riscos,
@@ -386,10 +456,21 @@ Deno.serve(async (req) => {
         clientes_em_risco: clientesEmRiscoUnicos,
         total_oportunidades: oportunidades.length,
         taxa_risco_percentual: taxaRisco,
-        taxa_engajamento_cliente: taxaEngajamentoCliente,
-        engajamento_status: engajamentoStatus,
         total_clientes_ativos: totalClientesAtivos,
-        modo: isGlobal ? 'global' : 'individual'
+        modo: isGlobal ? 'global' : 'individual',
+        // Métricas separadas por card
+        proximos_passos: {
+          taxa_atraso: taxaProximosPassos,
+          total_com_pp: totalClientesComPP,
+          clientes_atrasados: clientesComPPAtrasado,
+          severidade: getSeveridade(taxaProximosPassos)
+        },
+        sprints: {
+          taxa_desengajamento: taxaSprintsDesengajamento,
+          total_com_sprint: totalClientesComSprint,
+          clientes_desengajados: clientesSprintDesengajados,
+          severidade: getSeveridade(taxaSprintsDesengajamento)
+        }
       },
       consolidacao: clientesMap
     });

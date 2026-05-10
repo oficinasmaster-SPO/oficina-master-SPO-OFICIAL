@@ -97,27 +97,44 @@ export default function RiscosOportunidadesModal({ isOpen, onClose, workshopId }
                 <p className="text-xs font-semibold text-purple-500 uppercase tracking-wide">Taxa de Risco</p>
                 <p className="text-3xl font-bold text-purple-700">{analise.estatisticas.taxa_risco_percentual || 0}%</p>
               </div>
-              <div className={`border rounded-lg p-4 ${
-                (analise.estatisticas.taxa_engajamento_cliente || 0) <= 15 ? 'bg-green-50 border-green-300' :
-                (analise.estatisticas.taxa_engajamento_cliente || 0) <= 25 ? 'bg-yellow-50 border-yellow-300' :
-                'bg-red-50 border-red-300'
-              }`}>
-                <p className={`text-xs font-semibold uppercase tracking-wide ${
-                  (analise.estatisticas.taxa_engajamento_cliente || 0) <= 15 ? 'text-green-600' :
-                  (analise.estatisticas.taxa_engajamento_cliente || 0) <= 25 ? 'text-yellow-600' :
-                  'text-red-600'
-                }`}>Engajamento Cliente</p>
-                <p className={`text-3xl font-bold ${
-                  (analise.estatisticas.taxa_engajamento_cliente || 0) <= 15 ? 'text-green-700' :
-                  (analise.estatisticas.taxa_engajamento_cliente || 0) <= 25 ? 'text-yellow-700' :
-                  'text-red-700'
-                }`}>{analise.estatisticas.taxa_engajamento_cliente || 0}%</p>
-                <p className={`text-xs font-medium mt-1 ${
-                  (analise.estatisticas.taxa_engajamento_cliente || 0) <= 15 ? 'text-green-600' :
-                  (analise.estatisticas.taxa_engajamento_cliente || 0) <= 25 ? 'text-yellow-600' :
-                  'text-red-600'
-                }`}>{analise.estatisticas.engajamento_status?.label || '—'}</p>
-              </div>
+              {/* PP Atrasados */}
+              {(() => {
+                const pp = analise.estatisticas?.proximos_passos;
+                const taxa = pp?.taxa_atraso || 0;
+                const nivel = pp?.severidade?.nivel || (taxa <= 15 ? 'saudavel' : taxa <= 40 ? 'alerta' : 'critico');
+                const colors = nivel === 'saudavel' ? 'bg-green-50 border-green-300 text-green-600 text-green-700' :
+                               nivel === 'alerta' ? 'bg-yellow-50 border-yellow-300 text-yellow-600 text-yellow-700' :
+                               'bg-red-50 border-red-300 text-red-600 text-red-700';
+                const [bg, border, labelColor, valColor] = colors.split(' ');
+                return (
+                  <div className={`${bg} ${border} border rounded-lg p-4`}>
+                    <p className={`text-xs font-semibold uppercase tracking-wide ${labelColor}`}>PP em Atraso</p>
+                    <p className={`text-3xl font-bold ${valColor}`}>{taxa}%</p>
+                    <p className={`text-xs font-medium mt-1 ${labelColor}`}>
+                      {pp?.clientes_atrasados || 0}/{pp?.total_com_pp || 0} clientes · {pp?.severidade?.label || '—'}
+                    </p>
+                  </div>
+                );
+              })()}
+              {/* Sprints Desengajamento */}
+              {(() => {
+                const sp = analise.estatisticas?.sprints;
+                const taxa = sp?.taxa_desengajamento || 0;
+                const nivel = sp?.severidade?.nivel || (taxa <= 15 ? 'saudavel' : taxa <= 40 ? 'alerta' : 'critico');
+                const colors = nivel === 'saudavel' ? 'bg-green-50 border-green-300 text-green-600 text-green-700' :
+                               nivel === 'alerta' ? 'bg-yellow-50 border-yellow-300 text-yellow-600 text-yellow-700' :
+                               'bg-red-50 border-red-300 text-red-600 text-red-700';
+                const [bg, border, labelColor, valColor] = colors.split(' ');
+                return (
+                  <div className={`${bg} ${border} border rounded-lg p-4`}>
+                    <p className={`text-xs font-semibold uppercase tracking-wide ${labelColor}`}>Sprints Sem Ação</p>
+                    <p className={`text-3xl font-bold ${valColor}`}>{taxa}%</p>
+                    <p className={`text-xs font-medium mt-1 ${labelColor}`}>
+                      {sp?.clientes_desengajados || 0}/{sp?.total_com_sprint || 0} sem atividade +7d · {sp?.severidade?.label || '—'}
+                    </p>
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Abas */}
@@ -167,16 +184,39 @@ export default function RiscosOportunidadesModal({ isOpen, onClose, workshopId }
                 viewType === 'tabela' ? (
                   <ClientesRiscoTabela clientes={clientesConsolidados()} />
                 ) : analise.riscos.length > 0 ? (
-                  analise.riscos.map((risco) => (
-                    <RiscoCard
-                      key={risco.id}
-                      risco={risco}
-                      onAcao={handleAcao}
-                      engajamentoStatus={risco.engajamento_cliente ? analise.estatisticas?.engajamento_status : null}
-                      taxaEngajamento={risco.engajamento_cliente ? analise.estatisticas?.taxa_engajamento_cliente : null}
-                      totalAtivos={analise.estatisticas?.total_clientes_ativos || 0}
-                    />
-                  ))
+                  analise.riscos.map((risco) => {
+                    // Determinar métricas específicas por tipo de card
+                    let engajamentoStatus = null;
+                    let taxaEngajamento = null;
+                    let totalBase = 0;
+                    let desengajados = 0;
+
+                    if (risco.categoria === 'proximos_passos_atrasados') {
+                      const pp = analise.estatisticas?.proximos_passos;
+                      engajamentoStatus = pp?.severidade;
+                      taxaEngajamento = pp?.taxa_atraso;
+                      totalBase = pp?.total_com_pp || 0;
+                      desengajados = pp?.clientes_atrasados || 0;
+                    } else if (risco.categoria === 'sprints_atrasadas') {
+                      const sp = analise.estatisticas?.sprints;
+                      engajamentoStatus = sp?.severidade;
+                      taxaEngajamento = sp?.taxa_desengajamento;
+                      totalBase = sp?.total_com_sprint || 0;
+                      desengajados = sp?.clientes_desengajados || 0;
+                    }
+
+                    return (
+                      <RiscoCard
+                        key={risco.id}
+                        risco={risco}
+                        onAcao={handleAcao}
+                        engajamentoStatus={engajamentoStatus}
+                        taxaEngajamento={taxaEngajamento}
+                        totalAtivos={totalBase}
+                        desengajados={desengajados}
+                      />
+                    );
+                  })
                 ) : (
                   <div className="text-center py-8 text-gray-500 border rounded-lg bg-green-50">
                     ✅ Nenhum risco identificado. Situação controlada!
