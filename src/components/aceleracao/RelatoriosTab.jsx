@@ -104,32 +104,57 @@ export default function RelatoriosTab() {
     return semanas.size;
   };
 
-  // Badge de saúde baseado em ritmo: realizados vs esperado até hoje (por dias úteis passados)
+  // Feriados nacionais fixos brasileiros (MM-DD)
+  const FERIADOS_NACIONAIS_FIXOS = [
+    '01-01', // Ano Novo
+    '04-21', // Tiradentes
+    '05-01', // Dia do Trabalho
+    '09-07', // Independência
+    '10-12', // Nossa Senhora Aparecida
+    '11-02', // Finados
+    '11-15', // Proclamação da República
+    '11-20', // Consciência Negra
+    '12-25', // Natal
+  ];
+
+  const isFeriadoNacional = (ano, mes, dia) => {
+    const mmdd = `${String(mes + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+    return FERIADOS_NACIONAIS_FIXOS.includes(mmdd);
+  };
+
+  const isDiaUtil = (ano, mes, dia) => {
+    const dow = new Date(ano, mes, dia).getDay();
+    if (dow === 0 || dow === 6) return false; // fim de semana
+    if (isFeriadoNacional(ano, mes, dia)) return false; // feriado
+    return true;
+  };
+
+  // Badge de saúde baseado em ritmo: realizados vs esperado até hoje (por dias úteis passados, excluindo feriados)
   const getSaudeBadgeMensal = (followupsGerados, realizados) => {
     if (!followupsGerados || followupsGerados === 0) return null;
 
     const hoje = new Date();
-    const anoMes = hoje.getFullYear();
+    const ano = hoje.getFullYear();
     const mes = hoje.getMonth();
-    const totalDiasNoMes = new Date(anoMes, mes + 1, 0).getDate();
+    const totalDiasNoMes = new Date(ano, mes + 1, 0).getDate();
 
-    // Dias úteis totais do mês
+    // Dias úteis totais do mês (excluindo feriados)
     let diasUteisMes = 0;
     for (let d = 1; d <= totalDiasNoMes; d++) {
-      const dow = new Date(anoMes, mes, d).getDay();
-      if (dow !== 0 && dow !== 6) diasUteisMes++;
+      if (isDiaUtil(ano, mes, d)) diasUteisMes++;
     }
 
-    // Dias úteis já passados (incluindo hoje)
+    // Dias úteis já passados até hoje exclusive (hoje é domingo = não conta)
     let diasUteisPassados = 0;
-    for (let d = 1; d <= hoje.getDate(); d++) {
-      const dow = new Date(anoMes, mes, d).getDay();
-      if (dow !== 0 && dow !== 6) diasUteisPassados++;
+    for (let d = 1; d < hoje.getDate(); d++) {
+      if (isDiaUtil(ano, mes, d)) diasUteisPassados++;
     }
+    // Se hoje é dia útil, conta também
+    if (isDiaUtil(ano, mes, hoje.getDate())) diasUteisPassados++;
 
     if (diasUteisMes === 0 || diasUteisPassados === 0) return null;
 
-    // Média diária esperada × dias já passados = o que deveria ter sido feito até hoje
+    // média diária × dias úteis passados = esperado até hoje
     const mediaDiaria = followupsGerados / diasUteisMes;
     const esperadoAteHoje = mediaDiaria * diasUteisPassados;
 
