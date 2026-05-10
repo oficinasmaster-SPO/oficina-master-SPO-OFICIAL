@@ -65,16 +65,13 @@ export default function RelatoriosTab() {
     buscarMetricas();
   }, [periodoSelecionado, dataSelecionada]);
 
-  // Buscar dados de riscos quando modal abrir
+  // Buscar dados de riscos quando modal abrir — modo GLOBAL
   useEffect(() => {
-    if (riscosOportunidadesOpen && user?.data?.workshop_id) {
+    if (riscosOportunidadesOpen) {
       const buscarRiscos = async () => {
         setLoadingRiscos(true);
         try {
-          const response = await base44.functions.invoke('getRiscosOportunidadesAnalise', {
-            workshop_id: user.data.workshop_id
-          });
-
+          const response = await base44.functions.invoke('getRiscosOportunidadesAnalise', {});
           if (response.data?.estatisticas) {
             setRiscosData(response.data.estatisticas);
           }
@@ -84,10 +81,9 @@ export default function RelatoriosTab() {
           setLoadingRiscos(false);
         }
       };
-
       buscarRiscos();
     }
-  }, [riscosOportunidadesOpen, user?.data?.workshop_id]);
+  }, [riscosOportunidadesOpen]);
 
   const relatorios = [
     {
@@ -337,13 +333,11 @@ export default function RelatoriosTab() {
         data={dataSelecionada}
       />
 
-      {user?.data?.workshop_id && (
-        <RiscosOportunidadesModal
-          isOpen={riscosOportunidadesOpen}
-          onClose={() => setRiscosOportunidadesOpen(false)}
-          workshopId={user.data.workshop_id}
-        />
-      )}
+      <RiscosOportunidadesModal
+        isOpen={riscosOportunidadesOpen}
+        onClose={() => setRiscosOportunidadesOpen(false)}
+        workshopId={null}
+      />
     </div>
   );
 }
