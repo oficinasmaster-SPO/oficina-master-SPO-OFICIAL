@@ -131,6 +131,31 @@ export default function RelatorioDetailModal({ isOpen, onClose, tipo = 'diario',
             taxaRealizacao={metricas.taxaRealizacao || 0} 
           />
 
+          {/* Barra de benchmark */}
+          {(tipo === 'diario' || tipo === 'semanal') && (
+            <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2.5 text-xs text-amber-800">
+              <span className="text-base leading-none mt-0.5">⚠️</span>
+              <span>Pendentes acumulados — use o <strong>Mensal</strong> para avaliar a saúde do ciclo de gestão.</span>
+            </div>
+          )}
+
+          {/* Régua de benchmark */}
+          <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+            <p className="text-xs text-gray-500 font-medium mb-2">Régua de Saúde — Taxa de Atraso (pendentes / total)</p>
+            <div className="flex rounded-full overflow-hidden h-3">
+              <div className="flex-1 bg-green-400" title="Excelente: até 5%" />
+              <div className="flex-1 bg-blue-400"  title="Saudável: 5–10%" />
+              <div className="flex-1 bg-yellow-400" title="Atenção: 10–20%" />
+              <div className="flex-[2] bg-red-400"  title="Crítico: >20%" />
+            </div>
+            <div className="flex justify-between text-xs text-gray-500 mt-1">
+              <span>🟢 Excelente (≤5%)</span>
+              <span>🔵 Saudável (≤10%)</span>
+              <span>🟡 Atenção (≤20%)</span>
+              <span>🔴 Crítico (&gt;20%)</span>
+            </div>
+          </div>
+
           {/* Tabela */}
           {loadingMetricas ? (
             <div className="flex justify-center py-12">
