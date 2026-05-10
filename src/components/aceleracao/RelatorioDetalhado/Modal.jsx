@@ -10,25 +10,39 @@ import Filtros from './Filtros';
 import WheelLoader from '@/components/ui/WheelLoader';
 
 export default function RelatorioDetailModal({ isOpen, onClose, tipo = 'diario', periodo = 'mensal', data }) {
-  const [filters, setFilters] = useState({ consultor: null, tipo: null, status: 'realizado' });
+  const [filters, setFilters] = useState({ consultor: null, canal: null, status: 'todos' });
   const [expandObservacoes, setExpandObservacoes] = useState(false);
   const [page, setPage] = useState(0);
   const itemsPerPage = 10;
   const referenceDate = data || new Date().toISOString().split('T')[0];
 
+  // Bug #7 fix: reset page e filtros ao abrir modal
+  useEffect(() => {
+    if (isOpen) {
+      setPage(0);
+      setFilters({ consultor: null, canal: null, status: 'todos' });
+      setExpandObservacoes(false);
+    }
+  }, [isOpen, tipo]);
+
   // Buscar métricas e dados
    const { data: relatorioData = { metricas: {}, followups: [] }, isLoading: loadingMetricas } = useQuery({
-     queryKey: ['relatorioCompleto', tipo, periodo, referenceDate, filters],
+     // Bug fix: queryKey só depende de consultor (filtros de status/canal são client-side)
+     queryKey: ['relatorioCompleto', tipo, periodo, referenceDate, filters.consultor],
      queryFn: async () => {
        if (!isOpen) return { metricas: {}, followups: [] };
        try {
          // Chamar função backend que retorna métricas + dados detalhados
-         const response = await base44.functions.invoke('getRelatorioFollowUpMetricas', {
+         // Bug #1/#2 fix: diario e semanal não precisam de periodo
+         const payload = {
            tipo,
            data: referenceDate,
-           periodo,
            consultor_id: filters.consultor || null
-         });
+         };
+         if (tipo !== 'diario' && tipo !== 'semanal') {
+           payload.periodo = periodo;
+         }
+         const response = await base44.functions.invoke('getRelatorioFollowUpMetricas', payload);
 
          if (response.data?.followups) {
            const { metricas, followups } = response.data;
@@ -48,12 +62,15 @@ export default function RelatorioDetailModal({ isOpen, onClose, tipo = 'diario',
   const metricas = relatorioData.metricas || { realizados: 0, pendentes: 0, taxaRealizacao: 0 };
   const todasLinhas = relatorioData.followups || [];
 
-  // Aplicar filtros de status e canal no frontend
+  // Bug #4/#6 fix: filtros corretos — canal não exclui pendentes; status 'todos' é o padrão
   const linhas = todasLinhas.filter(row => {
     const statusOk = !filters.status || filters.status === 'todos'
       ? true
-      : filters.status === 'realizado' ? row.status === 'realizado' : row.status === 'pendente';
-    const canalOk = !filters.tipo || row.canal === filters.tipo;
+      : filters.status === 'realizado'
+        ? row.status === 'realizado'
+        : row.status === 'pendente';
+    // Bug #6: filtro de canal só aplica a realizados (pendentes não têm canal)
+    const canalOk = !filters.canal || row.status === 'pendente' || row.canal === filters.canal;
     return statusOk && canalOk;
   });
 
@@ -65,7 +82,7 @@ export default function RelatorioDetailModal({ isOpen, onClose, tipo = 'diario',
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader className="flex items-center justify-between">
           <DialogTitle className="text-xl font-bold">
-            Relatório Detalhado - {tipo.toUpperCase()}
+           Relatório Detalhado — {tipo === 'diario' ? 'Diário' : tipo === 'semanal' ? 'Semanal' : (periodo || 'Mensal').charAt(0).toUpperCase() + (periodo || 'Mensal').slice(1)}
           </DialogTitle>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
             <X className="w-5 h-5" />

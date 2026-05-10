@@ -45,8 +45,9 @@ export default function RelatoriosTab() {
     const buscarMetricas = async () => {
       setLoadingMetricas(true);
       try {
+        // Bug #2 fix: buscar métricas sempre com periodo (não tipo) para os cards da aba
         const response = await base44.functions.invoke('getRelatorioFollowUpMetricas', {
-          tipo: periodoSelecionado,
+          tipo: 'mensal', // cards usam período, não diário/semanal
           data: dataSelecionada,
           periodo: periodoSelecionado,
         });
@@ -237,7 +238,9 @@ export default function RelatoriosTab() {
                       const chave = rel.metricasChave[idx];
                       const isLoading = rel.isRiscos ? loadingRiscos : loadingMetricas;
                       const valor = rel.isRiscos ? riscosData[chave] : metricas[chave];
-                      const display = valor !== undefined ? (chave === 'taxa_risco_percentual' ? `${valor}%` : valor) : '—';
+                      // Bug #5 fix: exibir % para todas as taxas
+                      const isTaxa = chave === 'taxaRealizacao' || chave === 'taxa_risco_percentual';
+                      const display = valor !== undefined ? (isTaxa ? `${valor}%` : valor) : '—';
                       return (
                         <div key={idx} className="bg-gray-50 rounded p-2 text-center">
                           <p className="text-xs text-gray-600">{metrica}</p>
