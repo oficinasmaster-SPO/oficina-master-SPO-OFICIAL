@@ -145,7 +145,7 @@ export default function RelatoriosTab() {
       data: `${today.substring(0, 7)}-01`,
       descricao: 'Mês completo',
       metricas: [
-        { label: 'Total mês', valor: totalGeral, tipo: 'total' },
+        { label: 'Total mês', valor: metricas.realizados, tipo: 'realizados' },
         { label: 'Evolução semanal', valor: calcEvolucaoSemanal(followups), tipo: 'neutro' },
         { label: 'Taxa mensal', valor: metricas.taxaRealizacao, tipo: 'taxa', taxaAtraso: metricas.taxaAtraso },
       ],
