@@ -168,7 +168,7 @@ export default function RiscosOportunidadesModal({ isOpen, onClose, workshopId }
             <div className="space-y-4">
               {activeTab === 'riscos' ? (
                 viewType === 'tabela' ? (
-                  <ClientesRiscoTabela clientes={clientesConsolidados()} />
+                  <ClientesRiscoTabela clientes={clientesConsolidados()} riscos={analise.riscos} />
                 ) : analise.riscos.length > 0 ? (
                   analise.riscos.map((risco) => {
                     // Determinar métricas específicas por tipo de card
