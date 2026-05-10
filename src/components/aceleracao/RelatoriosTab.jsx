@@ -134,8 +134,8 @@ export default function RelatoriosTab() {
       data: weekStart.toISOString().split('T')[0],
       descricao: `Semana ${Math.ceil((new Date().getDate()) / 7)}`,
       metricas: [
-        { label: 'Total semana', valor: totalGeral, tipo: 'total' },
-        { label: 'Comparativo dias', valor: calcComparativoDias(followups), tipo: 'neutro' },
+        { label: 'Total semana', valor: metricas.realizados, tipo: 'realizados' },
+        { label: 'Pendentes', valor: metricas.pendentes, tipo: 'pendentes' },
         { label: 'Taxa média', valor: metricas.taxaRealizacao, tipo: 'taxa', taxaAtraso: metricas.taxaAtraso },
       ],
     },
