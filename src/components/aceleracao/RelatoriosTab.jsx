@@ -53,7 +53,8 @@ export default function RelatoriosTab() {
         });
 
         if (response.data?.metricas) {
-          setMetricas(response.data.metricas);
+          // Guardar followups dentro de metricas para cálculos de dias/semanas
+          setMetricas({ ...response.data.metricas, _followups: response.data.followups || [] });
         }
       } catch (error) {
         console.error('Erro ao buscar métricas:', error);
@@ -86,38 +87,79 @@ export default function RelatoriosTab() {
     }
   }, [riscosOportunidadesOpen]);
 
+  // Calcula dias distintos com atividade a partir dos followups
+  const calcComparativoDias = (followups = []) => {
+    const dias = new Set(followups.map(f => (f.dataContato || f.reminder_date || '').substring(0, 10)).filter(Boolean));
+    return dias.size;
+  };
+
+  // Calcula semanas distintas com atividade a partir dos followups
+  const calcEvolucaoSemanal = (followups = []) => {
+    const semanas = new Set(followups.map(f => {
+      const d = new Date(f.dataContato || f.reminder_date || '');
+      if (isNaN(d)) return null;
+      const week = Math.ceil(d.getDate() / 7);
+      return `${d.getFullYear()}-${d.getMonth()}-W${week}`;
+    }).filter(Boolean));
+    return semanas.size;
+  };
+
+  // Badge de saúde para taxa de atraso
+  const getSaudeBadge = (taxaAtraso) => {
+    if (taxaAtraso === undefined || taxaAtraso === null) return null;
+    if (taxaAtraso <= 5) return { label: 'Excelente', bg: 'bg-green-100 text-green-700' };
+    if (taxaAtraso <= 10) return { label: 'Saudável', bg: 'bg-blue-100 text-blue-700' };
+    if (taxaAtraso <= 20) return { label: 'Atenção', bg: 'bg-yellow-100 text-yellow-700' };
+    return { label: 'Crítico', bg: 'bg-red-100 text-red-700' };
+  };
+
+  const followups = metricas._followups || [];
+  const totalGeral = (metricas.realizados || 0) + (metricas.pendentes || 0);
+
   const relatorios = [
     {
       id: 'diario',
       titulo: '📊 Relatório Diário',
       data: today,
       descricao: 'Resumo do dia',
-      metricasLabels: ['Realizados', 'Pendentes', 'Taxa de realização'],
-      metricasChave: ['realizados', 'pendentes', 'taxaRealizacao'],
+      metricas: [
+        { label: 'Realizados', valor: metricas.realizados, tipo: 'realizados' },
+        { label: 'Pendentes', valor: metricas.pendentes, tipo: 'pendentes' },
+        { label: 'Taxa de realização', valor: metricas.taxaRealizacao, tipo: 'taxa', taxaAtraso: metricas.taxaAtraso },
+      ],
     },
     {
       id: 'semanal',
-      titulo: '📊 Relatório Semanal',
+      titulo: '📅 Relatório Semanal',
       data: weekStart.toISOString().split('T')[0],
       descricao: `Semana ${Math.ceil((new Date().getDate()) / 7)}`,
-      metricasLabels: ['Total semana', 'Comparativo dias', 'Taxa média'],
-      metricasChave: ['total', 'realizados', 'taxaRealizacao'],
+      metricas: [
+        { label: 'Total semana', valor: totalGeral, tipo: 'total' },
+        { label: 'Comparativo dias', valor: calcComparativoDias(followups), tipo: 'neutro' },
+        { label: 'Taxa média', valor: metricas.taxaRealizacao, tipo: 'taxa', taxaAtraso: metricas.taxaAtraso },
+      ],
     },
     {
       id: 'mensal',
-      titulo: '📊 Relatório Mensal',
+      titulo: '🗓️ Relatório Mensal',
       data: `${today.substring(0, 7)}-01`,
       descricao: 'Mês completo',
-      metricasLabels: ['Total mês', 'Evolução semanal', 'Taxa mensal'],
-      metricasChave: ['total', 'realizados', 'taxaRealizacao'],
+      metricas: [
+        { label: 'Total mês', valor: totalGeral, tipo: 'total' },
+        { label: 'Evolução semanal', valor: calcEvolucaoSemanal(followups), tipo: 'neutro' },
+        { label: 'Taxa mensal', valor: metricas.taxaRealizacao, tipo: 'taxa', taxaAtraso: metricas.taxaAtraso },
+      ],
     },
     {
       id: 'riscos',
       titulo: '⚠️ Riscos & Oportunidades',
       data: today,
       descricao: 'Análise de performance',
-      metricasLabels: ['Oportunidades', 'Em Risco', 'Taxa de Risco'],
-      metricasChave: ['total_oportunidades', 'clientes_em_risco', 'taxa_risco_percentual'],
+      metricas: [
+        { label: 'Oportunidades', valor: riscosData.total_oportunidades, tipo: 'neutro' },
+        { label: 'Em Risco', valor: riscosData.clientes_em_risco, tipo: 'pendentes' },
+        { label: 'Taxa de Risco', valor: riscosData.taxa_risco_percentual, tipo: 'taxa', taxaAtraso: riscosData.taxa_risco_percentual },
+      ],
       isRiscos: true
     },
   ];
@@ -234,19 +276,30 @@ export default function RelatoriosTab() {
                   </div>
 
                   <div className="grid grid-cols-3 gap-3">
-                    {rel.metricasLabels.map((metrica, idx) => {
-                      const chave = rel.metricasChave[idx];
+                    {rel.metricas.map((m, idx) => {
                       const isLoading = rel.isRiscos ? loadingRiscos : loadingMetricas;
-                      const valor = rel.isRiscos ? riscosData[chave] : metricas[chave];
-                      // Bug #5 fix: exibir % para todas as taxas
-                      const isTaxa = chave === 'taxaRealizacao' || chave === 'taxa_risco_percentual';
-                      const display = valor !== undefined ? (isTaxa ? `${valor}%` : valor) : '—';
+                      const display = m.valor !== undefined && m.valor !== null
+                        ? (m.tipo === 'taxa' ? `${m.valor}%` : m.valor)
+                        : '—';
+                      const badge = m.tipo === 'taxa' ? getSaudeBadge(m.taxaAtraso) : null;
+
+                      let bgClass = 'bg-gray-50';
+                      let textClass = 'text-gray-900';
+                      if (m.tipo === 'realizados') { bgClass = 'bg-green-50'; textClass = 'text-green-700'; }
+                      if (m.tipo === 'pendentes') { bgClass = 'bg-orange-50'; textClass = 'text-orange-600'; }
+                      if (m.tipo === 'taxa' && badge) { bgClass = 'bg-gray-50'; }
+
                       return (
-                        <div key={idx} className="bg-gray-50 rounded p-2 text-center">
-                          <p className="text-xs text-gray-600">{metrica}</p>
-                          <p className={`text-sm font-semibold mt-1 ${isLoading ? 'text-gray-400' : 'text-gray-900'}`}>
+                        <div key={idx} className={`${bgClass} rounded p-2 text-center`}>
+                          <p className="text-xs text-gray-600">{m.label}</p>
+                          <p className={`text-sm font-semibold mt-1 ${isLoading ? 'text-gray-400' : textClass}`}>
                             {isLoading ? '...' : display}
                           </p>
+                          {!isLoading && badge && (
+                            <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium mt-1 inline-block ${badge.bg}`}>
+                              {badge.label}
+                            </span>
+                          )}
                         </div>
                       );
                     })}
