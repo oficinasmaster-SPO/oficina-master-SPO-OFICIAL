@@ -37,8 +37,11 @@ export default function RiscoCard({ risco, onAcao, engajamentoStatus, taxaEngaja
   const config = severidadeConfig[risco.severidade] || severidadeConfig.medio;
   const Icon = config.icon;
 
-  const showEngajamento = risco.engajamento_cliente && engajamentoStatus && taxaEngajamento !== undefined;
-  const engConf = showEngajamento ? (engajamentoConfig[engajamentoStatus.nivel] || engajamentoConfig.saudavel) : null;
+  const showEngajamento = risco.engajamento_cliente && engajamentoStatus && taxaEngajamento !== undefined && taxaEngajamento !== null;
+  // engajamentoStatus pode ser objeto {nivel, label} ou string direta
+  const nivelEngajamento = typeof engajamentoStatus === 'string' ? engajamentoStatus : engajamentoStatus?.nivel;
+  const engConf = showEngajamento ? (engajamentoConfig[nivelEngajamento] || engajamentoConfig.saudavel) : null;
+  const engLabel = typeof engajamentoStatus === 'object' ? engajamentoStatus?.label : nivelEngajamento;
 
   // Label de contexto diferente para PP vs Sprints
   const isSprints = risco.categoria === 'sprints_atrasadas';
@@ -73,7 +76,7 @@ export default function RiscoCard({ risco, onAcao, engajamentoStatus, taxaEngaja
                 {isSprints ? 'Engajamento nas Sprints' : 'Cumprimento de Prazo'}
               </span>
             </div>
-            <span className={`text-xs font-bold ${engConf.text}`}>{engajamentoStatus.label} — {taxaEngajamento}%</span>
+            <span className={`text-xs font-bold ${engConf.text}`}>{engLabel} — {taxaEngajamento}%</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div
