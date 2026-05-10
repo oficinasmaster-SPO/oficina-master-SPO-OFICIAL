@@ -182,9 +182,21 @@ Deno.serve(async (req) => {
       }
     }
 
-    const getName = (wsId) => workshopsMap[wsId] || wsId || 'Workshop';
+    // Função que retorna nome real ou null se não resolvido
+    const getName = (wsId) => {
+      const nome = workshopsMap[wsId];
+      // Se não existe no mapa, ou o "nome" é o próprio ID (fallback anterior), retorna null
+      if (!nome || nome === wsId) return null;
+      return nome;
+    };
+
+    // Helper: retorna true apenas se tiver nome real
+    const temNome = (wsId) => getName(wsId) !== null;
 
     console.log(`[getRiscosOportunidadesAnalise] Workshops no cache: ${Object.keys(workshopsMap).length}`);
+
+    // FUP atrasados — só clientes com nome real
+    const followupClientesUnicosComNome = followupClientesUnicos.filter(c => temNome(c.id));
 
     const riscos = [
       {
@@ -193,10 +205,9 @@ Deno.serve(async (req) => {
         titulo: 'FUP Atrasados',
         descricao: 'Clientes com follow-ups vencidos na fila CRM',
         severidade: 'critico',
-        total: followupClientesUnicos.length,
-        clientes: followupClientesUnicos.map(c => ({
+        clientes: followupClientesUnicosComNome.map(c => ({
           id: c.id,
-          name: c.workshop_name,
+          name: getName(c.id) || c.workshop_name,
           consultor_nome: c.consultor_nome,
           dias_followup_atrasado: c.pior_atraso,
           detalhes: `${c.qtd_followups} FUP(s) em atraso`
@@ -208,8 +219,7 @@ Deno.serve(async (req) => {
         titulo: 'Recém Cadastrados sem Reunião',
         descricao: 'Contratos ativados recentemente sem ATA',
         severidade: 'critico',
-        total: contratos_sem_ata.length,
-        clientes: contratos_sem_ata.map(c => ({
+        clientes: contratos_sem_ata.filter(c => temNome(c.workshop_id)).map(c => ({
           id: c.workshop_id,
           name: getName(c.workshop_id),
           dias_restantes: 2 - Math.floor((hoje - new Date(c.activated_at)) / (1000 * 60 * 60 * 24)),
@@ -222,8 +232,7 @@ Deno.serve(async (req) => {
         titulo: 'Atendimentos Atrasados',
         descricao: 'Atendimentos não realizados no prazo',
         severidade: 'alto',
-        total: atendimentos_atrasados.length,
-        clientes: atendimentos_atrasados.map(a => ({
+        clientes: atendimentos_atrasados.filter(a => temNome(a.workshop_id)).map(a => ({
           id: a.workshop_id,
           name: getName(a.workshop_id),
           tipo: a.tipo_atendimento,
@@ -237,8 +246,7 @@ Deno.serve(async (req) => {
         titulo: 'Próximos Passos Atrasados',
         descricao: 'Tarefas de ação com prazo vencido — responsabilidade do cliente',
         severidade: 'alto',
-        total: proximos_atrasados.length,
-        clientes: proximos_atrasados.map(p => ({
+        clientes: proximos_atrasados.filter(p => temNome(p.workshop_id)).map(p => ({
           id: p.workshop_id,
           name: getName(p.workshop_id),
           titulo: p.titulo,
@@ -254,8 +262,7 @@ Deno.serve(async (req) => {
         titulo: 'Cronograma Atrasado',
         descricao: 'Itens do cronograma com prazo vencido',
         severidade: 'alto',
-        total: cronograma_atrasado.length,
-        clientes: cronograma_atrasado.map(c => ({
+        clientes: cronograma_atrasado.filter(c => temNome(c.workshop_id)).map(c => ({
           id: c.workshop_id,
           name: getName(c.workshop_id),
           item: c.item_nome,
@@ -269,8 +276,7 @@ Deno.serve(async (req) => {
         titulo: 'Cronograma não Iniciado',
         descricao: 'Itens que não foram iniciados e estão atrasados',
         severidade: 'alto',
-        total: cronograma_nao_iniciado.length,
-        clientes: cronograma_nao_iniciado.map(c => ({
+        clientes: cronograma_nao_iniciado.filter(c => temNome(c.workshop_id)).map(c => ({
           id: c.workshop_id,
           name: getName(c.workshop_id),
           item: c.item_nome,
@@ -284,8 +290,7 @@ Deno.serve(async (req) => {
         titulo: 'Sprints em Atraso',
         descricao: 'Sprints de consultoria com data de fim vencida — responsabilidade do cliente',
         severidade: 'critico',
-        total: sprints_atrasadas.length,
-        clientes: sprints_atrasadas.map(s => ({
+        clientes: sprints_atrasadas.filter(s => temNome(s.workshop_id)).map(s => ({
           id: s.workshop_id,
           name: getName(s.workshop_id),
           sprint_title: s.title,
@@ -295,7 +300,7 @@ Deno.serve(async (req) => {
         })),
         engajamento_cliente: true
       }
-    ].filter(r => r.total > 0);
+    ].map(r => ({ ...r, total: r.clientes.length })).filter(r => r.total > 0);
 
     // Oportunidades: apenas no modo individual
     const oportunidades = [];
@@ -443,9 +448,9 @@ Deno.serve(async (req) => {
         '', 1000
       );
 
-      // Filtrar apenas os que têm plano com atendimento
+      // Filtrar apenas os que têm plano com atendimento E nome resolvido no banco
       const clientesComPlano = workshopsAtivosArr.filter(w =>
-        planosComAtendimento.includes(w.planoAtual)
+        planosComAtendimento.includes(w.planoAtual) && w.name && w.name.trim() !== ''
       );
 
       totalClientesAtivos = clientesComPlano.length;
