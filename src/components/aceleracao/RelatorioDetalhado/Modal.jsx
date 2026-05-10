@@ -26,7 +26,8 @@ export default function RelatorioDetailModal({ isOpen, onClose, tipo = 'diario',
          const response = await base44.functions.invoke('getRelatorioFollowUpMetricas', {
            tipo,
            data: referenceDate,
-           periodo
+           periodo,
+           consultor_id: filters.consultor || null
          });
 
          if (response.data?.followups) {
