@@ -133,35 +133,62 @@ export default function RelatorioDetailModal({ isOpen, onClose, tipo = 'diario',
             taxaAtraso={metricas.taxaAtraso ?? null}
           />
 
-          {/* Régua de benchmark com marcador dinâmico — usa taxaAtraso do backend (só vencidos) */}
+          {/* Régua de benchmark com marcador dinâmico */}
           {(() => {
             const taxaAtraso = metricas.taxaAtraso ?? 0;
             const posPercent = Math.min(taxaAtraso / 40 * 100, 98);
+            const saudeLabel = taxaAtraso <= 5 ? 'Excelente' : taxaAtraso <= 10 ? 'Saudável' : taxaAtraso <= 20 ? 'Atenção' : 'Crítico';
+            const saudeColor = taxaAtraso <= 5 ? 'bg-green-500 text-white' : taxaAtraso <= 10 ? 'bg-blue-500 text-white' : taxaAtraso <= 20 ? 'bg-yellow-500 text-white' : 'bg-red-500 text-white';
+            const lineColor = taxaAtraso <= 5 ? '#22c55e' : taxaAtraso <= 10 ? '#3b82f6' : taxaAtraso <= 20 ? '#eab308' : '#ef4444';
             return (
-              <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
-                <p className="text-xs text-gray-500 font-medium mb-2">Régua de Saúde — Taxa de Atraso (vencidos / total do período)</p>
-                <div className="relative mb-5">
+              <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 pt-3 pb-4">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-xs text-gray-500 font-medium">Régua de Saúde — Taxa de Atraso</p>
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${saudeColor}`}>
+                    {saudeLabel}
+                  </span>
+                </div>
+
+                {/* Área do marcador + barra — altura fixa para não sobrepor */}
+                <div className="relative" style={{ height: '56px' }}>
+
+                  {/* Marcador flutuante ACIMA da barra */}
                   <div
-                    className="absolute -top-0.5 flex flex-col items-center"
+                    className="absolute top-0 flex flex-col items-center"
                     style={{ left: `${posPercent}%`, transform: 'translateX(-50%)' }}
                   >
-                    <span className="text-xs font-bold text-red-600 whitespace-nowrap">{taxaAtraso}% atraso</span>
-                    <svg width="12" height="10" viewBox="0 0 12 10" className="text-red-600 fill-red-600">
-                      <polygon points="6,10 0,0 12,0" />
+                    {/* Pill com o valor */}
+                    <div className={`px-2 py-0.5 rounded-full text-xs font-bold whitespace-nowrap shadow-sm ${saudeColor}`}>
+                      {taxaAtraso}%
+                    </div>
+                    {/* Linha vertical conectora */}
+                    <div
+                      className="w-px"
+                      style={{ height: '14px', backgroundColor: lineColor }}
+                    />
+                    {/* Triângulo apontando para baixo */}
+                    <svg width="10" height="6" viewBox="0 0 10 6" style={{ fill: lineColor, display: 'block' }}>
+                      <polygon points="5,6 0,0 10,0" />
                     </svg>
                   </div>
-                  <div className="flex rounded-full overflow-hidden h-3 mt-5">
-                    <div className="w-[12.5%] bg-green-400" />
-                    <div className="w-[12.5%] bg-blue-400" />
-                    <div className="w-[25%] bg-yellow-400" />
-                    <div className="w-[50%] bg-red-400" />
+
+                  {/* Barra de cores — fica na parte inferior da área */}
+                  <div className="absolute bottom-0 left-0 right-0">
+                    <div className="flex rounded-full overflow-hidden h-4 shadow-inner">
+                      <div className="w-[12.5%] bg-green-400" />
+                      <div className="w-[12.5%] bg-blue-400" />
+                      <div className="w-[25%] bg-yellow-400" />
+                      <div className="w-[50%] bg-red-400" />
+                    </div>
                   </div>
                 </div>
-                <div className="flex justify-between text-xs text-gray-500">
-                  <span>🟢 Excelente (≤5%)</span>
-                  <span>🔵 Saudável (≤10%)</span>
-                  <span>🟡 Atenção (≤20%)</span>
-                  <span>🔴 Crítico (&gt;20%)</span>
+
+                {/* Legenda */}
+                <div className="flex justify-between text-xs text-gray-400 mt-2">
+                  <span>🟢 ≤5% Excelente</span>
+                  <span>🔵 ≤10% Saudável</span>
+                  <span>🟡 ≤20% Atenção</span>
+                  <span>🔴 &gt;20% Crítico</span>
                 </div>
               </div>
             );
