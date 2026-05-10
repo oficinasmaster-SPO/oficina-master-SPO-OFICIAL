@@ -215,7 +215,8 @@ Deno.serve(async (req) => {
         pendentesNoPrazo: pendentesNoPrazo.length, // no prazo (ainda não venceu)
         total,
         taxaRealizacao,
-        taxaAtraso           // % real de atraso (vencidos / total)
+        taxaAtraso,          // % real de atraso (vencidos / total)
+        totalGeradosPeriodo: allReminders.length  // total de reminders gerados no período (fonte da verdade)
       },
       followups: todosFollowups,
       tipo,

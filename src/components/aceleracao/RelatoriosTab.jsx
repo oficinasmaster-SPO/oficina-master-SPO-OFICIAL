@@ -159,14 +159,8 @@ export default function RelatoriosTab() {
   const followups = metricas._followups || [];
   const totalGeral = (metricas.realizados || 0) + (metricas.pendentes || 0);
 
-  // Follow-ups gerados no mês atual: usa reminder_date (campo de negócio correto)
-  // created_date é a data de criação do registro (normalmente o mês anterior)
-  // reminder_date é a data em que o follow-up deve ser feito (o que importa para o mês)
-  const mesAtualStr = new Date().toISOString().substring(0, 7); // "2026-05"
-  const followupsGeradosMes = followups.filter(f => {
-    const reminderDate = f.reminder_date || '';
-    return reminderDate.startsWith(mesAtualStr);
-  }).length;
+  // Follow-ups gerados no período: usa o valor direto do backend (fonte da verdade)
+  const followupsGeradosMes = metricas.totalGeradosPeriodo ?? 0;
 
   // Taxa mensal: followups gerados / atendimentos realizados
   const realizadosMes = metricas.realizados || 0;
