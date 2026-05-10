@@ -1,5 +1,6 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { BadgeSaturacao } from "@/components/tempo/AlertasInteligenecia";
 
 function fmt(min) {
   if (!min) return "—";
@@ -20,7 +21,7 @@ function BarPercent({ value, total, color }) {
   );
 }
 
-export default function TabelaConsultores({ porConsultor }) {
+export default function TabelaConsultores({ porConsultor, capacidadePeriodo }) {
   if (!porConsultor?.length) {
     return (
       <Card>
@@ -44,13 +45,16 @@ export default function TabelaConsultores({ porConsultor }) {
                   <p className="text-sm font-semibold text-gray-900 truncate">{c.consultor_nome}</p>
                   <p className="text-xs text-gray-500">{c.clientes_count} clientes • {c.reunioes_count} reuniões • {c.followups_count} FUPs</p>
                 </div>
-                <div className="text-right ml-4 flex-shrink-0">
+                <div className="text-right ml-4 flex-shrink-0 flex items-center gap-2">
+                  <BadgeSaturacao consultor={c} capacidadePeriodo={capacidadePeriodo || 4800} />
+                  <div>
                   <p className="text-base font-bold text-gray-900">{fmt(c.total_minutos)}</p>
                   <p className="text-xs text-gray-400">
                     <span className="text-blue-500">{fmt(c.minutos_reuniao)}</span>
                     {" + "}
                     <span className="text-orange-400">{fmt(c.minutos_followup)}</span>
                   </p>
+                  </div>
                 </div>
               </div>
               <BarPercent value={c.minutos_reuniao} total={c.total_minutos} color="bg-blue-400" />

@@ -28,8 +28,19 @@ Deno.serve(async (req) => {
 
   const formatDate = (d) => d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
-  // Buscar todos os atendimentos da semana passada
-  const todosAtendimentos = await base44.asServiceRole.entities.ConsultoriaAtendimento.list();
+  const dataInicioStr = inicioSemanaPassada.toISOString();
+  const dataFimStr = fimSemanaPassada.toISOString();
+
+  // Buscar dados em paralelo
+  const [todosAtendimentos, todosUsuarios, workshops, followupsSemana] = await Promise.all([
+    base44.asServiceRole.entities.ConsultoriaAtendimento.list(),
+    base44.asServiceRole.entities.User.list(),
+    base44.asServiceRole.entities.Workshop.list(),
+    base44.asServiceRole.entities.FollowUpConcluido.filter({
+      completedAt: { '$gte': dataInicioStr }
+    }, '-completedAt', 5000).catch(() => []),
+  ]);
+
   const atendimentosSemana = todosAtendimentos.filter(a => {
     if (!a.data_agendada) return false;
     const d = new Date(a.data_agendada);
@@ -41,13 +52,16 @@ Deno.serve(async (req) => {
     return Response.json({ status: 'ok', message: 'Sem atendimentos na semana', emails_sent: 0 });
   }
 
-  // Buscar usuários para resolver e-mail dos consultores (consultor_email não existe na entidade)
-  const todosUsuarios = await base44.asServiceRole.entities.User.list();
   const userEmailMap = Object.fromEntries(todosUsuarios.map(u => [u.id, u.email]));
-
-  // Buscar workshops para resolver nomes
-  const workshops = await base44.asServiceRole.entities.Workshop.list();
   const workshopMap = Object.fromEntries(workshops.map(w => [w.id, w.name]));
+
+  // Mapear follow-ups por consultor
+  const fupPorConsultor = {};
+  followupsSemana.forEach(f => {
+    if (!f.consultor_id) return;
+    if (!fupPorConsultor[f.consultor_id]) fupPorConsultor[f.consultor_id] = [];
+    fupPorConsultor[f.consultor_id].push(f);
+  });
 
   // Agrupar por consultor
   const porConsultor = {};
@@ -68,11 +82,21 @@ Deno.serve(async (req) => {
   await Promise.all(Object.entries(porConsultor).map(async ([, consultor]) => {
     try {
     const ats = consultor.atendimentos;
+    const cId = Object.entries(porConsultor).find(([, v]) => v === consultor)?.[0];
     const realizados  = ats.filter(a => a.status === 'realizado').length;
     const agendados   = ats.filter(a => ['agendado', 'confirmado'].includes(a.status)).length;
     const faltaram    = ats.filter(a => a.status === 'faltou').length;
     const desmarcaram = ats.filter(a => ['desmarcou', 'cancelado'].includes(a.status)).length;
     const taxaRealizacao = ats.length > 0 ? Math.round((realizados / ats.length) * 100) : 0;
+
+    // Métricas de tempo
+    const minutosReunioes = ats
+      .filter(a => ['realizado', 'concluido'].includes(a.status))
+      .reduce((s, a) => s + (a.duracao_real_minutos || a.duracao_minutos || 0), 0);
+    const fupsDaSemana = fupPorConsultor[cId] || [];
+    const minutosFollowups = fupsDaSemana.reduce((s, f) => s + (f.duracao || 0), 0);
+    const totalMinutos = minutosReunioes + minutosFollowups;
+    const fmtMin = (m) => { const h = Math.floor(m/60); const min = m%60; return h > 0 ? `${h}h ${min > 0 ? min+'min' : ''}`.trim() : `${min}min`; };
 
     // Clientes sem atendimento realizado na semana
     const clientesNaoRealizados = ats
@@ -113,9 +137,17 @@ Deno.serve(async (req) => {
             </div>
           </div>
 
-          <div style="background:#ebf8ff;border-left:4px solid #4299e1;padding:12px 16px;border-radius:0 8px 8px 0;margin-bottom:20px">
+          <div style="background:#ebf8ff;border-left:4px solid #4299e1;padding:12px 16px;border-radius:0 8px 8px 0;margin-bottom:12px">
             <strong style="color:#2b6cb0">Taxa de Realização: ${taxaRealizacao}%</strong>
             ${agendados > 0 ? `<span style="color:#718096;margin-left:12px">${agendados} pendente(s) ainda agendado(s)</span>` : ''}
+          </div>
+
+          <div style="background:#f0fff4;border-left:4px solid #48bb78;padding:12px 16px;border-radius:0 8px 8px 0;margin-bottom:20px">
+            <strong style="color:#276749">⏱️ Tempo dedicado na semana: ${fmtMin(totalMinutos)}</strong>
+            <div style="margin-top:6px;display:flex;gap:16px">
+              <span style="color:#718096;font-size:13px">📹 Reuniões: <strong style="color:#2b6cb0">${fmtMin(minutosReunioes)}</strong></span>
+              <span style="color:#718096;font-size:13px">📞 Follow-ups: <strong style="color:#ed8936">${fmtMin(minutosFollowups)}</strong> (${fupsDaSemana.length})</span>
+            </div>
           </div>
 
           ${clientesNaoRealizados.length > 0 ? `

@@ -9,7 +9,13 @@ import GraficoTempo from "@/components/tempo/GraficoTempo";
 import TabelaConsultores from "@/components/tempo/TabelaConsultores";
 import TabelaClientes from "@/components/tempo/TabelaClientes";
 import TimelineCliente from "@/components/tempo/TimelineCliente";
+import { PainelAlertas, useAlertas } from "@/components/tempo/AlertasInteligenecia";
 import useConsultoresList from "@/components/hooks/useConsultoresList";
+
+function AlertasWrapper({ porCliente, porConsultor, periodo }) {
+  const { clientesSemAtencao, consultoresSaturados } = useAlertas({ porCliente, porConsultor, periodo });
+  return <PainelAlertas clientesSemAtencao={clientesSemAtencao} consultoresSaturados={consultoresSaturados} />;
+}
 
 export default function DashboardTempoAtencao() {
   const [periodo, setPeriodo] = useState("mes");
@@ -38,6 +44,11 @@ export default function DashboardTempoAtencao() {
   });
 
   const periodoLabel = { semana: "Esta semana", mes: "Este mês", trimestre: "Trimestre", ano: "Este ano" };
+
+  const calcCapacidade = (p) => {
+    const fator = p === 'semana' ? 0.25 : p === 'trimestre' ? 3 : p === 'ano' ? 12 : 1;
+    return 80 * fator * 60; // 80h/mês em minutos
+  };
 
   return (
     <div className="space-y-6">
@@ -99,6 +110,9 @@ export default function DashboardTempoAtencao() {
         </div>
       ) : (
         <>
+          {/* Alertas */}
+          <AlertasWrapper porCliente={data?.por_cliente} porConsultor={data?.por_consultor} periodo={periodo} />
+
           {/* KPIs */}
           <KPIsGerais totais={data?.totais} porConsultor={data?.por_consultor} />
 
@@ -107,7 +121,7 @@ export default function DashboardTempoAtencao() {
 
           {/* Tabelas lado a lado */}
           <div className="grid lg:grid-cols-2 gap-4">
-            <TabelaConsultores porConsultor={data?.por_consultor} />
+            <TabelaConsultores porConsultor={data?.por_consultor} capacidadePeriodo={calcCapacidade(periodo)} />
             <TabelaClientes
               porCliente={data?.por_cliente}
               onSelectCliente={setClienteSelecionado}
