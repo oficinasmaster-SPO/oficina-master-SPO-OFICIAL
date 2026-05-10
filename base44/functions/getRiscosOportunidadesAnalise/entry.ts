@@ -61,15 +61,15 @@ Deno.serve(async (req) => {
       atendimentosFilter, '-data_realizada', 200
     );
 
-    // 4. Próximos Passos Atrasados
+    // 4. Próximos Passos Atrasados — calcula por data real (prazo < hoje e não finalizado/cancelado)
     let proximos_atrasados = [];
     try {
       const proximosFilter = isGlobal
-        ? { status: 'atrasado' }
-        : { workshop_id, status: 'atrasado' };
+        ? { status: { '$nin': ['finalizado', 'cancelado'] }, prazo: { '$lt': hojeDate } }
+        : { workshop_id, status: { '$nin': ['finalizado', 'cancelado'] }, prazo: { '$lt': hojeDate } };
 
       proximos_atrasados = await base44.asServiceRole.entities.ConsultoriaProximoPasso.filter(
-        proximosFilter, '-prazo', 200
+        proximosFilter, '-prazo', 500
       );
     } catch (error) {
       console.warn('[getRiscosOportunidadesAnalise] ConsultoriaProximoPasso:', error.message);
@@ -93,13 +93,13 @@ Deno.serve(async (req) => {
       cronogramaNaoIniciadoFilter, '-data_termino_previsto', 200
     );
 
-    // 7. Sprints em Atraso
+    // 7. Sprints em Atraso — calcula por data real (end_date < hoje e não completed)
     const sprintsFilter = isGlobal
-      ? { status: { '$in': ['overdue', 'atrasada'] } }
-      : { workshop_id, status: { '$in': ['overdue', 'atrasada'] } };
+      ? { status: { '$nin': ['completed'] }, end_date: { '$lt': hojeDate } }
+      : { workshop_id, status: { '$nin': ['completed'] }, end_date: { '$lt': hojeDate } };
 
     const sprints_atrasadas = await base44.asServiceRole.entities.ConsultoriaSprint.filter(
-      sprintsFilter, '-end_date', 200
+      sprintsFilter, '-end_date', 500
     );
 
     // ── DEDUPLICAR follow-ups por cliente (1 entrada por workshop) ──
@@ -224,7 +224,7 @@ Deno.serve(async (req) => {
         id: 'proximos_passos_atrasados',
         categoria: 'proximos_passos_atrasados',
         titulo: 'Próximos Passos Atrasados',
-        descricao: 'Tarefas de ação com prazo vencido',
+        descricao: 'Tarefas de ação com prazo vencido — responsabilidade do cliente',
         severidade: 'alto',
         total: proximos_atrasados.length,
         clientes: proximos_atrasados.map(p => ({
@@ -232,8 +232,10 @@ Deno.serve(async (req) => {
           name: getName(p.workshop_id),
           titulo: p.titulo,
           prazo: p.prazo,
-          responsavel: p.responsavel_nome
-        }))
+          responsavel: p.responsavel_nome,
+          dias_atrasado: p.prazo ? Math.floor((hoje - new Date(p.prazo)) / (1000 * 60 * 60 * 24)) : 0
+        })),
+        engajamento_cliente: true
       },
       {
         id: 'cronograma_atrasado',
@@ -269,7 +271,7 @@ Deno.serve(async (req) => {
         id: 'sprints_atrasadas',
         categoria: 'sprints_atrasadas',
         titulo: 'Sprints em Atraso',
-        descricao: 'Sprints de consultoria com data de fim vencida',
+        descricao: 'Sprints de consultoria com data de fim vencida — responsabilidade do cliente',
         severidade: 'critico',
         total: sprints_atrasadas.length,
         clientes: sprints_atrasadas.map(s => ({
@@ -279,7 +281,8 @@ Deno.serve(async (req) => {
           dias_atrasado: Math.floor((hoje - new Date(s.end_date)) / (1000 * 60 * 60 * 24)),
           mission: s.mission_id,
           sprint_number: s.sprint_number
-        }))
+        })),
+        engajamento_cliente: true
       }
     ].filter(r => r.total > 0);
 
@@ -326,8 +329,10 @@ Deno.serve(async (req) => {
 
     const clientesEmRiscoUnicos = Object.keys(clientesMap).length;
 
-    // Taxa de risco
+    // Taxa de risco + Taxa de engajamento do cliente
     let taxaRisco = 0;
+    let taxaEngajamentoCliente = 0;
+    let totalClientesAtivos = 0;
     try {
       const totalAtivos = await base44.asServiceRole.entities.Contract.filter(
         isGlobal
@@ -335,12 +340,28 @@ Deno.serve(async (req) => {
           : { workshop_id, status: { '$in': ['ativo', 'efetivado'] } },
         '', 1000
       );
-      if (totalAtivos.length > 0) {
-        taxaRisco = Math.round((clientesEmRiscoUnicos / totalAtivos.length) * 100);
+      totalClientesAtivos = totalAtivos.length;
+      if (totalClientesAtivos > 0) {
+        taxaRisco = Math.round((clientesEmRiscoUnicos / totalClientesAtivos) * 100);
+
+        // Clientes únicos com sprint ou próximo passo atrasado
+        const clientesEngajamentoSet = new Set([
+          ...sprints_atrasadas.map(s => s.workshop_id),
+          ...proximos_atrasados.map(p => p.workshop_id)
+        ].filter(Boolean));
+        taxaEngajamentoCliente = Math.round((clientesEngajamentoSet.size / totalClientesAtivos) * 100);
       }
     } catch (e) {
       console.warn('Taxa risco error:', e.message);
     }
+
+    // Determinar severidade do engajamento do cliente
+    const getEngajamentoStatus = (taxa) => {
+      if (taxa <= 15) return { label: 'Saudável', nivel: 'saudavel' };
+      if (taxa <= 25) return { label: 'Alerta', nivel: 'alerta' };
+      return { label: 'Crítico', nivel: 'critico' };
+    };
+    const engajamentoStatus = getEngajamentoStatus(taxaEngajamentoCliente);
 
     console.log(`[getRiscosOportunidadesAnalise] FINAL: ${riscos.length} categorias, ${clientesEmRiscoUnicos} clientes únicos em risco, taxa ${taxaRisco}%`);
 
@@ -351,6 +372,9 @@ Deno.serve(async (req) => {
         clientes_em_risco: clientesEmRiscoUnicos,
         total_oportunidades: oportunidades.length,
         taxa_risco_percentual: taxaRisco,
+        taxa_engajamento_cliente: taxaEngajamentoCliente,
+        engajamento_status: engajamentoStatus,
+        total_clientes_ativos: totalClientesAtivos,
         modo: isGlobal ? 'global' : 'individual'
       },
       consolidacao: clientesMap
