@@ -10,144 +10,137 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { workshop_id, consultor_id } = body;
+    const { workshop_id } = body;
 
-    if (!workshop_id) {
-      return Response.json({ error: 'workshop_id é obrigatório' }, { status: 400 });
-    }
+    // workshop_id é OPCIONAL: se ausente → modo global (todos os workshops)
+    const isGlobal = !workshop_id;
 
     const hoje = new Date();
     const hojeDate = hoje.toISOString().split('T')[0];
-    const sete_dias_atras = new Date(hoje.getTime() - 7 * 24 * 60 * 60 * 1000);
     const dois_dias_atras = new Date(hoje.getTime() - 2 * 24 * 60 * 60 * 1000);
     const dois_dias_atrasDate = dois_dias_atras.toISOString().split('T')[0];
 
-    console.log('[getRiscosOportunidadesAnalise] Iniciando análise para workshop:', workshop_id);
-    console.log('[getRiscosOportunidadesAnalise] Data de referência:', hojeDate);
+    console.log(`[getRiscosOportunidadesAnalise] Modo: ${isGlobal ? 'GLOBAL' : 'workshop=' + workshop_id}`);
 
-    // 1. FollowUps Atrasados - CORRIGIDO: Comparar DATE, não DATETIME
-    // FASE 2 FIX: reminder_date é DATE (YYYY-MM-DD), não DATETIME
-    const followupsAtrasados = await base44.asServiceRole.entities.FollowUpReminder.filter({
-     workshop_id,
-     is_completed: false,
-     reminder_date: { '$lt': hojeDate }  // hojeDate = YYYY-MM-DD format ✅
-    }, '-reminder_date', 100);
+    // 1. FollowUps Atrasados
+    const followupsFilter = isGlobal
+      ? { is_completed: false, reminder_date: { '$lt': hojeDate } }
+      : { workshop_id, is_completed: false, reminder_date: { '$lt': hojeDate } };
 
-    // 2. Contratos recém ativados sem ATA - CORRIGIDO: Usar DATE correto
-    const contratos_recentes = await base44.asServiceRole.entities.Contract.filter({
-      workshop_id,
-      activated_at: { '$gte': dois_dias_atrasDate }
-    }, '-activated_at', 100);
+    const followupsAtrasados = await base44.asServiceRole.entities.FollowUpReminder.filter(
+      followupsFilter, '-reminder_date', 500
+    );
 
-    const atas_por_workshop = await base44.asServiceRole.entities.MeetingMinutes.filter({
-      workshop_id
-    }, '-meeting_date', 500);
+    // 2. Contratos recém ativados sem ATA
+    const contratosFilter = isGlobal
+      ? { activated_at: { '$gte': dois_dias_atrasDate } }
+      : { workshop_id, activated_at: { '$gte': dois_dias_atrasDate } };
 
-    // FASE 2 FIX BUG #2: Join correto com filter em vez de some()
-    // Filtra ATAs do workshop, não por atendimento_id
+    const contratos_recentes = await base44.asServiceRole.entities.Contract.filter(
+      contratosFilter, '-activated_at', 200
+    );
+
+    // ATAs para verificar onboarding
+    const atasFilter = isGlobal ? {} : { workshop_id };
+    const atas_por_workshop = await base44.asServiceRole.entities.MeetingMinutes.filter(
+      atasFilter, '-meeting_date', 1000
+    );
+
     const contratos_sem_ata = contratos_recentes.filter(c => {
-      const atas_do_contrato = atas_por_workshop.filter(a => 
-        a.workshop_id === workshop_id &&
+      const atas_do_contrato = atas_por_workshop.filter(a =>
+        a.workshop_id === c.workshop_id &&
         new Date(a.meeting_date) >= new Date(c.activated_at)
       );
-      return atas_do_contrato.length === 0;  // sem ATA vinculada ✅
+      return atas_do_contrato.length === 0;
     });
-    
-    console.log('[getRiscosOportunidadesAnalise] Contratos recentes:', contratos_recentes.length, 'Sem ATA:', contratos_sem_ata.length);
 
-    // 3. Sem contatos 7+ dias
-    const notificacoes_antigas = await base44.asServiceRole.entities.Notification.filter({
-      workshop_id,
-      created_date: { '$lte': sete_dias_atras.toISOString() }
-    }, '-created_date', 100);
+    // 3. Atendimentos Atrasados
+    const atendimentosFilter = isGlobal
+      ? { status: { '$in': ['atrasado', 'faltou'] } }
+      : { workshop_id, status: { '$in': ['atrasado', 'faltou'] } };
 
-    // 4. Atendimentos Atrasados
-    const atendimentos_atrasados = await base44.asServiceRole.entities.ConsultoriaAtendimento.filter({
-      workshop_id,
-      status: { '$in': ['atrasado', 'faltou'] }
-    }, '-data_realizada', 100);
+    const atendimentos_atrasados = await base44.asServiceRole.entities.ConsultoriaAtendimento.filter(
+      atendimentosFilter, '-data_realizada', 200
+    );
 
-    // 5. Próximos Passos Atrasados - CORRIGIDO: Verificar entidade
+    // 4. Próximos Passos Atrasados
     let proximos_atrasados = [];
     try {
-      proximos_atrasados = await base44.asServiceRole.entities.ConsultoriaProximoPasso.filter({
-        workshop_id,
-        status: 'atrasado'
-      }, '-prazo', 100);
-      console.log('[getRiscosOportunidadesAnalise] Próximos passos atrasados:', proximos_atrasados.length);
-    } catch (error) {
-      console.warn('[getRiscosOportunidadesAnalise] Entidade ConsultoriaProximoPasso pode não existir:', error.message);
-    }
+      const proximosFilter = isGlobal
+        ? { status: 'atrasado' }
+        : { workshop_id, status: 'atrasado' };
 
-    // 6. Cronograma Implementação Atrasado - CORRIGIDO: Usar DATE
-    const cronograma_atrasado = await base44.asServiceRole.entities.CronogramaImplementacao.filter({
-      workshop_id,
-      status: { '$ne': 'concluido' },
-      data_termino_previsto: { '$lt': hojeDate }
-    }, '-data_termino_previsto', 100);
-
-    // 7. Cronograma não iniciado - CORRIGIDO: Usar DATE
-    const cronograma_nao_iniciado = await base44.asServiceRole.entities.CronogramaImplementacao.filter({
-      workshop_id,
-      status: 'a_fazer',
-      data_termino_previsto: { '$lt': hojeDate }
-    }, '-data_termino_previsto', 100);
-
-    // 9. Sprints em Atraso
-    const sprints_atrasadas = await base44.asServiceRole.entities.ConsultoriaSprint.filter({
-      workshop_id,
-      status: { '$in': ['overdue', 'atrasada'] }
-    }, '-end_date', 100);
-
-    // 8. Sem colaboradores NÃO-SÓCIOS
-    const employees = await base44.asServiceRole.entities.Employee.filter({
-      workshop_id
-    }, '-created_date', 1000);
-    
-    // Buscar workshop para pegar owner_id
-    const ws = await base44.asServiceRole.entities.Workshop.filter(
-      { id: workshop_id },
-      '',
-      1
-    );
-    const workshop = ws && ws.length > 0 ? ws[0] : null;
-    
-    // Colaboradores não-sócios são aqueles cujo user_id !== workshop.owner_id
-    const colaboradoresNaoSocios = employees.filter(emp => 
-      emp.user_id && workshop && emp.user_id !== workshop.owner_id
-    );
-    const tem_colaboradores = colaboradoresNaoSocios.length > 0;
-
-    // CORRIGIDO BUG #3 e #4: Buscar nomes dos workshops de forma eficiente
-    const workshopsMap = {};
-    try {
-      const wsResult = await base44.asServiceRole.entities.Workshop.filter(
-        { id: workshop_id },
-        '',
-        1
+      proximos_atrasados = await base44.asServiceRole.entities.ConsultoriaProximoPasso.filter(
+        proximosFilter, '-prazo', 200
       );
-      if (wsResult && wsResult.length > 0) {
-        workshopsMap[workshop_id] = wsResult[0].name || 'Workshop';
-      } else {
-        workshopsMap[workshop_id] = 'Workshop';
-      }
-      console.log('[getRiscosOportunidadesAnalise] Workshop name loaded:', workshopsMap[workshop_id]);
     } catch (error) {
-      console.warn('[getRiscosOportunidadesAnalise] Erro ao carregar workshop:', error.message);
-      workshopsMap[workshop_id] = 'Workshop';
+      console.warn('[getRiscosOportunidadesAnalise] ConsultoriaProximoPasso:', error.message);
     }
+
+    // 5. Cronograma Atrasado
+    const cronogramaFilter = isGlobal
+      ? { status: { '$ne': 'concluido' }, data_termino_previsto: { '$lt': hojeDate } }
+      : { workshop_id, status: { '$ne': 'concluido' }, data_termino_previsto: { '$lt': hojeDate } };
+
+    const cronograma_atrasado = await base44.asServiceRole.entities.CronogramaImplementacao.filter(
+      cronogramaFilter, '-data_termino_previsto', 200
+    );
+
+    // 6. Cronograma não iniciado
+    const cronogramaNaoIniciadoFilter = isGlobal
+      ? { status: 'a_fazer', data_termino_previsto: { '$lt': hojeDate } }
+      : { workshop_id, status: 'a_fazer', data_termino_previsto: { '$lt': hojeDate } };
+
+    const cronograma_nao_iniciado = await base44.asServiceRole.entities.CronogramaImplementacao.filter(
+      cronogramaNaoIniciadoFilter, '-data_termino_previsto', 200
+    );
+
+    // 7. Sprints em Atraso
+    const sprintsFilter = isGlobal
+      ? { status: { '$in': ['overdue', 'atrasada'] } }
+      : { workshop_id, status: { '$in': ['overdue', 'atrasada'] } };
+
+    const sprints_atrasadas = await base44.asServiceRole.entities.ConsultoriaSprint.filter(
+      sprintsFilter, '-end_date', 200
+    );
+
+    // ── BATCH LOOKUP de workshops ──────────────────────────────
+    // Coletar todos workshop_ids únicos de todas as entidades
+    const allWsIds = [...new Set([
+      ...followupsAtrasados.map(f => f.workshop_id),
+      ...contratos_sem_ata.map(c => c.workshop_id),
+      ...atendimentos_atrasados.map(a => a.workshop_id),
+      ...proximos_atrasados.map(p => p.workshop_id),
+      ...cronograma_atrasado.map(c => c.workshop_id),
+      ...cronograma_nao_iniciado.map(c => c.workshop_id),
+      ...sprints_atrasadas.map(s => s.workshop_id),
+      ...(workshop_id ? [workshop_id] : [])
+    ].filter(Boolean))];
+
+    const workshopsData = allWsIds.length > 0
+      ? await base44.asServiceRole.entities.Workshop.filter(
+          { id: { '$in': allWsIds } }, '', 500
+        )
+      : [];
+
+    // Map rápido id → name
+    const workshopsMap = Object.fromEntries(workshopsData.map(w => [w.id, w.name || 'Workshop']));
+    const getName = (wsId) => workshopsMap[wsId] || 'Workshop';
+
+    console.log(`[getRiscosOportunidadesAnalise] Workshops carregados: ${workshopsData.length}`);
+    // ──────────────────────────────────────────────────────────
 
     const riscos = [
       {
         id: 'followup_atrasado',
         categoria: 'followup_atrasado',
         titulo: 'FollowUps Atrasados',
-        descricao: 'Followups atrasados e urgentes da fila CRM',
+        descricao: 'Follow-ups vencidos na fila CRM',
         severidade: 'critico',
         total: followupsAtrasados.length,
         clientes: followupsAtrasados.map(f => ({
           id: f.workshop_id,
-          name: workshopsMap[workshop_id] || 'Workshop',
+          name: getName(f.workshop_id),
           dias_atrasado: Math.floor((hoje - new Date(f.reminder_date)) / (1000 * 60 * 60 * 24)),
           detalhes: f.message
         }))
@@ -156,12 +149,12 @@ Deno.serve(async (req) => {
         id: 'onboarding_risco',
         categoria: 'onboarding_risco',
         titulo: 'Recém Cadastrados sem Reunião',
-        descricao: 'Contratos ativados há menos de 2 dias sem ATA/reunião',
+        descricao: 'Contratos ativados recentemente sem ATA',
         severidade: 'critico',
         total: contratos_sem_ata.length,
         clientes: contratos_sem_ata.map(c => ({
           id: c.workshop_id,
-          name: workshopsMap[workshop_id] || 'Workshop',
+          name: getName(c.workshop_id),
           dias_restantes: 2 - Math.floor((hoje - new Date(c.activated_at)) / (1000 * 60 * 60 * 24)),
           contrato_id: c.id
         }))
@@ -170,12 +163,12 @@ Deno.serve(async (req) => {
         id: 'atendimentos_atrasados',
         categoria: 'atendimentos_atrasados',
         titulo: 'Atendimentos Atrasados',
-        descricao: 'Atendimentos que não foram realizados no prazo',
+        descricao: 'Atendimentos não realizados no prazo',
         severidade: 'alto',
         total: atendimentos_atrasados.length,
         clientes: atendimentos_atrasados.map(a => ({
           id: a.workshop_id,
-          name: workshopsMap[workshop_id] || 'Workshop',
+          name: getName(a.workshop_id),
           tipo: a.tipo_atendimento,
           status: a.status,
           data_agendada: a.data_agendada
@@ -190,7 +183,7 @@ Deno.serve(async (req) => {
         total: proximos_atrasados.length,
         clientes: proximos_atrasados.map(p => ({
           id: p.workshop_id,
-          name: workshopsMap[workshop_id] || 'Workshop',
+          name: getName(p.workshop_id),
           titulo: p.titulo,
           prazo: p.prazo,
           responsavel: p.responsavel_nome
@@ -205,7 +198,7 @@ Deno.serve(async (req) => {
         total: cronograma_atrasado.length,
         clientes: cronograma_atrasado.map(c => ({
           id: c.workshop_id,
-          name: workshopsMap[workshop_id] || 'Workshop',
+          name: getName(c.workshop_id),
           item: c.item_nome,
           dias_atrasado: Math.floor((hoje - new Date(c.data_termino_previsto)) / (1000 * 60 * 60 * 24)),
           status: c.status
@@ -220,7 +213,7 @@ Deno.serve(async (req) => {
         total: cronograma_nao_iniciado.length,
         clientes: cronograma_nao_iniciado.map(c => ({
           id: c.workshop_id,
-          name: workshopsMap[workshop_id] || 'Workshop',
+          name: getName(c.workshop_id),
           item: c.item_nome,
           dias_atrasado: Math.floor((hoje - new Date(c.data_termino_previsto)) / (1000 * 60 * 60 * 24)),
           tipo: c.item_tipo
@@ -235,7 +228,7 @@ Deno.serve(async (req) => {
         total: sprints_atrasadas.length,
         clientes: sprints_atrasadas.map(s => ({
           id: s.workshop_id,
-          name: workshopsMap[workshop_id] || 'Workshop',
+          name: getName(s.workshop_id),
           sprint_title: s.title,
           dias_atrasado: Math.floor((hoje - new Date(s.end_date)) / (1000 * 60 * 60 * 24)),
           mission: s.mission_id,
@@ -244,41 +237,37 @@ Deno.serve(async (req) => {
       }
     ].filter(r => r.total > 0);
 
-    const oportunidades = [
-      {
-        id: 'sem_colaboradores',
-        categoria: 'sem_colaboradores',
-        titulo: 'Cadastro de Colaboradores',
-        descricao: `Workshop com plano ativo mas sem colaboradores não-sócios. Atualmente: ${colaboradoresNaoSocios.length}`,
-        total: tem_colaboradores ? 0 : 1,
-        workshop_name: workshopsMap[workshop_id] || 'Workshop',
-        acao: 'Convidar colaboradores para potencializar o time'
+    // Oportunidades: apenas no modo individual
+    const oportunidades = [];
+    if (!isGlobal) {
+      const employees = await base44.asServiceRole.entities.Employee.filter(
+        { workshop_id }, '-created_date', 1000
+      );
+      const ws = workshopsData.find(w => w.id === workshop_id);
+      const colaboradoresNaoSocios = employees.filter(emp =>
+        emp.user_id && ws && emp.user_id !== ws.owner_id
+      );
+      const tem_colaboradores = colaboradoresNaoSocios.length > 0;
+      if (!tem_colaboradores) {
+        oportunidades.push({
+          id: 'sem_colaboradores',
+          categoria: 'sem_colaboradores',
+          titulo: 'Cadastro de Colaboradores',
+          descricao: `Workshop com plano ativo mas sem colaboradores não-sócios.`,
+          total: 1,
+          acao: 'Convidar colaboradores para potencializar o time'
+        });
       }
-    ].filter(o => o.total > 0);
+    }
 
-    const totalRiscos = riscos.reduce((sum, r) => sum + r.total, 0);
-    const totalOportunidades = oportunidades.reduce((sum, o) => sum + o.total, 0);
-
-    // FASE 2 FIX #5: CONSOLIDAÇÃO POR CLIENTE (elimina duplicatas)
-    console.log('[getRiscosOportunidadesAnalise] Riscos encontrados:', riscos.length);
-    
-    // Mapear clientes únicos com risco
+    // Consolidar clientes únicos em risco
     const clientesMap = {};
-    
-    riscos.forEach((risco, idx) => {
-      console.log(`  [${idx}] ${risco.titulo}: ${risco.clientes?.length || 0} clientes`);
-      
-      // Agregar cada cliente com risco
+    riscos.forEach(risco => {
       if (risco.clientes && risco.clientes.length > 0) {
         risco.clientes.forEach(cliente => {
-          const key = cliente.id; // Usar ID único do cliente
+          const key = cliente.id;
           if (!clientesMap[key]) {
-            clientesMap[key] = { 
-              id: cliente.id, 
-              name: cliente.name,
-              riscos: [],
-              detalhes: {}
-            };
+            clientesMap[key] = { id: cliente.id, name: cliente.name, riscos: [] };
           }
           clientesMap[key].riscos.push({
             tipo: risco.categoria,
@@ -290,52 +279,46 @@ Deno.serve(async (req) => {
     });
 
     const clientesEmRiscoUnicos = Object.keys(clientesMap).length;
-    
-    // Validar que riscos com dados realmente têm clientes
-    const riscosValidos = riscos.filter(r => r.clientes && r.clientes.length > 0);
-    const oportunidadesValidas = oportunidades.filter(o => o.total > 0);
 
-    // Contar clientes ativos com planos (Contratos ativos)
-    const clientesAtivosPlanos = await base44.asServiceRole.entities.Contract.filter({
-      workshop_id,
-      status: { '$in': ['ativo', 'efetivado'] }
-    }, '', 1000);
-    const totalClientesAtivos = clientesAtivosPlanos.length;
+    // Taxa de risco
+    let taxaRisco = 0;
+    if (isGlobal) {
+      const totalAtivos = await base44.asServiceRole.entities.Contract.filter(
+        { status: { '$in': ['ativo', 'efetivado'] } }, '', 1000
+      );
+      taxaRisco = totalAtivos.length > 0
+        ? Math.round((clientesEmRiscoUnicos / totalAtivos.length) * 100)
+        : 0;
+    } else {
+      const clientesAtivosPlanos = await base44.asServiceRole.entities.Contract.filter(
+        { workshop_id, status: { '$in': ['ativo', 'efetivado'] } }, '', 1000
+      );
+      taxaRisco = clientesAtivosPlanos.length > 0
+        ? Math.round((clientesEmRiscoUnicos / clientesAtivosPlanos.length) * 100)
+        : 0;
+    }
 
-    // Calcular taxa de risco: (clientes_únicos_em_risco) / clientes_ativos = %
-    const taxaRisco = totalClientesAtivos > 0 
-      ? Math.round((clientesEmRiscoUnicos / totalClientesAtivos) * 100)
-      : 0;
-
-    console.log('[getRiscosOportunidadesAnalise] Validação final:', {
-      riscos_totais: riscos.length,
-      riscos_validos: riscosValidos.length,
-      clientes_ativos: totalClientesAtivos,
-      clientes_unicos_em_risco: clientesEmRiscoUnicos,
-      oportunidades: oportunidadesValidas.length,
-      taxa_risco_pct: taxaRisco,
-      status: 'success'
-    });
+    console.log(`[getRiscosOportunidadesAnalise] Resultado: ${riscos.length} categorias de risco, ${clientesEmRiscoUnicos} clientes únicos, taxa ${taxaRisco}%`);
 
     return Response.json({
-      riscos: riscosValidos,
-      oportunidades: oportunidadesValidas,
+      riscos,
+      oportunidades,
       estatisticas: {
-        clientes_ativos_planos: totalClientesAtivos,
         clientes_em_risco: clientesEmRiscoUnicos,
-        total_oportunidades: oportunidadesValidas.length,
-        taxa_risco_percentual: taxaRisco
+        total_oportunidades: oportunidades.length,
+        taxa_risco_percentual: taxaRisco,
+        modo: isGlobal ? 'global' : 'individual'
       },
       consolidacao: clientesMap
     });
 
   } catch (error) {
-    console.error('Erro ao buscar riscos e oportunidades:', error);
-    return Response.json({ 
+    console.error('[getRiscosOportunidadesAnalise] Erro:', error);
+    return Response.json({
       error: error.message,
       riscos: [],
       oportunidades: [],
-      estatisticas: { total_riscos: 0, clientes_em_risco: 0, total_oportunidades: 0, taxa_risco: 'baixo' }
+      estatisticas: { clientes_em_risco: 0, total_oportunidades: 0, taxa_risco_percentual: 0 }
     }, { status: 500 });
   }
 });

@@ -8,29 +8,30 @@ import RiscoCard from './RiscoCard';
 import ClientesRiscoTabela from './ClientesRiscoTabela';
 import WheelLoader from '@/components/ui/WheelLoader';
 
+// workshopId é opcional: se null/undefined → modo global (todos os clientes)
 export default function RiscosOportunidadesModal({ isOpen, onClose, workshopId }) {
   const [activeTab, setActiveTab] = useState('riscos');
   const [viewType, setViewType] = useState('cards'); // 'cards' ou 'tabela'
 
   const { data: analise = { riscos: [], oportunidades: [], estatisticas: {} }, isLoading } = useQuery({
-    queryKey: ['riscosOportunidades', workshopId],
+    queryKey: ['riscosOportunidades', workshopId ?? 'global'],
     queryFn: async () => {
-      if (!isOpen || !workshopId) return { riscos: [], oportunidades: [], estatisticas: {} };
+      if (!isOpen) return { riscos: [], oportunidades: [], estatisticas: {} };
       
       try {
-        const response = await base44.functions.invoke('getRiscosOportunidadesAnalise', {
-          workshop_id: workshopId
-        });
+        // Se workshopId ausente → envia sem workshop_id → backend entra em modo global
+        const payload = workshopId ? { workshop_id: workshopId } : {};
+        const response = await base44.functions.invoke('getRiscosOportunidadesAnalise', payload);
         return response.data || { riscos: [], oportunidades: [], estatisticas: {} };
       } catch (error) {
         console.error('Erro ao carregar análise:', error);
         return { riscos: [], oportunidades: [], estatisticas: {} };
       }
     },
-    enabled: isOpen && !!workshopId,
-    staleTime: 0,           // FASE 2 FIX: Sem cache
-    gcTime: 0,              // FASE 2 FIX: Não guardar resultado
-    refetchOnMount: true    // FASE 2 FIX: Refetch sempre ao abrir
+    enabled: isOpen,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: true
   });
 
   const handleAcao = (risco, cliente) => {
