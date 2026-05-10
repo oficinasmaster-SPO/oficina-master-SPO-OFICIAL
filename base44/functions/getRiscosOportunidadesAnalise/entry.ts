@@ -345,25 +345,25 @@ Deno.serve(async (req) => {
     let taxaEngajamentoCliente = 0;
     let totalClientesAtivos = 0;
     try {
-      const totalAtivos = await base44.asServiceRole.entities.Contract.filter(
+      // Usa Workshops ativos como base de clientes — mais confiável que contratos
+      const workshopsAtivosArr = await base44.asServiceRole.entities.Workshop.filter(
         isGlobal
-          ? { status: { '$in': ['ativo', 'efetivado'] } }
-          : { workshop_id, status: { '$in': ['ativo', 'efetivado'] } },
+          ? { status: 'ativo' }
+          : { id: workshop_id },
         '', 1000
       );
-      // Deduplicar por workshop_id para contar clientes únicos ativos, não contratos
-      const workshopsAtivos = new Set(totalAtivos.map(c => c.workshop_id).filter(Boolean));
-      totalClientesAtivos = workshopsAtivos.size || totalAtivos.length;
-      console.log(`[getRiscosOportunidadesAnalise] Contratos ativos: ${totalAtivos.length}, Clientes únicos: ${totalClientesAtivos}`);
+      totalClientesAtivos = workshopsAtivosArr.length;
+      console.log(`[getRiscosOportunidadesAnalise] Workshops ativos: ${totalClientesAtivos}`);
+
       if (totalClientesAtivos > 0) {
-        taxaRisco = Math.round((clientesEmRiscoUnicos / totalClientesAtivos) * 100);
+        taxaRisco = Math.min(100, Math.round((clientesEmRiscoUnicos / totalClientesAtivos) * 100));
 
         // Clientes únicos com sprint ou próximo passo atrasado
         const clientesEngajamentoSet = new Set([
           ...sprints_atrasadas.map(s => s.workshop_id),
           ...proximos_atrasados.map(p => p.workshop_id)
         ].filter(Boolean));
-        taxaEngajamentoCliente = Math.round((clientesEngajamentoSet.size / totalClientesAtivos) * 100);
+        taxaEngajamentoCliente = Math.min(100, Math.round((clientesEngajamentoSet.size / totalClientesAtivos) * 100));
       }
     } catch (e) {
       console.warn('Taxa risco error:', e.message);
