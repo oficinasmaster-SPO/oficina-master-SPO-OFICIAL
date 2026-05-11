@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, Clock, CheckCircle2, StickyNote, CalendarCheck, MessageCircle, Phone, Mail, MapPin, Video, FileText, Target } from "lucide-react";
+import { AlertCircle, Clock, CheckCircle2, StickyNote, CalendarCheck, MessageCircle, Phone, Mail, MapPin, Video, FileText, Target, Search, X } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import FollowUpCompletedDetailDrawer from "@/components/aceleracao/FollowUpCompletedDetailDrawer";
 import { useQuery } from "@tanstack/react-query";
@@ -104,6 +104,7 @@ const CANAL_ICON_MAP = {
 
 export default function FollowUpList({ reminders, today, isLoading, onSelect, filterPill, onFilterPill }) {
   const [selectedCompleted, setSelectedCompleted] = useState(null);
+  const [search, setSearch] = useState("");
   const concluidosIndex = useConcluidosIndex();
   // Extrai todos os ata_ids dos reminders para buscar apenas as ATAs necessárias
   const ataIds = reminders.map(r => r.ata_id).filter(Boolean);
@@ -117,7 +118,10 @@ export default function FollowUpList({ reminders, today, isLoading, onSelect, fi
     { id: "concluidos", label: "Concluídos" },
   ];
 
+  const searchTerm = search.trim().toLowerCase();
+
   const filtered = reminders.filter(r => {
+    if (searchTerm && !(r.workshop_name || "").toLowerCase().includes(searchTerm)) return false;
     if (filterPill === "concluidos") return r.is_completed;
     if (filterPill === "atrasados") return !r.is_completed && r.reminder_date < today;
     if (filterPill === "hoje")      return !r.is_completed && r.reminder_date === today;
@@ -138,6 +142,26 @@ export default function FollowUpList({ reminders, today, isLoading, onSelect, fi
 
   return (
     <div className="space-y-4">
+      {/* Search bar */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+        <input
+          type="text"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Buscar cliente..."
+          className="w-full pl-9 pr-9 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-transparent placeholder-gray-400"
+        />
+        {search && (
+          <button
+            onClick={() => setSearch("")}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+
       {/* Mini metric strip */}
       <div className="flex gap-3 text-sm">
         <div className="flex items-center gap-2 bg-red-50 border border-red-100 rounded-lg px-3 py-1.5">
