@@ -761,9 +761,13 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
         amanha.setDate(amanha.getDate() + 1);
         const amanhaStr = amanha.toISOString().split('T')[0];
 
+        // Usa o canal selecionado como origem (primeiro canal da lista)
+        const canalOrigem = canais[0] || "whatsapp";
+        const canalLabel = { ligacao: "Ligação", whatsapp: "WhatsApp", email: "E-mail", meet: "Meet", presencial: "Presencial" }[canalOrigem] || canalOrigem;
+
         // Monta message de contexto para o card de amanhã
         const msgContexto = resultado === "aguardando"
-          ? `⏳ Aguardando resposta (WhatsApp)${observacoes ? ` — ${observacoes.slice(0, 120)}` : ""}`
+          ? `⏳ Aguardando resposta (${canalLabel})${observacoes ? ` — ${observacoes.slice(0, 120)}` : ""}`
           : `🔁 Retentativa — não atendeu em ${format(new Date(), "dd/MM/yyyy")}${observacoes ? ` — ${observacoes.slice(0, 120)}` : ""}`;
 
         novoFollowUp = await base44.entities.FollowUpReminder.create({
@@ -779,8 +783,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
           sprint_id: followUp.sprint_id || null,
           is_completed: false,
           message: msgContexto,
-          // Marca WhatsApp para exibir ícone verde no card
-          canal_origem: resultado === "aguardando" ? "whatsapp" : null,
+          canal_origem: resultado === "aguardando" ? canalOrigem : null,
           consulting_firm_id: followUp.consulting_firm_id || null,
         });
       } else if (proximoPasso === "reagendar" && proxData) {
@@ -1176,10 +1179,10 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
               {/* Banner informativo para auto-reagendamento */}
               {isAutoReagendar && (
                 <div className={`rounded-lg border px-3 py-2.5 flex items-center gap-2 text-xs font-medium ${resultado === "aguardando" ? "bg-blue-50 border-blue-200 text-blue-800" : "bg-amber-50 border-amber-200 text-amber-800"}`}>
-                  <span className="text-base">{resultado === "aguardando" ? "💬" : "🔁"}</span>
+                  <span className="text-base">{resultado === "aguardando" ? ({ ligacao: "📞", email: "✉️", presencial: "🏠", meet: "🎥" }[canais[0]] || "💬") : "🔁"}</span>
                   <span>
                     {resultado === "aguardando"
-                      ? "Um novo follow-up será criado automaticamente para amanhã com ícone WhatsApp 🟢"
+                      ? `Um novo follow-up será criado automaticamente para amanhã — aguardando retorno via ${({ ligacao: "Ligação", whatsapp: "WhatsApp", email: "E-mail", meet: "Meet", presencial: "Presencial" }[canais[0]] || "WhatsApp")}`
                       : "Um novo follow-up de retentativa será criado automaticamente para amanhã"}
                   </span>
                 </div>

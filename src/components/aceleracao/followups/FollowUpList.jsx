@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, Clock, CheckCircle2, StickyNote, ArrowRight, User, CalendarCheck, MessageCircle } from "lucide-react";
+import { AlertCircle, Clock, CheckCircle2, StickyNote, ArrowRight, User, CalendarCheck, MessageCircle, Phone, Mail, MapPin, Video } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import FollowUpCompletedDetailDrawer from "@/components/aceleracao/FollowUpCompletedDetailDrawer";
 import { useQuery } from "@tanstack/react-query";
@@ -172,12 +172,24 @@ export default function FollowUpList({ reminders, today, isLoading, onSelect, fi
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-base text-gray-800 truncate">{name}</span>
-                    {/* Ícone WhatsApp verde — follow-up criado via "Aguardando resposta" */}
-                    {r.canal_origem === "whatsapp" && (
-                      <span title="Aguardando resposta WhatsApp" className="flex-shrink-0 flex items-center justify-center w-5 h-5 rounded-full bg-green-500">
-                        <MessageCircle className="w-3 h-3 text-white" />
-                      </span>
-                    )}
+                    {/* Ícone de canal — follow-up criado via "Aguardando resposta" */}
+                    {r.canal_origem && (() => {
+                      const map = {
+                        whatsapp:   { icon: MessageCircle, bg: "bg-green-500",  title: "Aguardando resposta WhatsApp" },
+                        ligacao:    { icon: Phone,          bg: "bg-blue-500",   title: "Aguardando retorno de ligação" },
+                        email:      { icon: Mail,           bg: "bg-indigo-500", title: "Aguardando resposta por e-mail" },
+                        presencial: { icon: MapPin,         bg: "bg-gray-500",   title: "Aguardando retorno presencial" },
+                        meet:       { icon: Video,          bg: "bg-purple-500", title: "Aguardando retorno via Meet" },
+                      };
+                      const cfg = map[r.canal_origem];
+                      if (!cfg) return null;
+                      const Icon = cfg.icon;
+                      return (
+                        <span title={cfg.title} className={`flex-shrink-0 flex items-center justify-center w-5 h-5 rounded-full ${cfg.bg}`}>
+                          <Icon className="w-3 h-3 text-white" />
+                        </span>
+                      );
+                    })()}
                     {isUrgent && (
                       <span className="flex-shrink-0 text-[10px] font-bold uppercase tracking-wide text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded">
                         Urgente
