@@ -65,11 +65,28 @@ function useConcluidosIndex() {
   return byWorkshop;
 }
 
-// Busca todas as ATAs de uma vez e cria índice por id
-function useAtasIndex() {
+// Busca ATAs pelo conjunto de ata_ids dos reminders ativos — sem limite de data
+function useAtasIndex(ataIds = []) {
+  const uniqueIds = [...new Set(ataIds.filter(Boolean))];
   const { data = [] } = useQuery({
-    queryKey: ["meeting-minutes-list-index"],
-    queryFn: () => base44.entities.MeetingMinutes.list("-meeting_date", 1000),
+    queryKey: ["meeting-minutes-by-ids", uniqueIds.sort().join(",")],
+    queryFn: async () => {
+      if (uniqueIds.length === 0) return [];
+      // Busca em lotes de 50 para não sobrecarregar
+      const BATCH = 50;
+      const results = [];
+      for (let i = 0; i < uniqueIds.length; i += BATCH) {
+        const batch = uniqueIds.slice(i, i + BATCH);
+        const items = await base44.entities.MeetingMinutes.filter(
+          { id: { $in: batch } },
+          "-meeting_date",
+          BATCH
+        );
+        results.push(...items);
+      }
+      return results;
+    },
+    enabled: uniqueIds.length > 0,
     staleTime: 5 * 60 * 1000,
   });
   const byId = {};
@@ -88,7 +105,9 @@ const CANAL_ICON_MAP = {
 export default function FollowUpList({ reminders, today, isLoading, onSelect, filterPill, onFilterPill }) {
   const [selectedCompleted, setSelectedCompleted] = useState(null);
   const concluidosIndex = useConcluidosIndex();
-  const atasIndex = useAtasIndex();
+  // Extrai todos os ata_ids dos reminders para buscar apenas as ATAs necessárias
+  const ataIds = reminders.map(r => r.ata_id).filter(Boolean);
+  const atasIndex = useAtasIndex(ataIds);
 
   const PILLS = [
     { id: "todos",     label: "Todos" },
@@ -179,12 +198,22 @@ export default function FollowUpList({ reminders, today, isLoading, onSelect, fi
             const tipoReuniao = ata?.tipo_aceleracao || ata?.tipo_atendimento || null;
             const ataCode = ata?.code || null;
             const ataHorario = ata?.meeting_time || null;
+            // objetivos_atendimento pode ser "• texto\n• texto2" — pega a 1ª linha limpa
             const objetivoRaw = ata?.objetivos_atendimento
               || (Array.isArray(ata?.objetivos) && ata.objetivos[0])
               || null;
             const objetivo = objetivoRaw
-              ? (typeof objetivoRaw === "string" ? objetivoRaw : JSON.stringify(objetivoRaw)).slice(0, 80)
+              ? (typeof objetivoRaw === "string"
+                  ? objetivoRaw
+                      .split("\n")[0]              // primeira linha
+                      .replace(/^[•\-–\s]+/, "")   // remove bullet inicial
+                      .trim()
+                      .slice(0, 90)
+                  : String(objetivoRaw).slice(0, 90))
               : null;
+
+            // ATA orphan: reminder tem ata_id mas a ATA não existe mais
+            const ataOrfha = r.ata_id && atasIndex !== null && Object.keys(atasIndex).length > 0 && !ata;
 
             // Canal ícone
             const canalCfg = r.canal_origem ? CANAL_ICON_MAP[r.canal_origem] : null;
@@ -228,7 +257,11 @@ export default function FollowUpList({ reminders, today, isLoading, onSelect, fi
                         Follow-up {r.sequence_number}/4
                         {r.consultor_nome && <> · <span className="text-gray-400">{r.consultor_nome}</span></>}
                       </span>
-                      {(tipoReuniao || ataCode || ataHorario) && (
+                      {ataOrfha ? (
+                        <span className="ml-2 text-[10px] text-red-500 bg-red-50 border border-red-100 px-1.5 py-0.5 rounded font-medium flex-shrink-0">
+                          ATA removida
+                        </span>
+                      ) : (tipoReuniao || ataCode || ataHorario) ? (
                         <span className="flex items-center gap-1 ml-2 flex-shrink-0">
                           {tipoReuniao && (
                             <span className="flex items-center gap-0.5 text-[10px] text-purple-700 bg-purple-50 border border-purple-100 px-1.5 py-0.5 rounded-full font-medium">
@@ -245,7 +278,7 @@ export default function FollowUpList({ reminders, today, isLoading, onSelect, fi
                             </span>
                           )}
                         </span>
-                      )}
+                      ) : null}
                     </div>
 
                     {/* Line 3: datas + objetivo */}
