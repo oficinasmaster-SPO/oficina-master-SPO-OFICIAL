@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, Clock, CheckCircle2, StickyNote, ArrowRight, User, CalendarCheck, MessageCircle, Phone, Mail, MapPin, Video } from "lucide-react";
+import { AlertCircle, Clock, CheckCircle2, StickyNote, CalendarCheck, MessageCircle, Phone, Mail, MapPin, Video, FileText, Target } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import FollowUpCompletedDetailDrawer from "@/components/aceleracao/FollowUpCompletedDetailDrawer";
 import { useQuery } from "@tanstack/react-query";
@@ -54,7 +54,6 @@ function useConcluidosIndex() {
     queryFn: () => base44.entities.FollowUpConcluido.list("-completedAt", 500),
     staleTime: 3 * 60 * 1000,
   });
-  // índice por workshop_id: último concluído por workshop
   const byWorkshop = {};
   data.forEach(c => {
     const wid = c.workshop_id;
@@ -66,9 +65,30 @@ function useConcluidosIndex() {
   return byWorkshop;
 }
 
+// Busca todas as ATAs de uma vez e cria índice por id
+function useAtasIndex() {
+  const { data = [] } = useQuery({
+    queryKey: ["meeting-minutes-list-index"],
+    queryFn: () => base44.entities.MeetingMinutes.list("-meeting_date", 1000),
+    staleTime: 5 * 60 * 1000,
+  });
+  const byId = {};
+  data.forEach(a => { if (a.id) byId[a.id] = a; });
+  return byId;
+}
+
+const CANAL_ICON_MAP = {
+  whatsapp:   { icon: MessageCircle, bg: "bg-green-500",  title: "Aguardando resposta WhatsApp" },
+  ligacao:    { icon: Phone,          bg: "bg-blue-500",   title: "Aguardando retorno de ligação" },
+  email:      { icon: Mail,           bg: "bg-indigo-500", title: "Aguardando resposta por e-mail" },
+  presencial: { icon: MapPin,         bg: "bg-gray-500",   title: "Aguardando retorno presencial" },
+  meet:       { icon: Video,          bg: "bg-purple-500", title: "Aguardando retorno via Meet" },
+};
+
 export default function FollowUpList({ reminders, today, isLoading, onSelect, filterPill, onFilterPill }) {
   const [selectedCompleted, setSelectedCompleted] = useState(null);
   const concluidosIndex = useConcluidosIndex();
+  const atasIndex = useAtasIndex();
 
   const PILLS = [
     { id: "todos",     label: "Todos" },
@@ -154,6 +174,22 @@ export default function FollowUpList({ reminders, today, isLoading, onSelect, fi
             const ultimoConcluido = concluidosIndex[r.workshop_id];
             const hasProximoPasso = ultimoConcluido?.proximoPasso && ultimoConcluido.proximoPasso !== 'cancelar';
 
+            // ATA vinculada
+            const ata = r.ata_id ? atasIndex[r.ata_id] : null;
+            const tipoReuniao = ata?.tipo_aceleracao || ata?.tipo_atendimento || null;
+            const ataCode = ata?.code || null;
+            const ataHorario = ata?.meeting_time || null;
+            const objetivoRaw = ata?.objetivos_atendimento
+              || (Array.isArray(ata?.objetivos) && ata.objetivos[0])
+              || null;
+            const objetivo = objetivoRaw
+              ? (typeof objetivoRaw === "string" ? objetivoRaw : JSON.stringify(objetivoRaw)).slice(0, 80)
+              : null;
+
+            // Canal ícone
+            const canalCfg = r.canal_origem ? CANAL_ICON_MAP[r.canal_origem] : null;
+            const CanalIcon = canalCfg?.icon || null;
+
             return (
               <button
                 key={r.id}
@@ -162,107 +198,120 @@ export default function FollowUpList({ reminders, today, isLoading, onSelect, fi
                   isConcluido ? "border-green-200 bg-green-50" : isOverdue ? "border-l-4 border-l-red-500 border-t-red-100 border-r-red-100 border-b-red-100" : "border-gray-200"
                 }`}
               >
-                <div className="flex items-center gap-3 px-4 py-3">
-                {/* Avatar */}
-                <div className={`flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold ${getAvatarColor(name)}`}>
-                  {getInitials(name)}
-                </div>
+                {/* MAIN ROW */}
+                <div className="flex items-center gap-3 px-4 py-2.5">
+                  {/* Avatar */}
+                  <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${getAvatarColor(name)}`}>
+                    {getInitials(name)}
+                  </div>
 
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-base text-gray-800 truncate">{name}</span>
-                    {/* Ícone de canal — follow-up criado via "Aguardando resposta" */}
-                    {r.canal_origem && (() => {
-                      const map = {
-                        whatsapp:   { icon: MessageCircle, bg: "bg-green-500",  title: "Aguardando resposta WhatsApp" },
-                        ligacao:    { icon: Phone,          bg: "bg-blue-500",   title: "Aguardando retorno de ligação" },
-                        email:      { icon: Mail,           bg: "bg-indigo-500", title: "Aguardando resposta por e-mail" },
-                        presencial: { icon: MapPin,         bg: "bg-gray-500",   title: "Aguardando retorno presencial" },
-                        meet:       { icon: Video,          bg: "bg-purple-500", title: "Aguardando retorno via Meet" },
-                      };
-                      const cfg = map[r.canal_origem];
-                      if (!cfg) return null;
-                      const Icon = cfg.icon;
-                      return (
-                        <span title={cfg.title} className={`flex-shrink-0 flex items-center justify-center w-5 h-5 rounded-full ${cfg.bg}`}>
-                          <Icon className="w-3 h-3 text-white" />
+                  {/* Content — 3 sub-lines */}
+                  <div className="flex-1 min-w-0">
+                    {/* Line 1: nome + urgente + canal */}
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className="font-semibold text-sm text-gray-800 truncate">{name}</span>
+                      {canalCfg && CanalIcon && (
+                        <span title={canalCfg.title} className={`flex-shrink-0 flex items-center justify-center w-4 h-4 rounded-full ${canalCfg.bg}`}>
+                          <CanalIcon className="w-2.5 h-2.5 text-white" />
                         </span>
-                      );
-                    })()}
-                    {isUrgent && (
-                      <span className="flex-shrink-0 text-[10px] font-bold uppercase tracking-wide text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded">
-                        Urgente
+                      )}
+                      {isUrgent && (
+                        <span className="flex-shrink-0 text-[9px] font-bold uppercase tracking-wide text-red-600 bg-red-50 border border-red-200 px-1 py-0.5 rounded">
+                          Urgente
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Line 2: FU + consultor | tipo + ATA code + horário */}
+                    <div className="flex items-center gap-0 min-w-0 mt-0.5">
+                      <span className="text-xs text-gray-500 flex-shrink-0">
+                        Follow-up {r.sequence_number}/4
+                        {r.consultor_nome && <> · <span className="text-gray-400">{r.consultor_nome}</span></>}
+                      </span>
+                      {(tipoReuniao || ataCode || ataHorario) && (
+                        <span className="flex items-center gap-1 ml-2 flex-shrink-0">
+                          {tipoReuniao && (
+                            <span className="flex items-center gap-0.5 text-[10px] text-purple-700 bg-purple-50 border border-purple-100 px-1.5 py-0.5 rounded-full font-medium">
+                              <FileText className="w-2.5 h-2.5" />
+                              {tipoReuniao}
+                            </span>
+                          )}
+                          {ataCode && (
+                            <span className="text-[10px] text-gray-500 font-mono">· {ataCode}</span>
+                          )}
+                          {ataHorario && (
+                            <span className="flex items-center gap-0.5 text-[10px] text-gray-400">
+                              · <Clock className="w-2.5 h-2.5" />{ataHorario}
+                            </span>
+                          )}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Line 3: datas + objetivo */}
+                    <div className="flex items-center gap-1 min-w-0 mt-0.5">
+                      <span className="text-[10px] text-gray-400 flex-shrink-0">
+                        {r.created_date && <>Criado: {format(new Date(r.created_date), "dd/MM/yyyy")}</>}
+                        {r.created_date && r.reminder_date && " · "}
+                        {r.reminder_date && <>Agendado: {format(new Date(r.reminder_date + "T00:00:00"), "dd/MM/yyyy")}</>}
+                      </span>
+                      {objetivo && (
+                        <span className="flex items-center gap-0.5 text-[10px] text-gray-400 italic truncate ml-1">
+                          · <Target className="w-2.5 h-2.5 flex-shrink-0 text-gray-400" />
+                          <span className="truncate">{objetivo}{objetivoRaw?.length > 80 ? "…" : ""}</span>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Right side */}
+                  <div className="flex-shrink-0 flex flex-col items-end gap-1 ml-2">
+                    {isConcluido ? (
+                      <span className="text-xs font-semibold text-green-600">Concluído</span>
+                    ) : isOverdue ? (
+                      <span className="text-xs font-semibold text-red-600">{daysOver}d vencido</span>
+                    ) : isTodayItem ? (
+                      <span className="text-xs font-semibold text-amber-600">Hoje</span>
+                    ) : (
+                      <span className="text-xs text-gray-400">
+                        {r.reminder_date ? format(new Date(r.reminder_date + "T00:00:00"), "dd/MM") : "—"}
                       </span>
                     )}
-                  </div>
-                  <div className="text-sm text-gray-500 mt-0.5 space-y-0.5">
-                    <div>
-                      Follow-up {r.sequence_number}/4
-                      {r.consultor_nome && <> · <span className="text-gray-400">{r.consultor_nome}</span></>}
-                    </div>
-                    <div className="text-xs text-gray-400">
-                      {r.created_date && <>Criado: {format(new Date(r.created_date), "dd/MM/yyyy")}</> }
-                      {r.created_date && r.reminder_date && " · "}
-                      {r.reminder_date && <>Agendado: {format(new Date(r.reminder_date + "T00:00:00"), "dd/MM/yyyy")}</>}
-                    </div>
+                    <Badge className={`text-[10px] px-1.5 py-0 ${
+                      isConcluido ? "bg-green-100 text-green-700 border-green-200" :
+                      isOverdue ? "bg-red-100 text-red-700 border-red-200" :
+                      isTodayItem ? "bg-amber-100 text-amber-700 border-amber-200" :
+                      "bg-gray-100 text-gray-500 border-gray-200"
+                    }`}>
+                      {isConcluido ? "Concluído" : isOverdue ? "Vencido" : isTodayItem ? "Hoje" : "Pendente"}
+                    </Badge>
                   </div>
                 </div>
 
-                {/* Right side */}
-                <div className="flex-shrink-0 flex flex-col items-end gap-1">
-                  {isConcluido ? (
-                    <span className="text-xs font-semibold text-green-600">Concluído</span>
-                  ) : isOverdue ? (
-                    <span className="text-xs font-semibold text-red-600">
-                      {daysOver}d vencido
-                    </span>
-                  ) : isTodayItem ? (
-                    <span className="text-xs font-semibold text-amber-600">Hoje</span>
-                  ) : (
-                    <span className="text-xs text-gray-400">
-                      {r.reminder_date ? format(new Date(r.reminder_date + "T00:00:00"), "dd/MM") : "—"}
-                    </span>
-                  )}
-                  <Badge className={`text-[10px] px-1.5 py-0 ${
-                    isConcluido ? "bg-green-100 text-green-700 border-green-200" :
-                    isOverdue ? "bg-red-100 text-red-700 border-red-200" :
-                    isTodayItem ? "bg-amber-100 text-amber-700 border-amber-200" :
-                    "bg-gray-100 text-gray-500 border-gray-200"
-                  }`}>
-                    {isConcluido ? "Concluído" : isOverdue ? "Vencido" : isTodayItem ? "Hoje" : "Pendente"}
-                  </Badge>
-                </div>
-                </div>
-
-                {/* Contexto da retentativa — message do reminder (nao_atendeu / aguardando) */}
+                {/* Faixa de contexto — retentativa / aguardando */}
                 {r.message && !isConcluido && (
-                  <div className="mx-4 mb-1.5 flex items-start gap-2 bg-amber-50 border border-amber-100 rounded-lg px-3 py-1.5">
-                    <span className="text-sm flex-shrink-0">{r.canal_origem === "whatsapp" ? "💬" : "🔁"}</span>
-                    <p className="text-[11px] text-amber-800 leading-relaxed line-clamp-2">{r.message}</p>
+                  <div className="mx-4 mb-2 flex items-center gap-2 bg-amber-50 border border-amber-100 rounded px-3 py-1.5">
+                    <span className="text-xs flex-shrink-0">{r.canal_origem === "whatsapp" ? "💬" : "🔁"}</span>
+                    <p className="text-[11px] text-amber-800 leading-relaxed line-clamp-1">{r.message}</p>
                   </div>
                 )}
 
-                {/* Próximo passo acordado no último atendimento */}
-                {hasProximoPasso && !isConcluido && !(r.message) && (
-                  <div className="mx-4 mb-2.5 flex items-start gap-2 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">
-                    <CalendarCheck className="w-3.5 h-3.5 text-blue-500 flex-shrink-0 mt-0.5" />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-[11px] font-semibold text-blue-700">
-                          {PROXIMO_PASSO_LABELS[ultimoConcluido.proximoPasso] || ultimoConcluido.proximoPasso}
-                        </span>
-                        {ultimoConcluido.proxData && (
-                          <span className="text-[10px] text-blue-500">
-                            · {format(new Date(ultimoConcluido.proxData + "T00:00:00"), "dd/MM/yyyy")}
-                            {ultimoConcluido.proxHora && ` às ${ultimoConcluido.proxHora}`}
-                          </span>
-                        )}
-                      </div>
-                      {ultimoConcluido.compromissos && (
-                        <p className="text-[10px] text-blue-600 truncate mt-0.5">{ultimoConcluido.compromissos}</p>
-                      )}
-                    </div>
+                {/* Faixa próximo passo */}
+                {hasProximoPasso && !isConcluido && !r.message && (
+                  <div className="mx-4 mb-2 flex items-center gap-2 bg-blue-50 border border-blue-100 rounded px-3 py-1.5">
+                    <CalendarCheck className="w-3 h-3 text-blue-500 flex-shrink-0" />
+                    <span className="text-[11px] font-semibold text-blue-700 flex-shrink-0">
+                      {PROXIMO_PASSO_LABELS[ultimoConcluido.proximoPasso] || ultimoConcluido.proximoPasso}
+                    </span>
+                    {ultimoConcluido.proxData && (
+                      <span className="text-[10px] text-blue-500">
+                        · {format(new Date(ultimoConcluido.proxData + "T00:00:00"), "dd/MM/yyyy")}
+                        {ultimoConcluido.proxHora && ` às ${ultimoConcluido.proxHora}`}
+                      </span>
+                    )}
+                    {ultimoConcluido.compromissos && (
+                      <span className="text-[10px] text-blue-600 truncate ml-1">· {ultimoConcluido.compromissos}</span>
+                    )}
                   </div>
                 )}
               </button>
