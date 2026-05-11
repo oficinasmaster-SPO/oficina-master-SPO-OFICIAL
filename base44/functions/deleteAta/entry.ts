@@ -71,7 +71,18 @@ Deno.serve(async (req) => {
         });
     }
 
-    // 3. Excluir a ATA
+    // 5. Deletar todos os FollowUpReminders vinculados a esta ATA (cascade)
+    const followUps = await base44.asServiceRole.entities.FollowUpReminder.filter({ ata_id });
+    let deletedFollowUps = 0;
+    for (const fu of followUps) {
+      await base44.asServiceRole.entities.FollowUpReminder.delete(fu.id);
+      deletedFollowUps++;
+    }
+    if (deletedFollowUps > 0) {
+      console.log(`🧹 ${deletedFollowUps} follow-up(s) vinculado(s) à ATA removidos.`);
+    }
+
+    // 6. Excluir a ATA
     try {
       await base44.entities.MeetingMinutes.delete(ata_id);
     } catch (e) {
@@ -84,7 +95,8 @@ Deno.serve(async (req) => {
 
     return Response.json({ 
       success: true, 
-      message: 'ATA excluída com sucesso' 
+      message: 'ATA excluída com sucesso',
+      deleted_follow_ups: deletedFollowUps
     });
 
   } catch (error) {
