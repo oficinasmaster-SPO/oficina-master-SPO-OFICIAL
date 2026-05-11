@@ -33,18 +33,26 @@ Deno.serve(async (req) => {
     if (consultor_id) atendimentoFilter.consultor_id = consultor_id;
     if (workshop_id) atendimentoFilter.workshop_id = workshop_id;
 
-    const followupFilter = {
-      dataContato: { '$gte': dataInicioStr.split('T')[0] }
-    };
+    // Para FollowUpConcluido usamos completedAt (ISO datetime) como fallback seguro
+    // pois dataContato é string date (YYYY-MM-DD) — o $gte compara string, o que é correto
+    // mas buscamos também pelo completedAt para não perder registros sem dataContato
+    const followupFilter = {};
     if (consultor_id) followupFilter.consultor_id = consultor_id;
     if (workshop_id) followupFilter.workshop_id = workshop_id;
 
-    // Buscar dados em paralelo
-    const [atendimentos, followups, workshops] = await Promise.all([
+    // Buscar dados em paralelo — followups sem filtro de data para não perder por formato
+    const [atendimentos, followupsAll, workshops] = await Promise.all([
       base44.asServiceRole.entities.ConsultoriaAtendimento.filter(atendimentoFilter, '-data_realizada', 2000),
-      base44.asServiceRole.entities.FollowUpConcluido.filter(followupFilter, '-dataContato', 5000),
+      base44.asServiceRole.entities.FollowUpConcluido.filter(followupFilter, '-completedAt', 5000),
       base44.asServiceRole.entities.Workshop.list('name', 2000),
     ]);
+
+    // Filtrar followups pelo período no JavaScript (evita problema de formato de data no $gte)
+    const dataInicioDate = dataInicio.toISOString().split('T')[0]; // YYYY-MM-DD
+    const followups = followupsAll.filter(f => {
+      const d = f.dataContato || (f.completedAt ? f.completedAt.split('T')[0] : null);
+      return d && d >= dataInicioDate;
+    });
 
     const workshopMap = {};
     workshops.forEach(w => { workshopMap[w.id] = w.name; });
@@ -106,7 +114,7 @@ Deno.serve(async (req) => {
     // Agregar por consultor
     const porConsultorMap = {};
     atendimentos.forEach(a => {
-      const cId = a.consultor_id;
+      const cId = a.consultor_id || a.created_by_id;
       if (!cId) return;
       if (!porConsultorMap[cId]) {
         porConsultorMap[cId] = {
@@ -127,12 +135,15 @@ Deno.serve(async (req) => {
     });
 
     followups.forEach(f => {
-      const cId = f.consultor_id;
+      // Fallback: se consultor_id estiver vazio, usa created_by_id
+      // O SDK retorna campos do data + campos built-in (id, created_by_id, etc.)
+      const cId = f.consultor_id || f.created_by_id;
       if (!cId) return;
+      const cNome = f.consultor_nome || cId;
       if (!porConsultorMap[cId]) {
         porConsultorMap[cId] = {
           consultor_id: cId,
-          consultor_nome: f.consultor_nome || cId,
+          consultor_nome: cNome,
           minutos_reuniao: 0,
           minutos_followup: 0,
           total_minutos: 0,
