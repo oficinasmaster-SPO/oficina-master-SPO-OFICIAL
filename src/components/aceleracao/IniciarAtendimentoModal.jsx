@@ -74,8 +74,8 @@ const CANAL_OPTIONS = [
 const RESULTADO_OPTIONS = [
   { id: "atendeu", label: "Atendeu", color: "bg-green-100 border-green-300" },
   { id: "nao_atendeu", label: "Não atendeu", color: "bg-red-100 border-red-300" },
-  { id: "retornar", label: "Retornar", color: "bg-amber-100 border-amber-300" },
-  { id: "agendou", label: "Agendou", color: "bg-blue-100 border-blue-300" },
+  { id: "aguardando", label: "Aguardando resposta", color: "bg-blue-100 border-blue-300" },
+  { id: "agendou", label: "Agendou", color: "bg-teal-100 border-teal-300" },
   { id: "reagendou", label: "Reagendou", color: "bg-purple-100 border-purple-300" },
   { id: "desistiu", label: "Desistiu", color: "bg-gray-100 border-gray-300" },
 ];
@@ -586,12 +586,16 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMensagens]);
 
+  // Resultados que fazem auto-reagendamento para amanhã (sem precisar próximo passo manual)
+  const isAutoReagendar = resultado === "nao_atendeu" || resultado === "aguardando";
+
   const validate = () => {
     const newErrors = {};
     if (canais.length === 0) newErrors.canais = "Selecione pelo menos um canal";
     if (!resultado) newErrors.resultado = "Obrigatório";
     if (!observacoes.trim() || observacoes.length < 10) newErrors.observacoes = "Mín. 10 caracteres";
-    if (!proximoPasso) newErrors.proximoPasso = "Obrigatório";
+    // Próximo passo não é obrigatório para nao_atendeu e aguardando (auto-reagendamento)
+    if (!isAutoReagendar && !proximoPasso) newErrors.proximoPasso = "Obrigatório";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -747,10 +751,40 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
       setFuAtaSelecionados([]);
       setFuSpSelecionados([]);
 
-      // STEP 2 — Criar próximo follow-up (se reagendar)
+      // STEP 2 — Criar próximo follow-up
       let novoFollowUp = null;
-      if (proximoPasso === "reagendar" && proxData) {
-        setActiveStepIndex(2);
+      setActiveStepIndex(2);
+
+      // Auto-reagendamento para amanhã: nao_atendeu ou aguardando resposta
+      if (resultado === "nao_atendeu" || resultado === "aguardando") {
+        const amanha = new Date();
+        amanha.setDate(amanha.getDate() + 1);
+        const amanhaStr = amanha.toISOString().split('T')[0];
+
+        // Monta message de contexto para o card de amanhã
+        const msgContexto = resultado === "aguardando"
+          ? `⏳ Aguardando resposta (WhatsApp)${observacoes ? ` — ${observacoes.slice(0, 120)}` : ""}`
+          : `🔁 Retentativa — não atendeu em ${format(new Date(), "dd/MM/yyyy")}${observacoes ? ` — ${observacoes.slice(0, 120)}` : ""}`;
+
+        novoFollowUp = await base44.entities.FollowUpReminder.create({
+          workshop_id: followUp.workshop_id,
+          workshop_name: followUp.workshop_name,
+          atendimento_id: followUp.atendimento_id,
+          ata_id: followUp.ata_id,
+          consultor_id: followUp.consultor_id,
+          consultor_nome: followUp.consultor_nome,
+          sequence_number: followUp.sequence_number || 1,
+          reminder_date: amanhaStr,
+          origin_type: followUp.origin_type || 'ata',
+          sprint_id: followUp.sprint_id || null,
+          is_completed: false,
+          message: msgContexto,
+          // Marca WhatsApp para exibir ícone verde no card
+          canal_origem: resultado === "aguardando" ? "whatsapp" : null,
+          consulting_firm_id: followUp.consulting_firm_id || null,
+        });
+      } else if (proximoPasso === "reagendar" && proxData) {
+        // Reagendamento manual com data escolhida
         const nextSeq = (followUp.sequence_number || 1) + 1;
         novoFollowUp = await base44.entities.FollowUpReminder.create({
           workshop_id: followUp.workshop_id,
@@ -764,10 +798,11 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
           origin_type: followUp.origin_type === 'sprint' ? 'sprint' : 'ata',
           sprint_id: followUp.origin_type === 'sprint' ? followUp.sprint_id : null,
           is_completed: false,
-          notes: compromissos ? `Comprometimentos anteriores:\n${compromissos}` : "",
+          message: compromissos ? `Comprometimentos anteriores:\n${compromissos}` : "",
+          consulting_firm_id: followUp.consulting_firm_id || null,
         });
-        await new Promise(r => setTimeout(r, 650));
       }
+      await new Promise(r => setTimeout(r, 650));
 
       // STEP 3 — Notificação (interna)
       setActiveStepIndex(3);
@@ -1110,7 +1145,8 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
                 />
               </div>
 
-              {/* Próximo passo */}
+              {/* Próximo passo — oculto para nao_atendeu e aguardando (auto-reagendamento) */}
+              {!isAutoReagendar && (
               <div>
                 <label className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2 block">Próximo passo *</label>
                 <div className="grid grid-cols-2 gap-2">
@@ -1135,6 +1171,19 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
                 </div>
                 {errors.proximoPasso && <p className="text-xs text-red-600 mt-1">{errors.proximoPasso}</p>}
               </div>
+              )}
+
+              {/* Banner informativo para auto-reagendamento */}
+              {isAutoReagendar && (
+                <div className={`rounded-lg border px-3 py-2.5 flex items-center gap-2 text-xs font-medium ${resultado === "aguardando" ? "bg-blue-50 border-blue-200 text-blue-800" : "bg-amber-50 border-amber-200 text-amber-800"}`}>
+                  <span className="text-base">{resultado === "aguardando" ? "💬" : "🔁"}</span>
+                  <span>
+                    {resultado === "aguardando"
+                      ? "Um novo follow-up será criado automaticamente para amanhã com ícone WhatsApp 🟢"
+                      : "Um novo follow-up de retentativa será criado automaticamente para amanhã"}
+                  </span>
+                </div>
+              )}
 
               {/* Data/Hora próximo contato */}
               {["reagendar", "agendar", "enviar"].includes(proximoPasso) && (

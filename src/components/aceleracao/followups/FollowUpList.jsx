@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, Clock, CheckCircle2, StickyNote, ArrowRight, User, CalendarCheck } from "lucide-react";
+import { AlertCircle, Clock, CheckCircle2, StickyNote, ArrowRight, User, CalendarCheck, MessageCircle } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import FollowUpCompletedDetailDrawer from "@/components/aceleracao/FollowUpCompletedDetailDrawer";
 import { useQuery } from "@tanstack/react-query";
@@ -172,6 +172,12 @@ export default function FollowUpList({ reminders, today, isLoading, onSelect, fi
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-base text-gray-800 truncate">{name}</span>
+                    {/* Ícone WhatsApp verde — follow-up criado via "Aguardando resposta" */}
+                    {r.canal_origem === "whatsapp" && (
+                      <span title="Aguardando resposta WhatsApp" className="flex-shrink-0 flex items-center justify-center w-5 h-5 rounded-full bg-green-500">
+                        <MessageCircle className="w-3 h-3 text-white" />
+                      </span>
+                    )}
                     {isUrgent && (
                       <span className="flex-shrink-0 text-[10px] font-bold uppercase tracking-wide text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded">
                         Urgente
@@ -217,8 +223,16 @@ export default function FollowUpList({ reminders, today, isLoading, onSelect, fi
                 </div>
                 </div>
 
+                {/* Contexto da retentativa — message do reminder (nao_atendeu / aguardando) */}
+                {r.message && !isConcluido && (
+                  <div className="mx-4 mb-1.5 flex items-start gap-2 bg-amber-50 border border-amber-100 rounded-lg px-3 py-1.5">
+                    <span className="text-sm flex-shrink-0">{r.canal_origem === "whatsapp" ? "💬" : "🔁"}</span>
+                    <p className="text-[11px] text-amber-800 leading-relaxed line-clamp-2">{r.message}</p>
+                  </div>
+                )}
+
                 {/* Próximo passo acordado no último atendimento */}
-                {hasProximoPasso && !isConcluido && (
+                {hasProximoPasso && !isConcluido && !(r.message) && (
                   <div className="mx-4 mb-2.5 flex items-start gap-2 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">
                     <CalendarCheck className="w-3.5 h-3.5 text-blue-500 flex-shrink-0 mt-0.5" />
                     <div className="flex-1 min-w-0">

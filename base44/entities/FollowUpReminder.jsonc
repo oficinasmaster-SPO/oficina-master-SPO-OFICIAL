@@ -41,7 +41,16 @@
     },
     "message": {
       "type": "string",
-      "description": "Mensagem do lembrete"
+      "description": "Mensagem do lembrete / contexto da retentativa"
+    },
+    "canal_origem": {
+      "type": "string",
+      "enum": [
+        "whatsapp",
+        "ligacao",
+        "email"
+      ],
+      "description": "Canal que originou este follow-up (ex: whatsapp = Aguardando resposta)"
     },
     "is_completed": {
       "type": "boolean",
