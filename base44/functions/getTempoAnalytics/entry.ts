@@ -47,6 +47,11 @@ Deno.serve(async (req) => {
       base44.asServiceRole.entities.Workshop.list('name', 2000),
     ]);
 
+    // Debug: logar campos do registro problemático
+    const problemRecord = followupsAll.find(f => f.workshop_id === '6980aca6be278cf6eaa60ff7');
+    if (problemRecord) console.log('[DEBUG] Iamut record keys:', JSON.stringify(Object.keys(problemRecord)));
+    if (problemRecord) console.log('[DEBUG] Iamut consultor_id:', problemRecord.consultor_id, '| created_by_id:', problemRecord.created_by_id);
+
     // Filtrar followups pelo período no JavaScript (evita problema de formato de data no $gte)
     const dataInicioDate = dataInicio.toISOString().split('T')[0]; // YYYY-MM-DD
     const followups = followupsAll.filter(f => {
