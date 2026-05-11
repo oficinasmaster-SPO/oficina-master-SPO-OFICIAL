@@ -28,6 +28,7 @@ import BacklogDashboard from "@/components/aceleracao/BacklogDashboard";
 import ProximosPassosAbaTab from "@/components/aceleracao/ProximosPassosAbaTab";
 import SprintClientModal from "@/components/aceleracao/sprint-client/SprintClientModal";
 import ClientSelectorGrid from "@/components/aceleracao/ClientSelectorGrid";
+import HistoricoContatosPanel, { buildHistoricoResumoIA } from "@/components/aceleracao/followups/HistoricoContatosPanel";
 
 const RESULTADO_COLORS = {
   atendeu: "bg-green-100 text-green-700 border-green-300",
@@ -193,7 +194,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
 
   // ─── OPERATIONAL SYNC MANAGER ───
   // Fonte única de verdade para todos os dados operacionais
-  const { 
+  const {
     allFollowUps,
     completedFollowUps: concluidosModal,
     consultorAttendances: atendimentosHojeModal,
@@ -474,9 +475,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
       const resumoAtas = atas.slice(0, 3).map(a =>
         `Ata (${a.tipo_aceleracao || a.tipo_atendimento || 'reunião'} - ${a.meeting_date || ''}): próximos passos: ${a.proximos_passos || 'não registrado'}`
       ).join('\n');
-      const resumoConcluidos = concluidosModal.slice(0, 3).map(c =>
-        `Atendimento via ${c.canal || '?'}: resultado=${c.resultado || '?'}, humor=${c.humor || '?'}, comprometimentos=${c.compromissos || 'nenhum'}`
-      ).join('\n');
+      const resumoHistoricoContatos = buildHistoricoResumoIA(concluidosModal);
 
       // Cria conversa pontual dedicada à dica
       const convDica = await base44.agents.createConversation({
@@ -496,8 +495,8 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
         `ÚLTIMAS ATAS:`,
         resumoAtas || 'Sem atas registradas',
         ``,
-        `ÚLTIMOS ATENDIMENTOS:`,
-        resumoConcluidos || 'Sem atendimentos anteriores',
+        `HISTÓRICO DE CONTATOS:`,
+        resumoHistoricoContatos || 'Sem contatos anteriores',
         ``,
         `Com base neste histórico, gere UMA dica prática e direta (máximo 3 linhas) para o consultor seguir neste atendimento. Responda apenas a dica, sem introdução, sem saudação.`,
       ].join('\n');
@@ -546,10 +545,8 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
     const resumoAtas = atas.slice(0, 5).map(a =>
       `- ${a.tipo_aceleracao || a.tipo_atendimento || 'Reunião'} (${a.meeting_date || ''}): próximos passos: ${a.proximos_passos || 'não registrado'}`
     ).join('\n');
-    const resumoConcluidos = concluidosModal.slice(0, 3).map(c =>
-      `- Canal: ${c.canal || '?'} | Resultado: ${c.resultado || '?'} | Humor: ${c.humor || '?'} | Comprometimentos: ${c.compromissos || 'nenhum'}`
-    ).join('\n');
-    return `Você é um assistente especializado em consultoria empresarial para oficinas mecânicas e negócios em aceleração. Seu papel é ajudar o consultor durante o atendimento de follow-up.\n\nCONTEXTO DO ATENDIMENTO\nCliente: ${followUp?.workshop_name}\nFollow-up: ${followUp?.sequence_number}/4\nConsultor: ${followUp?.consultor_nome || 'não informado'}\nData: ${followUp?.reminder_date || 'não informada'}\n\nÚLTIMAS ATAS:\n${resumoAtas || 'Nenhuma ata registrada'}\n\nÚLTIMOS ATENDIMENTOS:\n${resumoConcluidos || 'Nenhum atendimento anterior'}\n\nRegras:\n- Responda sempre em português brasileiro\n- Seja direto, prático e objetivo\n- Foque exclusivamente no cliente e contexto fornecido\n- Sugira abordagens e estratégias baseadas no histórico real do cliente\n- Seu escopo é: estratégia de atendimento, relacionamento com cliente, próximos passos, abordagem de follow-up, análise de humor e engajamento`;
+    const resumoHistorico = buildHistoricoResumoIA(concluidosModal);
+    return `Você é um assistente especializado em consultoria empresarial para oficinas mecânicas e negócios em aceleração. Seu papel é ajudar o consultor durante o atendimento de follow-up.\n\nCONTEXTO DO ATENDIMENTO\nCliente: ${followUp?.workshop_name}\nFollow-up: ${followUp?.sequence_number}/4\nConsultor: ${followUp?.consultor_nome || 'não informado'}\nData: ${followUp?.reminder_date || 'não informada'}\n\nÚLTIMAS ATAS:\n${resumoAtas || 'Nenhuma ata registrada'}\n\nHISTÓRICO DE CONTATOS (follow-ups anteriores):\n${resumoHistorico}\n\nRegras:\n- Responda sempre em português brasileiro\n- Seja direto, prático e objetivo\n- Foque exclusivamente no cliente e contexto fornecido\n- Use o histórico de contatos para identificar padrões de humor, engajamento e comprometimentos não cumpridos\n- Sugira abordagens baseadas no histórico real do cliente\n- Seu escopo é: estratégia de atendimento, relacionamento com cliente, próximos passos, abordagem de follow-up, análise de humor e engajamento`;
   };
 
   const iniciarChat = () => {
@@ -1231,7 +1228,8 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
               { id: 'proximospassos', emoji: '✅', label: 'Próximos Passos', group: 2 },
               { id: 'pedidos',      emoji: '📋', label: 'Pedidos',        group: 2 },
               { id: 'backlog',      emoji: '📝', label: 'Backlog',        group: 2 },
-              { id: 'ia',           emoji: '🤖', label: 'IA',             group: 3 },
+              { id: 'historico',    emoji: '🕐', label: 'Histórico',      group: 3 },
+      { id: 'ia',           emoji: '🤖', label: 'IA',             group: 3 },
             ];
 
             const handleRailClick = (id) => {
@@ -1640,6 +1638,14 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
                         <div className="px-3 py-4">
                           {followUp?.workshop_id ? <BacklogDashboard workshopId={followUp.workshop_id} consultorId={followUp.consultor_id} /> : <p className="text-xs text-gray-500 italic">Sem backlog disponível</p>}
                         </div>
+                      )}
+
+                      {/* HISTÓRICO DE CONTATOS */}
+                      {activePanel === 'historico' && (
+                        <HistoricoContatosPanel
+                          workshopId={followUp?.workshop_id}
+                          workshopName={followUp?.workshop_name}
+                        />
                       )}
 
                       {/* IA */}
