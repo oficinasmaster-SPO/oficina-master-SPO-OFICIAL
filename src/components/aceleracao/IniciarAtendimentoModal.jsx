@@ -36,7 +36,7 @@ import RegistrarAtendimento from "@/pages/RegistrarAtendimento";
 import { criarProximoSuporteFU } from "@/components/aceleracao/suporte/SuporteFollowUpHelper";
 import { useToasts } from "@/components/aceleracao/ToastContainer";
 import { useClientDemands } from "@/components/aceleracao/hooks/useClientDemands";
-import SuporteBanner from "@/components/aceleracao/suporte/SuporteBanner";
+import SuporteFormBanner from "@/components/aceleracao/suporte/SuporteFormBanner";
 
 const RESULTADO_COLORS = {
   atendeu: "bg-green-100 text-green-700 border-green-300",
@@ -1024,11 +1024,8 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
           </div>
         )}
 
-        {/* BANNER DE SUPORTE */}
-        <SuporteBanner followUp={followUp} />
-
         {/* HEADER - FIXO */}
-         <div className={`text-white px-6 py-4 flex items-center justify-between border-b flex-shrink-0 ${(followUp?.origin_type === 'suporte' || followUp?.origin_type === 'suporte_checkin') ? 'bg-amber-900 border-amber-800' : 'bg-gray-900 border-gray-800'}`}>
+         <div className="bg-gray-900 text-white px-6 py-4 flex items-center justify-between border-b border-gray-800 flex-shrink-0">
            <div className="flex items-center gap-4 flex-1">
              {/* Cliente Selector Button */}
              <button
@@ -1102,8 +1099,10 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
         <div className="flex-1 overflow-hidden flex min-h-0">
           {/* LEFT COLUMN - FORM (~40%) */}
           <div className="overflow-y-auto border-r border-gray-200 px-4 py-4" style={{ flex: '2 1 0%', minWidth: '320px', maxWidth: '42%' }}>
-            <div className="space-y-6 max-w-2xl px-2 py-2 bg-white rounded-lg shadow-[inset_0_2px_8px_rgba(0,0,0,0.05)]">
-              {/* Canal */}
+           <div className="space-y-6 max-w-2xl px-2 py-2 bg-white rounded-lg shadow-[inset_0_2px_8px_rgba(0,0,0,0.05)]">
+             {/* Banner Suporte */}
+             <SuporteFormBanner followUp={followUp} />
+             {/* Canal */}
               <div>
                 <label className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2 block">
                   Canais de contato *
