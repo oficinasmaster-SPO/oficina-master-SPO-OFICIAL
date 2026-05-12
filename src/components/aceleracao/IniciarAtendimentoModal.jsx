@@ -1299,9 +1299,9 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
                     const prevItem = NAV_ITEMS[idx - 1];
                     const showDivider = idx > 0 && item.group !== prevItem?.group;
                     return (
-                      <React.Fragment key={item.id}>
-                        {showDivider && <div className="w-8 h-px bg-gray-600 my-1" />}
-                        <div className="relative group">
+                      <div key={item.id}>
+                         {showDivider && <div className="w-8 h-px bg-gray-600 my-1" />}
+                         <div className="relative group">
                           <button
                             onClick={() => handleRailClick(item.id)}
                             title={item.label}
@@ -1319,7 +1319,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
                             <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-800" />
                           </div>
                         </div>
-                      </React.Fragment>
+                      </div>
                     );
                   })}
                 </div>
