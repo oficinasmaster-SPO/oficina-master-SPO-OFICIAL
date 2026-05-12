@@ -1111,7 +1111,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, onSaved
         style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}
       >
         <div className="absolute inset-0" onClick={handleClose} />
-        <div className={`relative bg-white rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.2)] w-full max-w-[800px] max-h-[95vh] flex flex-col z-10 transition-all duration-250 ${isClosing ? 'opacity-0 scale-95 translate-y-4' : 'animate-in fade-in zoom-in-95 duration-200'}`}>
+        <div className={`relative bg-white rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.2)] w-full max-w-[800px] max-h-[95vh] flex flex-col z-[10001] transition-all duration-250 ${isClosing ? 'opacity-0 scale-95 translate-y-4' : 'animate-in fade-in zoom-in-95 duration-200'}`}>
           <div className="flex items-center justify-between p-6 border-b shrink-0 shadow-[0_4px_16px_rgba(0,0,0,0.10)]">
             <div>
               {isReadOnly ? (
