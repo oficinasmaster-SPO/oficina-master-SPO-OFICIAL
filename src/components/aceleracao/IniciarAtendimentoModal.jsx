@@ -32,6 +32,7 @@ import HistoricoContatosPanel, { buildHistoricoResumoIA } from "@/components/ace
 import BucketPanel from "@/components/aceleracao/BucketPanel";
 import ParallelDemandsPanel from "@/components/aceleracao/ParallelDemandsPanel";
 import CheckpointModal from "@/components/aceleracao/CheckpointModal";
+import RegistrarAtendimento from "@/pages/RegistrarAtendimento";
 import { useToasts } from "@/components/aceleracao/ToastContainer";
 import { useClientDemands } from "@/components/aceleracao/hooks/useClientDemands";
 
@@ -175,6 +176,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
   const [selectedSprintId, setSelectedSprintId] = useState(null);
   const [showClientSelector, setShowClientSelector] = useState(false);
   const [clienteAtual, setClienteAtual] = useState(cliente);
+  const [showRegistrarAtendimento, setShowRegistrarAtendimento] = useState(false);
   const [showCheckpointModal, setShowCheckpointModal] = useState(false);
   
   // Toasts & Demands
@@ -1377,7 +1379,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
                         <Button 
                           size="sm" 
                           className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold h-7 px-2.5 mr-2"
-                          onClick={() => setShowClientSelector(true)}
+                          onClick={() => setShowRegistrarAtendimento(true)}
                         >
                           + Novo Atendimento
                         </Button>
@@ -1875,6 +1877,24 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
          <ClientSelectorGrid
            onSelect={carregarCliente}
            onClose={() => setShowClientSelector(false)}
+         />
+       )}
+
+       {/* Registrar Atendimento Modal — abre com dados do cliente pré-preenchidos */}
+       {showRegistrarAtendimento && (
+         <RegistrarAtendimento
+           isModal={true}
+           origemTela="IniciarAtendimentoModal"
+           initialData={{
+             workshop_id: followUp?.workshop_id,
+             consultor_id: followUp?.consultor_id,
+             consultor_nome: followUp?.consultor_nome,
+           }}
+           onClose={() => setShowRegistrarAtendimento(false)}
+           onSaved={() => {
+             setShowRegistrarAtendimento(false);
+             invalidate.all();
+           }}
          />
        )}
 

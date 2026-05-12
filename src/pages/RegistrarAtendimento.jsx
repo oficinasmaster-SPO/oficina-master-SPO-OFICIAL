@@ -38,7 +38,7 @@ import { INTELLIGENCE_AREAS, INTELLIGENCE_TYPES } from "@/components/lib/clientI
 import { useRegistroMeta } from "@/components/hooks/useRegistroMeta";
 import RegistroMetaBadge from "@/components/aceleracao/RegistroMetaBadge";
 
-export default function RegistrarAtendimento({ isModal = false, onClose, atendimentoId: atendimentoIdProp, consultoresExternos, isReadOnly = false, origemTela = "RegistrarAtendimento" }) {
+export default function RegistrarAtendimento({ isModal = false, onClose, onSaved, atendimentoId: atendimentoIdProp, consultoresExternos, isReadOnly = false, origemTela = "RegistrarAtendimento", initialData = null }) {
   const navigate = useNavigate();
   const location = window.location;
   const queryClient = useQueryClient();
@@ -82,7 +82,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
   }, [isModal, location.pathname]);
 
   const [formData, setFormData] = useState({
-    workshop_id: "", tipo_atendimento: "acompanhamento_mensal",
+    workshop_id: initialData?.workshop_id || "", tipo_atendimento: "acompanhamento_mensal",
     data_agendada: "", hora_agendada: "", duracao_minutos: 60,
     status: "agendado", status_cliente: "", google_meet_link: "",
     participantes: [{ nome: "", cargo: "", email: "" }],
@@ -216,11 +216,13 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
   // ── I2: Set default consultor_id when user loads and consultores are available ──
   useEffect(() => {
     if (user?.id && !formData.consultor_id && !resolvedAtendimentoId) {
-      const consultor = consultores?.find(c => c.id === user.id);
+      // Se veio initialData com consultor_id pré-definido, usa ele; senão usa o usuário logado
+      const preselectedConsultorId = initialData?.consultor_id || user.id;
+      const consultor = consultores?.find(c => c.id === preselectedConsultorId);
       setFormData(prev => ({
         ...prev,
-        consultor_id: user.id,
-        consultor_nome: consultor?.full_name || user.full_name
+        consultor_id: preselectedConsultorId,
+        consultor_nome: initialData?.consultor_nome || consultor?.full_name || user.full_name
       }));
     }
   }, [user?.id, consultores, resolvedAtendimentoId]);
@@ -418,6 +420,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
       setSaveSuccess(true);
       setHasUnsavedChanges(false);
       toast.success('Atendimento salvo com sucesso!');
+      onSaved?.();
       // E5: Use refs so timers can be properly cleaned up
       if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
       if (fallbackTimerRef.current) clearTimeout(fallbackTimerRef.current);
