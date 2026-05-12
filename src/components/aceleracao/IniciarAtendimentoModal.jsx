@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import ReactDOM from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -1974,8 +1975,8 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Registrar Atendimento Modal — fora do Dialog para evitar conflito de stacking context do Radix */}
-      {showRegistrarAtendimento && (
+      {/* Registrar Atendimento Modal — portal direto no body para escapar do stacking context do Radix Dialog */}
+      {showRegistrarAtendimento && ReactDOM.createPortal(
         <RegistrarAtendimento
           isModal={true}
           origemTela="IniciarAtendimentoModal"
@@ -1989,7 +1990,8 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
             setShowRegistrarAtendimento(false);
             invalidate.all();
           }}
-        />
+        />,
+        document.body
       )}
       </>
       );
