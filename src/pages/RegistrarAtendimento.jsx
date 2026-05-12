@@ -75,11 +75,11 @@ export default function RegistrarAtendimento({ isModal = false, onClose, onSaved
   }, [location.pathname, location.search, navigate, onClose]);
 
   React.useEffect(() => {
-    if (isModal && (!location.pathname.toLowerCase().includes('registraratendimento'))) {
+    if (isModal) {
       document.body.style.overflow = 'hidden';
       return () => { document.body.style.overflow = 'unset'; };
     }
-  }, [isModal, location.pathname]);
+  }, [isModal]);
 
   const [formData, setFormData] = useState({
     workshop_id: initialData?.workshop_id || "",
@@ -573,7 +573,16 @@ export default function RegistrarAtendimento({ isModal = false, onClose, onSaved
     return () => { if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current); };
   }, [autoSaveSnapshot, formData.id, formData.workshop_id, formData.data_agendada, formData.hora_agendada]);
 
-  if (!user || user.role !== 'admin') {
+  // Aguarda o usuário carregar antes de bloquear acesso
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
+  if (user.role !== 'admin') {
     return <div className="text-center py-12"><p className="text-gray-600">Acesso restrito a consultores</p></div>;
   }
 

@@ -455,7 +455,7 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
                   <p className="text-[10px] text-gray-400 uppercase tracking-wide font-semibold mb-1.5">Progresso dos follow-ups</p>
                   <div className="flex items-center gap-1.5">
                     {Array.from({ length: totalSteps }).map((_, i) => (
-                      <React.Fragment key={i} >
+                      <React.Fragment key={i}>
                         <div className={`w-3 h-3 rounded-full border-2 flex-shrink-0 ${
                           i < currentStep - 1
                             ? "bg-red-500 border-red-500"
