@@ -1,0 +1,208 @@
+{
+  "name": "FollowUpContador",
+  "type": "object",
+  "properties": {
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina cliente"
+    },
+    "consultor_id": {
+      "type": "string",
+      "description": "ID do consultor responsável"
+    },
+    "consultor_nome": {
+      "type": "string",
+      "description": "Nome do consultor (cache)"
+    },
+    
+    "origem_tipo": {
+      "type": "string",
+      "enum": ["bucket", "sprint"],
+      "description": "De onde vem o follow-up"
+    },
+    "origem_id": {
+      "type": "string",
+      "description": "ID do bucket ou sprint"
+    },
+    "origem_nome": {
+      "type": "string",
+      "description": "Nome do bucket/sprint (cache)"
+    },
+    
+    "numero_sequencia": {
+      "type": "integer",
+      "description": "Qual é este follow-up (1, 2, 3, 4...)"
+    },
+    "total_esperado": {
+      "type": "integer",
+      "description": "Total esperado de follow-ups (pode ser null se variável)"
+    },
+    
+    "status": {
+      "type": "string",
+      "enum": ["ativo", "concluido", "aguardando_proxima_semana"],
+      "default": "ativo",
+      "description": "Status atual do follow-up"
+    },
+    
+    "ciclo_numero_semana": {
+      "type": "integer",
+      "description": "Qual semana do acompanhamento"
+    },
+    "data_ciclo_inicio": {
+      "type": "string",
+      "format": "date",
+      "description": "Segunda-feira da semana"
+    },
+    "data_ciclo_fim": {
+      "type": "string",
+      "format": "date",
+      "description": "Domingo da semana"
+    },
+    
+    "data_criacao": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Quando foi criado"
+    },
+    "data_baixa": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Quando foi concluído (baixado)"
+    },
+    
+    "contexto": {
+      "type": "object",
+      "properties": {
+        "reunioes_agendadas": {
+          "type": "integer",
+          "description": "Para bucket: quantas reuniões estão agendadas"
+        },
+        "reunioes_total": {
+          "type": "integer",
+          "description": "Para bucket: total de reuniões previstas"
+        },
+        "proxima_reuniao_data": {
+          "type": "string",
+          "format": "date"
+        },
+        "tarefas_concluidas": {
+          "type": "integer",
+          "description": "Para sprint: tarefas feitas"
+        },
+        "tarefas_total": {
+          "type": "integer",
+          "description": "Para sprint: total de tarefas"
+        },
+        "fase_atual": {
+          "type": "string",
+          "description": "Fase atual da sprint"
+        },
+        "revisoes_solicitadas": {
+          "type": "integer",
+          "description": "Quantas revisões foram solicitadas"
+        }
+      },
+      "description": "Dados contextuais da época"
+    },
+    
+    "historico": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "numero": {
+            "type": "integer"
+          },
+          "data_criacao": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "data_baixa": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "motivo_fechamento": {
+            "type": "string"
+          },
+          "dias_duracao": {
+            "type": "integer"
+          },
+          "snapshot": {
+            "type": "object",
+            "description": "Estado da época"
+          },
+          "metricas": {
+            "type": "object",
+            "description": "Evolução e velocidade"
+          }
+        }
+      },
+      "default": [],
+      "description": "Histórico de todos os follow-ups concluídos"
+    },
+    
+    "consulting_firm_id": {
+      "type": "string",
+      "description": "ID da consultoria (isolamento de tenant)"
+    }
+  },
+  "required": [
+    "workshop_id",
+    "origem_tipo",
+    "origem_id",
+    "numero_sequencia"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        },
+        {
+          "consultor_id": "{{user.id}}"
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        },
+        {
+          "consultor_id": "{{user.id}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        },
+        {
+          "consultor_id": "{{user.id}}"
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

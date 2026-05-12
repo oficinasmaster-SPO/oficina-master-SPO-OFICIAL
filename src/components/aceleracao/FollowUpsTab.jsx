@@ -18,6 +18,8 @@ import { format } from "date-fns";
 import FollowUpList from "./followups/FollowUpList";
 import FollowUpDetail from "./followups/FollowUpDetail";
 import FollowUpCompletedDetailDrawer from "./FollowUpCompletedDetailDrawer";
+import FollowUpContadorRow from "./followups/FollowUpContadorRow";
+import FollowUpContadorHistorico from "./followups/FollowUpContadorHistorico";
 import RelatoriosTab from "./RelatoriosTab";
 
 // ── Componentes de módulo (fora do corpo do componente para evitar re-mount) ──
@@ -120,6 +122,7 @@ const TABS = [
   { id: "abertos",    label: "Abertos" },
   { id: "atrasados",  label: "Atrasados" },
   { id: "consultor",  label: "Por Consultor" },
+  { id: "acompanhamento", label: "Acompanhamento" },
   { id: "concluidos", label: "Concluídos" },
   { id: "relatorios", label: "Relatórios" },
 ];
@@ -180,6 +183,29 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
     },
     staleTime: 2 * 60 * 1000,
   });
+
+  // Fetch dos FollowUpContadores (acompanhamento)
+  const { data: followUpContadores = [], isLoading: isLoadingContadores } = useQuery({
+    queryKey: ["follow-up-contador-tab", consultorEfetivo],
+    queryFn: async () => {
+      const query = {};
+      if (consultorEfetivo) query.consultor_id = consultorEfetivo;
+      return base44.entities.FollowUpContador.filter(query, "-data_criacao", 500);
+    },
+    staleTime: 3 * 60 * 1000,
+  });
+
+  const fuContadoresAtivos = useMemo(() =>
+    followUpContadores.filter(f => f.status === 'ativo' || f.status === 'aguardando_proxima_semana'),
+    [followUpContadores]
+  );
+
+  const fuContadoresConcluidos = useMemo(() =>
+    followUpContadores.filter(f => f.status === 'concluido').sort((a, b) =>
+      new Date(b.data_baixa) - new Date(a.data_baixa)
+    ),
+    [followUpContadores]
+  );
 
   const handleComplete = async (reminder) => {
     await base44.entities.FollowUpReminder.update(reminder.id, {
@@ -528,6 +554,28 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
                 </Card>
               );
             })}
+          </div>
+        )
+      )}
+
+      {activeTab === "acompanhamento" && (
+        isLoadingContadores ? (
+          <FollowUpSkeleton />
+        ) : fuContadoresAtivos.length === 0 ? (
+          <EmptyState label="Nenhum acompanhamento ativo" />
+        ) : (
+          <div className="space-y-3">
+            {fuContadoresAtivos.map(fu => (
+              <FollowUpContadorRow key={fu.id} fu={fu} onSelect={() => {}} />
+            ))}
+            {fuContadoresConcluidos.length > 0 && (
+              <div className="pt-4 space-y-2">
+                <p className="text-xs font-semibold text-gray-600 px-1">Histórico</p>
+                {fuContadoresConcluidos.slice(0, 5).map(fu => (
+                  <FollowUpContadorRow key={fu.id} fu={fu} onSelect={() => {}} />
+                ))}
+              </div>
+            )}
           </div>
         )
       )}
