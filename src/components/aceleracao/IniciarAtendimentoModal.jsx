@@ -176,6 +176,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
   const [showClientSelector, setShowClientSelector] = useState(false);
   const [clienteAtual, setClienteAtual] = useState(cliente);
   const [showCheckpointModal, setShowCheckpointModal] = useState(false);
+  const [showDemandsModal, setShowDemandsModal] = useState(false);
   
   // Toasts & Demands
   const { addToast } = useToasts();
@@ -997,14 +998,8 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
              </Badge>
              </div>
 
-             {/* CENTERED PARALLEL DEMANDS PANEL */}
-             <div className="flex-1 flex items-center justify-center">
-               <ParallelDemandsPanel
-                 demands={demands}
-                 isOpen={true}
-                 onDemandClick={(type, id) => console.log(`Demand clicked: ${type} - ${id}`)}
-               />
-             </div>
+             {/* SPACER */}
+             <div className="flex-1" />
 
              <div className="flex items-center gap-2 ml-auto flex-shrink-0">
             {/* Badge de status/prioridade do FU atual */}
@@ -1310,9 +1305,11 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
               { id: 'bucket',       emoji: '📥', label: 'Bucket',         group: 2 },
               { id: 'historico',    emoji: '🕐', label: 'Histórico',      group: 3 },
       { id: 'ia',           emoji: '🤖', label: 'IA',             group: 3 },
-            ];
+      { id: 'demandas',     emoji: '🔔', label: 'Demandas Paralelas', group: 3, isDemands: true },
+      ];
 
             const handleRailClick = (id) => {
+              if (id === 'demandas') { setShowDemandsModal(true); return; }
               if (id === 'ia' && !chatInicializado) iniciarChat();
               setActivePanel(prev => prev === id ? null : id);
             };
@@ -1331,13 +1328,20 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
                           <button
                             onClick={() => handleRailClick(item.id)}
                             title={item.label}
-                            className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg transition-all duration-150 ${
+                            className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg transition-all duration-150 relative ${
                               activePanel === item.id
                                 ? 'bg-red-600 shadow-lg ring-2 ring-red-400'
                                 : 'hover:bg-gray-700'
                             }`}
                           >
                             {item.emoji}
+                            {/* Pulsing badge for demands */}
+                            {item.isDemands && demandsCritical && demandsCritical.length > 0 && (
+                              <>
+                                <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-orange-500 animate-ping opacity-75" />
+                                <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-orange-500" />
+                              </>
+                            )}
                           </button>
                           {/* Tooltip */}
                           <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 border border-gray-700">
@@ -1800,13 +1804,6 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
                     })()}
                     </div>
 
-        {/* PARALLEL DEMANDS PANEL */}
-        <ParallelDemandsPanel
-          demands={demands}
-          isOpen={true}
-          onDemandClick={(type, id) => console.log(`Demand clicked: ${type} - ${id}`)}
-        />
-
         {/* FOOTER - FIXO */}
          <div className="bg-white border-t border-gray-200 px-6 py-4 flex gap-3 justify-between flex-shrink-0">
            <Button variant="outline" onClick={() => { localStorage.removeItem(`draft_atendimento_${followUp?.id}`); onClose(); }} disabled={saving}>
@@ -1847,6 +1844,38 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
            onSelect={carregarCliente}
            onClose={() => setShowClientSelector(false)}
          />
+       )}
+
+       {/* DEMANDS MODAL */}
+       {showDemandsModal && (
+         <Dialog open onOpenChange={() => setShowDemandsModal(false)}>
+           <DialogContent className="max-w-2xl p-0 overflow-hidden" style={{ zIndex: 99999 }}>
+             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gray-50">
+               <div className="flex items-center gap-3">
+                 <span className="text-xl">🔔</span>
+                 <div>
+                   <h2 className="text-base font-bold text-gray-900">Demandas Paralelas</h2>
+                   <p className="text-xs text-gray-500">{followUp?.workshop_name}</p>
+                 </div>
+                 {demandsCritical && demandsCritical.length > 0 && (
+                   <Badge className="bg-orange-600 text-white text-xs font-bold animate-pulse">
+                     {demandsCritical.length} crítica{demandsCritical.length > 1 ? 's' : ''}
+                   </Badge>
+                 )}
+               </div>
+               <button onClick={() => setShowDemandsModal(false)} className="w-7 h-7 rounded flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-200 transition-colors">
+                 <X className="w-4 h-4" />
+               </button>
+             </div>
+             <div className="max-h-[70vh] overflow-y-auto p-4">
+               <ParallelDemandsPanel
+                 demands={demands}
+                 isOpen={true}
+                 onDemandClick={(type, id) => { console.log(`Demand clicked: ${type} - ${id}`); setShowDemandsModal(false); }}
+               />
+             </div>
+           </DialogContent>
+         </Dialog>
        )}
 
        {/* CHECKPOINT MODAL */}
