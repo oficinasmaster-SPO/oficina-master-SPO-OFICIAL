@@ -164,6 +164,7 @@ export default function BacklogDashboard({ workshopId, user }) {
         tarefa={editingTarefa}
         user={user}
         workshops={workshops}
+        workshopId={workshopId}
         onCancel={() => {
           setShowForm(false);
           setEditingTarefa(null);

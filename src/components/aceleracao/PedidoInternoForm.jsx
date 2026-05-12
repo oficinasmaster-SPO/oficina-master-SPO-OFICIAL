@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select";
 import PedidoInternoMediaUpload from "./PedidoInternoMediaUpload";
 
-export default function PedidoInternoForm({ pedido, user, usuarios = [], onCancel, onSuccess }) {
+export default function PedidoInternoForm({ pedido, user, usuarios: usuariosProp = [], onCancel, onSuccess }) {
   const [formData, setFormData] = useState({
     tipo: pedido?.tipo || 'apoio_tecnico',
     titulo: pedido?.titulo || '',
@@ -35,6 +35,20 @@ export default function PedidoInternoForm({ pedido, user, usuarios = [], onCance
     resposta: pedido?.resposta || '',
     midias_anexas: pedido?.midias_anexas || []
   });
+
+  // Busca usuários internamente para garantir que o select de responsável sempre funcione
+  const { data: usuariosInternos = [] } = useQuery({
+    queryKey: ['usuarios-pedido-interno'],
+    queryFn: async () => {
+      const users = await base44.entities.User.list();
+      return users || [];
+    },
+    // Só busca se o prop externo estiver vazio
+    enabled: usuariosProp.length === 0,
+  });
+
+  // Usa o prop se tiver dados, senão usa o fetch interno
+  const usuarios = usuariosProp.length > 0 ? usuariosProp : usuariosInternos;
 
   const { data: workshops = [] } = useQuery({
     queryKey: ['workshops-select'],
@@ -163,7 +177,7 @@ export default function PedidoInternoForm({ pedido, user, usuarios = [], onCance
                   <SelectValue placeholder="Selecione o responsável" />
                 </SelectTrigger>
                 <SelectContent>
-                  {usuarios.filter(u => u.role === 'admin').map(u => (
+                  {usuarios.map(u => (
                     <SelectItem key={u.id} value={u.id}>
                       {u.full_name}
                     </SelectItem>

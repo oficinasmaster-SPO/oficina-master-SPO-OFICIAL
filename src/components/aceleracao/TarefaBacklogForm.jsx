@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,11 +18,27 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-export default function TarefaBacklogForm({ tarefa, user, workshops, onCancel, onSuccess }) {
+export default function TarefaBacklogForm({ tarefa, user, workshops: workshopsProp, workshopId, onCancel, onSuccess }) {
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
+
+  // Busca workshops internamente se não recebeu como prop
+  const { data: workshopsInternal = [] } = useQuery({
+    queryKey: ['workshops-tarefa-form'],
+    queryFn: async () => {
+      const all = await base44.entities.Workshop.list();
+      return all || [];
+    },
+    enabled: !workshopsProp || workshopsProp.length === 0,
+  });
+
+  const workshops = workshopsProp?.length > 0 ? workshopsProp : workshopsInternal;
+
+  // Pré-seleciona cliente se workshopId foi passado
+  const workshopPreSelecionado = workshopId ? workshops.find(w => w.id === workshopId) : null;
+
   const [formData, setFormData] = useState({
-    cliente_id: tarefa?.cliente_id || '',
-    cliente_nome: tarefa?.cliente_nome || '',
+    cliente_id: tarefa?.cliente_id || workshopId || '',
+    cliente_nome: tarefa?.cliente_nome || workshopPreSelecionado?.name || '',
     consultor_id: tarefa?.consultor_id || user?.id,
     consultor_nome: tarefa?.consultor_nome || user?.full_name,
     criado_por_id: tarefa?.criado_por_id || user?.id,
@@ -40,11 +56,19 @@ export default function TarefaBacklogForm({ tarefa, user, workshops, onCancel, o
     anexos: tarefa?.anexos || []
   });
 
+  // Atualiza cliente_nome quando os workshops carregam (caso workshopId foi passado mas workshops ainda não tinham carregado)
+  useEffect(() => {
+    if (workshopId && !tarefa && formData.cliente_id === workshopId && !formData.cliente_nome) {
+      const ws = workshops.find(w => w.id === workshopId);
+      if (ws) setFormData(prev => ({ ...prev, cliente_nome: ws.name }));
+    }
+  }, [workshops, workshopId]);
+
   const { data: usuarios = [] } = useQuery({
     queryKey: ['usuarios-consultores'],
     queryFn: async () => {
       const users = await base44.entities.User.list();
-      return users.filter(u => u.role === 'admin') || [];
+      return users || [];
     }
   });
 
