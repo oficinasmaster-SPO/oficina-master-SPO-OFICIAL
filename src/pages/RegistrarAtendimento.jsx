@@ -22,6 +22,13 @@ import { toBrazilDate } from "@/utils/timezone";
 import BasicInfoSection from "@/components/atendimento/BasicInfoSection";
 import ParticipantsSection from "@/components/atendimento/ParticipantsSection";
 import AgendaSection from "@/components/atendimento/AgendaSection";
+import { useAttendanceValidation } from "@/hooks/useAttendanceValidation";
+import AttendanceValidationAlert from "@/components/aceleracao/AttendanceValidationAlert";
+
+function AttendanceValidationWrapper({ workshopId, attendanceTypeId, selectedDate }) {
+  const validation = useAttendanceValidation(workshopId, attendanceTypeId, selectedDate);
+  return <AttendanceValidationAlert validation={validation} />;
+}
 import ContentSection from "@/components/atendimento/ContentSection";
 import ObservationsSection from "@/components/atendimento/ObservationsSection";
 import AdvancedOptionsSection from "@/components/atendimento/AdvancedOptionsSection";
@@ -974,6 +981,15 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
           )}
           {autoSaveStatus && <AutoSaveIndicator status={autoSaveStatus} />}
         </div>
+      )}
+
+      {/* Validação de atendimento */}
+      {formData.workshop_id && (
+        <AttendanceValidationWrapper
+          workshopId={formData.workshop_id}
+          attendanceTypeId={formData.tipo_atendimento}
+          selectedDate={formData.data_agendada}
+        />
       )}
 
       <BasicInfoSection
