@@ -998,21 +998,22 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
              </div>
 
              {/* CENTERED PARALLEL DEMANDS CARD */}
-             <div className="flex-1 flex items-center justify-center">
-             {(demands || []).length > 0 && (
-               <div className="bg-white border border-gray-200 rounded-lg px-4 py-2.5 flex items-center gap-3 shadow-sm hover:shadow-md transition-shadow w-1/2">
+             <div className="flex-1 flex items-center justify-center px-4">
+               <div className="bg-white border border-gray-200 rounded-lg px-4 py-2.5 flex items-center gap-3 shadow-sm hover:shadow-md transition-shadow max-w-sm">
                  <AlertCircle className="w-4 h-4 text-orange-500 flex-shrink-0" />
                  <div className="flex-1 min-w-0">
-                   <p className="text-xs font-semibold text-gray-900 truncate">Demandas Paralelas</p>
+                   <p className="text-xs font-semibold text-gray-900">Demandas Paralelas</p>
                  </div>
                  {demandsCritical && demandsCritical.length > 0 && (
                    <Badge className="bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 flex-shrink-0">
                      {demandsCritical.length}
                    </Badge>
                  )}
+                 {!demandsCritical || demandsCritical.length === 0 && (
+                   <span className="text-[10px] text-gray-400">Sem urgência</span>
+                 )}
                  <ChevronRight className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
                </div>
-             )}
              </div>
 
              <div className="flex items-center gap-2 ml-auto flex-shrink-0">
