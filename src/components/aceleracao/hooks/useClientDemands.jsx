@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 
 /**
@@ -18,60 +18,86 @@ export function useClientDemands(workshopId, followUpType, isOpen = false) {
     criticalCount: 0
   });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [lastUpdated, setLastUpdated] = useState(null);
+   const [error, setError] = useState(null);
+   const [lastUpdated, setLastUpdated] = useState(null);
 
-  // Função para buscar demands
-  const fetchDemands = useCallback(async () => {
-    if (!workshopId) {
-      setDemands({
-        sprints: [],
-        pedidosInternos: [],
-        backlogTarefas: [],
-        cronogramaItems: []
-      });
-      return;
-    }
+   // Debounce ref para evitar rate limit
+   const fetchTimeoutRef = useRef(null);
+   const lastFetchRef = useRef(null);
+   const MIN_FETCH_INTERVAL = 2000; // 2s entre fetches
 
-    try {
-      setLoading(true);
-      setError(null);
+   // Função para buscar demands COM debounce
+   const fetchDemands = useCallback(async () => {
+     if (!workshopId) {
+       setDemands({
+         sprints: [],
+         pedidosInternos: [],
+         backlogTarefas: [],
+         cronogramaItems: []
+       });
+       return;
+     }
 
-      const response = await base44.functions.invoke('getClientParallelDemands', {
-        workshop_id: workshopId,
-        follow_up_type: followUpType || 'ata'
-      });
+     // ✅ EVITAR RATE LIMIT: Check min interval
+     const now = Date.now();
+     if (lastFetchRef.current && now - lastFetchRef.current < MIN_FETCH_INTERVAL) {
+       return;
+     }
 
-      if (response && response.data) {
-        const { sprints = [], pedidosInternos = [], backlogTarefas = [], cronogramaItems = [], summary = {} } = response.data;
-        
-        setDemands({
-          sprints: Array.isArray(sprints) ? sprints : [],
-          pedidosInternos: Array.isArray(pedidosInternos) ? pedidosInternos : [],
-          backlogTarefas: Array.isArray(backlogTarefas) ? backlogTarefas : [],
-          cronogramaItems: Array.isArray(cronogramaItems) ? cronogramaItems : []
-        });
-        
-        setSummary({
-          totalDemands: summary.totalDemands || 0,
-          criticalCount: summary.criticalCount || 0
-        });
-        setLastUpdated(new Date());
-      } else {
-        console.warn('Invalid response from getClientParallelDemands:', response);
-      }
-    } catch (err) {
-      console.error('Error fetching client demands:', err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [workshopId, followUpType]);
+     // ✅ Limpar timeout anterior
+     if (fetchTimeoutRef.current) clearTimeout(fetchTimeoutRef.current);
 
-  // Fetch inicial
+     try {
+       setLoading(true);
+       setError(null);
+       lastFetchRef.current = Date.now();
+
+       const response = await base44.functions.invoke('getClientParallelDemands', {
+         workshop_id: workshopId,
+         follow_up_type: followUpType || 'ata'
+       });
+
+       if (response && response.data) {
+         const { sprints = [], pedidosInternos = [], backlogTarefas = [], cronogramaItems = [], summary = {} } = response.data;
+
+         setDemands({
+           sprints: Array.isArray(sprints) ? sprints : [],
+           pedidosInternos: Array.isArray(pedidosInternos) ? pedidosInternos : [],
+           backlogTarefas: Array.isArray(backlogTarefas) ? backlogTarefas : [],
+           cronogramaItems: Array.isArray(cronogramaItems) ? cronogramaItems : []
+         });
+
+         setSummary({
+           totalDemands: summary.totalDemands || 0,
+           criticalCount: summary.criticalCount || 0
+         });
+         setLastUpdated(new Date());
+       } else {
+         console.warn('Invalid response from getClientParallelDemands:', response);
+       }
+     } catch (err) {
+       console.error('Error fetching client demands:', err);
+       // ✅ Retry após 5s se rate limit
+       if (err.status === 429) {
+         fetchTimeoutRef.current = setTimeout(() => {
+           lastFetchRef.current = null;
+           fetchDemands();
+         }, 5000);
+       } else {
+         setError(err.message);
+       }
+     } finally {
+       setLoading(false);
+     }
+   }, [workshopId, followUpType]);
+
+  // Fetch inicial (com debounce)
   useEffect(() => {
-    fetchDemands();
-  }, [fetchDemands]);
+    const timer = setTimeout(() => {
+      fetchDemands();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [workshopId, followUpType]); // ✅ Depende de IDs, não de fetchDemands
 
   // Auto-refresh a cada 30s se modal está aberto
   useEffect(() => {
@@ -116,6 +142,13 @@ export function useClientDemands(workshopId, followUpType, isOpen = false) {
     return getCriticalCount() > 0;
   }, [getCriticalCount]);
 
+  // Cleanup
+  useEffect(() => {
+    return () => {
+      if (fetchTimeoutRef.current) clearTimeout(fetchTimeoutRef.current);
+    };
+  }, []);
+
   return {
     // Dados
     demands,
@@ -135,6 +168,11 @@ export function useClientDemands(workshopId, followUpType, isOpen = false) {
     getCriticalCount,
     getDemandsByType,
     getCriticalByType,
-    hasAnyRed
+    hasAnyRed,
+    demandsCritical: demands.sprints.filter(d => d.severity === 'RED').concat(
+      demands.pedidosInternos.filter(d => d.severity === 'RED'),
+      demands.backlogTarefas.filter(d => d.severity === 'RED'),
+      demands.cronogramaItems.filter(d => d.severity === 'RED')
+    )
   };
 }
