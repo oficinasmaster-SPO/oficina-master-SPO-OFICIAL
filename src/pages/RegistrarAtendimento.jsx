@@ -82,7 +82,10 @@ export default function RegistrarAtendimento({ isModal = false, onClose, onSaved
   }, [isModal, location.pathname]);
 
   const [formData, setFormData] = useState({
-    workshop_id: initialData?.workshop_id || "", tipo_atendimento: "acompanhamento_mensal",
+    workshop_id: initialData?.workshop_id || "",
+    consultor_id: initialData?.consultor_id || "",
+    consultor_nome: initialData?.consultor_nome || "",
+    tipo_atendimento: "acompanhamento_mensal",
     data_agendada: "", hora_agendada: "", duracao_minutos: 60,
     status: "agendado", status_cliente: "", google_meet_link: "",
     participantes: [{ nome: "", cargo: "", email: "" }],
@@ -1104,7 +1107,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, onSaved
   if (isModal) {
     return (
       <div
-        className={`fixed inset-0 z-40 flex items-center justify-center p-4 sm:p-6 transition-opacity duration-250 ${isClosing ? 'opacity-0' : 'opacity-100'}`}
+        className={`fixed inset-0 z-[10000] flex items-center justify-center p-4 sm:p-6 transition-opacity duration-250 ${isClosing ? 'opacity-0' : 'opacity-100'}`}
         style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}
       >
         <div className="absolute inset-0" onClick={handleClose} />
