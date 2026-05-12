@@ -1880,23 +1880,8 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
          />
        )}
 
-       {/* Registrar Atendimento Modal — abre com dados do cliente pré-preenchidos */}
-       {showRegistrarAtendimento && (
-         <RegistrarAtendimento
-           isModal={true}
-           origemTela="IniciarAtendimentoModal"
-           initialData={{
-             workshop_id: followUp?.workshop_id,
-             consultor_id: followUp?.consultor_id,
-             consultor_nome: followUp?.consultor_nome,
-           }}
-           onClose={() => setShowRegistrarAtendimento(false)}
-           onSaved={() => {
-             setShowRegistrarAtendimento(false);
-             invalidate.all();
-           }}
-         />
-       )}
+       {/* Registrar Atendimento Modal — renderizado fora do Dialog para evitar conflito de stacking context */}
+       {/* NOTA: mantido aqui dentro do Fragment mas FORA do DialogContent */}
 
        {/* CHECKPOINT MODAL */}
        <CheckpointModal
@@ -1936,6 +1921,23 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Registrar Atendimento Modal — fora do Dialog para evitar conflito de stacking context do Radix */}
+      {showRegistrarAtendimento && (
+        <RegistrarAtendimento
+          isModal={true}
+          origemTela="IniciarAtendimentoModal"
+          initialData={{
+            workshop_id: followUp?.workshop_id,
+            consultor_id: followUp?.consultor_id,
+            consultor_nome: followUp?.consultor_nome,
+          }}
+          onClose={() => setShowRegistrarAtendimento(false)}
+          onSaved={() => {
+            setShowRegistrarAtendimento(false);
+            invalidate.all();
+          }}
+        />
+      )}
       </>
       );
       }
