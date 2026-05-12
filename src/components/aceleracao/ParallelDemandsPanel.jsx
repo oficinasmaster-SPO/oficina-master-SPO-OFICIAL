@@ -123,8 +123,8 @@ export default function ParallelDemandsPanel({ demands, isOpen = true, onDemandC
   if (!isOpen) return null;
 
   return (
-    <div className={`fixed right-4 top-4 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-50 transition-all ${
-      collapsed ? 'h-12' : 'max-h-[80vh]'
+    <div className={`w-full bg-white rounded-lg border border-gray-200 transition-all ${
+      collapsed ? 'h-12' : ''
     } flex flex-col`}>
       {/* Header */}
       <button
