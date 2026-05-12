@@ -36,6 +36,7 @@ import RegistrarAtendimento from "@/pages/RegistrarAtendimento";
 import { criarProximoSuporteFU } from "@/components/aceleracao/suporte/SuporteFollowUpHelper";
 import { useToasts } from "@/components/aceleracao/ToastContainer";
 import { useClientDemands } from "@/components/aceleracao/hooks/useClientDemands";
+import SuporteBanner from "@/components/aceleracao/suporte/SuporteBanner";
 
 const RESULTADO_COLORS = {
   atendeu: "bg-green-100 text-green-700 border-green-300",
@@ -1023,8 +1024,11 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
           </div>
         )}
 
+        {/* BANNER DE SUPORTE */}
+        <SuporteBanner followUp={followUp} />
+
         {/* HEADER - FIXO */}
-         <div className="bg-gray-900 text-white px-6 py-4 flex items-center justify-between border-b border-gray-800 flex-shrink-0">
+         <div className={`text-white px-6 py-4 flex items-center justify-between border-b flex-shrink-0 ${(followUp?.origin_type === 'suporte' || followUp?.origin_type === 'suporte_checkin') ? 'bg-amber-900 border-amber-800' : 'bg-gray-900 border-gray-800'}`}>
            <div className="flex items-center gap-4 flex-1">
              {/* Cliente Selector Button */}
              <button
