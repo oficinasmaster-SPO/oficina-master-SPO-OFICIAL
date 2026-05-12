@@ -60,7 +60,7 @@ export function useToastQueue() {
 /**
  * Hook para disparar toasts baseado em demands com timing inteligente
  */
-export function useSmartToastDispatcher(demands, addToast) {
+export function useSmartToastDispatcher(demands, addToast, onAlertShown) {
   useEffect(() => {
     if (!demands) return;
 
@@ -87,9 +87,10 @@ export function useSmartToastDispatcher(demands, addToast) {
       const delay = index * 5000; // 5 segundos entre toasts
       return setTimeout(() => {
         addToast(demand);
+        onAlertShown?.(demand);
       }, delay);
     });
 
     return () => timers.forEach(clearTimeout);
-  }, [demands, addToast]);
+  }, [demands, addToast, onAlertShown]);
 }

@@ -30,6 +30,10 @@ import SprintClientModal from "@/components/aceleracao/sprint-client/SprintClien
 import ClientSelectorGrid from "@/components/aceleracao/ClientSelectorGrid";
 import HistoricoContatosPanel, { buildHistoricoResumoIA } from "@/components/aceleracao/followups/HistoricoContatosPanel";
 import BucketPanel from "@/components/aceleracao/BucketPanel";
+import ParallelDemandsPanel from "@/components/aceleracao/ParallelDemandsPanel";
+import CheckpointModal from "@/components/aceleracao/CheckpointModal";
+import { useToasts } from "@/components/aceleracao/ToastContainer";
+import { useClientDemands } from "@/components/aceleracao/hooks/useClientDemands";
 
 const RESULTADO_COLORS = {
   atendeu: "bg-green-100 text-green-700 border-green-300",
@@ -169,6 +173,11 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
   const [selectedSprintId, setSelectedSprintId] = useState(null);
   const [showClientSelector, setShowClientSelector] = useState(false);
   const [clienteAtual, setClienteAtual] = useState(cliente);
+  const [showCheckpointModal, setShowCheckpointModal] = useState(false);
+  
+  // Toasts & Demands
+  const { addToast } = useToasts();
+  const { demands, demandsCritical } = useClientDemands(followUp?.workshop_id);
 
   // States da aba IA
   const [dicaIA, setDicaIA] = useState(null);
@@ -668,8 +677,14 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
       return;
     }
 
+    // Mostrar checkpoint modal em vez de salvar direto
+    setShowCheckpointModal(true);
+  };
+
+  const handleCheckpointDecision = async (decision, metadata) => {
     setSaving(true);
     setActiveStepIndex(0);
+    setShowCheckpointModal(false);
 
     try {
       // STEP 0 — Gravar interação (FollowUpConcluido)
@@ -1774,6 +1789,13 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
                     })()}
                     </div>
 
+        {/* PARALLEL DEMANDS PANEL */}
+        <ParallelDemandsPanel
+          demands={demands}
+          isOpen={true}
+          onDemandClick={(type, id) => console.log(`Demand clicked: ${type} - ${id}`)}
+        />
+
         {/* FOOTER - FIXO */}
          <div className="bg-white border-t border-gray-200 px-6 py-4 flex gap-3 justify-between flex-shrink-0">
            <Button variant="outline" onClick={() => { localStorage.removeItem(`draft_atendimento_${followUp?.id}`); onClose(); }} disabled={saving}>
@@ -1816,7 +1838,23 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
          />
        )}
 
-      <AlertDialog open={showNavConfirm} onOpenChange={setShowNavConfirm}>
+       {/* CHECKPOINT MODAL */}
+       <CheckpointModal
+         isOpen={showCheckpointModal}
+         followUpStatus={{
+           completed: 1,
+           inProgress: 0,
+           pendingCount: demandsCritical.length
+         }}
+         followUpContadorId={followUp?.id}
+         sprintId={followUp?.sprint_id}
+         bucketId={followUp?.id}
+         ataId={followUp?.ata_id}
+         onSubmit={handleCheckpointDecision}
+         onCancel={() => setShowCheckpointModal(false)}
+       />
+
+       <AlertDialog open={showNavConfirm} onOpenChange={setShowNavConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Navegar para outro follow-up?</AlertDialogTitle>

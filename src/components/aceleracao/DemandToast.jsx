@@ -39,6 +39,8 @@ export default function DemandToast({ demand, onDismiss, onView }) {
     <div
       className={`rounded-lg border p-3.5 shadow-lg backdrop-blur-sm ${bgColor} animate-slide-up max-w-sm`}
       role="alert"
+      aria-live="polite"
+      aria-atomic="true"
     >
       <div className="flex items-start gap-3">
         {/* Icon */}
@@ -49,12 +51,12 @@ export default function DemandToast({ demand, onDismiss, onView }) {
         {/* Content */}
         <div className="flex-1 min-w-0">
           <p className={`font-semibold text-sm ${titleColor}`}>
-            {demand.demandType === 'sprint' && 'Sprint'}
-            {demand.demandType === 'pedido' && 'Pedido Interno'}
-            {demand.demandType === 'tarefa' && 'Tarefa'}
-            {demand.demandType === 'cronograma' && 'Cronograma'}
+            {demand.demandType === 'sprint' && '📌 Sprint'}
+            {demand.demandType === 'pedido' && '📝 Pedido Interno'}
+            {demand.demandType === 'tarefa' && '✓ Tarefa'}
+            {demand.demandType === 'cronograma' && '📅 Cronograma'}
             {' '}
-            {demand.severity === 'RED' ? 'Crítico' : 'Atenção'}
+            {demand.severity === 'RED' ? '⚠️ Crítico' : '📢 Atenção'}
           </p>
           <p className={`text-sm ${textColor} mt-0.5 truncate`}>
             {demand.title}

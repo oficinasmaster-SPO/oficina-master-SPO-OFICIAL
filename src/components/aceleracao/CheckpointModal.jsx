@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Calendar, ChevronRight, AlertCircle } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { useDemandAnalytics } from './hooks/useDemandAnalytics';
 
 export default function CheckpointModal({
   isOpen,
@@ -18,6 +19,7 @@ export default function CheckpointModal({
   const [selectedDate, setSelectedDate] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const { logCheckpointDecision } = useDemandAnalytics();
 
   // Calcular próxima segunda-feira
   const getNextMonday = () => {
@@ -57,12 +59,17 @@ export default function CheckpointModal({
 
       const response = await base44.functions.invoke('processCheckpointDecision', payload);
 
+      const metadata = {
+        date: selectedOption === 'in_days' ? selectedDate : (selectedOption === 'next_week' ? nextMonday : null),
+        followUpId: response.data?.followUpId,
+        miniFollowUpId: response.data?.miniFollowUpId
+      };
+
+      // Log analytics
+      logCheckpointDecision(selectedOption, metadata);
+
       if (onSubmit) {
-        onSubmit(selectedOption, {
-          date: selectedOption === 'in_days' ? selectedDate : (selectedOption === 'next_week' ? nextMonday : null),
-          followUpId: response.data?.followUpId,
-          miniFollowUpId: response.data?.miniFollowUpId
-        });
+        onSubmit(selectedOption, metadata);
       }
 
       // Reset modal

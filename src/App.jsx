@@ -8,6 +8,7 @@ import VisualEditAgent from '@/lib/VisualEditAgent'
 import NavigationTracker from '@/lib/NavigationTracker'
 import { pagesConfig } from './pages.config'
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
+import { ToastProvider } from '@/components/aceleracao/ToastContainer';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
@@ -242,12 +243,14 @@ function App() {
             <AttendanceTypeProvider>
               <TemplateLibraryProvider>
                 <DraftPersistenceProvider>
-                  <Router>
-                    <PermissionsProvider>
-                      <NavigationTracker />
-                      <AuthenticatedApp />
-                    </PermissionsProvider>
-                  </Router>
+                  <ToastProvider>
+                    <Router>
+                      <PermissionsProvider>
+                        <NavigationTracker />
+                        <AuthenticatedApp />
+                      </PermissionsProvider>
+                    </Router>
+                  </ToastProvider>
                 </DraftPersistenceProvider>
               </TemplateLibraryProvider>
               <Toaster />
