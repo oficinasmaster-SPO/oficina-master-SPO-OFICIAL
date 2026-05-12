@@ -6,7 +6,7 @@ export function useRegistroMeta(origemTela) {
   const buildMeta = (responsavelId, responsavelNome) => ({
     criado_por_id: user?.id,
     criado_por_nome: user?.full_name,
-    criado_por_cargo: user?.job_role || "user",
+    criado_por_cargo: user?.job_role || user?.role || "consultor",
     criado_para_id: responsavelId,
     criado_para_nome: responsavelNome,
     origem_tela: origemTela,
