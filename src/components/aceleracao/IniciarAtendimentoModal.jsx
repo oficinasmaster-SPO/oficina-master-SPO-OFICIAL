@@ -258,33 +258,41 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
   const isDirty = !!(canais.length > 0 || resultado || observacoes || compromissos || proximoPasso || pastedImages.length > 0);
 
   // ── Função central de troca de follow-up (sem fechar o modal) ──
-  const trocarFollowUp = useCallback((novoFU) => {
-    // Limpar rascunho do anterior
-    localStorage.removeItem(`draft_atendimento_${followUp?.id}`);
-    // Atualizar FU interno
-    setFollowUp(novoFU);
-    // Resetar formulário
-    setCanais([]);
-    setResultado("");
-    setHumor("");
-    setEngajamento("");
-    setObservacoes("");
-    setCompromissos("");
-    setProximoPasso("");
-    setProxData("");
-    setProxHora("");
-    setPastedImages([]);
-    setErrors({});
-    setSaveSuccess(null);
-    setActiveStepIndex(-1);
-    // Resetar timer para o novo cliente
-    setTimer(0);
-    setDuracao(30);
-    setInicioContagem(Date.now());
-    setCronometroAtivo(true);
-    // Notificar o pai (opcional, só para sincronia de estado externo)
-    onNavegar?.(novoFU);
-  }, [followUp?.id, onNavegar]);
+   const trocarFollowUp = useCallback((novoFU) => {
+     // Limpar rascunho do anterior
+     localStorage.removeItem(`draft_atendimento_${followUp?.id}`);
+     // Atualizar FU interno
+     setFollowUp(novoFU);
+     // ✅ SINCRONIZAR CLIENTE ATUAL COM O NOVO FU
+     if (novoFU?.workshop_id) {
+       const novoCliente = {
+         id: novoFU.workshop_id,
+         name: novoFU.workshop_name,
+       };
+       setClienteAtual(novoCliente);
+     }
+     // Resetar formulário
+     setCanais([]);
+     setResultado("");
+     setHumor("");
+     setEngajamento("");
+     setObservacoes("");
+     setCompromissos("");
+     setProximoPasso("");
+     setProxData("");
+     setProxHora("");
+     setPastedImages([]);
+     setErrors({});
+     setSaveSuccess(null);
+     setActiveStepIndex(-1);
+     // Resetar timer para o novo cliente
+     setTimer(0);
+     setDuracao(30);
+     setInicioContagem(Date.now());
+     setCronometroAtivo(true);
+     // Notificar o pai (opcional, só para sincronia de estado externo)
+     onNavegar?.(novoFU);
+   }, [followUp?.id, onNavegar]);
 
   // ── Carregador de cliente (sem follow-ups = cria atendimento ad-hoc) ──
   const carregarCliente = useCallback(async (clientData) => {
