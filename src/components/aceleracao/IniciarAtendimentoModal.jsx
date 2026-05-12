@@ -176,7 +176,6 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
   const [showClientSelector, setShowClientSelector] = useState(false);
   const [clienteAtual, setClienteAtual] = useState(cliente);
   const [showCheckpointModal, setShowCheckpointModal] = useState(false);
-  const [showDemandsModal, setShowDemandsModal] = useState(false);
   
   // Toasts & Demands
   const { addToast } = useToasts();
@@ -1313,11 +1312,10 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
               { id: 'bucket',       emoji: '📥', label: 'Bucket',         group: 2 },
               { id: 'historico',    emoji: '🕐', label: 'Histórico',      group: 3 },
       { id: 'ia',           emoji: '🤖', label: 'IA',             group: 3 },
-      { id: 'demandas',     emoji: '🔔', label: 'Demandas Paralelas', group: 3, isDemands: true },
+      { id: 'demandas',     emoji: '🔔', label: 'Demandas Paralelas', group: 3 },
       ];
 
             const handleRailClick = (id) => {
-              if (id === 'demandas') { setShowDemandsModal(true); return; }
               if (id === 'ia' && !chatInicializado) iniciarChat();
               setActivePanel(prev => prev === id ? null : id);
             };
@@ -1344,7 +1342,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
                           >
                             {item.emoji}
                             {/* Pulsing badge for demands */}
-                            {item.isDemands && demandsCritical && demandsCritical.length > 0 && (
+                            {item.id === 'demandas' && demandsCritical && demandsCritical.length > 0 && (
                               <>
                                 <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-orange-500 animate-ping opacity-75" />
                                 <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-orange-500" />
@@ -1755,6 +1753,17 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
                         />
                       )}
 
+                      {/* DEMANDAS PARALELAS */}
+                      {activePanel === 'demandas' && (
+                        <div className="px-3 py-4">
+                          <ParallelDemandsPanel
+                            demands={demands}
+                            isOpen={true}
+                            onDemandClick={(type, id) => { console.log(`Demand clicked: ${type} - ${id}`); setActivePanel(null); }}
+                          />
+                        </div>
+                      )}
+
                       {/* IA */}
                       {activePanel === 'ia' && (
                         <div className="flex flex-col h-full px-3 pb-3 pt-3" style={{ minHeight: 0 }}>
@@ -1852,38 +1861,6 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
            onSelect={carregarCliente}
            onClose={() => setShowClientSelector(false)}
          />
-       )}
-
-       {/* DEMANDS MODAL */}
-       {showDemandsModal && (
-         <Dialog open onOpenChange={() => setShowDemandsModal(false)}>
-           <DialogContent className="max-w-2xl p-0 overflow-hidden" style={{ zIndex: 99999 }}>
-             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gray-50">
-               <div className="flex items-center gap-3">
-                 <span className="text-xl">🔔</span>
-                 <div>
-                   <h2 className="text-base font-bold text-gray-900">Demandas Paralelas</h2>
-                   <p className="text-xs text-gray-500">{followUp?.workshop_name}</p>
-                 </div>
-                 {demandsCritical && demandsCritical.length > 0 && (
-                   <Badge className="bg-orange-600 text-white text-xs font-bold animate-pulse">
-                     {demandsCritical.length} crítica{demandsCritical.length > 1 ? 's' : ''}
-                   </Badge>
-                 )}
-               </div>
-               <button onClick={() => setShowDemandsModal(false)} className="w-7 h-7 rounded flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-200 transition-colors">
-                 <X className="w-4 h-4" />
-               </button>
-             </div>
-             <div className="max-h-[70vh] overflow-y-auto p-4">
-               <ParallelDemandsPanel
-                 demands={demands}
-                 isOpen={true}
-                 onDemandClick={(type, id) => { console.log(`Demand clicked: ${type} - ${id}`); setShowDemandsModal(false); }}
-               />
-             </div>
-           </DialogContent>
-         </Dialog>
        )}
 
        {/* CHECKPOINT MODAL */}
