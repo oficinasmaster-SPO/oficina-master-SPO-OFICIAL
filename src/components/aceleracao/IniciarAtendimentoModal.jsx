@@ -295,10 +295,16 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
      onNavegar?.(novoFU);
    }, [followUp?.id, onNavegar]);
 
-  // ── Carregador de cliente (sem follow-ups = cria atendimento ad-hoc) ──
+  // ── Gerador de ID rastreável de suporte ──
+  const gerarSuporteId = () => {
+    const ts = Date.now();
+    const rand = Math.random().toString(36).substr(2, 5).toUpperCase();
+    return `SUP-${ts}-${rand}`;
+  };
+
+  // ── Carregador de cliente — abre suporte rastreável com prazo 24h ──
   const carregarCliente = useCallback(async (clientData) => {
     try {
-      // Guardar cliente atual
       setClienteAtual(clientData);
       
       // Buscar primeiro follow-up pendente do cliente
@@ -308,25 +314,29 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
       }, 'reminder_date', 1);
 
       if (followUps && followUps.length > 0) {
-        // Carrega o primeiro follow-up
         trocarFollowUp(followUps[0]);
       } else {
-        // Cliente sem follow-ups — criar atendimento ad-hoc
-        const novoFUadHoc = {
-          id: `adhoc_${clientData.id}_${Date.now()}`,
+        // Sem follow-ups — criar SUPORTE rastreável com prazo 24h (amanhã = vencido)
+        const suporteId = gerarSuporteId();
+        const hoje = new Date().toISOString().split('T')[0];
+        const novoSuporte = {
+          id: `suporte_${clientData.id}_${Date.now()}`,
           workshop_id: clientData.id,
           workshop_name: clientData.name,
           consultor_id: user?.id,
           consultor_nome: user?.full_name || "Consultor",
           sequence_number: 0,
-          reminder_date: new Date().toISOString().split('T')[0],
-          origin_type: 'manual',
+          reminder_date: hoje, // prazo = hoje, amanhã já aparece como vencido
+          origin_type: 'suporte',
+          suporte_id: suporteId,
+          suporte_descricao: '',
           is_completed: false,
           atendimento_id: null,
           ata_id: null,
-          notes: 'Atendimento ad-hoc (sem follow-up associado)',
+          notes: `Suporte ao Cliente · ${suporteId}`,
+          _isSuporteLocal: true, // flag para não salvar no BD ainda
         };
-        trocarFollowUp(novoFUadHoc);
+        trocarFollowUp(novoSuporte);
       }
       setShowClientSelector(false);
     } catch (err) {
@@ -698,11 +708,33 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
     setActiveStepIndex(0);
     setShowCheckpointModal(false);
 
+    const isSuporteFlow = followUp.origin_type === 'suporte' || followUp.origin_type === 'suporte_checkin';
+
     try {
+      // STEP 0 — Se for suporte local (ainda não salvo no BD), criar o FollowUpReminder primeiro
+      let followUpId = followUp.id;
+      if (followUp._isSuporteLocal) {
+        const suporteReminder = await base44.entities.FollowUpReminder.create({
+          workshop_id: followUp.workshop_id,
+          workshop_name: followUp.workshop_name,
+          consultor_id: followUp.consultor_id,
+          consultor_nome: followUp.consultor_nome,
+          sequence_number: 0,
+          reminder_date: followUp.reminder_date,
+          origin_type: 'suporte',
+          suporte_id: followUp.suporte_id,
+          suporte_descricao: observacoes,
+          is_completed: false,
+          notes: followUp.notes,
+          consulting_firm_id: user?.data?.consulting_firm_id || null,
+        });
+        followUpId = suporteReminder.id;
+      }
+
       // STEP 0 — Gravar interação (FollowUpConcluido)
       setActiveStepIndex(0);
       await base44.entities.FollowUpConcluido.create({
-        followup_id: followUp.id,
+        followup_id: followUpId,
         workshop_id: followUp.workshop_id,
         consultor_id: followUp.consultor_id,
         consultor_nome: followUp.consultor_nome,
@@ -712,7 +744,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
         duracao,
         humor,
         engajamento,
-        observacoes,
+        observacoes: isSuporteFlow ? `[SUPORTE ${followUp.suporte_id || ''}] ${observacoes}` : observacoes,
         compromissos,
         proximoPasso,
         proxData,
@@ -724,10 +756,18 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
 
       // STEP 1 — Atualizar status do FollowUpReminder
       setActiveStepIndex(1);
-      await base44.entities.FollowUpReminder.update(followUp.id, {
-        is_completed: true,
-        completed_at: new Date().toISOString(),
-      });
+      if (!followUp._isSuporteLocal) {
+        await base44.entities.FollowUpReminder.update(followUp.id, {
+          is_completed: true,
+          completed_at: new Date().toISOString(),
+        });
+      } else {
+        // Já criamos acima e vamos marcar como concluído pelo id real
+        await base44.entities.FollowUpReminder.update(followUpId, {
+          is_completed: true,
+          completed_at: new Date().toISOString(),
+        });
+      }
       await new Promise(r => setTimeout(r, 650));
 
       // INVALIDAR FOLLOW-UPS PARA SINCRONIZAR COM OUTROS COMPONENTES
@@ -814,7 +854,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
           canal_origem: resultado === "aguardando" ? canalOrigem : null,
           consulting_firm_id: followUp.consulting_firm_id || null,
         });
-      } else if (proximoPasso === "reagendar" && proxData) {
+      } else if (!isSuporteFlow && proximoPasso === "reagendar" && proxData) {
         // Reagendamento manual com data escolhida
         const nextSeq = (followUp.sequence_number || 1) + 1;
         novoFollowUp = await base44.entities.FollowUpReminder.create({
@@ -992,7 +1032,11 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
                  <p className="font-semibold text-sm group-hover:text-red-400 transition-colors">
                    {clienteAtual?.name || followUp?.workshop_name || "Selecionar cliente"}
                  </p>
-                 <p className="text-[10px] text-gray-400">Follow-up {followUp?.sequence_number}/4</p>
+                 {(followUp?.origin_type === 'suporte' || followUp?.origin_type === 'suporte_checkin') ? (
+                   <p className="text-[10px] text-amber-400 font-bold">🛟 {followUp?.suporte_id || 'Suporte'}</p>
+                 ) : (
+                   <p className="text-[10px] text-gray-400">Follow-up {followUp?.sequence_number}/4</p>
+                 )}
                </div>
                <span className="text-gray-400 ml-2">▼</span>
              </button>

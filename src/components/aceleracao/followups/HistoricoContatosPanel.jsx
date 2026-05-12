@@ -74,24 +74,45 @@ function ContatoCard({ contato, isFirst, workshopName }) {
     ? format(new Date(contato.dataContato + "T00:00:00"), "dd/MM/yyyy")
     : "—";
 
+  // Detecta se é um suporte pelo campo observacoes (começa com [SUPORTE SUP-])
+  const isSuporte = contato.observacoes?.startsWith('[SUPORTE ');
+  const suporteId = isSuporte
+    ? contato.observacoes.match(/\[SUPORTE (SUP-[^\]]+)\]/)?.[1]
+    : null;
+
   return (
     <>
       {imgModalSrc && <ImageModal src={imgModalSrc} onClose={() => setImgModalSrc(null)} />}
-      <div className={`border rounded-lg overflow-hidden transition-all ${isFirst ? "border-red-200 bg-red-50" : "border-gray-200 bg-white"}`}>
+      <div className={`border rounded-lg overflow-hidden transition-all ${
+        isSuporte
+          ? (isFirst ? "border-amber-300 bg-amber-50" : "border-amber-200 bg-white")
+          : (isFirst ? "border-red-200 bg-red-50" : "border-gray-200 bg-white")
+      }`}>
         {/* Header do card — sempre visível */}
         <button
           onClick={() => setExpanded(v => !v)}
           className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-black/5 transition-colors text-left"
         >
           <div className="flex items-center gap-2 flex-wrap min-w-0">
-            {isFirst && <span className="text-[9px] bg-red-600 text-white rounded px-1.5 py-0.5 font-bold flex-shrink-0">ÚLTIMO</span>}
-            {/* Canais */}
-            <div className="flex items-center gap-1">
-              {canais.slice(0, 2).map(c => {
-                const Icon = CANAL_ICONS[c] || MessageCircle;
-                return <Icon key={c} className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />;
-              })}
-            </div>
+            {isFirst && <span className={`text-[9px] rounded px-1.5 py-0.5 font-bold flex-shrink-0 ${isSuporte ? "bg-amber-500 text-white" : "bg-red-600 text-white"}`}>ÚLTIMO</span>}
+            {/* Badge suporte */}
+            {isSuporte ? (
+              <span className="text-[9px] bg-amber-100 text-amber-700 border border-amber-300 rounded px-1.5 py-0.5 font-bold flex-shrink-0">
+                🛟 SUPORTE
+              </span>
+            ) : (
+              /* Canais */
+              <div className="flex items-center gap-1">
+                {canais.slice(0, 2).map(c => {
+                  const Icon = CANAL_ICONS[c] || MessageCircle;
+                  return <Icon key={c} className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />;
+                })}
+              </div>
+            )}
+            {/* ID do suporte */}
+            {suporteId && (
+              <span className="text-[9px] text-amber-600 font-mono flex-shrink-0">{suporteId}</span>
+            )}
             {/* Resultado */}
             <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium flex-shrink-0 ${RESULTADO_COLORS[contato.resultado] || "bg-gray-100 text-gray-600 border-gray-200"}`}>
               {RESULTADO_LABELS[contato.resultado] || contato.resultado || "—"}

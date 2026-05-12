@@ -248,7 +248,9 @@ export default function FollowUpList({ reminders, today, isLoading, onSelect, fi
                 key={r.id}
                 onClick={() => isConcluido ? setSelectedCompleted(r) : onSelect(r)}
                 className={`w-full text-left rounded-lg border bg-white hover:bg-gray-50 transition-all flex flex-col gap-0 group ${
-                  isConcluido ? "border-green-200 bg-green-50" : isOverdue ? "border-l-4 border-l-red-500 border-t-red-100 border-r-red-100 border-b-red-100" : "border-gray-200"
+                  isConcluido ? "border-green-200 bg-green-50" :
+                  (r.origin_type === 'suporte' || r.origin_type === 'suporte_checkin') ? (isOverdue ? "border-l-4 border-l-amber-500 border-t-amber-100 border-r-amber-100 border-b-amber-100 bg-amber-50/30" : "border-amber-200 bg-amber-50/20") :
+                  isOverdue ? "border-l-4 border-l-red-500 border-t-red-100 border-r-red-100 border-b-red-100" : "border-gray-200"
                 }`}
               >
                 {/* MAIN ROW */}
@@ -277,10 +279,18 @@ export default function FollowUpList({ reminders, today, isLoading, onSelect, fi
 
                     {/* Line 2: FU + consultor | tipo + ATA code + horário */}
                     <div className="flex items-center gap-0 min-w-0 mt-0.5">
+                      {(r.origin_type === 'suporte' || r.origin_type === 'suporte_checkin') ? (
+                        <span className="text-xs flex-shrink-0 flex items-center gap-1">
+                          <span className="text-amber-600 font-bold">🛟 {r.origin_type === 'suporte_checkin' ? 'Check-in Suporte' : 'Suporte ao Cliente'}</span>
+                          {r.suporte_id && <span className="text-[10px] text-amber-500 font-mono">{r.suporte_id}</span>}
+                          {r.consultor_nome && <span className="text-gray-400"> · {r.consultor_nome}</span>}
+                        </span>
+                      ) : (
                       <span className="text-xs text-gray-500 flex-shrink-0">
                         Follow-up {r.sequence_number}/4
                         {r.consultor_nome && <> · <span className="text-gray-400">{r.consultor_nome}</span></>}
                       </span>
+                      )}
                       {ataOrfha ? (
                         <span className="ml-2 text-[10px] text-red-500 bg-red-50 border border-red-100 px-1.5 py-0.5 rounded font-medium flex-shrink-0">
                           ATA removida
