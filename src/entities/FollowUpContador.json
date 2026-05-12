@@ -37,7 +37,7 @@
     },
     "status": {
       "type": "string",
-      "enum": ["ativo", "concluido", "aguardando_proxima_semana"],
+      "enum": ["ativo", "concluido", "aguardando_proxima_semana", "aguardando_conclusao"],
       "default": "ativo",
       "description": "Status atual do follow-up"
     },
@@ -137,6 +137,25 @@
     "consulting_firm_id": {
       "type": "string",
       "description": "ID da consultoria (isolamento de tenant)"
+    },
+    "checkpoint_decision": {
+      "type": "string",
+      "enum": ["next_week", "in_days", "on_completion"],
+      "description": "Decisão de checkpoint: próxima semana | daqui X dias | quando terminar"
+    },
+    "checkpoint_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data do próximo retorno (quando checkpoint_decision = in_days)"
+    },
+    "checkpoint_saved_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Quando o checkpoint foi salvo"
+    },
+    "mini_followup_id": {
+      "type": "string",
+      "description": "ID do mini follow-up criado (quando checkpoint_decision = in_days)"
     }
   },
   "required": [
