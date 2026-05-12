@@ -1372,6 +1372,16 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
                         <span className="text-base">{NAV_ITEMS.find(n => n.id === activePanel)?.emoji}</span>
                         <span className="text-sm font-semibold text-gray-800">{NAV_ITEMS.find(n => n.id === activePanel)?.label}</span>
                       </div>
+                      {/* Botão + Novo Atendimento (apenas na aba ATAS) */}
+                      {activePanel === 'atas' && (
+                        <Button 
+                          size="sm" 
+                          className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold h-7 px-2.5 mr-2"
+                          onClick={() => setShowClientSelector(true)}
+                        >
+                          + Novo Atendimento
+                        </Button>
+                      )}
                       <button onClick={() => setActivePanel(null)} className="w-6 h-6 rounded flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-200 transition-colors">
                         <X className="w-3.5 h-3.5" />
                       </button>
