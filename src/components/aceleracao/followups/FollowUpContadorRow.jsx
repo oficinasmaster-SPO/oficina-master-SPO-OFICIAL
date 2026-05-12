@@ -98,32 +98,36 @@ export default function FollowUpContadorRow({ fu, onSelect }) {
         </div>
 
         {/* Contexto */}
-        <div className="pl-13">
+        <div className="pl-14">
           {renderContexto()}
         </div>
 
         {/* Timeline */}
-        <div className="flex items-center gap-2 text-xs text-gray-400 pl-13">
+        <div className="flex items-center gap-2 text-xs text-gray-400 pl-14">
           <Clock className="w-3 h-3" />
-          <span>
-            Semana de {format(new Date(fu.data_ciclo_inicio), 'dd/MM')} a {format(new Date(fu.data_ciclo_fim), 'dd/MM')}
-          </span>
+          {fu.data_ciclo_inicio && fu.data_ciclo_fim ? (
+            <span>
+              Semana de {format(new Date(fu.data_ciclo_inicio + 'T00:00:00'), 'dd/MM')} a {format(new Date(fu.data_ciclo_fim + 'T00:00:00'), 'dd/MM')}
+            </span>
+          ) : (
+            <span>Semana atual</span>
+          )}
         </div>
 
         {/* Histórico (se concluído) */}
         {isConcluido && fu.data_baixa && (
-          <div className="text-xs text-green-600 pl-13 pt-1 border-t border-green-200">
+          <div className="text-xs text-green-600 pl-14 pt-1 border-t border-green-200">
             <CheckCircle2 className="w-3 h-3 inline mr-1" />
             Concluído em {format(new Date(fu.data_baixa), 'dd/MM/yyyy')}
-            {fu.historico?.[0]?.dias_duracao && ` · ${fu.historico[0].dias_duracao} dias`}
+            {fu.historico?.at(-1)?.dias_duracao != null && ` · ${fu.historico.at(-1).dias_duracao} dias`}
           </div>
         )}
 
         {/* Alerta se vencido */}
         {isOverdue && !isConcluido && (
-          <div className="text-xs text-red-600 pl-13 pt-1 border-t border-red-200">
+          <div className="text-xs text-red-600 pl-14 pt-1 border-t border-red-200">
             <AlertCircle className="w-3 h-3 inline mr-1" />
-            Vencido em {format(new Date(fu.data_ciclo_fim), 'dd/MM/yyyy')}
+            {fu.data_ciclo_fim && `Vencido em ${format(new Date(fu.data_ciclo_fim + 'T00:00:00'), 'dd/MM/yyyy')}`}
           </div>
         )}
       </div>

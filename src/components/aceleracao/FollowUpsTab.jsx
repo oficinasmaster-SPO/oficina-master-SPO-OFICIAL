@@ -559,26 +559,37 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
       )}
 
       {activeTab === "acompanhamento" && (
-        isLoadingContadores ? (
-          <FollowUpSkeleton />
-        ) : fuContadoresAtivos.length === 0 ? (
-          <EmptyState label="Nenhum acompanhamento ativo" />
-        ) : (
-          <div className="space-y-3">
-            {fuContadoresAtivos.map(fu => (
-              <FollowUpContadorRow key={fu.id} fu={fu} onSelect={() => {}} />
-            ))}
-            {fuContadoresConcluidos.length > 0 && (
-              <div className="pt-4 space-y-2">
-                <p className="text-xs font-semibold text-gray-600 px-1">Histórico</p>
-                {fuContadoresConcluidos.slice(0, 5).map(fu => (
-                  <FollowUpContadorRow key={fu.id} fu={fu} onSelect={() => {}} />
-                ))}
-              </div>
-            )}
-          </div>
-        )
-      )}
+         isLoadingContadores ? (
+           <FollowUpSkeleton />
+         ) : fuContadoresAtivos.length === 0 && fuContadoresConcluidos.length === 0 ? (
+           <EmptyState label="Nenhum acompanhamento registrado. Acompanhamentos são criados automaticamente ao criar sprints ou buckets." />
+         ) : (
+           <div className="space-y-3">
+             {fuContadoresAtivos.length > 0 && (
+               <>
+                 <p className="text-xs font-semibold text-gray-500 px-1 uppercase tracking-wide">Ativos ({fuContadoresAtivos.length})</p>
+                 {fuContadoresAtivos.map(fu => (
+                   <FollowUpContadorRow key={fu.id} fu={fu} onSelect={() => {}} />
+                 ))}
+               </>
+             )}
+             {fuContadoresAtivos.length === 0 && (
+               <div className="py-6 flex flex-col items-center justify-center text-center space-y-1">
+                 <CheckCircle2 className="w-7 h-7 text-green-400" />
+                 <p className="text-gray-500 text-sm">Todos acompanhamentos concluídos</p>
+               </div>
+             )}
+             {fuContadoresConcluidos.length > 0 && (
+               <div className="pt-4 space-y-2">
+                 <p className="text-xs font-semibold text-gray-500 px-1 uppercase tracking-wide">Histórico Recente</p>
+                 {fuContadoresConcluidos.slice(0, 5).map(fu => (
+                   <FollowUpContadorRow key={fu.id} fu={fu} onSelect={() => {}} />
+                 ))}
+               </div>
+             )}
+           </div>
+         )
+       )}
 
       {activeTab === "concluidos" && (
         <>

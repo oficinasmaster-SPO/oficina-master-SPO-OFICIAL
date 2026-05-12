@@ -23,25 +23,27 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Busca o FU ativo
-    const fu = await base44.entities.FollowUpContador.list('-data_criacao', 1);
-    const fuAtual = fu.find(f => f.id === fu_id);
+    // Busca o FU pelo ID usando serviceRole para garantir acesso
+    const fuList = await base44.asServiceRole.entities.FollowUpContador.filter({
+      id: fu_id
+    });
+    const fuAtual = fuList?.[0];
 
     if (!fuAtual) {
       return Response.json({ error: 'FollowUpContador não encontrado' }, { status: 404 });
     }
 
     // Calcula duração
-    const dataCriacao = new Date(fuAtual.data_criacao);
+    const dataCriacao = new Date(fuAtual.data_criacao || fuAtual.created_date);
     const dataBaixa = new Date();
-    const diasDuracao = Math.floor((dataBaixa - dataCriacao) / (1000 * 60 * 60 * 24));
+    const diasDuracao = Math.max(0, Math.floor((dataBaixa - dataCriacao) / (1000 * 60 * 60 * 24)));
 
     // Adiciona ao histórico
     const novoHistorico = [
       ...(fuAtual.historico || []),
       {
         numero: fuAtual.numero_sequencia,
-        data_criacao: fuAtual.data_criacao,
+        data_criacao: fuAtual.data_criacao || fuAtual.created_date,
         data_baixa: dataBaixa.toISOString(),
         dias_duracao: diasDuracao,
         motivo_fechamento,
@@ -57,7 +59,7 @@ Deno.serve(async (req) => {
     ];
 
     // Atualiza FU como concluído
-    await base44.entities.FollowUpContador.update(fu_id, {
+    await base44.asServiceRole.entities.FollowUpContador.update(fu_id, {
       status: 'concluido',
       data_baixa: dataBaixa.toISOString(),
       historico: novoHistorico

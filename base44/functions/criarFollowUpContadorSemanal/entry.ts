@@ -56,14 +56,12 @@ Deno.serve(async (req) => {
       
       if (tipo === 'bucket') {
         // Bucket: verifica se status != completed
-        const buckets = await base44.asServiceRole.entities.ConsultoriaSprint.list();
-        const bucket = buckets.find(b => b.id === id);
-        origemAtiva = bucket && bucket.status !== 'completed';
+        const buckets = await base44.asServiceRole.entities.ConsultoriaSprint.filter({ id });
+        origemAtiva = buckets.length > 0 && buckets[0].status !== 'completed';
       } else if (tipo === 'sprint') {
         // Sprint: verifica se status != completed
-        const sprints = await base44.asServiceRole.entities.ConsultoriaSprint.list();
-        const sprint = sprints.find(s => s.id === id);
-        origemAtiva = sprint && sprint.status !== 'completed';
+        const sprints = await base44.asServiceRole.entities.ConsultoriaSprint.filter({ id });
+        origemAtiva = sprints.length > 0 && sprints[0].status !== 'completed';
       }
 
       if (!origemAtiva) {
