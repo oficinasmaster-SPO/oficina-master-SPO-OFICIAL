@@ -42,15 +42,23 @@ export function useClientDemands(workshopId, followUpType, isOpen = false) {
         follow_up_type: followUpType || 'ata'
       });
 
-      if (response.data) {
+      if (response && response.data) {
+        const { sprints = [], pedidosInternos = [], backlogTarefas = [], cronogramaItems = [], summary = {} } = response.data;
+        
         setDemands({
-          sprints: response.data.sprints || [],
-          pedidosInternos: response.data.pedidosInternos || [],
-          backlogTarefas: response.data.backlogTarefas || [],
-          cronogramaItems: response.data.cronogramaItems || []
+          sprints: Array.isArray(sprints) ? sprints : [],
+          pedidosInternos: Array.isArray(pedidosInternos) ? pedidosInternos : [],
+          backlogTarefas: Array.isArray(backlogTarefas) ? backlogTarefas : [],
+          cronogramaItems: Array.isArray(cronogramaItems) ? cronogramaItems : []
         });
-        setSummary(response.data.summary || { totalDemands: 0, criticalCount: 0 });
+        
+        setSummary({
+          totalDemands: summary.totalDemands || 0,
+          criticalCount: summary.criticalCount || 0
+        });
         setLastUpdated(new Date());
+      } else {
+        console.warn('Invalid response from getClientParallelDemands:', response);
       }
     } catch (err) {
       console.error('Error fetching client demands:', err);

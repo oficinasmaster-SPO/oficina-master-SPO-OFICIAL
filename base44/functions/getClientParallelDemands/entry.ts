@@ -52,14 +52,18 @@ Deno.serve(async (req) => {
     };
 
     // [5] Enriquecer dados com severity
-    const enrichedSprints = sprints.map(s => ({
-      id: s.id,
-      title: s.title,
-      status: s.status,
-      due_date: s.end_date,
-      phase_completion: s.progress_percentage || 0,
-      severity: calculateSprintSeverity(s.end_date, s.progress_percentage)
-    }));
+    const enrichedSprints = sprints.map(s => {
+      const daysDiff = s.end_date ? calculateDaysDiff(s.end_date) : null;
+      return {
+        id: s.id,
+        title: s.title,
+        status: s.status,
+        due_date: s.end_date,
+        phase_completion: s.progress_percentage || 0,
+        dias_para_vencer: daysDiff,
+        severity: calculateSprintSeverity(s.end_date, s.progress_percentage)
+      };
+    });
 
     const enrichedPedidos = pedidosInternos.map(p => ({
       id: p.id,
@@ -80,28 +84,34 @@ Deno.serve(async (req) => {
       severity: calculateTarefaSeverity(t.prazo)
     }));
 
-    const enrichedCronograma = cronogramaItems.map(c => ({
-      id: c.id,
-      item_nome: c.item_nome,
-      status: c.status,
-      prazo_previsto: c.data_termino_previsto,
-      dias_atraso: calculateDaysDiff(c.data_termino_previsto) < 0 ? Math.abs(calculateDaysDiff(c.data_termino_previsto)) : 0,
-      severity: calculateCronogramaSeverity(c.data_termino_previsto)
-    }));
+    const enrichedCronograma = cronogramaItems.map(c => {
+      const daysDiff = calculateDaysDiff(c.data_termino_previsto) || 0;
+      return {
+        id: c.id,
+        item_nome: c.item_nome,
+        status: c.status,
+        prazo_previsto: c.data_termino_previsto,
+        dias_atraso: daysDiff < 0 ? Math.abs(daysDiff) : 0,
+        severity: calculateCronogramaSeverity(c.data_termino_previsto)
+      };
+    });
+
+    // Validar dados antes de retornar
+    const allCritical = [
+      ...enrichedSprints.filter(s => s.severity === 'RED'),
+      ...enrichedPedidos.filter(p => p.severity === 'RED'),
+      ...enrichedBacklog.filter(t => t.severity === 'RED'),
+      ...enrichedCronograma.filter(c => c.severity === 'RED')
+    ];
 
     return Response.json({
-      sprints: enrichedSprints,
-      pedidosInternos: enrichedPedidos,
-      backlogTarefas: enrichedBacklog,
-      cronogramaItems: enrichedCronograma,
+      sprints: enrichedSprints || [],
+      pedidosInternos: enrichedPedidos || [],
+      backlogTarefas: enrichedBacklog || [],
+      cronogramaItems: enrichedCronograma || [],
       summary: {
         totalDemands: enrichedSprints.length + enrichedPedidos.length + enrichedBacklog.length + enrichedCronograma.length,
-        criticalCount: [
-          ...enrichedSprints.filter(s => s.severity === 'RED'),
-          ...enrichedPedidos.filter(p => p.severity === 'RED'),
-          ...enrichedBacklog.filter(t => t.severity === 'RED'),
-          ...enrichedCronograma.filter(c => c.severity === 'RED')
-        ].length
+        criticalCount: allCritical.length
       }
     });
   } catch (error) {

@@ -39,9 +39,11 @@ export default function ParallelDemandsPanel({ demands, isOpen = true, onDemandC
     getCriticalCount(demands.cronogramaItems);
 
   const DemandType = ({ label, icon, items, type }) => {
-    if (!items || items.length === 0) return null;
+    // Validar dados
+    const validItems = Array.isArray(items) ? items : [];
+    if (validItems.length === 0) return null;
 
-    const criticalCount = getCriticalCount(items);
+    const criticalCount = getCriticalCount(validItems);
     const isExpanded = expandedTypes[type];
     const hasCritical = criticalCount > 0;
 
@@ -57,7 +59,7 @@ export default function ParallelDemandsPanel({ demands, isOpen = true, onDemandC
             <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
               hasCritical ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-700'
             }`}>
-              {items.length}
+              {validItems.length}
             </span>
             {hasCritical && (
               <span className="text-xs px-2 py-0.5 rounded-full bg-red-50 text-red-700 font-semibold">
@@ -74,7 +76,7 @@ export default function ParallelDemandsPanel({ demands, isOpen = true, onDemandC
 
         {isExpanded && (
           <div className="bg-gray-50 px-3 py-2 space-y-1.5 border-t border-gray-100">
-            {items.map((item) => (
+            {validItems.map((item) => (
               <button
                 key={item.id}
                 onClick={() => onDemandClick?.(type, item.id)}
