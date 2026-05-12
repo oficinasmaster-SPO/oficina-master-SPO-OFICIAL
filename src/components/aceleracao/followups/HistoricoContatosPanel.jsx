@@ -74,10 +74,10 @@ function ContatoCard({ contato, isFirst, workshopName }) {
     ? format(new Date(contato.dataContato + "T00:00:00"), "dd/MM/yyyy")
     : "—";
 
-  // Detecta se é um suporte pelo campo observacoes (começa com [SUPORTE SUP-])
-  const isSuporte = contato.observacoes?.startsWith('[SUPORTE ');
+  // Detecta se é um suporte pelo campo observacoes ou pelo origin_type
+  const isSuporte = (contato.observacoes?.match(/\[SUPORTE\s+SUP-/i)) || false;
   const suporteId = isSuporte
-    ? contato.observacoes.match(/\[SUPORTE (SUP-[^\]]+)\]/)?.[1]
+    ? contato.observacoes.match(/\[SUPORTE\s+(SUP-[^\]]+)\]/i)?.[1]
     : null;
 
   return (
@@ -154,11 +154,13 @@ function ContatoCard({ contato, isFirst, workshopName }) {
               )}
             </div>
 
-            {/* Observações */}
+            {/* Observações — remove tag [SUPORTE xxx] do display */}
             {contato.observacoes && (
               <div>
                 <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wide mb-0.5">Observações</p>
-                <p className="text-[11px] text-gray-700 leading-relaxed whitespace-pre-wrap">{contato.observacoes}</p>
+                <p className="text-[11px] text-gray-700 leading-relaxed whitespace-pre-wrap">
+                  {contato.observacoes.replace(/^\[SUPORTE\s+SUP-[^\]]+\]\s*/i, '')}
+                </p>
               </div>
             )}
 

@@ -33,6 +33,7 @@ import BucketPanel from "@/components/aceleracao/BucketPanel";
 import ParallelDemandsPanel from "@/components/aceleracao/ParallelDemandsPanel";
 import CheckpointModal from "@/components/aceleracao/CheckpointModal";
 import RegistrarAtendimento from "@/pages/RegistrarAtendimento";
+import { criarProximoSuporteFU } from "@/components/aceleracao/suporte/SuporteFollowUpHelper";
 import { useToasts } from "@/components/aceleracao/ToastContainer";
 import { useClientDemands } from "@/components/aceleracao/hooks/useClientDemands";
 
@@ -823,8 +824,12 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
       let novoFollowUp = null;
       setActiveStepIndex(2);
 
-      // Auto-reagendamento para amanhã: nao_atendeu ou aguardando resposta
-      if (resultado === "nao_atendeu" || resultado === "aguardando") {
+      // Suporte: lógica de próximo FU dedicada (check-in +7d se resolvido, re-agenda amanhã se não)
+      if (isSuporteFlow) {
+        novoFollowUp = await criarProximoSuporteFU({ followUp, resultado });
+      }
+      // Auto-reagendamento para amanhã: nao_atendeu ou aguardando resposta (fluxo normal)
+      else if (resultado === "nao_atendeu" || resultado === "aguardando") {
         const amanha = new Date();
         amanha.setDate(amanha.getDate() + 1);
         const amanhaStr = amanha.toISOString().split('T')[0];
@@ -839,21 +844,22 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
           : `🔁 Retentativa — não atendeu em ${format(new Date(), "dd/MM/yyyy")}${observacoes ? ` — ${observacoes.slice(0, 120)}` : ""}`;
 
         novoFollowUp = await base44.entities.FollowUpReminder.create({
-          workshop_id: followUp.workshop_id,
-          workshop_name: followUp.workshop_name,
-          atendimento_id: followUp.atendimento_id,
-          ata_id: followUp.ata_id,
-          consultor_id: followUp.consultor_id,
-          consultor_nome: followUp.consultor_nome,
-          sequence_number: followUp.sequence_number || 1,
-          reminder_date: amanhaStr,
-          origin_type: followUp.origin_type || 'ata',
-          sprint_id: followUp.sprint_id || null,
-          is_completed: false,
-          message: msgContexto,
-          canal_origem: resultado === "aguardando" ? canalOrigem : null,
-          consulting_firm_id: followUp.consulting_firm_id || null,
-        });
+           workshop_id: followUp.workshop_id,
+           workshop_name: followUp.workshop_name,
+           atendimento_id: followUp.atendimento_id,
+           ata_id: followUp.ata_id,
+           consultor_id: followUp.consultor_id,
+           consultor_nome: followUp.consultor_nome,
+           sequence_number: followUp.sequence_number || 1,
+           reminder_date: amanhaStr,
+           origin_type: followUp.origin_type || 'ata',
+           sprint_id: followUp.sprint_id || null,
+           is_completed: false,
+           message: msgContexto,
+           canal_origem: resultado === "aguardando" ? canalOrigem : null,
+           consulting_firm_id: followUp.consulting_firm_id || null,
+           suporte_id: followUp.suporte_id || null,
+         });
       } else if (!isSuporteFlow && proximoPasso === "reagendar" && proxData) {
         // Reagendamento manual com data escolhida
         const nextSeq = (followUp.sequence_number || 1) + 1;
@@ -1883,8 +1889,8 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
              <Button variant="outline" onClick={() => { localStorage.removeItem(`draft_atendimento_${followUp?.id}`); onClose(); }} disabled={saving}>
                Fechar
              </Button>
-             <Button variant="ghost" onClick={() => setShowClientSelector(true)} className="text-blue-600 hover:bg-blue-50">
-               + Registrar Suporte ao Cliente
+             <Button variant="ghost" onClick={() => setShowClientSelector(true)} className="text-amber-600 hover:bg-amber-50 border border-amber-200">
+               🛟 Novo Suporte
              </Button>
            </div>
            <div className="flex gap-3">
