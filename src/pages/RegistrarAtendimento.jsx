@@ -1189,10 +1189,10 @@ export default function RegistrarAtendimento({ isModal = false, onClose, onSaved
               )}
             </form>
           </div>
-          <div className="flex gap-3 justify-end border-t border-gray-200 bg-white px-6 py-4 shrink-0 rounded-b-2xl shadow-[0_-4px_16px_rgba(0,0,0,0.10)]">
-            {isReadOnly ? (
-              <>
-                <Button type="button" variant="outline" onClick={handleClose} className="px-6">Fechar</Button>
+          <div className="flex gap-3 justify-end border-t border-gray-200 bg-white px-6 py-4 shrink-0 rounded-b-2xl shadow-[0_-4px_16px_rgba(0,0,0,0.10)] relative z-50 pointer-events-auto">
+           {isReadOnly ? (
+             <>
+               <Button type="button" variant="outline" onClick={handleClose} className="px-6 pointer-events-auto cursor-pointer">Fechar</Button>
                 <Button 
                   type="button" 
                   disabled={!formData.ata_id}
@@ -1219,11 +1219,11 @@ export default function RegistrarAtendimento({ isModal = false, onClose, onSaved
               </>
             ) : (
               <>
-                <Button type="button" variant="outline" onClick={handleClose} className="px-6">Cancelar</Button>
+                <Button type="button" variant="outline" onClick={handleClose} className="px-6 pointer-events-auto cursor-pointer">Cancelar</Button>
                 {formData.id && formData.status !== 'realizado' && formData.status !== 'concluido' && formData.status !== 'cancelado' && formData.status !== 'faltou' && (
                   <Button
                     type="button"
-                    className="px-6 bg-amber-500 hover:bg-amber-600 text-white font-semibold shadow-md"
+                    className="px-6 bg-amber-500 hover:bg-amber-600 text-white font-semibold shadow-md pointer-events-auto cursor-pointer"
                     disabled={createMutation.isPending}
                     onClick={async () => {
                       const updatedData = { ...formData, status: 'realizado' };
@@ -1240,7 +1240,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, onSaved
                   type="submit"
                   form="atendimento-form"
                   disabled={createMutation.isPending || saveSuccess}
-                  className={`px-6 shadow-md transition-all duration-300 ${
+                  className={`px-6 shadow-md transition-all duration-300 pointer-events-auto cursor-pointer ${
                     saveSuccess
                       ? 'bg-green-600 hover:bg-green-600'
                       : 'bg-blue-600 hover:bg-blue-700'
