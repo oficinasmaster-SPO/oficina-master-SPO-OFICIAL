@@ -1840,7 +1840,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
                Fechar
              </Button>
              <Button variant="ghost" onClick={() => setShowClientSelector(true)} className="text-blue-600 hover:bg-blue-50">
-               + Registrar novo atendimento
+               + Registrar Suporte ao Cliente
              </Button>
            </div>
            <div className="flex gap-3">
