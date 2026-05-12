@@ -35,8 +35,10 @@ import AdvancedOptionsSection from "@/components/atendimento/AdvancedOptionsSect
 import AtaActionsSection from "@/components/atendimento/AtaActionsSection";
 import ClientIntelligenceViewer from "@/components/inteligencia/ClientIntelligenceViewer";
 import { INTELLIGENCE_AREAS, INTELLIGENCE_TYPES } from "@/components/lib/clientIntelligenceConstants";
+import { useRegistroMeta } from "@/components/hooks/useRegistroMeta";
+import RegistroMetaBadge from "@/components/aceleracao/RegistroMetaBadge";
 
-export default function RegistrarAtendimento({ isModal = false, onClose, atendimentoId: atendimentoIdProp, consultoresExternos, isReadOnly = false }) {
+export default function RegistrarAtendimento({ isModal = false, onClose, atendimentoId: atendimentoIdProp, consultoresExternos, isReadOnly = false, origemTela = "RegistrarAtendimento" }) {
   const navigate = useNavigate();
   const location = window.location;
   const queryClient = useQueryClient();
@@ -106,6 +108,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
   const closeTimerRef = useRef(null);
   const fallbackTimerRef = useRef(null);
   const { createMeeting, isCreating } = useGoogleMeet();
+  const { buildMeta } = useRegistroMeta(origemTela);
 
   // ── C4: Stable auto-save deps via JSON snapshot (I5: includes participantes, pauta, objetivos) ──
   const autoSaveSnapshot = useMemo(() => JSON.stringify({
@@ -352,6 +355,11 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
       // Always use the employee's real name if found in the consultores list
       let consultorNome = consultor?.full_name || data.consultor_nome || user.full_name;
 
+      // Rastreabilidade: grava quem criou, para quem e de onde — apenas na criação
+      const registroMetaPayload = !data.id
+        ? buildMeta(data.consultor_id || user.id, consultorNome)
+        : data.registro_meta;
+
       const atendimentoData = {
         workshop_id: data.workshop_id,
         tipo_atendimento: data.tipo_atendimento,
@@ -376,7 +384,8 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
         proximos_passos: data.proximos_passos,
         proximos_passos_list: (data.proximos_passos_list || []).filter(p => p.descricao),
         checklist_respostas: data.checklist_respostas || [],
-        notificacoes_programadas: data.notificacoes_programadas || []
+        notificacoes_programadas: data.notificacoes_programadas || [],
+        registro_meta: registroMetaPayload
       };
 
       const atendimento = data.id
@@ -590,6 +599,13 @@ export default function RegistrarAtendimento({ isModal = false, onClose, atendim
             </a>
           )}
         </div>
+
+        {/* Rastreabilidade */}
+        {formData.registro_meta && (
+          <div className="mt-4">
+            <RegistroMetaBadge registroMeta={formData.registro_meta} showDetail={true} />
+          </div>
+        )}
       </div>
 
       <Tabs defaultValue="ata" className="w-full">
