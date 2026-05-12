@@ -130,6 +130,8 @@ function renderMarkdown(text) {
 }
 
 export default function IniciarAtendimentoModal({ followUp: followUpInicial, cliente, onClose, onSaved, fusConcatenados = [], proximoFU = null, onProximoFollowUp, filaReminders = [], onNavegar }) {
+  // Validar filaReminders — pode vir undefined
+  const validFilaReminders = Array.isArray(filaReminders) ? filaReminders : [];
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const today = new Date().toISOString().split('T')[0];
@@ -247,10 +249,10 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
 
 
 
-  const idxAtual = filaReminders.findIndex(f => f.id === followUp?.id);
-  const fuAnterior = idxAtual > 0 ? filaReminders[idxAtual - 1] : null;
-  const fuProximo = idxAtual >= 0 && idxAtual < filaReminders.length - 1
-    ? filaReminders[idxAtual + 1]
+  const idxAtual = validFilaReminders.findIndex(f => f.id === followUp?.id);
+  const fuAnterior = idxAtual > 0 ? validFilaReminders[idxAtual - 1] : null;
+  const fuProximo = idxAtual >= 0 && idxAtual < validFilaReminders.length - 1
+    ? validFilaReminders[idxAtual + 1]
     : null;
   const isDirty = !!(canais.length > 0 || resultado || observacoes || compromissos || proximoPasso || pastedImages.length > 0);
 
@@ -1015,7 +1017,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
               <ChevronLeft className="w-4 h-4" />
             </button>
             <span className="text-xs text-gray-500 min-w-[40px] text-center">
-              {idxAtual >= 0 ? `${idxAtual + 1}/${filaReminders.length}` : '—'}
+              {idxAtual >= 0 ? `${idxAtual + 1}/${validFilaReminders.length}` : '—'}
             </span>
             <button
               onClick={() => fuProximo && handleNavegar(fuProximo)}
@@ -1844,7 +1846,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
          followUpStatus={{
            completed: 1,
            inProgress: 0,
-           pendingCount: demandsCritical.length
+           pendingCount: (demandsCritical || []).length
          }}
          followUpContadorId={followUp?.id}
          sprintId={followUp?.sprint_id}
