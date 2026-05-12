@@ -203,7 +203,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
     workshopOwner: ownerEmployee,
     allSprints,
     invalidate,
-  } = useOperationalSync(followUp?.workshop_id, user?.id, user);
+  } = useOperationalSync(followUp?.workshop_id || null, user?.id, user);
 
   // Alias para compatibilidade com código existente
   const allFollowUpsModal = allFollowUps;

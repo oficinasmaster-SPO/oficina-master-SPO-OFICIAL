@@ -60,6 +60,10 @@ Deno.serve(async (req) => {
     } catch(e) {}
 
     if (!tenant) {
+      // Se o tenant não existe mas o usuário é admin, permite acesso
+      if (user.role === 'admin') {
+        return Response.json({ success: true, allowed: true });
+      }
       return Response.json({ success: false, error: { code: 'NOT_FOUND', message: 'Tenant não encontrado' } }, { status: 404 });
     }
 

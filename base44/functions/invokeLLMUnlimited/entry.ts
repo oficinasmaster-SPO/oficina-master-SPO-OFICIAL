@@ -61,9 +61,11 @@ Deno.serve(async (req) => {
     const { prompt, response_json_schema = null } = payload;
 
     // Ignorar tenantId ou workshop_id do payload/headers e obter APENAS do usuário autenticado
+    // Admins podem não ter workshop_id válido — isso é permitido
     const workshop_id = user.data?.workshop_id;
+    const isAdmin = user.role === 'admin';
 
-    if (!workshop_id) {
+    if (!workshop_id && !isAdmin) {
       return Response.json({ success: false, error: { code: 'FORBIDDEN', message: 'Usuário não vinculado a um tenant' } }, { status: 403 });
     }
 
@@ -85,8 +87,8 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, error: { code: 'RATE_LIMIT_EXCEEDED', message: 'Limite de uso de IA por oficina excedido. Aguarde 1 minuto.' } }, { status: 429 });
     }
 
-    // Validação de Plano
-    if (workshop_id) {
+    // Validação de Plano — admins não precisam de validação de plano
+    if (workshop_id && !isAdmin) {
         try {
             const planCheck = await base44.functions.invoke('checkPlanAccess', {
                 tenantId: workshop_id,
