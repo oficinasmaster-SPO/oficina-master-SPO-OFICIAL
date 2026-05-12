@@ -29,6 +29,7 @@ import ProximosPassosAbaTab from "@/components/aceleracao/ProximosPassosAbaTab";
 import SprintClientModal from "@/components/aceleracao/sprint-client/SprintClientModal";
 import ClientSelectorGrid from "@/components/aceleracao/ClientSelectorGrid";
 import HistoricoContatosPanel, { buildHistoricoResumoIA } from "@/components/aceleracao/followups/HistoricoContatosPanel";
+import BucketPanel from "@/components/aceleracao/BucketPanel";
 
 const RESULTADO_COLORS = {
   atendeu: "bg-green-100 text-green-700 border-green-300",
@@ -1280,6 +1281,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
               { id: 'proximospassos', emoji: '✅', label: 'Próximos Passos', group: 2 },
               { id: 'pedidos',      emoji: '📋', label: 'Pedidos',        group: 2 },
               { id: 'backlog',      emoji: '📝', label: 'Backlog',        group: 2 },
+              { id: 'bucket',       emoji: '📥', label: 'Bucket',         group: 2 },
               { id: 'historico',    emoji: '🕐', label: 'Histórico',      group: 3 },
       { id: 'ia',           emoji: '🤖', label: 'IA',             group: 3 },
             ];
@@ -1689,6 +1691,21 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
                       {activePanel === 'backlog' && (
                         <div className="px-3 py-4">
                           {followUp?.workshop_id ? <BacklogDashboard workshopId={followUp.workshop_id} consultorId={followUp.consultor_id} /> : <p className="text-xs text-gray-500 italic">Sem backlog disponível</p>}
+                        </div>
+                      )}
+
+                      {/* BUCKET DE ATENDIMENTOS */}
+                      {activePanel === 'bucket' && (
+                        <div className="px-3 py-4">
+                          {followUp?.workshop_id ? (
+                            <BucketPanel 
+                              workshopId={followUp.workshop_id} 
+                              followUp={followUp}
+                              onClose={() => setActivePanel(null)}
+                            />
+                          ) : (
+                            <p className="text-xs text-gray-500 italic">Sem bucket disponível</p>
+                          )}
                         </div>
                       )}
 
