@@ -16,6 +16,7 @@ import { createPageUrl } from "@/utils";
 import { useNavigate } from "react-router-dom";
 import AttendanceRulesTab from "../components/plans/AttendanceRulesTab";
 import VouchersTab from "../components/vouchers/VouchersTab";
+import DiagnosticFrequencyManager from "../components/plans/DiagnosticFrequencyManager";
 // Lista completa de funcionalidades do sistema organizadas por categoria
 const allFeatures = {
   diagnosticos: [
@@ -594,10 +595,11 @@ export default function GerenciarPlanos() {
             </CardHeader>
             <CardContent>
               <Tabs defaultValue="info" className="space-y-6">
-                <TabsList className="grid w-full grid-cols-5">
+                <TabsList className="grid w-full grid-cols-6">
                   <TabsTrigger value="info">Informações</TabsTrigger>
                   <TabsTrigger value="features">Funcionalidades</TabsTrigger>
                   <TabsTrigger value="modules">Módulos</TabsTrigger>
+                  <TabsTrigger value="diagnostics">📊 Diagnósticos</TabsTrigger>
                   <TabsTrigger value="limits">Limites</TabsTrigger>
                   <TabsTrigger value="attendances">
                     <Calendar className="w-4 h-4 mr-2" />
@@ -803,6 +805,10 @@ export default function GerenciarPlanos() {
                       </Card>
                     ))}
                   </div>
+                </TabsContent>
+
+                <TabsContent value="diagnostics">
+                  <DiagnosticFrequencyManager planId={selectedPlan.plan_id} />
                 </TabsContent>
 
                 <TabsContent value="limits" className="space-y-4">
