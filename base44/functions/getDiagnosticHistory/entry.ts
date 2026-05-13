@@ -12,16 +12,20 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { workshop_id, isAdmin, user_id } = await req.json();
+    const { workshop_id, isAdmin, user_id, adminModeActive } = await req.json();
 
     // Define filtros baseado no role do usuário
     let filterCondition = {};
 
-    // Se isAdmin=true (modo Admin ativo), usar só workshop_id do cliente
-    if (isAdmin && workshop_id) {
+    // CRÍTICO: Se está em modo visualização admin (vendo cliente específico)
+    // SEMPRE filtrar por workshop_id, mesmo que seja admin
+    if (adminModeActive && workshop_id) {
       filterCondition = { workshop_id };
-    } else if (user.role === 'admin' && !workshop_id) {
-      // Admin vendo todos (sem filtro de cliente específico)
+    } else if (isAdmin && workshop_id && !adminModeActive) {
+      // Admin normal com workshop_id específico (mas não em modo visualização)
+      filterCondition = { workshop_id };
+    } else if (user.role === 'admin' && !workshop_id && !adminModeActive) {
+      // Admin vendo todos (sem modo visualização)
       filterCondition = {};
     } else if (user.data?.consulting_firm_id && !workshop_id) {
       // Consultor vendo todos os clientes da sua consultoria
@@ -31,7 +35,6 @@ Deno.serve(async (req) => {
       filterCondition = { workshop_id };
     } else {
       // User comum SEM workshop_id: só vê diagnósticos onde ELE é o user_id
-      // (não por created_by, pois consultor pode ter criado para ele)
       filterCondition = { user_id: user.id };
     }
 

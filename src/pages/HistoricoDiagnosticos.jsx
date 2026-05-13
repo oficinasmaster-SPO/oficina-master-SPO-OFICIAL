@@ -51,8 +51,10 @@ export default function HistoricoDiagnosticos() {
         
         const result = await base44.functions.invoke('getDiagnosticHistory', {
           workshop_id: targetWorkshopId,
-          user_id: user.id,  // Passar user_id para backend validar
-          isAdmin: user.role === 'admin' || !!user.data?.consulting_firm_id
+          user_id: user.id,
+          isAdmin: user.role === 'admin' || !!user.data?.consulting_firm_id,
+          // CRÍTICO: Indica se está em modo visualização admin (vendo cliente específico)
+          adminModeActive: !!user._adminModeWorkshopId
         });
         
         if (!result.data?.diagnostics) return { diagnostics: [] };
