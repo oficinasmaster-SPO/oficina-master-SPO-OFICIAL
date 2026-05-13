@@ -137,32 +137,32 @@ export default function PedidosInternosTab({ workshopId, user }) {
     queryClient.invalidateQueries({ queryKey: ['pedidos-internos'] });
   };
 
-  // Responsável (não solicitante) vê tela de resposta
-  if (showForm && editingPedido && editingPedido.responsavel_id === user?.id && editingPedido.solicitante_id !== user?.id) {
-    return (
-      <PedidoInternoResponder
-        pedido={editingPedido}
-        user={user}
-        onCancel={() => { setShowForm(false); setEditingPedido(null); }}
-        onSuccess={onFormClose}
-      />
-    );
-  }
-
-  if (showForm) {
-    return (
-      <PedidoInternoForm
-        pedido={editingPedido}
-        user={user}
-        usuarios={usuarios}
-        onCancel={() => { setShowForm(false); setEditingPedido(null); }}
-        onSuccess={onFormClose}
-      />
-    );
-  }
-
   return (
     <div className="space-y-6">
+      {/* Modal de Novo/Editar Pedido — overlay com z-index alto para sobrepor qualquer modal */}
+      {showForm && (
+        <div className="fixed inset-0 z-[20000] flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}>
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            {showForm && editingPedido && editingPedido.responsavel_id === user?.id && editingPedido.solicitante_id !== user?.id ? (
+              <PedidoInternoResponder
+                pedido={editingPedido}
+                user={user}
+                onCancel={() => { setShowForm(false); setEditingPedido(null); }}
+                onSuccess={onFormClose}
+              />
+            ) : (
+              <PedidoInternoForm
+                pedido={editingPedido}
+                user={user}
+                usuarios={usuarios}
+                onCancel={() => { setShowForm(false); setEditingPedido(null); }}
+                onSuccess={onFormClose}
+              />
+            )}
+          </div>
+        </div>
+      )}
+
       <Tabs defaultValue="pedidos" className="w-full">
         <TabsList className="mb-4 bg-gray-100 rounded-lg p-1">
           <TabsTrigger value="pedidos" className="text-sm rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm">
