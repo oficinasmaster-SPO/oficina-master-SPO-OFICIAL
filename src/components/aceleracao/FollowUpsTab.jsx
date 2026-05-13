@@ -606,6 +606,10 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
         </>
       )}
 
+      {activeTab === "taxa-realizacao" && (
+        <TaxaRealizacaoRelatorio />
+      )}
+
       {activeTab === "relatorios" && (
         <RelatoriosTab />
       )}
