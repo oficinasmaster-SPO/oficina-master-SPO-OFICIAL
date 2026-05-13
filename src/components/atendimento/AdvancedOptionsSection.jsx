@@ -169,7 +169,7 @@ export default function AdvancedOptionsSection({ formData, setFormData, workshop
       {/* Drawer Tarefa Backlog */}
       {showTarefaDrawer && (
         <Drawer open={showTarefaDrawer} onOpenChange={setShowTarefaDrawer}>
-          <DrawerContent className="max-h-[90vh] flex flex-col">
+          <DrawerContent className="max-h-[90vh] flex flex-col z-[20000]">
             <DrawerHeader>
               <DrawerTitle>Criar Nova Tarefa</DrawerTitle>
               <DrawerClose />
@@ -191,7 +191,7 @@ export default function AdvancedOptionsSection({ formData, setFormData, workshop
       {/* Drawer Pedido Interno */}
       {showPedidoDrawer && (
         <Drawer open={showPedidoDrawer} onOpenChange={setShowPedidoDrawer}>
-          <DrawerContent className="max-h-[90vh] flex flex-col">
+          <DrawerContent className="max-h-[90vh] flex flex-col z-[20000]">
             <DrawerHeader>
               <DrawerTitle>Criar Novo Pedido Interno</DrawerTitle>
               <DrawerClose />
