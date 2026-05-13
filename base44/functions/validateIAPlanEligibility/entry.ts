@@ -13,16 +13,18 @@ Deno.serve(async (req) => {
     }
 
     // 1. Buscar workshop e seu plano
-    const workshops = await base44.entities.Workshop.filter({ id: workshop_id });
+    let workshop = null;
+    try {
+      const all = await base44.entities.Workshop.list();
+      workshop = all.find(w => w.id === workshop_id) || null;
+    } catch(e) { workshop = null; }
 
-    if (workshops.length === 0) {
+    if (!workshop) {
       return Response.json(
         { error: 'Workshop not found' },
         { status: 404 }
       );
     }
-
-    const workshop = workshops[0];
     const planId = workshop.planoAtual || 'FREE';
 
     // 2. Buscar DiagnosticFrequency

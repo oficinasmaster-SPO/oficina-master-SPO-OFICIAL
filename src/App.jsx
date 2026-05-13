@@ -42,6 +42,7 @@ const ProximosPassosConsultoria = lazy(() => import('@/pages/ProximosPassosConsu
 const AdminTemplatesBacklog = lazy(() => import('@/pages/AdminTemplatesBacklog'));
 const DiagnosticoRiscos = lazy(() => import('@/pages/DiagnosticoRiscos'));
 const DashboardTempoAtencao = lazy(() => import('@/pages/DashboardTempoAtencao'));
+const HistoricoDiagnosticos = lazy(() => import('@/pages/HistoricoDiagnosticos'));
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -200,6 +201,11 @@ const AuthenticatedApp = () => {
       <Route path="/DashboardTempoAtencao" element={
         <LayoutWrapper currentPageName="DashboardTempoAtencao">
           <DashboardTempoAtencao />
+        </LayoutWrapper>
+      } />
+      <Route path="/HistoricoDiagnosticos" element={
+        <LayoutWrapper currentPageName="HistoricoDiagnosticos">
+          <HistoricoDiagnosticos />
         </LayoutWrapper>
       } />
       {Object.entries(Pages).map(([path, Page]) => {
