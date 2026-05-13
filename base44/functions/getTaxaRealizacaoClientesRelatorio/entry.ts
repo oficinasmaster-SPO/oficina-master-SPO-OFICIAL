@@ -75,11 +75,16 @@ Deno.serve(async (req) => {
         const totalRealizado = atendimentosRealizados.length;
         const taxaRealizacao = totalPrevisto > 0 ? Math.round((totalRealizado / totalPrevisto) * 100) : 0;
 
+        // Contar quantos de cada tipo foram realizados (para suportar múltiplas ocorrências)
+        const realizadosPorTipo = {};
+        atendimentosRealizados.forEach(a => {
+          realizadosPorTipo[a.tipo_atendimento] = (realizadosPorTipo[a.tipo_atendimento] || 0) + 1;
+        });
+
         // Mapear status de cada atendimento (por attendance_type_id do plano)
-        const atendimentosStatus = atendimentosPlano.map(aten => {
-          const realizado = atendimentosRealizados.find(a => 
-            a.tipo_atendimento === aten.id
-          );
+        const atendimentosStatus = atendimentosPlano.map((aten, idx) => {
+          const quantidadeRealizada = realizadosPorTipo[aten.id] || 0;
+          const realizados = atendimentosRealizados.filter(a => a.tipo_atendimento === aten.id);
           const atrasado = atendimentosAtrasados.find(a => 
             a.tipo_atendimento === aten.id
           );
@@ -90,21 +95,22 @@ Deno.serve(async (req) => {
             a.tipo_atendimento === aten.id
           );
 
-          if (realizado) {
+          if (quantidadeRealizada > 0) {
             return { 
               status: 'realizado', 
-              data: realizado.data_realizada || null, 
-              nome: aten.nome 
+              data: realizados[0]?.data_realizada || null,
+              nome: `${aten.nome} ${idx + 1}`, // Adicionar número sequencial
+              quantidade: quantidadeRealizada
             };
           } else if (atrasado) {
             const diasAtrasado = Math.floor((new Date() - new Date(atrasado.data_agendada)) / (1000 * 60 * 60 * 24));
-            return { status: 'atrasado', diasAtrasado, nome: aten.nome };
+            return { status: 'atrasado', diasAtrasado, nome: `${aten.nome} ${idx + 1}`, quantidade: 0 };
           } else if (agendado) {
-            return { status: 'agendado', data: agendado.data_agendada, nome: aten.nome };
+            return { status: 'agendado', data: agendado.data_agendada, nome: `${aten.nome} ${idx + 1}`, quantidade: 0 };
           } else if (pendente) {
-            return { status: 'pendente', nome: aten.nome };
+            return { status: 'pendente', nome: `${aten.nome} ${idx + 1}`, quantidade: 0 };
           } else {
-            return { status: 'nao_agendado', nome: aten.nome };
+            return { status: 'nao_agendado', nome: `${aten.nome} ${idx + 1}`, quantidade: 0 };
           }
         });
 
