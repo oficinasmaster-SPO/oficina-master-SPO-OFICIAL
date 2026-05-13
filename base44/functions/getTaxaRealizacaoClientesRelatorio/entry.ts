@@ -66,17 +66,30 @@ Deno.serve(async (req) => {
         const totalRealizado = atendimentosRealizados.length;
         const taxaRealizacao = totalPrevisto > 0 ? Math.round((totalRealizado / totalPrevisto) * 100) : 0;
 
-        // Mapear status de cada atendimento
+        // Mapear status de cada atendimento (por tipo_id, não nome)
         const atendimentosStatus = atendimentosPlano.map(aten => {
-          const realizado = atendimentosRealizados.find(a => a.tipo_atendimento === aten.nome);
-          const atrasado = atendimentosAtrasados.find(a => a.tipo_atendimento === aten.nome);
-          const pendente = atendimentosPendentes.find(a => a.tipo_atendimento === aten.nome);
+          const realizado = atendimentosRealizados.find(a => 
+            a.tipo_atendimento === aten.nome || a.diagnostic_id === aten.id
+          );
+          const atrasado = atendimentosAtrasados.find(a => 
+            a.tipo_atendimento === aten.nome || a.diagnostic_id === aten.id
+          );
+          const agendado = attendances.find(a =>
+            a.workshop_id === workshop.id &&
+            a.status === 'agendado' &&
+            (a.tipo_atendimento === aten.nome || a.diagnostic_id === aten.id)
+          );
+          const pendente = atendimentosPendentes.find(a => 
+            a.tipo_atendimento === aten.nome || a.diagnostic_id === aten.id
+          );
 
           if (realizado) {
             return { status: 'realizado', data: realizado.data_realizada, nome: aten.nome };
           } else if (atrasado) {
             const diasAtrasado = Math.floor((new Date() - new Date(atrasado.data_agendada)) / (1000 * 60 * 60 * 24));
             return { status: 'atrasado', diasAtrasado, nome: aten.nome };
+          } else if (agendado) {
+            return { status: 'agendado', data: agendado.data_agendada, nome: aten.nome };
           } else if (pendente) {
             return { status: 'pendente', nome: aten.nome };
           } else {

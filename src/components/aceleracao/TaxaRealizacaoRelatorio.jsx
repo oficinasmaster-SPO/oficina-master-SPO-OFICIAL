@@ -22,9 +22,9 @@ const getTaxaColor = (taxa) => {
 const getStatusBadge = (status, data) => {
   switch (status) {
     case 'realizado':
-      return <span className="text-green-600 font-medium">✅ {new Date(data).toLocaleDateString('pt-BR')}</span>;
+      return <span className="text-green-600 font-medium">✅ {data ? new Date(data).toLocaleDateString('pt-BR') : '—'}</span>;
     case 'atrasado':
-      return <span className="text-red-600 font-medium">❌ {data > 0 ? `-${data}` : '0'} dias</span>;
+      return <span className="text-red-600 font-medium">❌ {typeof data === 'number' ? `-${data}d` : '—'}</span>;
     case 'agendado':
       return <span className="text-blue-600 font-medium">📝 Agendado</span>;
     case 'pendente':
@@ -151,7 +151,12 @@ export default function TaxaRealizacaoRelatorio() {
                     )}
                   </button>
                 </th>
-                {/* Colunas dinâmicas de atendimentos virão aqui */}
+                {/* Colunas dinâmicas de atendimentos */}
+                {sortedClientes.length > 0 && sortedClientes[0].atendimentos_status.map((aten, idx) => (
+                  <th key={idx} className="px-3 py-3 text-left font-semibold text-gray-700 text-xs border-l border-gray-200">
+                    {aten.nome}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
