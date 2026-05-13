@@ -11,7 +11,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Loader2, ArrowDown, ArrowUp, Download } from 'lucide-react';
-import { toast } from 'sonner';
 
 const getTaxaColor = (taxa) => {
   if (taxa >= 80) return { bg: 'bg-green-50', text: 'text-green-700', emoji: '🟢' };
@@ -71,6 +70,7 @@ export default function TaxaRealizacaoRelatorio() {
   const [empresaFilter, setEmpresaFilter] = useState('');
   const [dataFilter, setDataFilter] = useState('');
   const [sortOrder, setSortOrder] = useState('desc'); // 'asc' ou 'desc'
+
 
   const { data: clientes = [], isLoading, error, refetch } = useQuery({
     queryKey: ['taxa-realizacao', statusFilter, empresaFilter, dataFilter],
