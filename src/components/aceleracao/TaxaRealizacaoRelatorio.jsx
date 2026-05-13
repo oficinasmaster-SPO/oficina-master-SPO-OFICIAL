@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Loader2, ArrowUpDown, ArrowDown, ArrowUp } from 'lucide-react';
+import { Loader2, ArrowDown, ArrowUp, Download } from 'lucide-react';
 
 const getTaxaColor = (taxa) => {
   if (taxa >= 80) return { bg: 'bg-green-50', text: 'text-green-700', emoji: '🟢' };
@@ -19,19 +19,44 @@ const getTaxaColor = (taxa) => {
   return { bg: 'bg-red-50', text: 'text-red-700', emoji: '🔴' };
 };
 
-const getStatusBadge = (status, data) => {
+const getStatusCell = (status, data) => {
   switch (status) {
     case 'realizado':
-      return <span className="text-green-600 font-medium">✅ {data ? new Date(data).toLocaleDateString('pt-BR') : '—'}</span>;
+      return {
+        text: data ? new Date(data).toLocaleDateString('pt-BR') : '—',
+        emoji: '✅',
+        color: 'text-green-600',
+        bg: 'bg-green-50'
+      };
     case 'atrasado':
-      return <span className="text-red-600 font-medium">❌ {typeof data === 'number' ? `-${data}d` : '—'}</span>;
+      return {
+        text: typeof data === 'number' ? `-${data} dias` : '—',
+        emoji: '❌',
+        color: 'text-red-600',
+        bg: 'bg-red-50'
+      };
     case 'agendado':
-      return <span className="text-blue-600 font-medium">📝 Agendado</span>;
+      return {
+        text: data ? new Date(data).toLocaleDateString('pt-BR') : 'agendado',
+        emoji: '📝',
+        color: 'text-blue-600',
+        bg: 'bg-blue-50'
+      };
     case 'pendente':
     case 'nao_agendado':
-      return <span className="text-gray-400 font-medium">📋 —</span>;
+      return {
+        text: '—',
+        emoji: '📋',
+        color: 'text-gray-400',
+        bg: 'bg-gray-50'
+      };
     default:
-      return <span className="text-gray-400">—</span>;
+      return {
+        text: '—',
+        emoji: '—',
+        color: 'text-gray-300',
+        bg: 'bg-gray-50'
+      };
   }
 };
 
@@ -77,8 +102,8 @@ export default function TaxaRealizacaoRelatorio() {
   return (
     <div className="space-y-4">
       {/* Filtros */}
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+       <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
             <label className="text-xs font-medium text-gray-700 block mb-2">Status</label>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -119,8 +144,15 @@ export default function TaxaRealizacaoRelatorio() {
               className="w-full h-9 px-3 border border-gray-300 rounded text-sm"
             />
           </div>
-        </div>
-      </div>
+
+          <div className="flex items-end">
+            <Button variant="outline" size="sm" className="w-full h-9 gap-2">
+              <Download className="w-4 h-4" />
+              Exportar
+            </Button>
+          </div>
+          </div>
+          </div>
 
       {/* Tabela */}
       {isLoading ? (
@@ -134,7 +166,7 @@ export default function TaxaRealizacaoRelatorio() {
       ) : (
         <div className="overflow-x-auto border border-gray-200 rounded-lg">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-gray-50 border-b border-gray-200 sticky top-0">
               <tr>
                 <th className="px-4 py-3 text-left font-semibold text-gray-700">Empresa</th>
                 <th className="px-4 py-3 text-left font-semibold text-gray-700">Data Início</th>
@@ -153,7 +185,7 @@ export default function TaxaRealizacaoRelatorio() {
                 </th>
                 {/* Colunas dinâmicas de atendimentos */}
                 {sortedClientes.length > 0 && sortedClientes[0].atendimentos_status.map((aten, idx) => (
-                  <th key={idx} className="px-3 py-3 text-left font-semibold text-gray-700 text-xs border-l border-gray-200">
+                  <th key={idx} className="px-3 py-2 text-center font-semibold text-gray-700 text-xs border-l border-gray-200 whitespace-nowrap">
                     {aten.nome}
                   </th>
                 ))}
@@ -175,11 +207,20 @@ export default function TaxaRealizacaoRelatorio() {
                       </div>
                     </td>
                     {/* Renderizar colunas de atendimentos dinamicamente */}
-                    {cliente.atendimentos_status.map((aten, idx) => (
-                      <td key={idx} className="px-3 py-3 text-xs whitespace-nowrap border-l border-gray-100">
-                        {getStatusBadge(aten.status, aten.diasAtrasado || aten.data)}
-                      </td>
-                    ))}
+                     {cliente.atendimentos_status.map((aten, idx) => {
+                       const cell = getStatusCell(aten.status, aten.diasAtrasado || aten.data);
+                       return (
+                         <td 
+                           key={idx} 
+                           className={`px-3 py-2 text-xs text-center whitespace-nowrap border-l border-gray-100 ${cell.bg}`}
+                         >
+                           <div className="flex items-center justify-center gap-1">
+                             <span>{cell.emoji}</span>
+                             <span className={`${cell.color} font-medium`}>{cell.text}</span>
+                           </div>
+                         </td>
+                       );
+                     })}
                   </tr>
                 );
               })}
