@@ -14,8 +14,7 @@ Deno.serve(async (req) => {
     // Buscar workshops (clientes)
     const workshops = await base44.entities.Workshop.list('-created_date', 500);
     
-    // Buscar tipos de atendimento e suas regras por plano
-    const attendanceTypes = await base44.entities.TipoAtendimentoConsultoria.list('-created_date', 500);
+    // Buscar regras de atendimento por plano
     const planAttendanceRules = await base44.entities.PlanAttendanceRule.list('-created_date', 500);
     
     // Buscar atendimentos realizados
@@ -27,64 +26,67 @@ Deno.serve(async (req) => {
       .filter(w => !empresa_filter || w.id === empresa_filter) // Filtro de empresa
       .filter(w => !data_inicio_filter || w.created_date >= data_inicio_filter) // Filtro de data
       .map(workshop => {
-        const plano = workshop.planoAtual;
-        
-        // Buscar regras de atendimento para este plano
-        const planosRules = planAttendanceRules.filter(r => r.plan_id === plano && r.is_active);
-        
-        // Construir lista de atendimentos do plano
-        const atendimentosPlano = planosRules.map(rule => {
-          const type = attendanceTypes.find(t => t.id === rule.attendance_type_id);
-          return {
-            id: rule.attendance_type_id,
-            nome: rule.attendance_display_name || type?.nome || 'Atendimento',
-            tipo_id: rule.attendance_type_id
-          };
-        });
+         const plano = workshop.planoAtual;
 
-        // Buscar atendimentos realizados deste cliente
-        const atendimentosRealizados = attendances.filter(a => 
-          a.workshop_id === workshop.id && a.status === 'realizado'
-        );
+         // Buscar regras de atendimento para este plano (APENAS do contrato)
+         const planosRules = planAttendanceRules.filter(r => r.plan_id === plano && r.is_active);
+         const attendanceTypesDoPlano = planosRules.map(r => r.attendance_type_id);
 
-        const atendimentosAtrasados = attendances.filter(a =>
-          a.workshop_id === workshop.id && 
-          a.status !== 'realizado' && 
-          a.status !== 'agendado' &&
-          a.data_agendada && 
-          new Date(a.data_agendada) < new Date()
-        );
+         // Construir lista de atendimentos do plano
+         const atendimentosPlano = planosRules.map(rule => ({
+           id: rule.attendance_type_id,
+           nome: rule.attendance_display_name || 'Atendimento',
+           tipo_id: rule.attendance_type_id
+         }));
 
-        const atendimentosPendentes = attendances.filter(a =>
-          a.workshop_id === workshop.id &&
-          a.status !== 'realizado' &&
-          !a.data_agendada
-        );
+         // Filtrar atendimentos APENAS pelos tipos que estão no plano
+         const atendimentosDoCli = attendances.filter(a => 
+           a.workshop_id === workshop.id && attendanceTypesDoPlano.includes(a.tipo_atendimento)
+         );
+
+         // Buscar atendimentos realizados deste cliente (apenas do plano)
+         const atendimentosRealizados = atendimentosDoCli.filter(a => 
+           a.status === 'realizado'
+         );
+
+         const atendimentosAtrasados = atendimentosDoCli.filter(a =>
+           a.status !== 'realizado' && 
+           a.status !== 'agendado' &&
+           a.data_agendada && 
+           new Date(a.data_agendada) < new Date()
+         );
+
+         const atendimentosPendentes = atendimentosDoCli.filter(a =>
+           a.status !== 'realizado' &&
+           !a.data_agendada
+         );
 
         // Calcular taxa
         const totalPrevisto = atendimentosPlano.length;
         const totalRealizado = atendimentosRealizados.length;
         const taxaRealizacao = totalPrevisto > 0 ? Math.round((totalRealizado / totalPrevisto) * 100) : 0;
 
-        // Mapear status de cada atendimento (por tipo_id, não nome)
+        // Mapear status de cada atendimento (por attendance_type_id do plano)
         const atendimentosStatus = atendimentosPlano.map(aten => {
           const realizado = atendimentosRealizados.find(a => 
-            a.tipo_atendimento === aten.nome || a.diagnostic_id === aten.id
+            a.tipo_atendimento === aten.id
           );
           const atrasado = atendimentosAtrasados.find(a => 
-            a.tipo_atendimento === aten.nome || a.diagnostic_id === aten.id
+            a.tipo_atendimento === aten.id
           );
-          const agendado = attendances.find(a =>
-            a.workshop_id === workshop.id &&
-            a.status === 'agendado' &&
-            (a.tipo_atendimento === aten.nome || a.diagnostic_id === aten.id)
+          const agendado = atendimentosDoCli.find(a =>
+            a.status === 'agendado' && a.tipo_atendimento === aten.id
           );
           const pendente = atendimentosPendentes.find(a => 
-            a.tipo_atendimento === aten.nome || a.diagnostic_id === aten.id
+            a.tipo_atendimento === aten.id
           );
 
           if (realizado) {
-            return { status: 'realizado', data: realizado.data_realizada, nome: aten.nome };
+            return { 
+              status: 'realizado', 
+              data: realizado.data_realizada || null, 
+              nome: aten.nome 
+            };
           } else if (atrasado) {
             const diasAtrasado = Math.floor((new Date() - new Date(atrasado.data_agendada)) / (1000 * 60 * 60 * 24));
             return { status: 'atrasado', diasAtrasado, nome: aten.nome };

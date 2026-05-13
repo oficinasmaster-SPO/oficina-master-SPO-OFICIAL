@@ -23,7 +23,7 @@ const getStatusCell = (status, data) => {
   switch (status) {
     case 'realizado':
       return {
-        text: data ? new Date(data).toLocaleDateString('pt-BR') : '—',
+        text: data && !isNaN(new Date(data).getTime()) ? new Date(data).toLocaleDateString('pt-BR') : '—',
         emoji: '✅',
         color: 'text-green-600',
         bg: 'bg-green-50'
@@ -37,7 +37,7 @@ const getStatusCell = (status, data) => {
       };
     case 'agendado':
       return {
-        text: data ? new Date(data).toLocaleDateString('pt-BR') : 'agendado',
+        text: data && !isNaN(new Date(data).getTime()) ? new Date(data).toLocaleDateString('pt-BR') : 'agendado',
         emoji: '📝',
         color: 'text-blue-600',
         bg: 'bg-blue-50'
@@ -71,7 +71,7 @@ export default function TaxaRealizacaoRelatorio() {
   const [dataFilter, setDataFilter] = useState('');
   const [sortOrder, setSortOrder] = useState('desc'); // 'asc' ou 'desc'
 
-  const { data: clientes = [], isLoading } = useQuery({
+  const { data: clientes = [], isLoading, error } = useQuery({
     queryKey: ['taxa-realizacao', statusFilter, empresaFilter, dataFilter],
     queryFn: async () => {
       const response = await base44.functions.invoke('getTaxaRealizacaoClientesRelatorio', {
@@ -79,7 +79,8 @@ export default function TaxaRealizacaoRelatorio() {
         empresa_filter: empresaFilter || null,
         data_inicio_filter: dataFilter || null,
       });
-      return response.data?.clientes || [];
+      if (!response?.data?.clientes) return [];
+      return response.data.clientes;
     },
     staleTime: 2 * 60 * 1000,
   });
@@ -155,15 +156,19 @@ export default function TaxaRealizacaoRelatorio() {
           </div>
 
       {/* Tabela */}
-      {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
-        </div>
-      ) : sortedClientes.length === 0 ? (
-        <div className="text-center py-12 text-gray-400">
-          Nenhum cliente encontrado com os filtros selecionados
-        </div>
-      ) : (
+       {isLoading ? (
+         <div className="flex items-center justify-center py-12">
+           <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+         </div>
+       ) : error ? (
+         <div className="text-center py-12 text-red-500">
+           Erro ao carregar dados. Tente novamente.
+         </div>
+       ) : sortedClientes.length === 0 ? (
+         <div className="text-center py-12 text-gray-400">
+           Nenhum cliente encontrado com os filtros selecionados
+         </div>
+       ) : (
         <div className="overflow-x-auto border border-gray-200 rounded-lg">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-200 sticky top-0">
