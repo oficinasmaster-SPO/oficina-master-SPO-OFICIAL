@@ -571,7 +571,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, onSaved
     }, 3000);
 
     return () => { if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current); };
-  }, [autoSaveSnapshot, formData.id, formData.workshop_id, formData.data_agendada, formData.hora_agendada]);
+  }, [autoSaveSnapshot, formData.id, formData.workshop_id, formData.data_agendada, formData.hora_agendada, formData.tipo_atendimento]);
 
   // Aguarda o usuário carregar antes de bloquear acesso
   if (!user) {
