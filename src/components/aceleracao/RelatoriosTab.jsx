@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import EnviarEmailModal from './EnviarEmailModal';
 import RelatorioDetalhado from './RelatorioDetalhado/Modal';
 import RiscosOportunidadesModal from './RiscosOportunidades/RiscosOportunidadesModal';
+import TaxaRealizacaoRelatorio from './TaxaRealizacaoRelatorio';
 import {
   Select,
   SelectContent,

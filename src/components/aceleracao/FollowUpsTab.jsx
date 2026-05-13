@@ -21,6 +21,7 @@ import FollowUpCompletedDetailDrawer from "./FollowUpCompletedDetailDrawer";
 import FollowUpContadorRow from "./followups/FollowUpContadorRow";
 import FollowUpContadorHistorico from "./followups/FollowUpContadorHistorico";
 import RelatoriosTab from "./RelatoriosTab";
+import TaxaRealizacaoRelatorio from "./TaxaRealizacaoRelatorio";
 
 // ── Componentes de módulo (fora do corpo do componente para evitar re-mount) ──
 
@@ -124,6 +125,7 @@ const TABS = [
   { id: "consultor",  label: "Por Consultor" },
   { id: "acompanhamento", label: "Acompanhamento" },
   { id: "concluidos", label: "Concluídos" },
+  { id: "taxa-realizacao", label: "Taxa de Realização" },
   { id: "relatorios", label: "Relatórios" },
 ];
 
