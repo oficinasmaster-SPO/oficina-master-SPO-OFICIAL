@@ -260,7 +260,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, onSaved
 
   const todosOsTipos = useMemo(() => {
     const customFormatted = (tiposCustomizados || []).map(t => ({
-      id: t.value || t.id, value: t.value, label: t.label, duracao: t.duracao_minutos || 45
+      id: t.value || t.id, value: t.value || t.id, label: t.label, duracao: t.duracao_minutos || 45
     }));
     const padrao = [
       { id: 'acompanhamento_mensal', value: 'acompanhamento_mensal', label: 'Acompanhamento Mensal', duracao: 60 },
