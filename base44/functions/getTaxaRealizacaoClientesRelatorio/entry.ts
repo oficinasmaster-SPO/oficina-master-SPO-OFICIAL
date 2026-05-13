@@ -11,13 +11,9 @@ Deno.serve(async (req) => {
 
     const { status_filter = 'todos', empresa_filter = null, data_inicio_filter = null } = await req.json();
 
-    // Buscar workshops (clientes)
+    // Buscar dados base
     const workshops = await base44.entities.Workshop.list('-created_date', 500);
-    
-    // Buscar regras de atendimento por plano
     const planAttendanceRules = await base44.entities.PlanAttendanceRule.list('-created_date', 500);
-    
-    // Buscar atendimentos realizados
     const attendances = await base44.entities.ConsultoriaAtendimento.list('-created_date', 5000);
 
     // Buscar planos que têm regras de frequência
@@ -27,33 +23,39 @@ Deno.serve(async (req) => {
 
     // Construir dados por cliente
     const clientesDados = workshops
-      .filter(w => w.planoAtual && w.status !== 'inativo' && plansWithFrequency.includes(w.planoAtual)) // Apenas planos com frequência
-      .filter(w => !empresa_filter || w.id === empresa_filter) // Filtro de empresa
-      .filter(w => !data_inicio_filter || w.created_date >= data_inicio_filter) // Filtro de data
+      .filter(w => w.planoAtual && w.status !== 'inativo' && plansWithFrequency.includes(w.planoAtual))
+      .filter(w => !empresa_filter || w.id === empresa_filter)
+      .filter(w => !data_inicio_filter || w.created_date >= data_inicio_filter)
       .map(workshop => {
          const plano = workshop.planoAtual;
 
-         // Buscar regras de atendimento para este plano (APENAS frequência - bucket)
+         // Buscar regras de atendimento para este plano (APENAS frequência)
          const planosRules = planAttendanceRules.filter(r => 
            r.plan_id === plano && 
            r.is_active && 
            r.scheduling_type === 'frequency'
          );
-         const attendanceTypesDoPlano = planosRules.map(r => r.attendance_type_id);
 
-         // Construir lista de atendimentos do plano
+         // Construir lista de atendimentos esperados do plano
          const atendimentosPlano = planosRules.map(rule => ({
            id: rule.attendance_type_id,
-           nome: rule.attendance_display_name || 'Atendimento',
-           tipo_id: rule.attendance_type_id
+           nome: rule.attendance_type_name || 'Atendimento',
+           tipo_id: rule.attendance_type_id,
+           attendance_type_name: rule.attendance_type_name
          }));
 
-         // Filtrar atendimentos APENAS pelos tipos que estão no plano
-         const atendimentosDoCli = attendances.filter(a => 
-           a.workshop_id === workshop.id && attendanceTypesDoPlano.includes(a.tipo_atendimento)
-         );
+         // Filtrar atendimentos do cliente - comparar por nome (tipo_atendimento é texto livre)
+         const atendimentosDoCli = attendances.filter(a => {
+           if (a.workshop_id !== workshop.id) return false;
+           // Procurar se o tipo de atendimento corresponde a alguma regra do plano
+           return atendimentosPlano.some(aten => 
+             aten.attendance_type_name && 
+             a.tipo_atendimento && 
+             a.tipo_atendimento.toLowerCase().includes(aten.attendance_type_name.toLowerCase())
+           );
+         });
 
-         // Buscar atendimentos realizados deste cliente (apenas do plano)
+         // Contar atendimentos realizados
          const atendimentosRealizados = atendimentosDoCli.filter(a => 
            a.status === 'realizado'
          );
@@ -70,36 +72,49 @@ Deno.serve(async (req) => {
            !a.data_agendada
          );
 
-        // Calcular taxa
+        // Calcular taxa (total_previsto = número de regras de frequência)
         const totalPrevisto = atendimentosPlano.length;
         const totalRealizado = atendimentosRealizados.length;
         const taxaRealizacao = totalPrevisto > 0 ? Math.round((totalRealizado / totalPrevisto) * 100) : 0;
 
-        // Contar quantos de cada tipo foram realizados (para suportar múltiplas ocorrências)
+        // Contar quantos de cada tipo foram realizados
         const realizadosPorTipo = {};
         atendimentosRealizados.forEach(a => {
-          realizadosPorTipo[a.tipo_atendimento] = (realizadosPorTipo[a.tipo_atendimento] || 0) + 1;
+          const tipoMatch = atendimentosPlano.find(aten => 
+            aten.attendance_type_name && 
+            a.tipo_atendimento?.toLowerCase().includes(aten.attendance_type_name.toLowerCase())
+          );
+          if (tipoMatch) {
+            realizadosPorTipo[tipoMatch.id] = (realizadosPorTipo[tipoMatch.id] || 0) + 1;
+          }
         });
 
-        // Mapear status de cada atendimento (por attendance_type_id do plano)
+        // Mapear status de cada atendimento esperado
         const atendimentosStatus = atendimentosPlano.map((aten, idx) => {
           const quantidadeRealizada = realizadosPorTipo[aten.id] || 0;
-          const realizados = atendimentosRealizados.filter(a => a.tipo_atendimento === aten.id);
+          const realizados = atendimentosRealizados.filter(a => 
+            aten.attendance_type_name && 
+            a.tipo_atendimento?.toLowerCase().includes(aten.attendance_type_name.toLowerCase())
+          );
           const atrasado = atendimentosAtrasados.find(a => 
-            a.tipo_atendimento === aten.id
+            aten.attendance_type_name && 
+            a.tipo_atendimento?.toLowerCase().includes(aten.attendance_type_name.toLowerCase())
           );
           const agendado = atendimentosDoCli.find(a =>
-            a.status === 'agendado' && a.tipo_atendimento === aten.id
+            a.status === 'agendado' && 
+            aten.attendance_type_name && 
+            a.tipo_atendimento?.toLowerCase().includes(aten.attendance_type_name.toLowerCase())
           );
           const pendente = atendimentosPendentes.find(a => 
-            a.tipo_atendimento === aten.id
+            aten.attendance_type_name && 
+            a.tipo_atendimento?.toLowerCase().includes(aten.attendance_type_name.toLowerCase())
           );
 
           if (quantidadeRealizada > 0) {
             return { 
               status: 'realizado', 
               data: realizados[0]?.data_realizada || null,
-              nome: `${aten.nome} ${idx + 1}`, // Adicionar número sequencial
+              nome: `${aten.nome} ${idx + 1}`,
               quantidade: quantidadeRealizada
             };
           } else if (atrasado) {
@@ -128,7 +143,7 @@ Deno.serve(async (req) => {
           atendimentos_status: atendimentosStatus
         };
       })
-      .sort((a, b) => b.taxa_realizacao - a.taxa_realizacao); // Ordenar por taxa descendente
+      .sort((a, b) => b.taxa_realizacao - a.taxa_realizacao);
 
     // Aplicar filtro de status
     let filtered = clientesDados;
