@@ -1,0 +1,118 @@
+{
+  "name": "EntrepreneurDiagnostic",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio que fez o diagn\u00f3stico"
+    },
+    "user_name": {
+      "type": "string",
+      "description": "Nome completo do usu\u00e1rio (cache de full_name)"
+    },
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "client_name": {
+      "type": "string",
+      "description": "Nome da oficina/cliente (cache de workshop.name)"
+    },
+    "company_name": {
+      "type": "string",
+      "description": "Raz\u00e3o social da empresa (cache)"
+    },
+    "diagnostic_type": {
+      "type": "string",
+      "const": "entrepreneur_diagnostic",
+      "description": "Tipo de diagn\u00f3stico identificador"
+    },
+    "answers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "question_id": {
+            "type": "string"
+          },
+          "selected_profile": {
+            "type": "string",
+            "enum": [
+              "aventureiro",
+              "empreendedor",
+              "gestor"
+            ]
+          }
+        }
+      },
+      "description": "Respostas do diagn\u00f3stico"
+    },
+    "dominant_profile": {
+      "type": "string",
+      "enum": [
+        "aventureiro",
+        "empreendedor",
+        "gestor"
+      ],
+      "description": "Perfil predominante"
+    },
+    "profile_scores": {
+      "type": "object",
+      "properties": {
+        "aventureiro": {
+          "type": "integer",
+          "default": 0
+        },
+        "empreendedor": {
+          "type": "integer",
+          "default": 0
+        },
+        "gestor": {
+          "type": "integer",
+          "default": 0
+        }
+      },
+      "description": "Pontua\u00e7\u00e3o de cada perfil"
+    },
+    "completed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Diagn\u00f3stico completo"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data e hora de conclus\u00e3o do diagn\u00f3stico"
+    }
+  },
+  "required": [
+    "user_id",
+    "answers"
+  ],
+  "rls": {
+    "create": true,
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "created_by": "{{user.email}}"
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

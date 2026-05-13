@@ -1,0 +1,90 @@
+{
+  "name": "DiagnosticFrequency",
+  "type": "object",
+  "description": "Regra de frequ\u00eancia aplic\u00e1vel a TODOS os diagn\u00f3sticos por plano",
+  "properties": {
+    "plan_id": {
+      "type": "string",
+      "description": "ID do plano (FREE, START, BRONZE, PRATA, GOLD, IOM, MILLIONS)"
+    },
+    "diagnostic_type": {
+      "type": "string",
+      "enum": [
+        "entrepreneur_diagnostic",
+        "management_diagnostic",
+        "maturity_collaborative_diagnostic",
+        "productivity_diagnostic_tcmp2",
+        "performance_diagnostic_matrix30",
+        "workload_diagnostic",
+        "service_order_diagnostic_r70i30",
+        "disc_behavioral_diagnostic",
+        "debt_analysis_diagnostic",
+        "gerencial_diagnostic",
+        "commercial_diagnostic"
+      ],
+      "description": "Tipo de diagn\u00f3stico"
+    },
+    "diagnostic_display_name": {
+      "type": "string",
+      "description": "Nome leg\u00edvel para exibi\u00e7\u00e3o (ex: 'Diagn\u00f3stico de Empreendedor')"
+    },
+    "frequency_type": {
+      "type": "string",
+      "enum": [
+        "monthly",
+        "quarterly",
+        "semester",
+        "annual",
+        "unlimited"
+      ],
+      "description": "Frequ\u00eancia permitida"
+    },
+    "min_days_between_attempts": {
+      "type": "integer",
+      "description": "Dias m\u00ednimos entre tentativas (30, 90, 180, 365)"
+    },
+    "max_occurrences_per_period": {
+      "type": "integer",
+      "description": "Quantas vezes por per\u00edodo (1, 2, 3, etc)"
+    },
+    "has_personalized_action_plan_ia": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se esse diagn\u00f3stico TECNICAMENTE suporta plano de a\u00e7\u00e3o com IA"
+    },
+    "ia_plan_enabled_for_this_plan": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se NESTE PLANO espec\u00edfico, o cliente pode usar IA para plano personalizado"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se a regra est\u00e1 ativa"
+    }
+  },
+  "required": [
+    "plan_id",
+    "diagnostic_type",
+    "frequency_type",
+    "min_days_between_attempts"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": true,
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
