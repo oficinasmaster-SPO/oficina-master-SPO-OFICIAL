@@ -113,6 +113,38 @@ Deno.serve(async (req) => {
     if (form_type === 'entrepreneur_diagnostic') {
       const { answers, dominant_profile, profile_scores } = body;
       
+      // Proteção contra duplicação: verificar se já existe diagnóstico idêntico
+      // nos últimos 5 segundos (janela de proteção contra clique duplo)
+      const recentDiags = await base44.asServiceRole.entities.EntrepreneurDiagnostic.filter({
+        user_id: user.id,
+        workshop_id: workshop_id || null
+      }, '-created_date', 1).catch(() => []);
+      
+      if (recentDiags.length > 0) {
+        const lastDiag = recentDiags[0];
+        const createdTime = new Date(lastDiag.created_date).getTime();
+        const nowTime = new Date().getTime();
+        const secondsSinceLast = (nowTime - createdTime) / 1000;
+        
+        // Se menos de 5 segundos E respostas idênticas = duplicação detectada
+        if (secondsSinceLast < 5) {
+          const answersMatch = 
+            JSON.stringify(lastDiag.answers) === JSON.stringify(answers) &&
+            lastDiag.dominant_profile === dominant_profile;
+          
+          if (answersMatch) {
+            // Retornar o diagnóstico anterior em vez de criar duplicata
+            return Response.json({ 
+              success: true, 
+              id: lastDiag.id, 
+              diagnostic: lastDiag,
+              isDuplicate: true,
+              message: 'Diagnóstico duplicado detectado - retornando resposta anterior'
+            });
+          }
+        }
+      }
+      
       const diagnostic = await base44.asServiceRole.entities.EntrepreneurDiagnostic.create({
         user_id: user.id,
         user_name: userName,

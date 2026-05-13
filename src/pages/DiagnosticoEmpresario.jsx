@@ -121,6 +121,12 @@ export default function DiagnosticoEmpresario() {
   };
 
   const handleSubmit = async () => {
+    // Proteção contra clique duplo: se já está enviando, ignora novo clique
+    if (isSubmitting) {
+      toast.error("Diagnóstico já está sendo enviado. Aguarde...");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const scores = { aventureiro: 0, empreendedor: 0, gestor: 0 };
@@ -142,7 +148,9 @@ export default function DiagnosticoEmpresario() {
         workshop_id: workshop?.id || null,
         answers: answersArray,
         dominant_profile: dominantProfile,
-        profile_scores: scores
+        profile_scores: scores,
+        // Timestamp para idempotência no backend
+        submission_timestamp: Date.now()
       });
 
       if (response.data.error) throw new Error(response.data.error);
