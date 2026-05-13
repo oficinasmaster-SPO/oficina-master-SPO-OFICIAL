@@ -3,10 +3,15 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-
-    if (!user?.role !== 'admin') {
-      return Response.json({ error: 'Apenas admins podem sincronizar' }, { status: 403 });
+    
+    // Permitir acesso: admin ou automação do sistema (sem user autenticado)
+    try {
+      const user = await base44.auth.me();
+      if (user?.role !== 'admin') {
+        return Response.json({ error: 'Acesso negado: apenas admins podem sincronizar' }, { status: 403 });
+      }
+    } catch (authError) {
+      // Sem erro - automação do sistema pode rodar
     }
 
     // Buscar todos os workshops PRATA
