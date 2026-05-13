@@ -43,6 +43,12 @@ export default function HistoricoCard({ diagnostic, onViewResult, onViewActionPl
   const createdDate = diagnostic.created_date ? format(new Date(diagnostic.created_date), 'dd/MM/yyyy HH:mm', { locale: ptBR }) : 'N/A';
   const completedDate = diagnostic.completed_at ? format(new Date(diagnostic.completed_at), 'dd/MM/yyyy HH:mm', { locale: ptBR }) : '-';
 
+  // CORREÇÃO: Garantir que user_name e client_name SEMPRE existem
+  // Se não tiverem no cache, exibir placeholder consistente
+  const displayUserName = diagnostic.user_name || 'Usuário não identificado';
+  const displayClientName = diagnostic.client_name || 'Oficina não identificada';
+  const displayCompanyName = diagnostic.company_name || displayClientName; // Fallback para client_name
+
   return (
     <Card className="hover:shadow-lg transition-shadow">
       <CardHeader className="pb-3">
@@ -62,12 +68,17 @@ export default function HistoricoCard({ diagnostic, onViewResult, onViewActionPl
                 </Badge>
               )}
             </div>
-            <h3 className="font-semibold text-gray-900">
-              {diagnostic.client_name || 'Cliente sem nome'}
+            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+             <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+               {displayUserName}
+             </span>
+             <span>{displayClientName}</span>
             </h3>
-            <p className="text-sm text-gray-600 mt-1">
-              {diagnostic.company_name && `${diagnostic.company_name}`}
-            </p>
+            {displayCompanyName !== displayClientName && (
+             <p className="text-sm text-gray-600 mt-1">
+               Empresa: {displayCompanyName}
+             </p>
+            )}
           </div>
         </div>
       </CardHeader>
