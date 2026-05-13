@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Loader2, ArrowDown, ArrowUp, Download, RefreshCw } from 'lucide-react';
+import { Loader2, ArrowDown, ArrowUp, Download } from 'lucide-react';
 import { toast } from 'sonner';
 
 const getTaxaColor = (taxa) => {
@@ -71,7 +71,6 @@ export default function TaxaRealizacaoRelatorio() {
   const [empresaFilter, setEmpresaFilter] = useState('');
   const [dataFilter, setDataFilter] = useState('');
   const [sortOrder, setSortOrder] = useState('desc'); // 'asc' ou 'desc'
-  const [isSyncing, setIsSyncing] = useState(false);
 
   const { data: clientes = [], isLoading, error, refetch } = useQuery({
     queryKey: ['taxa-realizacao', statusFilter, empresaFilter, dataFilter],
@@ -114,25 +113,7 @@ export default function TaxaRealizacaoRelatorio() {
     return [...clientes].sort((a, b) => b.taxa_realizacao - a.taxa_realizacao);
   }, [clientes, sortOrder]);
 
-  const handleSync = async () => {
-    setIsSyncing(true);
-    try {
-      // Executa a sincronização dos dados históricos
-      const response = await base44.functions.invoke('syncTaxaRealizacaoHistorico', {});
-      console.log('Sincronismo concluído:', response);
 
-      // Aguarda 1s e força refresh dos dados na tela
-      setTimeout(() => {
-        refetch();
-        setIsSyncing(false);
-        toast.success(`✅ Taxa atualizada! ${response.data?.resumo?.workshops_prata_ativos || 0} clientes sincronizados.`);
-      }, 1000);
-    } catch (error) {
-      setIsSyncing(false);
-      toast.error(`❌ Erro ao sincronizar: ${error.message}`);
-      console.error('Erro no sync:', error);
-    }
-  };
 
   return (
     <div className="space-y-4">
@@ -181,16 +162,6 @@ export default function TaxaRealizacaoRelatorio() {
           </div>
 
           <div className="flex items-end gap-2">
-            <Button 
-              onClick={handleSync}
-              disabled={isSyncing}
-              variant="default" 
-              size="sm" 
-              className="h-9 gap-2 bg-blue-600 hover:bg-blue-700"
-            >
-              <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
-              {isSyncing ? 'Sincronizando...' : 'Sincronizar'}
-            </Button>
             <Button variant="outline" size="sm" className="flex-1 h-9 gap-2">
               <Download className="w-4 h-4" />
               Exportar
