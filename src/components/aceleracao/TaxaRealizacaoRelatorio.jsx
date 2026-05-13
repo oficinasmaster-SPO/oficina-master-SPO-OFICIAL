@@ -85,12 +85,24 @@ export default function TaxaRealizacaoRelatorio() {
     staleTime: 2 * 60 * 1000,
   });
 
-  // Buscar workshops para dropdown de empresas
+  // Buscar workshops para dropdown (apenas com regras de frequência)
   const { data: workshops = [] } = useQuery({
     queryKey: ['workshops-filter'],
     queryFn: async () => {
-      return await base44.entities.Workshop.list('-created_date', 500);
+      const allWorkshops = await base44.entities.Workshop.list('-created_date', 500);
+      const planRules = await base44.entities.PlanAttendanceRule.list('-created_date', 500);
+      
+      // Buscar planos que têm regras de frequência
+      const plansWithFrequency = planRules
+        .filter(r => r.scheduling_type === 'frequency' && r.is_active)
+        .map(r => r.plan_id);
+      
+      // Retornar apenas workshops com esses planos
+      return allWorkshops.filter(w => 
+        w.planoAtual && plansWithFrequency.includes(w.planoAtual) && w.status !== 'inativo'
+      );
     },
+    staleTime: 5 * 60 * 1000,
   });
 
   const sortedClientes = useMemo(() => {
