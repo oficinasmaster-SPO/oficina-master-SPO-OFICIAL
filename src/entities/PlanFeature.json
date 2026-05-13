@@ -1,0 +1,137 @@
+{
+  "name": "PlanFeature",
+  "type": "object",
+  "description": "Define features, módulos, limites e regras de diagnóstico por plano",
+  "properties": {
+    "plan_id": {
+      "type": "string",
+      "description": "ID único do plano (FREE, START, BRONZE, PRATA, GOLD, IOM, MILLIONS)"
+    },
+    "plan_name": {
+      "type": "string",
+      "description": "Nome exibível do plano"
+    },
+    "plan_description": {
+      "type": "string",
+      "description": "Descrição completa do plano"
+    },
+    "price_monthly": {
+      "type": "number",
+      "default": 0,
+      "description": "Preço mensal em reais"
+    },
+    "price_annual": {
+      "type": "number",
+      "default": 0,
+      "description": "Preço anual em reais"
+    },
+    "price_display_monthly": {
+      "type": "string",
+      "description": "Preço formatado para exibição mensal"
+    },
+    "price_display_annual": {
+      "type": "string",
+      "description": "Preço formatado para exibição anual"
+    },
+    "kiwify_checkout_url_monthly": {
+      "type": "string",
+      "description": "Link de checkout mensal da Kiwify"
+    },
+    "kiwify_checkout_url_annual": {
+      "type": "string",
+      "description": "Link de checkout anual da Kiwify"
+    },
+    "features_highlights": {
+      "type": "array",
+      "items": {"type": "string"},
+      "default": [],
+      "description": "Destaques do plano para exibição"
+    },
+    "features_allowed": {
+      "type": "array",
+      "items": {"type": "string"},
+      "default": [],
+      "description": "IDs de funcionalidades liberadas neste plano"
+    },
+    "features_blocked": {
+      "type": "array",
+      "items": {"type": "string"},
+      "default": [],
+      "description": "IDs de funcionalidades bloqueadas neste plano"
+    },
+    "modules_allowed": {
+      "type": "array",
+      "items": {"type": "string"},
+      "default": [],
+      "description": "IDs de módulos/páginas liberadas neste plano"
+    },
+    "cronograma_features": {
+      "type": "array",
+      "items": {"type": "string"},
+      "default": [],
+      "description": "Funcionalidades que aparecem no cronograma"
+    },
+    "cronograma_modules": {
+      "type": "array",
+      "items": {"type": "string"},
+      "default": [],
+      "description": "Módulos que aparecem no cronograma"
+    },
+    "max_diagnostics_per_month": {
+      "type": "integer",
+      "default": -1,
+      "description": "Limite de diagnósticos por mês (-1 = ilimitado)"
+    },
+    "max_employees": {
+      "type": "integer",
+      "default": -1,
+      "description": "Limite de colaboradores (-1 = ilimitado)"
+    },
+    "max_branches": {
+      "type": "integer",
+      "default": -1,
+      "description": "Limite de filiais (-1 = ilimitado)"
+    },
+    "extra_resources": {
+      "type": "string",
+      "description": "Recursos extras inclusos no plano"
+    },
+    "limitations": {
+      "type": "string",
+      "description": "Limitações do plano"
+    },
+    "is_popular": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se este plano deve ser marcado como 'Mais Popular'"
+    },
+    "badge_text": {
+      "type": "string",
+      "default": "Mais Popular",
+      "description": "Texto do badge quando is_popular=true"
+    },
+    "active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se o plano está ativo para venda"
+    },
+    "order": {
+      "type": "integer",
+      "default": 0,
+      "description": "Ordem de exibição (menor primeiro)"
+    }
+  },
+  "required": ["plan_id", "plan_name"],
+  "rls": {
+    "create": {
+      "user_condition": {"role": "admin"}
+    },
+    "read": true,
+    "update": {
+      "user_condition": {"role": "admin"}
+    },
+    "delete": {
+      "user_condition": {"role": "admin"}
+    }
+  }
+}

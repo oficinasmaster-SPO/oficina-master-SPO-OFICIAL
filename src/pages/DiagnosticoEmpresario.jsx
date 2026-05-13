@@ -89,7 +89,32 @@ export default function DiagnosticoEmpresario() {
     enabled: !!user?.id
   });
 
-  const startNew = () => {
+  // Validar frequência
+  const validateFrequency = async () => {
+    if (!workshop?.id) {
+      toast.error("Oficina não configurada");
+      return false;
+    }
+    try {
+      const response = await base44.functions.invoke('validateDiagnosticFrequency', {
+        workshop_id: workshop.id,
+        diagnostic_type: 'entrepreneur_diagnostic'
+      });
+      if (!response.data.allowed) {
+        toast.error(response.data.reason || 'Diagnóstico não permitido no momento');
+        return false;
+      }
+      return true;
+    } catch (error) {
+      console.error('Erro ao validar frequência:', error);
+      toast.error('Erro ao validar disponibilidade');
+      return false;
+    }
+  };
+
+  const startNew = async () => {
+    const canProceed = await validateFrequency();
+    if (!canProceed) return;
     setViewMode("new");
     setCurrentQuestion(0);
     setAnswers({});
@@ -167,17 +192,32 @@ export default function DiagnosticoEmpresario() {
               history.map((diag, idx) => (
                 <Card key={diag.id || idx} className="hover:shadow-md transition-shadow">
                   <CardContent className="p-6 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-4 flex-1">
                       <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-xl
                         ${diag.dominant_profile === 'aventureiro' ? 'bg-orange-500' : 
                           diag.dominant_profile === 'empreendedor' ? 'bg-green-500' : 'bg-blue-500'}`}>
                         {diag.dominant_profile?.[0]?.toUpperCase()}
                       </div>
-                      <div>
+                      <div className="flex-1">
                         <h3 className="font-bold text-lg capitalize">{diag.dominant_profile}</h3>
+                        <p className="text-sm text-gray-600 mb-1">
+                          {diag.client_name && <span>{diag.client_name}</span>}
+                          {diag.client_name && diag.company_name && <span> • </span>}
+                          {diag.company_name && <span>{diag.company_name}</span>}
+                        </p>
                         <p className="text-sm text-gray-500 flex items-center gap-2">
                           <Clock className="w-3 h-3" />
-                          {new Date(diag.created_date).toLocaleDateString('pt-BR')}
+                          {diag.completed_at 
+                            ? new Date(diag.completed_at).toLocaleDateString('pt-BR', { 
+                                weekday: 'short',
+                                year: 'numeric',
+                                month: '2-digit',
+                                day: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })
+                            : new Date(diag.created_date).toLocaleDateString('pt-BR')
+                          }
                         </p>
                       </div>
                     </div>

@@ -23,6 +23,11 @@ export default function HistoricoDiagnosticos() {
   const checkUser = async () => {
     try {
       const currentUser = await base44.auth.me();
+      // Detectar admin_workshop_id (modo Admin ativo)
+      const adminMode = localStorage.getItem('admin_workshop_id');
+      if (adminMode) {
+        currentUser._adminModeWorkshopId = adminMode;
+      }
       setUser(currentUser);
     } catch (error) {
       toast.error('Erro ao verificar autenticação');
@@ -32,13 +37,17 @@ export default function HistoricoDiagnosticos() {
 
   // Buscar histórico de diagnósticos
   const { data: historyData, isLoading, error } = useQuery({
-    queryKey: ['diagnosticHistory', user?.id, filters],
+    queryKey: ['diagnosticHistory', user?.id, user?._adminModeWorkshopId, filters],
     queryFn: async () => {
       if (!user) return { diagnostics: [] };
       
       try {
+        // Em modo Admin, usar admin_workshop_id; caso contrário, usar workshop_id do user
+        const targetWorkshopId = user._adminModeWorkshopId || user.data?.workshop_id || null;
+        
         const result = await base44.functions.invoke('getDiagnosticHistory', {
-          workshop_id: user.data?.workshop_id || null
+          workshop_id: targetWorkshopId,
+          isAdmin: user.role === 'admin' || !!user.data?.consulting_firm_id
         });
         
         if (!result.data?.diagnostics) return { diagnostics: [] };
@@ -76,9 +85,16 @@ export default function HistoricoDiagnosticos() {
 
   // Buscar workshops para o filtro (só se admin/consultor)
   const { data: workshops = [] } = useQuery({
-    queryKey: ['workshopsForFilter', user?.role],
+    queryKey: ['workshopsForFilter', user?.role, user?._adminModeWorkshopId],
     queryFn: async () => {
-      if (!user || user.role === 'user') return [];
+      if (!user) return [];
+      // Se em modo Admin vendo um cliente específico, retornar só aquele cliente
+      if (user._adminModeWorkshopId) {
+        const workshop = await base44.entities.Workshop.filter({ id: user._adminModeWorkshopId });
+        return workshop;
+      }
+      // Se admin/consultor, retornar todos
+      if (user.role === 'user') return [];
       return base44.entities.Workshop.list('-created_date', 100);
     },
     enabled: !!user && (user?.role === 'admin' || user?.data?.consulting_firm_id)
@@ -93,7 +109,8 @@ export default function HistoricoDiagnosticos() {
   }
 
   const diagnostics = historyData?.diagnostics || [];
-  const showCompanyFilter = user.role === 'admin' || user.data?.consulting_firm_id;
+  const isAdminMode = user.role === 'admin' || user.data?.consulting_firm_id;
+  const showCompanyFilter = isAdminMode;
 
   // Paginação
   const totalPages = Math.ceil(diagnostics.length / ITEMS_PER_PAGE);

@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import ActionPlanCard from "../components/diagnostics/ActionPlanCard";
 import ActionPlanDetails from "../components/diagnostics/ActionPlanDetails";
 import ActionPlanFeedbackModal from "../components/diagnostics/ActionPlanFeedbackModal";
+import DiagnosticResultHeader from "@/components/diagnostico/DiagnosticResultHeader";
 
 export default function ResultadoEmpresario() {
   const navigate = useNavigate();
@@ -21,6 +22,7 @@ export default function ResultadoEmpresario() {
   const [workshop, setWorkshop] = useState(null);
   const [showActionPlanDetails, setShowActionPlanDetails] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [iaEligible, setIaEligible] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: actionPlan } = useQuery({
@@ -75,8 +77,22 @@ export default function ResultadoEmpresario() {
   });
 
   useEffect(() => {
-    loadDiagnostic();
-  }, []);
+     loadDiagnostic();
+   }, []);
+
+  // Validar elegibilidade para IA
+  const checkIAEligibility = async (workshopId) => {
+    try {
+      const response = await base44.functions.invoke('validateIAPlanEligibility', {
+        workshop_id: workshopId,
+        diagnostic_type: 'entrepreneur_diagnostic'
+      });
+      setIaEligible(response.data.canUseIA || false);
+    } catch (error) {
+      console.error('Erro ao validar elegibilidade IA:', error);
+      setIaEligible(false);
+    }
+  };
 
   const loadDiagnostic = async () => {
     try {
@@ -98,11 +114,12 @@ export default function ResultadoEmpresario() {
 
       setDiagnostic(diag);
 
-      if (diag.workshop_id) {
-        const workshops = await base44.entities.Workshop.list();
-        const ws = workshops.find(w => w.id === diag.workshop_id);
-        setWorkshop(ws);
-      }
+       if (diag.workshop_id) {
+         const workshops = await base44.entities.Workshop.list();
+         const ws = workshops.find(w => w.id === diag.workshop_id);
+         setWorkshop(ws);
+         await checkIAEligibility(diag.workshop_id);
+       }
     } catch (error) {
       console.error(error);
     } finally {
@@ -137,12 +154,15 @@ export default function ResultadoEmpresario() {
           <h1 className="text-4xl font-bold text-gray-900 mb-2">
             Diagnóstico Concluído!
           </h1>
-          {workshop && (
-            <p className="text-gray-600">
-              {workshop.name}
-            </p>
-          )}
         </div>
+
+        {/* Header com informações da resposta */}
+        <DiagnosticResultHeader
+          clientName={diagnostic?.client_name}
+          companyName={diagnostic?.company_name}
+          userName={diagnostic?.user_name}
+          completedAt={diagnostic?.completed_at}
+        />
 
         {/* Perfil Dominante */}
         <Card className={`shadow-xl border-2 mb-8 bg-gradient-to-br ${profileInfo.color}`}>
@@ -233,8 +253,8 @@ export default function ResultadoEmpresario() {
           </CardContent>
         </Card>
 
-        {/* Plano Personalizado com IA */}
-        {showActionPlanDetails && actionPlan ? (
+        {/* Plano Personalizado com IA - Apenas se elegível */}
+         {iaEligible && showActionPlanDetails && actionPlan ? (
           <div className="mb-8">
             <ActionPlanDetails
               plan={actionPlan}
@@ -242,7 +262,7 @@ export default function ResultadoEmpresario() {
               onBack={() => setShowActionPlanDetails(false)}
             />
           </div>
-        ) : actionPlan ? (
+        ) : iaEligible && actionPlan ? (
           <div className="mb-8">
             <ActionPlanCard
               plan={actionPlan}
@@ -250,7 +270,7 @@ export default function ResultadoEmpresario() {
               onRefine={() => setShowFeedbackModal(true)}
             />
           </div>
-        ) : (
+        ) : iaEligible && (
           <Card className="mb-8 border-2 border-dashed border-blue-300 bg-blue-50">
             <CardContent className="p-8 text-center">
               <Sparkles className="w-12 h-12 text-blue-600 mx-auto mb-4" />
