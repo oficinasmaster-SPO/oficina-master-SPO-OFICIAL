@@ -20,9 +20,14 @@ Deno.serve(async (req) => {
     // Buscar atendimentos realizados
     const attendances = await base44.entities.ConsultoriaAtendimento.list('-created_date', 5000);
 
+    // Buscar planos que têm regras de frequência
+    const plansWithFrequency = planAttendanceRules
+      .filter(r => r.scheduling_type === 'frequency' && r.is_active)
+      .map(r => r.plan_id);
+
     // Construir dados por cliente
     const clientesDados = workshops
-      .filter(w => w.planoAtual && w.status !== 'inativo') // Apenas workshops ativos com plano
+      .filter(w => w.planoAtual && w.status !== 'inativo' && plansWithFrequency.includes(w.planoAtual)) // Apenas planos com frequência
       .filter(w => !empresa_filter || w.id === empresa_filter) // Filtro de empresa
       .filter(w => !data_inicio_filter || w.created_date >= data_inicio_filter) // Filtro de data
       .map(workshop => {
