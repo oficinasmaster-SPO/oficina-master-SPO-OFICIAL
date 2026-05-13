@@ -65,10 +65,33 @@ export default function Autoavaliacoes() {
       };
 
       return [
-        ...processAssessments.map(a => normalize(a, 'process', mapProcessType(a.assessment_type), `/VisualizarProcesso?id=${a.id}`)),
-        ...diagnostics.map(d => normalize(d, 'diagnostic', 'Diagnóstico Geral (Fase)', `/Resultado?id=${d.id}`)),
-        ...entrepreneurDiagnostics.map(e => normalize(e, 'entrepreneur', 'Diagnóstico Empresarial', `/ResultadoEmpresario?id=${e.id}`)),
-        ...discDiagnostics.map(d => normalize(d, 'disc', 'Perfil DISC', `/ResultadoDISC?id=${d.id}`))
+        ...processAssessments.map(a => ({
+          ...normalize(a, 'process', mapProcessType(a.assessment_type), `/VisualizarProcesso?id=${a.id}`),
+          client_name: a.workshop_name || '-',
+          company_name: a.company_name || '-',
+          user_name: a.user_name || a.created_by || '-'
+        })),
+        ...diagnostics.map(d => ({
+          ...normalize(d, 'diagnostic', 'Diagnóstico Geral (Fase)', `/Resultado?id=${d.id}`),
+          client_name: d.workshop_name || d.client_name || '-',
+          company_name: d.company_name || '-',
+          user_name: d.user_name || d.created_by || '-',
+          completed_at: d.completed_at || d.created_date
+        })),
+        ...entrepreneurDiagnostics.map(e => ({
+          ...normalize(e, 'entrepreneur', 'Diagnóstico Empresarial', `/ResultadoEmpresario?id=${e.id}`),
+          client_name: e.client_name || e.workshop_name || '-',
+          company_name: e.company_name || '-',
+          user_name: e.user_name || e.created_by || '-',
+          completed_at: e.completed_at || e.created_date
+        })),
+        ...discDiagnostics.map(d => ({
+          ...normalize(d, 'disc', 'Perfil DISC', `/ResultadoDISC?id=${d.id}`),
+          client_name: d.workshop_name || d.client_name || '-',
+          company_name: d.company_name || '-',
+          user_name: d.user_name || d.created_by || '-',
+          completed_at: d.completed_at || d.created_date
+        }))
       ].sort((a, b) => new Date(b.date) - new Date(a.date));
     }, [bffData]);
 
@@ -281,7 +304,7 @@ export default function Autoavaliacoes() {
                           <div className="mt-1 p-2 bg-green-50 rounded-full">
                             <CalendarClock className="w-5 h-5 text-green-600" />
                           </div>
-                          <div>
+                          <div className="flex-1">
                             <h4 className="font-semibold text-slate-800">{item.label}</h4>
                             <div className="flex items-center gap-2 mt-1 text-sm text-slate-500">
                               <Badge variant="outline" className="bg-slate-50">
@@ -290,6 +313,11 @@ export default function Autoavaliacoes() {
                               <Badge variant="outline" className="bg-slate-50">
                                 {item.date ? format(new Date(item.date), "HH:mm") : '-'}
                               </Badge>
+                            </div>
+                            <div className="mt-2 text-xs text-slate-600 space-y-1">
+                              <p><strong>Cliente:</strong> {item.client_name}</p>
+                              <p><strong>Empresa:</strong> {item.company_name}</p>
+                              <p><strong>Realizado por:</strong> {item.user_name}</p>
                             </div>
                             <div className="mt-2 flex items-center gap-2">
                                 <span className="text-sm font-medium text-slate-700">Resultado / Fase:</span>

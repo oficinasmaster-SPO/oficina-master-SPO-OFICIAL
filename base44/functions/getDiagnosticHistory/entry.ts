@@ -12,23 +12,25 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { workshop_id } = await req.json();
+    const { workshop_id, isAdmin } = await req.json();
 
     // Define filtros baseado no role do usuário
     let filterCondition = {};
 
-    if (user.role === 'admin') {
-      // Admin vê TUDO
+    // Se isAdmin=true (modo Admin ativo), usar só workshop_id do cliente
+    if (isAdmin && workshop_id) {
+      filterCondition = { workshop_id };
+    } else if (user.role === 'admin' && !workshop_id) {
+      // Admin vendo todos (sem filtro de cliente específico)
       filterCondition = {};
-    } else if (user.data?.consulting_firm_id) {
-      // Consultor vê todos os clientes da sua consultoria
-      // Neste caso, precisamos buscar workshops da consultoria
+    } else if (user.data?.consulting_firm_id && !workshop_id) {
+      // Consultor vendo todos os clientes da sua consultoria
       filterCondition = { consulting_firm_id: user.data.consulting_firm_id };
     } else if (workshop_id) {
-      // User comum vê só sua empresa
+      // User comum vendo sua empresa
       filterCondition = { workshop_id };
     } else {
-      // User comum sem workshop_id vê só dados associados a ele
+      // User comum sem workshop_id vendo só seus dados
       filterCondition = { created_by: user.email };
     }
 
