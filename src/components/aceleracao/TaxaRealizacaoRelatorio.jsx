@@ -36,7 +36,7 @@ const getStatusBadge = (status, data) => {
 };
 
 const getProgressBar = (taxa) => {
-  const filled = Math.round(taxa / 10);
+  const filled = Math.min(10, Math.max(0, Math.round(taxa / 10)));
   return '█'.repeat(filled) + '░'.repeat(10 - filled);
 };
 
