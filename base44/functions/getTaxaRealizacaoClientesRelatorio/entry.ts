@@ -28,8 +28,12 @@ Deno.serve(async (req) => {
       .map(workshop => {
          const plano = workshop.planoAtual;
 
-         // Buscar regras de atendimento para este plano (APENAS do contrato)
-         const planosRules = planAttendanceRules.filter(r => r.plan_id === plano && r.is_active);
+         // Buscar regras de atendimento para este plano (APENAS frequência - bucket)
+         const planosRules = planAttendanceRules.filter(r => 
+           r.plan_id === plano && 
+           r.is_active && 
+           r.scheduling_type === 'frequency'
+         );
          const attendanceTypesDoPlano = planosRules.map(r => r.attendance_type_id);
 
          // Construir lista de atendimentos do plano

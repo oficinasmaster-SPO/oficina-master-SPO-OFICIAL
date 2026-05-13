@@ -165,11 +165,15 @@ export default function TaxaRealizacaoRelatorio() {
            Erro ao carregar dados. Tente novamente.
          </div>
        ) : sortedClientes.length === 0 ? (
-         <div className="text-center py-12 text-gray-400">
-           Nenhum cliente encontrado com os filtros selecionados
-         </div>
-       ) : (
-        <div className="overflow-x-auto border border-gray-200 rounded-lg">
+          <div className="text-center py-12 text-gray-400">
+            Nenhum cliente encontrado com os filtros selecionados
+          </div>
+        ) : (
+         <>
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 text-sm text-blue-800">
+            ⚡ <strong>Métrica Atualizada:</strong> Taxa de realização agora conta APENAS atendimentos de frequência (reuniões recorrentes). Eventos avulsos (workshops, monitorias) não impactam a taxa.
+          </div>
+         <div className="overflow-x-auto border border-gray-200 rounded-lg">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-200 sticky top-0">
               <tr>
@@ -231,8 +235,9 @@ export default function TaxaRealizacaoRelatorio() {
               })}
             </tbody>
           </table>
-        </div>
-      )}
-    </div>
-  );
-}
+          </div>
+          </>
+          )}
+          </div>
+          );
+          }
