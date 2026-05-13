@@ -43,10 +43,15 @@ export default function HistoricoDiagnosticos() {
       
       try {
         // Em modo Admin, usar admin_workshop_id; caso contrário, usar workshop_id do user
-        const targetWorkshopId = user._adminModeWorkshopId || user.data?.workshop_id || null;
+        // CRÍTICO: Se user tem workshop_id, SEMPRE usar (nunca deixar como null/undefined)
+        const targetWorkshopId = user._adminModeWorkshopId || 
+                               user.data?.workshop_id || 
+                               (user.workshop_id) ||  // Fallback direto no user
+                               null;
         
         const result = await base44.functions.invoke('getDiagnosticHistory', {
           workshop_id: targetWorkshopId,
+          user_id: user.id,  // Passar user_id para backend validar
           isAdmin: user.role === 'admin' || !!user.data?.consulting_firm_id
         });
         

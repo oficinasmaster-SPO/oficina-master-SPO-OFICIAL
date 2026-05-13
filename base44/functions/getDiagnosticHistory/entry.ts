@@ -12,7 +12,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { workshop_id, isAdmin } = await req.json();
+    const { workshop_id, isAdmin, user_id } = await req.json();
 
     // Define filtros baseado no role do usuário
     let filterCondition = {};
@@ -30,8 +30,9 @@ Deno.serve(async (req) => {
       // User comum vendo sua empresa
       filterCondition = { workshop_id };
     } else {
-      // User comum sem workshop_id vendo só seus dados
-      filterCondition = { created_by: user.email };
+      // User comum SEM workshop_id: só vê diagnósticos onde ELE é o user_id
+      // (não por created_by, pois consultor pode ter criado para ele)
+      filterCondition = { user_id: user.id };
     }
 
     // Todas as entidades de diagnóstico e seus tipos
@@ -59,11 +60,19 @@ Deno.serve(async (req) => {
         1000
       ).catch(() => []);
 
-      // Adicionar tipo ao resultado
+      // Adicionar tipo ao resultado + VALIDAÇÃO FINAL de isolamento
       const withType = diagnostics.map(d => ({
         ...d,
         diagnostic_type: source.type
-      }));
+      })).filter(d => {
+        // VALIDAÇÃO CRÍTICA: Garantir que user comum vê APENAS seus diagnósticos
+        if (!isAdmin && !user.data?.consulting_firm_id && !workshop_id) {
+          // User comum sem workshop: validar que é seu diagnóstico por user_id
+          return d.user_id === user.id;
+        }
+        // Para outros casos, confiar no filterCondition
+        return true;
+      });
 
       allDiagnostics = [...allDiagnostics, ...withType];
     }
