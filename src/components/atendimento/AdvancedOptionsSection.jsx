@@ -176,6 +176,9 @@ export default function AdvancedOptionsSection({ formData, setFormData, workshop
             </DrawerHeader>
             <div className="overflow-y-auto flex-1 px-4">
               <TarefaBacklogForm
+                workshopId={formData.workshop_id}
+                workshops={workshops}
+                user={formData}
                 onSuccess={(tarefaId) => {
                   setTarefasVinculadas([...tarefasVinculadas, tarefaId]);
                   setShowTarefaDrawer(false);
@@ -200,6 +203,8 @@ export default function AdvancedOptionsSection({ formData, setFormData, workshop
               <PedidoInternoForm
                 user={formData}
                 usuarios={[]}
+                workshops={workshops}
+                clienteId={formData.workshop_id}
                 onSuccess={(pedidoId) => {
                   setPedidosVinculados([...pedidosVinculados, pedidoId]);
                   setShowPedidoDrawer(false);

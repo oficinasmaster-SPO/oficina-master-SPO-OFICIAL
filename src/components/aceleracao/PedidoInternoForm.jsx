@@ -17,7 +17,12 @@ import {
 } from "@/components/ui/select";
 import PedidoInternoMediaUpload from "./PedidoInternoMediaUpload";
 
-export default function PedidoInternoForm({ pedido, user, usuarios: usuariosProp = [], onCancel, onSuccess }) {
+export default function PedidoInternoForm({ pedido, user, usuarios: usuariosProp = [], workshops: workshopsProp = [], clienteId = '', onCancel, onSuccess }) {
+  // Pré-seleciona cliente se clienteId foi passado
+  const clientePreSelecionado = clienteId && workshopsProp?.length > 0 
+    ? workshopsProp.find(w => w.id === clienteId)
+    : null;
+
   const [formData, setFormData] = useState({
     tipo: pedido?.tipo || 'apoio_tecnico',
     titulo: pedido?.titulo || '',
@@ -26,8 +31,8 @@ export default function PedidoInternoForm({ pedido, user, usuarios: usuariosProp
     solicitante_nome: pedido?.solicitante_nome || user?.full_name,
     responsavel_id: pedido?.responsavel_id || '',
     responsavel_nome: pedido?.responsavel_nome || '',
-    cliente_id: pedido?.cliente_id || '',
-    cliente_nome: pedido?.cliente_nome || '',
+    cliente_id: pedido?.cliente_id || clienteId || '',
+    cliente_nome: pedido?.cliente_nome || clientePreSelecionado?.name || '',
     prazo: pedido?.prazo || '',
     status: pedido?.status || 'pendente',
     prioridade: pedido?.prioridade || 'media',
@@ -50,13 +55,17 @@ export default function PedidoInternoForm({ pedido, user, usuarios: usuariosProp
   // Usa o prop se tiver dados, senão usa o fetch interno
   const usuarios = usuariosProp.length > 0 ? usuariosProp : usuariosInternos;
 
-  const { data: workshops = [] } = useQuery({
-    queryKey: ['workshops-select'],
+  // Busca workshops internamente se não recebeu como prop
+  const { data: workshopsInternal = [] } = useQuery({
+    queryKey: ['workshops-pedido-interno'],
     queryFn: async () => {
       const all = await base44.entities.Workshop.list();
       return all || [];
-    }
+    },
+    enabled: !workshopsProp || workshopsProp.length === 0,
   });
+
+  const workshops = workshopsProp?.length > 0 ? workshopsProp : workshopsInternal;
 
   const saveMutation = useMutation({
     mutationFn: async (data) => {
