@@ -207,27 +207,37 @@ export default function DiagnosticoEmpresario() {
                         {diag.dominant_profile?.[0]?.toUpperCase()}
                       </div>
                       <div className="flex-1">
-                        <h3 className="font-bold text-lg capitalize">{diag.dominant_profile}</h3>
-                        <p className="text-sm text-gray-600 mb-1">
-                          {diag.client_name && <span>{diag.client_name}</span>}
-                          {diag.client_name && diag.company_name && <span> • </span>}
-                          {diag.company_name && <span>{diag.company_name}</span>}
-                        </p>
-                        <p className="text-sm text-gray-500 flex items-center gap-2">
-                          <Clock className="w-3 h-3" />
-                          {diag.completed_at 
-                            ? new Date(diag.completed_at).toLocaleDateString('pt-BR', { 
-                                weekday: 'short',
-                                year: 'numeric',
-                                month: '2-digit',
-                                day: '2-digit',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              })
-                            : new Date(diag.created_date).toLocaleDateString('pt-BR')
-                          }
-                        </p>
-                      </div>
+                         <h3 className="font-bold text-lg capitalize">{diag.dominant_profile}</h3>
+                         <p className="text-sm text-gray-600 mb-1">
+                           {diag.client_name && <span>{diag.client_name}</span>}
+                           {diag.client_name && diag.company_name && <span> • </span>}
+                           {diag.company_name && <span>{diag.company_name}</span>}
+                         </p>
+                         <p className="text-xs text-gray-500 mb-1">
+                           Por: {diag.user_name || 'Usuário'}
+                         </p>
+                         <p className="text-sm text-gray-500 flex items-center gap-2">
+                           <Clock className="w-3 h-3" />
+                           {diag.completed_at 
+                             ? new Date(diag.completed_at).toLocaleDateString('pt-BR', { 
+                                 weekday: 'short',
+                                 year: 'numeric',
+                                 month: '2-digit',
+                                 day: '2-digit',
+                                 hour: '2-digit',
+                                 minute: '2-digit'
+                               })
+                             : new Date(diag.created_date).toLocaleDateString('pt-BR', {
+                                 weekday: 'short',
+                                 year: 'numeric',
+                                 month: '2-digit',
+                                 day: '2-digit',
+                                 hour: '2-digit',
+                                 minute: '2-digit'
+                               })
+                           }
+                         </p>
+                       </div>
                     </div>
                     <Button variant="outline" onClick={() => navigate(createPageUrl("ResultadoEmpresario") + `?id=${diag.id}`)}>
                       <FileText className="w-4 h-4 mr-2" />
