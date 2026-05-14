@@ -3,16 +3,17 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 /**
  * Follow-up Guarda-Chuva Semanal
  * 
- * Executa toda segunda-feira 09:00
- * Varre TODOS workshops ativos
+ * Executa toda segunda-feira às 09:00
+ * Varre TODOS workshops ativos com planos elegíveis
  * Cria FollowUpReminder se:
  * - Plano elegível (BRONZE, PRATA, GOLD, IOM, MILLIONS)
- * - Sem FU pendente em 7 dias
- * - Sem atendimento EM QUALQUER período (30 dias)
- * - Sem sprint ativa
+ * - NÃO tem follow-up agendado para os PRÓXIMOS 7 DIAS
+ * 
+ * REGRA SIMPLES: "Semana que vem este cliente vai ter contato?"
+ * → NÃO vai ter → CRIA follow-up automático
+ * → JÁ vai ter → Não cria
  * 
  * @param {boolean} dry_run - Se true, só simula sem criar
- * @param {number} lookback_days - Dias para verificar atendimentos (default: 30)
  * @param {string[]} planos_elegiveis - Lista de planos elegíveis
  */
 Deno.serve(async (req) => {
@@ -50,9 +51,7 @@ Deno.serve(async (req) => {
     const metrics = {
       total_workshops: todosWorkshops.length,
       elegiveis: 0,
-      com_fu_recente: 0,
-      com_atendimento_recente: 0,
-      com_sprint_ativa: 0,
+      com_fu_agendado: 0,
       plano_nao_elegivel: 0,
       followups_criados: 0,
       falhas: 0
@@ -60,10 +59,6 @@ Deno.serve(async (req) => {
 
     const workshops_processados = [];
     const erros = [];
-
-    // Data de corte para lookback
-    const dataCorte = new Date();
-    dataCorte.setDate(dataCorte.getDate() - lookback_days);
 
     // Processar cada workshop
     for (const workshop of todosWorkshops) {
@@ -77,91 +72,35 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        // Critério 2: Verificar se tem FU pendente nos últimos 7 dias
-        const dataCorteFU = new Date();
-        dataCorteFU.setDate(dataCorteFU.getDate() - 7);
+        // Critério 2: Verificar se tem FU AGENDADO para os PRÓXIMOS 7 DIAS
+        const hoje = new Date();
+        const proximos7Dias = new Date();
+        proximos7Dias.setDate(hoje.getDate() + 7);
         
         const fuPendentes = await base44.entities.FollowUpReminder.filter({
           workshop_id: workshop.id,
           is_completed: false,
-          created_date: { $gte: dataCorteFU.toISOString() }
+          reminder_date: { 
+            $gte: hoje.toISOString().split('T')[0],
+            $lte: proximos7Dias.toISOString().split('T')[0]
+          }
         });
 
         if (fuPendentes && fuPendentes.length > 0) {
-          console.log(`[GUARDA-CHUVA] ❌ ${workshop.name}: Já tem ${fuPendentes.length} FU(s) pendente(s)`);
+          console.log(`[GUARDA-CHUVA] ❌ ${workshop.name}: Já tem ${fuPendentes.length} FU(s) agendado(s) para os próximos 7 dias`);
           metrics.com_fu_recente++;
           continue;
         }
 
-        // Critério 3: Verificar se teve atendimento nos últimos 30 dias
-        const atendamentosRecentes = await base44.entities.ConsultoriaAtendimento.filter({
-          workshop_id: workshop.id,
-          status: ['realizado', 'concluido'],
-          data_realizada: { $gte: dataCorte.toISOString() }
-        });
-
-        if (atendamentosRecentes && atendamentosRecentes.length > 0) {
-          console.log(`[GUARDA-CHUVA] ❌ ${workshop.name}: Tem ${atendamentosRecentes.length} atendimento(s) recente(s)`);
-          metrics.com_atendimento_recente++;
-          continue;
-        }
-
-        // Critério 4: Verificar se tem sprint ativa
-        const sprintsAtivas = await base44.entities.ConsultoriaSprint.filter({
-          workshop_id: workshop.id,
-          status: ['in_progress', 'pending']
-        });
-
-        if (sprintsAtivas && sprintsAtivas.length > 0) {
-          console.log(`[GUARDA-CHUVA] ❌ ${workshop.name}: Tem ${sprintsAtivas.length} sprint(s) ativa(s)`);
-          metrics.com_sprint_ativa++;
-          continue;
-        }
-
-        // Critério 5: Verificar se tem contrato ativo
-        const contratosAtivos = await base44.entities.Contract.filter({
-          workshop_id: workshop.id,
-          status: ['ativo', 'assinado']
-        });
-
-        if (!contratosAtivos || contratosAtivos.length === 0) {
-          console.log(`[GUARDA-CHUVA] ❌ ${workshop.name}: Sem contrato ativo`);
-          continue;
-        }
+        // Workshop é ELEGÍVEL (único critério: sem FU nos próximos 7 dias)
 
         // Workshop é ELEGÍVEL!
-        console.log(`[GUARDA-CHUVA] ✅ ${workshop.name}: ELEGÍVEL`);
+        console.log(`[GUARDA-CHUVA] ✅ ${workshop.name}: ELEGÍVEL - Sem FU nos próximos 7 dias`);
         metrics.elegiveis++;
 
-        // Identificar consultor responsável
-        let consultor_id = null;
-        let consultor_nome = null;
-
-        // Tentar pegar do último contrato
-        if (contratosAtivos.length > 0 && contratosAtivos[0].consultor_id) {
-          consultor_id = contratosAtivos[0].consultor_id;
-          consultor_nome = contratosAtivos[0].consultor_nome;
-        }
-
-        // Fallback: pegar último atendimento
-        if (!consultor_id) {
-          const ultimosAtendimentos = await base44.entities.ConsultoriaAtendimento.filter(
-            { workshop_id: workshop.id },
-            '-data_realizada',
-            1
-          );
-          if (ultimosAtendimentos && ultimosAtendimentos.length > 0) {
-            consultor_id = ultimosAtendimentos[0].consultor_id;
-            consultor_nome = ultimosAtendimentos[0].consultor_nome;
-          }
-        }
-
-        // Fallback final: usar admin que está executando
-        if (!consultor_id) {
-          console.log(`[GUARDA-CHUVA] ⚠️ ${workshop.name}: Sem consultor definido, usando admin`);
-          consultor_id = user.id;
-          consultor_nome = user.full_name || 'Admin';
-        }
+        // Identificar consultor responsável (usar admin que está executando)
+        const consultor_id = user.id;
+        const consultor_nome = user.full_name || 'Admin';
 
         // Criar FollowUpReminder (se não for dry_run)
         if (dry_run) {
@@ -182,8 +121,8 @@ Deno.serve(async (req) => {
             consultor_nome,
             reminder_date: new Date().toISOString().split('T')[0], // Hoje
             sequence_number: 1,
-            days_since_meeting: lookback_days,
-            message: `Cliente ativo sem contato há ${lookback_days} dias - follow-up preventivo`,
+            days_since_meeting: 7,
+            message: `Follow-up preventivo semanal - cliente sem contato agendado para os próximos 7 dias`,
             canal_origem: 'preventivo',
             origin_type: 'guarda_chuva',
             is_completed: false,
@@ -213,7 +152,7 @@ Deno.serve(async (req) => {
                 workshop_id: workshop.id,
                 consultor_id,
                 origin_type: 'guarda_chuva',
-                lookback_days
+                reason: 'sem_followup_proximos_7_dias'
               }
             });
           } catch (analyticsError) {
