@@ -190,14 +190,40 @@ describe('Regra de Negócio - Follow-up Finalização', () => {
   describe('Edge Cases', () => {
     it('deve lidar com reminder_date nulo ou indefinido', () => {
       const reminderNull = { ...mockReminder, reminder_date: null };
-      expect(reminderNull.reminder_date > today).toBe(false);
-      expect(reminderNull.reminder_date < today).toBe(false);
-      expect(reminderNull.reminder_date === today).toBe(false);
+      const isValidDateNull = reminderNull.reminder_date && /^\d{4}-\d{2}-\d{2}$/.test(reminderNull.reminder_date);
+      expect(isValidDateNull).toBe(false);
+      
+      const reminderUndefined = { ...mockReminder, reminder_date: undefined };
+      const isValidDateUndefined = reminderUndefined.reminder_date && /^\d{4}-\d{2}-\d{2}$/.test(reminderUndefined.reminder_date);
+      expect(isValidDateUndefined).toBe(false);
+    });
+
+    it('deve validar formato de data com regex', () => {
+      // Data válida
+      const dataValida = "2026-05-14";
+      expect(/^\d{4}-\d{2}-\d{2}$/.test(dataValida)).toBe(true);
+      
+      // Data inválida - formato brasileiro
+      const dataInvalida1 = "14/05/2026";
+      expect(/^\d{4}-\d{2}-\d{2}$/.test(dataInvalida1)).toBe(false);
+      
+      // Data inválida - formato americano
+      const dataInvalida2 = "05-14-2026";
+      expect(/^\d{4}-\d{2}-\d{2}$/.test(dataInvalida2)).toBe(false);
+      
+      // Data inválida - string aleatória
+      const dataInvalida3 = "invalid-date";
+      expect(/^\d{4}-\d{2}-\d{2}$/.test(dataInvalida3)).toBe(false);
+      
+      // Data inválida - objeto
+      const dataInvalida4 = { date: "2026-05-14" };
+      expect(/^\d{4}-\d{2}-\d{2}$/.test(dataInvalida4)).toBe(false);
     });
 
     it('deve lidar com follow-up já concluído', () => {
-      const reminderConcluido = { ...mockReminder, is_completed: true };
-      const canBeFinalized = reminderConcluido.is_completed === false && (
+      const reminderConcluido = { ...mockReminder, is_completed: true, reminder_date: yesterday };
+      const isValidDate = reminderConcluido.reminder_date && /^\d{4}-\d{2}-\d{2}$/.test(reminderConcluido.reminder_date);
+      const canBeFinalized = reminderConcluido.is_completed === false && isValidDate && (
         reminderConcluido.reminder_date < today || reminderConcluido.reminder_date === today
       );
       expect(canBeFinalized).toBe(false);
@@ -210,11 +236,23 @@ describe('Regra de Negócio - Follow-up Finalização', () => {
         { ...mockReminder, id: 'fu-3', reminder_date: today },
       ];
       followUpsNoMesmoDia.forEach(fu => {
-        const canBeFinalized = fu.is_completed === false && (
+        const isValidDate = fu.reminder_date && /^\d{4}-\d{2}-\d{2}$/.test(fu.reminder_date);
+        const canBeFinalized = fu.is_completed === false && isValidDate && (
           fu.reminder_date < today || fu.reminder_date === today
         );
         expect(canBeFinalized).toBe(true);
       });
+    });
+
+    it('deve prevenir erro de runtime com data nula no alerta', () => {
+      const reminderNull = { ...mockReminder, reminder_date: null };
+      const isValidDate = reminderNull.reminder_date && /^\d{4}-\d{2}-\d{2}$/.test(reminderNull.reminder_date);
+      const isFuture = isValidDate && reminderNull.reminder_date > today;
+      
+      expect(isValidDate).toBe(false);
+      expect(isFuture).toBe(false);
+      // Alerta não deve renderizar com data nula
+      expect(isFuture && isValidDate).toBe(false);
     });
   });
 

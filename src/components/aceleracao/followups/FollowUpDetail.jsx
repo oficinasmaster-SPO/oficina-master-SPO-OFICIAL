@@ -81,17 +81,19 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
   const [fuAtaSelecionados, setFuAtaSelecionados] = useState([]);
   const [fuSpSelecionados, setFuSpSelecionados] = useState([]);
 
-  const isOverdue = !reminder.is_completed && reminder.reminder_date < today;
+  const isOverdue = !reminder.is_completed && reminder.reminder_date && reminder.reminder_date < today;
   const daysOver = reminder.reminder_date
     ? differenceInDays(new Date(today), new Date(reminder.reminder_date + "T00:00:00"))
     : 0;
 
   // ── REGRA DE NEGÓCIO: Follow-ups só podem ser finalizados se estiverem vencidos, atrasados ou forem do dia
-  const canBeFinalized = reminder.is_completed === false && (
+  // CORREÇÃO QA: Validação segura contra datas nulas/inválidas
+  const isValidDate = reminder.reminder_date && /^\d{4}-\d{2}-\d{2}$/.test(reminder.reminder_date);
+  const canBeFinalized = reminder.is_completed === false && isValidDate && (
     reminder.reminder_date < today ||  // vencido/atrasado
     reminder.reminder_date === today    // ou é do dia
   );
-  const isFuture = reminder.reminder_date > today;  // follow-up futuro (não pode finalizar)
+  const isFuture = isValidDate && reminder.reminder_date > today;  // follow-up futuro (não pode finalizar)
 
   // ── Fonte da verdade: seqNum/stats vindos do hook pai (useFollowUpSequence)
   // Calculados aqui para serem disponíveis em TODOS os usos abaixo (IA, chat, UI)
@@ -1057,11 +1059,13 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
         {/* Footer fixo */}
         <div className="flex-shrink-0 px-6 py-4 border-t border-gray-200 bg-white space-y-2">
           {/* ALERTA: Follow-up futuro não pode ser finalizado */}
-          {isFuture && (
+          {isFuture && isValidDate && (
             <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
-                <p className="text-sm font-semibold text-amber-800">Follow-up agendado para {format(new Date(reminder.reminder_date + "T00:00:00"), "dd/MM/yyyy")}</p>
+                <p className="text-sm font-semibold text-amber-800">
+                  Follow-up agendado para {format(new Date(reminder.reminder_date + "T00:00:00"), "dd/MM/yyyy")}
+                </p>
                 <p className="text-xs text-amber-700 mt-1">
                   Este follow-up ainda não está na data de realização. Você pode visualizar os detalhes, mas só poderá finalizar ou dar baixa a partir da data agendada.
                 </p>
