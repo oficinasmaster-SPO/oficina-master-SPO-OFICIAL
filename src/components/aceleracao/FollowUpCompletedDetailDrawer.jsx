@@ -32,7 +32,7 @@ const PROXIMO_PASSO_LABELS = {
   cancelar: "Cancelamento",
 };
 
-export default function FollowUpCompletedDetailDrawer({ followUp, open, onClose }) {
+export default function FollowUpCompletedDetailDrawer({ followUp, open, onClose, seqNum, stats }) {
   const [selectedImage, setSelectedImage] = useState(null);
   const [attendanceData, setAttendanceData] = useState(null);
 
@@ -113,7 +113,19 @@ export default function FollowUpCompletedDetailDrawer({ followUp, open, onClose 
       <Sheet open={open} onOpenChange={onClose}>
         <SheetContent className="w-full md:w-[500px] max-h-[95vh] overflow-y-auto">
           <SheetHeader className="mb-6">
-            <SheetTitle>Detalhes do Follow-up Concluído</SheetTitle>
+            <SheetTitle>
+              {seqNum ? `Follow-up #${seqNum}${stats ? ` de ${stats.total}` : ""}` : "Detalhes do Follow-up Concluído"}
+              {followUp?.workshop_name && (
+                <p className="text-sm font-normal text-gray-500 mt-0.5">{followUp.workshop_name}</p>
+              )}
+            </SheetTitle>
+            {stats && (
+              <div className="flex gap-3 text-xs mt-1">
+                <span className="text-gray-500">{stats.total} FUs total</span>
+                <span className="text-green-600">· {stats.concluidos} concluídos</span>
+                <span className="text-amber-600">· {stats.pendentes} pendentes</span>
+              </div>
+            )}
           </SheetHeader>
 
           {!attendanceData && (

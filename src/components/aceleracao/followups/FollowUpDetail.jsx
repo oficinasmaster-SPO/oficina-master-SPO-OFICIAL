@@ -54,7 +54,7 @@ const ATA_ICONS = {
   pontual: "📌",
 };
 
-export default function FollowUpDetail({ reminder, today, onBack, filaReminders = [], onSelectReminder }) {
+export default function FollowUpDetail({ reminder, today, onBack, filaReminders = [], onSelectReminder, seqNum, stats }) {
   const queryClient = useQueryClient();
   const [view, setView] = useState("detail");
   const [canal, setCanal] = useState("");
@@ -391,9 +391,9 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
   }
 
   // ---- DETAIL VIEW ----
-  // Progress dots for 4 follow-ups
-  const totalSteps = 4;
-  const currentStep = reminder.sequence_number || 1;
+  // Usa seqNum do hook universal (fonte da verdade); fallback para sequence_number do reminder
+  const totalSteps = stats?.total || 4;
+  const currentStep = seqNum ?? reminder.sequence_number ?? 1;
 
   return (
     <div className="space-y-3">
@@ -445,7 +445,10 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
                       )}
                     </div>
                     <p className="text-xs text-gray-400 mt-0.5">
-                      Setor automotivo · Follow-up {currentStep}/{totalSteps}
+                      Follow-up #{currentStep} de {totalSteps}
+                      {stats && (
+                        <span className="ml-1 text-gray-400">· {stats.concluidos} concluídos · {stats.pendentes} pendentes</span>
+                      )}
                     </p>
                   </div>
                 </div>

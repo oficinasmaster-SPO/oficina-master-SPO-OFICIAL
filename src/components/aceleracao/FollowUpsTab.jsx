@@ -457,6 +457,8 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
             today={today}
             onBack={() => setSelectedReminder(null)}
             filaReminders={listAbertos}
+            seqNum={seqByReminderId[selectedReminder?.id]}
+            stats={statsByWorkshopId[selectedReminder?.workshop_id]}
             onSelectReminder={(fu) => {
               setAnimating(true);
               setTimeout(() => {
@@ -649,6 +651,8 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
               followUp={selectedConcluido}
               open={!!selectedConcluido}
               onClose={() => setSelectedConcluido(null)}
+              seqNum={seqByReminderId[selectedConcluido?.id]}
+              stats={statsByWorkshopId[selectedConcluido?.workshop_id]}
             />
           )}
         </>

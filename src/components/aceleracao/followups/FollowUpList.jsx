@@ -346,6 +346,17 @@ export default function FollowUpList({ reminders, today, isLoading, onSelect, fi
                       )}
                     </div>
 
+                    {/* Stats do cliente */}
+                    {statsByWorkshopId[r.workshop_id] && !r.is_completed && (
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className="text-[10px] text-gray-400">
+                          {statsByWorkshopId[r.workshop_id].total} FUs
+                          · <span className="text-green-600">{statsByWorkshopId[r.workshop_id].concluidos} ✓</span>
+                          · <span className="text-amber-600">{statsByWorkshopId[r.workshop_id].pendentes} pend.</span>
+                        </span>
+                      </div>
+                    )}
+
                     {/* Line 2: FU + consultor | tipo + ATA code + horário */}
                     <div className="flex items-center gap-0 min-w-0 mt-0.5">
                       {(r.origin_type === 'suporte' || r.origin_type === 'suporte_checkin') ? (
@@ -461,6 +472,8 @@ export default function FollowUpList({ reminders, today, isLoading, onSelect, fi
         followUp={selectedCompleted}
         open={!!selectedCompleted}
         onClose={() => setSelectedCompleted(null)}
+        seqNum={selectedCompleted ? seqByReminderId[selectedCompleted.id] : undefined}
+        stats={selectedCompleted ? statsByWorkshopId[selectedCompleted.workshop_id] : undefined}
       />
     </div>
   );
