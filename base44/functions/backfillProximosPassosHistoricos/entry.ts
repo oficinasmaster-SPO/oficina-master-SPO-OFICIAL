@@ -1,5 +1,15 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
+// Gerar hash do conteúdo para idempotência
+async function generateHash(text) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(text);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return hashHex.substring(0, 16);
+}
+
 /**
  * MIGRAÇÃO RETROATIVA (BACKFILL)
  * 
@@ -48,22 +58,25 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        // 2. Sincronizar com ConsultoriaProximoPasso
+        // 2. Sincronizar com ConsultoriaProximoPasso (usando hash para idempotência)
         for (const pp of proximosPassos) {
           try {
-            // Verificar se já existe (idempotência)
+            // Gerar hash do conteúdo
+            const contentToHash = `${pp.descricao || pp.titulo}|${pp.responsavel || ''}|${pp.prazo || ''}`;
+            const passoHash = await generateHash(contentToHash);
+
+            // Verificar se já existe pelo hash (mais robusto que texto exato)
             const existentes = await base44.asServiceRole.entities.ConsultoriaProximoPasso.filter({
               workshop_id: ata.workshop_id,
-              titulo: pp.descricao || pp.titulo,
-              prazo: pp.prazo,
+              item_id_hash: passoHash,
             }, '-created_date', 1);
 
             if (existentes && existentes.length > 0) {
-              console.log(`✓ PP "${pp.descricao?.substring(0, 30)}" já existe`);
+              console.log(`✓ PP "${pp.descricao?.substring(0, 30)}" já existe (hash: ${passoHash})`);
               continue;
             }
 
-            // Criar próximo passo operacional
+            // Criar próximo passo operacional com hash
             await base44.asServiceRole.entities.ConsultoriaProximoPasso.create({
               workshop_id: ata.workshop_id,
               consulting_firm_id: ata.consulting_firm_id || null,
@@ -75,6 +88,7 @@ Deno.serve(async (req) => {
               status: 'pendente',
               prioridade: 'media',
               origem: 'ata',
+              item_id_hash: passoHash, // ✅ Hash para idempotência
               observacoes_consultor: `Migrado via backfill da ATA ${ata.code || ata.id} em ${new Date().toISOString()}`,
               historico: [{
                 tipo: 'criacao',
