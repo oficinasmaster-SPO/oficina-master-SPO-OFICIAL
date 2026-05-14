@@ -48,14 +48,31 @@ export default function CheckpointModal({
       setLoading(true);
       setError(null);
 
+      // Normalizar decision para coincidir com o que o backend espera
+      const decisionNormalized = selectedOption === 'in_days' ? 'in_X_days' : selectedOption;
+
       const payload = {
         followUpContador_id: followUpContadorId,
-        decision: selectedOption,
+        decision: decisionNormalized,
         selectedDate: selectedOption === 'in_days' ? selectedDate : null,
         sprint_id: sprintId,
         bucket_id: bucketId,
         ata_id: ataId
       };
+
+      // Se não há FollowUpContador vinculado, pular chamada ao backend e ir direto ao onSubmit
+      if (!followUpContadorId) {
+        const metadata = {
+          date: selectedOption === 'in_days' ? selectedDate : (selectedOption === 'next_week' ? nextMonday : null),
+          followUpId: null,
+          miniFollowUpId: null
+        };
+        logCheckpointDecision(decisionNormalized, metadata);
+        if (onSubmit) onSubmit(selectedOption, metadata);
+        setSelectedOption(null);
+        setSelectedDate('');
+        return;
+      }
 
       const response = await base44.functions.invoke('processCheckpointDecision', payload);
 
