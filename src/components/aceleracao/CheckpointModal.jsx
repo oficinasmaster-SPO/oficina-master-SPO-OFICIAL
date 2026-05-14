@@ -121,7 +121,7 @@ export default function CheckpointModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
+        <div className="space-y-4 py-4 max-h-[calc(80vh-180px)] overflow-y-auto">
           {/* Status Summary */}
           {followUpStatus.pendingCount > 0 && (
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex gap-3">
