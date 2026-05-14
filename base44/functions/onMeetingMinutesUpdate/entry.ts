@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
     }
 
     // Chamar funcao de sincronizacao com todos os campos necessários
-    await base44.functions.invoke('syncProximosPassosToTasks', {
+    const syncResult = await base44.functions.invoke('syncProximosPassosToTasks', {
       ata_id,
       ata_data,
       workshop_id,
@@ -38,9 +38,21 @@ Deno.serve(async (req) => {
       consultor_id
     });
 
+    // Atualizar follow-ups vinculados com novos próximos passos
+    const fuResult = await base44.functions.invoke('syncAtaUpdatesToFollowUps', {
+      ata_id,
+      ata_data,
+      workshop_id
+    });
+
+    console.log('✅ Sync completo:', {
+      tarefas: syncResult?.data?.message || 'ok',
+      followUps: fuResult?.data?.message || 'nenhum FU atualizado'
+    });
+
     return Response.json({
       success: true,
-      message: 'Próximos passos sincronizados com sucesso'
+      message: `Próximos passos sincronizados: ${syncResult?.data?.message || 'ok'} | ${fuResult?.data?.message || 'nenhum FU atualizado'}`
     });
   } catch (error) {
     console.error('Erro ao processar atualização de ATA:', error);
