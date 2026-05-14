@@ -256,7 +256,7 @@ export default function FollowUpList({ reminders, today, isLoading, onSelect, fi
             const ata = r.ata_id ? atasIndex[r.ata_id] : null;
             // Usa sequência universal do hook (fonte da verdade: todos os reminders do cliente)
             const seqFU = seqByReminderId[r.id] ?? null;
-            const stats = statsByWorkshopId[r.workshop_id] ?? null;
+            const clientStats = statsByWorkshopId[r.workshop_id] ?? null;
             return (
               <FollowUpConcluidoRow
                 key={r.id}
@@ -264,7 +264,7 @@ export default function FollowUpList({ reminders, today, isLoading, onSelect, fi
                 reminder={r}
                 ata={ata}
                 totalFollowUps={seqFU}
-                totalDoCliente={stats?.total ?? null}
+                totalDoCliente={clientStats?.total ?? null}
                 onSelect={() => setSelectedCompleted(r)}
               />
             );
@@ -367,7 +367,7 @@ export default function FollowUpList({ reminders, today, isLoading, onSelect, fi
                         </span>
                       ) : (
                       <span className="text-xs text-gray-500 flex-shrink-0">
-                        Follow-up {r.sequence_number}/4
+                        Follow-up #{seqByReminderId[r.id] ?? r.sequence_number}{statsByWorkshopId[r.workshop_id] ? ` de ${statsByWorkshopId[r.workshop_id].total}` : ""}
                         {r.consultor_nome && <> · <span className="text-gray-400">{r.consultor_nome}</span></>}
                       </span>
                       )}

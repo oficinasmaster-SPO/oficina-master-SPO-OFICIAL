@@ -13,6 +13,7 @@ import { format, differenceInDays, addDays, isToday, parseISO } from "date-fns";
 import { toast } from "sonner";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMemo } from "react";
 import { useAuth } from "@/lib/AuthContext";
 import VisualizarAtaModal from "@/components/aceleracao/VisualizarAtaModal";
 import IniciarAtendimentoModal from "@/components/aceleracao/IniciarAtendimentoModal";
@@ -84,6 +85,11 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
   const daysOver = reminder.reminder_date
     ? differenceInDays(new Date(today), new Date(reminder.reminder_date + "T00:00:00"))
     : 0;
+
+  // ── Fonte da verdade: seqNum/stats vindos do hook pai (useFollowUpSequence)
+  // Calculados aqui para serem disponíveis em TODOS os usos abaixo (IA, chat, UI)
+  const totalSteps = stats?.total || 4;
+  const currentStep = seqNum ?? reminder.sequence_number ?? 1;
 
   const { data: allFollowUps = [] } = useQuery({
     queryKey: ["all-followups-workshop", reminder.workshop_id],
@@ -199,10 +205,10 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
       const resumoConcluidos = concluidos.slice(0, 3).map(c =>
         `- Canal: ${c.canal || '?'} | Resultado: ${c.resultado || '?'} | Humor: ${c.humor || '?'} | Comprometimentos: ${c.compromissos || 'nenhum'}`
       ).join('\n');
-      const contexto = `Você é um assistente de consultoria empresarial. Ajude o consultor a atender o cliente "${reminder.workshop_name}" (Follow-up ${reminder.sequence_number}/4).\n\nÚLTIMAS ATAS:\n${resumoAtas || 'Nenhuma ata registrada'}\n\nÚLTIMOS ATENDIMENTOS:\n${resumoConcluidos || 'Nenhum atendimento anterior'}\n\nResponda de forma direta e prática. Seja objetivo.`;
+      const contexto = `Você é um assistente de consultoria empresarial. Ajude o consultor a atender o cliente "${reminder.workshop_name}" (Follow-up #${currentStep} de ${totalSteps}).\n\nÚLTIMAS ATAS:\n${resumoAtas || 'Nenhuma ata registrada'}\n\nÚLTIMOS ATENDIMENTOS:\n${resumoConcluidos || 'Nenhum atendimento anterior'}\n\nResponda de forma direta e prática. Seja objetivo.`;
       const conv = await base44.agents.createConversation({
         agent_name: 'qgp_tecnico',
-        metadata: { name: `Chat ${reminder.workshop_name} - FU ${reminder.sequence_number}`, description: contexto },
+        metadata: { name: `Chat ${reminder.workshop_name} - FU #${currentStep}`, description: contexto },
       });
       setChatConversa(conv);
       setChatMensagens([{ role: 'assistant', content: `Olá! Estou pronto para ajudar com o atendimento de **${reminder.workshop_name}**. Tenho acesso ao histórico de atas e atendimentos deste cliente. O que você precisa saber?` }]);
@@ -243,7 +249,7 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
         `Atendimento via ${c.canal || '?'}: resultado=${c.resultado || '?'}, humor=${c.humor || '?'}, comprometimentos=${c.compromissos || 'nenhum'}`
       ).join('\n');
 
-      const prompt = `Você é um coach de consultores de negócios. Com base nos dados abaixo sobre o cliente "${reminder.workshop_name}", gere UMA dica prática, direta e motivadora (máximo 3 linhas) para o consultor seguir neste atendimento de follow-up ${reminder.sequence_number}/4. Foque no que o cliente precisa agora.\n\nÚLTIMAS ATAS:\n${resumoAtas || 'Sem atas registradas'}\n\nÚLTIMOS ATENDIMENTOS:\n${resumoConcluidos || 'Sem atendimentos anteriores'}\n\nResponda apenas a dica, sem introdução.`;
+      const prompt = `Você é um coach de consultores de negócios. Com base nos dados abaixo sobre o cliente "${reminder.workshop_name}", gere UMA dica prática, direta e motivadora (máximo 3 linhas) para o consultor seguir neste atendimento de follow-up #${currentStep} de ${totalSteps}. Foque no que o cliente precisa agora.\n\nÚLTIMAS ATAS:\n${resumoAtas || 'Sem atas registradas'}\n\nÚLTIMOS ATENDIMENTOS:\n${resumoConcluidos || 'Sem atendimentos anteriores'}\n\nResponda apenas a dica, sem introdução.`;
 
       const response = await base44.functions.invoke('invokeLLMUnlimited', { prompt });
       const dica = response?.data?.result || response?.data?.message || response?.data || response?.result || response?.message || 'Não foi possível gerar a dica.';
@@ -284,6 +290,19 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
   const proximoFU = filaReminders.find(f =>
     f.id !== reminder.id && !f.is_completed
   ) || null;
+  // Sequência local calculada a partir de allFollowUps (consistente com useFollowUpSequence)
+  const localSeqMap = useMemo(() => {
+    if (!allFollowUps.length) return {};
+    const sorted = allFollowUps.slice().sort((a, b) => {
+      const da = a.created_date || a.reminder_date || "";
+      const db = b.created_date || b.reminder_date || "";
+      return da.localeCompare(db);
+    });
+    const map = {};
+    sorted.forEach((r, idx) => { map[r.id] = idx + 1; });
+    return map;
+  }, [allFollowUps]);
+
   const fusDaSprint = isSprintFU
     ? allFollowUps
         .filter(f =>
@@ -291,7 +310,7 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
           f.sprint_id === reminder.sprint_id &&
           f.id !== reminder.id
         )
-        .sort((a, b) => (a.sequence_number || 0) - (b.sequence_number || 0))
+        .sort((a, b) => (localSeqMap[a.id] || 0) - (localSeqMap[b.id] || 0))
     : [];
 
   const handleSave = async () => {
@@ -391,9 +410,6 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
   }
 
   // ---- DETAIL VIEW ----
-  // Usa seqNum do hook universal (fonte da verdade); fallback para sequence_number do reminder
-  const totalSteps = stats?.total || 4;
-  const currentStep = seqNum ?? reminder.sequence_number ?? 1;
 
   return (
     <div className="space-y-3">
@@ -785,7 +801,7 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
                           <div className="flex items-center gap-2 bg-orange-100 border border-orange-200 rounded px-2 py-1.5">
                             <div className="w-2.5 h-2.5 rounded-full bg-orange-500 flex-shrink-0 ring-2 ring-orange-300" />
                             <span className="text-[11px] font-bold text-orange-800">
-                              FU {reminder.sequence_number} · Em andamento
+                               FU #{currentStep} · Em andamento
                             </span>
                             <span className="ml-auto text-[10px] text-orange-600 font-medium">
                               {reminder.reminder_date
@@ -804,7 +820,7 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
                               <span className={`text-[11px] font-semibold ${
                                 f.is_completed ? 'text-green-700' : 'text-gray-600'
                               }`}>
-                                FU {f.sequence_number}
+                                FU #{localSeqMap[f.id] ?? f.sequence_number}
                               </span>
                               <span className={`text-[10px] ${
                                 f.is_completed ? 'text-green-500' : 'text-gray-400'
@@ -869,8 +885,8 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
                                       <p className="text-[12px] font-bold text-gray-900 mb-1">{f.workshop_name || 'Cliente'}</p>
                                       <div className="space-y-0.5 mb-2">
                                         <p className="text-[10px] text-gray-600">
-                                          <span className="font-semibold">FU:</span> {f.sequence_number || '—'}/4
-                                        </p>
+                                            <span className="font-semibold">FU:</span> #{localSeqMap[f.id] ?? (f.sequence_number || '—')}
+                                          </p>
                                         <p className="text-[10px] text-gray-600">
                                           <span className="font-semibold">Consultor Resp:</span> {f.consultor_nome || '—'}
                                         </p>
@@ -939,7 +955,7 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
                                     />
                                     <div className="flex-1 min-w-0">
                                       <p className="text-[11px] font-semibold text-gray-800 line-clamp-1">{f.workshop_name}</p>
-                                      <p className="text-[10px] text-gray-500">FUSp {f.sequence_number} · Agendado: {f.reminder_date ? format(new Date(f.reminder_date + 'T00:00:00'), 'dd/MM/yy') : '—'}</p>
+                                      <p className="text-[10px] text-gray-500">FUSp #{localSeqMap[f.id] ?? f.sequence_number} · Agendado: {f.reminder_date ? format(new Date(f.reminder_date + 'T00:00:00'), 'dd/MM/yy') : '—'}</p>
                                     </div>
                                   </div>
                                   <div className="space-y-1 pl-6">
