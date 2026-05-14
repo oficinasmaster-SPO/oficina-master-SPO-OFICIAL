@@ -593,7 +593,15 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
                               )}
                             </div>
                             {ata.proximos_passos && (
-                              <p className="text-[11px] text-gray-500 line-clamp-2 mt-0.5">{ata.proximos_passos}</p>
+                              <p className="text-[11px] text-gray-500 line-clamp-2 mt-0.5">
+                                {Array.isArray(ata.proximos_passos)
+                                  ? ata.proximos_passos.map((p, i) => (
+                                      <span key={i}>{typeof p === 'string' ? p : p.descricao || 'Item'}{i < ata.proximos_passos.length - 1 ? '; ' : ''}</span>
+                                    ))
+                                  : typeof ata.proximos_passos === 'string'
+                                    ? ata.proximos_passos
+                                    : JSON.stringify(ata.proximos_passos)}
+                              </p>
                             )}
                           </div>
                           {dateStr && (
@@ -645,7 +653,15 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
                                 )}
                               </div>
                               {ata.proximos_passos && (
-                                <p className="text-sm text-gray-600 mb-1">{ata.proximos_passos}</p>
+                                <p className="text-sm text-gray-600 mb-1">
+                                  {Array.isArray(ata.proximos_passos)
+                                    ? ata.proximos_passos.map((p, i) => (
+                                        <span key={i}>{typeof p === 'string' ? p : p.descricao || 'Item'}{i < ata.proximos_passos.length - 1 ? '; ' : ''}</span>
+                                      ))
+                                    : typeof ata.proximos_passos === 'string'
+                                      ? ata.proximos_passos
+                                      : JSON.stringify(ata.proximos_passos)}
+                                </p>
                               )}
                             </div>
                             {dateStr && (
