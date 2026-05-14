@@ -77,14 +77,17 @@ function useConcluidosIndex() {
   });
 
   // Ordena cada workshop por completedAt ASC e atribui sequência #1, #2, #3...
+  // Chave: followup_id (= id do FollowUpReminder) OU id do próprio FollowUpConcluido
   Object.entries(byWorkshopRaw).forEach(([wid, list]) => {
     list
       .slice()
       .sort((a, b) => new Date(a.completedAt || a.created_date) - new Date(b.completedAt || b.created_date))
       .forEach((c, idx) => {
-        if (c.followup_id) sequenceByFollowupId[c.followup_id] = idx + 1;
-        // fallback por id do próprio concluido
-        sequenceByFollowupId[`_concluido_${c.id}`] = idx + 1;
+        const seq = idx + 1;
+        // chave primária: followup_id vincula ao FollowUpReminder.id
+        if (c.followup_id) sequenceByFollowupId[c.followup_id] = seq;
+        // chave secundária: id do próprio FollowUpConcluido (sem fallback cruzado)
+        if (c.id) sequenceByFollowupId[c.id] = seq;
       });
   });
 
@@ -251,8 +254,9 @@ export default function FollowUpList({ reminders, today, isLoading, onSelect, fi
             const concluido = concluidosByFuid?.[r.id] || concluidosIndex[r.workshop_id] || null;
             const ata = r.ata_id ? atasIndex[r.ata_id] : null;
             // Número sequencial cronológico deste FU para o cliente (#1, #2, #3...)
+            // r.id = FollowUpReminder.id = followup_id no FollowUpConcluido
             const seqFU = sequenceByFollowupId?.[r.id]
-              || (concluido?.id ? sequenceByFollowupId?.[`_concluido_${concluido.id}`] : null)
+              || (concluido?.id ? sequenceByFollowupId?.[concluido.id] : null)
               || null;
             return (
               <FollowUpConcluidoRow
