@@ -448,7 +448,12 @@ export default function FollowUpList({ reminders, today, isLoading, onSelect, fi
                   <div className="mx-4 mb-2 flex items-center gap-2 bg-blue-50 border border-blue-100 rounded px-3 py-1.5">
                     <CalendarCheck className="w-3 h-3 text-blue-500 flex-shrink-0" />
                     <span className="text-[11px] font-semibold text-blue-700 flex-shrink-0">
-                      {PROXIMO_PASSO_LABELS[ultimoConcluido.proximoPasso] || ultimoConcluido.proximoPasso}
+                      {(() => {
+                        const pp = ultimoConcluido.proximoPasso;
+                        if (typeof pp === 'string') return PROXIMO_PASSO_LABELS[pp] || pp;
+                        if (typeof pp === 'object' && pp !== null) return pp.descricao || JSON.stringify(pp);
+                        return String(pp || '');
+                      })()}
                     </span>
                     {ultimoConcluido.proxData && (
                       <span className="text-[10px] text-blue-500">
