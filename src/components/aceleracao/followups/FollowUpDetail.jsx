@@ -86,6 +86,13 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
     ? differenceInDays(new Date(today), new Date(reminder.reminder_date + "T00:00:00"))
     : 0;
 
+  // ── REGRA DE NEGÓCIO: Follow-ups só podem ser finalizados se estiverem vencidos, atrasados ou forem do dia
+  const canBeFinalized = reminder.is_completed === false && (
+    reminder.reminder_date < today ||  // vencido/atrasado
+    reminder.reminder_date === today    // ou é do dia
+  );
+  const isFuture = reminder.reminder_date > today;  // follow-up futuro (não pode finalizar)
+
   // ── Fonte da verdade: seqNum/stats vindos do hook pai (useFollowUpSequence)
   // Calculados aqui para serem disponíveis em TODOS os usos abaixo (IA, chat, UI)
   const totalSteps = stats?.total || 4;
@@ -333,6 +340,12 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
     : [];
 
   const handleSave = async () => {
+    // REGRA DE NEGÓCIO: Impedir finalização de follow-up futuro
+    if (!canBeFinalized) {
+      toast.error("Este follow-up só pode ser finalizado quando estiver vencido ou na data agendada.");
+      return;
+    }
+    
     if (!canal) { toast.error("Selecione o canal de contato"); return; }
     if (!resultado.trim()) { toast.error("Descreva o resultado da conversa"); return; }
     if (!proximoPasso) { toast.error("Defina o próximo passo"); return; }
@@ -374,6 +387,12 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
   };
 
   const handleLoss = async () => {
+    // REGRA DE NEGÓCIO: Impedir finalização de follow-up futuro
+    if (!canBeFinalized) {
+      toast.error("Este follow-up só pode ser finalizado quando estiver vencido ou na data agendada.");
+      return;
+    }
+    
     setSaving(true);
     try {
       await base44.entities.FollowUpReminder.update(reminder.id, {
@@ -1037,22 +1056,46 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
 
         {/* Footer fixo */}
         <div className="flex-shrink-0 px-6 py-4 border-t border-gray-200 bg-white space-y-2">
+          {/* ALERTA: Follow-up futuro não pode ser finalizado */}
+          {isFuture && (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-amber-800">Follow-up agendado para {format(new Date(reminder.reminder_date + "T00:00:00"), "dd/MM/yyyy")}</p>
+                <p className="text-xs text-amber-700 mt-1">
+                  Este follow-up ainda não está na data de realização. Você pode visualizar os detalhes, mas só poderá finalizar ou dar baixa a partir da data agendada.
+                </p>
+              </div>
+            </div>
+          )}
+          
           {(() => {
             const temRascunho = verificarRascunho();
             return (
               <Button
                 onClick={() => {
+                  if (!canBeFinalized) {
+                    toast.error("Este follow-up só pode ser finalizado quando estiver vencido ou na data agendada.");
+                    return;
+                  }
                   setView("register");
                   setRegisterStep("history");
                 }}
+                disabled={!canBeFinalized}
                 className={`w-full rounded-lg font-semibold flex items-center justify-center gap-2 transition-all ${
-                  temRascunho
+                  !canBeFinalized
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : temRascunho
                     ? "bg-cyan-600 hover:bg-cyan-700 text-white"
                     : "bg-green-600 hover:bg-green-700 text-white"
                 }`}
               >
                 <PlayCircle className="w-4 h-4" />
-                {temRascunho ? "Retomar Atendimento" : "Iniciar Atendimento"}
+                {!canBeFinalized 
+                  ? "Aguardando data para finalizar" 
+                  : temRascunho 
+                    ? "Retomar Atendimento" 
+                    : "Iniciar Atendimento"}
               </Button>
             );
           })()}
