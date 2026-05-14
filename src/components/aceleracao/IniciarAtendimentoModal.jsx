@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 
 
@@ -508,7 +508,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
     setCarregandoDica(true);
     try {
       const resumoAtas = atas.slice(0, 3).map(a =>
-        `Ata (${a.tipo_aceleracao || a.tipo_atendimento || 'reunião'} - ${a.meeting_date || ''}): próximos passos: ${a.proximos_passos || 'não registrado'}`
+        `Ata (${a.tipo_aceleracao || a.tipo_atendimento || 'reunião'} - ${a.meeting_date || ''}): próximos passos: ${typeof a.proximos_passos === 'string' ? a.proximos_passos : Array.isArray(a.proximos_passos) && a.proximos_passos.length ? (typeof a.proximos_passos[0] === 'string' ? a.proximos_passos[0] : a.proximos_passos[0]?.descricao||'') : 'não registrado'}`
       ).join('\n');
       const resumoHistoricoContatos = buildHistoricoResumoIA(concluidosModal);
 
@@ -578,7 +578,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
 
   const buildSystemPrompt = () => {
     const resumoAtas = atas.slice(0, 5).map(a =>
-      `- ${a.tipo_aceleracao || a.tipo_atendimento || 'Reunião'} (${a.meeting_date || ''}): próximos passos: ${a.proximos_passos || 'não registrado'}`
+      `- ${a.tipo_aceleracao || a.tipo_atendimento || 'Reunião'} (${a.meeting_date || ''}): próximos passos: ${typeof a.proximos_passos === 'string' ? a.proximos_passos : Array.isArray(a.proximos_passos) && a.proximos_passos.length ? (typeof a.proximos_passos[0] === 'string' ? a.proximos_passos[0] : a.proximos_passos[0]?.descricao||'') : 'não registrado'}`
     ).join('\n');
     const resumoHistorico = buildHistoricoResumoIA(concluidosModal);
     return `Você é um assistente especializado em consultoria empresarial para oficinas mecânicas e negócios em aceleração. Seu papel é ajudar o consultor durante o atendimento de follow-up.\n\nCONTEXTO DO ATENDIMENTO\nCliente: ${followUp?.workshop_name}\nFollow-up: ${followUp?.sequence_number}/4\nConsultor: ${followUp?.consultor_nome || 'não informado'}\nData: ${followUp?.reminder_date || 'não informada'}\n\nÚLTIMAS ATAS:\n${resumoAtas || 'Nenhuma ata registrada'}\n\nHISTÓRICO DE CONTATOS (follow-ups anteriores):\n${resumoHistorico}\n\nRegras:\n- Responda sempre em português brasileiro\n- Seja direto, prático e objetivo\n- Foque exclusivamente no cliente e contexto fornecido\n- Use o histórico de contatos para identificar padrões de humor, engajamento e comprometimentos não cumpridos\n- Sugira abordagens baseadas no histórico real do cliente\n- Seu escopo é: estratégia de atendimento, relacionamento com cliente, próximos passos, abordagem de follow-up, análise de humor e engajamento`;
@@ -926,7 +926,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
     const { clienteNome, sequenceNumber, canais: cs, resultado: r, novoFollowUp, proxData: pd, proxHora: ph, consultor_nome } = saveSuccess;
     return (
       <Dialog open onOpenChange={() => {}}>
-        <DialogContent className="max-w-lg p-0 overflow-hidden">
+        <DialogContent className="max-w-lg p-0 overflow-hidden" aria-label="Atendimento salvo">
           <div className="bg-gradient-to-b from-green-50 to-white p-8 flex flex-col items-center text-center">
             <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-4">
               <CheckCircle2 className="w-9 h-9 text-green-600" />
@@ -1467,7 +1467,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
                                     <p className={`text-xs font-semibold ${isOrigin ? "text-green-800" : "text-gray-800"}`}>{ata.tipo_aceleracao || ata.tipo_atendimento || "ATA"}</p>
                                     {isOrigin && <Badge className="bg-green-600 text-white text-[10px] flex items-center gap-1"><Check className="w-3 h-3" /> Origem</Badge>}
                                   </div>
-                                  {ata.proximos_passos && <p className="text-[11px] text-gray-500 line-clamp-1 mt-1">{ata.proximos_passos}</p>}
+                                  {ata.proximos_passos && <p className="text-[11px] text-gray-500 line-clamp-1 mt-1">{typeof ata.proximos_passos === 'string' ? ata.proximos_passos : Array.isArray(ata.proximos_passos) ? (typeof ata.proximos_passos[0] === 'string' ? ata.proximos_passos[0] : ata.proximos_passos[0]?.descricao || '') : ''}</p>}
                                   {ata.meeting_date && <p className="text-[10px] text-gray-400 mt-1">{format(new Date(ata.meeting_date), "dd/MM/yyyy")}</p>}
                                 </div>
                                 <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0 mt-1" />
