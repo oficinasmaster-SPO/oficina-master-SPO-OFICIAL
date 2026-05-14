@@ -56,14 +56,21 @@ function useConcluidosIndex() {
     staleTime: 3 * 60 * 1000,
   });
   const byWorkshop = {};
+  const byFollowupId = {};
+  const totalByWorkshop = {};
   data.forEach(c => {
     const wid = c.workshop_id;
     if (!wid) return;
+    // índice por followup_id
+    if (c.followup_id) byFollowupId[c.followup_id] = c;
+    // conta total por workshop
+    totalByWorkshop[wid] = (totalByWorkshop[wid] || 0) + 1;
+    // último concluído por workshop
     if (!byWorkshop[wid] || new Date(c.completedAt) > new Date(byWorkshop[wid].completedAt)) {
       byWorkshop[wid] = c;
     }
   });
-  return byWorkshop;
+  return { byWorkshop, byFollowupId, totalByWorkshop };
 }
 
 // Busca ATAs pelo conjunto de ata_ids dos reminders ativos — sem limite de data
@@ -106,10 +113,10 @@ const CANAL_ICON_MAP = {
 export default function FollowUpList({ reminders, today, isLoading, onSelect, filterPill, onFilterPill }) {
   const [selectedCompleted, setSelectedCompleted] = useState(null);
   const [search, setSearch] = useState("");
-  const { byWorkshop: concluidosIndex = {}, byFollowupId: concluidosByFuid = {}, totalByWorkshop = {} } = useConcluidosIndex() || {};
+  const { byWorkshop: concluidosIndex, byFollowupId: concluidosByFuid, totalByWorkshop } = useConcluidosIndex();
   // Extrai todos os ata_ids dos reminders para buscar apenas as ATAs necessárias
   const ataIds = reminders.map(r => r.ata_id).filter(Boolean);
-  const atasIndex = useAtasIndex(ataIds) || {};
+  const atasIndex = useAtasIndex(ataIds);
 
   const PILLS = [
     { id: "todos",     label: "Todos" },
@@ -209,14 +216,16 @@ export default function FollowUpList({ reminders, today, isLoading, onSelect, fi
         /* Layout horizontal tipo planilha para concluídos */
         <div className="rounded-lg border border-gray-200 overflow-x-auto bg-white">
           {/* Cabeçalho */}
-          <div className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 border-b border-gray-200 text-[11px] font-semibold text-gray-500 uppercase tracking-wide min-w-[900px]">
+          <div className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 border-b border-gray-200 text-[11px] font-semibold text-gray-500 uppercase tracking-wide min-w-[1100px]">
             <div className="w-10 flex-shrink-0 text-center">#FU</div>
             <div className="w-36 flex-shrink-0">Cliente</div>
             <div className="w-20 flex-shrink-0">Data</div>
-            <div className="w-32 flex-shrink-0">Consultor Resp.</div>
-            <div className="w-24 flex-shrink-0">Canal</div>
+            <div className="w-28 flex-shrink-0">Consultor Resp.</div>
+            <div className="w-28 flex-shrink-0">Quem Realizou</div>
+            <div className="w-20 flex-shrink-0">Humor</div>
+            <div className="w-20 flex-shrink-0">Canal</div>
             <div className="w-20 flex-shrink-0">ATA</div>
-            <div className="w-28 flex-shrink-0">Tipo</div>
+            <div className="w-24 flex-shrink-0">Tipo</div>
             <div className="w-24 flex-shrink-0">Próx. Contato</div>
             <div className="flex-shrink-0 ml-auto">Status</div>
           </div>

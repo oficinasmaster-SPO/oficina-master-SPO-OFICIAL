@@ -37,6 +37,29 @@ function safeDateFormat(dateStr, fmt) {
   }
 }
 
+const HUMOR_MAP = {
+  "😊": { emoji: "😊", label: "Feliz",        color: "text-green-600 bg-green-50 border-green-200" },
+  "😐": { emoji: "😐", label: "Neutro",       color: "text-gray-600 bg-gray-50 border-gray-200" },
+  "😞": { emoji: "😞", label: "Triste",       color: "text-red-600 bg-red-50 border-red-200" },
+  "😠": { emoji: "😠", label: "Irritado",     color: "text-red-700 bg-red-50 border-red-200" },
+  "😄": { emoji: "😄", label: "Animado",      color: "text-emerald-600 bg-emerald-50 border-emerald-200" },
+  "😓": { emoji: "😓", label: "Preocupado",   color: "text-amber-600 bg-amber-50 border-amber-200" },
+};
+
+function renderHumor(humor) {
+  if (!humor) return <span className="text-gray-300">—</span>;
+  const cfg = HUMOR_MAP[humor];
+  if (cfg) {
+    return (
+      <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full border text-[11px] font-medium ${cfg.color}`}>
+        {cfg.emoji} {cfg.label}
+      </span>
+    );
+  }
+  // texto livre
+  return <span className="text-gray-600 text-[11px] truncate">{humor}</span>;
+}
+
 export default function FollowUpConcluidoRow({ completed, reminder, ata, totalFollowUps, onSelect }) {
   const canal = completed?.canal?.toLowerCase();
   const canalCfg = CANAL_MAP[canal] || null;
@@ -46,6 +69,8 @@ export default function FollowUpConcluidoRow({ completed, reminder, ata, totalFo
   const dataContato = completed?.dataContato || reminder?.reminder_date;
   const dataConc = completed?.completedAt || reminder?.completed_at;
   const consultorResponsavel = reminder?.consultor_nome || completed?.consultor_nome || "—";
+  const quemRealizou = completed?.consultor_nome || completed?.created_by || "—";
+  const humor = completed?.humor || null;
 
   const ataCode = ata?.code || null;
   const tipoReuniao = ata?.tipo_aceleracao || ata?.tipo_atendimento || null;
@@ -58,7 +83,7 @@ export default function FollowUpConcluidoRow({ completed, reminder, ata, totalFo
   return (
     <button
       onClick={() => onSelect && onSelect()}
-      className="w-full text-left hover:bg-green-50/40 transition-colors px-4 py-2.5 border-b border-gray-100 last:border-b-0 min-w-[900px]"
+      className="w-full text-left hover:bg-green-50/40 transition-colors px-4 py-2.5 border-b border-gray-100 last:border-b-0 min-w-[1100px]"
     >
       <div className="flex items-center gap-2 text-xs min-w-0">
 
@@ -89,12 +114,26 @@ export default function FollowUpConcluidoRow({ completed, reminder, ata, totalFo
         </div>
 
         {/* Consultor Responsável */}
-        <div className="w-32 flex-shrink-0 text-gray-600 truncate">
+        <div className="w-28 flex-shrink-0 text-gray-600 truncate">
           {consultorResponsavel}
         </div>
 
+        {/* Quem Realizou */}
+        <div className="w-28 flex-shrink-0 text-gray-600 truncate">
+          {quemRealizou !== consultorResponsavel ? (
+            <span className="text-indigo-700 font-medium truncate">{quemRealizou}</span>
+          ) : (
+            <span className="text-gray-400 text-[11px]">— mesmo</span>
+          )}
+        </div>
+
+        {/* Humor */}
+        <div className="w-20 flex-shrink-0">
+          {renderHumor(humor)}
+        </div>
+
         {/* Canal */}
-        <div className="w-24 flex-shrink-0">
+        <div className="w-20 flex-shrink-0">
           {canalCfg ? (
             <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full border text-xs ${canalCfg.color} ${canalCfg.bg}`}>
               {CanalIcon && <CanalIcon className="w-3 h-3" />}
@@ -115,7 +154,7 @@ export default function FollowUpConcluidoRow({ completed, reminder, ata, totalFo
         </div>
 
         {/* Tipo Atendimento */}
-        <div className="w-28 flex-shrink-0">
+        <div className="w-24 flex-shrink-0">
           {tipoReuniao ? (
             <span className="inline-flex items-center gap-0.5 text-[10px] text-purple-700 bg-purple-50 border border-purple-100 px-1.5 py-0.5 rounded-full font-medium truncate max-w-full">
               <FileText className="w-2.5 h-2.5 flex-shrink-0" />
