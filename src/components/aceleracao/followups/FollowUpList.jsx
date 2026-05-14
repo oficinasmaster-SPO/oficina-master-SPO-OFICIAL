@@ -106,7 +106,7 @@ const CANAL_ICON_MAP = {
 export default function FollowUpList({ reminders, today, isLoading, onSelect, filterPill, onFilterPill }) {
   const [selectedCompleted, setSelectedCompleted] = useState(null);
   const [search, setSearch] = useState("");
-  const concluidosIndex = useConcluidosIndex();
+  const { byWorkshop: concluidosIndex, byFollowupId: concluidosByFuid, totalByWorkshop } = useConcluidosIndex();
   // Extrai todos os ata_ids dos reminders para buscar apenas as ATAs necessárias
   const ataIds = reminders.map(r => r.ata_id).filter(Boolean);
   const atasIndex = useAtasIndex(ataIds);
@@ -207,25 +207,30 @@ export default function FollowUpList({ reminders, today, isLoading, onSelect, fi
         </div>
       ) : filterPill === "concluidos" ? (
         /* Layout horizontal tipo planilha para concluídos */
-        <div className="rounded-lg border border-gray-200 overflow-hidden bg-white">
-          <div className="flex items-center gap-4 px-4 py-2.5 bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-600">
-            <div className="w-24 flex-shrink-0">Data</div>
-            <div className="w-28 flex-shrink-0">Consultor</div>
-            <div className="w-20 flex-shrink-0">Canal</div>
+        <div className="rounded-lg border border-gray-200 overflow-x-auto bg-white">
+          {/* Cabeçalho */}
+          <div className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 border-b border-gray-200 text-[11px] font-semibold text-gray-500 uppercase tracking-wide min-w-[900px]">
+            <div className="w-10 flex-shrink-0 text-center">#FU</div>
+            <div className="w-36 flex-shrink-0">Cliente</div>
+            <div className="w-20 flex-shrink-0">Data</div>
+            <div className="w-32 flex-shrink-0">Consultor Resp.</div>
+            <div className="w-24 flex-shrink-0">Canal</div>
+            <div className="w-20 flex-shrink-0">ATA</div>
+            <div className="w-28 flex-shrink-0">Tipo</div>
+            <div className="w-24 flex-shrink-0">Próx. Contato</div>
             <div className="flex-shrink-0 ml-auto">Status</div>
           </div>
           {filtered.map(r => {
-            const concluido = concluidosIndex[r.workshop_id];
-            const rowData = concluido ? { ...concluido, workshop_name: r.workshop_name } : {
-              canal: null,
-              consultor_nome: r.consultor_nome,
-              completedAt: r.completed_at,
-              dataContato: r.reminder_date,
-            };
+            const concluido = concluidosByFuid?.[r.id] || concluidosIndex[r.workshop_id] || null;
+            const ata = r.ata_id ? atasIndex[r.ata_id] : null;
+            const totalFUs = totalByWorkshop?.[r.workshop_id] ?? null;
             return (
               <FollowUpConcluidoRow
                 key={r.id}
-                completed={rowData}
+                completed={concluido}
+                reminder={r}
+                ata={ata}
+                totalFollowUps={totalFUs}
                 onSelect={() => setSelectedCompleted(r)}
               />
             );
