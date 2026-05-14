@@ -179,7 +179,12 @@ function ContatoCard({ contato, isFirst, workshopName }) {
               <div className="flex items-center gap-2">
                 <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wide">Próximo passo:</p>
                 <span className="text-[10px] bg-gray-900 text-white rounded px-2 py-0.5 font-medium">
-                  {PROXIMO_PASSO_LABELS[contato.proximoPasso] || contato.proximoPasso}
+                  {(() => {
+                    const pp = contato.proximoPasso;
+                    if (typeof pp === 'string') return PROXIMO_PASSO_LABELS[pp] || pp;
+                    if (typeof pp === 'object' && pp !== null) return pp.descricao || JSON.stringify(pp);
+                    return String(pp || '');
+                  })()}
                 </span>
                 {contato.proxData && (
                   <span className="text-[10px] text-blue-600 font-medium">
@@ -254,9 +259,11 @@ export default function HistoricoContatosPanel({ workshopId, workshopName }) {
   const contatosIndividuais = historico.filter(c => !c.is_batch_close || !c.batch_group_id);
 
   // Resumo para IA (texto simplificado dos últimos 5 contatos)
-  const resumoIA = historico.slice(0, 5).map((c, i) =>
-    `Contato ${i + 1} (${c.completedAt ? format(new Date(c.completedAt), "dd/MM/yy") : "—"}): canal=${c.canal || "?"}, resultado=${RESULTADO_LABELS[c.resultado] || c.resultado || "?"}, humor=${c.humor || "não informado"}, engajamento=${c.engajamento || "não informado"}, próximo passo=${PROXIMO_PASSO_LABELS[c.proximoPasso] || c.proximoPasso || "?"}, obs="${c.observacoes?.slice(0, 100) || "—"}"`
-  ).join(" | ");
+  const resumoIA = historico.slice(0, 5).map((c, i) => {
+    const pp = c.proximoPasso;
+    const ppStr = typeof pp === 'string' ? (PROXIMO_PASSO_LABELS[pp] || pp) : (pp?.descricao || String(pp || '?'));
+    return `Contato ${i + 1} (${c.completedAt ? format(new Date(c.completedAt), "dd/MM/yy") : "—"}): canal=${c.canal || "?"}, resultado=${RESULTADO_LABELS[c.resultado] || c.resultado || "?"}, humor=${c.humor || "não informado"}, engajamento=${c.engajamento || "não informado"}, próximo passo=${ppStr || "?"}, obs="${c.observacoes?.slice(0, 100) || "—"}"`;
+  }).join(" | ");
 
   return (
     <div className="px-3 py-3 space-y-2">
@@ -298,7 +305,9 @@ export default function HistoricoContatosPanel({ workshopId, workshopName }) {
 // Exporta o resumoIA como utilitário para a IA usar no buildSystemPrompt
 export function buildHistoricoResumoIA(historico = []) {
   if (!historico.length) return "Nenhum contato registrado.";
-  return historico.slice(0, 5).map((c, i) =>
-    `Contato ${i + 1} (${c.completedAt ? format(new Date(c.completedAt), "dd/MM/yy") : "—"}): canal=${c.canal || "?"}, resultado=${RESULTADO_LABELS[c.resultado] || c.resultado || "?"}, humor=${c.humor || "não informado"}, engajamento=${c.engajamento || "não informado"}, próximo passo=${PROXIMO_PASSO_LABELS[c.proximoPasso] || c.proximoPasso || "?"}, obs="${c.observacoes?.slice(0, 120) || "—"}"`
-  ).join("\n");
+  return historico.slice(0, 5).map((c, i) => {
+    const pp = c.proximoPasso;
+    const ppStr = typeof pp === 'string' ? (PROXIMO_PASSO_LABELS[pp] || pp) : (pp?.descricao || String(pp || '?'));
+    return `Contato ${i + 1} (${c.completedAt ? format(new Date(c.completedAt), "dd/MM/yy") : "—"}): canal=${c.canal || "?"}, resultado=${RESULTADO_LABELS[c.resultado] || c.resultado || "?"}, humor=${c.humor || "não informado"}, engajamento=${c.engajamento || "não informado"}, próximo passo=${ppStr || "?"}, obs="${c.observacoes?.slice(0, 120) || "—"}"`;
+  }).join("\n");
 }
