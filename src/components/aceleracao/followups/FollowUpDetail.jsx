@@ -640,7 +640,7 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
                 <Dialog open={showAllAtas} onOpenChange={setShowAllAtas}>
                   <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                     <DialogHeader>
-                      <DialogTitle>Todas as ATAs - {reminder.workshop_name}</DialogTitle>
+                      <DialogTitle className="text-lg font-bold text-gray-900">Todas as ATAs - {reminder.workshop_name}</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-2">
                       {atas.map(ata => {

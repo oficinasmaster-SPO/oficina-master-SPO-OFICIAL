@@ -75,7 +75,7 @@ export function useWorkshopContext() {
   }
 
   // 3. Caso o workshop selecionado não esteja na lista de disponíveis, busca individualmente (Fallback)
-  const { data: fetchedWorkshop, isLoading: isFetchedLoading } = useQuery({
+  const { data: fetchedWorkshop, isLoading: isFetchedLoading, error: fetchError } = useQuery({
     queryKey: ['workshop-single', missingWorkshopIdToFetch],
     queryFn: async () => {
       if (!missingWorkshopIdToFetch) return null;
@@ -93,6 +93,8 @@ export function useWorkshopContext() {
         const wsList = await base44.entities.Workshop.filter({ id: missingWorkshopIdToFetch });
         return wsList?.[0] || null;
       } catch (e) {
+        // QA-FIX-01: Log detalhado do erro para diagnóstico
+        console.error(`[useWorkshopContext] Falha ao buscar workshop ${missingWorkshopIdToFetch}:`, e?.message || e);
         return null;
       }
     },
@@ -112,6 +114,7 @@ export function useWorkshopContext() {
   const isLoading = isTenantLoading || isAvailableLoading || isFetchingMissing;
 
   // FIX-05: Debug logging para auxiliar diagnóstico
+  // QA-FIX-01: Adicionado log de erro quando workshop não existe
   useEffect(() => {
     if (!workshop && !isLoading) {
       console.warn('DEBUG [useWorkshopContext]:', {
@@ -122,9 +125,15 @@ export function useWorkshopContext() {
         userProfileWorkshopId: tenantUser?.data?.workshop_id || tenantUser?.workshop_id || null,
         isLoadingBFF: isAvailableLoading,
         isLoadingFallback: isFetchedLoading,
+        fetchError: fetchError?.message || null,
       });
     }
-  }, [workshop, isLoading, available, selectedCompanyId, missingWorkshopIdToFetch, fetchedWorkshop, tenantUser, isAvailableLoading, isFetchedLoading]);
+    
+    // QA-FIX-02: Alertar quando workshop referenciado não existe
+    if (fetchError && missingWorkshopIdToFetch) {
+      console.error(`[QA-FIX-02] Workshop ${missingWorkshopIdToFetch} não existe mais. Usuário ${tenantUser?.email} pode precisar atualizar perfil.`);
+    }
+  }, [workshop, isLoading, available, selectedCompanyId, missingWorkshopIdToFetch, fetchedWorkshop, tenantUser, isAvailableLoading, isFetchedLoading, fetchError]);
 
   const setCurrentWorkshop = (id) => {
     if (changeCompany) {

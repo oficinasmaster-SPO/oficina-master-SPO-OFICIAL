@@ -62,7 +62,16 @@ Deno.serve(withAuth(async (req, { base44, user }) => {
 
         // Singular: retrocompatibilidade
         if (body?.workshopId) {
-            const ws = await base44.asServiceRole.entities.Workshop.get(body.workshopId).catch(() => null);
+            const ws = await base44.asServiceRole.entities.Workshop.get(body.workshopId).catch((err) => {
+                console.error(`[getUserWorkshops] Erro ao buscar workshop ${body.workshopId}:`, err?.message);
+                return null;
+            });
+            
+            // QA-FIX-03: Log quando workshop não existe
+            if (!ws) {
+                console.warn(`[getUserWorkshops] Workshop ${body.workshopId} não encontrado para usuário ${user.email}`);
+            }
+            
             return new Response(JSON.stringify({ 
                 workshops: ws ? [ws] : [],
                 user: user 
