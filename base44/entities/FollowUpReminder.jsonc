@@ -48,7 +48,8 @@
       "enum": [
         "whatsapp",
         "ligacao",
-        "email"
+        "email",
+        "preventivo"
       ],
       "description": "Canal que originou este follow-up (ex: whatsapp = Aguardando resposta)"
     },
@@ -77,9 +78,10 @@
         "sprint",
         "manual",
         "suporte",
-        "suporte_checkin"
+        "suporte_checkin",
+        "guarda_chuva"
       ],
-      "description": "Origem do follow-up. 'suporte' = suporte inicial criado, 'suporte_checkin' = check-in p\u00f3s-resolu\u00e7\u00e3o ap\u00f3s 7 dias"
+      "description": "Origem do follow-up. 'suporte' = suporte inicial criado, 'suporte_checkin' = check-in p\u00f3s-resolu\u00e7\u00e3o ap\u00f3s 7 dias, 'guarda_chuva' = follow-up preventivo para clientes sem contato recente"
     },
     "suporte_id": {
       "type": "string",
