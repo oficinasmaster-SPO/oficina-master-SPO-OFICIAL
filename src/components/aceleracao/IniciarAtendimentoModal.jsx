@@ -1950,7 +1950,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
           sprintId={followUp?.sprint_id}
          bucketId={followUp?.id}
          ataId={followUp?.ata_id}
-         fusPendentes={allFollowUpsModal.filter(f => !f.is_completed && f.id !== followUp?.id && f.reminder_date <= fimSemana).sort((a, b) => new Date(b.reminder_date) - new Date(a.reminder_date))}
+         fusPendentes={allFollowUpsModal.filter(f => !f.is_completed && f.id !== followUp?.id && f.workshop_id === followUp?.workshop_id).sort((a, b) => new Date(b.reminder_date) - new Date(a.reminder_date))}
          onSubmit={handleCheckpointDecision}
          onCancel={() => setShowCheckpointModal(false)}
        />
