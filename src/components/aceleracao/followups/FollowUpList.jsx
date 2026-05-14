@@ -55,22 +55,40 @@ function useConcluidosIndex() {
     queryFn: () => base44.entities.FollowUpConcluido.list("-completedAt", 500),
     staleTime: 3 * 60 * 1000,
   });
+
   const byWorkshop = {};
   const byFollowupId = {};
-  const totalByWorkshop = {};
+  // sequenceByFollowupId: followup_id → número sequencial cronológico (#1, #2, #3...)
+  const sequenceByFollowupId = {};
+
+  // Agrupa por workshop e ordena cronologicamente (ASC) para atribuir sequência
+  const byWorkshopRaw = {};
   data.forEach(c => {
     const wid = c.workshop_id;
     if (!wid) return;
-    // índice por followup_id
+    if (!byWorkshopRaw[wid]) byWorkshopRaw[wid] = [];
+    byWorkshopRaw[wid].push(c);
+    // índice por followup_id (último encontrado — há no máximo 1 por FU)
     if (c.followup_id) byFollowupId[c.followup_id] = c;
-    // conta total por workshop
-    totalByWorkshop[wid] = (totalByWorkshop[wid] || 0) + 1;
     // último concluído por workshop
     if (!byWorkshop[wid] || new Date(c.completedAt) > new Date(byWorkshop[wid].completedAt)) {
       byWorkshop[wid] = c;
     }
   });
-  return { byWorkshop, byFollowupId, totalByWorkshop };
+
+  // Ordena cada workshop por completedAt ASC e atribui sequência #1, #2, #3...
+  Object.entries(byWorkshopRaw).forEach(([wid, list]) => {
+    list
+      .slice()
+      .sort((a, b) => new Date(a.completedAt || a.created_date) - new Date(b.completedAt || b.created_date))
+      .forEach((c, idx) => {
+        if (c.followup_id) sequenceByFollowupId[c.followup_id] = idx + 1;
+        // fallback por id do próprio concluido
+        sequenceByFollowupId[`_concluido_${c.id}`] = idx + 1;
+      });
+  });
+
+  return { byWorkshop, byFollowupId, sequenceByFollowupId };
 }
 
 // Busca ATAs pelo conjunto de ata_ids dos reminders ativos — sem limite de data
@@ -113,7 +131,7 @@ const CANAL_ICON_MAP = {
 export default function FollowUpList({ reminders, today, isLoading, onSelect, filterPill, onFilterPill }) {
   const [selectedCompleted, setSelectedCompleted] = useState(null);
   const [search, setSearch] = useState("");
-  const { byWorkshop: concluidosIndex, byFollowupId: concluidosByFuid, totalByWorkshop } = useConcluidosIndex();
+  const { byWorkshop: concluidosIndex, byFollowupId: concluidosByFuid, sequenceByFollowupId } = useConcluidosIndex();
   // Extrai todos os ata_ids dos reminders para buscar apenas as ATAs necessárias
   const ataIds = reminders.map(r => r.ata_id).filter(Boolean);
   const atasIndex = useAtasIndex(ataIds);
@@ -232,14 +250,17 @@ export default function FollowUpList({ reminders, today, isLoading, onSelect, fi
           {filtered.map(r => {
             const concluido = concluidosByFuid?.[r.id] || concluidosIndex[r.workshop_id] || null;
             const ata = r.ata_id ? atasIndex[r.ata_id] : null;
-            const totalFUs = totalByWorkshop?.[r.workshop_id] ?? null;
+            // Número sequencial cronológico deste FU para o cliente (#1, #2, #3...)
+            const seqFU = sequenceByFollowupId?.[r.id]
+              || (concluido?.id ? sequenceByFollowupId?.[`_concluido_${concluido.id}`] : null)
+              || null;
             return (
               <FollowUpConcluidoRow
                 key={r.id}
                 completed={concluido}
                 reminder={r}
                 ata={ata}
-                totalFollowUps={totalFUs}
+                totalFollowUps={seqFU}
                 onSelect={() => setSelectedCompleted(r)}
               />
             );
