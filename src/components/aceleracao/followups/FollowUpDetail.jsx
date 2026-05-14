@@ -190,18 +190,35 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
   });
 
   const originAta = atas.find(a => a.id === reminder.ata_id);
-  const suggestedAction = originAta?.proximos_passos?.trim()
-    || atas.find(a => a.proximos_passos?.trim())?.proximos_passos
-    || null;
+  const suggestedAction = (() => {
+    const pp = originAta?.proximos_passos;
+    if (typeof pp === 'string') return pp.trim();
+    if (Array.isArray(pp) && pp.length > 0) {
+      const first = pp[0];
+      return typeof first === 'string' ? first : first.descricao || '';
+    }
+    const fallback = atas.find(a => a.proximos_passos);
+    if (fallback) {
+      const pp2 = fallback.proximos_passos;
+      if (typeof pp2 === 'string') return pp2.trim();
+      if (Array.isArray(pp2) && pp2.length > 0) {
+        const first = pp2[0];
+        return typeof first === 'string' ? first : first.descricao || '';
+      }
+    }
+    return null;
+  })();
 
   const iniciarChat = async () => {
     setChatAberto(true);
     if (chatConversa) return;
     setChatEnviando(true);
     try {
-      const resumoAtas = atas.slice(0, 5).map(a =>
-        `- ${a.tipo_aceleracao || a.tipo_atendimento || 'Reunião'} (${a.meeting_date || 'sem data'}): ${a.proximos_passos || 'sem próximos passos'}`
-      ).join('\n');
+      const resumoAtas = atas.slice(0, 5).map(a => {
+        const pp = a.proximos_passos;
+        const ppStr = typeof pp === 'string' ? pp : (Array.isArray(pp) && pp.length > 0 ? (typeof pp[0] === 'string' ? pp[0] : pp[0].descricao || '') : '');
+        return `- ${a.tipo_aceleracao || a.tipo_atendimento || 'Reunião'} (${a.meeting_date || 'sem data'}): ${ppStr || 'sem próximos passos'}`;
+      }).join('\n');
       const resumoConcluidos = concluidos.slice(0, 3).map(c =>
         `- Canal: ${c.canal || '?'} | Resultado: ${c.resultado || '?'} | Humor: ${c.humor || '?'} | Comprometimentos: ${c.compromissos || 'nenhum'}`
       ).join('\n');
@@ -241,9 +258,11 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
   const gerarDicaIA = async () => {
     setCarregandoDica(true);
     try {
-      const resumoAtas = atas.slice(0, 3).map(a =>
-        `Ata (${a.tipo_aceleracao || a.tipo_atendimento || 'reunião'} - ${a.meeting_date || ''}): próximos passos: ${a.proximos_passos || 'não registrado'}`
-      ).join('\n');
+      const resumoAtas = atas.slice(0, 3).map(a => {
+        const pp = a.proximos_passos;
+        const ppStr = typeof pp === 'string' ? pp : (Array.isArray(pp) && pp.length > 0 ? (typeof pp[0] === 'string' ? pp[0] : pp[0].descricao || '') : '');
+        return `Ata (${a.tipo_aceleracao || a.tipo_atendimento || 'reunião'} - ${a.meeting_date || ''}): próximos passos: ${ppStr || 'não registrado'}`;
+      }).join('\n');
 
       const resumoConcluidos = concluidos.slice(0, 3).map(c =>
         `Atendimento via ${c.canal || '?'}: resultado=${c.resultado || '?'}, humor=${c.humor || '?'}, comprometimentos=${c.compromissos || 'nenhum'}`
