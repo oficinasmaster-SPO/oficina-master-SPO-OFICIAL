@@ -149,6 +149,28 @@
         4
       ],
       "description": "Número sequencial do follow-up (1º, 2º, 3º ou 4º da série)"
+    },
+    "concluded_by_id": {
+      "type": "string",
+      "description": "ID do usuário que concluiu este FU (automático via backend)"
+    },
+    "concluded_by_name": {
+      "type": "string",
+      "description": "Nome do usuário que concluiu (cache)"
+    },
+    "concluded_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora exata de conclusão (automático)"
+    },
+    "batch_group_id": {
+      "type": "string",
+      "description": "ID para agrupar múltiplos FUs concluídos em uma mesma ação (para visualizar histórico consolidado)"
+    },
+    "is_batch_close": {
+      "type": "boolean",
+      "default": false,
+      "description": "Marca se foi conclusão em massa (checkbox no modal)"
     }
   },
   "required": [

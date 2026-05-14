@@ -4,6 +4,8 @@ import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
 import { Phone, MessageCircle, Mail, Video, MapPin, ChevronDown, ChevronUp, X, Clock, User, MessageSquare } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import FollowUpConcluidoCard from "./FollowUpConcluidoCard";
+import { agruparFUsPorBatch } from "./FollowUpBatchClosureHelper";
 
 const CANAL_ICONS = {
   ligacao: Phone,
@@ -247,6 +249,10 @@ export default function HistoricoContatosPanel({ workshopId, workshopName }) {
     );
   }
 
+  // Agrupar conclusões em massa
+  const batchesAgrupadas = agruparFUsPorBatch(historico);
+  const contatosIndividuais = historico.filter(c => !c.is_batch_close || !c.batch_group_id);
+
   // Resumo para IA (texto simplificado dos últimos 5 contatos)
   const resumoIA = historico.slice(0, 5).map((c, i) =>
     `Contato ${i + 1} (${c.completedAt ? format(new Date(c.completedAt), "dd/MM/yy") : "—"}): canal=${c.canal || "?"}, resultado=${RESULTADO_LABELS[c.resultado] || c.resultado || "?"}, humor=${c.humor || "não informado"}, engajamento=${c.engajamento || "não informado"}, próximo passo=${PROXIMO_PASSO_LABELS[c.proximoPasso] || c.proximoPasso || "?"}, obs="${c.observacoes?.slice(0, 100) || "—"}"`
@@ -267,12 +273,21 @@ export default function HistoricoContatosPanel({ workshopId, workshopName }) {
       {/* Resumo para IA — oculto visualmente, mas disponível como data-attr para referência */}
       <div data-ia-context={resumoIA} className="hidden" aria-hidden="true" />
 
-      {/* Cards de contato */}
-      {historico.map((contato, idx) => (
+      {/* Conclusões em Massa (Batches) */}
+      {batchesAgrupadas.map(batch => (
+        <FollowUpConcluidoCard
+          key={batch.batch_group_id}
+          registro={batch}
+          isBatch={true}
+        />
+      ))}
+
+      {/* Cards de contato individual */}
+      {contatosIndividuais.map((contato, idx) => (
         <ContatoCard
           key={contato.id}
           contato={contato}
-          isFirst={idx === 0}
+          isFirst={idx === 0 && batchesAgrupadas.length === 0}
           workshopName={workshopName}
         />
       ))}
