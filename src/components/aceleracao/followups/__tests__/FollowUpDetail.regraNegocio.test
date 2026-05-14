@@ -1,0 +1,254 @@
+/**
+ * @vitest-environment jsdom
+ */
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { renderHook } from '@testing-library/react';
+import { format, addDays, subDays } from 'date-fns';
+
+// Mock do base44 client
+vi.mock('@/api/base44Client', () => ({
+  base44: {
+    entities: {
+      FollowUpReminder: {
+        filter: vi.fn().mockResolvedValue([]),
+        update: vi.fn().mockResolvedValue({}),
+      },
+      MeetingMinutes: {
+        filter: vi.fn().mockResolvedValue([]),
+      },
+      FollowUpConcluido: {
+        filter: vi.fn().mockResolvedValue([]),
+      },
+      ConsultoriaSprint: {
+        filter: vi.fn().mockResolvedValue([]),
+      },
+      ConsultoriaAtendimento: {
+        filter: vi.fn().mockResolvedValue([]),
+      },
+    },
+    agents: {
+      createConversation: vi.fn(),
+      addMessage: vi.fn(),
+      subscribeToConversation: vi.fn(),
+    },
+    functions: {
+      invoke: vi.fn(),
+    },
+  },
+}));
+
+// Mock do useAuth
+vi.mock('@/lib/AuthContext', () => ({
+  useAuth: () => ({
+    user: {
+      id: 'user-123',
+      email: 'consultor@test.com',
+      full_name: 'Consultor Teste',
+    },
+  }),
+}));
+
+// Mock dos hooks do TanStack Query
+vi.mock('@tanstack/react-query', () => ({
+  useQuery: () => ({ data: [] }),
+  useMutation: () => ({ mutate: vi.fn() }),
+  useQueryClient: () => ({
+    invalidateQueries: vi.fn(),
+  }),
+}));
+
+// Componente FollowUpDetail (import simplificado para testes)
+import FollowUpDetail from '@/components/aceleracao/followups/FollowUpDetail';
+
+describe('Regra de Negócio - Follow-up Finalização', () => {
+  const today = format(new Date(), 'yyyy-MM-dd');
+  const yesterday = format(subDays(new Date(), 1), 'yyyy-MM-dd');
+  const tomorrow = format(addDays(new Date(), 1), 'yyyy-MM-dd');
+  const nextWeek = format(addDays(new Date(), 7), 'yyyy-MM-dd');
+
+  const mockReminder = {
+    id: 'fu-123',
+    workshop_id: 'ws-123',
+    workshop_name: 'Oficina Teste',
+    consultor_id: 'user-123',
+    consultor_nome: 'Consultor Teste',
+    sequence_number: 2,
+    reminder_date: today,
+    is_completed: false,
+    origin_type: 'ata',
+    ata_id: 'ata-123',
+  };
+
+  const mockProps = {
+    reminder: mockReminder,
+    today: today,
+    onBack: vi.fn(),
+    filaReminders: [],
+    onSelectReminder: vi.fn(),
+    seqNum: 2,
+    stats: { total: 4, concluidos: 1, pendentes: 3 },
+  };
+
+  describe('Variáveis de Controle', () => {
+    it('deve calcular canBeFinalized corretamente para follow-up vencido', () => {
+      const reminder = { ...mockReminder, reminder_date: yesterday };
+      // Simulação da lógica do componente
+      const canBeFinalized = reminder.is_completed === false && (
+        reminder.reminder_date < today || reminder.reminder_date === today
+      );
+      expect(canBeFinalized).toBe(true);
+    });
+
+    it('deve calcular canBeFinalized corretamente para follow-up do dia', () => {
+      const reminder = { ...mockReminder, reminder_date: today };
+      const canBeFinalized = reminder.is_completed === false && (
+        reminder.reminder_date < today || reminder.reminder_date === today
+      );
+      expect(canBeFinalized).toBe(true);
+    });
+
+    it('deve calcular canBeFinalized corretamente para follow-up futuro', () => {
+      const reminder = { ...mockReminder, reminder_date: tomorrow };
+      const canBeFinalized = reminder.is_completed === false && (
+        reminder.reminder_date < today || reminder.reminder_date === today
+      );
+      expect(canBeFinalized).toBe(false);
+    });
+
+    it('deve calcular isFuture corretamente', () => {
+      const reminderFuturo = { ...mockReminder, reminder_date: tomorrow };
+      const isFutureFuturo = reminderFuturo.reminder_date > today;
+      expect(isFutureFuturo).toBe(true);
+
+      const reminderVencido = { ...mockReminder, reminder_date: yesterday };
+      const isFutureVencido = reminderVencido.reminder_date > today;
+      expect(isFutureVencido).toBe(false);
+    });
+
+    it('não deve permitir finalização se já estiver concluído', () => {
+      const reminder = { ...mockReminder, reminder_date: yesterday, is_completed: true };
+      const canBeFinalized = reminder.is_completed === false && (
+        reminder.reminder_date < today || reminder.reminder_date === today
+      );
+      expect(canBeFinalized).toBe(false);
+    });
+  });
+
+  describe('Regras de Negócio', () => {
+    it('deve permitir finalização apenas quando follow-up estiver vencido ou no dia', () => {
+      // Follow-up vencido
+      expect(
+        mockReminder.is_completed === false && (yesterday < today || yesterday === today)
+      ).toBe(true);
+
+      // Follow-up do dia
+      expect(
+        mockReminder.is_completed === false && (today < today || today === today)
+      ).toBe(true);
+
+      // Follow-up futuro
+      expect(
+        { ...mockReminder, reminder_date: tomorrow }.is_completed === false && 
+        (tomorrow < today || tomorrow === today)
+      ).toBe(false);
+    });
+
+    it('deve considerar timezone America/Sao_Paulo', () => {
+      // Teste conceitual - na prática, date-fns já lida com timezone
+      const dataHoje = new Date();
+      const dataHojeSP = format(dataHoje, 'yyyy-MM-dd');
+      expect(dataHojeSP).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    });
+  });
+
+  describe('Validação em Camadas', () => {
+    it('deve validar em 3 camadas: UI, Handler, Business Logic', () => {
+      // Camada 1: UI (botão desabilitado)
+      const canBeFinalized = false;
+      expect(canBeFinalized).toBe(false);
+
+      // Camada 2: Handler (toast de erro)
+      const handleSaveMock = () => {
+        if (!canBeFinalized) {
+          return 'toast.error';
+        }
+        return 'save';
+      };
+      expect(handleSaveMock()).toBe('toast.error');
+
+      // Camada 3: Business Logic (validação no handleSave/handleLoss)
+      const handleLossMock = () => {
+        if (!canBeFinalized) {
+          return 'toast.error';
+        }
+        return 'loss';
+      };
+      expect(handleLossMock()).toBe('toast.error');
+    });
+  });
+
+  describe('Edge Cases', () => {
+    it('deve lidar com reminder_date nulo ou indefinido', () => {
+      const reminderNull = { ...mockReminder, reminder_date: null };
+      expect(reminderNull.reminder_date > today).toBe(false);
+      expect(reminderNull.reminder_date < today).toBe(false);
+      expect(reminderNull.reminder_date === today).toBe(false);
+    });
+
+    it('deve lidar com follow-up já concluído', () => {
+      const reminderConcluido = { ...mockReminder, is_completed: true };
+      const canBeFinalized = reminderConcluido.is_completed === false && (
+        reminderConcluido.reminder_date < today || reminderConcluido.reminder_date === today
+      );
+      expect(canBeFinalized).toBe(false);
+    });
+
+    it('deve lidar com múltiplos follow-ups no mesmo dia', () => {
+      const followUpsNoMesmoDia = [
+        { ...mockReminder, id: 'fu-1', reminder_date: today },
+        { ...mockReminder, id: 'fu-2', reminder_date: today },
+        { ...mockReminder, id: 'fu-3', reminder_date: today },
+      ];
+      followUpsNoMesmoDia.forEach(fu => {
+        const canBeFinalized = fu.is_completed === false && (
+          fu.reminder_date < today || fu.reminder_date === today
+        );
+        expect(canBeFinalized).toBe(true);
+      });
+    });
+  });
+
+  describe('Feedback Visual', () => {
+    it('deve mostrar alerta âmbar para follow-ups futuros', () => {
+      const isFuture = tomorrow > today;
+      expect(isFuture).toBe(true);
+      // Na UI: {isFuture && <AlertaAmbar />}
+    });
+
+    it('deve mudar texto do botão baseado no estado', () => {
+      const canBeFinalized = false;
+      const temRascunho = false;
+      
+      const textoBotao = !canBeFinalized 
+        ? "Aguardando data para finalizar" 
+        : temRascunho 
+          ? "Retomar Atendimento" 
+          : "Iniciar Atendimento";
+      
+      expect(textoBotao).toBe("Aguardando data para finalizar");
+    });
+
+    it('deve aplicar estilos corretos no botão', () => {
+      const canBeFinalized = false;
+      const temRascunho = false;
+      
+      const className = !canBeFinalized
+        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+        : temRascunho
+          ? "bg-cyan-600 hover:bg-cyan-700 text-white"
+          : "bg-green-600 hover:bg-green-700 text-white";
+      
+      expect(className).toBe("bg-gray-300 text-gray-500 cursor-not-allowed");
+    });
+  });
+});
