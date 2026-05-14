@@ -248,7 +248,7 @@ export default function CheckpointModal({
               <p className="text-[11px] text-gray-500 px-3 pt-2 pb-1">
                 Os dados deste atendimento serão replicados nos FUs selecionados.
               </p>
-              <div className="divide-y divide-gray-100 max-h-48 overflow-y-auto">
+              <div className="divide-y divide-gray-100 max-h-64 overflow-y-auto scrollbar-thin">
                 {fusPendentes.map(fu => {
                   const isChecked = fusSelecionados.includes(fu.id);
                   const isVencido = fu.reminder_date < new Date().toISOString().split('T')[0];
