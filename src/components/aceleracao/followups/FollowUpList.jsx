@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { AlertCircle, Clock, CheckCircle2, StickyNote, CalendarCheck, MessageCircle, Phone, Mail, MapPin, Video, FileText, Target, Search, X } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import FollowUpCompletedDetailDrawer from "@/components/aceleracao/FollowUpCompletedDetailDrawer";
+import FollowUpConcluidoRow from "@/components/aceleracao/FollowUpConcluidoRow.jsx";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 
@@ -203,6 +204,32 @@ export default function FollowUpList({ reminders, today, isLoading, onSelect, fi
         <div className="py-16 flex flex-col items-center justify-center gap-2 text-gray-400">
           <StickyNote className="w-8 h-8 text-gray-300" />
           <p className="text-sm">Nenhum follow-up nesta categoria</p>
+        </div>
+      ) : filterPill === "concluidos" ? (
+        /* Layout horizontal tipo planilha para concluídos */
+        <div className="rounded-lg border border-gray-200 overflow-hidden bg-white">
+          <div className="flex items-center gap-4 px-4 py-2.5 bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-600">
+            <div className="w-24 flex-shrink-0">Data</div>
+            <div className="w-28 flex-shrink-0">Consultor</div>
+            <div className="w-20 flex-shrink-0">Canal</div>
+            <div className="flex-shrink-0 ml-auto">Status</div>
+          </div>
+          {filtered.map(r => {
+            const concluido = concluidosIndex[r.workshop_id];
+            const rowData = concluido ? { ...concluido, workshop_name: r.workshop_name } : {
+              canal: null,
+              consultor_nome: r.consultor_nome,
+              completedAt: r.completed_at,
+              dataContato: r.reminder_date,
+            };
+            return (
+              <FollowUpConcluidoRow
+                key={r.id}
+                completed={rowData}
+                onSelect={() => setSelectedCompleted(r)}
+              />
+            );
+          })}
         </div>
       ) : (
         <div className="space-y-2">

@@ -20,6 +20,7 @@ import FollowUpDetail from "./followups/FollowUpDetail";
 import FollowUpCompletedDetailDrawer from "./FollowUpCompletedDetailDrawer";
 import FollowUpContadorRow from "./followups/FollowUpContadorRow";
 import FollowUpContadorHistorico from "./followups/FollowUpContadorHistorico";
+import FollowUpConcluidoRow from "./FollowUpConcluidoRow.jsx";
 import RelatoriosTab from "./RelatoriosTab";
 import TaxaRealizacaoRelatorio from "./TaxaRealizacaoRelatorio";
 
@@ -595,7 +596,29 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
 
       {activeTab === "concluidos" && (
         <>
-          <FlatList items={listConcluidos} isLoading={isLoading} showWorkshop emptyLabel="Nenhum follow-up concluído" onSelect={setSelectedConcluido} today={today} onComplete={handleComplete} onReopen={handleReopen} />
+          {isLoading ? (
+            <FollowUpSkeleton />
+          ) : listConcluidos.length === 0 ? (
+            <EmptyState label="Nenhum follow-up concluído" />
+          ) : (
+            <Card className="overflow-hidden border-gray-200">
+              <div className="flex items-center gap-4 px-4 py-2.5 bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-600">
+                <div className="w-24 flex-shrink-0">Data</div>
+                <div className="w-28 flex-shrink-0">Consultor</div>
+                <div className="w-20 flex-shrink-0">Canal</div>
+                <div className="flex-shrink-0 ml-auto">Status</div>
+              </div>
+              <div className="divide-y divide-gray-100">
+                {listConcluidos.map(item => (
+                  <FollowUpConcluidoRow
+                    key={item.id}
+                    completed={item._attendanceData || item}
+                    onSelect={() => setSelectedConcluido(item)}
+                  />
+                ))}
+              </div>
+            </Card>
+          )}
           {selectedConcluido && (
             <FollowUpCompletedDetailDrawer
               followUp={selectedConcluido}
