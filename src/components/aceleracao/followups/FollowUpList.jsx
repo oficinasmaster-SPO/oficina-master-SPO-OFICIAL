@@ -51,9 +51,10 @@ function getAvatarColor(name = "") {
 // Busca todos os FollowUpConcluidos de uma vez para enriquecer os cards
 function useConcluidosIndex() {
   const { data = [] } = useQuery({
-    queryKey: ["follow-up-concluidos-list-index"],
-    queryFn: () => base44.entities.FollowUpConcluido.list("-completedAt", 500),
-    staleTime: 3 * 60 * 1000,
+    queryKey: ["follow-up-concluidos-list-index-v2"],
+    queryFn: () => base44.entities.FollowUpConcluido.list("-completedAt", 2000),
+    staleTime: 0,
+    gcTime: 0,
   });
 
   const byWorkshop = {};
@@ -250,25 +251,47 @@ export default function FollowUpList({ reminders, today, isLoading, onSelect, fi
             <div className="w-24 flex-shrink-0">Próx. Contato</div>
             <div className="flex-shrink-0 ml-auto">Status</div>
           </div>
-          {filtered.map(r => {
-            const concluido = concluidosByFuid?.[r.id] || concluidosIndex[r.workshop_id] || null;
-            const ata = r.ata_id ? atasIndex[r.ata_id] : null;
-            // Número sequencial cronológico deste FU para o cliente (#1, #2, #3...)
-            // r.id = FollowUpReminder.id = followup_id no FollowUpConcluido
-            const seqFU = sequenceByFollowupId?.[r.id]
-              || (concluido?.id ? sequenceByFollowupId?.[concluido.id] : null)
-              || null;
-            return (
-              <FollowUpConcluidoRow
-                key={r.id}
-                completed={concluido}
-                reminder={r}
-                ata={ata}
-                totalFollowUps={seqFU}
-                onSelect={() => setSelectedCompleted(r)}
-              />
-            );
-          })}
+          {/* Calcula posição sequencial dos reminders concluídos deste workshop por data de conclusão */}
+          {(() => {
+            // Agrupa os reminders concluídos por workshop e ordena por data (ASC) para numerar
+            const workshopReminders = {};
+            filtered.forEach(r => {
+              const wid = r.workshop_id;
+              if (!wid) return;
+              if (!workshopReminders[wid]) workshopReminders[wid] = [];
+              workshopReminders[wid].push(r);
+            });
+            // Ordena cada grupo por completed_at ou reminder_date ASC
+            Object.values(workshopReminders).forEach(list => {
+              list.sort((a, b) => {
+                const da = a.completed_at || a.reminder_date || "";
+                const db = b.completed_at || b.reminder_date || "";
+                return da.localeCompare(db);
+              });
+            });
+            // Mapa: reminder.id → posição (#1, #2...)
+            const reminderSeq = {};
+            Object.values(workshopReminders).forEach(list => {
+              list.forEach((r, idx) => { reminderSeq[r.id] = idx + 1; });
+            });
+
+            return filtered.map(r => {
+              const concluido = concluidosByFuid?.[r.id] || null;
+              const ata = r.ata_id ? atasIndex[r.ata_id] : null;
+              // Usa sequência calculada a partir dos próprios reminders concluídos (mais confiável)
+              const seqFU = reminderSeq[r.id] ?? null;
+              return (
+                <FollowUpConcluidoRow
+                  key={r.id}
+                  completed={concluido}
+                  reminder={r}
+                  ata={ata}
+                  totalFollowUps={seqFU}
+                  onSelect={() => setSelectedCompleted(r)}
+                />
+              );
+            });
+          })()}
         </div>
       ) : (
         <div className="space-y-2">
