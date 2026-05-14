@@ -706,7 +706,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
     setShowCheckpointModal(true);
   };
 
-  const handleCheckpointDecision = async (decision, metadata) => {
+  const handleCheckpointDecision = async (decision, metadata, fusCheckpoint = []) => {
     setSaving(true);
     setActiveStepIndex(0);
     setShowCheckpointModal(false);
@@ -777,11 +777,11 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
       invalidate.followUps();
 
       // STEP 1b — Encerrar FUs concatenados com os mesmos dados
-      // Combina: externos (fusConcatenados do FollowUpDetail) + internos FUAta + internos FUSp + fusSemanaLocal legado
       const fusInternos = [
         ...fuAtaSelecionados.map(id => allFollowUpsModal.find(f => f.id === id)),
         ...fuSpSelecionados.map(id => allFollowUpsModal.find(f => f.id === id)),
         ...fusSemanaLocal.map(id => allFollowUpsModal.find(f => f.id === id)),
+        ...fusCheckpoint.map(id => typeof id === 'string' ? allFollowUpsModal.find(f => f.id === id) : id),
       ].filter(Boolean);
       const todosIds = new Set([...fusConcatenados.map(f => f.id), ...fusInternos.map(f => f.id)]);
       const fusParaConcatenar = [...fusConcatenados, ...fusInternos].filter((f, _, arr) => {
@@ -1950,6 +1950,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
           sprintId={followUp?.sprint_id}
          bucketId={followUp?.id}
          ataId={followUp?.ata_id}
+         fusPendentes={allFollowUpsModal.filter(f => !f.is_completed && f.id !== followUp?.id && f.reminder_date >= inicioSemana && f.reminder_date <= fimSemana)}
          onSubmit={handleCheckpointDecision}
          onCancel={() => setShowCheckpointModal(false)}
        />
