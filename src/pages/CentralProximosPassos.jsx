@@ -71,6 +71,11 @@ export default function CentralProximosPassos() {
   const queryClient = useQueryClient();
   const [selectedPasso, setSelectedPasso] = useState(null);
   const [filters, setFilters] = useState({ status: "todos", prioridade: "todas" });
+  const [textFilters, setTextFilters] = useState({
+    acao: "",
+    responsavel: "",
+    cliente: ""
+  });
 
   const consultingFirmId = user?.data?.consulting_firm_id;
   const isAdmin = user?.role === "admin";
@@ -111,7 +116,18 @@ export default function CentralProximosPassos() {
       .filter(p => {
         const statusOk = filters.status === "todos" || p.status === filters.status;
         const prioOk = filters.prioridade === "todas" || p.prioridade === filters.prioridade;
-        return statusOk && prioOk;
+        
+        // Filtros de texto (case-insensitive, partial match)
+        const acaoOk = !textFilters.acao || 
+          p.titulo?.toLowerCase().includes(textFilters.acao.toLowerCase());
+        
+        const respOk = !textFilters.responsavel || 
+          p.responsavel_nome?.toLowerCase().includes(textFilters.responsavel.toLowerCase());
+        
+        const clienteOk = !textFilters.cliente || 
+          workshopMap[p.workshop_id]?.toLowerCase().includes(textFilters.cliente.toLowerCase());
+        
+        return statusOk && prioOk && acaoOk && respOk && clienteOk;
       })
       .sort((a, b) => {
         const prazoA = a.prazo ? new Date(a.prazo) : null;
@@ -134,7 +150,7 @@ export default function CentralProximosPassos() {
         
         return 0;
       });
-  }, [passos, filters]);
+  }, [passos, filters, textFilters, workshopMap]);
 
   const stats = {
     total: passos.length,
@@ -187,6 +203,8 @@ export default function CentralProximosPassos() {
       {/* Filtros */}
       <div className="bg-white border border-gray-200 rounded-xl p-4 flex flex-wrap gap-3 items-center">
         <Filter className="w-4 h-4 text-gray-400" />
+        
+        {/* Status */}
         <div className="flex items-center gap-2">
           <label className="text-xs text-gray-500">Status</label>
           <select
@@ -200,6 +218,8 @@ export default function CentralProximosPassos() {
             ))}
           </select>
         </div>
+
+        {/* Prioridade */}
         <div className="flex items-center gap-2">
           <label className="text-xs text-gray-500">Prioridade</label>
           <select
@@ -213,14 +233,80 @@ export default function CentralProximosPassos() {
             ))}
           </select>
         </div>
-        {(filters.status !== "todos" || filters.prioridade !== "todas") && (
+
+        {/* Buscar por Ação */}
+        <div className="flex items-center gap-2">
+          <label className="text-xs text-gray-500">Ação</label>
+          <input
+            type="text"
+            placeholder="Buscar por ação..."
+            value={textFilters.acao}
+            onChange={e => setTextFilters(f => ({ ...f, acao: e.target.value }))}
+            className="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 w-48 focus:outline-none focus:ring-1 focus:ring-blue-400"
+          />
+          {textFilters.acao && (
+            <button
+              onClick={() => setTextFilters(f => ({ ...f, acao: "" }))}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <XCircle className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+
+        {/* Buscar por Responsável */}
+        <div className="flex items-center gap-2">
+          <label className="text-xs text-gray-500">Responsável</label>
+          <input
+            type="text"
+            placeholder="Buscar por responsável..."
+            value={textFilters.responsavel}
+            onChange={e => setTextFilters(f => ({ ...f, responsavel: e.target.value }))}
+            className="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 w-48 focus:outline-none focus:ring-1 focus:ring-blue-400"
+          />
+          {textFilters.responsavel && (
+            <button
+              onClick={() => setTextFilters(f => ({ ...f, responsavel: "" }))}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <XCircle className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+
+        {/* Buscar por Cliente */}
+        <div className="flex items-center gap-2">
+          <label className="text-xs text-gray-500">Cliente</label>
+          <input
+            type="text"
+            placeholder="Buscar por cliente..."
+            value={textFilters.cliente}
+            onChange={e => setTextFilters(f => ({ ...f, cliente: e.target.value }))}
+            className="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 w-48 focus:outline-none focus:ring-1 focus:ring-blue-400"
+          />
+          {textFilters.cliente && (
+            <button
+              onClick={() => setTextFilters(f => ({ ...f, cliente: "" }))}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <XCircle className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+
+        {/* Limpar Filtros */}
+        {(filters.status !== "todos" || filters.prioridade !== "todas" || textFilters.acao || textFilters.responsavel || textFilters.cliente) && (
           <button
-            onClick={() => setFilters({ status: "todos", prioridade: "todas" })}
+            onClick={() => {
+              setFilters({ status: "todos", prioridade: "todas" });
+              setTextFilters({ acao: "", responsavel: "", cliente: "" });
+            }}
             className="text-xs text-gray-400 hover:text-gray-700 flex items-center gap-1"
           >
             <XCircle className="w-3.5 h-3.5" /> Limpar
           </button>
         )}
+        
         <span className="ml-auto text-xs text-gray-400">{filtered.length} registro{filtered.length !== 1 ? 's' : ''}</span>
       </div>
 
