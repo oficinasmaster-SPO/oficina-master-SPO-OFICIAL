@@ -365,6 +365,10 @@ export default function FollowUpList({ reminders, today, isLoading, onSelect, fi
                           {r.suporte_id && <span className="text-[10px] text-amber-500 font-mono">{r.suporte_id}</span>}
                           {r.consultor_nome && <span className="text-gray-400"> · {r.consultor_nome}</span>}
                         </span>
+                      ) : r.origin_type === 'guarda_chuva' ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-pink-100 text-pink-700 text-[10px] font-medium flex-shrink-0">
+                          💝 Encantamento
+                        </span>
                       ) : (
                       <span className="text-xs text-gray-500 flex-shrink-0">
                         Follow-up #{seqByReminderId[r.id] ?? r.sequence_number}{statsByWorkshopId[r.workshop_id] ? ` de ${statsByWorkshopId[r.workshop_id].total}` : ""}
