@@ -57,6 +57,11 @@ const ReminderRow = memo(({ reminder, today, showWorkshop, onComplete, onReopen,
             {reminder.reminder_date ? format(new Date(reminder.reminder_date + "T00:00:00"), "dd/MM/yyyy") : "—"}
           </span>
           {isOverdue && <AlertCircle className="w-3 h-3 text-red-500" />}
+          {reminder.origin_type === 'guarda_chuva' && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-pink-100 text-pink-700 text-[10px] font-medium">
+              💝 Encantamento
+            </span>
+          )}
           {reminder.consultor_nome && <span className="text-xs text-gray-400">· {reminder.consultor_nome}</span>}
         </div>
         {reminder.is_completed && reminder.completed_at && (
