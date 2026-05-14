@@ -862,8 +862,9 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
            consulting_firm_id: followUp.consulting_firm_id || null,
            suporte_id: followUp.suporte_id || null,
          });
-      } else if (!isSuporteFlow && proximoPasso === "reagendar" && proxData) {
-        // Reagendamento manual com data escolhida
+      } else if (!isSuporteFlow && (proximoPasso === "reagendar" || decision === "next_week" || decision === "in_X_days") && (proxData || metadata?.date)) {
+        // Reagendamento: usa data do checkpoint (next_week/in_X_days) ou data manual do formulário
+        const dataParaAgendar = metadata?.date || proxData;
         const nextSeq = (followUp.sequence_number || 1) + 1;
         novoFollowUp = await base44.entities.FollowUpReminder.create({
           workshop_id: followUp.workshop_id,
@@ -873,7 +874,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
           consultor_id: followUp.consultor_id,
           consultor_nome: followUp.consultor_nome,
           sequence_number: nextSeq,
-          reminder_date: proxData,
+          reminder_date: dataParaAgendar,
           origin_type: followUp.origin_type === 'sprint' ? 'sprint' : 'ata',
           sprint_id: followUp.origin_type === 'sprint' ? followUp.sprint_id : null,
           is_completed: false,
@@ -1939,14 +1940,14 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
 
        {/* CHECKPOINT MODAL */}
        <CheckpointModal
-         isOpen={showCheckpointModal}
-         followUpStatus={{
-           completed: 1,
-           inProgress: 0,
-           pendingCount: (demandsCritical || []).length
-         }}
-         followUpContadorId={followUp?.id}
-         sprintId={followUp?.sprint_id}
+          isOpen={showCheckpointModal}
+          followUpStatus={{
+            completed: 1,
+            inProgress: 0,
+            pendingCount: (demandsCritical || []).length
+          }}
+          followUpContadorId={null}
+          sprintId={followUp?.sprint_id}
          bucketId={followUp?.id}
          ataId={followUp?.ata_id}
          onSubmit={handleCheckpointDecision}
