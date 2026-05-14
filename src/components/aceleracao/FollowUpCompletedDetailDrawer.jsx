@@ -231,7 +231,12 @@ export default function FollowUpCompletedDetailDrawer({ followUp, open, onClose,
                 Próximo Passo
               </p>
               <p className="text-sm text-gray-900">
-                {PROXIMO_PASSO_LABELS[data.proximoPasso] || data.proximoPasso || "—"}
+                {(() => {
+                  const pp = data.proximoPasso;
+                  if (typeof pp === 'string') return PROXIMO_PASSO_LABELS[pp] || pp;
+                  if (typeof pp === 'object' && pp !== null) return pp.descricao || JSON.stringify(pp);
+                  return String(pp || '—');
+                })()}
               </p>
             </div>
 
