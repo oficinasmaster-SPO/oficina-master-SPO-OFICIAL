@@ -106,10 +106,10 @@ const CANAL_ICON_MAP = {
 export default function FollowUpList({ reminders, today, isLoading, onSelect, filterPill, onFilterPill }) {
   const [selectedCompleted, setSelectedCompleted] = useState(null);
   const [search, setSearch] = useState("");
-  const { byWorkshop: concluidosIndex, byFollowupId: concluidosByFuid, totalByWorkshop } = useConcluidosIndex();
+  const { byWorkshop: concluidosIndex = {}, byFollowupId: concluidosByFuid = {}, totalByWorkshop = {} } = useConcluidosIndex() || {};
   // Extrai todos os ata_ids dos reminders para buscar apenas as ATAs necessárias
   const ataIds = reminders.map(r => r.ata_id).filter(Boolean);
-  const atasIndex = useAtasIndex(ataIds);
+  const atasIndex = useAtasIndex(ataIds) || {};
 
   const PILLS = [
     { id: "todos",     label: "Todos" },
