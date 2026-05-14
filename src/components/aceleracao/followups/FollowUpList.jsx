@@ -132,7 +132,7 @@ const CANAL_ICON_MAP = {
   meet:       { icon: Video,          bg: "bg-purple-500", title: "Aguardando retorno via Meet" },
 };
 
-export default function FollowUpList({ reminders, today, isLoading, onSelect, filterPill, onFilterPill }) {
+export default function FollowUpList({ reminders, today, isLoading, onSelect, filterPill, onFilterPill, seqByReminderId = {}, statsByWorkshopId = {} }) {
   const [selectedCompleted, setSelectedCompleted] = useState(null);
   const [search, setSearch] = useState("");
   const { byWorkshop: concluidosIndex, byFollowupId: concluidosByFuid, sequenceByFollowupId } = useConcluidosIndex();
@@ -251,47 +251,24 @@ export default function FollowUpList({ reminders, today, isLoading, onSelect, fi
             <div className="w-24 flex-shrink-0">Próx. Contato</div>
             <div className="flex-shrink-0 ml-auto">Status</div>
           </div>
-          {/* Calcula posição sequencial dos reminders concluídos deste workshop por data de conclusão */}
-          {(() => {
-            // Agrupa os reminders concluídos por workshop e ordena por data (ASC) para numerar
-            const workshopReminders = {};
-            filtered.forEach(r => {
-              const wid = r.workshop_id;
-              if (!wid) return;
-              if (!workshopReminders[wid]) workshopReminders[wid] = [];
-              workshopReminders[wid].push(r);
-            });
-            // Ordena cada grupo por completed_at ou reminder_date ASC
-            Object.values(workshopReminders).forEach(list => {
-              list.sort((a, b) => {
-                const da = a.completed_at || a.reminder_date || "";
-                const db = b.completed_at || b.reminder_date || "";
-                return da.localeCompare(db);
-              });
-            });
-            // Mapa: reminder.id → posição (#1, #2...)
-            const reminderSeq = {};
-            Object.values(workshopReminders).forEach(list => {
-              list.forEach((r, idx) => { reminderSeq[r.id] = idx + 1; });
-            });
-
-            return filtered.map(r => {
-              const concluido = concluidosByFuid?.[r.id] || null;
-              const ata = r.ata_id ? atasIndex[r.ata_id] : null;
-              // Usa sequência calculada a partir dos próprios reminders concluídos (mais confiável)
-              const seqFU = reminderSeq[r.id] ?? null;
-              return (
-                <FollowUpConcluidoRow
-                  key={r.id}
-                  completed={concluido}
-                  reminder={r}
-                  ata={ata}
-                  totalFollowUps={seqFU}
-                  onSelect={() => setSelectedCompleted(r)}
-                />
-              );
-            });
-          })()}
+          {filtered.map(r => {
+            const concluido = concluidosByFuid?.[r.id] || null;
+            const ata = r.ata_id ? atasIndex[r.ata_id] : null;
+            // Usa sequência universal do hook (fonte da verdade: todos os reminders do cliente)
+            const seqFU = seqByReminderId[r.id] ?? null;
+            const stats = statsByWorkshopId[r.workshop_id] ?? null;
+            return (
+              <FollowUpConcluidoRow
+                key={r.id}
+                completed={concluido}
+                reminder={r}
+                ata={ata}
+                totalFollowUps={seqFU}
+                totalDoCliente={stats?.total ?? null}
+                onSelect={() => setSelectedCompleted(r)}
+              />
+            );
+          })}
         </div>
       ) : (
         <div className="space-y-2">
@@ -353,7 +330,10 @@ export default function FollowUpList({ reminders, today, isLoading, onSelect, fi
                   <div className="flex-1 min-w-0">
                     {/* Line 1: nome + urgente + canal */}
                     <div className="flex items-center gap-1.5 min-w-0">
-                      <span className="font-semibold text-sm text-gray-800 truncate">{name}</span>
+                     {seqByReminderId[r.id] && (
+                       <span className="flex-shrink-0 text-[10px] font-bold text-gray-400">#{seqByReminderId[r.id]}</span>
+                     )}
+                     <span className="font-semibold text-sm text-gray-800 truncate">{name}</span>
                       {canalCfg && CanalIcon && (
                         <span title={canalCfg.title} className={`flex-shrink-0 flex items-center justify-center w-4 h-4 rounded-full ${canalCfg.bg}`}>
                           <CanalIcon className="w-2.5 h-2.5 text-white" />

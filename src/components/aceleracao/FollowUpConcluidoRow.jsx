@@ -60,7 +60,7 @@ function renderHumor(humor) {
   return <span className="text-gray-600 text-[11px] truncate">{humor}</span>;
 }
 
-export default function FollowUpConcluidoRow({ completed, reminder, ata, totalFollowUps, onSelect }) {
+export default function FollowUpConcluidoRow({ completed, reminder, ata, totalFollowUps, totalDoCliente, onSelect }) {
   const canal = completed?.canal?.toLowerCase();
   const canalCfg = CANAL_MAP[canal] || null;
   const CanalIcon = canalCfg?.icon || null;
@@ -79,6 +79,7 @@ export default function FollowUpConcluidoRow({ completed, reminder, ata, totalFo
   const proxHora = completed?.proxHora;
 
   const fuTotal = totalFollowUps ?? "—";
+  const fuLabel = fuTotal !== "—" && totalDoCliente ? `${fuTotal}/${totalDoCliente}` : `${fuTotal}`;
 
   return (
     <button
@@ -89,13 +90,13 @@ export default function FollowUpConcluidoRow({ completed, reminder, ata, totalFo
 
         {/* Nº FU do cliente */}
         <div className="w-10 flex-shrink-0 text-center">
-          <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold ${
+          <span className={`inline-flex items-center justify-center rounded-full text-[10px] font-bold px-1.5 py-1 min-w-[2rem] ${
             typeof fuTotal === "number" && fuTotal >= 50 ? "bg-red-100 text-red-700" :
             typeof fuTotal === "number" && fuTotal >= 20 ? "bg-orange-100 text-orange-700" :
             typeof fuTotal === "number" && fuTotal >= 10 ? "bg-amber-100 text-amber-700" :
             "bg-gray-100 text-gray-600"
           }`}>
-            #{fuTotal}
+            #{fuLabel}
           </span>
         </div>
 

@@ -23,24 +23,35 @@ import FollowUpContadorHistorico from "./followups/FollowUpContadorHistorico";
 import FollowUpConcluidoRow from "./FollowUpConcluidoRow.jsx";
 import RelatoriosTab from "./RelatoriosTab";
 import TaxaRealizacaoRelatorio from "./TaxaRealizacaoRelatorio";
+import { useFollowUpSequence } from "@/hooks/useFollowUpSequence";
 
 // ── Componentes de módulo (fora do corpo do componente para evitar re-mount) ──
 
-const ReminderRow = memo(({ reminder, today, showWorkshop, onComplete, onReopen }) => {
+// seqNum = número sequencial global do reminder (#1, #2...) vindo do useFollowUpSequence
+// stats = { total, concluidos, pendentes } do workshop desse reminder
+const ReminderRow = memo(({ reminder, today, showWorkshop, onComplete, onReopen, seqNum, stats }) => {
   const isOverdue = !reminder.is_completed && reminder.reminder_date < today;
+  const displaySeq = seqNum ?? reminder.sequence_number ?? "?";
   return (
     <div className={`flex items-center gap-3 px-4 py-3 ${reminder.is_completed ? "bg-white opacity-70" : isOverdue ? "bg-red-50/30" : "bg-white"}`}>
       <div className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
         reminder.is_completed ? "bg-green-100 text-green-700" : isOverdue ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"
       }`}>
-        {reminder.sequence_number}
+        #{displaySeq}
       </div>
       <div className="flex-1 min-w-0">
         {showWorkshop && (
-          <span className="text-xs font-semibold text-gray-700 block truncate">{reminder.workshop_name || "Sem cliente"}</span>
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-xs font-semibold text-gray-700 truncate">{reminder.workshop_name || "Sem cliente"}</span>
+            {stats && (
+              <span className="text-[10px] text-gray-400 flex-shrink-0">
+                {stats.concluidos}/{stats.total} concluídos
+              </span>
+            )}
+          </div>
         )}
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs text-gray-600">Follow-up {reminder.sequence_number}/4</span>
+          <span className="text-xs text-gray-600">FU #{displaySeq}{stats ? ` de ${stats.total}` : ""}</span>
           <span className="text-xs text-gray-400">·</span>
           <span className={`text-xs ${isOverdue ? "text-red-600 font-medium" : "text-gray-500"}`}>
             {reminder.reminder_date ? format(new Date(reminder.reminder_date + "T00:00:00"), "dd/MM/yyyy") : "—"}
@@ -96,7 +107,7 @@ const FollowUpSkeleton = () => (
   </Card>
 );
 
-const FlatList = ({ items, isLoading, showWorkshop = false, emptyLabel, onSelect, today, onComplete, onReopen }) => (
+const FlatList = ({ items, isLoading, showWorkshop = false, emptyLabel, onSelect, today, onComplete, onReopen, seqByReminderId = {}, statsByWorkshopId = {} }) => (
   isLoading ? (
     <FollowUpSkeleton />
   ) : items.length === 0 ? (
@@ -110,7 +121,15 @@ const FlatList = ({ items, isLoading, showWorkshop = false, emptyLabel, onSelect
             onClick={() => onSelect && onSelect(r)}
             className="w-full text-left hover:bg-gray-50 transition-colors"
           >
-            <ReminderRow reminder={r} today={today} showWorkshop={showWorkshop} onComplete={onComplete} onReopen={onReopen} />
+            <ReminderRow
+              reminder={r}
+              today={today}
+              showWorkshop={showWorkshop}
+              onComplete={onComplete}
+              onReopen={onReopen}
+              seqNum={seqByReminderId[r.id]}
+              stats={statsByWorkshopId[r.workshop_id]}
+            />
           </button>
         ))}
       </div>
@@ -145,6 +164,8 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
 
   const today = new Date().toISOString().split("T")[0];
 
+  // ── Camada 1: sequência universal baseada em FollowUpReminder ──
+  // Calculado APÓS carregar reminders — injetado em todas as sub-telas
   const { data: reminders = [], isLoading } = useQuery({
     queryKey: ["follow-up-reminders-tab", consultorEfetivo],
     queryFn: async () => {
@@ -154,6 +175,8 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
     },
     staleTime: 2 * 60 * 1000,
   });
+
+  const { seqByReminderId, statsByWorkshopId } = useFollowUpSequence(reminders);
 
   // Verificação defensiva de vazamento de tenant
   useEffect(() => {
@@ -450,6 +473,8 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
             onSelect={setSelectedReminder}
             filterPill={crmFilterPill}
             onFilterPill={setCrmFilterPill}
+            seqByReminderId={seqByReminderId}
+            statsByWorkshopId={statsByWorkshopId}
           />
         )
       )}
@@ -508,7 +533,7 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
                   {isOpen && group.items.length > 0 && (
                     <CardContent className="p-0">
                       <div className="divide-y divide-gray-100">
-                        {group.items.map(r => <ReminderRow key={r.id} reminder={r} today={today} onComplete={handleComplete} onReopen={handleReopen} />)}
+                        {group.items.map(r => <ReminderRow key={r.id} reminder={r} today={today} onComplete={handleComplete} onReopen={handleReopen} seqNum={seqByReminderId[r.id]} stats={statsByWorkshopId[r.workshop_id]} />)}
                       </div>
                     </CardContent>
                   )}
@@ -526,11 +551,11 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
       )}
 
       {activeTab === "abertos" && (
-        <FlatList items={listAbertos} isLoading={isLoading} showWorkshop emptyLabel="Nenhum follow-up aberto" onSelect={setSelectedReminder} today={today} onComplete={handleComplete} onReopen={handleReopen} />
+        <FlatList items={listAbertos} isLoading={isLoading} showWorkshop emptyLabel="Nenhum follow-up aberto" onSelect={setSelectedReminder} today={today} onComplete={handleComplete} onReopen={handleReopen} seqByReminderId={seqByReminderId} statsByWorkshopId={statsByWorkshopId} />
       )}
 
       {activeTab === "atrasados" && (
-        <FlatList items={listAtrasados} isLoading={isLoading} showWorkshop emptyLabel="Nenhum follow-up atrasado" onSelect={setSelectedReminder} today={today} onComplete={handleComplete} onReopen={handleReopen} />
+        <FlatList items={listAtrasados} isLoading={isLoading} showWorkshop emptyLabel="Nenhum follow-up atrasado" onSelect={setSelectedReminder} today={today} onComplete={handleComplete} onReopen={handleReopen} seqByReminderId={seqByReminderId} statsByWorkshopId={statsByWorkshopId} />
       )}
 
       {activeTab === "consultor" && (
@@ -552,7 +577,7 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
                     </Badge>
                   </div>
                   <div className="divide-y divide-gray-100">
-                    {items.map(r => <ReminderRow key={r.id} reminder={r} today={today} showWorkshop onComplete={handleComplete} onReopen={handleReopen} />)}
+                    {items.map(r => <ReminderRow key={r.id} reminder={r} today={today} showWorkshop onComplete={handleComplete} onReopen={handleReopen} seqNum={seqByReminderId[r.id]} stats={statsByWorkshopId[r.workshop_id]} />)}
                   </div>
                 </Card>
               );
