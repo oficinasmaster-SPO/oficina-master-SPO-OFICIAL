@@ -457,52 +457,77 @@ export default function Notificacoes() {
               notifications.map((notification) => (
                 <Card key={notification.id} className={`shadow-md ${notification.is_read ? 'opacity-60' : 'border-l-4 border-blue-500'}`}>
                   <CardContent className="p-5">
-                    <div className="flex items-start gap-4">
-                      <div className="flex-shrink-0">
+                    <div className="mb-3">
+                      <h3 className="font-semibold text-gray-900 mb-1 flex items-center gap-2">
                         {getNotificationIcon(notification.type)}
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900 mb-1">
-                          {notification.title}
-                        </h3>
-                        <p className="text-gray-700 mb-2">
-                          {notification.message}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {format(new Date(notification.created_date), "dd 'de' MMM 'às' HH:mm", { locale: ptBR })}
-                        </p>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="default"
-                          size="sm"
-                          onClick={() => {
-                            markAsReadMutation.mutate(notification.id);
-                            if (notification.metadata?.link) {
-                              navigate(notification.metadata.link);
-                            }
-                          }}
-                          className="gap-1"
-                        >
-                          Ver →
-                        </Button>
-                        {!notification.is_read && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => markAsReadMutation.mutate(notification.id)}
-                          >
-                            Marcar como lida
-                          </Button>
-                        )}
+                        {notification.title}
+                      </h3>
+                      <p className="text-gray-700 mb-2">
+                        {notification.message}
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4 text-sm">
+                      {notification.metadata?.responsavel && (
+                        <div className="flex flex-col">
+                          <span className="text-gray-500 font-medium text-xs">Responsável</span>
+                          <span className="text-gray-800">{notification.metadata.responsavel}</span>
+                        </div>
+                      )}
+                      {notification.metadata?.cliente && (
+                        <div className="flex flex-col">
+                          <span className="text-gray-500 font-medium text-xs">Cliente</span>
+                          <span className="text-gray-800">{notification.metadata.cliente}</span>
+                        </div>
+                      )}
+                      {notification.metadata?.tipo && (
+                        <div className="flex flex-col">
+                          <span className="text-gray-500 font-medium text-xs">Tipo</span>
+                          <span className="text-gray-800">{notification.metadata.tipo}</span>
+                        </div>
+                      )}
+                      {notification.metadata?.acao && (
+                        <div className="flex flex-col">
+                          <span className="text-gray-500 font-medium text-xs">Ação</span>
+                          <span className="text-gray-800">{notification.metadata.acao}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <p className="text-xs text-gray-500 mb-3">
+                      {format(new Date(notification.created_date), "dd 'de' MMM 'às' HH:mm", { locale: ptBR })}
+                    </p>
+
+                    <div className="flex gap-2 flex-wrap">
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => {
+                          markAsReadMutation.mutate(notification.id);
+                          if (notification.metadata?.link) {
+                            navigate(notification.metadata.link);
+                          }
+                        }}
+                        className="gap-1"
+                      >
+                        Ver →
+                      </Button>
+                      {!notification.is_read && (
                         <Button
                           variant="ghost"
-                          size="icon"
-                          onClick={() => deleteNotificationMutation.mutate(notification.id)}
+                          size="sm"
+                          onClick={() => markAsReadMutation.mutate(notification.id)}
                         >
-                          <Trash2 className="w-4 h-4 text-red-600" />
+                          Marcar como lida
                         </Button>
-                      </div>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => deleteNotificationMutation.mutate(notification.id)}
+                      >
+                        <Trash2 className="w-4 h-4 text-red-600" />
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
