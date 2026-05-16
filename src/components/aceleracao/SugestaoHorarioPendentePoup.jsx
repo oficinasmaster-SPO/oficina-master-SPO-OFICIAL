@@ -169,9 +169,14 @@ export default function SugestaoHorarioPendentePoup({ isOpen, onClose, atendimen
           >
             🔔 Lembrar Depois
           </Button>
-          <AlertDialogCancel disabled={processarMutation.isPending}>
+          <Button
+            variant="outline"
+            onClick={handleRecusar}
+            disabled={processarMutation.isPending}
+            className="border-red-300 text-red-700 hover:bg-red-50"
+          >
             ❌ Recusar
-          </AlertDialogCancel>
+          </Button>
           <AlertDialogAction
             onClick={handleAceitar}
             disabled={processarMutation.isPending}
