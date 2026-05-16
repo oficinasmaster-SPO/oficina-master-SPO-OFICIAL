@@ -75,6 +75,14 @@ export default function GradeHorariosTab({ consultores = [], user }) {
   });
 
   const adicionarHorario = (diaRegistro) => {
+    // BUG-FIX #1: Verificar duplicata de horário no mesmo dia
+    const jaExiste = diaRegistro.horarios?.some(h => h.hora === novoHorario.hora);
+    if (jaExiste) {
+      toast.error(`Horário ${novoHorario.hora} já existe neste dia.`);
+      return;
+    }
+    // Adiciona no final mantendo prioridade manual — não reordena por hora
+    // (admin pode querer 14h como P1 e 11h como P2)
     const horariosAtualizados = [
       ...(diaRegistro.horarios || []),
       {
@@ -83,23 +91,26 @@ export default function GradeHorariosTab({ consultores = [], user }) {
         tipo_atendimento_ids: [],
         ativo: true,
       },
-    ].sort((a, b) => a.hora.localeCompare(b.hora))
-     .map((h, idx) => ({ ...h, prioridade: idx + 1 }));
+    ];
 
     salvarMutation.mutate({ ...diaRegistro, horarios: horariosAtualizados });
     setDialogAberto(false);
     setNovoHorario({ hora: "09:00" });
   };
 
-  const removerHorario = (diaRegistro, idx) => {
+  const removerHorario = (diaRegistro, slotHora, slotPrioridade) => {
+    // BUG-FIX #2: usar hora+prioridade como chave composta em vez de idx
+    // (idx do array sorted ≠ idx do array original após .slice().sort())
     const atualizados = diaRegistro.horarios
-      .filter((_, i) => i !== idx)
+      .filter(h => !(h.hora === slotHora && h.prioridade === slotPrioridade))
       .map((h, i) => ({ ...h, prioridade: i + 1 }));
     salvarMutation.mutate({ ...diaRegistro, horarios: atualizados });
   };
 
-  const moverPrioridade = (diaRegistro, idx, direcao) => {
-    const arr = [...diaRegistro.horarios];
+  const moverPrioridade = (diaRegistro, slotHora, slotPrioridade, direcao) => {
+    // BUG-FIX #3: operar sobre o array JÁ ordenado por prioridade (o que o usuário vê)
+    const arr = [...diaRegistro.horarios].sort((a, b) => a.prioridade - b.prioridade);
+    const idx = arr.findIndex(h => h.hora === slotHora && h.prioridade === slotPrioridade);
     const outro = idx + direcao;
     if (outro < 0 || outro >= arr.length) return;
     [arr[idx], arr[outro]] = [arr[outro], arr[idx]];
@@ -107,9 +118,10 @@ export default function GradeHorariosTab({ consultores = [], user }) {
     salvarMutation.mutate({ ...diaRegistro, horarios: atualizados });
   };
 
-  const toggleSlot = (diaRegistro, idx) => {
-    const atualizados = diaRegistro.horarios.map((h, i) =>
-      i === idx ? { ...h, ativo: !h.ativo } : h
+  const toggleSlot = (diaRegistro, slotHora, slotPrioridade) => {
+    // BUG-FIX #4: mesma correção de chave composta para toggle
+    const atualizados = diaRegistro.horarios.map(h =>
+      h.hora === slotHora && h.prioridade === slotPrioridade ? { ...h, ativo: !h.ativo } : h
     );
     salvarMutation.mutate({ ...diaRegistro, horarios: atualizados });
   };
@@ -232,21 +244,21 @@ export default function GradeHorariosTab({ consultores = [], user }) {
                             {/* Ativo toggle */}
                             <Switch
                               checked={slot.ativo}
-                              onCheckedChange={() => toggleSlot(diaRegistro, diaRegistro.horarios.findIndex(h => h.hora === slot.hora && h.prioridade === slot.prioridade))}
+                              onCheckedChange={() => toggleSlot(diaRegistro, slot.hora, slot.prioridade)}
                               className="scale-[0.65]"
                             />
 
                             {/* Mover prioridade */}
                             <div className="flex flex-col gap-0">
                               <button
-                                onClick={() => moverPrioridade(diaRegistro, diaRegistro.horarios.findIndex(h => h.hora === slot.hora && h.prioridade === slot.prioridade), -1)}
+                                onClick={() => moverPrioridade(diaRegistro, slot.hora, slot.prioridade, -1)}
                                 className="text-gray-300 hover:text-indigo-500 transition-colors"
                                 title="Aumentar prioridade"
                               >
                                 <ChevronUp className="w-3.5 h-3.5" />
                               </button>
                               <button
-                                onClick={() => moverPrioridade(diaRegistro, diaRegistro.horarios.findIndex(h => h.hora === slot.hora && h.prioridade === slot.prioridade), 1)}
+                                onClick={() => moverPrioridade(diaRegistro, slot.hora, slot.prioridade, 1)}
                                 className="text-gray-300 hover:text-indigo-500 transition-colors"
                                 title="Diminuir prioridade"
                               >
@@ -256,7 +268,7 @@ export default function GradeHorariosTab({ consultores = [], user }) {
 
                             {/* Remover */}
                             <button
-                              onClick={() => removerHorario(diaRegistro, diaRegistro.horarios.findIndex(h => h.hora === slot.hora && h.prioridade === slot.prioridade))}
+                              onClick={() => removerHorario(diaRegistro, slot.hora, slot.prioridade)}
                               className="text-gray-300 hover:text-red-500 transition-colors"
                               title="Remover horário"
                             >
