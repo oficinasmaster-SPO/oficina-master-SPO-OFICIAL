@@ -72,9 +72,10 @@ Deno.serve(async (req) => {
       );
 
       // Procurar slots disponíveis próximos à data sugerida
-      for (let d = new Date(dataInicio); d <= dataFim; d.setDate(d.getDate() + 1)) {
-        const diaSemana = d.getDay();
-        const dataStr = d.toISOString().split('T')[0];
+      const dataAtual = new Date(dataInicio);
+      while (dataAtual <= dataFim) {
+        const diaSemana = dataAtual.getDay();
+        const dataStr = dataAtual.toISOString().split('T')[0];
 
         const horariosNoDia = grade.horarios?.filter(h => h.ativo) || [];
         const horariosOrdenados = [...horariosNoDia].sort((a, b) =>
@@ -98,7 +99,7 @@ Deno.serve(async (req) => {
             data: dataStr,
             hora: horario.hora,
             prioridade: horario.prioridade || 999,
-            distancia_dias: Math.floor((new Date(dataStr) - dataInicio) / (24 * 60 * 60 * 1000))
+            distancia_dias: Math.floor((new Date(dataStr) - new Date(dataInicio)) / (24 * 60 * 60 * 1000))
           });
 
           // Sair do loop de horários (pegar apenas o primeiro disponível deste dia)
@@ -107,8 +108,11 @@ Deno.serve(async (req) => {
 
         // Se encontrou um slot para este consultor, não procurar em mais dias
         if (alternativas.some(a => a.consultor_id === grade.consultor_id)) {
+          dataAtual.setDate(dataFim.getDate() + 1); // Força saída do while
           break;
         }
+
+        dataAtual.setDate(dataAtual.getDate() + 1);
       }
 
       // Limitar alternativas a 5 por performance

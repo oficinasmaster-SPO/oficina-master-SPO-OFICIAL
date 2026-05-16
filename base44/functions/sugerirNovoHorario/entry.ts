@@ -85,17 +85,15 @@ Deno.serve(async (req) => {
     }
 
     // ── Atualizar atendimento com sugestão ──
-    await base44.entities.ConsultoriaAtendimento.update(
-      atendimento_id,
-      {
-        data_sugerida_cliente: dataSugerida.toISOString(),
-        hora_sugerida_cliente: hora_sugerida,
-        mensagem_cliente: mensagem_cliente || '',
-        status_posta_venda: slotOcupado 
-          ? 'reagendada_pendente_confirmacao' 
-          : 'reagendada_confirmada'
-      }
-    );
+     await base44.entities.ConsultoriaAtendimento.update(
+       atendimento_id,
+       {
+         data_sugerida_cliente: data_sugerida,
+         hora_sugerida_cliente: hora_sugerida,
+         mensagem_cliente: mensagem_cliente || '',
+         status: 'reagendado'
+       }
+     );
 
     // ── Notificar admin sobre sugestão ──
     try {

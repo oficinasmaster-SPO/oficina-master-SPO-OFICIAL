@@ -42,11 +42,11 @@ Deno.serve(async (req) => {
       });
     }
 
-    const dataSugeridaFormatada = new Date(data_sugerida).toLocaleDateString('pt-BR', {
-      weekday: 'long',
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
+    const dataSugeridaFormatada = new Date(`${data_sugerida}T00:00:00`).toLocaleDateString('pt-BR', {
+     weekday: 'long',
+     day: '2-digit',
+     month: '2-digit',
+     year: 'numeric'
     });
 
     // ── Preparar conteúdo da notificação ──
@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
 
 ${mensagem_cliente ? `<p><strong>Mensagem do Cliente:</strong></p><blockquote>${mensagem_cliente}</blockquote>` : ''}
 
-<p><strong>Status:</strong> ${slot_disponivel ? '✅ Slot disponível para confirmação imediata' : '⏳ Consultor ocupado neste horário'}</p>
+<p><strong>Status:</strong> ${slot_disponivel ? '✅ Slot livre - Pode confirmar direto' : '⏳ Slot ocupado - Apresentar alternativas'}</p>
 
 ${alternativas && alternativas.length > 0 ? `
 <p><strong>Alternativas de Consultores:</strong></p>
