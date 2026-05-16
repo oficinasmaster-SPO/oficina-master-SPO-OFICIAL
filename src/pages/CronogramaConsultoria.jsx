@@ -65,7 +65,7 @@ export default function CronogramaConsultoria() {
         try {
           return await base44.entities.Workshop.get(urlWorkshopId);
         } catch (e) {
-          console.error(`CronogramaConsultoria: Workshop/Company com ID ${urlWorkshopId} não encontrado. Limpando referência.`, e);
+          console.error(`CronogramaConsultoria: Workshop/Company com ID ${urlWorkshopId} não encontrado.`, e);
         }
       }
 
@@ -74,30 +74,31 @@ export default function CronogramaConsultoria() {
         try {
           return await base44.entities.Workshop.get(workshopId);
         } catch (e) {
-          console.error(`CronogramaConsultoria: Workshop do perfil do usuário é inválido. Limpando workshop_id do perfil.`, e);
+          console.error(`CronogramaConsultoria: Workshop ID inválido.`, e);
         }
       }
 
-      // Fallback 1: Employee vinculado
+      // Fallback único: proprietário ou employee
       try {
-        const employees = await base44.entities.Employee.filter({ user_id: user.id });
-        if (employees.length > 0 && employees[0].workshop_id) {
-          return await base44.entities.Workshop.get(employees[0].workshop_id);
-        }
-      } catch (e) {
-        console.warn(`CronogramaConsultoria: Erro ao buscar workshop via Employee:`, e);
-      }
+        const [byOwner, byEmployee] = await Promise.all([
+          base44.entities.Workshop.filter({ owner_id: user.id }, '-created_date', 1).catch(() => []),
+          base44.entities.Employee.filter({ user_id: user.id }, undefined, 1).then(emps => {
+            if (emps.length > 0 && emps[0].workshop_id) {
+              return base44.entities.Workshop.get(emps[0].workshop_id).catch(() => null);
+            }
+            return null;
+          }).catch(() => null)
+        ]);
 
-      // Fallback 2: Workshop como proprietário
-      try {
-        const workshops = await base44.entities.Workshop.filter({ owner_id: user.id });
-        return workshops[0] || null;
+        return byOwner?.[0] || byEmployee || null;
       } catch (e) {
-        console.error(`CronogramaConsultoria: Erro ao buscar workshop como proprietário:`, e);
+        console.error(`CronogramaConsultoria: Erro ao resolver workshop:`, e);
         return null;
       }
     },
-    enabled: !!user
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000, // Cache por 5 min
+    retry: 1 // Apenas 1 retry
   });
 
   const activeWorkshopId = workshop?.id;

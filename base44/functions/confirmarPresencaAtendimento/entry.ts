@@ -31,6 +31,27 @@ Deno.serve(async (req) => {
 
   if (!atendimento) return Response.json({ error: 'Atendimento não encontrado' }, { status: 404 });
 
+  // ✅ Validar janela de 24h (até 24h ANTES do atendimento)
+  const dataAtendimento = new Date(atendimento.data_agendada);
+  const agora = new Date();
+  const horas24Antes = new Date(dataAtendimento.getTime() - 24 * 60 * 60 * 1000);
+
+  if (agora > dataAtendimento) {
+    return Response.json({ 
+      error: 'Não é possível confirmar um atendimento que já passou',
+      status: 400
+    });
+  }
+
+  if (agora < horas24Antes) {
+    const diasFaltando = Math.ceil((horas24Antes - agora) / (1000 * 60 * 60 * 24));
+    return Response.json({ 
+      error: 'Confirmação de presença só é aceita até 24 horas antes do atendimento',
+      dias_faltando: diasFaltando,
+      status: 400
+    });
+  }
+
   // Idempotência: só confirma se ainda estiver agendado
   if (atendimento.status !== 'agendado') {
     return Response.json({ success: true, message: 'Já confirmado anteriormente', enviados: [] });

@@ -8,27 +8,13 @@ import { Calendar, Clock, User, CheckCircle2, AlertCircle } from 'lucide-react';
 import { format, isFuture } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import SugerirNovoHorarioModal from './SugerirNovoHorarioModal';
 
 export default function ReunioesClienteTab({ workshopId, user }) {
   const queryClient = useQueryClient();
   const [showSuggestModal, setShowSuggestModal] = useState(false);
-  const [selectedAtendimento, setSelectedAtendimento] = useState(null);
-  const [suggestForm, setSuggestForm] = useState({
-    data_sugerida: '',
-    hora_sugerida: '',
-    mensagem: ''
-  });
+  const [atendimentoSelecionado, setAtendimentoSelecionado] = useState(null);
+  const [consultorAtendimento, setConsultorAtendimento] = useState(null);
 
   // Fetch reuniões futuras
   const { data: reunioes = [], isLoading } = useQuery({
@@ -63,27 +49,7 @@ export default function ReunioesClienteTab({ workshopId, user }) {
     onError: (err) => toast.error('Erro ao confirmar: ' + err.message)
   });
 
-  // Mutação: Sugerir novo horário
-  const sugerirHorarioMutation = useMutation({
-    mutationFn: (data) =>
-      base44.functions.invoke('sugerirNovoHorario', {
-        atendimento_id: selectedAtendimento.id,
-        data_sugerida: suggestForm.data_sugerida,
-        hora_sugerida: suggestForm.hora_sugerida,
-        mensagem_cliente: suggestForm.mensagem,
-        workshop_id: workshopId
-      }),
-    onSuccess: () => {
-      toast.success('Sugestão enviada para o consultor!');
-      setShowSuggestModal(false);
-      setSuggestForm({ data_sugerida: '', hora_sugerida: '', mensagem: '' });
-      setSelectedAtendimento(null);
-      queryClient.invalidateQueries({
-        queryKey: ['atendimentos-acelerador', 'reunioes-futuras', workshopId]
-      });
-    },
-    onError: (err) => toast.error('Erro: ' + err.message)
-  });
+
 
   const getStatusBadge = (status) => {
     const colors = {
@@ -195,7 +161,11 @@ export default function ReunioesClienteTab({ workshopId, user }) {
                       size="sm"
                       variant="outline"
                       onClick={() => {
-                        setSelectedAtendimento(atendimento);
+                        setAtendimentoSelecionado(atendimento);
+                        setConsultorAtendimento({
+                          nome: atendimento.consultor_nome,
+                          id: atendimento.consultor_id
+                        });
                         setShowSuggestModal(true);
                       }}
                     >
@@ -211,70 +181,16 @@ export default function ReunioesClienteTab({ workshopId, user }) {
       </Card>
 
       {/* Modal: Sugerir novo horário */}
-      <Dialog open={showSuggestModal} onOpenChange={setShowSuggestModal}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Sugerir Novo Horário</DialogTitle>
-            <DialogDescription>
-              Sugira uma data e horário alternativos para sua reunião.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="data_sugerida">Data Sugerida</Label>
-              <Input
-                id="data_sugerida"
-                type="date"
-                value={suggestForm.data_sugerida}
-                onChange={(e) =>
-                  setSuggestForm({ ...suggestForm, data_sugerida: e.target.value })
-                }
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="hora_sugerida">Horário Sugerido</Label>
-              <Input
-                id="hora_sugerida"
-                type="time"
-                value={suggestForm.hora_sugerida}
-                onChange={(e) =>
-                  setSuggestForm({ ...suggestForm, hora_sugerida: e.target.value })
-                }
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="mensagem">Mensagem (Opcional)</Label>
-              <Textarea
-                id="mensagem"
-                placeholder="Ex: Prefiro tarde porque tenho outras reuniões..."
-                value={suggestForm.mensagem}
-                onChange={(e) =>
-                  setSuggestForm({ ...suggestForm, mensagem: e.target.value })
-                }
-                className="h-20"
-              />
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowSuggestModal(false)}
-            >
-              Cancelar
-            </Button>
-            <Button
-              disabled={!suggestForm.data_sugerida || !suggestForm.hora_sugerida || sugerirHorarioMutation.isPending}
-              onClick={() => sugerirHorarioMutation.mutate()}
-            >
-              {sugerirHorarioMutation.isPending ? 'Enviando...' : 'Enviar Sugestão'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <SugerirNovoHorarioModal
+        isOpen={showSuggestModal}
+        onClose={() => {
+          setShowSuggestModal(false);
+          setAtendimentoSelecionado(null);
+          setConsultorAtendimento(null);
+        }}
+        atendimento={atendimentoSelecionado}
+        consultor={consultorAtendimento}
+      />
     </>
   );
 }
