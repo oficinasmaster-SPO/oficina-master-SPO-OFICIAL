@@ -491,7 +491,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, onSaved
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     if (!formData.workshop_id) { toast.error("Selecione uma oficina"); return; }
     if (!formData.consultor_id) { toast.error("Selecione um consultor"); return; }
     if (!formData.tipo_atendimento) { toast.error("Selecione o tipo de atendimento"); return; }
@@ -1104,6 +1104,22 @@ export default function RegistrarAtendimento({ isModal = false, onClose, onSaved
         className={`fixed inset-0 z-[10000] flex items-center justify-center p-4 sm:p-6 transition-opacity duration-250 ${isClosing ? 'opacity-0' : 'opacity-100'}`}
         style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}
       >
+        {/* Modal de conflito fora do stacking context do modal wrapper */}
+        <ConflitosHorarioModal
+          open={conflitosModal.open}
+          onOpenChange={(open) => setConflitosModal(prev => ({ ...prev, open }))}
+          conflitos={conflitosModal.conflitos}
+          dataHorario={conflitosModal.dataHorario}
+          consultorId={formData.consultor_id || user?.id}
+          duracaoMinutos={formData.duracao_minutos}
+          onSelectHorario={({ data, hora }) => {
+            setFormData(prev => ({ ...prev, data_agendada: data, hora_agendada: hora }));
+          }}
+          onIgnoreConflict={() => {
+            setHasUnsavedChanges(false);
+            createMutation.mutate(formData);
+          }}
+        />
         <div className="absolute inset-0" onClick={handleClose} />
         <div className={`relative bg-white rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.2)] w-full max-w-[800px] max-h-[95vh] flex flex-col z-[10001] transition-all duration-250 ${isClosing ? 'opacity-0 scale-95 translate-y-4' : 'animate-in fade-in zoom-in-95 duration-200'}`}>
           <div className="flex items-center justify-between p-6 border-b shrink-0 shadow-[0_4px_16px_rgba(0,0,0,0.10)]">
@@ -1174,10 +1190,10 @@ export default function RegistrarAtendimento({ isModal = false, onClose, onSaved
               )}
             </form>
           </div>
-          <div className="flex gap-3 justify-end border-t border-gray-200 bg-white px-6 py-4 shrink-0 rounded-b-2xl shadow-[0_-4px_16px_rgba(0,0,0,0.10)] relative z-50 pointer-events-auto">
+          <div className="flex gap-3 justify-end border-t border-gray-200 bg-white px-6 py-4 shrink-0 rounded-b-2xl shadow-[0_-4px_16px_rgba(0,0,0,0.10)] rounded-b-2xl">
            {isReadOnly ? (
              <>
-               <Button type="button" variant="outline" onClick={handleClose} className="px-6 pointer-events-auto cursor-pointer">Fechar</Button>
+               <Button type="button" variant="outline" onClick={handleClose} className="px-6">Fechar</Button>
                 <Button 
                   type="button" 
                   disabled={!formData.ata_id}
@@ -1222,10 +1238,10 @@ export default function RegistrarAtendimento({ isModal = false, onClose, onSaved
                   </Button>
                 )}
                 <Button
-                  type="submit"
-                  form="atendimento-form"
+                  type="button"
                   disabled={createMutation.isPending || saveSuccess}
-                  className={`px-6 shadow-md transition-all duration-300 pointer-events-auto cursor-pointer ${
+                  onClick={handleSubmit}
+                  className={`px-6 shadow-md transition-all duration-300 ${
                     saveSuccess
                       ? 'bg-green-600 hover:bg-green-600'
                       : 'bg-blue-600 hover:bg-blue-700'
