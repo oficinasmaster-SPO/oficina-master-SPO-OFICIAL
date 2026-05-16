@@ -27,6 +27,7 @@ import ErrorBoundary from '@/components/shared/ErrorBoundary';
 const Home = lazy(() => import('@/pages/Home'));
 const GestaoTenants = lazy(() => import('@/pages/GestaoTenants'));
 const CompletarPerfil = lazy(() => import('@/pages/CompletarPerfil'));
+const MeuAgendamento = lazy(() => import('@/pages/MeuAgendamento'));
 const DescricaoCargos = lazy(() => import('@/pages/DescricaoCargos'));
 const CentralAvaliacoes = lazy(() => import('@/pages/CentralAvaliacoes'));
 const MatrizDesempenho = lazy(() => import('@/pages/MatrizDesempenho'));
@@ -206,6 +207,11 @@ const AuthenticatedApp = () => {
       <Route path="/HistoricoDiagnosticos" element={
         <LayoutWrapper currentPageName="HistoricoDiagnosticos">
           <HistoricoDiagnosticos />
+        </LayoutWrapper>
+      } />
+      <Route path="/MeuAgendamento" element={
+        <LayoutWrapper currentPageName="MeuAgendamento">
+          <MeuAgendamento />
         </LayoutWrapper>
       } />
       {Object.entries(Pages).map(([path, Page]) => {
