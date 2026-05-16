@@ -265,7 +265,7 @@ export default function PainelAtendimentosTab({ state }) {
         />
       )}
 
-      {activeTab !== 'bucket' && (
+      {activeTab !== 'bucket' && activeTab !== 'grade_horarios' && (
         <DashboardAtendimentos atendimentos={atendimentosFiltrados} onStatusClick={setActiveTab} />
       )}
 
@@ -296,7 +296,7 @@ export default function PainelAtendimentosTab({ state }) {
               </button>
             ))}
           </div>
-          {activeTab !== 'bucket' && (
+          {activeTab !== 'bucket' && activeTab !== 'grade_horarios' && (
           <div className="relative flex-1 min-w-[180px] max-w-xs">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
             <Input
