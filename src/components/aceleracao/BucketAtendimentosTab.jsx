@@ -68,7 +68,7 @@ export default function BucketAtendimentosTab({ state }) {
     onSuccess: () => {
       toast.success("Atendimento agendado com sucesso!");
       queryClient.invalidateQueries({ queryKey: ['bucket-atendimentos'] });
-      queryClient.invalidateQueries({ queryKey: ['atendimentos-acelerador'] });
+      queryClient.invalidateQueries({ queryKey: ['atendimentos-acelerador'] }); // Sincroniza reunioes-futuras automaticamente
       // Sincronizar todos os dados operacionais
       invalidateAll();
       setAgendarDialog({ open: false, item: null });

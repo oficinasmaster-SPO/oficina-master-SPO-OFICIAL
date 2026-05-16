@@ -9,7 +9,7 @@ import { ptBR } from 'date-fns/locale';
 
 export default function ReunioesFuturas({ workshopId, consultorId }) {
   const { data: atendimentos = [], isLoading } = useQuery({
-    queryKey: ['reunioes-futuras', workshopId, consultorId],
+    queryKey: ['atendimentos-acelerador', 'reunioes-futuras', workshopId, consultorId],
     queryFn: async () => {
       if (!workshopId && !consultorId) return [];
       
