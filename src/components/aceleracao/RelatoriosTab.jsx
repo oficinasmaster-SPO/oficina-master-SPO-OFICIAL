@@ -223,7 +223,7 @@ export default function RelatoriosTab() {
       descricao: `Dia ${new Date(dataSelecionada + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit' })}`,
       metricas: [
         { label: 'Realizados hoje', valor: metricasDiarias.realizados, tipo: 'realizados' },
-        { label: 'Pendentes', valor: metricasDiarias.pendentes, tipo: 'pendentes' },
+        { label: 'Pendentes (hoje + atrasados)', valor: metricasDiarias.pendentes, tipo: 'pendentes' },
         { label: 'Taxa realização', valor: metricasDiarias.taxaRealizacao, tipo: 'taxa', taxaAtraso: metricasDiarias.taxaAtraso },
       ],
     },

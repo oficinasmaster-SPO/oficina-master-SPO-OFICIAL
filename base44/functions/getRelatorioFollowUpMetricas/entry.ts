@@ -127,17 +127,20 @@ Deno.serve(async (req) => {
     const pendentesAtrasadosPeriodo = allPendentesItems.filter(r => (r.reminder_date || '') < todayStr);
     const atrasadosAnterioresFiltrados = atrasadosAnteriores.filter(r => r.is_completed !== true);
 
-    // Deduplicar por id (evitar overlap se reminder_date = startDate)
-    const atrasadosMap = new Map();
-    [...pendentesAtrasadosPeriodo, ...atrasadosAnterioresFiltrados].forEach(r => {
-      if (r.id) atrasadosMap.set(r.id, r);
+    // Pendentes de hoje = reminder_date = hoje, não concluídos
+    const pendentesHoje = allPendentesItems.filter(r => (r.reminder_date || '') === todayStr);
+
+    // Deduplicar por id: atrasados anteriores + atrasados do período + pendentes de hoje
+    const pendentesMap = new Map();
+    [...pendentesAtrasadosPeriodo, ...atrasadosAnterioresFiltrados, ...pendentesHoje].forEach(r => {
+      if (r.id) pendentesMap.set(r.id, r);
     });
-    const pendentesAtrasados = Array.from(atrasadosMap.values());
+    const pendentesAtrasados = Array.from(pendentesMap.values());
 
-    // Pendentes no prazo = prazo ainda não chegou (reminder_date >= hoje)
-    const pendentesNoPrazo  = allPendentesItems.filter(r => (r.reminder_date || '') >= todayStr);
+    // Pendentes no prazo = prazo ainda não chegou (reminder_date > hoje — futuro)
+    const pendentesNoPrazo = allPendentesItems.filter(r => (r.reminder_date || '') > todayStr);
 
-    // "pendentes" para KPI = atrasados (inclui anteriores ao período no diário)
+    // "pendentes" para KPI = atrasados anteriores + de hoje (tudo que está em aberto até hoje)
     const pendentesItems = pendentesAtrasados;
     const pendentes = pendentesAtrasados.length;
     const total = realizados + allPendentesItems.length; // total real do período
