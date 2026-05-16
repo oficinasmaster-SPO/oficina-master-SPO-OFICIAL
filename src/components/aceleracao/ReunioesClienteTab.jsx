@@ -27,8 +27,13 @@ export default function ReunioesClienteTab({ workshopId, user }) {
         50
       );
       return (list || [])
-        .filter(a => isFuture(new Date(a.data_agendada)))
-        .sort((a, b) => new Date(a.data_agendada) - new Date(b.data_agendada));
+        .filter(a => !a.data_agendada || isFuture(new Date(a.data_agendada)))
+        .sort((a, b) => {
+          // Reuniões SEM data/hora vêm primeiro
+          if (!a.data_agendada) return -1;
+          if (!b.data_agendada) return 1;
+          return new Date(a.data_agendada) - new Date(b.data_agendada);
+        });
     },
     enabled: !!workshopId
   });
@@ -128,14 +133,23 @@ export default function ReunioesClienteTab({ workshopId, user }) {
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Calendar className="w-4 h-4 text-blue-500" />
-                        {format(new Date(atendimento.data_agendada), "dd 'de' MMMM", { locale: ptBR })}
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Clock className="w-4 h-4 text-blue-500" />
-                        {format(new Date(atendimento.data_agendada), 'HH:mm')}
-                      </div>
+                      {atendimento.data_agendada ? (
+                        <>
+                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <Calendar className="w-4 h-4 text-blue-500" />
+                            {format(new Date(atendimento.data_agendada), "dd 'de' MMMM", { locale: ptBR })}
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <Clock className="w-4 h-4 text-blue-500" />
+                            {format(new Date(atendimento.data_agendada), 'HH:mm')}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="col-span-2 flex items-center gap-2 text-sm text-amber-600 bg-amber-50 px-3 py-2 rounded">
+                          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                          <span>Data e horário pendentes — sugira um horário!</span>
+                        </div>
+                      )}
                       <div className="flex items-center gap-2 text-sm text-gray-600 col-span-2">
                         <User className="w-4 h-4 text-blue-500" />
                         {atendimento.consultor_nome || 'Consultor não definido'}
