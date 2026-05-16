@@ -615,24 +615,66 @@ export default function Notificacoes() {
                 <CardContent className="p-6">
                   <div className="space-y-3">
                     {overdueTasks.map((task) => {
-                      const daysOverdue = Math.abs(differenceInDays(new Date(task.due_date), new Date()));
-                      
-                      return (
-                        <div key={task.id} className="bg-white p-4 rounded-lg border border-red-200">
-                          <h4 className="font-semibold text-gray-900 mb-1">{task.title}</h4>
-                          {task.description && (
-                            <p className="text-sm text-gray-600 mb-2">{task.description}</p>
-                          )}
-                          <div className="flex items-center gap-2">
-                            <Badge className="bg-red-100 text-red-700">
-                              Atrasada há {daysOverdue} dia{daysOverdue !== 1 ? 's' : ''}
-                            </Badge>
-                            <Badge variant="outline">
-                              Venceu em {format(new Date(task.due_date), "dd/MM/yyyy")}
-                            </Badge>
-                          </div>
-                        </div>
-                      );
+                       const daysOverdue = Math.abs(differenceInDays(new Date(task.due_date), new Date()));
+
+                       return (
+                         <div key={task.id} className="bg-white p-4 rounded-lg border border-red-200">
+                           <div className="mb-3">
+                             <h4 className="font-semibold text-gray-900 mb-2">{task.title}</h4>
+                             {task.description && (
+                               <p className="text-sm text-gray-600 mb-3">{task.description}</p>
+                             )}
+                           </div>
+
+                           <div className="grid grid-cols-2 gap-3 mb-4 text-sm">
+                             {task.metadata?.workshop_name && (
+                               <div className="flex flex-col">
+                                 <span className="text-gray-500 font-medium text-xs">Cliente</span>
+                                 <span className="text-gray-800">{task.metadata.workshop_name}</span>
+                               </div>
+                             )}
+                             {task.metadata?.consultor_nome && (
+                               <div className="flex flex-col">
+                                 <span className="text-gray-500 font-medium text-xs">Consultor</span>
+                                 <span className="text-gray-800">{task.metadata.consultor_nome}</span>
+                               </div>
+                             )}
+                             {task.metadata?.tipo_atendimento && (
+                               <div className="flex flex-col">
+                                 <span className="text-gray-500 font-medium text-xs">Tipo de Atendimento</span>
+                                 <span className="text-gray-800">{task.metadata.tipo_atendimento}</span>
+                               </div>
+                             )}
+                             {task.metadata?.funcao && (
+                               <div className="flex flex-col">
+                                 <span className="text-gray-500 font-medium text-xs">Função</span>
+                                 <span className="text-gray-800">{task.metadata.funcao}</span>
+                               </div>
+                             )}
+                           </div>
+
+                           <div className="flex items-center justify-between gap-2">
+                             <div className="flex items-center gap-2">
+                               <Badge className="bg-red-100 text-red-700">
+                                 Atrasada há {daysOverdue} dia{daysOverdue !== 1 ? 's' : ''}
+                               </Badge>
+                               <Badge variant="outline">
+                                 Venceu em {format(new Date(task.due_date), "dd/MM/yyyy")}
+                               </Badge>
+                             </div>
+                             {task.metadata?.link && (
+                               <Button 
+                                 variant="default" 
+                                 size="sm" 
+                                 onClick={() => navigate(task.metadata.link)}
+                                 className="gap-1"
+                               >
+                                 Ver →
+                               </Button>
+                             )}
+                           </div>
+                         </div>
+                       );
                     })}
                   </div>
                 </CardContent>
