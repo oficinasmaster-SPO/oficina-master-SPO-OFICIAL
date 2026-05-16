@@ -60,6 +60,11 @@ export default function SugerirNovoHorarioModal({ isOpen, onClose, atendimento, 
     sugerirMutation.mutate();
   };
 
+  // Guard: evitar renderizar se atendimento for null
+  if (!isOpen || !atendimento) {
+    return null;
+  }
+
   const dataAtendimentoFormatada = atendimento.data_agendada
     ? new Date(atendimento.data_agendada).toLocaleDateString("pt-BR", {
         weekday: "long",
@@ -69,17 +74,12 @@ export default function SugerirNovoHorarioModal({ isOpen, onClose, atendimento, 
       })
     : "Não informada";
 
-  const horaAtendimento = atendimento?.data_agendada
+  const horaAtendimento = atendimento.data_agendada
     ? new Date(atendimento.data_agendada).toLocaleTimeString("pt-BR", {
         hour: "2-digit",
         minute: "2-digit"
       })
     : "Não informada";
-
-  // Guard: evitar renderizar se atendimento for null
-  if (!isOpen || !atendimento) {
-    return null;
-  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
