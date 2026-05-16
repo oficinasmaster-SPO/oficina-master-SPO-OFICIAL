@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FileText, Download, Building2, MapPin, Award, Send, Loader2 } from "lucide-react";
+import { downloadAtaPDF } from "@/components/aceleracao/AtasPDFGenerator";
 import ReactMarkdown from "react-markdown";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -121,12 +122,16 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
     }
   }, [ata?.id, atendimento]);
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (isLoading) {
       toast.warning('Aguarde o carregamento completo da ATA');
       return;
     }
-    window.print();
+    try {
+      await downloadAtaPDF(ataAtualizada, workshop);
+    } catch (error) {
+      toast.error('Erro ao gerar PDF: ' + error.message);
+    }
   };
 
 
