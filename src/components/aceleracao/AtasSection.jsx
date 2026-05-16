@@ -11,12 +11,13 @@ import { downloadAtaPDF } from "./AtasPDFGenerator";
 import { toast } from "sonner";
 import { base44 } from "@/api/base44Client";
 
-export default function AtasSection({ atas, workshop }) {
+export default function AtasSection({ atas, workshop, user }) {
   const [showAta, setShowAta] = useState(false);
   const [selectedAta, setSelectedAta] = useState(null);
   const [sendingEmail, setSendingEmail] = useState(false);
   const [sendingWhatsapp, setSendingWhatsapp] = useState(false);
   const queryClient = useQueryClient();
+  const isAdmin = user?.role === 'admin';
 
   const handleDeleteAta = async (ata) => {
     if (window.confirm("Tem certeza que deseja excluir esta ATA permanentemente?")) {
@@ -213,15 +214,17 @@ export default function AtasSection({ atas, workshop }) {
                         <Share2 className="w-4 h-4" />
                       </Button>
 
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleDeleteAta(ata)}
-                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                        title="Excluir ATA"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      {isAdmin && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleDeleteAta(ata)}
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                          title="Excluir ATA"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </div>

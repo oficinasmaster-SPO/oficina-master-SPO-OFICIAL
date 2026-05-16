@@ -128,7 +128,12 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
       return;
     }
     try {
-      await downloadAtaPDF(ataAtualizada, workshop);
+      // Injetar clientIntelligence no objeto da ATA antes de gerar o PDF
+      const ataComIntel = {
+        ...ataAtualizada,
+        client_intelligence: intelData.length > 0 ? intelData : (ataAtualizada.client_intelligence || [])
+      };
+      await downloadAtaPDF(ataComIntel, workshop);
     } catch (error) {
       toast.error('Erro ao gerar PDF: ' + error.message);
     }

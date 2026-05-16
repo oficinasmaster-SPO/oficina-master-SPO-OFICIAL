@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,7 +14,7 @@ import FaseOficinaCard from "../components/aceleracao/FaseOficinaCard";
 import AtividadesImplementacao from "../components/aceleracao/AtividadesImplementacao";
 import PlanoAceleracaoMensal from "../components/aceleracao/PlanoAceleracaoMensal";
 import FeedbackPlanoModal from "../components/aceleracao/FeedbackPlanoModal";
-import AtasSection from "../components/aceleracao/AtasSection";
+import AtasSection from "@/components/aceleracao/AtasSection";
 import SprintClientSection from "../components/aceleracao/sprint-client/SprintClientSection";
 import EAPViewer from "../components/aceleracao/EAPViewer";
 
@@ -586,6 +586,9 @@ export default function PainelClienteAceleracao() {
         workshop={workshop}
         isLoading={loadingSprints || !workshop?.id}
       />
+
+      {/* ATAs de Reunião */}
+      {atas.length > 0 && <AtasSection atas={atas} workshop={workshop} user={user} />}
 
       {/* Atividades de Implementação do Cronograma */}
       <AtividadesImplementacao items={allItemsForPanel} workshop={workshop} />
