@@ -1,4 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { format } from 'npm:date-fns@3';
+import { ptBR } from 'npm:date-fns@3/locale/pt-BR';
 
 const MENSAGEM_POLITICA = `Ficou alinhado que, após a reunião ser confirmada e agendada, qualquer solicitação de cancelamento ou remarcação deverá ser realizada com no mínimo 48 horas de antecedência. Caso o aviso não seja feito dentro desse prazo, a reunião será considerada como realizada e contabilizada normalmente dentro do plano contratado como reunião concluída.`;
 
@@ -7,26 +9,47 @@ Deno.serve(async (req) => {
   const user = await base44.auth.me();
   if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { atendimento_id } = await req.json();
+  const { atendimento_id, workshop_id } = await req.json();
   if (!atendimento_id) return Response.json({ error: 'atendimento_id obrigatório' }, { status: 400 });
 
-  // Buscar atendimento
-  const atendimento = await base44.entities.ConsultoriaAtendimento.get(atendimento_id);
+  // Buscar atendimento pelo workshop_id (campo indexado no schema)
+  let atendimento = null;
+  if (workshop_id) {
+    try {
+      const lista = await base44.entities.ConsultoriaAtendimento.filter({ workshop_id }, '-data_agendada', 500);
+      atendimento = lista?.find(a => a.id === atendimento_id) || null;
+    } catch (_) {}
+  }
+
+  // Fallback: buscar via asServiceRole sem filtro se não temos workshop_id
+  if (!atendimento) {
+    try {
+      const lista = await base44.asServiceRole.entities.ConsultoriaAtendimento.filter({ workshop_id: user?.data?.workshop_id || '' }, '-data_agendada', 500);
+      atendimento = lista?.find(a => a.id === atendimento_id) || null;
+    } catch (_) {}
+  }
+
   if (!atendimento) return Response.json({ error: 'Atendimento não encontrado' }, { status: 404 });
+
+  // Idempotência: só confirma se ainda estiver agendado
+  if (atendimento.status !== 'agendado') {
+    return Response.json({ success: true, message: 'Já confirmado anteriormente', enviados: [] });
+  }
 
   // Atualizar status para confirmado
   await base44.entities.ConsultoriaAtendimento.update(atendimento_id, { status: 'confirmado' });
 
-  // Buscar workshop para pegar dados do cliente
+  // Buscar workshop para dados do cliente
   let workshopName = '';
   let clienteEmail = '';
   try {
-    const workshop = await base44.entities.Workshop.get(atendimento.workshop_id);
+    const workshops = await base44.entities.Workshop.filter({ id: atendimento.workshop_id });
+    const workshop = workshops?.[0];
     workshopName = workshop?.name || '';
     clienteEmail = workshop?.email || '';
   } catch (_) {}
 
-  // Buscar email do consultor via User list (admin)
+  // Buscar email do consultor
   let consultorEmail = '';
   try {
     const users = await base44.asServiceRole.entities.User.list();
@@ -34,16 +57,12 @@ Deno.serve(async (req) => {
     consultorEmail = consultorUser?.email || '';
   } catch (_) {}
 
-  const { format } = await import('npm:date-fns@3');
-  const { ptBR } = await import('npm:date-fns@3/locale/pt-BR');
-
   const dataFormatada = format(new Date(atendimento.data_agendada), "dd 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: ptBR });
-
   const assunto = `✅ Presença Confirmada — ${atendimento.tipo_atendimento || 'Reunião'} em ${dataFormatada}`;
 
   const corpo = `
 <p>Olá,</p>
-<p>A presença para a reunião abaixo foi <strong>confirmada</strong>:</p>
+<p>A presença para a reunião abaixo foi <strong>confirmada pelo cliente</strong>:</p>
 <ul>
   <li><strong>Tipo:</strong> ${atendimento.tipo_atendimento || '—'}</li>
   <li><strong>Data:</strong> ${dataFormatada}</li>
@@ -59,14 +78,9 @@ Deno.serve(async (req) => {
   `.trim();
 
   const destinatarios = [consultorEmail, clienteEmail].filter(Boolean);
-
   for (const email of destinatarios) {
     try {
-      await base44.integrations.Core.SendEmail({
-        to: email,
-        subject: assunto,
-        body: corpo,
-      });
+      await base44.integrations.Core.SendEmail({ to: email, subject: assunto, body: corpo });
     } catch (_) {}
   }
 
