@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import {
@@ -20,7 +20,17 @@ import { toast } from 'sonner';
 
 export default function SugestaoHorarioPendentePoup({ isOpen, onClose, atendimento }) {
   const queryClient = useQueryClient();
-  const [decisao, setDecisao] = useState(null); // "aceitar" | "recusar" | null
+  const [decisao, setDecisao] = useState(null);
+  const [workshop, setWorkshop] = useState(null);
+  
+  // Buscar dados da workshop para exibir nome real
+  useEffect(() => {
+    if (atendimento?.workshop_id) {
+      base44.entities.Workshop.read(atendimento.workshop_id)
+        .then(ws => setWorkshop(ws))
+        .catch(() => setWorkshop(null));
+    }
+  }, [atendimento]);
 
   const processarMutation = useMutation({
     mutationFn: async (payload) => {
@@ -89,8 +99,13 @@ export default function SugestaoHorarioPendentePoup({ isOpen, onClose, atendimen
             <div className="space-y-4 text-sm">
               {/* Cliente e Oficina */}
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <p className="font-medium text-gray-900">{atendimento.workshop_id}</p>
-                <p className="text-gray-600">solicitou um novo horário para sua reunião</p>
+                <p className="font-medium text-gray-900">{workshop?.name || atendimento.workshop_id}</p>
+                <p className="text-xs text-gray-600 mb-2">{workshop?.city && `${workshop.city}, ${workshop.state}`}</p>
+                <p className="text-gray-700"><strong>Consultor:</strong> {atendimento.consultor_nome || 'N/A'}</p>
+                {atendimento.tipo_atendimento && (
+                  <p className="text-gray-700 text-sm"><strong>Tipo:</strong> {atendimento.tipo_atendimento}</p>
+                )}
+                <p className="text-gray-600 text-sm mt-2">solicitou um novo horário para sua reunião</p>
               </div>
 
               {/* Horário Original */}
