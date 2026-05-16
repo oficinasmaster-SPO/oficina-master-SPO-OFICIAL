@@ -24,6 +24,7 @@ import CancelarAtendimentoDialog from "./CancelarAtendimentoDialog";
 import FaltouAtendimentoDialog from "./FaltouAtendimentoDialog";
 import ConcluirAtendimentoDialog from "./ConcluirAtendimentoDialog";
 const BucketAtendimentosTab = lazy(() => import("./BucketAtendimentosTab"));
+const GradeHorariosTab = lazy(() => import("./GradeHorariosTab"));
 import DashboardAtendimentos from "./DashboardAtendimentos";
 import { ATENDIMENTO_STATUS, ATENDIMENTO_STATUS_COLORS, ATENDIMENTO_STATUS_LABELS } from "@/components/lib/ataConstants";
 import { format } from "date-fns";
@@ -280,6 +281,7 @@ export default function PainelAtendimentosTab({ state }) {
               { value: ATENDIMENTO_STATUS.REALIZADO, label: 'Realizados' },
               { value: ATENDIMENTO_STATUS.CONCLUIDO, label: 'Concluídos' },
               { value: 'bucket', label: '📥 Bucket' },
+              { value: 'grade_horarios', label: '🗓️ Grade Horários' },
             ].map(tab => (
               <button
                 key={tab.value}
@@ -367,6 +369,10 @@ export default function PainelAtendimentosTab({ state }) {
       {activeTab === 'bucket' ? (
         <Suspense fallback={<div className="py-12 text-center text-gray-500">Carregando bucket...</div>}>
           <BucketAtendimentosTab state={state} />
+        </Suspense>
+      ) : activeTab === 'grade_horarios' ? (
+        <Suspense fallback={<div className="py-12 text-center text-gray-500">Carregando grade...</div>}>
+          <GradeHorariosTab consultores={consultores} user={user} />
         </Suspense>
       ) : (
       <>

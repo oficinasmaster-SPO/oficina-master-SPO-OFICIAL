@@ -1,0 +1,78 @@
+{
+  "name": "RegraAgendamento",
+  "type": "object",
+  "properties": {
+    "consulting_firm_id": {
+      "type": "string",
+      "description": "ID do escrit\u00f3rio de consultoria"
+    },
+    "plan_id": {
+      "type": "string",
+      "description": "ID do plano (FREE, START, BRONZE, PRATA, GOLD, IOM, MILLIONS). Vazio = aplica a todos."
+    },
+    "nome": {
+      "type": "string",
+      "description": "Nome da regra para identifica\u00e7\u00e3o"
+    },
+    "sequencia": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "ordem": {
+            "type": "integer",
+            "description": "Posi\u00e7\u00e3o na sequ\u00eancia (1, 2, 3...)"
+          },
+          "tipo_atendimento_id": {
+            "type": "string"
+          },
+          "nome": {
+            "type": "string",
+            "description": "Nome leg\u00edvel do tipo"
+          },
+          "prazo_dias_apos_inicio": {
+            "type": "integer",
+            "description": "Deve ocorrer em at\u00e9 X dias ap\u00f3s o in\u00edcio do programa (0 = sem prazo)"
+          },
+          "intervalo_minimo_dias": {
+            "type": "integer",
+            "default": 0,
+            "description": "M\u00ednimo de dias ap\u00f3s o item anterior antes de poder agendar este"
+          },
+          "obrigatorio": {
+            "type": "boolean",
+            "default": true,
+            "description": "Se \u00e9 obrigat\u00f3rio concluir antes de avan\u00e7ar"
+          }
+        }
+      },
+      "description": "Sequ\u00eancia obrigat\u00f3ria de reuni\u00f5es"
+    },
+    "ativo": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "nome",
+    "sequencia"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": true,
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
