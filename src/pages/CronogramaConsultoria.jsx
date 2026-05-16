@@ -6,7 +6,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, User, FileText, Eye, Users, Target, Printer, MessageSquare, Send, CheckCircle2 } from "lucide-react";
+import { Calendar, Clock, User, FileText, Eye, Users, Target, Printer, MessageSquare, Send, CheckCircle2, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -17,6 +17,7 @@ import { useAtaSearch } from "@/components/aceleracao/useAtaSearch";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import EventosTab from "@/components/aceleracao/EventosTab";
 import VisualizarAtaModal from "@/components/aceleracao/VisualizarAtaModal";
+import SprintsClienteTab from "@/components/aceleracao/SprintsClienteTab";
 
 export default function CronogramaConsultoria() {
   const navigate = useNavigate();
@@ -297,6 +298,13 @@ export default function CronogramaConsultoria() {
             {(followUpsRealizados?.length || 0) > 0 && (
               <Badge className="ml-2 bg-green-100 text-green-700 text-xs">{followUpsRealizados?.length}</Badge>
             )}
+          </TabsTrigger>
+          <TabsTrigger
+            value="sprints"
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-700 data-[state=active]:bg-transparent px-6 py-3 font-medium"
+          >
+            <Zap className="w-4 h-4 mr-2" />
+            Sprints
           </TabsTrigger>
           <TabsTrigger
             value="eventos"
@@ -628,7 +636,12 @@ export default function CronogramaConsultoria() {
             </CardContent>
           </Card>
         </TabsContent>
-        {/* ABA 4: Eventos */}
+        {/* ABA 4: Sprints */}
+        <TabsContent value="sprints" className="mt-4">
+          <SprintsClienteTab workshopId={activeWorkshopId} user={user} />
+        </TabsContent>
+
+        {/* ABA 5: Eventos */}
         <TabsContent value="eventos" className="mt-4">
           {workshop ? (
             <EventosTab
