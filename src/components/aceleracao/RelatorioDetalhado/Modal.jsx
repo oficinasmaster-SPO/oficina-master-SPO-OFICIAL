@@ -14,7 +14,8 @@ export default function RelatorioDetailModal({ isOpen, onClose, tipo = 'diario',
   const [expandObservacoes, setExpandObservacoes] = useState(false);
   const [page, setPage] = useState(0);
   const itemsPerPage = 10;
-  const referenceDate = data || new Date().toISOString().split('T')[0];
+  // Sempre usa o `data` prop mais recente, com fallback para hoje
+  const referenceDate = data || new Date().toLocaleDateString('en-CA');
 
   // Bug #7 fix: reset page e filtros ao abrir modal
   useEffect(() => {
@@ -26,38 +27,35 @@ export default function RelatorioDetailModal({ isOpen, onClose, tipo = 'diario',
   }, [isOpen, tipo]);
 
   // Buscar métricas e dados
-   const { data: relatorioData = { metricas: {}, followups: [] }, isLoading: loadingMetricas } = useQuery({
-     // Bug fix: queryKey só depende de consultor (filtros de status/canal são client-side)
-     queryKey: ['relatorioCompleto', tipo, periodo, referenceDate, filters.consultor],
-     queryFn: async () => {
-       if (!isOpen) return { metricas: {}, followups: [] };
-       try {
-         // Chamar função backend que retorna métricas + dados detalhados
-         // Bug #1/#2 fix: diario e semanal não precisam de periodo
-         const payload = {
-           tipo,
-           data: referenceDate,
-           consultor_id: filters.consultor || null
-         };
-         if (tipo !== 'diario' && tipo !== 'semanal') {
-           payload.periodo = periodo;
-         }
-         const response = await base44.functions.invoke('getRelatorioFollowUpMetricas', payload);
+  const { data: relatorioData = { metricas: {}, followups: [] }, isLoading: loadingMetricas } = useQuery({
+    queryKey: ['relatorioCompleto', tipo, periodo, referenceDate, filters.consultor],
+    queryFn: async () => {
+      try {
+        const payload = {
+          tipo,
+          data: referenceDate,
+          consultor_id: filters.consultor || null
+        };
+        if (tipo !== 'diario' && tipo !== 'semanal') {
+          payload.periodo = periodo;
+        }
+        const response = await base44.functions.invoke('getRelatorioFollowUpMetricas', payload);
 
-         if (response.data?.followups) {
-           const { metricas, followups } = response.data;
-           return { metricas: metricas || {}, followups: followups || [] };
-         }
+        if (response.data?.followups) {
+          const { metricas, followups } = response.data;
+          return { metricas: metricas || {}, followups: followups || [] };
+        }
 
-         return { metricas: {}, followups: [] };
-       } catch (error) {
-         console.error('Erro ao buscar relatório:', error);
-         return { metricas: { realizados: 0, pendentes: 0, taxaRealizacao: 0 }, followups: [] };
-       }
-     },
-     enabled: isOpen,
-     staleTime: 5 * 60 * 1000
-   });
+        return { metricas: {}, followups: [] };
+      } catch (error) {
+        console.error('Erro ao buscar relatório:', error);
+        return { metricas: { realizados: 0, pendentes: 0, taxaRealizacao: 0 }, followups: [] };
+      }
+    },
+    enabled: isOpen,
+    staleTime: 0,        // sempre busca dados frescos ao abrir
+    gcTime: 0,           // não mantém cache entre aberturas
+  });
 
   const metricas = relatorioData.metricas || { realizados: 0, pendentes: 0, taxaRealizacao: 0 };
   const todasLinhas = relatorioData.followups || [];
