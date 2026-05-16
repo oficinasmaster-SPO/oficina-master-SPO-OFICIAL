@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import ReactDOM from "react-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ExternalLink } from "lucide-react";
@@ -19,6 +20,100 @@ export default function AdvancedOptionsSection({ formData, setFormData, workshop
   const [showPedidoDrawer, setShowPedidoDrawer] = useState(false);
   const [tarefasVinculadas, setTarefasVinculadas] = useState([]);
   const [pedidosVinculados, setPedidosVinculados] = useState([]);
+
+  // Portais renderizados diretamente no document.body para escapar de qualquer stacking context
+  const modals = (
+    <>
+      {showNotificationModal && (
+        <NotificationSchedulerModal
+          onClose={() => setShowNotificationModal(false)}
+          onSave={(notificacoes) => {
+            setFormData(prev => ({ ...prev, notificacoes_programadas: notificacoes }));
+            setShowNotificationModal(false);
+            toast.success('Notificações programadas!');
+          }}
+        />
+      )}
+
+      {showTemplateModal && (
+        <TemplateAtendimentoModal
+          onClose={() => setShowTemplateModal(false)}
+          onSelect={(template) => {
+            setFormData(prev => ({
+              ...prev,
+              tipo_atendimento: template.tipo,
+              pauta: template.pauta || [{ titulo: "", descricao: "", tempo_estimado: 15 }],
+              objetivos: template.objetivos || [""],
+              duracao_minutos: template.duracao_minutos || 60
+            }));
+            setShowTemplateModal(false);
+            toast.success('Template aplicado!');
+          }}
+        />
+      )}
+
+      {showConsultoriasPanel && formData.workshop_id && (
+        <ClientDetailPanel
+          key={formData.workshop_id}
+          client={workshops?.find(w => w.id === formData.workshop_id) || null}
+          isOpen={true}
+          onClose={() => setShowConsultoriasPanel(false)}
+          atendimentos={[]}
+          processos={[]}
+          defaultTab="consultoria"
+        />
+      )}
+
+      {showTarefaDrawer && (
+        <Drawer open={showTarefaDrawer} onOpenChange={setShowTarefaDrawer}>
+          <DrawerContent className="max-h-[90vh] flex flex-col" style={{ zIndex: 99999 }}>
+            <DrawerHeader>
+              <DrawerTitle>Criar Nova Tarefa</DrawerTitle>
+              <DrawerClose />
+            </DrawerHeader>
+            <div className="overflow-y-auto flex-1 px-4">
+              <TarefaBacklogForm
+                workshopId={formData.workshop_id}
+                workshops={workshops}
+                user={formData}
+                onSuccess={(tarefaId) => {
+                  setTarefasVinculadas([...tarefasVinculadas, tarefaId]);
+                  setShowTarefaDrawer(false);
+                  toast.success(`✅ Tarefa vinculada ao atendimento!`);
+                }}
+                onCancel={() => setShowTarefaDrawer(false)}
+              />
+            </div>
+          </DrawerContent>
+        </Drawer>
+      )}
+
+      {showPedidoDrawer && (
+        <Drawer open={showPedidoDrawer} onOpenChange={setShowPedidoDrawer}>
+          <DrawerContent className="max-h-[90vh] flex flex-col" style={{ zIndex: 99999 }}>
+            <DrawerHeader>
+              <DrawerTitle>Criar Novo Pedido Interno</DrawerTitle>
+              <DrawerClose />
+            </DrawerHeader>
+            <div className="overflow-y-auto flex-1 px-4">
+              <PedidoInternoForm
+                user={formData}
+                usuarios={[]}
+                workshops={workshops}
+                clienteId={formData.workshop_id}
+                onSuccess={(pedidoId) => {
+                  setPedidosVinculados([...pedidosVinculados, pedidoId]);
+                  setShowPedidoDrawer(false);
+                  toast.success(`📋 Pedido vinculado ao atendimento!`);
+                }}
+                onCancel={() => setShowPedidoDrawer(false)}
+              />
+            </div>
+          </DrawerContent>
+        </Drawer>
+      )}
+    </>
+  );
 
   return (
     <>
@@ -125,97 +220,8 @@ export default function AdvancedOptionsSection({ formData, setFormData, workshop
         </CardContent>
       </Card>
 
-      {/* Modais */}
-      {showNotificationModal && (
-        <NotificationSchedulerModal
-          onClose={() => setShowNotificationModal(false)}
-          onSave={(notificacoes) => {
-            setFormData(prev => ({ ...prev, notificacoes_programadas: notificacoes }));
-            setShowNotificationModal(false);
-            toast.success('Notificações programadas!');
-          }}
-        />
-      )}
-
-      {showTemplateModal && (
-        <TemplateAtendimentoModal
-          onClose={() => setShowTemplateModal(false)}
-          onSelect={(template) => {
-            setFormData(prev => ({
-              ...prev,
-              tipo_atendimento: template.tipo,
-              pauta: template.pauta || [{ titulo: "", descricao: "", tempo_estimado: 15 }],
-              objetivos: template.objetivos || [""],
-              duracao_minutos: template.duracao_minutos || 60
-            }));
-            setShowTemplateModal(false);
-            toast.success('Template aplicado!');
-          }}
-        />
-      )}
-
-      {showConsultoriasPanel && formData.workshop_id && (
-        <ClientDetailPanel
-          key={formData.workshop_id}
-          client={workshops?.find(w => w.id === formData.workshop_id) || null}
-          isOpen={true}
-          onClose={() => setShowConsultoriasPanel(false)}
-          atendimentos={[]}
-          processos={[]}
-          defaultTab="consultoria"
-        />
-      )}
-
-      {/* Drawer Tarefa Backlog */}
-      {showTarefaDrawer && (
-        <Drawer open={showTarefaDrawer} onOpenChange={setShowTarefaDrawer}>
-          <DrawerContent className="max-h-[90vh] flex flex-col z-[20000]">
-            <DrawerHeader>
-              <DrawerTitle>Criar Nova Tarefa</DrawerTitle>
-              <DrawerClose />
-            </DrawerHeader>
-            <div className="overflow-y-auto flex-1 px-4">
-              <TarefaBacklogForm
-                workshopId={formData.workshop_id}
-                workshops={workshops}
-                user={formData}
-                onSuccess={(tarefaId) => {
-                  setTarefasVinculadas([...tarefasVinculadas, tarefaId]);
-                  setShowTarefaDrawer(false);
-                  toast.success(`✅ Tarefa vinculada ao atendimento!`);
-                }}
-                onCancel={() => setShowTarefaDrawer(false)}
-              />
-            </div>
-          </DrawerContent>
-        </Drawer>
-      )}
-
-      {/* Drawer Pedido Interno */}
-      {showPedidoDrawer && (
-        <Drawer open={showPedidoDrawer} onOpenChange={setShowPedidoDrawer}>
-          <DrawerContent className="max-h-[90vh] flex flex-col z-[20000]">
-            <DrawerHeader>
-              <DrawerTitle>Criar Novo Pedido Interno</DrawerTitle>
-              <DrawerClose />
-            </DrawerHeader>
-            <div className="overflow-y-auto flex-1 px-4">
-              <PedidoInternoForm
-                user={formData}
-                usuarios={[]}
-                workshops={workshops}
-                clienteId={formData.workshop_id}
-                onSuccess={(pedidoId) => {
-                  setPedidosVinculados([...pedidosVinculados, pedidoId]);
-                  setShowPedidoDrawer(false);
-                  toast.success(`📋 Pedido vinculado ao atendimento!`);
-                }}
-                onCancel={() => setShowPedidoDrawer(false)}
-              />
-            </div>
-          </DrawerContent>
-        </Drawer>
-      )}
+      {/* Modais renderizados fora do stacking context do form via createPortal */}
+      {typeof document !== 'undefined' && ReactDOM.createPortal(modals, document.body)}
     </>
   );
 }
