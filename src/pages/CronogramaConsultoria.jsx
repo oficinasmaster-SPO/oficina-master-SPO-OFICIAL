@@ -29,6 +29,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import EventosTab from "@/components/aceleracao/EventosTab";
 import VisualizarAtaModal from "@/components/aceleracao/VisualizarAtaModal";
 import SprintsClienteTab from "@/components/aceleracao/SprintsClienteTab";
+import ReunioesClienteTab from "@/components/aceleracao/ReunioesClienteTab";
 
 export default function CronogramaConsultoria() {
   const navigate = useNavigate();
@@ -342,12 +343,16 @@ export default function CronogramaConsultoria() {
         </TabsList>
 
         {/* ABA 1: Próximos Atendimentos */}
-        <TabsContent value="proximos" className="mt-4">
+        <TabsContent value="proximos" className="mt-4 space-y-6">
+          {/* Seção: Reuniões Futuras com ações do cliente */}
+          <ReunioesClienteTab workshopId={activeWorkshopId} user={user} />
+
+          {/* Seção legada: Atendimentos agendados */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
                 <Clock className="w-5 h-5 text-blue-600" />
-                Reuniões futuras — ordenadas do mais próximo ao mais distante
+                Todos os Próximos Atendimentos — ordenados do mais próximo ao mais distante
               </CardTitle>
             </CardHeader>
             <CardContent>
