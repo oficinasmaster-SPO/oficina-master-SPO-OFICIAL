@@ -6,7 +6,17 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, User, FileText, Eye, Users, Target, Printer, MessageSquare, Send, CheckCircle2, Zap, ThumbsUp } from "lucide-react";
+import { Calendar, Clock, User, FileText, Eye, Users, Target, Printer, MessageSquare, Send, CheckCircle2, Zap, ThumbsUp, AlertCircle } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -25,6 +35,8 @@ export default function CronogramaConsultoria() {
   const queryClient = useQueryClient();
   const [selectedAta, setSelectedAta] = useState(null);
   const [showVisualizarAta, setShowVisualizarAta] = useState(false);
+  const [confirmacaoAberta, setConfirmacaoAberta] = useState(false);
+  const [atendimentoParaConfirmar, setAtendimentoParaConfirmar] = useState(null);
   const [filters, setFilters] = useState({
     searchTerm: "",
     workshop_id: "",
@@ -419,7 +431,10 @@ export default function CronogramaConsultoria() {
                                 variant="outline"
                                 className="border-green-500 text-green-700 hover:bg-green-50 gap-2"
                                 disabled={confirmarPresencaMutation.isPending}
-                                onClick={() => confirmarPresencaMutation.mutate(atendimento.id)}
+                                onClick={() => {
+                                  setAtendimentoParaConfirmar(atendimento.id);
+                                  setConfirmacaoAberta(true);
+                                }}
                               >
                                 <ThumbsUp className="w-4 h-4" />
                                 {confirmarPresencaMutation.isPending ? "Confirmando..." : "Confirmar Presença"}
@@ -695,6 +710,49 @@ export default function CronogramaConsultoria() {
       {showVisualizarAta && selectedAta && (
         <VisualizarAtaModal ata={selectedAta} onClose={() => { setShowVisualizarAta(false); setSelectedAta(null); }} />
       )}
+
+      {/* Dialog de confirmação de presença */}
+      <AlertDialog open={confirmacaoAberta} onOpenChange={setConfirmacaoAberta}>
+        <AlertDialogContent className="max-w-lg">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-green-700">
+              <CheckCircle2 className="w-5 h-5" />
+              Confirmar Presença na Reunião
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3 text-sm text-gray-700">
+                <p>
+                  Ficou alinhado que, dentro das próximas <strong>24 horas anteriores ao atendimento</strong>, poderão ocorrer ajustes operacionais, alinhamentos finais ou confirmações complementares por parte da equipe responsável.
+                </p>
+                <p>
+                  Caso o cliente não receba nenhum contato adicional da equipe dentro desse período, entende-se automaticamente que o atendimento <strong>permanece confirmado</strong> conforme previamente agendado.
+                </p>
+                <div className="bg-amber-50 border border-amber-200 rounded-md p-3 flex gap-2">
+                  <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  <p className="text-amber-800 text-xs">
+                    Qualquer solicitação de cancelamento ou remarcação deverá ser realizada com no mínimo <strong>48 horas de antecedência</strong>. Fora desse prazo, a reunião será contabilizada normalmente no plano contratado.
+                  </p>
+                </div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setAtendimentoParaConfirmar(null)}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-green-600 hover:bg-green-700 text-white"
+              onClick={() => {
+                confirmarPresencaMutation.mutate(atendimentoParaConfirmar);
+                setAtendimentoParaConfirmar(null);
+              }}
+            >
+              <ThumbsUp className="w-4 h-4 mr-2" />
+              Confirmar Presença
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
