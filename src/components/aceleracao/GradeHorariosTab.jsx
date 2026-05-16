@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Clock, Plus, Trash2, GripVertical, User, CalendarDays, ChevronUp, ChevronDown, Settings } from "lucide-react";
+import { Clock, Plus, Trash2, GripVertical, User, CalendarDays, ChevronUp, ChevronDown, Settings, Check } from "lucide-react";
 import { toast } from "sonner";
 
 const DIAS_SEMANA = [
@@ -27,8 +27,15 @@ export default function GradeHorariosTab({ consultores = [], user }) {
   const queryClient = useQueryClient();
   const [consultorSelecionado, setConsultorSelecionado] = useState(user?.id || "");
   const [dialogAberto, setDialogAberto] = useState(false);
+  const [editandoSlot, setEditandoSlot] = useState(null); // { diaRegistro, slot }
   const [diaEditando, setDiaEditando] = useState(null); // dia_semana number
   const [novoHorario, setNovoHorario] = useState({ hora: "09:00" });
+
+  // Buscar tipos de atendimento disponíveis
+  const { data: tiposAtendimento = [] } = useQuery({
+    queryKey: ['tipos-atendimento'],
+    queryFn: () => base44.entities.TipoAtendimentoConsultoria?.list?.() || [],
+  });
 
   // Buscar grade do consultor selecionado
   const { data: grade = [], isLoading } = useQuery({
@@ -225,56 +232,82 @@ export default function GradeHorariosTab({ consultores = [], user }) {
                         .sort((a, b) => a.prioridade - b.prioridade)
                         .map((slot, idx) => (
                           <div
-                            key={idx}
-                            className={`flex items-center gap-2 rounded-md px-2 py-1.5 text-sm border ${
-                              slot.ativo
-                                ? "bg-white border-gray-200"
-                                : "bg-gray-50 border-gray-100 opacity-50"
-                            }`}
-                          >
-                            {/* Prioridade */}
-                            <span className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold flex items-center justify-center shrink-0">
-                              {slot.prioridade}
-                            </span>
+                             key={idx}
+                             className={`flex flex-col rounded-md px-2 py-1.5 text-sm border gap-1 ${
+                               slot.ativo
+                                 ? "bg-white border-gray-200"
+                                 : "bg-gray-50 border-gray-100 opacity-50"
+                             }`}
+                           >
+                             <div className="flex items-center gap-2">
+                               {/* Prioridade */}
+                               <span className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold flex items-center justify-center shrink-0">
+                                 {slot.prioridade}
+                               </span>
 
-                            {/* Hora */}
-                            <Clock className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                            <span className="font-mono font-medium text-gray-800 flex-1">{slot.hora}</span>
+                               {/* Hora */}
+                               <Clock className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                               <span className="font-mono font-medium text-gray-800 flex-1">{slot.hora}</span>
 
-                            {/* Ativo toggle */}
-                            <Switch
-                              checked={slot.ativo}
-                              onCheckedChange={() => toggleSlot(diaRegistro, slot.hora, slot.prioridade)}
-                              className="scale-[0.65]"
-                            />
+                               {/* Ativo toggle */}
+                               <Switch
+                                 checked={slot.ativo}
+                                 onCheckedChange={() => toggleSlot(diaRegistro, slot.hora, slot.prioridade)}
+                                 className="scale-[0.65]"
+                               />
 
-                            {/* Mover prioridade */}
-                            <div className="flex flex-col gap-0">
-                              <button
-                                onClick={() => moverPrioridade(diaRegistro, slot.hora, slot.prioridade, -1)}
-                                className="text-gray-300 hover:text-indigo-500 transition-colors"
-                                title="Aumentar prioridade"
-                              >
-                                <ChevronUp className="w-3.5 h-3.5" />
-                              </button>
-                              <button
-                                onClick={() => moverPrioridade(diaRegistro, slot.hora, slot.prioridade, 1)}
-                                className="text-gray-300 hover:text-indigo-500 transition-colors"
-                                title="Diminuir prioridade"
-                              >
-                                <ChevronDown className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
+                               {/* Mover prioridade */}
+                               <div className="flex flex-col gap-0">
+                                 <button
+                                   onClick={() => moverPrioridade(diaRegistro, slot.hora, slot.prioridade, -1)}
+                                   className="text-gray-300 hover:text-indigo-500 transition-colors"
+                                   title="Aumentar prioridade"
+                                 >
+                                   <ChevronUp className="w-3.5 h-3.5" />
+                                 </button>
+                                 <button
+                                   onClick={() => moverPrioridade(diaRegistro, slot.hora, slot.prioridade, 1)}
+                                   className="text-gray-300 hover:text-indigo-500 transition-colors"
+                                   title="Diminuir prioridade"
+                                 >
+                                   <ChevronDown className="w-3.5 h-3.5" />
+                                 </button>
+                               </div>
 
-                            {/* Remover */}
-                            <button
-                              onClick={() => removerHorario(diaRegistro, slot.hora, slot.prioridade)}
-                              className="text-gray-300 hover:text-red-500 transition-colors"
-                              title="Remover horário"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
+                               {/* Editar tipos */}
+                               <Button
+                                 variant="ghost"
+                                 size="sm"
+                                 className="h-6 px-2 text-xs text-indigo-600 hover:bg-indigo-50"
+                                 onClick={() => setEditandoSlot({ diaRegistro, slot })}
+                               >
+                                 <Settings className="w-3 h-3" />
+                               </Button>
+
+                               {/* Remover */}
+                               <button
+                                 onClick={() => removerHorario(diaRegistro, slot.hora, slot.prioridade)}
+                                 className="text-gray-300 hover:text-red-500 transition-colors"
+                                 title="Remover horário"
+                               >
+                                 <Trash2 className="w-3.5 h-3.5" />
+                               </button>
+                             </div>
+
+                             {/* Tipos de atendimento */}
+                             {slot.tipo_atendimento_ids?.length > 0 && (
+                               <div className="flex flex-wrap gap-1 pl-8">
+                                 {slot.tipo_atendimento_ids.map((id) => {
+                                   const tipo = tiposAtendimento.find(t => t.id === id);
+                                   return (
+                                     <Badge key={id} variant="outline" className="text-xs">
+                                       {tipo?.nome || id}
+                                     </Badge>
+                                   );
+                                 })}
+                               </div>
+                             )}
+                           </div>
                         ))}
                     </div>
                   )}
@@ -362,6 +395,72 @@ export default function GradeHorariosTab({ consultores = [], user }) {
             >
               <Plus className="w-4 h-4 mr-1" />
               Adicionar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog: editar tipos de atendimento do slot */}
+      <Dialog open={!!editandoSlot} onOpenChange={() => setEditandoSlot(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Settings className="w-5 h-5 text-indigo-600" />
+              Tipos de Atendimento — {editandoSlot?.slot.hora}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Selecione os tipos de atendimento permitidos:</Label>
+              <div className="space-y-2 max-h-64 overflow-y-auto border rounded-lg p-3 bg-gray-50">
+                {tiposAtendimento.map((tipo) => (
+                  <label key={tipo.id} className="flex items-center gap-2 p-2 hover:bg-white rounded transition-colors cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={(editandoSlot?.slot.tipo_atendimento_ids || []).includes(tipo.id)}
+                      onChange={(e) => {
+                        const ids = editandoSlot?.slot.tipo_atendimento_ids || [];
+                        const updated = e.target.checked
+                          ? [...ids, tipo.id]
+                          : ids.filter(id => id !== tipo.id);
+                        setEditandoSlot({
+                          ...editandoSlot,
+                          slot: { ...editandoSlot.slot, tipo_atendimento_ids: updated }
+                        });
+                      }}
+                      className="cursor-pointer"
+                    />
+                    <span className="text-sm">{tipo.nome}</span>
+                  </label>
+                ))}
+              </div>
+              <p className="text-xs text-gray-500 mt-2">
+                Se vazio, o slot atende <strong>qualquer tipo</strong> de atendimento.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditandoSlot(null)}>
+              Cancelar
+            </Button>
+            <Button
+              className="bg-indigo-600 hover:bg-indigo-700"
+              disabled={salvarMutation.isPending}
+              onClick={() => {
+                const diaAtualizado = {
+                  ...editandoSlot.diaRegistro,
+                  horarios: editandoSlot.diaRegistro.horarios.map(h =>
+                    h.hora === editandoSlot.slot.hora && h.prioridade === editandoSlot.slot.prioridade
+                      ? editandoSlot.slot
+                      : h
+                  )
+                };
+                salvarMutation.mutate(diaAtualizado);
+                setEditandoSlot(null);
+              }}
+            >
+              <Check className="w-4 h-4 mr-1" />
+              Salvar
             </Button>
           </DialogFooter>
         </DialogContent>

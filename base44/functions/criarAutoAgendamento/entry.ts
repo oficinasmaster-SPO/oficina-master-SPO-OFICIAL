@@ -80,42 +80,29 @@ Deno.serve(async (req) => {
       }
     }
 
-    // ── Buscar consultores ativos com grade configurada ──
-    const consultores = await base44.entities.User.filter({
-      role: 'admin',
-      'data.consulting_firm_id': workshop.consulting_firm_id
-    });
-
-    if (!consultores || consultores.length === 0) {
-      return Response.json({ 
-        error: 'Nenhum consultor disponível para agendamento' 
-      }, { status: 400 });
-    }
-
-    // ── Buscar horários disponíveis para os próximos 30 dias ──
+    // ── FASE 2: Atribuir consultor automaticamente ──
+    // Buscar o melhor consultor com base em tipo + disponibilidade + prioridade
     let slotEncontrado = null;
 
-    for (const consultor of consultores) {
-      try {
-        const response = await base44.functions.invoke('getHorariosDisponiveis', {
-          consultor_id: consultor.id,
-          tipo_atendimento_id,
-          data_fim: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-        });
+    try {
+      const atribuicaoResponse = await base44.functions.invoke('atribuirConsultorAutomatico', {
+        tipo_atendimento_id,
+        workshop_id,
+        data_preferida: null, // Cliente não especificou preferência
+        data_fim_limite: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+      });
 
-        if (response.data?.slots && response.data.slots.length > 0) {
-          const primeiroSlot = response.data.slots[0];
-          slotEncontrado = {
-            consultor_id: consultor.id,
-            consultor_nome: consultor.full_name,
-            ...primeiroSlot
-          };
-          break; // Usar o primeiro consultor com disponibilidade
-        }
-      } catch (e) {
-        // Continuar para o próximo consultor
-        continue;
+      if (atribuicaoResponse.data?.success && atribuicaoResponse.data.consultor_id) {
+        slotEncontrado = {
+          consultor_id: atribuicaoResponse.data.consultor_id,
+          consultor_nome: atribuicaoResponse.data.consultor_nome,
+          data: atribuicaoResponse.data.data,
+          hora: atribuicaoResponse.data.hora,
+          prioridade: atribuicaoResponse.data.prioridade
+        };
       }
+    } catch (e) {
+      console.warn('Aviso em atribuirConsultorAutomatico:', e.message);
     }
 
     if (!slotEncontrado) {
