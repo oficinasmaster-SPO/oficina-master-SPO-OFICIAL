@@ -470,33 +470,45 @@ export default function Notificacoes() {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4 text-sm">
                       {notification.metadata?.responsavel && (
                         <div className="flex flex-col">
-                          <span className="text-gray-500 font-medium text-xs">Responsável</span>
-                          <span className="text-gray-800">{notification.metadata.responsavel}</span>
+                          <span className="text-gray-500 font-medium text-xs">👤 Responsável</span>
+                          <span className="text-gray-800 font-medium">{notification.metadata.responsavel}</span>
                         </div>
                       )}
                       {notification.metadata?.cliente && (
                         <div className="flex flex-col">
-                          <span className="text-gray-500 font-medium text-xs">Cliente</span>
-                          <span className="text-gray-800">{notification.metadata.cliente}</span>
+                          <span className="text-gray-500 font-medium text-xs">🏢 Cliente</span>
+                          <span className="text-gray-800 font-medium">{notification.metadata.cliente}</span>
                         </div>
                       )}
                       {notification.metadata?.tipo && (
                         <div className="flex flex-col">
-                          <span className="text-gray-500 font-medium text-xs">Tipo</span>
-                          <span className="text-gray-800">{notification.metadata.tipo}</span>
+                          <span className="text-gray-500 font-medium text-xs">📋 Tipo</span>
+                          <span className="text-gray-800 font-medium">{notification.metadata.tipo}</span>
                         </div>
                       )}
                       {notification.metadata?.acao && (
                         <div className="flex flex-col">
-                          <span className="text-gray-500 font-medium text-xs">Ação</span>
-                          <span className="text-gray-800">{notification.metadata.acao}</span>
+                          <span className="text-gray-500 font-medium text-xs">⚡ Ação</span>
+                          <span className="text-gray-800 font-medium">{notification.metadata.acao}</span>
                         </div>
                       )}
                     </div>
 
-                    <p className="text-xs text-gray-500 mb-3">
-                      {format(new Date(notification.created_date), "dd 'de' MMM 'às' HH:mm", { locale: ptBR })}
-                    </p>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4 text-xs border-t pt-3">
+                      <div className="flex items-center gap-1">
+                        <span className="text-gray-500">📅 Criado:</span>
+                        <span className="text-gray-700 font-medium">{format(new Date(notification.created_date), "dd/MM/yyyy", { locale: ptBR })}</span>
+                      </div>
+                      {notification.metadata?.due_date && (
+                        <div className="flex items-center gap-1">
+                          <span className="text-gray-500">📌 Vence:</span>
+                          <span className="text-gray-700 font-medium">{format(new Date(notification.metadata.due_date), "dd/MM/yyyy", { locale: ptBR })}</span>
+                        </div>
+                      )}
+                      <div className="text-xs text-gray-500">
+                        ⏰ {format(new Date(notification.created_date), "HH:mm", { locale: ptBR })}
+                      </div>
+                    </div>
 
                     <div className="flex gap-2 flex-wrap">
                       <Button
@@ -666,28 +678,41 @@ export default function Notificacoes() {
                            <div className="grid grid-cols-2 gap-3 mb-4 text-sm">
                              {task.metadata?.workshop_name && (
                                <div className="flex flex-col">
-                                 <span className="text-gray-500 font-medium text-xs">Cliente</span>
-                                 <span className="text-gray-800">{task.metadata.workshop_name}</span>
+                                 <span className="text-gray-500 font-medium text-xs">🏢 Cliente</span>
+                                 <span className="text-gray-800 font-medium">{task.metadata.workshop_name}</span>
                                </div>
                              )}
                              {task.metadata?.consultor_nome && (
                                <div className="flex flex-col">
-                                 <span className="text-gray-500 font-medium text-xs">Consultor</span>
-                                 <span className="text-gray-800">{task.metadata.consultor_nome}</span>
+                                 <span className="text-gray-500 font-medium text-xs">👤 Responsável</span>
+                                 <span className="text-gray-800 font-medium">{task.metadata.consultor_nome}</span>
                                </div>
                              )}
                              {task.metadata?.tipo_atendimento && (
                                <div className="flex flex-col">
-                                 <span className="text-gray-500 font-medium text-xs">Tipo de Atendimento</span>
-                                 <span className="text-gray-800">{task.metadata.tipo_atendimento}</span>
+                                 <span className="text-gray-500 font-medium text-xs">📋 Tipo</span>
+                                 <span className="text-gray-800 font-medium">{task.metadata.tipo_atendimento}</span>
                                </div>
                              )}
                              {task.metadata?.funcao && (
                                <div className="flex flex-col">
-                                 <span className="text-gray-500 font-medium text-xs">Função</span>
-                                 <span className="text-gray-800">{task.metadata.funcao}</span>
+                                 <span className="text-gray-500 font-medium text-xs">⚡ Ação</span>
+                                 <span className="text-gray-800 font-medium">{task.metadata.funcao}</span>
                                </div>
                              )}
+                           </div>
+
+                           <div className="border-t pt-3 mb-4 grid grid-cols-2 gap-2 text-xs">
+                             <div className="flex items-center gap-1">
+                               <span className="text-gray-500">📅 Criado:</span>
+                               <span className="text-gray-700 font-medium">{format(new Date(task.created_date || new Date()), "dd/MM/yyyy", { locale: ptBR })}</span>
+                             </div>
+                             <div className="flex items-center gap-1">
+                               <span className="text-gray-500">📌 Vence:</span>
+                               <span className={`font-medium ${task.due_date && new Date(task.due_date) < new Date() ? 'text-red-600' : 'text-gray-700'}`}>
+                                 {format(new Date(task.due_date), "dd/MM/yyyy", { locale: ptBR })}
+                               </span>
+                             </div>
                            </div>
 
                            <div className="flex items-center justify-between gap-2">
