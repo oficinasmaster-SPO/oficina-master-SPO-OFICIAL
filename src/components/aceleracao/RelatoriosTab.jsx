@@ -8,7 +8,6 @@ import { toast } from 'sonner';
 import EnviarEmailModal from './EnviarEmailModal';
 import RelatorioDetalhado from './RelatorioDetalhado/Modal';
 import RiscosOportunidadesModal from './RiscosOportunidades/RiscosOportunidadesModal';
-import TaxaRealizacaoRelatorio from './TaxaRealizacaoRelatorio';
 import {
   Select,
   SelectContent,
@@ -16,7 +15,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import jsPDF from 'npm:jspdf@2.5.2';
 
 export default function RelatoriosTab() {
   const { user } = useAuth();
@@ -37,10 +35,11 @@ export default function RelatoriosTab() {
   });
   const [loadingRiscos, setLoadingRiscos] = useState(false);
 
-  const today = new Date().toISOString().split('T')[0];
+  // Datas calculadas uma vez, com timezone BR correto
+  const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD no fuso local
   const weekStart = new Date();
-  weekStart.setDate(weekStart.getDate() - weekStart.getDay());
-  const weekStartStr = weekStart.toISOString().split('T')[0];
+  weekStart.setDate(weekStart.getDate() - weekStart.getDay()); // domingo da semana atual
+  const weekStartStr = weekStart.toLocaleDateString('en-CA');
 
   const [metricasDiarias, setMetricasDiarias] = useState({});
   const [metricasSemanais, setMetricasSemanais] = useState({});
@@ -51,15 +50,15 @@ export default function RelatoriosTab() {
       setLoadingMetricas(true);
       try {
         const [resDiario, resSemanal, resMensal] = await Promise.all([
-          // Diário: só o dia de hoje
+          // Diário: data selecionada (não hardcoded today)
           base44.functions.invoke('getRelatorioFollowUpMetricas', {
             tipo: 'diario',
-            data: today,
+            data: dataSelecionada,
           }),
-          // Semanal: semana atual (dom → sáb)
+          // Semanal: semana que contém a data selecionada
           base44.functions.invoke('getRelatorioFollowUpMetricas', {
             tipo: 'semanal',
-            data: today,
+            data: dataSelecionada,
           }),
           // Mensal: período selecionado
           base44.functions.invoke('getRelatorioFollowUpMetricas', {
@@ -108,23 +107,6 @@ export default function RelatoriosTab() {
       buscarRiscos();
     }
   }, [riscosOportunidadesOpen]);
-
-  // Calcula dias distintos com atividade a partir dos followups
-  const calcComparativoDias = (followups = []) => {
-    const dias = new Set(followups.map(f => (f.dataContato || f.reminder_date || '').substring(0, 10)).filter(Boolean));
-    return dias.size;
-  };
-
-  // Calcula semanas distintas com atividade a partir dos followups
-  const calcEvolucaoSemanal = (followups = []) => {
-    const semanas = new Set(followups.map(f => {
-      const d = new Date(f.dataContato || f.reminder_date || '');
-      if (isNaN(d)) return null;
-      const week = Math.ceil(d.getDate() / 7);
-      return `${d.getFullYear()}-${d.getMonth()}-W${week}`;
-    }).filter(Boolean));
-    return semanas.size;
-  };
 
   // Feriados nacionais fixos brasileiros (MM-DD)
   const FERIADOS_NACIONAIS_FIXOS = [
@@ -238,7 +220,7 @@ export default function RelatoriosTab() {
       id: 'diario',
       titulo: '📊 Relatório Diário',
       data: today,
-      descricao: `Hoje, ${new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit' })}`,
+      descricao: `Dia ${new Date(dataSelecionada + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit' })}`,
       metricas: [
         { label: 'Realizados hoje', valor: metricasDiarias.realizados, tipo: 'realizados' },
         { label: 'Atrasados', valor: metricasDiarias.pendentes, tipo: 'pendentes' },
@@ -249,7 +231,7 @@ export default function RelatoriosTab() {
       id: 'semanal',
       titulo: '📅 Relatório Semanal',
       data: weekStartStr,
-      descricao: `Semana ${weekStartStr} → ${today}`,
+      descricao: `Semana de ${weekStartStr} → ${dataSelecionada}`,
       metricas: [
         { label: 'Realizados semana', valor: metricasSemanais.realizados, tipo: 'realizados' },
         { label: 'Pendentes semana', valor: metricasSemanais.pendentes, tipo: 'pendentes' },
@@ -313,33 +295,7 @@ export default function RelatoriosTab() {
     }
   };
 
-  const handleVerPDF = async (tipo) => {
-    setLoadingPdf(tipo);
-    try {
-      const payload = {
-        tipo,
-        data: dataSelecionada,
-      };
 
-      if ((tipo === 'mensal' || tipo === 'riscos') && periodoSelecionado) {
-        payload.periodo = periodoSelecionado;
-      }
-
-      const response = await base44.functions.invoke('gerarRelatorioFollowUpPDF', payload);
-
-      if (response.data) {
-        const blob = new Blob([response.data], { type: 'application/pdf' });
-        const pdfUrl = window.URL.createObjectURL(blob);
-        setPdfPreview({ tipo, url: pdfUrl });
-        toast.success('Relatório carregado');
-      }
-    } catch (error) {
-      console.error('Erro ao gerar PDF:', error);
-      toast.error('Erro ao gerar relatório');
-    } finally {
-      setLoadingPdf(null);
-    }
-  };
 
   return (
     <div className="space-y-6">
