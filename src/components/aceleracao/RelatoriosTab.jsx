@@ -40,22 +40,43 @@ export default function RelatoriosTab() {
   const today = new Date().toISOString().split('T')[0];
   const weekStart = new Date();
   weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+  const weekStartStr = weekStart.toISOString().split('T')[0];
 
-  // Buscar métricas quando alterar período ou data
+  const [metricasDiarias, setMetricasDiarias] = useState({});
+  const [metricasSemanais, setMetricasSemanais] = useState({});
+
+  // Buscar métricas quando alterar período ou data — 3 chamadas independentes
   useEffect(() => {
     const buscarMetricas = async () => {
       setLoadingMetricas(true);
       try {
-        // Bug #2 fix: buscar métricas sempre com periodo (não tipo) para os cards da aba
-        const response = await base44.functions.invoke('getRelatorioFollowUpMetricas', {
-          tipo: 'mensal', // cards usam período, não diário/semanal
-          data: dataSelecionada,
-          periodo: periodoSelecionado,
-        });
+        const [resDiario, resSemanal, resMensal] = await Promise.all([
+          // Diário: só o dia de hoje
+          base44.functions.invoke('getRelatorioFollowUpMetricas', {
+            tipo: 'diario',
+            data: today,
+          }),
+          // Semanal: semana atual (dom → sáb)
+          base44.functions.invoke('getRelatorioFollowUpMetricas', {
+            tipo: 'semanal',
+            data: today,
+          }),
+          // Mensal: período selecionado
+          base44.functions.invoke('getRelatorioFollowUpMetricas', {
+            tipo: 'mensal',
+            data: dataSelecionada,
+            periodo: periodoSelecionado,
+          }),
+        ]);
 
-        if (response.data?.metricas) {
-          // Guardar followups dentro de metricas para cálculos de dias/semanas
-          setMetricas({ ...response.data.metricas, _followups: response.data.followups || [] });
+        if (resDiario.data?.metricas) {
+          setMetricasDiarias(resDiario.data.metricas);
+        }
+        if (resSemanal.data?.metricas) {
+          setMetricasSemanais(resSemanal.data.metricas);
+        }
+        if (resMensal.data?.metricas) {
+          setMetricas({ ...resMensal.data.metricas, _followups: resMensal.data.followups || [] });
         }
       } catch (error) {
         console.error('Erro ao buscar métricas:', error);
@@ -217,22 +238,22 @@ export default function RelatoriosTab() {
       id: 'diario',
       titulo: '📊 Relatório Diário',
       data: today,
-      descricao: 'Resumo do dia',
+      descricao: `Hoje, ${new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit' })}`,
       metricas: [
-        { label: 'Realizados', valor: metricas.realizados, tipo: 'realizados' },
-        { label: 'Pendentes', valor: metricas.pendentes, tipo: 'pendentes' },
-        { label: 'Taxa de realização', valor: metricas.taxaRealizacao, tipo: 'taxa', taxaAtraso: metricas.taxaAtraso },
+        { label: 'Realizados hoje', valor: metricasDiarias.realizados, tipo: 'realizados' },
+        { label: 'Atrasados', valor: metricasDiarias.pendentes, tipo: 'pendentes' },
+        { label: 'Taxa realização', valor: metricasDiarias.taxaRealizacao, tipo: 'taxa', taxaAtraso: metricasDiarias.taxaAtraso },
       ],
     },
     {
       id: 'semanal',
       titulo: '📅 Relatório Semanal',
-      data: weekStart.toISOString().split('T')[0],
-      descricao: `Semana ${Math.ceil((new Date().getDate()) / 7)}`,
+      data: weekStartStr,
+      descricao: `Semana ${weekStartStr} → ${today}`,
       metricas: [
-        { label: 'Total semana', valor: metricas.realizados, tipo: 'realizados' },
-        { label: 'Pendentes', valor: metricas.pendentes, tipo: 'pendentes' },
-        { label: 'Taxa média', valor: metricas.taxaRealizacao, tipo: 'taxa', taxaAtraso: metricas.taxaAtraso },
+        { label: 'Realizados semana', valor: metricasSemanais.realizados, tipo: 'realizados' },
+        { label: 'Pendentes semana', valor: metricasSemanais.pendentes, tipo: 'pendentes' },
+        { label: 'Taxa semana', valor: metricasSemanais.taxaRealizacao, tipo: 'taxa', taxaAtraso: metricasSemanais.taxaAtraso },
       ],
     },
     {
