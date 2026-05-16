@@ -8,7 +8,7 @@ import { base44 } from "@/api/base44Client";
 import NotificationSchedulerModal from "@/components/aceleracao/NotificationSchedulerModal";
 import TemplateAtendimentoModal from "@/components/aceleracao/TemplateAtendimentoModal";
 import ClientDetailPanel from "@/components/aceleracao/ClientDetailPanel";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerClose } from "@/components/ui/drawer";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import TarefaBacklogForm from "@/components/aceleracao/TarefaBacklogForm";
 import PedidoInternoForm from "@/components/aceleracao/PedidoInternoForm";
 
@@ -65,52 +65,46 @@ export default function AdvancedOptionsSection({ formData, setFormData, workshop
       )}
 
       {showTarefaDrawer && (
-        <Drawer open={showTarefaDrawer} onOpenChange={setShowTarefaDrawer}>
-          <DrawerContent className="max-h-[90vh] flex flex-col" style={{ zIndex: 99999 }}>
-            <DrawerHeader>
-              <DrawerTitle>Criar Nova Tarefa</DrawerTitle>
-              <DrawerClose />
-            </DrawerHeader>
-            <div className="overflow-y-auto flex-1 px-4">
-              <TarefaBacklogForm
-                workshopId={formData.workshop_id}
-                workshops={workshops}
-                user={formData}
-                onSuccess={(tarefaId) => {
-                  setTarefasVinculadas([...tarefasVinculadas, tarefaId]);
-                  setShowTarefaDrawer(false);
-                  toast.success(`✅ Tarefa vinculada ao atendimento!`);
-                }}
-                onCancel={() => setShowTarefaDrawer(false)}
-              />
-            </div>
-          </DrawerContent>
-        </Drawer>
+        <Dialog open={showTarefaDrawer} onOpenChange={setShowTarefaDrawer}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" style={{ zIndex: 99999 }}>
+            <DialogHeader>
+              <DialogTitle>Criar Nova Tarefa</DialogTitle>
+            </DialogHeader>
+            <TarefaBacklogForm
+              workshopId={formData.workshop_id}
+              workshops={workshops}
+              user={formData}
+              onSuccess={(tarefaId) => {
+                setTarefasVinculadas([...tarefasVinculadas, tarefaId]);
+                setShowTarefaDrawer(false);
+                toast.success(`✅ Tarefa vinculada ao atendimento!`);
+              }}
+              onCancel={() => setShowTarefaDrawer(false)}
+            />
+          </DialogContent>
+        </Dialog>
       )}
 
       {showPedidoDrawer && (
-        <Drawer open={showPedidoDrawer} onOpenChange={setShowPedidoDrawer}>
-          <DrawerContent className="max-h-[90vh] flex flex-col" style={{ zIndex: 99999 }}>
-            <DrawerHeader>
-              <DrawerTitle>Criar Novo Pedido Interno</DrawerTitle>
-              <DrawerClose />
-            </DrawerHeader>
-            <div className="overflow-y-auto flex-1 px-4">
-              <PedidoInternoForm
-                user={formData}
-                usuarios={[]}
-                workshops={workshops}
-                clienteId={formData.workshop_id}
-                onSuccess={(pedidoId) => {
-                  setPedidosVinculados([...pedidosVinculados, pedidoId]);
-                  setShowPedidoDrawer(false);
-                  toast.success(`📋 Pedido vinculado ao atendimento!`);
-                }}
-                onCancel={() => setShowPedidoDrawer(false)}
-              />
-            </div>
-          </DrawerContent>
-        </Drawer>
+        <Dialog open={showPedidoDrawer} onOpenChange={setShowPedidoDrawer}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" style={{ zIndex: 99999 }}>
+            <DialogHeader>
+              <DialogTitle>Criar Novo Pedido Interno</DialogTitle>
+            </DialogHeader>
+            <PedidoInternoForm
+              user={formData}
+              usuarios={[]}
+              workshops={workshops}
+              clienteId={formData.workshop_id}
+              onSuccess={(pedidoId) => {
+                setPedidosVinculados([...pedidosVinculados, pedidoId]);
+                setShowPedidoDrawer(false);
+                toast.success(`📋 Pedido vinculado ao atendimento!`);
+              }}
+              onCancel={() => setShowPedidoDrawer(false)}
+            />
+          </DialogContent>
+        </Dialog>
       )}
     </>
   );
