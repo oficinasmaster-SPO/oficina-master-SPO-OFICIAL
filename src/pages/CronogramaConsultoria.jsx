@@ -174,12 +174,12 @@ export default function CronogramaConsultoria() {
 
   const atasFiltradas = useAtaSearch(allAtas, filters);
 
-  // Mutação para o cliente confirmar presença
+  // Mutação para o cliente confirmar presença — atualiza status + envia email para consultor e cliente
   const confirmarPresencaMutation = useMutation({
     mutationFn: (atendimentoId) =>
-      base44.entities.ConsultoriaAtendimento.update(atendimentoId, { status: 'confirmado' }),
+      base44.functions.invoke('confirmarPresencaAtendimento', { atendimento_id: atendimentoId }),
     onSuccess: () => {
-      toast.success("Presença confirmada! O consultor foi notificado.");
+      toast.success("Presença confirmada! Consultor e cliente foram notificados por email.");
       queryClient.invalidateQueries({ queryKey: ['consultoria-atendimentos', user?.id, activeWorkshopId] });
     },
     onError: () => toast.error("Erro ao confirmar presença. Tente novamente."),
