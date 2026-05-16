@@ -10,11 +10,13 @@ import { Bell, AlertTriangle, Clock, CheckCircle2, Trash2, Loader2, FileText, Us
 import { format, isPast, isToday, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 import NotificationPreferences from "@/components/notifications/NotificationPreferences";
 import { useNotificationPush } from "@/components/notifications/useNotificationPush";
 
 export default function Notificacoes() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [showClearDialog, setShowClearDialog] = useState(false);
   const { sendNotification, permission } = useNotificationPush();
@@ -471,6 +473,19 @@ export default function Notificacoes() {
                         </p>
                       </div>
                       <div className="flex gap-2">
+                        {notification.metadata?.link && (
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => {
+                              markAsReadMutation.mutate(notification.id);
+                              navigate(notification.metadata.link);
+                            }}
+                            className="gap-1"
+                          >
+                            Ver →
+                          </Button>
+                        )}
                         {!notification.is_read && (
                           <Button
                             variant="ghost"
@@ -522,6 +537,19 @@ export default function Notificacoes() {
                         </p>
                       </div>
                       <div className="flex gap-2">
+                        {notification.metadata?.link && (
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => {
+                              markAsReadMutation.mutate(notification.id);
+                              navigate(notification.metadata.link);
+                            }}
+                            className="gap-1"
+                          >
+                            Ver →
+                          </Button>
+                        )}
                         <Button
                           variant="ghost"
                           size="sm"
