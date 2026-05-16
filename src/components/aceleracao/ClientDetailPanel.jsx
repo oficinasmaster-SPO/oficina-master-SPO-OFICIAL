@@ -40,7 +40,7 @@ export default function ClientDetailPanel({ client, isOpen, onClose, atendimento
 
   return (
     <Dialog open={isOpen && !!client} onOpenChange={onClose}>
-      <DialogContent className="max-w-7xl h-[90vh] overflow-hidden flex flex-col [&>button[class*='absolute']]:hidden">
+      <DialogContent className="max-w-7xl h-[90vh] overflow-hidden flex flex-col [&>button[class*='absolute']]:hidden" style={{ zIndex: 99999 }}>
         {client && (
           <>
             <DialogHeader>
