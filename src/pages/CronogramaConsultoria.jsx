@@ -6,7 +6,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, User, FileText, Eye, Users, Target, Printer, MessageSquare, Send, CheckCircle2, Zap } from "lucide-react";
+import { Calendar, Clock, User, FileText, Eye, Users, Target, Printer, MessageSquare, Send, CheckCircle2, Zap, ThumbsUp } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -172,6 +173,17 @@ export default function CronogramaConsultoria() {
     .sort((a, b) => new Date(a.data_agendada) - new Date(b.data_agendada)); // mais próximo primeiro
 
   const atasFiltradas = useAtaSearch(allAtas, filters);
+
+  // Mutação para o cliente confirmar presença
+  const confirmarPresencaMutation = useMutation({
+    mutationFn: (atendimentoId) =>
+      base44.entities.ConsultoriaAtendimento.update(atendimentoId, { status: 'confirmado' }),
+    onSuccess: () => {
+      toast.success("Presença confirmada! O consultor foi notificado.");
+      queryClient.invalidateQueries({ queryKey: ['consultoria-atendimentos', user?.id, activeWorkshopId] });
+    },
+    onError: () => toast.error("Erro ao confirmar presença. Tente novamente."),
+  });
 
   const isLoading = loadingAtendimentos || loadingAtas || loadingFollowUps;
 
@@ -384,8 +396,8 @@ export default function CronogramaConsultoria() {
                             </div>
                           )}
 
-                          {atendimento.google_meet_link && (
-                            <div className="mt-4">
+                          <div className="mt-4 flex items-center gap-3 flex-wrap">
+                            {atendimento.google_meet_link && (
                               <Button
                                 asChild
                                 className="bg-blue-600 hover:bg-blue-700 text-white gap-2"
@@ -399,8 +411,28 @@ export default function CronogramaConsultoria() {
                                   <span>▶</span> Iniciar
                                 </a>
                               </Button>
-                            </div>
-                          )}
+                            )}
+
+                            {atendimento.status === 'agendado' && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="border-green-500 text-green-700 hover:bg-green-50 gap-2"
+                                disabled={confirmarPresencaMutation.isPending}
+                                onClick={() => confirmarPresencaMutation.mutate(atendimento.id)}
+                              >
+                                <ThumbsUp className="w-4 h-4" />
+                                {confirmarPresencaMutation.isPending ? "Confirmando..." : "Confirmar Presença"}
+                              </Button>
+                            )}
+
+                            {atendimento.status === 'confirmado' && (
+                              <span className="inline-flex items-center gap-1.5 text-sm text-green-700 font-medium bg-green-50 border border-green-200 rounded-md px-3 py-1.5">
+                                <CheckCircle2 className="w-4 h-4" />
+                                Presença confirmada
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
