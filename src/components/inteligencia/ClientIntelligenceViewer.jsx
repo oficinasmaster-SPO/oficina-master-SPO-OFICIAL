@@ -247,6 +247,7 @@ export default function ClientIntelligenceViewer({ open, onOpenChange, item, wor
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
         className="w-full max-w-[800px] max-h-[95vh] overflow-hidden flex flex-col p-0 gap-0 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.2)]"
+        style={{ zIndex: 99999 }}
         onInteractOutside={(e) => e.preventDefault()}
       >
         <div className="flex items-center justify-between p-5 border-b border-gray-200 shrink-0 bg-white shadow-[0_4px_16px_rgba(0,0,0,0.02)]">

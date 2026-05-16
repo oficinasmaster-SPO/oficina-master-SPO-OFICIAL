@@ -89,6 +89,7 @@ export default function ClientIntelligenceDetailForm({ open, onOpenChange, intel
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
         className="max-w-2xl max-h-[90vh] overflow-y-auto"
+        style={{ zIndex: 99999 }}
         onInteractOutside={(e) => e.preventDefault()}
       >
         <DialogHeader>
