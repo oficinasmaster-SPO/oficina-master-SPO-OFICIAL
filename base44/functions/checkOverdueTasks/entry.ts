@@ -71,21 +71,15 @@ Deno.serve(async (req) => {
         console.log('Erro ao buscar Workshop/Consultor:', err.message);
       }
 
-      // Verificar se já existe notificação do mesmo tipo para esta tarefa hoje
+      // Verificar se já existe notificação da mesma tarefa (lida ou não)
       for (const userId of task.assigned_to) {
         const existing = await base44.asServiceRole.entities.Notification.filter({
           user_id: userId,
           type: notificationType,
-          is_read: false
-        }, '-created_date', 50);
+          "metadata.task_id": task.id
+        }, null, 1);
 
-        const alreadyNotified = existing.some(n => 
-          n.metadata?.task_id === task.id && 
-          n.created_date && 
-          n.created_date.split('T')[0] === todayStr
-        );
-
-        if (!alreadyNotified) {
+        if (existing.length === 0) {
           await base44.asServiceRole.entities.Notification.create({
             user_id: userId,
             workshop_id: task.workshop_id,

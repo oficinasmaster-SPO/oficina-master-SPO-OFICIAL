@@ -58,6 +58,17 @@ Deno.serve(async (req) => {
           }
         });
 
+        // Verificar se já existe notificação da mesma tarefa (lida ou não)
+        const existing = await base44.asServiceRole.entities.Notification.filter({
+          user_id: tarefa.atribuido_para_id,
+          type: 'tarefa_vencida',
+          "metadata.tarefa_id": tarefa.id
+        }, null, 1);
+
+        if (existing.length > 0) {
+          continue; // Já existe, não cria duplicata
+        }
+
         // Enviar email
         try {
           const user = await base44.asServiceRole.entities.User.filter(
