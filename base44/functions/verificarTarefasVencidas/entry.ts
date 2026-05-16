@@ -24,6 +24,21 @@ Deno.serve(async (req) => {
         const diasVencidos = Math.floor((now - prazoData) / (24 * 60 * 60 * 1000));
         const message = `🚨 Tarefa vencida: ${tarefa.titulo} | Atrasada há ${diasVencidos} dia(s)`;
 
+        // Buscar dados do Workshop e Consultor
+        let workshopName = 'Cliente';
+        let consultorName = 'Consultor';
+
+        try {
+          if (tarefa.workshop_id) {
+            const workshop = await base44.asServiceRole.entities.Workshop.read(tarefa.workshop_id);
+            if (workshop) workshopName = workshop.name;
+          }
+          const consultor = await base44.asServiceRole.entities.User.read(tarefa.atribuido_para_id);
+          if (consultor) consultorName = consultor.full_name;
+        } catch (err) {
+          console.log('Erro ao buscar Workshop/Consultor:', err.message);
+        }
+
         await base44.asServiceRole.entities.Notification.create({
           user_id: tarefa.atribuido_para_id,
           type: 'tarefa_vencida',
@@ -33,7 +48,13 @@ Deno.serve(async (req) => {
             tarefa_id: tarefa.id,
             titulo: tarefa.titulo,
             prazo: tarefa.prazo,
-            dias_vencidos: diasVencidos
+            dias_vencidos: diasVencidos,
+            workshop_id: tarefa.workshop_id,
+            workshop_name: workshopName,
+            consultant_id: tarefa.atribuido_para_id,
+            consultant_name: consultorName,
+            attendance_type: 'TarefaBacklog',
+            link: `/ControleAceleracao?client=${tarefa.workshop_id}&tab=backlog`
           }
         });
 

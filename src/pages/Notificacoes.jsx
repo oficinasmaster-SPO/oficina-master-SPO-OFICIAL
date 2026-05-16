@@ -97,6 +97,7 @@ export default function Notificacoes() {
       return await base44.entities.Notification.update(notificationId, { is_read: true });
     },
     onSuccess: () => {
+      toast.success('✅ Notificação marcada como lida');
       queryClient.invalidateQueries(['notifications']);
     }
   });

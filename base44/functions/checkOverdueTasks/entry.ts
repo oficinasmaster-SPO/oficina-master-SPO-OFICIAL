@@ -53,6 +53,24 @@ Deno.serve(async (req) => {
 
       if (!notificationType) continue;
 
+      // Buscar dados do Workshop e Consultor para enriquecer metadata
+      let workshopName = 'Cliente';
+      let consultorName = 'Consultor';
+      let attendanceType = 'Tarefa';
+
+      try {
+        if (task.workshop_id) {
+          const workshop = await base44.asServiceRole.entities.Workshop.read(task.workshop_id);
+          if (workshop) workshopName = workshop.name;
+        }
+        if (task.assigned_to?.[0]) {
+          const consultor = await base44.asServiceRole.entities.User.read(task.assigned_to[0]);
+          if (consultor) consultorName = consultor.full_name;
+        }
+      } catch (err) {
+        console.log('Erro ao buscar Workshop/Consultor:', err.message);
+      }
+
       // Verificar se já existe notificação do mesmo tipo para esta tarefa hoje
       for (const userId of task.assigned_to) {
         const existing = await base44.asServiceRole.entities.Notification.filter({
@@ -75,7 +93,15 @@ Deno.serve(async (req) => {
             title,
             message,
             is_read: false,
-            metadata: { task_id: task.id }
+            metadata: {
+              task_id: task.id,
+              workshop_id: task.workshop_id,
+              workshop_name: workshopName,
+              consultant_id: task.assigned_to[0],
+              consultant_name: consultorName,
+              attendance_type: attendanceType,
+              link: `/ControleAceleracao?client=${task.workshop_id}&tab=bucket`
+            }
           });
           notificationsCreated++;
         }
