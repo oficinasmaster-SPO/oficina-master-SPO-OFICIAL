@@ -21,18 +21,23 @@ export default function ControleAceleracao() {
         const user = await base44.auth.me();
         if (!user || user.role !== 'admin') return [];
         
-        const atendimentos = await base44.entities.ConsultoriaAtendimento.filter({
-          data_sugerida_cliente: { $exists: true },
+        const allAtendimentos = await base44.entities.ConsultoriaAtendimento.filter({
           status: { $in: ['agendado', 'confirmado', 'reagendado'] }
-        }, '-created_date', 50);
+        }, '-created_date', 100);
         
-        return atendimentos.filter(a => a.data_sugerida_cliente && a.contagem_lembretes_sugestao < 3);
+        // Filtrar apenas os que têm sugestão de horário do cliente
+        return allAtendimentos.filter(a => 
+          a.data_sugerida_cliente && 
+          a.hora_sugerida_cliente && 
+          a.mensagem_cliente
+        );
       } catch (e) {
         console.warn('Erro ao buscar sugestões pendentes:', e.message);
         return [];
       }
     },
-    staleTime: 30 * 1000
+    staleTime: 10 * 1000, // Atualiza a cada 10s para teste
+    refetchInterval: 10 * 1000
   });
 
   useEffect(() => {
