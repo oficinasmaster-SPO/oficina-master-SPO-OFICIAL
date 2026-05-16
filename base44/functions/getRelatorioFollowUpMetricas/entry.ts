@@ -89,8 +89,18 @@ Deno.serve(async (req) => {
       concluidosFilterAlt.consultor_id = filtroConsultor;
     }
 
+    // Para o diário, "Atrasados" = todos os pendentes com reminder_date <= refDate (sem limite inferior)
+    // Para demais tipos, usa o range normal do período
     const reminderFilter = { reminder_date: { '$gte': startDate, '$lte': endDate } };
     if (filtroConsultor) reminderFilter.consultor_id = filtroConsultor;
+
+    // Filtro extra para buscar atrasados de datas ANTERIORES ao período (apenas no diário)
+    let atrasadosAnteriores = [];
+    if (tipo === 'diario') {
+      const atrasadosFilter = { reminder_date: { '$lt': startDate }, is_completed: false };
+      if (filtroConsultor) atrasadosFilter.consultor_id = filtroConsultor;
+      atrasadosAnteriores = await entityClient.FollowUpReminder.filter(atrasadosFilter, '-reminder_date', 2000);
+    }
 
     // Buscar dados em paralelo — FollowUpConcluido com dois filtros para cobrir ambos os campos de data
     const [allReminders, concluidosByCompletedAt, concluidosByDataContato] = await Promise.all([
@@ -113,12 +123,21 @@ Deno.serve(async (req) => {
     const realizados = allConcluidos.length;
     const allPendentesItems = allReminders.filter(r => r.is_completed !== true);
 
-    // Pendentes atrasados = prazo já passou (reminder_date < hoje)
-    const pendentesAtrasados = allPendentesItems.filter(r => (r.reminder_date || '') < todayStr);
+    // Pendentes atrasados = do período + todos anteriores (apenas no diário, já filtrados na query)
+    const pendentesAtrasadosPeriodo = allPendentesItems.filter(r => (r.reminder_date || '') < todayStr);
+    const atrasadosAnterioresFiltrados = atrasadosAnteriores.filter(r => r.is_completed !== true);
+
+    // Deduplicar por id (evitar overlap se reminder_date = startDate)
+    const atrasadosMap = new Map();
+    [...pendentesAtrasadosPeriodo, ...atrasadosAnterioresFiltrados].forEach(r => {
+      if (r.id) atrasadosMap.set(r.id, r);
+    });
+    const pendentesAtrasados = Array.from(atrasadosMap.values());
+
     // Pendentes no prazo = prazo ainda não chegou (reminder_date >= hoje)
     const pendentesNoPrazo  = allPendentesItems.filter(r => (r.reminder_date || '') >= todayStr);
 
-    // "pendentes" para KPI = apenas os atrasados (é o que indica problema real)
+    // "pendentes" para KPI = atrasados (inclui anteriores ao período no diário)
     const pendentesItems = pendentesAtrasados;
     const pendentes = pendentesAtrasados.length;
     const total = realizados + allPendentesItems.length; // total real do período
