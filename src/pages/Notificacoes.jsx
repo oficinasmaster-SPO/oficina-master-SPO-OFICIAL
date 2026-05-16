@@ -473,19 +473,19 @@ export default function Notificacoes() {
                         </p>
                       </div>
                       <div className="flex gap-2">
-                        {notification.metadata?.link && (
-                          <Button
-                            variant="default"
-                            size="sm"
-                            onClick={() => {
-                              markAsReadMutation.mutate(notification.id);
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={() => {
+                            markAsReadMutation.mutate(notification.id);
+                            if (notification.metadata?.link) {
                               navigate(notification.metadata.link);
-                            }}
-                            className="gap-1"
-                          >
-                            Ver →
-                          </Button>
-                        )}
+                            }
+                          }}
+                          className="gap-1"
+                        >
+                          Ver →
+                        </Button>
                         {!notification.is_read && (
                           <Button
                             variant="ghost"
@@ -537,19 +537,19 @@ export default function Notificacoes() {
                         </p>
                       </div>
                       <div className="flex gap-2">
-                        {notification.metadata?.link && (
-                          <Button
-                            variant="default"
-                            size="sm"
-                            onClick={() => {
-                              markAsReadMutation.mutate(notification.id);
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={() => {
+                            markAsReadMutation.mutate(notification.id);
+                            if (notification.metadata?.link) {
                               navigate(notification.metadata.link);
-                            }}
-                            className="gap-1"
-                          >
-                            Ver →
-                          </Button>
-                        )}
+                            }
+                          }}
+                          className="gap-1"
+                        >
+                          Ver →
+                        </Button>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -589,13 +589,25 @@ export default function Notificacoes() {
                         {task.description && (
                           <p className="text-sm text-gray-600 mb-2">{task.description}</p>
                         )}
-                        <div className="flex items-center gap-2">
-                          <Badge className="bg-yellow-100 text-yellow-700">
-                            Vence hoje
-                          </Badge>
-                          <Badge variant="outline">
-                            {getStatusLabel(task.status)}
-                          </Badge>
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <Badge className="bg-yellow-100 text-yellow-700">
+                              Vence hoje
+                            </Badge>
+                            <Badge variant="outline">
+                              {getStatusLabel(task.status)}
+                            </Badge>
+                          </div>
+                          {task.metadata?.link && (
+                            <Button 
+                              variant="default" 
+                              size="sm" 
+                              onClick={() => navigate(task.metadata.link)}
+                              className="gap-1"
+                            >
+                              Ver →
+                            </Button>
+                          )}
                         </div>
                       </div>
                     ))}
