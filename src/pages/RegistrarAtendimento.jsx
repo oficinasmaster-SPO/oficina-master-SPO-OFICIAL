@@ -1095,21 +1095,6 @@ export default function RegistrarAtendimento({ isModal = false, onClose, onSaved
         handleDeleteAta={handleDeleteAta} queryClient={queryClient}
       />
 
-      <ConflitosHorarioModal
-        open={conflitosModal.open}
-        onOpenChange={(open) => setConflitosModal(prev => ({ ...prev, open }))}
-        conflitos={conflitosModal.conflitos}
-        dataHorario={conflitosModal.dataHorario}
-        consultorId={formData.consultor_id || user?.id}
-        duracaoMinutos={formData.duracao_minutos}
-        onSelectHorario={({ data, hora }) => {
-          setFormData(prev => ({ ...prev, data_agendada: data, hora_agendada: hora }));
-        }}
-        onIgnoreConflict={() => {
-          setHasUnsavedChanges(false);
-          createMutation.mutate(formData);
-        }}
-      />
     </>
   );
 
@@ -1264,6 +1249,22 @@ export default function RegistrarAtendimento({ isModal = false, onClose, onSaved
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
+      {/* Modal de conflito fora do form/sticky para evitar stacking context */}
+      <ConflitosHorarioModal
+        open={conflitosModal.open}
+        onOpenChange={(open) => setConflitosModal(prev => ({ ...prev, open }))}
+        conflitos={conflitosModal.conflitos}
+        dataHorario={conflitosModal.dataHorario}
+        consultorId={formData.consultor_id || user?.id}
+        duracaoMinutos={formData.duracao_minutos}
+        onSelectHorario={({ data, hora }) => {
+          setFormData(prev => ({ ...prev, data_agendada: data, hora_agendada: hora }));
+        }}
+        onIgnoreConflict={() => {
+          setHasUnsavedChanges(false);
+          createMutation.mutate(formData);
+        }}
+      />
       <div>
         {isReadOnly ? (
           <>

@@ -125,7 +125,7 @@ export default function ConflitosHorarioModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto z-[9999]" style={{ zIndex: 9999 }}>
         <DialogHeader>
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
