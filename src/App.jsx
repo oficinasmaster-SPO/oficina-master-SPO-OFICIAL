@@ -45,6 +45,7 @@ const DiagnosticoRiscos = lazy(() => import('@/pages/DiagnosticoRiscos'));
 const DashboardTempoAtencao = lazy(() => import('@/pages/DashboardTempoAtencao'));
 const HistoricoDiagnosticos = lazy(() => import('@/pages/HistoricoDiagnosticos'));
 const DreMockup = lazy(() => import('@/pages/DreMockup'));
+const GerenciarSubcategorias = lazy(() => import('@/pages/GerenciarSubcategorias'));
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -242,6 +243,13 @@ const AuthenticatedApp = () => {
       <Route path="/DreMockup" element={
         <LayoutWrapper currentPageName="DreMockup">
           <DreMockup />
+        </LayoutWrapper>
+      } />
+      <Route path="/GerenciarSubcategorias" element={
+        <LayoutWrapper currentPageName="GerenciarSubcategorias">
+          <PageAccessControl adminOnly={true}>
+            <GerenciarSubcategorias />
+          </PageAccessControl>
         </LayoutWrapper>
       } />
       <Route path="*" element={<PageNotFound />} />
