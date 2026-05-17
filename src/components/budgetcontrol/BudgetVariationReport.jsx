@@ -81,7 +81,9 @@ export default function BudgetVariationReport({ metas, calculado }) {
                     </div>
                   </div>
                   <p className="text-xs text-red-700 mt-2 font-semibold">
-                    Excesso: {formatCurrency(item.realizado - item.meta_rs)}
+                    {item.isDespesa
+                      ? `Excesso: ${formatCurrency(item.realizado - item.meta_rs)}`
+                      : `Abaixo da meta: ${formatCurrency(item.meta_rs - item.realizado)}`}
                   </p>
                 </div>
               ))}
@@ -126,7 +128,9 @@ export default function BudgetVariationReport({ metas, calculado }) {
                     </div>
                   </div>
                   <p className="text-xs text-green-700 mt-2 font-semibold">
-                    Economia: {formatCurrency(item.meta_rs - item.realizado)}
+                    {item.isDespesa
+                      ? `Economia: +${formatCurrency(item.meta_rs - item.realizado)}`
+                      : `Superação: +${formatCurrency(item.realizado - item.meta_rs)}`}
                   </p>
                 </div>
               ))}
@@ -158,8 +162,8 @@ export default function BudgetVariationReport({ metas, calculado }) {
                   <p className="text-xs text-gray-500 ml-5">{item.categoria} · {item.responsavel}</p>
                 </div>
                 <div className="text-right">
-                  <Badge className={item.realizado > item.meta_rs ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"}>
-                    {item.realizado > item.meta_rs ? '+' : '-'}{formatNumber(Math.abs(item.variacao), 1)}%
+                  <Badge className={item.variacao >= 0 ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
+                    {item.variacao >= 0 ? '+' : ''}{formatNumber(item.variacao, 1)}%
                   </Badge>
                   <p className="text-xs text-gray-600 mt-1">{formatCurrency(Math.abs(item.diferenca))}</p>
                 </div>
