@@ -9,9 +9,12 @@ export default function BudgetVariationReport({ metas, calculado }) {
     if (!metas.length) return { exceedido: [], economizado: [], ranking: [] };
 
     const items = metas
-      .filter(meta => meta.controlar_orcamento !== false) // ignorar itens excluídos
+      .filter(m => m.controlar_orcamento !== false) // cenário 6: invisível
       .map(meta => {
         const calc = calculado.por_categoria[meta.id] || {};
+        const meta_rs = meta.meta_percentual
+          ? (meta.meta_percentual / 100) * (meta.faturamento_meta_rs || 0)
+          : (meta.meta_fixa_rs || 0);
         const isDespesa = meta.tipo !== "receita";
 
         return {
@@ -20,22 +23,23 @@ export default function BudgetVariationReport({ metas, calculado }) {
           tipo: meta.tipo || "despesa",
           isDespesa,
           responsavel: meta.responsavel_nome || 'Sem responsável',
-          meta_rs: calc.meta_rs || 0,
+          meta_rs,
           realizado: calc.realizado || 0,
-          diferenca: calc.diferenca || 0, // positivo = bom em ambos os tipos
-          variacao: calc.variacao || 0,   // positivo = bom em ambos os tipos
-          status: calc.status
+          diferenca: calc.diferenca || 0,   // positivo = bom (economia despesa / acima meta receita)
+          variacao: calc.variacao || 0,     // positivo = bom, negativo = ruim
+          status: calc.status,
+          statusLabel: calc.statusLabel
         };
-      });
+      })
+      .filter(i => i.meta_rs > 0); // cenário 5: sem meta fora da análise
 
-    // "Ultrapassaram": despesas que estouraram o teto OU receitas abaixo da meta (<80%)
-    const exceedido = items
-      .filter(i => i.status === "❌" || i.status === "⚠️")
-      .sort((a, b) => Math.abs(a.diferenca) - Math.abs(b.diferenca));
+    // "Ultrapassaram": despesas estouradas (realizado > teto*1.05) OU receitas muito abaixo (<80%)
+    const exceedido = items.filter(i => i.status === "❌")
+      .sort((a, b) => Math.abs(b.variacao) - Math.abs(a.variacao));
 
-    // "Economizado": despesas abaixo do teto OU receitas que superaram a meta
-    const economizado = items
-      .filter(i => i.diferenca > 0 && i.status === "✅")
+    // "Economizado/Superado": despesas abaixo do teto OU receitas acima da meta
+    // diferenca > 0 = bom para ambos os tipos
+    const economizado = items.filter(i => i.diferenca > 0)
       .sort((a, b) => b.diferenca - a.diferenca);
 
     const ranking = [...items].sort((a, b) => Math.abs(b.variacao) - Math.abs(a.variacao)).slice(0, 5);
@@ -45,34 +49,35 @@ export default function BudgetVariationReport({ metas, calculado }) {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {/* Categorias que Ultrapassaram */}
+      {/* Categorias com problema (❌ status) */}
       <Card className="border-red-200 bg-red-50">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-red-900">
             <AlertTriangle className="w-5 h-5 text-red-600" />
-            ⚠️ Ultrapassaram o Orçamento ({report.exceedido.length})
+            ❌ Problemas ({report.exceedido.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
           {report.exceedido.length === 0 ? (
-            <p className="text-sm text-red-700">✅ Nenhuma categoria ultrapassou o orçamento!</p>
+            <p className="text-sm text-red-700">✅ Nenhum problema encontrado!</p>
           ) : (
             <div className="space-y-3">
               {report.exceedido.map((item, idx) => (
                 <div key={idx} className="p-3 bg-white rounded-lg border border-red-200">
                   <div className="flex justify-between items-start mb-1">
                     <div className="flex items-center gap-2">
-                      <span className={`text-xs px-1.5 py-0.5 rounded font-semibold ${item.tipo === 'despesa' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
-                        {item.tipo === 'despesa' ? '↑ Despesa' : '↓ Receita'}
+                      <span className={`text-xs px-1.5 py-0.5 rounded font-semibold ${item.isDespesa ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                        {item.isDespesa ? '↑ Despesa' : '↑ Receita'}
                       </span>
                       <h4 className="font-semibold text-red-900">{item.item}</h4>
                     </div>
+                    {/* variacao negativo = ruim → exibe quanto faltou/excedeu */}
                     <Badge className="bg-red-600">{formatNumber(item.variacao, 1)}%</Badge>
                   </div>
                   <p className="text-xs text-gray-600 mb-2">{item.categoria} · {item.responsavel}</p>
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <div className="bg-red-50 p-2 rounded">
-                      <p className="text-gray-600">Meta</p>
+                      <p className="text-gray-600">{item.isDespesa ? 'Teto' : 'Meta'}</p>
                       <p className="font-bold text-red-900">{formatCurrency(item.meta_rs)}</p>
                     </div>
                     <div className="bg-red-100 p-2 rounded">
@@ -82,8 +87,8 @@ export default function BudgetVariationReport({ metas, calculado }) {
                   </div>
                   <p className="text-xs text-red-700 mt-2 font-semibold">
                     {item.isDespesa
-                      ? `Excesso: ${formatCurrency(item.realizado - item.meta_rs)}`
-                      : `Abaixo da meta: ${formatCurrency(item.meta_rs - item.realizado)}`}
+                      ? `Excesso: +${formatCurrency(item.realizado - item.meta_rs)}`
+                      : `Falta: ${formatCurrency(item.meta_rs - item.realizado)}`}
                   </p>
                 </div>
               ))}
@@ -92,34 +97,35 @@ export default function BudgetVariationReport({ metas, calculado }) {
         </CardContent>
       </Card>
 
-      {/* Categorias com Economia */}
+      {/* Categorias com resultado positivo (economia despesa OU receita superada) */}
       <Card className="border-green-200 bg-green-50">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-green-900">
             <TrendingDown className="w-5 h-5 text-green-600" />
-            ✅ Economizado ({report.economizado.length})
+            ✅ Resultados Positivos ({report.economizado.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
           {report.economizado.length === 0 ? (
-            <p className="text-sm text-green-700">Nenhuma categoria com economia significativa.</p>
+            <p className="text-sm text-green-700">Nenhum resultado positivo ainda.</p>
           ) : (
             <div className="space-y-3">
               {report.economizado.map((item, idx) => (
                 <div key={idx} className="p-3 bg-white rounded-lg border border-green-200">
                   <div className="flex justify-between items-start mb-1">
                     <div className="flex items-center gap-2">
-                      <span className={`text-xs px-1.5 py-0.5 rounded font-semibold ${item.tipo === 'despesa' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
-                        {item.tipo === 'despesa' ? '↑ Despesa' : '↓ Receita'}
+                      <span className={`text-xs px-1.5 py-0.5 rounded font-semibold ${item.isDespesa ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                        {item.isDespesa ? '↑ Despesa' : '↑ Receita'}
                       </span>
                       <h4 className="font-semibold text-green-900">{item.item}</h4>
                     </div>
-                    <Badge className="bg-green-600">-{formatNumber(Math.abs(item.variacao), 1)}%</Badge>
+                    {/* variacao positivo = bom → exibe com + */}
+                    <Badge className="bg-green-600">+{formatNumber(Math.abs(item.variacao), 1)}%</Badge>
                   </div>
                   <p className="text-xs text-gray-600 mb-2">{item.categoria} · {item.responsavel}</p>
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <div className="bg-green-50 p-2 rounded">
-                      <p className="text-gray-600">Meta</p>
+                      <p className="text-gray-600">{item.isDespesa ? 'Teto' : 'Meta'}</p>
                       <p className="font-bold text-green-900">{formatCurrency(item.meta_rs)}</p>
                     </div>
                     <div className="bg-green-100 p-2 rounded">
@@ -129,8 +135,8 @@ export default function BudgetVariationReport({ metas, calculado }) {
                   </div>
                   <p className="text-xs text-green-700 mt-2 font-semibold">
                     {item.isDespesa
-                      ? `Economia: +${formatCurrency(item.meta_rs - item.realizado)}`
-                      : `Superação: +${formatCurrency(item.realizado - item.meta_rs)}`}
+                      ? `Economia: +${formatCurrency(item.diferenca)}`
+                      : `Superado: +${formatCurrency(item.diferenca)}`}
                   </p>
                 </div>
               ))}
@@ -144,7 +150,7 @@ export default function BudgetVariationReport({ metas, calculado }) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-blue-900">
             <TrendingUp className="w-5 h-5 text-blue-600" />
-            🎯 Top 5 Maiores Desvios (Variações)
+            🎯 Top 5 Maiores Variações
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -154,14 +160,15 @@ export default function BudgetVariationReport({ metas, calculado }) {
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-bold text-blue-700">{idx + 1}.</span>
-                    <span className={`text-xs px-1.5 py-0.5 rounded font-semibold ${item.tipo === 'despesa' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
-                      {item.tipo === 'despesa' ? '↑ Desp' : '↓ Rec'}
+                    <span className={`text-xs px-1.5 py-0.5 rounded font-semibold ${item.isDespesa ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                      {item.isDespesa ? '↑ Desp' : '↑ Rec'}
                     </span>
                     <p className="text-sm font-semibold text-blue-900">{item.item}</p>
                   </div>
                   <p className="text-xs text-gray-500 ml-5">{item.categoria} · {item.responsavel}</p>
                 </div>
                 <div className="text-right">
+                  {/* variacao positivo = bom (verde), negativo = ruim (vermelho) */}
                   <Badge className={item.variacao >= 0 ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
                     {item.variacao >= 0 ? '+' : ''}{formatNumber(item.variacao, 1)}%
                   </Badge>
