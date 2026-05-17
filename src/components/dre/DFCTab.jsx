@@ -214,7 +214,7 @@ function ModalMarcarPagamento({ item, onFechar, onSalvo }) {
   useEffect(() => {
     setDataPagamento(item?.data_pagamento || "");
     setDataVencimento(item?.data_vencimento || "");
-  }, [item?.id, item?.data_pagamento, item?.data_vencimento]);
+  }, [item?.id, item?.data_pagamento, item?.data_vencimento, item]);
 
   if (!item) return null;
 

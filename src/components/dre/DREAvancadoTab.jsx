@@ -89,9 +89,9 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
       toast.error("Preencha todos os campos obrigatórios");
       return;
     }
-    const valorNum = parseFloat(valor.replace(",", "."));
+    const valorNum = parseFloat(String(valor).replace(",", "."));
     if (isNaN(valorNum) || valorNum <= 0) {
-      toast.error("Informe um valor válido");
+      toast.error("Informe um valor maior que zero");
       return;
     }
 
@@ -480,7 +480,9 @@ function PainelAnalise({ lancamentos, tecnicosCount, horasMes }) {
   const margemLucro = totalReceita > 0 ? (lucro / totalReceita) * 100 : 0;
   const totalHoras = (tecnicosCount || 1) * (horasMes || 219);
   const tcmp2 = totalHoras > 0 ? totalTcmp2 / totalHoras : 0;
-  const r70 = totalReceita > 0 ? ((totalReceita - custoPecas) / totalReceita) * 100 : 0;
+  // R70/I30 = (Receita - Peças Aplicadas - Peças Estoque) / Receita
+  const partsAppliedCost = despesas.filter(l => l.categoria === "pecas_aplicadas").reduce((s, l) => s + l.valor, 0);
+  const r70 = totalReceita > 0 ? ((totalReceita - partsAppliedCost - custoPecas) / totalReceita) * 100 : 0;
 
   return (
     <div className="space-y-4">
@@ -555,7 +557,7 @@ function PainelAnalise({ lancamentos, tecnicosCount, horasMes }) {
               .map((cat, i) => (
                 <div key={cat} className={`flex items-center justify-between text-sm py-1 pl-2 border-l-2 ${categoriasDespesas[cat].entra_tcmp2 ? "border-blue-500" : "border-orange-500"}`}>
                   <span className="text-gray-600">{categoriasDespesas[cat].label}</span>
-                  <span className={`font-semibold ${categoriasDespesas[cat].entra_tcmp2 ? "text-blue-700" : "text-orange-700"`}>
+                  <span className={`font-semibold ${categoriasDespesas[cat].entra_tcmp2 ? "text-blue-700" : "text-orange-700"}`}>
                     - {formatCurrency(categoriasDespesas[cat].valor)}
                   </span>
                 </div>
