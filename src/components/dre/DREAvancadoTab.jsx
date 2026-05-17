@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -271,7 +271,9 @@ function PainelAnalise({ lancamentos, tecnicosCount, horasMes }) {
 
   const totalReceita = receitas.reduce((s, l) => s + l.valor, 0);
   const totalTcmp2 = despesas.filter(l => l.entra_tcmp2).reduce((s, l) => s + l.valor, 0);
+  // Custos financeiros/investimento (não TCMP², exceto pecas_estoque que vai em linha própria)
   const totalNaoTcmp2 = despesas.filter(l => !l.entra_tcmp2 && l.categoria !== "pecas_estoque").reduce((s, l) => s + l.valor, 0);
+  // Peças para estoque são registradas separadamente (não duplicar em totalNaoTcmp2)
   const custoPecas = despesas.filter(l => l.categoria === "pecas_estoque").reduce((s, l) => s + l.valor, 0);
 
   const receitaPecas = receitas.filter(l => l.categoria === "pecas_aplicadas").reduce((s, l) => s + l.valor, 0);
@@ -362,7 +364,7 @@ export default function DREAvancadoTab({ workshopId, mes, tecnicosCount, horasMe
     enabled: !!workshopId && !!mes
   });
 
-  const refresh = () => queryClient.invalidateQueries(["dre-lancamentos", workshopId, mes]);
+  const refresh = () => queryClient.invalidateQueries({ queryKey: ["dre-lancamentos", workshopId, mes] });
 
   // Totais para consolidação
   const totaisConsolidados = useMemo(() => {
@@ -387,13 +389,14 @@ export default function DREAvancadoTab({ workshopId, mes, tecnicosCount, horasMe
         financing: despesas.filter(l => l.categoria === "financeiro" && l.subcategoria === "Financiamento (veículo/imóvel)").reduce((s, l) => s + l.valor, 0),
         consortium: despesas.filter(l => l.subcategoria === "Consórcio").reduce((s, l) => s + l.valor, 0),
         equipment_installments: despesas.filter(l => l.subcategoria === "Parcelamento de equipamento").reduce((s, l) => s + l.valor, 0),
-        parts_invoices: despesas.filter(l => l.categoria === "pecas_estoque").reduce((s, l) => s + l.valor, 0),
+        // parts_invoices NOT mapped here — lives in parts_cost to avoid double-counting
+        parts_invoices: 0,
         legal_processes: despesas.filter(l => l.subcategoria === "Processos judiciais").reduce((s, l) => s + l.valor, 0),
         land_purchase: despesas.filter(l => l.subcategoria === "Compra de imóvel/terreno").reduce((s, l) => s + l.valor, 0),
         investments: despesas.filter(l => l.categoria === "financeiro" && !["Financiamento (veículo/imóvel)", "Consórcio", "Parcelamento de equipamento", "Processos judiciais", "Compra de imóvel/terreno"].includes(l.subcategoria)).reduce((s, l) => s + l.valor, 0),
       },
       parts_cost: {
-        parts_applied_cost: 0,
+        parts_applied_cost: 0, // não lançado aqui — usuário preenche manualmente na aba Peças
         parts_stock_purchase: despesas.filter(l => l.categoria === "pecas_estoque").reduce((s, l) => s + l.valor, 0),
       }
     };

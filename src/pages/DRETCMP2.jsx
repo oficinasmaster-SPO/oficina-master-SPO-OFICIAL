@@ -128,7 +128,7 @@ export default function DRETCMP2() {
         // 1. Consolidar dados diários para o DRE
         await updateDREFromMonthlyGoals(workshop.id, selectedMonth);
         // 2. Recarregar lista de DREs para mostrar valores atualizados
-        await queryClient.invalidateQueries(['dre-list', workshop?.id]);
+        await queryClient.invalidateQueries({ queryKey: ['dre-list', workshop?.id] });
         // 3. Sincronizar DRE com metas se existir
         setTimeout(() => {
           if (currentDRE) {
@@ -227,7 +227,7 @@ export default function DRETCMP2() {
       }
     },
     onSuccess: async () => {
-      queryClient.invalidateQueries(['dre-list']);
+      queryClient.invalidateQueries({ queryKey: ['dre-list'] });
       toast.success("DRE salvo com sucesso!");
       
       // Marcar módulo DRE como concluído
@@ -348,7 +348,7 @@ export default function DRETCMP2() {
 
     if (result.success) {
       setSyncAlert(null);
-      queryClient.invalidateQueries(['dre-list']);
+      queryClient.invalidateQueries({ queryKey: ['dre-list'] });
     }
   };
 
@@ -434,7 +434,7 @@ export default function DRETCMP2() {
                 <Button 
                   onClick={async () => {
                     await updateDREFromMonthlyGoals(workshop.id, selectedMonth);
-                    queryClient.invalidateQueries(['dre-list', workshop?.id]);
+                    queryClient.invalidateQueries({ queryKey: ['dre-list', workshop?.id] });
                     toast.success("Receitas sincronizadas com sucesso!");
                   }}
                   disabled={isSyncing}
