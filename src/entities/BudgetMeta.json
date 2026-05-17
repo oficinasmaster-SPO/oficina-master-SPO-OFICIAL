@@ -44,14 +44,9 @@
       "description": "Anotações sobre a meta"
     }
   },
-  "required": ["workshop_id", "mes", "faturamento_meta_rs", "item", "categoria"],
+  "required": ["workshop_id", "mes", "item", "categoria"],
   "rls": {
-    "create": {
-      "$or": [
-        {"workshop_id": "{{user.data.workshop_id}}"},
-        {"user_condition": {"role": "admin"}}
-      ]
-    },
+    "create": true,
     "read": {
       "$or": [
         {"workshop_id": "{{user.data.workshop_id}}"},
@@ -65,10 +60,7 @@
       ]
     },
     "delete": {
-      "$or": [
-        {"workshop_id": "{{user.data.workshop_id}}"},
-        {"user_condition": {"role": "admin"}}
-      ]
+      "user_condition": {"role": "admin"}
     }
   }
 }
