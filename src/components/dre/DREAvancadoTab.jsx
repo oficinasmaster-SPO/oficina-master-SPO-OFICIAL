@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { formatCurrency } from "@/components/utils/formatters";
 import { toast } from "sonner";
+import SubcategoriaSelector from "./SubcategoriaSelector";
 
 // ─── CATEGORIAS ───────────────────────────────────────────────────────────────
 const CATEGORIAS_DESPESA = {
@@ -84,9 +85,14 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
   const categorias = tipo === "receita" ? CATEGORIAS_RECEITA : CATEGORIAS_DESPESA;
   const catSelecionada = categorias[catKey];
 
+  // Validação: subcategoria obrigatória
   const handleSave = async () => {
     if (!catKey || !valor || !descricao) {
       toast.error("Preencha todos os campos obrigatórios");
+      return;
+    }
+    if (!subcat) {
+      toast.error("Selecione uma subcategoria");
       return;
     }
     const valorNum = parseFloat(String(valor).replace(",", "."));
@@ -145,18 +151,15 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
           </select>
         </div>
         <div>
-          <label className="text-xs text-gray-500 mb-1 block">Subcategoria</label>
-          <select
-            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
+          <label className="text-xs text-gray-500 mb-1 block">Subcategoria *</label>
+          <SubcategoriaSelector
+            categoria={catKey}
+            workshopId={workshopId}
             value={subcat}
-            onChange={e => setSubcat(e.target.value)}
+            onChange={setSubcat}
             disabled={!catKey}
-          >
-            <option value="">Selecione...</option>
-            {catSelecionada?.subcategorias.map(s => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
+            placeholder="Selecione ou crie..."
+          />
         </div>
       </div>
 
@@ -317,16 +320,13 @@ function LancamentoRow({ item, onDelete, onSaved }) {
           </div>
           <div>
             <label className="text-xs text-gray-500 mb-1 block">Subcategoria</label>
-            <select
-              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-amber-300"
+            <SubcategoriaSelector
+              categoria={catKey}
+              workshopId={item.workshop_id}
               value={subcat}
-              onChange={e => setSubcat(e.target.value)}
-            >
-              <option value="">Selecione...</option>
-              {catSelecionada?.subcategorias.map(s => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
+              onChange={setSubcat}
+              placeholder="Selecione ou crie..."
+            />
           </div>
         </div>
 
