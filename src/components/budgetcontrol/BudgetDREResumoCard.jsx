@@ -18,7 +18,7 @@ const CATEGORIA_LABELS = {
   outras: { label: "Outras Receitas", color: "bg-emerald-100 text-emerald-700", tcmp2: false },
 };
 
-function LinhaCategoria({ catKey, itens }) {
+function LinhaCategoria({ catKey, itens, onSelectItem }) {
   const [open, setOpen] = useState(false);
   const cat = CATEGORIA_LABELS[catKey] || { label: catKey, color: "bg-gray-100 text-gray-700", tcmp2: false };
   const total = itens.reduce((s, i) => s + (i.valor || 0), 0);
@@ -48,12 +48,16 @@ function LinhaCategoria({ catKey, itens }) {
       {open && (
         <div className="border-t border-gray-100 bg-gray-50 divide-y divide-gray-100">
           {itens.map((item, i) => (
-            <div key={item.id || i} className="flex justify-between items-center px-4 py-1.5 text-sm">
+            <button
+              key={item.id || i}
+              onClick={() => onSelectItem(item)}
+              className="w-full flex justify-between items-center px-4 py-1.5 text-sm hover:bg-gray-100 transition-colors cursor-pointer"
+            >
               <span className="text-gray-600 truncate max-w-[60%]">{item.descricao || item.subcategoria || "—"}</span>
               <span className={`font-medium ${isDespesa ? "text-red-600" : "text-green-600"}`}>
                 {formatCurrency(item.valor)}
               </span>
-            </div>
+            </button>
           ))}
         </div>
       )}
@@ -61,7 +65,7 @@ function LinhaCategoria({ catKey, itens }) {
   );
 }
 
-export default function BudgetDREResumoCard({ lancamentos = [] }) {
+export default function BudgetDREResumoCard({ lancamentos = [], onSelectDREItem }) {
   const [abaAtiva, setAbaAtiva] = useState("despesas");
 
   if (!lancamentos.length) {
@@ -155,17 +159,17 @@ export default function BudgetDREResumoCard({ lancamentos = [] }) {
         </div>
 
         {/* Lista por categoria */}
-        <div className="space-y-2">
-          {Object.keys(gruposAtivos).length === 0 ? (
-            <p className="text-center text-gray-400 py-4 text-sm">
-              Nenhum lançamento de {abaAtiva === "despesas" ? "despesa" : "receita"} neste mês.
-            </p>
-          ) : (
-            Object.entries(gruposAtivos).map(([catKey, itens]) => (
-              <LinhaCategoria key={catKey} catKey={catKey} itens={itens} />
-            ))
-          )}
-        </div>
+         <div className="space-y-2">
+           {Object.keys(gruposAtivos).length === 0 ? (
+             <p className="text-center text-gray-400 py-4 text-sm">
+               Nenhum lançamento de {abaAtiva === "despesas" ? "despesa" : "receita"} neste mês.
+             </p>
+           ) : (
+             Object.entries(gruposAtivos).map(([catKey, itens]) => (
+               <LinhaCategoria key={catKey} catKey={catKey} itens={itens} onSelectItem={onSelectDREItem} />
+             ))
+           )}
+         </div>
 
         {/* Rodapé totais */}
         <div className="border-t border-gray-200 pt-3 flex justify-between items-center">

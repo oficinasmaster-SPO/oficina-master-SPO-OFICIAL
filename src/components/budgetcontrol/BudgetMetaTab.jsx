@@ -37,7 +37,9 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
   const queryClient = useQueryClient();
   const [editingId, setEditingId] = useState(null);
   const [showForm, setShowForm] = useState(false);
-  const [syncPulse, setSyncPulse] = useState(false); // feedback visual de sync
+  const [syncPulse, setSyncPulse] = useState(false);
+  const [showMetaModal, setShowMetaModal] = useState(false);
+  const [selectedDREItem, setSelectedDREItem] = useState(null);
   const [formData, setFormData] = useState({
     faturamento_meta_rs: 0,
     item: "",
@@ -47,6 +49,17 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
     responsavel_nome: "",
     notas: ""
   });
+
+  const handleSelectDREItem = (lancamento) => {
+    setSelectedDREItem({
+      categoria: lancamento.categoria,
+      item: lancamento.descricao,
+      valor_realizado: lancamento.valor,
+      tipo: lancamento.tipo,
+      entra_tcmp2: lancamento.entra_tcmp2
+    });
+    setShowMetaModal(true);
+  };
 
   // Buscar metas do mês
   const { data: metas = [], isLoading: isLoadingMetas } = useQuery({
@@ -239,7 +252,25 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
       <BudgetHistoryTable workshopId={workshopId} mes={mes} />
 
       {/* Card: Todas despesas/receitas lançadas no DRE Avançado */}
-      <BudgetDREResumoCard lancamentos={lancamentos} />
+      <BudgetDREResumoCard lancamentos={lancamentos} onSelectDREItem={handleSelectDREItem} />
+
+      {/* Modal: Configurar Meta a partir do DRE (será criado na Fase 3) */}
+      {showMetaModal && selectedDREItem && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <h2 className="text-lg font-bold mb-4">Configurar Meta do Lançamento</h2>
+            <p className="text-sm text-gray-600 mb-2">Categoria: {selectedDREItem.categoria}</p>
+            <p className="text-sm text-gray-600 mb-4">Item: {selectedDREItem.item}</p>
+            <p className="text-sm text-gray-600 mb-6">Valor Real (DRE): R$ {selectedDREItem.valor_realizado}</p>
+            <button
+              onClick={() => setShowMetaModal(false)}
+              className="w-full px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition"
+            >
+              Fechar (Modal completo em Fase 3)
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Cards Resumo */}
       <BudgetSummaryCards calculado={calculado} metas={metas} />
