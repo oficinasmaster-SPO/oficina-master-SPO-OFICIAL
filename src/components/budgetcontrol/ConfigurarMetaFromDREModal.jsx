@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { formatCurrency } from "../utils/formatters";
 import { AlertCircle } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function ConfigurarMetaFromDREModal({
   item,
@@ -20,6 +21,7 @@ export default function ConfigurarMetaFromDREModal({
     notas: ""
   });
 
+  const [metaType, setMetaType] = useState("fixa"); // "fixa" ou "percentual"
   const [errors, setErrors] = useState({});
 
   // Resetar form quando modal fecha
@@ -45,16 +47,16 @@ export default function ConfigurarMetaFromDREModal({
       newErrors.responsavel_nome = "Responsável é obrigatório";
     }
 
-    if (formData.meta_fixa_rs < 0) {
-      newErrors.meta_fixa_rs = "Meta em R$ não pode ser negativa";
+    if (metaType === "fixa" && formData.meta_fixa_rs <= 0) {
+      newErrors.meta_fixa_rs = "Meta em R$ é obrigatória e deve ser maior que zero";
     }
 
-    if (formData.meta_percentual < 0 || formData.meta_percentual > 100) {
+    if (metaType === "percentual" && (formData.meta_percentual < 0 || formData.meta_percentual > 100)) {
       newErrors.meta_percentual = "Meta em % deve ser entre 0 e 100";
     }
 
-    if (formData.meta_fixa_rs === 0 && formData.meta_percentual === 0) {
-      newErrors.meta_fixa_rs = "Defina pelo menos uma meta (R$ ou %)";
+    if (metaType === "percentual" && formData.meta_percentual === 0) {
+      newErrors.meta_percentual = "Meta em % é obrigatória";
     }
 
     if (formData.notas.length > 300) {
@@ -126,42 +128,48 @@ export default function ConfigurarMetaFromDREModal({
               )}
             </div>
 
-            {/* Meta em R$ */}
-            <div>
-              <Label htmlFor="metaRs" className="text-xs font-medium mb-1.5 block">
-                Meta em R$
-              </Label>
-              <InputMoeda
-                id="metaRs"
-                placeholder="0"
-                value={formData.meta_fixa_rs}
-                onChange={(e) => handleFieldChange("meta_fixa_rs", parseFloat(e.target.value) || 0)}
-                className={errors.meta_fixa_rs ? "border-red-500" : ""}
-              />
-              {errors.meta_fixa_rs && (
-                <p className="text-xs text-red-500 mt-1">{errors.meta_fixa_rs}</p>
-              )}
-            </div>
+            {/* Tabs: Meta Fixa vs Percentual */}
+            <Tabs value={metaType} onValueChange={setMetaType} className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-3">
+                <TabsTrigger value="fixa">Meta Fixa (R$)</TabsTrigger>
+                <TabsTrigger value="percentual">Meta em %</TabsTrigger>
+              </TabsList>
 
-            {/* Meta em % */}
-            <div>
-              <Label htmlFor="metaPercent" className="text-xs font-medium mb-1.5 block">
-                Meta em %
-              </Label>
-              <Input
-                id="metaPercent"
-                type="number"
-                placeholder="0"
-                value={formData.meta_percentual}
-                onChange={(e) => handleFieldChange("meta_percentual", parseFloat(e.target.value) || 0)}
-                min="0"
-                max="100"
-                className={errors.meta_percentual ? "border-red-500" : ""}
-              />
-              {errors.meta_percentual && (
-                <p className="text-xs text-red-500 mt-1">{errors.meta_percentual}</p>
-              )}
-            </div>
+              <TabsContent value="fixa" className="space-y-2">
+                <Label htmlFor="metaRs" className="text-xs font-medium">
+                  OU Meta em R$ Fixo *
+                </Label>
+                <InputMoeda
+                  id="metaRs"
+                  placeholder="0"
+                  value={formData.meta_fixa_rs}
+                  onChange={(e) => handleFieldChange("meta_fixa_rs", parseFloat(e.target.value) || 0)}
+                  className={errors.meta_fixa_rs ? "border-red-500" : ""}
+                />
+                {errors.meta_fixa_rs && (
+                  <p className="text-xs text-red-500 mt-1">{errors.meta_fixa_rs}</p>
+                )}
+              </TabsContent>
+
+              <TabsContent value="percentual" className="space-y-2">
+                <Label htmlFor="metaPercent" className="text-xs font-medium">
+                  OU Meta em % *
+                </Label>
+                <Input
+                  id="metaPercent"
+                  type="number"
+                  placeholder="0"
+                  value={formData.meta_percentual}
+                  onChange={(e) => handleFieldChange("meta_percentual", parseFloat(e.target.value) || 0)}
+                  min="0"
+                  max="100"
+                  className={errors.meta_percentual ? "border-red-500" : ""}
+                />
+                {errors.meta_percentual && (
+                  <p className="text-xs text-red-500 mt-1">{errors.meta_percentual}</p>
+                )}
+              </TabsContent>
+            </Tabs>
 
             {/* Observações */}
             <div>
