@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
@@ -206,9 +206,15 @@ function StatusPagamento({ item }) {
 
 // ─── Modal para marcar data_pagamento ─────────────────────────────
 function ModalMarcarPagamento({ item, onFechar, onSalvo }) {
-  const [dataPagamento, setDataPagamento] = useState(item?.data_pagamento || "");
-  const [dataVencimento, setDataVencimento] = useState(item?.data_vencimento || "");
+  const [dataPagamento, setDataPagamento] = useState("");
+  const [dataVencimento, setDataVencimento] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // BUG FIX: sincronizar state local toda vez que o item muda
+  useEffect(() => {
+    setDataPagamento(item?.data_pagamento || "");
+    setDataVencimento(item?.data_vencimento || "");
+  }, [item?.id, item?.data_pagamento, item?.data_vencimento]);
 
   if (!item) return null;
 
@@ -283,10 +289,17 @@ function ModalMarcarPagamento({ item, onFechar, onSalvo }) {
 
 // ─── Linha de item ─────────────────────────────────────────────────
 function LinhaItem({ item, onDelete, onEdit, onMarcarPagamento }) {
+  const handleRowClick = () => {
+    // Apenas itens do DRE (com ID) abrem o modal de pagamento ao clicar na linha
+    if (item.origem !== "manual" && item.id) {
+      onMarcarPagamento(item);
+    }
+  };
+
   return (
     <div
       className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-gray-50 group cursor-pointer"
-      onClick={() => item.origem !== "manual" && onMarcarPagamento(item)}
+      onClick={handleRowClick}
     >
       <div className="flex items-center gap-2 flex-1 min-w-0">
         <Badge
@@ -449,10 +462,21 @@ export default function DFCTab({ workshopId, mes }) {
   const saldoInicialRecord = saldoInicialDB[0] || null;
   const saldoInicialSalvo  = saldoInicialRecord?.saldo_inicial ?? 0;
 
-  // Sincronizar input local com valor do banco
+  // BUG FIX: Sincronizar input local com valor do banco apenas na primeira carga por mês
+  // (não sobrescrever enquanto o usuário está digitando)
+  const saldoCarregado = useRef(false);
+  const mesAnterior = useRef(null);
   useEffect(() => {
-    setSaldoInicialInput(String(saldoInicialSalvo));
-  }, [saldoInicialSalvo]);
+    // Resetar flag quando o mês muda
+    if (mesAnterior.current !== mes) {
+      saldoCarregado.current = false;
+      mesAnterior.current = mes;
+    }
+    if (!saldoCarregado.current && saldoInicialDB.length >= 0 && saldoInicialDB !== undefined) {
+      setSaldoInicialInput(String(saldoInicialSalvo));
+      saldoCarregado.current = true;
+    }
+  }, [mes, saldoInicialSalvo, saldoInicialDB]);
 
   // ── Mutations ──────────────────────────────────────────────────
   const criarMutation = useMutation({

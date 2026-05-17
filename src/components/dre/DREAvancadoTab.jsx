@@ -565,10 +565,9 @@ export default function DREAvancadoTab({ workshopId, mes, tecnicosCount, horasMe
     if (!workshopId || !mes) return;
     
     const unsubscribe = base44.entities.DRELancamento.subscribe((event) => {
-      if (event.data?.workshop_id === workshopId && event.data?.mes === mes) {
-        if (event.type === 'create' || event.type === 'delete') {
-          refetch();
-        }
+      const relevante = event.data?.workshop_id === workshopId && event.data?.mes === mes;
+      if (relevante && (event.type === 'create' || event.type === 'delete' || event.type === 'update')) {
+        refetch();
       }
     });
 

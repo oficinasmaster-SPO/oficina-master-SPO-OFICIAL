@@ -27,6 +27,7 @@ import { markModuleCompleted } from "@/components/hooks/useModuleTracking";
 import DREAvancadoTab from "@/components/dre/DREAvancadoTab";
 import DFCTab from "@/components/dre/DFCTab";
 import BudgetMetaTab from "@/components/budgetcontrol/BudgetMetaTab";
+import VencimentosCard from "@/components/dre/VencimentosCard";
 
 const getCurrentMonth = () => {
   const now = new Date();
@@ -561,6 +562,11 @@ export default function DRETCMP2() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Card de alertas de vencimento (Fase 4) */}
+        {viewMode === 'month' && workshop && (
+          <VencimentosCard workshopId={workshop.id} mes={selectedMonth} />
+        )}
 
         {/* Formulário DRE */}
         <Tabs defaultValue="receitas" className="space-y-6">

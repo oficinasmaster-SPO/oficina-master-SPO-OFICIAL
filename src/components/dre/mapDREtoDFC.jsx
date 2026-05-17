@@ -53,6 +53,10 @@ export function mapDREtoDFC(lancamentos = []) {
     const sub = l.subcategoria || "";
     const desc = l.descricao || sub || cat;
 
+    // Campos de data — propagados para ProjecaoCaixaView e badges de status
+    const dataVencimento = l.data_vencimento || null;
+    const dataPagamento  = l.data_pagamento  || null;
+
     // --- ENTRADAS ---
     if (l.tipo === "receita") {
       return {
@@ -62,6 +66,8 @@ export function mapDREtoDFC(lancamentos = []) {
         tipo: "entrada",
         grupo: "operacional",
         origem: "dre_automatico",
+        data_vencimento: dataVencimento,
+        data_pagamento:  dataPagamento,
       };
     }
 
@@ -79,8 +85,7 @@ export function mapDREtoDFC(lancamentos = []) {
     ) {
       grupo = "investimento";
     }
-    // 3. Tudo mais → Operacional (pessoas, marketing, operacional, administrativo,
-    //    terceirizados, pecas_estoque, pecas_aplicadas, servicos, outras, etc.)
+    // 3. Tudo mais → Operacional
 
     return {
       id: l.id,
@@ -89,6 +94,8 @@ export function mapDREtoDFC(lancamentos = []) {
       tipo: "saida",
       grupo,
       origem: "dre_automatico",
+      data_vencimento: dataVencimento,
+      data_pagamento:  dataPagamento,
     };
   });
 }
