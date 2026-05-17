@@ -1,6 +1,11 @@
 /**
  * mapDREtoDFC — converte DRELancamento[] em itens do DFC
  *
+ * IMPORTANTE (Fase 4 - Subcategorias):
+ * O mapeamento usa o campo `categoria` (categoria pai), NÃO usa `subcategoria`.
+ * Subcategorias herdam automaticamente o grupo DFC da categoria pai.
+ * Exemplo: categoria="financeiro", subcategoria="Financiamento veículo" → grupo="financiamento"
+ *
  * Regras de mapeamento:
  *  receitas                                        → Operacional / Entrada
  *  pessoas, operacional, marketing, administrativo,

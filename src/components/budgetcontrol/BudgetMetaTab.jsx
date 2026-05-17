@@ -204,9 +204,10 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
 
   // Calcular totais e comparações
   const calculado = useMemo(() => {
-    if (!metas.length) return { total_meta: 0, por_categoria: {}, receita: {}, despesa: {} };
+    if (!metas.length) return { total_meta: 0, por_categoria: {}, receita: {}, despesa: {}, detalhes_subcategorias: {} };
 
     const por_categoria = {};
+    const detalhes_subcategorias = {};
     let total_meta_receita = 0;
     let total_realizado_receita = 0;
     let total_meta_despesa = 0;
@@ -225,12 +226,21 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
         return;
       }
 
+      // Total por categoria (ignora subcategoria para totais)
       const realizado = lancamentos
-        .filter(l =>
-          l.categoria === meta.categoria &&
-          (l.descricao === meta.item || l.subcategoria === meta.item || l.categoria === meta.item)
-        )
+        .filter(l => l.categoria === meta.categoria)
         .reduce((sum, l) => sum + (l.valor || 0), 0);
+
+      // Detalhamento por subcategoria (para exibição)
+      const subcategoriasDetalhes = lancamentos
+        .filter(l => l.categoria === meta.categoria && l.subcategoria)
+        .reduce((acc, l) => {
+          if (!acc[l.subcategoria]) acc[l.subcategoria] = 0;
+          acc[l.subcategoria] += l.valor || 0;
+          return acc;
+        }, {});
+
+      detalhes_subcategorias[meta.id] = subcategoriasDetalhes;
 
       const isDespesa = meta.tipo !== "receita";
 
