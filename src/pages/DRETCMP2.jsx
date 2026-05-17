@@ -26,6 +26,7 @@ import DiscrepancyAlert from "../components/sync/DiscrepancyAlert";
 import { markModuleCompleted } from "@/components/hooks/useModuleTracking";
 import DREAvancadoTab from "@/components/dre/DREAvancadoTab";
 import DFCTab from "@/components/dre/DFCTab";
+import BudgetMetaTab from "@/components/budgetcontrol/BudgetMetaTab";
 
 const getCurrentMonth = () => {
   const now = new Date();
@@ -571,6 +572,7 @@ export default function DRETCMP2() {
             <TabsTrigger value="resumo">📊 Resumo DRE</TabsTrigger>
             <TabsTrigger value="avancado">📋 DRE Avançado</TabsTrigger>
             <TabsTrigger value="dfc">💵 DFC</TabsTrigger>
+            <TabsTrigger value="orcamento">💳 Controle Orçamentário</TabsTrigger>
           </TabsList>
 
           {/* Receitas */}
@@ -1012,7 +1014,29 @@ export default function DRETCMP2() {
               </CardContent>
             </Card>
           </TabsContent>
-        </Tabs>
+
+          {/* Controle Orçamentário */}
+          <TabsContent value="orcamento">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  💳 Controle Orçamentário
+                </CardTitle>
+                <CardDescription>
+                  Configure as metas do mês e acompanhe o realizado versus o planejado
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {workshop && (
+                  <BudgetMetaTab
+                    workshopId={workshop.id}
+                    mes={selectedMonth}
+                  />
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+          </Tabs>
       </div>
     </div>
   );

@@ -1,0 +1,74 @@
+{
+  "name": "BudgetMeta",
+  "type": "object",
+  "properties": {
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "mes": {
+      "type": "string",
+      "description": "Mês de referência (YYYY-MM)"
+    },
+    "faturamento_meta_rs": {
+      "type": "number",
+      "description": "Meta total de faturamento em R$"
+    },
+    "item": {
+      "type": "string",
+      "description": "Nome do item da meta (ex: aluguel, salarios, marketing)"
+    },
+    "categoria": {
+      "type": "string",
+      "enum": ["operacional", "pessoas", "marketing", "manutencao", "terceirizados", "administrativo", "financeiro", "pecas"],
+      "description": "Categoria do item"
+    },
+    "meta_percentual": {
+      "type": "number",
+      "description": "Meta em percentual do faturamento (0-100)"
+    },
+    "meta_fixa_rs": {
+      "type": "number",
+      "description": "Meta em valor fixo em R$ (alternativa ao percentual)"
+    },
+    "responsavel_id": {
+      "type": "string",
+      "description": "ID do usuário responsável por esta categoria"
+    },
+    "responsavel_nome": {
+      "type": "string",
+      "description": "Nome do responsável (cache)"
+    },
+    "notas": {
+      "type": "string",
+      "description": "Anotações sobre a meta"
+    }
+  },
+  "required": ["workshop_id", "mes", "faturamento_meta_rs", "item", "categoria"],
+  "rls": {
+    "create": {
+      "$or": [
+        {"workshop_id": "{{user.data.workshop_id}}"},
+        {"user_condition": {"role": "admin"}}
+      ]
+    },
+    "read": {
+      "$or": [
+        {"workshop_id": "{{user.data.workshop_id}}"},
+        {"user_condition": {"role": "admin"}}
+      ]
+    },
+    "update": {
+      "$or": [
+        {"workshop_id": "{{user.data.workshop_id}}"},
+        {"user_condition": {"role": "admin"}}
+      ]
+    },
+    "delete": {
+      "$or": [
+        {"workshop_id": "{{user.data.workshop_id}}"},
+        {"user_condition": {"role": "admin"}}
+      ]
+    }
+  }
+}
