@@ -77,6 +77,8 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
   const [subcat, setSubcat] = useState("");
   const [descricao, setDescricao] = useState("");
   const [valor, setValor] = useState("");
+  const [dataVencimento, setDataVencimento] = useState("");
+  const [dataPagamento, setDataPagamento] = useState("");
   const [saving, setSaving] = useState(false);
 
   const categorias = tipo === "receita" ? CATEGORIAS_RECEITA : CATEGORIAS_DESPESA;
@@ -103,7 +105,9 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
         subcategoria: subcat || (catSelecionada?.subcategorias[0] ?? ""),
         descricao,
         valor: valorNum,
-        entra_tcmp2: catSelecionada?.entra_tcmp2 ?? true
+        entra_tcmp2: catSelecionada?.entra_tcmp2 ?? true,
+        ...(dataVencimento && { data_vencimento: dataVencimento }),
+        ...(dataPagamento && { data_pagamento: dataPagamento }),
       });
 
       // Invalidar queries do Controle Orçamentário em tempo real
@@ -187,6 +191,27 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
         </div>
       </div>
 
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <label className="text-xs text-gray-500 mb-1 block">📅 Vencimento <span className="text-gray-400">(opcional)</span></label>
+          <input
+            type="date"
+            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
+            value={dataVencimento}
+            onChange={e => setDataVencimento(e.target.value)}
+          />
+        </div>
+        <div>
+          <label className="text-xs text-gray-500 mb-1 block">✅ Data Pagamento <span className="text-gray-400">(opcional)</span></label>
+          <input
+            type="date"
+            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-green-300"
+            value={dataPagamento}
+            onChange={e => setDataPagamento(e.target.value)}
+          />
+        </div>
+      </div>
+
       <div className="flex gap-2">
         <Button size="sm" onClick={handleSave} disabled={saving} className="bg-blue-600 hover:bg-blue-700 flex-1">
           {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Plus className="w-4 h-4 mr-1" />}
@@ -208,10 +233,12 @@ function LancamentoRow({ item, onDelete, onSaved }) {
   const categorias = item.tipo === "receita" ? CATEGORIAS_RECEITA : CATEGORIAS_DESPESA;
   const cat = categorias[item.categoria];
 
-  const [catKey, setCatKey]     = useState(item.categoria);
-  const [subcat, setSubcat]     = useState(item.subcategoria || "");
+  const [catKey, setCatKey]       = useState(item.categoria);
+  const [subcat, setSubcat]       = useState(item.subcategoria || "");
   const [descricao, setDescricao] = useState(item.descricao || "");
-  const [valor, setValor]       = useState(String(item.valor));
+  const [valor, setValor]         = useState(String(item.valor));
+  const [dataVencimento, setDataVencimento] = useState(item.data_vencimento || "");
+  const [dataPagamento, setDataPagamento]   = useState(item.data_pagamento || "");
 
   const catSelecionada = categorias[catKey];
 
@@ -240,7 +267,9 @@ function LancamentoRow({ item, onDelete, onSaved }) {
         subcategoria: subcat,
         descricao,
         valor: valorNum,
-        entra_tcmp2: catSelecionada?.entra_tcmp2 ?? item.entra_tcmp2
+        entra_tcmp2: catSelecionada?.entra_tcmp2 ?? item.entra_tcmp2,
+        data_vencimento: dataVencimento || null,
+        data_pagamento: dataPagamento || null,
       });
       // Propagar edição para DFC e Controle Orçamentário via custom event
       window.dispatchEvent(new CustomEvent('dre-lancamento-criado', {
@@ -262,6 +291,8 @@ function LancamentoRow({ item, onDelete, onSaved }) {
     setSubcat(item.subcategoria || "");
     setDescricao(item.descricao || "");
     setValor(String(item.valor));
+    setDataVencimento(item.data_vencimento || "");
+    setDataPagamento(item.data_pagamento || "");
     setEditing(false);
   };
 
@@ -323,6 +354,27 @@ function LancamentoRow({ item, onDelete, onSaved }) {
               className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-amber-300 text-right font-mono"
               value={valor}
               onChange={e => setValor(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block">📅 Vencimento</label>
+            <input
+              type="date"
+              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-amber-300"
+              value={dataVencimento}
+              onChange={e => setDataVencimento(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block">✅ Pago em</label>
+            <input
+              type="date"
+              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-green-300"
+              value={dataPagamento}
+              onChange={e => setDataPagamento(e.target.value)}
             />
           </div>
         </div>

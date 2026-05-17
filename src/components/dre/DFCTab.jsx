@@ -174,10 +174,119 @@ function ModalLancamento({ aberto, onFechar, onSalvar, isSaving, lancamentoEdica
   );
 }
 
-// ─── Linha de item ─────────────────────────────────────────────────
-function LinhaItem({ item, onDelete, onEdit }) {
+// ─── Formatar data curta ───────────────────────────────────────────
+const fmtData = (d) => {
+  if (!d) return null;
+  const [ano, mes, dia] = d.split("-");
+  return `${dia}/${mes}`;
+};
+
+// ─── Badge de status de pagamento ─────────────────────────────────
+function StatusPagamento({ item }) {
+  if (item.origem === "manual") return null; // manual do DFC não tem data_vencimento do DRE
+  const hoje = new Date().toISOString().split("T")[0];
+  if (item.data_pagamento) {
+    return (
+      <span className="text-[10px] font-medium text-emerald-600 bg-emerald-50 border border-emerald-200 rounded px-1.5 py-0.5 shrink-0">
+        ✓ {fmtData(item.data_pagamento)}
+      </span>
+    );
+  }
+  if (item.data_vencimento) {
+    const vencido = item.data_vencimento < hoje;
+    return (
+      <span className={`text-[10px] font-medium rounded px-1.5 py-0.5 shrink-0 ${vencido ? "text-red-600 bg-red-50 border border-red-200" : "text-amber-600 bg-amber-50 border border-amber-200"}`}>
+        {vencido ? "⚠️" : "🕐"} vence {fmtData(item.data_vencimento)}
+      </span>
+    );
+  }
+  return null;
+}
+
+// ─── Modal para marcar data_pagamento ─────────────────────────────
+function ModalMarcarPagamento({ item, onFechar, onSalvo }) {
+  const [dataPagamento, setDataPagamento] = useState(item?.data_pagamento || "");
+  const [dataVencimento, setDataVencimento] = useState(item?.data_vencimento || "");
+  const [saving, setSaving] = useState(false);
+
+  if (!item) return null;
+
+  const handleSalvar = async () => {
+    setSaving(true);
+    try {
+      await base44.entities.DRELancamento.update(item.id, {
+        ...(dataVencimento !== undefined && { data_vencimento: dataVencimento || null }),
+        ...(dataPagamento !== undefined && { data_pagamento: dataPagamento || null }),
+      });
+      toast.success("Datas atualizadas!");
+      onSalvo();
+      onFechar();
+    } catch {
+      toast.error("Erro ao salvar");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
-    <div className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-gray-50 group">
+    <Dialog open={!!item} onOpenChange={onFechar}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle className="text-sm font-semibold">📅 Datas do Lançamento</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-1 text-xs text-gray-500 pb-2">
+          <p className="font-medium text-gray-800 text-sm truncate">{item.descricao || "—"}</p>
+          <p className={item.tipo === "entrada" ? "text-green-600 font-semibold" : "text-red-600 font-semibold"}>
+            {item.tipo === "entrada" ? "+" : "-"}{fmt(item.valor)}
+          </p>
+        </div>
+        <div className="space-y-3">
+          <div>
+            <Label className="text-xs">Data de Vencimento <span className="text-gray-400">(opcional)</span></Label>
+            <input
+              type="date"
+              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 mt-1 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
+              value={dataVencimento}
+              onChange={e => setDataVencimento(e.target.value)}
+            />
+          </div>
+          <div>
+            <Label className="text-xs">Data de Pagamento <span className="text-gray-400">(preencha quando pago)</span></Label>
+            <input
+              type="date"
+              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 mt-1 bg-white focus:outline-none focus:ring-2 focus:ring-green-300"
+              value={dataPagamento}
+              onChange={e => setDataPagamento(e.target.value)}
+            />
+            {dataPagamento && (
+              <button
+                onClick={() => setDataPagamento("")}
+                className="text-xs text-red-500 hover:text-red-700 mt-1"
+              >
+                Limpar (marcar como pendente)
+              </button>
+            )}
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" size="sm" onClick={onFechar}>Cancelar</Button>
+          <Button size="sm" onClick={handleSalvar} disabled={saving}>
+            {saving && <Loader2 className="w-3 h-3 animate-spin mr-1" />}
+            Salvar
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── Linha de item ─────────────────────────────────────────────────
+function LinhaItem({ item, onDelete, onEdit, onMarcarPagamento }) {
+  return (
+    <div
+      className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-gray-50 group cursor-pointer"
+      onClick={() => item.origem !== "manual" && onMarcarPagamento(item)}
+    >
       <div className="flex items-center gap-2 flex-1 min-w-0">
         <Badge
           variant="outline"
@@ -188,26 +297,29 @@ function LinhaItem({ item, onDelete, onEdit }) {
           {item.origem === "manual" ? "Manual" : "DRE"}
         </Badge>
         <span className="text-sm text-gray-700 truncate">{item.descricao || "—"}</span>
+        <StatusPagamento item={item} />
       </div>
       <div className="flex items-center gap-1 shrink-0">
         <span className={`text-sm font-semibold mr-2 ${item.tipo === "entrada" ? "text-green-700" : "text-red-600"}`}>
           {item.tipo === "entrada" ? "+" : "-"}{fmt(item.valor)}
         </span>
-        {item.origem === "manual" && (
+        {item.origem === "manual" ? (
           <>
             <button
-              onClick={() => onEdit(item)}
+              onClick={(e) => { e.stopPropagation(); onEdit(item); }}
               className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-blue-500 p-0.5"
             >
               <Pencil className="w-3.5 h-3.5" />
             </button>
             <button
-              onClick={() => onDelete(item)}
+              onClick={(e) => { e.stopPropagation(); onDelete(item); }}
               className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-500 p-0.5"
             >
               <Trash2 className="w-3.5 h-3.5" />
             </button>
           </>
+        ) : (
+          <span className="opacity-0 group-hover:opacity-60 text-xs text-gray-400 transition-opacity">📅</span>
         )}
       </div>
     </div>
@@ -215,10 +327,18 @@ function LinhaItem({ item, onDelete, onEdit }) {
 }
 
 // ─── Seção colapsável ──────────────────────────────────────────────
-function SecaoFluxo({ titulo, icone, cor, itens, fluxo, onAddManual, onDelete, onEdit }) {
+function SecaoFluxo({ titulo, icone, cor, itens, fluxo, onAddManual, onDelete, onEdit, onMarcarPagamento }) {
   const [aberta, setAberta] = useState(true);
-  const entradas = itens.filter(i => i.tipo === "entrada");
-  const saidas   = itens.filter(i => i.tipo === "saida");
+
+  // Ordenar por data_vencimento (sem data vai para o fim)
+  const ordenados = [...itens].sort((a, b) => {
+    const da = a.data_vencimento || "9999-99-99";
+    const db = b.data_vencimento || "9999-99-99";
+    return da.localeCompare(db);
+  });
+
+  const entradas = ordenados.filter(i => i.tipo === "entrada");
+  const saidas   = ordenados.filter(i => i.tipo === "saida");
 
   return (
     <div className={`border-2 rounded-xl overflow-hidden ${cor.border}`}>
@@ -242,7 +362,7 @@ function SecaoFluxo({ titulo, icone, cor, itens, fluxo, onAddManual, onDelete, o
             <div>
               <p className="text-xs font-semibold text-green-600 uppercase mb-1">Entradas</p>
               {entradas.map((item, i) => (
-                <LinhaItem key={item.id || i} item={item} onDelete={onDelete} onEdit={onEdit} />
+                <LinhaItem key={item.id || i} item={item} onDelete={onDelete} onEdit={onEdit} onMarcarPagamento={onMarcarPagamento} />
               ))}
             </div>
           )}
@@ -250,7 +370,7 @@ function SecaoFluxo({ titulo, icone, cor, itens, fluxo, onAddManual, onDelete, o
             <div>
               <p className="text-xs font-semibold text-red-600 uppercase mb-1">Saídas</p>
               {saidas.map((item, i) => (
-                <LinhaItem key={item.id || i} item={item} onDelete={onDelete} onEdit={onEdit} />
+                <LinhaItem key={item.id || i} item={item} onDelete={onDelete} onEdit={onEdit} onMarcarPagamento={onMarcarPagamento} />
               ))}
             </div>
           )}
@@ -278,6 +398,7 @@ export default function DFCTab({ workshopId, mes }) {
   const [grupoModal, setGrupoModal] = useState("operacional");
   const [lancamentoEdicao, setLancamentoEdicao] = useState(null);
   const [saldoInicialInput, setSaldoInicialInput] = useState("0");
+  const [itemPagamento, setItemPagamento] = useState(null); // item DRE para marcar datas
 
   // ── Buscar DRELancamentos → mapeados automaticamente (Fase 3) ──
   const { data: lancamentosDRE = [], isLoading: isDRELoading, refetch: refetchDRE } = useQuery({
@@ -485,6 +606,7 @@ export default function DFCTab({ workshopId, mes }) {
         onAddManual={() => abrirModal("operacional")}
         onDelete={handleDelete}
         onEdit={(item) => abrirModal("operacional", item)}
+        onMarcarPagamento={setItemPagamento}
       />
       <SecaoFluxo
         titulo="Investimento"
@@ -495,6 +617,7 @@ export default function DFCTab({ workshopId, mes }) {
         onAddManual={() => abrirModal("investimento")}
         onDelete={handleDelete}
         onEdit={(item) => abrirModal("investimento", item)}
+        onMarcarPagamento={setItemPagamento}
       />
       <SecaoFluxo
         titulo="Financiamento"
@@ -505,6 +628,7 @@ export default function DFCTab({ workshopId, mes }) {
         onAddManual={() => abrirModal("financiamento")}
         onDelete={handleDelete}
         onEdit={(item) => abrirModal("financiamento", item)}
+        onMarcarPagamento={setItemPagamento}
       />
 
       {/* Saldo Final — indicador verde/vermelho em tempo real */}
@@ -551,7 +675,7 @@ export default function DFCTab({ workshopId, mes }) {
         </CardContent>
       </Card>
 
-      {/* Modal CRUD */}
+      {/* Modal CRUD manual */}
       <ModalLancamento
         aberto={modalAberto}
         onFechar={() => { setModalAberto(false); setLancamentoEdicao(null); }}
@@ -559,6 +683,13 @@ export default function DFCTab({ workshopId, mes }) {
         isSaving={criarMutation.isPending || editarMutation.isPending}
         lancamentoEdicao={lancamentoEdicao}
         grupoInicial={grupoModal}
+      />
+
+      {/* Modal marcar pagamento (itens DRE) */}
+      <ModalMarcarPagamento
+        item={itemPagamento}
+        onFechar={() => setItemPagamento(null)}
+        onSalvo={() => refetchDRE()}
       />
     </div>
   );
