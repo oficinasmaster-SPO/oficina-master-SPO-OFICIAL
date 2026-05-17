@@ -12,9 +12,8 @@ import {
 import { formatCurrency } from "@/components/utils/formatters";
 import { toast } from "sonner";
 import SubcategoriaSelector from "./SubcategoriaSelector";
-import FrequenciaSelector from "./FrequenciaSelector";
-import ConfiguracaoRecorrencia from "./ConfiguracaoRecorrencia";
-import { base44 } from "@/api/base44Client";
+import FiltroPeriodo from "./FiltroPeriodo";
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell, Legend } from "recharts";
 
 // ─── CATEGORIAS ───────────────────────────────────────────────────────────────
 const CATEGORIAS_DESPESA = {
@@ -84,12 +83,6 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
   const [dataVencimento, setDataVencimento] = useState("");
   const [dataPagamento, setDataPagamento] = useState("");
   const [saving, setSaving] = useState(false);
-  
-  // Campos de recorrência
-  const [frequencia, setFrequencia] = useState("unico");
-  const [dataInicio, setDataInicio] = useState("");
-  const [dataFim, setDataFim] = useState("");
-  const [numeroParcelas, setNumeroParcelas] = useState(12);
 
   const categorias = tipo === "receita" ? CATEGORIAS_RECEITA : CATEGORIAS_DESPESA;
   const catSelecionada = categorias[catKey];
@@ -112,55 +105,28 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
 
     setSaving(true);
     try {
-      // Se tiver frequência, usar criação recorrente
-      if (frequencia !== 'unico') {
-        const response = await base44.functions.invoke('criarLancamentoRecorrente', {
-          workshop_id: workshopId,
-          mes_inicio: mes,
-          tipo,
-          categoria: catKey,
-          subcategoria: subcat || (catSelecionada?.subcategorias[0] ?? ""),
-          descricao,
-          valor: valorNum,
-          entra_tcmp2: catSelecionada?.entra_tcmp2 ?? true,
-          data_vencimento: dataVencimento,
-          frequencia,
-          numero_parcelas: dataFim ? null : numeroParcelas,
-          data_inicio: dataInicio || new Date().toISOString().split('T')[0],
-          data_fim: dataFim || null
-        });
+      const novoLancamento = await base44.entities.DRELancamento.create({
+        workshop_id: workshopId,
+        mes,
+        tipo,
+        categoria: catKey,
+        subcategoria: subcat || (catSelecionada?.subcategorias[0] ?? ""),
+        descricao,
+        valor: valorNum,
+        entra_tcmp2: catSelecionada?.entra_tcmp2 ?? true,
+        ...(dataVencimento && { data_vencimento: dataVencimento }),
+        ...(dataPagamento && { data_pagamento: dataPagamento }),
+      });
 
-        if (response.data.success) {
-          window.dispatchEvent(new CustomEvent('dre-lancamento-criado', { 
-            detail: { workshop_id: workshopId, mes } 
-          }));
-          toast.success(response.data.mensagem);
-          onSuccess();
-        }
-      } else {
-        // Lançamento único normal
-        const novoLancamento = await base44.entities.DRELancamento.create({
-          workshop_id: workshopId,
-          mes,
-          tipo,
-          categoria: catKey,
-          subcategoria: subcat || (catSelecionada?.subcategorias[0] ?? ""),
-          descricao,
-          valor: valorNum,
-          entra_tcmp2: catSelecionada?.entra_tcmp2 ?? true,
-          ...(dataVencimento && { data_vencimento: dataVencimento }),
-          ...(dataPagamento && { data_pagamento: dataPagamento }),
-        });
+      // Invalidar queries do Controle Orçamentário em tempo real
+      window.dispatchEvent(new CustomEvent('dre-lancamento-criado', { 
+        detail: { workshop_id: workshopId, mes, lancamento: novoLancamento } 
+      }));
 
-        window.dispatchEvent(new CustomEvent('dre-lancamento-criado', { 
-          detail: { workshop_id: workshopId, mes, lancamento: novoLancamento } 
-        }));
-
-        toast.success("Lançamento adicionado!");
-        onSuccess();
-      }
+      toast.success("Lançamento adicionado!");
+      onSuccess();
     } catch (e) {
-      toast.error("Erro ao salvar: " + e.message);
+      toast.error("Erro ao salvar lançamento");
     } finally {
       setSaving(false);
     }
@@ -249,28 +215,6 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
             onChange={e => setDataPagamento(e.target.value)}
           />
         </div>
-      </div>
-
-      {/* Frequência e Recorrência */}
-      <div className="space-y-3 pt-3 border-t border-gray-200">
-        <FrequenciaSelector
-          value={frequencia}
-          onChange={setFrequencia}
-        />
-        
-        {frequencia !== 'unico' && (
-          <ConfiguracaoRecorrencia
-            frequencia={frequencia}
-            dataInicio={dataInicio}
-            dataFim={dataFim}
-            numeroParcelas={numeroParcelas}
-            onChange={(updates) => {
-              if (updates.data_inicio) setDataInicio(updates.data_inicio);
-              if (updates.data_fim !== undefined) setDataFim(updates.data_fim);
-              if (updates.numero_parcelas !== undefined) setNumeroParcelas(updates.numero_parcelas);
-            }}
-          />
-        )}
       </div>
 
       <div className="flex gap-2">
@@ -673,11 +617,25 @@ export default function DREAvancadoTab({ workshopId, mes, tecnicosCount, horasMe
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(null); // 'receita' | 'despesa' | null
   const [abaAtiva, setAbaAtiva] = useState("todos"); // todos | receitas | despesas | analise
+  const [periodo, setPeriodo] = useState("mensal"); // mensal | anual
+  const [ano, setAno] = useState(new Date().getFullYear());
+  
+  // Extrair mês do parâmetro (formato YYYY-MM)
+  const mesAtual = mes ? mes.split('-')[1] : "01";
+  const anoAtual = mes ? parseInt(mes.split('-')[0]) : new Date().getFullYear();
 
+  // Query para dados anuais
+  const { data: dadosAnuais, isLoading: isLoadingAnual } = useQuery({
+    queryKey: ["dre-anual", workshopId, ano],
+    queryFn: () => base44.functions.invoke('getDREDataAnual', { workshop_id: workshopId, ano }),
+    enabled: periodo === "anual" && !!workshopId && !!ano
+  });
+
+  // Query para dados mensais (padrão)
   const { data: lancamentos = [], isLoading, refetch } = useQuery({
     queryKey: ["dre-lancamentos", workshopId, mes],
     queryFn: () => base44.entities.DRELancamento.filter({ workshop_id: workshopId, mes }, "-created_date", 200),
-    enabled: !!workshopId && !!mes
+    enabled: periodo === "mensal" && !!workshopId && !!mes
   });
 
   // Real-time: atualizar quando novo DRELancamento é criado/deletado
@@ -772,98 +730,223 @@ export default function DREAvancadoTab({ workshopId, mes, tecnicosCount, horasMe
         </p>
       </div>
 
-      {/* Sub-abas internas */}
-      <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
-        {[
-          { key: "todos", label: "📋 Todos" },
-          { key: "receitas", label: "💰 Receitas (" + formatCurrency(totalReceitas) + ")" },
-          { key: "despesas", label: "📉 Despesas (" + formatCurrency(totalDespesas) + ")" },
-          { key: "analise", label: "📊 Análise" }
-        ].map(tab => (
-          <button
-            key={tab.key}
-            onClick={() => setAbaAtiva(tab.key)}
-            className={"flex-1 text-xs py-1.5 px-2 rounded-md transition-all font-medium " + (abaAtiva === tab.key ? "bg-white shadow text-gray-900" : "text-gray-500 hover:text-gray-700")}
-          >
-            {tab.label}
-          </button>
-        ))}
+      {/* Filtro de Período */}
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <FiltroPeriodo
+          mes={mesAtual}
+          ano={anoAtual}
+          periodo={periodo}
+          onMesChange={(novoMes) => {
+            const novaData = `${anoAtual}-${novoMes}`;
+            window.dispatchEvent(new CustomEvent('dre-mudar-mes', { detail: { mes: novaData } }));
+          }}
+          onAnoChange={(novoAno) => setAno(parseInt(novoAno))}
+          onPeriodoChange={(novoPeriodo) => setPeriodo(novoPeriodo)}
+        />
       </div>
 
-      {/* Aba de Análise */}
-      {abaAtiva === "analise" ? (
-        <PainelAnalise lancamentos={lancamentos} tecnicosCount={tecnicosCount} horasMes={horasMes} />
-      ) : (
-        <div className="space-y-4">
-          {/* Botões de ação */}
-          <div className="flex items-center gap-2 flex-wrap">
-            {(abaAtiva === "todos" || abaAtiva === "receitas") && (
-              <Button size="sm" variant="outline" className="border-green-300 text-green-700 hover:bg-green-50"
-                onClick={() => setShowForm(showForm === "receita" ? null : "receita")}>
-                <ArrowUpCircle className="w-4 h-4 mr-1" /> + Receita
-              </Button>
-            )}
-            {(abaAtiva === "todos" || abaAtiva === "despesas") && (
-              <Button size="sm" variant="outline" className="border-red-300 text-red-700 hover:bg-red-50"
-                onClick={() => setShowForm(showForm === "despesa" ? null : "despesa")}>
-                <ArrowDownCircle className="w-4 h-4 mr-1" /> + Despesa
-              </Button>
-            )}
-            <div className="ml-auto flex gap-2">
-              <Button size="sm" variant="outline" onClick={refresh}>
-                <RefreshCw className="w-4 h-4" />
-              </Button>
-              {lancamentos.length > 0 && onConsolidar && (
-                <Button size="sm" className="bg-green-600 hover:bg-green-700"
-                  onClick={() => onConsolidar(totaisConsolidados)}>
-                  <TrendingUp className="w-4 h-4 mr-1" /> Consolidar no DRE
-                </Button>
-              )}
+      {/* VISÃO ANUAL */}
+      {periodo === "anual" ? (
+        <div className="space-y-6">
+          {isLoadingAnual ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
             </div>
+          ) : dadosAnuais ? (
+            <>
+              {/* KPIs Anuais */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <Card className="bg-gradient-to-br from-green-500 to-emerald-600 text-white">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs opacity-75">Receita Total Anual</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-2xl font-bold">{formatCurrency(dadosAnuais.total_anual.receitas)}</p>
+                    <p className="text-xs opacity-80 mt-1">Média mensal: {formatCurrency(dadosAnuais.media_mensal.receitas)}</p>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs opacity-75">Despesas Totais</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-2xl font-bold">{formatCurrency(dadosAnuais.total_anual.despesas)}</p>
+                    <p className="text-xs opacity-80 mt-1">Média mensal: {formatCurrency(dadosAnuais.media_mensal.despesas)}</p>
+                  </CardContent>
+                </Card>
+
+                <Card className={`bg-gradient-to-br ${dadosAnuais.total_anual.lucro >= 0 ? "from-emerald-500 to-teal-600" : "from-red-500 to-rose-600"} text-white`}>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs opacity-75">Lucro Anual</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-2xl font-bold">{formatCurrency(dadosAnuais.total_anual.lucro)}</p>
+                    <p className="text-xs opacity-80 mt-1">Margem: {dadosAnuais.total_anual.margem.toFixed(1)}%</p>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-gradient-to-br from-purple-500 to-pink-600 text-white">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs opacity-75">Total Lançamentos</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-2xl font-bold">{dadosAnuais.total_lancamentos}</p>
+                    <p className="text-xs opacity-80 mt-1">em {dadosAnuais.meses.filter(m => m.receitas > 0 || m.despesas > 0).length} meses</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Gráfico Mensal */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm">📊 Evolução Mensal - {ano}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={dadosAnuais.meses}>
+                        <XAxis dataKey="mes_nome" tick={{ fontSize: 11 }} />
+                        <YAxis tickFormatter={(v) => `R$ ${(v/1000).toFixed(0)}k`} tick={{ fontSize: 10 }} />
+                        <Tooltip 
+                          formatter={(value) => formatCurrency(value)}
+                          contentStyle={{ fontSize: '12px' }}
+                        />
+                        <Legend />
+                        <Bar dataKey="receitas" name="Receitas" fill="#10b981" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="despesas" name="Despesas" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="lucro" name="Lucro" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Tabela por Categoria */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm">📋 Totais por Categoria - {ano}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {dadosAnuais.categorias.map((cat) => (
+                      <div key={cat.categoria} className="flex items-center justify-between py-2 border-b border-gray-100">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className={cat.tipo === "receita" ? "border-green-300 text-green-700" : "border-red-300 text-red-700"}>
+                            {cat.tipo === "receita" ? "💰" : "📉"} {cat.label}
+                          </Badge>
+                          {!cat.entra_tcmp2 && cat.tipo === "despesa" && (
+                            <span className="text-xs text-orange-600">🚫 Fora TCMP²</span>
+                          )}
+                        </div>
+                        <span className={`font-bold ${cat.tipo === "receita" ? "text-green-700" : "text-red-700"}`}>
+                          {cat.tipo === "receita" ? "+" : "-"} {formatCurrency(cat.total)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </>
+          ) : null}
+        </div>
+      ) : (
+        /* VISÃO MENSAL (EXISTENTE) */
+        <div className="space-y-4">
+          {/* Sub-abas internas */}
+          <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+            {[
+              { key: "todos", label: "📋 Todos" },
+              { key: "receitas", label: "💰 Receitas (" + formatCurrency(totalReceitas) + ")" },
+              { key: "despesas", label: "📉 Despesas (" + formatCurrency(totalDespesas) + ")" },
+              { key: "analise", label: "📊 Análise" }
+            ].map(tab => (
+              <button
+                key={tab.key}
+                onClick={() => setAbaAtiva(tab.key)}
+                className={"flex-1 text-xs py-1.5 px-2 rounded-md transition-all font-medium " + (abaAtiva === tab.key ? "bg-white shadow text-gray-900" : "text-gray-500 hover:text-gray-700")}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
 
-          {/* Formulário */}
-          {showForm && (
-            <FormLancamento
-              tipo={showForm}
-              workshopId={workshopId}
-              mes={mes}
-              onSuccess={() => { refresh(); setShowForm(null); }}
-              onCancel={() => setShowForm(null)}
-            />
-          )}
-
-          {/* Lista de lançamentos */}
-          {Object.keys(grupos).length === 0 ? (
-            <div className="text-center py-12 text-gray-400 border-2 border-dashed border-gray-200 rounded-xl">
-              <Plus className="w-10 h-10 mx-auto mb-2 opacity-30" />
-              <p className="text-sm">Nenhum lançamento ainda.</p>
-              <p className="text-xs">Clique em "+ Receita" ou "+ Despesa" para começar.</p>
-            </div>
+          {/* Aba de Análise */}
+          {abaAtiva === "analise" ? (
+            <PainelAnalise lancamentos={lancamentos} tecnicosCount={tecnicosCount} horasMes={horasMes} />
           ) : (
-            <div className="space-y-4">
-              {Object.entries(grupos).map(([key, grupo]) => (
-                <GrupoCategoria
-                  key={key}
-                  catKey={grupo.catKey}
-                  label={grupo.label}
-                  itens={grupo.itens}
-                  tipo={grupo.tipo}
-                  onDelete={refresh}
-                  onSaved={refresh}
+            <>
+              {/* Botões de ação */}
+              <div className="flex items-center gap-2 flex-wrap">
+                {(abaAtiva === "todos" || abaAtiva === "receitas") && (
+                  <Button size="sm" variant="outline" className="border-green-300 text-green-700 hover:bg-green-50"
+                    onClick={() => setShowForm(showForm === "receita" ? null : "receita")}>
+                    <ArrowUpCircle className="w-4 h-4 mr-1" /> + Receita
+                  </Button>
+                )}
+                {(abaAtiva === "todos" || abaAtiva === "despesas") && (
+                  <Button size="sm" variant="outline" className="border-red-300 text-red-700 hover:bg-red-50"
+                    onClick={() => setShowForm(showForm === "despesa" ? null : "despesa")}>
+                    <ArrowDownCircle className="w-4 h-4 mr-1" /> + Despesa
+                  </Button>
+                )}
+                <div className="ml-auto flex gap-2">
+                  <Button size="sm" variant="outline" onClick={refresh}>
+                    <RefreshCw className="w-4 h-4" />
+                  </Button>
+                  {lancamentos.length > 0 && onConsolidar && (
+                    <Button size="sm" className="bg-green-600 hover:bg-green-700"
+                      onClick={() => onConsolidar(totaisConsolidados)}>
+                      <TrendingUp className="w-4 h-4 mr-1" /> Consolidar no DRE
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              {/* Formulário */}
+              {showForm && (
+                <FormLancamento
+                  tipo={showForm}
+                  workshopId={workshopId}
+                  mes={mes}
+                  onSuccess={() => { refresh(); setShowForm(null); }}
+                  onCancel={() => setShowForm(null)}
                 />
-              ))}
+              )}
+
+              {/* Lista de lançamentos */}
+              {Object.keys(grupos).length === 0 ? (
+                <div className="text-center py-12 text-gray-400 border-2 border-dashed border-gray-200 rounded-xl">
+                  <Plus className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">Nenhum lançamento ainda.</p>
+                  <p className="text-xs">Clique em "+ Receita" ou "+ Despesa" para começar.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {Object.entries(grupos).map(([key, grupo]) => (
+                    <GrupoCategoria
+                      key={key}
+                      catKey={grupo.catKey}
+                      label={grupo.label}
+                      itens={grupo.itens}
+                      tipo={grupo.tipo}
+                      onDelete={refresh}
+                      onSaved={refresh}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Legenda TCMP² */}
+          {abaAtiva !== "analise" && lancamentos.some(l => l.tipo === "despesa") && (
+            <div className="flex gap-4 text-xs text-gray-500 pt-2 border-t border-gray-100">
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-blue-400 inline-block" /> Entra no TCMP²</span>
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-red-400 inline-block" /> Fora do TCMP²</span>
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-green-400 inline-block" /> Receita</span>
             </div>
           )}
-        </div>
-      )}
-
-      {/* Legenda TCMP² */}
-      {abaAtiva !== "analise" && lancamentos.some(l => l.tipo === "despesa") && (
-        <div className="flex gap-4 text-xs text-gray-500 pt-2 border-t border-gray-100">
-          <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-blue-400 inline-block" /> Entra no TCMP²</span>
-          <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-red-400 inline-block" /> Fora do TCMP²</span>
-          <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-green-400 inline-block" /> Receita</span>
         </div>
       )}
     </div>

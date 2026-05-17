@@ -30,6 +30,23 @@
       ],
       "description": "Se \u00e9 meta de receita ou despesa"
     },
+    "periodicidade": {
+      "type": "string",
+      "enum": [
+        "mensal",
+        "anual"
+      ],
+      "default": "mensal",
+      "description": "Se a meta \u00e9 mensal ou anual"
+    },
+    "meta_anual_rs": {
+      "type": "number",
+      "description": "Meta anual em R$ (quando periodicidade=anual)"
+    },
+    "meta_acumulada_mes": {
+      "type": "number",
+      "description": "Meta acumulada at\u00e9 este m\u00eas (calculado: meta_anual / 12 * n\u00famero do m\u00eas)"
+    },
     "meta_percentual": {
       "type": "number",
       "description": "Meta em percentual do faturamento_meta_rs (0-100)"
