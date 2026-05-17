@@ -242,6 +242,10 @@ function LancamentoRow({ item, onDelete, onSaved }) {
         valor: valorNum,
         entra_tcmp2: catSelecionada?.entra_tcmp2 ?? item.entra_tcmp2
       });
+      // Propagar edição para DFC e Controle Orçamentário via custom event
+      window.dispatchEvent(new CustomEvent('dre-lancamento-criado', {
+        detail: { workshop_id: item.workshop_id, mes: item.mes }
+      }));
       toast.success("Lançamento atualizado!");
       setEditing(false);
       onSaved();

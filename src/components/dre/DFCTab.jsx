@@ -293,7 +293,7 @@ export default function DFCTab({ workshopId, mes }) {
 
     const unsubscribe = base44.entities.DRELancamento.subscribe((event) => {
       if (event.data?.workshop_id === workshopId && event.data?.mes === mes) {
-        if (event.type === 'create' || event.type === 'delete') {
+        if (event.type === 'create' || event.type === 'delete' || event.type === 'update') {
           refetchDRE();
         }
       }

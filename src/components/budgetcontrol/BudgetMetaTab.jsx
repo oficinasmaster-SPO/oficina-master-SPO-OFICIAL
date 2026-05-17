@@ -111,7 +111,7 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
     // OPÇÃO 1: Real-time via BD subscription
     const unsubscribe = base44.entities.DRELancamento.subscribe((event) => {
       if (event.data?.workshop_id === workshopId && event.data?.mes === mes) {
-        if (event.type === 'create' || event.type === 'delete') {
+        if (event.type === 'create' || event.type === 'delete' || event.type === 'update') {
           setSyncPulse(true);
           refetchLancamentos();
           setTimeout(() => setSyncPulse(false), 1500);
