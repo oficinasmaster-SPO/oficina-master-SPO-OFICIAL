@@ -24,6 +24,7 @@ import AdminViewBanner from "../components/shared/AdminViewBanner";
 import { useSyncData } from "../components/hooks/useSyncData";
 import DiscrepancyAlert from "../components/sync/DiscrepancyAlert";
 import { markModuleCompleted } from "@/components/hooks/useModuleTracking";
+import DREAvancadoTab from "@/components/dre/DREAvancadoTab";
 
 const getCurrentMonth = () => {
   const now = new Date();
@@ -567,6 +568,7 @@ export default function DRETCMP2() {
             <TabsTrigger value="custos_nao_tcmp2">🚫 Custos NÃO TCMP²</TabsTrigger>
             <TabsTrigger value="pecas">📦 Peças</TabsTrigger>
             <TabsTrigger value="resumo">📊 Resumo DRE</TabsTrigger>
+            <TabsTrigger value="avancado">📋 DRE Avançado</TabsTrigger>
           </TabsList>
 
           {/* Receitas */}
@@ -949,6 +951,40 @@ export default function DRETCMP2() {
                     </p>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          {/* DRE Avançado */}
+          <TabsContent value="avancado">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="w-5 h-5 text-blue-600" />
+                  DRE Avançado — Lançamentos Detalhados
+                </CardTitle>
+                <CardDescription>
+                  Para oficinas sem sistema de gestão financeiro. Lance receitas e despesas individualmente.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {workshop && (
+                  <DREAvancadoTab
+                    workshopId={workshop.id}
+                    mes={selectedMonth}
+                    tecnicosCount={formData.productive_technicians}
+                    horasMes={formData.monthly_hours}
+                    onConsolidar={(totais) => {
+                      setFormData(prev => ({
+                        ...prev,
+                        revenue: { ...prev.revenue, ...totais.revenue },
+                        costs_tcmp2: { ...prev.costs_tcmp2, ...totais.costs_tcmp2 },
+                        costs_not_tcmp2: { ...prev.costs_not_tcmp2, ...totais.costs_not_tcmp2 },
+                        parts_cost: { ...prev.parts_cost, ...totais.parts_cost }
+                      }));
+                      toast.success("Totais consolidados! Clique em 'Salvar DRE' para persistir.");
+                    }}
+                  />
+                )}
               </CardContent>
             </Card>
           </TabsContent>
