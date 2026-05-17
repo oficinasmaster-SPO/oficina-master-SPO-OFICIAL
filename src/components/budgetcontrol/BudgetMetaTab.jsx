@@ -213,7 +213,6 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
     let total_realizado_despesa = 0;
 
     metas.forEach(meta => {
-      // Respeitar flag controlar_orcamento (default true para retrocompatibilidade)
       const controlar = meta.controlar_orcamento !== false;
 
       const faturamento = meta.faturamento_meta_rs || 0;
@@ -221,9 +220,8 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
         ? (meta.meta_percentual / 100) * faturamento
         : (meta.meta_fixa_rs || 0);
 
-      // Sem meta configurada → exibe mas não entra nos totais
       if (!meta_rs || meta_rs === 0) {
-        por_categoria[meta.id] = { meta_rs: 0, realizado: 0, diferenca: 0, variacao: 0, status: "—" };
+        por_categoria[meta.id] = { meta_rs: 0, realizado: 0, diferenca: 0, variacao: 0, performance: 0, status: "—" };
         return;
       }
 
@@ -234,26 +232,30 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
         )
         .reduce((sum, l) => sum + (l.valor || 0), 0);
 
-      const isDespesa = meta.tipo !== "receita"; // default despesa se não informado
+      const isDespesa = meta.tipo !== "receita";
 
-      // Diferença semântica por tipo:
-      // Despesa: positivo = dentro do orçamento (gastou menos) → bom
-      // Receita: positivo = acima da meta (faturou mais) → bom
-      const diferenca = isDespesa ? meta_rs - realizado : realizado - meta_rs;
-      const variacao = (Math.abs(diferenca) / meta_rs) * 100;
+      let performance, variacao, status, diferenca;
 
-      let status = "✅";
-      if (isDespesa) {
-        if (realizado > meta_rs * 1.05) status = "❌";
-        else if (realizado > meta_rs) status = "⚠️";
+      if (!isDespesa) {
+        // RECEITA: performance = realizado / meta → quanto maior melhor
+        performance = meta_rs > 0 ? (realizado / meta_rs) * 100 : 0;
+        variacao = ((realizado - meta_rs) / meta_rs) * 100;
+        diferenca = realizado - meta_rs; // positivo = acima da meta (bom)
+        if (performance >= 100) status = "✅";
+        else if (performance >= 80) status = "⚠️";
+        else status = "❌";
       } else {
-        if (realizado < meta_rs * 0.80) status = "❌";
-        else if (realizado < meta_rs) status = "⚠️";
+        // DESPESA: performance = meta / realizado → quanto mais perto de 100% melhor; >100% = estourou
+        performance = realizado > 0 ? (meta_rs / realizado) * 100 : 100;
+        variacao = ((meta_rs - realizado) / meta_rs) * 100; // positivo = economizou (bom)
+        diferenca = meta_rs - realizado; // positivo = dentro do limite (bom)
+        if (realizado <= meta_rs) status = "✅";
+        else if (realizado <= meta_rs * 1.05) status = "⚠️";
+        else status = "❌";
       }
 
-      por_categoria[meta.id] = { meta_rs, realizado, diferenca, variacao, status, isDespesa };
+      por_categoria[meta.id] = { meta_rs, realizado, diferenca, variacao, performance, status, isDespesa };
 
-      // Totais separados — somente se controlar_orcamento === true
       if (controlar) {
         if (isDespesa) {
           total_meta_despesa += meta_rs;

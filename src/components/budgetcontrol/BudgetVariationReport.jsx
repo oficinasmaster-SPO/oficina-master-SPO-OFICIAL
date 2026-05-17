@@ -8,28 +8,37 @@ export default function BudgetVariationReport({ metas, calculado }) {
   const report = useMemo(() => {
     if (!metas.length) return { exceedido: [], economizado: [], ranking: [] };
 
-    const items = metas.map(meta => {
-      const calc = calculado.por_categoria[meta.id] || {};
-      const meta_rs = meta.meta_percentual 
-        ? (meta.meta_percentual / 100) * (meta.faturamento_meta_rs || 0)
-        : meta.meta_fixa_rs;
+    const items = metas
+      .filter(meta => meta.controlar_orcamento !== false) // ignorar itens excluídos
+      .map(meta => {
+        const calc = calculado.por_categoria[meta.id] || {};
+        const isDespesa = meta.tipo !== "receita";
 
-      return {
-        item: meta.item,
-        categoria: meta.categoria,
-        tipo: meta.tipo || "despesa",
-        responsavel: meta.responsavel_nome || 'Sem responsável',
-        meta_rs,
-        realizado: calc.realizado || 0,
-        diferenca: calc.diferenca || 0,
-        variacao: calc.variacao || 0,
-        status: calc.status
-      };
-    });
+        return {
+          item: meta.item,
+          categoria: meta.categoria,
+          tipo: meta.tipo || "despesa",
+          isDespesa,
+          responsavel: meta.responsavel_nome || 'Sem responsável',
+          meta_rs: calc.meta_rs || 0,
+          realizado: calc.realizado || 0,
+          diferenca: calc.diferenca || 0, // positivo = bom em ambos os tipos
+          variacao: calc.variacao || 0,   // positivo = bom em ambos os tipos
+          status: calc.status
+        };
+      });
 
-    const exceedido = items.filter(i => i.realizado > i.meta_rs * 1.05).sort((a, b) => b.realizado - a.meta_rs - (a.meta_rs - a.realizado));
-    const economizado = items.filter(i => i.diferenca > 0 && i.realizado <= i.meta_rs * 0.95).sort((a, b) => b.diferenca - a.diferenca);
-    const ranking = items.sort((a, b) => Math.abs(b.variacao) - Math.abs(a.variacao)).slice(0, 5);
+    // "Ultrapassaram": despesas que estouraram o teto OU receitas abaixo da meta (<80%)
+    const exceedido = items
+      .filter(i => i.status === "❌" || i.status === "⚠️")
+      .sort((a, b) => Math.abs(a.diferenca) - Math.abs(b.diferenca));
+
+    // "Economizado": despesas abaixo do teto OU receitas que superaram a meta
+    const economizado = items
+      .filter(i => i.diferenca > 0 && i.status === "✅")
+      .sort((a, b) => b.diferenca - a.diferenca);
+
+    const ranking = [...items].sort((a, b) => Math.abs(b.variacao) - Math.abs(a.variacao)).slice(0, 5);
 
     return { exceedido, economizado, ranking };
   }, [metas, calculado]);
