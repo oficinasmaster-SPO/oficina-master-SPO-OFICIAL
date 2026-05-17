@@ -77,13 +77,13 @@ export default function ConfigurarMetaFromDREModal({
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Configurar Meta do Lançamento</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
-          {/* Seção 1: Dados Automáticos (readonly) */}
+        <div className="grid grid-cols-2 gap-6">
+          {/* Coluna 1: Dados Automáticos (readonly) */}
           <div className="bg-gray-50 p-4 rounded-lg space-y-3">
             <h3 className="text-xs font-semibold text-gray-700 uppercase">Dados do DRE</h3>
 
@@ -103,7 +103,7 @@ export default function ConfigurarMetaFromDREModal({
             </div>
           </div>
 
-          {/* Seção 2: Configuração (editável) */}
+          {/* Coluna 2: Configuração (editável) */}
           <div className="space-y-4">
             <h3 className="text-xs font-semibold text-gray-700 uppercase">Configurar Meta</h3>
 
