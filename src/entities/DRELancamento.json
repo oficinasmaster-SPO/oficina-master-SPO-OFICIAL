@@ -1,0 +1,144 @@
+{
+  "name": "DRELancamento",
+  "type": "object",
+  "properties": {
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "mes": {
+      "type": "string",
+      "description": "Mês de referência no formato YYYY-MM (ex: 2026-05)"
+    },
+    "tipo": {
+      "type": "string",
+      "enum": [
+        "receita",
+        "despesa"
+      ],
+      "description": "Se é uma entrada ou saída"
+    },
+    "categoria": {
+      "type": "string",
+      "description": "Categoria do lançamento"
+    },
+    "subcategoria": {
+      "type": "string",
+      "description": "Subcategoria específica dentro da categoria"
+    },
+    "descricao": {
+      "type": "string",
+      "description": "Descrição livre do lançamento"
+    },
+    "valor": {
+      "type": "number",
+      "description": "Valor em reais"
+    },
+    "entra_tcmp2": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se este lançamento entra no cálculo do TCMP². Automático pela categoria."
+    },
+    "data_vencimento": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de vencimento da obrigação (ex: boleto, fatura). Usado no DFC para projeção."
+    },
+    "data_pagamento": {
+      "type": "string",
+      "format": "date",
+      "description": "Data em que o pagamento/recebimento foi efetivado no caixa. Vazio = pendente no DFC."
+    },
+    "frequencia": {
+      "type": "string",
+      "enum": [
+        "unico",
+        "mensal",
+        "quinzenal",
+        "semanal",
+        "anual"
+      ],
+      "default": "unico",
+      "description": "Frequência de repetição do lançamento"
+    },
+    "recorrencia_id": {
+      "type": "string",
+      "description": "ID único que agrupa lançamentos recorrentes da mesma série"
+    },
+    "data_inicio": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de início da recorrência"
+    },
+    "data_fim": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de fim da recorrência"
+    },
+    "numero_parcelas": {
+      "type": "integer",
+      "description": "Número total de parcelas/repetições"
+    },
+    "parcela_atual": {
+      "type": "integer",
+      "description": "Número da parcela atual (1, 2, 3...)"
+    }
+  },
+  "required": [
+    "workshop_id",
+    "mes",
+    "tipo",
+    "categoria",
+    "valor"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}
