@@ -19,6 +19,7 @@ import BudgetConsolidatedReport from "./BudgetConsolidatedReport";
 import BudgetHistoryTable from "./BudgetHistoryTable";
 import BudgetResponsibilityMatrix from "./BudgetResponsibilityMatrix";
 import BudgetDREResumoCard from "./BudgetDREResumoCard";
+import ConfigurarMetaFromDREModal from "./ConfigurarMetaFromDREModal";
 
 const CATEGORIAS = ["operacional", "pessoas", "marketing", "manutencao", "terceirizados", "administrativo", "financeiro", "pecas"];
 
@@ -59,6 +60,24 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
       entra_tcmp2: lancamento.entra_tcmp2
     });
     setShowMetaModal(true);
+  };
+
+  const handleSaveMetaFromDRE = async (metaData) => {
+    try {
+      await saveMutation.mutateAsync({
+        categoria: metaData.categoria,
+        item: metaData.item,
+        responsavel_nome: metaData.responsavel_nome,
+        meta_fixa_rs: metaData.meta_fixa_rs,
+        meta_percentual: metaData.meta_percentual,
+        notas: metaData.notas,
+        faturamento_meta_rs: metaData.faturamento_meta_rs || 0
+      });
+      setShowMetaModal(false);
+      setSelectedDREItem(null);
+    } catch (error) {
+      console.error("Erro ao salvar meta:", error);
+    }
   };
 
   // Buscar metas do mês
