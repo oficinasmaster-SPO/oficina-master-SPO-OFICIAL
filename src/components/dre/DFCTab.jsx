@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
@@ -280,12 +280,34 @@ export default function DFCTab({ workshopId, mes }) {
   const [saldoInicialInput, setSaldoInicialInput] = useState("0");
 
   // ── Buscar DRELancamentos → mapeados automaticamente (Fase 3) ──
-  const { data: lancamentosDRE = [], isLoading: isDRELoading } = useQuery({
+  const { data: lancamentosDRE = [], isLoading: isDRELoading, refetch: refetchDRE } = useQuery({
     queryKey: ["dre-lancamentos-dfc", workshopId, mes],
     queryFn: () => base44.entities.DRELancamento.filter({ workshop_id: workshopId, mes }),
     enabled: !!workshopId && !!mes,
     staleTime: 30_000,
   });
+
+  // BUG FIX #1: Real-time subscription para escutar novos lançamentos do DRE Avançado
+  useEffect(() => {
+    if (!workshopId || !mes) return;
+
+    const unsubscribe = base44.entities.DRELancamento.subscribe((event) => {
+      if (event.data?.workshop_id === workshopId && event.data?.mes === mes) {
+        if (event.type === 'create' || event.type === 'delete') {
+          refetchDRE();
+        }
+      }
+    });
+
+    // Event listener para cross-tab sync
+    const handleDREChange = () => refetchDRE();
+    window.addEventListener('dre-lancamento-criado', handleDREChange);
+
+    return () => {
+      unsubscribe();
+      window.removeEventListener('dre-lancamento-criado', handleDREChange);
+    };
+  }, [workshopId, mes, refetchDRE]);
 
   // ── Buscar lançamentos manuais do DFC ──────────────────────────
   const { data: manuaisDB = [], isLoading: isManuaisLoading } = useQuery({
@@ -314,6 +336,7 @@ export default function DFCTab({ workshopId, mes }) {
     mutationFn: (data) => base44.entities.DFCLancamento.create({ ...data, workshop_id: workshopId, mes }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["dfc-manuais", workshopId, mes] });
+      queryClient.invalidateQueries({ queryKey: ["budget-metas", workshopId, mes] });
       toast.success("Lançamento adicionado!");
       setModalAberto(false);
       setLancamentoEdicao(null);
@@ -324,6 +347,7 @@ export default function DFCTab({ workshopId, mes }) {
     mutationFn: ({ id, data }) => base44.entities.DFCLancamento.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["dfc-manuais", workshopId, mes] });
+      queryClient.invalidateQueries({ queryKey: ["budget-metas", workshopId, mes] });
       toast.success("Lançamento atualizado!");
       setModalAberto(false);
       setLancamentoEdicao(null);
@@ -334,6 +358,7 @@ export default function DFCTab({ workshopId, mes }) {
     mutationFn: (id) => base44.entities.DFCLancamento.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["dfc-manuais", workshopId, mes] });
+      queryClient.invalidateQueries({ queryKey: ["budget-metas", workshopId, mes] });
       toast.success("Lançamento removido!");
     },
   });

@@ -56,12 +56,12 @@ export function mapDREtoDFC(lancamentos = []) {
     // --- ENTRADAS ---
     if (l.tipo === "receita") {
       return {
+        id: l.id,
         descricao: desc,
         valor: l.valor,
         tipo: "entrada",
         grupo: "operacional",
         origem: "dre_automatico",
-        _lancamento_id: l.id,
       };
     }
 
@@ -83,12 +83,12 @@ export function mapDREtoDFC(lancamentos = []) {
     //    terceirizados, pecas_estoque, pecas_aplicadas, servicos, outras, etc.)
 
     return {
+      id: l.id,
       descricao: desc,
       valor: l.valor,
       tipo: "saida",
       grupo,
       origem: "dre_automatico",
-      _lancamento_id: l.id,
     };
   });
 }
