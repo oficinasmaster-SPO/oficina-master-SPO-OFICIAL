@@ -119,8 +119,10 @@ function ModalLancamento({ aberto, onFechar, onSalvar, isSaving, lancamentoEdica
         <div className="space-y-4 py-2">
           <div>
             <Label>Grupo</Label>
-            <Select value={form.grupo} onValueChange={v => setForm(f => ({ ...f, grupo: v }))}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+            <Select value={form.grupo || ""} onValueChange={v => setForm(f => ({ ...f, grupo: v }))}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o grupo" />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="operacional">🟢 Operacional</SelectItem>
                 <SelectItem value="investimento">🔵 Investimento</SelectItem>
