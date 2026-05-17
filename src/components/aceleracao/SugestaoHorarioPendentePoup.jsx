@@ -102,6 +102,17 @@ export default function SugestaoHorarioPendentePoup({ isOpen, onClose, atendimen
     _mensagem_cliente: atendimento.mensagem_cliente
   } : null;
 
+  if (abrirReagendar && !workshop) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+        <div className="bg-white rounded-lg p-6 flex items-center gap-3 shadow-xl">
+          <div className="animate-spin w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full" />
+          <span className="text-sm text-gray-700">Carregando dados da oficina...</span>
+        </div>
+      </div>
+    );
+  }
+
   if (abrirReagendar && workshop) {
     return (
       <ReagendarAtendimentoModal

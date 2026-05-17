@@ -90,7 +90,8 @@ Deno.serve(async (req) => {
         status: 'agendado',
         data_sugerida_cliente: null,
         hora_sugerida_cliente: null,
-        mensagem_cliente: null
+        mensagem_cliente: null,
+        modo_reagendamento_cliente: null
       });
 
       // Notificar cliente (RECUSADO - amigável)
