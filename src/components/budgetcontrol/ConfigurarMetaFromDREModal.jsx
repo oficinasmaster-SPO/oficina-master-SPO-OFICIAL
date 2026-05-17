@@ -16,6 +16,7 @@ export default function ConfigurarMetaFromDREModal({
 }) {
   const [formData, setFormData] = useState({
     responsavel_nome: "",
+    meta_total_rs: 0,
     meta_fixa_rs: 0,
     meta_percentual: 0,
     notas: ""
@@ -25,12 +26,12 @@ export default function ConfigurarMetaFromDREModal({
   const [errors, setErrors] = useState({});
 
   // Resetar form quando modal fecha
-  useEffect(() => {
-    return () => {
-      setFormData({ responsavel_nome: "", meta_fixa_rs: 0, meta_percentual: 0, notas: "" });
-      setErrors({});
-    };
-  }, []);
+   useEffect(() => {
+     return () => {
+       setFormData({ responsavel_nome: "", meta_total_rs: 0, meta_fixa_rs: 0, meta_percentual: 0, notas: "" });
+       setErrors({});
+     };
+   }, []);
 
   const handleFieldChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -45,6 +46,10 @@ export default function ConfigurarMetaFromDREModal({
 
     if (!formData.responsavel_nome.trim()) {
       newErrors.responsavel_nome = "Responsável é obrigatório";
+    }
+
+    if (formData.meta_total_rs <= 0) {
+      newErrors.meta_total_rs = "Meta Total é obrigatória e deve ser maior que zero";
     }
 
     if (metaType === "fixa" && formData.meta_fixa_rs <= 0) {
@@ -72,7 +77,8 @@ export default function ConfigurarMetaFromDREModal({
       onSave({
         ...formData,
         categoria: item?.categoria,
-        item: item?.item
+        item: item?.item,
+        tipo_meta: item?.tipo
       });
     }
   };
@@ -125,6 +131,23 @@ export default function ConfigurarMetaFromDREModal({
                 <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
                   <AlertCircle className="w-3 h-3" /> {errors.responsavel_nome}
                 </p>
+              )}
+            </div>
+
+            {/* Meta Total */}
+            <div>
+              <Label htmlFor="metaTotal" className="text-xs font-medium mb-1.5 block">
+                Meta Total (R$) *
+              </Label>
+              <InputMoeda
+                id="metaTotal"
+                placeholder="0"
+                value={formData.meta_total_rs}
+                onChange={(e) => handleFieldChange("meta_total_rs", parseFloat(e.target.value) || 0)}
+                className={errors.meta_total_rs ? "border-red-500" : ""}
+              />
+              {errors.meta_total_rs && (
+                <p className="text-xs text-red-500 mt-1">{errors.meta_total_rs}</p>
               )}
             </div>
 
