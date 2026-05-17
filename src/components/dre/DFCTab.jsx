@@ -544,7 +544,9 @@ export default function DFCTab({ workshopId, mes }) {
   const calcFluxo = (itens) =>
     itens.reduce((s, i) => s + (i.tipo === "entrada" ? i.valor : -i.valor), 0);
 
-  const saldoInicial = parseFloat(saldoInicialInput) || 0;
+  // BUG FIX #5: cálculos usam o valor confirmado do banco, não o input local (que pode estar sendo editado)
+  // O input local só é sincronizado para exibição; o valor real é saldoInicialSalvo
+  const saldoInicial = saldoInicialSalvo;
   const fluxoOp  = useMemo(() => calcFluxo(itensPorGrupo.operacional),  [itensPorGrupo.operacional]);
   const fluxoInv = useMemo(() => calcFluxo(itensPorGrupo.investimento), [itensPorGrupo.investimento]);
   const fluxoFin = useMemo(() => calcFluxo(itensPorGrupo.financiamento),[itensPorGrupo.financiamento]);
