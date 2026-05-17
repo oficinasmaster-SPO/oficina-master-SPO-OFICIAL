@@ -474,6 +474,7 @@ function PainelAnalise({ lancamentos, tecnicosCount, horasMes }) {
 
   const receitaPecas = receitas.filter(l => l.categoria === "pecas_aplicadas").reduce((s, l) => s + l.valor, 0);
   const receitaServicos = receitas.filter(l => l.categoria === "servicos").reduce((s, l) => s + l.valor, 0);
+  const receitaOutras = receitas.filter(l => l.categoria === "outras").reduce((s, l) => s + l.valor, 0);
 
   const lucro = totalReceita - totalTcmp2 - totalNaoTcmp2 - custoPecas;
   const margemLucro = totalReceita > 0 ? (lucro / totalReceita) * 100 : 0;
@@ -506,23 +507,82 @@ function PainelAnalise({ lancamentos, tecnicosCount, horasMes }) {
         </div>
       </div>
 
-      {/* Waterfall */}
+      {/* Waterfall - Demonstrativo de Resultado Expandido */}
       <div className="bg-white border border-gray-200 rounded-xl p-4 space-y-2">
         <p className="text-sm font-semibold text-gray-700 mb-3">Demonstrativo de Resultado</p>
-        {[
-          { label: "Receita Bruta", valor: totalReceita, cor: "text-green-700", sinal: "+" },
-          { label: "(-) Custos Operacionais (TCMP²)", valor: totalTcmp2, cor: "text-blue-700", sinal: "-" },
-          { label: "(-) Custos Financeiros / Invest.", valor: totalNaoTcmp2, cor: "text-orange-700", sinal: "-" },
-          { label: "(-) Custo de Peças / Estoque", valor: custoPecas, cor: "text-purple-700", sinal: "-" },
-        ].map((row, i) => (
-          <div key={i} className="flex items-center justify-between text-sm py-1 border-b border-gray-100 last:border-0">
-            <span className="text-gray-600">{row.label}</span>
-            <span className={`font-semibold ${row.cor}`}>{row.sinal} {formatCurrency(row.valor)}</span>
+        
+        {/* RECEITAS */}
+        <div className="space-y-1">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Receitas</p>
+          {despesas.filter(l => l.categoria === "pecas_aplicadas").length > 0 && (
+            <div className="flex items-center justify-between text-sm py-1 pl-2 border-l-2 border-green-500">
+              <span className="text-gray-600">Peças Aplicadas</span>
+              <span className="font-semibold text-green-700">+ {formatCurrency(receitaPecas)}</span>
+            </div>
+          )}
+          {despesas.filter(l => l.categoria === "servicos").length > 0 && (
+            <div className="flex items-center justify-between text-sm py-1 pl-2 border-l-2 border-green-500">
+              <span className="text-gray-600">Serviços</span>
+              <span className="font-semibold text-green-700">+ {formatCurrency(receitaServicos)}</span>
+            </div>
+          )}
+          {despesas.filter(l => l.categoria === "outras").length > 0 && (
+            <div className="flex items-center justify-between text-sm py-1 pl-2 border-l-2 border-green-500">
+              <span className="text-gray-600">Outras Receitas</span>
+              <span className="font-semibold text-green-700">+ {formatCurrency(totalReceita - receitaPecas - receitaServicos)}</span>
+            </div>
+          )}
+        </div>
+
+        {/* DESPESAS POR CATEGORIA */}
+        <div className="space-y-1 mt-3">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Despesas por Categoria</p>
+          
+          {/* Agrupar despesas por categoria */}
+          {(() => {
+            const categoriasDespesas = despesas.reduce((acc, d) => {
+              if (!acc[d.categoria]) {
+                acc[d.categoria] = { label: CATEGORIAS_DESPESA[d.categoria]?.label ?? d.categoria, valor: 0, entra_tcmp2: d.entra_tcmp2 };
+              }
+              acc[d.categoria].valor += d.valor;
+              return acc;
+            }, {});
+
+            const ordemCategorias = ["operacional", "pessoas", "marketing", "manutencao", "terceirizados", "administrativo", "financeiro", "pecas_estoque"];
+            
+            return ordemCategorias
+              .filter(cat => categoriasDespesas[cat] && categoriasDespesas[cat].valor > 0)
+              .map((cat, i) => (
+                <div key={cat} className={`flex items-center justify-between text-sm py-1 pl-2 border-l-2 ${categoriasDespesas[cat].entra_tcmp2 ? "border-blue-500" : "border-orange-500"}`}>
+                  <span className="text-gray-600">{categoriasDespesas[cat].label}</span>
+                  <span className={`font-semibold ${categoriasDespesas[cat].entra_tcmp2 ? "text-blue-700" : "text-orange-700"`}>
+                    - {formatCurrency(categoriasDespesas[cat].valor)}
+                  </span>
+                </div>
+              ));
+          })()}
+        </div>
+
+        {/* TOTALIZADORES */}
+        <div className="space-y-1 mt-3 pt-3 border-t border-gray-200">
+          <div className="flex items-center justify-between text-sm py-1">
+            <span className="text-gray-600 font-medium">Total TCMP²</span>
+            <span className="font-semibold text-blue-700">- {formatCurrency(totalTcmp2)}</span>
           </div>
-        ))}
-        <div className="flex items-center justify-between pt-2 border-t-2 border-gray-300">
-          <span className="font-bold text-gray-800">= Lucro Líquido</span>
-          <span className={`font-bold text-lg ${lucro >= 0 ? "text-emerald-700" : "text-red-700"}`}>
+          <div className="flex items-center justify-between text-sm py-1">
+            <span className="text-gray-600 font-medium">Total Não-TCMP²</span>
+            <span className="font-semibold text-orange-700">- {formatCurrency(totalNaoTcmp2)}</span>
+          </div>
+          <div className="flex items-center justify-between text-sm py-1">
+            <span className="text-gray-600 font-medium">Peças / Estoque</span>
+            <span className="font-semibold text-purple-700">- {formatCurrency(custoPecas)}</span>
+          </div>
+        </div>
+
+        {/* LUCRO LÍQUIDO */}
+        <div className="flex items-center justify-between pt-3 border-t-2 border-gray-300 mt-2">
+          <span className="font-bold text-gray-800">= Lucro Liquido</span>
+          <span className={lucro >= 0 ? "font-bold text-lg text-emerald-700" : "font-bold text-lg text-red-700"}>
             {formatCurrency(lucro)} ({margemLucro.toFixed(1)}%)
           </span>
         </div>
