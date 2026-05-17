@@ -593,9 +593,9 @@ function PainelAnalise({ lancamentos, tecnicosCount, horasMes }) {
         <div className="bg-white border border-gray-200 rounded-xl p-4">
           <p className="text-xs font-semibold text-gray-500 mb-2">Mix de Receita</p>
           <div className="flex gap-0.5 h-5 rounded-full overflow-hidden">
-            <div className="bg-green-500 transition-all" style={{ width: `${(receitaPecas / totalReceita) * 100}%` }} />
-            <div className="bg-emerald-400 transition-all" style={{ width: `${(receitaServicos / totalReceita) * 100}%` }} />
-            <div className="bg-cyan-400 transition-all" style={{ width: `${((totalReceita - receitaPecas - receitaServicos) / totalReceita) * 100}%` }} />
+            <div className="bg-green-500 transition-all" style={{ width: ((receitaPecas / totalReceita) * 100) + "%" }} />
+            <div className="bg-emerald-400 transition-all" style={{ width: ((receitaServicos / totalReceita) * 100) + "%" }} />
+            <div className="bg-cyan-400 transition-all" style={{ width: (((totalReceita - receitaPecas - receitaServicos) / totalReceita) * 100) + "%" }} />
           </div>
           <div className="flex gap-4 mt-2 text-xs text-gray-500">
             <span className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-green-500 inline-block" /> Peças: {((receitaPecas / totalReceita) * 100).toFixed(0)}%</span>
@@ -681,7 +681,7 @@ export default function DREAvancadoTab({ workshopId, mes, tecnicosCount, horasMe
         : lancamentos;
 
     return filtrados.reduce((acc, item) => {
-      const key = `${item.tipo}_${item.categoria}`;
+      const key = item.tipo + "_" + item.categoria;
       if (!acc[key]) {
         const cats = item.tipo === "receita" ? CATEGORIAS_RECEITA : CATEGORIAS_DESPESA;
         acc[key] = { label: cats[item.categoria]?.label ?? item.categoria, tipo: item.tipo, itens: [], catKey: item.categoria };
