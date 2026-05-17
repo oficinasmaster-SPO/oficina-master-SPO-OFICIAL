@@ -98,14 +98,21 @@ export default function BudgetResponsibilityMatrix({ metas, calculado }) {
                     : item.meta_fixa_rs;
                   const isOver = calc.realizado > m_rs * 1.05;
 
+                  const isDespesa = item.tipo === "despesa";
                   return (
                     <div key={i} className={`p-2 rounded text-sm ${isOver ? 'bg-red-100 border border-red-300' : 'bg-white border border-gray-200'}`}>
-                      <div className="flex justify-between items-start">
-                        <span className="font-medium text-gray-900">{item.item}</span>
-                        <span className={`text-lg font-bold ${isOver ? 'text-red-600' : 'text-green-600'}`}>
+                      <div className="flex justify-between items-start mb-1">
+                        <div className="flex items-center gap-1 flex-wrap">
+                          <span className={`text-xs px-1 py-0.5 rounded font-semibold ${isDespesa ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                            {isDespesa ? '↑ Desp' : '↓ Rec'}
+                          </span>
+                          <span className="font-medium text-gray-900">{item.item}</span>
+                        </div>
+                        <span className={`text-base font-bold ${isOver ? 'text-red-600' : 'text-green-600'}`}>
                           {calc.status}
                         </span>
                       </div>
+                      <p className="text-xs text-gray-500">{item.categoria}</p>
                       <p className="text-xs text-gray-600 mt-1">
                         {formatCurrency(calc.realizado || 0)} / {formatCurrency(m_rs)}
                       </p>

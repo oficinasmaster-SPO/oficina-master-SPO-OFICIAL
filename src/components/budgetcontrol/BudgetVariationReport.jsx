@@ -17,6 +17,7 @@ export default function BudgetVariationReport({ metas, calculado }) {
       return {
         item: meta.item,
         categoria: meta.categoria,
+        tipo: meta.tipo || "despesa",
         responsavel: meta.responsavel_nome || 'Sem responsável',
         meta_rs,
         realizado: calc.realizado || 0,
@@ -51,10 +52,15 @@ export default function BudgetVariationReport({ metas, calculado }) {
               {report.exceedido.map((item, idx) => (
                 <div key={idx} className="p-3 bg-white rounded-lg border border-red-200">
                   <div className="flex justify-between items-start mb-1">
-                    <h4 className="font-semibold text-red-900">{item.item}</h4>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-xs px-1.5 py-0.5 rounded font-semibold ${item.tipo === 'despesa' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                        {item.tipo === 'despesa' ? '↑ Despesa' : '↓ Receita'}
+                      </span>
+                      <h4 className="font-semibold text-red-900">{item.item}</h4>
+                    </div>
                     <Badge className="bg-red-600">{formatNumber(item.variacao, 1)}%</Badge>
                   </div>
-                  <p className="text-xs text-gray-600 mb-2">{item.responsavel}</p>
+                  <p className="text-xs text-gray-600 mb-2">{item.categoria} · {item.responsavel}</p>
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <div className="bg-red-50 p-2 rounded">
                       <p className="text-gray-600">Meta</p>
@@ -91,10 +97,15 @@ export default function BudgetVariationReport({ metas, calculado }) {
               {report.economizado.map((item, idx) => (
                 <div key={idx} className="p-3 bg-white rounded-lg border border-green-200">
                   <div className="flex justify-between items-start mb-1">
-                    <h4 className="font-semibold text-green-900">{item.item}</h4>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-xs px-1.5 py-0.5 rounded font-semibold ${item.tipo === 'despesa' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                        {item.tipo === 'despesa' ? '↑ Despesa' : '↓ Receita'}
+                      </span>
+                      <h4 className="font-semibold text-green-900">{item.item}</h4>
+                    </div>
                     <Badge className="bg-green-600">-{formatNumber(Math.abs(item.variacao), 1)}%</Badge>
                   </div>
-                  <p className="text-xs text-gray-600 mb-2">{item.responsavel}</p>
+                  <p className="text-xs text-gray-600 mb-2">{item.categoria} · {item.responsavel}</p>
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <div className="bg-green-50 p-2 rounded">
                       <p className="text-gray-600">Meta</p>
@@ -128,14 +139,20 @@ export default function BudgetVariationReport({ metas, calculado }) {
             {report.ranking.map((item, idx) => (
               <div key={idx} className="flex items-center justify-between p-2 bg-white rounded-lg border border-blue-200">
                 <div className="flex-1">
-                  <p className="text-sm font-semibold text-blue-900">{idx + 1}. {item.item}</p>
-                  <p className="text-xs text-gray-600">{item.responsavel}</p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-blue-700">{idx + 1}.</span>
+                    <span className={`text-xs px-1.5 py-0.5 rounded font-semibold ${item.tipo === 'despesa' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                      {item.tipo === 'despesa' ? '↑ Desp' : '↓ Rec'}
+                    </span>
+                    <p className="text-sm font-semibold text-blue-900">{item.item}</p>
+                  </div>
+                  <p className="text-xs text-gray-500 ml-5">{item.categoria} · {item.responsavel}</p>
                 </div>
                 <div className="text-right">
                   <Badge className={item.realizado > item.meta_rs ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"}>
                     {item.realizado > item.meta_rs ? '+' : '-'}{formatNumber(Math.abs(item.variacao), 1)}%
                   </Badge>
-                  <p className="text-xs text-gray-600 mt-1">{formatCurrency(item.diferenca)}</p>
+                  <p className="text-xs text-gray-600 mt-1">{formatCurrency(Math.abs(item.diferenca))}</p>
                 </div>
               </div>
             ))}
