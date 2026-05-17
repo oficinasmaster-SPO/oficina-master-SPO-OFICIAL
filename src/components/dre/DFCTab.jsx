@@ -88,15 +88,20 @@ function GraficoWaterfall({ saldoInicial, fluxoOp, fluxoInv, fluxoFin, saldoFina
 
 // ─── Modal CRUD lançamento manual ─────────────────────────────────
 function ModalLancamento({ aberto, onFechar, onSalvar, isSaving, lancamentoEdicao, grupoInicial }) {
-  const vazio = { grupo: grupoInicial || "operacional", tipo: "saida", descricao: "", valor: "" };
-  const [form, setForm] = useState(vazio);
+  const [form, setForm] = useState({ grupo: "operacional", tipo: "entrada", descricao: "", valor: "" });
 
   useEffect(() => {
     if (aberto) {
-      setForm(lancamentoEdicao
-        ? { grupo: lancamentoEdicao.grupo, tipo: lancamentoEdicao.tipo, descricao: lancamentoEdicao.descricao, valor: String(lancamentoEdicao.valor) }
-        : { ...vazio, grupo: grupoInicial || "operacional" }
-      );
+      if (lancamentoEdicao) {
+        setForm({
+          grupo: lancamentoEdicao.grupo,
+          tipo: lancamentoEdicao.tipo,
+          descricao: lancamentoEdicao.descricao,
+          valor: String(lancamentoEdicao.valor)
+        });
+      } else {
+        setForm({ grupo: grupoInicial || "operacional", tipo: "entrada", descricao: "", valor: "" });
+      }
     }
   }, [aberto, lancamentoEdicao, grupoInicial]);
 
