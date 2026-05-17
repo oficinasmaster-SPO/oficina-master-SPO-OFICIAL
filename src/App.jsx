@@ -46,6 +46,7 @@ const DashboardTempoAtencao = lazy(() => import('@/pages/DashboardTempoAtencao')
 const HistoricoDiagnosticos = lazy(() => import('@/pages/HistoricoDiagnosticos'));
 const DreMockup = lazy(() => import('@/pages/DreMockup'));
 const GerenciarSubcategorias = lazy(() => import('@/pages/GerenciarSubcategorias'));
+const RelatoriosAnuais = lazy(() => import('@/pages/RelatoriosAnuais'));
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -250,6 +251,11 @@ const AuthenticatedApp = () => {
           <PageAccessControl adminOnly={true}>
             <GerenciarSubcategorias />
           </PageAccessControl>
+        </LayoutWrapper>
+      } />
+      <Route path="/RelatoriosAnuais" element={
+        <LayoutWrapper currentPageName="RelatoriosAnuais">
+          <RelatoriosAnuais />
         </LayoutWrapper>
       } />
       <Route path="*" element={<PageNotFound />} />
