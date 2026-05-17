@@ -1007,7 +1007,6 @@ export default function DRETCMP2() {
                   <DFCTab
                     workshopId={workshop.id}
                     mes={selectedMonth}
-                    lancamentosDRE={[]}
                   />
                 )}
               </CardContent>

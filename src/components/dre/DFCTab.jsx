@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,8 +11,9 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter
 } from "@/components/ui/dialog";
 import {
-  ChevronDown, ChevronRight, Plus, Trash2, Wallet, TrendingUp, TrendingDown, Building2, Landmark
+  ChevronDown, ChevronRight, Plus, Trash2, Wallet, TrendingUp, TrendingDown, Building2, Landmark, Loader2
 } from "lucide-react";
+import { mapDREtoDFC } from "./mapDREtoDFC";
 
 const fmt = (v) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v || 0);
@@ -191,34 +194,23 @@ function ModalNovoLancamento({ aberto, onFechar, onSalvar, grupoInicial }) {
 }
 
 // ─── Componente principal ──────────────────────────────────────────
-export default function DFCTab({ workshopId, mes, lancamentosDRE = [] }) {
+export default function DFCTab({ workshopId, mes }) {
   const [saldoInicial, setSaldoInicial] = useState(0);
   const [manuais, setManuais] = useState([]);
   const [modalAberto, setModalAberto] = useState(false);
   const [grupoModal, setGrupoModal] = useState("operacional");
 
-  // Mapeamento DRE → DFC automático
-  const dreParaDFC = (lancamentosDRE || []).map(l => {
-    let grupo = "operacional";
-    let tipo = l.tipo === "receita" ? "entrada" : "saida";
-
-    if (["financeiro"].includes(l.categoria) &&
-        ["Financiamento (veículo/imóvel)", "Consórcio", "Parcelamento de equipamento"].includes(l.subcategoria)) {
-      grupo = "financiamento";
-    } else if (["manutencao"].includes(l.categoria) && l.subcategoria?.includes("equipamento")) {
-      grupo = "investimento";
-    } else if (["pecas_estoque"].includes(l.categoria)) {
-      grupo = "operacional";
-    }
-
-    return {
-      descricao: l.descricao || l.subcategoria || l.categoria,
-      valor: l.valor,
-      tipo,
-      grupo,
-      origem: "dre_automatico",
-    };
+  // Buscar DRELancamentos do banco
+  const { data: lancamentosDB = [], isLoading } = useQuery({
+    queryKey: ["dre-lancamentos-dfc", workshopId, mes],
+    queryFn: () =>
+      base44.entities.DRELancamento.filter({ workshop_id: workshopId, mes }),
+    enabled: !!workshopId && !!mes,
+    staleTime: 30_000,
   });
+
+  // Mapeamento DRE → DFC usando a função centralizada
+  const dreParaDFC = mapDREtoDFC(lancamentosDB);
 
   const todosItens = [...dreParaDFC, ...manuais];
 
@@ -247,11 +239,23 @@ export default function DFCTab({ workshopId, mes, lancamentosDRE = [] }) {
     setManuais(m => m.filter(i => i !== item));
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12 text-gray-500">
+        <Loader2 className="w-6 h-6 animate-spin mr-2" />
+        Carregando lançamentos do DRE...
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Aviso informativo */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-sm text-blue-800">
-        <strong>Como funciona:</strong> Os dados do <span className="font-semibold">DRE Avançado</span> são importados automaticamente (badge <Badge variant="outline" className="text-[10px] border-gray-300 text-gray-500 mx-1">DRE</Badge>). Adicione manualmente apenas o que o DRE não captura: saldo inicial, empréstimos recebidos, recebimentos parcelados de meses anteriores.
+        <strong>Como funciona:</strong> Os lançamentos do <span className="font-semibold">DRE Avançado</span> são importados automaticamente (badge <Badge variant="outline" className="text-[10px] border-gray-300 text-gray-500 mx-1">DRE</Badge>). Adicione manualmente apenas o que o DRE não captura: saldo inicial, empréstimos recebidos, recebimentos parcelados de meses anteriores.
+        {lancamentosDB.length === 0 && (
+          <span className="block mt-1 text-amber-700">⚠️ Nenhum lançamento encontrado no DRE Avançado para {mes}. Preencha a aba "DRE Avançado" primeiro.</span>
+        )}
       </div>
 
       {/* Saldo inicial */}
