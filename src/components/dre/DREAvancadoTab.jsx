@@ -716,14 +716,14 @@ export default function DREAvancadoTab({ workshopId, mes, tecnicosCount, horasMe
       <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
         {[
           { key: "todos", label: "📋 Todos" },
-          { key: "receitas", label: `💰 Receitas (${formatCurrency(totalReceitas)})` },
-          { key: "despesas", label: `📉 Despesas (${formatCurrency(totalDespesas)})` },
+          { key: "receitas", label: "💰 Receitas (" + formatCurrency(totalReceitas) + ")" },
+          { key: "despesas", label: "📉 Despesas (" + formatCurrency(totalDespesas) + ")" },
           { key: "analise", label: "📊 Análise" }
         ].map(tab => (
           <button
             key={tab.key}
             onClick={() => setAbaAtiva(tab.key)}
-            className={`flex-1 text-xs py-1.5 px-2 rounded-md transition-all font-medium ${abaAtiva === tab.key ? "bg-white shadow text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+            className={"flex-1 text-xs py-1.5 px-2 rounded-md transition-all font-medium " + (abaAtiva === tab.key ? "bg-white shadow text-gray-900" : "text-gray-500 hover:text-gray-700")}
           >
             {tab.label}
           </button>
