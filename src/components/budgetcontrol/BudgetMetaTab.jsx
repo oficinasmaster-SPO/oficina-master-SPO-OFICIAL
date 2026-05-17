@@ -15,6 +15,9 @@ import { toast } from "sonner";
 import BudgetSummaryCards from "./BudgetSummaryCards";
 import BudgetProgressBars from "./BudgetProgressBars";
 import BudgetVariationReport from "./BudgetVariationReport";
+import BudgetConsolidatedReport from "./BudgetConsolidatedReport";
+import BudgetHistoryTable from "./BudgetHistoryTable";
+import BudgetResponsibilityMatrix from "./BudgetResponsibilityMatrix";
 
 const CATEGORIAS = ["operacional", "pessoas", "marketing", "manutencao", "terceirizados", "administrativo", "financeiro", "pecas"];
 
@@ -186,6 +189,14 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
 
   return (
     <div className="space-y-6">
+      {/* FASE 4: Relatório Consolidado */}
+      {metas.length > 0 && (
+        <BudgetConsolidatedReport calculado={calculado} metas={metas} />
+      )}
+
+      {/* FASE 4: Histórico de Variações */}
+      <BudgetHistoryTable workshopId={workshopId} mes={mes} />
+
       {/* Cards Resumo */}
       <BudgetSummaryCards calculado={calculado} metas={metas} />
 
@@ -205,6 +216,11 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
       {/* Relatório de Variações */}
       {metas.length > 0 && (
         <BudgetVariationReport metas={metas} calculado={calculado} />
+      )}
+
+      {/* FASE 4: Responsáveis & Ações */}
+      {metas.length > 0 && (
+        <BudgetResponsibilityMatrix metas={metas} calculado={calculado} />
       )}
 
       {/* Seção: Configurar Metas */}
