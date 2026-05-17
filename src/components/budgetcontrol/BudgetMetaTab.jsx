@@ -235,11 +235,11 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
         <BudgetConsolidatedReport calculado={calculado} metas={metas} />
       )}
 
-      {/* Card: Todas despesas/receitas lançadas no DRE Avançado */}
-      <BudgetDREResumoCard lancamentos={lancamentos} />
-
       {/* FASE 4: Histórico de Variações */}
       <BudgetHistoryTable workshopId={workshopId} mes={mes} />
+
+      {/* Card: Todas despesas/receitas lançadas no DRE Avançado */}
+      <BudgetDREResumoCard lancamentos={lancamentos} />
 
       {/* Cards Resumo */}
       <BudgetSummaryCards calculado={calculado} metas={metas} />
