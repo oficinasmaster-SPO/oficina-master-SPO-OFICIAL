@@ -9,14 +9,9 @@ import { formatCurrency } from "../utils/formatters";
 import { AlertCircle } from "lucide-react";
 
 export default function ConfigurarMetaFromDREModal({
-  isOpen,
-  selectedItem,
+  item,
   onClose,
-  onSave,
-  workshopId,
-  mes,
-  faturamentoMeta,
-  colaboradores = []
+  onSave
 }) {
   const [formData, setFormData] = useState({
     responsavel_nome: "",
@@ -29,11 +24,11 @@ export default function ConfigurarMetaFromDREModal({
 
   // Resetar form quando modal fecha
   useEffect(() => {
-    if (!isOpen) {
+    return () => {
       setFormData({ responsavel_nome: "", meta_fixa_rs: 0, meta_percentual: 0, notas: "" });
       setErrors({});
-    }
-  }, [isOpen]);
+    };
+  }, []);
 
   const handleFieldChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -74,22 +69,14 @@ export default function ConfigurarMetaFromDREModal({
     if (validate()) {
       onSave({
         ...formData,
-        categoria: selectedItem?.categoria,
-        item: selectedItem?.item,
-        valor_realizado: selectedItem?.valor_realizado,
-        tipo: selectedItem?.tipo,
-        entra_tcmp2: selectedItem?.entra_tcmp2,
-        workshop_id: workshopId,
-        mes: mes,
-        faturamento_meta_rs: faturamentoMeta
+        categoria: item?.categoria,
+        item: item?.item
       });
     }
   };
 
-  if (!isOpen || !selectedItem) return null;
-
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Configurar Meta do Lançamento</DialogTitle>
@@ -102,17 +89,17 @@ export default function ConfigurarMetaFromDREModal({
 
             <div>
               <Label className="text-xs text-gray-600">Categoria</Label>
-              <p className="text-sm font-medium text-gray-900">{selectedItem.categoria}</p>
+              <p className="text-sm font-medium text-gray-900">{item?.categoria}</p>
             </div>
 
             <div>
               <Label className="text-xs text-gray-600">Item</Label>
-              <p className="text-sm font-medium text-gray-900">{selectedItem.item}</p>
+              <p className="text-sm font-medium text-gray-900">{item?.item}</p>
             </div>
 
             <div>
               <Label className="text-xs text-gray-600">Valor Real (DRE)</Label>
-              <p className="text-sm font-bold text-green-700">{formatCurrency(selectedItem.valor_realizado)}</p>
+              <p className="text-sm font-bold text-green-700">{formatCurrency(item?.valor_realizado)}</p>
             </div>
           </div>
 

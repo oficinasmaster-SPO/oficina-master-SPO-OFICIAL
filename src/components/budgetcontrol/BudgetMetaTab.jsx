@@ -267,22 +267,16 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
       {/* Card: Todas despesas/receitas lançadas no DRE Avançado */}
       <BudgetDREResumoCard lancamentos={lancamentos} onSelectDREItem={handleSelectDREItem} />
 
-      {/* Modal: Configurar Meta a partir do DRE (será criado na Fase 3) */}
+      {/* Modal: Configurar Meta a partir do DRE */}
       {showMetaModal && selectedDREItem && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <h2 className="text-lg font-bold mb-4">Configurar Meta do Lançamento</h2>
-            <p className="text-sm text-gray-600 mb-2">Categoria: {selectedDREItem.categoria}</p>
-            <p className="text-sm text-gray-600 mb-4">Item: {selectedDREItem.item}</p>
-            <p className="text-sm text-gray-600 mb-6">Valor Real (DRE): R$ {selectedDREItem.valor_realizado}</p>
-            <button
-              onClick={() => setShowMetaModal(false)}
-              className="w-full px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition"
-            >
-              Fechar (Modal completo em Fase 3)
-            </button>
-          </div>
-        </div>
+        <ConfigurarMetaFromDREModal
+          item={selectedDREItem}
+          onClose={() => setShowMetaModal(false)}
+          onSave={(metaData) => {
+            setShowMetaModal(false);
+            saveMutation.mutate(metaData);
+          }}
+        />
       )}
 
       {/* Cards Resumo */}
