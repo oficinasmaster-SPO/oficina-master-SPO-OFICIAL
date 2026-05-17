@@ -204,21 +204,29 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
 
   // Calcular totais e comparações
   const calculado = useMemo(() => {
-    if (!metas.length) return { total_meta: 0, por_categoria: {} };
+    if (!metas.length) return { total_meta: 0, por_categoria: {}, receita: {}, despesa: {} };
 
     const por_categoria = {};
-    let total_meta_rs = 0;
+    let total_meta_receita = 0;
+    let total_realizado_receita = 0;
+    let total_meta_despesa = 0;
+    let total_realizado_despesa = 0;
 
     metas.forEach(meta => {
-      // faturamento_meta_rs é a base de cálculo salva em cada meta individualmente
-      const faturamento = meta.faturamento_meta_rs || 0;
+      // Respeitar flag controlar_orcamento (default true para retrocompatibilidade)
+      const controlar = meta.controlar_orcamento !== false;
 
-      // meta_rs: prioriza percentual se > 0, senão usa fixa
+      const faturamento = meta.faturamento_meta_rs || 0;
       const meta_rs = (meta.meta_percentual && meta.meta_percentual > 0)
         ? (meta.meta_percentual / 100) * faturamento
         : (meta.meta_fixa_rs || 0);
 
-      // Match: compara categoria E descricao/item do lançamento
+      // Sem meta configurada → exibe mas não entra nos totais
+      if (!meta_rs || meta_rs === 0) {
+        por_categoria[meta.id] = { meta_rs: 0, realizado: 0, diferenca: 0, variacao: 0, status: "—" };
+        return;
+      }
+
       const realizado = lancamentos
         .filter(l =>
           l.categoria === meta.categoria &&
@@ -226,36 +234,55 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
         )
         .reduce((sum, l) => sum + (l.valor || 0), 0);
 
-      // Para despesas: meta é limite máximo (acima = ruim). Para receitas: meta é mínimo (abaixo = ruim)
-      const isDespesa = meta.tipo === "despesa";
+      const isDespesa = meta.tipo !== "receita"; // default despesa se não informado
+
+      // Diferença semântica por tipo:
+      // Despesa: positivo = dentro do orçamento (gastou menos) → bom
+      // Receita: positivo = acima da meta (faturou mais) → bom
       const diferenca = isDespesa ? meta_rs - realizado : realizado - meta_rs;
-      const variacao = meta_rs > 0 ? (Math.abs(diferenca) / meta_rs) * 100 : 0;
+      const variacao = (Math.abs(diferenca) / meta_rs) * 100;
 
       let status = "✅";
       if (isDespesa) {
-        // Despesa: realizado > meta é ruim
         if (realizado > meta_rs * 1.05) status = "❌";
-        else if (realizado > meta_rs * 0.95) status = "⚠️";
+        else if (realizado > meta_rs) status = "⚠️";
       } else {
-        // Receita: realizado < meta é ruim
-        if (realizado < meta_rs * 0.95) status = "❌";
+        if (realizado < meta_rs * 0.80) status = "❌";
         else if (realizado < meta_rs) status = "⚠️";
       }
 
-      por_categoria[meta.id] = {
-        meta_rs,
-        realizado,
-        diferenca,
-        variacao,
-        status
-      };
+      por_categoria[meta.id] = { meta_rs, realizado, diferenca, variacao, status, isDespesa };
 
-      total_meta_rs += meta_rs;
+      // Totais separados — somente se controlar_orcamento === true
+      if (controlar) {
+        if (isDespesa) {
+          total_meta_despesa += meta_rs;
+          total_realizado_despesa += realizado;
+        } else {
+          total_meta_receita += meta_rs;
+          total_realizado_receita += realizado;
+        }
+      }
     });
 
+    const economia_despesa = total_meta_despesa - total_realizado_despesa;
+    const atingimento_receita = total_meta_receita > 0
+      ? (total_realizado_receita / total_meta_receita) * 100
+      : null;
+
     return {
-      total_meta: total_meta_rs,
-      por_categoria
+      total_meta: total_meta_receita + total_meta_despesa,
+      por_categoria,
+      receita: {
+        meta: total_meta_receita,
+        realizado: total_realizado_receita,
+        atingimento: atingimento_receita
+      },
+      despesa: {
+        meta: total_meta_despesa,
+        realizado: total_realizado_despesa,
+        economia: economia_despesa
+      }
     };
   }, [metas, lancamentos]);
 

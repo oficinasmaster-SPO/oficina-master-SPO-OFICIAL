@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { formatCurrency } from "../utils/formatters";
 import { AlertCircle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
 
 export default function ConfigurarMetaFromDREModal({
   item,
@@ -19,7 +20,8 @@ export default function ConfigurarMetaFromDREModal({
     meta_total_rs: 0,
     meta_fixa_rs: 0,
     meta_percentual: 0,
-    notas: ""
+    notas: "",
+    controlar_orcamento: true
   });
 
   const [metaType, setMetaType] = useState("fixa"); // "fixa" ou "percentual"
@@ -28,7 +30,7 @@ export default function ConfigurarMetaFromDREModal({
   // Resetar form quando modal fecha
    useEffect(() => {
      return () => {
-       setFormData({ responsavel_nome: "", meta_total_rs: 0, meta_fixa_rs: 0, meta_percentual: 0, notas: "" });
+       setFormData({ responsavel_nome: "", meta_total_rs: 0, meta_fixa_rs: 0, meta_percentual: 0, notas: "", controlar_orcamento: true });
        setErrors({});
      };
    }, []);
@@ -69,11 +71,10 @@ export default function ConfigurarMetaFromDREModal({
       onSave({
         responsavel_nome: formData.responsavel_nome,
         notas: formData.notas,
-        // modo fixa: faturamento_meta_rs = próprio valor fixo (base neutra)
-        // modo percentual: faturamento_meta_rs = base de cálculo informada
         faturamento_meta_rs: metaType === "percentual" ? formData.meta_total_rs : formData.meta_fixa_rs,
         meta_fixa_rs: metaType === "fixa" ? formData.meta_fixa_rs : 0,
         meta_percentual: metaType === "percentual" ? formData.meta_percentual : 0,
+        controlar_orcamento: formData.controlar_orcamento,
         categoria: item?.categoria,
         item: item?.item,
         tipo: item?.tipo
@@ -194,6 +195,18 @@ export default function ConfigurarMetaFromDREModal({
                 )}
               </TabsContent>
             </Tabs>
+
+            {/* Controlar Orçamento */}
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
+              <div>
+                <p className="text-xs font-medium text-gray-800">Incluir no controle orçamentário</p>
+                <p className="text-xs text-gray-500 mt-0.5">Se desativado, não entra nos totais nem alertas</p>
+              </div>
+              <Switch
+                checked={formData.controlar_orcamento}
+                onCheckedChange={(v) => handleFieldChange("controlar_orcamento", v)}
+              />
+            </div>
 
             {/* Observações */}
             <div>

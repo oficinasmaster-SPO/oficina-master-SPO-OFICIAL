@@ -45,6 +45,11 @@
     "notas": {
       "type": "string",
       "description": "Anota\u00e7\u00f5es sobre a meta"
+    },
+    "controlar_orcamento": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se false, a linha existe no DRE mas N\u00c3O entra no or\u00e7amento controlado (totais, an\u00e1lises e alertas)"
     }
   },
   "required": [
