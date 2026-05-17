@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import {
-  ChevronDown, ChevronRight, Plus, Trash2, Pencil, Wallet,
+  ChevronDown, ChevronRight, Plus, Trash2, Pencil, Wallet, Eye,
   TrendingUp, TrendingDown, Building2, Landmark, Loader2
 } from "lucide-react";
 import {
@@ -18,6 +18,8 @@ import {
 import { toast } from "sonner";
 import { mapDREtoDFC } from "./mapDREtoDFC";
 import ProjecaoCaixaView from "./ProjecaoCaixaView";
+import ModalSaldoInicialDetalhado from "../dfc/ModalSaldoInicialDetalhado";
+import FonteSaidaSelector from "../dfc/FonteSaidaSelector";
 
 // ─── Formatação ────────────────────────────────────────────────────
 const fmt = (v) =>
@@ -89,7 +91,13 @@ function GraficoWaterfall({ saldoInicial, fluxoOp, fluxoInv, fluxoFin, saldoFina
 
 // ─── Modal CRUD lançamento manual ─────────────────────────────────
 function ModalLancamento({ aberto, onFechar, onSalvar, isSaving, lancamentoEdicao, grupoInicial }) {
-  const [form, setForm] = useState({ grupo: "operacional", tipo: "entrada", descricao: "", valor: "" });
+  const [form, setForm] = useState({ 
+    grupo: "operacional", 
+    tipo: "entrada", 
+    descricao: "", 
+    valor: "",
+    fonte_saida: ""
+  });
 
   useEffect(() => {
     if (aberto) {
@@ -98,10 +106,17 @@ function ModalLancamento({ aberto, onFechar, onSalvar, isSaving, lancamentoEdica
           grupo: lancamentoEdicao.grupo,
           tipo: lancamentoEdicao.tipo,
           descricao: lancamentoEdicao.descricao,
-          valor: String(lancamentoEdicao.valor)
+          valor: String(lancamentoEdicao.valor),
+          fonte_saida: lancamentoEdicao.fonte_saida || ""
         });
       } else {
-        setForm({ grupo: grupoInicial || "operacional", tipo: "entrada", descricao: "", valor: "" });
+        setForm({ 
+          grupo: grupoInicial || "operacional", 
+          tipo: "entrada", 
+          descricao: "", 
+          valor: "",
+          fonte_saida: ""
+        });
       }
     }
   }, [aberto, lancamentoEdicao, grupoInicial]);
@@ -162,6 +177,15 @@ function ModalLancamento({ aberto, onFechar, onSalvar, isSaving, lancamentoEdica
               onChange={e => setForm(f => ({ ...f, valor: e.target.value }))}
             />
           </div>
+          
+          {/* Seletor de fonte de saída (apenas para saídas) */}
+          {form.tipo === "saida" && (
+            <FonteSaidaSelector
+              value={form.fonte_saida}
+              onChange={(fonte) => setForm(f => ({ ...f, fonte_saida: fonte }))}
+              disabled={false}
+            />
+          )}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onFechar}>Cancelar</Button>
@@ -413,6 +437,7 @@ export default function DFCTab({ workshopId, mes }) {
   const [saldoInicialInput, setSaldoInicialInput] = useState("0");
   const [itemPagamento, setItemPagamento] = useState(null);
   const [view, setView] = useState("grupos"); // "grupos" | "projecao"
+  const [modalSaldoDetalhadoAberto, setModalSaldoDetalhadoAberto] = useState(false);
 
   // ── Buscar DRELancamentos → mapeados automaticamente (Fase 3) ──
   const { data: lancamentosDRE = [], isLoading: isDRELoading, refetch: refetchDRE } = useQuery({
@@ -563,9 +588,21 @@ export default function DFCTab({ workshopId, mes }) {
 
   const handleSalvarModal = (form) => {
     if (lancamentoEdicao?.id) {
-      editarMutation.mutate({ id: lancamentoEdicao.id, data: form });
+      editarMutation.mutate({ 
+        id: lancamentoEdicao.id, 
+        data: { 
+          ...form,
+          // Limpar fonte_saida se for entrada
+          fonte_saida: form.tipo === "entrada" ? null : form.fonte_saida
+        } 
+      });
     } else {
-      criarMutation.mutate({ ...form, origem: "manual" });
+      criarMutation.mutate({ 
+        ...form, 
+        origem: "manual",
+        // Limpar fonte_saida se for entrada
+        fonte_saida: form.tipo === "entrada" ? null : form.fonte_saida
+      });
     }
   };
 
@@ -627,6 +664,15 @@ export default function DFCTab({ workshopId, mes }) {
                   className="w-44 text-right font-semibold"
                 />
                 {salvarSaldoMutation.isPending && <Loader2 className="w-4 h-4 animate-spin text-gray-400" />}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setModalSaldoDetalhadoAberto(true)}
+                  className="shrink-0"
+                  title="Ver detalhamento do saldo inicial"
+                >
+                  <Eye className="w-4 h-4" />
+                </Button>
               </div>
             </div>
           </CardContent>
@@ -755,6 +801,15 @@ export default function DFCTab({ workshopId, mes }) {
           queryClient.invalidateQueries({ queryKey: ["dre-lancamentos", workshopId, mes] });
           setItemPagamento(null);
         }}
+      />
+
+      {/* Modal saldo inicial detalhado */}
+      <ModalSaldoInicialDetalhado
+        aberto={modalSaldoDetalhadoAberto}
+        onFechar={() => setModalSaldoDetalhadoAberto(false)}
+        workshopId={workshopId}
+        mes={mes}
+        saldoInicialRecord={saldoInicialRecord}
       />
     </div>
   );

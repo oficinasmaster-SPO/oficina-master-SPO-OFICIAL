@@ -48,6 +48,33 @@
     "saldo_inicial": {
       "type": "number",
       "description": "Saldo inicial do m\u00eas no caixa/banco. Usado apenas no registro de controle do m\u00eas (grupo=saldo_inicial)."
+    },
+    "detalhes": {
+      "type": "object",
+      "properties": {
+        "banco": {
+          "type": "number",
+          "description": "Valor em conta banc\u00e1ria"
+        },
+        "maquina_cartao": {
+          "type": "number",
+          "description": "Valor em receb\u00edveis de m\u00e1quina de cart\u00e3o"
+        },
+        "caixa": {
+          "type": "number",
+          "description": "Valor em dinheiro f\u00edsico"
+        }
+      },
+      "description": "Detalhamento de onde est\u00e1 o dinheiro do saldo inicial (apenas para grupo=saldo_inicial)"
+    },
+    "fonte_saida": {
+      "type": "string",
+      "enum": [
+        "banco",
+        "maquina_cartao",
+        "caixa"
+      ],
+      "description": "De onde saiu o dinheiro para este lan\u00e7amento de sa\u00edda (apenas para grupo!=saldo_inicial e tipo=saida)"
     }
   },
   "required": [
