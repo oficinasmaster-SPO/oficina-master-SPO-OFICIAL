@@ -29,7 +29,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import EventosTab from "@/components/aceleracao/EventosTab";
 import VisualizarAtaModal from "@/components/aceleracao/VisualizarAtaModal";
 import SprintsClienteTab from "@/components/aceleracao/SprintsClienteTab";
-import ReunioesClienteTab from "@/components/aceleracao/ReunioesClienteTab";
+import SugerirNovoHorarioModal from "@/components/aceleracao/SugerirNovoHorarioModal";
 
 export default function CronogramaConsultoria() {
   const navigate = useNavigate();
@@ -38,6 +38,8 @@ export default function CronogramaConsultoria() {
   const [showVisualizarAta, setShowVisualizarAta] = useState(false);
   const [confirmacaoAberta, setConfirmacaoAberta] = useState(false);
   const [atendimentoParaConfirmar, setAtendimentoParaConfirmar] = useState(null);
+  const [showSuggestModal, setShowSuggestModal] = useState(false);
+  const [atendimentoSelecionado, setAtendimentoSelecionado] = useState(null);
   const [filters, setFilters] = useState({
     searchTerm: "",
     workshop_id: "",
@@ -345,15 +347,11 @@ export default function CronogramaConsultoria() {
 
         {/* ABA 1: Próximos Atendimentos */}
         <TabsContent value="proximos" className="mt-4 space-y-6">
-          {/* Seção: Reuniões Futuras com ações do cliente */}
-          <ReunioesClienteTab workshopId={activeWorkshopId} user={user} />
-
-          {/* Seção legada: Atendimentos agendados */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
                 <Clock className="w-5 h-5 text-blue-600" />
-                Todos os Próximos Atendimentos — ordenados do mais próximo ao mais distante
+                Próximos Atendimentos — ordenados do mais próximo ao mais distante
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -403,19 +401,6 @@ export default function CronogramaConsultoria() {
                             )}
                           </div>
 
-                          {atendimento.objetivos?.length > 0 && (
-                            <div className="mt-3">
-                              <p className="text-sm font-medium text-gray-700 flex items-center gap-1 mb-1">
-                                <Target className="w-4 h-4" /> Objetivos:
-                              </p>
-                              <ul className="text-sm text-gray-600 ml-5 list-disc space-y-0.5">
-                                {atendimento.objetivos.slice(0, 3).map((obj, idx) => (
-                                  <li key={idx}>{obj}</li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-
                           <div className="mt-4 flex items-center gap-3 flex-wrap">
                             {atendimento.google_meet_link && (
                               <Button
@@ -423,11 +408,7 @@ export default function CronogramaConsultoria() {
                                 className="bg-blue-600 hover:bg-blue-700 text-white gap-2"
                                 size="sm"
                               >
-                                <a
-                                  href={atendimento.google_meet_link}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                >
+                                <a href={atendimento.google_meet_link} target="_blank" rel="noopener noreferrer">
                                   <span>▶</span> Iniciar
                                 </a>
                               </Button>
@@ -445,7 +426,7 @@ export default function CronogramaConsultoria() {
                                 }}
                               >
                                 <ThumbsUp className="w-4 h-4" />
-                                {confirmarPresencaMutation.isPending ? "Confirmando..." : "Confirmar Presença"}
+                                Confirmar Presença
                               </Button>
                             )}
 
@@ -455,6 +436,19 @@ export default function CronogramaConsultoria() {
                                 Presença confirmada
                               </span>
                             )}
+
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="gap-2"
+                              onClick={() => {
+                                setAtendimentoSelecionado(atendimento);
+                                setShowSuggestModal(true);
+                              }}
+                            >
+                              <AlertCircle className="w-4 h-4" />
+                              Sugerir Horário
+                            </Button>
                           </div>
                         </div>
                       </div>
@@ -718,6 +712,14 @@ export default function CronogramaConsultoria() {
       {showVisualizarAta && selectedAta && (
         <VisualizarAtaModal ata={selectedAta} onClose={() => { setShowVisualizarAta(false); setSelectedAta(null); }} />
       )}
+
+      {/* Modal: Sugerir novo horário */}
+      <SugerirNovoHorarioModal
+        isOpen={showSuggestModal}
+        onClose={() => { setShowSuggestModal(false); setAtendimentoSelecionado(null); }}
+        atendimento={atendimentoSelecionado}
+        consultor={atendimentoSelecionado ? { nome: atendimentoSelecionado.consultor_nome, id: atendimentoSelecionado.consultor_id } : null}
+      />
 
       {/* Dialog de confirmação de presença */}
       <AlertDialog open={confirmacaoAberta} onOpenChange={setConfirmacaoAberta}>
