@@ -36,6 +36,7 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
   const queryClient = useQueryClient();
   const [editingId, setEditingId] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const [syncPulse, setSyncPulse] = useState(false); // feedback visual de sync
   const [formData, setFormData] = useState({
     faturamento_meta_rs: 0,
     item: "",
@@ -82,7 +83,9 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
     const unsubscribe = base44.entities.DRELancamento.subscribe((event) => {
       if (event.data?.workshop_id === workshopId && event.data?.mes === mes) {
         if (event.type === 'create' || event.type === 'delete') {
+          setSyncPulse(true);
           refetchLancamentos();
+          setTimeout(() => setSyncPulse(false), 1500);
         }
       }
     });
@@ -90,7 +93,9 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
     // OPÇÃO 2: Event listener para sincronismo cross-tab (DRE Avançado → Controle Orçamentário)
     const handleDREChange = (e) => {
       if (e.detail?.workshop_id === workshopId && e.detail?.mes === mes) {
+        setSyncPulse(true);
         refetchLancamentos();
+        setTimeout(() => setSyncPulse(false), 1500);
       }
     };
     window.addEventListener('dre-lancamento-criado', handleDREChange);
@@ -216,6 +221,14 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
 
   return (
     <div className="space-y-6">
+      {/* Feedback de Sincronismo */}
+      {syncPulse && (
+        <div className="fixed top-4 right-4 z-50 animate-pulse bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 text-sm font-medium">
+          <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+          Dados do DRE atualizados instantaneamente
+        </div>
+      )}
+
       {/* FASE 4: Relatório Consolidado */}
       {metas.length > 0 && (
         <BudgetConsolidatedReport calculado={calculado} metas={metas} />
