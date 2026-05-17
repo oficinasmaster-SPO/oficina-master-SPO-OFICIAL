@@ -17,6 +17,7 @@ import {
 } from "recharts";
 import { toast } from "sonner";
 import { mapDREtoDFC } from "./mapDREtoDFC";
+import ProjecaoCaixaView from "./ProjecaoCaixaView";
 
 // ─── Formatação ────────────────────────────────────────────────────
 const fmt = (v) =>
@@ -398,7 +399,8 @@ export default function DFCTab({ workshopId, mes }) {
   const [grupoModal, setGrupoModal] = useState("operacional");
   const [lancamentoEdicao, setLancamentoEdicao] = useState(null);
   const [saldoInicialInput, setSaldoInicialInput] = useState("0");
-  const [itemPagamento, setItemPagamento] = useState(null); // item DRE para marcar datas
+  const [itemPagamento, setItemPagamento] = useState(null);
+  const [view, setView] = useState("grupos"); // "grupos" | "projecao"
 
   // ── Buscar DRELancamentos → mapeados automaticamente (Fase 3) ──
   const { data: lancamentosDRE = [], isLoading: isDRELoading, refetch: refetchDRE } = useQuery({
@@ -572,31 +574,55 @@ export default function DFCTab({ workshopId, mes }) {
         )}
       </div>
 
-      {/* Saldo Inicial — salvo no banco ao sair do campo */}
-      <Card className="border-2 border-gray-200">
-        <CardContent className="pt-4">
-          <div className="flex items-center justify-between gap-4 flex-wrap">
-            <div>
-              <p className="text-sm font-semibold text-gray-700">Saldo Inicial do Mês</p>
-              <p className="text-xs text-gray-500">Quanto havia no caixa/banco em 01/{mes}</p>
+      {/* Saldo Inicial + seletor de view */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        <Card className="border-2 border-gray-200 flex-1">
+          <CardContent className="pt-4 pb-4">
+            <div className="flex items-center justify-between gap-4 flex-wrap">
+              <div>
+                <p className="text-sm font-semibold text-gray-700">Saldo Inicial do Mês</p>
+                <p className="text-xs text-gray-500">Quanto havia no caixa/banco em 01/{mes}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-500">R$</span>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={saldoInicialInput}
+                  onChange={e => setSaldoInicialInput(e.target.value)}
+                  onBlur={handleSaldoBlur}
+                  className="w-44 text-right font-semibold"
+                />
+                {salvarSaldoMutation.isPending && <Loader2 className="w-4 h-4 animate-spin text-gray-400" />}
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-500">R$</span>
-              <Input
-                type="number"
-                step="0.01"
-                value={saldoInicialInput}
-                onChange={e => setSaldoInicialInput(e.target.value)}
-                onBlur={handleSaldoBlur}
-                className="w-44 text-right font-semibold"
-              />
-              {salvarSaldoMutation.isPending && <Loader2 className="w-4 h-4 animate-spin text-gray-400" />}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      {/* 3 Seções colapsáveis */}
+        {/* Tabs de view */}
+        <div className="flex gap-1 bg-gray-100 rounded-lg p-1 shrink-0">
+          <button
+            onClick={() => setView("grupos")}
+            className={`text-xs px-3 py-2 rounded-md font-medium transition-all ${view === "grupos" ? "bg-white shadow text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+          >
+            🗂️ Por Grupo
+          </button>
+          <button
+            onClick={() => setView("projecao")}
+            className={`text-xs px-3 py-2 rounded-md font-medium transition-all ${view === "projecao" ? "bg-white shadow text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+          >
+            📅 Projeção
+          </button>
+        </div>
+      </div>
+
+      {/* VIEW: PROJEÇÃO */}
+      {view === "projecao" && (
+        <ProjecaoCaixaView todosItens={todosItens} saldoInicial={saldoInicial} />
+      )}
+
+      {/* VIEW: POR GRUPO — 3 Seções colapsáveis */}
+      {view === "grupos" && (<>
       <SecaoFluxo
         titulo="Operacional"
         icone={<Wallet className="w-4 h-4" />}
@@ -674,6 +700,7 @@ export default function DFCTab({ workshopId, mes }) {
           </div>
         </CardContent>
       </Card>
+      </>)}
 
       {/* Modal CRUD manual */}
       <ModalLancamento
