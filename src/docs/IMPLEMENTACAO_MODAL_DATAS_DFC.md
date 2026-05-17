@@ -354,4 +354,36 @@ const handleAbrirDatas = (lancamento) => {
 ---
 
 **Documento criado:** 2026-05-17
-**Status:** Pronto para implementação
+**Status:** ✅ IMPLEMENTADO
+
+## ✅ IMPLEMENTAÇÃO CONCLUÍDA
+
+### O que foi feito:
+
+1. **Modal já existe:** `ModalMarcarPagamento` (linhas 207-287 do DFCTab.jsx)
+   - Campos: Data de Vencimento + Data de Pagamento
+   - Salva em `DRELancamento.data_vencimento` e `DRELancamento.data_pagamento`
+   - Feedback visual com toast
+
+2. **Projeção atualizada:** `ProjecaoCaixaView.jsx`
+   - ✅ Cada item da linha do tempo agora é **clicável**
+   - ✅ Hover effect mostra ícone 📅
+   - ✅ Clique abre o modal `ModalMarcarPagamento`
+   - ✅ Atualização em tempo real via query invalidation
+
+### Como usar:
+
+1. Abrir DFC → Aba **"📅 Projeção"**
+2. Ver linha do tempo com lançamentos
+3. **Clicar em qualquer item** da lista
+4. Modal abre com dados do lançamento
+5. Preencher datas de vencimento/pagamento
+6. Salvar → Atualiza automaticamente
+
+### Fluxo Visual:
+
+```
+Projeção → Clique no item (✓ ou ○) → Modal → Salvar → Atualiza
+```
+
+**Pronto para uso!** 🎉

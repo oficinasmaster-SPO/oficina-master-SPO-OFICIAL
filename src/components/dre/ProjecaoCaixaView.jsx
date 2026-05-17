@@ -57,7 +57,7 @@ function buildLinhaDoTempo(todosItens, saldoInicial) {
   return linhas;
 }
 
-export default function ProjecaoCaixaView({ todosItens, saldoInicial }) {
+export default function ProjecaoCaixaView({ todosItens, saldoInicial, onMarcarPagamento }) {
   const hoje = new Date().toISOString().split("T")[0];
 
   const linhas = useMemo(
@@ -144,13 +144,16 @@ export default function ProjecaoCaixaView({ todosItens, saldoInicial }) {
                   {/* Itens do dia — lista compacta */}
                   <div className="space-y-0.5 min-w-0">
                     {linha.itens.map((item, i) => (
-                      <div key={i} className="flex items-center gap-1.5 min-w-0">
+                      <div key={i} className="flex items-center gap-1.5 min-w-0 group cursor-pointer hover:bg-gray-100 rounded px-1 py-0.5 transition-colors" onClick={() => onMarcarPagamento?.(item)}>
                         <span className={`text-[10px] shrink-0 ${item._realizado ? "text-emerald-500" : "text-amber-500"}`}>
                           {item._realizado ? "✓" : "○"}
                         </span>
                         <span className="text-xs text-gray-600 truncate">{item.descricao || "—"}</span>
                         <span className={`text-xs font-semibold shrink-0 ml-auto ${item._delta >= 0 ? "text-green-600" : "text-red-600"}`}>
                           {item._delta >= 0 ? "+" : ""}{fmt(Math.abs(item._delta))}
+                        </span>
+                        <span className="opacity-0 group-hover:opacity-100 text-[10px] text-blue-500 transition-opacity ml-1">
+                          📅
                         </span>
                       </div>
                     ))}

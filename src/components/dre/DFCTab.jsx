@@ -651,7 +651,7 @@ export default function DFCTab({ workshopId, mes }) {
 
       {/* VIEW: PROJEÇÃO */}
       {view === "projecao" && (
-        <ProjecaoCaixaView todosItens={todosItens} saldoInicial={saldoInicial} />
+        <ProjecaoCaixaView todosItens={todosItens} saldoInicial={saldoInicial} onMarcarPagamento={setItemPagamento} />
       )}
 
       {/* VIEW: POR GRUPO — 3 Seções colapsáveis */}
