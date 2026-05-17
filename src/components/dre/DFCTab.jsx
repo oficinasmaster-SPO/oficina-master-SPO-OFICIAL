@@ -52,10 +52,13 @@ function GraficoWaterfall({ saldoInicial, fluxoOp, fluxoInv, fluxoFin, saldoFina
   let acumulado = 0;
   const dados = barras.map((b, i) => {
     if (i === 0 || i === barras.length - 1) {
+      // Saldo inicial e final: barra começa do zero, altura é o valor absoluto
+      const altura = Math.abs(b.valor);
       acumulado = b.valor;
-      return { ...b, base: 0, altura: b.valor, saldoApos: b.valor };
+      return { ...b, base: 0, altura, saldoApos: b.valor };
     }
-    const base = b.valor < 0 ? acumulado + b.valor : acumulado;
+    // Barras intermediárias: base = ponto mais baixo da barra
+    const base = b.valor >= 0 ? acumulado : acumulado + b.valor;
     const altura = Math.abs(b.valor);
     acumulado += b.valor;
     return { ...b, base, altura, saldoApos: acumulado };
@@ -350,15 +353,20 @@ export default function DFCTab({ workshopId, mes }) {
   const manuais    = useMemo(() => manuaisDB.map(m => ({ ...m, origem: "manual" })), [manuaisDB]);
   const todosItens = useMemo(() => [...dreParaDFC, ...manuais], [dreParaDFC, manuais]);
 
-  const itensPorGrupo = (grupo) => todosItens.filter(i => i.grupo === grupo);
-  const fluxoGrupo    = (grupo) =>
-    itensPorGrupo(grupo).reduce((s, i) => s + (i.tipo === "entrada" ? i.valor : -i.valor), 0);
+  // Cálculos memoizados por grupo para evitar re-cálculo desnecessário
+  const itensPorGrupo = useMemo(() => ({
+    operacional:  todosItens.filter(i => i.grupo === "operacional"),
+    investimento: todosItens.filter(i => i.grupo === "investimento"),
+    financiamento: todosItens.filter(i => i.grupo === "financiamento"),
+  }), [todosItens]);
 
-  // Saldo inicial usa o input local para cálculo em tempo real (antes do blur/save)
+  const calcFluxo = (itens) =>
+    itens.reduce((s, i) => s + (i.tipo === "entrada" ? i.valor : -i.valor), 0);
+
   const saldoInicial = parseFloat(saldoInicialInput) || 0;
-  const fluxoOp  = fluxoGrupo("operacional");
-  const fluxoInv = fluxoGrupo("investimento");
-  const fluxoFin = fluxoGrupo("financiamento");
+  const fluxoOp  = useMemo(() => calcFluxo(itensPorGrupo.operacional),  [itensPorGrupo.operacional]);
+  const fluxoInv = useMemo(() => calcFluxo(itensPorGrupo.investimento), [itensPorGrupo.investimento]);
+  const fluxoFin = useMemo(() => calcFluxo(itensPorGrupo.financiamento),[itensPorGrupo.financiamento]);
   const saldoFinal = saldoInicial + fluxoOp + fluxoInv + fluxoFin;
 
   // ── Handlers ──────────────────────────────────────────────────
@@ -379,8 +387,9 @@ export default function DFCTab({ workshopId, mes }) {
   const handleDelete = (item) => { if (item.id) deletarMutation.mutate(item.id); };
 
   const handleSaldoBlur = () => {
-    const valor = parseFloat(saldoInicialInput) || 0;
-    if (valor !== saldoInicialSalvo) salvarSaldoMutation.mutate(valor);
+    const valor = parseFloat(parseFloat(saldoInicialInput || "0").toFixed(2));
+    const salvo = parseFloat(parseFloat(saldoInicialSalvo || 0).toFixed(2));
+    if (valor !== salvo) salvarSaldoMutation.mutate(valor);
   };
 
   const isLoading = isDRELoading || isManuaisLoading;
@@ -437,7 +446,7 @@ export default function DFCTab({ workshopId, mes }) {
         titulo="Operacional"
         icone={<Wallet className="w-4 h-4" />}
         cor={{ border: "border-green-200", header: "bg-green-50 text-green-800" }}
-        itens={itensPorGrupo("operacional")}
+        itens={itensPorGrupo.operacional}
         fluxo={fluxoOp}
         onAddManual={() => abrirModal("operacional")}
         onDelete={handleDelete}
@@ -447,7 +456,7 @@ export default function DFCTab({ workshopId, mes }) {
         titulo="Investimento"
         icone={<Building2 className="w-4 h-4" />}
         cor={{ border: "border-blue-200", header: "bg-blue-50 text-blue-800" }}
-        itens={itensPorGrupo("investimento")}
+        itens={itensPorGrupo.investimento}
         fluxo={fluxoInv}
         onAddManual={() => abrirModal("investimento")}
         onDelete={handleDelete}
@@ -457,7 +466,7 @@ export default function DFCTab({ workshopId, mes }) {
         titulo="Financiamento"
         icone={<Landmark className="w-4 h-4" />}
         cor={{ border: "border-purple-200", header: "bg-purple-50 text-purple-800" }}
-        itens={itensPorGrupo("financiamento")}
+        itens={itensPorGrupo.financiamento}
         fluxo={fluxoFin}
         onAddManual={() => abrirModal("financiamento")}
         onDelete={handleDelete}

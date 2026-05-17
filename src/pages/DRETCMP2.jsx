@@ -120,14 +120,6 @@ export default function DRETCMP2() {
     retry: 1
   });
 
-  // Lançamentos DRE Avançado para sincronizar com DFC
-  const { data: dreLancamentos = [] } = useQuery({
-    queryKey: ['dre-lancamentos', workshop?.id, selectedMonth],
-    queryFn: () =>
-      base44.entities.DRELancamento.filter({ workshop_id: workshop.id, mes: selectedMonth }),
-    enabled: !!workshop?.id && !!selectedMonth,
-  });
-
   const currentDRE = dreList.find(d => d.month === selectedMonth);
 
   // Sincronizar dados: consolidar registros diários → DRE → metas
@@ -1015,7 +1007,6 @@ export default function DRETCMP2() {
                   <DFCTab
                     workshopId={workshop.id}
                     mes={selectedMonth}
-                    lancamentosDRE={dreLancamentos}
                   />
                 )}
               </CardContent>
