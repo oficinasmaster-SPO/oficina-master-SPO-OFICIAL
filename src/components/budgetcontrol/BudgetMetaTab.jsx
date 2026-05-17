@@ -20,6 +20,8 @@ import BudgetHistoryTable from "./BudgetHistoryTable";
 import BudgetResponsibilityMatrix from "./BudgetResponsibilityMatrix";
 import BudgetDREResumoCard from "./BudgetDREResumoCard";
 import ConfigurarMetaFromDREModal from "./ConfigurarMetaFromDREModal";
+import MetaAnualEditor from "./MetaAnualEditor";
+import BudgetConsolidadoAnual from "./BudgetConsolidadoAnual";
 
 const CATEGORIAS = ["operacional", "pessoas", "marketing", "manutencao", "terceirizados", "administrativo", "financeiro", "pecas"];
 
@@ -41,6 +43,8 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
   const [syncPulse, setSyncPulse] = useState(false);
   const [showMetaModal, setShowMetaModal] = useState(false);
   const [selectedDREItem, setSelectedDREItem] = useState(null);
+  const [visaoPeriodo, setVisaoPeriodo] = useState("mensal"); // "mensal" | "anual"
+  const [anoSelecionado, setAnoSelecionado] = useState(parseInt(mes.split('-')[0]));
   const [formData, setFormData] = useState({
     faturamento_meta_rs: 0,
     item: "",
@@ -76,7 +80,7 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
     });
   };
 
-  // Buscar metas do mês
+  // Buscar metas do mês (visão mensal)
   const { data: metas = [], isLoading: isLoadingMetas } = useQuery({
     queryKey: ["budget-metas", workshopId, mes],
     queryFn: async () => {
@@ -87,7 +91,37 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
       }, "-created_date");
       return Array.isArray(result) ? result : [];
     },
-    enabled: !!workshopId && !!mes
+    enabled: !!workshopId && !!mes && visaoPeriodo === "mensal"
+  });
+
+  // Buscar metas anuais (visão anual)
+  const { data: metasAnuais = [], isLoading: isLoadingMetasAnuais } = useQuery({
+    queryKey: ["budget-metas-anuais", workshopId, anoSelecionado],
+    queryFn: async () => {
+      if (!workshopId) return [];
+      const anoInicio = `${anoSelecionado}-01`;
+      const anoFim = `${anoSelecionado}-12`;
+      const result = await base44.entities.BudgetMeta.filter({
+        workshop_id: workshopId,
+        periodicidade: "anual"
+      }, "-created_date");
+      // Filtrar apenas do ano selecionado
+      return Array.isArray(result) ? result.filter(m => m.mes >= anoInicio && m.mes <= anoFim) : [];
+    },
+    enabled: !!workshopId && visaoPeriodo === "anual"
+  });
+
+  // Buscar realizados do ano (para visão anual)
+  const { data: realizadosAno = [] } = useQuery({
+    queryKey: ["dre-realizados-ano", workshopId, anoSelecionado],
+    queryFn: async () => {
+      if (!workshopId) return [];
+      const result = await base44.entities.DRELancamento.filter({
+        workshop_id: workshopId
+      }, "-created_date");
+      return Array.isArray(result) ? result.filter(l => l.mes.startsWith(anoSelecionado.toString())) : [];
+    },
+    enabled: !!workshopId && visaoPeriodo === "anual"
   });
 
   // Buscar lançamentos do DRE para comparação
@@ -304,6 +338,55 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
 
   return (
     <div className="space-y-6">
+      {/* Toggle Visão Mensal | Visão Anual */}
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900">Controle Orçamentário</h3>
+          <p className="text-sm text-gray-500">Acompanhe metas e realizado</p>
+        </div>
+        <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+          <button
+            onClick={() => setVisaoPeriodo("mensal")}
+            className={`text-xs px-3 py-2 rounded-md font-medium transition-all ${visaoPeriodo === "mensal" ? "bg-white shadow text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+          >
+            📅 Visão Mensal
+          </button>
+          <button
+            onClick={() => setVisaoPeriodo("anual")}
+            className={`text-xs px-3 py-2 rounded-md font-medium transition-all ${visaoPeriodo === "anual" ? "bg-white shadow text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+          >
+            📊 Visão Anual
+          </button>
+        </div>
+      </div>
+
+      {/* VISÃO ANUAL */}
+      {visaoPeriodo === "anual" && (
+        <div className="space-y-6">
+          {/* Editor de Meta Anual */}
+          <MetaAnualEditor
+            workshopId={workshopId}
+            ano={anoSelecionado.toString()}
+            item="Faturamento Total"
+            categoria="geral"
+            tipo="receita"
+            metaAnualExistente={metasAnuais.find(m => m.mes === `${anoSelecionado}-01`)?.meta_anual_rs}
+            onMetaSalva={() => queryClient.invalidateQueries({ queryKey: ['budget-metas-anuais', workshopId, anoSelecionado] })}
+          />
+
+          {/* Consolidado Anual */}
+          <BudgetConsolidadoAnual
+            ano={anoSelecionado}
+            workshopId={workshopId}
+            metas={metasAnuais}
+            realizados={realizadosAno}
+          />
+        </div>
+      )}
+
+      {/* VISÃO MENSAL */}
+      {visaoPeriodo === "mensal" && (
+        <>
       {/* Feedback de Sincronismo */}
       {syncPulse && (
         <div className="fixed top-4 right-4 z-50 animate-pulse bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 text-sm font-medium">
@@ -555,6 +638,8 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
           )}
         </CardContent>
       </Card>
+        </>
+      )}
     </div>
   );
 }
