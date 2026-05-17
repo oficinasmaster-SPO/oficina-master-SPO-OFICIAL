@@ -20,6 +20,7 @@ import { mapDREtoDFC } from "./mapDREtoDFC";
 import ProjecaoCaixaView from "./ProjecaoCaixaView";
 import ModalSaldoInicialDetalhado from "../dfc/ModalSaldoInicialDetalhado";
 import FonteSaidaSelector from "../dfc/FonteSaidaSelector";
+import FiltroPeriodo from "./FiltroPeriodo";
 
 // ─── Formatação ────────────────────────────────────────────────────
 const fmt = (v) =>
@@ -438,6 +439,11 @@ export default function DFCTab({ workshopId, mes }) {
   const [itemPagamento, setItemPagamento] = useState(null);
   const [view, setView] = useState("grupos"); // "grupos" | "projecao"
   const [modalSaldoDetalhadoAberto, setModalSaldoDetalhadoAberto] = useState(false);
+  const [periodo, setPeriodo] = useState("mensal"); // mensal | anual
+  const [ano, setAno] = useState(new Date().getFullYear());
+  
+  const mesAtual = mes ? mes.split('-')[1] : "01";
+  const anoAtual = mes ? parseInt(mes.split('-')[0]) : new Date().getFullYear();
 
   // ── Buscar DRELancamentos → mapeados automaticamente (Fase 3) ──
   const { data: lancamentosDRE = [], isLoading: isDRELoading, refetch: refetchDRE } = useQuery({
@@ -642,6 +648,21 @@ export default function DFCTab({ workshopId, mes }) {
             ⚠️ Nenhum lançamento no DRE Avançado para {mes}. Preencha a aba "DRE Avançado" primeiro.
           </span>
         )}
+      </div>
+
+      {/* Filtro de Período */}
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <FiltroPeriodo
+          mes={mesAtual}
+          ano={anoAtual}
+          periodo={periodo}
+          onMesChange={(novoMes) => {
+            const novaData = `${anoAtual}-${novoMes}`;
+            window.dispatchEvent(new CustomEvent('dfc-mudar-mes', { detail: { mes: novaData } }));
+          }}
+          onAnoChange={(novoAno) => setAno(parseInt(novoAno))}
+          onPeriodoChange={(novoPeriodo) => setPeriodo(novoPeriodo)}
+        />
       </div>
 
       {/* Saldo Inicial + seletor de view */}

@@ -12,6 +12,9 @@ import {
 import { formatCurrency } from "@/components/utils/formatters";
 import { toast } from "sonner";
 import SubcategoriaSelector from "./SubcategoriaSelector";
+import FrequenciaSelector from "./FrequenciaSelector";
+import ConfiguracaoRecorrencia from "./ConfiguracaoRecorrencia";
+import { base44 } from "@/api/base44Client";
 
 // ─── CATEGORIAS ───────────────────────────────────────────────────────────────
 const CATEGORIAS_DESPESA = {
@@ -81,6 +84,12 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
   const [dataVencimento, setDataVencimento] = useState("");
   const [dataPagamento, setDataPagamento] = useState("");
   const [saving, setSaving] = useState(false);
+  
+  // Campos de recorrência
+  const [frequencia, setFrequencia] = useState("unico");
+  const [dataInicio, setDataInicio] = useState("");
+  const [dataFim, setDataFim] = useState("");
+  const [numeroParcelas, setNumeroParcelas] = useState(12);
 
   const categorias = tipo === "receita" ? CATEGORIAS_RECEITA : CATEGORIAS_DESPESA;
   const catSelecionada = categorias[catKey];
@@ -103,28 +112,55 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
 
     setSaving(true);
     try {
-      const novoLancamento = await base44.entities.DRELancamento.create({
-        workshop_id: workshopId,
-        mes,
-        tipo,
-        categoria: catKey,
-        subcategoria: subcat || (catSelecionada?.subcategorias[0] ?? ""),
-        descricao,
-        valor: valorNum,
-        entra_tcmp2: catSelecionada?.entra_tcmp2 ?? true,
-        ...(dataVencimento && { data_vencimento: dataVencimento }),
-        ...(dataPagamento && { data_pagamento: dataPagamento }),
-      });
+      // Se tiver frequência, usar criação recorrente
+      if (frequencia !== 'unico') {
+        const response = await base44.functions.invoke('criarLancamentoRecorrente', {
+          workshop_id: workshopId,
+          mes_inicio: mes,
+          tipo,
+          categoria: catKey,
+          subcategoria: subcat || (catSelecionada?.subcategorias[0] ?? ""),
+          descricao,
+          valor: valorNum,
+          entra_tcmp2: catSelecionada?.entra_tcmp2 ?? true,
+          data_vencimento: dataVencimento,
+          frequencia,
+          numero_parcelas: dataFim ? null : numeroParcelas,
+          data_inicio: dataInicio || new Date().toISOString().split('T')[0],
+          data_fim: dataFim || null
+        });
 
-      // Invalidar queries do Controle Orçamentário em tempo real
-      window.dispatchEvent(new CustomEvent('dre-lancamento-criado', { 
-        detail: { workshop_id: workshopId, mes, lancamento: novoLancamento } 
-      }));
+        if (response.data.success) {
+          window.dispatchEvent(new CustomEvent('dre-lancamento-criado', { 
+            detail: { workshop_id: workshopId, mes } 
+          }));
+          toast.success(response.data.mensagem);
+          onSuccess();
+        }
+      } else {
+        // Lançamento único normal
+        const novoLancamento = await base44.entities.DRELancamento.create({
+          workshop_id: workshopId,
+          mes,
+          tipo,
+          categoria: catKey,
+          subcategoria: subcat || (catSelecionada?.subcategorias[0] ?? ""),
+          descricao,
+          valor: valorNum,
+          entra_tcmp2: catSelecionada?.entra_tcmp2 ?? true,
+          ...(dataVencimento && { data_vencimento: dataVencimento }),
+          ...(dataPagamento && { data_pagamento: dataPagamento }),
+        });
 
-      toast.success("Lançamento adicionado!");
-      onSuccess();
+        window.dispatchEvent(new CustomEvent('dre-lancamento-criado', { 
+          detail: { workshop_id: workshopId, mes, lancamento: novoLancamento } 
+        }));
+
+        toast.success("Lançamento adicionado!");
+        onSuccess();
+      }
     } catch (e) {
-      toast.error("Erro ao salvar lançamento");
+      toast.error("Erro ao salvar: " + e.message);
     } finally {
       setSaving(false);
     }
@@ -213,6 +249,28 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
             onChange={e => setDataPagamento(e.target.value)}
           />
         </div>
+      </div>
+
+      {/* Frequência e Recorrência */}
+      <div className="space-y-3 pt-3 border-t border-gray-200">
+        <FrequenciaSelector
+          value={frequencia}
+          onChange={setFrequencia}
+        />
+        
+        {frequencia !== 'unico' && (
+          <ConfiguracaoRecorrencia
+            frequencia={frequencia}
+            dataInicio={dataInicio}
+            dataFim={dataFim}
+            numeroParcelas={numeroParcelas}
+            onChange={(updates) => {
+              if (updates.data_inicio) setDataInicio(updates.data_inicio);
+              if (updates.data_fim !== undefined) setDataFim(updates.data_fim);
+              if (updates.numero_parcelas !== undefined) setNumeroParcelas(updates.numero_parcelas);
+            }}
+          />
+        )}
       </div>
 
       <div className="flex gap-2">
@@ -736,7 +794,7 @@ export default function DREAvancadoTab({ workshopId, mes, tecnicosCount, horasMe
       {abaAtiva === "analise" ? (
         <PainelAnalise lancamentos={lancamentos} tecnicosCount={tecnicosCount} horasMes={horasMes} />
       ) : (
-        <>
+        <div className="space-y-4">
           {/* Botões de ação */}
           <div className="flex items-center gap-2 flex-wrap">
             {(abaAtiva === "todos" || abaAtiva === "receitas") && (
@@ -797,7 +855,7 @@ export default function DREAvancadoTab({ workshopId, mes, tecnicosCount, horasMe
               ))}
             </div>
           )}
-        </>
+        </div>
       )}
 
       {/* Legenda TCMP² */}
