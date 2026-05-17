@@ -75,10 +75,16 @@ export default function ConfigurarMetaFromDREModal({
   const handleSave = () => {
     if (validate()) {
       onSave({
-        ...formData,
+        responsavel_nome: formData.responsavel_nome,
+        notas: formData.notas,
+        // faturamento_meta_rs = Meta Total serve como base para cálculo percentual
+        faturamento_meta_rs: formData.meta_total_rs,
+        meta_fixa_rs: metaType === "fixa" ? formData.meta_fixa_rs : 0,
+        meta_percentual: metaType === "percentual" ? formData.meta_percentual : 0,
+        // dados do lancamento DRE
         categoria: item?.categoria,
-        item: item?.item,
-        tipo_meta: item?.tipo
+        item: item?.item,       // corresponde à descricao do DRELancamento
+        tipo: item?.tipo        // "receita" ou "despesa"
       });
     }
   };

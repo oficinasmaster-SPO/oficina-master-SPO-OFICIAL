@@ -12,28 +12,28 @@
     },
     "faturamento_meta_rs": {
       "type": "number",
-      "description": "Meta total de faturamento em R$"
+      "description": "Meta total de faturamento/base de cálculo em R$ (usado para calcular meta percentual)"
     },
     "item": {
       "type": "string",
-      "description": "Nome do item da meta (ex: aluguel, salarios, marketing)"
+      "description": "Nome do item da meta (deve corresponder à descricao do DRELancamento)"
     },
     "categoria": {
       "type": "string",
-      "enum": ["operacional", "pessoas", "marketing", "manutencao", "terceirizados", "administrativo", "financeiro", "pecas"],
-      "description": "Categoria do item"
+      "description": "Categoria do item (espelha categoria do DRELancamento)"
+    },
+    "tipo": {
+      "type": "string",
+      "enum": ["receita", "despesa"],
+      "description": "Se é meta de receita ou despesa"
     },
     "meta_percentual": {
       "type": "number",
-      "description": "Meta em percentual do faturamento (0-100)"
+      "description": "Meta em percentual do faturamento_meta_rs (0-100). Usado quando tipo_calculo=percentual"
     },
     "meta_fixa_rs": {
       "type": "number",
       "description": "Meta em valor fixo em R$ (alternativa ao percentual)"
-    },
-    "responsavel_id": {
-      "type": "string",
-      "description": "ID do usuário responsável por esta categoria"
     },
     "responsavel_nome": {
       "type": "string",
@@ -60,7 +60,10 @@
       ]
     },
     "delete": {
-      "user_condition": {"role": "admin"}
+      "$or": [
+        {"workshop_id": "{{user.data.workshop_id}}"},
+        {"user_condition": {"role": "admin"}}
+      ]
     }
   }
 }

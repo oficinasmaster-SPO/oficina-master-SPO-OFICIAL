@@ -54,7 +54,8 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
   const handleSelectDREItem = (lancamento) => {
     setSelectedDREItem({
       categoria: lancamento.categoria,
-      item: lancamento.descricao,
+      // item = descricao do lancamento (campo que usamos para match)
+      item: lancamento.descricao || lancamento.subcategoria || lancamento.categoria,
       valor_realizado: lancamento.valor,
       tipo: lancamento.tipo,
       entra_tcmp2: lancamento.entra_tcmp2
@@ -66,7 +67,8 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
     saveMutation.mutate({
       categoria: metaData.categoria,
       item: metaData.item,
-      responsavel_nome: metaData.responsavel_nome,
+      tipo: metaData.tipo,
+      responsavel_nome: metaData.responsavel_nome || "",
       meta_fixa_rs: metaData.meta_fixa_rs || 0,
       meta_percentual: metaData.meta_percentual || 0,
       notas: metaData.notas || "",
@@ -204,25 +206,41 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
   const calculado = useMemo(() => {
     if (!metas.length) return { total_meta: 0, por_categoria: {} };
 
-    const faturamento = metas[0]?.faturamento_meta_rs || 0;
     const por_categoria = {};
     let total_meta_rs = 0;
 
     metas.forEach(meta => {
-      const meta_rs = meta.meta_percentual 
-        ? (meta.meta_percentual / 100) * faturamento
-        : meta.meta_fixa_rs;
+      // faturamento_meta_rs é a base de cálculo salva em cada meta individualmente
+      const faturamento = meta.faturamento_meta_rs || 0;
 
+      // meta_rs: prioriza percentual se > 0, senão usa fixa
+      const meta_rs = (meta.meta_percentual && meta.meta_percentual > 0)
+        ? (meta.meta_percentual / 100) * faturamento
+        : (meta.meta_fixa_rs || 0);
+
+      // Match: compara categoria E descricao/item do lançamento
       const realizado = lancamentos
-        .filter(l => l.categoria === meta.categoria && l.item === meta.item)
+        .filter(l =>
+          l.categoria === meta.categoria &&
+          (l.descricao === meta.item || l.subcategoria === meta.item || l.categoria === meta.item)
+        )
         .reduce((sum, l) => sum + (l.valor || 0), 0);
 
-      const diferenca = meta_rs - realizado;
-      const variacao = meta_rs > 0 ? (diferenca / meta_rs) * 100 : 0;
+      // Para despesas: meta é limite máximo (acima = ruim). Para receitas: meta é mínimo (abaixo = ruim)
+      const isDespesa = meta.tipo === "despesa";
+      const diferenca = isDespesa ? meta_rs - realizado : realizado - meta_rs;
+      const variacao = meta_rs > 0 ? (Math.abs(diferenca) / meta_rs) * 100 : 0;
 
       let status = "✅";
-      if (realizado > meta_rs * 1.05) status = "❌";
-      else if (realizado > meta_rs * 0.95) status = "⚠️";
+      if (isDespesa) {
+        // Despesa: realizado > meta é ruim
+        if (realizado > meta_rs * 1.05) status = "❌";
+        else if (realizado > meta_rs * 0.95) status = "⚠️";
+      } else {
+        // Receita: realizado < meta é ruim
+        if (realizado < meta_rs * 0.95) status = "❌";
+        else if (realizado < meta_rs) status = "⚠️";
+      }
 
       por_categoria[meta.id] = {
         meta_rs,
@@ -237,7 +255,6 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
 
     return {
       total_meta: total_meta_rs,
-      faturamento_meta: faturamento,
       por_categoria
     };
   }, [metas, lancamentos]);
@@ -271,10 +288,11 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
       {showMetaModal && selectedDREItem && (
         <ConfigurarMetaFromDREModal
           item={selectedDREItem}
-          onClose={() => setShowMetaModal(false)}
+          onClose={() => { setShowMetaModal(false); setSelectedDREItem(null); }}
           onSave={(metaData) => {
             setShowMetaModal(false);
-            saveMutation.mutate(metaData);
+            setSelectedDREItem(null);
+            handleSaveMetaFromDRE(metaData);
           }}
         />
       )}
@@ -455,30 +473,40 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-2">Item</th>
-                    <th className="text-right py-2">Meta %</th>
-                    <th className="text-right py-2">Meta R$</th>
-                    <th className="text-right py-2">Realizado</th>
-                    <th className="text-right py-2">Diferença</th>
-                    <th className="text-right py-2">Variação %</th>
-                    <th className="text-center py-2">Status</th>
+                  <tr className="border-b bg-gray-50">
+                    <th className="text-left py-2 px-2">Item</th>
+                    <th className="text-left py-2 px-2">Tipo</th>
+                    <th className="text-right py-2 px-2">Base (R$)</th>
+                    <th className="text-right py-2 px-2">Meta %</th>
+                    <th className="text-right py-2 px-2">Meta R$</th>
+                    <th className="text-right py-2 px-2">Realizado</th>
+                    <th className="text-right py-2 px-2">Diferença</th>
+                    <th className="text-center py-2 px-2">Status</th>
                   </tr>
                 </thead>
                 <tbody>
                   {metas.map(meta => {
                     const calc = calculado.por_categoria[meta.id] || {};
+                    const isDespesa = meta.tipo === "despesa";
+                    const diferencaPositiva = calc.diferenca >= 0;
+                    // Para despesa: positivo = dentro do limite (verde). Para receita: positivo = acima da meta (verde)
+                    const diferencaCor = diferencaPositiva ? "text-green-600" : "text-red-600";
                     return (
                       <tr key={meta.id} className="border-b hover:bg-gray-50">
-                        <td className="py-3">{meta.item}</td>
-                        <td className="text-right">{meta.meta_percentual}%</td>
-                        <td className="text-right">{formatCurrency(calc.meta_rs || 0)}</td>
-                        <td className="text-right">{formatCurrency(calc.realizado || 0)}</td>
-                        <td className={`text-right font-semibold ${calc.diferenca >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {calc.diferenca >= 0 ? '+' : ''}{formatCurrency(calc.diferenca || 0)}
+                        <td className="py-3 px-2 font-medium">{meta.item}</td>
+                        <td className="py-3 px-2">
+                          <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${isDespesa ? "bg-red-50 text-red-600" : "bg-green-50 text-green-600"}`}>
+                            {isDespesa ? "Despesa" : "Receita"}
+                          </span>
                         </td>
-                        <td className="text-right">{formatNumber(calc.variacao || 0, 1)}%</td>
-                        <td className="text-center text-2xl">{calc.status}</td>
+                        <td className="text-right py-3 px-2 text-gray-500">{formatCurrency(meta.faturamento_meta_rs || 0)}</td>
+                        <td className="text-right py-3 px-2">{meta.meta_percentual > 0 ? `${meta.meta_percentual}%` : "—"}</td>
+                        <td className="text-right py-3 px-2 font-semibold">{formatCurrency(calc.meta_rs || 0)}</td>
+                        <td className="text-right py-3 px-2">{formatCurrency(calc.realizado || 0)}</td>
+                        <td className={`text-right py-3 px-2 font-semibold ${diferencaCor}`}>
+                          {diferencaPositiva ? "+" : ""}{formatCurrency(calc.diferenca || 0)}
+                        </td>
+                        <td className="text-center py-3 px-2 text-xl">{calc.status}</td>
                       </tr>
                     );
                   })}
