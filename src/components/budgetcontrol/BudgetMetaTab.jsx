@@ -12,6 +12,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Edit2, Trash2, Loader2, AlertCircle, CheckCircle, AlertTriangle } from "lucide-react";
 import { formatCurrency, formatNumber } from "../utils/formatters";
 import { toast } from "sonner";
+import BudgetSummaryCards from "./BudgetSummaryCards";
+import BudgetProgressBars from "./BudgetProgressBars";
+import BudgetVariationReport from "./BudgetVariationReport";
 
 const CATEGORIAS = ["operacional", "pessoas", "marketing", "manutencao", "terceirizados", "administrativo", "financeiro", "pecas"];
 
@@ -183,6 +186,27 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
 
   return (
     <div className="space-y-6">
+      {/* Cards Resumo */}
+      <BudgetSummaryCards calculado={calculado} metas={metas} />
+
+      {/* Progress Bars */}
+      {metas.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>📊 Progresso por Categoria</CardTitle>
+            <CardDescription>Acompanhe o andamento de cada meta visualmente</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <BudgetProgressBars metas={metas} calculado={calculado} />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Relatório de Variações */}
+      {metas.length > 0 && (
+        <BudgetVariationReport metas={metas} calculado={calculado} />
+      )}
+
       {/* Seção: Configurar Metas */}
       <Card>
         <CardHeader>
