@@ -131,7 +131,9 @@ function ModalLancamento({ aberto, onFechar, onSalvar, isSaving, lancamentoEdica
           <div>
             <Label>Tipo</Label>
             <Select value={form.tipo} onValueChange={v => setForm(f => ({ ...f, tipo: v }))}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <span>{form.tipo === "entrada" ? "+ Entrada de caixa" : "- Saída de caixa"}</span>
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="entrada">+ Entrada de caixa</SelectItem>
                 <SelectItem value="saida">- Saída de caixa</SelectItem>
