@@ -198,13 +198,25 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
   );
 }
 
-// ─── LINHA DE LANÇAMENTO ──────────────────────────────────────────────────────
-function LancamentoRow({ item, onDelete }) {
+// ─── LINHA DE LANÇAMENTO (com edição inline ao clicar) ───────────────────────
+function LancamentoRow({ item, onDelete, onSaved }) {
+  const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  // campos editáveis
   const categorias = item.tipo === "receita" ? CATEGORIAS_RECEITA : CATEGORIAS_DESPESA;
   const cat = categorias[item.categoria];
 
-  const handleDelete = async () => {
+  const [catKey, setCatKey]     = useState(item.categoria);
+  const [subcat, setSubcat]     = useState(item.subcategoria || "");
+  const [descricao, setDescricao] = useState(item.descricao || "");
+  const [valor, setValor]       = useState(String(item.valor));
+
+  const catSelecionada = categorias[catKey];
+
+  const handleDelete = async (e) => {
+    e.stopPropagation();
     setDeleting(true);
     try {
       await base44.entities.DRELancamento.delete(item.id);
@@ -215,8 +227,128 @@ function LancamentoRow({ item, onDelete }) {
     }
   };
 
+  const handleSave = async () => {
+    const valorNum = parseFloat(String(valor).replace(",", "."));
+    if (!catKey || !descricao || isNaN(valorNum) || valorNum <= 0) {
+      toast.error("Preencha todos os campos corretamente");
+      return;
+    }
+    setSaving(true);
+    try {
+      await base44.entities.DRELancamento.update(item.id, {
+        categoria: catKey,
+        subcategoria: subcat,
+        descricao,
+        valor: valorNum,
+        entra_tcmp2: catSelecionada?.entra_tcmp2 ?? item.entra_tcmp2
+      });
+      toast.success("Lançamento atualizado!");
+      setEditing(false);
+      onSaved();
+    } catch {
+      toast.error("Erro ao salvar");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancel = () => {
+    // restaurar valores originais
+    setCatKey(item.categoria);
+    setSubcat(item.subcategoria || "");
+    setDescricao(item.descricao || "");
+    setValor(String(item.valor));
+    setEditing(false);
+  };
+
+  // ── MODO EDIÇÃO ──────────────────────────────────────────────────────────────
+  if (editing) {
+    return (
+      <div className="bg-amber-50 border-2 border-amber-300 rounded-xl p-4 space-y-3">
+        <p className="text-xs font-semibold text-amber-700">✏️ Editando lançamento</p>
+
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block">Categoria</label>
+            <select
+              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-amber-300"
+              value={catKey}
+              onChange={e => { setCatKey(e.target.value); setSubcat(""); }}
+            >
+              {Object.entries(categorias).map(([k, v]) => (
+                <option key={k} value={k}>{v.label}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block">Subcategoria</label>
+            <select
+              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-amber-300"
+              value={subcat}
+              onChange={e => setSubcat(e.target.value)}
+            >
+              <option value="">Selecione...</option>
+              {catSelecionada?.subcategorias.map(s => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {catKey && item.tipo === "despesa" && (
+          <div className={`flex items-center gap-2 text-xs px-3 py-2 rounded-lg ${catSelecionada?.entra_tcmp2 ? "bg-blue-100 text-blue-700" : "bg-red-50 text-red-700"}`}>
+            {catSelecionada?.entra_tcmp2
+              ? <><CheckCircle className="w-3 h-3 flex-shrink-0" /> <strong>ENTRA</strong> no cálculo do TCMP²</>
+              : <><AlertCircle className="w-3 h-3 flex-shrink-0" /> <strong>NÃO ENTRA</strong> no cálculo do TCMP²</>
+            }
+          </div>
+        )}
+
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block">Descrição</label>
+            <input
+              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-amber-300"
+              value={descricao}
+              onChange={e => setDescricao(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block">Valor (R$)</label>
+            <input
+              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-amber-300 text-right font-mono"
+              value={valor}
+              onChange={e => setValor(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className="flex gap-2">
+          <Button size="sm" onClick={handleSave} disabled={saving} className="bg-amber-500 hover:bg-amber-600 text-white flex-1">
+            {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
+            Salvar alterações
+          </Button>
+          <Button size="sm" variant="outline" onClick={handleCancel}>Cancelar</Button>
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            className="ml-auto text-xs text-red-500 hover:text-red-700 flex items-center gap-1 px-2"
+          >
+            {deleting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
+            Excluir
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── MODO LEITURA ─────────────────────────────────────────────────────────────
   return (
-    <div className="flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-lg hover:border-gray-300 transition-colors group">
+    <div
+      onClick={() => setEditing(true)}
+      className="flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-lg hover:border-amber-300 hover:bg-amber-50/30 transition-colors group cursor-pointer"
+      title="Clique para editar"
+    >
       <div className={`w-1.5 h-8 rounded-full flex-shrink-0 ${item.tipo === "receita" ? "bg-green-400" : item.entra_tcmp2 ? "bg-blue-400" : "bg-red-400"}`} />
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-gray-900 truncate">{item.descricao}</p>
@@ -233,6 +365,8 @@ function LancamentoRow({ item, onDelete }) {
       <span className={`font-bold text-sm flex-shrink-0 ${item.tipo === "receita" ? "text-green-600" : "text-red-600"}`}>
         {item.tipo === "receita" ? "+" : "-"} {formatCurrency(item.valor)}
       </span>
+      {/* hint de edição visível no hover */}
+      <span className="opacity-0 group-hover:opacity-60 text-xs text-gray-400 flex-shrink-0 transition-opacity">✏️</span>
       <button
         onClick={handleDelete}
         disabled={deleting}
@@ -245,7 +379,7 @@ function LancamentoRow({ item, onDelete }) {
 }
 
 // ─── SEÇÃO AGRUPADA POR CATEGORIA ────────────────────────────────────────────
-function GrupoCategoria({ catKey, label, itens, tipo, onDelete }) {
+function GrupoCategoria({ catKey, label, itens, tipo, onDelete, onSaved }) {
   const [expanded, setExpanded] = useState(true);
   const total = itens.reduce((s, i) => s + i.valor, 0);
 
@@ -264,7 +398,7 @@ function GrupoCategoria({ catKey, label, itens, tipo, onDelete }) {
         </div>
       </button>
       {expanded && itens.map(item => (
-        <LancamentoRow key={item.id} item={item} onDelete={onDelete} />
+        <LancamentoRow key={item.id} item={item} onDelete={onDelete} onSaved={onSaved} />
       ))}
     </div>
   );
@@ -541,6 +675,7 @@ export default function DREAvancadoTab({ workshopId, mes, tecnicosCount, horasMe
                   itens={grupo.itens}
                   tipo={grupo.tipo}
                   onDelete={refresh}
+                  onSaved={refresh}
                 />
               ))}
             </div>
