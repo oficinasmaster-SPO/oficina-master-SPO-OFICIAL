@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -61,7 +61,7 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
   });
 
   // Buscar lançamentos do DRE para comparação
-  const { data: lancamentos = [] } = useQuery({
+  const { data: lancamentos = [], refetch: refetchLancamentos } = useQuery({
     queryKey: ["dre-lancamentos", workshopId, mes],
     queryFn: async () => {
       if (!workshopId) return [];
@@ -73,6 +73,20 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
     },
     enabled: !!workshopId && !!mes
   });
+
+  // Real-time subscription: atualizar quando novo DRELancamento é criado
+  useEffect(() => {
+    if (!workshopId || !mes) return;
+
+    const unsubscribe = base44.entities.DRELancamento.subscribe((event) => {
+      // Se novo lançamento do mês atual, atualizar query
+      if (event.type === 'create' && event.data?.workshop_id === workshopId && event.data?.mes === mes) {
+        refetchLancamentos();
+      }
+    });
+
+    return unsubscribe;
+  }, [workshopId, mes, refetchLancamentos]);
 
   // Criar/Atualizar meta
   const saveMutation = useMutation({
