@@ -17,13 +17,14 @@ import { Calendar, Clock, User, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
+import ReagendarAtendimentoModal from '@/components/aceleracao/ReagendarAtendimentoModal';
 
 export default function SugestaoHorarioPendentePoup({ isOpen, onClose, atendimento }) {
   const queryClient = useQueryClient();
   const [decisao, setDecisao] = useState(null);
   const [workshop, setWorkshop] = useState(null);
+  const [abrirReagendar, setAbrirReagendar] = useState(false);
   
-  // Buscar dados da workshop para exibir nome real
   useEffect(() => {
     if (atendimento?.workshop_id) {
       base44.entities.Workshop.read(atendimento.workshop_id)
@@ -38,9 +39,7 @@ export default function SugestaoHorarioPendentePoup({ isOpen, onClose, atendimen
       return response.data;
     },
     onSuccess: (data) => {
-      if (decisao === 'aceitar') {
-        toast.success('✅ Sugestão aceita! Cliente foi notificado.');
-      } else if (decisao === 'recusar') {
+      if (decisao === 'recusar') {
         toast.success('⏰ Sugestão recusada. Cliente foi notificado (horário original mantido).');
       }
       queryClient.invalidateQueries({ queryKey: ['consultoria-atendimentos'] });
@@ -55,6 +54,8 @@ export default function SugestaoHorarioPendentePoup({ isOpen, onClose, atendimen
 
   if (!atendimento || !isOpen) return null;
 
+  const isModoReagendamento = atendimento.modo_reagendamento_cliente === true;
+
   const dataSugerida = new Date(`${atendimento.data_sugerida_cliente}T${atendimento.hora_sugerida_cliente}`);
   const dataOriginal = new Date(atendimento.data_agendada);
 
@@ -62,13 +63,18 @@ export default function SugestaoHorarioPendentePoup({ isOpen, onClose, atendimen
   const dataOriginalFormatada = format(dataOriginal, "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
 
   const handleAceitar = () => {
-    setDecisao('aceitar');
-    processarMutation.mutate({
-      atendimento_id: atendimento.id,
-      decisao: 'aceitar',
-      data_nova: atendimento.data_sugerida_cliente,
-      hora_nova: atendimento.hora_sugerida_cliente
-    });
+    if (isModoReagendamento) {
+      // Abre o modal de reagendamento pré-populado com os dados do cliente
+      setAbrirReagendar(true);
+    } else {
+      setDecisao('aceitar');
+      processarMutation.mutate({
+        atendimento_id: atendimento.id,
+        decisao: 'aceitar',
+        data_nova: atendimento.data_sugerida_cliente,
+        hora_nova: atendimento.hora_sugerida_cliente
+      });
+    }
   };
 
   const handleRecusar = () => {
@@ -87,13 +93,51 @@ export default function SugestaoHorarioPendentePoup({ isOpen, onClose, atendimen
     onClose();
   };
 
+  // Atendimento pré-populado para o modal de reagendamento
+  const atendimentoParaReagendar = abrirReagendar ? {
+    ...atendimento,
+    // pré-popula data/hora sugerida pelo cliente
+    _data_sugerida_cliente: atendimento.data_sugerida_cliente,
+    _hora_sugerida_cliente: atendimento.hora_sugerida_cliente,
+    _mensagem_cliente: atendimento.mensagem_cliente
+  } : null;
+
+  if (abrirReagendar && workshop) {
+    return (
+      <ReagendarAtendimentoModal
+        atendimento={atendimentoParaReagendar}
+        workshop={workshop}
+        onClose={() => { setAbrirReagendar(false); onClose(); }}
+        onSaved={() => {
+          // Limpar campos de sugestão do atendimento
+          base44.entities.ConsultoriaAtendimento.update(atendimento.id, {
+            data_sugerida_cliente: null,
+            hora_sugerida_cliente: null,
+            mensagem_cliente: null,
+            modo_reagendamento_cliente: null
+          }).catch(() => {});
+          queryClient.invalidateQueries({ queryKey: ['consultoria-atendimentos'] });
+          queryClient.invalidateQueries({ queryKey: ['atendimentos-acelerador'] });
+          toast.success('✅ Reagendamento confirmado! Cliente será notificado.');
+          setAbrirReagendar(false);
+          onClose();
+        }}
+      />
+    );
+  }
+
   return (
     <AlertDialog open={isOpen} onOpenChange={onClose}>
       <AlertDialogContent className="max-w-2xl">
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2 text-lg">
             <Calendar className="w-6 h-6 text-blue-600" />
-            Sugestão de Novo Horário
+            {isModoReagendamento ? "Solicitação de Reagendamento" : "Sugestão de Novo Horário"}
+            {isModoReagendamento && (
+              <Badge className="bg-amber-100 text-amber-800 border-amber-300 text-xs ml-1">
+                ⚠️ Data vencida / &lt;8h
+              </Badge>
+            )}
           </AlertDialogTitle>
           <AlertDialogDescription asChild>
             <div className="space-y-4 text-sm">

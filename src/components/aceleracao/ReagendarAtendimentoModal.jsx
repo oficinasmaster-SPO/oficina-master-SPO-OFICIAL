@@ -18,17 +18,20 @@ const TODOS_MOTIVOS = {
 
 export default function ReagendarAtendimentoModal({ atendimento, workshop, onClose, onSaved }) {
   const [loading, setLoading] = useState(false);
-  const [novaData, setNovaData] = useState("");
-  const [novoHorario, setNovoHorario] = useState("");
+  // Pré-popular com dados sugeridos pelo cliente (quando vem do fluxo de reagendamento)
+  const [novaData, setNovaData] = useState(atendimento?._data_sugerida_cliente || "");
+  const [novoHorario, setNovoHorario] = useState(atendimento?._hora_sugerida_cliente || "");
   const [statusPosvenda, setStatusPosvenda] = useState("");
   const [responsabilidade, setResponsabilidade] = useState("");
   const [motivoSelecionado, setMotivoSelecionado] = useState("");
-  const [descricaoManual, setDescricaoManual] = useState("");
+  const [descricaoManual, setDescricaoManual] = useState(atendimento?._mensagem_cliente || "");
   const [novoMeetLink, setNovoMeetLink] = useState("");
   const [novoEventId, setNovoEventId] = useState("");
   const [novoCalendarLink, setNovoCalendarLink] = useState("");
   const [descricaoReuniao, setDescricaoReuniao] = useState("");
   const { createMeeting, isCreating } = useGoogleMeet();
+
+  const veioDeSugestaoCliente = !!atendimento?._data_sugerida_cliente;
 
   const motivosFiltrados = responsabilidade === 'cliente' ? MOTIVOS_CLIENTE :
                            responsabilidade === 'empresa' ? MOTIVOS_EMPRESA :
@@ -192,6 +195,17 @@ export default function ReagendarAtendimentoModal({ atendimento, workshop, onClo
         </DialogHeader>
 
         <div className="space-y-5 py-4">
+          {/* Banner quando vem de sugestão do cliente */}
+          {veioDeSugestaoCliente && (
+            <div className="bg-amber-50 border border-amber-300 rounded-lg p-3 flex gap-2">
+              <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-amber-900">
+                <p className="font-semibold">Reagendamento solicitado pelo cliente</p>
+                <p>Data/hora e motivo já foram pré-preenchidos com a sugestão do cliente. Ajuste se necessário.</p>
+              </div>
+            </div>
+          )}
+
           {/* Info Cliente */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
             <p className="text-sm text-blue-900">

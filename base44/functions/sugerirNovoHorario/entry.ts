@@ -14,7 +14,8 @@ Deno.serve(async (req) => {
       data_sugerida,
       hora_sugerida,
       mensagem_cliente,
-      workshop_id
+      workshop_id,
+      modo_reagendamento
     } = await req.json();
 
     if (!atendimento_id || !data_sugerida || !hora_sugerida) {
@@ -84,16 +85,25 @@ Deno.serve(async (req) => {
       }
     }
 
+    // ── Detectar modo reagendamento: data já passou ou falta < 8h ──
+    const agora = new Date();
+    const dataAtendimento = new Date(atendimento.data_agendada);
+    const diffMs = dataAtendimento - agora;
+    const isModoReagendamento = modo_reagendamento || diffMs < 8 * 60 * 60 * 1000;
+
     // ── Atualizar atendimento com sugestão ──
-     await base44.entities.ConsultoriaAtendimento.update(
-       atendimento_id,
-       {
-         data_sugerida_cliente: data_sugerida,
-         hora_sugerida_cliente: hora_sugerida,
-         mensagem_cliente: mensagem_cliente || '',
-         status: 'reagendado'
-       }
-     );
+    // Em modo reagendamento: mantém status atual (aguarda consultor abrir modal de reagendamento)
+    // Em modo sugestão normal: marca como reagendado
+    await base44.entities.ConsultoriaAtendimento.update(
+      atendimento_id,
+      {
+        data_sugerida_cliente: data_sugerida,
+        hora_sugerida_cliente: hora_sugerida,
+        mensagem_cliente: mensagem_cliente || '',
+        modo_reagendamento_cliente: isModoReagendamento,
+        status: isModoReagendamento ? atendimento.status : 'reagendado'
+      }
+    );
 
     // ── Notificar admin sobre sugestão ──
     try {

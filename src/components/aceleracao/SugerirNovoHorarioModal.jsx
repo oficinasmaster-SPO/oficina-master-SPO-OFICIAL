@@ -11,13 +11,25 @@ import { base44 } from "@/api/base44Client";
 import { Calendar, Clock, AlertCircle, Check, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
+// Retorna true se o atendimento está em modo reagendamento
+// (data já passou OU falta menos de 8h)
+function isModoReagendamento(atendimento) {
+  if (!atendimento?.data_agendada) return false;
+  const agora = new Date();
+  const dataAtendimento = new Date(atendimento.data_agendada);
+  const diffMs = dataAtendimento - agora;
+  const oitoHorasMs = 8 * 60 * 60 * 1000;
+  return diffMs < oitoHorasMs; // já passou ou < 8h
+}
+
 export default function SugerirNovoHorarioModal({ isOpen, onClose, atendimento, consultor }) {
   const [dataSugerida, setDataSugerida] = useState("");
   const [horaSugerida, setHoraSugerida] = useState("");
   const [mensagem, setMensagem] = useState("");
   const [mostrarAlternativas, setMostrarAlternativas] = useState(false);
 
-  // Validar e sugerir
+  const modoReagendamento = isModoReagendamento(atendimento);
+
   const sugerirMutation = useMutation({
     mutationFn: async () => {
       const response = await base44.functions.invoke("sugerirNovoHorario", {
@@ -25,7 +37,8 @@ export default function SugerirNovoHorarioModal({ isOpen, onClose, atendimento, 
         data_sugerida: dataSugerida,
         hora_sugerida: horaSugerida,
         mensagem_cliente: mensagem,
-        workshop_id: atendimento.workshop_id
+        workshop_id: atendimento.workshop_id,
+        modo_reagendamento: modoReagendamento
       });
       return response.data;
     },
@@ -33,7 +46,9 @@ export default function SugerirNovoHorarioModal({ isOpen, onClose, atendimento, 
       if (data.alternativas && data.alternativas.length > 0) {
         setMostrarAlternativas(true);
       } else {
-        toast.success(data.message || "Sugestão enviada com sucesso!");
+        toast.success(data.message || (modoReagendamento
+          ? "Solicitação de reagendamento enviada! O consultor irá confirmar."
+          : "Sugestão enviada com sucesso!"));
         onClose();
       }
     },
@@ -43,41 +58,30 @@ export default function SugerirNovoHorarioModal({ isOpen, onClose, atendimento, 
   });
 
   const handleSugerir = () => {
-    // Validações básicas
     if (!dataSugerida || !horaSugerida) {
       toast.error("Preencha data e hora");
       return;
     }
-
     const dataSugerida_date = new Date(`${dataSugerida}T${horaSugerida}`);
-    const dataAtendimentoOriginal = new Date(atendimento.data_agendada);
-
     if (dataSugerida_date <= new Date()) {
-      toast.error("Data e hora devem ser no futuro");
+      toast.error("A nova data e hora devem ser no futuro");
       return;
     }
-
     sugerirMutation.mutate();
   };
 
   // Guard: evitar renderizar se atendimento for null
-  if (!isOpen || !atendimento) {
-    return null;
-  }
+  if (!isOpen || !atendimento) return null;
 
   const dataAtendimentoFormatada = atendimento.data_agendada
     ? new Date(atendimento.data_agendada).toLocaleDateString("pt-BR", {
-        weekday: "long",
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric"
+        weekday: "long", day: "2-digit", month: "2-digit", year: "numeric"
       })
     : "Não informada";
 
   const horaAtendimento = atendimento.data_agendada
     ? new Date(atendimento.data_agendada).toLocaleTimeString("pt-BR", {
-        hour: "2-digit",
-        minute: "2-digit"
+        hour: "2-digit", minute: "2-digit"
       })
     : "Não informada";
 
@@ -87,7 +91,7 @@ export default function SugerirNovoHorarioModal({ isOpen, onClose, atendimento, 
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Calendar className="w-5 h-5 text-indigo-600" />
-            Sugerir Novo Horário
+            {modoReagendamento ? "Solicitar Reagendamento" : "Sugerir Novo Horário"}
           </DialogTitle>
         </DialogHeader>
 
@@ -95,7 +99,7 @@ export default function SugerirNovoHorarioModal({ isOpen, onClose, atendimento, 
           {/* Atendimento Original */}
           <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
             <p className="text-xs font-medium text-gray-600 mb-2">Atendimento Original</p>
-            <div className="flex items-center gap-4 text-sm">
+            <div className="flex items-center gap-4 text-sm flex-wrap">
               <div className="flex items-center gap-1">
                 <Calendar className="w-4 h-4 text-gray-500" />
                 <span className="text-gray-700">{dataAtendimentoFormatada}</span>
@@ -112,11 +116,20 @@ export default function SugerirNovoHorarioModal({ isOpen, onClose, atendimento, 
             )}
           </div>
 
+          {/* Banner de modo reagendamento */}
+          {modoReagendamento && (
+            <Alert className="bg-amber-50 border-amber-300">
+              <AlertCircle className="h-4 w-4 text-amber-600" />
+              <AlertDescription className="text-sm text-amber-900">
+                <strong>Data próxima ou vencida.</strong> Esta solicitação entrará como <strong>reagendamento</strong> — o consultor irá confirmar a nova data e registrar o motivo.
+              </AlertDescription>
+            </Alert>
+          )}
+
           {!mostrarAlternativas ? (
             <>
-              {/* Nova Data */}
               <div>
-                <Label className="text-sm font-medium">Data Sugerida</Label>
+                <Label className="text-sm font-medium">Nova Data</Label>
                 <Input
                   type="date"
                   value={dataSugerida}
@@ -125,10 +138,8 @@ export default function SugerirNovoHorarioModal({ isOpen, onClose, atendimento, 
                   className="mt-1"
                 />
               </div>
-
-              {/* Nova Hora */}
               <div>
-                <Label className="text-sm font-medium">Hora Sugerida</Label>
+                <Label className="text-sm font-medium">Novo Horário</Label>
                 <Input
                   type="time"
                   value={horaSugerida}
@@ -136,12 +147,12 @@ export default function SugerirNovoHorarioModal({ isOpen, onClose, atendimento, 
                   className="mt-1"
                 />
               </div>
-
-              {/* Mensagem */}
               <div>
-                <Label className="text-sm font-medium">Mensagem (Opcional)</Label>
+                <Label className="text-sm font-medium">Motivo / Mensagem {modoReagendamento ? "*" : "(Opcional)"}</Label>
                 <Textarea
-                  placeholder="Conte ao consultor por que precisa mudar..."
+                  placeholder={modoReagendamento
+                    ? "Explique o motivo do reagendamento..."
+                    : "Conte ao consultor por que precisa mudar..."}
                   value={mensagem}
                   onChange={(e) => setMensagem(e.target.value)}
                   className="mt-1 resize-none"
@@ -149,12 +160,14 @@ export default function SugerirNovoHorarioModal({ isOpen, onClose, atendimento, 
                 />
               </div>
 
-              <Alert className="bg-blue-50 border-blue-200">
-                <AlertCircle className="h-4 w-4 text-blue-600" />
-                <AlertDescription className="text-sm text-blue-800">
-                  Sua sugestão será analisada pelo consultor. Você receberá uma notificação quando a nova data for confirmada.
-                </AlertDescription>
-              </Alert>
+              {!modoReagendamento && (
+                <Alert className="bg-blue-50 border-blue-200">
+                  <AlertCircle className="h-4 w-4 text-blue-600" />
+                  <AlertDescription className="text-sm text-blue-800">
+                    Sua sugestão será analisada pelo consultor. Você receberá uma notificação quando a nova data for confirmada.
+                  </AlertDescription>
+                </Alert>
+              )}
             </>
           ) : (
             <AlternativasPanel alternativas={mostrarAlternativas.alternativas} />
@@ -164,32 +177,20 @@ export default function SugerirNovoHorarioModal({ isOpen, onClose, atendimento, 
         <DialogFooter className="flex gap-2">
           <Button
             variant="outline"
-            onClick={() => {
-              if (mostrarAlternativas) {
-                setMostrarAlternativas(false);
-              } else {
-                onClose();
-              }
-            }}
+            onClick={() => mostrarAlternativas ? setMostrarAlternativas(false) : onClose()}
           >
             {mostrarAlternativas ? "Voltar" : "Cancelar"}
           </Button>
           {!mostrarAlternativas && (
             <Button
-              className="bg-indigo-600 hover:bg-indigo-700"
-              disabled={sugerirMutation.isPending || !dataSugerida || !horaSugerida}
+              className={modoReagendamento ? "bg-amber-600 hover:bg-amber-700" : "bg-indigo-600 hover:bg-indigo-700"}
+              disabled={sugerirMutation.isPending || !dataSugerida || !horaSugerida || (modoReagendamento && !mensagem.trim())}
               onClick={handleSugerir}
             >
               {sugerirMutation.isPending ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-                  Enviando...
-                </>
+                <><Loader2 className="w-4 h-4 mr-1 animate-spin" />Enviando...</>
               ) : (
-                <>
-                  <Check className="w-4 h-4 mr-1" />
-                  Enviar Sugestão
-                </>
+                <><Check className="w-4 h-4 mr-1" />{modoReagendamento ? "Solicitar Reagendamento" : "Enviar Sugestão"}</>
               )}
             </Button>
           )}
