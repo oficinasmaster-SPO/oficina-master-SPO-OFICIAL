@@ -222,14 +222,13 @@ function ModalMarcarPagamento({ item, onFechar, onSalvo }) {
     setSaving(true);
     try {
       await base44.entities.DRELancamento.update(item.id, {
-        ...(dataVencimento !== undefined && { data_vencimento: dataVencimento || null }),
-        ...(dataPagamento !== undefined && { data_pagamento: dataPagamento || null }),
+        data_vencimento: dataVencimento || null,
+        data_pagamento:  dataPagamento  || null,
       });
       toast.success("Datas atualizadas!");
-      onSalvo();
-      onFechar();
+      onSalvo(); // onSalvo já fecha o modal (invalida query + setItemPagamento(null))
     } catch {
-      toast.error("Erro ao salvar");
+      toast.error("Erro ao salvar datas");
     } finally {
       setSaving(false);
     }
@@ -526,7 +525,10 @@ export default function DFCTab({ workshopId, mes }) {
         saldo_inicial: valor,
       });
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["dfc-saldo", workshopId, mes] }),
+    onSuccess: (_, valor) => {
+      queryClient.invalidateQueries({ queryKey: ["dfc-saldo", workshopId, mes] });
+      toast.success("Saldo inicial salvo!");
+    },
   });
 
   // ── Cálculos em tempo real (Fase 5) ───────────────────────────
@@ -572,7 +574,12 @@ export default function DFCTab({ workshopId, mes }) {
   const handleSaldoBlur = () => {
     const valor = parseFloat(parseFloat(saldoInicialInput || "0").toFixed(2));
     const salvo = parseFloat(parseFloat(saldoInicialSalvo || 0).toFixed(2));
-    if (valor !== salvo) salvarSaldoMutation.mutate(valor);
+    if (valor !== salvo) {
+      salvarSaldoMutation.mutate(valor);
+    } else {
+      // Normalizar o input para o formato correto
+      setSaldoInicialInput(String(salvo));
+    }
   };
 
   const isLoading = isDRELoading || isManuaisLoading;
@@ -742,7 +749,12 @@ export default function DFCTab({ workshopId, mes }) {
       <ModalMarcarPagamento
         item={itemPagamento}
         onFechar={() => setItemPagamento(null)}
-        onSalvo={() => refetchDRE()}
+        onSalvo={() => {
+          // Invalidar ambas as queries para manter DFC e Projeção sincronizados
+          queryClient.invalidateQueries({ queryKey: ["dre-lancamentos-dfc", workshopId, mes] });
+          queryClient.invalidateQueries({ queryKey: ["dre-lancamentos", workshopId, mes] });
+          setItemPagamento(null);
+        }}
       />
     </div>
   );
