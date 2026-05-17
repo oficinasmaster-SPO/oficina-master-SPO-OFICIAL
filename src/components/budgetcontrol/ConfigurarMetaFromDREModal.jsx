@@ -44,24 +44,16 @@ export default function ConfigurarMetaFromDREModal({
   const validate = () => {
     const newErrors = {};
 
-    if (!formData.responsavel_nome.trim()) {
-      newErrors.responsavel_nome = "Responsável é obrigatório";
-    }
-
-    if (formData.meta_total_rs <= 0) {
-      newErrors.meta_total_rs = "Meta Total é obrigatória e deve ser maior que zero";
-    }
-
     if (metaType === "fixa" && formData.meta_fixa_rs <= 0) {
-      newErrors.meta_fixa_rs = "Meta em R$ é obrigatória e deve ser maior que zero";
+      newErrors.meta_fixa_rs = "Informe um valor maior que zero";
     }
 
-    if (metaType === "percentual" && (formData.meta_percentual < 0 || formData.meta_percentual > 100)) {
-      newErrors.meta_percentual = "Meta em % deve ser entre 0 e 100";
+    if (metaType === "percentual" && (formData.meta_percentual <= 0 || formData.meta_percentual > 100)) {
+      newErrors.meta_percentual = "Informe um percentual entre 1 e 100";
     }
 
-    if (metaType === "percentual" && formData.meta_percentual === 0) {
-      newErrors.meta_percentual = "Meta em % é obrigatória";
+    if (metaType === "percentual" && formData.meta_total_rs <= 0) {
+      newErrors.meta_total_rs = "Informe a base de cálculo (faturamento) para usar percentual";
     }
 
     if (formData.notas.length > 300) {
@@ -77,14 +69,14 @@ export default function ConfigurarMetaFromDREModal({
       onSave({
         responsavel_nome: formData.responsavel_nome,
         notas: formData.notas,
-        // faturamento_meta_rs = Meta Total serve como base para cálculo percentual
-        faturamento_meta_rs: formData.meta_total_rs,
+        // modo fixa: faturamento_meta_rs = próprio valor fixo (base neutra)
+        // modo percentual: faturamento_meta_rs = base de cálculo informada
+        faturamento_meta_rs: metaType === "percentual" ? formData.meta_total_rs : formData.meta_fixa_rs,
         meta_fixa_rs: metaType === "fixa" ? formData.meta_fixa_rs : 0,
         meta_percentual: metaType === "percentual" ? formData.meta_percentual : 0,
-        // dados do lancamento DRE
         categoria: item?.categoria,
-        item: item?.item,       // corresponde à descricao do DRELancamento
-        tipo: item?.tipo        // "receita" ou "despesa"
+        item: item?.item,
+        tipo: item?.tipo
       });
     }
   };
@@ -140,22 +132,25 @@ export default function ConfigurarMetaFromDREModal({
               )}
             </div>
 
-            {/* Meta Total */}
+            {/* Meta Total — só relevante no modo percentual */}
+            {metaType === "percentual" && (
             <div>
               <Label htmlFor="metaTotal" className="text-xs font-medium mb-1.5 block">
-                Meta Total (R$) *
+                Base de cálculo — Faturamento (R$) *
               </Label>
               <InputMoeda
                 id="metaTotal"
-                placeholder="0"
+                placeholder="Ex: R$ 50.000,00"
                 value={formData.meta_total_rs}
                 onChange={(e) => handleFieldChange("meta_total_rs", parseFloat(e.target.value) || 0)}
                 className={errors.meta_total_rs ? "border-red-500" : ""}
               />
+              <p className="text-xs text-gray-500 mt-1">Faturamento total usado para calcular o %</p>
               {errors.meta_total_rs && (
                 <p className="text-xs text-red-500 mt-1">{errors.meta_total_rs}</p>
               )}
             </div>
+            )}
 
             {/* Tabs: Meta Fixa vs Percentual */}
             <Tabs value={metaType} onValueChange={setMetaType} className="w-full">
