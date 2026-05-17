@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -95,7 +95,7 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
 
     setSaving(true);
     try {
-      await base44.entities.DRELancamento.create({
+      const novoLancamento = await base44.entities.DRELancamento.create({
         workshop_id: workshopId,
         mes,
         tipo,
@@ -105,6 +105,12 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
         valor: valorNum,
         entra_tcmp2: catSelecionada?.entra_tcmp2 ?? true
       });
+
+      // Invalidar queries do Controle Orçamentário em tempo real
+      window.dispatchEvent(new CustomEvent('dre-lancamento-criado', { 
+        detail: { workshop_id: workshopId, mes, lancamento: novoLancamento } 
+      }));
+
       toast.success("Lançamento adicionado!");
       onSuccess();
     } catch (e) {
@@ -358,13 +364,28 @@ export default function DREAvancadoTab({ workshopId, mes, tecnicosCount, horasMe
   const [showForm, setShowForm] = useState(null); // 'receita' | 'despesa' | null
   const [abaAtiva, setAbaAtiva] = useState("todos"); // todos | receitas | despesas | analise
 
-  const { data: lancamentos = [], isLoading } = useQuery({
+  const { data: lancamentos = [], isLoading, refetch } = useQuery({
     queryKey: ["dre-lancamentos", workshopId, mes],
-    queryFn: () => base44.entities.DRELancamento.filter({ workshop_id: workshopId, mes }, "created_date", 200),
+    queryFn: () => base44.entities.DRELancamento.filter({ workshop_id: workshopId, mes }, "-created_date", 200),
     enabled: !!workshopId && !!mes
   });
 
-  const refresh = () => queryClient.invalidateQueries({ queryKey: ["dre-lancamentos", workshopId, mes] });
+  // Real-time: atualizar quando novo DRELancamento é criado/deletado
+  useEffect(() => {
+    if (!workshopId || !mes) return;
+    
+    const unsubscribe = base44.entities.DRELancamento.subscribe((event) => {
+      if (event.data?.workshop_id === workshopId && event.data?.mes === mes) {
+        if (event.type === 'create' || event.type === 'delete') {
+          refetch();
+        }
+      }
+    });
+
+    return unsubscribe;
+  }, [workshopId, mes, refetch]);
+
+  const refresh = () => refetch();
 
   // Totais para consolidação
   const totaisConsolidados = useMemo(() => {

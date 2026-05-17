@@ -78,14 +78,27 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
   useEffect(() => {
     if (!workshopId || !mes) return;
 
+    // OPÇÃO 1: Real-time via BD subscription
     const unsubscribe = base44.entities.DRELancamento.subscribe((event) => {
-      // Se novo lançamento do mês atual, atualizar query
-      if (event.type === 'create' && event.data?.workshop_id === workshopId && event.data?.mes === mes) {
-        refetchLancamentos();
+      if (event.data?.workshop_id === workshopId && event.data?.mes === mes) {
+        if (event.type === 'create' || event.type === 'delete') {
+          refetchLancamentos();
+        }
       }
     });
 
-    return unsubscribe;
+    // OPÇÃO 2: Event listener para sincronismo cross-tab (DRE Avançado → Controle Orçamentário)
+    const handleDREChange = (e) => {
+      if (e.detail?.workshop_id === workshopId && e.detail?.mes === mes) {
+        refetchLancamentos();
+      }
+    };
+    window.addEventListener('dre-lancamento-criado', handleDREChange);
+
+    return () => {
+      unsubscribe();
+      window.removeEventListener('dre-lancamento-criado', handleDREChange);
+    };
   }, [workshopId, mes, refetchLancamentos]);
 
   // Criar/Atualizar meta
