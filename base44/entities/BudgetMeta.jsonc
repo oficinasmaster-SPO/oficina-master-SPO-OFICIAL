@@ -1,0 +1,95 @@
+{
+  "name": "BudgetMeta",
+  "type": "object",
+  "properties": {
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "mes": {
+      "type": "string",
+      "description": "M\u00eas de refer\u00eancia (YYYY-MM)"
+    },
+    "faturamento_meta_rs": {
+      "type": "number",
+      "description": "Meta total / base de c\u00e1lculo em R$ (usado para calcular meta percentual)"
+    },
+    "item": {
+      "type": "string",
+      "description": "Nome do item da meta (deve corresponder \u00e0 descricao do DRELancamento)"
+    },
+    "categoria": {
+      "type": "string",
+      "description": "Categoria do item (espelha categoria do DRELancamento)"
+    },
+    "tipo": {
+      "type": "string",
+      "enum": [
+        "receita",
+        "despesa"
+      ],
+      "description": "Se \u00e9 meta de receita ou despesa"
+    },
+    "meta_percentual": {
+      "type": "number",
+      "description": "Meta em percentual do faturamento_meta_rs (0-100)"
+    },
+    "meta_fixa_rs": {
+      "type": "number",
+      "description": "Meta em valor fixo em R$ (alternativa ao percentual)"
+    },
+    "responsavel_nome": {
+      "type": "string",
+      "description": "Nome do respons\u00e1vel"
+    },
+    "notas": {
+      "type": "string",
+      "description": "Anota\u00e7\u00f5es sobre a meta"
+    }
+  },
+  "required": [
+    "workshop_id",
+    "mes",
+    "item",
+    "categoria"
+  ],
+  "rls": {
+    "create": true,
+    "read": {
+      "$or": [
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}
