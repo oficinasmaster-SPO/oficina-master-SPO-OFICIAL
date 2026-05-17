@@ -18,6 +18,7 @@ import BudgetVariationReport from "./BudgetVariationReport";
 import BudgetConsolidatedReport from "./BudgetConsolidatedReport";
 import BudgetHistoryTable from "./BudgetHistoryTable";
 import BudgetResponsibilityMatrix from "./BudgetResponsibilityMatrix";
+import BudgetDREResumoCard from "./BudgetDREResumoCard";
 
 const CATEGORIAS = ["operacional", "pessoas", "marketing", "manutencao", "terceirizados", "administrativo", "financeiro", "pecas"];
 
@@ -228,6 +229,9 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
           Dados do DRE atualizados instantaneamente
         </div>
       )}
+
+      {/* Card: Todas despesas/receitas lançadas no DRE Avançado */}
+      <BudgetDREResumoCard lancamentos={lancamentos} />
 
       {/* FASE 4: Relatório Consolidado */}
       {metas.length > 0 && (
