@@ -137,7 +137,7 @@ export default function ConfigurarMetaFromDREModal({
             {/* Meta Total */}
             <div>
               <Label htmlFor="metaTotal" className="text-xs font-medium mb-1.5 block">
-                Meta Total (R$) *
+                Meta Total (R$) - (Despesa ou Receita) *
               </Label>
               <InputMoeda
                 id="metaTotal"
@@ -160,7 +160,7 @@ export default function ConfigurarMetaFromDREModal({
 
               <TabsContent value="fixa" className="space-y-2">
                 <Label htmlFor="metaRs" className="text-xs font-medium">
-                  OU Meta em R$ Fixo *
+                  OU Meta em R$ Fixo - (Despesa ou Receita) *
                 </Label>
                 <InputMoeda
                   id="metaRs"
@@ -176,7 +176,7 @@ export default function ConfigurarMetaFromDREModal({
 
               <TabsContent value="percentual" className="space-y-2">
                 <Label htmlFor="metaPercent" className="text-xs font-medium">
-                  OU Meta em % *
+                  OU Meta em % - (Despesa ou Receita) *
                 </Label>
                 <Input
                   id="metaPercent"
