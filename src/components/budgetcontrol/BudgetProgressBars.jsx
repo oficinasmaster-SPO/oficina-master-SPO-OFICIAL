@@ -28,7 +28,8 @@ export default function BudgetProgressBars({ metas, calculado }) {
         }
 
         const isDespesa = meta.tipo !== "receita";
-        const percentual = (calc.realizado / meta_rs) * 100;
+        const realizado = calc.realizado || 0;
+        const percentual = (realizado / meta_rs) * 100;
 
         // Cor da barra por tipo (usando o status já calculado no engine)
         const statusOk   = calc.status === "✅";

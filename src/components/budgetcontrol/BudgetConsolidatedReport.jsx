@@ -107,7 +107,9 @@ export default function BudgetConsolidatedReport({ calculado }) {
             </div>
 
             <div className="pt-1">
-              {despesa.economia >= 0 ? (
+              {(despesa.realizado || 0) === 0 ? (
+                <StatusBadge ok={true} warning={false} label="Sem gastos lançados" />
+              ) : despesa.economia >= 0 ? (
                 <StatusBadge
                   ok={despesaOk}
                   warning={despesaWarn}

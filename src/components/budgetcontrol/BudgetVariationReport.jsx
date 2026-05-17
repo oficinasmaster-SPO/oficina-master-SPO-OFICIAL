@@ -37,9 +37,9 @@ export default function BudgetVariationReport({ metas, calculado }) {
     const exceedido = items.filter(i => i.status === "❌")
       .sort((a, b) => Math.abs(b.variacao) - Math.abs(a.variacao));
 
-    // "Economizado/Superado": despesas abaixo do teto OU receitas acima da meta
-    // diferenca > 0 = bom para ambos os tipos
-    const economizado = items.filter(i => i.diferenca > 0)
+    // "Economizado/Superado": despesas abaixo do teto (com lançamentos reais) OU receitas acima da meta
+    // diferenca > 0 = bom para ambos os tipos; exige realizado > 0 para evitar falso positivo
+    const economizado = items.filter(i => i.diferenca > 0 && i.realizado > 0)
       .sort((a, b) => b.diferenca - a.diferenca);
 
     const ranking = [...items].sort((a, b) => Math.abs(b.variacao) - Math.abs(a.variacao)).slice(0, 5);
