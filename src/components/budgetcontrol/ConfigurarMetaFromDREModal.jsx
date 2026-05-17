@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { InputMoeda } from "@/components/ui/InputMoeda";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { formatCurrency } from "../utils/formatters";
@@ -58,7 +59,7 @@ export default function ConfigurarMetaFromDREModal({
     }
 
     if (formData.meta_fixa_rs === 0 && formData.meta_percentual === 0) {
-      newErrors.meta_percentual = "Defina pelo menos uma meta (R$ ou %)";
+      newErrors.meta_fixa_rs = "Defina pelo menos uma meta (R$ ou %)";
     }
 
     if (formData.notas.length > 300) {
@@ -143,13 +144,11 @@ export default function ConfigurarMetaFromDREModal({
               <Label htmlFor="metaRs" className="text-xs font-medium mb-1.5 block">
                 Meta em R$
               </Label>
-              <Input
+              <InputMoeda
                 id="metaRs"
-                type="number"
                 placeholder="0"
                 value={formData.meta_fixa_rs}
                 onChange={(e) => handleFieldChange("meta_fixa_rs", parseFloat(e.target.value) || 0)}
-                min="0"
                 className={errors.meta_fixa_rs ? "border-red-500" : ""}
               />
               {errors.meta_fixa_rs && (

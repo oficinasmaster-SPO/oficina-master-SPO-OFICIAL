@@ -159,7 +159,7 @@ export default function BudgetDREResumoCard({ lancamentos = [], onSelectDREItem 
         </div>
 
         {/* Lista por categoria */}
-         <div className="space-y-2">
+        <div className="space-y-2">
            {Object.keys(gruposAtivos).length === 0 ? (
              <p className="text-center text-gray-400 py-4 text-sm">
                Nenhum lançamento de {abaAtiva === "despesas" ? "despesa" : "receita"} neste mês.

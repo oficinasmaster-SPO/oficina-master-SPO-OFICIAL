@@ -62,22 +62,16 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
     setShowMetaModal(true);
   };
 
-  const handleSaveMetaFromDRE = async (metaData) => {
-    try {
-      await saveMutation.mutateAsync({
-        categoria: metaData.categoria,
-        item: metaData.item,
-        responsavel_nome: metaData.responsavel_nome,
-        meta_fixa_rs: metaData.meta_fixa_rs,
-        meta_percentual: metaData.meta_percentual,
-        notas: metaData.notas,
-        faturamento_meta_rs: metaData.faturamento_meta_rs || 0
-      });
-      setShowMetaModal(false);
-      setSelectedDREItem(null);
-    } catch (error) {
-      console.error("Erro ao salvar meta:", error);
-    }
+  const handleSaveMetaFromDRE = (metaData) => {
+    saveMutation.mutate({
+      categoria: metaData.categoria,
+      item: metaData.item,
+      responsavel_nome: metaData.responsavel_nome,
+      meta_fixa_rs: metaData.meta_fixa_rs || 0,
+      meta_percentual: metaData.meta_percentual || 0,
+      notas: metaData.notas || "",
+      faturamento_meta_rs: metaData.faturamento_meta_rs || 0
+    });
   };
 
   // Buscar metas do mês
