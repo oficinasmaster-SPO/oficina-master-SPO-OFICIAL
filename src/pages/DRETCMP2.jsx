@@ -25,6 +25,7 @@ import { useSyncData } from "../components/hooks/useSyncData";
 import DiscrepancyAlert from "../components/sync/DiscrepancyAlert";
 import { markModuleCompleted } from "@/components/hooks/useModuleTracking";
 import DREAvancadoTab from "@/components/dre/DREAvancadoTab";
+import DFCTab from "@/components/dre/DFCTab";
 
 const getCurrentMonth = () => {
   const now = new Date();
@@ -569,6 +570,7 @@ export default function DRETCMP2() {
             <TabsTrigger value="pecas">📦 Peças</TabsTrigger>
             <TabsTrigger value="resumo">📊 Resumo DRE</TabsTrigger>
             <TabsTrigger value="avancado">📋 DRE Avançado</TabsTrigger>
+            <TabsTrigger value="dfc">💵 DFC</TabsTrigger>
           </TabsList>
 
           {/* Receitas */}
@@ -983,6 +985,29 @@ export default function DRETCMP2() {
                       }));
                       toast.success("Totais consolidados! Clique em 'Salvar DRE' para persistir.");
                     }}
+                  />
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* DFC */}
+          <TabsContent value="dfc">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  💵 DFC — Demonstrativo de Fluxo de Caixa
+                </CardTitle>
+                <CardDescription>
+                  Preencha o DRE Avançado primeiro. Os dados são importados automaticamente aqui.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {workshop && (
+                  <DFCTab
+                    workshopId={workshop.id}
+                    mes={selectedMonth}
+                    lancamentosDRE={[]}
                   />
                 )}
               </CardContent>
