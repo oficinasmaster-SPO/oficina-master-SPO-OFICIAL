@@ -16,45 +16,13 @@ import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell, ReferenceLine
 } from "recharts";
 import { toast } from "sonner";
-
-// ─── Mapeamento DRE → DFC (Fase 3) ────────────────────────────────
-const CATEGORIAS_FINANCIAMENTO = ["financeiro"];
-const SUBCATEGORIAS_FINANCIAMENTO = [
-  "financiamento", "consorcio", "consórcio", "financiamento (veículo/imóvel)",
-  "consórcio", "parcelamento de equipamento"
-];
-const CATEGORIAS_INVESTIMENTO_KW = ["manutencao", "manutenção"];
-
-export function mapDREtoDFC(lancamentos) {
-  return (lancamentos || []).map(l => {
-    const cat = (l.categoria || "").toLowerCase();
-    const sub = (l.subcategoria || "").toLowerCase();
-    let grupo = "operacional";
-
-    if (CATEGORIAS_FINANCIAMENTO.includes(cat) &&
-        SUBCATEGORIAS_FINANCIAMENTO.some(s => sub.includes(s))) {
-      grupo = "financiamento";
-    } else if (CATEGORIAS_INVESTIMENTO_KW.includes(cat) && sub.includes("equipamento")) {
-      grupo = "investimento";
-    }
-    // receitas, pessoas, operacional, marketing, administrativo, terceirizados, pecas_estoque → operacional
-
-    return {
-      descricao: l.descricao || l.subcategoria || l.categoria,
-      valor: l.valor || 0,
-      tipo: l.tipo === "receita" ? "entrada" : "saida",
-      grupo,
-      origem: "dre_automatico",
-      _dreId: l.id,
-    };
-  });
-}
+import { mapDREtoDFC } from "./mapDREtoDFC";
 
 // ─── Formatação ────────────────────────────────────────────────────
 const fmt = (v) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v || 0);
 
-// ─── Tooltip Waterfall customizado ────────────────────────────────
+// ─── Tooltip Waterfall ─────────────────────────────────────────────
 function WaterfallTooltip({ active, payload }) {
   if (!active || !payload?.length) return null;
   const d = payload[0]?.payload;
@@ -71,27 +39,21 @@ function WaterfallTooltip({ active, payload }) {
   );
 }
 
-// ─── Gráfico Waterfall (Fase 6) ────────────────────────────────────
+// ─── Gráfico Waterfall ─────────────────────────────────────────────
 function GraficoWaterfall({ saldoInicial, fluxoOp, fluxoInv, fluxoFin, saldoFinal }) {
-  // Waterfall: cada barra tem um "base" invisível + valor visível
   const barras = [
     { label: "Saldo Inicial", valor: saldoInicial, tipo: "saldo" },
-    { label: "Operacional",   valor: fluxoOp,      tipo: fluxoOp >= 0 ? "positivo" : "negativo" },
+    { label: "Operacional",   valor: fluxoOp,      tipo: fluxoOp  >= 0 ? "positivo" : "negativo" },
     { label: "Investimento",  valor: fluxoInv,     tipo: fluxoInv >= 0 ? "positivo" : "negativo" },
     { label: "Financiamento", valor: fluxoFin,     tipo: fluxoFin >= 0 ? "positivo" : "negativo" },
     { label: "Saldo Final",   valor: saldoFinal,   tipo: "saldo" },
   ];
 
-  // Calcular base acumulada para waterfall
   let acumulado = 0;
   const dados = barras.map((b, i) => {
     if (i === 0 || i === barras.length - 1) {
-      // Saldo inicial e final: barra do zero
-      const base = 0;
-      const altura = b.valor;
-      const saldoApos = b.valor;
       acumulado = b.valor;
-      return { ...b, base, altura, saldoApos };
+      return { ...b, base: 0, altura: b.valor, saldoApos: b.valor };
     }
     const base = b.valor < 0 ? acumulado + b.valor : acumulado;
     const altura = Math.abs(b.valor);
@@ -109,9 +71,7 @@ function GraficoWaterfall({ saldoInicial, fluxoOp, fluxoInv, fluxoFin, saldoFina
           <YAxis tickFormatter={v => fmt(v)} tick={{ fontSize: 10 }} width={90} />
           <Tooltip content={<WaterfallTooltip />} />
           <ReferenceLine y={0} stroke="#9ca3af" strokeWidth={1} />
-          {/* Barra invisível de base */}
           <Bar dataKey="base" stackId="w" fill="transparent" />
-          {/* Barra visível */}
           <Bar dataKey="altura" stackId="w" radius={[4, 4, 0, 0]}>
             {dados.map((d, i) => (
               <Cell key={i} fill={cores[d.tipo]} />
@@ -123,7 +83,7 @@ function GraficoWaterfall({ saldoInicial, fluxoOp, fluxoInv, fluxoFin, saldoFina
   );
 }
 
-// ─── Modal CRUD lançamento manual (Fase 4) ─────────────────────────
+// ─── Modal CRUD lançamento manual ─────────────────────────────────
 function ModalLancamento({ aberto, onFechar, onSalvar, isSaving, lancamentoEdicao, grupoInicial }) {
   const vazio = { grupo: grupoInicial || "operacional", tipo: "saida", descricao: "", valor: "" };
   const [form, setForm] = useState(vazio);
@@ -193,7 +153,7 @@ function ModalLancamento({ aberto, onFechar, onSalvar, isSaving, lancamentoEdica
         <DialogFooter>
           <Button variant="outline" onClick={onFechar}>Cancelar</Button>
           <Button onClick={handleSalvar} disabled={!form.descricao || !form.valor || isSaving}>
-            {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
+            {isSaving && <Loader2 className="w-4 h-4 animate-spin mr-1" />}
             {lancamentoEdicao ? "Salvar alterações" : "Adicionar"}
           </Button>
         </DialogFooter>
@@ -246,7 +206,7 @@ function LinhaItem({ item, onDelete, onEdit }) {
 function SecaoFluxo({ titulo, icone, cor, itens, fluxo, onAddManual, onDelete, onEdit }) {
   const [aberta, setAberta] = useState(true);
   const entradas = itens.filter(i => i.tipo === "entrada");
-  const saidas = itens.filter(i => i.tipo === "saida");
+  const saidas   = itens.filter(i => i.tipo === "saida");
 
   return (
     <div className={`border-2 rounded-xl overflow-hidden ${cor.border}`}>
@@ -270,7 +230,7 @@ function SecaoFluxo({ titulo, icone, cor, itens, fluxo, onAddManual, onDelete, o
             <div>
               <p className="text-xs font-semibold text-green-600 uppercase mb-1">Entradas</p>
               {entradas.map((item, i) => (
-                <LinhaItem key={i} item={item} onDelete={onDelete} onEdit={onEdit} />
+                <LinhaItem key={item.id || i} item={item} onDelete={onDelete} onEdit={onEdit} />
               ))}
             </div>
           )}
@@ -278,7 +238,7 @@ function SecaoFluxo({ titulo, icone, cor, itens, fluxo, onAddManual, onDelete, o
             <div>
               <p className="text-xs font-semibold text-red-600 uppercase mb-1">Saídas</p>
               {saidas.map((item, i) => (
-                <LinhaItem key={i} item={item} onDelete={onDelete} onEdit={onEdit} />
+                <LinhaItem key={item.id || i} item={item} onDelete={onDelete} onEdit={onEdit} />
               ))}
             </div>
           )}
@@ -300,40 +260,44 @@ function SecaoFluxo({ titulo, icone, cor, itens, fluxo, onAddManual, onDelete, o
 }
 
 // ─── Componente principal ──────────────────────────────────────────
-export default function DFCTab({ workshopId, mes, lancamentosDRE = [] }) {
+export default function DFCTab({ workshopId, mes }) {
   const queryClient = useQueryClient();
   const [modalAberto, setModalAberto] = useState(false);
   const [grupoModal, setGrupoModal] = useState("operacional");
   const [lancamentoEdicao, setLancamentoEdicao] = useState(null);
+  const [saldoInicialInput, setSaldoInicialInput] = useState("0");
 
-  // Buscar lançamentos manuais do banco (Fase 4)
-  const { data: manuaisDB = [], isLoading } = useQuery({
+  // ── Buscar DRELancamentos → mapeados automaticamente (Fase 3) ──
+  const { data: lancamentosDRE = [], isLoading: isDRELoading } = useQuery({
+    queryKey: ["dre-lancamentos-dfc", workshopId, mes],
+    queryFn: () => base44.entities.DRELancamento.filter({ workshop_id: workshopId, mes }),
+    enabled: !!workshopId && !!mes,
+    staleTime: 30_000,
+  });
+
+  // ── Buscar lançamentos manuais do DFC ──────────────────────────
+  const { data: manuaisDB = [], isLoading: isManuaisLoading } = useQuery({
     queryKey: ["dfc-manuais", workshopId, mes],
-    queryFn: () =>
-      base44.entities.DFCLancamento.filter({
-        workshop_id: workshopId,
-        mes,
-        origem: "manual",
-      }),
+    queryFn: () => base44.entities.DFCLancamento.filter({ workshop_id: workshopId, mes, origem: "manual" }),
     enabled: !!workshopId && !!mes,
   });
 
-  // Buscar saldo inicial do banco
+  // ── Buscar saldo inicial salvo (Fase 5) ────────────────────────
   const { data: saldoInicialDB = [] } = useQuery({
     queryKey: ["dfc-saldo", workshopId, mes],
-    queryFn: () =>
-      base44.entities.DFCLancamento.filter({
-        workshop_id: workshopId,
-        mes,
-        grupo: "saldo_inicial",
-      }),
+    queryFn: () => base44.entities.DFCLancamento.filter({ workshop_id: workshopId, mes, grupo: "saldo_inicial" }),
     enabled: !!workshopId && !!mes,
   });
 
   const saldoInicialRecord = saldoInicialDB[0] || null;
-  const saldoInicial = saldoInicialRecord?.saldo_inicial ?? 0;
+  const saldoInicialSalvo  = saldoInicialRecord?.saldo_inicial ?? 0;
 
-  // Mutations
+  // Sincronizar input local com valor do banco
+  useEffect(() => {
+    setSaldoInicialInput(String(saldoInicialSalvo));
+  }, [saldoInicialSalvo]);
+
+  // ── Mutations ──────────────────────────────────────────────────
   const criarMutation = useMutation({
     mutationFn: (data) => base44.entities.DFCLancamento.create({ ...data, workshop_id: workshopId, mes }),
     onSuccess: () => {
@@ -363,7 +327,7 @@ export default function DFCTab({ workshopId, mes, lancamentosDRE = [] }) {
   });
 
   const salvarSaldoMutation = useMutation({
-    mutationFn: async (valor) => {
+    mutationFn: (valor) => {
       if (saldoInicialRecord) {
         return base44.entities.DFCLancamento.update(saldoInicialRecord.id, { saldo_inicial: valor });
       }
@@ -378,28 +342,26 @@ export default function DFCTab({ workshopId, mes, lancamentosDRE = [] }) {
         saldo_inicial: valor,
       });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["dfc-saldo", workshopId, mes] });
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["dfc-saldo", workshopId, mes] }),
   });
 
-  // Sincronização DRE → DFC (Fase 3)
+  // ── Cálculos em tempo real (Fase 5) ───────────────────────────
   const dreParaDFC = useMemo(() => mapDREtoDFC(lancamentosDRE), [lancamentosDRE]);
-
-  // Combinar manuais do banco com os do DRE
-  const manuais = manuaisDB.map(m => ({ ...m, origem: "manual" }));
-  const todosItens = [...dreParaDFC, ...manuais];
+  const manuais    = useMemo(() => manuaisDB.map(m => ({ ...m, origem: "manual" })), [manuaisDB]);
+  const todosItens = useMemo(() => [...dreParaDFC, ...manuais], [dreParaDFC, manuais]);
 
   const itensPorGrupo = (grupo) => todosItens.filter(i => i.grupo === grupo);
-  const fluxoGrupo = (grupo) =>
+  const fluxoGrupo    = (grupo) =>
     itensPorGrupo(grupo).reduce((s, i) => s + (i.tipo === "entrada" ? i.valor : -i.valor), 0);
 
-  const fluxoOp = fluxoGrupo("operacional");
+  // Saldo inicial usa o input local para cálculo em tempo real (antes do blur/save)
+  const saldoInicial = parseFloat(saldoInicialInput) || 0;
+  const fluxoOp  = fluxoGrupo("operacional");
   const fluxoInv = fluxoGrupo("investimento");
   const fluxoFin = fluxoGrupo("financiamento");
   const saldoFinal = saldoInicial + fluxoOp + fluxoInv + fluxoFin;
 
-  // Handlers
+  // ── Handlers ──────────────────────────────────────────────────
   const abrirModal = (grupo, item = null) => {
     setGrupoModal(grupo);
     setLancamentoEdicao(item);
@@ -414,20 +376,14 @@ export default function DFCTab({ workshopId, mes, lancamentosDRE = [] }) {
     }
   };
 
-  const handleDelete = (item) => {
-    if (!item.id) return;
-    deletarMutation.mutate(item.id);
-  };
-
-  const [saldoInicialInput, setSaldoInicialInput] = useState("");
-  useEffect(() => {
-    setSaldoInicialInput(String(saldoInicial));
-  }, [saldoInicial]);
+  const handleDelete = (item) => { if (item.id) deletarMutation.mutate(item.id); };
 
   const handleSaldoBlur = () => {
     const valor = parseFloat(saldoInicialInput) || 0;
-    salvarSaldoMutation.mutate(valor);
+    if (valor !== saldoInicialSalvo) salvarSaldoMutation.mutate(valor);
   };
+
+  const isLoading = isDRELoading || isManuaisLoading;
 
   if (isLoading) {
     return (
@@ -440,15 +396,19 @@ export default function DFCTab({ workshopId, mes, lancamentosDRE = [] }) {
 
   return (
     <div className="space-y-6">
-      {/* Banner informativo */}
+      {/* Banner */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-sm text-blue-800">
-        <strong>Como funciona:</strong> Dados do{" "}
-        <span className="font-semibold">DRE Avançado</span> são importados automaticamente{" "}
+        <strong>Como funciona:</strong> Dados do <span className="font-semibold">DRE Avançado</span> são importados automaticamente{" "}
         <Badge variant="outline" className="text-[10px] border-gray-300 text-gray-500 mx-1">DRE</Badge>.
-        Complemente apenas o que o DRE não sabe: saldo inicial, empréstimos, recebimentos parcelados.
+        Complemente com o saldo inicial, empréstimos e recebimentos que o DRE não captura.
+        {lancamentosDRE.length === 0 && (
+          <span className="block mt-1 text-amber-700 font-medium">
+            ⚠️ Nenhum lançamento no DRE Avançado para {mes}. Preencha a aba "DRE Avançado" primeiro.
+          </span>
+        )}
       </div>
 
-      {/* Saldo Inicial (Fase 5) */}
+      {/* Saldo Inicial — salvo no banco ao sair do campo */}
       <Card className="border-2 border-gray-200">
         <CardContent className="pt-4">
           <div className="flex items-center justify-between gap-4 flex-wrap">
@@ -466,9 +426,7 @@ export default function DFCTab({ workshopId, mes, lancamentosDRE = [] }) {
                 onBlur={handleSaldoBlur}
                 className="w-44 text-right font-semibold"
               />
-              {salvarSaldoMutation.isPending && (
-                <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
-              )}
+              {salvarSaldoMutation.isPending && <Loader2 className="w-4 h-4 animate-spin text-gray-400" />}
             </div>
           </div>
         </CardContent>
@@ -506,21 +464,22 @@ export default function DFCTab({ workshopId, mes, lancamentosDRE = [] }) {
         onEdit={(item) => abrirModal("financiamento", item)}
       />
 
-      {/* Saldo Final (Fase 5) */}
+      {/* Saldo Final — indicador verde/vermelho em tempo real */}
       <Card className={`border-2 ${saldoFinal >= 0 ? "border-emerald-400 bg-emerald-50" : "border-red-400 bg-red-50"}`}>
         <CardContent className="pt-4">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
               <p className="text-sm font-semibold text-gray-700">Saldo Final do Mês</p>
               <p className="text-xs text-gray-500">
-                {fmt(saldoInicial)} (ini) {fluxoOp >= 0 ? "+" : ""}{fmt(fluxoOp)} (op){" "}
+                {fmt(saldoInicial)} (ini){" "}
+                {fluxoOp  >= 0 ? "+" : ""}{fmt(fluxoOp)} (op){" "}
                 {fluxoInv >= 0 ? "+" : ""}{fmt(fluxoInv)} (inv){" "}
                 {fluxoFin >= 0 ? "+" : ""}{fmt(fluxoFin)} (fin)
               </p>
             </div>
             <div className="flex items-center gap-2">
               {saldoFinal >= 0
-                ? <TrendingUp className="w-6 h-6 text-emerald-600" />
+                ? <TrendingUp  className="w-6 h-6 text-emerald-600" />
                 : <TrendingDown className="w-6 h-6 text-red-600" />}
               <p className={`text-3xl font-bold ${saldoFinal >= 0 ? "text-emerald-700" : "text-red-700"}`}>
                 {fmt(saldoFinal)}
@@ -530,7 +489,7 @@ export default function DFCTab({ workshopId, mes, lancamentosDRE = [] }) {
         </CardContent>
       </Card>
 
-      {/* Gráfico Waterfall (Fase 6) */}
+      {/* Gráfico Waterfall */}
       <Card className="border border-gray-200">
         <CardContent className="pt-4">
           <p className="text-sm font-semibold text-gray-700 mb-3">📊 Waterfall — Composição do Saldo</p>
