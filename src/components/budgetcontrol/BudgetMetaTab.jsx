@@ -260,14 +260,34 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
         return;
       }
 
-      // Total por categoria (ignora subcategoria para totais)
-      const realizado = lancamentos
-        .filter(l => l.categoria === meta.categoria)
-        .reduce((sum, l) => sum + (l.valor || 0), 0);
+      // BUG FIX #4: Match por item (descricao ou subcategoria) quando possível,
+      // caso contrário agrega toda a categoria (comportamento legado).
+      // Prioridade: match exato por descricao → match por subcategoria → agregado por categoria
+      const metaItem = (meta.item || "").trim().toLowerCase();
+
+      const lancamentosDaCategoria = lancamentos.filter(l => l.categoria === meta.categoria);
+
+      // Tentar match fino por item
+      const matchPorDescricao = lancamentosDaCategoria.filter(
+        l => (l.descricao || "").trim().toLowerCase() === metaItem
+      );
+      const matchPorSubcategoria = lancamentosDaCategoria.filter(
+        l => (l.subcategoria || "").trim().toLowerCase() === metaItem
+      );
+
+      // Usar o match mais específico disponível; fallback = categoria inteira
+      const lancamentosFiltrados =
+        matchPorDescricao.length > 0
+          ? matchPorDescricao
+          : matchPorSubcategoria.length > 0
+            ? matchPorSubcategoria
+            : lancamentosDaCategoria;
+
+      const realizado = lancamentosFiltrados.reduce((sum, l) => sum + (l.valor || 0), 0);
 
       // Detalhamento por subcategoria (para exibição)
-      const subcategoriasDetalhes = lancamentos
-        .filter(l => l.categoria === meta.categoria && l.subcategoria)
+      const subcategoriasDetalhes = lancamentosFiltrados
+        .filter(l => l.subcategoria)
         .reduce((acc, l) => {
           if (!acc[l.subcategoria]) acc[l.subcategoria] = 0;
           acc[l.subcategoria] += l.valor || 0;
