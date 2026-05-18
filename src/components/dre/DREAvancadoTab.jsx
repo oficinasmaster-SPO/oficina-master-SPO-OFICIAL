@@ -13,7 +13,16 @@ import { formatCurrency } from "@/components/utils/formatters";
 import { toast } from "sonner";
 import SubcategoriaSelector from "./SubcategoriaSelector";
 import FiltroPeriodo from "./FiltroPeriodo";
+import ConfiguracaoRecorrencia from "./ConfiguracaoRecorrencia";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell, Legend } from "recharts";
+
+const FREQUENCIAS = [
+  { value: "unico", label: "Único (só este mês)" },
+  { value: "mensal", label: "Mensal" },
+  { value: "quinzenal", label: "Quinzenal" },
+  { value: "semanal", label: "Semanal" },
+  { value: "anual", label: "Anual" },
+];
 
 // ─── CATEGORIAS ───────────────────────────────────────────────────────────────
 const CATEGORIAS_DESPESA = {
@@ -84,10 +93,17 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
   const [dataPagamento, setDataPagamento] = useState("");
   const [saving, setSaving] = useState(false);
 
+  // Recorrência
+  const [frequencia, setFrequencia] = useState("unico");
+  const [recorrencia, setRecorrencia] = useState({
+    data_inicio: mes ? mes + "-01" : "",
+    data_fim: null,
+    numero_parcelas: 12,
+  });
+
   const categorias = tipo === "receita" ? CATEGORIAS_RECEITA : CATEGORIAS_DESPESA;
   const catSelecionada = categorias[catKey];
 
-  // Validação: subcategoria obrigatória
   const handleSave = async () => {
     if (!catKey || !valor || !descricao) {
       toast.error("Preencha todos os campos obrigatórios");
@@ -105,28 +121,52 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
 
     setSaving(true);
     try {
-      const novoLancamento = await base44.entities.DRELancamento.create({
-        workshop_id: workshopId,
-        mes,
-        tipo,
-        categoria: catKey,
-        subcategoria: subcat || (catSelecionada?.subcategorias[0] ?? ""),
-        descricao,
-        valor: valorNum,
-        entra_tcmp2: catSelecionada?.entra_tcmp2 ?? true,
-        ...(dataVencimento && { data_vencimento: dataVencimento }),
-        ...(dataPagamento && { data_pagamento: dataPagamento }),
-      });
-
-      // Invalidar queries do Controle Orçamentário em tempo real
-      window.dispatchEvent(new CustomEvent('dre-lancamento-criado', { 
-        detail: { workshop_id: workshopId, mes, lancamento: novoLancamento } 
-      }));
-
-      toast.success("Lançamento adicionado!");
+      if (frequencia && frequencia !== "unico") {
+        // ── RECORRENTE: chama backend ─────────────────────────────
+        if (!recorrencia.data_inicio) {
+          toast.error("Informe a data de início da recorrência");
+          setSaving(false);
+          return;
+        }
+        const resp = await base44.functions.invoke("criarLancamentoRecorrente", {
+          workshop_id: workshopId,
+          mes_inicio: mes,
+          tipo,
+          categoria: catKey,
+          subcategoria: subcat,
+          descricao,
+          valor: valorNum,
+          entra_tcmp2: catSelecionada?.entra_tcmp2 ?? true,
+          ...(dataVencimento && { data_vencimento: dataVencimento }),
+          frequencia,
+          data_inicio: recorrencia.data_inicio,
+          ...(recorrencia.data_fim ? { data_fim: recorrencia.data_fim } : { numero_parcelas: recorrencia.numero_parcelas }),
+        });
+        const total = resp.data?.total_criado ?? 0;
+        toast.success(`${total} lançamentos recorrentes criados!`);
+      } else {
+        // ── ÚNICO: cria direto ────────────────────────────────────
+        const novoLancamento = await base44.entities.DRELancamento.create({
+          workshop_id: workshopId,
+          mes,
+          tipo,
+          categoria: catKey,
+          subcategoria: subcat,
+          descricao,
+          valor: valorNum,
+          entra_tcmp2: catSelecionada?.entra_tcmp2 ?? true,
+          frequencia: "unico",
+          ...(dataVencimento && { data_vencimento: dataVencimento }),
+          ...(dataPagamento && { data_pagamento: dataPagamento }),
+        });
+        window.dispatchEvent(new CustomEvent('dre-lancamento-criado', {
+          detail: { workshop_id: workshopId, mes, lancamento: novoLancamento }
+        }));
+        toast.success("Lançamento adicionado!");
+      }
       onSuccess();
     } catch (e) {
-      toast.error("Erro ao salvar lançamento");
+      toast.error("Erro ao salvar: " + (e.message || "tente novamente"));
     } finally {
       setSaving(false);
     }
@@ -165,7 +205,6 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
         </div>
       </div>
 
-      {/* Alerta TCMP² automático */}
       {catKey && tipo === "despesa" && (
         <div className={`flex items-center gap-2 text-xs px-3 py-2 rounded-lg ${catSelecionada?.entra_tcmp2 ? "bg-blue-100 text-blue-700" : "bg-red-50 text-red-700"}`}>
           {catSelecionada?.entra_tcmp2
@@ -213,14 +252,40 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
             className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-green-300"
             value={dataPagamento}
             onChange={e => setDataPagamento(e.target.value)}
+            disabled={frequencia !== "unico"}
+            title={frequencia !== "unico" ? "Data de pagamento só disponível para lançamentos únicos" : ""}
           />
         </div>
       </div>
 
+      {/* ── RECORRÊNCIA ─────────────────────────────────────────────── */}
+      <div>
+        <label className="text-xs text-gray-500 mb-1 block">🔁 Recorrência</label>
+        <select
+          className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
+          value={frequencia}
+          onChange={e => setFrequencia(e.target.value)}
+        >
+          {FREQUENCIAS.map(f => (
+            <option key={f.value} value={f.value}>{f.label}</option>
+          ))}
+        </select>
+      </div>
+
+      {frequencia !== "unico" && (
+        <ConfiguracaoRecorrencia
+          frequencia={frequencia}
+          dataInicio={recorrencia.data_inicio}
+          dataFim={recorrencia.data_fim}
+          numeroParcelas={recorrencia.numero_parcelas}
+          onChange={(partial) => setRecorrencia(prev => ({ ...prev, ...partial }))}
+        />
+      )}
+
       <div className="flex gap-2">
         <Button size="sm" onClick={handleSave} disabled={saving} className="bg-blue-600 hover:bg-blue-700 flex-1">
           {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Plus className="w-4 h-4 mr-1" />}
-          Adicionar
+          {frequencia !== "unico" ? "Criar Recorrência" : "Adicionar"}
         </Button>
         <Button size="sm" variant="outline" onClick={onCancel}>Cancelar</Button>
       </div>
@@ -244,6 +309,7 @@ function LancamentoRow({ item, onDelete, onSaved }) {
   const [valor, setValor]         = useState(String(item.valor));
   const [dataVencimento, setDataVencimento] = useState(item.data_vencimento || "");
   const [dataPagamento, setDataPagamento]   = useState(item.data_pagamento || "");
+  const [frequencia, setFrequencia]         = useState(item.frequencia || "unico");
 
   const catSelecionada = categorias[catKey];
 
@@ -275,6 +341,7 @@ function LancamentoRow({ item, onDelete, onSaved }) {
         entra_tcmp2: catSelecionada?.entra_tcmp2 ?? item.entra_tcmp2,
         data_vencimento: dataVencimento || null,
         data_pagamento: dataPagamento || null,
+        frequencia: frequencia || "unico",
       });
       // Propagar edição para DFC e Controle Orçamentário via custom event
       window.dispatchEvent(new CustomEvent('dre-lancamento-criado', {
@@ -291,13 +358,13 @@ function LancamentoRow({ item, onDelete, onSaved }) {
   };
 
   const handleCancel = () => {
-    // restaurar valores originais
     setCatKey(item.categoria);
     setSubcat(item.subcategoria || "");
     setDescricao(item.descricao || "");
     setValor(String(item.valor));
     setDataVencimento(item.data_vencimento || "");
     setDataPagamento(item.data_pagamento || "");
+    setFrequencia(item.frequencia || "unico");
     setEditing(false);
   };
 
@@ -381,6 +448,25 @@ function LancamentoRow({ item, onDelete, onSaved }) {
           </div>
         </div>
 
+        {/* Recorrência (somente leitura na edição — mostra o tipo atual) */}
+        <div>
+          <label className="text-xs text-gray-500 mb-1 block">🔁 Recorrência</label>
+          <select
+            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-amber-300"
+            value={frequencia}
+            onChange={e => setFrequencia(e.target.value)}
+          >
+            {FREQUENCIAS.map(f => (
+              <option key={f.value} value={f.value}>{f.label}</option>
+            ))}
+          </select>
+          {item.recorrencia_id && (
+            <p className="text-xs text-amber-600 mt-1">
+              ⚠️ Este lançamento faz parte de uma recorrência. Alterar a frequência afeta só este item.
+            </p>
+          )}
+        </div>
+
         <div className="flex gap-2">
           <Button size="sm" onClick={handleSave} disabled={saving} className="bg-amber-500 hover:bg-amber-600 text-white flex-1">
             {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
@@ -410,13 +496,19 @@ function LancamentoRow({ item, onDelete, onSaved }) {
       <div className={`w-1.5 h-8 rounded-full flex-shrink-0 ${item.tipo === "receita" ? "bg-green-400" : item.entra_tcmp2 ? "bg-blue-400" : "bg-red-400"}`} />
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-gray-900 truncate">{item.descricao}</p>
-        <div className="flex items-center gap-2 mt-0.5">
+        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
           <span className="text-xs text-gray-400">{cat?.label ?? item.categoria}</span>
           {item.subcategoria && <span className="text-xs text-gray-400">· {item.subcategoria}</span>}
           {item.tipo === "despesa" && (
             item.entra_tcmp2
               ? <span className="text-xs text-blue-600">✅ TCMP²</span>
               : <span className="text-xs text-red-500">🚫 Fora TCMP²</span>
+          )}
+          {item.frequencia && item.frequencia !== "unico" && (
+            <span className="text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full">
+              🔁 {FREQUENCIAS.find(f => f.value === item.frequencia)?.label ?? item.frequencia}
+              {item.parcela_atual && item.numero_parcelas ? ` (${item.parcela_atual}/${item.numero_parcelas})` : ""}
+            </span>
           )}
         </div>
       </div>
