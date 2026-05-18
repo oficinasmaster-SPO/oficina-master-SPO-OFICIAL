@@ -574,9 +574,9 @@ function PainelAnalise({ lancamentos, tecnicosCount, horasMes }) {
   const margemLucro = totalReceita > 0 ? (lucro / totalReceita) * 100 : 0;
   const totalHoras = (tecnicosCount || 1) * (horasMes || 219);
   const tcmp2 = totalHoras > 0 ? totalTcmp2 / totalHoras : 0;
-  // R70/I30 = (Receita - Peças Aplicadas - Peças Estoque) / Receita
-  const partsAppliedCost = despesas.filter(l => l.categoria === "pecas_aplicadas").reduce((s, l) => s + l.valor, 0);
-  const r70 = totalReceita > 0 ? ((totalReceita - partsAppliedCost - custoPecas) / totalReceita) * 100 : 0;
+  // R70/I30 = (Receita de Serviços + Outras) / Receita Total
+  // I30 = Receita de Peças Aplicadas (produtos). R70 = tudo que não é peça.
+  const r70 = totalReceita > 0 ? ((totalReceita - receitaPecas) / totalReceita) * 100 : 0;
 
   return (
     <div className="space-y-4">
