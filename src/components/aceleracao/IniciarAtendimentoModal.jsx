@@ -999,10 +999,11 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
     );
   }
 
-  return (
+  return ReactDOM.createPortal(
     <>
-      <Dialog open onOpenChange={() => {}}>
-        <DialogContent hideClose className="p-0 flex flex-col overflow-hidden relative" style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "96vw", maxWidth: "96vw", height: "94vh", maxHeight: "94vh", zIndex: 9999, margin: 0, borderRadius: "12px" }}>
+      {/* Overlay — renderizado via portal diretamente no body, evita conflito de z-index com Dialog pai */}
+      <div className="fixed inset-0 bg-black/60" style={{ zIndex: 9998 }} />
+      <div className="p-0 flex flex-col overflow-hidden relative bg-white" style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "96vw", maxWidth: "96vw", height: "94vh", maxHeight: "94vh", zIndex: 9999, margin: 0, borderRadius: "12px", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)" }}>
         {/* OVERLAY DE SALVAMENTO */}
         {saving && (
           <div className="absolute inset-0 bg-white/90 z-50 flex flex-col items-center justify-center gap-6">
@@ -1907,10 +1908,9 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
              </Button>
            </div>
          </div>
-        </DialogContent>
-        </Dialog>
+         </div>
 
-      {/* ATA Modal - Fora do Dialog */}
+         {/* ATA Modal */}
       {selectedAta && (
        <VisualizarAtaModal
          ata={selectedAta}
@@ -1918,7 +1918,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
        />
        )}
 
-       {/* Sprint Modal — aberto ao clicar em "Abrir Sprint" na aba Follow-ups */}
+       {/* Sprint Modal */}
        <SprintClientModal
          sprint={selectedSprintId ? (sprintsMapModal[selectedSprintId] || null) : null}
          user={user}
@@ -1934,9 +1934,6 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
            onClose={() => setShowClientSelector(false)}
          />
        )}
-
-       {/* Registrar Atendimento Modal — renderizado fora do Dialog para evitar conflito de stacking context */}
-       {/* NOTA: mantido aqui dentro do Fragment mas FORA do DialogContent */}
 
        {/* CHECKPOINT MODAL */}
        <CheckpointModal
@@ -1977,7 +1974,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Registrar Atendimento Modal — portal direto no body para escapar do stacking context do Radix Dialog */}
+      {/* Registrar Atendimento Modal */}
       {showRegistrarAtendimento && ReactDOM.createPortal(
         <RegistrarAtendimento
           isModal={true}
@@ -1995,6 +1992,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
         />,
         document.body
       )}
-      </>
-      );
-      }
+    </>,
+    document.body
+  );
+}
