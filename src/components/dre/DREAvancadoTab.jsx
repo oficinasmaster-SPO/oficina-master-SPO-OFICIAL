@@ -113,7 +113,9 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
       toast.error("Selecione uma subcategoria");
       return;
     }
-    const valorNum = parseFloat(String(valor).replace(",", "."));
+    // Remove pontos de milhar, troca vírgula decimal por ponto
+    const valorLimpo = String(valor).replace(/\./g, "").replace(",", ".");
+    const valorNum = parseFloat(valorLimpo);
     if (isNaN(valorNum) || valorNum <= 0) {
       toast.error("Informe um valor maior que zero");
       return;
@@ -326,7 +328,7 @@ function LancamentoRow({ item, onDelete, onSaved }) {
   };
 
   const handleSave = async () => {
-    const valorNum = parseFloat(String(valor).replace(",", "."));
+    const valorNum = parseFloat(String(valor).replace(/\./g, "").replace(",", "."));
     if (!catKey || !descricao || isNaN(valorNum) || valorNum <= 0) {
       toast.error("Preencha todos os campos corretamente");
       return;
