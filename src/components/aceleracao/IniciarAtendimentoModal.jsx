@@ -5,7 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 
 
@@ -924,9 +923,9 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
       // Tela de confirmação pós-salvar
   if (saveSuccess) {
     const { clienteNome, sequenceNumber, canais: cs, resultado: r, novoFollowUp, proxData: pd, proxHora: ph, consultor_nome } = saveSuccess;
-    return (
-      <Dialog open onOpenChange={() => {}}>
-        <DialogContent className="max-w-lg p-0 overflow-hidden" aria-label="Atendimento salvo">
+    return ReactDOM.createPortal(
+      <div style={{ position: "fixed", inset: 0, zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "rgba(0,0,0,0.5)" }}>
+        <div className="bg-white rounded-xl max-w-lg w-full mx-4 overflow-hidden shadow-2xl">
           <div className="bg-gradient-to-b from-green-50 to-white p-8 flex flex-col items-center text-center">
             <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-4">
               <CheckCircle2 className="w-9 h-9 text-green-600" />
@@ -994,16 +993,15 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
               )}
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+      </div>,
+      document.body
     );
   }
 
   return ReactDOM.createPortal(
     <>
-      {/* Overlay — renderizado via portal diretamente no body, evita conflito de z-index com Dialog pai */}
-      <div className="fixed inset-0 bg-black/60" style={{ zIndex: 9998 }} />
-      <div className="p-0 flex flex-col overflow-hidden relative bg-white" style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "96vw", maxWidth: "96vw", height: "94vh", maxHeight: "94vh", zIndex: 9999, margin: 0, borderRadius: "12px", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)" }}>
+      <div className="p-0 flex flex-col overflow-hidden relative bg-white" style={{ position: "fixed", inset: 0, zIndex: 9999, margin: 0, borderRadius: 0, boxShadow: "none" }}>
         {/* OVERLAY DE SALVAMENTO */}
         {saving && (
           <div className="absolute inset-0 bg-white/90 z-50 flex flex-col items-center justify-center gap-6">
