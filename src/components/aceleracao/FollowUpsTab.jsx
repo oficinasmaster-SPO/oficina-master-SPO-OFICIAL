@@ -191,6 +191,17 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
     staleTime: 2 * 60 * 1000,
   });
 
+  // Query separada para reminders CONCLUÍDOS (usada nas abas Concluídos e pill CRM)
+  const { data: remindersConcluidos = [], isLoading: isLoadingConcluidos } = useQuery({
+    queryKey: ["follow-up-reminders-concluidos-tab", consultorEfetivo],
+    queryFn: async () => {
+      const query = { is_completed: true };
+      if (consultorEfetivo) query.consultor_id = consultorEfetivo;
+      return base44.entities.FollowUpReminder.filter(query, "-completed_at", 300);
+    },
+    staleTime: 2 * 60 * 1000,
+  });
+
   const { seqByReminderId, statsByWorkshopId } = useFollowUpSequence(reminders);
 
   // Debug: Log dos follow-ups carregados
@@ -293,8 +304,8 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
   const counts = useMemo(() => ({
     pendentes: reminders.filter(r => !r.is_completed).length,
     atrasados: reminders.filter(r => !r.is_completed && r.reminder_date < today).length,
-    concluidos: reminders.filter(r => r.is_completed).length + concludedAttendances.length,
-  }), [reminders, concludedAttendances, today]);
+    concluidos: remindersConcluidos.length + concludedAttendances.length,
+  }), [reminders, remindersConcluidos, concludedAttendances, today]);
 
   const applySearch = useCallback((list) => {
     if (!searchTerm.trim()) return list;
@@ -329,9 +340,10 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
     // Índice de reminders pelo id para enriquecer dados de concluded
     const reminderById = {};
     reminders.forEach(r => { reminderById[r.id] = r; });
+    remindersConcluidos.forEach(r => { reminderById[r.id] = r; });
 
-    // 1. Reminders já marcados como concluídos
-    const fromReminders = applySearch(reminders.filter(r => r.is_completed))
+    // 1. Reminders já marcados como concluídos (query separada)
+    const fromReminders = applySearch(remindersConcluidos)
       .map(r => ({ ...r, _source: 'reminder' }));
 
     // IDs de reminders que já estão na lista (evitar duplicatas)
@@ -528,8 +540,9 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
         ) : (
           <FollowUpList
             reminders={reminders}
+            remindersConcluidos={remindersConcluidos}
             today={today}
-            isLoading={isLoading}
+            isLoading={isLoading || isLoadingConcluidos}
             onSelect={setSelectedReminder}
             filterPill={crmFilterPill}
             onFilterPill={setCrmFilterPill}

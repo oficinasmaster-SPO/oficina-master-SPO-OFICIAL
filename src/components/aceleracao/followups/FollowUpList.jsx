@@ -132,7 +132,7 @@ const CANAL_ICON_MAP = {
   meet:       { icon: Video,          bg: "bg-purple-500", title: "Aguardando retorno via Meet" },
 };
 
-export default function FollowUpList({ reminders, today, isLoading, onSelect, filterPill, onFilterPill, seqByReminderId = {}, statsByWorkshopId = {} }) {
+export default function FollowUpList({ reminders, remindersConcluidos = [], today, isLoading, onSelect, filterPill, onFilterPill, seqByReminderId = {}, statsByWorkshopId = {} }) {
   const [selectedCompleted, setSelectedCompleted] = useState(null);
   const [search, setSearch] = useState("");
   const { byWorkshop: concluidosIndex, byFollowupId: concluidosByFuid, sequenceByFollowupId } = useConcluidosIndex();
@@ -150,9 +150,12 @@ export default function FollowUpList({ reminders, today, isLoading, onSelect, fi
 
   const searchTerm = search.trim().toLowerCase();
 
-  const filtered = reminders.filter(r => {
+  // Para a pill "concluídos", usa a lista separada de reminders concluídos
+  const sourceList = filterPill === "concluidos" ? remindersConcluidos : reminders;
+
+  const filtered = sourceList.filter(r => {
     if (searchTerm && !(r.workshop_name || "").toLowerCase().includes(searchTerm)) return false;
-    if (filterPill === "concluidos") return r.is_completed;
+    if (filterPill === "concluidos") return true; // já filtrado pela sourceList
     if (filterPill === "atrasados") return !r.is_completed && r.reminder_date < today;
     if (filterPill === "hoje")      return !r.is_completed && r.reminder_date === today;
     if (filterPill === "urgentes")  return !r.is_completed && getDaysOverdue(r.reminder_date, today) >= 3;
