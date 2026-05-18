@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Plus, Loader2 } from "lucide-react";
@@ -129,6 +129,7 @@ function CriarSubcategoriaModal({ categoria, workshopId, onClose, onCreated }) {
   const [ordem, setOrdem] = useState("");
   const [entraTcmp2, setEntraTcmp2] = useState(true);
   const [saving, setSaving] = useState(false);
+  const queryClient = useQueryClient();
 
   const handleSalvar = async () => {
     if (!label.trim()) {
@@ -147,6 +148,9 @@ function CriarSubcategoriaModal({ categoria, workshopId, onClose, onCreated }) {
         ativo: true,
         entra_tcmp2: entraTcmp2,
       });
+
+      // Invalida cache para que a lista seja atualizada imediatamente
+      queryClient.invalidateQueries({ queryKey: ["subcategorias-dre"] });
 
       onCreated(novaSubcategoria);
     } catch (e) {
