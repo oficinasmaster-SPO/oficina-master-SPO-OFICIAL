@@ -1,5 +1,9 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
+/**
+ * QA FIX: Cria follow-up reminders APENAS se não existirem para o atendimento/ATA
+ * Idempotente: nunca cria duplicatas para o mesmo (atendimento_id, sequence_number)
+ */
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -13,7 +17,8 @@ Deno.serve(async (req) => {
       return Response.json({ skipped: true, reason: 'No atendimento_id' });
     }
 
-    console.log('Processing follow-up for ATA:', data.id || event?.entity_id, 'atendimento:', data.atendimento_id);
+    const ataId = data.id || event?.entity_id;
+    console.log('Processing follow-up for ATA:', ataId, 'atendimento:', data.atendimento_id);
 
     // Fetch the related atendimento to get consultor info
     const atendimento = await base44.asServiceRole.entities.ConsultoriaAtendimento.get(data.atendimento_id);
@@ -21,16 +26,49 @@ Deno.serve(async (req) => {
       return Response.json({ skipped: true, reason: 'Atendimento not found' });
     }
 
+    const workshopId = data.workshop_id || atendimento.workshop_id;
+    if (!workshopId) {
+      return Response.json({ skipped: true, reason: 'No workshop_id' });
+    }
+
+    // ✅ QA FIX: Verificar se já existem reminders para este atendimento/ATA (evita duplicatas)
+    const existingReminders = await base44.asServiceRole.entities.FollowUpReminder.filter({
+      atendimento_id: atendimento.id,
+      is_completed: false
+    });
+
+    if (existingReminders && existingReminders.length > 0) {
+      console.log(`⚠️ Reminders já existem para atendimento ${atendimento.id}: ${existingReminders.length} encontrados. Pulando criação.`);
+      return Response.json({
+        skipped: true,
+        reason: 'Reminders already exist for this atendimento',
+        existing: existingReminders.length
+      });
+    }
+
+    // Também verificar pela ATA específica
+    if (ataId) {
+      const ataReminders = await base44.asServiceRole.entities.FollowUpReminder.filter({
+        ata_id: ataId,
+        is_completed: false
+      });
+      if (ataReminders && ataReminders.length > 0) {
+        console.log(`⚠️ Reminders já existem para ATA ${ataId}: ${ataReminders.length} encontrados. Pulando criação.`);
+        return Response.json({
+          skipped: true,
+          reason: 'Reminders already exist for this ATA',
+          existing: ataReminders.length
+        });
+      }
+    }
+
     // Fetch workshop name
     let workshopName = '';
-    const workshopId = data.workshop_id || atendimento.workshop_id;
-    if (workshopId) {
-      try {
-        const workshop = await base44.asServiceRole.entities.Workshop.get(workshopId);
-        workshopName = workshop?.name || '';
-      } catch (e) {
-        console.warn('Could not fetch workshop:', e.message);
-      }
+    try {
+      const workshop = await base44.asServiceRole.entities.Workshop.get(workshopId);
+      workshopName = workshop?.name || '';
+    } catch (e) {
+      console.warn('Could not fetch workshop:', e.message);
     }
 
     // Calculate the base date (meeting date)
@@ -46,21 +84,22 @@ Deno.serve(async (req) => {
         workshop_id: workshopId,
         workshop_name: workshopName,
         atendimento_id: atendimento.id,
-        ata_id: data.id || event?.entity_id,
+        ata_id: ataId,
         consultor_id: atendimento.consultor_id,
         consultor_nome: atendimento.consultor_nome || data.consultor_name || '',
         reminder_date: reminderDate.toISOString().split('T')[0],
         sequence_number: i,
         days_since_meeting: daysOffset,
         message: `Hoje faz ${daysOffset} dias desde o último atendimento com ${workshopName}. Seria importante dar um retorno hoje ainda para saber sobre a evolução do cliente.`,
-        is_completed: false
+        is_completed: false,
+        origin_type: 'ata'
       });
     }
 
     // Bulk create all 4 reminders
     await base44.asServiceRole.entities.FollowUpReminder.bulkCreate(reminders);
 
-    console.log(`Created ${reminders.length} follow-up reminders for atendimento ${atendimento.id}`, reminders.map(r => r.reminder_date));
+    console.log(`✅ Created ${reminders.length} follow-up reminders for atendimento ${atendimento.id}`, reminders.map(r => r.reminder_date));
 
     return Response.json({ 
       success: true, 

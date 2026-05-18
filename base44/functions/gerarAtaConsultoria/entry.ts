@@ -255,6 +255,9 @@ Formate em Markdown para fácil leitura. ${toneText} NÃO adicione saudações f
     });
 
     // 🔗 HOOK: Sincronizar próximos passos com ConsultoriaProximoPasso + CronogramaImplementacao
+    // QA FIX: Usar flag para evitar double-trigger com onMeetingMinutesUpdate automation
+    // A automation onMeetingMinutesUpdate também chama syncProximosPassosToTasks mas com
+    // proteção de idempotência — aqui é a chamada primária (mais rápida/confiável)
     if ((atendimento.proximos_passos_list || []).length > 0) {
       try {
         const resolvedConsultingFirmId = workshop?.consulting_firm_id || user?.data?.consulting_firm_id || null;
@@ -265,7 +268,7 @@ Formate em Markdown para fácil leitura. ${toneText} NÃO adicione saudações f
           consultor_id: atendimento.consultor_id || null,
           consulting_firm_id: resolvedConsultingFirmId
         });
-        console.log("✅ Próximos passos sincronizados:", syncRes?.message || "ok");
+        console.log("✅ Próximos passos sincronizados:", syncRes?.data?.message || "ok");
       } catch (syncError) {
         console.warn("⚠️ Erro ao sincronizar próximos passos (não bloqueia):", syncError.message);
       }
