@@ -844,7 +844,7 @@ export default function DREAvancadoTab({ workshopId, mes, tecnicosCount, horasMe
             <div className="flex items-center justify-center py-16">
               <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
             </div>
-          ) : dadosAnuais ? (
+          ) : dadosAnuais?.total_anual ? (
             <>
               {/* KPIs Anuais */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
