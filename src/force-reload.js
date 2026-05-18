@@ -1,1 +1,1 @@
-export const force = 'reload for gestao contratos';
+export const force = 'reload-2026-05-18-fix-iniciar-atendimento-modal';
