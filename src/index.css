@@ -195,3 +195,11 @@ button:focus-visible {
   background-color: #9ca3af;
   background-clip: content-box;
 }
+
+/* Garante que portais do Radix UI (Select, Popover, etc) ficam acima de modais customizados */
+[data-radix-popper-content-wrapper] {
+  z-index: 99999 !important;
+}
+[data-radix-select-viewport] {
+  z-index: 99999 !important;
+}
