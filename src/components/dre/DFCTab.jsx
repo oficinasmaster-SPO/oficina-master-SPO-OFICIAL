@@ -13,7 +13,7 @@ import {
   TrendingUp, TrendingDown, Building2, Landmark, Loader2
 } from "lucide-react";
 import {
-  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell, ReferenceLine
+  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell, ReferenceLine, Legend
 } from "recharts";
 import { toast } from "sonner";
 import { mapDREtoDFC } from "./mapDREtoDFC";

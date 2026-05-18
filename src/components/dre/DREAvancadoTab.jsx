@@ -518,19 +518,19 @@ function PainelAnalise({ lancamentos, tecnicosCount, horasMes }) {
         {/* RECEITAS */}
         <div className="space-y-1">
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Receitas</p>
-          {despesas.filter(l => l.categoria === "pecas_aplicadas").length > 0 && (
+          {receitas.filter(l => l.categoria === "pecas_aplicadas").length > 0 && (
             <div className="flex items-center justify-between text-sm py-1 pl-2 border-l-2 border-green-500">
               <span className="text-gray-600">Peças Aplicadas</span>
               <span className="font-semibold text-green-700">+ {formatCurrency(receitaPecas)}</span>
             </div>
           )}
-          {despesas.filter(l => l.categoria === "servicos").length > 0 && (
+          {receitas.filter(l => l.categoria === "servicos").length > 0 && (
             <div className="flex items-center justify-between text-sm py-1 pl-2 border-l-2 border-green-500">
               <span className="text-gray-600">Serviços</span>
               <span className="font-semibold text-green-700">+ {formatCurrency(receitaServicos)}</span>
             </div>
           )}
-          {despesas.filter(l => l.categoria === "outras").length > 0 && (
+          {receitas.filter(l => l.categoria === "outras").length > 0 && (
             <div className="flex items-center justify-between text-sm py-1 pl-2 border-l-2 border-green-500">
               <span className="text-gray-600">Outras Receitas</span>
               <span className="font-semibold text-green-700">+ {formatCurrency(totalReceita - receitaPecas - receitaServicos)}</span>
