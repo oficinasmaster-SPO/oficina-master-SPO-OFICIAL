@@ -171,6 +171,17 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
   const countHoje      = reminders.filter(r => !r.is_completed && r.reminder_date === today).length;
   const countUrgentes  = reminders.filter(r => !r.is_completed && getDaysOverdue(r.reminder_date, today) >= 3).length;
 
+  // Empresas distintas com pelo menos 1 FU vencido OU hoje OU urgente
+  const countEmpresas = new Set(
+    reminders.filter(r =>
+      !r.is_completed && (
+        r.reminder_date < today ||
+        r.reminder_date === today ||
+        getDaysOverdue(r.reminder_date, today) >= 3
+      )
+    ).map(r => r.workshop_id)
+  ).size;
+
   if (isLoading) return <div className="py-20 text-center text-gray-400 text-sm">Carregando...</div>;
 
   return (
@@ -211,6 +222,11 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
           <AlertCircle className="w-3.5 h-3.5 text-orange-500" />
           <span className="font-semibold text-orange-700">{countUrgentes}</span>
           <span className="text-orange-500 text-xs">urgentes</span>
+        </div>
+        <div className="flex items-center gap-2 bg-purple-50 border border-purple-100 rounded-lg px-3 py-1.5">
+          <AlertCircle className="w-3.5 h-3.5 text-purple-500" />
+          <span className="font-semibold text-purple-700">{countEmpresas}</span>
+          <span className="text-purple-500 text-xs">empresas</span>
         </div>
       </div>
 
