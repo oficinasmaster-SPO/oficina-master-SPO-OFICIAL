@@ -125,7 +125,7 @@ function renderHumor(humor) {
   return <span className="text-gray-600 text-[11px] truncate">{humor}</span>;
 }
 
-export default function FollowUpConcluidoRow({ completed, reminder, ata, totalFollowUps, totalDoCliente, proximoFuPendente, risco, onSelect }) {
+export default function FollowUpConcluidoRow({ completed, reminder, ata, totalFollowUps, totalDoCliente, proximoFuPendente, risco, empresaInfo, onSelect }) {
   const canal = completed?.canal?.toLowerCase();
   const canalCfg = CANAL_MAP[canal] || null;
   const CanalIcon = canalCfg?.icon || null;
@@ -213,6 +213,17 @@ export default function FollowUpConcluidoRow({ completed, reminder, ata, totalFo
             <span className="text-gray-300">—</span>
           )}
         </div>
+
+        {/* Total FUs da empresa (apenas no modo Por Empresa) */}
+        {empresaInfo && (
+          <div className="w-16 flex-shrink-0 text-center">
+            <span className={`inline-flex items-center justify-center rounded-full text-[10px] font-bold px-2 py-1 ${
+              empresaInfo.critico ? "bg-red-100 text-red-700 border border-red-200" : "bg-purple-100 text-purple-700 border border-purple-200"
+            }`}>
+              {empresaInfo.total} FUs
+            </span>
+          </div>
+        )}
 
         {/* ATA */}
         <div className="w-20 flex-shrink-0">

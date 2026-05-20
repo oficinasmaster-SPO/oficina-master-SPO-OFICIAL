@@ -288,12 +288,14 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
     { id: "urgentes",   label: "Urgentes" },
     { id: "concluidos", label: "Concluídos" },
     { id: "criticos",   label: "🔴 Críticos" },
+    { id: "por_empresa", label: "🏢 Por Empresa" },
   ];
 
   const searchTerm = search.trim().toLowerCase();
 
-  // Para pills de concluídos e críticos, usa a lista separada
-  const sourceList = (filterPill === "concluidos" || filterPill === "criticos") ? remindersConcluidos : reminders;
+  // Para pills de concluídos, críticos e por_empresa, usa a lista de concluídos
+  const isConcluidosPill = filterPill === "concluidos" || filterPill === "criticos" || filterPill === "por_empresa";
+  const sourceList = isConcluidosPill ? remindersConcluidos : reminders;
 
   // Workshop IDs dos concluídos para buscar reuniões
   const workshopIdsConcluidos = React.useMemo(
@@ -302,27 +304,63 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
   );
   const reunioesIndex = useReunioesIndex(workshopIdsConcluidos);
 
-  const filtered = sourceList.filter(r => {
-    if (searchTerm && !(r.workshop_name || "").toLowerCase().includes(searchTerm)) return false;
-    if (filterPill === "concluidos") return true;
-    if (filterPill === "criticos") {
+  // Contagem de FUs por empresa (para exibir badge no modo Por Empresa)
+  const fusPorEmpresa = React.useMemo(() => {
+    const mapa = {};
+    remindersConcluidos.forEach(r => {
+      if (!r.workshop_id) return;
+      if (!mapa[r.workshop_id]) mapa[r.workshop_id] = { total: 0, critico: false };
+      mapa[r.workshop_id].total++;
       const risco = reunioesIndex[r.workshop_id];
-      return risco && (risco.nivel === "critico" || risco.nivel === "nunca");
+      if (risco && (risco.nivel === "critico" || risco.nivel === "nunca" || (risco.atrasadas || 0) > 0)) {
+        mapa[r.workshop_id].critico = true;
+      }
+    });
+    return mapa;
+  }, [remindersConcluidos, reunioesIndex]);
+
+  const filtered = (() => {
+    const base = sourceList.filter(r => {
+      if (searchTerm && !(r.workshop_name || "").toLowerCase().includes(searchTerm)) return false;
+      if (filterPill === "concluidos") return true;
+      if (filterPill === "criticos") {
+        const risco = reunioesIndex[r.workshop_id];
+        return risco && (risco.nivel === "critico" || risco.nivel === "nunca");
+      }
+      if (filterPill === "por_empresa") return true; // todos os concluídos, deduplicamos abaixo
+      if (filterPill === "atrasados") return !r.is_completed && r.reminder_date < today;
+      if (filterPill === "hoje")      return !r.is_completed && r.reminder_date === today;
+      if (filterPill === "urgentes")  return !r.is_completed && getDaysOverdue(r.reminder_date, today) >= 3;
+      return !r.is_completed;
+    }).sort((a, b) => {
+      const aOverdue = getDaysOverdue(a.reminder_date, today);
+      const bOverdue = getDaysOverdue(b.reminder_date, today);
+      if (aOverdue !== bOverdue) return bOverdue - aOverdue;
+      return (a.reminder_date || "").localeCompare(b.reminder_date || "");
+    });
+
+    // Deduplicação: "Por Empresa" → 1 por workshop_id (o mais recente)
+    if (filterPill === "por_empresa") {
+      const seen = new Set();
+      // Ordena por data decrescente para pegar o mais recente
+      const sorted = [...base].sort((a, b) =>
+        (b.created_date || "").localeCompare(a.created_date || "")
+      );
+      return sorted.filter(r => {
+        if (seen.has(r.workshop_id)) return false;
+        seen.add(r.workshop_id);
+        return true;
+      });
     }
-    if (filterPill === "atrasados") return !r.is_completed && r.reminder_date < today;
-    if (filterPill === "hoje")      return !r.is_completed && r.reminder_date === today;
-    if (filterPill === "urgentes")  return !r.is_completed && getDaysOverdue(r.reminder_date, today) >= 3;
-    return !r.is_completed;
-  }).sort((a, b) => {
-    const aOverdue = getDaysOverdue(a.reminder_date, today);
-    const bOverdue = getDaysOverdue(b.reminder_date, today);
-    if (aOverdue !== bOverdue) return bOverdue - aOverdue;
-    return (a.reminder_date || "").localeCompare(b.reminder_date || "");
-  });
+
+    return base;
+  })();
 
   const countAtrasados = reminders.filter(r => !r.is_completed && r.reminder_date < today).length;
   const countHoje      = reminders.filter(r => !r.is_completed && r.reminder_date === today).length;
   const countUrgentes  = reminders.filter(r => !r.is_completed && getDaysOverdue(r.reminder_date, today) >= 3).length;
+  const countEmpresasTotal = Object.keys(fusPorEmpresa).length;
+  const countEmpresasCriticas = Object.values(fusPorEmpresa).filter(e => e.critico).length;
 
   // Empresas distintas com pelo menos 1 FU vencido OU hoje OU urgente
   const countEmpresas = new Set(
@@ -376,10 +414,19 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
           <span className="font-semibold text-orange-700">{countUrgentes}</span>
           <span className="text-orange-500 text-xs">urgentes</span>
         </div>
-        <div className="flex items-center gap-2 bg-purple-50 border border-purple-100 rounded-lg px-3 py-1.5">
+        <div
+          className="flex items-center gap-2 bg-purple-50 border border-purple-100 rounded-lg px-3 py-1.5 cursor-pointer hover:bg-purple-100 transition-colors"
+          onClick={() => onFilterPill("por_empresa")}
+          title="Ver 1 por empresa"
+        >
           <AlertCircle className="w-3.5 h-3.5 text-purple-500" />
           <span className="font-semibold text-purple-700">{countEmpresas}</span>
           <span className="text-purple-500 text-xs">empresas</span>
+          {countEmpresasCriticas > 0 && (
+            <span className="text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 px-1 py-0.5 rounded-full">
+              {countEmpresasCriticas}🔴
+            </span>
+          )}
         </div>
       </div>
 
@@ -406,18 +453,26 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
           <StickyNote className="w-8 h-8 text-gray-300" />
           <p className="text-sm">Nenhum follow-up nesta categoria</p>
         </div>
-      ) : (filterPill === "concluidos" || filterPill === "criticos") ? (
-        /* Layout horizontal tipo planilha para concluídos / críticos */
+      ) : isConcluidosPill ? (
+        /* Layout horizontal tipo planilha para concluídos / críticos / por_empresa */
         <div className="rounded-lg border border-gray-200 overflow-x-auto bg-white">
           {/* Cabeçalho */}
           <div className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 border-b border-gray-200 text-[11px] font-semibold text-gray-500 uppercase tracking-wide min-w-[1200px]">
             <div className="w-10 flex-shrink-0 text-center">#FU</div>
-            <div className="w-36 flex-shrink-0">Cliente</div>
+            <div className="w-36 flex-shrink-0">
+              Cliente
+              {filterPill === "por_empresa" && (
+                <span className="ml-1 text-[9px] text-purple-500 normal-case font-normal">(1 por empresa)</span>
+              )}
+            </div>
             <div className="w-20 flex-shrink-0">Data</div>
             <div className="w-28 flex-shrink-0">Consultor Resp.</div>
             <div className="w-28 flex-shrink-0">Quem Realizou</div>
             <div className="w-20 flex-shrink-0">Humor</div>
             <div className="w-20 flex-shrink-0">Canal</div>
+            {filterPill === "por_empresa" && (
+              <div className="w-16 flex-shrink-0">Total FUs</div>
+            )}
             <div className="w-20 flex-shrink-0">ATA</div>
             <div className="w-24 flex-shrink-0">Tipo</div>
             <div className="w-32 flex-shrink-0">Situação Reuniões</div>
@@ -430,6 +485,7 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
             const seqFU = seqByReminderId[r.id] ?? null;
             const clientStats = statsByWorkshopId[r.workshop_id] ?? null;
             const risco = reunioesIndex[r.workshop_id] ?? null;
+            const empresaInfo = filterPill === "por_empresa" ? fusPorEmpresa[r.workshop_id] : null;
             return (
               <FollowUpConcluidoRow
                 key={r.id}
@@ -440,6 +496,7 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
                 totalDoCliente={clientStats?.total ?? null}
                 proximoFuPendente={proximoFuPorWorkshop[r.workshop_id]}
                 risco={risco}
+                empresaInfo={empresaInfo}
                 onSelect={() => setSelectedCompleted(r)}
               />
             );
