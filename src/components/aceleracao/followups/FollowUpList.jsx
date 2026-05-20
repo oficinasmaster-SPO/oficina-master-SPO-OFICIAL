@@ -7,6 +7,104 @@ import FollowUpConcluidoRow from "@/components/aceleracao/FollowUpConcluidoRow.j
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 
+// Calcula o nível de risco de reuniões para um workshop_id
+// Retorna: { nivel: "ok"|"atencao"|"critico"|"nunca", realizadas, total, proxima, diasDesdeUltima }
+function calcRiscoReuniao(workshopId, contractAttendances, consultoriaAtendimentos) {
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+
+  const buckets = contractAttendances.filter(a => a.workshop_id === workshopId);
+  const total = buckets.length;
+
+  const realizadas = buckets.filter(a => a.status === "realizado" || a.status === "concluido").length;
+
+  // Próxima reunião futura no bucket
+  const futuras = buckets.filter(a =>
+    (a.status === "agendado" || a.status === "pendente") &&
+    a.scheduled_date && new Date(a.scheduled_date) >= hoje
+  ).sort((a, b) => new Date(a.scheduled_date) - new Date(b.scheduled_date));
+  const proxima = futuras[0]?.scheduled_date || null;
+
+  // Última reunião realizada (de ConsultoriaAtendimento)
+  const realizadasDatas = consultoriaAtendimentos
+    .filter(a => a.workshop_id === workshopId && (a.status === "realizado" || a.status === "concluido") && a.data_realizada)
+    .map(a => new Date(a.data_realizada))
+    .sort((a, b) => b - a);
+  const ultimaData = realizadasDatas[0] || null;
+  const diasDesdeUltima = ultimaData ? Math.floor((hoje - ultimaData) / (1000 * 60 * 60 * 24)) : null;
+
+  // Lógica de nível
+  let nivel;
+  if (realizadas === 0 && total === 0) {
+    nivel = "sem_dados";
+  } else if (realizadas === 0) {
+    nivel = "nunca";
+  } else if (!proxima) {
+    nivel = "critico";
+  } else if (diasDesdeUltima !== null && diasDesdeUltima > 25) {
+    nivel = "atencao";
+  } else {
+    nivel = "ok";
+  }
+
+  return { nivel, realizadas, total, proxima, diasDesdeUltima };
+}
+
+// Hook para buscar ContractAttendance e ConsultoriaAtendimento em lote para workshops visíveis
+function useReunioesIndex(workshopIds = []) {
+  const ids = [...new Set(workshopIds.filter(Boolean))];
+
+  const { data: contractData = [] } = useQuery({
+    queryKey: ["contract-attendances-bulk", ids.sort().join(",")],
+    queryFn: async () => {
+      if (ids.length === 0) return [];
+      const BATCH = 100;
+      const results = [];
+      for (let i = 0; i < ids.length; i += BATCH) {
+        const batch = ids.slice(i, i + BATCH);
+        const items = await base44.entities.ContractAttendance.filter(
+          { workshop_id: { $in: batch } },
+          "-scheduled_date",
+          BATCH * 10
+        );
+        results.push(...items);
+      }
+      return results;
+    },
+    enabled: ids.length > 0,
+    staleTime: 3 * 60 * 1000,
+  });
+
+  const { data: consultoriaData = [] } = useQuery({
+    queryKey: ["consultoria-atendimentos-bulk", ids.sort().join(",")],
+    queryFn: async () => {
+      if (ids.length === 0) return [];
+      const BATCH = 100;
+      const results = [];
+      for (let i = 0; i < ids.length; i += BATCH) {
+        const batch = ids.slice(i, i + BATCH);
+        const items = await base44.entities.ConsultoriaAtendimento.filter(
+          { workshop_id: { $in: batch } },
+          "-data_realizada",
+          BATCH * 5
+        );
+        results.push(...items);
+      }
+      return results;
+    },
+    enabled: ids.length > 0,
+    staleTime: 3 * 60 * 1000,
+  });
+
+  // Monta índice por workshop_id
+  const index = {};
+  ids.forEach(wid => {
+    index[wid] = calcRiscoReuniao(wid, contractData, consultoriaData);
+  });
+
+  return index;
+}
+
 const PROXIMO_PASSO_LABELS = {
   reagendar: "Reagendar FU",
   agendar: "Agendar reunião",
@@ -153,21 +251,33 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
   }, [reminders, today]);
 
   const PILLS = [
-    { id: "todos",     label: "Todos" },
-    { id: "atrasados", label: "Vencidos" },
-    { id: "hoje",      label: "Hoje" },
-    { id: "urgentes",  label: "Urgentes" },
+    { id: "todos",      label: "Todos" },
+    { id: "atrasados",  label: "Vencidos" },
+    { id: "hoje",       label: "Hoje" },
+    { id: "urgentes",   label: "Urgentes" },
     { id: "concluidos", label: "Concluídos" },
+    { id: "criticos",   label: "🔴 Críticos" },
   ];
 
   const searchTerm = search.trim().toLowerCase();
 
-  // Para a pill "concluídos", usa a lista separada de reminders concluídos
-  const sourceList = filterPill === "concluidos" ? remindersConcluidos : reminders;
+  // Para pills de concluídos e críticos, usa a lista separada
+  const sourceList = (filterPill === "concluidos" || filterPill === "criticos") ? remindersConcluidos : reminders;
+
+  // Workshop IDs dos concluídos para buscar reuniões
+  const workshopIdsConcluidos = React.useMemo(
+    () => [...new Set(remindersConcluidos.map(r => r.workshop_id).filter(Boolean))],
+    [remindersConcluidos]
+  );
+  const reunioesIndex = useReunioesIndex(workshopIdsConcluidos);
 
   const filtered = sourceList.filter(r => {
     if (searchTerm && !(r.workshop_name || "").toLowerCase().includes(searchTerm)) return false;
-    if (filterPill === "concluidos") return true; // já filtrado pela sourceList
+    if (filterPill === "concluidos") return true;
+    if (filterPill === "criticos") {
+      const risco = reunioesIndex[r.workshop_id];
+      return risco && (risco.nivel === "critico" || risco.nivel === "nunca");
+    }
     if (filterPill === "atrasados") return !r.is_completed && r.reminder_date < today;
     if (filterPill === "hoje")      return !r.is_completed && r.reminder_date === today;
     if (filterPill === "urgentes")  return !r.is_completed && getDaysOverdue(r.reminder_date, today) >= 3;
@@ -265,11 +375,11 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
           <StickyNote className="w-8 h-8 text-gray-300" />
           <p className="text-sm">Nenhum follow-up nesta categoria</p>
         </div>
-      ) : filterPill === "concluidos" ? (
-        /* Layout horizontal tipo planilha para concluídos */
+      ) : (filterPill === "concluidos" || filterPill === "criticos") ? (
+        /* Layout horizontal tipo planilha para concluídos / críticos */
         <div className="rounded-lg border border-gray-200 overflow-x-auto bg-white">
           {/* Cabeçalho */}
-          <div className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 border-b border-gray-200 text-[11px] font-semibold text-gray-500 uppercase tracking-wide min-w-[1100px]">
+          <div className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 border-b border-gray-200 text-[11px] font-semibold text-gray-500 uppercase tracking-wide min-w-[1200px]">
             <div className="w-10 flex-shrink-0 text-center">#FU</div>
             <div className="w-36 flex-shrink-0">Cliente</div>
             <div className="w-20 flex-shrink-0">Data</div>
@@ -279,15 +389,16 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
             <div className="w-20 flex-shrink-0">Canal</div>
             <div className="w-20 flex-shrink-0">ATA</div>
             <div className="w-24 flex-shrink-0">Tipo</div>
+            <div className="w-32 flex-shrink-0">Situação Reuniões</div>
             <div className="w-24 flex-shrink-0">Próx. Contato</div>
             <div className="flex-shrink-0 ml-auto">Status</div>
           </div>
           {filtered.map(r => {
             const concluido = concluidosByFuid?.[r.id] || null;
             const ata = r.ata_id ? atasIndex[r.ata_id] : null;
-            // Usa sequência universal do hook (fonte da verdade: todos os reminders do cliente)
             const seqFU = seqByReminderId[r.id] ?? null;
             const clientStats = statsByWorkshopId[r.workshop_id] ?? null;
+            const risco = reunioesIndex[r.workshop_id] ?? null;
             return (
               <FollowUpConcluidoRow
                 key={r.id}
@@ -297,6 +408,7 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
                 totalFollowUps={seqFU}
                 totalDoCliente={clientStats?.total ?? null}
                 proximoFuPendente={proximoFuPorWorkshop[r.workshop_id]}
+                risco={risco}
                 onSelect={() => setSelectedCompleted(r)}
               />
             );

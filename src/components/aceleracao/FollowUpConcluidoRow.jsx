@@ -1,6 +1,66 @@
 import React from "react";
 import { format } from "date-fns";
-import { Phone, Mail, MessageCircle, FileText, CalendarCheck } from "lucide-react";
+import { Phone, Mail, MessageCircle, FileText, CalendarCheck, Calendar } from "lucide-react";
+
+function RiscoReuniaoCell({ risco }) {
+  if (!risco || risco.nivel === "sem_dados") {
+    return <span className="text-gray-300 text-[11px]">—</span>;
+  }
+
+  const { nivel, realizadas, total, proxima, diasDesdeUltima } = risco;
+
+  const proximaFmt = proxima
+    ? (() => {
+        try {
+          const d = new Date(proxima);
+          return format(d, "dd/MM/yy");
+        } catch { return null; }
+      })()
+    : null;
+
+  return (
+    <div className="flex flex-col gap-0.5">
+      {/* Linha 1: realizadas/total */}
+      <div className="flex items-center gap-1">
+        {nivel === "nunca" ? (
+          <span className="text-[10px] text-gray-500 bg-gray-100 border border-gray-200 px-1.5 py-0.5 rounded-full font-medium">⚫ 0/{total} realizadas</span>
+        ) : (
+          <span className="text-[10px] text-green-700 bg-green-50 border border-green-200 px-1.5 py-0.5 rounded-full font-medium">
+            ✅ {realizadas}/{total}
+          </span>
+        )}
+      </div>
+
+      {/* Linha 2: dias desde última (só se atenção) */}
+      {nivel === "atencao" && diasDesdeUltima !== null && (
+        <span className="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-full font-medium">
+          ⚠️ última há {diasDesdeUltima}d
+        </span>
+      )}
+
+      {/* Linha 3: próxima ou crítico */}
+      {nivel === "critico" || nivel === "nunca" ? (
+        proximaFmt ? null : (
+          <span className="text-[10px] text-red-700 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded-full font-medium">
+            ❌ Sem próxima
+          </span>
+        )
+      ) : proximaFmt ? (
+        <span className="text-[10px] text-blue-700 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded-full font-medium flex items-center gap-0.5">
+          <Calendar className="w-2.5 h-2.5" />{proximaFmt}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
+// Cor da borda lateral baseada no nível de risco
+function getBordaRisco(nivel) {
+  if (nivel === "critico") return "border-l-4 border-l-red-500";
+  if (nivel === "nunca") return "border-l-4 border-l-red-400";
+  if (nivel === "atencao") return "border-l-4 border-l-amber-400";
+  return "";
+}
 
 const CANAL_MAP = {
   ligacao:    { icon: Phone,          label: "Ligação",    color: "text-blue-600",   bg: "bg-blue-50 border-blue-200" },
@@ -60,7 +120,7 @@ function renderHumor(humor) {
   return <span className="text-gray-600 text-[11px] truncate">{humor}</span>;
 }
 
-export default function FollowUpConcluidoRow({ completed, reminder, ata, totalFollowUps, totalDoCliente, proximoFuPendente, onSelect }) {
+export default function FollowUpConcluidoRow({ completed, reminder, ata, totalFollowUps, totalDoCliente, proximoFuPendente, risco, onSelect }) {
   const canal = completed?.canal?.toLowerCase();
   const canalCfg = CANAL_MAP[canal] || null;
   const CanalIcon = canalCfg?.icon || null;
@@ -83,10 +143,12 @@ export default function FollowUpConcluidoRow({ completed, reminder, ata, totalFo
   const fuTotal = totalFollowUps ?? "—";
   const fuLabel = fuTotal !== "—" && totalDoCliente ? `${fuTotal}/${totalDoCliente}` : `${fuTotal}`;
 
+  const bordaRisco = risco ? getBordaRisco(risco.nivel) : "";
+
   return (
     <button
       onClick={() => onSelect && onSelect()}
-      className="w-full text-left hover:bg-green-50/40 transition-colors px-4 py-2.5 border-b border-gray-100 last:border-b-0 min-w-[1100px]"
+      className={`w-full text-left hover:bg-green-50/40 transition-colors px-4 py-2.5 border-b border-gray-100 last:border-b-0 min-w-[1200px] ${bordaRisco}`}
     >
       <div className="flex items-center gap-2 text-xs min-w-0">
 
@@ -172,6 +234,11 @@ export default function FollowUpConcluidoRow({ completed, reminder, ata, totalFo
           ) : (
             <span className="text-gray-300">—</span>
           )}
+        </div>
+
+        {/* Situação Reuniões */}
+        <div className="w-32 flex-shrink-0">
+          <RiscoReuniaoCell risco={risco} />
         </div>
 
         {/* Próximo Contato */}
