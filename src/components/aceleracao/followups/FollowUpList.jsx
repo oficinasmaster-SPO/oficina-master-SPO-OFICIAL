@@ -8,61 +8,76 @@ import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 
 // Calcula o nível de risco de reuniões para um workshop_id
-// Retorna: { nivel: "ok"|"atencao"|"critico"|"nunca"|"sem_dados", realizadas, total, proxima, diasDesdeUltima }
+// Retorna: { nivel, realizadas, total, proxima, diasDesdeUltima, atrasadas, atrasadasList }
 function calcRiscoReuniao(workshopId, contractAttendances, consultoriaAtendimentos) {
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
 
-  // --- FONTE PRIMÁRIA: ConsultoriaAtendimento ---
-  // É a fonte real de verdade: registros criados pelo consultor com data, tipo e status.
+  // Todos os ConsultoriaAtendimento deste workshop
   const atendimentos = consultoriaAtendimentos.filter(a => a.workshop_id === workshopId);
 
-  // Realizadas: status concluido, realizado OU participando (em andamento)
+  // Buckets do plano contratado (ContractAttendance)
+  const buckets = contractAttendances.filter(a => a.workshop_id === workshopId);
+
+  // --- REALIZADAS: concluido, realizado, participando ---
   const REALIZADOS_STATUS = ["concluido", "realizado", "participando"];
   const realizadasList = atendimentos.filter(a => REALIZADOS_STATUS.includes(a.status));
   const realizadas = realizadasList.length;
 
-  // Total: todos os atendimentos (realizados + agendados + pendentes)
-  // Usamos ContractAttendance apenas para calcular o total do plano (slots contratados)
-  const buckets = contractAttendances.filter(a => a.workshop_id === workshopId);
-  // total = slots do plano (bucket), ou se vazio, todos os ConsultoriaAtendimento conhecidos
+  // --- TOTAL DO PLANO: slots de ContractAttendance OU total de ConsultoriaAtendimento ---
   const total = buckets.length > 0 ? buckets.length : atendimentos.length;
 
-  // Próxima reunião futura: busca em ConsultoriaAtendimento com data_agendada futura
-  // e status que indica que ainda vai acontecer
-  const FUTUROS_STATUS = ["agendado", "confirmado", "reagendado"];
+  // --- ATRASADAS: status "atrasado" OU agendado/confirmado com data_agendada no passado ---
+  // São reuniões que JÁ deveriam ter acontecido mas não aconteceram
+  const PENDENTES_STATUS = ["agendado", "confirmado", "reagendado", "atrasado"];
+  const atrasadasList = atendimentos.filter(a => {
+    if (a.status === "atrasado") return true; // marcado explicitamente como atrasado
+    if (PENDENTES_STATUS.includes(a.status) && a.data_agendada) {
+      return new Date(a.data_agendada) < hoje; // data no passado = atrasada
+    }
+    return false;
+  });
+  const atrasadas = atrasadasList.length;
+
+  // --- PRÓXIMA: agendado/confirmado com data_agendada FUTURA ---
   const futuras = atendimentos
     .filter(a =>
-      FUTUROS_STATUS.includes(a.status) &&
+      ["agendado", "confirmado", "reagendado"].includes(a.status) &&
       a.data_agendada &&
       new Date(a.data_agendada) >= hoje
     )
     .sort((a, b) => new Date(a.data_agendada) - new Date(b.data_agendada));
   const proxima = futuras[0]?.data_agendada || null;
 
-  // Última reunião realizada: prefere data_realizada, fallback para data_agendada
+  // --- ÚLTIMA REALIZADA: usa data_realizada, fallback data_agendada ---
   const ultimasOrdenadas = realizadasList
     .map(a => new Date(a.data_realizada || a.data_agendada))
     .filter(d => !isNaN(d.getTime()))
     .sort((a, b) => b - a);
   const ultimaData = ultimasOrdenadas[0] || null;
-  const diasDesdeUltima = ultimaData ? Math.floor((hoje - ultimaData) / (1000 * 60 * 60 * 24)) : null;
+  const diasDesdeUltima = ultimaData
+    ? Math.floor((hoje - ultimaData) / (1000 * 60 * 60 * 24))
+    : null;
 
-  // Lógica de nível
+  // --- NÍVEL DE RISCO ---
   let nivel;
   if (atendimentos.length === 0 && buckets.length === 0) {
     nivel = "sem_dados";
-  } else if (realizadas === 0) {
-    nivel = "nunca";
-  } else if (!proxima) {
-    nivel = "critico";
+  } else if (realizadas === 0 && atrasadas === 0) {
+    nivel = "nunca"; // nunca teve nenhuma atividade
+  } else if (atrasadas > 0 && !proxima) {
+    nivel = "critico"; // tem reuniões atrasadas e nenhuma futura agendada
+  } else if (atrasadas > 0) {
+    nivel = "atencao"; // tem atrasadas mas ao menos tem próxima futura
+  } else if (!proxima && realizadas > 0) {
+    nivel = "critico"; // realizou mas não tem nenhuma futura agendada
   } else if (diasDesdeUltima !== null && diasDesdeUltima > 25) {
-    nivel = "atencao";
+    nivel = "atencao"; // última reunião há mais de 25 dias
   } else {
     nivel = "ok";
   }
 
-  return { nivel, realizadas, total, proxima, diasDesdeUltima };
+  return { nivel, realizadas, total, proxima, diasDesdeUltima, atrasadas, atrasadasList };
 }
 
 // Hook para buscar ContractAttendance e ConsultoriaAtendimento em lote para workshops visíveis

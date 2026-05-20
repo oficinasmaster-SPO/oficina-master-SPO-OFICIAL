@@ -7,56 +7,61 @@ function RiscoReuniaoCell({ risco }) {
     return <span className="text-gray-300 text-[11px]">—</span>;
   }
 
-  const { nivel, realizadas, total, proxima, diasDesdeUltima } = risco;
+  const { nivel, realizadas, total, proxima, diasDesdeUltima, atrasadas = 0 } = risco;
 
-  const proximaFmt = proxima
-    ? (() => {
-        try {
-          const d = new Date(proxima);
-          return format(d, "dd/MM/yy");
-        } catch { return null; }
-      })()
-    : null;
+  const fmtDate = (d) => {
+    try { return format(new Date(d), "dd/MM/yy"); } catch { return null; }
+  };
+  const proximaFmt = proxima ? fmtDate(proxima) : null;
 
   return (
     <div className="flex flex-col gap-0.5">
+
       {/* Linha 1: realizadas/total */}
       <div className="flex items-center gap-1">
         {nivel === "nunca" ? (
-          <span className="text-[10px] text-gray-500 bg-gray-100 border border-gray-200 px-1.5 py-0.5 rounded-full font-medium">⚫ 0/{total} realizadas</span>
+          <span className="text-[10px] text-gray-500 bg-gray-100 border border-gray-200 px-1.5 py-0.5 rounded-full font-medium">
+            ⚫ 0/{total} realiz.
+          </span>
         ) : (
           <span className="text-[10px] text-green-700 bg-green-50 border border-green-200 px-1.5 py-0.5 rounded-full font-medium">
-            ✅ {realizadas}/{total}
+            ✅ {realizadas}/{total} realiz.
           </span>
         )}
       </div>
 
-      {/* Linha 2: dias desde última (só se atenção) */}
-      {nivel === "atencao" && diasDesdeUltima !== null && (
+      {/* Linha 2: ATRASADAS — badge vermelho com contagem */}
+      {atrasadas > 0 && (
+        <span className="text-[10px] text-red-700 bg-red-50 border border-red-300 px-1.5 py-0.5 rounded-full font-semibold">
+          🔴 {atrasadas} atrasada{atrasadas > 1 ? "s" : ""}
+        </span>
+      )}
+
+      {/* Linha 3: dias desde última (só atenção sem atrasadas) */}
+      {nivel === "atencao" && atrasadas === 0 && diasDesdeUltima !== null && (
         <span className="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-full font-medium">
           ⚠️ última há {diasDesdeUltima}d
         </span>
       )}
 
-      {/* Linha 3: próxima ou crítico */}
-      {nivel === "critico" || nivel === "nunca" ? (
-        proximaFmt ? null : (
-          <span className="text-[10px] text-red-700 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded-full font-medium">
-            ❌ Sem próxima
-          </span>
-        )
-      ) : proximaFmt ? (
+      {/* Linha 4: próxima agendada OU sem próxima */}
+      {proximaFmt ? (
         <span className="text-[10px] text-blue-700 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded-full font-medium flex items-center gap-0.5">
-          <Calendar className="w-2.5 h-2.5" />{proximaFmt}
+          <Calendar className="w-2.5 h-2.5" /> {proximaFmt}
+        </span>
+      ) : (nivel === "critico" || nivel === "nunca" || atrasadas > 0) ? (
+        <span className="text-[10px] text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded-full font-medium">
+          ❌ Sem próxima
         </span>
       ) : null}
+
     </div>
   );
 }
 
 // Cor da borda lateral baseada no nível de risco
-function getBordaRisco(nivel) {
-  if (nivel === "critico") return "border-l-4 border-l-red-500";
+function getBordaRisco(nivel, atrasadas = 0) {
+  if (nivel === "critico" || atrasadas > 0) return "border-l-4 border-l-red-500";
   if (nivel === "nunca") return "border-l-4 border-l-red-400";
   if (nivel === "atencao") return "border-l-4 border-l-amber-400";
   return "";
@@ -143,7 +148,7 @@ export default function FollowUpConcluidoRow({ completed, reminder, ata, totalFo
   const fuTotal = totalFollowUps ?? "—";
   const fuLabel = fuTotal !== "—" && totalDoCliente ? `${fuTotal}/${totalDoCliente}` : `${fuTotal}`;
 
-  const bordaRisco = risco ? getBordaRisco(risco.nivel) : "";
+  const bordaRisco = risco ? getBordaRisco(risco.nivel, risco.atrasadas) : "";
 
   return (
     <button
