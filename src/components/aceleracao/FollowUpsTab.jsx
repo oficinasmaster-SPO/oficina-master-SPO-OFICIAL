@@ -202,7 +202,9 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
     staleTime: 2 * 60 * 1000,
   });
 
-  const { seqByReminderId, statsByWorkshopId } = useFollowUpSequence(reminders);
+  // Passa pendentes + concluídos para sequência real (#1/8, não #1/2)
+  const allRemindersForSeq = useMemo(() => [...reminders, ...remindersConcluidos], [reminders, remindersConcluidos]);
+  const { seqByReminderId, statsByWorkshopId } = useFollowUpSequence(allRemindersForSeq);
 
   // Debug: Log dos follow-ups carregados
   useEffect(() => {

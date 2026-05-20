@@ -149,6 +149,12 @@ export default function FollowUpConcluidoRow({ completed, reminder, ata, totalFo
         <div className="w-20 flex-shrink-0">
           {ataCode ? (
             <span className="text-gray-500 font-mono text-[11px]">{ataCode}</span>
+          ) : reminder?.origin_type === 'guarda_chuva' ? (
+            <span className="inline-flex items-center text-[10px] text-pink-600 bg-pink-50 border border-pink-200 px-1.5 py-0.5 rounded-full font-medium">💝 Encant.</span>
+          ) : reminder?.origin_type === 'suporte' ? (
+            <span className="inline-flex items-center text-[10px] text-amber-600 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-full font-medium">🛟 Suporte</span>
+          ) : reminder?.origin_type === 'suporte_checkin' ? (
+            <span className="inline-flex items-center text-[10px] text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-full font-medium">🛟 Check-in</span>
           ) : (
             <span className="text-gray-300">—</span>
           )}
