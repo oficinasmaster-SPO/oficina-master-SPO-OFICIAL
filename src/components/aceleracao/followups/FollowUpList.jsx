@@ -8,34 +8,49 @@ import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 
 // Calcula o nível de risco de reuniões para um workshop_id
-// Retorna: { nivel: "ok"|"atencao"|"critico"|"nunca", realizadas, total, proxima, diasDesdeUltima }
+// Retorna: { nivel: "ok"|"atencao"|"critico"|"nunca"|"sem_dados", realizadas, total, proxima, diasDesdeUltima }
 function calcRiscoReuniao(workshopId, contractAttendances, consultoriaAtendimentos) {
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
 
+  // --- FONTE PRIMÁRIA: ConsultoriaAtendimento ---
+  // É a fonte real de verdade: registros criados pelo consultor com data, tipo e status.
+  const atendimentos = consultoriaAtendimentos.filter(a => a.workshop_id === workshopId);
+
+  // Realizadas: status concluido, realizado OU participando (em andamento)
+  const REALIZADOS_STATUS = ["concluido", "realizado", "participando"];
+  const realizadasList = atendimentos.filter(a => REALIZADOS_STATUS.includes(a.status));
+  const realizadas = realizadasList.length;
+
+  // Total: todos os atendimentos (realizados + agendados + pendentes)
+  // Usamos ContractAttendance apenas para calcular o total do plano (slots contratados)
   const buckets = contractAttendances.filter(a => a.workshop_id === workshopId);
-  const total = buckets.length;
+  // total = slots do plano (bucket), ou se vazio, todos os ConsultoriaAtendimento conhecidos
+  const total = buckets.length > 0 ? buckets.length : atendimentos.length;
 
-  const realizadas = buckets.filter(a => a.status === "realizado" || a.status === "concluido").length;
+  // Próxima reunião futura: busca em ConsultoriaAtendimento com data_agendada futura
+  // e status que indica que ainda vai acontecer
+  const FUTUROS_STATUS = ["agendado", "confirmado", "reagendado"];
+  const futuras = atendimentos
+    .filter(a =>
+      FUTUROS_STATUS.includes(a.status) &&
+      a.data_agendada &&
+      new Date(a.data_agendada) >= hoje
+    )
+    .sort((a, b) => new Date(a.data_agendada) - new Date(b.data_agendada));
+  const proxima = futuras[0]?.data_agendada || null;
 
-  // Próxima reunião futura no bucket
-  const futuras = buckets.filter(a =>
-    (a.status === "agendado" || a.status === "pendente") &&
-    a.scheduled_date && new Date(a.scheduled_date) >= hoje
-  ).sort((a, b) => new Date(a.scheduled_date) - new Date(b.scheduled_date));
-  const proxima = futuras[0]?.scheduled_date || null;
-
-  // Última reunião realizada (de ConsultoriaAtendimento)
-  const realizadasDatas = consultoriaAtendimentos
-    .filter(a => a.workshop_id === workshopId && (a.status === "realizado" || a.status === "concluido") && a.data_realizada)
-    .map(a => new Date(a.data_realizada))
+  // Última reunião realizada: prefere data_realizada, fallback para data_agendada
+  const ultimasOrdenadas = realizadasList
+    .map(a => new Date(a.data_realizada || a.data_agendada))
+    .filter(d => !isNaN(d.getTime()))
     .sort((a, b) => b - a);
-  const ultimaData = realizadasDatas[0] || null;
+  const ultimaData = ultimasOrdenadas[0] || null;
   const diasDesdeUltima = ultimaData ? Math.floor((hoje - ultimaData) / (1000 * 60 * 60 * 24)) : null;
 
   // Lógica de nível
   let nivel;
-  if (realizadas === 0 && total === 0) {
+  if (atendimentos.length === 0 && buckets.length === 0) {
     nivel = "sem_dados";
   } else if (realizadas === 0) {
     nivel = "nunca";
@@ -79,14 +94,15 @@ function useReunioesIndex(workshopIds = []) {
     queryKey: ["consultoria-atendimentos-bulk", ids.sort().join(",")],
     queryFn: async () => {
       if (ids.length === 0) return [];
-      const BATCH = 100;
+      // Busca em lotes de 50 workshops por vez para não ultrapassar limite de query
+      const BATCH = 50;
       const results = [];
       for (let i = 0; i < ids.length; i += BATCH) {
         const batch = ids.slice(i, i + BATCH);
         const items = await base44.entities.ConsultoriaAtendimento.filter(
           { workshop_id: { $in: batch } },
-          "-data_realizada",
-          BATCH * 5
+          "-data_agendada",
+          500
         );
         results.push(...items);
       }
