@@ -60,7 +60,7 @@ function renderHumor(humor) {
   return <span className="text-gray-600 text-[11px] truncate">{humor}</span>;
 }
 
-export default function FollowUpConcluidoRow({ completed, reminder, ata, totalFollowUps, totalDoCliente, onSelect }) {
+export default function FollowUpConcluidoRow({ completed, reminder, ata, totalFollowUps, totalDoCliente, proximoFuPendente, onSelect }) {
   const canal = completed?.canal?.toLowerCase();
   const canalCfg = CANAL_MAP[canal] || null;
   const CanalIcon = canalCfg?.icon || null;
@@ -75,8 +75,10 @@ export default function FollowUpConcluidoRow({ completed, reminder, ata, totalFo
   const ataCode = ata?.code || null;
   const tipoReuniao = ata?.tipo_aceleracao || ata?.tipo_atendimento || null;
 
-  const proxData = completed?.proxData;
-  const proxHora = completed?.proxHora;
+  // Cascata: 1) consultor definiu manualmente, 2) sistema tem próximo FU pendente, 3) vazio = risco
+  const proxData = completed?.proxData || proximoFuPendente?.reminder_date || null;
+  const proxHora = completed?.proxData ? completed?.proxHora : null;
+  const proxFonte = completed?.proxData ? "manual" : proximoFuPendente ? "fu_pendente" : null;
 
   const fuTotal = totalFollowUps ?? "—";
   const fuLabel = fuTotal !== "—" && totalDoCliente ? `${fuTotal}/${totalDoCliente}` : `${fuTotal}`;
@@ -173,14 +175,21 @@ export default function FollowUpConcluidoRow({ completed, reminder, ata, totalFo
         </div>
 
         {/* Próximo Contato */}
-        <div className="w-24 flex-shrink-0 text-gray-500">
+        <div className="w-24 flex-shrink-0">
           {proxData ? (
             <>
-              <div className="font-medium">{safeDateFormat(proxData, "dd/MM/yy")}</div>
-              {proxHora && <div className="text-gray-400">{proxHora}</div>}
+              <div className={`font-medium text-xs ${proxFonte === "fu_pendente" ? "text-blue-600" : "text-gray-700"}`}>
+                {safeDateFormat(proxData, "dd/MM/yy")}
+              </div>
+              {proxHora && <div className="text-gray-400 text-[10px]">{proxHora}</div>}
+              {proxFonte === "fu_pendente" && (
+                <div className="text-[9px] text-blue-400 font-medium mt-0.5">🔔 FU agendado</div>
+              )}
             </>
           ) : (
-            <span className="text-gray-300">—</span>
+            <span className="inline-flex items-center gap-0.5 text-[10px] text-red-500 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded-full font-medium">
+              ⚠️ Sem contato
+            </span>
           )}
         </div>
 

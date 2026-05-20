@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { AlertCircle, Clock, CheckCircle2, StickyNote, CalendarCheck, MessageCircle, Phone, Mail, MapPin, Video, FileText, Target, Search, X } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
@@ -139,6 +139,18 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
   // Extrai todos os ata_ids dos reminders para buscar apenas as ATAs necessárias
   const ataIds = reminders.map(r => r.ata_id).filter(Boolean);
   const atasIndex = useAtasIndex(ataIds);
+
+  // Índice: workshop_id → próximo FU pendente com reminder_date >= hoje (para coluna Próx. Contato)
+  const proximoFuPorWorkshop = React.useMemo(() => {
+    const mapa = {};
+    reminders
+      .filter(r => !r.is_completed && r.reminder_date >= today)
+      .sort((a, b) => (a.reminder_date || "").localeCompare(b.reminder_date || ""))
+      .forEach(r => {
+        if (!mapa[r.workshop_id]) mapa[r.workshop_id] = r;
+      });
+    return mapa;
+  }, [reminders, today]);
 
   const PILLS = [
     { id: "todos",     label: "Todos" },
@@ -284,6 +296,7 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
                 ata={ata}
                 totalFollowUps={seqFU}
                 totalDoCliente={clientStats?.total ?? null}
+                proximoFuPendente={proximoFuPorWorkshop[r.workshop_id]}
                 onSelect={() => setSelectedCompleted(r)}
               />
             );
