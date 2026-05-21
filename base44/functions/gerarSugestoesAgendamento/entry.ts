@@ -244,14 +244,21 @@ Deno.serve(async (req) => {
       const dia = new Date(dataBase);
       dia.setDate(dia.getDate() + diaOffset);
       const diaSemana = dia.getDay();
+      const nomeDiaSemana = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'][diaSemana];
+      const dataStr = dia.toISOString().split('T')[0];
+      
       // Pula fim de semana
       if (diaSemana !== 0 && diaSemana !== 6) {
         // 🔗 VERIFICA se o dia da semana tem grade ativa para esse consultor
         const gradeNesteDia = gradeConsultor.find(g => g.dia_semana === diaSemana && g.ativo);
         
+        // LOG: mostra se dia tem grade configurada
+        console.log(`🔍 ${dataStr} (${nomeDiaSemana}): Grade ativa? ${!!gradeNesteDia}`);
+        
         // CRÍTICO: Se grade não existe para este dia → NÃO GERA SLOTS
         // (respeita SEG/SEX bloqueadas na Grade de Horários)
         if (!gradeNesteDia) {
+          console.log(`   ❌ ${dataStr} (${nomeDiaSemana}): SEM GRADE ATIVA — pulando dia`);
           diaOffset++;
           continue;
         }
@@ -261,8 +268,12 @@ Deno.serve(async (req) => {
           .map(h => h.hora)
           .sort();
         
+        // LOG: mostra quantos horários ativos neste dia
+        console.log(`   📅 ${dataStr} (${nomeDiaSemana}): ${horariosNesteDia.length} horários ativos: ${horariosNesteDia.join(', ')}`);
+        
         // Se não há horários ativos neste dia → pula
         if (horariosNesteDia.length === 0) {
+          console.log(`   ❌ ${dataStr} (${nomeDiaSemana}): SEM HORÁRIOS ATIVOS — pulando dia`);
           diaOffset++;
           continue;
         }
@@ -410,11 +421,38 @@ Deno.serve(async (req) => {
       criadas.push(criada);
     }
 
+    // LOG FINAL: resumo dos dias utilizados
+    const diasUtilizados = [...new Set(sugestoes.map(s => s.data_sugerida))].sort();
+    const diasNaoUtilizados = Object.keys(slotsByDia).filter(d => !diasUtilizados.includes(d));
+    
+    console.log('\n=== 📊 RESUMO FINAL ===');
+    console.log(`✅ Dias com sugestões: ${diasUtilizados.length}`);
+    diasUtilizados.forEach(d => {
+      const dataObj = new Date(d + 'T12:00:00');
+      const nomeDia = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'][dataObj.getDay()];
+      const count = sugestoes.filter(s => s.data_sugerida === d).length;
+      console.log(`   ${d} (${nomeDia}): ${count} sugestão(ões)`);
+    });
+    
+    if (diasNaoUtilizados.length > 0) {
+      console.log(`⏭️  Dias com slots mas sem sugestões: ${diasNaoUtilizados.length}`);
+      diasNaoUtilizados.forEach(d => {
+        const dataObj = new Date(d + 'T12:00:00');
+        const nomeDia = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'][dataObj.getDay()];
+        console.log(`   ${d} (${nomeDia}): ${slotsByDia[d].length} slots disponíveis, 0 sugestões (incompatibilidade de tipos)`);
+      });
+    }
+
     return Response.json({
       success: true,
       total_geradas: criadas.length,
       total_clientes_analisados: scoredWorkshops.length,
       sugestoes: criadas,
+      debug: {
+        dias_utilizados: diasUtilizados,
+        dias_nao_utilizados: diasNaoUtilizados,
+        slots_por_dia: slotsByDia,
+      }
     });
 
   } catch (error) {
