@@ -106,22 +106,32 @@ export default function SugestoesAgendamentoTab() {
       amanha.setDate(amanha.getDate() + 1);
       const dataInicio = amanha.toISOString().split("T")[0];
 
-      // Usa o consultor filtrado; se "todos", usa o primeiro da lista (ou o logado)
-      const consultorId = consultorFiltro !== "todos" ? consultorFiltro : (consultores[0]?.id || user?.id);
-      const consultorObj = consultores.find(c => c.id === consultorId);
+      // Se filtrado por consultor específico, gera só para ele
+      // Se "todos", gera para cada consultor separadamente (distribuição igualitária)
+      const consultoresParaGerar = consultorFiltro !== "todos"
+        ? [consultores.find(c => c.id === consultorFiltro)].filter(Boolean)
+        : consultores;
 
-      const res = await base44.functions.invoke("gerarSugestoesAgendamento", {
-        consultor_id: consultorId,
-        consultor_nome: consultorObj?.full_name || user?.full_name,
-        data_inicio: dataInicio,
-        max_por_dia: config.max_por_dia,
-        horarios_disponiveis: horariosDoConsultor, // 🔗 da Grade de Horários
-        dias_a_frente: config.dias_a_frente,
-      });
+      if (consultoresParaGerar.length === 0) {
+        toast.error("Nenhum consultor encontrado para gerar sugestões.");
+        return;
+      }
 
-      const total = res?.data?.total_geradas ?? 0;
-      if (total > 0) {
-        toast.success(`${total} sugestão(ões) gerada(s) com sucesso!`);
+      let totalGerado = 0;
+      for (const consultorObj of consultoresParaGerar) {
+        const res = await base44.functions.invoke("gerarSugestoesAgendamento", {
+          consultor_id: consultorObj.id,
+          consultor_nome: consultorObj.full_name,
+          data_inicio: dataInicio,
+          max_por_dia: config.max_por_dia,
+          horarios_disponiveis: horariosDoConsultor,
+          dias_a_frente: config.dias_a_frente,
+        });
+        totalGerado += res?.data?.total_geradas ?? 0;
+      }
+
+      if (totalGerado > 0) {
+        toast.success(`${totalGerado} sugestão(ões) gerada(s) para ${consultoresParaGerar.length} consultor(es)!`);
       } else {
         toast.info("Nenhuma sugestão gerada. Todos os clientes críticos já possuem sugestão ativa.");
       }
