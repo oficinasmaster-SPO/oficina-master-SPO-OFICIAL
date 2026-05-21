@@ -61,7 +61,7 @@ export default function SequenciaEntregaTab({ planId, planName }) {
     },
     onSuccess: (result) => {
       if (!regraId) setRegraId(result.id);
-      queryClient.invalidateQueries(["regra-agendamento", planId]);
+      queryClient.invalidateQueries({ queryKey: ["regra-agendamento", planId] });
       setDirty(false);
       toast.success("Sequência salva! A Agenda Inteligente já usa essa configuração.");
     },

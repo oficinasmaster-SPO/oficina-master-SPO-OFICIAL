@@ -53,11 +53,13 @@ Deno.serve(async (req) => {
       { status: { $in: ['pendente', 'agendado'] } }, '-scheduled_date', 2000
     );
 
-    // === 3. Busca ConsultoriaAtendimentos recentes (últimos 90 dias) ===
-    const noventa_dias_atras = new Date();
-    noventa_dias_atras.setDate(noventa_dias_atras.getDate() - 90);
+    // === 3. Busca ConsultoriaAtendimentos realizados (últimos 365 dias)
+    // IMPORTANTE: usa 365 dias para garantir que sequências de plano detectem
+    // tipos realizados há mais de 90 dias (ex: Onboarding feito há 4 meses)
+    const um_ano_atras = new Date();
+    um_ano_atras.setDate(um_ano_atras.getDate() - 365);
     const atendimentos = await base44.asServiceRole.entities.ConsultoriaAtendimento.filter(
-      { data_agendada: { $gte: noventa_dias_atras.toISOString() } }, '-data_agendada', 2000
+      { data_agendada: { $gte: um_ano_atras.toISOString() } }, '-data_agendada', 2000
     );
 
     // === 4. Busca tipos de atendimento reais cadastrados ===
@@ -101,18 +103,20 @@ Deno.serve(async (req) => {
         realizadosPorTipo[t] = (realizadosPorTipo[t] || 0) + 1;
       });
 
-      // Encontra o próximo tipo da sequência que ainda não foi realizado (ou obrigatório não concluído)
+      // Encontra o próximo tipo da sequência que ainda não foi realizado
       for (const item of seq) {
         const nomeItem = (item.nome || '').toLowerCase();
         const jaRealizou = Object.keys(realizadosPorTipo).some(t =>
           t.includes(nomeItem) || nomeItem.includes(t)
         );
         if (!jaRealizou) {
-          // Retorna o nome legível do tipo, resolvido contra os tipos reais
+          // Item obrigatório não realizado: sugere este
+          // Item opcional não realizado: também sugere (está no caminho natural)
           return resolverTipo(item.nome);
         }
-        // Se é opcional e já fez, pula
-        // Se é obrigatório e já fez, continua para o próximo
+        // Se é obrigatório e já fez → avança para o próximo
+        // Se é opcional e já fez → avança para o próximo (mesmo comportamento)
+        // A diferença do "opcional" é que o consultor pode ignorar a sugestão manualmente
       }
       // Todos concluídos — repete o último da sequência (acompanhamento contínuo)
       return resolverTipo(seq[seq.length - 1].nome);
