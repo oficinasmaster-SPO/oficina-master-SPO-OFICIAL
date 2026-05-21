@@ -5,7 +5,7 @@ import { useAuth } from "@/lib/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Sparkles, CheckCircle2, XCircle, Clock, RefreshCw, CalendarDays, Users, Zap, Info } from "lucide-react";
+import { Loader2, Sparkles, CheckCircle2, XCircle, Clock, RefreshCw, CalendarDays, Users, Zap, Info, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import SugestaoCard from "./SugestaoCard";
 import useConsultoresList from "@/components/hooks/useConsultoresList";
@@ -201,6 +201,22 @@ export default function SugestoesAgendamentoTab() {
     refetch();
   };
 
+  const handleResetarPendentes = async () => {
+    const pendentes = sugestoesFiltradas.filter(s => s.status === "pendente");
+    if (pendentes.length === 0) return;
+    for (const s of pendentes) {
+      await base44.entities.SugestaoAgendamento.delete(s.id);
+    }
+    toast.success(`${pendentes.length} sugestão(ões) pendente(s) removida(s).`);
+    refetch();
+  };
+
+  const handleDeletarSugestao = async (sugestaoId) => {
+    await base44.entities.SugestaoAgendamento.delete(sugestaoId);
+    queryClient.setQueryData(["sugestoes-agendamento"], (old = []) => old.filter(s => s.id !== sugestaoId));
+    toast.success("Sugestão removida.");
+  };
+
   return (
     <div className="space-y-4">
 
@@ -261,6 +277,17 @@ export default function SugestoesAgendamentoTab() {
           </div>
 
           <div className="flex items-center gap-2 ml-auto">
+            {sugestoesFiltradas.filter(s => s.status === "pendente").length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 text-xs text-red-400 hover:text-red-600 hover:bg-red-50"
+                onClick={handleResetarPendentes}
+              >
+                <Trash2 className="w-3.5 h-3.5 mr-1" />
+                Apagar pendentes ({sugestoesFiltradas.filter(s => s.status === "pendente").length})
+              </Button>
+            )}
             {sugestoes.filter(s => s.status === "reprovado").length > 0 && (
               <Button
                 variant="ghost"
@@ -358,6 +385,7 @@ export default function SugestoesAgendamentoTab() {
               sugestao={sugestao}
               onAprovar={handleAprovar}
               onReprovar={handleReprovar}
+              onDeletar={handleDeletarSugestao}
               tiposAtendimento={tiposAtendimentoBanco}
               consultores={consultores}
               onConsultorChange={handleConsultorChange}

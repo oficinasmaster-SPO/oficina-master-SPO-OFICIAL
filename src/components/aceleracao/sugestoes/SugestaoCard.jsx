@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, Clock, User, CheckCircle2, XCircle, Loader2, Video, Mail, TrendingUp } from "lucide-react";
+import { Calendar, Clock, User, CheckCircle2, XCircle, Loader2, Video, Mail, TrendingUp, Trash2 } from "lucide-react";
 
 const NIVEL_CONFIG = {
   critico: { label: "CRÍTICO", color: "bg-red-100 text-red-700 border-red-200", dot: "bg-red-500", border: "border-l-red-500" },
@@ -12,7 +12,7 @@ const NIVEL_CONFIG = {
 };
 
 // tiposAtendimento, consultores são recebidos via props (buscados pelo pai)
-export default function SugestaoCard({ sugestao, onAprovar, onReprovar, tiposAtendimento = [], consultores = [], onConsultorChange }) {
+export default function SugestaoCard({ sugestao, onAprovar, onReprovar, onDeletar, tiposAtendimento = [], consultores = [], onConsultorChange }) {
   const [tipoFinal, setTipoFinal] = useState(sugestao.tipo_atendimento_final || sugestao.tipo_atendimento_sugerido);
   const [dataFinal, setDataFinal] = useState(sugestao.data_final || sugestao.data_sugerida);
   const [horaFinal, setHoraFinal] = useState(sugestao.hora_final || sugestao.hora_sugerida);
@@ -67,6 +67,9 @@ export default function SugestaoCard({ sugestao, onAprovar, onReprovar, tiposAte
                 <Mail className="w-3 h-3" /> E-mail enviado
               </span>
             )}
+            <button onClick={() => onDeletar?.(sugestao.id)} className="text-[10px] text-gray-300 hover:text-red-400 transition-colors mt-1 flex items-center gap-0.5">
+              <Trash2 className="w-3 h-3" /> remover
+            </button>
           </div>
         </div>
       </div>
@@ -77,12 +80,17 @@ export default function SugestaoCard({ sugestao, onAprovar, onReprovar, tiposAte
   if (sugestao.status === "reprovado") {
     return (
       <div className="bg-white rounded-xl border border-gray-200 border-l-4 border-l-gray-300 p-4 shadow-sm opacity-70">
-        <div className="flex items-center gap-2">
-          <XCircle className="w-4 h-4 text-gray-400 flex-shrink-0" />
-          <div>
-            <p className="font-semibold text-sm text-gray-500">{sugestao.workshop_name}</p>
-            <p className="text-xs text-gray-400">Reprovado · {sugestao.motivo_reprovacao}</p>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <XCircle className="w-4 h-4 text-gray-400 flex-shrink-0" />
+            <div>
+              <p className="font-semibold text-sm text-gray-500">{sugestao.workshop_name}</p>
+              <p className="text-xs text-gray-400">Reprovado · {sugestao.motivo_reprovacao}</p>
+            </div>
           </div>
+          <button onClick={() => onDeletar?.(sugestao.id)} className="text-gray-300 hover:text-red-400 transition-colors flex-shrink-0">
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
         </div>
       </div>
     );
@@ -103,11 +111,18 @@ export default function SugestaoCard({ sugestao, onAprovar, onReprovar, tiposAte
               <p className="text-[11px] text-gray-500 mt-0.5 leading-relaxed">{sugestao.motivo_urgencia}</p>
             </div>
           </div>
-          <div className="flex items-center gap-1.5 flex-shrink-0">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <div className="flex items-center gap-1 text-[10px] text-gray-400 bg-gray-50 border border-gray-200 rounded px-2 py-1">
               <TrendingUp className="w-3 h-3" />
               <span className="font-bold text-gray-600">{sugestao.score_prioridade}</span>
             </div>
+            <button
+              onClick={() => onDeletar?.(sugestao.id)}
+              className="text-gray-300 hover:text-red-400 transition-colors p-1"
+              title="Remover sugestão"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
           </div>
         </div>
       </div>
