@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar, Clock, User, CheckCircle2, XCircle, Loader2, Video, Mail, TrendingUp, Trash2 } from "lucide-react";
+import HistoricoAtendimentosPreview from "./HistoricoAtendimentosPreview";
 
 const NIVEL_CONFIG = {
   critico: { label: "CRÍTICO", color: "bg-red-100 text-red-700 border-red-200", dot: "bg-red-500", border: "border-l-red-500" },
@@ -178,6 +179,11 @@ export default function SugestaoCard({ sugestao, onAprovar, onReprovar, onDeleta
             className="w-full h-8 text-xs border border-gray-200 rounded-md px-2 focus:outline-none focus:ring-2 focus:ring-gray-300"
           />
         </div>
+      </div>
+
+      {/* Histórico de Atendimentos */}
+      <div className="px-4 py-0">
+        <HistoricoAtendimentosPreview workshopId={sugestao.workshop_id} />
       </div>
 
       {/* Consultor + ações */}
