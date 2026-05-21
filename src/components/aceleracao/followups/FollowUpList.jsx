@@ -63,8 +63,10 @@ function calcRiscoReuniao(workshopId, contractAttendances, consultoriaAtendiment
   let nivel;
   if (atendimentos.length === 0 && buckets.length === 0) {
     nivel = "sem_dados";
+  } else if (realizadas === 0 && atrasadas === 0 && proxima) {
+    nivel = "ok"; // FIX: ainda não realizou NENHUMA mas JÁ TEM reunião futura agendada/confirmada → não é "nunca"
   } else if (realizadas === 0 && atrasadas === 0) {
-    nivel = "nunca"; // nunca teve nenhuma atividade
+    nivel = "nunca"; // nunca teve nenhuma atividade e nenhuma futura
   } else if (atrasadas > 0 && !proxima) {
     nivel = "critico"; // tem reuniões atrasadas e nenhuma futura agendada
   } else if (atrasadas > 0) {
