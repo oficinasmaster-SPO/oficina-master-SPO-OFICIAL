@@ -59,16 +59,18 @@ function calcRiscoReuniao(workshopId, contractAttendances, consultoriaAtendiment
   });
   const atrasadas = atrasadasList.length;
 
-  // --- PRÓXIMA: reuniões pendentes que NÃO são atrasadas (hoje/futuro ainda dentro da tolerância) ---
+  // --- PRÓXIMA: reuniões com data hoje ou futura, que NÃO entraram na lista de atrasadas ---
+  // Inclui "atrasado" no status pois o job markAtrasados pode ter marcado uma reunião de hoje/futuro
+  // antes da correção da lógica — o que importa é a DATA, não o status gravado no banco
   const atrasadasIds = new Set(atrasadasList.map(a => a.id));
   const futuras = atendimentos
     .filter(a => {
-      if (!["agendado", "confirmado", "reagendado"].includes(a.status)) return false;
+      if (!["agendado", "confirmado", "reagendado", "atrasado"].includes(a.status)) return false;
       if (!a.data_agendada) return false;
-      if (atrasadasIds.has(a.id)) return false; // já classificada como atrasada
+      if (atrasadasIds.has(a.id)) return false; // foi calculada como realmente atrasada (passou +30min)
       const d = toLocalDate(a.data_agendada);
       const dSemHora = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-      return dSemHora >= hoje;
+      return dSemHora >= hoje; // data hoje ou futura → é próxima
     })
     .sort((a, b) => toLocalDate(a.data_agendada) - toLocalDate(b.data_agendada));
   const proxima = futuras[0]?.data_agendada || null;
