@@ -204,15 +204,21 @@ export default function SugestoesAgendamentoTab() {
   const handleResetarPendentes = async () => {
     const pendentes = sugestoesFiltradas.filter(s => s.status === "pendente");
     if (pendentes.length === 0) return;
+    let removidos = 0;
     for (const s of pendentes) {
-      await base44.entities.SugestaoAgendamento.delete(s.id);
+      try {
+        await base44.entities.SugestaoAgendamento.delete(s.id);
+        removidos++;
+      } catch { /* ignora se já não existe */ }
     }
-    toast.success(`${pendentes.length} sugestão(ões) pendente(s) removida(s).`);
+    toast.success(`${removidos} sugestão(ões) pendente(s) removida(s).`);
     refetch();
   };
 
   const handleDeletarSugestao = async (sugestaoId) => {
-    await base44.entities.SugestaoAgendamento.delete(sugestaoId);
+    try {
+      await base44.entities.SugestaoAgendamento.delete(sugestaoId);
+    } catch { /* ignora se já não existe */ }
     queryClient.setQueryData(["sugestoes-agendamento"], (old = []) => old.filter(s => s.id !== sugestaoId));
     toast.success("Sugestão removida.");
   };
