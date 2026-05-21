@@ -241,13 +241,6 @@ const AuthenticatedApp = () => {
           />
         );
       })}
-      <Route path="/DreMockup" element={
-        <LayoutWrapper currentPageName="DreMockup">
-          <PageAccessControl requiredPermissions={pagePermissions['DreMockup'] ? [pagePermissions['DreMockup']] : []}>
-            <DreMockup />
-          </PageAccessControl>
-        </LayoutWrapper>
-      } />
       <Route path="/GerenciarSubcategorias" element={
         <LayoutWrapper currentPageName="GerenciarSubcategorias">
           <PageAccessControl adminOnly={true}>

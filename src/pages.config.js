@@ -69,6 +69,7 @@ const CronogramaGeral = lazy(() => import('./pages/CronogramaGeral'));
 const CronogramaImplementacao = lazy(() => import('./pages/CronogramaImplementacao'));
 const CulturaOrganizacional = lazy(() => import('./pages/CulturaOrganizacional'));
 const DRETCMP2 = lazy(() => import('./pages/DRETCMP2'));
+const DreMockup = lazy(() => import('./pages/DreMockup'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const DashboardFinanceiro = lazy(() => import('./pages/DashboardFinanceiro'));
 const DashboardOverview = lazy(() => import('./pages/DashboardOverview'));
@@ -247,6 +248,7 @@ export const PAGES = {
     "CronogramaImplementacao": CronogramaImplementacao,
     "CulturaOrganizacional": CulturaOrganizacional,
     "DRETCMP2": DRETCMP2,
+    "DreMockup": DreMockup,
     "Dashboard": Dashboard,
     "DashboardFinanceiro": DashboardFinanceiro,
     "DashboardOverview": DashboardOverview,
