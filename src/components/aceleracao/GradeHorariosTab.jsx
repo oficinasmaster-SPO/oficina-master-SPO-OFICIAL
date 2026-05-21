@@ -33,8 +33,9 @@ export default function GradeHorariosTab({ consultores = [], user }) {
 
   // Buscar tipos de atendimento disponíveis
   const { data: tiposAtendimento = [] } = useQuery({
-    queryKey: ['tipos-atendimento'],
+    queryKey: ['tipos-atendimento-consultoria'],
     queryFn: () => base44.entities.TipoAtendimentoConsultoria?.list?.() || [],
+    staleTime: 5 * 60 * 1000,
   });
 
   // Buscar grade do consultor selecionado
