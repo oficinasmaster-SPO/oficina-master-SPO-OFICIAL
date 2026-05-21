@@ -249,11 +249,27 @@ Deno.serve(async (req) => {
       const diaSemana = dia.getDay();
       // Pula fim de semana
       if (diaSemana !== 0 && diaSemana !== 6) {
-        // 🔗 Também verifica se o dia da semana tem grade ativa para esse consultor
+        // 🔗 VERIFICA se o dia da semana tem grade ativa para esse consultor
         const gradeNesteDia = gradeConsultor.find(g => g.dia_semana === diaSemana && g.ativo);
-        const horariosNesteDia = gradeNesteDia
-          ? gradeNesteDia.horarios.filter(h => h.ativo).map(h => h.hora).sort()
-          : horariosParaUsar;
+        
+        // CRÍTICO: Se grade não existe para este dia → NÃO GERA SLOTS
+        // (respeita SEG/SEX bloqueadas na Grade de Horários)
+        if (!gradeNesteDia) {
+          diaOffset++;
+          continue;
+        }
+        
+        const horariosNesteDia = gradeNesteDia.horarios
+          .filter(h => h.ativo)
+          .map(h => h.hora)
+          .sort();
+        
+        // Se não há horários ativos neste dia → pula
+        if (horariosNesteDia.length === 0) {
+          diaOffset++;
+          continue;
+        }
+        
         horariosNesteDia.forEach(hora => {
           slots.push({
             data: dia.toISOString().split('T')[0],
