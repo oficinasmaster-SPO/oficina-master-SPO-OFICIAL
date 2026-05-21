@@ -27,6 +27,14 @@
       ],
       "description": "Dia da semana: 0=Dom, 1=Seg, 2=Ter, 3=Qua, 4=Qui, 5=Sex, 6=S\u00e1b"
     },
+    "tipos_permitidos": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Tipos de atendimento permitidos para TODOS os hor\u00e1rios deste dia (vazio = todos)",
+      "default": []
+    },
     "horarios": {
       "type": "array",
       "items": {
@@ -39,13 +47,6 @@
           "prioridade": {
             "type": "integer",
             "description": "Ordem de prefer\u00eancia no dia (1=primeiro a oferecer, 2=segundo, etc)"
-          },
-          "tipo_atendimento_ids": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "Tipos de atendimento permitidos neste slot (vazio = todos)"
           },
           "ativo": {
             "type": "boolean",

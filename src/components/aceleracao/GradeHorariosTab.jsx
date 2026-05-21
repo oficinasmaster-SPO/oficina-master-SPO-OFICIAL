@@ -27,9 +27,11 @@ export default function GradeHorariosTab({ consultores = [], user }) {
   const queryClient = useQueryClient();
   const [consultorSelecionado, setConsultorSelecionado] = useState(user?.id || "");
   const [dialogAberto, setDialogAberto] = useState(false);
-  const [editandoSlot, setEditandoSlot] = useState(null); // { diaRegistro, slot }
+  const [dialogTiposAberto, setDialogTiposAberto] = useState(false);
+  const [diaEditandoTipos, setDiaEditandoTipos] = useState(null); // diaRegistro completo
   const [diaEditando, setDiaEditando] = useState(null); // dia_semana number
   const [novoHorario, setNovoHorario] = useState({ hora: "09:00" });
+  const [tiposSelecionadosDia, setTiposSelecionadosDia] = useState([]); // tipos do dia sendo editado
 
   // Buscar tipos de atendimento — mesma fonte do modal de Registrar Atendimento
   const { data: tiposAtendimentoRaw = [] } = useQuery({
@@ -94,13 +96,11 @@ export default function GradeHorariosTab({ consultores = [], user }) {
       return;
     }
     // Adiciona no final mantendo prioridade manual — não reordena por hora
-    // (admin pode querer 14h como P1 e 11h como P2)
     const horariosAtualizados = [
       ...(diaRegistro.horarios || []),
       {
         hora: novoHorario.hora,
         prioridade: (diaRegistro.horarios?.length || 0) + 1,
-        tipo_atendimento_ids: [],
         ativo: true,
       },
     ];
@@ -140,6 +140,24 @@ export default function GradeHorariosTab({ consultores = [], user }) {
 
   const toggleDia = (diaRegistro) => {
     salvarMutation.mutate({ ...diaRegistro, ativo: !diaRegistro.ativo });
+  };
+
+  // Abrir modal de tipos do DIA
+  const abrirModalTiposDia = (diaRegistro) => {
+    setDiaEditandoTipos(diaRegistro);
+    setTiposSelecionadosDia(diaRegistro.tipos_permitidos || []);
+    setDialogTiposAberto(true);
+  };
+
+  // Salvar tipos do DIA
+  const salvarTiposDia = () => {
+    salvarMutation.mutate({
+      ...diaEditandoTipos,
+      tipos_permitidos: tiposSelecionadosDia
+    });
+    setDialogTiposAberto(false);
+    setDiaEditandoTipos(null);
+    toast.success("Tipos de atendimento atualizados!");
   };
 
   if (!consultorSelecionado) {
@@ -279,14 +297,15 @@ export default function GradeHorariosTab({ consultores = [], user }) {
                                  </button>
                                </div>
 
-                               {/* Editar tipos */}
+                               {/* Editar tipos do DIA */}
                                <Button
                                  variant="ghost"
                                  size="sm"
                                  className="h-6 px-2 text-xs text-indigo-600 hover:bg-indigo-50"
-                                 onClick={() => setEditandoSlot({ diaRegistro, slot })}
+                                 onClick={() => setDiaEditandoTipos(diaRegistro)}
                                >
                                  <Settings className="w-3 h-3" />
+                                 <span className="ml-1 text-[10px]">Tipos</span>
                                </Button>
 
                                {/* Remover */}
@@ -299,13 +318,13 @@ export default function GradeHorariosTab({ consultores = [], user }) {
                                </button>
                              </div>
 
-                             {/* Tipos de atendimento */}
-                             {slot.tipo_atendimento_ids?.length > 0 && (
+                             {/* Tipos de atendimento do DIA */}
+                             {diaRegistro.tipos_permitidos?.length > 0 && (
                                <div className="flex flex-wrap gap-1 pl-8">
-                                 {slot.tipo_atendimento_ids.map((id) => {
+                                 {diaRegistro.tipos_permitidos.map((id) => {
                                    const tipo = tiposAtendimento.find(t => t.id === id);
                                    return (
-                                     <Badge key={id} variant="outline" className="text-xs">
+                                     <Badge key={id} variant="outline" className="text-xs bg-indigo-50 text-indigo-700 border-indigo-200">
                                        {tipo?.label || tipo?.nome || id}
                                      </Badge>
                                    );
@@ -405,33 +424,30 @@ export default function GradeHorariosTab({ consultores = [], user }) {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog: editar tipos de atendimento do slot */}
-      <Dialog open={!!editandoSlot} onOpenChange={() => setEditandoSlot(null)}>
-        <DialogContent className="max-w-sm">
+      {/* Dialog: editar tipos de atendimento do DIA */}
+      <Dialog open={dialogTiposAberto} onOpenChange={setDialogTiposAberto}>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Settings className="w-5 h-5 text-indigo-600" />
-              Tipos de Atendimento — {editandoSlot?.slot.hora}
+              Tipos de Atendimento — {DIAS_SEMANA.find(d => d.value === diaEditandoTipos?.dia_semana)?.label}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label className="text-sm font-medium">Selecione os tipos de atendimento permitidos:</Label>
+              <Label className="text-sm font-medium">Selecione os tipos de atendimento permitidos para TODOS os horários deste dia:</Label>
               <div className="space-y-2 max-h-64 overflow-y-auto border rounded-lg p-3 bg-gray-50">
                 {tiposAtendimento.map((tipo) => (
                   <label key={tipo.id} className="flex items-center gap-2 p-2 hover:bg-white rounded transition-colors cursor-pointer">
                     <input
                       type="checkbox"
-                      checked={(editandoSlot?.slot.tipo_atendimento_ids || []).includes(tipo.id)}
+                      checked={tiposSelecionadosDia.includes(tipo.id)}
                       onChange={(e) => {
-                        const ids = editandoSlot?.slot.tipo_atendimento_ids || [];
-                        const updated = e.target.checked
-                          ? [...ids, tipo.id]
-                          : ids.filter(id => id !== tipo.id);
-                        setEditandoSlot({
-                          ...editandoSlot,
-                          slot: { ...editandoSlot.slot, tipo_atendimento_ids: updated }
-                        });
+                        if (e.target.checked) {
+                          setTiposSelecionadosDia([...tiposSelecionadosDia, tipo.id]);
+                        } else {
+                          setTiposSelecionadosDia(tiposSelecionadosDia.filter(id => id !== tipo.id));
+                        }
                       }}
                       className="cursor-pointer"
                     />
@@ -440,61 +456,21 @@ export default function GradeHorariosTab({ consultores = [], user }) {
                 ))}
               </div>
               <p className="text-xs text-gray-500 mt-2">
-                Se vazio, o slot atende <strong>qualquer tipo</strong> de atendimento.
+                {tiposSelecionadosDia.length === 0 
+                  ? "Se vazio, este dia atende <strong>qualquer tipo</strong> de atendimento."
+                  : `${tiposSelecionadosDia.length} tipo(s) selecionado(s) para todos os horários.`
+                }
               </p>
-
-              {/* Ação rápida: replicar para todos */}
-              <div className="border-t pt-3 mt-1">
-                <button
-                  type="button"
-                  className="w-full flex items-center justify-center gap-2 text-xs text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded-md py-2 px-3 border border-indigo-200 transition-colors"
-                  onClick={() => {
-                    const ids = editandoSlot?.slot.tipo_atendimento_ids || [];
-                    const confirmou = window.confirm(
-                      `Aplicar esses ${ids.length === 0 ? "(qualquer tipo — sem restrição)" : ids.length + " tipo(s) selecionado(s)"} em TODOS os horários e dias da grade?\n\nEssa ação substitui as configurações atuais de todos os slots.`
-                    );
-                    if (!confirmou) return;
-
-                    // Aplica a seleção atual em todos os slots de todos os dias
-                    gradeCompleta.forEach(diaRegistro => {
-                      if (!diaRegistro.ativo || !diaRegistro.horarios?.length) return;
-                      const horariosAtualizados = diaRegistro.horarios.map(h => ({
-                        ...h,
-                        tipo_atendimento_ids: [...ids]
-                      }));
-                      salvarMutation.mutate({ ...diaRegistro, horarios: horariosAtualizados });
-                    });
-
-                    // Também atualiza o slot atual no estado local
-                    setEditandoSlot(null);
-                    toast.success("Tipos aplicados em todos os slots da grade!");
-                  }}
-                >
-                  <Copy className="w-3.5 h-3.5" />
-                  Aplicar esses tipos em <strong className="mx-1">todos</strong> os horários e dias
-                </button>
-              </div>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditandoSlot(null)}>
+            <Button variant="outline" onClick={() => setDialogTiposAberto(false)}>
               Cancelar
             </Button>
             <Button
               className="bg-indigo-600 hover:bg-indigo-700"
               disabled={salvarMutation.isPending}
-              onClick={() => {
-                const diaAtualizado = {
-                  ...editandoSlot.diaRegistro,
-                  horarios: editandoSlot.diaRegistro.horarios.map(h =>
-                    h.hora === editandoSlot.slot.hora && h.prioridade === editandoSlot.slot.prioridade
-                      ? editandoSlot.slot
-                      : h
-                  )
-                };
-                salvarMutation.mutate(diaAtualizado);
-                setEditandoSlot(null);
-              }}
+              onClick={salvarTiposDia}
             >
               <Check className="w-4 h-4 mr-1" />
               Salvar

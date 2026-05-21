@@ -43,15 +43,12 @@ Deno.serve(async (req) => {
       ? Array.from(horariosGrade).sort()
       : (horarios_disponiveis?.length > 0 ? horarios_disponiveis : ["09:00", "14:00"]);
 
-    // Mapa: "diaSemana_hora" → tipo_atendimento_ids permitidos ([] = qualquer)
-    // Usado no Step 8 para filtrar compatibilidade de tipo por slot
-    const tiposPermitidosPorSlot = {};
+    // Mapa: diaSemana → tipos_permitidos (nível do DIA, não por horário)
+    // Usado no Step 8 para filtrar compatibilidade de tipo
+    const tiposPorDia = {};
     gradeConsultor.forEach(dia => {
       if (!dia.ativo) return;
-      (dia.horarios || []).forEach(h => {
-        if (!h.ativo) return;
-        tiposPermitidosPorSlot[`${dia.dia_semana}_${h.hora}`] = h.tipo_atendimento_ids || [];
-      });
+      tiposPorDia[dia.dia_semana] = dia.tipos_permitidos || [];
     });
 
     // === 1. Busca todos os workshops com contrato ativo ===
@@ -307,9 +304,21 @@ Deno.serve(async (req) => {
       })
     );
 
-    // Helper: SEMPRE aceita qualquer tipo (restrição desabilitada)
-    const slotAceitaTipo = (diaSemanaNum, hora, tipoNome) => {
-      return true; // ✅ Aceita qualquer cliente em qualquer slot
+    // Helper: verifica se tipo sugerido é compatível com tipos permitidos do DIA
+    const tiposMap = {}; // id → label
+    tiposAtendimento.forEach(t => { tiposMap[t.id] = (t.label || t.nome || '').toLowerCase(); });
+
+    const diaAceitaTipo = (diaSemanaNum, tipoNome) => {
+      const idsPermitidos = tiposPorDia[diaSemanaNum];
+      // Dia sem restrição (lista vazia) → aceita qualquer tipo
+      if (!idsPermitidos || idsPermitidos.length === 0) return true;
+      if (!tipoNome) return true;
+      const nomeNorm = tipoNome.toLowerCase();
+      // Verifica se algum id permitido corresponde ao nome do tipo sugerido
+      return idsPermitidos.some(id => {
+        const labelTipo = tiposMap[id] || '';
+        return labelTipo.includes(nomeNorm) || nomeNorm.includes(labelTipo);
+      });
     };
 
     const sugestoes = [];
@@ -342,16 +351,28 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        // LOG: mostra tipos permitidos neste slot
-        const chaveSlot = `${diaSemanaNum}_${hora}`;
-        const idsPermitidos = tiposPermitidosPorSlot[chaveSlot];
+        // LOG: mostra tipos permitidos neste DIA
+        const idsPermitidos = tiposPorDia[diaSemanaNum];
         const tiposPermitidosNomes = idsPermitidos?.length > 0
           ? idsPermitidos.map(id => tiposMap[id]).filter(Boolean)
           : ['QUALQUER'];
-        console.log(`  🔍 ${hora}: Tipos permitidos: ${tiposPermitidosNomes.join(', ')}`);
+        console.log(`  📋 ${dia} (${nomeDia}): Tipos do dia: ${tiposPermitidosNomes.join(', ')}`);
 
-        // Pega o primeiro cliente da fila (sem filtro de tipo)
-        const sw = filaWorkshops.shift();
+        // Busca o primeiro workshop compatível com tipos do DIA
+        const idxCompativel = filaWorkshops.findIndex(sw => {
+          const compativel = diaAceitaTipo(diaSemanaNum, sw.tipoSugerido);
+          if (!compativel) {
+            console.log(`     ❌ ${sw.workshop_name} (${sw.tipoSugerido}) ≠ tipos do dia`);
+          }
+          return compativel;
+        });
+        
+        if (idxCompativel === -1) {
+          console.log(`  ❌ ${hora}: NENHUM cliente compatível com tipos do dia`);
+          continue;
+        }
+
+        const sw = filaWorkshops.splice(idxCompativel, 1)[0];
         console.log(`  ✅ ${hora}: Alocado ${sw.workshop_name} (${sw.tipoSugerido})`);
         sugestoes.push({
           consultor_id: resolvedConsultorId,
