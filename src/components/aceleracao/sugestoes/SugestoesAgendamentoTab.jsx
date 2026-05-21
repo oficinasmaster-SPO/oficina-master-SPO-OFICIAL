@@ -102,9 +102,12 @@ export default function SugestoesAgendamentoTab() {
     setGerando(true);
     try {
       const hoje = new Date();
-      const amanha = new Date(hoje);
-      amanha.setDate(amanha.getDate() + 1);
-      const dataInicio = amanha.toISOString().split("T")[0];
+      // Sempre começa na próxima segunda-feira para garantir janela consistente
+      const proximaSegunda = new Date(hoje);
+      const diaSemana = hoje.getDay(); // 0=dom, 1=seg...
+      const diasAteSegunda = diaSemana === 0 ? 1 : diaSemana === 1 ? 7 : 8 - diaSemana;
+      proximaSegunda.setDate(hoje.getDate() + diasAteSegunda);
+      const dataInicio = proximaSegunda.toISOString().split("T")[0];
 
       // Se filtrado por consultor específico, gera só para ele
       // Se "todos", gera para cada consultor separadamente (distribuição igualitária)
