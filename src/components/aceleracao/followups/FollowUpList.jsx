@@ -35,22 +35,23 @@ function calcRiscoReuniao(workshopId, contractAttendances, consultoriaAtendiment
     return new Date(s.includes("T") ? s : s + "T12:00:00");
   };
 
-  // Agora real com +30min de tolerância para considerar uma reunião como "atrasada"
-  const agoraMais30 = new Date(hoje.getTime() + (new Date().getHours() * 60 + new Date().getMinutes() + 30) * 60 * 1000);
+  // Agora real — usado para comparação com tolerância de 30min
+  const agora = new Date();
 
   // --- ATRASADAS: passou do horário + 30 minutos de tolerância ---
-  // Lógica: se tem hora no campo → usa datetime real + 30min; se só data → usa fim do dia anterior
+  // Lógica: se tem hora no campo (T) → usa datetime real + 30min de tolerância
+  //         se só data (sem T)       → considera atrasada se o DIA já passou
   const PENDENTES_STATUS = ["agendado", "confirmado", "reagendado", "atrasado"];
   const atrasadasList = atendimentos.filter(a => {
     if (!PENDENTES_STATUS.includes(a.status) || !a.data_agendada) return false;
     const s = typeof a.data_agendada === "string" ? a.data_agendada : a.data_agendada.toISOString();
     if (s.includes("T")) {
-      // Tem hora: considera atrasada 30min após o horário marcado
-      const dataHora = new Date(s);
-      dataHora.setMinutes(dataHora.getMinutes() + 30);
-      return dataHora < new Date(); // compara com agora real
+      // Tem datetime: atrasada somente 30min APÓS o horário marcado
+      const limite = new Date(s);
+      limite.setMinutes(limite.getMinutes() + 30);
+      return limite < agora; // ← usa agora real (não hoje zerado)
     } else {
-      // Só data: considera atrasada se o dia já passou (dia anterior a hoje)
+      // Só data: atrasada se o dia já passou completamente
       const d = toLocalDate(s);
       const dSemHora = new Date(d.getFullYear(), d.getMonth(), d.getDate());
       return dSemHora < hoje;
@@ -322,12 +323,16 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
   const isConcluidosPill = filterPill === "concluidos" || filterPill === "criticos" || filterPill === "por_empresa";
   const sourceList = isConcluidosPill ? remindersConcluidos : reminders;
 
-  // Workshop IDs dos concluídos para buscar reuniões
-  const workshopIdsConcluidos = React.useMemo(
-    () => [...new Set(remindersConcluidos.map(r => r.workshop_id).filter(Boolean))],
-    [remindersConcluidos]
+  // Workshop IDs de TODOS os reminders visíveis (pendentes + concluídos)
+  // FIX: antes só buscava para concluídos — mas pendentes também precisam da coluna Situação Reuniões
+  const workshopIdsTodos = React.useMemo(
+    () => [...new Set([
+      ...remindersConcluidos.map(r => r.workshop_id),
+      ...reminders.map(r => r.workshop_id),
+    ].filter(Boolean))],
+    [remindersConcluidos, reminders]
   );
-  const reunioesIndex = useReunioesIndex(workshopIdsConcluidos);
+  const reunioesIndex = useReunioesIndex(workshopIdsTodos);
 
   // Contagem de FUs por empresa (para exibir badge no modo Por Empresa)
   const fusPorEmpresa = React.useMemo(() => {
