@@ -31,15 +31,23 @@ Deno.serve(async (req) => {
 
     // === APROVAR ===
     if (acao === 'aprovar') {
-      // Marca como processando
-      await base44.asServiceRole.entities.SugestaoAgendamento.update(sugestao_id, { status: 'processando' });
-
       const tipoFinal = tipo_final || sugestao.tipo_atendimento_final || sugestao.tipo_atendimento_sugerido;
       const dataFinal = data_final || sugestao.data_final || sugestao.data_sugerida;
       const horaFinal = hora_final || sugestao.hora_final || sugestao.hora_sugerida;
       // Permite trocar consultor no momento da aprovação
       const consultorIdFinal = consultor_id_override || sugestao.consultor_id;
       const consultorNomeFinal = consultor_nome_override || sugestao.consultor_nome;
+
+      // Marca como processando e já persiste o tipo/data/hora escolhidos pelo consultor
+      // (garante consistência mesmo se o Google Calendar falhar a seguir)
+      await base44.asServiceRole.entities.SugestaoAgendamento.update(sugestao_id, {
+        status: 'processando',
+        tipo_atendimento_final: tipoFinal,
+        data_final: dataFinal,
+        hora_final: horaFinal,
+        consultor_id: consultorIdFinal,
+        consultor_nome: consultorNomeFinal,
+      });
 
       // Monta datetime
       const dataHoraISO = `${dataFinal}T${horaFinal}:00`;

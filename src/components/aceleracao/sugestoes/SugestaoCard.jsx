@@ -125,10 +125,10 @@ export default function SugestaoCard({ sugestao, onAprovar, onReprovar, tiposAte
               {tiposAtendimento.map(t => (
                 <SelectItem key={t.id || t.nome} value={t.nome} className="text-xs">{t.nome}</SelectItem>
               ))}
-              {/* Fallback: se o tipo sugerido não está na lista, mostra assim mesmo */}
-              {sugestao.tipo_atendimento_sugerido && !tiposAtendimento.find(t => t.nome === sugestao.tipo_atendimento_sugerido) && (
-                <SelectItem value={sugestao.tipo_atendimento_sugerido} className="text-xs font-medium text-purple-700">
-                  ✨ {sugestao.tipo_atendimento_sugerido} (IA)
+              {/* Fallback: se o valor atual não está na lista, exibe para não perder o select */}
+              {tipoFinal && tiposAtendimento.length > 0 && !tiposAtendimento.find(t => t.nome === tipoFinal) && (
+                <SelectItem value={tipoFinal} className="text-xs font-medium text-purple-700">
+                  ✨ {tipoFinal} (IA)
                 </SelectItem>
               )}
             </SelectContent>
