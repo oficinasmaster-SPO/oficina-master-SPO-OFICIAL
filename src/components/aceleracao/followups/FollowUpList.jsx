@@ -130,14 +130,14 @@ function useReunioesIndex(workshopIds = []) {
       return results;
     },
     enabled: ids.length > 0,
-    staleTime: 3 * 60 * 1000,
+    staleTime: 0,
+    gcTime: 0,
   });
 
   const { data: consultoriaData = [] } = useQuery({
     queryKey: ["consultoria-atendimentos-bulk", ids.sort().join(",")],
     queryFn: async () => {
       if (ids.length === 0) return [];
-      // Busca em lotes de 50 workshops por vez para não ultrapassar limite de query
       const BATCH = 50;
       const results = [];
       for (let i = 0; i < ids.length; i += BATCH) {
@@ -152,7 +152,8 @@ function useReunioesIndex(workshopIds = []) {
       return results;
     },
     enabled: ids.length > 0,
-    staleTime: 3 * 60 * 1000,
+    staleTime: 0,
+    gcTime: 0,
   });
 
   // Monta índice por workshop_id
