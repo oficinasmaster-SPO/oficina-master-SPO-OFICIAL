@@ -105,12 +105,24 @@ Deno.serve(async (req) => {
         console.warn('Google Calendar falhou, continuando sem Meet:', gcalErr.message);
       }
 
-      // 4. Busca e-mails dos sócios do workshop
+      // 4. VALIDA WORKSHOP (CRÍTICO: evita loop infinito se deletado)
       const workshop = await base44.asServiceRole.entities.Workshop.get(sugestao.workshop_id);
+      if (!workshop) {
+        // Workshop deletado → marca como falha e PARA
+        await base44.asServiceRole.entities.SugestaoAgendamento.update(sugestao_id, {
+          status: 'reprovado',
+          motivo_reprovacao: 'Workshop não encontrado (possivelmente deletado)',
+        });
+        return Response.json({ 
+          error: 'Workshop não encontrado. Sugestão marcada como reprovada.', 
+          status: 404 
+        });
+      }
+
       const emailsDestino = [];
-      if (workshop?.email) emailsDestino.push(workshop.email);
+      if (workshop.email) emailsDestino.push(workshop.email);
       
-      if (workshop?.partner_ids?.length > 0) {
+      if (workshop.partner_ids && workshop.partner_ids.length > 0) {
         for (const partnerId of workshop.partner_ids) {
           try {
             const socio = await base44.asServiceRole.entities.User.get(partnerId);
@@ -121,21 +133,25 @@ Deno.serve(async (req) => {
         }
       }
 
-      // 5. Envia e-mail para empresa + sócios (NÃO-BLOQUEANTE)
+      // 5. Envia e-mail para empresa + sócios (NÃO-BLOQUEANTE com TIMEOUT)
       const dataFormatada = new Date(dataHoraISO).toLocaleDateString('pt-BR', {
         weekday: 'long', day: '2-digit', month: 'long', year: 'numeric'
       });
 
       const emailsDestinoCleaned = [...new Set(emailsDestino)].filter(Boolean);
       
-      // Enviar ASSINCRONAMENTE sem bloquear a resposta
-      // (dispara background job que roda em paralelo)
+      // Enviar ASSINCRONAMENTE com TIMEOUT de 10 segundos
       const emailPromises = emailsDestinoCleaned.map(async (email) => {
-        try {
-          await base44.asServiceRole.integrations.Core.SendEmail({
-            to: email,
-            subject: `Reunião agendada: ${tipoFinal} - ${dataFormatada} às ${horaFinal}`,
-            body: `
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout email')), 10000)
+        );
+        
+        const emailSendPromise = (async () => {
+          try {
+            await base44.asServiceRole.integrations.Core.SendEmail({
+              to: email,
+              subject: `Reunião agendada: ${tipoFinal} - ${dataFormatada} às ${horaFinal}`,
+              body: `
 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
   <div style="background: #1a1a1a; padding: 24px; border-radius: 12px 12px 0 0;">
     <h1 style="color: white; margin: 0; font-size: 20px;">📅 Reunião Agendada</h1>
@@ -179,19 +195,27 @@ Deno.serve(async (req) => {
   </div>
 </div>
             `.trim(),
-          });
-          return { email, sucesso: true };
-        } catch (err) {
-          console.warn(`E-mail falhou para ${email}:`, err.message);
-          return { email, sucesso: false, erro: err.message };
-        }
+            });
+            return { email, sucesso: true };
+          } catch (err) {
+            console.warn(`E-mail falhou para ${email}:`, err.message);
+            return { email, sucesso: false, erro: err.message };
+          }
+        })();
+        
+        // Race entre email e timeout
+        return Promise.race([emailSendPromise, timeoutPromise]);
       });
 
-      // NÃO AGUARDA - deixa rodar em background
-      // (garante resposta rápida ao usuário)
-      Promise.all(emailPromises).catch(err => 
-        console.error('Erro ao enviar e-mails em background:', err)
-      );
+      // NÃO AGUARDA - deixa rodar em background com tratamento de erro
+      Promise.all(emailPromises)
+        .then(results => {
+          const successCount = results.filter(r => r.sucesso).length;
+          console.log(`✅ ${successCount}/${results.length} e-mails enviados em background`);
+        })
+        .catch(err => 
+          console.error('❌ Erro ao enviar e-mails em background:', err.message)
+        );
 
       const emailEnviado = true; // Sempre true (enviando em background)
 
