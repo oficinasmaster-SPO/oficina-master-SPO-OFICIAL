@@ -31,12 +31,16 @@ export default function GradeHorariosTab({ consultores = [], user }) {
   const [diaEditando, setDiaEditando] = useState(null); // dia_semana number
   const [novoHorario, setNovoHorario] = useState({ hora: "09:00" });
 
-  // Buscar tipos de atendimento disponíveis
-  const { data: tiposAtendimento = [] } = useQuery({
+  // Buscar tipos de atendimento — mesma fonte do modal de Registrar Atendimento
+  const { data: tiposAtendimentoRaw = [] } = useQuery({
     queryKey: ['tipos-atendimento-consultoria'],
-    queryFn: () => base44.entities.TipoAtendimentoConsultoria?.list?.() || [],
+    queryFn: async () => {
+      const res = await base44.functions.invoke('getAttendanceTypes', { workshop_id: null });
+      return res?.data?.types || [];
+    },
     staleTime: 5 * 60 * 1000,
   });
+  const tiposAtendimento = tiposAtendimentoRaw;
 
   // Buscar grade do consultor selecionado
   const { data: grade = [], isLoading } = useQuery({
@@ -302,7 +306,7 @@ export default function GradeHorariosTab({ consultores = [], user }) {
                                    const tipo = tiposAtendimento.find(t => t.id === id);
                                    return (
                                      <Badge key={id} variant="outline" className="text-xs">
-                                       {tipo?.nome || id}
+                                       {tipo?.label || tipo?.nome || id}
                                      </Badge>
                                    );
                                  })}
@@ -431,7 +435,7 @@ export default function GradeHorariosTab({ consultores = [], user }) {
                       }}
                       className="cursor-pointer"
                     />
-                    <span className="text-sm">{tipo.nome}</span>
+                    <span className="text-sm">{tipo.label || tipo.nome}</span>
                   </label>
                 ))}
               </div>

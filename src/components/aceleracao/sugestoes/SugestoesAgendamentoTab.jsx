@@ -29,10 +29,13 @@ export default function SugestoesAgendamentoTab() {
     gcTime: 0,
   });
 
-  // 🔗 Busca tipos de atendimento reais do banco (mesmos do RegistrarAtendimento)
+  // 🔗 Busca tipos de atendimento — mesma fonte do modal de Registrar Atendimento
   const { data: tiposAtendimentoBanco = [] } = useQuery({
     queryKey: ["tipos-atendimento-consultoria"],
-    queryFn: () => base44.entities.TipoAtendimentoConsultoria.list(),
+    queryFn: async () => {
+      const res = await base44.functions.invoke('getAttendanceTypes', { workshop_id: null });
+      return res?.data?.types || [];
+    },
     staleTime: 5 * 60 * 1000,
   });
 
