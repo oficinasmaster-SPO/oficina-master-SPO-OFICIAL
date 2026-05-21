@@ -19,6 +19,30 @@ Deno.serve(async (req) => {
     const resolvedConsultorId = consultor_id || user.id;
     const resolvedConsultorNome = consultor_nome || user.full_name || 'Consultor';
 
+    // Valida que o consultor passado existe na lista real (Employee da Oficinas Master)
+    const OFICINAS_MASTER_ID = '695408b3ed74bfeb60d708c0';
+    const employeesConsultores = await base44.asServiceRole.entities.Employee.filter(
+      { workshop_id: OFICINAS_MASTER_ID, status: 'ativo' }, null, 200
+    );
+    const consultorValido = employeesConsultores.some(e => e.user_id === resolvedConsultorId);
+    if (!consultorValido && resolvedConsultorId !== user.id) {
+      return Response.json({ error: 'Consultor inválido — não encontrado na lista de consultores ativos' }, { status: 400 });
+    }
+
+    // 🔗 Busca horários da Grade do consultor (ignora horarios_disponiveis do body)
+    const gradeConsultor = await base44.asServiceRole.entities.HorarioDisponivel.filter(
+      { consultor_id: resolvedConsultorId }
+    );
+    const horariosGrade = new Set();
+    gradeConsultor.forEach(dia => {
+      if (!dia.ativo) return;
+      (dia.horarios || []).forEach(h => { if (h.ativo) horariosGrade.add(h.hora); });
+    });
+    // Se sem grade configurada, usa o fallback do body ou padrão
+    const horarios_disponiveis_final = horariosGrade.size > 0
+      ? Array.from(horariosGrade).sort()
+      : (horarios_disponiveis?.length > 0 ? horarios_disponiveis : ["09:00", "14:00"]);
+
     // === 1. Busca todos os workshops com contrato ativo ===
     const workshops = await base44.asServiceRole.entities.Workshop.filter(
       { status: 'ativo' }, '-created_date', 500
@@ -156,13 +180,20 @@ Deno.serve(async (req) => {
     const dataBase = data_inicio ? new Date(data_inicio + 'T12:00:00') : new Date();
     const slots = [];
     let diaOffset = 0;
-    while (slots.length < scoredWorkshops.length * horarios_disponiveis.length && diaOffset < 60) {
+    // 🔗 Usa horários da Grade de Horários (já calculados acima)
+    const horariosParaUsar = horarios_disponiveis_final;
+    while (slots.length < scoredWorkshops.length * horariosParaUsar.length && diaOffset < 60) {
       const dia = new Date(dataBase);
       dia.setDate(dia.getDate() + diaOffset);
       const diaSemana = dia.getDay();
       // Pula fim de semana
       if (diaSemana !== 0 && diaSemana !== 6) {
-        horarios_disponiveis.forEach(hora => {
+        // 🔗 Também verifica se o dia da semana tem grade ativa para esse consultor
+        const gradeNesteDia = gradeConsultor.find(g => g.dia_semana === diaSemana && g.ativo);
+        const horariosNesteDia = gradeNesteDia
+          ? gradeNesteDia.horarios.filter(h => h.ativo).map(h => h.hora).sort()
+          : horariosParaUsar;
+        horariosNesteDia.forEach(hora => {
           slots.push({
             data: dia.toISOString().split('T')[0],
             hora,

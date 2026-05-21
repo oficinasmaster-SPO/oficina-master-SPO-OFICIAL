@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Sparkles, CheckCircle2, XCircle, Clock, RefreshCw, CalendarDays, Users, Zap, Info } from "lucide-react";
 import { toast } from "sonner";
 import SugestaoCard from "./SugestaoCard";
+import useConsultoresList from "@/components/hooks/useConsultoresList";
 
 export default function SugestoesAgendamentoTab() {
   const { user } = useAuth();
@@ -35,28 +36,26 @@ export default function SugestoesAgendamentoTab() {
     staleTime: 5 * 60 * 1000,
   });
 
-  // 🔗 Busca lista de admins/consultores reais do sistema
-  const { data: consultoresBanco = [] } = useQuery({
-    queryKey: ["consultores-admin-list"],
-    queryFn: () => base44.entities.User.filter({ role: "admin" }, "full_name", 100),
-    staleTime: 5 * 60 * 1000,
-  });
+  // 🔗 Usa MESMA fonte de consultores que a Grade de Horários (Employee da Oficinas Master)
+  const { data: consultoresBanco = [] } = useConsultoresList(user);
 
-  // 🔗 Busca horários disponíveis do consultor selecionado (Grade de Horários)
-  const consultorParaHorarios = consultorFiltro !== "todos" ? consultorFiltro : user?.id;
+  // 🔗 Busca horários disponíveis — quando filtrado por consultor usa esse, senão busca todos
+  const consultorParaHorarios = consultorFiltro !== "todos" ? consultorFiltro : null;
   const { data: horariosGrade = [] } = useQuery({
-    queryKey: ["horarios-disponiveis-sugestoes", consultorParaHorarios],
+    queryKey: ["horarios-disponiveis-sugestoes", consultorParaHorarios || "todos"],
     queryFn: () => consultorParaHorarios
       ? base44.entities.HorarioDisponivel.filter({ consultor_id: consultorParaHorarios })
-      : [],
-    enabled: !!consultorParaHorarios,
+      : base44.entities.HorarioDisponivel.list(), // todos os consultores quando filtro = "todos"
     staleTime: 2 * 60 * 1000,
   });
 
-  // Extrai slots ativos da grade (todos os dias)
+  // Extrai slots ativos da grade — filtra pelo consultor selecionado se houver
   const horariosDoConsultor = useMemo(() => {
     const slots = new Set();
-    horariosGrade.forEach(diaGrade => {
+    const gradesFiltradas = consultorParaHorarios
+      ? horariosGrade.filter(g => g.consultor_id === consultorParaHorarios)
+      : horariosGrade;
+    gradesFiltradas.forEach(diaGrade => {
       if (!diaGrade.ativo) return;
       (diaGrade.horarios || []).forEach(h => {
         if (h.ativo) slots.add(h.hora);
@@ -64,13 +63,10 @@ export default function SugestoesAgendamentoTab() {
     });
     const sorted = Array.from(slots).sort();
     return sorted.length > 0 ? sorted : ["09:00", "14:00"]; // fallback
-  }, [horariosGrade]);
+  }, [horariosGrade, consultorParaHorarios]);
 
-  // Busca lista de consultores das sugestões (para filtro)
-  const consultores = React.useMemo(() => {
-    // Usa a lista real de admins do banco
-    return consultoresBanco;
-  }, [consultoresBanco]);
+  // Consultores = mesma lista da Grade de Horários
+  const consultores = consultoresBanco;
 
   // Filtra por consultor
   const sugestoesFiltradas = React.useMemo(() => {
@@ -97,6 +93,8 @@ export default function SugestoesAgendamentoTab() {
     });
   }, [sugestoesFiltradas]);
 
+  const horariosEhFallback = horariosGrade.length === 0;
+
   const handleGerar = async () => {
     setGerando(true);
     try {
@@ -105,7 +103,8 @@ export default function SugestoesAgendamentoTab() {
       amanha.setDate(amanha.getDate() + 1);
       const dataInicio = amanha.toISOString().split("T")[0];
 
-      const consultorId = consultorFiltro !== "todos" ? consultorFiltro : user?.id;
+      // Usa o consultor filtrado; se "todos", usa o primeiro da lista (ou o logado)
+      const consultorId = consultorFiltro !== "todos" ? consultorFiltro : (consultores[0]?.id || user?.id);
       const consultorObj = consultores.find(c => c.id === consultorId);
 
       const res = await base44.functions.invoke("gerarSugestoesAgendamento", {
@@ -247,9 +246,15 @@ export default function SugestoesAgendamentoTab() {
                 <span key={h} className="text-[10px] bg-indigo-50 text-indigo-700 border border-indigo-200 rounded px-1.5 py-0.5 font-mono">{h}</span>
               ))}
             </div>
-            <span className="text-[10px] text-gray-400 italic flex items-center gap-0.5">
-              <Info className="w-3 h-3" /> Grade
-            </span>
+            {horariosEhFallback ? (
+              <span className="text-[10px] text-amber-500 italic flex items-center gap-0.5">
+                <Info className="w-3 h-3" /> Fallback — configure a Grade de Horários
+              </span>
+            ) : (
+              <span className="text-[10px] text-gray-400 italic flex items-center gap-0.5">
+                <Info className="w-3 h-3" /> Grade
+              </span>
+            )}
           </div>
 
           <div className="flex items-center gap-2 ml-auto">
