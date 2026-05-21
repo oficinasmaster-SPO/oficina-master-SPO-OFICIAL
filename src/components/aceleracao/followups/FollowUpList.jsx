@@ -27,40 +27,49 @@ function calcRiscoReuniao(workshopId, contractAttendances, consultoriaAtendiment
   // --- TOTAL DO PLANO: slots de ContractAttendance OU total de ConsultoriaAtendimento ---
   const total = buckets.length > 0 ? buckets.length : atendimentos.length;
 
-  // Helper: extrai só a data (sem hora) de qualquer formato datetime
-  // Evita o bug UTC: "2026-05-21" sem hora é interpretado como UTC midnight → no Brasil = dia 20
-  const toDateOnly = (d) => {
+  // Helper: normaliza data para evitar UTC shift
+  // "2026-05-21" sem hora → JS interpreta como UTC midnight → no Brasil vira dia 20 às 21h
+  const toLocalDate = (d) => {
     if (!d) return null;
     const s = typeof d === "string" ? d : d.toISOString();
-    // Se já tem componente de hora (T), usa direto; senão adiciona meio-dia local para evitar UTC shift
     return new Date(s.includes("T") ? s : s + "T12:00:00");
   };
 
-  // --- ATRASADAS: status "atrasado" OU agendado/confirmado com data_agendada no passado ---
-  // São reuniões que JÁ deveriam ter acontecido mas não aconteceram
+  // Agora real com +30min de tolerância para considerar uma reunião como "atrasada"
+  const agoraMais30 = new Date(hoje.getTime() + (new Date().getHours() * 60 + new Date().getMinutes() + 30) * 60 * 1000);
+
+  // --- ATRASADAS: passou do horário + 30 minutos de tolerância ---
+  // Lógica: se tem hora no campo → usa datetime real + 30min; se só data → usa fim do dia anterior
   const PENDENTES_STATUS = ["agendado", "confirmado", "reagendado", "atrasado"];
   const atrasadasList = atendimentos.filter(a => {
-    if (a.status === "atrasado") return true; // marcado explicitamente como atrasado
-    if (PENDENTES_STATUS.includes(a.status) && a.data_agendada) {
-      const d = toDateOnly(a.data_agendada);
-      // Considera atrasada apenas se a DATA (sem hora) for anterior a hoje
+    if (!PENDENTES_STATUS.includes(a.status) || !a.data_agendada) return false;
+    const s = typeof a.data_agendada === "string" ? a.data_agendada : a.data_agendada.toISOString();
+    if (s.includes("T")) {
+      // Tem hora: considera atrasada 30min após o horário marcado
+      const dataHora = new Date(s);
+      dataHora.setMinutes(dataHora.getMinutes() + 30);
+      return dataHora < new Date(); // compara com agora real
+    } else {
+      // Só data: considera atrasada se o dia já passou (dia anterior a hoje)
+      const d = toLocalDate(s);
       const dSemHora = new Date(d.getFullYear(), d.getMonth(), d.getDate());
       return dSemHora < hoje;
     }
-    return false;
   });
   const atrasadas = atrasadasList.length;
 
-  // --- PRÓXIMA: agendado/confirmado com data_agendada HOJE ou FUTURA ---
+  // --- PRÓXIMA: reuniões pendentes que NÃO são atrasadas (hoje/futuro ainda dentro da tolerância) ---
+  const atrasadasIds = new Set(atrasadasList.map(a => a.id));
   const futuras = atendimentos
     .filter(a => {
       if (!["agendado", "confirmado", "reagendado"].includes(a.status)) return false;
       if (!a.data_agendada) return false;
-      const d = toDateOnly(a.data_agendada);
+      if (atrasadasIds.has(a.id)) return false; // já classificada como atrasada
+      const d = toLocalDate(a.data_agendada);
       const dSemHora = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-      return dSemHora >= hoje; // hoje ou futuro → conta como próxima
+      return dSemHora >= hoje;
     })
-    .sort((a, b) => toDateOnly(a.data_agendada) - toDateOnly(b.data_agendada));
+    .sort((a, b) => toLocalDate(a.data_agendada) - toLocalDate(b.data_agendada));
   const proxima = futuras[0]?.data_agendada || null;
 
   // --- ÚLTIMA REALIZADA: usa data_realizada, fallback data_agendada ---
