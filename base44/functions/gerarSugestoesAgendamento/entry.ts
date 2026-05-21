@@ -77,6 +77,47 @@ Deno.serve(async (req) => {
       return parcial || nomesTipos[0] || nomeDesejado;
     };
 
+    // === 4b. Busca RegraAgendamento por plano (sequência de entrega configurada) ===
+    const regrasAgendamento = await base44.asServiceRole.entities.RegraAgendamento.filter({ ativo: true });
+    // Mapeia plan_id → sequencia ordenada
+    const regrasPorPlano = {};
+    regrasAgendamento.forEach(r => {
+      if (r.plan_id) {
+        regrasPorPlano[r.plan_id] = [...(r.sequencia || [])].sort((a, b) => a.ordem - b.ordem);
+      }
+    });
+
+    // Helper: dado um workshop, retorna o próximo tipo da sequência do plano
+    const resolverTipoPorSequencia = (workshop, realizadas) => {
+      const plano = workshop.planoAtual;
+      if (!plano || !regrasPorPlano[plano]) return null;
+      const seq = regrasPorPlano[plano];
+      if (seq.length === 0) return null;
+
+      // Conta quantas vezes cada tipo foi realizado
+      const realizadosPorTipo = {};
+      realizadas.forEach(a => {
+        const t = (a.tipo_atendimento || '').toLowerCase();
+        realizadosPorTipo[t] = (realizadosPorTipo[t] || 0) + 1;
+      });
+
+      // Encontra o próximo tipo da sequência que ainda não foi realizado (ou obrigatório não concluído)
+      for (const item of seq) {
+        const nomeItem = (item.nome || '').toLowerCase();
+        const jaRealizou = Object.keys(realizadosPorTipo).some(t =>
+          t.includes(nomeItem) || nomeItem.includes(t)
+        );
+        if (!jaRealizou) {
+          // Retorna o nome legível do tipo, resolvido contra os tipos reais
+          return resolverTipo(item.nome);
+        }
+        // Se é opcional e já fez, pula
+        // Se é obrigatório e já fez, continua para o próximo
+      }
+      // Todos concluídos — repete o último da sequência (acompanhamento contínuo)
+      return resolverTipo(seq[seq.length - 1].nome);
+    };
+
     // === 5. Busca sugestões pendentes já existentes para evitar duplicatas ===
     const sugestoesExistentes = await base44.asServiceRole.entities.SugestaoAgendamento.filter(
       { status: { $in: ['pendente', 'aprovado'] } }, '-created_date', 500
@@ -136,9 +177,13 @@ Deno.serve(async (req) => {
         score += atrasadas.length * 10;
         score += casPendentes.length * 20;
 
-        // Tipo sugerido baseado no último atendimento — resolvido contra tipos reais do banco
+        // Tipo sugerido — usa sequência do plano se configurada, senão fallback histórico
         const ultimoTipo = realizadas[0]?.tipo_atendimento || null;
         const tipoSugerido = (() => {
+          // Prioridade 0: Sequência de Entrega configurada para o plano do cliente
+          const tipoPorSequencia = resolverTipoPorSequencia(w, realizadas);
+          if (tipoPorSequencia) return tipoPorSequencia;
+
           // Prioridade 1: tipo do CA pendente mais antigo (já vem do banco)
           if (casPendentes.length > 0 && casPendentes[0].attendance_type_name) {
             return resolverTipo(casPendentes[0].attendance_type_name);

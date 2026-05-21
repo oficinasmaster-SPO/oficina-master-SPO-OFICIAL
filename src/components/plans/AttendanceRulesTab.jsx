@@ -9,9 +9,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Trash2, Clock, Calendar, AlertCircle, Check, Loader2 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Plus, Trash2, Clock, Calendar, AlertCircle, Check, Loader2, ListOrdered } from "lucide-react";
 import { toast } from "sonner";
 import TipoAtendimentoManager from "@/components/aceleracao/TipoAtendimentoManager";
+import SequenciaEntregaTab from "./SequenciaEntregaTab";
 
 export default function AttendanceRulesTab({ planId, planName }) {
   const queryClient = useQueryClient();
@@ -168,6 +170,23 @@ export default function AttendanceRulesTab({ planId, planName }) {
   }
 
   return (
+    <Tabs defaultValue="regras" className="space-y-5">
+      <TabsList>
+        <TabsTrigger value="regras">
+          <Calendar className="w-4 h-4 mr-2" />
+          Regras e Frequências
+        </TabsTrigger>
+        <TabsTrigger value="sequencia">
+          <ListOrdered className="w-4 h-4 mr-2" />
+          Sequência de Entrega
+        </TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="sequencia">
+        <SequenciaEntregaTab planId={planId} planName={planName} />
+      </TabsContent>
+
+      <TabsContent value="regras">
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-start justify-between">
@@ -510,5 +529,7 @@ export default function AttendanceRulesTab({ planId, planName }) {
         </Card>
       )}
     </div>
+      </TabsContent>
+    </Tabs>
   );
 }
