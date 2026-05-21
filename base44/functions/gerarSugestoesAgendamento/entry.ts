@@ -36,13 +36,29 @@ Deno.serve(async (req) => {
       { data_agendada: { $gte: noventa_dias_atras.toISOString() } }, '-data_agendada', 2000
     );
 
-    // === 4. Busca sugestões pendentes já existentes para evitar duplicatas ===
+    // === 4. Busca tipos de atendimento reais cadastrados ===
+    const tiposAtendimento = await base44.asServiceRole.entities.TipoAtendimentoConsultoria.list();
+    const nomesTipos = tiposAtendimento.map(t => t.nome).filter(Boolean);
+
+    // Helper: encontra o tipo mais parecido na lista real (case-insensitive)
+    const resolverTipo = (nomeDesejado) => {
+      if (!nomeDesejado || nomesTipos.length === 0) return nomesTipos[0] || 'Acompanhamento';
+      const exato = nomesTipos.find(n => n.toLowerCase() === nomeDesejado.toLowerCase());
+      if (exato) return exato;
+      const parcial = nomesTipos.find(n =>
+        n.toLowerCase().includes(nomeDesejado.toLowerCase()) ||
+        nomeDesejado.toLowerCase().includes(n.toLowerCase())
+      );
+      return parcial || nomesTipos[0] || nomeDesejado;
+    };
+
+    // === 5. Busca sugestões pendentes já existentes para evitar duplicatas ===
     const sugestoesExistentes = await base44.asServiceRole.entities.SugestaoAgendamento.filter(
       { status: { $in: ['pendente', 'aprovado'] } }, '-created_date', 500
     );
     const workshopsComSugestaoAtiva = new Set(sugestoesExistentes.map(s => s.workshop_id));
 
-    // === 5. Calcula score de prioridade para cada workshop ===
+    // === 6. Calcula score de prioridade para cada workshop ===
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
 
@@ -95,14 +111,17 @@ Deno.serve(async (req) => {
         score += atrasadas.length * 10;
         score += casPendentes.length * 20;
 
-        // Tipo sugerido baseado no último atendimento
+        // Tipo sugerido baseado no último atendimento — resolvido contra tipos reais do banco
         const ultimoTipo = realizadas[0]?.tipo_atendimento || null;
         const tipoSugerido = (() => {
-          if (realizadas.length === 0) return 'Onboarding / Diagnóstico';
-          if (ultimoTipo === 'Diagnóstico') return 'Acompanhamento';
-          if (ultimoTipo === 'Acompanhamento') return 'Revisão de Metas';
-          if (casPendentes.length > 0) return casPendentes[0].attendance_type_name || 'Acompanhamento';
-          return 'Acompanhamento';
+          // Prioridade 1: tipo do CA pendente mais antigo (já vem do banco)
+          if (casPendentes.length > 0 && casPendentes[0].attendance_type_name) {
+            return resolverTipo(casPendentes[0].attendance_type_name);
+          }
+          // Prioridade 2: progressão baseada no último tipo realizado
+          if (realizadas.length === 0) return resolverTipo('Onboarding') || resolverTipo('Diagnóstico') || nomesTipos[0] || 'Acompanhamento';
+          if (ultimoTipo) return resolverTipo(ultimoTipo) || nomesTipos[0] || 'Acompanhamento';
+          return nomesTipos[0] || 'Acompanhamento';
         })();
 
         // CA mais antigo pendente
@@ -133,7 +152,7 @@ Deno.serve(async (req) => {
       .filter(s => s.nivel !== 'ok' && s.nivel !== 'sem_dados') // só quem precisa
       .sort((a, b) => b.score - a.score);
 
-    // === 6. Gera slots de datas disponíveis ===
+    // === 7. Gera slots de datas disponíveis ===
     const dataBase = data_inicio ? new Date(data_inicio + 'T12:00:00') : new Date();
     const slots = [];
     let diaOffset = 0;
@@ -154,7 +173,7 @@ Deno.serve(async (req) => {
       if (diaOffset > dias_a_frente + 14) break;
     }
 
-    // === 7. Encaixa clientes nos slots (max_por_dia) ===
+    // === 8. Encaixa clientes nos slots (max_por_dia) ===
     const slotsByDia = {};
     slots.forEach(s => {
       if (!slotsByDia[s.data]) slotsByDia[s.data] = [];
@@ -226,7 +245,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // === 8. Salva sugestões no banco ===
+    // === 9. Salva sugestões no banco ===
     const criadas = [];
     for (const s of sugestoes) {
       const criada = await base44.asServiceRole.entities.SugestaoAgendamento.create(s);
