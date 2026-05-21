@@ -27,26 +27,40 @@ function calcRiscoReuniao(workshopId, contractAttendances, consultoriaAtendiment
   // --- TOTAL DO PLANO: slots de ContractAttendance OU total de ConsultoriaAtendimento ---
   const total = buckets.length > 0 ? buckets.length : atendimentos.length;
 
+  // Helper: extrai só a data (sem hora) de qualquer formato datetime
+  // Evita o bug UTC: "2026-05-21" sem hora é interpretado como UTC midnight → no Brasil = dia 20
+  const toDateOnly = (d) => {
+    if (!d) return null;
+    const s = typeof d === "string" ? d : d.toISOString();
+    // Se já tem componente de hora (T), usa direto; senão adiciona meio-dia local para evitar UTC shift
+    return new Date(s.includes("T") ? s : s + "T12:00:00");
+  };
+
   // --- ATRASADAS: status "atrasado" OU agendado/confirmado com data_agendada no passado ---
   // São reuniões que JÁ deveriam ter acontecido mas não aconteceram
   const PENDENTES_STATUS = ["agendado", "confirmado", "reagendado", "atrasado"];
   const atrasadasList = atendimentos.filter(a => {
     if (a.status === "atrasado") return true; // marcado explicitamente como atrasado
     if (PENDENTES_STATUS.includes(a.status) && a.data_agendada) {
-      return new Date(a.data_agendada) < hoje; // data no passado = atrasada
+      const d = toDateOnly(a.data_agendada);
+      // Considera atrasada apenas se a DATA (sem hora) for anterior a hoje
+      const dSemHora = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      return dSemHora < hoje;
     }
     return false;
   });
   const atrasadas = atrasadasList.length;
 
-  // --- PRÓXIMA: agendado/confirmado com data_agendada FUTURA ---
+  // --- PRÓXIMA: agendado/confirmado com data_agendada HOJE ou FUTURA ---
   const futuras = atendimentos
-    .filter(a =>
-      ["agendado", "confirmado", "reagendado"].includes(a.status) &&
-      a.data_agendada &&
-      new Date(a.data_agendada) >= hoje
-    )
-    .sort((a, b) => new Date(a.data_agendada) - new Date(b.data_agendada));
+    .filter(a => {
+      if (!["agendado", "confirmado", "reagendado"].includes(a.status)) return false;
+      if (!a.data_agendada) return false;
+      const d = toDateOnly(a.data_agendada);
+      const dSemHora = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      return dSemHora >= hoje; // hoje ou futuro → conta como próxima
+    })
+    .sort((a, b) => toDateOnly(a.data_agendada) - toDateOnly(b.data_agendada));
   const proxima = futuras[0]?.data_agendada || null;
 
   // --- ÚLTIMA REALIZADA: usa data_realizada, fallback data_agendada ---
