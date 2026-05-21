@@ -7,7 +7,7 @@ Deno.serve(async (req) => {
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
     const body = await req.json();
-    const { sugestao_id, acao, motivo_reprovacao, tipo_final, data_final, hora_final } = body;
+    const { sugestao_id, acao, motivo_reprovacao, tipo_final, data_final, hora_final, consultor_id_override, consultor_nome_override } = body;
 
     if (!sugestao_id || !acao) {
       return Response.json({ error: 'sugestao_id e acao são obrigatórios' }, { status: 400 });
@@ -37,6 +37,9 @@ Deno.serve(async (req) => {
       const tipoFinal = tipo_final || sugestao.tipo_atendimento_final || sugestao.tipo_atendimento_sugerido;
       const dataFinal = data_final || sugestao.data_final || sugestao.data_sugerida;
       const horaFinal = hora_final || sugestao.hora_final || sugestao.hora_sugerida;
+      // Permite trocar consultor no momento da aprovação
+      const consultorIdFinal = consultor_id_override || sugestao.consultor_id;
+      const consultorNomeFinal = consultor_nome_override || sugestao.consultor_nome;
 
       // Monta datetime
       const dataHoraISO = `${dataFinal}T${horaFinal}:00`;
@@ -44,8 +47,8 @@ Deno.serve(async (req) => {
       // 1. Cria ConsultoriaAtendimento
       const novoAtendimento = await base44.asServiceRole.entities.ConsultoriaAtendimento.create({
         workshop_id: sugestao.workshop_id,
-        consultor_id: sugestao.consultor_id,
-        consultor_nome: sugestao.consultor_nome,
+        consultor_id: consultorIdFinal,
+        consultor_nome: consultorNomeFinal,
         tipo_atendimento: tipoFinal,
         data_agendada: dataHoraISO,
         status: 'agendado',
@@ -147,7 +150,7 @@ Deno.serve(async (req) => {
         </tr>
         <tr>
           <td style="padding: 8px 0; color: #666; font-size: 14px;">Consultor:</td>
-          <td style="padding: 8px 0; color: #111; font-size: 14px;">${sugestao.consultor_nome}</td>
+          <td style="padding: 8px 0; color: #111; font-size: 14px;">${consultorNomeFinal}</td>
         </tr>
         ${meetLink ? `
         <tr>
@@ -178,6 +181,8 @@ Deno.serve(async (req) => {
         tipo_atendimento_final: tipoFinal,
         data_final: dataFinal,
         hora_final: horaFinal,
+        consultor_id: consultorIdFinal,
+        consultor_nome: consultorNomeFinal,
         atendimento_criado_id: novoAtendimento.id,
         google_event_id: googleEventId,
         google_meet_link: meetLink,

@@ -2,9 +2,7 @@ import React, { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, Clock, User, CheckCircle2, XCircle, Loader2, Video, Mail, AlertTriangle, TrendingUp } from "lucide-react";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { Calendar, Clock, User, CheckCircle2, XCircle, Loader2, Video, Mail, TrendingUp } from "lucide-react";
 
 const NIVEL_CONFIG = {
   critico: { label: "CRÍTICO", color: "bg-red-100 text-red-700 border-red-200", dot: "bg-red-500", border: "border-l-red-500" },
@@ -13,21 +11,12 @@ const NIVEL_CONFIG = {
   ok:      { label: "OK", color: "bg-green-100 text-green-700 border-green-200", dot: "bg-green-500", border: "border-l-green-500" },
 };
 
-const TIPOS_ATENDIMENTO = [
-  "Onboarding / Diagnóstico",
-  "Acompanhamento",
-  "Revisão de Metas",
-  "Diagnóstico Financeiro",
-  "Reunião Estratégica",
-  "Check-in Rápido",
-  "Diagnóstico Completo",
-  "Planejamento Mensal",
-];
-
-export default function SugestaoCard({ sugestao, onAprovar, onReprovar }) {
+// tiposAtendimento, consultores são recebidos via props (buscados pelo pai)
+export default function SugestaoCard({ sugestao, onAprovar, onReprovar, tiposAtendimento = [], consultores = [], onConsultorChange }) {
   const [tipoFinal, setTipoFinal] = useState(sugestao.tipo_atendimento_final || sugestao.tipo_atendimento_sugerido);
   const [dataFinal, setDataFinal] = useState(sugestao.data_final || sugestao.data_sugerida);
   const [horaFinal, setHoraFinal] = useState(sugestao.hora_final || sugestao.hora_sugerida);
+  const [consultorId, setConsultorId] = useState(sugestao.consultor_id);
   const [showReprovar, setShowReprovar] = useState(false);
   const [motivoReprovacao, setMotivoReprovacao] = useState("");
   const [loading, setLoading] = useState(false);
@@ -36,7 +25,14 @@ export default function SugestaoCard({ sugestao, onAprovar, onReprovar }) {
 
   const handleAprovar = async () => {
     setLoading(true);
-    await onAprovar(sugestao.id, { tipoFinal, dataFinal, horaFinal });
+    const consultorSelecionado = consultores.find(c => c.id === consultorId);
+    await onAprovar(sugestao.id, {
+      tipoFinal,
+      dataFinal,
+      horaFinal,
+      consultorId,
+      consultorNome: consultorSelecionado?.full_name || sugestao.consultor_nome,
+    });
     setLoading(false);
   };
 
@@ -126,12 +122,15 @@ export default function SugestaoCard({ sugestao, onAprovar, onReprovar }) {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {TIPOS_ATENDIMENTO.map(t => (
-                <SelectItem key={t} value={t} className="text-xs">{t}</SelectItem>
+              {tiposAtendimento.map(t => (
+                <SelectItem key={t.id || t.nome} value={t.nome} className="text-xs">{t.nome}</SelectItem>
               ))}
-              <SelectItem value={sugestao.tipo_atendimento_sugerido} className="text-xs font-medium text-purple-700">
-                ✨ {sugestao.tipo_atendimento_sugerido} (IA)
-              </SelectItem>
+              {/* Fallback: se o tipo sugerido não está na lista, mostra assim mesmo */}
+              {sugestao.tipo_atendimento_sugerido && !tiposAtendimento.find(t => t.nome === sugestao.tipo_atendimento_sugerido) && (
+                <SelectItem value={sugestao.tipo_atendimento_sugerido} className="text-xs font-medium text-purple-700">
+                  ✨ {sugestao.tipo_atendimento_sugerido} (IA)
+                </SelectItem>
+              )}
             </SelectContent>
           </Select>
         </div>
@@ -165,9 +164,25 @@ export default function SugestaoCard({ sugestao, onAprovar, onReprovar }) {
 
       {/* Consultor + ações */}
       <div className="px-4 pb-3 flex items-center justify-between gap-3 border-t border-gray-100 pt-3">
-        <div className="flex items-center gap-1.5 text-xs text-gray-500">
-          <User className="w-3.5 h-3.5" />
-          <span>{sugestao.consultor_nome}</span>
+        <div className="flex items-center gap-1.5 min-w-0">
+          <User className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+          {consultores.length > 1 ? (
+            <Select value={consultorId} onValueChange={(v) => {
+              setConsultorId(v);
+              onConsultorChange?.(sugestao.id, v, consultores.find(c => c.id === v)?.full_name);
+            }}>
+              <SelectTrigger className="h-7 text-xs border-gray-200 w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {consultores.map(c => (
+                  <SelectItem key={c.id} value={c.id} className="text-xs">{c.full_name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <span className="text-xs text-gray-500">{sugestao.consultor_nome}</span>
+          )}
         </div>
 
         {!showReprovar ? (

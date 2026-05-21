@@ -5,7 +5,7 @@ import { useAuth } from "@/lib/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Sparkles, CheckCircle2, XCircle, Clock, RefreshCw, CalendarDays, Users, Zap } from "lucide-react";
+import { Loader2, Sparkles, CheckCircle2, XCircle, Clock, RefreshCw, CalendarDays, Users, Zap, Info } from "lucide-react";
 import { toast } from "sonner";
 import SugestaoCard from "./SugestaoCard";
 
@@ -17,7 +17,6 @@ export default function SugestoesAgendamentoTab() {
   const [gerando, setGerando] = useState(false);
   const [config, setConfig] = useState({
     max_por_dia: 2,
-    horarios: "09:00,14:00",
     dias_a_frente: 7,
   });
 
@@ -29,14 +28,49 @@ export default function SugestoesAgendamentoTab() {
     gcTime: 0,
   });
 
-  // Busca lista de consultores das sugestões
-  const consultores = React.useMemo(() => {
-    const map = {};
-    sugestoes.forEach(s => {
-      if (s.consultor_id && s.consultor_nome) map[s.consultor_id] = s.consultor_nome;
+  // 🔗 Busca tipos de atendimento reais do banco (mesmos do RegistrarAtendimento)
+  const { data: tiposAtendimentoBanco = [] } = useQuery({
+    queryKey: ["tipos-atendimento-consultoria"],
+    queryFn: () => base44.entities.TipoAtendimentoConsultoria.list(),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // 🔗 Busca lista de admins/consultores reais do sistema
+  const { data: consultoresBanco = [] } = useQuery({
+    queryKey: ["consultores-admin-list"],
+    queryFn: () => base44.entities.User.filter({ role: "admin" }, "full_name", 100),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // 🔗 Busca horários disponíveis do consultor selecionado (Grade de Horários)
+  const consultorParaHorarios = consultorFiltro !== "todos" ? consultorFiltro : user?.id;
+  const { data: horariosGrade = [] } = useQuery({
+    queryKey: ["horarios-disponiveis-sugestoes", consultorParaHorarios],
+    queryFn: () => consultorParaHorarios
+      ? base44.entities.HorarioDisponivel.filter({ consultor_id: consultorParaHorarios })
+      : [],
+    enabled: !!consultorParaHorarios,
+    staleTime: 2 * 60 * 1000,
+  });
+
+  // Extrai slots ativos da grade (todos os dias)
+  const horariosDoConsultor = useMemo(() => {
+    const slots = new Set();
+    horariosGrade.forEach(diaGrade => {
+      if (!diaGrade.ativo) return;
+      (diaGrade.horarios || []).forEach(h => {
+        if (h.ativo) slots.add(h.hora);
+      });
     });
-    return Object.entries(map).map(([id, nome]) => ({ id, nome }));
-  }, [sugestoes]);
+    const sorted = Array.from(slots).sort();
+    return sorted.length > 0 ? sorted : ["09:00", "14:00"]; // fallback
+  }, [horariosGrade]);
+
+  // Busca lista de consultores das sugestões (para filtro)
+  const consultores = React.useMemo(() => {
+    // Usa a lista real de admins do banco
+    return consultoresBanco;
+  }, [consultoresBanco]);
 
   // Filtra por consultor
   const sugestoesFiltradas = React.useMemo(() => {
@@ -71,14 +105,15 @@ export default function SugestoesAgendamentoTab() {
       amanha.setDate(amanha.getDate() + 1);
       const dataInicio = amanha.toISOString().split("T")[0];
 
+      const consultorId = consultorFiltro !== "todos" ? consultorFiltro : user?.id;
+      const consultorObj = consultores.find(c => c.id === consultorId);
+
       const res = await base44.functions.invoke("gerarSugestoesAgendamento", {
-        consultor_id: consultorFiltro !== "todos" ? consultorFiltro : user?.id,
-        consultor_nome: consultorFiltro !== "todos"
-          ? consultores.find(c => c.id === consultorFiltro)?.nome
-          : user?.full_name,
+        consultor_id: consultorId,
+        consultor_nome: consultorObj?.full_name || user?.full_name,
         data_inicio: dataInicio,
         max_por_dia: config.max_por_dia,
-        horarios_disponiveis: config.horarios.split(",").map(h => h.trim()).filter(Boolean),
+        horarios_disponiveis: horariosDoConsultor, // 🔗 da Grade de Horários
         dias_a_frente: config.dias_a_frente,
       });
 
@@ -96,7 +131,22 @@ export default function SugestoesAgendamentoTab() {
     }
   };
 
-  const handleAprovar = async (sugestaoId, { tipoFinal, dataFinal, horaFinal }) => {
+  // Troca consultor diretamente na sugestão sem aprovar
+  const handleConsultorChange = async (sugestaoId, novoConsultorId, novoConsultorNome) => {
+    try {
+      await base44.entities.SugestaoAgendamento.update(sugestaoId, {
+        consultor_id: novoConsultorId,
+        consultor_nome: novoConsultorNome,
+      });
+      queryClient.setQueryData(["sugestoes-agendamento"], (old = []) =>
+        old.map(s => s.id === sugestaoId ? { ...s, consultor_id: novoConsultorId, consultor_nome: novoConsultorNome } : s)
+      );
+    } catch {
+      toast.error("Erro ao atribuir consultor");
+    }
+  };
+
+  const handleAprovar = async (sugestaoId, { tipoFinal, dataFinal, horaFinal, consultorId, consultorNome }) => {
     try {
       // Otimistic update
       queryClient.setQueryData(["sugestoes-agendamento"], (old = []) =>
@@ -109,6 +159,8 @@ export default function SugestoesAgendamentoTab() {
         tipo_final: tipoFinal,
         data_final: dataFinal,
         hora_final: horaFinal,
+        consultor_id_override: consultorId,
+        consultor_nome_override: consultorNome,
       });
 
       if (res?.data?.success) {
@@ -164,7 +216,7 @@ export default function SugestoesAgendamentoTab() {
               <SelectContent>
                 <SelectItem value="todos" className="text-xs">Todos os consultores</SelectItem>
                 {consultores.map(c => (
-                  <SelectItem key={c.id} value={c.id} className="text-xs">{c.nome}</SelectItem>
+                  <SelectItem key={c.id} value={c.id} className="text-xs">{c.full_name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -186,17 +238,18 @@ export default function SugestoesAgendamentoTab() {
             </Select>
           </div>
 
-          {/* Config: horários */}
-          <div className="flex items-center gap-2 flex-1 min-w-0">
+          {/* Horários da Grade (somente leitura, sincronizados) */}
+          <div className="flex items-center gap-2">
             <Clock className="w-4 h-4 text-gray-400 flex-shrink-0" />
-            <span className="text-xs text-gray-500 flex-shrink-0">Horários:</span>
-            <input
-              type="text"
-              value={config.horarios}
-              onChange={e => setConfig(c => ({ ...c, horarios: e.target.value }))}
-              placeholder="09:00,14:00"
-              className="h-8 text-xs border border-gray-200 rounded-md px-2 w-36 focus:outline-none focus:ring-2 focus:ring-gray-300"
-            />
+            <span className="text-xs text-gray-500 flex-shrink-0">Slots:</span>
+            <div className="flex gap-1 flex-wrap">
+              {horariosDoConsultor.map(h => (
+                <span key={h} className="text-[10px] bg-indigo-50 text-indigo-700 border border-indigo-200 rounded px-1.5 py-0.5 font-mono">{h}</span>
+              ))}
+            </div>
+            <span className="text-[10px] text-gray-400 italic flex items-center gap-0.5">
+              <Info className="w-3 h-3" /> Grade
+            </span>
           </div>
 
           <div className="flex items-center gap-2 ml-auto">
@@ -297,6 +350,9 @@ export default function SugestoesAgendamentoTab() {
               sugestao={sugestao}
               onAprovar={handleAprovar}
               onReprovar={handleReprovar}
+              tiposAtendimento={tiposAtendimentoBanco}
+              consultores={consultores}
+              onConsultorChange={handleConsultorChange}
             />
           ))}
         </div>
