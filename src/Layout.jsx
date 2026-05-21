@@ -27,6 +27,7 @@ import { useAuth } from "@/lib/AuthContext";
 import WheelLoader from "@/components/ui/WheelLoader";
 import PlanLimitModal from "@/components/limits/PlanLimitModal";
 import VoucherPendingDialog from "@/components/vouchers/VoucherPendingDialog";
+import PermissionDebugLogger from "@/components/debug/PermissionDebugLogger";
 
 export default function Layout({ children, currentPageName }) {
   // Layout cache bust
@@ -156,6 +157,14 @@ export default function Layout({ children, currentPageName }) {
       <div className="min-h-screen bg-gray-50">
         <PlanLimitModal />
         {isAuthenticated && user && <VoucherPendingDialog user={user} />}
+        
+        {/* Debug de Permissões - Logs no Console F12 */}
+        {isAuthenticated && user && (
+          <PermissionDebugLogger 
+            pageName={currentPageName} 
+            enabled={true} 
+          />
+        )}
 
         {shouldShowMenus && (
           <Sidebar 
