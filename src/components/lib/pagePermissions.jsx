@@ -19,6 +19,7 @@ export const pagePermissions = {
   PainelMetas: "workshop.manage_goals",
   DRETCMP2: "financeiro.view",
   ConsolidadoMensal: "financeiro.view",
+  DreMockup: "financeiro.view",
   
   // Gestão de Pessoas
   Colaboradores: "employees.view",
