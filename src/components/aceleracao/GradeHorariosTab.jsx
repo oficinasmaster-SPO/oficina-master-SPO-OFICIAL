@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Clock, Plus, Trash2, GripVertical, User, CalendarDays, ChevronUp, ChevronDown, Settings, Check } from "lucide-react";
+import { Clock, Plus, Trash2, GripVertical, User, CalendarDays, ChevronUp, ChevronDown, Settings, Check, Copy } from "lucide-react";
 import { toast } from "sonner";
 
 const DIAS_SEMANA = [
@@ -442,6 +442,38 @@ export default function GradeHorariosTab({ consultores = [], user }) {
               <p className="text-xs text-gray-500 mt-2">
                 Se vazio, o slot atende <strong>qualquer tipo</strong> de atendimento.
               </p>
+
+              {/* Ação rápida: replicar para todos */}
+              <div className="border-t pt-3 mt-1">
+                <button
+                  type="button"
+                  className="w-full flex items-center justify-center gap-2 text-xs text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded-md py-2 px-3 border border-indigo-200 transition-colors"
+                  onClick={() => {
+                    const ids = editandoSlot?.slot.tipo_atendimento_ids || [];
+                    const confirmou = window.confirm(
+                      `Aplicar esses ${ids.length === 0 ? "(qualquer tipo — sem restrição)" : ids.length + " tipo(s) selecionado(s)"} em TODOS os horários e dias da grade?\n\nEssa ação substitui as configurações atuais de todos os slots.`
+                    );
+                    if (!confirmou) return;
+
+                    // Aplica a seleção atual em todos os slots de todos os dias
+                    gradeCompleta.forEach(diaRegistro => {
+                      if (!diaRegistro.ativo || !diaRegistro.horarios?.length) return;
+                      const horariosAtualizados = diaRegistro.horarios.map(h => ({
+                        ...h,
+                        tipo_atendimento_ids: [...ids]
+                      }));
+                      salvarMutation.mutate({ ...diaRegistro, horarios: horariosAtualizados });
+                    });
+
+                    // Também atualiza o slot atual no estado local
+                    setEditandoSlot(null);
+                    toast.success("Tipos aplicados em todos os slots da grade!");
+                  }}
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                  Aplicar esses tipos em <strong className="mx-1">todos</strong> os horários e dias
+                </button>
+              </div>
             </div>
           </div>
           <DialogFooter>
