@@ -330,27 +330,56 @@ Deno.serve(async (req) => {
     const contagemPorDia = {};
     // Fila de workshops ainda não alocados (permite tentar próximo slot se incompatível)
     const filaWorkshops = [...scoredWorkshops];
+    
+    // LOG DE DEBUG: mostra tentativa de alocação
+    console.log(`📊 Tentando alocar ${filaWorkshops.length} clientes em ${Object.keys(slotsByDia).length} dias`);
 
     for (const [dia, horas] of Object.entries(slotsByDia).sort()) {
       if (filaWorkshops.length === 0) break;
       contagemPorDia[dia] = 0;
       const dataObj = new Date(dia + 'T12:00:00');
       const diaSemanaNum = dataObj.getDay();
+      const nomeDia = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'][diaSemanaNum];
+
+      console.log(`\n📅 ${nomeDia} (${dia}) - ${horas.length} horários, ${filaWorkshops.length} clientes na fila`);
 
       for (const hora of horas) {
         if (filaWorkshops.length === 0) break;
-        if (contagemPorDia[dia] >= max_por_dia) break;
+        if (contagemPorDia[dia] >= max_por_dia) {
+          console.log(`  ⏭️  ${hora}: Limite diário (${max_por_dia}) atingido`);
+          break;
+        }
 
         const chave = `${dia}_${hora}`;
-        if (ocupadosPorDiaHora.has(chave)) continue;
+        if (ocupadosPorDiaHora.has(chave)) {
+          console.log(`  ⏭️  ${hora}: Já agendado`);
+          continue;
+        }
+
+        // LOG: mostra tipos permitidos neste slot
+        const chaveSlot = `${diaSemanaNum}_${hora}`;
+        const idsPermitidos = tiposPermitidosPorSlot[chaveSlot];
+        const tiposPermitidosNomes = idsPermitidos?.length > 0
+          ? idsPermitidos.map(id => tiposMap[id]).filter(Boolean)
+          : ['QUALQUER'];
+        console.log(`  🔍 ${hora}: Tipos permitidos: ${tiposPermitidosNomes.join(', ')}`);
 
         // Busca o primeiro workshop da fila cujo tipo é compatível com este slot
-        const idxCompativel = filaWorkshops.findIndex(sw =>
-          slotAceitaTipo(diaSemanaNum, hora, sw.tipoSugerido)
-        );
-        if (idxCompativel === -1) continue; // nenhum cliente compatível com este slot
+        const idxCompativel = filaWorkshops.findIndex(sw => {
+          const compativel = slotAceitaTipo(diaSemanaNum, hora, sw.tipoSugerido);
+          if (!compativel) {
+            console.log(`     ❌ ${sw.workshop_name} (${sw.tipoSugerido}) ≠ slot`);
+          }
+          return compativel;
+        });
+        
+        if (idxCompativel === -1) {
+          console.log(`  ❌ ${hora}: NENHUM cliente compatível com tipos do slot`);
+          continue;
+        }
 
         const sw = filaWorkshops.splice(idxCompativel, 1)[0];
+        console.log(`  ✅ ${hora}: Alocado ${sw.workshop_name} (${sw.tipoSugerido})`);
         sugestoes.push({
           consultor_id: resolvedConsultorId,
           consultor_nome: resolvedConsultorNome,
