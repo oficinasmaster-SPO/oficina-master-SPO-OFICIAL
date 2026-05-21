@@ -121,18 +121,26 @@ Deno.serve(async (req) => {
         }
       }
 
-      // 5. Envia e-mail para empresa + sócios
+      // 5. Envia e-mail para empresa + sócios (COM RETRY)
       const dataFormatada = new Date(dataHoraISO).toLocaleDateString('pt-BR', {
         weekday: 'long', day: '2-digit', month: 'long', year: 'numeric'
       });
 
-      let emailEnviado = false;
-      for (const email of [...new Set(emailsDestino)]) {
-        try {
-          await base44.asServiceRole.integrations.Core.SendEmail({
-            to: email,
-            subject: `Reunião agendada: ${tipoFinal} - ${dataFormatada} às ${horaFinal}`,
-            body: `
+      const emailsFalhados = [];
+      const emailsEnviados = [];
+      const emailsDestinoCleaned = [...new Set(emailsDestino)].filter(Boolean);
+
+      for (const email of emailsDestinoCleaned) {
+        let emailSucesso = false;
+        let ultimoErro = null;
+
+        // Retry 3 vezes com backoff
+        for (let tentativa = 1; tentativa <= 3 && !emailSucesso; tentativa++) {
+          try {
+            await base44.asServiceRole.integrations.Core.SendEmail({
+              to: email,
+              subject: `Reunião agendada: ${tipoFinal} - ${dataFormatada} às ${horaFinal}`,
+              body: `
 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
   <div style="background: #1a1a1a; padding: 24px; border-radius: 12px 12px 0 0;">
     <h1 style="color: white; margin: 0; font-size: 20px;">📅 Reunião Agendada</h1>
@@ -176,12 +184,26 @@ Deno.serve(async (req) => {
   </div>
 </div>
             `.trim(),
-          });
-          emailEnviado = true;
-        } catch (emailErr) {
-          console.warn('Erro ao enviar e-mail para', email, ':', emailErr.message);
+            });
+            emailSucesso = true;
+            emailsEnviados.push(email);
+            console.log(`✅ E-mail enviado para ${email}`);
+          } catch (emailErr) {
+            ultimoErro = emailErr.message;
+            console.warn(`⚠️ Tentativa ${tentativa}/3 falhou para ${email}:`, ultimoErro);
+            if (tentativa < 3) {
+              await new Promise(r => setTimeout(r, 500 * tentativa)); // Backoff exponencial
+            }
+          }
+        }
+
+        if (!emailSucesso) {
+          emailsFalhados.push({ email, erro: ultimoErro });
+          console.error(`❌ E-mail falhou permanentemente para ${email}: ${ultimoErro}`);
         }
       }
+
+      const emailEnviado = emailsEnviados.length > 0;
 
       // 6. Atualiza sugestão com tudo concluído
       await base44.asServiceRole.entities.SugestaoAgendamento.update(sugestao_id, {
@@ -196,6 +218,8 @@ Deno.serve(async (req) => {
         google_meet_link: meetLink,
         email_enviado: emailEnviado,
         socios_emails: emailsDestino,
+        emails_enviados_com_sucesso: emailsEnviados,
+        emails_falhados: emailsFalhados,
       });
 
       return Response.json({
@@ -203,7 +227,8 @@ Deno.serve(async (req) => {
         acao: 'aprovado',
         atendimento_id: novoAtendimento.id,
         meet_link: meetLink,
-        emails_enviados: emailsDestino.length,
+        emails_enviados: emailsEnviados.length,
+        emails_falhados: emailsFalhados.length,
         email_enviado: emailEnviado,
       });
     }
