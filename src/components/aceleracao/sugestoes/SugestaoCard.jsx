@@ -122,11 +122,14 @@ export default function SugestaoCard({ sugestao, onAprovar, onReprovar, tiposAte
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {tiposAtendimento.map(t => (
-                <SelectItem key={t.id || t.nome} value={t.nome} className="text-xs">{t.nome}</SelectItem>
-              ))}
+              {tiposAtendimento.map(t => {
+                const label = t.label || t.nome || t.value || t.id;
+                return (
+                  <SelectItem key={t.id || label} value={label} className="text-xs">{label}</SelectItem>
+                );
+              })}
               {/* Fallback: se o valor atual não está na lista, exibe para não perder o select */}
-              {tipoFinal && tiposAtendimento.length > 0 && !tiposAtendimento.find(t => t.nome === tipoFinal) && (
+              {tipoFinal && tiposAtendimento.length > 0 && !tiposAtendimento.find(t => (t.label || t.nome) === tipoFinal) && (
                 <SelectItem value={tipoFinal} className="text-xs font-medium text-purple-700">
                   ✨ {tipoFinal} (IA)
                 </SelectItem>

@@ -62,7 +62,8 @@ Deno.serve(async (req) => {
 
     // === 4. Busca tipos de atendimento reais cadastrados ===
     const tiposAtendimento = await base44.asServiceRole.entities.TipoAtendimentoConsultoria.list();
-    const nomesTipos = tiposAtendimento.map(t => t.nome).filter(Boolean);
+    // A entidade usa o campo "label" (não "nome") — usar label com fallback
+    const nomesTipos = tiposAtendimento.map(t => t.label || t.nome).filter(Boolean);
 
     // Helper: encontra o tipo mais parecido na lista real (case-insensitive)
     const resolverTipo = (nomeDesejado) => {
