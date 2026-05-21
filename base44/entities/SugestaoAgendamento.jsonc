@@ -1,0 +1,177 @@
+{
+  "name": "SugestaoAgendamento",
+  "type": "object",
+  "properties": {
+    "consultor_id": {
+      "type": "string",
+      "description": "ID do consultor respons\u00e1vel"
+    },
+    "consultor_nome": {
+      "type": "string",
+      "description": "Nome do consultor"
+    },
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina/cliente"
+    },
+    "workshop_name": {
+      "type": "string",
+      "description": "Nome do cliente"
+    },
+    "workshop_email": {
+      "type": "string",
+      "description": "E-mail da empresa"
+    },
+    "socios_emails": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "E-mails dos s\u00f3cios para notifica\u00e7\u00e3o"
+    },
+    "tipo_atendimento_sugerido": {
+      "type": "string",
+      "description": "Tipo sugerido pela IA baseado no hist\u00f3rico"
+    },
+    "tipo_atendimento_final": {
+      "type": "string",
+      "description": "Tipo final escolhido pelo consultor no checklist"
+    },
+    "data_sugerida": {
+      "type": "string",
+      "format": "date",
+      "description": "Data sugerida pelo sistema"
+    },
+    "hora_sugerida": {
+      "type": "string",
+      "description": "Hora sugerida (HH:MM)"
+    },
+    "data_final": {
+      "type": "string",
+      "format": "date",
+      "description": "Data final definida no checklist"
+    },
+    "hora_final": {
+      "type": "string",
+      "description": "Hora final definida no checklist (HH:MM)"
+    },
+    "score_prioridade": {
+      "type": "integer",
+      "description": "Score calculado pela engine de prioriza\u00e7\u00e3o"
+    },
+    "nivel_criticidade": {
+      "type": "string",
+      "enum": [
+        "critico",
+        "atencao",
+        "nunca",
+        "ok"
+      ],
+      "description": "N\u00edvel de criticidade do cliente"
+    },
+    "motivo_urgencia": {
+      "type": "string",
+      "description": "Texto explicativo ex: '3 reuni\u00f5es atrasadas \u00b7 45d sem contato \u00b7 4 CAs pendentes'"
+    },
+    "reunioes_atrasadas": {
+      "type": "integer",
+      "default": 0,
+      "description": "N\u00famero de reuni\u00f5es atrasadas"
+    },
+    "reunioes_pendentes_plano": {
+      "type": "integer",
+      "default": 0,
+      "description": "N\u00famero de ContractAttendances pendentes"
+    },
+    "dias_sem_contato": {
+      "type": "integer",
+      "description": "Dias desde o \u00faltimo contato/reuni\u00e3o"
+    },
+    "contract_attendance_id": {
+      "type": "string",
+      "description": "ID do ContractAttendance a ser consumido (mais antigo pendente)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pendente",
+        "aprovado",
+        "reprovado",
+        "processando"
+      ],
+      "default": "pendente",
+      "description": "Status da sugest\u00e3o"
+    },
+    "motivo_reprovacao": {
+      "type": "string",
+      "description": "Motivo informado ao reprovar"
+    },
+    "atendimento_criado_id": {
+      "type": "string",
+      "description": "ID do ConsultoriaAtendimento criado ap\u00f3s aprova\u00e7\u00e3o"
+    },
+    "google_event_id": {
+      "type": "string",
+      "description": "ID do evento no Google Calendar"
+    },
+    "google_meet_link": {
+      "type": "string",
+      "description": "Link do Google Meet gerado"
+    },
+    "email_enviado": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se o e-mail de confirma\u00e7\u00e3o foi enviado"
+    },
+    "periodo_geracao": {
+      "type": "string",
+      "description": "Identificador do lote gerado ex: 'semana_2026-05-26'"
+    },
+    "consulting_firm_id": {
+      "type": "string",
+      "description": "ID da consultoria (isolamento de tenant)"
+    }
+  },
+  "required": [
+    "consultor_id",
+    "workshop_id",
+    "tipo_atendimento_sugerido",
+    "data_sugerida"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "consultor_id": "{{user.id}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "consultor_id": "{{user.id}}"
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

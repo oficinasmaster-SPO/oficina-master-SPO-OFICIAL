@@ -1,0 +1,306 @@
+import React, { useState, useMemo } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Loader2, Sparkles, CheckCircle2, XCircle, Clock, RefreshCw, CalendarDays, Users, Zap } from "lucide-react";
+import { toast } from "sonner";
+import SugestaoCard from "./SugestaoCard";
+
+export default function SugestoesAgendamentoTab() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  const [consultorFiltro, setConsultorFiltro] = useState("todos");
+  const [gerando, setGerando] = useState(false);
+  const [config, setConfig] = useState({
+    max_por_dia: 2,
+    horarios: "09:00,14:00",
+    dias_a_frente: 7,
+  });
+
+  // Busca sugestões existentes
+  const { data: sugestoes = [], isLoading, refetch } = useQuery({
+    queryKey: ["sugestoes-agendamento"],
+    queryFn: () => base44.entities.SugestaoAgendamento.list("-created_date", 200),
+    staleTime: 0,
+    gcTime: 0,
+  });
+
+  // Busca lista de consultores das sugestões
+  const consultores = React.useMemo(() => {
+    const map = {};
+    sugestoes.forEach(s => {
+      if (s.consultor_id && s.consultor_nome) map[s.consultor_id] = s.consultor_nome;
+    });
+    return Object.entries(map).map(([id, nome]) => ({ id, nome }));
+  }, [sugestoes]);
+
+  // Filtra por consultor
+  const sugestoesFiltradas = React.useMemo(() => {
+    if (consultorFiltro === "todos") return sugestoes;
+    return sugestoes.filter(s => s.consultor_id === consultorFiltro);
+  }, [sugestoes, consultorFiltro]);
+
+  // Contadores
+  const contadores = React.useMemo(() => ({
+    pendentes:  sugestoesFiltradas.filter(s => s.status === "pendente").length,
+    aprovados:  sugestoesFiltradas.filter(s => s.status === "aprovado").length,
+    reprovados: sugestoesFiltradas.filter(s => s.status === "reprovado").length,
+    processando: sugestoesFiltradas.filter(s => s.status === "processando").length,
+  }), [sugestoesFiltradas]);
+
+  // Ordena: processando → pendente → aprovado → reprovado
+  const sugestoesOrdenadas = React.useMemo(() => {
+    const ordem = { processando: 0, pendente: 1, aprovado: 2, reprovado: 3 };
+    return [...sugestoesFiltradas].sort((a, b) => {
+      const oa = ordem[a.status] ?? 9;
+      const ob = ordem[b.status] ?? 9;
+      if (oa !== ob) return oa - ob;
+      return (b.score_prioridade || 0) - (a.score_prioridade || 0);
+    });
+  }, [sugestoesFiltradas]);
+
+  const handleGerar = async () => {
+    setGerando(true);
+    try {
+      const hoje = new Date();
+      const amanha = new Date(hoje);
+      amanha.setDate(amanha.getDate() + 1);
+      const dataInicio = amanha.toISOString().split("T")[0];
+
+      const res = await base44.functions.invoke("gerarSugestoesAgendamento", {
+        consultor_id: consultorFiltro !== "todos" ? consultorFiltro : user?.id,
+        consultor_nome: consultorFiltro !== "todos"
+          ? consultores.find(c => c.id === consultorFiltro)?.nome
+          : user?.full_name,
+        data_inicio: dataInicio,
+        max_por_dia: config.max_por_dia,
+        horarios_disponiveis: config.horarios.split(",").map(h => h.trim()).filter(Boolean),
+        dias_a_frente: config.dias_a_frente,
+      });
+
+      const total = res?.data?.total_geradas ?? 0;
+      if (total > 0) {
+        toast.success(`${total} sugestão(ões) gerada(s) com sucesso!`);
+      } else {
+        toast.info("Nenhuma sugestão gerada. Todos os clientes críticos já possuem sugestão ativa.");
+      }
+      refetch();
+    } catch (err) {
+      toast.error("Erro ao gerar sugestões: " + err.message);
+    } finally {
+      setGerando(false);
+    }
+  };
+
+  const handleAprovar = async (sugestaoId, { tipoFinal, dataFinal, horaFinal }) => {
+    try {
+      // Otimistic update
+      queryClient.setQueryData(["sugestoes-agendamento"], (old = []) =>
+        old.map(s => s.id === sugestaoId ? { ...s, status: "processando" } : s)
+      );
+
+      const res = await base44.functions.invoke("processarAprovacaoSugestao", {
+        sugestao_id: sugestaoId,
+        acao: "aprovar",
+        tipo_final: tipoFinal,
+        data_final: dataFinal,
+        hora_final: horaFinal,
+      });
+
+      if (res?.data?.success) {
+        const msgs = [`✅ Reunião agendada!`];
+        if (res.data.meet_link) msgs.push("Google Meet criado");
+        if (res.data.email_enviado) msgs.push(`E-mail enviado para ${res.data.emails_enviados} destinatário(s)`);
+        toast.success(msgs.join(" · "));
+      }
+      refetch();
+    } catch (err) {
+      toast.error("Erro ao aprovar: " + err.message);
+      refetch();
+    }
+  };
+
+  const handleReprovar = async (sugestaoId, motivo) => {
+    try {
+      await base44.functions.invoke("processarAprovacaoSugestao", {
+        sugestao_id: sugestaoId,
+        acao: "reprovar",
+        motivo_reprovacao: motivo,
+      });
+      toast.info("Sugestão reprovada.");
+      refetch();
+    } catch (err) {
+      toast.error("Erro ao reprovar: " + err.message);
+    }
+  };
+
+  const handleLimparReprovados = async () => {
+    const reprovados = sugestoes.filter(s => s.status === "reprovado");
+    for (const s of reprovados) {
+      await base44.entities.SugestaoAgendamento.delete(s.id);
+    }
+    toast.success(`${reprovados.length} sugestão(ões) reprovada(s) removida(s).`);
+    refetch();
+  };
+
+  return (
+    <div className="space-y-4">
+
+      {/* Header configuração */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 flex-wrap">
+
+          {/* Filtro consultor */}
+          <div className="flex items-center gap-2 min-w-0">
+            <Users className="w-4 h-4 text-gray-400 flex-shrink-0" />
+            <Select value={consultorFiltro} onValueChange={setConsultorFiltro}>
+              <SelectTrigger className="h-8 text-xs w-44">
+                <SelectValue placeholder="Todos os consultores" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos" className="text-xs">Todos os consultores</SelectItem>
+                {consultores.map(c => (
+                  <SelectItem key={c.id} value={c.id} className="text-xs">{c.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Config: max por dia */}
+          <div className="flex items-center gap-2">
+            <Zap className="w-4 h-4 text-gray-400 flex-shrink-0" />
+            <span className="text-xs text-gray-500 flex-shrink-0">Máx/dia:</span>
+            <Select value={String(config.max_por_dia)} onValueChange={v => setConfig(c => ({ ...c, max_por_dia: Number(v) }))}>
+              <SelectTrigger className="h-8 text-xs w-16">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {[1,2,3,4,5].map(n => (
+                  <SelectItem key={n} value={String(n)} className="text-xs">{n}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Config: horários */}
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <Clock className="w-4 h-4 text-gray-400 flex-shrink-0" />
+            <span className="text-xs text-gray-500 flex-shrink-0">Horários:</span>
+            <input
+              type="text"
+              value={config.horarios}
+              onChange={e => setConfig(c => ({ ...c, horarios: e.target.value }))}
+              placeholder="09:00,14:00"
+              className="h-8 text-xs border border-gray-200 rounded-md px-2 w-36 focus:outline-none focus:ring-2 focus:ring-gray-300"
+            />
+          </div>
+
+          <div className="flex items-center gap-2 ml-auto">
+            {sugestoes.filter(s => s.status === "reprovado").length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 text-xs text-gray-400 hover:text-gray-600"
+                onClick={handleLimparReprovados}
+              >
+                Limpar reprovados
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 text-xs text-gray-500"
+              onClick={() => refetch()}
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+            </Button>
+            <Button
+              size="sm"
+              className="h-8 text-xs bg-gray-900 hover:bg-gray-800 text-white"
+              onClick={handleGerar}
+              disabled={gerando}
+            >
+              {gerando ? (
+                <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+              ) : (
+                <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+              )}
+              {gerando ? "Gerando..." : "Gerar Sugestões IA"}
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Stats bar */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-100 rounded-lg px-3 py-1.5">
+          <Clock className="w-3.5 h-3.5 text-amber-500" />
+          <span className="font-semibold text-amber-700 text-sm">{contadores.pendentes}</span>
+          <span className="text-amber-500 text-xs">pendentes</span>
+        </div>
+        <div className="flex items-center gap-1.5 bg-green-50 border border-green-100 rounded-lg px-3 py-1.5">
+          <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
+          <span className="font-semibold text-green-700 text-sm">{contadores.aprovados}</span>
+          <span className="text-green-500 text-xs">agendados</span>
+        </div>
+        <div className="flex items-center gap-1.5 bg-red-50 border border-red-100 rounded-lg px-3 py-1.5">
+          <XCircle className="w-3.5 h-3.5 text-red-400" />
+          <span className="font-semibold text-red-700 text-sm">{contadores.reprovados}</span>
+          <span className="text-red-400 text-xs">reprovados</span>
+        </div>
+        {contadores.processando > 0 && (
+          <div className="flex items-center gap-1.5 bg-blue-50 border border-blue-100 rounded-lg px-3 py-1.5">
+            <Loader2 className="w-3.5 h-3.5 text-blue-500 animate-spin" />
+            <span className="font-semibold text-blue-700 text-sm">{contadores.processando}</span>
+            <span className="text-blue-500 text-xs">processando</span>
+          </div>
+        )}
+      </div>
+
+      {/* Lista de sugestões */}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-16 text-gray-400 gap-2">
+          <Loader2 className="w-5 h-5 animate-spin" />
+          <span className="text-sm">Carregando sugestões...</span>
+        </div>
+      ) : sugestoesOrdenadas.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
+          <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center">
+            <CalendarDays className="w-7 h-7 text-gray-300" />
+          </div>
+          <div>
+            <p className="font-semibold text-gray-700">Nenhuma sugestão gerada</p>
+            <p className="text-sm text-gray-400 mt-1">
+              Clique em "Gerar Sugestões IA" para analisar os clientes mais críticos<br />
+              e criar automaticamente uma fila de agendamentos priorizados.
+            </p>
+          </div>
+          <Button
+            size="sm"
+            className="mt-2 bg-gray-900 hover:bg-gray-800 text-white text-xs"
+            onClick={handleGerar}
+            disabled={gerando}
+          >
+            {gerando ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 mr-1.5" />}
+            {gerando ? "Gerando..." : "Gerar agora"}
+          </Button>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {sugestoesOrdenadas.map(sugestao => (
+            <SugestaoCard
+              key={sugestao.id}
+              sugestao={sugestao}
+              onAprovar={handleAprovar}
+              onReprovar={handleReprovar}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

@@ -23,6 +23,7 @@ import FollowUpContadorHistorico from "./followups/FollowUpContadorHistorico";
 import FollowUpConcluidoRow from "./FollowUpConcluidoRow.jsx";
 import RelatoriosTab from "./RelatoriosTab";
 import TaxaRealizacaoRelatorio from "./TaxaRealizacaoRelatorio";
+import SugestoesAgendamentoTab from "./sugestoes/SugestoesAgendamentoTab";
 import { useFollowUpSequence } from "@/hooks/useFollowUpSequence";
 
 // ── Componentes de módulo (fora do corpo do componente para evitar re-mount) ──
@@ -144,6 +145,7 @@ const FlatList = ({ items, isLoading, showWorkshop = false, emptyLabel, onSelect
 
 const TABS = [
   { id: "crm",        label: "Fila CRM" },
+  { id: "sugestoes",  label: "🤖 Agenda Inteligente" },
   { id: "pastas",     label: "Pastas" },
   { id: "abertos",    label: "Abertos" },
   { id: "atrasados",  label: "Atrasados" },
@@ -729,6 +731,10 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
             />
           )}
         </>
+      )}
+
+      {activeTab === "sugestoes" && (
+        <SugestoesAgendamentoTab />
       )}
 
       {activeTab === "taxa-realizacao" && (
