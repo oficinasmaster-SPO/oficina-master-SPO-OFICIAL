@@ -307,23 +307,9 @@ Deno.serve(async (req) => {
       })
     );
 
-    // Helper: verifica se o tipo sugerido é compatível com os tipos permitidos do slot
-    // Compara pelo nome (label) do tipo, buscando no mapa de id→label
-    const tiposMap = {}; // id → label
-    tiposAtendimento.forEach(t => { tiposMap[t.id] = (t.label || t.nome || '').toLowerCase(); });
-
+    // Helper: SEMPRE aceita qualquer tipo (restrição desabilitada)
     const slotAceitaTipo = (diaSemanaNum, hora, tipoNome) => {
-      const chaveSlot = `${diaSemanaNum}_${hora}`;
-      const idsPermitidos = tiposPermitidosPorSlot[chaveSlot];
-      // Slot sem restrição (lista vazia ou não configurado) → aceita qualquer tipo
-      if (!idsPermitidos || idsPermitidos.length === 0) return true;
-      if (!tipoNome) return true;
-      const nomeNorm = tipoNome.toLowerCase();
-      // Verifica se algum id permitido corresponde ao nome do tipo sugerido
-      return idsPermitidos.some(id => {
-        const labelTipo = tiposMap[id] || '';
-        return labelTipo.includes(nomeNorm) || nomeNorm.includes(labelTipo);
-      });
+      return true; // ✅ Aceita qualquer cliente em qualquer slot
     };
 
     const sugestoes = [];
@@ -364,21 +350,8 @@ Deno.serve(async (req) => {
           : ['QUALQUER'];
         console.log(`  🔍 ${hora}: Tipos permitidos: ${tiposPermitidosNomes.join(', ')}`);
 
-        // Busca o primeiro workshop da fila cujo tipo é compatível com este slot
-        const idxCompativel = filaWorkshops.findIndex(sw => {
-          const compativel = slotAceitaTipo(diaSemanaNum, hora, sw.tipoSugerido);
-          if (!compativel) {
-            console.log(`     ❌ ${sw.workshop_name} (${sw.tipoSugerido}) ≠ slot`);
-          }
-          return compativel;
-        });
-        
-        if (idxCompativel === -1) {
-          console.log(`  ❌ ${hora}: NENHUM cliente compatível com tipos do slot`);
-          continue;
-        }
-
-        const sw = filaWorkshops.splice(idxCompativel, 1)[0];
+        // Pega o primeiro cliente da fila (sem filtro de tipo)
+        const sw = filaWorkshops.shift();
         console.log(`  ✅ ${hora}: Alocado ${sw.workshop_name} (${sw.tipoSugerido})`);
         sugestoes.push({
           consultor_id: resolvedConsultorId,
