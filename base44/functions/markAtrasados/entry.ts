@@ -24,12 +24,15 @@ Deno.serve(async (req) => {
     );
 
     const now = new Date();
+    // Tolerância de 30 minutos — mesma regra usada no alertaAtendimentoAtraso
+    const trintaMinAtras = new Date(now.getTime() - 30 * 60 * 1000);
     const idsToUpdate = [];
 
     for (const a of atendimentos) {
       if (finalStatuses.includes(a.status)) continue;
       const dataAgendada = new Date(a.data_agendada);
-      if (now > dataAgendada) {
+      // Só marca como atrasado se já passaram 30+ minutos do horário agendado
+      if (dataAgendada <= trintaMinAtras) {
         idsToUpdate.push(a.id);
       }
     }
