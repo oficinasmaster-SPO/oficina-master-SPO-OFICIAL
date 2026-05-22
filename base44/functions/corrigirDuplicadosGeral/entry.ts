@@ -14,77 +14,65 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'workshop_id is required' }, { status: 400 });
     }
 
-    // Buscar todos os lançamentos das 3 tabelas
-    const [contas_pagar, contas_receber, dre_lancamentos] = await Promise.all([
-      base44.entities.ContaPagar.list('', 1000).catch(() => []),
-      base44.entities.ContaReceber.list('', 1000).catch(() => []),
-      base44.entities.DRELancamento.list('', 1000).catch(() => [])
-    ]);
-
-    const todasasContas = [
-      ...contas_pagar.map(c => ({ ...c, tipo: 'ContaPagar' })),
-      ...contas_receber.map(c => ({ ...c, tipo: 'ContaReceber' })),
-      ...dre_lancamentos.map(c => ({ ...c, tipo: 'DRELancamento' }))
-    ].filter(c => c.workshop_id === workshop_id);
+    // Buscar apenas ContaPagar (foco principal)
+    const contas_pagar = await base44.entities.ContaPagar.list('', 2000);
+    const todasasContas = contas_pagar
+      .filter(c => c.workshop_id === workshop_id)
+      .map(c => ({ ...c, tipo: 'ContaPagar' }));
 
     // Agrupar por: nome + valor + data_vencimento
     const grupos = {};
     todasasContas.forEach(item => {
-      const key = `${item.fornecedor_nome || item.cliente_nome || item.descricao}|${item.valor}|${item.data_vencimento || item.data_pagamento}`;
+      const key = `${item.fornecedor_nome || 'N/A'}|${item.valor_original}|${item.data_vencimento}`;
       if (!grupos[key]) grupos[key] = [];
       grupos[key].push(item);
     });
 
-    // Processar grupos com duplicatas
+    // Processar apenas grupos com duplicatas
     const correcoes = [];
     const erros = [];
+    let processados = 0;
 
     for (const [key, items] of Object.entries(grupos)) {
-      if (items.length <= 1) continue; // Sem duplicatas
+      if (items.length <= 1) continue;
 
-      // Ordenar por data de criação para manter o primeiro
       items.sort((a, b) => new Date(a.created_date) - new Date(b.created_date));
 
-      // Manter o primeiro e redistribuir os demais
       for (let i = 1; i < items.length; i++) {
         const item = items[i];
         const mesesAdiante = i;
         
         try {
-          // Calcular nova data de vencimento
-          const dataOriginal = new Date(item.data_vencimento || item.data_pagamento);
+          const dataOriginal = new Date(item.data_vencimento);
           const novaData = new Date(dataOriginal);
           novaData.setMonth(novaData.getMonth() + mesesAdiante);
           const novaDataStr = novaData.toISOString().split('T')[0];
-
-          // Calcular novo mês (YYYY-MM)
           const novoMes = novaData.toISOString().substring(0, 7);
 
-          // Atualizar conforme tipo
-          const updateData = {
+          await base44.entities.ContaPagar.update(item.id, {
             data_vencimento: novaDataStr,
             mes: novoMes
-          };
-
-          if (item.parcela_numero && item.parcela_total) {
-            updateData.parcela_numero = item.parcela_numero + mesesAdiante;
-          }
-
-          await base44.entities[item.tipo].update(item.id, updateData);
+          });
 
           correcoes.push({
             id: item.id,
-            nome: item.fornecedor_nome || item.cliente_nome || item.descricao,
-            tipo: item.tipo,
+            nome: item.fornecedor_nome,
             mesesAdiante,
             novaData: novaDataStr,
             novoMes,
-            valor: item.valor
+            valor: item.valor_original
           });
+          
+          processados++;
+          
+          // Delay para evitar rate limit
+          if (processados % 10 === 0) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+          }
         } catch (err) {
           erros.push({
             id: item.id,
-            nome: item.fornecedor_nome || item.cliente_nome || item.descricao,
+            nome: item.fornecedor_nome,
             erro: err.message
           });
         }
@@ -98,8 +86,8 @@ Deno.serve(async (req) => {
         total_duplicatas_corrigidas: correcoes.length,
         erros: erros.length
       },
-      correcoes: correcoes.slice(0, 50), // Primeiros 50
-      erros: erros.slice(0, 20)
+      correcoes: correcoes.slice(0, 100),
+      erros: erros.slice(0, 50)
     });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
