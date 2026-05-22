@@ -71,15 +71,22 @@ export function formatTimeBR(date) {
 }
 
 /**
- * Retorna um objeto Date ajustado para o fuso de Brasília
- * Útil para comparações e cálculos
+ * Retorna um objeto Date ajustado para o fuso de Brasília.
+ * IMPORTANTE: O Date retornado tem os campos getHours/getDate/etc. correspondendo
+ * ao horário de Brasília (útil para extrair hora/data local sem perda de fuso).
  * @param {string|Date} date 
  * @returns {Date}
  */
 export function toBrazilDate(date) {
   if (!date) return new Date();
+  // Se a string não tem offset explícito (ex: "2026-05-22T11:00:00" sem Z ou +/-),
+  // trata como horário de Brasília (UTC-3) para compatibilidade com registros antigos.
+  if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(date) && !date.endsWith('Z') && !/[+-]\d{2}:\d{2}$/.test(date)) {
+    // Registro legado sem timezone — assume BRT (UTC-3)
+    return new Date(date + '-03:00');
+  }
   const d = typeof date === 'string' ? new Date(date) : new Date(date);
-  // Cria uma string no fuso de Brasília e re-parseia
+  // Cria uma string no fuso de Brasília e re-parseia para ter getHours() correto
   const brString = d.toLocaleString('en-US', { timeZone: TIMEZONE });
   return new Date(brString);
 }

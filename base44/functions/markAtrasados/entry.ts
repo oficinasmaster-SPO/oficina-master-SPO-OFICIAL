@@ -23,14 +23,27 @@ Deno.serve(async (req) => {
       500
     );
 
-    const now = new Date();
+    const now = new Date(); // UTC
     // Tolerância de 30 minutos — mesma regra usada no alertaAtendimentoAtraso
     const trintaMinAtras = new Date(now.getTime() - 30 * 60 * 1000);
     const idsToUpdate = [];
 
     for (const a of atendimentos) {
       if (finalStatuses.includes(a.status)) continue;
-      const dataAgendada = new Date(a.data_agendada);
+      if (!a.data_agendada) continue;
+
+      // Normaliza a data agendada para UTC:
+      // - Se já tem 'Z' ou offset explícito (+/-HH:MM) → parse direto (correto)
+      // - Se não tem timezone (registro legado "2026-05-22T11:00:00") → assume BRT (UTC-3)
+      let dataAgendada;
+      const raw = a.data_agendada;
+      if (raw.endsWith('Z') || /[+-]\d{2}:\d{2}$/.test(raw)) {
+        dataAgendada = new Date(raw);
+      } else {
+        // Legado: interpreta como horário de Brasília (UTC-3)
+        dataAgendada = new Date(raw + '-03:00');
+      }
+
       // Só marca como atrasado se já passaram 30+ minutos do horário agendado
       if (dataAgendada <= trintaMinAtras) {
         idsToUpdate.push(a.id);

@@ -352,7 +352,11 @@ export default function RegistrarAtendimento({ isModal = false, onClose, onSaved
       if (!data.workshop_id) throw new Error("Selecione uma oficina");
       if (!data.data_agendada || !data.hora_agendada) throw new Error("Preencha data e horário");
 
-      const dataHora = `${data.data_agendada}T${data.hora_agendada}:00`;
+      // Converte horário local Brasil (UTC-3) para UTC antes de salvar
+      // Exemplo: usuário digita 11:00 BRT → salva 14:00:00.000Z no banco
+      const dataHoraLocalStr = `${data.data_agendada}T${data.hora_agendada}:00`;
+      const dataHoraUTC = new Date(dataHoraLocalStr + '-03:00');
+      const dataHora = dataHoraUTC.toISOString();
 
       // I1: Use consultor_nome from consultores list (Employee name) — always prefer Employee name over user.full_name
       const consultorId = data.consultor_id || user.id;
@@ -498,7 +502,9 @@ export default function RegistrarAtendimento({ isModal = false, onClose, onSaved
     if (!formData.data_agendada || !formData.hora_agendada) { toast.error("Preencha data e horário do atendimento"); return; }
 
     try {
-      const dataHoraCompleta = `${formData.data_agendada}T${formData.hora_agendada}:00`;
+      // Converte horário local Brasil para UTC ao verificar conflitos também
+      const dataHoraLocalStr2 = `${formData.data_agendada}T${formData.hora_agendada}:00`;
+      const dataHoraCompleta = new Date(dataHoraLocalStr2 + '-03:00').toISOString();
       const consultorId = formData.consultor_id || user.id;
       const response = await base44.functions.invoke('verificarConflitoHorario', {
         consultor_id: consultorId,

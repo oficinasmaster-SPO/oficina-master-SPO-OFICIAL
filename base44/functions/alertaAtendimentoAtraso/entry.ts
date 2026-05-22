@@ -41,7 +41,11 @@ Deno.serve(async (req) => {
   const atrasados = todosAtendimentos.filter(a => {
     if (!['agendado', 'confirmado'].includes(a.status)) return false;
     if (!a.data_agendada) return false;
-    const d = new Date(a.data_agendada);
+    // Normaliza para UTC: datas sem timezone (legado) assumem BRT (UTC-3)
+    const raw = a.data_agendada;
+    const d = (raw.endsWith('Z') || /[+-]\d{2}:\d{2}$/.test(raw))
+      ? new Date(raw)
+      : new Date(raw + '-03:00');
     return d <= trintaMinAtras && d >= tresBufAtras;
   });
 
