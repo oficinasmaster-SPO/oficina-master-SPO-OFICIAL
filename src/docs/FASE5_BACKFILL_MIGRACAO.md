@@ -1,400 +1,472 @@
-# 📊 FASE 5 - BACKFILL E MIGRAÇÃO
+# ✅ FASE 5: BACKFILL + MIGRAÇÃO - CONCLUÍDA
 
-**Status:** ✅ Implementado  
-**Data:** 2026-05-17
-
----
-
-## 🎯 OBJETIVO
-
-Migrar dados legados para a nova estrutura de recorrências e metas anuais.
+**Data:** 2026-05-22  
+**Status:** ✅ IMPLEMENTADO  
+**Duração:** 3 semanas (estimado)
 
 ---
 
-## ✅ ENTREGÁVEIS
+## 📦 OBJETIVO DA FASE
 
-### 1. **Function: `backfillRecorrencias`**
+Migrar dados históricos dos últimos 12 meses para a nova arquitetura financeira, garantindo consistência e integridade dos dados.
 
-**Propósito:** Identifica e marca lançamentos recorrentes automaticamente
+**Metas:**
+- ✅ Migrar DRE/DFC históricos
+- ✅ Criar ContaReceber/ContaPagar vinculados
+- ✅ Criar LiquidaçõesFinanceiras históricas
+- ✅ Validar integridade dos dados
+- ✅ Corrigir inconsistências automaticamente
+
+---
+
+## 🔧 BACKEND FUNCTIONS CRIADAS
+
+### 1. backfillHistoricoFinanceiro
+**Arquivo:** `functions/backfillHistoricoFinanceiro.js`
+
+**Responsabilidade:** Migrar últimos N meses de dados financeiros
 
 **Input:**
-```json
+```javascript
 {
-  "workshop_id": "xyz",
-  "ano": 2026,
-  "dry_run": true
+  workshop_id: string,
+  meses_back: number (default: 12)
 }
 ```
 
-**Output:**
-```json
+**O que faz:**
+
+#### Passo 1: Migrar DRE
+Para cada mês do período:
+1. Busca todos os DRELancamentos do mês
+2. Para cada lançamento de **receita**:
+   - Verifica se já existe ContaReceber vinculada
+   - Se não existe → Cria ContaReceber
+   - Marca como "pago" (dados históricos)
+   - Vincula ao DRE original via `dre_lancamento_id`
+
+3. Para cada lançamento de **despesa**:
+   - Verifica se já existe ContaPagar vinculada
+   - Se não existe → Cria ContaPagar
+   - Marca como "pago" (dados históricos)
+   - Vincula ao DRE original via `dre_lancamento_id`
+
+#### Passo 2: Migrar DFC
+Para cada DFCLancamento manual:
+1. Cria LiquidaçãoFinanceira correspondente
+2. Marca como conciliada (dados históricos)
+3. Vincula via número de documento
+
+**Exemplo de Uso:**
+```javascript
+// Migrar últimos 12 meses
+const result = await base44.functions.backfillHistoricoFinanceiro({
+  workshop_id: 'ws_123',
+  meses_back: 12
+});
+
+// Resultado esperado:
 {
-  "dry_run": true,
-  "total_lancamentos": 156,
-  "grupos_analisados": 42,
-  "recorrencias_identificadas": [
-    {
-      "descricao": "Aluguel",
-      "categoria": "operacional",
-      "tipo": "despesa",
-      "meses": ["2026-01", "2026-02", "2026-03"],
-      "qtd_meses": 3,
-      "valor_medio": 2500,
-      "variacao": 0.02,
-      "consecutivos": true,
-      "lancamentos_ids": ["id1", "id2", "id3"],
-      "acao": "SERIA_ATUALIZADO"
-    }
-  ],
-  "atualizacoes_pendentes": 48
-}
-```
-
-**Critérios para identificar recorrência:**
-- ✅ Mesma descrição + categoria + tipo
-- ✅ Pelo menos 2 meses
-- ✅ Variação de valor <= 15%
-- ✅ Preferência: meses consecutivos
-
-**Fluxo:**
-1. **Dry Run (recomendado primeiro):**
-   ```json
-   { "dry_run": true }
-   ```
-   - Apenas identifica, não altera nada
-   - Mostra preview do que será migrado
-
-2. **Execução:**
-   ```json
-   { "dry_run": false }
-   ```
-   - Aplica mudanças
-   - Adiciona `recorrencia_id` e `recorrente: true`
-
----
-
-### 2. **Function: `migrarMetasAnuais`**
-
-**Propósito:** Soma metas mensais e cria BudgetMeta anual
-
-**Input:**
-```json
-{
-  "workshop_id": "xyz",
-  "ano": 2026,
-  "dry_run": true
-}
-```
-
-**Output:**
-```json
-{
-  "dry_run": true,
-  "total_metas_mensais": 48,
-  "itens_analisados": 12,
-  "metas_anuais_preview": [
-    {
-      "item": "Aluguel",
-      "categoria": "operacional",
-      "tipo": "despesa",
-      "meta_anual_rs": 30000,
-      "meta_mensal_media": 2500,
-      "qtd_meses_com_meta": 12,
-      "meta_acumulada_por_mes": {
-        "2026-01": 2500,
-        "2026-02": 5000,
-        "2026-03": 7500,
-        ...
-      },
-      "acao": "SERIA_CRIADA"
-    }
-  ]
-}
-```
-
-**Lógica:**
-1. Busca todas as BudgetMeta mensais do ano
-2. Agrupa por item + categoria + tipo
-3. Soma as 12 metas mensais
-4. Cria BudgetMeta anual com:
-   - `mes: "2026-ANUAL"`
-   - `periodicidade: "anual"`
-   - `meta_anual_rs: <soma>`
-   - `meta_acumulada_mes: {objeto}`
-
-**Fluxo:**
-1. **Dry Run:** Preview sem criar
-2. **Execução:** Cria metas anuais
-
----
-
-### 3. **Function: `validarIntegridadeMigracao`**
-
-**Propósito:** Verifica integridade dos dados após migração
-
-**Input:**
-```json
-{
-  "workshop_id": "xyz",
-  "ano": 2026
-}
-```
-
-**Output:**
-```json
-{
-  "timestamp": "2026-05-17T10:30:00Z",
-  "dre": {
-    "total_lancamentos": 156,
-    "com_recorrencia": 48,
-    "sem_recorrencia": 108,
-    "inconsistencias": [
-      {
-        "tipo": "POSSIVEL_RECORRENCIA_NAO_MARCADA",
-        "descricao": "Internet",
-        "meses": 4,
-        "valor_medio": 150,
-        "severidade": "MEDIA"
-      }
-    ]
+  success: true,
+  resultados: {
+    dre_migrados: 240,
+    dfc_migrados: 80,
+    contas_receber_criadas: 150,
+    contas_pagar_criadas: 90,
+    liquidacoes_criadas: 80,
+    erros: []
   },
-  "budget": {
-    "total_metas": 50,
-    "metas_anuais": 12,
-    "metas_mensais": 38,
-    "inconsistencias": [
-      {
-        "tipo": "DIVERGENCIA_ANUAL_VS_MENSAIS",
-        "item": "Marketing",
-        "valor_anual": 50000,
-        "soma_mensais": 48000,
-        "diff_percentual": "4.17%",
-        "severidade": "MEDIA"
-      }
-    ]
-  },
-  "resumo": {
-    "status": "ATENCAO",
-    "total_inconsistencias": 3,
-    "recomendacoes": [
-      "Executar backfillRecorrencias para marcar 2 possíveis recorrências",
-      "Revisar 1 divergência entre metas anuais e mensais"
-    ]
+  resumo: {
+    total_operacoes: 640,
+    erros_count: 0
   }
 }
 ```
 
-**Validações:**
-1. ✅ DRE: Identifica recorrências não marcadas
-2. ✅ Budget: Compara anual vs soma das mensais
-3. ✅ Budget: Verifica meses faltantes
-4. ✅ Status: OK | ATENCAO | CRITICO
+**Dados Criados:**
+- ContaReceber: `cliente_id: 'historico_migration'`
+- ContaPagar: `fornecedor_id: 'historico_migration'`
+- Todos marcados como "pago"
+- Observação: "Migrado via backfill - FASE 5"
+
+---
+
+### 2. validarIntegridadeHistorico
+**Arquivo:** `functions/validarIntegridadeHistorico.js`
+
+**Responsabilidade:** Validar integridade dos dados migrados
+
+**Input:**
+```javascript
+{
+  workshop_id: string
+}
+```
+
+**7 Validações Realizadas:**
+
+#### 1. DRE sem ContaReceber/ContaPagar
+- **Gravidade:** Média
+- **Descrição:** DRE lançado sem contraparte financeira
+- **Ação:** Executar backfill ou criar manualmente
+
+```javascript
+{
+  tipo: 'dre_sem_conta',
+  gravidade: 'media',
+  entidade_id: 'dre_abc',
+  mes: '2025-08',
+  descricao: "DRE 'Venda de Peças' sem ContaReceber vinculada",
+  acao: "Executar backfill"
+}
+```
+
+#### 2. ContaReceber sem Liquidação
+- **Gravidade:** Alta
+- **Descrição:** Conta aberta/parcial sem liquidação registrada
+- **Ação:** Criar liquidação ou ajustar status
+
+#### 3. ContaPagar sem Liquidação
+- **Gravidade:** Alta
+- **Descrição:** Conta aberta/parcial sem liquidação registrada
+- **Ação:** Criar liquidação ou ajustar status
+
+#### 4. Liquidação não Conciliada
+- **Gravidade:** Média
+- **Descrição:** Liquidação antiga (>30 dias) sem conciliação bancária
+- **Ação:** Importar extrato ou conciliar manualmente
+
+#### 5. Valores Divergentes
+- **Gravidade:** Crítica ⚠️
+- **Descrição:** DRE e ContaReceber com valores diferentes
+- **Ação:** Ajustar valores para bater
+
+```javascript
+{
+  tipo: 'valor_divergente',
+  gravidade: 'critica',
+  entidade_id: 'dre_abc',
+  descricao: "Divergência: DRE R$ 1000 vs ContaReceber R$ 990",
+  acao: "Ajustar valores"
+}
+```
+
+#### 6. ContaReceber Duplicada
+- **Gravidade:** Alta
+- **Descrição:** Múltiplas ContaReceber para mesmo DRE
+- **Ação:** Excluir duplicatas
+
+#### 7. Datas Inconsistentes
+- **Gravidade:** Média
+- **Descrição:** Data de pagamento anterior à emissão
+- **Ação:** Corrigir datas
+
+**Output:**
+```javascript
+{
+  success: true,
+  total_validacoes: 25,
+  total_erros: 8,
+  resumo: {
+    dre_sem_conta: 5,
+    contas_receber_sem_liquidacao: 3,
+    contas_pagar_sem_liquidacao: 2,
+    liquidacoes_nao_conciliadas: 10,
+    valores_divergentes: 2,
+    duplicatas: 2,
+    datas_inconsistentes: 1
+  },
+  validacoes: [/* array completo */]
+}
+```
+
+**Exemplo de Uso:**
+```javascript
+const validacao = await base44.functions.validarIntegridadeHistorico({
+  workshop_id: 'ws_123'
+});
+
+// Se total_erros > 0 → Executar correções
+if (validacao.total_erros > 0) {
+  await base44.functions.corrigirIntegridadeHistorico({
+    workshop_id: 'ws_123'
+  });
+}
+```
+
+---
+
+### 3. corrigirIntegridadeHistorico
+**Arquivo:** `functions/corrigirIntegridadeHistorico.js`
+
+**Responsabilidade:** Corrigir automaticamente inconsistências
+
+**Input:**
+```javascript
+{
+  workshop_id: string
+}
+```
+
+**Correções Automáticas:**
+
+#### 1. Atualiza Status de ContaReceber
+- Busca todas as liquidações vinculadas
+- Calcula total pago
+- Atualiza status:
+  - `totalPago >= valorOriginal` → "pago"
+  - `totalPago > 0` → "parcial"
+  - `totalPago === 0` → "aberto"
+- Atualiza `valor_pago` e `valor_aberto`
+
+#### 2. Atualiza Status de ContaPagar
+- Mesma lógica de ContaReceber
+- Atualiza status e valores
+
+#### 3. Atualiza Dias de Atraso
+- Calcula dias entre vencimento e hoje
+- Atualiza `dias_atraso` em ContaReceber e ContaPagar
+- Apenas para contas não pagas
+
+#### 4. Concilia Liquidações Antigas
+- Liquidações com >90 dias não conciliadas
+- Marca como `conciliado: true`
+- Adiciona observação: "Conciliado via auto-backfill"
+
+#### 5. Remove Duplicatas
+- Identifica ContaReceber duplicadas (mesmo DRE + valor + data)
+- Mantém a primeira
+- Exclui as demais
+
+**Output:**
+```javascript
+{
+  success: true,
+  message: "Correções aplicadas com sucesso",
+  correcoes: {
+    dre_atualizados: 0,
+    contas_receber_atualizadas: 45,
+    contas_pagar_atualizadas: 30,
+    liquidacoes_atualizadas: 15,
+    erros: []
+  },
+  resumo: {
+    total_correcoes: 90,
+    total_erros: 0
+  }
+}
+```
 
 ---
 
 ## 📊 FLUXO DE MIGRAÇÃO
 
-### Passo 1: Backfill de Recorrências
+```
+1. Backfill (backfillHistoricoFinanceiro)
+   ↓
+   Para cada mês (últimos 12):
+   - Busca DRE → Cria ContaReceber/ContaPagar
+   - Busca DFC → Cria Liquidações
+   ↓
+   Resultado: Dados históricos migrados
 
-```bash
-# 1. Dry run (preview)
-POST /functions/backfillRecorrencias
-{
-  "workshop_id": "xyz",
-  "ano": 2026,
-  "dry_run": true
+2. Validação (validarIntegridadeHistorico)
+   ↓
+   7 validações:
+   - DRE sem conta
+   - Conta sem liquidação
+   - Liquidação não conciliada
+   - Valores divergentes
+   - Duplicatas
+   - Datas inconsistentes
+   ↓
+   Relatório: total_erros, total_validacoes
+
+3. Correção (corrigirIntegridadeHistorico)
+   ↓
+   Correções automáticas:
+   - Atualiza status
+   - Atualiza dias_atraso
+   - Concilia antigas
+   - Remove duplicatas
+   ↓
+   Resultado: Dados consistentes
+
+4. Validação Final
+   ↓
+   Re-executa validação
+   ↓
+   Se total_erros === 0 → ✅ MIGRAÇÃO CONCLUÍDA
+```
+
+---
+
+## 🎯 CRITÉRIOS DE ACEITE
+
+### Backfill
+- [x] Migrar últimos 12 meses
+- [x] Criar ContaReceber para DRE receitas
+- [x] Criar ContaPagar para DRE despesas
+- [x] Criar Liquidações para DFC manuais
+- [x] Vincular via dre_lancamento_id
+- [x] Marcar como "pago" (histórico)
+- [x] Registrar auditoria
+
+### Validação
+- [x] 7 tipos de validação
+- [x] Ordenar por gravidade
+- [x] Reportar total_erros
+- [x] Sugerir ações corretivas
+
+### Correção
+- [x] Atualizar status baseado em liquidações
+- [x] Calcular dias_atraso
+- [x] Conciliar liquidações antigas (>90 dias)
+- [x] Remover duplicatas
+- [x] Registrar auditoria
+
+### Integridade
+- [x] DRE ↔ ContaReceber/ContaPagar (1:1)
+- [x] ContaReceber ↔ Liquidação (1:N)
+- [x] Valores consistentes (±0.01)
+- [x] Datas coerentes
+- [x] Sem duplicatas
+
+---
+
+## 📝 EXEMPLO DE MIGRAÇÃO COMPLETA
+
+```javascript
+// 1. Executar Backfill
+console.log('Iniciando migração de 12 meses...');
+const backfill = await base44.functions.backfillHistoricoFinanceiro({
+  workshop_id: 'ws_123',
+  meses_back: 12
+});
+
+console.log('Backfill concluído:', backfill.resultados);
+// - 240 DRE migrados
+// - 150 ContaReceber criadas
+// - 90 ContaPagar criadas
+
+// 2. Validar Integridade
+console.log('Validando integridade...');
+const validacao = await base44.functions.validarIntegridadeHistorico({
+  workshop_id: 'ws_123'
+});
+
+console.log('Erros encontrados:', validacao.total_erros);
+// - 8 erros críticos/altos
+// - 25 validações totais
+
+// 3. Corrigir Automaticamente
+if (validacao.total_erros > 0) {
+  console.log('Corrigindo inconsistências...');
+  const correcao = await base44.functions.corrigirIntegridadeHistorico({
+    workshop_id: 'ws_123'
+  });
+  
+  console.log('Correções aplicadas:', correcao.correcoes);
+  // - 45 ContaReceber atualizadas
+  // - 30 ContaPagar atualizadas
+  // - 15 Liquidações conciliadas
 }
 
-# Revisa o preview...
+// 4. Validação Final
+console.log('Validação final...');
+const validacaoFinal = await base44.functions.validarIntegridadeHistorico({
+  workshop_id: 'ws_123'
+});
 
-# 2. Execução
-POST /functions/backfillRecorrencias
-{
-  "workshop_id": "xyz",
-  "ano": 2026,
-  "dry_run": false
+if (validacaoFinal.total_erros === 0) {
+  console.log('✅ MIGRAÇÃO CONCLUÍDA COM SUCESSO!');
+} else {
+  console.log('⚠️ Erros pendentes:', validacaoFinal.total_erros);
+  // Revisar manualmente erros restantes
 }
 ```
 
-### Passo 2: Migrar Metas Anuais
-
-```bash
-# 1. Dry run (preview)
-POST /functions/migrarMetasAnuais
-{
-  "workshop_id": "xyz",
-  "ano": 2026,
-  "dry_run": true
-}
-
-# Revisa o preview...
-
-# 2. Execução
-POST /functions/migrarMetasAnuais
-{
-  "workshop_id": "xyz",
-  "ano": 2026,
-  "dry_run": false
-}
-```
-
-### Passo 3: Validar Integridade
-
-```bash
-POST /functions/validarIntegridadeMigracao
-{
-  "workshop_id": "xyz",
-  "ano": 2026
-}
-
-# Revisa relatório de inconsistências
-# Se tiver erros, corrige manualmente
-```
-
 ---
 
-## 🔍 EXEMPLOS DE INCONSISTÊNCIAS
+## 🔍 DADOS MIGRADOS
 
-### Tipo: `POSSIVEL_RECORRENCIA_NAO_MARCADA`
-
-**Causa:** Lançamentos com mesma descrição em meses consecutivos mas sem `recorrencia_id`
-
-**Solução:** Executar `backfillRecorrencias` com `dry_run: false`
-
----
-
-### Tipo: `DIVERGENCIA_ANUAL_VS_MENSAIS`
-
-**Causa:** Meta anual não bate com soma das mensais (> 5% diff)
-
-**Exemplo:**
-- Meta anual: R$ 50.000
-- Soma mensais: R$ 48.000
-- Diferença: 4.17%
-
-**Solução:**
-1. Verificar se há erro nas metas mensais
-2. Ou atualizar meta anual manualmente
-
----
-
-### Tipo: `MESES_FALTANTES`
-
-**Causa:** Alguns meses sem BudgetMeta
-
-**Exemplo:**
-```json
+### Entity: ContaReceber (Histórico)
+```javascript
 {
-  "tipo": "MESES_FALTANTES",
-  "meses": ["07", "08"],
-  "severidade": "BAIXA"
+  workshop_id: 'ws_123',
+  dre_lancamento_id: 'dre_abc',
+  cliente_id: 'historico_migration',
+  cliente_nome: 'Venda de Peças',
+  valor_original: 1000,
+  valor_aberto: 0,
+  valor_pago: 1000,
+  status: 'pago',
+  data_vencimento: '2025-08-10',
+  data_emissao: '2025-08-01',
+  data_primeiro_pagamento: '2025-08-15',
+  numero_documento: 'DRE-dre_abc',
+  tipo_documento: 'nota_fiscal',
+  forma_pagamento: 'pix',
+  parcela_numero: 1,
+  parcela_total: 1,
+  observacoes: 'Migrado via backfill - FASE 5'
 }
 ```
 
-**Solução:** Criar metas faltantes manualmente ou validar se é intencional
-
----
-
-## 📊 STATUS DO RELATÓRIO
-
-| Status | Significado | Ação |
-|--------|-------------|------|
-| ✅ OK | Nenhuma inconsistência | Nenhuma ação necessária |
-| ⚠️ ATENCAO | Inconsistências médias/baixas | Revisar recomendações |
-| 🚨 CRITICO | Múltiplas inconsistências graves | Ação imediata necessária |
-
----
-
-## 🧪 TESTES
-
-### Teste 1: Backfill Dry Run
-
-```bash
-# Executar backfillRecorrencias (dry_run=true)
-# Verificar:
-#   ✅ Mostra recorrências identificadas
-#   ✅ Não altera dados
-#   ✅ Calcula valor médio e variação corretamente
+### Entity: ContaPagar (Histórico)
+```javascript
+{
+  workshop_id: 'ws_123',
+  dre_lancamento_id: 'dre_xyz',
+  fornecedor_id: 'historico_migration',
+  fornecedor_nome: 'Compra de Peças',
+  valor_original: 500,
+  valor_aberto: 0,
+  valor_pago: 500,
+  status: 'pago',
+  data_vencimento: '2025-08-10',
+  data_emissao: '2025-08-01',
+  numero_documento: 'DRE-dre_xyz',
+  tipo_documento: 'nota_fiscal',
+  forma_pagamento: 'pix',
+  parcela_numero: 1,
+  parcela_total: 1,
+  categoria: 'Custo Direto',
+  centro_custo: 'Peças',
+  observacoes: 'Migrado via backfill - FASE 5'
+}
 ```
 
-### Teste 2: Backfill Execução
-
-```bash
-# Executar backfillRecorrencias (dry_run=false)
-# Verificar:
-#   ✅ Adiciona recorrencia_id nos lançamentos
-#   ✅ Adiciona recorrente: true
-#   ✅ Mesmo recorrencia_id para grupo
-```
-
-### Teste 3: Migrar Metas Dry Run
-
-```bash
-# Executar migrarMetasAnuais (dry_run=true)
-# Verificar:
-#   ✅ Soma metas mensais corretamente
-#   ✅ Calcula meta acumulada por mês
-#   ✅ Não cria registros
-```
-
-### Teste 4: Migrar Metas Execução
-
-```bash
-# Executar migrarMetasAnuais (dry_run=false)
-# Verificar:
-#   ✅ Cria BudgetMeta com mes="2026-ANUAL"
-#   ✅ periodicidade="anual"
-#   ✅ meta_anual_rs = soma das mensais
-```
-
-### Teste 5: Validar Integridade
-
-```bash
-# Executar validarIntegridadeMigracao
-# Verificar:
-#   ✅ Status correto (OK/ATENCAO/CRITICO)
-#   ✅ Inconsistências listadas
-#   ✅ Recomendações claras
+### Entity: LiquidaçãoFinanceira (Histórico)
+```javascript
+{
+  workshop_id: 'ws_123',
+  tipo: 'recebimento',
+  valor_liquidacao: 1000,
+  data_liquidacao: '2025-08-15',
+  forma_pagamento: 'pix',
+  numero_documento: 'DFC-dfc_abc',
+  observacoes: 'Migrado via backfill - FASE 5',
+  conciliado: true,
+  data_conciliacao: '2025-08-20'
+}
 ```
 
 ---
 
-## ⚠️ IMPORTANTE
+## ✅ MARCO ATINGIDO
 
-### Ordem de Execução
+**Dados Históricos Consistentes:**
+- ✅ Últimos 12 meses migrados
+- ✅ DRE ↔ Financeiro vinculados
+- ✅ Liquidações criadas
+- ✅ Validação de integridade completa
+- ✅ Correções automáticas aplicadas
+- ✅ Auditoria registrada
 
-1. ✅ **backfillRecorrencias** (dry_run=true)
-2. ✅ **backfillRecorrencias** (dry_run=false)
-3. ✅ **migrarMetasAnuais** (dry_run=true)
-4. ✅ **migrarMetasAnuais** (dry_run=false)
-5. ✅ **validarIntegridadeMigracao**
-
-### Segurança
-
-- ✅ Sempre executar **dry_run** primeiro
-- ✅ Revisar preview antes de aplicar
-- ✅ Validar integridade após migração
-- ✅ Apenas admin pode executar
-
-### Rollback
-
-Se necessário reverter:
-- Remover `recorrencia_id` manualmente via query
-- Deletar BudgetMeta com `mes: "2026-ANUAL"`
+**Próximo:** FASE 6 - Relatórios + Exportação (2 semanas)
 
 ---
 
-## ✅ CRITÉRIOS DE ACEITE
-
-- ✅ `backfillRecorrencias` identifica recorrências corretamente
-- ✅ `backfillRecorrencias` marca lançamentos com dry_run=false
-- ✅ `migrarMetasAnuais` soma metas mensais
-- ✅ `migrarMetasAnuais` cria BudgetMeta anual
-- ✅ `validarIntegridadeMigracao` detecta inconsistências
-- ✅ `validarIntegridadeMigracao` retorna recomendações
-- ✅ Todas functions apenas para admin
-
----
-
-**FASE 5 CONCLUÍDA!** 🚀  
-Próximo: **FASE 6 - RELATÓRIOS E PROJEÇÕES**
+**Status:** ✅ FASE 5 COMPLETA  
+**Próxima Fase:** FASE 6 - Relatórios + Exportação
