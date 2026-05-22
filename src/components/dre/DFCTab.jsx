@@ -660,7 +660,15 @@ export default function DFCTab({ workshopId, mes }) {
             const novaData = `${anoAtual}-${novoMes}`;
             window.dispatchEvent(new CustomEvent('dfc-mudar-mes', { detail: { mes: novaData } }));
           }}
-          onAnoChange={(novoAno) => setAno(parseInt(novoAno))}
+          onAnoChange={(novoAno) => {
+            const novoAnoInt = parseInt(novoAno);
+            setAno(novoAnoInt);
+            // No modo mensal: recompõe o mes completo com novo ano e propaga ao pai
+            if (periodo === "mensal") {
+              const novaData = `${novoAnoInt}-${mesAtual}`;
+              window.dispatchEvent(new CustomEvent('dfc-mudar-mes', { detail: { mes: novaData } }));
+            }
+          }}
           onPeriodoChange={(novoPeriodo) => setPeriodo(novoPeriodo)}
         />
       </div>

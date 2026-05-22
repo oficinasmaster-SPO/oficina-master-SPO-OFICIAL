@@ -111,15 +111,18 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
     enabled: !!workshopId && visaoPeriodo === "anual"
   });
 
-  // Buscar realizados do ano (para visão anual)
+  // Buscar realizados do ano (para visão anual) — busca mês a mês para filtrar no servidor
   const { data: realizadosAno = [] } = useQuery({
     queryKey: ["dre-realizados-ano", workshopId, anoSelecionado],
     queryFn: async () => {
       if (!workshopId) return [];
-      const result = await base44.entities.DRELancamento.filter({
-        workshop_id: workshopId
-      }, "-created_date");
-      return Array.isArray(result) ? result.filter(l => l.mes.startsWith(anoSelecionado.toString())) : [];
+      // Buscar os 12 meses do ano filtrando no servidor (evita overfetch de todos os anos)
+      const promises = Array.from({ length: 12 }, (_, i) => {
+        const mesRef = `${anoSelecionado}-${String(i + 1).padStart(2, '0')}`;
+        return base44.entities.DRELancamento.filter({ workshop_id: workshopId, mes: mesRef });
+      });
+      const resultados = await Promise.all(promises);
+      return resultados.flat().filter(Boolean);
     },
     enabled: !!workshopId && visaoPeriodo === "anual"
   });
@@ -383,6 +386,20 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
       {/* VISÃO ANUAL */}
       {visaoPeriodo === "anual" && (
         <div className="space-y-6">
+          {/* Seletor de Ano */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-gray-700">Ano:</span>
+            <select
+              className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
+              value={anoSelecionado}
+              onChange={e => setAnoSelecionado(parseInt(e.target.value))}
+            >
+              {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map(a => (
+                <option key={a} value={a}>{a}</option>
+              ))}
+            </select>
+          </div>
+
           {/* Editor de Meta Anual */}
           <MetaAnualEditor
             workshopId={workshopId}

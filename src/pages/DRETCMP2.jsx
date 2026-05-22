@@ -73,13 +73,17 @@ export default function DRETCMP2() {
     loadData();
   }, []);
 
-  // Escuta mudança de mês disparada pelo FiltroPeriodo interno do DRE Avançado
+  // Escuta mudança de mês disparada pelos FiltroPeriodo internos (DRE Avançado e DFC)
   useEffect(() => {
     const handler = (e) => {
       if (e.detail?.mes) setSelectedMonth(e.detail.mes);
     };
     window.addEventListener('dre-mudar-mes', handler);
-    return () => window.removeEventListener('dre-mudar-mes', handler);
+    window.addEventListener('dfc-mudar-mes', handler);
+    return () => {
+      window.removeEventListener('dre-mudar-mes', handler);
+      window.removeEventListener('dfc-mudar-mes', handler);
+    };
   }, []);
 
   const loadData = async () => {
