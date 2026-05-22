@@ -8,15 +8,28 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Download } from "lucide-react";
+import { Download, Trash2, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 
 export default function ContasPagar() {
   const { workshop } = useWorkshopContext();
   const [filtroStatus, setFiltroStatus] = useState("todos");
   const [filtroFornecedor, setFiltroFornecedor] = useState("");
+  const [contaParaDeletar, setContaParaDeletar] = useState(null);
+  const [deletando, setDeletando] = useState(false);
 
-  const { data: contas, isLoading } = useQuery({
+  const { data: contas, isLoading, refetch } = useQuery({
     queryKey: ['contas-pagar', workshop?.id, filtroStatus],
     queryFn: async () => {
       if (!workshop?.id) return [];
@@ -26,6 +39,22 @@ export default function ContasPagar() {
     },
     enabled: !!workshop?.id
   });
+
+  const handleDeleteConta = async () => {
+    if (!contaParaDeletar) return;
+    setDeletando(true);
+    try {
+      await base44.entities.ContaPagar.delete(contaParaDeletar.id);
+      toast.success('Conta deletada com sucesso!');
+      refetch();
+      setContaParaDeletar(null);
+    } catch (error) {
+      toast.error('Erro ao deletar conta');
+      console.error(error);
+    } finally {
+      setDeletando(false);
+    }
+  };
 
   const totalAberto = contas?.filter(c => c.status === 'aberto').reduce((sum, c) => sum + c.valor_aberto, 0) || 0;
   const totalVencido = contas?.filter(c => c.status === 'vencido').reduce((sum, c) => sum + c.valor_aberto, 0) || 0;
@@ -98,6 +127,7 @@ export default function ContasPagar() {
                 <TableHead>Valor Original</TableHead>
                 <TableHead>Valor Aberto</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -113,12 +143,46 @@ export default function ContasPagar() {
                       {conta.status}
                     </Badge>
                   </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
+                  <TableCell className="text-right">
+                    <Button 
+                      size="sm" 
+                      variant="ghost" 
+                      className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                      onClick={() => setContaParaDeletar(conta)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </TableCell>
+                  </TableRow>
+                  ))}
+                  </TableBody>
+                  </Table>
+                  </CardContent>
+                  </Card>
+
+                  <AlertDialog open={!!contaParaDeletar} onOpenChange={() => setContaParaDeletar(null)}>
+                  <AlertDialogContent>
+                  <AlertDialogHeader>
+                  <AlertDialogTitle>🗑️ Deletar Conta?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                  Tem certeza que deseja deletar a conta de <strong>{contaParaDeletar?.fornecedor_nome}</strong> no valor de <strong>R$ {contaParaDeletar?.valor_original?.toFixed(2)}</strong>?
+                  <br />
+                  <span className="text-red-600 text-sm mt-2 block">Essa ação não pode ser desfeita!</span>
+                  </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction 
+                  onClick={handleDeleteConta} 
+                  disabled={deletando}
+                  className="bg-red-600 hover:bg-red-700"
+                  >
+                  {deletando && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                  Deletar
+                  </AlertDialogAction>
+                  </AlertDialogFooter>
+                  </AlertDialogContent>
+                  </AlertDialog>
+                  </div>
+                  );
+                  }

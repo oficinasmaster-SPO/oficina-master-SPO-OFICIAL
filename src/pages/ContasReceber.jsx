@@ -8,8 +8,18 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Loader2, DollarSign, Clock, AlertCircle, CheckCircle } from "lucide-react";
+import { Loader2, DollarSign, Clock, AlertCircle, CheckCircle, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const fmt = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
 const fmtDate = (d) => d ? new Date(d).toLocaleDateString('pt-BR') : '—';
@@ -148,6 +158,8 @@ export default function ContasReceber() {
   const queryClient = useQueryClient();
   const [filtroStatus, setFiltroStatus] = useState('todos');
   const [contaSelecionada, setContaSelecionada] = useState(null);
+  const [contaParaDeletar, setContaParaDeletar] = useState(null);
+  const [deletando, setDeletando] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ['current-user'],
@@ -170,6 +182,22 @@ export default function ContasReceber() {
   const totalAberto = contas.reduce((s, c) => s + (c.valor_aberto || 0), 0);
   const totalVencido = contas.filter(c => c.data_vencimento < new Date().toISOString().slice(0, 10) && c.status !== 'pago').reduce((s, c) => s + (c.valor_aberto || 0), 0);
   const hoje = new Date().toISOString().slice(0, 10);
+
+  const handleDeleteConta = async () => {
+    if (!contaParaDeletar) return;
+    setDeletando(true);
+    try {
+      await base44.entities.ContaReceber.delete(contaParaDeletar.id);
+      toast.success('Conta deletada com sucesso!');
+      refetch();
+      setContaParaDeletar(null);
+    } catch (error) {
+      toast.error('Erro ao deletar conta');
+      console.error(error);
+    } finally {
+      setDeletando(false);
+    }
+  };
 
   if (isLoading) return <div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 animate-spin text-blue-600" /></div>;
 
@@ -245,11 +273,21 @@ export default function ContasReceber() {
                     <p className="text-xs text-green-600">Pago: {fmt(conta.valor_pago)}</p>
                   )}
                 </div>
-                {conta.status !== 'pago' && conta.status !== 'cancelado' && (
-                  <Button size="sm" onClick={() => setContaSelecionada(conta)}>
-                    <DollarSign className="w-4 h-4 mr-1" /> Registrar
+                <div className="flex gap-2">
+                  {conta.status !== 'pago' && conta.status !== 'cancelado' && (
+                    <Button size="sm" onClick={() => setContaSelecionada(conta)}>
+                      <DollarSign className="w-4 h-4 mr-1" /> Registrar
+                    </Button>
+                  )}
+                  <Button 
+                    size="sm" 
+                    variant="ghost" 
+                    className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                    onClick={() => setContaParaDeletar(conta)}
+                  >
+                    <Trash2 className="w-4 h-4" />
                   </Button>
-                )}
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -264,6 +302,30 @@ export default function ContasReceber() {
           refetch();
         }}
       />
+
+      <AlertDialog open={!!contaParaDeletar} onOpenChange={() => setContaParaDeletar(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>🗑️ Deletar Conta?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja deletar a conta <strong>{contaParaDeletar?.cliente_nome}</strong> no valor de <strong>{fmt(contaParaDeletar?.valor_original)}</strong>?
+              <br />
+              <span className="text-red-600 text-sm mt-2 block">Essa ação não pode ser desfeita!</span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteConta} 
+              disabled={deletando}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deletando && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+              Deletar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
