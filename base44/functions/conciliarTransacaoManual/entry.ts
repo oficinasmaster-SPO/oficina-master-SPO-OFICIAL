@@ -1,5 +1,4 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
-import { FinancialEngine } from './FinancialEngine.js';
 
 Deno.serve(async (req) => {
   try {
@@ -7,11 +6,7 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const {
-      bank_transaction_id,
-      liquidacao_financeira_id,
-      observacoes
-    } = await req.json();
+    const { bank_transaction_id, liquidacao_financeira_id, observacoes } = await req.json();
 
     if (!bank_transaction_id || !liquidacao_financeira_id) {
       return Response.json({ 
@@ -19,40 +14,37 @@ Deno.serve(async (req) => {
       }, { status: 400 });
     }
 
-    // Busca ambos os registros
-    const transacao = await base44.entities.BankTransaction.get(bank_transaction_id);
-    const liquidacao = await base44.entities.LiquidacaoFinanceira.get(liquidacao_financeira_id);
+    const [transacao, liquidacao] = await Promise.all([
+      base44.entities.BankTransaction.get(bank_transaction_id),
+      base44.entities.LiquidacaoFinanceira.get(liquidacao_financeira_id)
+    ]);
 
     if (!transacao) return Response.json({ error: 'Transação bancária não encontrada' }, { status: 404 });
     if (!liquidacao) return Response.json({ error: 'Liquidação não encontrada' }, { status: 404 });
 
-    // Alerta se valores divergem (mas permite mesmo assim)
     const divergenciaValor = Math.abs(transacao.valor - liquidacao.valor_liquidacao);
     const temDivergencia = divergenciaValor > 0.01;
 
-    // Registra conciliação manual
-    await base44.entities.BankTransaction.update(bank_transaction_id, {
-      liquidacao_financeira_id,
-      status_conciliacao: 'conciliado',
-      divergencia_valor: temDivergencia ? divergenciaValor : 0,
-      divergencia_tipo: temDivergencia ? 'valor_diferente' : null,
-      data_conciliacao: new Date().toISOString(),
-      conciliado_por: user.email,
-      observacoes: observacoes || ''
-    });
-
-    await base44.entities.LiquidacaoFinanceira.update(liquidacao_financeira_id, {
-      conciliado: true,
-      data_conciliacao: new Date().toISOString(),
-      conciliado_por: user.email
-    });
+    await Promise.all([
+      base44.entities.BankTransaction.update(bank_transaction_id, {
+        liquidacao_financeira_id,
+        status_conciliacao: 'conciliado',
+        divergencia_valor: temDivergencia ? divergenciaValor : 0,
+        divergencia_tipo: temDivergencia ? 'valor_diferente' : null,
+        data_conciliacao: new Date().toISOString(),
+        conciliado_por: user.email,
+        observacoes: observacoes || ''
+      }),
+      base44.entities.LiquidacaoFinanceira.update(liquidacao_financeira_id, {
+        conciliado: true,
+        data_conciliacao: new Date().toISOString(),
+        conciliado_por: user.email
+      })
+    ]);
 
     return Response.json({
       success: true,
-      divergencia: temDivergencia ? {
-        detectada: true,
-        valor: divergenciaValor
-      } : { detectada: false }
+      divergencia: temDivergencia ? { detectada: true, valor: divergenciaValor } : { detectada: false }
     });
 
   } catch (error) {

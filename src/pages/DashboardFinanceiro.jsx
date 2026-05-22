@@ -1,77 +1,137 @@
-import React, { useState } from "react";
+import React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import RevenueMetrics from "@/components/financial/RevenueMetrics";
-import PaymentStatusTable from "@/components/financial/PaymentStatusTable";
-import PlanPerformanceChart from "@/components/financial/PlanPerformanceChart";
-import ConsultorPerformanceChart from "@/components/financial/ConsultorPerformanceChart";
-import FinancialFilters from "@/components/financial/FinancialFilters";
-import { Loader2 } from "lucide-react";
 
 export default function DashboardFinanceiro() {
-  const [user, setUser] = useState(null);
-  const [dateRange, setDateRange] = useState({
-    startDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
-    endDate: new Date().toISOString().split('T')[0]
-  });
+  const { workshop } = useWorkshopContext();
 
-  React.useEffect(() => {
-    const loadUser = async () => {
-      try {
-        const currentUser = await base44.auth.me();
-        setUser(currentUser);
-      } catch (error) {
-        console.error("Erro ao carregar usuário:", error);
-      }
-    };
-    loadUser();
-  }, []);
-
-  const { data: metrics, isLoading } = useQuery({
-    queryKey: ["financial-metrics", dateRange],
+  const { data: kpis, isLoading } = useQuery({
+    queryKey: ['dashboard-financeiro', workshop?.id],
     queryFn: async () => {
-      const response = await base44.functions.invoke("getFinancialMetrics", dateRange);
-      return response.data;
+      if (!workshop?.id) return null;
+      return await base44.functions.invoke('getFinancialDashboard', {
+        workshopId: workshop.id,
+        mes: new Date().toISOString().slice(0, 7)
+      });
     },
-    enabled: !!user,
-    refetchInterval: 60000
+    enabled: !!workshop?.id
   });
 
-  if (!user || user.role !== 'admin') {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <p className="text-gray-500">Acesso restrito a administradores</p>
-      </div>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-      </div>
-    );
+  if (isLoading || !kpis) {
+    return <div className="p-6">Carregando...</div>;
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard Financeiro</h1>
-        <p className="text-gray-600 mt-2">
-          Visão geral de receitas, pagamentos e performance
-        </p>
+    <div className="container mx-auto p-6">
+      <h1 className="text-3xl font-bold mb-6">Dashboard Financeiro</h1>
+
+      {/* KPIs */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Faturamento</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">R$ {kpis.kpis?.faturamento?.toFixed(2) || 0}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Lucro Líquido</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">R$ {kpis.kpis?.lucro_liquido?.toFixed(2) || 0}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Margem Líquida</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{kpis.kpis?.margem_liquida?.toFixed(1) || 0}%</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">TCMP²</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">R$ {kpis.kpis?.tcmp2?.toFixed(2) || 0}</div>
+          </CardContent>
+        </Card>
       </div>
 
-      <FinancialFilters dateRange={dateRange} onDateRangeChange={setDateRange} />
+      {/* Gráfico DRE vs DFC */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>DRE - Receitas vs Despesas</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={[
+                { name: 'Receitas', valor: kpis.kpis?.faturamento || 0 },
+                { name: 'Despesas', valor: kpis.kpis?.despesas_totais || 0 },
+                { name: 'Lucro', valor: kpis.kpis?.lucro_liquido || 0 }
+              ]}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="valor" fill="#8884d8" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
 
-      <RevenueMetrics metrics={metrics} />
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <PlanPerformanceChart data={metrics?.planPerformance || []} />
-        <ConsultorPerformanceChart data={metrics?.consultorPerformance || []} />
+        <Card>
+          <CardHeader>
+            <CardTitle>Fluxo de Caixa</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={[
+                { name: 'Saldo Inicial', valor: kpis.cash_flow?.saldo_atual || 0 },
+                { name: 'Entradas', valor: kpis.kpis?.entradas || 0 },
+                { name: 'Saídas', valor: kpis.kpis?.saidas || 0 },
+                { name: 'Saldo Final', valor: kpis.cash_flow?.projecao_30d || 0 }
+              ]}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Line type="monotone" dataKey="valor" stroke="#82ca9d" strokeWidth={2} />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
       </div>
 
-      <PaymentStatusTable contracts={metrics?.contracts || []} />
+      {/* Contas a Receber */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Contas a Receber</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <p className="text-sm text-gray-600">Aberto</p>
+              <p className="text-xl font-bold">R$ {kpis.contas_receber?.valor_aberto?.toFixed(2) || 0}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">Vencido</p>
+              <p className="text-xl font-bold text-red-600">R$ {kpis.contas_receber?.valor_vencido?.toFixed(2) || 0}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">Total</p>
+              <p className="text-xl font-bold">{kpis.contas_receber?.total || 0} contas</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

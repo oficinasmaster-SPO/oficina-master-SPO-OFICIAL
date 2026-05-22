@@ -47,6 +47,10 @@ const HistoricoDiagnosticos = lazy(() => import('@/pages/HistoricoDiagnosticos')
 const DreMockup = lazy(() => import('@/pages/DreMockup'));
 const GerenciarSubcategorias = lazy(() => import('@/pages/GerenciarSubcategorias'));
 const RelatoriosAnuais = lazy(() => import('@/pages/RelatoriosAnuais'));
+const ContasReceber = lazy(() => import('@/pages/ContasReceber'));
+const ContasPagar = lazy(() => import('@/pages/ContasPagar'));
+const ConciliacaoBancaria = lazy(() => import('@/pages/ConciliacaoBancaria'));
+const DashboardFinanceiro = lazy(() => import('@/pages/DashboardFinanceiro'));
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -251,6 +255,26 @@ const AuthenticatedApp = () => {
       <Route path="/RelatoriosAnuais" element={
         <LayoutWrapper currentPageName="RelatoriosAnuais">
           <RelatoriosAnuais />
+        </LayoutWrapper>
+      } />
+      <Route path="/ContasReceber" element={
+        <LayoutWrapper currentPageName="ContasReceber">
+          <ContasReceber />
+        </LayoutWrapper>
+      } />
+      <Route path="/ContasPagar" element={
+        <LayoutWrapper currentPageName="ContasPagar">
+          <ContasPagar />
+        </LayoutWrapper>
+      } />
+      <Route path="/ConciliacaoBancaria" element={
+        <LayoutWrapper currentPageName="ConciliacaoBancaria">
+          <ConciliacaoBancaria />
+        </LayoutWrapper>
+      } />
+      <Route path="/DashboardFinanceiro" element={
+        <LayoutWrapper currentPageName="DashboardFinanceiro">
+          <DashboardFinanceiro />
         </LayoutWrapper>
       } />
       <Route path="*" element={<PageNotFound />} />

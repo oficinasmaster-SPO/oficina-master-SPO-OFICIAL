@@ -1,5 +1,4 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
-import { FinancialEngine } from './FinancialEngine.js';
 
 Deno.serve(async (req) => {
   try {
@@ -12,25 +11,18 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'workshopId e mes obrigatórios' }, { status: 400 });
     }
 
-    const engine = new FinancialEngine(base44);
-    const kpis = await engine.getKPIs(mes, workshopId);
-    const budget = await engine.getBudgetVsActual(mes, workshopId);
-    const contas = await engine.getContasReceber({ workshopId });
-    const cashFlow = await engine.getCashFlow(workshopId);
+    // Chama FinancialEngine via SDK
+    const [kpisRes, budgetRes, cashFlowRes] = await Promise.all([
+      base44.functions.invoke('FinancialEngine', { action: 'getKPIs', params: { mes, workshopId } }),
+      base44.functions.invoke('FinancialEngine', { action: 'getBudgetVsActual', params: { mes, workshopId } }),
+      base44.functions.invoke('FinancialEngine', { action: 'getCashFlow', params: { workshopId } }),
+    ]);
 
     return Response.json({
       mes,
-      kpis,
-      budget,
-      contas_receber: {
-        valor_aberto: contas.valor_aberto,
-        valor_vencido: contas.valor_vencido,
-        total: contas.total
-      },
-      cash_flow: {
-        saldo_atual: cashFlow.saldo_inicial,
-        projecao_30d: cashFlow.saldo_final_projetado
-      }
+      kpis: kpisRes.data,
+      budget: budgetRes.data,
+      cash_flow: cashFlowRes.data
     });
 
   } catch (error) {

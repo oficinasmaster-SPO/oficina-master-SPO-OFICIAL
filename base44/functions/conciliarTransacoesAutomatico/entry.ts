@@ -1,5 +1,4 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
-import { FinancialEngine } from './FinancialEngine.js';
 
 Deno.serve(async (req) => {
   try {
@@ -12,14 +11,12 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'workshopId e banco obrigatórios' }, { status: 400 });
     }
 
-    const engine = new FinancialEngine(base44);
-    const resultado = await engine.conciliateBankTransactions(workshopId, banco);
-    const status = await engine.getConciliacaoStatus(workshopId);
-
-    return Response.json({
-      ...resultado,
-      status_geral: status
+    const resultado = await base44.functions.invoke('FinancialEngine', {
+      action: 'conciliate',
+      params: { workshopId, banco }
     });
+
+    return Response.json(resultado.data);
 
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });

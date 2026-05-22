@@ -1,7 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
-import { FinancialEngine } from './FinancialEngine.js';
 
-// Detecta divergências financeiras entre sistema e banco
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -13,10 +11,10 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'workshopId obrigatório' }, { status: 400 });
     }
 
-    const engine = new FinancialEngine(base44);
     const divergencias = [];
+    const hoje = new Date().toISOString().slice(0, 10);
 
-    // 1. Transações bancárias divergentes (banco tem, sistema não)
+    // 1. Transações bancárias sem match
     const transacoesDivergentes = await base44.entities.BankTransaction.filter({
       workshop_id: workshopId,
       status_conciliacao: 'divergente'
@@ -34,18 +32,15 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 2. Liquidações pendentes de conciliação
+    // 2. Liquidações pendentes há mais de 3 dias
     const liquidacoesPendentes = await base44.entities.LiquidacaoFinanceira.filter({
       workshop_id: workshopId,
       conciliado: false
     });
 
-    const hoje = new Date();
     for (const l of liquidacoesPendentes) {
-      const dataLiq = new Date(l.data_liquidacao);
-      const diasPendente = Math.floor((hoje - dataLiq) / (1000 * 60 * 60 * 24));
-      
-      if (diasPendente > 3) { // Pendente há mais de 3 dias
+      const diasPendente = Math.floor((new Date() - new Date(l.data_liquidacao)) / (1000 * 60 * 60 * 24));
+      if (diasPendente > 3) {
         divergencias.push({
           tipo: 'liquidacao_nao_conciliada',
           descricao: `Liquidação sem conciliação bancária há ${diasPendente} dias`,
@@ -58,34 +53,40 @@ Deno.serve(async (req) => {
       }
     }
 
-    // 3. Contas vencidas sem pagamento
-    const contasVencidas = await engine.getContasVencidas(workshopId);
-    if (contasVencidas.total > 0) {
+    // 3. Contas vencidas
+    const contasVencidas = await base44.entities.ContaReceber.filter({
+      workshop_id: workshopId,
+      status: { $in: ['aberto', 'parcial'] },
+      data_vencimento: { $lt: hoje }
+    });
+
+    if (contasVencidas.length > 0) {
+      const sum = arr => arr.reduce((a, v) => a + (v || 0), 0);
       divergencias.push({
         tipo: 'inadimplencia',
-        descricao: `${contasVencidas.total} contas vencidas sem pagamento`,
-        valor: contasVencidas.valor_vencido,
+        descricao: `${contasVencidas.length} contas vencidas sem pagamento`,
+        valor: sum(contasVencidas.map(c => c.valor_aberto)),
         severidade: 'media',
-        total_contas: contasVencidas.total
+        total_contas: contasVencidas.length
       });
     }
 
-    // 4. DRE vs Contas a Receber (se passado um mês)
+    // 4. DRE vs Contas a Receber (por mês)
     if (mes) {
-      const dre = await engine.getDRE(mes, workshopId);
-      const contasMes = await base44.entities.ContaReceber.filter({
-        workshop_id: workshopId,
-        data_emissao: { $gte: `${mes}-01`, $lte: `${mes}-31` }
-      });
-      
-      const totalContasMes = engine.sum(contasMes.map(c => c.valor_original));
-      const difDreCr = Math.abs(dre.faturamento - totalContasMes);
-      
-      if (difDreCr > 1) { // tolerância de R$ 1
+      const [lancamentos, contasMes] = await Promise.all([
+        base44.entities.DRELancamento.filter({ workshop_id: workshopId, mes, tipo: 'receita' }),
+        base44.entities.ContaReceber.filter({ workshop_id: workshopId, data_emissao: { $gte: `${mes}-01`, $lte: `${mes}-31` } })
+      ]);
+
+      const totalDRE = lancamentos.reduce((a, l) => a + l.valor, 0);
+      const totalCR = contasMes.reduce((a, c) => a + c.valor_original, 0);
+      const dif = Math.abs(totalDRE - totalCR);
+
+      if (dif > 1) {
         divergencias.push({
           tipo: 'dre_vs_contas_receber',
-          descricao: `DRE (R$ ${dre.faturamento.toFixed(2)}) ≠ Contas a Receber (R$ ${totalContasMes.toFixed(2)})`,
-          valor: difDreCr,
+          descricao: `DRE (R$ ${totalDRE.toFixed(2)}) ≠ Contas a Receber (R$ ${totalCR.toFixed(2)})`,
+          valor: dif,
           mes,
           severidade: 'critica'
         });
@@ -93,8 +94,8 @@ Deno.serve(async (req) => {
     }
 
     // Ordena por severidade
-    const ordemSeveridade = { critica: 0, alta: 1, media: 2, baixa: 3 };
-    divergencias.sort((a, b) => ordemSeveridade[a.severidade] - ordemSeveridade[b.severidade]);
+    const ordem = { critica: 0, alta: 1, media: 2, baixa: 3 };
+    divergencias.sort((a, b) => ordem[a.severidade] - ordem[b.severidade]);
 
     return Response.json({
       total: divergencias.length,
