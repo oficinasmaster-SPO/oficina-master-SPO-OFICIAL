@@ -28,6 +28,7 @@ import DREAvancadoTab from "@/components/dre/DREAvancadoTab";
 import DFCTab from "@/components/dre/DFCTab";
 import BudgetMetaTab from "@/components/budgetcontrol/BudgetMetaTab";
 import VencimentosCard from "@/components/dre/VencimentosCard";
+import FASE2EditorModal from "@/components/budgetcontrol/FASE2EditorModal";
 
 const getCurrentMonth = () => {
   const now = new Date();
@@ -385,6 +386,9 @@ export default function DRETCMP2() {
           />
         )}
         
+        {/* Modal FASE 2 */}
+        <FASE2EditorModal />
+
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
@@ -1036,24 +1040,50 @@ export default function DRETCMP2() {
 
           {/* Controle Orçamentário */}
           <TabsContent value="orcamento">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  💳 Controle Orçamentário
-                </CardTitle>
-                <CardDescription>
-                  Configure as metas do mês e acompanhe o realizado versus o planejado
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {workshop && (
-                  <BudgetMetaTab
-                    workshopId={workshop.id}
-                    mes={selectedMonth}
-                  />
-                )}
-              </CardContent>
-            </Card>
+            <div className="space-y-6">
+              {/* Botões de Acesso às Funcionalidades FASE 2 */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card className="hover:shadow-lg transition-shadow cursor-pointer border-green-200">
+                  <CardContent className="pt-6">
+                    <div 
+                      className="flex items-center gap-4"
+                      onClick={() => window.dispatchEvent(new CustomEvent('open-sazonalidade-editor'))}
+                    >
+                      <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+                        <TrendingUp className="w-6 h-6 text-green-600" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-lg">📊 Distribuição Sazonal</h3>
+                        <p className="text-sm text-muted-foreground">Configure pesos mensais para metas realistas</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="hover:shadow-lg transition-shadow cursor-pointer border-blue-200">
+                  <CardContent className="pt-6">
+                    <div 
+                      className="flex items-center gap-4"
+                      onClick={() => window.dispatchEvent(new CustomEvent('open-hierarquia-editor'))}
+                    >
+                      <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                        <BarChart3 className="w-6 h-6 text-blue-600" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-lg">📁 Hierarquia Orçamentária</h3>
+                        <p className="text-sm text-muted-foreground">Organize por grupos e categorias</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Tab Principal de Metas */}
+              <BudgetMetaTab
+                workshopId={workshop.id}
+                mes={selectedMonth}
+              />
+            </div>
           </TabsContent>
           </Tabs>
       </div>

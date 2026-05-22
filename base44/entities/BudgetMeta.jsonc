@@ -22,6 +22,13 @@
       "type": "string",
       "description": "Categoria do item (espelha categoria do DRELancamento)"
     },
+    "group_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "ID do grupo hier\u00e1rquico (BudgetGroup) ao qual este item pertence"
+    },
     "tipo": {
       "type": "string",
       "enum": [
@@ -54,6 +61,52 @@
     "meta_fixa_rs": {
       "type": "number",
       "description": "Meta em valor fixo em R$ (alternativa ao percentual)"
+    },
+    "peso_sazonal": {
+      "type": "number",
+      "description": "Peso sazonal do m\u00eas (0.00-1.00). Ex: 0.08 = 8% do anual. Soma dos 12 meses deve ser 1.00"
+    },
+    "sazonalidade_config": {
+      "type": "object",
+      "description": "Configura\u00e7\u00e3o completa de sazonalidade anual (todos os 12 meses)",
+      "properties": {
+        "01": {
+          "type": "number"
+        },
+        "02": {
+          "type": "number"
+        },
+        "03": {
+          "type": "number"
+        },
+        "04": {
+          "type": "number"
+        },
+        "05": {
+          "type": "number"
+        },
+        "06": {
+          "type": "number"
+        },
+        "07": {
+          "type": "number"
+        },
+        "08": {
+          "type": "number"
+        },
+        "09": {
+          "type": "number"
+        },
+        "10": {
+          "type": "number"
+        },
+        "11": {
+          "type": "number"
+        },
+        "12": {
+          "type": "number"
+        }
+      }
     },
     "responsavel_nome": {
       "type": "string",
