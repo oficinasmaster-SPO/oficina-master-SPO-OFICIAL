@@ -25,35 +25,35 @@ export default function FiltroPeriodo({ mes, ano, periodo, onMesChange, onAnoCha
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
-      {periodo === "mensal" ? (
-        <>
-          <Select value={mes} onValueChange={onMesChange}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Mês" />
-            </SelectTrigger>
-            <SelectContent>
-              {meses.map((m) => (
-                <SelectItem key={m.value} value={m.value}>
-                  {m.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      {/* Mês — só no modo mensal */}
+      {periodo === "mensal" && (
+        <Select value={mes} onValueChange={onMesChange}>
+          <SelectTrigger className="w-40">
+            <SelectValue placeholder="Mês" />
+          </SelectTrigger>
+          <SelectContent>
+            {meses.map((m) => (
+              <SelectItem key={m.value} value={m.value}>
+                {m.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
 
-          <Select value={String(ano)} onValueChange={onAnoChange}>
-            <SelectTrigger className="w-24">
-              <SelectValue placeholder="Ano" />
-            </SelectTrigger>
-            <SelectContent>
-              {anos.map((a) => (
-                <SelectItem key={a} value={String(a)}>
-                  {a}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </>
-      ) : null}
+      {/* Ano — aparece em AMBOS os modos */}
+      <Select value={String(ano)} onValueChange={onAnoChange}>
+        <SelectTrigger className="w-24">
+          <SelectValue placeholder="Ano" />
+        </SelectTrigger>
+        <SelectContent>
+          {anos.map((a) => (
+            <SelectItem key={a} value={String(a)}>
+              {a}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
       <ToggleGroup 
         type="single" 
