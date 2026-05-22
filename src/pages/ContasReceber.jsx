@@ -5,184 +5,265 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { Download } from "lucide-react";
-import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Loader2, DollarSign, Clock, AlertCircle, CheckCircle } from "lucide-react";
+import { toast } from "sonner";
 
-export default function ContasReceber() {
-  const { workshop } = useWorkshopContext();
-  const queryClient = useQueryClient();
-  const [filtroStatus, setFiltroStatus] = useState("todos");
-  const [filtroCliente, setFiltroCliente] = useState("");
-  const [modalOpen, setModalOpen] = useState(false);
-  const [contaSelecionada, setContaSelecionada] = useState(null);
+const fmt = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
+const fmtDate = (d) => d ? new Date(d).toLocaleDateString('pt-BR') : '—';
 
-  const { data: contas, isLoading } = useQuery({
-    queryKey: ['contas-receber', workshop?.id, filtroStatus],
-    queryFn: async () => {
-      if (!workshop?.id) return [];
-      const query = { workshop_id: workshop.id };
-      if (filtroStatus !== "todos") query.status = filtroStatus;
-      return await base44.entities.ContaReceber.filter(query, '-data_vencimento', 100);
-    },
-    enabled: !!workshop?.id
-  });
+function StatusBadge({ status }) {
+  const map = {
+    aberto: { label: 'Aberto', color: 'bg-blue-100 text-blue-800' },
+    parcial: { label: 'Parcial', color: 'bg-yellow-100 text-yellow-800' },
+    pago: { label: 'Pago', color: 'bg-green-100 text-green-800' },
+    vencido: { label: 'Vencido', color: 'bg-red-100 text-red-800' },
+    cancelado: { label: 'Cancelado', color: 'bg-gray-100 text-gray-800' },
+  };
+  const s = map[status] || { label: status, color: 'bg-gray-100 text-gray-800' };
+  return <span className={`text-xs px-2 py-1 rounded-full font-medium ${s.color}`}>{s.label}</span>;
+}
 
-  const totalAberto = contas?.filter(c => c.status === 'aberto').reduce((sum, c) => sum + c.valor_aberto, 0) || 0;
-  const totalVencido = contas?.filter(c => c.status === 'vencido').reduce((sum, c) => sum + c.valor_aberto, 0) || 0;
+function ModalRegistrarPagamento({ conta, onClose, onSaved }) {
+  const [valorPago, setValorPago] = useState('');
+  const [formaPagamento, setFormaPagamento] = useState('pix');
+  const [banco, setBanco] = useState('');
+  const [desconto, setDesconto] = useState('0');
+  const [juros, setJuros] = useState('0');
+  const [multa, setMulta] = useState('0');
+  const [observacoes, setObservacoes] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  if (!conta) return null;
+
+  const valorLiquido = (parseFloat(valorPago) || 0) + (parseFloat(juros) || 0) + (parseFloat(multa) || 0) - (parseFloat(desconto) || 0);
+
+  const handleSalvar = async () => {
+    if (!valorPago || parseFloat(valorPago) <= 0) {
+      toast.error('Informe um valor válido');
+      return;
+    }
+    setSaving(true);
+    const resp = await base44.functions.invoke('registrarLiquidacao', {
+      conta_receber_id: conta.id,
+      tipo: 'recebimento',
+      valor_liquidacao: parseFloat(valorPago),
+      forma_pagamento: formaPagamento,
+      data_liquidacao: new Date().toISOString(),
+      banco,
+      desconto: parseFloat(desconto) || 0,
+      juros: parseFloat(juros) || 0,
+      multa: parseFloat(multa) || 0,
+      observacoes
+    });
+    setSaving(false);
+    if (resp.data?.success) {
+      toast.success('Pagamento registrado com sucesso!');
+      onSaved();
+    } else {
+      toast.error(resp.data?.error || 'Erro ao registrar pagamento');
+    }
+  };
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Contas a Receber</h1>
-        <Button onClick={() => setModalOpen(true)}>
-          <Download className="w-4 h-4 mr-2" />
-          Exportar
-        </Button>
+    <Dialog open={!!conta} onOpenChange={onClose}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>💰 Registrar Pagamento</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
+          <div className="bg-gray-50 rounded-lg p-3 text-sm">
+            <p className="font-medium">{conta.cliente_nome}</p>
+            <p className="text-gray-500">Valor original: {fmt(conta.valor_original)}</p>
+            <p className="text-gray-500">Saldo aberto: <span className="font-semibold text-blue-700">{fmt(conta.valor_aberto)}</span></p>
+          </div>
+
+          <div>
+            <Label>Valor Recebido (R$) *</Label>
+            <Input type="number" placeholder="0,00" value={valorPago} onChange={e => setValorPago(e.target.value)} />
+          </div>
+
+          <div>
+            <Label>Forma de Pagamento *</Label>
+            <Select value={formaPagamento} onValueChange={setFormaPagamento}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="pix">PIX</SelectItem>
+                <SelectItem value="ted">TED</SelectItem>
+                <SelectItem value="boleto">Boleto</SelectItem>
+                <SelectItem value="cartao_credito">Cartão Crédito</SelectItem>
+                <SelectItem value="cartao_debito">Cartão Débito</SelectItem>
+                <SelectItem value="dinheiro">Dinheiro</SelectItem>
+                <SelectItem value="cheque">Cheque</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label>Banco</Label>
+            <Input placeholder="Nome do banco" value={banco} onChange={e => setBanco(e.target.value)} />
+          </div>
+
+          <div className="grid grid-cols-3 gap-2">
+            <div>
+              <Label className="text-xs">Desconto (R$)</Label>
+              <Input type="number" placeholder="0" value={desconto} onChange={e => setDesconto(e.target.value)} />
+            </div>
+            <div>
+              <Label className="text-xs">Juros (R$)</Label>
+              <Input type="number" placeholder="0" value={juros} onChange={e => setJuros(e.target.value)} />
+            </div>
+            <div>
+              <Label className="text-xs">Multa (R$)</Label>
+              <Input type="number" placeholder="0" value={multa} onChange={e => setMulta(e.target.value)} />
+            </div>
+          </div>
+
+          <div className="bg-blue-50 rounded p-2 text-sm flex justify-between">
+            <span className="text-blue-700 font-medium">Valor Líquido:</span>
+            <span className="font-bold text-blue-900">{fmt(valorLiquido)}</span>
+          </div>
+
+          <div>
+            <Label>Observações</Label>
+            <Input placeholder="Anotações sobre o pagamento" value={observacoes} onChange={e => setObservacoes(e.target.value)} />
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button onClick={handleSalvar} disabled={saving || !valorPago}>
+            {saving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+            Registrar Pagamento
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+export default function ContasReceber() {
+  const queryClient = useQueryClient();
+  const [filtroStatus, setFiltroStatus] = useState('todos');
+  const [contaSelecionada, setContaSelecionada] = useState(null);
+
+  const { data: user } = useQuery({
+    queryKey: ['current-user'],
+    queryFn: () => base44.auth.me()
+  });
+
+  const workshopId = user?.data?.workshop_id;
+
+  const { data: contas = [], isLoading, refetch } = useQuery({
+    queryKey: ['contas-receber', workshopId, filtroStatus],
+    queryFn: async () => {
+      if (!workshopId) return [];
+      const query = { workshop_id: workshopId };
+      if (filtroStatus !== 'todos') query.status = filtroStatus;
+      return await base44.entities.ContaReceber.filter(query, '-data_vencimento', 100);
+    },
+    enabled: !!workshopId
+  });
+
+  const totalAberto = contas.reduce((s, c) => s + (c.valor_aberto || 0), 0);
+  const totalVencido = contas.filter(c => c.data_vencimento < new Date().toISOString().slice(0, 10) && c.status !== 'pago').reduce((s, c) => s + (c.valor_aberto || 0), 0);
+  const hoje = new Date().toISOString().slice(0, 10);
+
+  if (isLoading) return <div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 animate-spin text-blue-600" /></div>;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">💰 Contas a Receber</h1>
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Aberto</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">R$ {totalAberto.toFixed(2)}</div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="bg-blue-50 border-blue-200">
+          <CardContent className="pt-4">
+            <p className="text-sm text-blue-600">Total em Aberto</p>
+            <p className="text-2xl font-bold text-blue-900">{fmt(totalAberto)}</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Vencido</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">R$ {totalVencido.toFixed(2)}</div>
+        <Card className="bg-red-50 border-red-200">
+          <CardContent className="pt-4">
+            <p className="text-sm text-red-600">Total Vencido</p>
+            <p className="text-2xl font-bold text-red-900">{fmt(totalVencido)}</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Contas</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{contas?.length || 0}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Inadimplência</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {totalAberto > 0 ? ((totalVencido / totalAberto) * 100).toFixed(1) : 0}%
-            </div>
+        <Card className="bg-gray-50 border-gray-200">
+          <CardContent className="pt-4">
+            <p className="text-sm text-gray-600">Total de Registros</p>
+            <p className="text-2xl font-bold text-gray-900">{contas.length}</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Filtros */}
-      <div className="flex gap-4 mb-6">
-        <Select value={filtroStatus} onValueChange={setFiltroStatus}>
-          <SelectTrigger className="w-48">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="todos">Todos</SelectItem>
-            <SelectItem value="aberto">Aberto</SelectItem>
-            <SelectItem value="pago">Pago</SelectItem>
-            <SelectItem value="vencido">Vencido</SelectItem>
-          </SelectContent>
-        </Select>
-        <Input
-          placeholder="Filtrar por cliente..."
-          value={filtroCliente}
-          onChange={(e) => setFiltroCliente(e.target.value)}
-          className="w-64"
-        />
+      {/* Filtro */}
+      <div className="flex gap-2 flex-wrap">
+        {['todos', 'aberto', 'parcial', 'vencido', 'pago'].map(s => (
+          <button
+            key={s}
+            onClick={() => setFiltroStatus(s)}
+            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
+              filtroStatus === s ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            {s.charAt(0).toUpperCase() + s.slice(1)}
+          </button>
+        ))}
       </div>
 
-      {/* Tabela */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Lista de Contas</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Cliente</TableHead>
-                <TableHead>Vencimento</TableHead>
-                <TableHead>Valor Original</TableHead>
-                <TableHead>Valor Aberto</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {contas?.map((conta) => (
-                <TableRow key={conta.id}>
-                  <TableCell>{conta.cliente_nome}</TableCell>
-                  <TableCell>{format(new Date(conta.data_vencimento), 'dd/MM/yyyy', { locale: ptBR })}</TableCell>
-                  <TableCell>R$ {conta.valor_original?.toFixed(2)}</TableCell>
-                  <TableCell>R$ {conta.valor_aberto?.toFixed(2)}</TableCell>
-                  <TableCell>
-                    <Badge variant={conta.status === 'pago' ? 'default' : conta.status === 'vencido' ? 'destructive' : 'secondary'}>
-                      {conta.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Button variant="outline" size="sm" onClick={() => setContaSelecionada(conta)}>
-                      Ver
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      {/* Lista */}
+      <div className="space-y-2">
+        {contas.length === 0 ? (
+          <div className="text-center py-12 text-gray-400">Nenhuma conta encontrada</div>
+        ) : contas.map(conta => (
+          <Card key={conta.id} className={`hover:shadow-md transition-shadow ${conta.data_vencimento < hoje && conta.status !== 'pago' ? 'border-red-200 bg-red-50/30' : ''}`}>
+            <CardContent className="pt-4">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="font-semibold truncate">{conta.cliente_nome || 'Cliente não informado'}</p>
+                    <StatusBadge status={conta.status} />
+                    {conta.data_vencimento < hoje && conta.status !== 'pago' && (
+                      <span className="text-xs text-red-600 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" /> Vencida
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex gap-4 text-sm text-gray-500">
+                    <span>Vence: {fmtDate(conta.data_vencimento)}</span>
+                    {conta.parcela_numero && <span>{conta.parcela_numero}/{conta.parcela_total}</span>}
+                  </div>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className="font-bold text-blue-700">{fmt(conta.valor_aberto)}</p>
+                  {conta.valor_pago > 0 && (
+                    <p className="text-xs text-green-600">Pago: {fmt(conta.valor_pago)}</p>
+                  )}
+                </div>
+                {conta.status !== 'pago' && conta.status !== 'cancelado' && (
+                  <Button size="sm" onClick={() => setContaSelecionada(conta)}>
+                    <DollarSign className="w-4 h-4 mr-1" /> Registrar
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
-      {/* Modal Detalhes */}
-      {contaSelecionada && (
-        <Dialog open={!!contaSelecionada} onOpenChange={() => setContaSelecionada(null)}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Detalhes da Conta</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium">Cliente</label>
-                <p className="text-lg">{contaSelecionada.cliente_nome}</p>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium">Valor Original</label>
-                  <p className="text-lg">R$ {contaSelecionada.valor_original?.toFixed(2)}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Valor Aberto</label>
-                  <p className="text-lg">R$ {contaSelecionada.valor_aberto?.toFixed(2)}</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium">Vencimento</label>
-                  <p>{format(new Date(contaSelecionada.data_vencimento), 'dd/MM/yyyy', { locale: ptBR })}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Status</label>
-                  <Badge>{contaSelecionada.status}</Badge>
-                </div>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
+      <ModalRegistrarPagamento
+        conta={contaSelecionada}
+        onClose={() => setContaSelecionada(null)}
+        onSaved={() => {
+          setContaSelecionada(null);
+          refetch();
+        }}
+      />
     </div>
   );
 }
