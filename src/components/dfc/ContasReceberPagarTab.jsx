@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { InputMoeda } from "@/components/ui/InputMoeda";
 import { Loader2, DollarSign, CreditCard, CheckCircle, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
+import FiltroPeriodo from "../dre/FiltroPeriodo";
 
 const fmt = (v) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v || 0);
 
@@ -290,18 +291,40 @@ export default function ContasReceberPagarTab({ workshopId, mes }) {
   const queryClient = useQueryClient();
   const [contaReceberModal, setContaReceberModal] = useState(null);
   const [contaPagarModal, setContaPagarModal] = useState(null);
+  const [periodo, setPeriodo] = useState("mensal"); // mensal | anual
+  const [ano, setAno] = useState(new Date().getFullYear());
+  const [mesSelecionado, setMesSelecionado] = useState(mes ? mes.split('-')[1] : new Date().getMonth() + 1);
+  
+  const mesAtual = mes ? mes.split('-')[1] : "01";
+  const anoAtual = mes ? parseInt(mes.split('-')[0]) : new Date().getFullYear();
 
-  // Buscar Contas a Receber
+  // Calcular datas do filtro
+  const dataInicio = periodo === "mensal" 
+    ? `${ano}-${String(mesSelecionado).padStart(2, '0')}-01`
+    : `${ano}-01-01`;
+  const dataFim = periodo === "mensal"
+    ? `${ano}-${String(mesSelecionado).padStart(2, '0')}-31`
+    : `${ano}-12-31`;
+
+  // Buscar Contas a Receber com filtro
   const { data: contasReceber = [], isLoading: isReceberLoading, refetch: refetchReceber } = useQuery({
-    queryKey: ["contas-receber", workshopId],
-    queryFn: () => base44.entities.ContaReceber.filter({ workshop_id: workshopId, status: "aberto" }),
+    queryKey: ["contas-receber", workshopId, periodo, ano, mesSelecionado],
+    queryFn: () => base44.entities.ContaReceber.filter({ 
+      workshop_id: workshopId, 
+      status: "aberto",
+      data_vencimento: { $gte: dataInicio, $lte: dataFim }
+    }),
     enabled: !!workshopId,
   });
 
-  // Buscar Contas a Pagar
+  // Buscar Contas a Pagar com filtro
   const { data: contasPagar = [], isLoading: isPagarLoading, refetch: refetchPagar } = useQuery({
-    queryKey: ["contas-pagar", workshopId],
-    queryFn: () => base44.entities.ContaPagar.filter({ workshop_id: workshopId, status: "aberto" }),
+    queryKey: ["contas-pagar", workshopId, periodo, ano, mesSelecionado],
+    queryFn: () => base44.entities.ContaPagar.filter({ 
+      workshop_id: workshopId, 
+      status: "aberto",
+      data_vencimento: { $gte: dataInicio, $lte: dataFim }
+    }),
     enabled: !!workshopId,
   });
 
@@ -329,6 +352,18 @@ export default function ContasReceberPagarTab({ workshopId, mes }) {
       <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-sm text-blue-800">
         <strong>Contas a Receber/Pagar:</strong> Registre recebimentos e pagamentos que alimentam o DFC automaticamente.
         Os lançamentos são criados na aba DFC quando você confirma o pagamento.
+      </div>
+
+      {/* Filtro de Período */}
+      <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
+        <FiltroPeriodo
+          mes={mesAtual}
+          ano={anoAtual}
+          periodo={periodo}
+          onMesChange={(novoMes) => setMesSelecionado(novoMes)}
+          onAnoChange={(novoAno) => setAno(parseInt(novoAno))}
+          onPeriodoChange={(novoPeriodo) => setPeriodo(novoPeriodo)}
+        />
       </div>
 
       <Tabs defaultValue="receber" className="space-y-4">
