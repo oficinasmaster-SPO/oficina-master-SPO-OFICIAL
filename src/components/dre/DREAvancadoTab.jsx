@@ -24,6 +24,21 @@ const FREQUENCIAS = [
   { value: "anual", label: "Anual" },
 ];
 
+// ─── DETECÇÃO AUTOMÁTICA DE TIPO ─────────────────────────────────────────────
+const CATEGORIAS_RECEITA_KEYS = ['pecas_aplicadas', 'servicos', 'outras'];
+const CATEGORIAS_DESPESA_KEYS = ['operacional', 'pessoas', 'marketing', 'manutencao', 'terceirizados', 'administrativo', 'financeiro', 'pecas_estoque'];
+
+/**
+ * Infere automaticamente se uma categoria é receita ou despesa
+ * @param {string} categoria - chave da categoria (ex: 'pecas_aplicadas', 'operacional')
+ * @returns {'receita' | 'despesa' | null}
+ */
+function inferirTipoPorCategoria(categoria) {
+  if (CATEGORIAS_RECEITA_KEYS.includes(categoria)) return 'receita';
+  if (CATEGORIAS_DESPESA_KEYS.includes(categoria)) return 'despesa';
+  return null;
+}
+
 // ─── CATEGORIAS ───────────────────────────────────────────────────────────────
 const CATEGORIAS_DESPESA = {
   operacional: {
@@ -92,6 +107,9 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
   const [dataVencimento, setDataVencimento] = useState("");
   const [dataPagamento, setDataPagamento] = useState("");
   const [saving, setSaving] = useState(false);
+  
+  // Inferir tipo automaticamente baseado na categoria selecionada
+  const tipoInferido = catKey ? inferirTipoPorCategoria(catKey) : tipo;
 
   // Recorrência
   const [frequencia, setFrequencia] = useState("unico");
@@ -133,7 +151,7 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
         const resp = await base44.functions.invoke("criarLancamentoRecorrente", {
           workshop_id: workshopId,
           mes_inicio: mes,
-          tipo,
+          tipo: tipoInferido || tipo,  // ✅ USA DETECÇÃO AUTOMÁTICA
           categoria: catKey,
           subcategoria: subcat,
           descricao,
@@ -151,7 +169,7 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
         const novoLancamento = await base44.entities.DRELancamento.create({
           workshop_id: workshopId,
           mes,
-          tipo,
+          tipo: tipoInferido || tipo,  // ✅ USA DETECÇÃO AUTOMÁTICA
           categoria: catKey,
           subcategoria: subcat,
           descricao,
@@ -176,9 +194,16 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
 
   return (
     <div className="bg-blue-50 border-2 border-dashed border-blue-200 rounded-xl p-4 space-y-3">
-      <p className="text-sm font-semibold text-blue-700">
-        {tipo === "receita" ? "💰 Novo Lançamento de Receita" : "📋 Novo Lançamento de Despesa"}
-      </p>
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm font-semibold text-blue-700">
+          {tipo === "receita" ? "💰 Novo Lançamento de Receita" : "📋 Novo Lançamento de Despesa"}
+        </p>
+        {catKey && tipoInferido && (
+          <Badge className={tipoInferido === "receita" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}>
+            {tipoInferido === "receita" ? "💰 Receita" : "📉 Despesa"} Detectado
+          </Badge>
+        )}
+      </div>
 
       <div className="grid grid-cols-2 gap-2">
         <div>
