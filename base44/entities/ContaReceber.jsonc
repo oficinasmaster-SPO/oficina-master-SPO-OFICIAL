@@ -12,11 +12,19 @@
     },
     "cliente_id": {
       "type": "string",
-      "description": "ID do cliente"
+      "description": "ID do cliente (opcional)"
     },
     "cliente_nome": {
       "type": "string",
       "description": "Nome do cliente"
+    },
+    "contato_telefone": {
+      "type": "string",
+      "description": "Telefone/WhatsApp para contato sobre esta conta"
+    },
+    "contato_email": {
+      "type": "string",
+      "description": "E-mail para contato sobre esta conta"
     },
     "valor_original": {
       "type": "number",
@@ -121,7 +129,6 @@
   },
   "required": [
     "workshop_id",
-    "cliente_id",
     "valor_original",
     "status",
     "data_vencimento"

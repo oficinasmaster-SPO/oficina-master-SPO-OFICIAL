@@ -12,11 +12,19 @@
     },
     "fornecedor_id": {
       "type": "string",
-      "description": "ID do fornecedor"
+      "description": "ID do fornecedor (opcional)"
     },
     "fornecedor_nome": {
       "type": "string",
       "description": "Nome do fornecedor"
+    },
+    "contato_telefone": {
+      "type": "string",
+      "description": "Telefone/WhatsApp para contato sobre esta conta"
+    },
+    "contato_email": {
+      "type": "string",
+      "description": "E-mail para contato sobre esta conta"
     },
     "valor_original": {
       "type": "number",
@@ -87,7 +95,6 @@
   },
   "required": [
     "workshop_id",
-    "fornecedor_id",
     "valor_original",
     "status",
     "data_vencimento"
