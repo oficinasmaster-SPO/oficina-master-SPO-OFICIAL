@@ -46,10 +46,20 @@ Deno.serve(async (req) => {
 
     // Criar lançamentos para cada período
     const lancamentosCriados = [];
+    
+    // Extrair dia da data_vencimento original
+    const dataVencimentoOriginal = new Date(data_vencimento);
+    const diaVencimento = dataVencimentoOriginal.getDate();
 
     for (let i = 0; i < meses.length; i++) {
       const mesRef = meses[i].mes;
       const parcelaAtual = i + 1;
+      
+      // Calcular data_vencimento para esta parcela
+      // Exemplo: se era 19/05/2026 e frequência=mensal, a próxima é 19/06/2026, depois 19/07, etc
+      const dataParcela = new Date(dataVencimentoOriginal);
+      dataParcela.setMonth(dataParcela.getMonth() + i);
+      const dataVencimentoParcela = dataParcela.toISOString().split('T')[0];
 
       const lancamento = await base44.entities.DRELancamento.create({
         workshop_id,
@@ -60,7 +70,7 @@ Deno.serve(async (req) => {
         descricao,
         valor,
         entra_tcmp2: entra_tcmp2 ?? true,
-        data_vencimento,
+        data_vencimento: dataVencimentoParcela,
         frequencia,
         recorrencia_id,
         data_inicio,
