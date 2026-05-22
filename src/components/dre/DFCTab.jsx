@@ -21,6 +21,7 @@ import ProjecaoCaixaView from "./ProjecaoCaixaView";
 import ModalSaldoInicialDetalhado from "../dfc/ModalSaldoInicialDetalhado";
 import FonteSaidaSelector from "../dfc/FonteSaidaSelector";
 import FiltroPeriodo from "./FiltroPeriodo";
+import ContasReceberPagarTab from "../dfc/ContasReceberPagarTab";
 
 // ─── Formatação ────────────────────────────────────────────────────
 const fmt = (v) =>
@@ -441,6 +442,7 @@ export default function DFCTab({ workshopId, mes }) {
   const [modalSaldoDetalhadoAberto, setModalSaldoDetalhadoAberto] = useState(false);
   const [periodo, setPeriodo] = useState("mensal"); // mensal | anual
   const [ano, setAno] = useState(new Date().getFullYear());
+  const [showContasTab, setShowContasTab] = useState(false);
   
   const mesAtual = mes ? mes.split('-')[1] : "01";
   const anoAtual = mes ? parseInt(mes.split('-')[0]) : new Date().getFullYear();
@@ -638,6 +640,29 @@ export default function DFCTab({ workshopId, mes }) {
 
   return (
     <div className="space-y-6">
+      {/* Toggle DFC vs Contas */}
+      <div className="flex gap-1 bg-gray-100 rounded-lg p-1 mb-4">
+        <button
+          onClick={() => setShowContasTab(false)}
+          className={`text-xs px-3 py-2 rounded-md font-medium transition-all ${!showContasTab ? "bg-white shadow text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+        >
+          💵 Fluxo de Caixa (DFC)
+        </button>
+        <button
+          onClick={() => setShowContasTab(true)}
+          className={`text-xs px-3 py-2 rounded-md font-medium transition-all ${showContasTab ? "bg-white shadow text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+        >
+          📋 Contas a Receber/Pagar
+        </button>
+      </div>
+
+      {/* VIEW: CONTAS */}
+      {showContasTab && (
+        <ContasReceberPagarTab workshopId={workshopId} mes={mes} />
+      )}
+
+      {/* VIEW: DFC */}
+      {!showContasTab && (<>
       {/* Banner */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-sm text-blue-800">
         <strong>Como funciona:</strong> Dados do <span className="font-semibold">DRE Avançado</span> são importados automaticamente{" "}
@@ -840,6 +865,7 @@ export default function DFCTab({ workshopId, mes }) {
         mes={mes}
         saldoInicialRecord={saldoInicialRecord}
       />
+      </>)}
     </div>
   );
 }
