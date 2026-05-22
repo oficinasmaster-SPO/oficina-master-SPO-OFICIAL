@@ -116,9 +116,30 @@ export default function CadastroUsuarioDireto() {
               <p className="font-medium">{createdUser.email}</p>
             </div>
 
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <Label className="text-sm text-blue-700 font-semibold">🔑 User ID (cole no campo Owner ID da oficina)</Label>
+              <div className="flex gap-2 mt-1">
+                <Input
+                  value={createdUser.user_id || createdUser.id || '—'}
+                  readOnly
+                  className="flex-1 font-mono text-sm bg-white"
+                />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => {
+                    navigator.clipboard.writeText(createdUser.user_id || createdUser.id || '');
+                    toast.success('User ID copiado!');
+                  }}
+                >
+                  <Copy className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+
             <div>
               <Label className="text-sm text-gray-600">Profile ID</Label>
-              <p className="font-medium">{createdUser.profile_id}</p>
+              <p className="font-medium text-sm text-gray-500">{createdUser.profile_id || '—'}</p>
             </div>
 
             <div>
