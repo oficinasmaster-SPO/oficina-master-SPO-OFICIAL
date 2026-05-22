@@ -63,7 +63,8 @@ export default function CadastroUsuarioDireto() {
       }
     },
     onError: (error) => {
-      toast.error('Erro ao criar usuário: ' + error.message);
+      const msg = error?.response?.data?.error?.message || error?.message || 'Erro desconhecido';
+      toast.error('Erro ao criar usuário: ' + msg);
     }
   });
 

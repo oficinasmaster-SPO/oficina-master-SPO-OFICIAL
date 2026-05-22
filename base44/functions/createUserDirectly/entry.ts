@@ -54,30 +54,9 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, error: { code: 'MISSING_FIELDS', message: 'Campos obrigatórios ausentes ou inválidos (name, email, workshop_id)' } }, { status: 400 });
     }
 
-    if (currentUser.data?.workshop_id && currentUser.data?.workshop_id !== workshop_id) {
+    // Cross-tenant: só bloqueia se o admin for de uma oficina específica (não admin global)
+    if (currentUser.role !== 'admin' && currentUser.data?.workshop_id && currentUser.data?.workshop_id !== workshop_id) {
        return Response.json({ success: false, error: { code: 'FORBIDDEN', message: 'Acesso cross-tenant negado' } }, { status: 403 });
-    }
-
-    // Validação de Plano
-    try {
-      const existingUsers = await base44.asServiceRole.entities.User.filter({ workshop_id });
-      const planCheck = await base44.functions.invoke('checkPlanAccess', {
-        tenantId: workshop_id,
-        feature: 'users',
-        action: 'check_limit',
-        currentUsage: existingUsers ? existingUsers.length : 0
-      });
-      if (!planCheck.data?.success) {
-        return Response.json({
-          success: false,
-          error: {
-            code: "PLAN_RESTRICTION",
-            message: "Limite do plano atingido"
-          }
-        }, { status: 403 });
-      }
-    } catch (e) {
-      console.error("Erro na validação do plano:", e);
     }
 
     async function validateBusinessRules(data, context) {
@@ -89,9 +68,12 @@ Deno.serve(async (req) => {
         throw { code: 'INVALID_STATE', message: 'Oficina especificada não existe' };
       }
       
-      const profile = await base44.asServiceRole.entities.UserProfile.get(profile_id);
-      if (!profile) {
-        throw { code: 'INVALID_STATE', message: 'Perfil especificado não existe' };
+      // Só valida perfil se foi informado
+      if (profile_id) {
+        const profile = await base44.asServiceRole.entities.UserProfile.get(profile_id);
+        if (!profile) {
+          throw { code: 'INVALID_STATE', message: 'Perfil especificado não existe' };
+        }
       }
 
       const existingEmployees = await base44.asServiceRole.entities.Employee.filter({ email, workshop_id });
@@ -407,15 +389,10 @@ Deno.serve(async (req) => {
     return Response.json(responseBody);
 
   } catch (error) {
-    console.error(JSON.stringify({
-      level: 'ERROR',
-      action: 'CREATE_USER_DIRECTLY',
-      message: error.message,
-      timestamp: new Date().toISOString()
-    }));
+    console.error('❌ ERRO DETALHADO createUserDirectly:', error?.message, error?.stack);
     return Response.json({ 
       success: false,
-      error: { code: 'INTERNAL_ERROR', message: 'Erro interno no servidor' }
+      error: { code: 'INTERNAL_ERROR', message: error?.message || 'Erro interno no servidor' }
     }, { status: 500 });
   }
 });
