@@ -84,7 +84,7 @@ const CATEGORIAS_DESPESA = {
   tecnologia: {
     label: "Tecnologia",
     entra_tcmp2: true,
-    subcategorias: ["APIs IA", "Software", "Infraestrutura", "Segurança"]
+    subcategorias: ["APIs IA", "Base44", "Cloud", "OpenAI", "Software", "Infraestrutura", "Segurança"]
   }
   };
 
