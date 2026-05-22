@@ -27,16 +27,17 @@ export default function BudgetConsolidadoAnual({ ano, workshopId, metas, realiza
     const mesStr = `${ano}-${String(i + 1).padStart(2, '0')}`;
     const metaMes = metas.find(m => m.mes === mesStr);
 
-    // FIX #2: agregar (somar) todos os lançamentos de receita do mês, não pegar só o primeiro
+    // FIX #2: agregar (somar) todos os lançamentos do mês por tipo
+    // Para receitas: soma apenas receitas. Para despesas: soma apenas despesas.
     const realizadoMes = realizados
-      .filter(r => r.mes === mesStr && r.tipo === "receita")
+      .filter(r => r.mes === mesStr)
       .reduce((sum, r) => sum + (r.valor || 0), 0);
 
-    // FIX #2: acumulado também filtra apenas receitas
+    // FIX #2: acumulado soma todos os lançamentos até o mês atual
     const acumuladoRealizado = realizados
       .filter(r => {
         const mesNum = parseInt(r.mes.split('-')[1]);
-        return mesNum <= i + 1 && r.tipo === "receita";
+        return mesNum <= i + 1;
       })
       .reduce((sum, r) => sum + (r.valor || 0), 0);
 
