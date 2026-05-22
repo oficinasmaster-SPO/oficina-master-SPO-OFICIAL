@@ -65,9 +65,9 @@ Deno.serve(async (req) => {
           
           processados++;
           
-          // Delay para evitar rate limit
-          if (processados % 10 === 0) {
-            await new Promise(resolve => setTimeout(resolve, 100));
+          // Delay maior para evitar rate limit
+          if (processados % 5 === 0) {
+            await new Promise(resolve => setTimeout(resolve, 200));
           }
         } catch (err) {
           erros.push({
