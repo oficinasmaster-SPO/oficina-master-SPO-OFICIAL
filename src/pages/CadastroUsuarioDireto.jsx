@@ -54,11 +54,12 @@ export default function CadastroUsuarioDireto() {
     onSuccess: (data) => {
       if (data.success) {
         toast.success('Usuário criado com sucesso!');
-        setCreatedUser(data);
+        // A função retorna { success, data: { user_id, email, ... } }
+        setCreatedUser(data.data || data);
         queryClient.invalidateQueries({ queryKey: ['admin-users'] });
         queryClient.invalidateQueries({ queryKey: ['employees'] });
       } else {
-        toast.error(data.error || 'Erro ao criar usuário');
+        toast.error(data.error?.message || data.error || 'Erro ao criar usuário');
       }
     },
     onError: (error) => {
