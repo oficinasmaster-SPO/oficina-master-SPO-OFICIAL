@@ -26,7 +26,7 @@ const FREQUENCIAS = [
 
 // ─── DETECÇÃO AUTOMÁTICA DE TIPO ─────────────────────────────────────────────
 const CATEGORIAS_RECEITA_KEYS = ['pecas_aplicadas', 'servicos', 'outras'];
-const CATEGORIAS_DESPESA_KEYS = ['operacional', 'pessoas', 'marketing', 'manutencao', 'terceirizados', 'administrativo', 'financeiro', 'pecas_estoque'];
+const CATEGORIAS_DESPESA_KEYS = ['operacional', 'pessoas', 'marketing', 'manutencao', 'terceirizados', 'administrativo', 'financeiro', 'pecas_estoque', 'tecnologia'];
 
 /**
  * Infere automaticamente se uma categoria é receita ou despesa
@@ -80,8 +80,13 @@ const CATEGORIAS_DESPESA = {
     label: "Peças para Estoque",
     entra_tcmp2: false,
     subcategorias: ["Boleto de peças (estoque)", "Compra antecipada", "Devolução de peças"]
+  },
+  tecnologia: {
+    label: "Tecnologia",
+    entra_tcmp2: true,
+    subcategorias: ["APIs IA", "Software", "Infraestrutura", "Segurança"]
   }
-};
+  };
 
 const CATEGORIAS_RECEITA = {
   pecas_aplicadas: {
@@ -671,7 +676,7 @@ function PainelAnalise({ lancamentos, tecnicosCount, horasMes }) {
               return acc;
             }, {});
 
-            const ordemCategorias = ["operacional", "pessoas", "marketing", "manutencao", "terceirizados", "administrativo", "financeiro", "pecas_estoque"];
+            const ordemCategorias = ["operacional", "pessoas", "marketing", "manutencao", "terceirizados", "administrativo", "tecnologia", "financeiro", "pecas_estoque"];
             
             return ordemCategorias
               .filter(cat => categoriasDespesas[cat] && categoriasDespesas[cat].valor > 0)
