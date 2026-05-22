@@ -1,0 +1,165 @@
+{
+  "name": "BankTransaction",
+  "type": "object",
+  "properties": {
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "banco": {
+      "type": "string",
+      "description": "Nome do banco (ex: Ita\u00fa, Bradesco, Nubank)"
+    },
+    "numero_conta": {
+      "type": "string",
+      "description": "N\u00famero da conta"
+    },
+    "tipo": {
+      "type": "string",
+      "enum": [
+        "credito",
+        "debito"
+      ],
+      "description": "Tipo de transa\u00e7\u00e3o"
+    },
+    "valor": {
+      "type": "number",
+      "description": "Valor da transa\u00e7\u00e3o"
+    },
+    "data_operacao": {
+      "type": "string",
+      "format": "date",
+      "description": "Data da opera\u00e7\u00e3o"
+    },
+    "data_lancamento": {
+      "type": "string",
+      "format": "date",
+      "description": "Data do lan\u00e7amento no extrato"
+    },
+    "descricao": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o da transa\u00e7\u00e3o"
+    },
+    "numero_documento": {
+      "type": "string",
+      "description": "N\u00famero do documento (nosso n\u00famero, ID PIX, etc)"
+    },
+    "categoria_bancaria": {
+      "type": "string",
+      "description": "Categoria da transa\u00e7\u00e3o no banco"
+    },
+    "liquidacao_financeira_id": {
+      "type": "string",
+      "description": "ID da Liquida\u00e7\u00e3oFinanceira vinculada (match)"
+    },
+    "status_conciliacao": {
+      "type": "string",
+      "enum": [
+        "pendente",
+        "conciliado",
+        "divergente",
+        "ignorado"
+      ],
+      "default": "pendente",
+      "description": "Status da concilia\u00e7\u00e3o"
+    },
+    "divergencia_valor": {
+      "type": "number",
+      "description": "Diferen\u00e7a de valor encontrada"
+    },
+    "divergencia_tipo": {
+      "type": "string",
+      "description": "Tipo de diverg\u00eancia"
+    },
+    "conciliado_por": {
+      "type": "string",
+      "description": "Usu\u00e1rio que conciliou"
+    },
+    "data_conciliacao": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data da concilia\u00e7\u00e3o"
+    },
+    "observacoes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es da concilia\u00e7\u00e3o"
+    },
+    "metadados": {
+      "type": "object",
+      "description": "Metadados da transa\u00e7\u00e3o (JSON flex\u00edvel)",
+      "properties": {
+        "id_transacao_banco": {
+          "type": "string",
+          "description": "ID \u00fanico da transa\u00e7\u00e3o no banco"
+        },
+        "tipo_transacao": {
+          "type": "string",
+          "description": "Tipo detalhado (TED, PIX, DOC, etc)"
+        },
+        "favorecido": {
+          "type": "string",
+          "description": "Nome do favorecido"
+        },
+        "cpf_cnpj": {
+          "type": "string",
+          "description": "CPF/CNPJ do favorecido"
+        },
+        "id_pix": {
+          "type": "string",
+          "description": "ID da transa\u00e7\u00e3o PIX"
+        }
+      }
+    }
+  },
+  "required": [
+    "workshop_id",
+    "banco",
+    "tipo",
+    "valor",
+    "data_operacao",
+    "descricao"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
