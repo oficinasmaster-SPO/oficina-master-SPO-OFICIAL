@@ -6,8 +6,14 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 
 export default function BudgetConsolidadoAnual({ ano, workshopId, metas, realizados }) {
   // Calcular totais anuais
+  // FIX #1: Meta usa apenas periodicidade anual; realizado filtra apenas receitas
   const metaAnualTotal = metas.reduce((sum, m) => sum + (m.meta_fixa_rs || m.meta_anual_rs || 0), 0);
-  const realizadoAcumulado = realizados.reduce((sum, r) => sum + (r.valor || 0), 0);
+  
+  // FIX #1: somar apenas receitas para comparar com meta de faturamento
+  const realizadoAcumulado = realizados
+    .filter(r => r.tipo === "receita")
+    .reduce((sum, r) => sum + (r.valor || 0), 0);
+
   const percentualAtingimento = metaAnualTotal > 0 ? (realizadoAcumulado / metaAnualTotal) * 100 : 0;
   const restante = metaAnualTotal - realizadoAcumulado;
 
@@ -20,19 +26,26 @@ export default function BudgetConsolidadoAnual({ ano, workshopId, metas, realiza
   const dadosGrafico = meses.map((nomeMes, i) => {
     const mesStr = `${ano}-${String(i + 1).padStart(2, '0')}`;
     const metaMes = metas.find(m => m.mes === mesStr);
-    const realizadoMes = realizados.find(r => r.mes === mesStr);
-    
+
+    // FIX #2: agregar (somar) todos os lançamentos de receita do mês, não pegar só o primeiro
+    const realizadoMes = realizados
+      .filter(r => r.mes === mesStr && r.tipo === "receita")
+      .reduce((sum, r) => sum + (r.valor || 0), 0);
+
+    // FIX #2: acumulado também filtra apenas receitas
+    const acumuladoRealizado = realizados
+      .filter(r => {
+        const mesNum = parseInt(r.mes.split('-')[1]);
+        return mesNum <= i + 1 && r.tipo === "receita";
+      })
+      .reduce((sum, r) => sum + (r.valor || 0), 0);
+
     return {
       mes: nomeMes,
-      meta: metaMes?.meta_fixa_rs || metaMes?.meta_anual_rs / 12 || 0,
-      realizado: realizadoMes?.valor || 0,
+      meta: metaMes?.meta_fixa_rs || (metaMes?.meta_anual_rs ? metaMes.meta_anual_rs / 12 : 0),
+      realizado: realizadoMes,
       acumulado_meta: metaMes?.meta_acumulada_mes || 0,
-      acumulado_realizado: realizados
-        .filter(r => {
-          const mesNum = parseInt(r.mes.split('-')[1]);
-          return mesNum <= i + 1;
-        })
-        .reduce((sum, r) => sum + (r.valor || 0), 0)
+      acumulado_realizado: acumuladoRealizado
     };
   });
 
@@ -99,20 +112,26 @@ export default function BudgetConsolidadoAnual({ ano, workshopId, metas, realiza
           </CardContent>
         </Card>
 
-        <Card className={`border-2 ${restante >= 0 ? 'bg-purple-50 border-purple-200' : 'bg-red-50 border-red-200'}`}>
+        <Card className={`border-2 ${
+          metaAnualTotal === 0 ? 'bg-gray-50 border-gray-200' :
+          restante >= 0 ? 'bg-purple-50 border-purple-200' : 'bg-emerald-50 border-emerald-200'
+        }`}>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2"
-              style={{ color: restante >= 0 ? '#7c3aed' : '#dc2626' }}>
-              {restante >= 0 ? <Target className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+              style={{ color: metaAnualTotal === 0 ? '#6b7280' : restante >= 0 ? '#7c3aed' : '#059669' }}>
+              {metaAnualTotal === 0 ? <Target className="w-4 h-4" /> : restante >= 0 ? <Target className="w-4 h-4" /> : <TrendingUp className="w-4 h-4" />}
               Restante
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className={`text-2xl font-bold ${restante >= 0 ? 'text-purple-900' : 'text-red-900'}`}>
-              {formatMoeda(Math.abs(restante))}
+            <p className={`text-2xl font-bold ${
+              metaAnualTotal === 0 ? 'text-gray-500' :
+              restante >= 0 ? 'text-purple-900' : 'text-emerald-900'
+            }`}>
+              {metaAnualTotal === 0 ? '—' : formatMoeda(Math.abs(restante))}
             </p>
-            <p className="text-xs mt-1" style={{ color: restante >= 0 ? '#7c3aed' : '#dc2626' }}>
-              {restante >= 0 ? 'Falta atingir' : 'Acima da meta'}
+            <p className="text-xs mt-1" style={{ color: metaAnualTotal === 0 ? '#6b7280' : restante >= 0 ? '#7c3aed' : '#059669' }}>
+              {metaAnualTotal === 0 ? 'Defina uma meta anual' : restante >= 0 ? 'Falta atingir' : '✅ Meta superada!'}
             </p>
           </CardContent>
         </Card>
