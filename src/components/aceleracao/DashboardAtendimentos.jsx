@@ -1,5 +1,44 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { FileText, BarChart3 } from "lucide-react";
+
+const TOP_N = 5;
+
+function TiposCollapsible({ tipos, formatarTipo }) {
+  const [expanded, setExpanded] = useState(false);
+  const visible = expanded ? tipos : tipos.slice(0, TOP_N);
+  const hidden = tipos.length - TOP_N;
+
+  return (
+    <div className="flex items-center gap-1.5 flex-wrap">
+      <span className="text-xs text-gray-400 shrink-0">Tipos:</span>
+      {visible.map(([tipo, qtd]) => (
+        <span
+          key={tipo}
+          className="inline-flex items-center gap-1 text-xs bg-gray-100 text-gray-600 rounded px-2 py-0.5 border border-gray-200"
+        >
+          <span className="font-semibold text-gray-800">{qtd}</span>
+          {formatarTipo(tipo)}
+        </span>
+      ))}
+      {!expanded && hidden > 0 && (
+        <button
+          onClick={() => setExpanded(true)}
+          className="text-xs text-blue-600 hover:text-blue-800 font-medium px-2 py-0.5 rounded border border-blue-200 bg-blue-50 hover:bg-blue-100 transition-colors"
+        >
+          +{hidden} mais
+        </button>
+      )}
+      {expanded && (
+        <button
+          onClick={() => setExpanded(false)}
+          className="text-xs text-gray-500 hover:text-gray-700 font-medium px-2 py-0.5 rounded border border-gray-200 bg-gray-50 hover:bg-gray-100 transition-colors"
+        >
+          recolher
+        </button>
+      )}
+    </div>
+  );
+}
 
 export default function DashboardAtendimentos({ atendimentos = [], onStatusClick }) {
   const estatisticas = useMemo(() => {
@@ -46,19 +85,8 @@ export default function DashboardAtendimentos({ atendimentos = [], onStatusClick
       {/* Divisor */}
       <div className="h-5 w-px bg-gray-200 shrink-0 hidden sm:block" />
 
-      {/* Tags de tipo inline */}
-      <div className="flex items-center gap-1.5 flex-wrap">
-        <span className="text-xs text-gray-400 shrink-0">Tipos:</span>
-        {tiposOrdenados.map(([tipo, qtd]) => (
-          <span
-            key={tipo}
-            className="inline-flex items-center gap-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 rounded px-2 py-0.5 border border-gray-200 transition-colors cursor-default"
-          >
-            <span className="font-semibold text-gray-800">{qtd}</span>
-            {formatarTipo(tipo)}
-          </span>
-        ))}
-      </div>
+      {/* Tags de tipo inline — colapsáveis */}
+      <TiposCollapsible tipos={tiposOrdenados} formatarTipo={formatarTipo} />
     </div>
   );
 }
