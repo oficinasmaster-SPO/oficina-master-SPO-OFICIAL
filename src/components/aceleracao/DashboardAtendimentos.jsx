@@ -40,22 +40,22 @@ function TiposCollapsible({ tipos, formatarTipo }) {
   );
 }
 
-export default function DashboardAtendimentos({ atendimentos = [], onStatusClick }) {
+export default function DashboardAtendimentos({ atendimentos = [], bucketCount = 0, onStatusClick }) {
   const estatisticas = useMemo(() => {
     const grupos = {};
     let totalAtas = 0;
-    const porStatus = { agendado: 0, confirmado: 0, realizado: 0, reagendado: 0, bucket: 0 };
+    // contadores de status — baseados nos atendimentos brutos (sem filtro de tab/data)
+    const porStatus = { agendado: 0, confirmado: 0, realizado: 0, reagendado: 0 };
 
     atendimentos.forEach(a => {
       const tipo = a.tipo_atendimento || "outros";
       grupos[tipo] = (grupos[tipo] || 0) + 1;
       if (a.ata_id) totalAtas++;
       const s = a.status;
-      if (s === 'agendado') porStatus.agendado++;
+      if (s === 'agendado' || s === 'atrasado' || s === 'participando') porStatus.agendado++;
       else if (s === 'confirmado') porStatus.confirmado++;
       else if (s === 'realizado' || s === 'concluido') porStatus.realizado++;
       else if (s === 'reagendado') porStatus.reagendado++;
-      else if (s === 'bucket') porStatus.bucket++;
     });
 
     return { grupos, totalAtas, total: atendimentos.length, porStatus };
@@ -99,7 +99,6 @@ export default function DashboardAtendimentos({ atendimentos = [], onStatusClick
           { key: 'confirmado', label: 'Confirmado', color: 'bg-emerald-50 border-emerald-200 text-emerald-700', icon: <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> },
           { key: 'realizado',  label: 'Realizado',  color: 'bg-green-50 border-green-200 text-green-700', icon: <CheckCircle2 className="w-3.5 h-3.5 text-green-400" /> },
           { key: 'reagendado', label: 'Reagendado', color: 'bg-amber-50 border-amber-200 text-amber-700', icon: <RefreshCw className="w-3.5 h-3.5 text-amber-400" /> },
-          { key: 'bucket',     label: 'Bucket',     color: 'bg-gray-50 border-gray-200 text-gray-700',   icon: <Inbox className="w-3.5 h-3.5 text-gray-400" /> },
         ].map(({ key, label, color, icon }) => (
           <button
             key={key}
@@ -111,6 +110,15 @@ export default function DashboardAtendimentos({ atendimentos = [], onStatusClick
             <span className="font-bold">{estatisticas.porStatus[key]}</span>
           </button>
         ))}
+        {/* Bucket — entidade separada (ContractAttendance pendentes) */}
+        <button
+          onClick={() => onStatusClick?.('bucket')}
+          className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 border text-xs font-medium transition-colors hover:opacity-80 bg-indigo-50 border-indigo-200 text-indigo-700"
+        >
+          <Inbox className="w-3.5 h-3.5 text-indigo-400" />
+          <span className="text-gray-500">Bucket</span>
+          <span className="font-bold">{bucketCount}</span>
+        </button>
       </div>
 
       {/* Divisor */}

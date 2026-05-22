@@ -1,7 +1,7 @@
 // v2
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useDebounce } from "@/components/hooks/useDebounce";
 import AttendanceDetailsDrawer from "./AttendanceDetailsDrawer";
 import AtendimentoRow from "./AtendimentoRow";
@@ -63,6 +63,16 @@ export default function PainelAtendimentosTab({ state }) {
 
   // ── Validação de atendimentos ──
   const [detailsDrawer, setDetailsDrawer] = useState({ open: false, item: null, validation: null });
+
+  // ── Bucket count (entidade separada: ContractAttendance pendentes) ──
+  const { data: bucketCount = 0 } = useQuery({
+    queryKey: ['bucket-count'],
+    queryFn: async () => {
+      const items = await base44.entities.ContractAttendance.filter({ status: 'pendente' }, 'scheduled_date', 500);
+      return items.filter(i => !i.consultoria_atendimento_id).length;
+    },
+    staleTime: 2 * 60 * 1000
+  });
 
   // ── Filtros LOCAIS da aba (apenas search — datas vêm da URL via filtros) ──
   const [localFilters, setLocalFilters] = useState({
@@ -257,7 +267,7 @@ export default function PainelAtendimentosTab({ state }) {
       )}
 
       {activeTab !== 'bucket' && activeTab !== 'grade_horarios' && (
-        <DashboardAtendimentos atendimentos={atendimentosFiltrados} onStatusClick={setActiveTab} />
+        <DashboardAtendimentos atendimentos={atendimentos} bucketCount={bucketCount} onStatusClick={setActiveTab} />
       )}
 
       <div className="w-full">
