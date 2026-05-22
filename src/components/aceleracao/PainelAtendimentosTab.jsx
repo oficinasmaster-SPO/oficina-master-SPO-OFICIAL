@@ -134,18 +134,9 @@ export default function PainelAtendimentosTab({ state }) {
 
   // ── Filtragem local (memoized e otimizada) ──
   const atendimentosFiltrados = useMemo(() => {
-    let startLimit = null;
-    let endLimit = null;
-    
-    // Processa os limites de data apenas uma vez fora do loop
-    if (filtros.dataInicio) {
-      startLimit = new Date(filtros.dataInicio).getTime();
-    }
-    if (filtros.dataFim) {
-      const df = new Date(filtros.dataFim);
-      df.setHours(23, 59, 59, 999);
-      endLimit = df.getTime();
-    }
+    // Strings de data "YYYY-MM-DD" — comparação direta em BRT
+    const startLimit = filtros.dataInicio || null;
+    const endLimit = filtros.dataFim || null;
     
     // Transforma a busca uma vez só
     const searchLower = debouncedSearch ? debouncedSearch.toLowerCase() : "";
@@ -157,11 +148,11 @@ export default function PainelAtendimentosTab({ state }) {
         // Atrasados sempre passam no filtro de data (já foram incluídos no atendimentosPeriodo)
         const isAtrasado = a.status === 'atrasado';
         
-        // Verifica as datas usando milissegundos (exceto atrasados)
+        // Verifica as datas usando a data local em BRT (exceto atrasados)
         if (!isAtrasado && (startLimit || endLimit)) {
-          const itemTime = new Date(a.data_agendada).getTime();
-          if (startLimit && itemTime < startLimit) return false;
-          if (endLimit && itemTime > endLimit) return false;
+          const itemDate = new Date(a.data_agendada).toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+          if (startLimit && itemDate < startLimit) return false;
+          if (endLimit && itemDate > endLimit) return false;
         }
         
         if (searchLower) {
