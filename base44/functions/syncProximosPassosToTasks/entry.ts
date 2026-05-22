@@ -1,6 +1,22 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 /**
+ * Converte date-only ("2026-05-30") para UTC ancorando ao meio-dia BRT (15:00 UTC).
+ * Evita o bug de -1 dia causado por new Date("2026-05-30") → meia-noite UTC → dia anterior em BRT.
+ */
+function safeDateOnlyParse(dateOnly) {
+  if (!dateOnly) return new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  const s = String(dateOnly).trim();
+  // Se já tem componente de tempo, normaliza com offset BRT
+  if (s.includes('T')) {
+    if (s.endsWith('Z') || /[+-]\d{2}:\d{2}$/.test(s)) return new Date(s);
+    return new Date(s + '-03:00');
+  }
+  // Date-only: ancora ao meio-dia BRT = 15:00 UTC
+  return new Date(s + 'T15:00:00.000Z');
+}
+
+/**
  * QA FIX: Sync de próximos passos com proteção total contra duplicatas.
  * - Usa item_id_hash como chave de idempotência no ConsultoriaProximoPasso
  * - Busca por AMBOS ata_id E consultoria_atendimento_id para detectar duplicatas cross-field
@@ -45,13 +61,14 @@ Deno.serve(async (req) => {
 
       const existingTask = ataTasks.find(t => t.item_id === taskId);
 
+      // B3 FIX: usa safeDateOnlyParse para evitar -1 dia em prazos date-only
+      const prazoUTC = safeDateOnlyParse(passo.prazo).toISOString();
+
       if (existingTask) {
         await base44.asServiceRole.entities.CronogramaImplementacao.update(existingTask.id, {
           item_nome: passo.descricao,
           status: passo.status || 'a_fazer',
-          data_termino_previsto: passo.prazo
-            ? new Date(passo.prazo).toISOString()
-            : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          data_termino_previsto: prazoUTC,
           observacoes: `Responsável: ${passo.responsavel || 'Não definido'}`
         });
       } else {
@@ -62,9 +79,7 @@ Deno.serve(async (req) => {
           item_tipo: 'proximo_passo_ata',
           status: passo.status || 'a_fazer',
           data_inicio_real: new Date().toISOString(),
-          data_termino_previsto: passo.prazo
-            ? new Date(passo.prazo).toISOString()
-            : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          data_termino_previsto: prazoUTC,
           observacoes: `Responsável: ${passo.responsavel || 'Não definido'}`,
           ata_origem_id: ata_id
         });

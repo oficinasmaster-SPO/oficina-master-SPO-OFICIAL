@@ -1,6 +1,18 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
 /**
+ * Normaliza qualquer string de data para Date UTC.
+ * - Com 'Z' ou offset → parse direto
+ * - Legado sem timezone ("2026-05-22T11:00:00") → assume BRT (UTC-3)
+ */
+function normalizeDateUTC(raw) {
+  if (!raw) return null;
+  const s = String(raw).trim();
+  if (s.endsWith('Z') || /[+-]\d{2}:\d{2}$/.test(s)) return new Date(s);
+  return new Date(s + '-03:00');
+}
+
+/**
  * Alerta de Atendimento em Atraso (tempo real)
  * Roda a cada 15 min via automação agendada.
  * Detecta atendimentos com status agendado/confirmado
@@ -62,8 +74,13 @@ Deno.serve(async (req) => {
     try {
       const consultorEmail = userEmailMap[a.consultor_id];
       const clienteNome = workshopNomeMap[a.workshop_id] || 'Cliente';
-      const horaAgendada = new Date(a.data_agendada).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-      const minutosAtraso = Math.round((agora - new Date(a.data_agendada)) / 60000);
+      const dataAgendadaUTC = normalizeDateUTC(a.data_agendada);
+      const horaAgendada = dataAgendadaUTC
+        ? dataAgendadaUTC.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })
+        : a.data_agendada;
+      const minutosAtraso = dataAgendadaUTC
+        ? Math.round((agora - dataAgendadaUTC) / 60000)
+        : 0;
 
       // Atualizar status ANTES do e-mail — evita re-alerta se e-mail falhar depois
       await base44.asServiceRole.entities.ConsultoriaAtendimento.update(a.id, {

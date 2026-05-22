@@ -1,6 +1,34 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 /**
+ * Normaliza qualquer string de data para Date UTC.
+ * - Com 'Z' ou offset → parse direto (correto)
+ * - Legado sem timezone → assume BRT (UTC-3)
+ * - Date-only → ancora ao meio-dia BRT (15:00 UTC) para evitar -1 dia
+ */
+function normalizeDateUTC(raw) {
+  if (!raw) return null;
+  const s = String(raw).trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return new Date(s + 'T15:00:00.000Z');
+  if (s.endsWith('Z') || /[+-]\d{2}:\d{2}$/.test(s)) return new Date(s);
+  return new Date(s + '-03:00');
+}
+
+/**
+ * Extrai "YYYY-MM-DD" no fuso de Brasília a partir de qualquer Date UTC.
+ * Substitui o padrão quebrado: date.toISOString().split('T')[0]
+ */
+function extractDateBRT(d) {
+  if (!d) return '';
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Sao_Paulo',
+    year: 'numeric', month: '2-digit', day: '2-digit'
+  }).formatToParts(d);
+  const get = (t) => parts.find(p => p.type === t)?.value || '00';
+  return `${get('year')}-${get('month')}-${get('day')}`;
+}
+
+/**
  * QA FIX: Cria follow-up reminders APENAS se não existirem para o atendimento/ATA
  * Idempotente: nunca cria duplicatas para o mesmo (atendimento_id, sequence_number)
  */
@@ -71,13 +99,14 @@ Deno.serve(async (req) => {
       console.warn('Could not fetch workshop:', e.message);
     }
 
-    // Calculate the base date (meeting date)
-    const meetingDate = new Date(data.meeting_date || atendimento.data_realizada || atendimento.data_agendada);
-    
+    // B4 FIX: normaliza data base corretamente (legados sem TZ assumem BRT, date-only âncora ao meio-dia BRT)
+    const rawMeetingDate = data.meeting_date || atendimento.data_realizada || atendimento.data_agendada;
+    const meetingDateUTC = normalizeDateUTC(rawMeetingDate);
+
     const reminders = [];
     for (let i = 1; i <= 4; i++) {
-      const reminderDate = new Date(meetingDate);
-      reminderDate.setDate(reminderDate.getDate() + (i * 7));
+      // Adiciona dias via ms — seguro, sem depender de setDate() em contexto TZ errado
+      const reminderDateUTC = new Date(meetingDateUTC.getTime() + i * 7 * 24 * 60 * 60 * 1000);
       const daysOffset = i * 7;
 
       reminders.push({
@@ -87,7 +116,8 @@ Deno.serve(async (req) => {
         ata_id: ataId,
         consultor_id: atendimento.consultor_id,
         consultor_nome: atendimento.consultor_nome || data.consultor_name || '',
-        reminder_date: reminderDate.toISOString().split('T')[0],
+        // B4 FIX: extrai data no fuso BRT para que o dia exibido seja correto
+        reminder_date: extractDateBRT(reminderDateUTC),
         sequence_number: i,
         days_since_meeting: daysOffset,
         message: `Hoje faz ${daysOffset} dias desde o último atendimento com ${workshopName}. Seria importante dar um retorno hoje ainda para saber sobre a evolução do cliente.`,

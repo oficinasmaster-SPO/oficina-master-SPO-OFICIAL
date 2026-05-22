@@ -128,4 +128,62 @@ export function currentMonthBrazil() {
   return todayBrazil().substring(0, 7);
 }
 
+/**
+ * Converte input do usuário (data local BRT) para ISO UTC antes de salvar.
+ * Ex: parseBrazilDate("2026-05-22", "11:00") → "2026-05-22T14:00:00.000Z"
+ * @param {string} dateStr  "YYYY-MM-DD"
+ * @param {string} timeStr  "HH:MM" (opcional, default "00:00")
+ * @returns {string} ISO UTC
+ */
+export function parseBrazilDate(dateStr, timeStr = '00:00') {
+  if (!dateStr) return '';
+  const localStr = `${dateStr}T${timeStr}:00`;
+  return new Date(localStr + '-03:00').toISOString();
+}
+
+/**
+ * Parse seguro de qualquer string de data.
+ * - Com Z/offset → UTC direto
+ * - Legado sem TZ → assume BRT (UTC-3)
+ * - Date-only → ancora ao meio-dia BRT (evita -1 dia)
+ * @param {string|Date|null} raw
+ * @returns {Date|null}
+ */
+export function safeParseDate(raw) {
+  if (!raw) return null;
+  if (raw instanceof Date) return isNaN(raw.getTime()) ? null : raw;
+  const s = String(raw).trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return new Date(s + 'T15:00:00.000Z');
+  if (s.endsWith('Z') || /[+-]\d{2}:\d{2}$/.test(s)) {
+    const d = new Date(s);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  const d = new Date(s + '-03:00');
+  return isNaN(d.getTime()) ? null : d;
+}
+
+/**
+ * Parse seguro de valores date-only ("YYYY-MM-DD").
+ * Ancora ao meio-dia BRT (15:00 UTC) para evitar o bug de -1 dia.
+ * @param {string|null} dateOnly
+ * @returns {Date|null}
+ */
+export function safeDateOnlyParse(dateOnly) {
+  if (!dateOnly) return null;
+  const s = String(dateOnly).trim();
+  if (s.includes('T')) return safeParseDate(s);
+  return new Date(s + 'T15:00:00.000Z');
+}
+
+/**
+ * Parse de data UTC — alias explícito para clareza semântica.
+ * @param {string|null} isoUtc
+ * @returns {Date|null}
+ */
+export function parseUTCDate(isoUtc) {
+  if (!isoUtc) return null;
+  const d = new Date(isoUtc);
+  return isNaN(d.getTime()) ? null : d;
+}
+
 export { TIMEZONE };

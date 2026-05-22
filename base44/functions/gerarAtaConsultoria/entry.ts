@@ -1,5 +1,38 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
+/**
+ * Normaliza data para UTC: legado sem TZ assume BRT (UTC-3), date-only ancora ao meio-dia BRT.
+ */
+function normalizeDateUTC(raw) {
+  if (!raw) return null;
+  const s = String(raw).trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return new Date(s + 'T15:00:00.000Z');
+  if (s.endsWith('Z') || /[+-]\d{2}:\d{2}$/.test(s)) return new Date(s);
+  return new Date(s + '-03:00');
+}
+
+/** Extrai "YYYY-MM-DD" no fuso BRT. Substitui split('T')[0] */
+function extractDateBRT(raw) {
+  const d = normalizeDateUTC(raw);
+  if (!d) return '';
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Sao_Paulo',
+    year: 'numeric', month: '2-digit', day: '2-digit'
+  }).formatToParts(d);
+  const get = (t) => parts.find(p => p.type === t)?.value || '00';
+  return `${get('year')}-${get('month')}-${get('day')}`;
+}
+
+/** Extrai "HH:MM" no fuso BRT. Substitui split('T')[1].slice(0,5) */
+function extractTimeBRT(raw) {
+  const d = normalizeDateUTC(raw);
+  if (!d) return '';
+  return d.toLocaleTimeString('pt-BR', {
+    timeZone: 'America/Sao_Paulo',
+    hour: '2-digit', minute: '2-digit', hour12: false
+  });
+}
+
 Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
   
@@ -216,8 +249,9 @@ Formate em Markdown para fácil leitura. ${toneText} NÃO adicione saudações f
         code: `ATA${Math.floor(1000 + Math.random() * 9000)}`,
         workshop_id: atendimento.workshop_id,
         atendimento_id: atendimento.id,
-        meeting_date: atendimento.data_realizada ? atendimento.data_realizada.split('T')[0] : atendimento.data_agendada.split('T')[0],
-        meeting_time: atendimento.data_realizada ? atendimento.data_realizada.split('T')[1].slice(0, 5) : atendimento.data_agendada.split('T')[1].slice(0, 5),
+        // B2 FIX: extrai data e hora no fuso BRT (não no UTC do servidor)
+        meeting_date: extractDateBRT(atendimento.data_realizada || atendimento.data_agendada),
+        meeting_time: extractTimeBRT(atendimento.data_realizada || atendimento.data_agendada),
         tipo_aceleracao: atendimento.tipo_atendimento,
         consultor_name: atendimento.consultor_nome,
         consultor_id: atendimento.consultor_id,
