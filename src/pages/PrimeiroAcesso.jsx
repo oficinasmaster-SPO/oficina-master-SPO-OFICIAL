@@ -20,7 +20,12 @@ export default function PrimeiroAcesso() {
   const validateToken = async () => {
     try {
       const urlParams = new URLSearchParams(window.location.search);
-      const token = urlParams.get('token');
+      let token = urlParams.get('token');
+
+      // Recuperar token do sessionStorage caso tenha voltado do login sem o token na URL
+      if (!token) {
+        token = sessionStorage.getItem('invite_token_pending');
+      }
 
       if (!token) {
         setError("Link de convite inválido. Token não encontrado.");
@@ -50,6 +55,8 @@ export default function PrimeiroAcesso() {
           try {
             const completeResponse = await base44.functions.invoke('completeInviteOnFirstAccess', { invite_token: token });
             if (completeResponse.data.success) {
+              // Limpar token salvo após uso bem-sucedido
+              sessionStorage.removeItem('invite_token_pending');
               setStep("success");
               setTimeout(() => {
                 window.location.href = createPageUrl("Home"); 
@@ -62,10 +69,13 @@ export default function PrimeiroAcesso() {
             setStep("error");
           }
         } else {
+          // Salvar token no sessionStorage antes de redirecionar para login
+          sessionStorage.setItem('invite_token_pending', token);
           setStep("login_redirect");
           setTimeout(() => {
-            base44.auth.redirectToLogin(window.location.origin + window.location.pathname + window.location.search);
-          }, 4000);
+            // Redireciona de volta para /PrimeiroAcesso sem parâmetros (token está no sessionStorage)
+            base44.auth.redirectToLogin(window.location.origin + '/PrimeiroAcesso');
+          }, 3000);
         }
       } else {
         setError(response.data.error || "Convite inválido");
@@ -100,7 +110,7 @@ export default function PrimeiroAcesso() {
                 Acesso Liberado
               </p>
               <p className="text-sm text-blue-700 mb-2">
-                Na próxima tela, utilize a opção <strong>"Criar conta" (Sign up)</strong> com o seu e-mail para definir sua senha de acesso.
+                Na próxima tela, clique em <strong>"Criar conta" (Sign up)</strong> e use o e-mail para o qual recebeu o convite. Após criar sua conta, você será redirecionado automaticamente.
               </p>
             </div>
             <div className="flex items-center justify-center gap-2 text-gray-500 font-medium">

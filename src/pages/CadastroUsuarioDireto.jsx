@@ -74,7 +74,13 @@ export default function CadastroUsuarioDireto() {
       return;
     }
 
-    createUserMutation.mutate(formData);
+    // Garantir que profile_id null não seja enviado como string "null"
+    const payload = { ...formData };
+    if (!payload.profile_id || payload.profile_id === 'null') {
+      delete payload.profile_id;
+    }
+
+    createUserMutation.mutate(payload);
   };
 
   const handleCopyLink = () => {
@@ -318,14 +324,14 @@ export default function CadastroUsuarioDireto() {
               <div>
                 <Label>Perfil de Acesso (Opcional)</Label>
                 <Select
-                  value={formData.profile_id}
-                  onValueChange={(value) => setFormData({...formData, profile_id: value})}
+                  value={formData.profile_id || '__auto__'}
+                  onValueChange={(value) => setFormData({...formData, profile_id: value === '__auto__' ? '' : value})}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Gerar automaticamente" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={null}>Gerar automaticamente</SelectItem>
+                    <SelectItem value="__auto__">Gerar automaticamente</SelectItem>
                     {profiles.map((p) => (
                       <SelectItem key={p.id} value={p.id}>
                         {p.name}

@@ -50,9 +50,8 @@ Deno.serve(async (req) => {
     
     if (!name || typeof name !== 'string' || name.length > 255 ||
         !email || typeof email !== 'string' || email.length > 255 ||
-        !workshop_id || typeof workshop_id !== 'string' ||
-        !profile_id || typeof profile_id !== 'string') {
-      return Response.json({ success: false, error: { code: 'MISSING_FIELDS', message: 'Campos obrigatórios ausentes ou inválidos (name, email, workshop_id, profile_id)' } }, { status: 400 });
+        !workshop_id || typeof workshop_id !== 'string') {
+      return Response.json({ success: false, error: { code: 'MISSING_FIELDS', message: 'Campos obrigatórios ausentes ou inválidos (name, email, workshop_id)' } }, { status: 400 });
     }
 
     if (currentUser.data?.workshop_id && currentUser.data?.workshop_id !== workshop_id) {
@@ -101,8 +100,22 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Se profile_id não foi enviado, busca o primeiro perfil externo ativo como fallback
+    let finalProfileIdResolved = profile_id;
+    if (!finalProfileIdResolved) {
+      try {
+        const profiles = await base44.asServiceRole.entities.UserProfile.filter({ type: 'externo', status: 'ativo' });
+        if (profiles && profiles.length > 0) {
+          finalProfileIdResolved = profiles[0].id;
+          console.log("📋 Profile_id resolvido automaticamente:", finalProfileIdResolved);
+        }
+      } catch(e) {
+        console.warn("⚠️ Não foi possível resolver profile_id automaticamente:", e.message);
+      }
+    }
+
     try {
-      await validateBusinessRules({ email, workshop_id, profile_id }, { base44 });
+      await validateBusinessRules({ email, workshop_id, profile_id: finalProfileIdResolved }, { base44 });
     } catch (ruleError) {
       return Response.json({ success: false, error: ruleError }, { status: 400 });
     }
@@ -127,8 +140,8 @@ Deno.serve(async (req) => {
       console.error("⚠️ Aviso: Falha ao buscar dados da oficina:", e.message);
     }
     
-    // O profile_id enviado é a fonte da verdade para as permissões
-    const finalProfileId = profile_id;
+    // O profile_id resolvido é a fonte da verdade para as permissões
+    const finalProfileId = finalProfileIdResolved || profile_id;
 
     // Convidar usuário via Base44 usando SERVICE ROLE (não afeta sessão do admin)
     console.log("📧 Convidando usuário via Base44 com role:", safeRole);

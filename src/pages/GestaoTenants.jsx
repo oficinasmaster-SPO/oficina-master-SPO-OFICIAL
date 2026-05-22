@@ -805,7 +805,7 @@ export default function GestaoTenants() {
             <Button variant="outline" onClick={() => setIsCompanyModalOpen(false)}>Cancelar</Button>
             <Button 
               onClick={() => saveCompanyMutation.mutate(companyFormData)} 
-              disabled={saveCompanyMutation.isPending || !companyFormData.name || !companyFormData.consulting_firm_id || !companyFormData.owner_id}
+              disabled={saveCompanyMutation.isPending || !companyFormData.name || !companyFormData.consulting_firm_id}
             >
               {saveCompanyMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : 'Salvar'}
             </Button>
