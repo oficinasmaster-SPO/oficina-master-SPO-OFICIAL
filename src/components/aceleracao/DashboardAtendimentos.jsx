@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { FileText, BarChart3 } from "lucide-react";
+import { FileText, BarChart3, Calendar, CheckCircle2, Clock, RefreshCw, Inbox } from "lucide-react";
 
 const TOP_N = 5;
 
@@ -44,14 +44,21 @@ export default function DashboardAtendimentos({ atendimentos = [], onStatusClick
   const estatisticas = useMemo(() => {
     const grupos = {};
     let totalAtas = 0;
+    const porStatus = { agendado: 0, confirmado: 0, realizado: 0, reagendado: 0, bucket: 0 };
 
     atendimentos.forEach(a => {
       const tipo = a.tipo_atendimento || "outros";
       grupos[tipo] = (grupos[tipo] || 0) + 1;
       if (a.ata_id) totalAtas++;
+      const s = a.status;
+      if (s === 'agendado') porStatus.agendado++;
+      else if (s === 'confirmado') porStatus.confirmado++;
+      else if (s === 'realizado' || s === 'concluido') porStatus.realizado++;
+      else if (s === 'reagendado') porStatus.reagendado++;
+      else if (s === 'bucket') porStatus.bucket++;
     });
 
-    return { grupos, totalAtas, total: atendimentos.length };
+    return { grupos, totalAtas, total: atendimentos.length, porStatus };
   }, [atendimentos]);
 
   const formatarTipo = (tipo) =>
@@ -80,6 +87,30 @@ export default function DashboardAtendimentos({ atendimentos = [], onStatusClick
           <span className="text-xs text-gray-500">Doc.</span>
           <span className="text-sm font-bold text-purple-700">{taxaDoc}%</span>
         </div>
+      </div>
+
+      {/* Divisor */}
+      <div className="h-5 w-px bg-gray-200 shrink-0 hidden sm:block" />
+
+      {/* Status chips clicáveis */}
+      <div className="flex items-center gap-2 shrink-0 flex-wrap">
+        {[
+          { key: 'agendado',   label: 'Agendado',   color: 'bg-blue-50 border-blue-200 text-blue-700',   icon: <Calendar className="w-3.5 h-3.5 text-blue-400" /> },
+          { key: 'confirmado', label: 'Confirmado', color: 'bg-emerald-50 border-emerald-200 text-emerald-700', icon: <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> },
+          { key: 'realizado',  label: 'Realizado',  color: 'bg-green-50 border-green-200 text-green-700', icon: <CheckCircle2 className="w-3.5 h-3.5 text-green-400" /> },
+          { key: 'reagendado', label: 'Reagendado', color: 'bg-amber-50 border-amber-200 text-amber-700', icon: <RefreshCw className="w-3.5 h-3.5 text-amber-400" /> },
+          { key: 'bucket',     label: 'Bucket',     color: 'bg-gray-50 border-gray-200 text-gray-700',   icon: <Inbox className="w-3.5 h-3.5 text-gray-400" /> },
+        ].map(({ key, label, color, icon }) => (
+          <button
+            key={key}
+            onClick={() => onStatusClick?.(key)}
+            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 border text-xs font-medium transition-colors hover:opacity-80 ${color}`}
+          >
+            {icon}
+            <span className="text-gray-500">{label}</span>
+            <span className="font-bold">{estatisticas.porStatus[key]}</span>
+          </button>
+        ))}
       </div>
 
       {/* Divisor */}
