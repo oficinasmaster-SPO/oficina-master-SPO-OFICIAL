@@ -1,0 +1,137 @@
+{
+  "name": "BudgetMetaHistory",
+  "type": "object",
+  "properties": {
+    "meta_id": {
+      "type": "string",
+      "description": "ID da BudgetMeta que foi alterada"
+    },
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina (para facilitar consultas)"
+    },
+    "mes": {
+      "type": "string",
+      "description": "M\u00eas de refer\u00eancia da meta (YYYY-MM)"
+    },
+    "version": {
+      "type": "integer",
+      "description": "N\u00famero da vers\u00e3o (incremental: 1, 2, 3...)"
+    },
+    "changed_by": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio que fez a altera\u00e7\u00e3o"
+    },
+    "changed_by_nome": {
+      "type": "string",
+      "description": "Nome do usu\u00e1rio (cache)"
+    },
+    "changed_by_email": {
+      "type": "string",
+      "description": "Email do usu\u00e1rio (cache)"
+    },
+    "changed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp exato da altera\u00e7\u00e3o"
+    },
+    "field_changed": {
+      "type": "string",
+      "description": "Nome do campo que foi alterado (ex: meta_fixa_rs, meta_percentual)"
+    },
+    "old_value": {
+      "type": "string",
+      "description": "Valor anterior (stringificado para suportar todos os tipos)"
+    },
+    "new_value": {
+      "type": "string",
+      "description": "Novo valor (stringificado)"
+    },
+    "reason": {
+      "type": "string",
+      "description": "Motivo/justificativa da altera\u00e7\u00e3o (obrigat\u00f3rio para meses fechados)"
+    },
+    "snapshot": {
+      "type": "object",
+      "description": "Snapshot completo da meta ap\u00f3s altera\u00e7\u00e3o",
+      "properties": {
+        "faturamento_meta_rs": {
+          "type": "number"
+        },
+        "meta_fixa_rs": {
+          "type": "number"
+        },
+        "meta_percentual": {
+          "type": "number"
+        },
+        "peso_sazonal": {
+          "type": "number"
+        },
+        "responsavel_nome": {
+          "type": "string"
+        },
+        "notas": {
+          "type": "string"
+        }
+      }
+    },
+    "is_locked_change": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se esta altera\u00e7\u00e3o foi em um m\u00eas j\u00e1 fechado (requer justificativa)"
+    },
+    "ip_address": {
+      "type": "string",
+      "description": "IP do usu\u00e1rio que fez a altera\u00e7\u00e3o (auditoria)"
+    },
+    "user_agent": {
+      "type": "string",
+      "description": "User agent do navegador (auditoria)"
+    }
+  },
+  "required": [
+    "meta_id",
+    "workshop_id",
+    "mes",
+    "version",
+    "changed_by",
+    "field_changed",
+    "changed_at"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
