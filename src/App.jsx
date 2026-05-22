@@ -51,6 +51,7 @@ const ContasReceber = lazy(() => import('@/pages/ContasReceber'));
 const ContasPagar = lazy(() => import('@/pages/ContasPagar'));
 const ConciliacaoBancaria = lazy(() => import('@/pages/ConciliacaoBancaria'));
 const DashboardFinanceiro = lazy(() => import('@/pages/DashboardFinanceiro'));
+const CorrigirParcelasDuplicadas = lazy(() => import('@/pages/CorrigirParcelasDuplicadas'));
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -275,6 +276,13 @@ const AuthenticatedApp = () => {
       <Route path="/DashboardFinanceiro" element={
         <LayoutWrapper currentPageName="DashboardFinanceiro">
           <DashboardFinanceiro />
+        </LayoutWrapper>
+      } />
+      <Route path="/CorrigirParcelasDuplicadas" element={
+        <LayoutWrapper currentPageName="CorrigirParcelasDuplicadas">
+          <PageAccessControl adminOnly={true}>
+            <CorrigirParcelasDuplicadas />
+          </PageAccessControl>
         </LayoutWrapper>
       } />
       <Route path="*" element={<PageNotFound />} />
