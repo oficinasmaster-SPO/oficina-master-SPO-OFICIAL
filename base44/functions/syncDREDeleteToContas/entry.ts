@@ -49,13 +49,13 @@ Deno.serve(async (req) => {
     // ✅ STEP 3: Deletar Contas a Receber e suas Liquidações
     for (const conta of contasReceber) {
       // Deletar liquidações primeiro
-      const liquidacoes = await base44.asServiceRole.entities.LiquidacaoFinanceira.filter({
+      const liquidacoes = await base44.asServiceRole.entities['LiquidaçãoFinanceira'].filter({
         conta_receber_id: conta.id,
         workshop_id: workshopId
       });
       
       for (const liq of liquidacoes) {
-        await base44.asServiceRole.entities.LiquidacaoFinanceira.delete(liq.id);
+        await base44.asServiceRole.entities['LiquidaçãoFinanceira'].delete(liq.id);
       }
 
       // Deletar conta
@@ -66,13 +66,13 @@ Deno.serve(async (req) => {
     // ✅ STEP 4: Deletar Contas a Pagar e suas Liquidações
     for (const conta of contasPagar) {
       // Deletar liquidações primeiro
-      const liquidacoes = await base44.asServiceRole.entities.LiquidacaoFinanceira.filter({
+      const liquidacoes = await base44.asServiceRole.entities['LiquidaçãoFinanceira'].filter({
         conta_pagar_id: conta.id,
         workshop_id: workshopId
       });
       
       for (const liq of liquidacoes) {
-        await base44.asServiceRole.entities.LiquidacaoFinanceira.delete(liq.id);
+        await base44.asServiceRole.entities['LiquidaçãoFinanceira'].delete(liq.id);
       }
 
       // Deletar conta
