@@ -29,6 +29,8 @@ import DFCTab from "@/components/dre/DFCTab";
 import BudgetMetaTab from "@/components/budgetcontrol/BudgetMetaTab";
 import VencimentosCard from "@/components/dre/VencimentosCard";
 import FASE2EditorModal from "@/components/budgetcontrol/FASE2EditorModal";
+import HistoricoMetasModal from "@/components/budgetcontrol/HistoricoMetasModal";
+import FecharMesModal from "@/components/budgetcontrol/FecharMesModal";
 
 const getCurrentMonth = () => {
   const now = new Date();
@@ -1041,6 +1043,23 @@ export default function DRETCMP2() {
           {/* Controle Orçamentário */}
           <TabsContent value="orcamento">
             <div className="space-y-6">
+              {/* Header com Ações FASE 3 */}
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-bold">💳 Controle Orçamentário</h3>
+                <div className="flex gap-2">
+                  <FecharMesModal
+                    workshopId={workshop.id}
+                    mes={selectedMonth}
+                    isLocked={false}
+                  />
+                  <HistoricoMetasModal
+                    metaId="all"
+                    workshopId={workshop.id}
+                    mes={selectedMonth}
+                  />
+                </div>
+              </div>
+
               {/* Botões de Acesso às Funcionalidades FASE 2 */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Card className="hover:shadow-lg transition-shadow cursor-pointer border-green-200">
