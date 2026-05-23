@@ -1,12 +1,13 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { Plus, X, Building2, CreditCard, Banknote, Loader2, CheckCircle2 } from "lucide-react";
+import { Plus, X, Building2, CreditCard, Banknote, Loader2, CheckCircle2, FlaskConical } from "lucide-react";
 import { toast } from "sonner";
+import SimulacaoBanner from "./SimulacaoBanner";
 
 const fmt = (v) => Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -23,6 +24,9 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
   const [localDetalhes, setLocalDetalhes] = useState({ bancos: [], maquinas_cartao: [], caixa: 0 });
   const inicializadoRef = useRef(false);
 
+  // ── MODO SIMULAÇÃO (opcional) ─────────────────────────────────
+  const [modoSimulacao, setModoSimulacao] = useState(false);
+  
   // ── Busca o registro persistido — apenas na abertura ──────────
   const { data: saldoInicial, isLoading, refetch } = useQuery({
     queryKey: ["saldoInicial", workshopId, mes],
@@ -34,11 +38,38 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
       );
       return records?.[0] || null;
     },
-    enabled: !!workshopId && !!mes && aberto,
-    staleTime: Infinity, // Nunca faz refetch automático enquanto o modal estiver aberto
+    enabled: !!workshopId && !!mes && aberto && !modoSimulacao,
+    staleTime: Infinity,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
   });
+
+  // Dados de simulação (usados apenas quando modoSimulacao=true)
+  const saldoInicialSimulado = React.useMemo(() => ({
+    id: "simulado",
+    workshop_id: workshopId,
+    mes,
+    grupo: "saldo_inicial",
+    tipo: "entrada",
+    descricao: "Saldo Inicial Simulado",
+    valor: 10000,
+    saldo_inicial: 10000,
+    detalhes: {
+      bancos: [
+        { id: "sim_1", nome: "Banco Simulação 1", tipo_conta: "corrente", saldo: 5000, data: "" },
+        { id: "sim_2", nome: "Banco Simulação 2", tipo_conta: "poupanca", saldo: 3000, data: "" }
+      ],
+      maquinas_cartao: [
+        { id: "sim_3", nome: "Stone Simulação", gateway_pagamento: "stone", saldo: 2000, data: "" }
+      ],
+      caixa: 0
+    },
+    created_date: new Date().toISOString()
+  }), [workshopId, mes]);
+
+  // Usa dados simulados ou reais dependendo do modo
+  const saldoInicialEfetivo = modoSimulacao ? saldoInicialSimulado : saldoInicial;
+  const isLoadingEfetivo = modoSimulacao ? false : isLoading;
 
   // ── Popular estado local com dados do banco (uma vez por abertura) ──
   useEffect(() => {
@@ -49,11 +80,11 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
       setLocalDetalhes({ bancos: [], maquinas_cartao: [], caixa: 0 });
       return;
     }
-    console.log('[DFC-Modal] 🔄 useEffect aberto=true | isLoading=', isLoading, '| inicializado=', inicializadoRef.current, '| saldoInicial=', saldoInicial);
-    if (isLoading || inicializadoRef.current) return;
+    console.log('[DFC-Modal] 🔄 useEffect aberto=true | isLoadingEfetivo=', isLoadingEfetivo, '| inicializado=', inicializadoRef.current, '| saldoInicialEfetivo=', saldoInicialEfetivo);
+    if (isLoadingEfetivo || inicializadoRef.current) return;
     inicializadoRef.current = true;
 
-    const det = saldoInicial?.detalhes || {};
+    const det = saldoInicialEfetivo?.detalhes || {};
     console.log('[DFC-Modal] ✅ Inicializando com detalhes:', det);
     const bancos = Array.isArray(det.bancos) ? det.bancos
       : det.banco != null ? [{ id: "legado_banco", nome: "Banco", tipo_conta: "corrente", saldo: det.banco, data: "" }]
@@ -64,13 +95,13 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
     const caixaValue = typeof det.caixa === 'number' ? det.caixa : (det.caixa != null ? Number(det.caixa) : 0);
     console.log('[DFC-Modal] 🏦 bancos:', bancos, '| 💳 maquinas:', maquinas, '| 💵 caixa:', caixaValue);
     setLocalDetalhes({ bancos: bancos || [], maquinas_cartao: maquinas || [], caixa: caixaValue });
-  }, [aberto, isLoading, saldoInicial]);
+  }, [aberto, isLoadingEfetivo, saldoInicialEfetivo]);
 
   // ── Guarda o ID do registro (necessário para updates após criação) ──
   const registroIdRef = useRef(null);
   useEffect(() => {
-    if (saldoInicial?.id) registroIdRef.current = saldoInicial.id;
-  }, [saldoInicial?.id]);
+    if (saldoInicialEfetivo?.id && !modoSimulacao) registroIdRef.current = saldoInicialEfetivo.id;
+  }, [saldoInicialEfetivo?.id, modoSimulacao]);
 
   // ── Verifica se há liquidações no mês (bloqueia edição) ─────────
   const { data: hasLiquidacoes = false } = useQuery({
@@ -101,6 +132,12 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
 
   const persistirMutation = useMutation({
     mutationFn: async ({ detalhes, tipo_alteracao = 'edicao', detalhes_anteriores = null }) => {
+      // Em modo simulação, não persiste no banco - apenas atualiza o estado local
+      if (modoSimulacao) {
+        console.log('[DFC-Modal] 🧪 MODO SIMULAÇÃO - não persiste no banco');
+        return { id: 'simulado', detalhes, valor: calcTotal(detalhes) };
+      }
+      
       const total = calcTotal(detalhes);
       const idAtual = registroIdRef.current;
       console.log('[DFC-Modal] 💾 persistir chamado | inicializado=', inicializadoRef.current, '| idAtual=', idAtual, '| detalhes=', detalhes);
@@ -162,12 +199,19 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
       console.log('[DFC-Modal] ✅ persistir onSuccess | resultado=', resultado);
       setLastSaved(new Date());
       // Captura o ID do registro recém criado para próximos updates
-      if (resultado?.id) registroIdRef.current = resultado.id;
+      if (resultado?.id && !modoSimulacao) registroIdRef.current = resultado.id;
       // NÃO atualiza o cache da query para evitar re-renderizar com dados stale
       // O estado local já foi atualizado antes da mutation
-      queryClient.invalidateQueries({ queryKey: ["dfc-saldo", workshopId, mes] });
+      if (!modoSimulacao) {
+        queryClient.invalidateQueries({ queryKey: ["dfc-saldo", workshopId, mes] });
+      }
     },
-    onError: (err) => { console.error('[DFC-Modal] ❌ persistir onError:', err); toast.error("Erro ao salvar: " + err.message); },
+    onError: (err) => { 
+      if (!modoSimulacao) {
+        console.error('[DFC-Modal] ❌ persistir onError:', err); 
+        toast.error("Erro ao salvar: " + err.message);
+      }
+    },
   });
 
   const calcTotal = (d) => {
@@ -278,23 +322,37 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
     <Dialog open={aberto} onOpenChange={handleFechar}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-base">
-            💰 Saldo Inicial Detalhado — {mes}
-            {bloqueadoPorLiquidacao && (
-              <span className="flex items-center gap-1 text-xs text-red-600 font-semibold ml-2 bg-red-50 px-2 py-1 rounded border border-red-200">
-                🔒 Bloqueado
-              </span>
-            )}
-            {isSaving
-              ? <span className="flex items-center gap-1 text-xs text-amber-600 font-normal ml-2"><Loader2 className="w-3 h-3 animate-spin" /> Salvando...</span>
-              : lastSaved
-                ? <span className="flex items-center gap-1 text-xs text-emerald-600 font-normal ml-2"><CheckCircle2 className="w-3 h-3" /> Salvo</span>
-                : null
-            }
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="flex items-center gap-2 text-base">
+              💰 Saldo Inicial Detalhado — {mes}
+              {bloqueadoPorLiquidacao && (
+                <span className="flex items-center gap-1 text-xs text-red-600 font-semibold ml-2 bg-red-50 px-2 py-1 rounded border border-red-200">
+                  🔒 Bloqueado
+                </span>
+              )}
+              {isSaving
+                ? <span className="flex items-center gap-1 text-xs text-amber-600 font-normal ml-2"><Loader2 className="w-3 h-3 animate-spin" /> Salvando...</span>
+                : lastSaved
+                  ? <span className="flex items-center gap-1 text-xs text-emerald-600 font-normal ml-2"><CheckCircle2 className="w-3 h-3" /> Salvo</span>
+                  : null
+              }
+            </DialogTitle>
+            <Button
+              size="sm"
+              variant={modoSimulacao ? "default" : "outline"}
+              onClick={() => {
+                setModoSimulacao(!modoSimulacao);
+                inicializadoRef.current = false;
+                setLocalDetalhes({ bancos: [], maquinas_cartao: [], caixa: 0 });
+              }}
+              className={`text-xs h-7 ${modoSimulacao ? 'bg-purple-600 hover:bg-purple-700' : ''}`}
+            >
+              {modoSimulacao ? '🧪 Simulação ATIVA' : '🧪 Modo Simulação'}
+            </Button>
+          </div>
         </DialogHeader>
 
-        {isLoading ? (
+        {isLoadingEfetivo ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-6 h-6 animate-spin text-blue-500 mr-2" />
             <span className="text-gray-500">Carregando dados do banco...</span>
@@ -302,6 +360,7 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
         ) : (
           <div className="space-y-5">
             {/* Info */}
+            <SimulacaoBanner ativo={modoSimulacao} onToggle={() => setModoSimulacao(!modoSimulacao)} />
             {bloqueadoPorLiquidacao ? (
               <div className="bg-red-50 border-2 border-red-300 rounded-lg p-4 text-xs text-red-800 font-semibold">
                 🔒 <strong>Edição bloqueada:</strong> Este mês já possui liquidações registradas. Para evitar inconsistências entre o saldo inicial e as liquidações processadas, a edição do saldo inicial está bloqueada.
