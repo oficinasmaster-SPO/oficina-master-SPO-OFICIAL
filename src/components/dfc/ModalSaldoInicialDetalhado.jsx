@@ -42,6 +42,7 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
   useEffect(() => {
     if (!aberto) {
       inicializadoRef.current = false;
+      registroIdRef.current = null;
       setLocalDetalhes({ bancos: [], maquinas_cartao: [], caixa: 0 });
       return;
     }
@@ -351,9 +352,16 @@ function BancoRow({ banco, onUpdate, onRemove, disabled }) {
   const [nome, setNome] = useState(banco.nome);
   const [saldo, setSaldo] = useState(banco.saldo);
 
-  // Sincroniza quando o registro externo muda (ex: após save)
-  useEffect(() => { setNome(banco.nome); }, [banco.nome]);
-  useEffect(() => { setSaldo(banco.saldo); }, [banco.saldo]);
+  // Sincroniza APENAS na montagem inicial (quando o banco é criado/carregado)
+  // NÃO sincroniza em mudanças subsequentes para evitar sobrescrever o que o usuário digitou
+  const mountedRef = useRef(false);
+  useEffect(() => {
+    if (!mountedRef.current) {
+      mountedRef.current = true;
+      setNome(banco.nome);
+      setSaldo(banco.saldo);
+    }
+  }, [banco.id]); // só re-sincroniza se o ID mudar (novo banco)
 
   return (
     <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
@@ -410,8 +418,15 @@ function MaquinaRow({ maquina, onUpdate, onRemove, disabled }) {
   const [nome, setNome] = useState(maquina.nome);
   const [saldo, setSaldo] = useState(maquina.saldo);
 
-  useEffect(() => { setNome(maquina.nome); }, [maquina.nome]);
-  useEffect(() => { setSaldo(maquina.saldo); }, [maquina.saldo]);
+  // Sincroniza APENAS na montagem inicial — não sobrescreve o que o usuário está digitando
+  const mountedRef = useRef(false);
+  useEffect(() => {
+    if (!mountedRef.current) {
+      mountedRef.current = true;
+      setNome(maquina.nome);
+      setSaldo(maquina.saldo);
+    }
+  }, [maquina.id]); // só re-sincroniza se o ID mudar (nova máquina)
 
   return (
     <div className="bg-green-50 border border-green-200 rounded-lg p-3 grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
