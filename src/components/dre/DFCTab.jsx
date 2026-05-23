@@ -22,6 +22,7 @@ import ModalSaldoInicialDetalhado from "../dfc/ModalSaldoInicialDetalhado";
 import FonteSaidaSelector from "../dfc/FonteSaidaSelector";
 import FiltroPeriodo from "./FiltroPeriodo";
 import ContasReceberPagarTab from "../dfc/ContasReceberPagarTab";
+import ModalLiquidacaoDRE from "../dfc/ModalLiquidacaoDRE";
 
 // ─── Formatação ────────────────────────────────────────────────────
 const fmt = (v) =>
@@ -845,14 +846,16 @@ export default function DFCTab({ workshopId, mes }) {
         grupoInicial={grupoModal}
       />
 
-      {/* Modal marcar pagamento (itens DRE) */}
-      <ModalMarcarPagamento
+      {/* Modal liquidação DRE — abre ModalRegistrarPagamento ou ModalRegistrarRecebimento */}
+      <ModalLiquidacaoDRE
         item={itemPagamento}
+        workshopId={workshopId}
         onFechar={() => setItemPagamento(null)}
         onSalvo={() => {
-          // Invalidar ambas as queries para manter DFC e Projeção sincronizados
           queryClient.invalidateQueries({ queryKey: ["dre-lancamentos-dfc", workshopId, mes] });
           queryClient.invalidateQueries({ queryKey: ["dre-lancamentos", workshopId, mes] });
+          queryClient.invalidateQueries({ queryKey: ["contas-receber", workshopId] });
+          queryClient.invalidateQueries({ queryKey: ["contas-pagar", workshopId] });
           setItemPagamento(null);
         }}
       />
