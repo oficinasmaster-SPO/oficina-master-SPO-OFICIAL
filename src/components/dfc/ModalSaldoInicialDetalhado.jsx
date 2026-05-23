@@ -69,6 +69,31 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
     if (saldoInicial?.id) registroIdRef.current = saldoInicial.id;
   }, [saldoInicial?.id]);
 
+  // ── Verifica se há liquidações no mês (bloqueia edição) ─────────
+  const { data: hasLiquidacoes = false } = useQuery({
+    queryKey: ["has-liquidacoes", workshopId, mes],
+    queryFn: async () => {
+      if (!workshopId || !mes) return false;
+      const liquidacoes = await base44.entities.LiquidaçãoFinanceira.filter(
+        { workshop_id: workshopId },
+        '-data_liquidacao',
+        1
+      );
+      if (!liquidacoes || liquidacoes.length === 0) return false;
+      // Verifica se alguma liquidação é do mês
+      const liquidacoesDoMes = liquidacoes.filter(liq => {
+        const dataLiq = new Date(liq.data_liquidacao);
+        const mesAno = `${dataLiq.getFullYear()}-${String(dataLiq.getMonth() + 1).padStart(2, '0')}`;
+        return mesAno === mes;
+      });
+      return liquidacoesDoMes.length > 0;
+    },
+    enabled: !!workshopId && !!mes && aberto,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const bloqueadoPorLiquidacao = hasLiquidacoes;
+
   const [lastSaved, setLastSaved] = useState(null);
 
   const persistirMutation = useMutation({
@@ -272,9 +297,15 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
         ) : (
           <div className="space-y-5">
             {/* Info */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-800">
-              📌 <strong>Auto-save ativo:</strong> Qualquer adição, remoção ou edição (ao sair do campo) é salva automaticamente no banco de dados e refletida no card de Saldo Inicial.
-            </div>
+            {bloqueadoPorLiquidacao ? (
+              <div className="bg-red-50 border-2 border-red-300 rounded-lg p-4 text-xs text-red-800 font-semibold">
+                🔒 <strong>Edição bloqueada:</strong> Este mês já possui liquidações registradas. Para evitar inconsistências entre o saldo inicial e as liquidações processadas, a edição do saldo inicial está bloqueada.
+              </div>
+            ) : (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-800">
+                📌 <strong>Auto-save ativo:</strong> Qualquer adição, remoção ou edição (ao sair do campo) é salva automaticamente no banco de dados e refletida no card de Saldo Inicial.
+              </div>
+            )}
 
             {/* ══ BANCOS ══ */}
             <section className="space-y-2">
@@ -283,7 +314,7 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
                   <Building2 className="w-4 h-4" /> 🏦 Contas Bancárias
                   <span className="text-xs font-normal text-blue-500">({localDetalhes.bancos.length})</span>
                 </h3>
-                <Button size="sm" variant="outline" onClick={adicionarBanco} disabled={isSaving}
+                <Button size="sm" variant="outline" onClick={adicionarBanco} disabled={isSaving || bloqueadoPorLiquidacao}
                   className="gap-1 text-xs text-blue-700 border-blue-300 h-7">
                   <Plus className="w-3 h-3" /> Adicionar Banco
                 </Button>
@@ -318,7 +349,7 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
                   <CreditCard className="w-4 h-4" /> 💳 Máquinas de Cartão
                   <span className="text-xs font-normal text-green-500">({localDetalhes.maquinas_cartao.length})</span>
                 </h3>
-                <Button size="sm" variant="outline" onClick={adicionarMaquina} disabled={isSaving}
+                <Button size="sm" variant="outline" onClick={adicionarMaquina} disabled={isSaving || bloqueadoPorLiquidacao}
                   className="gap-1 text-xs text-green-700 border-green-300 h-7">
                   <Plus className="w-3 h-3" /> Adicionar Máquina
                 </Button>
