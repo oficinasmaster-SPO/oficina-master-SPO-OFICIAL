@@ -17,18 +17,22 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
     queryKey: ["saldoInicial", workshopId, mes],
     queryFn: async () => {
       if (!workshopId || !mes) return null;
+      // Buscar o registro que pode ter sido criado tanto com tipo "entrada" quanto sem tipo
       const records = await base44.entities.DFCLancamento.filter({
         workshop_id: workshopId,
         mes,
         grupo: "saldo_inicial",
-        tipo: "entrada"
       }, "-created_date", 1);
       return records?.[0] || null;
     },
     enabled: !!workshopId && !!mes && aberto,
+    refetchOnMount: true,
+    staleTime: 0,
   });
 
+  // Reset ao abrir
   useEffect(() => {
+    if (!aberto) return;
     if (saldoInicial?.detalhes) {
       setDetalhes({
         bancos: saldoInicial.detalhes.bancos || [],
@@ -38,15 +42,17 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
     } else {
       setDetalhes({ bancos: [], maquinas_cartao: [], caixa: 0 });
     }
-  }, [saldoInicial]);
+  }, [aberto, saldoInicial]);
 
   // Salvar detalhes
   const salvarMutation = useMutation({
     mutationFn: async (data) => {
+      const total = calcularTotal(data);
       if (saldoInicial?.id) {
         await base44.entities.DFCLancamento.update(saldoInicial.id, {
           detalhes: data,
-          valor: calcularTotal(data)
+          valor: total,
+          saldo_inicial: total, // BUG FIX: sincroniza com o campo lido pelo DFCTab
         });
       } else {
         await base44.entities.DFCLancamento.create({
@@ -55,14 +61,17 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
           grupo: "saldo_inicial",
           tipo: "entrada",
           descricao: "Saldo Inicial - Detalhado",
-          valor: calcularTotal(data),
+          valor: total,
+          saldo_inicial: total, // BUG FIX: sincroniza com o campo lido pelo DFCTab
           detalhes: data,
           origem: "manual"
         });
       }
     },
     onSuccess: () => {
+      // BUG FIX: invalida AMBAS as queries (saldoInicial + dfc-saldo usado pelo DFCTab)
       queryClient.invalidateQueries({ queryKey: ["saldoInicial", workshopId, mes] });
+      queryClient.invalidateQueries({ queryKey: ["dfc-saldo", workshopId, mes] });
       toast.success("Saldo detalhado salvo com sucesso!");
       onFechar();
     },
