@@ -11,18 +11,21 @@ import { ptBR } from "date-fns/locale";
 import { AlertCircle, DollarSign, Calendar, CreditCard, Banknote, X } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import InputMoeda from "@/components/ui/InputMoeda";
+import SeletorFonteSaida from "./SeletorFonteSaida";
 
 export default function ModalRegistrarPagamento({ 
   contaReceber, 
   open, 
   onOpenChange,
-  onSuccess 
+  onSuccess,
+  workshopId,
+  mes
 }) {
   const [loading, setLoading] = useState(false);
   const [dataPagamento, setDataPagamento] = useState('');
   const [valorRecebido, setValorRecebido] = useState(0);
   const [formaPagamento, setFormaPagamento] = useState('');
-  const [bancoDestino, setBancoDestino] = useState('');
+  const [fonteSaida, setFonteSaida] = useState('');
   const [descontoConcedido, setDescontoConcedido] = useState(0);
   const [jurosRecebido, setJurosRecebido] = useState(0);
   const [multaRecebida, setMultaRecebida] = useState(0);
@@ -34,7 +37,7 @@ export default function ModalRegistrarPagamento({
       setDataPagamento('');
       setValorRecebido(contaReceber.valor_aberto || contaReceber.valor_original || 0);
       setFormaPagamento('');
-      setBancoDestino('');
+      setFonteSaida('');
       setDescontoConcedido(0);
       setJurosRecebido(0);
       setMultaRecebida(0);
@@ -56,6 +59,11 @@ export default function ModalRegistrarPagamento({
 
     if (!formaPagamento) {
       toast.error('Forma de pagamento é obrigatória');
+      return;
+    }
+
+    if (!fonteSaida) {
+      toast.error('Fonte de saída é obrigatória');
       return;
     }
 
@@ -83,7 +91,7 @@ export default function ModalRegistrarPagamento({
         data_pagamento: dataPagamento,
         valor_recebido: valorRecebido,
         forma_pagamento: formaPagamento,
-        banco_destino: bancoDestino,
+        fonte_saida: fonteSaida,
         desconto_concedido: descontoConcedido,
         juros_recebido: jurosRecebido,
         multa_recebida: multaRecebida,
@@ -107,7 +115,7 @@ export default function ModalRegistrarPagamento({
     setDataPagamento('');
     setValorRecebido(0);
     setFormaPagamento('');
-    setBancoDestino('');
+    setFonteSaida('');
     setDescontoConcedido(0);
     setJurosRecebido(0);
     setMultaRecebida(0);
@@ -214,22 +222,12 @@ export default function ModalRegistrarPagamento({
             </div>
 
             <div>
-              <Label htmlFor="bancoDestino">Banco/Destino</Label>
-              <Select value={bancoDestino} onValueChange={setBancoDestino}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Selecione o banco de destino" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Nubank">Nubank</SelectItem>
-                  <SelectItem value="Itaú">Itaú</SelectItem>
-                  <SelectItem value="Bradesco">Bradesco</SelectItem>
-                  <SelectItem value="Santander">Santander</SelectItem>
-                  <SelectItem value="Caixa">Caixa</SelectItem>
-                  <SelectItem value="Banco do Brasil">Banco do Brasil</SelectItem>
-                  <SelectItem value="Inter">Inter</SelectItem>
-                  <SelectItem value="Outro">Outro</SelectItem>
-                </SelectContent>
-              </Select>
+              <SeletorFonteSaida
+                workshopId={workshopId}
+                mes={mes}
+                value={fonteSaida}
+                onChange={setFonteSaida}
+              />
             </div>
 
             {/* Valores */}
