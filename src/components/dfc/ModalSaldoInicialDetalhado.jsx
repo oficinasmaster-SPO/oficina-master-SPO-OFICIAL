@@ -59,8 +59,9 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
     const maquinas = Array.isArray(det.maquinas_cartao) ? det.maquinas_cartao
       : det.maquina_cartao != null ? [{ id: "legado_maq", nome: "Máquina", gateway_pagamento: "", saldo: det.maquina_cartao, data: "" }]
       : [];
-    console.log('[DFC-Modal] 🏦 bancos:', bancos, '| 💳 maquinas:', maquinas, '| 💵 caixa:', det.caixa);
-    setLocalDetalhes({ bancos, maquinas_cartao: maquinas, caixa: det.caixa ?? 0 });
+    const caixaValue = typeof det.caixa === 'number' ? det.caixa : (det.caixa != null ? Number(det.caixa) : 0);
+    console.log('[DFC-Modal] 🏦 bancos:', bancos, '| 💳 maquinas:', maquinas, '| 💵 caixa:', caixaValue);
+    setLocalDetalhes({ bancos: bancos || [], maquinas_cartao: maquinas || [], caixa: caixaValue });
   }, [aberto, isLoading, saldoInicial]);
 
   // ── Guarda o ID do registro (necessário para updates após criação) ──
@@ -198,8 +199,9 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
       saldo: 0,
       data: new Date().toISOString().split('T')[0],
     };
-    const detalhesAntes = { ...localDetalhes, bancos: [...localDetalhes.bancos] };
-    persistir({ detalhes: { ...localDetalhes, bancos: [...localDetalhes.bancos, novo] }, tipo_alteracao: 'edicao', detalhes_anteriores: detalhesAntes });
+    const bancosAtuais = localDetalhes.bancos || [];
+    const detalhesAntes = { ...localDetalhes, bancos: [...bancosAtuais] };
+    persistir({ detalhes: { ...localDetalhes, bancos: [...bancosAtuais, novo] }, tipo_alteracao: 'edicao', detalhes_anteriores: detalhesAntes });
   };
 
   const atualizarBanco = (id, field, value) => {
@@ -229,8 +231,9 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
       saldo: 0,
       data: new Date().toISOString().split('T')[0],
     };
-    const detalhesAntes = { ...localDetalhes, maquinas_cartao: [...localDetalhes.maquinas_cartao] };
-    persistir({ detalhes: { ...localDetalhes, maquinas_cartao: [...localDetalhes.maquinas_cartao, nova] }, tipo_alteracao: 'edicao', detalhes_anteriores: detalhesAntes });
+    const maquinasAtuais = localDetalhes.maquinas_cartao || [];
+    const detalhesAntes = { ...localDetalhes, maquinas_cartao: [...maquinasAtuais] };
+    persistir({ detalhes: { ...localDetalhes, maquinas_cartao: [...maquinasAtuais, nova] }, tipo_alteracao: 'edicao', detalhes_anteriores: detalhesAntes });
   };
 
   const atualizarMaquina = (id, field, value) => {
@@ -317,7 +320,7 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold flex items-center gap-2 text-blue-800">
                   <Building2 className="w-4 h-4" /> 🏦 Contas Bancárias
-                  <span className="text-xs font-normal text-blue-500">({localDetalhes.bancos.length})</span>
+                  <span className="text-xs font-normal text-blue-500">({(localDetalhes.bancos || []).length})</span>
                 </h3>
                 <Button size="sm" variant="outline" onClick={adicionarBanco} disabled={isSaving || bloqueadoPorLiquidacao}
                   className="gap-1 text-xs text-blue-700 border-blue-300 h-7">
@@ -325,13 +328,13 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
                 </Button>
               </div>
 
-              {localDetalhes.bancos.length === 0 ? (
+              {(!localDetalhes.bancos || localDetalhes.bancos.length === 0) ? (
                 <div className="border-2 border-dashed border-blue-200 rounded-lg p-5 text-center text-gray-400 text-xs">
                   Nenhuma conta bancária. Clique em "+ Adicionar Banco".
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {localDetalhes.bancos.map((banco) => (
+                  {(localDetalhes.bancos || []).map((banco) => (
                     <BancoRow
                       key={banco.id}
                       banco={banco}
@@ -343,7 +346,7 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
                 </div>
               )}
               <div className="text-right text-xs font-semibold text-blue-700">
-                Subtotal Bancos: R$ {fmt(localDetalhes.bancos.reduce((s, b) => s + (Number(b.saldo) || 0), 0))}
+                Subtotal Bancos: R$ {fmt((localDetalhes.bancos || []).reduce((s, b) => s + (Number(b.saldo) || 0), 0))}
               </div>
             </section>
 
@@ -352,7 +355,7 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold flex items-center gap-2 text-green-800">
                   <CreditCard className="w-4 h-4" /> 💳 Máquinas de Cartão
-                  <span className="text-xs font-normal text-green-500">({localDetalhes.maquinas_cartao.length})</span>
+                  <span className="text-xs font-normal text-green-500">({(localDetalhes.maquinas_cartao || []).length})</span>
                 </h3>
                 <Button size="sm" variant="outline" onClick={adicionarMaquina} disabled={isSaving || bloqueadoPorLiquidacao}
                   className="gap-1 text-xs text-green-700 border-green-300 h-7">
@@ -360,13 +363,13 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
                 </Button>
               </div>
 
-              {localDetalhes.maquinas_cartao.length === 0 ? (
+              {(!localDetalhes.maquinas_cartao || localDetalhes.maquinas_cartao.length === 0) ? (
                 <div className="border-2 border-dashed border-green-200 rounded-lg p-5 text-center text-gray-400 text-xs">
                   Nenhuma máquina cadastrada. Clique em "+ Adicionar Máquina".
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {localDetalhes.maquinas_cartao.map((maquina) => (
+                  {(localDetalhes.maquinas_cartao || []).map((maquina) => (
                     <MaquinaRow
                       key={maquina.id}
                       maquina={maquina}
@@ -378,7 +381,7 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
                 </div>
               )}
               <div className="text-right text-xs font-semibold text-green-700">
-                Subtotal Máquinas: R$ {fmt(localDetalhes.maquinas_cartao.reduce((s, m) => s + (Number(m.saldo) || 0), 0))}
+                Subtotal Máquinas: R$ {fmt((localDetalhes.maquinas_cartao || []).reduce((s, m) => s + (Number(m.saldo) || 0), 0))}
               </div>
             </section>
 
@@ -408,9 +411,9 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
               <div>
                 <p className="text-xs text-gray-300 font-medium">Total Saldo Inicial do Mês</p>
                 <p className="text-[11px] text-gray-400 mt-0.5">
-                  Bancos R${fmt(localDetalhes.bancos.reduce((s,b)=>s+(Number(b.saldo)||0),0))}
-                  {' + '}Máquinas R${fmt(localDetalhes.maquinas_cartao.reduce((s,m)=>s+(Number(m.saldo)||0),0))}
-                  {' + '}Caixa R${fmt(localDetalhes.caixa)}
+                  Bancos R${fmt((localDetalhes.bancos || []).reduce((s,b)=>s+(Number(b.saldo)||0),0))}
+                  {' + '}Máquinas R${fmt((localDetalhes.maquinas_cartao || []).reduce((s,m)=>s+(Number(m.saldo)||0),0))}
+                  {' + '}Caixa R${fmt(localDetalhes.caixa || 0)}
                 </p>
               </div>
               <p className="text-3xl font-bold tabular-nums">R$ {fmt(total)}</p>
