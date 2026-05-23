@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { InputMoeda } from "@/components/ui/InputMoeda";
@@ -24,6 +25,7 @@ export default function ModalLiquidacaoDRE({ item, workshopId, onFechar, onSalvo
   // Form state
   const [valor, setValor] = useState("");
   const [formaPagamento, setFormaPagamento] = useState("pix");
+  const [dataLiquidacao, setDataLiquidacao] = useState(new Date().toISOString().split("T")[0]);
   const [desconto, setDesconto] = useState(0);
   const [juros, setJuros] = useState(0);
   const [multa, setMulta] = useState(0);
@@ -91,6 +93,7 @@ export default function ModalLiquidacaoDRE({ item, workshopId, onFechar, onSalvo
           tipo: "pagamento",
           valor_liquidacao: valorLiquidacao,
           forma_pagamento: formaPagamento,
+          data_liquidacao: dataLiquidacao,
           desconto_concedido: desconto,
           juros_recebido: juros,
           multa_recebida: multa,
@@ -103,12 +106,21 @@ export default function ModalLiquidacaoDRE({ item, workshopId, onFechar, onSalvo
           tipo: "recebimento",
           valor_liquidacao: valorLiquidacao,
           forma_pagamento: formaPagamento,
+          data_liquidacao: dataLiquidacao,
           desconto_concedido: desconto,
           juros_recebido: juros,
           multa_recebida: multa,
         });
         toast.success("Recebimento registrado!");
       }
+
+      // ✅ Sincronizar data_pagamento no DRELancamento de origem
+      if (item?.id) {
+        await base44.entities.DRELancamento.update(item.id, {
+          data_pagamento: dataLiquidacao
+        });
+      }
+
       onSalvo?.();
     } catch (error) {
       toast.error("Erro: " + (error.message || "Erro desconhecido"));
@@ -167,6 +179,14 @@ export default function ModalLiquidacaoDRE({ item, workshopId, onFechar, onSalvo
             <div>
               <Label>Valor Aberto</Label>
               <p className={`text-lg font-bold ${corPrincipal}`}>{fmt(contaVinculada.valor_aberto)}</p>
+            </div>
+            <div>
+              <Label>Data do Pagamento</Label>
+              <Input
+                type="date"
+                value={dataLiquidacao}
+                onChange={(e) => setDataLiquidacao(e.target.value)}
+              />
             </div>
             <div>
               <Label>{isReceita ? "Valor Recebido (R$)" : "Valor Pago (R$)"}</Label>
