@@ -14,26 +14,55 @@ import { Loader2, DollarSign, CreditCard, CheckCircle, AlertCircle, Building2 } 
 import { toast } from "sonner";
 import FiltroPeriodo from "../dre/FiltroPeriodo";
 
-// Hook para buscar as fontes de dinheiro do saldo inicial do mês
+// Hook para buscar as fontes de dinheiro do saldo inicial
+// Busca o registro mais recente de saldo_inicial da oficina (independente do mês filtrado)
 function useFontesDinheiro(workshopId, mes) {
   return useQuery({
     queryKey: ["saldo-inicial-fontes", workshopId, mes],
     queryFn: async () => {
-      if (!workshopId || !mes) return { bancos: [], maquinas_cartao: [], caixa: 0 };
-      // BUG FIX: não filtra por tipo pois o registro pode ter sido criado sem tipo
-      const records = await base44.entities.DFCLancamento.filter({
+      if (!workshopId) return { bancos: [], maquinas_cartao: [], caixa: 0 };
+
+      // 1. Tenta o mês exato passado
+      if (mes) {
+        const records = await base44.entities.DFCLancamento.filter({
+          workshop_id: workshopId,
+          mes,
+          grupo: "saldo_inicial",
+        }, "-created_date", 1);
+        if (records?.[0]?.detalhes) {
+          const detalhes = records[0].detalhes;
+          const temFontes = (detalhes.bancos?.length > 0) || (detalhes.maquinas_cartao?.length > 0) || (detalhes.caixa > 0);
+          if (temFontes) {
+            return {
+              bancos: detalhes.bancos || [],
+              maquinas_cartao: detalhes.maquinas_cartao || [],
+              caixa: detalhes.caixa || 0,
+            };
+          }
+        }
+      }
+
+      // 2. Fallback: busca o registro de saldo_inicial mais recente da oficina (qualquer mês)
+      const allRecords = await base44.entities.DFCLancamento.filter({
         workshop_id: workshopId,
-        mes,
         grupo: "saldo_inicial",
-      }, "-created_date", 1);
-      const detalhes = records?.[0]?.detalhes;
-      return {
-        bancos: detalhes?.bancos || [],
-        maquinas_cartao: detalhes?.maquinas_cartao || [],
-        caixa: detalhes?.caixa || 0,
-      };
+      }, "-created_date", 5);
+
+      // Procura o primeiro que tenha bancos ou máquinas cadastradas
+      for (const rec of (allRecords || [])) {
+        const d = rec.detalhes;
+        if (d && ((d.bancos?.length > 0) || (d.maquinas_cartao?.length > 0) || (d.caixa > 0))) {
+          return {
+            bancos: d.bancos || [],
+            maquinas_cartao: d.maquinas_cartao || [],
+            caixa: d.caixa || 0,
+          };
+        }
+      }
+
+      return { bancos: [], maquinas_cartao: [], caixa: 0 };
     },
-    enabled: !!workshopId && !!mes,
+    enabled: !!workshopId,
     staleTime: 0,
   });
 }
