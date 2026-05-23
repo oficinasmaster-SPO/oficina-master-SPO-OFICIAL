@@ -72,28 +72,63 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
   const [lastSaved, setLastSaved] = useState(null);
 
   const persistirMutation = useMutation({
-    mutationFn: async (detalhes) => {
+    mutationFn: async ({ detalhes, tipo_alteracao = 'edicao', detalhes_anteriores = null }) => {
       const total = calcTotal(detalhes);
       const idAtual = registroIdRef.current;
       console.log('[DFC-Modal] 💾 persistir chamado | inicializado=', inicializadoRef.current, '| idAtual=', idAtual, '| detalhes=', detalhes);
+      
+      let resultado;
       if (idAtual) {
-        return base44.entities.DFCLancamento.update(idAtual, {
+        resultado = await base44.entities.DFCLancamento.update(idAtual, {
           detalhes,
           valor: total,
           saldo_inicial: total,
         });
+      } else {
+        resultado = await base44.entities.DFCLancamento.create({
+          workshop_id: workshopId,
+          mes,
+          grupo: "saldo_inicial",
+          tipo: "entrada",
+          descricao: "Saldo Inicial - Detalhado",
+          valor: total,
+          saldo_inicial: total,
+          detalhes,
+          origem: "manual",
+        });
       }
-      return base44.entities.DFCLancamento.create({
-        workshop_id: workshopId,
-        mes,
-        grupo: "saldo_inicial",
-        tipo: "entrada",
-        descricao: "Saldo Inicial - Detalhado",
-        valor: total,
-        saldo_inicial: total,
-        detalhes,
-        origem: "manual",
-      });
+
+      // Registrar histórico se houver mudança
+      if (detalhes_anteriores && idAtual) {
+        const valorAnterior = calcTotal(detalhes_anteriores);
+        const valorDelta = total - valorAnterior;
+        
+        // Determinar qual campo mudou
+        let campoAlterado = null;
+        if (JSON.stringify(detalhes_anteriores.bancos) !== JSON.stringify(detalhes.bancos)) {
+          campoAlterado = 'bancos';
+        } else if (JSON.stringify(detalhes_anteriores.maquinas_cartao) !== JSON.stringify(detalhes.maquinas_cartao)) {
+          campoAlterado = 'maquinas_cartao';
+        } else if (detalhes_anteriores.caixa !== detalhes.caixa) {
+          campoAlterado = 'caixa';
+        }
+
+        await base44.functions.invoke('registrarHistoricoSaldo', {
+          workshop_id: workshopId,
+          dfc_lancamento_id: idAtual,
+          mes,
+          tipo_alteracao,
+          valor_anterior: valorAnterior,
+          valor_novo: total,
+          detalhes_anteriores,
+          detalhes_novos: detalhes,
+          campo_alterado: campoAlterado,
+          valor_delta: valorDelta,
+          origem_alteracao: 'modal_saldo_inicial',
+        });
+      }
+
+      return resultado;
     },
     onSuccess: (resultado) => {
       console.log('[DFC-Modal] ✅ persistir onSuccess | resultado=', resultado);
@@ -138,19 +173,22 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
       saldo: 0,
       data: new Date().toISOString().split('T')[0],
     };
-    persistir({ ...localDetalhes, bancos: [...localDetalhes.bancos, novo] });
+    const detalhesAntes = { ...localDetalhes, bancos: [...localDetalhes.bancos] };
+    persistir({ detalhes: { ...localDetalhes, bancos: [...localDetalhes.bancos, novo] }, tipo_alteracao: 'edicao', detalhes_anteriores: detalhesAntes });
   };
 
   const atualizarBanco = (id, field, value) => {
     if (!inicializadoRef.current) return;
     const bancos = localDetalhes.bancos.map(b => b.id === id ? { ...b, [field]: value } : b);
-    persistir({ ...localDetalhes, bancos });
+    const detalhesAntes = { ...localDetalhes, bancos: [...localDetalhes.bancos] };
+    persistir({ detalhes: { ...localDetalhes, bancos }, tipo_alteracao: 'edicao', detalhes_anteriores: detalhesAntes });
   };
 
   const removerBanco = (id) => {
     const bancos = localDetalhes.bancos.filter(b => b.id !== id);
+    const detalhesAntes = { ...localDetalhes, bancos: [...localDetalhes.bancos] };
     persistirMutation.mutate(
-      { ...localDetalhes, bancos },
+      { detalhes: { ...localDetalhes, bancos }, tipo_alteracao: 'edicao', detalhes_anteriores: detalhesAntes },
       { onSuccess: () => { setLocalDetalhes(prev => ({ ...prev, bancos })); toast.success("Banco removido."); } }
     );
     setLocalDetalhes(prev => ({ ...prev, bancos }));
@@ -166,19 +204,22 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
       saldo: 0,
       data: new Date().toISOString().split('T')[0],
     };
-    persistir({ ...localDetalhes, maquinas_cartao: [...localDetalhes.maquinas_cartao, nova] });
+    const detalhesAntes = { ...localDetalhes, maquinas_cartao: [...localDetalhes.maquinas_cartao] };
+    persistir({ detalhes: { ...localDetalhes, maquinas_cartao: [...localDetalhes.maquinas_cartao, nova] }, tipo_alteracao: 'edicao', detalhes_anteriores: detalhesAntes });
   };
 
   const atualizarMaquina = (id, field, value) => {
     if (!inicializadoRef.current) return;
     const maquinas_cartao = localDetalhes.maquinas_cartao.map(m => m.id === id ? { ...m, [field]: value } : m);
-    persistir({ ...localDetalhes, maquinas_cartao });
+    const detalhesAntes = { ...localDetalhes, maquinas_cartao: [...localDetalhes.maquinas_cartao] };
+    persistir({ detalhes: { ...localDetalhes, maquinas_cartao }, tipo_alteracao: 'edicao', detalhes_anteriores: detalhesAntes });
   };
 
   const removerMaquina = (id) => {
     const maquinas_cartao = localDetalhes.maquinas_cartao.filter(m => m.id !== id);
+    const detalhesAntes = { ...localDetalhes, maquinas_cartao: [...localDetalhes.maquinas_cartao] };
     persistirMutation.mutate(
-      { ...localDetalhes, maquinas_cartao },
+      { detalhes: { ...localDetalhes, maquinas_cartao }, tipo_alteracao: 'edicao', detalhes_anteriores: detalhesAntes },
       { onSuccess: () => { setLocalDetalhes(prev => ({ ...prev, maquinas_cartao })); toast.success("Máquina removida."); } }
     );
     setLocalDetalhes(prev => ({ ...prev, maquinas_cartao }));
@@ -190,7 +231,8 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
   const salvarCaixa = () => {
     console.log('[DFC-Modal] 💵 salvarCaixa | inicializado=', inicializadoRef.current, '| localDetalhes=', localDetalhes);
     if (!inicializadoRef.current) { console.warn('[DFC-Modal] ⚠️ salvarCaixa bloqueado — modal ainda não inicializado'); return; }
-    persistir({ ...localDetalhes, caixa: Number(localDetalhes.caixa) || 0 });
+    const detalhesAntes = { ...localDetalhes };
+    persistir({ detalhes: { ...localDetalhes, caixa: Number(localDetalhes.caixa) || 0 }, tipo_alteracao: 'edicao', detalhes_anteriores: detalhesAntes });
   };
 
   // ── Zerar tudo ────────────────────────────────────────────────
@@ -343,6 +385,14 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
               <p>• O <strong>Total acima</strong> atualiza o card "Saldo Inicial do Mês" ao fechar este modal.</p>
               <p>• O <strong>Saldo Final do DFC</strong> = Saldo Inicial + Fluxo Operacional + Investimento + Financiamento.</p>
               <p>• Contas a Pagar/Receber liquidadas são lançadas como <strong>saídas/entradas do Operacional</strong>, reduzindo ou aumentando o saldo final — não o saldo inicial.</p>
+            </div>
+
+            {/* ══ AUDITORIA ══ */}
+            <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 text-xs text-emerald-700 space-y-1">
+              <p className="font-semibold text-emerald-800">🔒 Log de Auditoria Ativo</p>
+              <p>• Todas as alterações são registradas na entidade <strong>SaldoInicialHistorico</strong>.</p>
+              <p>• Rastreia: valor anterior, valor novo, campo alterado, usuário, data/hora e origem (manual ou liquidação).</p>
+              <p>• Consultoria pode auditar mudanças no saldo inicial por mês.</p>
             </div>
 
             {/* ══ AÇÕES ══ */}
