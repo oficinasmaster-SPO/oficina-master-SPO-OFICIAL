@@ -58,14 +58,20 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
     setLocalDetalhes({ bancos, maquinas_cartao: maquinas, caixa: det.caixa ?? 0 });
   }, [aberto, isLoading, saldoInicial]);
 
-  // ── Mutation central ──────────────────────────────────────────
+  // ── Guarda o ID do registro (necessário para updates após criação) ──
+  const registroIdRef = useRef(null);
+  useEffect(() => {
+    if (saldoInicial?.id) registroIdRef.current = saldoInicial.id;
+  }, [saldoInicial?.id]);
+
   const [lastSaved, setLastSaved] = useState(null);
 
   const persistirMutation = useMutation({
     mutationFn: async (detalhes) => {
       const total = calcTotal(detalhes);
-      if (saldoInicial?.id) {
-        return base44.entities.DFCLancamento.update(saldoInicial.id, {
+      const idAtual = registroIdRef.current;
+      if (idAtual) {
+        return base44.entities.DFCLancamento.update(idAtual, {
           detalhes,
           valor: total,
           saldo_inicial: total,
@@ -83,12 +89,12 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
         origem: "manual",
       });
     },
-    onSuccess: (_, detalhes) => {
+    onSuccess: (resultado) => {
       setLastSaved(new Date());
-      queryClient.invalidateQueries({ queryKey: ["saldoInicial", workshopId, mes] });
+      // Captura o ID do registro recém criado para próximos updates
+      if (resultado?.id) registroIdRef.current = resultado.id;
+      // Invalida apenas o card pai — NÃO invalida saldoInicial para não resetar o estado local
       queryClient.invalidateQueries({ queryKey: ["dfc-saldo", workshopId, mes] });
-      // Re-inicializa após save para manter em sync com o novo id (criação)
-      inicializadoRef.current = false;
     },
     onError: (err) => toast.error("Erro ao salvar: " + err.message),
   });
