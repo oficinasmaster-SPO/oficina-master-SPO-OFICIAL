@@ -41,21 +41,25 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
   // ── Popular estado local com dados do banco (uma vez por abertura) ──
   useEffect(() => {
     if (!aberto) {
+      console.log('[DFC-Modal] ❌ Fechado — resetando refs');
       inicializadoRef.current = false;
       registroIdRef.current = null;
       setLocalDetalhes({ bancos: [], maquinas_cartao: [], caixa: 0 });
       return;
     }
+    console.log('[DFC-Modal] 🔄 useEffect aberto=true | isLoading=', isLoading, '| inicializado=', inicializadoRef.current, '| saldoInicial=', saldoInicial);
     if (isLoading || inicializadoRef.current) return;
     inicializadoRef.current = true;
 
     const det = saldoInicial?.detalhes || {};
+    console.log('[DFC-Modal] ✅ Inicializando com detalhes:', det);
     const bancos = Array.isArray(det.bancos) ? det.bancos
       : det.banco != null ? [{ id: "legado_banco", nome: "Banco", tipo_conta: "corrente", saldo: det.banco, data: "" }]
       : [];
     const maquinas = Array.isArray(det.maquinas_cartao) ? det.maquinas_cartao
       : det.maquina_cartao != null ? [{ id: "legado_maq", nome: "Máquina", gateway_pagamento: "", saldo: det.maquina_cartao, data: "" }]
       : [];
+    console.log('[DFC-Modal] 🏦 bancos:', bancos, '| 💳 maquinas:', maquinas, '| 💵 caixa:', det.caixa);
     setLocalDetalhes({ bancos, maquinas_cartao: maquinas, caixa: det.caixa ?? 0 });
   }, [aberto, isLoading, saldoInicial]);
 
@@ -71,6 +75,7 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
     mutationFn: async (detalhes) => {
       const total = calcTotal(detalhes);
       const idAtual = registroIdRef.current;
+      console.log('[DFC-Modal] 💾 persistir chamado | inicializado=', inicializadoRef.current, '| idAtual=', idAtual, '| detalhes=', detalhes);
       if (idAtual) {
         return base44.entities.DFCLancamento.update(idAtual, {
           detalhes,
@@ -91,6 +96,7 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
       });
     },
     onSuccess: (resultado) => {
+      console.log('[DFC-Modal] ✅ persistir onSuccess | resultado=', resultado);
       setLastSaved(new Date());
       // Captura o ID do registro recém criado para próximos updates
       if (resultado?.id) registroIdRef.current = resultado.id;
@@ -105,7 +111,7 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
       }
       queryClient.invalidateQueries({ queryKey: ["dfc-saldo", workshopId, mes] });
     },
-    onError: (err) => toast.error("Erro ao salvar: " + err.message),
+    onError: (err) => { console.error('[DFC-Modal] ❌ persistir onError:', err); toast.error("Erro ao salvar: " + err.message); },
   });
 
   const calcTotal = (d) => {
@@ -182,7 +188,8 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
   const setCaixa = (v) => setLocalDetalhes(prev => ({ ...prev, caixa: v }));
   // Só salva se o modal já foi inicializado com os dados do banco (evita sobrescrever bancos/máquinas com lista vazia)
   const salvarCaixa = () => {
-    if (!inicializadoRef.current) return;
+    console.log('[DFC-Modal] 💵 salvarCaixa | inicializado=', inicializadoRef.current, '| localDetalhes=', localDetalhes);
+    if (!inicializadoRef.current) { console.warn('[DFC-Modal] ⚠️ salvarCaixa bloqueado — modal ainda não inicializado'); return; }
     persistir({ ...localDetalhes, caixa: Number(localDetalhes.caixa) || 0 });
   };
 
