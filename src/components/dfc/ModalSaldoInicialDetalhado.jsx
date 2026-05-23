@@ -8,7 +8,7 @@ import { base44 } from "@/api/base44Client";
 import { Plus, X, Building2, CreditCard, Banknote } from "lucide-react";
 import { toast } from "sonner";
 
-export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, workshopId }) {
+export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, workshopId, saldoSimples = 0 }) {
   const queryClient = useQueryClient();
   const [detalhes, setDetalhes] = useState({ bancos: [], maquinas_cartao: [], caixa: 0 });
   
@@ -30,19 +30,25 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
     staleTime: 0,
   });
 
-  // Reset ao abrir
+  // Reset ao abrir: se já há detalhes salvos, usa eles. 
+  // Senão, pré-popula o caixa com o valor digitado no campo simples (se houver).
   useEffect(() => {
     if (!aberto) return;
-    if (saldoInicial?.detalhes) {
+    if (saldoInicial?.detalhes && (
+      (saldoInicial.detalhes.bancos?.length > 0) ||
+      (saldoInicial.detalhes.maquinas_cartao?.length > 0) ||
+      (saldoInicial.detalhes.caixa > 0)
+    )) {
       setDetalhes({
         bancos: saldoInicial.detalhes.bancos || [],
         maquinas_cartao: saldoInicial.detalhes.maquinas_cartao || [],
         caixa: saldoInicial.detalhes.caixa || 0,
       });
     } else {
-      setDetalhes({ bancos: [], maquinas_cartao: [], caixa: 0 });
+      // Pré-popula o caixa com o saldo simples já digitado (sincronismo bidirecional)
+      setDetalhes({ bancos: [], maquinas_cartao: [], caixa: saldoSimples || 0 });
     }
-  }, [aberto, saldoInicial]);
+  }, [aberto, saldoInicial, saldoSimples]);
 
   // Salvar detalhes
   const salvarMutation = useMutation({

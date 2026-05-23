@@ -863,10 +863,15 @@ export default function DFCTab({ workshopId, mes }) {
       {/* Modal saldo inicial detalhado */}
       <ModalSaldoInicialDetalhado
         aberto={modalSaldoDetalhadoAberto}
-        onFechar={() => setModalSaldoDetalhadoAberto(false)}
+        onFechar={() => {
+          setModalSaldoDetalhadoAberto(false);
+          // Ao fechar o modal, recarregar o saldo para refletir o total dos detalhes
+          queryClient.invalidateQueries({ queryKey: ["dfc-saldo", workshopId, mes] });
+          saldoCarregado.current = false;
+        }}
         workshopId={workshopId}
         mes={mes}
-        saldoInicialRecord={saldoInicialRecord}
+        saldoSimples={saldoInicialSalvo}
       />
       </>)}
     </div>
