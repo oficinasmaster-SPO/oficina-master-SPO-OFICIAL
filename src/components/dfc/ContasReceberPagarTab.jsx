@@ -20,15 +20,21 @@ function useFontesDinheiro(workshopId, mes) {
     queryKey: ["saldo-inicial-fontes", workshopId, mes],
     queryFn: async () => {
       if (!workshopId || !mes) return { bancos: [], maquinas_cartao: [], caixa: 0 };
+      // BUG FIX: não filtra por tipo pois o registro pode ter sido criado sem tipo
       const records = await base44.entities.DFCLancamento.filter({
         workshop_id: workshopId,
         mes,
         grupo: "saldo_inicial",
-        tipo: "entrada"
       }, "-created_date", 1);
-      return records?.[0]?.detalhes || { bancos: [], maquinas_cartao: [], caixa: 0 };
+      const detalhes = records?.[0]?.detalhes;
+      return {
+        bancos: detalhes?.bancos || [],
+        maquinas_cartao: detalhes?.maquinas_cartao || [],
+        caixa: detalhes?.caixa || 0,
+      };
     },
     enabled: !!workshopId && !!mes,
+    staleTime: 0,
   });
 }
 
@@ -347,37 +353,50 @@ function ModalRegistrarPagamento({ aberto, onFechar, conta, workshopId, mes, onS
 // ── Função auxiliar: atualiza saldo da fonte no saldo inicial ────
 async function atualizarSaldoFonte(workshopId, mes, fonteKey, valor, operacao, queryClient) {
   try {
+    // BUG FIX: não filtra por tipo — registro pode ter sido criado sem tipo "entrada"
     const records = await base44.entities.DFCLancamento.filter({
       workshop_id: workshopId,
       mes,
       grupo: "saldo_inicial",
-      tipo: "entrada"
     }, "-created_date", 1);
     const registro = records?.[0];
     if (!registro) return;
 
-    const detalhes = { ...registro.detalhes };
+    const detalhes = {
+      bancos: registro.detalhes?.bancos || [],
+      maquinas_cartao: registro.detalhes?.maquinas_cartao || [],
+      caixa: registro.detalhes?.caixa || 0,
+    };
     const [tipo, id] = fonteKey.split(":");
+    const delta = operacao === "soma" ? valor : -valor;
 
     if (tipo === "banco") {
-      detalhes.bancos = (detalhes.bancos || []).map(b =>
-        b.id === id ? { ...b, saldo: Math.max(0, (b.saldo || 0) + (operacao === "soma" ? valor : -valor)) } : b
+      detalhes.bancos = detalhes.bancos.map(b =>
+        b.id === id ? { ...b, saldo: Math.max(0, (b.saldo || 0) + delta) } : b
       );
     } else if (tipo === "maquina") {
-      detalhes.maquinas_cartao = (detalhes.maquinas_cartao || []).map(m =>
-        m.id === id ? { ...m, saldo: Math.max(0, (m.saldo || 0) + (operacao === "soma" ? valor : -valor)) } : m
+      detalhes.maquinas_cartao = detalhes.maquinas_cartao.map(m =>
+        m.id === id ? { ...m, saldo: Math.max(0, (m.saldo || 0) + delta) } : m
       );
     } else if (tipo === "caixa") {
-      detalhes.caixa = Math.max(0, (detalhes.caixa || 0) + (operacao === "soma" ? valor : -valor));
+      detalhes.caixa = Math.max(0, detalhes.caixa + delta);
     }
 
-    const novoTotal = (detalhes.bancos || []).reduce((s, b) => s + (b.saldo || 0), 0)
-      + (detalhes.maquinas_cartao || []).reduce((s, m) => s + (m.saldo || 0), 0)
-      + (detalhes.caixa || 0);
+    const novoTotal = detalhes.bancos.reduce((s, b) => s + (b.saldo || 0), 0)
+      + detalhes.maquinas_cartao.reduce((s, m) => s + (m.saldo || 0), 0)
+      + detalhes.caixa;
 
-    await base44.entities.DFCLancamento.update(registro.id, { detalhes, valor: novoTotal });
+    // BUG FIX: atualiza TAMBÉM saldo_inicial para refletir no DFCTab
+    await base44.entities.DFCLancamento.update(registro.id, {
+      detalhes,
+      valor: novoTotal,
+      saldo_inicial: novoTotal,
+    });
+
+    // Invalida todas as queries relacionadas ao saldo inicial
     queryClient.invalidateQueries({ queryKey: ["saldoInicial", workshopId, mes] });
     queryClient.invalidateQueries({ queryKey: ["saldo-inicial-fontes", workshopId, mes] });
+    queryClient.invalidateQueries({ queryKey: ["dfc-saldo", workshopId, mes] });
   } catch (e) {
     console.warn("Não foi possível atualizar saldo inicial:", e.message);
   }
