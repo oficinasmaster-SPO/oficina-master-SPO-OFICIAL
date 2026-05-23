@@ -10,24 +10,89 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { InputMoeda } from "@/components/ui/InputMoeda";
-import { Loader2, DollarSign, CreditCard, CheckCircle, AlertCircle } from "lucide-react";
+import { Loader2, DollarSign, CreditCard, CheckCircle, AlertCircle, Building2 } from "lucide-react";
 import { toast } from "sonner";
 import FiltroPeriodo from "../dre/FiltroPeriodo";
+
+// Hook para buscar as fontes de dinheiro do saldo inicial do mês
+function useFontesDinheiro(workshopId, mes) {
+  return useQuery({
+    queryKey: ["saldo-inicial-fontes", workshopId, mes],
+    queryFn: async () => {
+      if (!workshopId || !mes) return { bancos: [], maquinas_cartao: [], caixa: 0 };
+      const records = await base44.entities.DFCLancamento.filter({
+        workshop_id: workshopId,
+        mes,
+        grupo: "saldo_inicial",
+        tipo: "entrada"
+      }, "-created_date", 1);
+      return records?.[0]?.detalhes || { bancos: [], maquinas_cartao: [], caixa: 0 };
+    },
+    enabled: !!workshopId && !!mes,
+  });
+}
+
+// Componente seletor de fonte do dinheiro
+function SeletorFonte({ fontes, fonteSelecionada, onChange, label = "De onde saiu o dinheiro?" }) {
+  const bancos = fontes?.bancos || [];
+  const maquinas = fontes?.maquinas_cartao || [];
+  const temFontes = bancos.length > 0 || maquinas.length > 0 || (fontes?.caixa > 0);
+
+  if (!temFontes) return null;
+
+  return (
+    <div>
+      <Label className="flex items-center gap-2">
+        <Building2 className="w-4 h-4 text-blue-600" />
+        {label}
+      </Label>
+      <Select value={fonteSelecionada} onValueChange={onChange}>
+        <SelectTrigger className="mt-1">
+          <SelectValue placeholder="Selecione a fonte..." />
+        </SelectTrigger>
+        <SelectContent>
+          {bancos.map((b) => (
+            <SelectItem key={`banco-${b.id}`} value={`banco:${b.id}:${b.nome}`}>
+              🏦 {b.nome} — R$ {(b.saldo || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+            </SelectItem>
+          ))}
+          {maquinas.map((m) => (
+            <SelectItem key={`maq-${m.id}`} value={`maquina:${m.id}:${m.nome}`}>
+              💳 {m.nome} — R$ {(m.saldo || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+            </SelectItem>
+          ))}
+          {(fontes?.caixa > 0) && (
+            <SelectItem value="caixa:caixa:Caixa">
+              💵 Caixa — R$ {(fontes.caixa || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+            </SelectItem>
+          )}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
 
 const fmt = (v) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v || 0);
 
 // ── Modal Registrar Recebimento ───────────────────────────
-function ModalRegistrarRecebimento({ aberto, onFechar, conta, workshopId, onSuccess }) {
+function ModalRegistrarRecebimento({ aberto, onFechar, conta, workshopId, mes, onSuccess }) {
+  const queryClient = useQueryClient();
   const [valor, setValor] = useState("");
   const [formaPagamento, setFormaPagamento] = useState("pix");
+  const [dataLiquidacao, setDataLiquidacao] = useState(new Date().toISOString().split("T")[0]);
+  const [fonteDestino, setFonteDestino] = useState(""); // onde VAI o dinheiro recebido
   const [desconto, setDesconto] = useState(0);
   const [juros, setJuros] = useState(0);
   const [multa, setMulta] = useState(0);
   const [saving, setSaving] = useState(false);
 
+  const { data: fontes } = useFontesDinheiro(workshopId, mes);
+
   useEffect(() => {
     if (aberto) {
       setValor(String(conta?.valor_aberto || 0));
+      setDataLiquidacao(new Date().toISOString().split("T")[0]);
+      setFonteDestino("");
       setDesconto(0);
       setJuros(0);
       setMulta(0);
@@ -44,10 +109,17 @@ function ModalRegistrarRecebimento({ aberto, onFechar, conta, workshopId, onSucc
         tipo: "recebimento",
         valor_liquidacao: valorLiquidacao,
         forma_pagamento: formaPagamento,
+        data_liquidacao: dataLiquidacao,
         desconto_concedido: desconto,
         juros_recebido: juros,
         multa_recebida: multa,
       });
+
+      // Atualizar saldo inicial: SOMA na fonte de destino
+      if (fonteDestino && mes) {
+        await atualizarSaldoFonte(workshopId, mes, fonteDestino, valorLiquidacao, "soma", queryClient);
+      }
+
       toast.success("Recebimento registrado!");
       onSuccess();
       onFechar();
@@ -76,6 +148,10 @@ function ModalRegistrarRecebimento({ aberto, onFechar, conta, workshopId, onSucc
             <p className="text-lg font-bold text-green-600">{fmt(conta?.valor_aberto)}</p>
           </div>
           <div>
+            <Label>Data do Recebimento</Label>
+            <Input type="date" value={dataLiquidacao} onChange={(e) => setDataLiquidacao(e.target.value)} className="mt-1" />
+          </div>
+          <div>
             <Label>Valor Recebido (R$)</Label>
             <InputMoeda value={parseFloat(valor) || 0} onChange={(e) => setValor(e.target.value)} className="text-right" />
           </div>
@@ -96,6 +172,12 @@ function ModalRegistrarRecebimento({ aberto, onFechar, conta, workshopId, onSucc
               </SelectContent>
             </Select>
           </div>
+          <SeletorFonte
+            fontes={fontes}
+            fonteSelecionada={fonteDestino}
+            onChange={setFonteDestino}
+            label="Onde vai entrar o dinheiro?"
+          />
           <div className="grid grid-cols-3 gap-2">
             <div>
               <Label>Desconto</Label>
@@ -128,17 +210,24 @@ function ModalRegistrarRecebimento({ aberto, onFechar, conta, workshopId, onSucc
 }
 
 // ── Modal Registrar Pagamento ───────────────────────────
-function ModalRegistrarPagamento({ aberto, onFechar, conta, workshopId, onSuccess }) {
+function ModalRegistrarPagamento({ aberto, onFechar, conta, workshopId, mes, onSuccess }) {
+  const queryClient = useQueryClient();
   const [valor, setValor] = useState("");
   const [formaPagamento, setFormaPagamento] = useState("pix");
+  const [dataLiquidacao, setDataLiquidacao] = useState(new Date().toISOString().split("T")[0]);
+  const [fonteSaida, setFonteSaida] = useState(""); // de onde SAI o dinheiro
   const [desconto, setDesconto] = useState(0);
   const [juros, setJuros] = useState(0);
   const [multa, setMulta] = useState(0);
   const [saving, setSaving] = useState(false);
 
+  const { data: fontes } = useFontesDinheiro(workshopId, mes);
+
   useEffect(() => {
     if (aberto) {
       setValor(String(conta?.valor_aberto || 0));
+      setDataLiquidacao(new Date().toISOString().split("T")[0]);
+      setFonteSaida("");
       setDesconto(0);
       setJuros(0);
       setMulta(0);
@@ -155,10 +244,17 @@ function ModalRegistrarPagamento({ aberto, onFechar, conta, workshopId, onSucces
         tipo: "pagamento",
         valor_liquidacao: valorLiquidacao,
         forma_pagamento: formaPagamento,
+        data_liquidacao: dataLiquidacao,
         desconto_concedido: desconto,
         juros_recebido: juros,
         multa_recebida: multa,
       });
+
+      // Atualizar saldo inicial: SUBTRAI da fonte selecionada
+      if (fonteSaida && mes) {
+        await atualizarSaldoFonte(workshopId, mes, fonteSaida, valorLiquidacao, "subtrai", queryClient);
+      }
+
       toast.success("Pagamento registrado!");
       onSuccess();
       onFechar();
@@ -187,6 +283,10 @@ function ModalRegistrarPagamento({ aberto, onFechar, conta, workshopId, onSucces
             <p className="text-lg font-bold text-red-600">{fmt(conta?.valor_aberto)}</p>
           </div>
           <div>
+            <Label>Data do Pagamento</Label>
+            <Input type="date" value={dataLiquidacao} onChange={(e) => setDataLiquidacao(e.target.value)} className="mt-1" />
+          </div>
+          <div>
             <Label>Valor Pago (R$)</Label>
             <InputMoeda value={parseFloat(valor) || 0} onChange={(e) => setValor(e.target.value)} className="text-right" />
           </div>
@@ -207,6 +307,12 @@ function ModalRegistrarPagamento({ aberto, onFechar, conta, workshopId, onSucces
               </SelectContent>
             </Select>
           </div>
+          <SeletorFonte
+            fontes={fontes}
+            fonteSelecionada={fonteSaida}
+            onChange={setFonteSaida}
+            label="De onde saiu o dinheiro?"
+          />
           <div className="grid grid-cols-3 gap-2">
             <div>
               <Label>Desconto</Label>
@@ -236,6 +342,45 @@ function ModalRegistrarPagamento({ aberto, onFechar, conta, workshopId, onSucces
       </DialogContent>
     </Dialog>
   );
+}
+
+// ── Função auxiliar: atualiza saldo da fonte no saldo inicial ────
+async function atualizarSaldoFonte(workshopId, mes, fonteKey, valor, operacao, queryClient) {
+  try {
+    const records = await base44.entities.DFCLancamento.filter({
+      workshop_id: workshopId,
+      mes,
+      grupo: "saldo_inicial",
+      tipo: "entrada"
+    }, "-created_date", 1);
+    const registro = records?.[0];
+    if (!registro) return;
+
+    const detalhes = { ...registro.detalhes };
+    const [tipo, id] = fonteKey.split(":");
+
+    if (tipo === "banco") {
+      detalhes.bancos = (detalhes.bancos || []).map(b =>
+        b.id === id ? { ...b, saldo: Math.max(0, (b.saldo || 0) + (operacao === "soma" ? valor : -valor)) } : b
+      );
+    } else if (tipo === "maquina") {
+      detalhes.maquinas_cartao = (detalhes.maquinas_cartao || []).map(m =>
+        m.id === id ? { ...m, saldo: Math.max(0, (m.saldo || 0) + (operacao === "soma" ? valor : -valor)) } : m
+      );
+    } else if (tipo === "caixa") {
+      detalhes.caixa = Math.max(0, (detalhes.caixa || 0) + (operacao === "soma" ? valor : -valor));
+    }
+
+    const novoTotal = (detalhes.bancos || []).reduce((s, b) => s + (b.saldo || 0), 0)
+      + (detalhes.maquinas_cartao || []).reduce((s, m) => s + (m.saldo || 0), 0)
+      + (detalhes.caixa || 0);
+
+    await base44.entities.DFCLancamento.update(registro.id, { detalhes, valor: novoTotal });
+    queryClient.invalidateQueries({ queryKey: ["saldoInicial", workshopId, mes] });
+    queryClient.invalidateQueries({ queryKey: ["saldo-inicial-fontes", workshopId, mes] });
+  } catch (e) {
+    console.warn("Não foi possível atualizar saldo inicial:", e.message);
+  }
 }
 
 // ── Lista de Contas ───────────────────────────────────────────────
@@ -434,6 +579,7 @@ export default function ContasReceberPagarTab({ workshopId, mes }) {
           onFechar={() => setContaReceberModal(null)}
           conta={contaReceberModal}
           workshopId={workshopId}
+          mes={`${ano}-${mesPadded}`}
           onSuccess={handleSuccess}
         />
       )}
@@ -444,6 +590,7 @@ export default function ContasReceberPagarTab({ workshopId, mes }) {
           onFechar={() => setContaPagarModal(null)}
           conta={contaPagarModal}
           workshopId={workshopId}
+          mes={`${ano}-${mesPadded}`}
           onSuccess={handleSuccess}
         />
       )}
