@@ -11,13 +11,14 @@ import { toast } from "sonner";
 export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, workshopId, saldoSimples = 0 }) {
   const queryClient = useQueryClient();
   const [detalhes, setDetalhes] = useState({ bancos: [], maquinas_cartao: [], caixa: 0 });
+  // Flag: dados já foram carregados para esta abertura do modal — não sobrescrever mais
+  const [carregado, setCarregado] = useState(false);
   
-  // Buscar registro de saldo inicial
+  // Buscar registro de saldo inicial — só quando o modal está aberto
   const { data: saldoInicial } = useQuery({
     queryKey: ["saldoInicial", workshopId, mes],
     queryFn: async () => {
       if (!workshopId || !mes) return null;
-      // Buscar o registro que pode ter sido criado tanto com tipo "entrada" quanto sem tipo
       const records = await base44.entities.DFCLancamento.filter({
         workshop_id: workshopId,
         mes,
@@ -26,29 +27,38 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
       return records?.[0] || null;
     },
     enabled: !!workshopId && !!mes && aberto,
-    refetchOnMount: true,
     staleTime: 0,
   });
 
-  // Reset ao abrir: se já há detalhes salvos, usa eles. 
-  // Senão, pré-popula o caixa com o valor digitado no campo simples (se houver).
+  // Resetar flag ao fechar para que na próxima abertura recarregue do banco
   useEffect(() => {
-    if (!aberto) return;
+    if (!aberto) {
+      setCarregado(false);
+    }
+  }, [aberto]);
+
+  // Carregar dados DO BANCO apenas uma vez por abertura (quando query retornar)
+  // Nunca sobrescreve após o carregamento inicial — permite o usuário editar livremente
+  useEffect(() => {
+    if (!aberto || carregado || saldoInicial === undefined) return;
+    
     if (saldoInicial?.detalhes && (
       (saldoInicial.detalhes.bancos?.length > 0) ||
       (saldoInicial.detalhes.maquinas_cartao?.length > 0) ||
       (saldoInicial.detalhes.caixa > 0)
     )) {
+      // Há detalhes salvos: carrega do banco
       setDetalhes({
         bancos: saldoInicial.detalhes.bancos || [],
         maquinas_cartao: saldoInicial.detalhes.maquinas_cartao || [],
         caixa: saldoInicial.detalhes.caixa || 0,
       });
     } else {
-      // Pré-popula o caixa com o saldo simples já digitado (sincronismo bidirecional)
+      // Sem detalhes salvos: pré-popula caixa com valor do campo simples
       setDetalhes({ bancos: [], maquinas_cartao: [], caixa: saldoSimples || 0 });
     }
-  }, [aberto, saldoInicial, saldoSimples]);
+    setCarregado(true); // trava: não sobrescreve mais enquanto modal estiver aberto
+  }, [aberto, saldoInicial, carregado, saldoSimples]);
 
   // Salvar detalhes
   const salvarMutation = useMutation({
