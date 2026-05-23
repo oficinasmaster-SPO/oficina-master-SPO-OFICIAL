@@ -247,7 +247,7 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
     if (!inicializadoRef.current) return;
     const novo = {
       id: Date.now().toString(),
-      nome: formData.nome,
+      nome: formData.nome.trim(),
       tipo_conta: formData.tipo_conta,
       saldo: Number(formData.saldo) || 0,
       data: new Date().toISOString().split('T')[0],
@@ -255,8 +255,9 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
     const bancosAtuais = Array.isArray(localDetalhes?.bancos) ? localDetalhes.bancos : [];
     const detalhesAntes = { ...localDetalhes, bancos: [...bancosAtuais] };
     persistir({ detalhes: { ...localDetalhes, bancos: [...bancosAtuais, novo] }, tipo_alteracao: 'edicao', detalhes_anteriores: detalhesAntes });
+    setFormData({ nome: '', saldo: 0, tipo_conta: 'corrente', gateway: '' });
     setModalFormAberto(false);
-    toast.success("Banco adicionado!");
+    toast.success("✅ Banco adicionado e salvo!");
   };
 
   const atualizarBanco = (id, field, value) => {
@@ -291,7 +292,7 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
     if (!inicializadoRef.current) return;
     const nova = {
       id: Date.now().toString(),
-      nome: formData.nome,
+      nome: formData.nome.trim(),
       gateway_pagamento: formData.gateway,
       saldo: Number(formData.saldo) || 0,
       data: new Date().toISOString().split('T')[0],
@@ -299,8 +300,9 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
     const maquinasAtuais = Array.isArray(localDetalhes?.maquinas_cartao) ? localDetalhes.maquinas_cartao : [];
     const detalhesAntes = { ...localDetalhes, maquinas_cartao: [...maquinasAtuais] };
     persistir({ detalhes: { ...localDetalhes, maquinas_cartao: [...maquinasAtuais, nova] }, tipo_alteracao: 'edicao', detalhes_anteriores: detalhesAntes });
+    setFormData({ nome: '', saldo: 0, tipo_conta: '', gateway: '' });
     setModalFormAberto(false);
-    toast.success("Máquina adicionada!");
+    toast.success("✅ Máquina adicionada e salva!");
   };
 
   const atualizarMaquina = (id, field, value) => {
@@ -406,8 +408,10 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
                 type="number"
                 step="0.01"
                 min="0"
-                value={formData.saldo}
-                onChange={(e) => setFormData({ ...formData, saldo: e.target.value })}
+                max="999999999.99"
+                value={formData.saldo || ''}
+                onChange={(e) => setFormData({ ...formData, saldo: parseFloat(e.target.value) || 0 })}
+                placeholder="0,00"
                 className="mt-1 text-sm font-semibold"
               />
             </div>
