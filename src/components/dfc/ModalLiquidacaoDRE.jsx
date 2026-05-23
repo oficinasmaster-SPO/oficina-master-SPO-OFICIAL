@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { InputMoeda } from "@/components/ui/InputMoeda";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Loader2, AlertCircle, Building2 } from "lucide-react";
 import { toast } from "sonner";
+import SeletorFonte from "./SeletorFonte";
 
 const fmt = (v) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v || 0);
 
@@ -18,6 +20,7 @@ const fmt = (v) => new Intl.NumberFormat("pt-BR", { style: "currency", currency:
  * - Se não houver conta vinculada → fallback para modal de datas simples (DRELancamento)
  */
 export default function ModalLiquidacaoDRE({ item, workshopId, onFechar, onSalvo }) {
+  const queryClient = useQueryClient();
   const [loading, setLoading] = useState(true);
   const [contaVinculada, setContaVinculada] = useState(null);
   const [semConta, setSemConta] = useState(false);
@@ -26,6 +29,7 @@ export default function ModalLiquidacaoDRE({ item, workshopId, onFechar, onSalvo
   const [valor, setValor] = useState("");
   const [formaPagamento, setFormaPagamento] = useState("pix");
   const [dataLiquidacao, setDataLiquidacao] = useState(new Date().toISOString().split("T")[0]);
+  const [fonteSelecionada, setFonteSelecionada] = useState(""); // de onde sai/onde entra o dinheiro
   const [desconto, setDesconto] = useState(0);
   const [juros, setJuros] = useState(0);
   const [multa, setMulta] = useState(0);
@@ -36,6 +40,32 @@ export default function ModalLiquidacaoDRE({ item, workshopId, onFechar, onSalvo
   const [dataPagamento, setDataPagamento] = useState("");
 
   const isDespesa = item?.tipo === "saida";
+
+  // Buscar fontes de dinheiro do mês
+  const mesReferencia = item?.mes;
+  const { data: fontes } = useQuery({
+    queryKey: ["saldo-inicial-fontes", workshopId, mesReferencia],
+    queryFn: async () => {
+      if (!workshopId) return { bancos: [], maquinas_cartao: [], caixa: 0 };
+      const allRecords = await base44.entities.DFCLancamento.filter({
+        workshop_id: workshopId,
+        grupo: "saldo_inicial",
+      }, "-created_date", 5);
+      for (const rec of (allRecords || [])) {
+        const d = rec.detalhes;
+        if (d && ((d.bancos?.length > 0) || (d.maquinas_cartao?.length > 0) || (d.caixa > 0))) {
+          return {
+            bancos: d.bancos || [],
+            maquinas_cartao: d.maquinas_cartao || [],
+            caixa: d.caixa || 0,
+          };
+        }
+      }
+      return { bancos: [], maquinas_cartao: [], caixa: 0 };
+    },
+    enabled: !!workshopId && !!item,
+    staleTime: 0,
+  });
 
   useEffect(() => {
     if (!item?.id) return;
@@ -81,7 +111,7 @@ export default function ModalLiquidacaoDRE({ item, workshopId, onFechar, onSalvo
 
   const valorLiquido = (parseFloat(valor) || 0) + juros + multa - desconto;
 
-  // ── Handler: Liquidação via registrarLiquidacao ──────────────────
+  // ── Handler: Liquidação via registrarLiquidacao + atualiza saldo inicial ──────────────────
   const handleSalvarLiquidacao = async () => {
     setSaving(true);
     try {
@@ -119,6 +149,52 @@ export default function ModalLiquidacaoDRE({ item, workshopId, onFechar, onSalvo
         await base44.entities.DRELancamento.update(item.id, {
           data_pagamento: dataLiquidacao
         });
+      }
+
+      // ✅ Atualizar saldo inicial da fonte selecionada
+      if (fonteSelecionada && mesReferencia) {
+        const [tipo, id] = fonteSelecionada.split(":");
+        const operacao = isDespesa ? "subtrai" : "soma";
+        
+        const records = await base44.entities.DFCLancamento.filter({
+          workshop_id: workshopId,
+          mes: mesReferencia,
+          grupo: "saldo_inicial",
+        }, "-created_date", 1);
+        const registro = records?.[0];
+        if (registro) {
+          const detalhes = {
+            bancos: registro.detalhes?.bancos || [],
+            maquinas_cartao: registro.detalhes?.maquinas_cartao || [],
+            caixa: registro.detalhes?.caixa || 0,
+          };
+          const delta = operacao === "soma" ? valorLiquidacao : -valorLiquidacao;
+
+          if (tipo === "banco") {
+            detalhes.bancos = detalhes.bancos.map(b =>
+              b.id === id ? { ...b, saldo: Math.max(0, (b.saldo || 0) + delta) } : b
+            );
+          } else if (tipo === "maquina") {
+            detalhes.maquinas_cartao = detalhes.maquinas_cartao.map(m =>
+              m.id === id ? { ...m, saldo: Math.max(0, (m.saldo || 0) + delta) } : m
+            );
+          } else if (tipo === "caixa") {
+            detalhes.caixa = Math.max(0, detalhes.caixa + delta);
+          }
+
+          const novoTotal = detalhes.bancos.reduce((s, b) => s + (b.saldo || 0), 0)
+            + detalhes.maquinas_cartao.reduce((s, m) => s + (m.saldo || 0), 0)
+            + detalhes.caixa;
+
+          await base44.entities.DFCLancamento.update(registro.id, {
+            detalhes,
+            valor: novoTotal,
+            saldo_inicial: novoTotal,
+          });
+
+          queryClient.invalidateQueries({ queryKey: ["saldo-inicial-fontes", workshopId, mesReferencia] });
+          queryClient.invalidateQueries({ queryKey: ["dfc-saldo", workshopId, mesReferencia] });
+        }
       }
 
       onSalvo?.();
@@ -206,6 +282,18 @@ export default function ModalLiquidacaoDRE({ item, workshopId, onFechar, onSalvo
                   <SelectItem value="cheque">Cheque</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div>
+              <Label className="flex items-center gap-2">
+                <Building2 className="w-4 h-4 text-blue-600" />
+                {isDespesa ? "De onde saiu o dinheiro?" : "Onde vai entrar o dinheiro?"}
+              </Label>
+              <SeletorFonte
+                fontes={fontes}
+                fonteSelecionada={fonteSelecionada}
+                onChange={setFonteSelecionada}
+                label=""
+              />
             </div>
             <div className="grid grid-cols-3 gap-2">
               <div>
