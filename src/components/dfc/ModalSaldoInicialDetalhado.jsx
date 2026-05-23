@@ -352,7 +352,7 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
                   step="0.01"
                   min="0"
                   value={detalhes.caixa}
-                  onChange={(e) => setDetalhes({...detalhes, caixa: parseFloat(e.target.value) || 0})}
+                  onChange={(e) => setDetalhes(prev => ({ ...prev, caixa: parseFloat(e.target.value) || 0 }))}
                   className="mt-2"
                 />
               </div>
