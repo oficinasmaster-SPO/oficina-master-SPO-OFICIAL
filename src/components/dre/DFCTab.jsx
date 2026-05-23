@@ -547,11 +547,13 @@ export default function DFCTab({ workshopId, mes }) {
 
   const salvarSaldoMutation = useMutation({
     mutationFn: (valor) => {
+      // Quando zerado pelo campo simples, limpa também os detalhes para manter consistência
+      const detalhesLimpos = valor === 0 ? { bancos: [], maquinas_cartao: [], caixa: 0 } : undefined;
       if (saldoInicialRecord) {
-        // Atualiza saldo_inicial E valor para manter consistência com o modal detalhado
         return base44.entities.DFCLancamento.update(saldoInicialRecord.id, { 
           saldo_inicial: valor,
           valor: valor,
+          ...(detalhesLimpos && { detalhes: detalhesLimpos }),
         });
       }
       return base44.entities.DFCLancamento.create({
@@ -560,7 +562,7 @@ export default function DFCTab({ workshopId, mes }) {
         grupo: "saldo_inicial",
         tipo: "entrada",
         descricao: "Saldo inicial do mês",
-        valor: valor, // ← corrigido: era 0
+        valor: valor,
         origem: "manual",
         saldo_inicial: valor,
       });

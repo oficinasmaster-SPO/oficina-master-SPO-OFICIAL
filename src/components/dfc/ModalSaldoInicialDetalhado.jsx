@@ -384,17 +384,27 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
           </div>
 
           {/* BUTTONS */}
-          <div className="flex justify-end gap-3 pt-4 border-t">
-            <Button variant="outline" onClick={onFechar}>
-              Cancelar
-            </Button>
-            <Button 
-              onClick={() => salvarMutation.mutate(detalhes)}
+          <div className="flex justify-between items-center pt-4 border-t">
+            <Button
+              variant="outline"
+              className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
               disabled={salvarMutation.isPending}
-              className="bg-black hover:bg-gray-800"
+              onClick={() => salvarMutation.mutate({ bancos: [], maquinas_cartao: [], caixa: 0 })}
             >
-              {salvarMutation.isPending ? "Salvando..." : "Salvar Saldo Detalhado"}
+              🗑️ Zerar tudo
             </Button>
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={onFechar}>
+                Cancelar
+              </Button>
+              <Button 
+                onClick={() => salvarMutation.mutate(detalhes)}
+                disabled={salvarMutation.isPending}
+                className="bg-black hover:bg-gray-800"
+              >
+                {salvarMutation.isPending ? "Salvando..." : "Salvar Saldo Detalhado"}
+              </Button>
+            </div>
           </div>
         </div>
       </DialogContent>
