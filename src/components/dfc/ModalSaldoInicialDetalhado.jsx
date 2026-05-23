@@ -124,6 +124,7 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
 
   // ── Banco: add / update / remove ──────────────────────────────
   const adicionarBanco = () => {
+    if (!inicializadoRef.current) return;
     const novo = {
       id: Date.now().toString(),
       nome: "Novo Banco",
@@ -135,6 +136,7 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
   };
 
   const atualizarBanco = (id, field, value) => {
+    if (!inicializadoRef.current) return;
     const bancos = localDetalhes.bancos.map(b => b.id === id ? { ...b, [field]: value } : b);
     persistir({ ...localDetalhes, bancos });
   };
@@ -150,6 +152,7 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
 
   // ── Máquina: add / update / remove ────────────────────────────
   const adicionarMaquina = () => {
+    if (!inicializadoRef.current) return;
     const nova = {
       id: Date.now().toString(),
       nome: "Nova Máquina",
@@ -161,6 +164,7 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
   };
 
   const atualizarMaquina = (id, field, value) => {
+    if (!inicializadoRef.current) return;
     const maquinas_cartao = localDetalhes.maquinas_cartao.map(m => m.id === id ? { ...m, [field]: value } : m);
     persistir({ ...localDetalhes, maquinas_cartao });
   };
@@ -176,7 +180,11 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
 
   // ── Caixa: atualiza local sem persistir — persiste no blur ────
   const setCaixa = (v) => setLocalDetalhes(prev => ({ ...prev, caixa: v }));
-  const salvarCaixa = () => persistir({ ...localDetalhes, caixa: Number(localDetalhes.caixa) || 0 });
+  // Só salva se o modal já foi inicializado com os dados do banco (evita sobrescrever bancos/máquinas com lista vazia)
+  const salvarCaixa = () => {
+    if (!inicializadoRef.current) return;
+    persistir({ ...localDetalhes, caixa: Number(localDetalhes.caixa) || 0 });
+  };
 
   // ── Zerar tudo ────────────────────────────────────────────────
   const zerarTudo = () => {
