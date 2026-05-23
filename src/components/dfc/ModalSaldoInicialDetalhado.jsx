@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,9 +11,13 @@ import { toast } from "sonner";
 export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, workshopId, saldoSimples = 0 }) {
   const queryClient = useQueryClient();
   const [detalhes, setDetalhes] = useState({ bancos: [], maquinas_cartao: [], caixa: 0 });
-  // Flag: dados já foram carregados para esta abertura do modal — não sobrescrever mais
-  const [carregado, setCarregado] = useState(false);
+  // Ref para garantir que o carregamento inicial só acontece UMA vez por abertura
+  const carregadoRef = useRef(false);
+  const saldoSimplesRef = useRef(saldoSimples);
   
+  // Atualizar ref do saldoSimples sem causar re-renders
+  useEffect(() => { saldoSimplesRef.current = saldoSimples; }, [saldoSimples]);
+
   // Buscar registro de saldo inicial — só quando o modal está aberto
   const { data: saldoInicial } = useQuery({
     queryKey: ["saldoInicial", workshopId, mes],
@@ -30,35 +34,37 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
     staleTime: 0,
   });
 
-  // Resetar flag ao fechar para que na próxima abertura recarregue do banco
+  // Ao abrir: resetar flag de carregamento
+  // Ao fechar: resetar estado para próxima abertura
   useEffect(() => {
-    if (!aberto) {
-      setCarregado(false);
+    if (aberto) {
+      carregadoRef.current = false;
+    } else {
+      setDetalhes({ bancos: [], maquinas_cartao: [], caixa: 0 });
     }
   }, [aberto]);
 
-  // Carregar dados DO BANCO apenas uma vez por abertura (quando query retornar)
-  // Nunca sobrescreve após o carregamento inicial — permite o usuário editar livremente
+  // Carregar dados do banco UMA ÚNICA VEZ quando a query retornar resultado
+  // Usa ref em vez de state para a flag — não dispara re-render nem riscos de closure stale
   useEffect(() => {
-    if (!aberto || carregado || saldoInicial === undefined) return;
+    if (!aberto || carregadoRef.current || saldoInicial === undefined) return;
     
+    carregadoRef.current = true; // trava IMEDIATAMENTE antes de qualquer setState
+
     if (saldoInicial?.detalhes && (
       (saldoInicial.detalhes.bancos?.length > 0) ||
       (saldoInicial.detalhes.maquinas_cartao?.length > 0) ||
       (saldoInicial.detalhes.caixa > 0)
     )) {
-      // Há detalhes salvos: carrega do banco
       setDetalhes({
-        bancos: saldoInicial.detalhes.bancos || [],
-        maquinas_cartao: saldoInicial.detalhes.maquinas_cartao || [],
+        bancos: [...(saldoInicial.detalhes.bancos || [])],
+        maquinas_cartao: [...(saldoInicial.detalhes.maquinas_cartao || [])],
         caixa: saldoInicial.detalhes.caixa || 0,
       });
     } else {
-      // Sem detalhes salvos: pré-popula caixa com valor do campo simples
-      setDetalhes({ bancos: [], maquinas_cartao: [], caixa: saldoSimples || 0 });
+      setDetalhes({ bancos: [], maquinas_cartao: [], caixa: saldoSimplesRef.current || 0 });
     }
-    setCarregado(true); // trava: não sobrescreve mais enquanto modal estiver aberto
-  }, [aberto, saldoInicial, carregado, saldoSimples]);
+  }, [aberto, saldoInicial]);
 
   // Salvar detalhes
   const salvarMutation = useMutation({
@@ -103,55 +109,42 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
   };
 
   const adicionarBanco = () => {
-    setDetalhes({
-      ...detalhes,
-      bancos: [...detalhes.bancos, { id: Date.now().toString(), nome: "", tipo_conta: "corrente", saldo: 0, data: new Date().toISOString().split('T')[0] }]
-    });
+    setDetalhes(prev => ({
+      ...prev,
+      bancos: [...prev.bancos, { id: Date.now().toString(), nome: "", tipo_conta: "corrente", saldo: 0, data: new Date().toISOString().split('T')[0] }]
+    }));
   };
 
   const removerBanco = (id) => {
-    setDetalhes({
-      ...detalhes,
-      bancos: detalhes.bancos.filter(b => b.id !== id)
-    });
+    setDetalhes(prev => ({ ...prev, bancos: prev.bancos.filter(b => b.id !== id) }));
   };
 
   const atualizarBanco = (id, field, value) => {
-    setDetalhes({
-      ...detalhes,
-      bancos: detalhes.bancos.map(b => 
-        b.id === id ? { ...b, [field]: value } : b
-      )
-    });
+    setDetalhes(prev => ({
+      ...prev,
+      bancos: prev.bancos.map(b => b.id === id ? { ...b, [field]: value } : b)
+    }));
   };
 
   const adicionarMaquina = () => {
-    setDetalhes({
-      ...detalhes,
-      maquinas_cartao: [...detalhes.maquinas_cartao, { 
-        id: Date.now().toString(), 
-        nome: "", 
-        gateway_pagamento: "", 
-        saldo: 0, 
+    setDetalhes(prev => ({
+      ...prev,
+      maquinas_cartao: [...prev.maquinas_cartao, { 
+        id: Date.now().toString(), nome: "", gateway_pagamento: "", saldo: 0, 
         data: new Date().toISOString().split('T')[0] 
       }]
-    });
+    }));
   };
 
   const removerMaquina = (id) => {
-    setDetalhes({
-      ...detalhes,
-      maquinas_cartao: detalhes.maquinas_cartao.filter(m => m.id !== id)
-    });
+    setDetalhes(prev => ({ ...prev, maquinas_cartao: prev.maquinas_cartao.filter(m => m.id !== id) }));
   };
 
   const atualizarMaquina = (id, field, value) => {
-    setDetalhes({
-      ...detalhes,
-      maquinas_cartao: detalhes.maquinas_cartao.map(m => 
-        m.id === id ? { ...m, [field]: value } : m
-      )
-    });
+    setDetalhes(prev => ({
+      ...prev,
+      maquinas_cartao: prev.maquinas_cartao.map(m => m.id === id ? { ...m, [field]: value } : m)
+    }));
   };
 
   const total = calcularTotal(detalhes);
