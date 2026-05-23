@@ -174,31 +174,31 @@ function ModalRegistrarRecebimento({ aberto, onFechar, conta, workshopId, mes, o
 
   return (
     <Dialog open={aberto} onOpenChange={onFechar}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>💰 Registrar Recebimento</DialogTitle>
+      <DialogContent className="max-w-md max-h-[80vh] flex flex-col p-4">
+        <DialogHeader className="pb-2">
+          <DialogTitle className="text-lg">💰 Registrar Recebimento</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4 py-2">
+        <div className="space-y-2 py-0 overflow-y-auto flex-1">
           <div>
-            <Label>Cliente</Label>
+            <Label className="text-xs">Cliente</Label>
             <p className="text-sm font-medium text-gray-900">{conta?.cliente_nome || "—"}</p>
           </div>
           <div>
-            <Label>Valor Aberto</Label>
-            <p className="text-lg font-bold text-green-600">{fmt(conta?.valor_aberto)}</p>
+            <Label className="text-xs">Valor Aberto</Label>
+            <p className="text-base font-bold text-green-600">{fmt(conta?.valor_aberto)}</p>
           </div>
           <div>
-            <Label>Data do Recebimento</Label>
-            <Input type="date" value={dataLiquidacao} onChange={(e) => setDataLiquidacao(e.target.value)} className="mt-1" />
+            <Label className="text-xs">Data de Recebimento</Label>
+            <Input type="date" value={dataLiquidacao} onChange={(e) => setDataLiquidacao(e.target.value)} className="mt-0.5 text-sm" />
           </div>
           <div>
-            <Label>Valor Recebido (R$)</Label>
-            <InputMoeda value={parseFloat(valor) || 0} onChange={(e) => setValor(e.target.value)} className="text-right" />
+            <Label className="text-xs">Valor Recebido (R$)</Label>
+            <InputMoeda value={parseFloat(valor) || 0} onChange={(e) => setValor(e.target.value)} className="text-right text-sm" />
           </div>
           <div>
-            <Label>Forma de Pagamento</Label>
+            <Label className="text-xs">Forma de Pagamento</Label>
             <Select value={formaPagamento} onValueChange={setFormaPagamento}>
-              <SelectTrigger>
+              <SelectTrigger className="text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -218,28 +218,28 @@ function ModalRegistrarRecebimento({ aberto, onFechar, conta, workshopId, mes, o
             onChange={setFonteDestino}
             label="Onde vai entrar o dinheiro?"
           />
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-3 gap-1">
             <div>
-              <Label>Desconto</Label>
-              <InputMoeda value={desconto} onChange={(e) => setDesconto(parseFloat(e.target.value) || 0)} className="text-right" />
+              <Label className="text-xs">Desconto</Label>
+              <InputMoeda value={desconto} onChange={(e) => setDesconto(parseFloat(e.target.value) || 0)} className="text-right text-xs" />
             </div>
             <div>
-              <Label>Juros</Label>
-              <InputMoeda value={juros} onChange={(e) => setJuros(parseFloat(e.target.value) || 0)} className="text-right" />
+              <Label className="text-xs">Juros</Label>
+              <InputMoeda value={juros} onChange={(e) => setJuros(parseFloat(e.target.value) || 0)} className="text-right text-xs" />
             </div>
             <div>
-              <Label>Multa</Label>
-              <InputMoeda value={multa} onChange={(e) => setMulta(parseFloat(e.target.value) || 0)} className="text-right" />
+              <Label className="text-xs">Multa</Label>
+              <InputMoeda value={multa} onChange={(e) => setMulta(parseFloat(e.target.value) || 0)} className="text-right text-xs" />
             </div>
           </div>
-          <div className="p-3 bg-green-50 rounded-lg">
-            <p className="text-sm text-green-700">Valor Líquido</p>
-            <p className="text-2xl font-bold text-green-900">{fmt(valorLiquido)}</p>
+          <div className="p-2 bg-green-50 rounded border border-green-200">
+            <p className="text-xs text-green-700">Valor Líquido</p>
+            <p className="text-lg font-bold text-green-900">{fmt(valorLiquido)}</p>
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onFechar}>Cancelar</Button>
-          <Button onClick={handleSalvar} disabled={saving || !valor}>
+        <DialogFooter className="gap-2 pt-2 mt-auto">
+          <Button variant="outline" size="sm" onClick={onFechar}>Cancelar</Button>
+          <Button size="sm" onClick={handleSalvar} disabled={saving || !valor}>
             {saving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
             Confirmar Recebimento
           </Button>
@@ -309,31 +309,31 @@ function ModalRegistrarPagamento({ aberto, onFechar, conta, workshopId, mes, onS
 
   return (
     <Dialog open={aberto} onOpenChange={onFechar}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>💳 Registrar Pagamento</DialogTitle>
+      <DialogContent className="max-w-md max-h-[80vh] flex flex-col p-4">
+        <DialogHeader className="pb-2">
+          <DialogTitle className="text-lg">💳 Registrar Pagamento</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4 py-2">
+        <div className="space-y-2 py-0 overflow-y-auto flex-1">
           <div>
-            <Label>Fornecedor</Label>
+            <Label className="text-xs">Fornecedor</Label>
             <p className="text-sm font-medium text-gray-900">{conta?.fornecedor_nome || "—"}</p>
           </div>
           <div>
-            <Label>Valor Aberto</Label>
-            <p className="text-lg font-bold text-red-600">{fmt(conta?.valor_aberto)}</p>
+            <Label className="text-xs">Valor Aberto</Label>
+            <p className="text-base font-bold text-red-600">{fmt(conta?.valor_aberto)}</p>
           </div>
           <div>
-            <Label>Data do Pagamento</Label>
-            <Input type="date" value={dataLiquidacao} onChange={(e) => setDataLiquidacao(e.target.value)} className="mt-1" />
+            <Label className="text-xs">Data de Pagamento</Label>
+            <Input type="date" value={dataLiquidacao} onChange={(e) => setDataLiquidacao(e.target.value)} className="mt-0.5 text-sm" />
           </div>
           <div>
-            <Label>Valor Pago (R$)</Label>
-            <InputMoeda value={parseFloat(valor) || 0} onChange={(e) => setValor(e.target.value)} className="text-right" />
+            <Label className="text-xs">Valor Pago (R$)</Label>
+            <InputMoeda value={parseFloat(valor) || 0} onChange={(e) => setValor(e.target.value)} className="text-right text-sm" />
           </div>
           <div>
-            <Label>Forma de Pagamento</Label>
+            <Label className="text-xs">Forma de Pagamento</Label>
             <Select value={formaPagamento} onValueChange={setFormaPagamento}>
-              <SelectTrigger>
+              <SelectTrigger className="text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -353,28 +353,28 @@ function ModalRegistrarPagamento({ aberto, onFechar, conta, workshopId, mes, onS
             onChange={setFonteSaida}
             label="De onde saiu o dinheiro?"
           />
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-3 gap-1">
             <div>
-              <Label>Desconto</Label>
-              <InputMoeda value={desconto} onChange={(e) => setDesconto(parseFloat(e.target.value) || 0)} className="text-right" />
+              <Label className="text-xs">Desconto</Label>
+              <InputMoeda value={desconto} onChange={(e) => setDesconto(parseFloat(e.target.value) || 0)} className="text-right text-xs" />
             </div>
             <div>
-              <Label>Juros</Label>
-              <InputMoeda value={juros} onChange={(e) => setJuros(parseFloat(e.target.value) || 0)} className="text-right" />
+              <Label className="text-xs">Juros</Label>
+              <InputMoeda value={juros} onChange={(e) => setJuros(parseFloat(e.target.value) || 0)} className="text-right text-xs" />
             </div>
             <div>
-              <Label>Multa</Label>
-              <InputMoeda value={multa} onChange={(e) => setMulta(parseFloat(e.target.value) || 0)} className="text-right" />
+              <Label className="text-xs">Multa</Label>
+              <InputMoeda value={multa} onChange={(e) => setMulta(parseFloat(e.target.value) || 0)} className="text-right text-xs" />
             </div>
           </div>
-          <div className="p-3 bg-red-50 rounded-lg">
-            <p className="text-sm text-red-700">Valor Líquido</p>
-            <p className="text-2xl font-bold text-red-900">{fmt(valorLiquido)}</p>
+          <div className="p-2 bg-red-50 rounded border border-red-200">
+            <p className="text-xs text-red-700">Valor Líquido</p>
+            <p className="text-lg font-bold text-red-900">{fmt(valorLiquido)}</p>
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onFechar}>Cancelar</Button>
-          <Button onClick={handleSalvar} disabled={saving || !valor}>
+        <DialogFooter className="gap-2 pt-2 mt-auto">
+          <Button variant="outline" size="sm" onClick={onFechar}>Cancelar</Button>
+          <Button size="sm" onClick={handleSalvar} disabled={saving || !valor}>
             {saving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
             Confirmar Pagamento
           </Button>
