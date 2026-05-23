@@ -52,6 +52,7 @@ const ContasPagar = lazy(() => import('@/pages/ContasPagar'));
 const ConciliacaoBancaria = lazy(() => import('@/pages/ConciliacaoBancaria'));
 const DashboardFinanceiro = lazy(() => import('@/pages/DashboardFinanceiro'));
 const CorrigirParcelasDuplicadas = lazy(() => import('@/pages/CorrigirParcelasDuplicadas'));
+const BackfillSaldosHistoricos = lazy(() => import('@/pages/BackfillSaldosHistoricos'));
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -282,6 +283,13 @@ const AuthenticatedApp = () => {
         <LayoutWrapper currentPageName="CorrigirParcelasDuplicadas">
           <PageAccessControl adminOnly={true}>
             <CorrigirParcelasDuplicadas />
+          </PageAccessControl>
+        </LayoutWrapper>
+      } />
+      <Route path="/BackfillSaldosHistoricos" element={
+        <LayoutWrapper currentPageName="BackfillSaldosHistoricos">
+          <PageAccessControl adminOnly={true}>
+            <BackfillSaldosHistoricos />
           </PageAccessControl>
         </LayoutWrapper>
       } />
