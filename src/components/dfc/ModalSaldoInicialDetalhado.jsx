@@ -35,7 +35,7 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
       return records?.[0] || null;
     },
     enabled: !!workshopId && !!mes && aberto,
-    staleTime: 0,
+    staleTime: 30 * 1000, // 30s — evita refetch durante a sessão do modal e a janela de race condition
   });
 
   // ── Popular estado local com dados do banco (uma vez por abertura) ──
