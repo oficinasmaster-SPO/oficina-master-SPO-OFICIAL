@@ -437,7 +437,7 @@ export default function DFCTab({ workshopId, mes }) {
   const [modalAberto, setModalAberto] = useState(false);
   const [grupoModal, setGrupoModal] = useState("operacional");
   const [lancamentoEdicao, setLancamentoEdicao] = useState(null);
-  const [saldoInicialInput, setSaldoInicialInput] = useState("0");
+  // saldoInicialInput removido — card é somente leitura, valor vem direto de saldoInicialSalvo
   const [itemPagamento, setItemPagamento] = useState(null);
   const [view, setView] = useState("grupos"); // "grupos" | "projecao"
   const [modalSaldoDetalhadoAberto, setModalSaldoDetalhadoAberto] = useState(false);
@@ -497,21 +497,7 @@ export default function DFCTab({ workshopId, mes }) {
   // Fallback para `saldo_inicial` para compatibilidade com registros antigos
   const saldoInicialSalvo = saldoInicialRecord?.valor ?? saldoInicialRecord?.saldo_inicial ?? 0;
 
-  // BUG FIX: Sincronizar input local com valor do banco apenas na primeira carga por mês
-  // (não sobrescrever enquanto o usuário está digitando)
-  const saldoCarregado = useRef(false);
-  const mesAnterior = useRef(null);
-  useEffect(() => {
-    // Resetar flag quando o mês muda
-    if (mesAnterior.current !== mes) {
-      saldoCarregado.current = false;
-      mesAnterior.current = mes;
-    }
-    if (!saldoCarregado.current && saldoInicialDB.length >= 0 && saldoInicialDB !== undefined) {
-      setSaldoInicialInput(String(saldoInicialSalvo));
-      saldoCarregado.current = true;
-    }
-  }, [mes, saldoInicialSalvo, saldoInicialDB]);
+  // Sem sincronização de input local — card exibe saldoInicialSalvo diretamente (somente leitura)
 
   // ── Mutations ──────────────────────────────────────────────────
   const criarMutation = useMutation({
@@ -626,17 +612,6 @@ export default function DFCTab({ workshopId, mes }) {
 
   const handleDelete = (item) => { if (item.id) deletarMutation.mutate(item.id); };
 
-  const handleSaldoBlur = () => {
-    const valor = parseFloat(parseFloat(saldoInicialInput || "0").toFixed(2));
-    const salvo = parseFloat(parseFloat(saldoInicialSalvo || 0).toFixed(2));
-    if (valor !== salvo) {
-      salvarSaldoMutation.mutate(valor);
-    } else {
-      // Normalizar o input para o formato correto
-      setSaldoInicialInput(String(salvo));
-    }
-  };
-
   const isLoading = isDRELoading || isManuaisLoading;
 
   if (isLoading) {
@@ -719,21 +694,15 @@ export default function DFCTab({ workshopId, mes }) {
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-500">R$</span>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={saldoInicialInput}
-                  onChange={e => setSaldoInicialInput(e.target.value)}
-                  onBlur={handleSaldoBlur}
-                  className="w-44 text-right font-semibold"
-                />
-                {salvarSaldoMutation.isPending && <Loader2 className="w-4 h-4 animate-spin text-gray-400" />}
+                <div className="w-44 text-right font-semibold px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-gray-800">
+                  {saldoInicialSalvo.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </div>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setModalSaldoDetalhadoAberto(true)}
                   className="shrink-0"
-                  title="Ver detalhamento do saldo inicial"
+                  title="Detalhar saldo inicial por banco, máquina e caixa"
                 >
                   <Eye className="w-4 h-4" />
                 </Button>
@@ -874,10 +843,8 @@ export default function DFCTab({ workshopId, mes }) {
         aberto={modalSaldoDetalhadoAberto}
         onFechar={async () => {
           setModalSaldoDetalhadoAberto(false);
-          // Aguarda a invalidação e força re-fetch para sincronizar input + Waterfall
           await queryClient.invalidateQueries({ queryKey: ["dfc-saldo", workshopId, mes] });
           await queryClient.refetchQueries({ queryKey: ["dfc-saldo", workshopId, mes] });
-          saldoCarregado.current = false;
         }}
         workshopId={workshopId}
         mes={mes}

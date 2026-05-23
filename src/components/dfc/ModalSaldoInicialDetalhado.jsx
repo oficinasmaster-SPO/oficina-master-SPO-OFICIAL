@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+// ModalSaldoInicialDetalhado — v3 (dados persistidos, sem input editável no card pai)
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,15 +12,11 @@ import { toast } from "sonner";
 export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, workshopId, saldoSimples = 0, saldoRecord = null }) {
   const queryClient = useQueryClient();
   const [detalhes, setDetalhes] = useState({ bancos: [], maquinas_cartao: [], caixa: 0 });
-  // Ref para garantir que o carregamento inicial só acontece UMA vez por abertura
-  const carregadoRef = useRef(false);
-  const saldoSimplesRef = useRef(saldoSimples);
-  
-  // Atualizar ref do saldoSimples sem causar re-renders
-  useEffect(() => { saldoSimplesRef.current = saldoSimples; }, [saldoSimples]);
+  // Controla se já populamos o state com dados do banco nesta abertura
+  const populadoRef = useRef(false);
 
-  // Buscar registro de saldo inicial — só quando o modal está aberto
-  const { data: saldoInicial } = useQuery({
+  // Buscar registro — sempre fresh ao abrir
+  const { data: saldoInicial, isSuccess } = useQuery({
     queryKey: ["saldoInicial", workshopId, mes],
     queryFn: async () => {
       if (!workshopId || !mes) return null;
@@ -34,46 +31,26 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
     staleTime: 0,
   });
 
-  // Ao abrir: resetar flag de carregamento
-  // Ao fechar: resetar estado para próxima abertura
+  // Ao fechar: limpar estado e flag para próxima abertura
   useEffect(() => {
-    if (aberto) {
-      carregadoRef.current = false;
-    } else {
+    if (!aberto) {
+      populadoRef.current = false;
       setDetalhes({ bancos: [], maquinas_cartao: [], caixa: 0 });
     }
   }, [aberto]);
 
-  // Carregar dados do banco UMA ÚNICA VEZ quando a query retornar resultado
-  // Usa ref em vez de state para a flag — não dispara re-render nem riscos de closure stale
+  // Popular state COM dados do banco assim que a query retornar — apenas uma vez por abertura
   useEffect(() => {
-    if (!aberto || carregadoRef.current || saldoInicial === undefined) return;
-    
-    carregadoRef.current = true; // trava IMEDIATAMENTE antes de qualquer setState
+    if (!aberto || !isSuccess || populadoRef.current) return;
+    populadoRef.current = true;
 
     const det = saldoInicial?.detalhes || {};
-    // Compatibilidade: suporta chaves antigas (singular) e novas (plural)
-    const bancosCarregados = det.bancos || (det.banco ? [det.banco] : []);
-    const maquinasCarregadas = det.maquinas_cartao || (det.maquina_cartao ? [det.maquina_cartao] : []);
-    const caixaCarregada = det.caixa || 0;
+    const bancos = det.bancos || (det.banco != null ? [det.banco] : []);
+    const maquinas = det.maquinas_cartao || (det.maquina_cartao != null ? [det.maquina_cartao] : []);
+    const caixa = det.caixa ?? 0;
 
-    if (saldoInicial?.detalhes && (
-      bancosCarregados.length > 0 ||
-      maquinasCarregadas.length > 0 ||
-      caixaCarregada > 0
-    )) {
-      setDetalhes({
-        bancos: [...bancosCarregados],
-        maquinas_cartao: [...maquinasCarregadas],
-        caixa: caixaCarregada,
-      });
-    } else {
-      // Sem detalhes: usa o valor total como fallback para caixa
-      // Garante que o campo caixa reflita o que está no card (saldoInicialSalvo)
-      const valorFallback = saldoInicial?.valor ?? saldoInicial?.saldo_inicial ?? saldoSimplesRef.current ?? 0;
-      setDetalhes({ bancos: [], maquinas_cartao: [], caixa: valorFallback });
-    }
-  }, [aberto, saldoInicial]);
+    setDetalhes({ bancos, maquinas_cartao: maquinas, caixa });
+  }, [aberto, isSuccess, saldoInicial]);
 
   // Salvar detalhes
   const salvarMutation = useMutation({
