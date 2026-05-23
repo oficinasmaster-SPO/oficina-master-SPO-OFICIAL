@@ -84,13 +84,13 @@ Deno.serve(async (req) => {
         const dataFimMes = `${mes}-${String(ultimoDia).padStart(2, '0')}T23:59:59`;
         console.log(`[BACKFILL SALDOS] Buscando liquidações até: ${dataFimMes}`);
         
-        const liquidacoesRecebimento = await base44.entities.LiquidaçãoFinanceira.filter({
+        const liquidacoesRecebimento = await base44.entities.LiquidacaoFinanceira.filter({
           workshop_id,
           tipo: 'recebimento',
           data_liquidacao: { $gte: `${mes}-01`, $lte: dataFimMes }
         });
 
-        const liquidacoesPagamento = await base44.entities.LiquidaçãoFinanceira.filter({
+        const liquidacoesPagamento = await base44.entities.LiquidacaoFinanceira.filter({
           workshop_id,
           tipo: 'pagamento',
           data_liquidacao: { $gte: `${mes}-01`, $lte: dataFimMes }

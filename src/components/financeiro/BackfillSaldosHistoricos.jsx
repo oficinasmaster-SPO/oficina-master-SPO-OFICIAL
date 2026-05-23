@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 
 export default function BackfillSaldosHistoricos() {
-  const { workshop } = useWorkshopContext();
+  const { workshop, isLoading } = useWorkshopContext();
   const [mesInicio, setMesInicio] = useState("2024-01");
   const [mesFim, setMesFim] = useState("2024-12");
   const [dryRun, setDryRun] = useState(true);
@@ -18,6 +18,9 @@ export default function BackfillSaldosHistoricos() {
 
   const mutation = useMutation({
     mutationFn: async (params) => {
+      if (!workshop?.id) {
+        throw new Error("Workshop não selecionado");
+      }
       const response = await base44.functions.invoke("backfillSaldosHistoricos", {
         workshop_id: workshop.id,
         mes_inicio: params.mesInicio,
@@ -31,9 +34,34 @@ export default function BackfillSaldosHistoricos() {
     },
     onError: (error) => {
       console.error("Erro no backfill:", error);
-      setResultado({ error: error.message });
+      setResultado({ 
+        error: error.message || "Erro desconhecido",
+        detalhes: error.response?.data?.error 
+      });
     }
   });
+
+  // Verificar se workshop está carregando
+  if (isLoading || !workshop) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+        <span className="ml-3 text-gray-600">Carregando dados da oficina...</span>
+      </div>
+    );
+  }
+
+  // Verificar se workshop tem ID
+  if (!workshop.id) {
+    return (
+      <Alert variant="destructive">
+        <AlertTriangle className="w-4 h-4" />
+        <AlertDescription>
+          Nenhuma oficina selecionada. Por favor, selecione uma oficina para continuar.
+        </AlertDescription>
+      </Alert>
+    );
+  }
 
   const handleExecutar = () => {
     if (!confirm(dryRun 
@@ -118,7 +146,12 @@ export default function BackfillSaldosHistoricos() {
         <Alert variant="destructive">
           <AlertTriangle className="w-4 h-4" />
           <AlertDescription>
-            Erro: {resultado?.error || "Erro ao executar backfill"}
+            <div className="space-y-2">
+              <p><strong>Erro:</strong> {resultado?.error || "Erro ao executar backfill"}</p>
+              {resultado?.detalhes && (
+                <p className="text-sm mt-2"><strong>Detalhes:</strong> {resultado.detalhes}</p>
+              )}
+            </div>
           </AlertDescription>
         </Alert>
       )}
