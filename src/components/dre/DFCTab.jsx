@@ -493,7 +493,9 @@ export default function DFCTab({ workshopId, mes }) {
   });
 
   const saldoInicialRecord = saldoInicialDB[0] || null;
-  const saldoInicialSalvo  = saldoInicialRecord?.saldo_inicial ?? 0;
+  // Usa `valor` como fonte de verdade (sempre sincronizado pelo modal detalhado E pelo campo simples)
+  // Fallback para `saldo_inicial` para compatibilidade com registros antigos
+  const saldoInicialSalvo = saldoInicialRecord?.valor ?? saldoInicialRecord?.saldo_inicial ?? 0;
 
   // BUG FIX: Sincronizar input local com valor do banco apenas na primeira carga por mês
   // (não sobrescrever enquanto o usuário está digitando)
@@ -878,6 +880,7 @@ export default function DFCTab({ workshopId, mes }) {
         workshopId={workshopId}
         mes={mes}
         saldoSimples={saldoInicialSalvo}
+        saldoRecord={saldoInicialRecord}
       />
       </>)}
     </div>

@@ -8,7 +8,7 @@ import { base44 } from "@/api/base44Client";
 import { Plus, X, Building2, CreditCard, Banknote } from "lucide-react";
 import { toast } from "sonner";
 
-export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, workshopId, saldoSimples = 0 }) {
+export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, workshopId, saldoSimples = 0, saldoRecord = null }) {
   const queryClient = useQueryClient();
   const [detalhes, setDetalhes] = useState({ bancos: [], maquinas_cartao: [], caixa: 0 });
   // Ref para garantir que o carregamento inicial só acontece UMA vez por abertura
@@ -68,7 +68,10 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
         caixa: caixaCarregada,
       });
     } else {
-      setDetalhes({ bancos: [], maquinas_cartao: [], caixa: saldoSimplesRef.current || 0 });
+      // Sem detalhes: usa o valor total como fallback para caixa
+      // Garante que o campo caixa reflita o que está no card (saldoInicialSalvo)
+      const valorFallback = saldoInicial?.valor ?? saldoInicial?.saldo_inicial ?? saldoSimplesRef.current ?? 0;
+      setDetalhes({ bancos: [], maquinas_cartao: [], caixa: valorFallback });
     }
   }, [aberto, saldoInicial]);
 
