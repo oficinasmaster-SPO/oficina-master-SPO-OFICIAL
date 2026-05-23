@@ -199,21 +199,21 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
       saldo: 0,
       data: new Date().toISOString().split('T')[0],
     };
-    const bancosAtuais = localDetalhes.bancos || [];
+    const bancosAtuais = Array.isArray(localDetalhes?.bancos) ? localDetalhes.bancos : [];
     const detalhesAntes = { ...localDetalhes, bancos: [...bancosAtuais] };
     persistir({ detalhes: { ...localDetalhes, bancos: [...bancosAtuais, novo] }, tipo_alteracao: 'edicao', detalhes_anteriores: detalhesAntes });
   };
 
   const atualizarBanco = (id, field, value) => {
     if (!inicializadoRef.current) return;
-    const bancos = localDetalhes.bancos.map(b => b.id === id ? { ...b, [field]: value } : b);
-    const detalhesAntes = { ...localDetalhes, bancos: [...localDetalhes.bancos] };
+    const bancos = (localDetalhes?.bancos || []).map(b => b.id === id ? { ...b, [field]: value } : b);
+    const detalhesAntes = { ...localDetalhes, bancos: [...(localDetalhes?.bancos || [])] };
     persistir({ detalhes: { ...localDetalhes, bancos }, tipo_alteracao: 'edicao', detalhes_anteriores: detalhesAntes });
   };
 
   const removerBanco = (id) => {
-    const bancos = localDetalhes.bancos.filter(b => b.id !== id);
-    const detalhesAntes = { ...localDetalhes, bancos: [...localDetalhes.bancos] };
+    const bancos = (localDetalhes?.bancos || []).filter(b => b.id !== id);
+    const detalhesAntes = { ...localDetalhes, bancos: [...(localDetalhes?.bancos || [])] };
     persistirMutation.mutate(
       { detalhes: { ...localDetalhes, bancos }, tipo_alteracao: 'edicao', detalhes_anteriores: detalhesAntes },
       { onSuccess: () => { setLocalDetalhes(prev => ({ ...prev, bancos })); toast.success("Banco removido."); } }
@@ -231,21 +231,21 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
       saldo: 0,
       data: new Date().toISOString().split('T')[0],
     };
-    const maquinasAtuais = localDetalhes.maquinas_cartao || [];
+    const maquinasAtuais = Array.isArray(localDetalhes?.maquinas_cartao) ? localDetalhes.maquinas_cartao : [];
     const detalhesAntes = { ...localDetalhes, maquinas_cartao: [...maquinasAtuais] };
     persistir({ detalhes: { ...localDetalhes, maquinas_cartao: [...maquinasAtuais, nova] }, tipo_alteracao: 'edicao', detalhes_anteriores: detalhesAntes });
   };
 
   const atualizarMaquina = (id, field, value) => {
     if (!inicializadoRef.current) return;
-    const maquinas_cartao = localDetalhes.maquinas_cartao.map(m => m.id === id ? { ...m, [field]: value } : m);
-    const detalhesAntes = { ...localDetalhes, maquinas_cartao: [...localDetalhes.maquinas_cartao] };
+    const maquinas_cartao = (localDetalhes?.maquinas_cartao || []).map(m => m.id === id ? { ...m, [field]: value } : m);
+    const detalhesAntes = { ...localDetalhes, maquinas_cartao: [...(localDetalhes?.maquinas_cartao || [])] };
     persistir({ detalhes: { ...localDetalhes, maquinas_cartao }, tipo_alteracao: 'edicao', detalhes_anteriores: detalhesAntes });
   };
 
   const removerMaquina = (id) => {
-    const maquinas_cartao = localDetalhes.maquinas_cartao.filter(m => m.id !== id);
-    const detalhesAntes = { ...localDetalhes, maquinas_cartao: [...localDetalhes.maquinas_cartao] };
+    const maquinas_cartao = (localDetalhes?.maquinas_cartao || []).filter(m => m.id !== id);
+    const detalhesAntes = { ...localDetalhes, maquinas_cartao: [...(localDetalhes?.maquinas_cartao || [])] };
     persistirMutation.mutate(
       { detalhes: { ...localDetalhes, maquinas_cartao }, tipo_alteracao: 'edicao', detalhes_anteriores: detalhesAntes },
       { onSuccess: () => { setLocalDetalhes(prev => ({ ...prev, maquinas_cartao })); toast.success("Máquina removida."); } }
@@ -320,7 +320,7 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold flex items-center gap-2 text-blue-800">
                   <Building2 className="w-4 h-4" /> 🏦 Contas Bancárias
-                  <span className="text-xs font-normal text-blue-500">({(localDetalhes.bancos || []).length})</span>
+                  <span className="text-xs font-normal text-blue-500">({(localDetalhes?.bancos || []).length})</span>
                 </h3>
                 <Button size="sm" variant="outline" onClick={adicionarBanco} disabled={isSaving || bloqueadoPorLiquidacao}
                   className="gap-1 text-xs text-blue-700 border-blue-300 h-7">
@@ -328,7 +328,7 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
                 </Button>
               </div>
 
-              {(!localDetalhes.bancos || localDetalhes.bancos.length === 0) ? (
+              {(!localDetalhes?.bancos || localDetalhes.bancos.length === 0) ? (
                 <div className="border-2 border-dashed border-blue-200 rounded-lg p-5 text-center text-gray-400 text-xs">
                   Nenhuma conta bancária. Clique em "+ Adicionar Banco".
                 </div>
@@ -355,7 +355,7 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold flex items-center gap-2 text-green-800">
                   <CreditCard className="w-4 h-4" /> 💳 Máquinas de Cartão
-                  <span className="text-xs font-normal text-green-500">({(localDetalhes.maquinas_cartao || []).length})</span>
+                  <span className="text-xs font-normal text-green-500">({(localDetalhes?.maquinas_cartao || []).length})</span>
                 </h3>
                 <Button size="sm" variant="outline" onClick={adicionarMaquina} disabled={isSaving || bloqueadoPorLiquidacao}
                   className="gap-1 text-xs text-green-700 border-green-300 h-7">
@@ -363,7 +363,7 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
                 </Button>
               </div>
 
-              {(!localDetalhes.maquinas_cartao || localDetalhes.maquinas_cartao.length === 0) ? (
+              {(!localDetalhes?.maquinas_cartao || localDetalhes.maquinas_cartao?.length === 0) ? (
                 <div className="border-2 border-dashed border-green-200 rounded-lg p-5 text-center text-gray-400 text-xs">
                   Nenhuma máquina cadastrada. Clique em "+ Adicionar Máquina".
                 </div>
