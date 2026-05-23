@@ -295,15 +295,13 @@ export default function ContasReceberPagarTab({ workshopId, mes }) {
   const [ano, setAno] = useState(new Date().getFullYear());
   const [mesSelecionado, setMesSelecionado] = useState(mes ? mes.split('-')[1] : new Date().getMonth() + 1);
   
-  const mesAtual = mes ? mes.split('-')[1] : "01";
-  const anoAtual = mes ? parseInt(mes.split('-')[0]) : new Date().getFullYear();
-
-  // Calcular datas do filtro
+  // Calcular datas do filtro usando o estado reativo
+  const mesPadded = String(mesSelecionado).padStart(2, '0');
   const dataInicio = periodo === "mensal" 
-    ? `${ano}-${String(mesSelecionado).padStart(2, '0')}-01`
+    ? `${ano}-${mesPadded}-01`
     : `${ano}-01-01`;
   const dataFim = periodo === "mensal"
-    ? `${ano}-${String(mesSelecionado).padStart(2, '0')}-31`
+    ? `${ano}-${mesPadded}-31`
     : `${ano}-12-31`;
 
   // Buscar Contas a Receber com filtro
@@ -357,8 +355,8 @@ export default function ContasReceberPagarTab({ workshopId, mes }) {
       {/* Filtro de Período */}
       <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
         <FiltroPeriodo
-          mes={mesAtual}
-          ano={anoAtual}
+          mes={String(mesSelecionado).padStart(2, '0')}
+          ano={ano}
           periodo={periodo}
           onMesChange={(novoMes) => setMesSelecionado(novoMes)}
           onAnoChange={(novoAno) => setAno(parseInt(novoAno))}

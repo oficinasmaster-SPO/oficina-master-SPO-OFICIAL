@@ -7,12 +7,8 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
 
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
+    // Automações entity não têm usuário logado — usar asServiceRole diretamente
     const payload = await req.json();
     const { event, data } = payload;
 
@@ -80,12 +76,27 @@ Deno.serve(async (req) => {
       deletedPagar++;
     }
 
+    // ✅ STEP 5: Deletar BudgetMeta vinculada ao mesmo workshop/mes/item (se existir)
+    let deletedBudget = 0;
+    if (data?.descricao && data?.mes) {
+      const budgetMetas = await base44.asServiceRole.entities.BudgetMeta.filter({
+        workshop_id: workshopId,
+        mes: data.mes,
+        item: data.descricao
+      });
+      for (const bm of budgetMetas) {
+        await base44.asServiceRole.entities.BudgetMeta.delete(bm.id);
+        deletedBudget++;
+      }
+    }
+
     return Response.json({
       status: 'success',
-      message: `Sincronismo DRE Delete: ${deletedReceber} Contas a Receber e ${deletedPagar} Contas a Pagar foram deletadas`,
+      message: `Sincronismo DRE Delete: ${deletedReceber} Contas a Receber, ${deletedPagar} Contas a Pagar e ${deletedBudget} BudgetMetas foram deletadas`,
       dreLancamentoId,
       deletedReceber,
       deletedPagar,
+      deletedBudget,
       totalLiquidacoesDeletadas: deletedReceber + deletedPagar
     });
 
