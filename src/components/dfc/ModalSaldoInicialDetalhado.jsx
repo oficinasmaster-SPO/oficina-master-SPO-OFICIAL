@@ -93,7 +93,15 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
       setLastSaved(new Date());
       // Captura o ID do registro recém criado para próximos updates
       if (resultado?.id) registroIdRef.current = resultado.id;
-      // Invalida apenas o card pai — NÃO invalida saldoInicial para não resetar o estado local
+      // Atualiza o cache da query sem disparar refetch (evita resetar estado local)
+      if (resultado) {
+        queryClient.setQueryData(["saldoInicial", workshopId, mes], resultado);
+        queryClient.setQueryData(["saldo-inicial-fontes", workshopId, mes], {
+          bancos: resultado.detalhes?.bancos || [],
+          maquinas_cartao: resultado.detalhes?.maquinas_cartao || [],
+          caixa: resultado.detalhes?.caixa || 0,
+        });
+      }
       queryClient.invalidateQueries({ queryKey: ["dfc-saldo", workshopId, mes] });
     },
     onError: (err) => toast.error("Erro ao salvar: " + err.message),
