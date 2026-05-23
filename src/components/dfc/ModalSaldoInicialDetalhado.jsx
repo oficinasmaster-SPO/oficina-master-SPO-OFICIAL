@@ -328,6 +328,7 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
                 </Button>
               </div>
 
+              {console.log('[DFC-Modal] 🏦 Render Bancos | length=', localDetalhes?.bancos?.length, '| bancos=', localDetalhes?.bancos)}
               {(!localDetalhes?.bancos || localDetalhes.bancos.length === 0) ? (
                 <div className="border-2 border-dashed border-blue-200 rounded-lg p-5 text-center text-gray-400 text-xs">
                   Nenhuma conta bancária. Clique em "+ Adicionar Banco".
@@ -363,6 +364,7 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
                 </Button>
               </div>
 
+              {console.log('[DFC-Modal] 💳 Render Máquinas | length=', localDetalhes?.maquinas_cartao?.length, '| maquinas=', localDetalhes?.maquinas_cartao)}
               {(!localDetalhes?.maquinas_cartao || localDetalhes.maquinas_cartao?.length === 0) ? (
                 <div className="border-2 border-dashed border-green-200 rounded-lg p-5 text-center text-gray-400 text-xs">
                   Nenhuma máquina cadastrada. Clique em "+ Adicionar Máquina".
