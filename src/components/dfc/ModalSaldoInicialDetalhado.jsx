@@ -30,7 +30,11 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
 
   useEffect(() => {
     if (saldoInicial?.detalhes) {
-      setDetalhes(saldoInicial.detalhes);
+      setDetalhes({
+        bancos: saldoInicial.detalhes.bancos || [],
+        maquinas_cartao: saldoInicial.detalhes.maquinas_cartao || [],
+        caixa: saldoInicial.detalhes.caixa || 0,
+      });
     } else {
       setDetalhes({ bancos: [], maquinas_cartao: [], caixa: 0 });
     }
