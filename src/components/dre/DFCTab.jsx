@@ -546,7 +546,11 @@ export default function DFCTab({ workshopId, mes }) {
   const salvarSaldoMutation = useMutation({
     mutationFn: (valor) => {
       if (saldoInicialRecord) {
-        return base44.entities.DFCLancamento.update(saldoInicialRecord.id, { saldo_inicial: valor });
+        // Atualiza saldo_inicial E valor para manter consistência com o modal detalhado
+        return base44.entities.DFCLancamento.update(saldoInicialRecord.id, { 
+          saldo_inicial: valor,
+          valor: valor,
+        });
       }
       return base44.entities.DFCLancamento.create({
         workshop_id: workshopId,
@@ -554,13 +558,14 @@ export default function DFCTab({ workshopId, mes }) {
         grupo: "saldo_inicial",
         tipo: "entrada",
         descricao: "Saldo inicial do mês",
-        valor: 0,
+        valor: valor, // ← corrigido: era 0
         origem: "manual",
         saldo_inicial: valor,
       });
     },
-    onSuccess: (_, valor) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["dfc-saldo", workshopId, mes] });
+      queryClient.invalidateQueries({ queryKey: ["saldoInicial", workshopId, mes] });
       toast.success("Saldo inicial salvo!");
     },
   });
@@ -863,10 +868,11 @@ export default function DFCTab({ workshopId, mes }) {
       {/* Modal saldo inicial detalhado */}
       <ModalSaldoInicialDetalhado
         aberto={modalSaldoDetalhadoAberto}
-        onFechar={() => {
+        onFechar={async () => {
           setModalSaldoDetalhadoAberto(false);
-          // Ao fechar o modal, recarregar o saldo para refletir o total dos detalhes
-          queryClient.invalidateQueries({ queryKey: ["dfc-saldo", workshopId, mes] });
+          // Aguarda a invalidação e força re-fetch para sincronizar input + Waterfall
+          await queryClient.invalidateQueries({ queryKey: ["dfc-saldo", workshopId, mes] });
+          await queryClient.refetchQueries({ queryKey: ["dfc-saldo", workshopId, mes] });
           saldoCarregado.current = false;
         }}
         workshopId={workshopId}
