@@ -280,6 +280,11 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base">
             💰 Saldo Inicial Detalhado — {mes}
+            {bloqueadoPorLiquidacao && (
+              <span className="flex items-center gap-1 text-xs text-red-600 font-semibold ml-2 bg-red-50 px-2 py-1 rounded border border-red-200">
+                🔒 Bloqueado
+              </span>
+            )}
             {isSaving
               ? <span className="flex items-center gap-1 text-xs text-amber-600 font-normal ml-2"><Loader2 className="w-3 h-3 animate-spin" /> Salvando...</span>
               : lastSaved
@@ -332,7 +337,7 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
                       banco={banco}
                       onUpdate={atualizarBanco}
                       onRemove={removerBanco}
-                      disabled={isSaving}
+                      disabled={isSaving || bloqueadoPorLiquidacao}
                     />
                   ))}
                 </div>
@@ -367,7 +372,7 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
                       maquina={maquina}
                       onUpdate={atualizarMaquina}
                       onRemove={removerMaquina}
-                      disabled={isSaving}
+                      disabled={isSaving || bloqueadoPorLiquidacao}
                     />
                   ))}
                 </div>
@@ -391,6 +396,7 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
                   value={localDetalhes.caixa}
                   onChange={(e) => setCaixa(e.target.value)}
                   onBlur={salvarCaixa}
+                  disabled={bloqueadoPorLiquidacao}
                   className="w-44 bg-white font-semibold text-sm"
                 />
                 <span className="text-xs text-amber-600">salva ao sair do campo</span>
@@ -429,7 +435,7 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
             {/* ══ AÇÕES ══ */}
             <div className="flex justify-between items-center pt-2 border-t">
               <Button variant="outline" className="text-red-600 border-red-200 hover:bg-red-50 text-xs"
-                disabled={isSaving} onClick={zerarTudo}>
+                disabled={isSaving || bloqueadoPorLiquidacao} onClick={zerarTudo}>
                 🗑️ Zerar tudo
               </Button>
               <Button onClick={handleFechar} className="bg-black hover:bg-gray-800 text-sm">
