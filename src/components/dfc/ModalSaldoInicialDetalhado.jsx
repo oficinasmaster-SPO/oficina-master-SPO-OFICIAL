@@ -24,7 +24,7 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
   const inicializadoRef = useRef(false);
 
   // ── Busca o registro persistido — apenas na abertura ──────────
-  const { data: saldoInicial, isLoading } = useQuery({
+  const { data: saldoInicial, isLoading, refetch } = useQuery({
     queryKey: ["saldoInicial", workshopId, mes],
     queryFn: async () => {
       if (!workshopId || !mes) return null;
@@ -35,7 +35,9 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
       return records?.[0] || null;
     },
     enabled: !!workshopId && !!mes && aberto,
-    staleTime: 30 * 1000, // 30s — evita refetch durante a sessão do modal e a janela de race condition
+    staleTime: Infinity, // Nunca faz refetch automático enquanto o modal estiver aberto
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 
   // ── Popular estado local com dados do banco (uma vez por abertura) ──
@@ -267,6 +269,7 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
   // ── Fechar: invalida queries e notifica pai ────────────────────
   const handleFechar = async () => {
     await queryClient.invalidateQueries({ queryKey: ["dfc-saldo", workshopId, mes] });
+    await queryClient.invalidateQueries({ queryKey: ["saldoInicial", workshopId, mes] });
     await queryClient.refetchQueries({ queryKey: ["dfc-saldo", workshopId, mes], type: "active" });
     onFechar();
   };
