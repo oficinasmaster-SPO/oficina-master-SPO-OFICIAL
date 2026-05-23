@@ -51,15 +51,21 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
     
     carregadoRef.current = true; // trava IMEDIATAMENTE antes de qualquer setState
 
+    const det = saldoInicial?.detalhes || {};
+    // Compatibilidade: suporta chaves antigas (singular) e novas (plural)
+    const bancosCarregados = det.bancos || (det.banco ? [det.banco] : []);
+    const maquinasCarregadas = det.maquinas_cartao || (det.maquina_cartao ? [det.maquina_cartao] : []);
+    const caixaCarregada = det.caixa || 0;
+
     if (saldoInicial?.detalhes && (
-      (saldoInicial.detalhes.bancos?.length > 0) ||
-      (saldoInicial.detalhes.maquinas_cartao?.length > 0) ||
-      (saldoInicial.detalhes.caixa > 0)
+      bancosCarregados.length > 0 ||
+      maquinasCarregadas.length > 0 ||
+      caixaCarregada > 0
     )) {
       setDetalhes({
-        bancos: [...(saldoInicial.detalhes.bancos || [])],
-        maquinas_cartao: [...(saldoInicial.detalhes.maquinas_cartao || [])],
-        caixa: saldoInicial.detalhes.caixa || 0,
+        bancos: [...bancosCarregados],
+        maquinas_cartao: [...maquinasCarregadas],
+        caixa: caixaCarregada,
       });
     } else {
       setDetalhes({ bancos: [], maquinas_cartao: [], caixa: saldoSimplesRef.current || 0 });
