@@ -129,6 +129,9 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
   const bloqueadoPorLiquidacao = hasLiquidacoes;
 
   const [lastSaved, setLastSaved] = useState(null);
+  const [modalFormAberto, setModalFormAberto] = useState(false);
+  const [tipoForm, setTipoForm] = useState(null); // 'banco' ou 'maquina'
+  const [formData, setFormData] = useState({ nome: '', saldo: 0, tipo_conta: 'corrente', gateway: '' });
 
   const persistirMutation = useMutation({
     mutationFn: async ({ detalhes, tipo_alteracao = 'edicao', detalhes_anteriores = null }) => {
@@ -231,17 +234,29 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
 
   // ── Banco: add / update / remove ──────────────────────────────
   const adicionarBanco = () => {
+    setTipoForm('banco');
+    setFormData({ nome: '', saldo: 0, tipo_conta: 'corrente', gateway: '' });
+    setModalFormAberto(true);
+  };
+
+  const confirmarAdicionarBanco = () => {
+    if (!formData.nome.trim()) {
+      toast.error("Digite o nome do banco");
+      return;
+    }
     if (!inicializadoRef.current) return;
     const novo = {
       id: Date.now().toString(),
-      nome: "Novo Banco",
-      tipo_conta: "corrente",
-      saldo: 0,
+      nome: formData.nome,
+      tipo_conta: formData.tipo_conta,
+      saldo: Number(formData.saldo) || 0,
       data: new Date().toISOString().split('T')[0],
     };
     const bancosAtuais = Array.isArray(localDetalhes?.bancos) ? localDetalhes.bancos : [];
     const detalhesAntes = { ...localDetalhes, bancos: [...bancosAtuais] };
     persistir({ detalhes: { ...localDetalhes, bancos: [...bancosAtuais, novo] }, tipo_alteracao: 'edicao', detalhes_anteriores: detalhesAntes });
+    setModalFormAberto(false);
+    toast.success("Banco adicionado!");
   };
 
   const atualizarBanco = (id, field, value) => {
@@ -263,17 +278,29 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
 
   // ── Máquina: add / update / remove ────────────────────────────
   const adicionarMaquina = () => {
+    setTipoForm('maquina');
+    setFormData({ nome: '', saldo: 0, tipo_conta: '', gateway: '' });
+    setModalFormAberto(true);
+  };
+
+  const confirmarAdicionarMaquina = () => {
+    if (!formData.nome.trim()) {
+      toast.error("Digite o nome da máquina");
+      return;
+    }
     if (!inicializadoRef.current) return;
     const nova = {
       id: Date.now().toString(),
-      nome: "Nova Máquina",
-      gateway_pagamento: "",
-      saldo: 0,
+      nome: formData.nome,
+      gateway_pagamento: formData.gateway,
+      saldo: Number(formData.saldo) || 0,
       data: new Date().toISOString().split('T')[0],
     };
     const maquinasAtuais = Array.isArray(localDetalhes?.maquinas_cartao) ? localDetalhes.maquinas_cartao : [];
     const detalhesAntes = { ...localDetalhes, maquinas_cartao: [...maquinasAtuais] };
     persistir({ detalhes: { ...localDetalhes, maquinas_cartao: [...maquinasAtuais, nova] }, tipo_alteracao: 'edicao', detalhes_anteriores: detalhesAntes });
+    setModalFormAberto(false);
+    toast.success("Máquina adicionada!");
   };
 
   const atualizarMaquina = (id, field, value) => {
@@ -319,7 +346,90 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
   };
 
   return (
-    <Dialog open={aberto} onOpenChange={handleFechar}>
+    <>
+      {/* Modal de Registro - Banco/Máquina */}
+      <Dialog open={modalFormAberto} onOpenChange={setModalFormAberto}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-sm">
+              {tipoForm === 'banco' ? '🏦 Adicionar Banco' : '💳 Adicionar Máquina de Cartão'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label className="text-xs">{tipoForm === 'banco' ? 'Nome do Banco' : 'Nome da Máquina'}</Label>
+              <Input
+                placeholder={tipoForm === 'banco' ? 'ex: Banco do Brasil' : 'ex: Stone Loja 1'}
+                value={formData.nome}
+                onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                className="mt-1 text-sm"
+                autoFocus
+              />
+            </div>
+            
+            {tipoForm === 'banco' ? (
+              <div>
+                <Label className="text-xs">Tipo de Conta</Label>
+                <select
+                  value={formData.tipo_conta}
+                  onChange={(e) => setFormData({ ...formData, tipo_conta: e.target.value })}
+                  className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white"
+                >
+                  <option value="corrente">Corrente</option>
+                  <option value="poupanca">Poupança</option>
+                  <option value="aplicacao">Aplicação</option>
+                </select>
+              </div>
+            ) : (
+              <div>
+                <Label className="text-xs">Gateway de Pagamento</Label>
+                <select
+                  value={formData.gateway}
+                  onChange={(e) => setFormData({ ...formData, gateway: e.target.value })}
+                  className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white"
+                >
+                  <option value="">Selecione...</option>
+                  <option value="rede">Rede</option>
+                  <option value="stone">Stone</option>
+                  <option value="sumup">SumUp</option>
+                  <option value="pagseguro">PagSeguro</option>
+                  <option value="mercadopago">Mercado Pago</option>
+                  <option value="cielo">Cielo</option>
+                  <option value="outro">Outro</option>
+                </select>
+              </div>
+            )}
+            
+            <div>
+              <Label className="text-xs">Saldo Inicial (R$)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                value={formData.saldo}
+                onChange={(e) => setFormData({ ...formData, saldo: e.target.value })}
+                className="mt-1 text-sm font-semibold"
+              />
+            </div>
+          </div>
+
+          <div className="flex gap-2 justify-end pt-4 border-t">
+            <Button variant="outline" size="sm" onClick={() => setModalFormAberto(false)}>
+              Cancelar
+            </Button>
+            <Button 
+              size="sm"
+              onClick={tipoForm === 'banco' ? confirmarAdicionarBanco : confirmarAdicionarMaquina}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              Adicionar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Principal */}
+      <Dialog open={aberto} onOpenChange={handleFechar}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center justify-between">
@@ -505,6 +615,7 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
         )}
       </DialogContent>
     </Dialog>
+    </>
   );
 }
 
