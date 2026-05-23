@@ -10,6 +10,13 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
  * após mudanças na lógica de cálculo de saldos.
  */
 
+// Helper: obter último dia do mês
+function getUltimoDiaMes(mesAno) {
+  const [ano, mes] = mesAno.split('-').map(Number);
+  const ultimoDia = new Date(ano, mes, 0).getDate();
+  return ultimoDia;
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -56,30 +63,49 @@ Deno.serve(async (req) => {
     // Processar mês a mês em ordem cronológica
     dfcLancamentos.sort((a, b) => a.mes.localeCompare(b.mes));
 
-    let saldo_final_anterior = { bancos: 0, maquinas: 0, caixa: 0, total: 0 };
+    // BUG FIX #5: Buscar saldo inicial do primeiro mês como ponto de partida
+    const primeiroDfc = dfcLancamentos[0];
+    let saldo_final_anterior = {
+      bancos: primeiroDfc?.detalhes?.bancos?.reduce((sum, b) => sum + (b.saldo || 0), 0) || 0,
+      maquinas: primeiroDfc?.detalhes?.maquinas_cartao?.reduce((sum, m) => sum + (m.saldo || 0), 0) || 0,
+      caixa: primeiroDfc?.detalhes?.caixa || 0,
+      total: 0
+    };
+    saldo_final_anterior.total = saldo_final_anterior.bancos + saldo_final_anterior.maquinas + saldo_final_anterior.caixa;
 
     for (const dfc of dfcLancamentos) {
       try {
         const mes = dfc.mes;
-        console.log(`[BACKFILL SALDOS] Processando mês: ${mes}`);
+        const ultimoDia = getUltimoDiaMes(mes);
+        console.log(`[BACKFILL SALDOS] === Mês: ${mes} (até dia ${ultimoDia}) ===`);
+        console.log(`[BACKFILL SALDOS] Saldo final anterior: R$ ${saldo_final_anterior.total.toFixed(2)}`);
 
-        // 1. Buscar liquidações do mês
+        // 1. Buscar liquidações do mês (BUG FIX #1: último dia correto)
+        const dataFimMes = `${mes}-${String(ultimoDia).padStart(2, '0')}T23:59:59`;
+        console.log(`[BACKFILL SALDOS] Buscando liquidações até: ${dataFimMes}`);
+        
         const liquidacoesRecebimento = await base44.entities.LiquidaçãoFinanceira.filter({
           workshop_id,
           tipo: 'recebimento',
-          data_liquidacao: { $gte: `${mes}-01`, $lt: `${mes}-31T23:59:59` }
+          data_liquidacao: { $gte: `${mes}-01`, $lte: dataFimMes }
         });
 
         const liquidacoesPagamento = await base44.entities.LiquidaçãoFinanceira.filter({
           workshop_id,
           tipo: 'pagamento',
-          data_liquidacao: { $gte: `${mes}-01`, $lt: `${mes}-31T23:59:59` }
+          data_liquidacao: { $gte: `${mes}-01`, $lte: dataFimMes }
         });
+        
+        console.log(`[BACKFILL SALDOS] Liquidações: ${liquidacoesRecebimento.length} recebimentos, ${liquidacoesPagamento.length} pagamentos`);
 
-        // 2. Calcular totais por fonte
+        // 2. Calcular totais por fonte (BUG FIX #4: filtro específico de bancos)
         const totalRecebimentos = {
           banco: liquidacoesRecebimento
-            .filter(l => l.banco_destino && l.banco_destino.toLowerCase().includes('banco'))
+            .filter(l => {
+              // FIX: Verificar se é realmente um banco (não "banco de dados")
+              const banco = l.banco_destino || '';
+              return banco.toLowerCase().match(/\b(banco|banco do brasil|caixa|bradesco|santander|itau|nubank)\b/);
+            })
             .reduce((sum, l) => sum + (l.valor_liquido || l.valor_liquidacao), 0),
           maquina: liquidacoesRecebimento
             .filter(l => l.forma_pagamento && ['cartao_credito', 'cartao_debito'].includes(l.forma_pagamento))
@@ -91,7 +117,11 @@ Deno.serve(async (req) => {
 
         const totalPagamentos = {
           banco: liquidacoesPagamento
-            .filter(l => l.banco_origem && l.banco_origem.toLowerCase().includes('banco'))
+            .filter(l => {
+              // FIX: Verificar se é realmente um banco
+              const banco = l.banco_origem || '';
+              return banco.toLowerCase().match(/\b(banco|banco do brasil|caixa|bradesco|santander|itau|nubank)\b/);
+            })
             .reduce((sum, l) => sum + (l.valor_liquidacao), 0),
           maquina: 0, // Máquina de cartão não é fonte de pagamento
           caixa: liquidacoesPagamento
@@ -99,31 +129,37 @@ Deno.serve(async (req) => {
             .reduce((sum, l) => sum + (l.valor_liquidacao), 0)
         };
 
-        // 3. Calcular saldo final do mês anterior (ou usar inicial se for primeiro mês)
-        const saldoInicialEsperado = {
+        // 3. Calcular saldo inicial atual do mês
+        const saldoInicialAtual = {
           bancos: dfc.detalhes?.bancos?.reduce((sum, b) => sum + (b.saldo || 0), 0) || 0,
           maquinas: dfc.detalhes?.maquinas_cartao?.reduce((sum, m) => sum + (m.saldo || 0), 0) || 0,
           caixa: dfc.detalhes?.caixa || 0
         };
-
-        // 4. Calcular saldo final projetado
-        const saldoFinalProjetado = {
-          bancos: saldo_final_anterior.bancos + totalRecebimentos.banco - totalPagamentos.banco,
-          maquinas: saldo_final_anterior.maquinas + totalRecebimentos.maquina,
-          caixa: saldo_final_anterior.caixa + totalRecebimentos.caixa - totalPagamentos.caixa
-        };
-
-        saldoFinalProjetado.total = saldoFinalProjetado.bancos + saldoFinalProjetado.maquinas + saldoFinalProjetado.caixa;
-
-        // 5. Comparar com saldo atual
-        const saldoAtualTotal = (saldoInicialEsperado.bancos + saldoInicialEsperado.maquinas + saldoInicialEsperado.caixa);
+        const saldoInicialAtualTotal = saldoInicialAtual.bancos + saldoInicialAtual.maquinas + saldoInicialAtual.caixa;
         
-        const divergencia = Math.abs(saldoFinalProjetado.total - saldoAtualTotal);
+        console.log(`[BACKFILL SALDOS] Saldo inicial atual: R$ ${saldoInicialAtualTotal.toFixed(2)} (B: ${saldoInicialAtual.bancos.toFixed(2)}, M: ${saldoInicialAtual.maquinas.toFixed(2)}, C: ${saldoInicialAtual.caixa.toFixed(2)})`);
+        console.log(`[BACKFILL SALDOS] Recebimentos: R$ ${(totalRecebimentos.banco + totalRecebimentos.maquina + totalRecebimentos.caixa).toFixed(2)}`);
+        console.log(`[BACKFILL SALDOS] Pagamentos: R$ ${(totalPagamentos.banco + totalPagamentos.caixa).toFixed(2)}`);
+
+        // BUG FIX #2: Comparar saldo inicial do mês com saldo final do mês anterior
+        // Regra: Saldo Inicial (mês M) deve ser igual a Saldo Final (mês M-1)
+        const divergencia = Math.abs(saldo_final_anterior.total - saldoInicialAtualTotal);
         const precisaAlterar = divergencia > 0.01; // Tolerância de 1 centavo
+        
+        console.log(`[BACKFILL SALDOS] Divergência: R$ ${divergencia.toFixed(2)} - ${precisaAlterar ? 'PRECISA ALTERAR' : 'OK'}`);
+
+        // 4. Calcular saldo final projetado do mês atual
+        const saldoFinalProjetado = {
+          bancos: saldoInicialAtual.bancos + totalRecebimentos.banco - totalPagamentos.banco,
+          maquinas: saldoInicialAtual.maquinas + totalRecebimentos.maquina,
+          caixa: saldoInicialAtual.caixa + totalRecebimentos.caixa - totalPagamentos.caixa
+        };
+        saldoFinalProjetado.total = saldoFinalProjetado.bancos + saldoFinalProjetado.maquinas + saldoFinalProjetado.caixa;
 
         const registro = {
           mes,
-          saldo_inicial_atual: saldoAtualTotal,
+          saldo_inicial_anterior: saldo_final_anterior.total,
+          saldo_inicial_atual: saldoInicialAtualTotal,
           saldo_final_calculado: saldoFinalProjetado.total,
           divergencia,
           precisa_alterar: precisaAlterar,
@@ -133,7 +169,7 @@ Deno.serve(async (req) => {
 
         // 6. Se houver divergência e não for dry run, atualizar
         if (precisaAlterar && !dry_run) {
-          // Atualizar saldo inicial do mês com o saldo final do mês anterior
+          // BUG FIX #3: Prevenir divisão por zero
           const novosDetalhes = {
             bancos: dfc.detalhes?.bancos?.map(b => ({ ...b, saldo: 0 })) || [],
             maquinas_cartao: dfc.detalhes?.maquinas_cartao?.map(m => ({ ...m, saldo: 0 })) || [],
@@ -142,21 +178,23 @@ Deno.serve(async (req) => {
 
           // Distribuir saldo final anterior proporcionalmente
           if (saldo_final_anterior.total > 0) {
-            const proporcaoBancos = saldo_final_anterior.bancos / saldo_final_anterior.total;
-            const proporcaoMaquinas = saldo_final_anterior.maquinas / saldo_final_anterior.total;
-            const proporcaoCaixa = saldo_final_anterior.caixa / saldo_final_anterior.total;
+            const qtdBancos = novosDetalhes.bancos.length || 1; // FIX: Evitar divisão por zero
+            const qtdMaquinas = novosDetalhes.maquinas_cartao.length || 1; // FIX: Evitar divisão por zero
+            
+            // Se não houver contas cadastradas, criar rateio igualitário
+            if (novosDetalhes.bancos.length === 0 && novosDetalhes.maquinas_cartao.length === 0) {
+              // Sem contas: colocar tudo em caixa
+              novosDetalhes.caixa = Math.round(saldo_final_anterior.total * 100) / 100;
+            } else {
+              // Rateio proporcional
+              const saldoPorBanco = Math.round((saldo_final_anterior.bancos / qtdBancos) * 100) / 100;
+              const saldoPorMaquina = Math.round((saldo_final_anterior.maquinas / qtdMaquinas) * 100) / 100;
+              const saldoCaixa = Math.round((saldo_final_anterior.caixa) * 100) / 100;
 
-            novosDetalhes.bancos = novosDetalhes.bancos.map(b => ({
-              ...b,
-              saldo: Math.round(saldo_final_anterior.total * proporcaoBancos / novosDetalhes.bancos.length * 100) / 100
-            }));
-            
-            novosDetalhes.maquinas_cartao = novosDetalhes.maquinas_cartao.map(m => ({
-              ...m,
-              saldo: Math.round(saldo_final_anterior.total * proporcaoMaquinas / novosDetalhes.maquinas_cartao.length * 100) / 100
-            }));
-            
-            novosDetalhes.caixa = Math.round(saldo_final_anterior.total * proporcaoCaixa * 100) / 100;
+              novosDetalhes.bancos = novosDetalhes.bancos.map(b => ({ ...b, saldo: saldoPorBanco }));
+              novosDetalhes.maquinas_cartao = novosDetalhes.maquinas_cartao.map(m => ({ ...m, saldo: saldoPorMaquina }));
+              novosDetalhes.caixa = saldoCaixa;
+            }
           }
 
           await base44.entities.DFCLancamento.update(dfc.id, {
@@ -172,8 +210,15 @@ Deno.serve(async (req) => {
         resultados.detalhes.push(registro);
         resultados.processados++;
 
-        // Atualizar saldo final para próximo mês
-        saldo_final_anterior = saldoFinalProjetado;
+        // Atualizar saldo final para próximo mês (se não foi alterado, usar saldo inicial atual + movimentação)
+        if (!registro.foi_alterado) {
+          saldo_final_anterior = {
+            bancos: saldoInicialAtual.bancos + totalRecebimentos.banco - totalPagamentos.banco,
+            maquinas: saldoInicialAtual.maquinas + totalRecebimentos.maquina,
+            caixa: saldoInicialAtual.caixa + totalRecebimentos.caixa - totalPagamentos.caixa
+          };
+          saldo_final_anterior.total = saldo_final_anterior.bancos + saldo_final_anterior.maquinas + saldo_final_anterior.caixa;
+        }
 
       } catch (error) {
         console.error(`[BACKFILL SALDOS] Erro ao processar mês ${dfc.mes}:`, error);
