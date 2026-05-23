@@ -1,19 +1,29 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { Plus, X, Building2, CreditCard, Banknote, Save, Loader2 } from "lucide-react";
+import { Plus, X, Building2, CreditCard, Banknote, Loader2, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 
 const fmt = (v) => Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// FIX: O estado local é a FONTE DE VERDADE enquanto o modal está aberto.
+// O banco de dados é populado na abertura e persistido a cada operação.
+// Isso elimina o race condition entre onChange (cache otimista) e onBlur (closure stale).
+// ─────────────────────────────────────────────────────────────────────────────
+
 export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, workshopId }) {
   const queryClient = useQueryClient();
 
-  // ── Busca o registro existente — sempre fresh ──────────────────
+  // ── Estado local é a fonte de verdade no modal ─────────────────
+  const [localDetalhes, setLocalDetalhes] = useState({ bancos: [], maquinas_cartao: [], caixa: 0 });
+  const inicializadoRef = useRef(false);
+
+  // ── Busca o registro persistido — apenas na abertura ──────────
   const { data: saldoInicial, isLoading } = useQuery({
     queryKey: ["saldoInicial", workshopId, mes],
     queryFn: async () => {
@@ -28,23 +38,35 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
     staleTime: 0,
   });
 
-  // ── Estado local apenas para edição em andamento ───────────────
-  const detalhes = saldoInicial?.detalhes || { bancos: [], maquinas_cartao: [], caixa: 0 };
-  const bancos = detalhes.bancos || [];
-  const maquinas = detalhes.maquinas_cartao || [];
-  const caixa = detalhes.caixa ?? 0;
+  // ── Popular estado local com dados do banco (uma vez por abertura) ──
+  useEffect(() => {
+    if (!aberto) {
+      inicializadoRef.current = false;
+      setLocalDetalhes({ bancos: [], maquinas_cartao: [], caixa: 0 });
+      return;
+    }
+    if (isLoading || inicializadoRef.current) return;
+    inicializadoRef.current = true;
 
-  // Estado local do campo caixa (edição inline sem salvar imediatamente)
-  const [caixaLocal, setCaixaLocal] = useState(caixa);
-  useEffect(() => { setCaixaLocal(caixa); }, [caixa]);
+    const det = saldoInicial?.detalhes || {};
+    const bancos = Array.isArray(det.bancos) ? det.bancos
+      : det.banco != null ? [{ id: "legado_banco", nome: "Banco", tipo_conta: "corrente", saldo: det.banco, data: "" }]
+      : [];
+    const maquinas = Array.isArray(det.maquinas_cartao) ? det.maquinas_cartao
+      : det.maquina_cartao != null ? [{ id: "legado_maq", nome: "Máquina", gateway_pagamento: "", saldo: det.maquina_cartao, data: "" }]
+      : [];
+    setLocalDetalhes({ bancos, maquinas_cartao: maquinas, caixa: det.caixa ?? 0 });
+  }, [aberto, isLoading, saldoInicial]);
 
-  // ── Mutation central: persiste detalhes completos ──────────────
+  // ── Mutation central ──────────────────────────────────────────
+  const [lastSaved, setLastSaved] = useState(null);
+
   const persistirMutation = useMutation({
-    mutationFn: async (novosDetalhes) => {
-      const total = calcularTotal(novosDetalhes);
+    mutationFn: async (detalhes) => {
+      const total = calcTotal(detalhes);
       if (saldoInicial?.id) {
         return base44.entities.DFCLancamento.update(saldoInicial.id, {
-          detalhes: novosDetalhes,
+          detalhes,
           valor: total,
           saldo_inicial: total,
         });
@@ -57,406 +79,377 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
         descricao: "Saldo Inicial - Detalhado",
         valor: total,
         saldo_inicial: total,
-        detalhes: novosDetalhes,
+        detalhes,
         origem: "manual",
       });
     },
-    onSuccess: () => {
+    onSuccess: (_, detalhes) => {
+      setLastSaved(new Date());
       queryClient.invalidateQueries({ queryKey: ["saldoInicial", workshopId, mes] });
       queryClient.invalidateQueries({ queryKey: ["dfc-saldo", workshopId, mes] });
+      // Re-inicializa após save para manter em sync com o novo id (criação)
+      inicializadoRef.current = false;
     },
     onError: (err) => toast.error("Erro ao salvar: " + err.message),
   });
 
-  const calcularTotal = (d) => {
-    const totalBancos = (d.bancos || []).reduce((s, b) => s + (Number(b.saldo) || 0), 0);
-    const totalMaquinas = (d.maquinas_cartao || []).reduce((s, m) => s + (Number(m.saldo) || 0), 0);
-    return totalBancos + totalMaquinas + (Number(d.caixa) || 0);
+  const calcTotal = (d) => {
+    const tb = (d.bancos || []).reduce((s, b) => s + (Number(b.saldo) || 0), 0);
+    const tm = (d.maquinas_cartao || []).reduce((s, m) => s + (Number(m.saldo) || 0), 0);
+    return tb + tm + (Number(d.caixa) || 0);
   };
 
-  const total = calcularTotal({ bancos, maquinas_cartao: maquinas, caixa: caixaLocal });
+  const persistir = useCallback((novoDetalhes) => {
+    setLocalDetalhes(novoDetalhes);
+    persistirMutation.mutate(novoDetalhes);
+  }, [persistirMutation]);
 
-  // ── Adicionar banco — persiste imediatamente ───────────────────
+  const total = calcTotal(localDetalhes);
+  const isSaving = persistirMutation.isPending;
+
+  // ── Banco: add / update / remove ──────────────────────────────
   const adicionarBanco = () => {
-    const novoBanco = {
+    const novo = {
       id: Date.now().toString(),
       nome: "Novo Banco",
       tipo_conta: "corrente",
       saldo: 0,
       data: new Date().toISOString().split('T')[0],
     };
-    const novosDetalhes = {
-      bancos: [...bancos, novoBanco],
-      maquinas_cartao: maquinas,
-      caixa: caixaLocal,
-    };
-    persistirMutation.mutate(novosDetalhes);
+    persistir({ ...localDetalhes, bancos: [...localDetalhes.bancos, novo] });
   };
 
-  // ── Adicionar máquina — persiste imediatamente ─────────────────
+  const atualizarBanco = (id, field, value) => {
+    const bancos = localDetalhes.bancos.map(b => b.id === id ? { ...b, [field]: value } : b);
+    persistir({ ...localDetalhes, bancos });
+  };
+
+  const removerBanco = (id) => {
+    const bancos = localDetalhes.bancos.filter(b => b.id !== id);
+    persistirMutation.mutate(
+      { ...localDetalhes, bancos },
+      { onSuccess: () => { setLocalDetalhes(prev => ({ ...prev, bancos })); toast.success("Banco removido."); } }
+    );
+    setLocalDetalhes(prev => ({ ...prev, bancos }));
+  };
+
+  // ── Máquina: add / update / remove ────────────────────────────
   const adicionarMaquina = () => {
-    const novaMaquina = {
+    const nova = {
       id: Date.now().toString(),
       nome: "Nova Máquina",
       gateway_pagamento: "",
       saldo: 0,
       data: new Date().toISOString().split('T')[0],
     };
-    const novosDetalhes = {
-      bancos,
-      maquinas_cartao: [...maquinas, novaMaquina],
-      caixa: caixaLocal,
-    };
-    persistirMutation.mutate(novosDetalhes);
+    persistir({ ...localDetalhes, maquinas_cartao: [...localDetalhes.maquinas_cartao, nova] });
   };
 
-  // ── Atualizar campo de banco ───────────────────────────────────
-  const atualizarBanco = (id, field, value) => {
-    const novosDetalhes = {
-      bancos: bancos.map(b => b.id === id ? { ...b, [field]: value } : b),
-      maquinas_cartao: maquinas,
-      caixa: caixaLocal,
-    };
-    persistirMutation.mutate(novosDetalhes);
-  };
-
-  // ── Atualizar campo de máquina ─────────────────────────────────
   const atualizarMaquina = (id, field, value) => {
-    const novosDetalhes = {
-      bancos,
-      maquinas_cartao: maquinas.map(m => m.id === id ? { ...m, [field]: value } : m),
-      caixa: caixaLocal,
-    };
-    persistirMutation.mutate(novosDetalhes);
+    const maquinas_cartao = localDetalhes.maquinas_cartao.map(m => m.id === id ? { ...m, [field]: value } : m);
+    persistir({ ...localDetalhes, maquinas_cartao });
   };
 
-  // ── Remover banco ──────────────────────────────────────────────
-  const removerBanco = (id) => {
-    const novosDetalhes = {
-      bancos: bancos.filter(b => b.id !== id),
-      maquinas_cartao: maquinas,
-      caixa: caixaLocal,
-    };
-    persistirMutation.mutate(novosDetalhes, {
-      onSuccess: () => toast.success("Banco removido."),
-    });
-  };
-
-  // ── Remover máquina ────────────────────────────────────────────
   const removerMaquina = (id) => {
-    const novosDetalhes = {
-      bancos,
-      maquinas_cartao: maquinas.filter(m => m.id !== id),
-      caixa: caixaLocal,
-    };
-    persistirMutation.mutate(novosDetalhes, {
-      onSuccess: () => toast.success("Máquina removida."),
-    });
+    const maquinas_cartao = localDetalhes.maquinas_cartao.filter(m => m.id !== id);
+    persistirMutation.mutate(
+      { ...localDetalhes, maquinas_cartao },
+      { onSuccess: () => { setLocalDetalhes(prev => ({ ...prev, maquinas_cartao })); toast.success("Máquina removida."); } }
+    );
+    setLocalDetalhes(prev => ({ ...prev, maquinas_cartao }));
   };
 
-  // ── Salvar caixa (ao blur do campo) ───────────────────────────
-  const salvarCaixa = () => {
-    persistirMutation.mutate({
-      bancos,
-      maquinas_cartao: maquinas,
-      caixa: Number(caixaLocal) || 0,
-    });
-  };
+  // ── Caixa: atualiza local sem persistir — persiste no blur ────
+  const setCaixa = (v) => setLocalDetalhes(prev => ({ ...prev, caixa: v }));
+  const salvarCaixa = () => persistir({ ...localDetalhes, caixa: Number(localDetalhes.caixa) || 0 });
 
   // ── Zerar tudo ────────────────────────────────────────────────
   const zerarTudo = () => {
-    persistirMutation.mutate(
-      { bancos: [], maquinas_cartao: [], caixa: 0 },
-      { onSuccess: () => toast.success("Saldo zerado.") }
-    );
+    const vazio = { bancos: [], maquinas_cartao: [], caixa: 0 };
+    setLocalDetalhes(vazio);
+    persistirMutation.mutate(vazio, { onSuccess: () => toast.success("Saldo zerado.") });
   };
 
-  const isSaving = persistirMutation.isPending;
+  // ── Fechar: invalida queries e notifica pai ────────────────────
+  const handleFechar = async () => {
+    await queryClient.invalidateQueries({ queryKey: ["dfc-saldo", workshopId, mes] });
+    await queryClient.refetchQueries({ queryKey: ["dfc-saldo", workshopId, mes], type: "active" });
+    onFechar();
+  };
 
   return (
-    <Dialog open={aberto} onOpenChange={onFechar}>
+    <Dialog open={aberto} onOpenChange={handleFechar}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            💰 Detalhar Saldo Inicial — {mes}
-            {isSaving && <Loader2 className="w-4 h-4 animate-spin text-gray-400 ml-2" />}
+          <DialogTitle className="flex items-center gap-2 text-base">
+            💰 Saldo Inicial Detalhado — {mes}
+            {isSaving
+              ? <span className="flex items-center gap-1 text-xs text-amber-600 font-normal ml-2"><Loader2 className="w-3 h-3 animate-spin" /> Salvando...</span>
+              : lastSaved
+                ? <span className="flex items-center gap-1 text-xs text-emerald-600 font-normal ml-2"><CheckCircle2 className="w-3 h-3" /> Salvo</span>
+                : null
+            }
           </DialogTitle>
         </DialogHeader>
 
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-6 h-6 animate-spin text-blue-500 mr-2" />
-            <span className="text-gray-500">Carregando...</span>
+            <span className="text-gray-500">Carregando dados do banco...</span>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-5">
             {/* Info */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-900">
-              📌 Cada banco e máquina adicionado é <strong>salvo automaticamente</strong>. Edite os valores diretamente nas linhas e eles são atualizados ao sair do campo.
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-800">
+              📌 <strong>Auto-save ativo:</strong> Qualquer adição, remoção ou edição (ao sair do campo) é salva automaticamente no banco de dados e refletida no card de Saldo Inicial.
             </div>
 
-            {/* ── BANCOS ── */}
-            <div className="space-y-3">
+            {/* ══ BANCOS ══ */}
+            <section className="space-y-2">
               <div className="flex items-center justify-between">
-                <h3 className="text-base font-semibold flex items-center gap-2 text-blue-800">
-                  <Building2 className="w-4 h-4" /> 🏦 Bancos
-                  <span className="text-sm font-normal text-blue-600 ml-1">
-                    ({bancos.length} cadastrado{bancos.length !== 1 ? 's' : ''})
-                  </span>
+                <h3 className="text-sm font-semibold flex items-center gap-2 text-blue-800">
+                  <Building2 className="w-4 h-4" /> 🏦 Contas Bancárias
+                  <span className="text-xs font-normal text-blue-500">({localDetalhes.bancos.length})</span>
                 </h3>
-                <Button size="sm" variant="outline" onClick={adicionarBanco} disabled={isSaving} className="gap-1 text-blue-700 border-blue-300">
-                  <Plus className="w-4 h-4" /> Adicionar Banco
+                <Button size="sm" variant="outline" onClick={adicionarBanco} disabled={isSaving}
+                  className="gap-1 text-xs text-blue-700 border-blue-300 h-7">
+                  <Plus className="w-3 h-3" /> Adicionar Banco
                 </Button>
               </div>
 
-              {bancos.length === 0 ? (
-                <div className="border-2 border-dashed border-blue-200 rounded-lg p-6 text-center text-gray-400 text-sm">
-                  Nenhum banco cadastrado. Clique em "Adicionar Banco" para incluir.
+              {localDetalhes.bancos.length === 0 ? (
+                <div className="border-2 border-dashed border-blue-200 rounded-lg p-5 text-center text-gray-400 text-xs">
+                  Nenhuma conta bancária. Clique em "+ Adicionar Banco".
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {bancos.map((banco) => (
-                    <div key={banco.id} className="bg-blue-50 border border-blue-200 rounded-lg p-3 grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
-                      <div>
-                        <Label className="text-xs text-blue-700">Nome do Banco</Label>
-                        <Input
-                          placeholder="ex: Banco do Brasil"
-                          value={banco.nome}
-                          onChange={(e) => {
-                            // Atualiza localmente via query cache para feedback imediato
-                            queryClient.setQueryData(["saldoInicial", workshopId, mes], (old) => {
-                              if (!old) return old;
-                              return {
-                                ...old,
-                                detalhes: {
-                                  ...old.detalhes,
-                                  bancos: (old.detalhes?.bancos || []).map(b => b.id === banco.id ? { ...b, nome: e.target.value } : b),
-                                }
-                              };
-                            });
-                          }}
-                          onBlur={(e) => atualizarBanco(banco.id, "nome", e.target.value)}
-                          className="mt-1 bg-white"
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-xs text-blue-700">Tipo de Conta</Label>
-                        <select
-                          value={banco.tipo_conta}
-                          onChange={(e) => atualizarBanco(banco.id, "tipo_conta", e.target.value)}
-                          className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white"
-                        >
-                          <option value="corrente">Corrente</option>
-                          <option value="poupanca">Poupança</option>
-                          <option value="aplicacao">Aplicação</option>
-                        </select>
-                      </div>
-                      <div>
-                        <Label className="text-xs text-blue-700">Saldo (R$)</Label>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          value={banco.saldo}
-                          onChange={(e) => {
-                            queryClient.setQueryData(["saldoInicial", workshopId, mes], (old) => {
-                              if (!old) return old;
-                              return {
-                                ...old,
-                                detalhes: {
-                                  ...old.detalhes,
-                                  bancos: (old.detalhes?.bancos || []).map(b => b.id === banco.id ? { ...b, saldo: parseFloat(e.target.value) || 0 } : b),
-                                }
-                              };
-                            });
-                          }}
-                          onBlur={(e) => atualizarBanco(banco.id, "saldo", parseFloat(e.target.value) || 0)}
-                          className="mt-1 bg-white font-semibold"
-                        />
-                      </div>
-                      <div className="flex gap-2 items-end">
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => removerBanco(banco.id)}
-                          disabled={isSaving}
-                          className="text-red-500 hover:bg-red-50 hover:text-red-700"
-                          title="Remover banco"
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
-                        <span className="text-sm font-semibold text-blue-700 ml-1">
-                          R$ {fmt(banco.saldo)}
-                        </span>
-                      </div>
-                    </div>
+                  {localDetalhes.bancos.map((banco) => (
+                    <BancoRow
+                      key={banco.id}
+                      banco={banco}
+                      onUpdate={atualizarBanco}
+                      onRemove={removerBanco}
+                      disabled={isSaving}
+                    />
                   ))}
                 </div>
               )}
-
-              <div className="text-right text-sm font-semibold text-blue-800">
-                Subtotal Bancos: R$ {fmt(bancos.reduce((s, b) => s + (Number(b.saldo) || 0), 0))}
+              <div className="text-right text-xs font-semibold text-blue-700">
+                Subtotal Bancos: R$ {fmt(localDetalhes.bancos.reduce((s, b) => s + (Number(b.saldo) || 0), 0))}
               </div>
-            </div>
+            </section>
 
-            {/* ── MÁQUINAS ── */}
-            <div className="space-y-3">
+            {/* ══ MÁQUINAS ══ */}
+            <section className="space-y-2">
               <div className="flex items-center justify-between">
-                <h3 className="text-base font-semibold flex items-center gap-2 text-green-800">
+                <h3 className="text-sm font-semibold flex items-center gap-2 text-green-800">
                   <CreditCard className="w-4 h-4" /> 💳 Máquinas de Cartão
-                  <span className="text-sm font-normal text-green-600 ml-1">
-                    ({maquinas.length} cadastrada{maquinas.length !== 1 ? 's' : ''})
-                  </span>
+                  <span className="text-xs font-normal text-green-500">({localDetalhes.maquinas_cartao.length})</span>
                 </h3>
-                <Button size="sm" variant="outline" onClick={adicionarMaquina} disabled={isSaving} className="gap-1 text-green-700 border-green-300">
-                  <Plus className="w-4 h-4" /> Adicionar Máquina
+                <Button size="sm" variant="outline" onClick={adicionarMaquina} disabled={isSaving}
+                  className="gap-1 text-xs text-green-700 border-green-300 h-7">
+                  <Plus className="w-3 h-3" /> Adicionar Máquina
                 </Button>
               </div>
 
-              {maquinas.length === 0 ? (
-                <div className="border-2 border-dashed border-green-200 rounded-lg p-6 text-center text-gray-400 text-sm">
-                  Nenhuma máquina cadastrada. Clique em "Adicionar Máquina" para incluir.
+              {localDetalhes.maquinas_cartao.length === 0 ? (
+                <div className="border-2 border-dashed border-green-200 rounded-lg p-5 text-center text-gray-400 text-xs">
+                  Nenhuma máquina cadastrada. Clique em "+ Adicionar Máquina".
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {maquinas.map((maquina) => (
-                    <div key={maquina.id} className="bg-green-50 border border-green-200 rounded-lg p-3 grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
-                      <div>
-                        <Label className="text-xs text-green-700">Nome da Máquina</Label>
-                        <Input
-                          placeholder="ex: Stone Loja 1"
-                          value={maquina.nome}
-                          onChange={(e) => {
-                            queryClient.setQueryData(["saldoInicial", workshopId, mes], (old) => {
-                              if (!old) return old;
-                              return {
-                                ...old,
-                                detalhes: {
-                                  ...old.detalhes,
-                                  maquinas_cartao: (old.detalhes?.maquinas_cartao || []).map(m => m.id === maquina.id ? { ...m, nome: e.target.value } : m),
-                                }
-                              };
-                            });
-                          }}
-                          onBlur={(e) => atualizarMaquina(maquina.id, "nome", e.target.value)}
-                          className="mt-1 bg-white"
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-xs text-green-700">Gateway</Label>
-                        <select
-                          value={maquina.gateway_pagamento}
-                          onChange={(e) => atualizarMaquina(maquina.id, "gateway_pagamento", e.target.value)}
-                          className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white"
-                        >
-                          <option value="">Selecione...</option>
-                          <option value="rede">Rede</option>
-                          <option value="stone">Stone</option>
-                          <option value="sumup">SumUp</option>
-                          <option value="pagseguro">PagSeguro</option>
-                          <option value="mercadopago">Mercado Pago</option>
-                          <option value="cielo">Cielo</option>
-                          <option value="outro">Outro</option>
-                        </select>
-                      </div>
-                      <div>
-                        <Label className="text-xs text-green-700">Recebíveis (R$)</Label>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          value={maquina.saldo}
-                          onChange={(e) => {
-                            queryClient.setQueryData(["saldoInicial", workshopId, mes], (old) => {
-                              if (!old) return old;
-                              return {
-                                ...old,
-                                detalhes: {
-                                  ...old.detalhes,
-                                  maquinas_cartao: (old.detalhes?.maquinas_cartao || []).map(m => m.id === maquina.id ? { ...m, saldo: parseFloat(e.target.value) || 0 } : m),
-                                }
-                              };
-                            });
-                          }}
-                          onBlur={(e) => atualizarMaquina(maquina.id, "saldo", parseFloat(e.target.value) || 0)}
-                          className="mt-1 bg-white font-semibold"
-                        />
-                      </div>
-                      <div className="flex gap-2 items-end">
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => removerMaquina(maquina.id)}
-                          disabled={isSaving}
-                          className="text-red-500 hover:bg-red-50 hover:text-red-700"
-                          title="Remover máquina"
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
-                        <span className="text-sm font-semibold text-green-700 ml-1">
-                          R$ {fmt(maquina.saldo)}
-                        </span>
-                      </div>
-                    </div>
+                  {localDetalhes.maquinas_cartao.map((maquina) => (
+                    <MaquinaRow
+                      key={maquina.id}
+                      maquina={maquina}
+                      onUpdate={atualizarMaquina}
+                      onRemove={removerMaquina}
+                      disabled={isSaving}
+                    />
                   ))}
                 </div>
               )}
-
-              <div className="text-right text-sm font-semibold text-green-800">
-                Subtotal Máquinas: R$ {fmt(maquinas.reduce((s, m) => s + (Number(m.saldo) || 0), 0))}
+              <div className="text-right text-xs font-semibold text-green-700">
+                Subtotal Máquinas: R$ {fmt(localDetalhes.maquinas_cartao.reduce((s, m) => s + (Number(m.saldo) || 0), 0))}
               </div>
-            </div>
+            </section>
 
-            {/* ── CAIXA ── */}
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-              <h3 className="text-base font-semibold flex items-center gap-2 text-amber-800 mb-3">
+            {/* ══ CAIXA ══ */}
+            <section className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+              <h3 className="text-sm font-semibold flex items-center gap-2 text-amber-800 mb-3">
                 <Banknote className="w-4 h-4" /> 💵 Dinheiro em Caixa (físico)
               </h3>
               <div className="flex items-center gap-3">
-                <Label className="text-sm text-amber-700 whitespace-nowrap">Valor R$</Label>
+                <Label className="text-xs text-amber-700 whitespace-nowrap">Valor R$</Label>
                 <Input
                   type="number"
                   step="0.01"
                   min="0"
-                  value={caixaLocal}
-                  onChange={(e) => setCaixaLocal(e.target.value)}
+                  value={localDetalhes.caixa}
+                  onChange={(e) => setCaixa(e.target.value)}
                   onBlur={salvarCaixa}
-                  className="w-48 bg-white font-semibold"
+                  className="w-44 bg-white font-semibold text-sm"
                 />
-                <span className="text-sm text-amber-700">{isSaving ? <Loader2 className="w-4 h-4 animate-spin inline" /> : "✓ salvo ao sair do campo"}</span>
+                <span className="text-xs text-amber-600">salva ao sair do campo</span>
               </div>
-            </div>
+            </section>
 
-            {/* ── TOTAL ── */}
-            <div className="bg-gray-900 text-white rounded-lg p-4 flex justify-between items-center">
+            {/* ══ TOTAL ══ */}
+            <div className="bg-gray-900 text-white rounded-xl p-4 flex justify-between items-center">
               <div>
-                <p className="text-sm text-gray-300">Total Saldo Inicial</p>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  Bancos R$ {fmt(bancos.reduce((s, b) => s + (Number(b.saldo) || 0), 0))} +
-                  Máquinas R$ {fmt(maquinas.reduce((s, m) => s + (Number(m.saldo) || 0), 0))} +
-                  Caixa R$ {fmt(caixaLocal)}
+                <p className="text-xs text-gray-300 font-medium">Total Saldo Inicial do Mês</p>
+                <p className="text-[11px] text-gray-400 mt-0.5">
+                  Bancos R${fmt(localDetalhes.bancos.reduce((s,b)=>s+(Number(b.saldo)||0),0))}
+                  {' + '}Máquinas R${fmt(localDetalhes.maquinas_cartao.reduce((s,m)=>s+(Number(m.saldo)||0),0))}
+                  {' + '}Caixa R${fmt(localDetalhes.caixa)}
                 </p>
               </div>
-              <p className="text-3xl font-bold">R$ {fmt(total)}</p>
+              <p className="text-3xl font-bold tabular-nums">R$ {fmt(total)}</p>
             </div>
 
-            {/* ── AÇÕES ── */}
+            {/* ══ NOTA SINCRONISMO ══ */}
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs text-gray-500 space-y-1">
+              <p className="font-semibold text-gray-700">ℹ️ Sincronismo com o DFC</p>
+              <p>• O <strong>Total acima</strong> atualiza o card "Saldo Inicial do Mês" ao fechar este modal.</p>
+              <p>• O <strong>Saldo Final do DFC</strong> = Saldo Inicial + Fluxo Operacional + Investimento + Financiamento.</p>
+              <p>• Contas a Pagar/Receber liquidadas são lançadas como <strong>saídas/entradas do Operacional</strong>, reduzindo ou aumentando o saldo final — não o saldo inicial.</p>
+            </div>
+
+            {/* ══ AÇÕES ══ */}
             <div className="flex justify-between items-center pt-2 border-t">
-              <Button
-                variant="outline"
-                className="text-red-600 border-red-200 hover:bg-red-50"
-                disabled={isSaving}
-                onClick={zerarTudo}
-              >
+              <Button variant="outline" className="text-red-600 border-red-200 hover:bg-red-50 text-xs"
+                disabled={isSaving} onClick={zerarTudo}>
                 🗑️ Zerar tudo
               </Button>
-              <Button onClick={onFechar} className="bg-black hover:bg-gray-800">
-                Fechar
+              <Button onClick={handleFechar} className="bg-black hover:bg-gray-800 text-sm">
+                Fechar e Atualizar
               </Button>
             </div>
           </div>
         )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+// ─── BancoRow — componente separado com estado local para evitar race condition ──
+function BancoRow({ banco, onUpdate, onRemove, disabled }) {
+  const [nome, setNome] = useState(banco.nome);
+  const [saldo, setSaldo] = useState(banco.saldo);
+
+  // Sincroniza quando o registro externo muda (ex: após save)
+  useEffect(() => { setNome(banco.nome); }, [banco.nome]);
+  useEffect(() => { setSaldo(banco.saldo); }, [banco.saldo]);
+
+  return (
+    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+      <div>
+        <Label className="text-xs text-blue-700">Nome do Banco</Label>
+        <Input
+          placeholder="ex: Banco do Brasil"
+          value={nome}
+          onChange={(e) => setNome(e.target.value)}
+          onBlur={() => onUpdate(banco.id, "nome", nome)}
+          className="mt-1 bg-white text-sm"
+          disabled={disabled}
+        />
+      </div>
+      <div>
+        <Label className="text-xs text-blue-700">Tipo de Conta</Label>
+        <select
+          value={banco.tipo_conta}
+          onChange={(e) => onUpdate(banco.id, "tipo_conta", e.target.value)}
+          className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white"
+          disabled={disabled}
+        >
+          <option value="corrente">Corrente</option>
+          <option value="poupanca">Poupança</option>
+          <option value="aplicacao">Aplicação</option>
+        </select>
+      </div>
+      <div>
+        <Label className="text-xs text-blue-700">Saldo (R$)</Label>
+        <Input
+          type="number"
+          step="0.01"
+          min="0"
+          value={saldo}
+          onChange={(e) => setSaldo(e.target.value)}
+          onBlur={() => onUpdate(banco.id, "saldo", parseFloat(saldo) || 0)}
+          className="mt-1 bg-white font-semibold text-sm"
+          disabled={disabled}
+        />
+      </div>
+      <div className="flex items-center gap-2 justify-between">
+        <span className="text-sm font-bold text-blue-800">R$ {fmt(saldo)}</span>
+        <Button size="icon" variant="ghost" onClick={() => onRemove(banco.id)} disabled={disabled}
+          className="text-red-500 hover:bg-red-50 hover:text-red-700 h-8 w-8">
+          <X className="w-4 h-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// ─── MaquinaRow — componente separado com estado local para evitar race condition ──
+function MaquinaRow({ maquina, onUpdate, onRemove, disabled }) {
+  const [nome, setNome] = useState(maquina.nome);
+  const [saldo, setSaldo] = useState(maquina.saldo);
+
+  useEffect(() => { setNome(maquina.nome); }, [maquina.nome]);
+  useEffect(() => { setSaldo(maquina.saldo); }, [maquina.saldo]);
+
+  return (
+    <div className="bg-green-50 border border-green-200 rounded-lg p-3 grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+      <div>
+        <Label className="text-xs text-green-700">Nome da Máquina</Label>
+        <Input
+          placeholder="ex: Stone Loja 1"
+          value={nome}
+          onChange={(e) => setNome(e.target.value)}
+          onBlur={() => onUpdate(maquina.id, "nome", nome)}
+          className="mt-1 bg-white text-sm"
+          disabled={disabled}
+        />
+      </div>
+      <div>
+        <Label className="text-xs text-green-700">Gateway</Label>
+        <select
+          value={maquina.gateway_pagamento}
+          onChange={(e) => onUpdate(maquina.id, "gateway_pagamento", e.target.value)}
+          className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white"
+          disabled={disabled}
+        >
+          <option value="">Selecione...</option>
+          <option value="rede">Rede</option>
+          <option value="stone">Stone</option>
+          <option value="sumup">SumUp</option>
+          <option value="pagseguro">PagSeguro</option>
+          <option value="mercadopago">Mercado Pago</option>
+          <option value="cielo">Cielo</option>
+          <option value="outro">Outro</option>
+        </select>
+      </div>
+      <div>
+        <Label className="text-xs text-green-700">Recebíveis (R$)</Label>
+        <Input
+          type="number"
+          step="0.01"
+          min="0"
+          value={saldo}
+          onChange={(e) => setSaldo(e.target.value)}
+          onBlur={() => onUpdate(maquina.id, "saldo", parseFloat(saldo) || 0)}
+          className="mt-1 bg-white font-semibold text-sm"
+          disabled={disabled}
+        />
+      </div>
+      <div className="flex items-center gap-2 justify-between">
+        <span className="text-sm font-bold text-green-800">R$ {fmt(saldo)}</span>
+        <Button size="icon" variant="ghost" onClick={() => onRemove(maquina.id)} disabled={disabled}
+          className="text-red-500 hover:bg-red-50 hover:text-red-700 h-8 w-8">
+          <X className="w-4 h-4" />
+        </Button>
+      </div>
+    </div>
   );
 }

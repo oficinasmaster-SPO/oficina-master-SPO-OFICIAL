@@ -841,15 +841,9 @@ export default function DFCTab({ workshopId, mes }) {
       {/* Modal saldo inicial detalhado */}
       <ModalSaldoInicialDetalhado
         aberto={modalSaldoDetalhadoAberto}
-        onFechar={async () => {
-          setModalSaldoDetalhadoAberto(false);
-          await queryClient.invalidateQueries({ queryKey: ["dfc-saldo", workshopId, mes] });
-          await queryClient.refetchQueries({ queryKey: ["dfc-saldo", workshopId, mes] });
-        }}
+        onFechar={() => setModalSaldoDetalhadoAberto(false)}
         workshopId={workshopId}
         mes={mes}
-        saldoSimples={saldoInicialSalvo}
-        saldoRecord={saldoInicialRecord}
       />
       </>)}
     </div>
