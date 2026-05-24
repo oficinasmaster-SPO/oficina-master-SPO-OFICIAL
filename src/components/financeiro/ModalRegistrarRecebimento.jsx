@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { InputMoeda } from "@/components/ui/InputMoeda";
-import { Loader2, Building2, AlertCircle } from "lucide-react";
+import { Loader2, Building2, AlertCircle, CreditCard, Calendar, DollarSign, Minus, Plus, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 
 const fmt = (v) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v || 0);
@@ -18,9 +18,9 @@ function useFontesDinheiro(workshopId, mes) {
     queryFn: async () => {
       if (!workshopId) return { bancos: [], maquinas_cartao: [], caixa: 0 };
       if (mes) {
-        const records = await base44.entities.DFCLancamento.filter({
-          workshop_id: workshopId, mes, grupo: "saldo_inicial",
-        }, "-created_date", 1);
+        const records = await base44.entities.DFCLancamento.filter(
+          { workshop_id: workshopId, mes, grupo: "saldo_inicial" }, "-created_date", 1
+        );
         if (records?.[0]?.detalhes) {
           const d = records[0].detalhes;
           if ((d.bancos?.length > 0) || (d.maquinas_cartao?.length > 0) || (d.caixa > 0)) {
@@ -28,9 +28,9 @@ function useFontesDinheiro(workshopId, mes) {
           }
         }
       }
-      const allRecords = await base44.entities.DFCLancamento.filter({
-        workshop_id: workshopId, grupo: "saldo_inicial",
-      }, "-created_date", 5);
+      const allRecords = await base44.entities.DFCLancamento.filter(
+        { workshop_id: workshopId, grupo: "saldo_inicial" }, "-created_date", 5
+      );
       for (const rec of (allRecords || [])) {
         const d = rec.detalhes;
         if (d && ((d.bancos?.length > 0) || (d.maquinas_cartao?.length > 0) || (d.caixa > 0))) {
@@ -46,12 +46,11 @@ function useFontesDinheiro(workshopId, mes) {
 
 async function atualizarSaldoFonte(workshopId, mes, fonteKey, valor, operacao, queryClient) {
   try {
-    const records = await base44.entities.DFCLancamento.filter({
-      workshop_id: workshopId, mes, grupo: "saldo_inicial",
-    }, "-created_date", 1);
+    const records = await base44.entities.DFCLancamento.filter(
+      { workshop_id: workshopId, mes, grupo: "saldo_inicial" }, "-created_date", 1
+    );
     const registro = records?.[0];
     if (!registro) return;
-
     const detalhes = {
       bancos: registro.detalhes?.bancos || [],
       maquinas_cartao: registro.detalhes?.maquinas_cartao || [],
@@ -59,7 +58,6 @@ async function atualizarSaldoFonte(workshopId, mes, fonteKey, valor, operacao, q
     };
     const [tipo, id] = fonteKey.split(":");
     const delta = operacao === "soma" ? valor : -valor;
-
     if (tipo === "banco") {
       detalhes.bancos = detalhes.bancos.map(b =>
         b.id === id ? { ...b, saldo: Math.max(0, (b.saldo || 0) + delta) } : b
@@ -71,15 +69,10 @@ async function atualizarSaldoFonte(workshopId, mes, fonteKey, valor, operacao, q
     } else if (tipo === "caixa") {
       detalhes.caixa = Math.max(0, detalhes.caixa + delta);
     }
-
     const novoTotal = detalhes.bancos.reduce((s, b) => s + (b.saldo || 0), 0)
       + detalhes.maquinas_cartao.reduce((s, m) => s + (m.saldo || 0), 0)
       + detalhes.caixa;
-
-    await base44.entities.DFCLancamento.update(registro.id, {
-      detalhes, valor: novoTotal, saldo_inicial: novoTotal,
-    });
-
+    await base44.entities.DFCLancamento.update(registro.id, { detalhes, valor: novoTotal, saldo_inicial: novoTotal });
     queryClient.invalidateQueries({ queryKey: ["saldo-inicial-fontes", workshopId, mes] });
     queryClient.invalidateQueries({ queryKey: ["dfc-saldo", workshopId, mes] });
   } catch (e) {
@@ -120,7 +113,6 @@ export default function ModalRegistrarRecebimento({ aberto, onFechar, conta, wor
   const bancos = fontes?.bancos || [];
   const maquinas = fontes?.maquinas_cartao || [];
   const temFontes = bancos.length > 0 || maquinas.length > 0 || (fontes?.caixa > 0);
-
   const valorLiquido = (valor || 0) + juros + multa - desconto;
 
   const handleSalvar = async () => {
@@ -138,11 +130,9 @@ export default function ModalRegistrarRecebimento({ aberto, onFechar, conta, wor
         juros_recebido: juros,
         multa_recebida: multa,
       });
-
       if (fonteDestino && mes) {
         await atualizarSaldoFonte(workshopId, mes, fonteDestino, valor, "soma", queryClient);
       }
-
       queryClient.invalidateQueries({ queryKey: ["contas-pagar"] });
       queryClient.invalidateQueries({ queryKey: ["contas-receber"] });
       queryClient.invalidateQueries({ queryKey: ["dre-lancamentos"] });
@@ -162,118 +152,179 @@ export default function ModalRegistrarRecebimento({ aberto, onFechar, conta, wor
 
   return (
     <Dialog open={aberto} onOpenChange={onFechar}>
-      <DialogContent className="max-w-md max-h-[85vh] flex flex-col p-4">
-        <DialogHeader className="pb-2">
-          <DialogTitle className="text-lg">💰 Registrar Recebimento</DialogTitle>
+      <DialogContent className="max-w-2xl w-full p-0 gap-0 overflow-hidden">
+        {/* Header */}
+        <DialogHeader className="px-6 py-4 border-b bg-green-50">
+          <DialogTitle className="text-lg font-bold text-green-900 flex items-center gap-2">
+            <DollarSign className="w-5 h-5 text-green-600" />
+            Registrar Recebimento
+          </DialogTitle>
+          <p className="text-sm text-green-700 font-medium">{conta.cliente_nome || "—"}</p>
         </DialogHeader>
 
-        <div className="space-y-3 py-0 overflow-y-auto flex-1">
-          <div className="bg-gray-50 rounded-lg p-3 text-sm">
-            <p className="font-medium text-gray-900">{conta.cliente_nome || "—"}</p>
-            <p className="text-gray-500">Valor original: {fmt(conta.valor_original)}</p>
-            <p className="text-gray-500">Saldo aberto: <span className="font-semibold text-green-700">{fmt(conta.valor_aberto)}</span></p>
-          </div>
+        {/* Body: 2 colunas */}
+        <div className="grid grid-cols-2 divide-x">
 
-          <div>
-            <Label className="text-xs">Data de Recebimento *</Label>
-            <Input
-              type="date"
-              value={dataLiquidacao}
-              onChange={(e) => setDataLiquidacao(e.target.value)}
-              className="mt-0.5 text-sm"
-            />
-          </div>
-
-          <div>
-            <Label className="text-xs">Valor Recebido (R$) *</Label>
-            <InputMoeda
-              value={valor}
-              onChange={(v) => setValor(v)}
-              className="text-right text-sm"
-            />
-          </div>
-
-          <div>
-            <Label className="text-xs">Forma de Pagamento *</Label>
-            <Select value={formaPagamento} onValueChange={setFormaPagamento}>
-              <SelectTrigger className="text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="pix">PIX</SelectItem>
-                <SelectItem value="ted">TED</SelectItem>
-                <SelectItem value="boleto">Boleto</SelectItem>
-                <SelectItem value="cartao_credito">Cartão de Crédito</SelectItem>
-                <SelectItem value="cartao_debito">Cartão de Débito</SelectItem>
-                <SelectItem value="dinheiro">Dinheiro</SelectItem>
-                <SelectItem value="cheque">Cheque</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <Label className="text-xs flex items-center gap-1">
-              <Building2 className="w-3 h-3 text-blue-600" /> Onde vai entrar o dinheiro?
-            </Label>
-            {!temFontes ? (
-              <div className="mt-1 p-2 rounded-md border border-yellow-200 bg-yellow-50 text-xs text-yellow-700 flex items-center gap-2">
-                <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
-                Nenhum banco ou máquina cadastrado no Saldo Inicial. Cadastre em <strong>Saldo Inicial Detalhado</strong>.
+          {/* Coluna esquerda: Resumo + ajustes */}
+          <div className="p-6 space-y-5">
+            <div>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Resumo da Conta</p>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center py-2 border-b border-dashed border-gray-200">
+                  <span className="text-sm text-gray-600">Valor original</span>
+                  <span className="text-sm font-medium text-gray-900">{fmt(conta.valor_original)}</span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b border-dashed border-gray-200">
+                  <span className="text-sm text-gray-600">Saldo em aberto</span>
+                  <span className="text-base font-bold text-green-700">{fmt(conta.valor_aberto)}</span>
+                </div>
+                {conta.data_vencimento && (
+                  <div className="flex justify-between items-center py-2">
+                    <span className="text-sm text-gray-600">Vencimento</span>
+                    <span className="text-sm text-gray-800">
+                      {new Date(conta.data_vencimento + "T12:00:00").toLocaleDateString("pt-BR")}
+                    </span>
+                  </div>
+                )}
               </div>
-            ) : (
-              <Select value={fonteDestino} onValueChange={setFonteDestino}>
-                <SelectTrigger className="mt-1 text-sm">
-                  <SelectValue placeholder="Selecione a fonte..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {bancos.map((b) => (
-                    <SelectItem key={`banco-${b.id}`} value={`banco:${b.id}:${b.nome}`}>
-                      🏦 {b.nome} — {fmt(b.saldo || 0)}
-                    </SelectItem>
-                  ))}
-                  {maquinas.map((m) => (
-                    <SelectItem key={`maq-${m.id}`} value={`maquina:${m.id}:${m.nome}`}>
-                      💳 {m.nome} — {fmt(m.saldo || 0)}
-                    </SelectItem>
-                  ))}
-                  {(fontes?.caixa > 0) && (
-                    <SelectItem value="caixa:caixa:Caixa">
-                      💵 Caixa — {fmt(fontes.caixa)}
-                    </SelectItem>
+            </div>
+
+            <div>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Ajustes</p>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <Label className="text-xs text-red-700 flex items-center gap-1 mb-1">
+                    <Minus className="w-3 h-3" /> Desconto
+                  </Label>
+                  <InputMoeda value={desconto} onChange={(v) => setDesconto(v)} className="text-right text-sm" />
+                </div>
+                <div>
+                  <Label className="text-xs text-green-700 flex items-center gap-1 mb-1">
+                    <Plus className="w-3 h-3" /> Juros
+                  </Label>
+                  <InputMoeda value={juros} onChange={(v) => setJuros(v)} className="text-right text-sm" />
+                </div>
+                <div>
+                  <Label className="text-xs text-green-700 flex items-center gap-1 mb-1">
+                    <AlertTriangle className="w-3 h-3" /> Multa
+                  </Label>
+                  <InputMoeda value={multa} onChange={(v) => setMulta(v)} className="text-right text-sm" />
+                </div>
+              </div>
+            </div>
+
+            {/* Valor líquido destacado */}
+            <div className="rounded-xl bg-green-600 text-white p-4">
+              <p className="text-xs opacity-80 mb-1">Total a receber (líquido)</p>
+              <p className="text-3xl font-bold tracking-tight">{fmt(valorLiquido)}</p>
+            </div>
+          </div>
+
+          {/* Coluna direita: campos de recebimento */}
+          <div className="p-6 space-y-5">
+            <div>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Dados do Recebimento</p>
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-sm font-medium flex items-center gap-1.5 mb-1.5">
+                    <DollarSign className="w-4 h-4 text-gray-500" /> Valor Recebido (R$) *
+                  </Label>
+                  <InputMoeda
+                    value={valor}
+                    onChange={(v) => setValor(v)}
+                    className="text-right text-base font-semibold h-11"
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium flex items-center gap-1.5 mb-1.5">
+                    <Calendar className="w-4 h-4 text-gray-500" /> Data de Recebimento *
+                  </Label>
+                  <Input
+                    type="date"
+                    value={dataLiquidacao}
+                    onChange={(e) => setDataLiquidacao(e.target.value)}
+                    className="h-11 text-sm"
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium flex items-center gap-1.5 mb-1.5">
+                    <CreditCard className="w-4 h-4 text-gray-500" /> Forma de Pagamento *
+                  </Label>
+                  <Select value={formaPagamento} onValueChange={setFormaPagamento}>
+                    <SelectTrigger className="h-11 text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pix">PIX</SelectItem>
+                      <SelectItem value="ted">TED</SelectItem>
+                      <SelectItem value="boleto">Boleto</SelectItem>
+                      <SelectItem value="cartao_credito">Cartão de Crédito</SelectItem>
+                      <SelectItem value="cartao_debito">Cartão de Débito</SelectItem>
+                      <SelectItem value="dinheiro">Dinheiro</SelectItem>
+                      <SelectItem value="cheque">Cheque</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium flex items-center gap-1.5 mb-1.5">
+                    <Building2 className="w-4 h-4 text-gray-500" /> Onde vai entrar o dinheiro?
+                  </Label>
+                  {!temFontes ? (
+                    <div className="p-3 rounded-lg border border-yellow-200 bg-yellow-50 text-xs text-yellow-800 flex items-start gap-2">
+                      <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                      <span>Nenhum banco ou máquina cadastrado no Saldo Inicial. Cadastre em <strong>Saldo Inicial Detalhado</strong>.</span>
+                    </div>
+                  ) : (
+                    <Select value={fonteDestino} onValueChange={setFonteDestino}>
+                      <SelectTrigger className="h-11 text-sm">
+                        <SelectValue placeholder="Selecione a fonte..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {bancos.map((b) => (
+                          <SelectItem key={`banco-${b.id}`} value={`banco:${b.id}:${b.nome}`}>
+                            🏦 {b.nome} — {fmt(b.saldo || 0)}
+                          </SelectItem>
+                        ))}
+                        {maquinas.map((m) => (
+                          <SelectItem key={`maq-${m.id}`} value={`maquina:${m.id}:${m.nome}`}>
+                            💳 {m.nome} — {fmt(m.saldo || 0)}
+                          </SelectItem>
+                        ))}
+                        {(fontes?.caixa > 0) && (
+                          <SelectItem value="caixa:caixa:Caixa">
+                            💵 Caixa — {fmt(fontes.caixa)}
+                          </SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
                   )}
-                </SelectContent>
-              </Select>
-            )}
-          </div>
-
-          <div className="grid grid-cols-3 gap-2">
-            <div>
-              <Label className="text-xs">Desconto</Label>
-              <InputMoeda value={desconto} onChange={(v) => setDesconto(v)} className="text-right text-xs" />
+                </div>
+              </div>
             </div>
-            <div>
-              <Label className="text-xs">Juros</Label>
-              <InputMoeda value={juros} onChange={(v) => setJuros(v)} className="text-right text-xs" />
-            </div>
-            <div>
-              <Label className="text-xs">Multa</Label>
-              <InputMoeda value={multa} onChange={(v) => setMulta(v)} className="text-right text-xs" />
-            </div>
-          </div>
-
-          <div className="p-2 bg-green-50 rounded border border-green-200">
-            <p className="text-xs text-green-700">Valor Líquido</p>
-            <p className="text-lg font-bold text-green-900">{fmt(valorLiquido)}</p>
           </div>
         </div>
 
-        <DialogFooter className="gap-2 pt-2 mt-auto">
-          <Button variant="outline" size="sm" onClick={onFechar} disabled={saving}>Cancelar</Button>
-          <Button size="sm" onClick={handleSalvar} disabled={saving || !valor}>
-            {saving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-            Confirmar Recebimento
+        {/* Footer fixo */}
+        <div className="px-6 py-4 border-t bg-gray-50 flex items-center justify-between gap-3">
+          <Button variant="outline" size="lg" onClick={onFechar} disabled={saving} className="min-w-[120px]">
+            Cancelar
           </Button>
-        </DialogFooter>
+          <Button
+            size="lg"
+            onClick={handleSalvar}
+            disabled={saving || !valor}
+            className="flex-1 max-w-xs bg-green-600 hover:bg-green-700 text-white font-semibold text-base"
+          >
+            {saving ? (
+              <><Loader2 className="w-5 h-5 animate-spin mr-2" /> Registrando...</>
+            ) : (
+              <>✓ Confirmar Recebimento</>
+            )}
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );
