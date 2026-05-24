@@ -154,7 +154,12 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
       }
       
       const total = calcTotal(detalhes);
-      const idAtual = registroIdRef.current;
+      // ✅ FIX: Busca o ID mais recente do banco em vez de confiar na ref que pode estar stale
+      const registrosExistentes = await base44.entities.DFCLancamento.filter(
+        { workshop_id: workshopId, mes, grupo: "saldo_inicial" },
+        "-updated_date", 1
+      );
+      const idAtual = registrosExistentes?.[0]?.id || registroIdRef.current;
       console.log('[DFC-Modal] 💾 persistir chamado | inicializado=', inicializadoRef.current, '| idAtual=', idAtual, '| detalhes=', detalhes);
       
       let resultado;
