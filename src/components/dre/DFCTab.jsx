@@ -451,7 +451,25 @@ export default function DFCTab({ workshopId, mes }) {
   // ── Buscar DRELancamentos → mapeados automaticamente (Fase 3) ──
   const { data: lancamentosDRE = [], isLoading: isDRELoading, refetch: refetchDRE } = useQuery({
     queryKey: ["dre-lancamentos-dfc", workshopId, mes],
-    queryFn: () => base44.entities.DRELancamento.filter({ workshop_id: workshopId, mes }),
+    queryFn: async () => {
+      const dres = await base44.entities.DRELancamento.filter({ workshop_id: workshopId, mes });
+      // Cruzar com ContaReceber/ContaPagar para pegar data_pagamento real
+      const [contasReceber, contasPagar] = await Promise.all([
+        base44.entities.ContaReceber.filter({ workshop_id: workshopId }),
+        base44.entities.ContaPagar.filter({ workshop_id: workshopId }),
+      ]);
+      const mapaReceber = Object.fromEntries((contasReceber || []).map(c => [c.dre_lancamento_id, c]));
+      const mapaPagar   = Object.fromEntries((contasPagar   || []).map(c => [c.dre_lancamento_id, c]));
+      return dres.map(d => {
+        const contaR = mapaReceber[d.id];
+        const contaP = mapaPagar[d.id];
+        const conta = contaR || contaP;
+        if (conta && !d.data_pagamento && conta.status === "pago" && conta.data_primeiro_pagamento) {
+          return { ...d, data_pagamento: conta.data_primeiro_pagamento };
+        }
+        return d;
+      });
+    },
     enabled: !!workshopId && !!mes,
     staleTime: 30_000,
   });
