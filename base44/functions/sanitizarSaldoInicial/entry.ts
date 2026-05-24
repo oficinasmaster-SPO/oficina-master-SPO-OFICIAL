@@ -2,8 +2,16 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 /**
  * Sanitiza registros duplicados de saldo_inicial para um workshopId + mes.
- * Remove registros legados (schema antigo: detalhes.banco) mantendo apenas o novo (detalhes.bancos[]).
- * Garante exatamente 1 registro válido por workshopId + mes + grupo=saldo_inicial.
+ *
+ * Critério de schema LEGADO:  detalhes.banco !== undefined OU detalhes.maquina_cartao !== undefined
+ * Critério de schema NOVO:    Array.isArray(detalhes.bancos) OU Array.isArray(detalhes.maquinas_cartao)
+ *
+ * Estratégia:
+ *   1. Busca todos os registros { workshop_id, mes, grupo: saldo_inicial }
+ *   2. Identifica legados pelo critério acima
+ *   3. Remove todos os legados
+ *   4. Se restar mais de 1 registro novo, mantém o mais recente e remove os excedentes
+ *   → Garante exatamente 1 registro válido no schema novo
  */
 Deno.serve(async (req) => {
   try {
@@ -20,51 +28,70 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'workshop_id e mes são obrigatórios' }, { status: 400 });
     }
 
-    // Busca todos os registros saldo_inicial do mês
+    // Busca todos os registros saldo_inicial do mês, ordenados do mais recente ao mais antigo
     const registros = await base44.asServiceRole.entities.DFCLancamento.filter(
       { workshop_id, mes, grupo: 'saldo_inicial' },
       '-updated_date',
-      20
+      50
     );
 
-    if (!registros || registros.length <= 1) {
-      // Nenhuma duplicata — nada a fazer
-      return Response.json({ success: true, action: 'noop', total: registros?.length || 0 });
+    if (!registros || registros.length === 0) {
+      return Response.json({ success: true, action: 'noop', total: 0 });
     }
 
-    // Separar novo (tem detalhes.bancos como array) de legado (tem detalhes.banco singular ou sem bancos)
-    const novo = registros.find(r =>
-      r.detalhes && (Array.isArray(r.detalhes.bancos) || Array.isArray(r.detalhes.maquinas_cartao))
-    );
+    if (registros.length === 1) {
+      return Response.json({ success: true, action: 'noop', total: 1 });
+    }
 
-    const legados = registros.filter(r =>
-      r.id !== (novo?.id) &&
-      !(Array.isArray(r.detalhes?.bancos) || Array.isArray(r.detalhes?.maquinas_cartao))
-    );
+    // ── Classificar registros ──────────────────────────────────────
+    const isLegado = (r) =>
+      r.detalhes != null && (
+        r.detalhes.banco !== undefined ||
+        r.detalhes.maquina_cartao !== undefined
+      );
 
-    if (legados.length === 0) {
-      // Todos têm schema novo — manter o mais recente, deletar os demais
-      const [manter, ...excedentes] = registros; // já ordenado por -updated_date
+    const isNovo = (r) =>
+      r.detalhes != null && (
+        Array.isArray(r.detalhes.bancos) ||
+        Array.isArray(r.detalhes.maquinas_cartao)
+      );
+
+    const legados = registros.filter(r => isLegado(r));
+    const novos   = registros.filter(r => isNovo(r));
+    // registros sem detalhes ou sem campos reconhecidos — tratar como legado
+    const semSchema = registros.filter(r => !isLegado(r) && !isNovo(r));
+
+    const deletados = [];
+
+    // ── 1. Deletar todos os legados ────────────────────────────────
+    for (const r of [...legados, ...semSchema]) {
+      await base44.asServiceRole.entities.DFCLancamento.delete(r.id);
+      deletados.push(r.id);
+    }
+
+    // ── 2. Se sobrar mais de 1 novo, manter apenas o mais recente ──
+    if (novos.length > 1) {
+      // novos já está ordenado por -updated_date (mais recente primeiro)
+      const [_manter, ...excedentes] = novos;
       for (const r of excedentes) {
         await base44.asServiceRole.entities.DFCLancamento.delete(r.id);
+        deletados.push(r.id);
       }
-      return Response.json({ success: true, action: 'dedup_novo', deletados: excedentes.length });
     }
 
-    // Deletar todos os legados
-    for (const legado of legados) {
-      await base44.asServiceRole.entities.DFCLancamento.delete(legado.id);
-    }
+    const registroValidoId = novos[0]?.id || null;
 
     return Response.json({
       success: true,
-      action: 'removed_legacy',
-      deletados: legados.length,
-      registro_valido_id: novo?.id || null,
+      action: deletados.length > 0 ? 'sanitized' : 'noop',
+      deletados: deletados.length,
+      ids_deletados: deletados,
+      legados_removidos: legados.length + semSchema.length,
+      duplicatas_novas_removidas: Math.max(0, novos.length - 1),
+      registro_valido_id: registroValidoId,
     });
 
   } catch (error) {
-    // Falha silenciosa — não deve quebrar o fluxo do modal
     console.error('[sanitizarSaldoInicial] erro:', error.message);
     return Response.json({ success: false, error: error.message }, { status: 500 });
   }

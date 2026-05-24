@@ -76,6 +76,15 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
   const saldoInicialEfetivo = modoSimulacao ? saldoInicialSimulado : saldoInicial;
   const isLoadingEfetivo = modoSimulacao ? false : isLoading;
 
+  // ── Sanitização proativa na abertura: remove legados do banco antes de hidratar ──
+  useEffect(() => {
+    if (!aberto || !workshopId || !mes || modoSimulacao) return;
+    // Dispara silenciosamente — não bloqueia carregamento nem altera estado local
+    base44.functions.invoke('sanitizarSaldoInicial', { workshop_id: workshopId, mes })
+      .then(() => refetch())
+      .catch(() => {});
+  }, [aberto, workshopId, mes, modoSimulacao]);
+
   // ── Popular estado local com dados do banco (uma vez por abertura) ──
   useEffect(() => {
     if (!aberto) {
