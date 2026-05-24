@@ -29,15 +29,15 @@ export default function BudgetProgressBars({ metas, calculado }) {
 
         const isDespesa = meta.tipo !== "receita";
         const realizado = calc.realizado || 0;
-        const percentual = (realizado / meta_rs) * 100;
+        const previsto = calc.previsto || 0;
+        const pctRealizado = Math.min((realizado / meta_rs) * 100, 100);
+        const pctPrevisto = Math.min((previsto / meta_rs) * 100, 100);
 
-        // Cor da barra por tipo (usando o status já calculado no engine)
         const statusOk   = calc.status === "✅";
         const statusWarn = calc.status === "⚠️";
         const barColor = statusOk ? 'bg-green-500' : statusWarn ? 'bg-yellow-500' : 'bg-red-500';
         const statusColor = statusOk ? 'text-green-600' : statusWarn ? 'text-yellow-600' : 'text-red-600';
 
-        // Texto descritivo da variação contextual
         const variacaoTexto = isDespesa
           ? (calc.variacao >= 0 ? `+${formatNumber(calc.variacao, 0)}% econ.` : `${formatNumber(calc.variacao, 0)}% excesso`)
           : (calc.variacao >= 0 ? `+${formatNumber(calc.variacao, 0)}% acima` : `${formatNumber(calc.variacao, 0)}% abaixo`);
@@ -55,19 +55,32 @@ export default function BudgetProgressBars({ metas, calculado }) {
                 </div>
               </div>
               <div className="text-right ml-2">
-                <p className={`text-sm font-bold ${statusColor}`}>{calc.status} {calc.statusLabel || ''}</p>
+                <p className={`text-sm font-bold ${statusColor}`}>{calc.status}</p>
                 <p className="text-xs text-gray-500">{variacaoTexto}</p>
               </div>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+
+            {/* Barra previsto (DRE - fundo cinza) */}
+            <div className="relative w-full bg-gray-200 rounded-full h-3 overflow-hidden mb-1">
               <div
-                className={`h-full rounded-full transition-all ${barColor}`}
-                style={{ width: Math.min(percentual, 100) + '%' }}
+                className="absolute h-full rounded-full bg-gray-400 transition-all"
+                style={{ width: pctPrevisto + '%' }}
+                title={`Previsto (DRE): ${formatCurrency(previsto)}`}
+              />
+              {/* Barra realizado (pago) por cima */}
+              <div
+                className={`absolute h-full rounded-full transition-all ${barColor}`}
+                style={{ width: pctRealizado + '%' }}
+                title={`Realizado (Pago): ${formatCurrency(realizado)}`}
               />
             </div>
+
             <div className="flex justify-between text-xs text-gray-600 mt-1">
               <span>{isDespesa ? 'Teto' : 'Meta'}: <strong>{formatCurrency(meta_rs)}</strong></span>
-              <span>Real: <strong>{formatCurrency(calc.realizado || 0)}</strong></span>
+              <span className="flex gap-3">
+                <span className="text-gray-400">Prev: {formatCurrency(previsto)}</span>
+                <span className="text-blue-700 font-semibold">Pago: {formatCurrency(realizado)}</span>
+              </span>
             </div>
           </div>
         );

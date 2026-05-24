@@ -59,8 +59,12 @@ export default function BudgetConsolidatedReport({ calculado }) {
               <span>Meta</span>
               <span className="font-semibold">{formatCurrency(receita.meta)}</span>
             </div>
+            <div className="flex justify-between text-sm opacity-70">
+              <span>Previsto (DRE)</span>
+              <span>{formatCurrency(receita.previsto || 0)}</span>
+            </div>
             <div className="flex justify-between text-sm opacity-90">
-              <span>Realizado</span>
+              <span>Realizado (Pago)</span>
               <span className="font-semibold">{formatCurrency(receita.realizado)}</span>
             </div>
 
@@ -93,8 +97,12 @@ export default function BudgetConsolidatedReport({ calculado }) {
               <span>Teto orçado</span>
               <span className="font-semibold">{formatCurrency(despesa.meta)}</span>
             </div>
+            <div className="flex justify-between text-sm opacity-70">
+              <span>Previsto (DRE)</span>
+              <span>{formatCurrency(despesa.previsto || 0)}</span>
+            </div>
             <div className="flex justify-between text-sm opacity-90">
-              <span>Realizado</span>
+              <span>Realizado (Pago)</span>
               <span className="font-semibold">{formatCurrency(despesa.realizado)}</span>
             </div>
 

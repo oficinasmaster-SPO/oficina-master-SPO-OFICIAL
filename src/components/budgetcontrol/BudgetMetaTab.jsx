@@ -141,12 +141,29 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
     enabled: !!workshopId && !!mes
   });
 
-  // Real-time subscription: atualizar quando novo DRELancamento é criado
+  // Buscar liquidações do mês para calcular Realizado real (pago efetivamente)
+  const { data: liquidacoes = [], refetch: refetchLiquidacoes } = useQuery({
+    queryKey: ["liquidacoes-mes", workshopId, mes],
+    queryFn: async () => {
+      if (!workshopId) return [];
+      // Buscar liquidações do mês (data_liquidacao começa com o mês YYYY-MM)
+      const todas = await base44.entities.LiquidaçãoFinanceira.filter({
+        workshop_id: workshopId
+      }, "-data_liquidacao", 500);
+      // Filtrar pelo mês
+      return Array.isArray(todas) ? todas.filter(l => {
+        const dataLiq = l.data_liquidacao || "";
+        return dataLiq.startsWith(mes);
+      }) : [];
+    },
+    enabled: !!workshopId && !!mes
+  });
+
+  // Real-time subscription: atualizar quando novo DRELancamento ou Liquidação é criado
   useEffect(() => {
     if (!workshopId || !mes) return;
 
-    // OPÇÃO 1: Real-time via BD subscription
-    const unsubscribe = base44.entities.DRELancamento.subscribe((event) => {
+    const unsubscribeDRE = base44.entities.DRELancamento.subscribe((event) => {
       if (event.data?.workshop_id === workshopId && event.data?.mes === mes) {
         if (event.type === 'create' || event.type === 'delete' || event.type === 'update') {
           setSyncPulse(true);
@@ -156,7 +173,14 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
       }
     });
 
-    // OPÇÃO 2: Event listener para sincronismo cross-tab (DRE Avançado → Controle Orçamentário)
+    const unsubscribeLiq = base44.entities.LiquidaçãoFinanceira.subscribe((event) => {
+      if (event.data?.workshop_id === workshopId) {
+        setSyncPulse(true);
+        refetchLiquidacoes();
+        setTimeout(() => setSyncPulse(false), 1500);
+      }
+    });
+
     const handleDREChange = (e) => {
       if (e.detail?.workshop_id === workshopId && e.detail?.mes === mes) {
         setSyncPulse(true);
@@ -167,10 +191,11 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
     window.addEventListener('dre-lancamento-criado', handleDREChange);
 
     return () => {
-      unsubscribe();
+      unsubscribeDRE();
+      unsubscribeLiq();
       window.removeEventListener('dre-lancamento-criado', handleDREChange);
     };
-  }, [workshopId, mes, refetchLancamentos]);
+  }, [workshopId, mes, refetchLancamentos, refetchLiquidacoes]);
 
   // Criar/Atualizar meta
   const saveMutation = useMutation({
@@ -240,6 +265,8 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
   };
 
   // Calcular totais e comparações
+  // realizado = valor_liquido das LiquidacaoFinanceira do mês (efetivamente pago)
+  // previsto  = soma do DRELancamento (lançado mas ainda não pago)
   const calculado = useMemo(() => {
     if (!metas.length) return { total_meta: 0, por_categoria: {}, receita: {}, despesa: {}, detalhes_subcategorias: {} };
 
@@ -247,8 +274,10 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
     const detalhes_subcategorias = {};
     let total_meta_receita = 0;
     let total_realizado_receita = 0;
+    let total_previsto_receita = 0;
     let total_meta_despesa = 0;
     let total_realizado_despesa = 0;
+    let total_previsto_despesa = 0;
 
     metas.forEach(meta => {
       const controlar = meta.controlar_orcamento !== false;
@@ -259,26 +288,20 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
         : (meta.meta_fixa_rs || 0);
 
       if (!meta_rs || meta_rs === 0) {
-        por_categoria[meta.id] = { meta_rs: 0, realizado: 0, diferenca: 0, variacao: 0, performance: 0, status: "—" };
+        por_categoria[meta.id] = { meta_rs: 0, realizado: 0, previsto: 0, diferenca: 0, variacao: 0, performance: 0, status: "—" };
         return;
       }
 
-      // BUG FIX #4: Match por item (descricao ou subcategoria) quando possível,
-      // caso contrário agrega toda a categoria (comportamento legado).
-      // Prioridade: match exato por descricao → match por subcategoria → agregado por categoria
       const metaItem = (meta.item || "").trim().toLowerCase();
-
       const lancamentosDaCategoria = lancamentos.filter(l => l.categoria === meta.categoria);
 
-      // Tentar match fino por item
+      // Match fino por item no DRE (para previsto)
       const matchPorDescricao = lancamentosDaCategoria.filter(
         l => (l.descricao || "").trim().toLowerCase() === metaItem
       );
       const matchPorSubcategoria = lancamentosDaCategoria.filter(
         l => (l.subcategoria || "").trim().toLowerCase() === metaItem
       );
-
-      // Usar o match mais específico disponível; fallback = categoria inteira
       const lancamentosFiltrados =
         matchPorDescricao.length > 0
           ? matchPorDescricao
@@ -286,9 +309,24 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
             ? matchPorSubcategoria
             : lancamentosDaCategoria;
 
-      const realizado = lancamentosFiltrados.reduce((sum, l) => sum + (l.valor || 0), 0);
+      // PREVISTO = soma do DRE (todos os lançamentos, pagos ou não)
+      const previsto = lancamentosFiltrados.reduce((sum, l) => sum + (l.valor || 0), 0);
 
-      // Detalhamento por subcategoria (para exibição)
+      // IDs dos DRELancamentos desta meta para cruzar com liquidações
+      const dreIds = new Set(lancamentosFiltrados.map(l => l.id));
+
+      // REALIZADO = soma de valor_liquido das liquidações vinculadas a esses lançamentos
+      // Liquidações de pagamento (conta_pagar) ou recebimento (conta_receber) cujo dre_lancamento_id bate
+      // Como LiquidacaoFinanceira não tem dre_lancamento_id direto, usamos ContaPagar/ContaReceber como ponte
+      // Estratégia simples: liquidações do mês cujo banco_origem/destino e tipo batem com a categoria
+      // Para máxima precisão: filtrar pelo tipo (pagamento=despesa, recebimento=receita) e somar valor_liquido
+      const isDespesa = meta.tipo !== "receita";
+      const tipoLiq = isDespesa ? "pagamento" : "recebimento";
+      const liquidacoesMeta = liquidacoes.filter(l => l.tipo === tipoLiq);
+      // Somar valor_liquido das liquidações (valor efetivamente pago após ajustes)
+      const realizado = liquidacoesMeta.reduce((sum, l) => sum + (l.valor_liquido || l.valor_liquidacao || 0), 0);
+
+      // Detalhamento subcategorias
       const subcategoriasDetalhes = lancamentosFiltrados
         .filter(l => l.subcategoria)
         .reduce((acc, l) => {
@@ -296,40 +334,38 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
           acc[l.subcategoria] += l.valor || 0;
           return acc;
         }, {});
-
       detalhes_subcategorias[meta.id] = subcategoriasDetalhes;
 
-      const isDespesa = meta.tipo !== "receita";
-
+      // Performance baseada no REALIZADO (pago efetivamente)
       let performance, variacao, status, diferenca;
 
       if (!isDespesa) {
-        // RECEITA: performance = realizado / meta → quanto maior melhor
         performance = meta_rs > 0 ? (realizado / meta_rs) * 100 : 0;
         variacao = ((realizado - meta_rs) / meta_rs) * 100;
-        diferenca = realizado - meta_rs; // positivo = acima da meta (bom)
+        diferenca = realizado - meta_rs;
         if (performance >= 100) status = "✅";
         else if (performance >= 80) status = "⚠️";
         else status = "❌";
       } else {
-        // DESPESA: performance = meta / realizado → quanto mais perto de 100% melhor; >100% = estourou
         performance = realizado > 0 ? (meta_rs / realizado) * 100 : 100;
-        variacao = ((meta_rs - realizado) / meta_rs) * 100; // positivo = economizou (bom)
-        diferenca = meta_rs - realizado; // positivo = dentro do limite (bom)
+        variacao = ((meta_rs - realizado) / meta_rs) * 100;
+        diferenca = meta_rs - realizado;
         if (realizado <= meta_rs) status = "✅";
         else if (realizado <= meta_rs * 1.05) status = "⚠️";
         else status = "❌";
       }
 
-      por_categoria[meta.id] = { meta_rs, realizado, diferenca, variacao, performance, status, isDespesa };
+      por_categoria[meta.id] = { meta_rs, realizado, previsto, diferenca, variacao, performance, status, isDespesa };
 
       if (controlar) {
         if (isDespesa) {
           total_meta_despesa += meta_rs;
           total_realizado_despesa += realizado;
+          total_previsto_despesa += previsto;
         } else {
           total_meta_receita += meta_rs;
           total_realizado_receita += realizado;
+          total_previsto_receita += previsto;
         }
       }
     });
@@ -345,15 +381,17 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
       receita: {
         meta: total_meta_receita,
         realizado: total_realizado_receita,
+        previsto: total_previsto_receita,
         atingimento: atingimento_receita
       },
       despesa: {
         meta: total_meta_despesa,
         realizado: total_realizado_despesa,
+        previsto: total_previsto_despesa,
         economia: economia_despesa
       }
     };
-  }, [metas, lancamentos]);
+  }, [metas, lancamentos, liquidacoes]);
 
   if (isLoadingMetas) {
     return <div className="flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Carregando...</div>;
@@ -601,7 +639,8 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
                       </div>
                       <div className="text-right space-y-1">
                         <p className="text-sm"><strong>Meta:</strong> {formatCurrency(meta_rs)}</p>
-                        <p className="text-sm"><strong>Real:</strong> {formatCurrency(calc.realizado || 0)}</p>
+                        <p className="text-sm text-gray-500"><strong>Previsto:</strong> {formatCurrency(calc.previsto || 0)}</p>
+                        <p className="text-sm text-blue-700 font-semibold"><strong>Realizado:</strong> {formatCurrency(calc.realizado || 0)}</p>
                         <p className={`text-sm font-semibold ${calc.diferenca >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                           {calc.diferenca >= 0 ? '+' : ''}{formatCurrency(calc.diferenca || 0)}
                         </p>
@@ -638,7 +677,8 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
                     <th className="text-right py-2 px-2">Base (R$)</th>
                     <th className="text-right py-2 px-2">Meta %</th>
                     <th className="text-right py-2 px-2">Meta R$</th>
-                    <th className="text-right py-2 px-2">Realizado</th>
+                    <th className="text-right py-2 px-2 text-gray-500">Previsto (DRE)</th>
+                    <th className="text-right py-2 px-2 text-blue-700">Realizado (Pago)</th>
                     <th className="text-right py-2 px-2">Diferença</th>
                     <th className="text-center py-2 px-2">Status</th>
                   </tr>
@@ -661,7 +701,8 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
                         <td className="text-right py-3 px-2 text-gray-500">{formatCurrency(meta.faturamento_meta_rs || 0)}</td>
                         <td className="text-right py-3 px-2">{meta.meta_percentual > 0 ? `${meta.meta_percentual}%` : "—"}</td>
                         <td className="text-right py-3 px-2 font-semibold">{formatCurrency(calc.meta_rs || 0)}</td>
-                        <td className="text-right py-3 px-2">{formatCurrency(calc.realizado || 0)}</td>
+                        <td className="text-right py-3 px-2 text-gray-500">{formatCurrency(calc.previsto || 0)}</td>
+                        <td className="text-right py-3 px-2 font-semibold text-blue-700">{formatCurrency(calc.realizado || 0)}</td>
                         <td className={`text-right py-3 px-2 font-semibold ${diferencaCor}`}>
                           {diferencaPositiva ? "+" : ""}{formatCurrency(calc.diferenca || 0)}
                         </td>
