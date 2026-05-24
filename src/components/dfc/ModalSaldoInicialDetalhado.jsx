@@ -229,6 +229,8 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
     persistirMutation.mutate({ detalhes: novoDetalhes, tipo_alteracao, detalhes_anteriores });
   }, [persistirMutation]);
 
+
+
   const total = calcTotal(localDetalhes);
   const isSaving = persistirMutation.isPending;
 
@@ -254,7 +256,8 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
     };
     const bancosAtuais = Array.isArray(localDetalhes?.bancos) ? localDetalhes.bancos : [];
     const detalhesAntes = { ...localDetalhes, bancos: [...bancosAtuais] };
-    persistir({ detalhes: { ...localDetalhes, bancos: [...bancosAtuais, novo] }, tipo_alteracao: 'edicao', detalhes_anteriores: detalhesAntes });
+    const novosDetalhes = { ...localDetalhes, bancos: [...bancosAtuais, novo] };
+    persistir(novosDetalhes, 'edicao', detalhesAntes);
     setFormData({ nome: '', saldo: 0, tipo_conta: 'corrente', gateway: '' });
     setModalFormAberto(false);
     toast.success("✅ Banco adicionado e salvo!");
@@ -264,7 +267,7 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
     if (!inicializadoRef.current) return;
     const bancos = (localDetalhes?.bancos || []).map(b => b.id === id ? { ...b, [field]: value } : b);
     const detalhesAntes = { ...localDetalhes, bancos: [...(localDetalhes?.bancos || [])] };
-    persistir({ detalhes: { ...localDetalhes, bancos }, tipo_alteracao: 'edicao', detalhes_anteriores: detalhesAntes });
+    persistir({ ...localDetalhes, bancos }, 'edicao', detalhesAntes);
   };
 
   const removerBanco = (id) => {
@@ -299,7 +302,8 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
     };
     const maquinasAtuais = Array.isArray(localDetalhes?.maquinas_cartao) ? localDetalhes.maquinas_cartao : [];
     const detalhesAntes = { ...localDetalhes, maquinas_cartao: [...maquinasAtuais] };
-    persistir({ detalhes: { ...localDetalhes, maquinas_cartao: [...maquinasAtuais, nova] }, tipo_alteracao: 'edicao', detalhes_anteriores: detalhesAntes });
+    const novosDetalhes = { ...localDetalhes, maquinas_cartao: [...maquinasAtuais, nova] };
+    persistir(novosDetalhes, 'edicao', detalhesAntes);
     setFormData({ nome: '', saldo: 0, tipo_conta: '', gateway: '' });
     setModalFormAberto(false);
     toast.success("✅ Máquina adicionada e salva!");
@@ -309,7 +313,7 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
     if (!inicializadoRef.current) return;
     const maquinas_cartao = (localDetalhes?.maquinas_cartao || []).map(m => m.id === id ? { ...m, [field]: value } : m);
     const detalhesAntes = { ...localDetalhes, maquinas_cartao: [...(localDetalhes?.maquinas_cartao || [])] };
-    persistir({ detalhes: { ...localDetalhes, maquinas_cartao }, tipo_alteracao: 'edicao', detalhes_anteriores: detalhesAntes });
+    persistir({ ...localDetalhes, maquinas_cartao }, 'edicao', detalhesAntes);
   };
 
   const removerMaquina = (id) => {
@@ -329,7 +333,7 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
     console.log('[DFC-Modal] 💵 salvarCaixa | inicializado=', inicializadoRef.current, '| localDetalhes=', localDetalhes);
     if (!inicializadoRef.current) { console.warn('[DFC-Modal] ⚠️ salvarCaixa bloqueado — modal ainda não inicializado'); return; }
     const detalhesAntes = { ...localDetalhes };
-    persistir({ detalhes: { ...localDetalhes, caixa: Number(localDetalhes.caixa) || 0 }, tipo_alteracao: 'edicao', detalhes_anteriores: detalhesAntes });
+    persistir({ ...localDetalhes, caixa: Number(localDetalhes.caixa) || 0 }, 'edicao', detalhesAntes);
   };
 
   // ── Zerar tudo ────────────────────────────────────────────────
