@@ -17,7 +17,9 @@ Deno.serve(async (req) => {
       valor_liquidacao,
       forma_pagamento,
       data_liquidacao,
-      banco,
+      banco_destino,
+      banco_origem,
+      fonte_selecionada,
       observacoes
     } = body;
 
@@ -25,6 +27,9 @@ Deno.serve(async (req) => {
     const desconto = body.desconto_concedido ?? body.desconto ?? 0;
     const juros    = body.juros_recebido    ?? body.juros    ?? 0;
     const multa    = body.multa_recebida    ?? body.multa    ?? 0;
+
+    // Determina qual banco/máquina/caixa foi selecionado (unificado para entrada e saída)
+    const bancoSelecionado = banco_origem || banco_destino || banco || fonte_selecionada;
 
     // Validações
     if (!valor_liquidacao || valor_liquidacao <= 0) {
@@ -90,7 +95,8 @@ Deno.serve(async (req) => {
       valor_liquidacao,
       data_liquidacao,
       forma_pagamento,
-      banco_destino: banco || null,
+      banco_destino: tipo === 'recebimento' ? bancoSelecionado : null,
+      banco_origem: tipo === 'pagamento' ? bancoSelecionado : null,
       desconto_concedido: desconto || 0,
       juros_recebido: juros || 0,
       multa_recebida: multa || 0,
@@ -131,7 +137,6 @@ Deno.serve(async (req) => {
     } catch (_) { /* não bloqueia se não houver DRE vinculado */ }
 
     // 4. Gera DFC (SÓ AGORA!)
-    // Usa os primeiros 7 chars da string diretamente para evitar bug de timezone UTC
     const mesReferencia = String(data_liquidacao).slice(0, 7); // YYYY-MM
     
     await base44.entities.DFCLancamento.create({
@@ -142,7 +147,70 @@ Deno.serve(async (req) => {
       grupo: 'operacional',
       descricao: `${tipo === 'recebimento' ? 'Recebimento' : 'Pagamento'} - ${conta.cliente_nome || conta.fornecedor_nome}`,
       valor: valor_liquidacao,
+      fonte_saida: tipo === 'pagamento' ? bancoSelecionado : null,
+      fonte_entrada: tipo === 'recebimento' ? bancoSelecionado : null,
     });
+
+    // 5. Atualizar saldo inicial da fonte selecionada
+    if (bancoSelecionado) {
+      const records = await base44.asServiceRole.entities.DFCLancamento.filter({
+        workshop_id: conta.workshop_id,
+        mes: mesReferencia,
+        grupo: 'saldo_inicial',
+      }, '-created_date', 1);
+      
+      const registroSaldo = records?.[0];
+      if (registroSaldo) {
+        const detalhes = {
+          bancos: registroSaldo.detalhes?.bancos || [],
+          maquinas_cartao: registroSaldo.detalhes?.maquinas_cartao || [],
+          caixa: registroSaldo.detalhes?.caixa || 0,
+        };
+        
+        const [tipoFonte, idFonte] = bancoSelecionado.split(':');
+        const delta = tipo === 'recebimento' ? valor_liquidacao : -valor_liquidacao;
+        
+        if (tipoFonte === 'banco') {
+          detalhes.bancos = detalhes.bancos.map(b =>
+            b.id === idFonte ? { ...b, saldo: Math.max(0, (b.saldo || 0) + delta) } : b
+          );
+        } else if (tipoFonte === 'maquina') {
+          detalhes.maquinas_cartao = detalhes.maquinas_cartao.map(m =>
+            m.id === idFonte ? { ...m, saldo: Math.max(0, (m.saldo || 0) + delta) } : m
+          );
+        } else if (tipoFonte === 'caixa') {
+          detalhes.caixa = Math.max(0, detalhes.caixa + delta);
+        }
+        
+        const novoTotal = detalhes.bancos.reduce((s, b) => s + (b.saldo || 0), 0)
+          + detalhes.maquinas_cartao.reduce((s, m) => s + (m.saldo || 0), 0)
+          + detalhes.caixa;
+        
+        await base44.entities.DFCLancamento.update(registroSaldo.id, {
+          detalhes,
+          valor: novoTotal,
+          saldo_inicial: novoTotal,
+        });
+        
+        // Registrar histórico
+        await base44.functions.invoke('registrarHistoricoSaldo', {
+          workshop_id: conta.workshop_id,
+          dfc_lancamento_id: registroSaldo.id,
+          mes: mesReferencia,
+          tipo_alteracao: 'liquidacao',
+          valor_anterior: registroSaldo.valor,
+          valor_novo: novoTotal,
+          detalhes_anteriores: registroSaldo.detalhes,
+          detalhes_novos: detalhes,
+          campo_alterado: tipoFonte === 'caixa' ? 'caixa' : `${tipoFonte}s`,
+          valor_delta: delta,
+          origem_alteracao: tipo === 'recebimento' ? 'liquidacao_recebimento' : 'liquidacao_pagamento',
+          liquidacao_id: liquidacao.id,
+          conta_pagar_id: conta_pagar_id,
+          conta_receber_id: conta_receber_id,
+        });
+      }
+    }
 
     return Response.json({
       success: true,
@@ -151,7 +219,8 @@ Deno.serve(async (req) => {
       valor_pago: novoValorPago,
       valor_aberto: novoValorAberto,
       dfc_gerado: true,
-      mes_dfc: mesReferencia
+      mes_dfc: mesReferencia,
+      saldo_atualizado: !!bancoSelecionado
     });
 
   } catch (error) {

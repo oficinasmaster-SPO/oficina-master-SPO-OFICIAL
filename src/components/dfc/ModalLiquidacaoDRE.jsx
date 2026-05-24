@@ -127,6 +127,7 @@ export default function ModalLiquidacaoDRE({ item, workshopId, onFechar, onSalvo
           desconto_concedido: desconto,
           juros_recebido: juros,
           multa_recebida: multa,
+          fonte_selecionada: fonteSelecionada,
         });
         toast.success("Pagamento registrado!");
       } else {
@@ -140,6 +141,7 @@ export default function ModalLiquidacaoDRE({ item, workshopId, onFechar, onSalvo
           desconto_concedido: desconto,
           juros_recebido: juros,
           multa_recebida: multa,
+          fonte_selecionada: fonteSelecionada,
         });
         toast.success("Recebimento registrado!");
       }
@@ -151,50 +153,10 @@ export default function ModalLiquidacaoDRE({ item, workshopId, onFechar, onSalvo
         });
       }
 
-      // ✅ Atualizar saldo inicial da fonte selecionada
+      // ✅ Atualizar queries (o backend já atualiza o saldo inicial agora)
       if (fonteSelecionada && mesReferencia) {
-        const [tipo, id] = fonteSelecionada.split(":");
-        const operacao = isDespesa ? "subtrai" : "soma";
-        
-        const records = await base44.entities.DFCLancamento.filter({
-          workshop_id: workshopId,
-          mes: mesReferencia,
-          grupo: "saldo_inicial",
-        }, "-created_date", 1);
-        const registro = records?.[0];
-        if (registro) {
-          const detalhes = {
-            bancos: registro.detalhes?.bancos || [],
-            maquinas_cartao: registro.detalhes?.maquinas_cartao || [],
-            caixa: registro.detalhes?.caixa || 0,
-          };
-          const delta = operacao === "soma" ? valorLiquidacao : -valorLiquidacao;
-
-          if (tipo === "banco") {
-            detalhes.bancos = detalhes.bancos.map(b =>
-              b.id === id ? { ...b, saldo: Math.max(0, (b.saldo || 0) + delta) } : b
-            );
-          } else if (tipo === "maquina") {
-            detalhes.maquinas_cartao = detalhes.maquinas_cartao.map(m =>
-              m.id === id ? { ...m, saldo: Math.max(0, (m.saldo || 0) + delta) } : m
-            );
-          } else if (tipo === "caixa") {
-            detalhes.caixa = Math.max(0, detalhes.caixa + delta);
-          }
-
-          const novoTotal = detalhes.bancos.reduce((s, b) => s + (b.saldo || 0), 0)
-            + detalhes.maquinas_cartao.reduce((s, m) => s + (m.saldo || 0), 0)
-            + detalhes.caixa;
-
-          await base44.entities.DFCLancamento.update(registro.id, {
-            detalhes,
-            valor: novoTotal,
-            saldo_inicial: novoTotal,
-          });
-
-          queryClient.invalidateQueries({ queryKey: ["saldo-inicial-fontes", workshopId, mesReferencia] });
-          queryClient.invalidateQueries({ queryKey: ["dfc-saldo", workshopId, mesReferencia] });
-        }
+        queryClient.invalidateQueries({ queryKey: ["saldo-inicial-fontes", workshopId, mesReferencia] });
+        queryClient.invalidateQueries({ queryKey: ["dfc-saldo", workshopId, mesReferencia] });
       }
 
       onSalvo?.();
