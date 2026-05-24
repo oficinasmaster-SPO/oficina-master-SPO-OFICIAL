@@ -40,6 +40,7 @@ export default function ContasReceber() {
   const [contaSelecionada, setContaSelecionada] = useState(null);
   const [contaParaDeletar, setContaParaDeletar] = useState(null);
   const [deletando, setDeletando] = useState(false);
+  const [loadingReceber, setLoadingReceber] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ['current-user'],
@@ -57,12 +58,27 @@ export default function ContasReceber() {
       if (filtroStatus !== 'todos') query.status = filtroStatus;
       return await base44.entities.ContaReceber.filter(query, '-data_vencimento', 100);
     },
-    enabled: !!workshopId
+    enabled: !!workshopId,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   const totalAberto = contas.reduce((s, c) => s + (c.valor_aberto || 0), 0);
   const totalVencido = contas.filter(c => c.data_vencimento < new Date().toISOString().slice(0, 10) && c.status !== 'pago').reduce((s, c) => s + (c.valor_aberto || 0), 0);
   const hoje = new Date().toISOString().slice(0, 10);
+
+  // Sempre busca o registro mais atualizado do BD antes de abrir o modal
+  const handleAbrirModalReceber = async (conta) => {
+    setLoadingReceber(true);
+    try {
+      const registros = await base44.entities.ContaReceber.filter({ id: conta.id }, '-created_date', 1);
+      setContaSelecionada(registros?.[0] || conta);
+    } catch {
+      setContaSelecionada(conta);
+    } finally {
+      setLoadingReceber(false);
+    }
+  };
 
   const handleDeleteConta = async () => {
     if (!contaParaDeletar) return;
@@ -156,8 +172,9 @@ export default function ContasReceber() {
                 </div>
                 <div className="flex gap-2">
                   {conta.status !== 'pago' && conta.status !== 'cancelado' && (
-                    <Button size="sm" onClick={() => setContaSelecionada(conta)}>
-                      <DollarSign className="w-4 h-4 mr-1" /> Registrar
+                    <Button size="sm" onClick={() => handleAbrirModalReceber(conta)} disabled={loadingReceber}>
+                      {loadingReceber ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <DollarSign className="w-4 h-4 mr-1" />}
+                      Registrar
                     </Button>
                   )}
                   <Button 

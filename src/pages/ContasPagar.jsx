@@ -30,8 +30,22 @@ export default function ContasPagar() {
   const [contaParaDeletar, setContaParaDeletar] = useState(null);
   const [contaParaPagar, setContaParaPagar] = useState(null);
   const [deletando, setDeletando] = useState(false);
+  const [loadingPagar, setLoadingPagar] = useState(false);
 
   const mesAtual = new Date().toISOString().slice(0, 7);
+
+  // Sempre busca o registro mais atualizado do BD antes de abrir o modal
+  const handleAbrirModalPagar = async (conta) => {
+    setLoadingPagar(true);
+    try {
+      const registros = await base44.entities.ContaPagar.filter({ id: conta.id }, '-created_date', 1);
+      setContaParaPagar(registros?.[0] || conta);
+    } catch {
+      setContaParaPagar(conta);
+    } finally {
+      setLoadingPagar(false);
+    }
+  };
 
   const { data: contas, isLoading, refetch } = useQuery({
     queryKey: ['contas-pagar', workshop?.id, filtroStatus],
@@ -41,7 +55,9 @@ export default function ContasPagar() {
       if (filtroStatus !== "todos") query.status = filtroStatus;
       return await base44.entities.ContaPagar.filter(query, '-data_vencimento', 100);
     },
-    enabled: !!workshop?.id
+    enabled: !!workshop?.id,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   const handleDeleteConta = async () => {
@@ -163,9 +179,11 @@ export default function ContasPagar() {
                             size="sm"
                             variant="outline"
                             className="text-green-700 border-green-300 hover:bg-green-50"
-                            onClick={() => setContaParaPagar(conta)}
+                            onClick={() => handleAbrirModalPagar(conta)}
+                            disabled={loadingPagar}
                           >
-                            <DollarSign className="w-3 h-3 mr-1" /> Pagar
+                            {loadingPagar ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <DollarSign className="w-3 h-3 mr-1" />}
+                            Pagar
                           </Button>
                         )}
                         <Button
