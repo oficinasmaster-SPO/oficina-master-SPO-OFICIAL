@@ -211,15 +211,28 @@ const fmtData = (d) => {
 
 // ─── Badge de status de pagamento ─────────────────────────────────
 function StatusPagamento({ item }) {
-  if (item.origem === "manual") return null; // manual do DFC não tem data_vencimento do DRE
+  if (item.origem === "manual") return null;
   const hoje = new Date().toISOString().split("T")[0];
-  if (item.data_pagamento) {
+
+  // ✅ Pago total
+  if (item.data_pagamento && item.status_conta !== "parcial") {
     return (
       <span className="text-[10px] font-medium text-emerald-600 bg-emerald-50 border border-emerald-200 rounded px-1.5 py-0.5 shrink-0">
-        ✓ {fmtData(item.data_pagamento)}
+        ✅ pago {fmtData(item.data_pagamento)}
       </span>
     );
   }
+
+  // 🟡 Parcialmente pago
+  if (item.status_conta === "parcial") {
+    return (
+      <span className="text-[10px] font-medium text-yellow-700 bg-yellow-50 border border-yellow-300 rounded px-1.5 py-0.5 shrink-0">
+        ◑ parcial {item.data_vencimento ? `· vence ${fmtData(item.data_vencimento)}` : ""}
+      </span>
+    );
+  }
+
+  // ⚠️ Vencido ou 🕐 A vencer
   if (item.data_vencimento) {
     const vencido = item.data_vencimento < hoje;
     return (
@@ -464,10 +477,14 @@ export default function DFCTab({ workshopId, mes }) {
         const contaR = mapaReceber[d.id];
         const contaP = mapaPagar[d.id];
         const conta = contaR || contaP;
-        if (conta && !d.data_pagamento && conta.status === "pago" && conta.data_primeiro_pagamento) {
-          return { ...d, data_pagamento: conta.data_primeiro_pagamento };
+        if (!conta) return d;
+        if (conta.status === "pago" && !d.data_pagamento && conta.data_primeiro_pagamento) {
+          return { ...d, data_pagamento: conta.data_primeiro_pagamento, status_conta: "pago" };
         }
-        return d;
+        if (conta.status === "parcial") {
+          return { ...d, status_conta: "parcial", data_pagamento: d.data_pagamento || conta.data_primeiro_pagamento || null };
+        }
+        return { ...d, status_conta: conta.status };
       });
     },
     enabled: !!workshopId && !!mes,
