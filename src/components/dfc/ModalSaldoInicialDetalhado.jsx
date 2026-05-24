@@ -139,7 +139,7 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
   const [formData, setFormData] = useState({ nome: '', saldo: 0, tipo_conta: 'corrente', gateway: '' });
 
   const persistirMutation = useMutation({
-    mutationFn: async ({ detalhes, tipo_alteracao = 'edicao', detalhes_anteriores = null }) => {
+    mutationFn: async ({ detalhes, tipo_alteracao = 'edicao', detalhes_anteriores = null, _detalhesParaCache }) => {
       // Em modo simulação, não persiste no banco - apenas atualiza o estado local
       if (modoSimulacao) {
         console.log('[DFC-Modal] 🧪 MODO SIMULAÇÃO - não persiste no banco');
@@ -170,10 +170,9 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
           origem: "manual",
         });
       }
-      // Garante que o objeto retornado sempre tem os detalhes corretos (alguns backends retornam sem o campo)
-      if (resultado && !resultado.detalhes) {
-        resultado = { ...resultado, detalhes };
-      }
+      // Garante que o objeto retornado SEMPRE tem os detalhes corretos no formato novo
+      // O backend às vezes retorna sem o campo detalhes ou com o formato antigo
+      resultado = { ...resultado, detalhes };
 
       // Registrar histórico se houver mudança
       if (detalhes_anteriores && idAtual) {
