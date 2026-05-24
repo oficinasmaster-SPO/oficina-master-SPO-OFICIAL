@@ -54,16 +54,17 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Conta não encontrada' }, { status: 404 });
     }
 
-    // Calcula novos valores
+    // Calcula novos valores — usa valor_aberto atual como base para suportar pagamentos parciais
+    const valorAbertoAtual = (conta.valor_aberto != null) ? conta.valor_aberto : conta.valor_original;
+    const novoValorAberto = Math.max(0, valorAbertoAtual - valor_liquidacao);
     const novoValorPago = (conta.valor_pago || 0) + valor_liquidacao;
-    const novoValorAberto = conta.valor_original - novoValorPago;
     const novoStatus = novoValorAberto <= 0.01 ? 'pago' : 'parcial';
 
-    // Valida se não está pagando mais que o devido
-    if (novoValorPago > conta.valor_original * 1.01) { // 1% de tolerância
+    // Valida se não está pagando mais que o saldo em aberto (com 1 centavo de tolerância)
+    if (valor_liquidacao > valorAbertoAtual + 0.01) {
       return Response.json({ 
-        error: 'Valor pago excede o valor original',
-        detalhe: `Pago: ${novoValorPago}, Original: ${conta.valor_original}`
+        error: 'Valor pago excede o saldo em aberto',
+        detalhe: `Tentando pagar: ${valor_liquidacao}, Saldo em aberto: ${valorAbertoAtual}`
       }, { status: 400 });
     }
 
