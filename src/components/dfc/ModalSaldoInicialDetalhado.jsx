@@ -163,12 +163,14 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
       console.log('[DFC-Modal] 💾 persistir chamado | inicializado=', inicializadoRef.current, '| idAtual=', idAtual, '| detalhes=', detalhes);
       
       let resultado;
+      console.log('[DFC-Modal] 💾 persistirMutation | detalhes antes de salvar:', detalhes);
       if (idAtual) {
         resultado = await base44.entities.DFCLancamento.update(idAtual, {
           detalhes,
           valor: total,
           saldo_inicial: total,
         });
+        console.log('[DFC-Modal] ✅ UPDATE realizado | id:', idAtual, '| resultado.detalhes:', resultado.detalhes);
       } else {
         resultado = await base44.entities.DFCLancamento.create({
           workshop_id: workshopId,
@@ -181,10 +183,12 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
           detalhes,
           origem: "manual",
         });
+        console.log('[DFC-Modal] ✅ CREATE realizado | id:', resultado.id, '| resultado.detalhes:', resultado.detalhes);
       }
       // Garante que o objeto retornado SEMPRE tem os detalhes corretos no formato novo
       // O backend às vezes retorna sem o campo detalhes ou com o formato antigo
       resultado = { ...resultado, detalhes };
+      console.log('[DFC-Modal] 📦 resultado final retornado:', resultado);
 
       // Sanitização silenciosa pós-save: remove registros legados/duplicados no backend
       // Não bloqueia o fluxo — erro é ignorado intencionalmente
