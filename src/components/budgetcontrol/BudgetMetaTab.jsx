@@ -141,23 +141,31 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
     enabled: !!workshopId && !!mes
   });
 
-  // Buscar liquidações do mês para calcular Realizado real (pago efetivamente)
-  const { data: liquidacoes = [], refetch: refetchLiquidacoes } = useQuery({
-    queryKey: ["liquidacoes-mes", workshopId, mes],
-    queryFn: async () => {
-      if (!workshopId) return [];
-      // Buscar liquidações do mês (data_liquidacao começa com o mês YYYY-MM)
-      const todas = await base44.entities.LiquidaçãoFinanceira.filter({
-        workshop_id: workshopId
-      }, "-data_liquidacao", 500);
-      // Filtrar pelo mês
-      return Array.isArray(todas) ? todas.filter(l => {
-        const dataLiq = l.data_liquidacao || "";
-        return dataLiq.startsWith(mes);
-      }) : [];
-    },
-    enabled: !!workshopId && !!mes
+  // Buscar ContaReceber e ContaPagar para cruzar realizado via dre_lancamento_id
+  const { data: contasReceber = [], refetch: refetchContasReceber } = useQuery({
+    queryKey: ["contas-receber-budget", workshopId],
+    queryFn: () => base44.entities.ContaReceber.filter({ workshop_id: workshopId }),
+    enabled: !!workshopId
   });
+
+  const { data: contasPagar = [], refetch: refetchContasPagar } = useQuery({
+    queryKey: ["contas-pagar-budget", workshopId],
+    queryFn: () => base44.entities.ContaPagar.filter({ workshop_id: workshopId }),
+    enabled: !!workshopId
+  });
+
+  // Mapas de dre_lancamento_id → conta (para cruzamento rápido)
+  const mapaContasReceber = useMemo(() =>
+    Object.fromEntries((contasReceber || []).map(c => [c.dre_lancamento_id, c])),
+    [contasReceber]
+  );
+  const mapaContasPagar = useMemo(() =>
+    Object.fromEntries((contasPagar || []).map(c => [c.dre_lancamento_id, c])),
+    [contasPagar]
+  );
+
+  // refetchLiquidacoes mantido como alias para compatibilidade com useEffect existente
+  const refetchLiquidacoes = () => { refetchContasReceber(); refetchContasPagar(); };
 
   // Real-time subscription: atualizar quando novo DRELancamento ou Liquidação é criado
   useEffect(() => {
@@ -173,7 +181,15 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
       }
     });
 
-    const unsubscribeLiq = base44.entities.LiquidaçãoFinanceira.subscribe((event) => {
+    const unsubscribeLiq = base44.entities.ContaPagar.subscribe((event) => {
+      if (event.data?.workshop_id === workshopId) {
+        setSyncPulse(true);
+        refetchLiquidacoes();
+        setTimeout(() => setSyncPulse(false), 1500);
+      }
+    });
+
+    const unsubscribeReceber = base44.entities.ContaReceber.subscribe((event) => {
       if (event.data?.workshop_id === workshopId) {
         setSyncPulse(true);
         refetchLiquidacoes();
@@ -193,6 +209,7 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
     return () => {
       unsubscribeDRE();
       unsubscribeLiq();
+      unsubscribeReceber();
       window.removeEventListener('dre-lancamento-criado', handleDREChange);
     };
   }, [workshopId, mes, refetchLancamentos, refetchLiquidacoes]);
@@ -312,19 +329,15 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
       // PREVISTO = soma do DRE (todos os lançamentos, pagos ou não)
       const previsto = lancamentosFiltrados.reduce((sum, l) => sum + (l.valor || 0), 0);
 
-      // IDs dos DRELancamentos desta meta para cruzar com liquidações
-      const dreIds = new Set(lancamentosFiltrados.map(l => l.id));
-
-      // REALIZADO = soma de valor_liquido das liquidações vinculadas a esses lançamentos
-      // Liquidações de pagamento (conta_pagar) ou recebimento (conta_receber) cujo dre_lancamento_id bate
-      // Como LiquidacaoFinanceira não tem dre_lancamento_id direto, usamos ContaPagar/ContaReceber como ponte
-      // Estratégia simples: liquidações do mês cujo banco_origem/destino e tipo batem com a categoria
-      // Para máxima precisão: filtrar pelo tipo (pagamento=despesa, recebimento=receita) e somar valor_liquido
+      // REALIZADO = valor_pago das ContaReceber/ContaPagar vinculadas via dre_lancamento_id
       const isDespesa = meta.tipo !== "receita";
-      const tipoLiq = isDespesa ? "pagamento" : "recebimento";
-      const liquidacoesMeta = liquidacoes.filter(l => l.tipo === tipoLiq);
-      // Somar valor_liquido das liquidações (valor efetivamente pago após ajustes)
-      const realizado = liquidacoesMeta.reduce((sum, l) => sum + (l.valor_liquido || l.valor_liquidacao || 0), 0);
+      const mapa = isDespesa ? mapaContasPagar : mapaContasReceber;
+      const realizado = lancamentosFiltrados.reduce((sum, l) => {
+        const conta = mapa[l.id];
+        if (!conta) return sum;
+        // Para status "pago" ou "parcial", usar valor_pago
+        return sum + (conta.valor_pago || 0);
+      }, 0);
 
       // Detalhamento subcategorias
       const subcategoriasDetalhes = lancamentosFiltrados
@@ -391,7 +404,7 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
         economia: economia_despesa
       }
     };
-  }, [metas, lancamentos, liquidacoes]);
+  }, [metas, lancamentos, mapaContasReceber, mapaContasPagar]);
 
   if (isLoadingMetas) {
     return <div className="flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Carregando...</div>;
