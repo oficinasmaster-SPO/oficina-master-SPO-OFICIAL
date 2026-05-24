@@ -38,8 +38,8 @@ export default function ContasPagar() {
   const handleAbrirModalPagar = async (conta) => {
     setLoadingPagar(true);
     try {
-      const registros = await base44.entities.ContaPagar.filter({ id: conta.id }, '-created_date', 1);
-      setContaParaPagar(registros?.[0] || conta);
+      const registroAtualizado = await base44.entities.ContaPagar.get(conta.id);
+      setContaParaPagar(registroAtualizado || conta);
     } catch {
       setContaParaPagar(conta);
     } finally {
