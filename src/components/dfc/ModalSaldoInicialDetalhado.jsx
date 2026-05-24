@@ -165,6 +165,10 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
           origem: "manual",
         });
       }
+      // Garante que o objeto retornado sempre tem os detalhes corretos (alguns backends retornam sem o campo)
+      if (resultado && !resultado.detalhes) {
+        resultado = { ...resultado, detalhes };
+      }
 
       // Registrar histórico se houver mudança
       if (detalhes_anteriores && idAtual) {
@@ -201,11 +205,10 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
     onSuccess: (resultado) => {
       console.log('[DFC-Modal] ✅ persistir onSuccess | resultado=', resultado);
       setLastSaved(new Date());
-      // Captura o ID do registro recém criado para próximos updates
-      if (resultado?.id && !modoSimulacao) registroIdRef.current = resultado.id;
-      // NÃO atualiza o cache da query para evitar re-renderizar com dados stale
-      // O estado local já foi atualizado antes da mutation
-      if (!modoSimulacao) {
+      if (!modoSimulacao && resultado?.id) {
+        registroIdRef.current = resultado.id;
+        // Atualiza o cache da query com os dados reais salvos para que ao reabrir o modal os detalhes sejam carregados corretamente
+        queryClient.setQueryData(["saldoInicial", workshopId, mes], resultado);
         queryClient.invalidateQueries({ queryKey: ["dfc-saldo", workshopId, mes] });
       }
     },
