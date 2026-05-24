@@ -116,13 +116,16 @@ function SeletorFonte({ fontes, fonteSelecionada, onChange, label = "De onde sai
 
 const fmt = (v) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v || 0);
 
+// ── Função auxiliar: atualiza saldo da fonte no saldo inicial ────
+// (mantida aqui pois é usada pelos modais compartilhados via prop onSuccess + invalidate)
+
 // ── Modal Registrar Recebimento ───────────────────────────
-function ModalRegistrarRecebimento({ aberto, onFechar, conta, workshopId, mes, onSuccess }) {
+function ModalRegistrarRecebimento_LEGACY_UNUSED({ aberto, onFechar, conta, workshopId, mes, onSuccess }) {
   const queryClient = useQueryClient();
   const [valor, setValor] = useState("");
   const [formaPagamento, setFormaPagamento] = useState("pix");
   const [dataLiquidacao, setDataLiquidacao] = useState(new Date().toISOString().split("T")[0]);
-  const [fonteDestino, setFonteDestino] = useState(""); // onde VAI o dinheiro recebido
+  const [fonteDestino, setFonteDestino] = useState("");
   const [desconto, setDesconto] = useState(0);
   const [juros, setJuros] = useState(0);
   const [multa, setMulta] = useState(0);
@@ -252,7 +255,7 @@ function ModalRegistrarRecebimento({ aberto, onFechar, conta, workshopId, mes, o
 }
 
 // ── Modal Registrar Pagamento ───────────────────────────
-function ModalRegistrarPagamento({ aberto, onFechar, conta, workshopId, mes, onSuccess }) {
+function ModalRegistrarPagamento_LEGACY_UNUSED({ aberto, onFechar, conta, workshopId, mes, onSuccess }) {
   const queryClient = useQueryClient();
   const [valor, setValor] = useState("");
   const [formaPagamento, setFormaPagamento] = useState("pix");
@@ -529,8 +532,12 @@ export default function ContasReceberPagarTab({ workshopId, mes }) {
   const handleSuccess = () => {
     refetchReceber();
     refetchPagar();
-    queryClient.invalidateQueries({ queryKey: ["dfc-manuais", workshopId, mes] });
-    queryClient.invalidateQueries({ queryKey: ["dre-lancamentos-dfc", workshopId, mes] });
+    queryClient.invalidateQueries({ queryKey: ["dfc-manuais", workshopId] });
+    queryClient.invalidateQueries({ queryKey: ["dre-lancamentos-dfc", workshopId] });
+    queryClient.invalidateQueries({ queryKey: ["contas-receber", workshopId] });
+    queryClient.invalidateQueries({ queryKey: ["contas-pagar", workshopId] });
+    queryClient.invalidateQueries({ queryKey: ["liquidacoes", workshopId] });
+    queryClient.invalidateQueries({ queryKey: ["saldo-inicial-fontes", workshopId] });
   };
 
   const totalReceber = contasReceber.reduce((sum, c) => sum + (c.valor_aberto || 0), 0);

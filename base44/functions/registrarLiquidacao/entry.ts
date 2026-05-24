@@ -9,6 +9,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const body = await req.json();
     const {
       conta_receber_id,
       conta_pagar_id,
@@ -17,11 +18,13 @@ Deno.serve(async (req) => {
       forma_pagamento,
       data_liquidacao,
       banco,
-      desconto,
-      juros,
-      multa,
       observacoes
-    } = await req.json();
+    } = body;
+
+    // Suporta tanto nomes curtos quanto nomes completos dos campos financeiros
+    const desconto = body.desconto_concedido ?? body.desconto ?? 0;
+    const juros    = body.juros_recebido    ?? body.juros    ?? 0;
+    const multa    = body.multa_recebida    ?? body.multa    ?? 0;
 
     // Validações
     if (!valor_liquidacao || valor_liquidacao <= 0) {

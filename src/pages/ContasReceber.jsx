@@ -186,6 +186,9 @@ export default function ContasReceber() {
           onSuccess={() => {
             setContaSelecionada(null);
             queryClient.invalidateQueries({ queryKey: ['contas-receber'] });
+            queryClient.invalidateQueries({ queryKey: ['liquidacoes'] });
+            queryClient.invalidateQueries({ queryKey: ['dfc-manuais'] });
+            queryClient.invalidateQueries({ queryKey: ['saldo-inicial-fontes'] });
             refetch();
           }}
         />

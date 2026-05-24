@@ -113,22 +113,24 @@ Deno.serve(async (req) => {
       }
     });
 
-    // PASO 4: Registra auditoria
-    await base44.functions.auditLog({
-      acao: 'registrar_pagamento',
-      entidade: 'ContaReceber',
-      entidade_id: conta_receber_id,
-      usuario_id: user.id,
-      usuario_email: user.email,
-      detalhes: {
-        valor_recebido,
-        forma_pagamento,
-        data_pagamento,
-        liquidacao_id: liquidacao.id,
-        status_anterior: contaReceber.status,
-        status_novo: novoStatus
-      }
-    });
+    // PASO 4: Registra auditoria (non-blocking)
+    try {
+      await base44.functions.invoke('auditLog', {
+        acao: 'registrar_pagamento',
+        entidade: 'ContaReceber',
+        entidade_id: conta_receber_id,
+        usuario_id: user.id,
+        usuario_email: user.email,
+        detalhes: {
+          valor_recebido,
+          forma_pagamento,
+          data_pagamento,
+          liquidacao_id: liquidacao.id,
+          status_anterior: contaReceber.status,
+          status_novo: novoStatus
+        }
+      });
+    } catch (_) { /* auditoria não bloqueia o fluxo */ }
 
     return Response.json({
       success: true,

@@ -197,6 +197,9 @@ export default function ContasPagar() {
           onSuccess={() => {
             setContaParaPagar(null);
             queryClient.invalidateQueries({ queryKey: ['contas-pagar'] });
+            queryClient.invalidateQueries({ queryKey: ['liquidacoes'] });
+            queryClient.invalidateQueries({ queryKey: ['dfc-manuais'] });
+            queryClient.invalidateQueries({ queryKey: ['saldo-inicial-fontes'] });
             refetch();
           }}
         />
