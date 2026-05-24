@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
     // Calcula novos valores
     const novoValorPago = (conta.valor_pago || 0) + valor_liquidacao;
     const novoValorAberto = conta.valor_original - novoValorPago;
-    const novoStatus = novoValorAberto <= 0 ? 'pago' : 'parcial';
+    const novoStatus = novoValorAberto <= 0.01 ? 'pago' : 'parcial';
 
     // Valida se não está pagando mais que o devido
     if (novoValorPago > conta.valor_original * 1.01) { // 1% de tolerância
@@ -68,13 +68,17 @@ Deno.serve(async (req) => {
     }
 
     // 1. Atualiza ContaReceber ou ContaPagar
-    await base44.entities[entityName].update(entidadeId, {
+    const updatePayload = {
       valor_pago: novoValorPago,
       valor_aberto: novoValorAberto,
       status: novoStatus,
-      data_primeiro_pagamento: data_liquidacao,
       dias_atraso: calcularDiasAtraso(conta.data_vencimento, data_liquidacao)
-    });
+    };
+    // Só preenche data_primeiro_pagamento se ainda não existir
+    if (!conta.data_primeiro_pagamento) {
+      updatePayload.data_primeiro_pagamento = data_liquidacao;
+    }
+    await base44.entities[entityName].update(entidadeId, updatePayload);
 
     // 2. Cria LiquidaçãoFinanceira
     const liquidacao = await base44.entities.LiquidacaoFinanceira.create({
@@ -105,7 +109,8 @@ Deno.serve(async (req) => {
     } catch (_) { /* não bloqueia se não houver DRE vinculado */ }
 
     // 4. Gera DFC (SÓ AGORA!)
-    const mesReferencia = new Date(data_liquidacao).toISOString().slice(0, 7); // YYYY-MM
+    // Usa os primeiros 7 chars da string diretamente para evitar bug de timezone UTC
+    const mesReferencia = String(data_liquidacao).slice(0, 7); // YYYY-MM
     
     await base44.entities.DFCLancamento.create({
       workshop_id: conta.workshop_id,
