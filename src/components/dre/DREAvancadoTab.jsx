@@ -524,6 +524,10 @@ function LancamentoRow({ item, onDelete, onSaved }) {
   }
 
   // ── MODO LEITURA ─────────────────────────────────────────────────────────────
+  const fmtData = (d) => { if (!d) return ""; const [,m,dia] = d.split("-"); return `${dia}/${m}`; };
+  const isPago = !!item.data_pagamento;
+  const hasVenc = !!item.data_vencimento;
+
   return (
     <div
       onClick={() => setEditing(true)}
@@ -547,6 +551,15 @@ function LancamentoRow({ item, onDelete, onSaved }) {
               {item.parcela_atual && item.numero_parcelas ? ` (${item.parcela_atual}/${item.numero_parcelas})` : ""}
             </span>
           )}
+          {isPago ? (
+            <span className="inline-flex items-center gap-1 text-xs bg-green-100 text-green-700 border border-green-200 px-1.5 py-0.5 rounded-full font-medium">
+              ✅ pago {fmtData(item.data_pagamento)}
+            </span>
+          ) : hasVenc ? (
+            <span className="inline-flex items-center gap-1 text-xs bg-amber-100 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded-full font-medium">
+              🕐 vence {fmtData(item.data_vencimento)}
+            </span>
+          ) : null}
         </div>
       </div>
       <span className={`font-bold text-sm flex-shrink-0 ${item.tipo === "receita" ? "text-green-600" : "text-red-600"}`}>
