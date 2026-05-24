@@ -1,14 +1,11 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Loader2, DollarSign, Clock, AlertCircle, CheckCircle, Trash2 } from "lucide-react";
+import { Loader2, DollarSign, AlertCircle, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -20,6 +17,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import ModalRegistrarRecebimento from "@/components/financeiro/ModalRegistrarRecebimento";
 
 const fmt = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
 const fmtDate = (d) => d ? new Date(d).toLocaleDateString('pt-BR') : '—';
@@ -36,124 +34,6 @@ function StatusBadge({ status }) {
   return <span className={`text-xs px-2 py-1 rounded-full font-medium ${s.color}`}>{s.label}</span>;
 }
 
-function ModalRegistrarPagamento({ conta, onClose, onSaved }) {
-  const [valorPago, setValorPago] = useState('');
-  const [formaPagamento, setFormaPagamento] = useState('pix');
-  const [banco, setBanco] = useState('');
-  const [desconto, setDesconto] = useState('0');
-  const [juros, setJuros] = useState('0');
-  const [multa, setMulta] = useState('0');
-  const [observacoes, setObservacoes] = useState('');
-  const [saving, setSaving] = useState(false);
-
-  if (!conta) return null;
-
-  const valorLiquido = (parseFloat(valorPago) || 0) + (parseFloat(juros) || 0) + (parseFloat(multa) || 0) - (parseFloat(desconto) || 0);
-
-  const handleSalvar = async () => {
-    if (!valorPago || parseFloat(valorPago) <= 0) {
-      toast.error('Informe um valor válido');
-      return;
-    }
-    setSaving(true);
-    const resp = await base44.functions.invoke('registrarLiquidacao', {
-      conta_receber_id: conta.id,
-      tipo: 'recebimento',
-      valor_liquidacao: parseFloat(valorPago),
-      forma_pagamento: formaPagamento,
-      data_liquidacao: new Date().toISOString(),
-      banco,
-      desconto: parseFloat(desconto) || 0,
-      juros: parseFloat(juros) || 0,
-      multa: parseFloat(multa) || 0,
-      observacoes
-    });
-    setSaving(false);
-    if (resp.data?.success) {
-      toast.success('Pagamento registrado com sucesso!');
-      onSaved();
-    } else {
-      toast.error(resp.data?.error || 'Erro ao registrar pagamento');
-    }
-  };
-
-  return (
-    <Dialog open={!!conta} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>💰 Registrar Pagamento</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4 py-2">
-          <div className="bg-gray-50 rounded-lg p-3 text-sm">
-            <p className="font-medium">{conta.cliente_nome}</p>
-            <p className="text-gray-500">Valor original: {fmt(conta.valor_original)}</p>
-            <p className="text-gray-500">Saldo aberto: <span className="font-semibold text-blue-700">{fmt(conta.valor_aberto)}</span></p>
-          </div>
-
-          <div>
-            <Label>Valor Recebido (R$) *</Label>
-            <Input type="number" placeholder="0,00" value={valorPago} onChange={e => setValorPago(e.target.value)} />
-          </div>
-
-          <div>
-            <Label>Forma de Pagamento *</Label>
-            <Select value={formaPagamento} onValueChange={setFormaPagamento}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="pix">PIX</SelectItem>
-                <SelectItem value="ted">TED</SelectItem>
-                <SelectItem value="boleto">Boleto</SelectItem>
-                <SelectItem value="cartao_credito">Cartão Crédito</SelectItem>
-                <SelectItem value="cartao_debito">Cartão Débito</SelectItem>
-                <SelectItem value="dinheiro">Dinheiro</SelectItem>
-                <SelectItem value="cheque">Cheque</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <Label>Banco</Label>
-            <Input placeholder="Nome do banco" value={banco} onChange={e => setBanco(e.target.value)} />
-          </div>
-
-          <div className="grid grid-cols-3 gap-2">
-            <div>
-              <Label className="text-xs">Desconto (R$)</Label>
-              <Input type="number" placeholder="0" value={desconto} onChange={e => setDesconto(e.target.value)} />
-            </div>
-            <div>
-              <Label className="text-xs">Juros (R$)</Label>
-              <Input type="number" placeholder="0" value={juros} onChange={e => setJuros(e.target.value)} />
-            </div>
-            <div>
-              <Label className="text-xs">Multa (R$)</Label>
-              <Input type="number" placeholder="0" value={multa} onChange={e => setMulta(e.target.value)} />
-            </div>
-          </div>
-
-          <div className="bg-blue-50 rounded p-2 text-sm flex justify-between">
-            <span className="text-blue-700 font-medium">Valor Líquido:</span>
-            <span className="font-bold text-blue-900">{fmt(valorLiquido)}</span>
-          </div>
-
-          <div>
-            <Label>Observações</Label>
-            <Input placeholder="Anotações sobre o pagamento" value={observacoes} onChange={e => setObservacoes(e.target.value)} />
-          </div>
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button onClick={handleSalvar} disabled={saving || !valorPago}>
-            {saving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-            Registrar Pagamento
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 export default function ContasReceber() {
   const queryClient = useQueryClient();
   const [filtroStatus, setFiltroStatus] = useState('todos');
@@ -167,6 +47,7 @@ export default function ContasReceber() {
   });
 
   const workshopId = user?.data?.workshop_id;
+  const mesAtual = new Date().toISOString().slice(0, 7); // YYYY-MM
 
   const { data: contas = [], isLoading, refetch } = useQuery({
     queryKey: ['contas-receber', workshopId, filtroStatus],
@@ -294,14 +175,21 @@ export default function ContasReceber() {
         ))}
       </div>
 
-      <ModalRegistrarPagamento
-        conta={contaSelecionada}
-        onClose={() => setContaSelecionada(null)}
-        onSaved={() => {
-          setContaSelecionada(null);
-          refetch();
-        }}
-      />
+      {/* Modal correto com data + fonte de saída */}
+      {contaSelecionada && (
+        <ModalRegistrarRecebimento
+          aberto={!!contaSelecionada}
+          onFechar={() => setContaSelecionada(null)}
+          conta={contaSelecionada}
+          workshopId={workshopId}
+          mes={mesAtual}
+          onSuccess={() => {
+            setContaSelecionada(null);
+            queryClient.invalidateQueries({ queryKey: ['contas-receber'] });
+            refetch();
+          }}
+        />
+      )}
 
       <AlertDialog open={!!contaParaDeletar} onOpenChange={() => setContaParaDeletar(null)}>
         <AlertDialogContent>

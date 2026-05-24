@@ -52,7 +52,7 @@ Deno.serve(async (req) => {
     }
 
     // Calcula valor líquido
-    const valorLiquido = valor_recebido - desconto_concedido + juros_recebido + multa_recebido;
+    const valorLiquido = valor_recebido - desconto_concedido + juros_recebido + multa_recebida;
 
     // PASO 1: Cria LiquidaçãoFinanceira
     const liquidacao = await base44.entities.LiquidacaoFinanceira.create({
@@ -113,28 +113,7 @@ Deno.serve(async (req) => {
       }
     });
 
-    // PASO 4: Cria BankTransaction pendente de conciliação
-    await base44.entities.BankTransaction.create({
-      workshop_id: contaReceber.workshop_id,
-      banco: banco_destino || 'Não informado',
-      numero_conta: '',
-      tipo: 'credito',
-      valor: valorLiquido,
-      data_operacao: data_pagamento,
-      data_lancamento: data_pagamento,
-      descricao: `${forma_pagamento.toUpperCase()} - ${contaReceber.cliente_nome || 'Cliente'}`,
-      numero_documento: contaReceber.numero_documento || '',
-      categoria_bancaria: 'Recebimento',
-      liquidacao_financeira_id: liquidacao.id,
-      status_conciliacao: 'pendente',
-      metadados: {
-        conta_receber_id: conta_receber_id,
-        forma_pagamento,
-        origem: 'registro_manual'
-      }
-    });
-
-    // PASO 5: Registra auditoria
+    // PASO 4: Registra auditoria
     await base44.functions.auditLog({
       acao: 'registrar_pagamento',
       entidade: 'ContaReceber',

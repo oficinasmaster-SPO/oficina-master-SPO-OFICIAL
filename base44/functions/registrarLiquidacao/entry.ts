@@ -91,7 +91,17 @@ Deno.serve(async (req) => {
       observacoes: observacoes || ''
     });
 
-    // 3. Gera DFC (SÓ AGORA!)
+    // 3. Atualiza data_pagamento no DRELancamento de origem (para refletir no DRE e Controle Orçamentário)
+    try {
+      const dre_lancamento_id = conta.dre_lancamento_id;
+      if (dre_lancamento_id) {
+        await base44.entities.DRELancamento.update(dre_lancamento_id, {
+          data_pagamento: data_liquidacao
+        });
+      }
+    } catch (_) { /* não bloqueia se não houver DRE vinculado */ }
+
+    // 4. Gera DFC (SÓ AGORA!)
     const mesReferencia = new Date(data_liquidacao).toISOString().slice(0, 7); // YYYY-MM
     
     await base44.entities.DFCLancamento.create({

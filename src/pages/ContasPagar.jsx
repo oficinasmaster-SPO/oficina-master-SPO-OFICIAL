@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Download, Trash2, Loader2 } from "lucide-react";
+import { Download, Trash2, Loader2, DollarSign } from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -21,13 +21,17 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
+import ModalRegistrarPagamentoConta from "@/components/financeiro/ModalRegistrarPagamentoConta";
 
 export default function ContasPagar() {
   const { workshop } = useWorkshopContext();
+  const queryClient = useQueryClient();
   const [filtroStatus, setFiltroStatus] = useState("todos");
-  const [filtroFornecedor, setFiltroFornecedor] = useState("");
   const [contaParaDeletar, setContaParaDeletar] = useState(null);
+  const [contaParaPagar, setContaParaPagar] = useState(null);
   const [deletando, setDeletando] = useState(false);
+
+  const mesAtual = new Date().toISOString().slice(0, 7);
 
   const { data: contas, isLoading, refetch } = useQuery({
     queryKey: ['contas-pagar', workshop?.id, filtroStatus],
@@ -56,17 +60,13 @@ export default function ContasPagar() {
     }
   };
 
-  const totalAberto = contas?.filter(c => c.status === 'aberto').reduce((sum, c) => sum + c.valor_aberto, 0) || 0;
-  const totalVencido = contas?.filter(c => c.status === 'vencido').reduce((sum, c) => sum + c.valor_aberto, 0) || 0;
+  const totalAberto = contas?.filter(c => c.status === 'aberto').reduce((sum, c) => sum + (c.valor_aberto || 0), 0) || 0;
+  const totalVencido = contas?.filter(c => c.status === 'vencido').reduce((sum, c) => sum + (c.valor_aberto || 0), 0) || 0;
 
   return (
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Contas a Pagar</h1>
-        <Button>
-          <Download className="w-4 h-4 mr-2" />
-          Exportar
-        </Button>
       </div>
 
       {/* KPIs */}
@@ -106,6 +106,7 @@ export default function ContasPagar() {
           <SelectContent>
             <SelectItem value="todos">Todos</SelectItem>
             <SelectItem value="aberto">Aberto</SelectItem>
+            <SelectItem value="parcial">Parcial</SelectItem>
             <SelectItem value="pago">Pago</SelectItem>
             <SelectItem value="vencido">Vencido</SelectItem>
           </SelectContent>
@@ -118,71 +119,112 @@ export default function ContasPagar() {
           <CardTitle>Lista de Contas</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Fornecedor</TableHead>
-                <TableHead>Vencimento</TableHead>
-                <TableHead>Categoria</TableHead>
-                <TableHead>Valor Original</TableHead>
-                <TableHead>Valor Aberto</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {contas?.map((conta) => (
-                <TableRow key={conta.id}>
-                  <TableCell>{conta.fornecedor_nome}</TableCell>
-                  <TableCell>{format(new Date(conta.data_vencimento), 'dd/MM/yyyy', { locale: ptBR })}</TableCell>
-                  <TableCell>{conta.categoria}</TableCell>
-                  <TableCell>R$ {conta.valor_original?.toFixed(2)}</TableCell>
-                  <TableCell>R$ {conta.valor_aberto?.toFixed(2)}</TableCell>
-                  <TableCell>
-                    <Badge variant={conta.status === 'pago' ? 'default' : conta.status === 'vencido' ? 'destructive' : 'secondary'}>
-                      {conta.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button 
-                      size="sm" 
-                      variant="ghost" 
-                      className="text-red-600 hover:bg-red-50 hover:text-red-700"
-                      onClick={() => setContaParaDeletar(conta)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </TableCell>
+          {isLoading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Fornecedor</TableHead>
+                  <TableHead>Vencimento</TableHead>
+                  <TableHead>Categoria</TableHead>
+                  <TableHead>Valor Original</TableHead>
+                  <TableHead>Valor Aberto</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {contas?.map((conta) => (
+                  <TableRow key={conta.id}>
+                    <TableCell>{conta.fornecedor_nome || '—'}</TableCell>
+                    <TableCell>
+                      {conta.data_vencimento
+                        ? format(new Date(conta.data_vencimento), 'dd/MM/yyyy', { locale: ptBR })
+                        : '—'}
+                    </TableCell>
+                    <TableCell>{conta.categoria || '—'}</TableCell>
+                    <TableCell>R$ {conta.valor_original?.toFixed(2)}</TableCell>
+                    <TableCell>R$ {(conta.valor_aberto || 0).toFixed(2)}</TableCell>
+                    <TableCell>
+                      <Badge variant={
+                        conta.status === 'pago' ? 'default' :
+                        conta.status === 'vencido' ? 'destructive' : 'secondary'
+                      }>
+                        {conta.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex gap-1 justify-end">
+                        {conta.status !== 'pago' && conta.status !== 'cancelado' && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-green-700 border-green-300 hover:bg-green-50"
+                            onClick={() => setContaParaPagar(conta)}
+                          >
+                            <DollarSign className="w-3 h-3 mr-1" /> Pagar
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                          onClick={() => setContaParaDeletar(conta)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
-                  ))}
-                  </TableBody>
-                  </Table>
-                  </CardContent>
-                  </Card>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
 
-                  <AlertDialog open={!!contaParaDeletar} onOpenChange={() => setContaParaDeletar(null)}>
-                  <AlertDialogContent>
-                  <AlertDialogHeader>
-                  <AlertDialogTitle>🗑️ Deletar Conta?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                  Tem certeza que deseja deletar a conta de <strong>{contaParaDeletar?.fornecedor_nome}</strong> no valor de <strong>R$ {contaParaDeletar?.valor_original?.toFixed(2)}</strong>?
-                  <br />
-                  <span className="text-red-600 text-sm mt-2 block">Essa ação não pode ser desfeita!</span>
-                  </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction 
-                  onClick={handleDeleteConta} 
-                  disabled={deletando}
-                  className="bg-red-600 hover:bg-red-700"
-                  >
-                  {deletando && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                  Deletar
-                  </AlertDialogAction>
-                  </AlertDialogFooter>
-                  </AlertDialogContent>
-                  </AlertDialog>
-                  </div>
-                  );
-                  }
+      {/* Modal registrar pagamento */}
+      {contaParaPagar && (
+        <ModalRegistrarPagamentoConta
+          aberto={!!contaParaPagar}
+          onFechar={() => setContaParaPagar(null)}
+          conta={contaParaPagar}
+          workshopId={workshop?.id}
+          mes={mesAtual}
+          onSuccess={() => {
+            setContaParaPagar(null);
+            queryClient.invalidateQueries({ queryKey: ['contas-pagar'] });
+            refetch();
+          }}
+        />
+      )}
+
+      <AlertDialog open={!!contaParaDeletar} onOpenChange={() => setContaParaDeletar(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>🗑️ Deletar Conta?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja deletar a conta de <strong>{contaParaDeletar?.fornecedor_nome}</strong> no valor de <strong>R$ {contaParaDeletar?.valor_original?.toFixed(2)}</strong>?
+              <br />
+              <span className="text-red-600 text-sm mt-2 block">Essa ação não pode ser desfeita!</span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConta}
+              disabled={deletando}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deletando && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+              Deletar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}

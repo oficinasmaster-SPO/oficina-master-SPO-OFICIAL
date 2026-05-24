@@ -13,6 +13,8 @@ import { InputMoeda } from "@/components/ui/InputMoeda";
 import { Loader2, DollarSign, CreditCard, CheckCircle, AlertCircle, Building2 } from "lucide-react";
 import { toast } from "sonner";
 import FiltroPeriodo from "../dre/FiltroPeriodo";
+import ModalRegistrarRecebimentoShared from "@/components/financeiro/ModalRegistrarRecebimento";
+import ModalRegistrarPagamentoContaShared from "@/components/financeiro/ModalRegistrarPagamentoConta";
 
 // Hook para buscar as fontes de dinheiro do saldo inicial
 // Busca o registro mais recente de saldo_inicial da oficina (independente do mês filtrado)
@@ -627,7 +629,7 @@ export default function ContasReceberPagarTab({ workshopId, mes }) {
 
       {/* Modais */}
       {contaReceberModal && (
-        <ModalRegistrarRecebimento
+        <ModalRegistrarRecebimentoShared
           aberto={!!contaReceberModal}
           onFechar={() => setContaReceberModal(null)}
           conta={contaReceberModal}
@@ -638,7 +640,7 @@ export default function ContasReceberPagarTab({ workshopId, mes }) {
       )}
 
       {contaPagarModal && (
-        <ModalRegistrarPagamento
+        <ModalRegistrarPagamentoContaShared
           aberto={!!contaPagarModal}
           onFechar={() => setContaPagarModal(null)}
           conta={contaPagarModal}
