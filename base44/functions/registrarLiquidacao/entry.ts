@@ -110,16 +110,11 @@ Deno.serve(async (req) => {
     await base44.entities.DFCLancamento.create({
       workshop_id: conta.workshop_id,
       mes: mesReferencia,
-      origem: 'liquidacao_financeira',
+      origem: 'manual',
       tipo: tipo === 'recebimento' ? 'entrada' : 'saida',
       grupo: 'operacional',
       descricao: `${tipo === 'recebimento' ? 'Recebimento' : 'Pagamento'} - ${conta.cliente_nome || conta.fornecedor_nome}`,
       valor: valor_liquidacao,
-      data_pagamento: data_liquidacao,
-      forma_pagamento: forma_pagamento,
-      liquidacao_financeira_id: liquidacao.id,
-      conta_receber_id: conta_receber_id || null,
-      conta_pagar_id: conta_pagar_id || null
     });
 
     return Response.json({
