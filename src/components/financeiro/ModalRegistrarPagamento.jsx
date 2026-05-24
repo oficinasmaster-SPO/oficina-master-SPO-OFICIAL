@@ -130,7 +130,7 @@ export default function ModalRegistrarPagamento({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <DollarSign className="w-5 h-5 text-green-600" />
-            Registrar Dados de Pagamento
+            Registrar Pagamento
           </DialogTitle>
         </DialogHeader>
 

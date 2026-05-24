@@ -76,13 +76,11 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
   const saldoInicialEfetivo = modoSimulacao ? saldoInicialSimulado : saldoInicial;
   const isLoadingEfetivo = modoSimulacao ? false : isLoading;
 
-  // ── Sanitização proativa na abertura: remove legados do banco antes de hidratar ──
+  // ── Sanitização silenciosa na abertura: limpa legados do banco sem interferir na hidratação ──
   useEffect(() => {
     if (!aberto || !workshopId || !mes || modoSimulacao) return;
-    // Dispara silenciosamente — não bloqueia carregamento nem altera estado local
-    base44.functions.invoke('sanitizarSaldoInicial', { workshop_id: workshopId, mes })
-      .then(() => refetch())
-      .catch(() => {});
+    // Fire-and-forget — não faz refetch para não sobrescrever estado já hidratado
+    base44.functions.invoke('sanitizarSaldoInicial', { workshop_id: workshopId, mes }).catch(() => {});
   }, [aberto, workshopId, mes, modoSimulacao]);
 
   // ── Popular estado local com dados do banco (uma vez por abertura) ──
@@ -460,7 +458,7 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle className="flex items-center gap-2 text-base">
-              💰 Saldo Inicial Detalhado — {mes}
+              💰 Saldo Inicial do Mês — {mes}
               {bloqueadoPorLiquidacao && (
                 <span className="flex items-center gap-1 text-xs text-red-600 font-semibold ml-2 bg-red-50 px-2 py-1 rounded border border-red-200">
                   🔒 Bloqueado
