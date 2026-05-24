@@ -368,6 +368,8 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
 
   // ── Fechar: invalida queries e notifica pai ────────────────────
   const handleFechar = async () => {
+    // ✅ FIX: Invalida a query do saldo inicial para forçar reload na próxima abertura
+    await queryClient.invalidateQueries({ queryKey: ["saldoInicial", workshopId, mes] });
     await queryClient.invalidateQueries({ queryKey: ["dfc-saldo", workshopId, mes] });
     onFechar();
   };
