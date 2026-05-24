@@ -532,12 +532,14 @@ export default function ContasReceberPagarTab({ workshopId, mes }) {
   const handleSuccess = () => {
     refetchReceber();
     refetchPagar();
-    queryClient.invalidateQueries({ queryKey: ["dfc-manuais", workshopId] });
-    queryClient.invalidateQueries({ queryKey: ["dre-lancamentos-dfc", workshopId] });
-    queryClient.invalidateQueries({ queryKey: ["contas-receber", workshopId] });
-    queryClient.invalidateQueries({ queryKey: ["contas-pagar", workshopId] });
-    queryClient.invalidateQueries({ queryKey: ["liquidacoes", workshopId] });
-    queryClient.invalidateQueries({ queryKey: ["saldo-inicial-fontes", workshopId] });
+    queryClient.invalidateQueries({ queryKey: ["dfc-manuais"] });
+    queryClient.invalidateQueries({ queryKey: ["dre-lancamentos"] });
+    queryClient.invalidateQueries({ queryKey: ["dre-lancamentos-dfc"] });
+    queryClient.invalidateQueries({ queryKey: ["contas-receber"] });
+    queryClient.invalidateQueries({ queryKey: ["contas-pagar"] });
+    queryClient.invalidateQueries({ queryKey: ["liquidacoes"] });
+    queryClient.invalidateQueries({ queryKey: ["saldo-inicial-fontes"] });
+    queryClient.invalidateQueries({ queryKey: ["budget-metas"] });
   };
 
   const totalReceber = contasReceber.reduce((sum, c) => sum + (c.valor_aberto || 0), 0);

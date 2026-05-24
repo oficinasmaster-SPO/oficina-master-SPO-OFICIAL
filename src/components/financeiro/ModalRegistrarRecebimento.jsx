@@ -143,6 +143,13 @@ export default function ModalRegistrarRecebimento({ aberto, onFechar, conta, wor
         await atualizarSaldoFonte(workshopId, mes, fonteDestino, valor, "soma", queryClient);
       }
 
+      queryClient.invalidateQueries({ queryKey: ["contas-pagar"] });
+      queryClient.invalidateQueries({ queryKey: ["contas-receber"] });
+      queryClient.invalidateQueries({ queryKey: ["dre-lancamentos"] });
+      queryClient.invalidateQueries({ queryKey: ["budget-metas"] });
+      queryClient.invalidateQueries({ queryKey: ["liquidacoes"] });
+      queryClient.invalidateQueries({ queryKey: ["dfc-manuais"] });
+      queryClient.invalidateQueries({ queryKey: ["saldo-inicial-fontes"] });
       toast.success("Recebimento registrado!");
       onSuccess?.();
       onFechar();

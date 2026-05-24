@@ -143,6 +143,13 @@ export default function ModalRegistrarPagamentoConta({ aberto, onFechar, conta, 
         await atualizarSaldoFonte(workshopId, mes, fonteSaida, valor, "subtrai", queryClient);
       }
 
+      queryClient.invalidateQueries({ queryKey: ["contas-pagar"] });
+      queryClient.invalidateQueries({ queryKey: ["contas-receber"] });
+      queryClient.invalidateQueries({ queryKey: ["dre-lancamentos"] });
+      queryClient.invalidateQueries({ queryKey: ["budget-metas"] });
+      queryClient.invalidateQueries({ queryKey: ["liquidacoes"] });
+      queryClient.invalidateQueries({ queryKey: ["dfc-manuais"] });
+      queryClient.invalidateQueries({ queryKey: ["saldo-inicial-fontes"] });
       toast.success("Pagamento registrado!");
       onSuccess?.();
       onFechar();

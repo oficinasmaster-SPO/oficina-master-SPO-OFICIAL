@@ -189,6 +189,8 @@ export default function ContasReceber() {
             queryClient.invalidateQueries({ queryKey: ['liquidacoes'] });
             queryClient.invalidateQueries({ queryKey: ['dfc-manuais'] });
             queryClient.invalidateQueries({ queryKey: ['saldo-inicial-fontes'] });
+            queryClient.invalidateQueries({ queryKey: ['dre-lancamentos'] });
+            queryClient.invalidateQueries({ queryKey: ['budget-metas'] });
             refetch();
           }}
         />
