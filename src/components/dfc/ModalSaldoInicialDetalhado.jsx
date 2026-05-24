@@ -174,6 +174,10 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
       // O backend às vezes retorna sem o campo detalhes ou com o formato antigo
       resultado = { ...resultado, detalhes };
 
+      // Sanitização silenciosa pós-save: remove registros legados/duplicados no backend
+      // Não bloqueia o fluxo — erro é ignorado intencionalmente
+      base44.functions.invoke('sanitizarSaldoInicial', { workshop_id: workshopId, mes }).catch(() => {});
+
       // Registrar histórico se houver mudança
       if (detalhes_anteriores && idAtual) {
         const valorAnterior = calcTotal(detalhes_anteriores);
