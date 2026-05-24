@@ -360,7 +360,7 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
   const zerarTudo = () => {
     const vazio = { bancos: [], maquinas_cartao: [], caixa: 0 };
     setLocalDetalhes(vazio);
-    persistirMutation.mutate(vazio, { onSuccess: () => toast.success("Saldo zerado.") });
+    persistirMutation.mutate({ detalhes: vazio }, { onSuccess: () => toast.success("Saldo zerado.") });
   };
 
   // ── Fechar: invalida queries e notifica pai ────────────────────
