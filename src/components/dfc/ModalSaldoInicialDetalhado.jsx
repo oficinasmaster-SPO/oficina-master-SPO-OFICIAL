@@ -39,9 +39,9 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
       return records?.[0] || null;
     },
     enabled: !!workshopId && !!mes && aberto && !modoSimulacao,
-    staleTime: Infinity,
+    staleTime: 0,
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    refetchOnMount: true,
   });
 
   // Dados de simulação (usados apenas quando modoSimulacao=true)
@@ -349,8 +349,6 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
   // ── Fechar: invalida queries e notifica pai ────────────────────
   const handleFechar = async () => {
     await queryClient.invalidateQueries({ queryKey: ["dfc-saldo", workshopId, mes] });
-    await queryClient.invalidateQueries({ queryKey: ["saldoInicial", workshopId, mes] });
-    await queryClient.refetchQueries({ queryKey: ["dfc-saldo", workshopId, mes], type: "active" });
     onFechar();
   };
 
