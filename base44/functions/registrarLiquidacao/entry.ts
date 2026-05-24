@@ -101,10 +101,31 @@ Deno.serve(async (req) => {
     // 3. Atualiza data_pagamento no DRELancamento de origem (para refletir no DRE e Controle Orçamentário)
     try {
       const dre_lancamento_id = conta.dre_lancamento_id;
+
       if (dre_lancamento_id) {
         await base44.entities.DRELancamento.update(dre_lancamento_id, {
           data_pagamento: data_liquidacao
         });
+      } else {
+        // Fallback: busca LiquidacoesFinanceiras anteriores desta conta para encontrar o DRELancamento
+        // Tenta buscar nas ContasPagar/ContaReceber o dre_lancamento_id via busca por valor+mês+workshop
+        const mes = String(data_liquidacao).slice(0, 7);
+        const dresCandidatos = await base44.asServiceRole.entities.DRELancamento.filter({
+          workshop_id: conta.workshop_id,
+          mes,
+          valor: conta.valor_original
+        }, '-created_date', 5);
+        // Pega o primeiro que ainda não tem data_pagamento (evita sobrescrever outros já pagos)
+        const dreSemPagamento = dresCandidatos?.find(d => !d.data_pagamento);
+        if (dreSemPagamento) {
+          await base44.entities.DRELancamento.update(dreSemPagamento.id, {
+            data_pagamento: data_liquidacao
+          });
+          // Vincula para futuras liquidações
+          await base44.entities[entityName].update(entidadeId, {
+            dre_lancamento_id: dreSemPagamento.id
+          });
+        }
       }
     } catch (_) { /* não bloqueia se não houver DRE vinculado */ }
 
