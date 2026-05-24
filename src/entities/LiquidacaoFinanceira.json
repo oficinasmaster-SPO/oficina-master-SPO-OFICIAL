@@ -1,0 +1,139 @@
+{
+  "name": "LiquidacaoFinanceira",
+  "type": "object",
+  "properties": {
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "conta_receber_id": {
+      "type": "string",
+      "description": "ID da ContaReceber vinculada"
+    },
+    "conta_pagar_id": {
+      "type": "string",
+      "description": "ID da ContaPagar vinculada"
+    },
+    "tipo": {
+      "type": "string",
+      "enum": ["recebimento", "pagamento"],
+      "description": "Tipo de liquidação"
+    },
+    "valor_liquidacao": {
+      "type": "number",
+      "description": "Valor da liquidação"
+    },
+    "data_liquidacao": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data e hora da liquidação"
+    },
+    "forma_pagamento": {
+      "type": "string",
+      "enum": ["pix", "ted", "boleto", "cartao_credito", "cartao_debito", "dinheiro", "cheque"],
+      "description": "Forma de pagamento"
+    },
+    "banco_destino": {
+      "type": "string",
+      "description": "Banco de destino"
+    },
+    "banco_origem": {
+      "type": "string",
+      "description": "Banco de origem"
+    },
+    "numero_documento": {
+      "type": "string",
+      "description": "Número do documento"
+    },
+    "numero_transacao": {
+      "type": "string",
+      "description": "Número da transação"
+    },
+    "taxa_cartao": {
+      "type": "number",
+      "default": 0,
+      "description": "Taxa de cartão"
+    },
+    "taxa_intermediacao": {
+      "type": "number",
+      "default": 0,
+      "description": "Taxa de intermediação"
+    },
+    "desconto_concedido": {
+      "type": "number",
+      "default": 0,
+      "description": "Desconto concedido"
+    },
+    "juros_recebido": {
+      "type": "number",
+      "default": 0,
+      "description": "Juros recebidos"
+    },
+    "multa_recebida": {
+      "type": "number",
+      "default": 0,
+      "description": "Multa recebida"
+    },
+    "valor_liquido": {
+      "type": "number",
+      "description": "Valor líquido (após taxas, juros, multas)"
+    },
+    "conciliado": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se foi conciliado com banco"
+    },
+    "data_conciliacao": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data da conciliação"
+    },
+    "conciliado_por": {
+      "type": "string",
+      "description": "Usuário que conciliou"
+    },
+    "observacoes": {
+      "type": "string",
+      "description": "Observações"
+    }
+  },
+  "required": [
+    "workshop_id",
+    "tipo",
+    "valor_liquidacao",
+    "data_liquidacao",
+    "forma_pagamento"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"

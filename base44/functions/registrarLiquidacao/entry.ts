@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
     const multa    = body.multa_recebida    ?? body.multa    ?? 0;
 
     // Determina qual banco/máquina/caixa foi selecionado (unificado para entrada e saída)
-    const bancoSelecionado = banco_origem || banco_destino || banco || fonte_selecionada;
+    const bancoSelecionado = banco_origem || banco_destino || fonte_selecionada;
 
     // Validações
     if (!valor_liquidacao || valor_liquidacao <= 0) {
