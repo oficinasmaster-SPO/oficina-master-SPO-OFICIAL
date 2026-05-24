@@ -34,9 +34,14 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
       if (!workshopId || !mes) return null;
       const records = await base44.entities.DFCLancamento.filter(
         { workshop_id: workshopId, mes, grupo: "saldo_inicial" },
-        "-created_date", 1
+        "-updated_date", 10
       );
-      return records?.[0] || null;
+      if (!records || records.length === 0) return null;
+      // Prioriza o registro que tem detalhes no formato novo (bancos/maquinas_cartao como arrays)
+      const comDetalhesNovos = records.find(r => 
+        r.detalhes && (Array.isArray(r.detalhes.bancos) || Array.isArray(r.detalhes.maquinas_cartao))
+      );
+      return comDetalhesNovos || records[0];
     },
     enabled: !!workshopId && !!mes && aberto && !modoSimulacao,
     staleTime: 0,
