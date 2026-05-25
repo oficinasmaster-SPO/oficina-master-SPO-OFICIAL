@@ -26,6 +26,10 @@ Deno.serve(async (req) => {
     const event = {
       summary,
       description,
+      organizer: {
+        email: 'assessoriaoficinasmastermga@gmail.com',
+        displayName: 'Oficinas Master',
+      },
       start: {
         dateTime: startDateTime,
         timeZone: 'America/Sao_Paulo',
