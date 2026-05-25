@@ -26,10 +26,6 @@ Deno.serve(async (req) => {
     const event = {
       summary,
       description,
-      organizer: {
-        email: 'assessoriaoficinasmastermga@gmail.com',
-        displayName: 'Oficinas Master',
-      },
       start: {
         dateTime: startDateTime,
         timeZone: 'America/Sao_Paulo',
@@ -68,6 +64,7 @@ Deno.serve(async (req) => {
 
     if (!response.ok) {
       const error = await response.text();
+      console.error('[createGoogleMeetEvent] Google API error:', response.status, error);
       return Response.json({ error: 'Failed to create event', details: error }, { status: 500 });
     }
 
