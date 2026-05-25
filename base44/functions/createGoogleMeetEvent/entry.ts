@@ -18,9 +18,6 @@ Deno.serve(async (req) => {
 
     // Get OAuth token
     const connection = await base44.asServiceRole.connectors.getConnection("googlecalendar");
-    console.log('[createGoogleMeetEvent] connection keys:', Object.keys(connection || {}));
-    console.log('[createGoogleMeetEvent] accessToken present:', !!connection?.accessToken);
-    console.log('[createGoogleMeetEvent] accessToken length:', connection?.accessToken?.length);
     const accessToken = connection?.accessToken;
     if (!accessToken) {
       return Response.json({ error: 'Google Calendar não está conectado. Reconecte a integração no painel.' }, { status: 503 });
