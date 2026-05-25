@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
   try {
@@ -16,7 +16,7 @@ Deno.serve(async (req) => {
     }
 
     // Get OAuth token
-    const accessToken = await base44.asServiceRole.connectors.getAccessToken("googlecalendar");
+    const { accessToken } = await base44.asServiceRole.connectors.getConnection("googlecalendar");
 
     // Create Google Calendar event with Meet
     const event = {
