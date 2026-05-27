@@ -100,21 +100,17 @@
               "imagem",
               "arquivo",
               "link"
-            ],
-            "description": "Tipo de m\u00eddia"
+            ]
           },
           "url": {
-            "type": "string",
-            "description": "URL da m\u00eddia"
+            "type": "string"
           },
           "nome": {
-            "type": "string",
-            "description": "Nome/t\u00edtulo da m\u00eddia"
+            "type": "string"
           },
           "uploaded_at": {
             "type": "string",
-            "format": "date-time",
-            "description": "Data de upload"
+            "format": "date-time"
           }
         }
       },
@@ -150,6 +146,26 @@
       "type": "boolean",
       "default": false,
       "description": "Se o pedido est\u00e1 vencido"
+    },
+    "notificacao_lembrete_enviada": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se e-mail de lembrete D-1 foi enviado ao respons\u00e1vel"
+    },
+    "notificacao_vencimento_enviada": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se e-mail de alerta de vencimento foi enviado"
+    },
+    "notificacao_escalamento_d1_enviada": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se escalonamento D+1 foi enviado ao solicitante"
+    },
+    "notificacao_escalamento_d3_enviada": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se escalonamento D+3 foi enviado ao solicitante"
     },
     "historico": {
       "type": "array",
