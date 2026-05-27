@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Clock, CheckCircle, AlertTriangle, FileText } from "lucide-react";
+import { Plus, Clock, CheckCircle, AlertTriangle, FileText, CheckCheck } from "lucide-react";
 import PedidoInternoForm from "./PedidoInternoForm";
 import PedidoInternoResponder from "./PedidoInternoResponder";
 import BacklogDashboard from "./BacklogDashboard";
@@ -238,6 +238,9 @@ export default function PedidosInternosTab({ workshopId, user }) {
                     const isConcluido = ['concluido', 'recusado'].includes(pedido.status);
                     const isVencido = pedido.prazo && new Date(pedido.prazo) < hoje && !isConcluido;
 
+                    // Responsável pode concluir diretamente do card
+                    const isResponsavelDoPedido = pedido.responsavel_id === user?.id;
+
                     return (
                       <button
                         key={pedido.id}
@@ -265,6 +268,18 @@ export default function PedidosInternosTab({ workshopId, user }) {
                             <span className={`flex items-center gap-1 text-xs flex-shrink-0 ${isVencido ? "text-red-600 font-semibold" : "text-gray-500"}`}>
                               <Clock className="w-3 h-3" />
                               {format(new Date(pedido.prazo), "dd/MM/yyyy", { locale: ptBR })}
+                            </span>
+                          )}
+                          {/* Ação rápida: responsável pode concluir sem abrir modal */}
+                          {isResponsavelDoPedido && !isConcluido && (
+                            <span
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleChangeStatus(pedido.id, 'concluido');
+                              }}
+                              className="flex items-center gap-1 text-[11px] font-medium text-green-600 bg-green-50 border border-green-200 rounded-md px-2 py-0.5 hover:bg-green-100 flex-shrink-0 cursor-pointer"
+                            >
+                              <CheckCheck className="w-3 h-3" /> Concluir
                             </span>
                           )}
                           <span className="text-gray-300 group-hover:text-gray-500 text-xs flex-shrink-0">›</span>

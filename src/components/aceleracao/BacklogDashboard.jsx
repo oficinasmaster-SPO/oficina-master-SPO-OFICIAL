@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, AlertCircle, TrendingUp, Clock } from "lucide-react";
+import { Plus, AlertCircle, TrendingUp, Clock, Play, CheckCircle } from "lucide-react";
 import TarefaBacklogForm from "./TarefaBacklogForm";
 import TarefaBacklogDetalhe from "./TarefaBacklogDetalhe";
 import BacklogFilters from "./BacklogFilters";
@@ -231,6 +231,13 @@ export default function BacklogDashboard({ workshopId, user }) {
                 const statusBadge = getStatusBadge(tarefa.status);
                 const isVencida = tarefa.prazo && new Date(tarefa.prazo) < hoje;
 
+                // Determina se o usuário pode executar ações rápidas nesta tarefa
+                const podeAgir = !user || (
+                  user.id === tarefa.criado_por_id ||
+                  user.id === tarefa.consultor_id ||
+                  user.id === tarefa.atribuido_para_id
+                );
+
                 return (
                   <button
                     key={tarefa.id}
@@ -253,6 +260,29 @@ export default function BacklogDashboard({ workshopId, user }) {
                         <span className={`flex items-center gap-1 text-xs flex-shrink-0 ${isVencida ? "text-red-600 font-semibold" : "text-gray-500"}`}>
                           <Clock className="w-3 h-3" />
                           {format(new Date(tarefa.prazo), "dd/MM/yyyy", { locale: ptBR })}
+                        </span>
+                      )}
+                      {/* Ações rápidas inline — stopPropagation para não abrir o detalhe */}
+                      {podeAgir && tarefa.status === 'aberta' && (
+                        <span
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            updateTarefaMutation.mutate({ id: tarefa.id, data: { status: 'em_execucao' } });
+                          }}
+                          className="flex items-center gap-1 text-[11px] font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-md px-2 py-0.5 hover:bg-blue-100 flex-shrink-0 cursor-pointer"
+                        >
+                          <Play className="w-3 h-3" /> Iniciar
+                        </span>
+                      )}
+                      {podeAgir && tarefa.status === 'em_execucao' && (
+                        <span
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            updateTarefaMutation.mutate({ id: tarefa.id, data: { status: 'concluida', data_conclusao: new Date().toISOString() } });
+                          }}
+                          className="flex items-center gap-1 text-[11px] font-medium text-green-600 bg-green-50 border border-green-200 rounded-md px-2 py-0.5 hover:bg-green-100 flex-shrink-0 cursor-pointer"
+                        >
+                          <CheckCircle className="w-3 h-3" /> Concluir
                         </span>
                       )}
                       <span className="text-gray-300 group-hover:text-gray-500 text-xs flex-shrink-0">›</span>
