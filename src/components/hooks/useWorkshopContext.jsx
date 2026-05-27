@@ -86,22 +86,19 @@ export function useWorkshopContext() {
         });
         if (response?.data?.workshops?.length > 0) {
           const found = response.data.workshops.find(w => w.id === missingWorkshopIdToFetch);
-          if (found) return found;
-          return response.data.workshops[0];
+          return found || response.data.workshops[0];
         }
-        // Fallback local apenas se BFF também não encontrar
-        const wsList = await base44.entities.Workshop.filter({ id: missingWorkshopIdToFetch });
-        return wsList?.[0] || null;
+        // BFF retornou vazio = workshop não existe — retornar null sem tentar novamente
+        return null;
       } catch (e) {
-        // QA-FIX-01: Log detalhado do erro para diagnóstico
-        console.error(`[useWorkshopContext] Falha ao buscar workshop ${missingWorkshopIdToFetch}:`, e?.message || e);
+        console.warn(`[useWorkshopContext] Falha ao buscar workshop ${missingWorkshopIdToFetch}:`, e?.message || e);
         return null;
       }
     },
     enabled: !!missingWorkshopIdToFetch && !isAvailableLoading,
     staleTime: 10 * 60 * 1000,
     gcTime: 15 * 60 * 1000,
-    retry: 1,
+    retry: 0, // ID inválido não deve ser retentado — evita bloquear o carregamento
     refetchOnWindowFocus: false,
     refetchOnMount: false,
   });
