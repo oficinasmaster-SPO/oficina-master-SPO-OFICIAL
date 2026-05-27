@@ -8,7 +8,8 @@ import AtendimentoRow from "./AtendimentoRow";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Edit, AlertTriangle, FilePlus, Play, StopCircle, CalendarClock, FileText, CheckCircle, Trash2, Clock, Search, X, CalendarDays, MoreVertical, SearchX, PlusCircle } from "lucide-react";
+import { Edit, AlertTriangle, FilePlus, Play, StopCircle, CalendarClock, FileText, CheckCircle, Trash2, Clock, Search, X, CalendarDays, MoreVertical, SearchX, PlusCircle, Building2 } from "lucide-react";
+import WorkshopGroupCard from "./WorkshopGroupCard";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -60,6 +61,11 @@ export default function PainelAtendimentosTab({ state }) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
+
+  // Toggle "Agrupar por empresa" — disponível apenas em "todos" e "atrasado"
+  // Sempre começa desativado (sessão limpa)
+  const [agruparPorEmpresa, setAgruparPorEmpresa] = useState(false);
+  const showAgruparToggle = activeTab === 'todos' || activeTab === 'atrasado';
 
   // ── Validação de atendimentos ──
   const [detailsDrawer, setDetailsDrawer] = useState({ open: false, item: null, validation: null });
@@ -137,9 +143,10 @@ export default function PainelAtendimentosTab({ state }) {
   // ── Debounce search for perf ──
   const debouncedSearch = useDebounce(localFilters.searchTerm, 300);
 
-  // Reset pagination when filters change
+  // Reset pagination when filters change; reset agrupamento ao trocar de tab
   useEffect(() => {
     setCurrentPage(1);
+    setAgruparPorEmpresa(false);
   }, [activeTab, filtros.dataInicio, filtros.dataFim, debouncedSearch, atendimentos.length]);
 
   // ── Filtragem local (memoized e otimizada) ──
@@ -212,8 +219,34 @@ export default function PainelAtendimentosTab({ state }) {
       });
   }, [atendimentos, activeTab, filtros.dataInicio, filtros.dataFim, debouncedSearch, workshopMap]);
 
-  const totalPages = Math.ceil(atendimentosFiltrados.length / itemsPerPage);
-  const paginatedAtendimentos = atendimentosFiltrados.slice(
+  // Grupos por empresa (apenas quando toggle ativo) — ordenados por nome da empresa, itens por data_agendada asc
+  const gruposPorEmpresa = useMemo(() => {
+    if (!agruparPorEmpresa) return [];
+    const mapa = {};
+    atendimentosFiltrados.forEach(item => {
+      const wid = item.workshop_id;
+      if (!mapa[wid]) {
+        mapa[wid] = {
+          workshop_id: wid,
+          nome: workshopMap[wid]?.name || 'Empresa desconhecida',
+          itens: []
+        };
+      }
+      mapa[wid].itens.push(item);
+    });
+    return Object.values(mapa)
+      .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
+      .map(grupo => ({
+        ...grupo,
+        itens: [...grupo.itens].sort((a, b) =>
+          (a.data_agendada || "").localeCompare(b.data_agendada || "")
+        )
+      }));
+  }, [agruparPorEmpresa, atendimentosFiltrados, workshopMap]);
+
+  // Paginação só se aplica na visão flat (sem agrupamento)
+  const totalPages = agruparPorEmpresa ? 0 : Math.ceil(atendimentosFiltrados.length / itemsPerPage);
+  const paginatedAtendimentos = agruparPorEmpresa ? [] : atendimentosFiltrados.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
@@ -384,6 +417,22 @@ export default function PainelAtendimentosTab({ state }) {
             </div>
           </div>
           )}
+          {/* Toggle "Agrupar por empresa" — apenas em todos e atrasados */}
+          {showAgruparToggle && (
+            <button
+              type="button"
+              onClick={() => setAgruparPorEmpresa(v => !v)}
+              className={`h-9 flex items-center gap-2 px-3 rounded-md border text-sm font-medium transition-colors ${
+                agruparPorEmpresa
+                  ? 'bg-red-600 text-white border-red-600 shadow-sm'
+                  : 'bg-white text-gray-600 border-gray-200 hover:border-red-300 hover:text-red-600'
+              }`}
+            >
+              <Building2 className="w-3.5 h-3.5" />
+              Agrupar por empresa
+            </button>
+          )}
+
           {/* Consultor info — read-only, controlled by global filter */}
           {state.consultorEfetivo && (
             <div className="h-9 px-3 flex items-center text-sm text-gray-500 bg-gray-50 border rounded-md">
@@ -405,6 +454,54 @@ export default function PainelAtendimentosTab({ state }) {
       <>
 
       <div className="w-full">
+        {/* ── Visão agrupada por empresa ── */}
+        {agruparPorEmpresa ? (
+          <div>
+            {gruposPorEmpresa.length === 0 ? (
+              <div className="py-24 text-center">
+                <div className="flex flex-col items-center justify-center max-w-md mx-auto space-y-4">
+                  <div className="bg-gray-50 p-4 rounded-full"><SearchX className="w-10 h-10 text-gray-400" /></div>
+                  <h3 className="text-lg font-medium text-gray-900">Nenhum atendimento encontrado</h3>
+                </div>
+              </div>
+            ) : gruposPorEmpresa.map(grupo => (
+              <WorkshopGroupCard
+                key={grupo.workshop_id}
+                grupo={grupo}
+                renderRow={(atendimento) => {
+                  const workshop = workshopMap[atendimento.workshop_id];
+                  const ataVinculada = atasMap[atendimento.ata_id];
+                  return (
+                    <table key={atendimento.id} className="w-full" style={{ minWidth: '900px' }}>
+                      <tbody>
+                        <AtendimentoRow
+                          atendimento={atendimento}
+                          workshop={workshop}
+                          ataVinculada={ataVinculada}
+                          consultores={consultores}
+                          onOpenDetails={(item, validation) => setDetailsDrawer({ open: true, item, validation })}
+                          onOpenVisualizar={(id) => { setVisualizarAtendimentoId(id); setShowVisualizarAtendimento(true); }}
+                          onIniciar={(id) => iniciarMutation.mutate(id)}
+                          verificarRascunho={verificarRascunho}
+                          onReagendar={(a) => { setSelectedAtendimento(a); setShowReagendar(true); }}
+                          onCancelar={(a) => { setActionAtendimento(a); setShowCancelar(true); }}
+                          onFaltou={(a) => { setActionAtendimento(a); setShowFaltou(true); }}
+                          onConcluir={(a) => { setActionAtendimento(a); setShowConcluir(true); }}
+                          onEditar={(id) => { setEditarAtendimentoId(id); setShowEditarAtendimento(true); }}
+                          onVerAta={(ata) => { setSelectedAta(ata); setShowVisualizarAta(true); }}
+                          onGerarAta={(a) => { setSelectedAtendimento(a); setShowGerarAta(true); }}
+                          onDeleteConfirm={(confirm) => setDeleteConfirm(confirm)}
+                          queryClient={queryClient}
+                        />
+                      </tbody>
+                    </table>
+                  );
+                }}
+              />
+            ))}
+          </div>
+        ) : (
+        /* ── Visão flat (tabela normal) ── */
         <Card>
           <CardContent className="pt-4 px-2 sm:px-3 lg:px-4 xl:px-5">
             <div className="w-full overflow-x-auto">
@@ -521,6 +618,7 @@ export default function PainelAtendimentosTab({ state }) {
             )}
           </CardContent>
         </Card>
+        )}
       </div>
 
       </>
