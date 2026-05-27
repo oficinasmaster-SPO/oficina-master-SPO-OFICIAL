@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-export default function TarefaBacklogForm({ tarefa, user, workshops: workshopsProp, workshopId, isFromAttendance = true, onCancel, onSuccess }) {
+export default function TarefaBacklogForm({ tarefa, user, workshops: workshopsProp, workshopId, isFromAttendance = true, origemId, origemData, origemTitulo, onCancel, onSuccess }) {
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
 
   // Busca workshops internamente se não recebeu como prop
@@ -45,7 +45,10 @@ export default function TarefaBacklogForm({ tarefa, user, workshops: workshopsPr
     atribuido_para_id: tarefa?.atribuido_para_id || user?.id,
     titulo: tarefa?.titulo || '',
     descricao: tarefa?.descricao || '',
-    origem: tarefa?.origem || (isFromAttendance ? 'reuniao' : 'manual'),
+    origem: tarefa?.origem || (origemId ? 'reuniao' : isFromAttendance ? 'reuniao' : 'manual'),
+    origem_id: tarefa?.origem_id || origemId || '',
+    origem_data: tarefa?.origem_data || origemData || '',
+    origem_titulo: tarefa?.origem_titulo || origemTitulo || '',
     prazo: tarefa?.prazo || '',
     prioridade: tarefa?.prioridade || 'media',
     status: tarefa?.status || 'aberta',

@@ -179,6 +179,34 @@ export default function TarefaBacklogDetalhe({ tarefa, user, onVoltar, onEditar,
         </div>
       </div>
 
+      {/* Banner de rastreabilidade — exibido quando a tarefa tem origem em uma ATA */}
+      {tarefa.origem === 'reuniao' && tarefa.origem_id && (
+        <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 flex items-start gap-3">
+          <FileText className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-blue-900">
+              📋 Criado na ATA de Reunião{tarefa.cliente_nome ? ` com ${tarefa.cliente_nome}` : ""}
+            </p>
+            <p className="text-xs text-blue-700 mt-0.5">
+              {tarefa.origem_data
+                ? format(new Date(tarefa.origem_data), "dd/MM/yyyy 'às' HH'h'mm", { locale: ptBR })
+                : "Data não disponível"}
+              {tarefa.consultor_nome ? ` · ${tarefa.consultor_nome}` : ""}
+              {tarefa.origem_titulo ? ` · ${tarefa.origem_titulo}` : ""}
+            </p>
+          </div>
+          <a
+            href={`/RegistrarAtendimento?atendimento_id=${tarefa.origem_id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-800 whitespace-nowrap flex-shrink-0 mt-0.5"
+          >
+            <ExternalLink className="w-3.5 h-3.5" /> Ver ATA original
+          </a>
+        </div>
+      )}
+
       <div className="grid md:grid-cols-3 gap-6">
         {/* Dados Gerais */}
         <div className="md:col-span-2 space-y-4">
