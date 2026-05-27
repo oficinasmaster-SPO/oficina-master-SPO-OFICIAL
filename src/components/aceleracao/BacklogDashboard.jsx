@@ -153,6 +153,7 @@ export default function BacklogDashboard({ workshopId, user }) {
             {viewingTarefa ? (
               <TarefaBacklogDetalhe
                 tarefa={viewingTarefa}
+                user={user}
                 onVoltar={() => setViewingTarefa(null)}
                 onEditar={(t) => {
                   setViewingTarefa(null);

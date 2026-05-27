@@ -78,24 +78,40 @@ function TimelineItem({ evento }) {
   );
 }
 
-export default function TarefaBacklogDetalhe({ tarefa, onVoltar, onEditar, onConcluir }) {
+export default function TarefaBacklogDetalhe({ tarefa, user, onVoltar, onEditar, onConcluir }) {
   const [criadoPorNome, setCriadoPorNome] = useState(null);
+  const [atribuidoParaNome, setAtribuidoParaNome] = useState(null);
+  const [solicitanteNome, setSolicitanteNome] = useState(null);
 
-  // Buscar nome de quem criou a tarefa
+  // Buscar nomes de usuários pelo ID (criadoPor, atribuidoPara, solicitante) em paralelo
   useEffect(() => {
-    const buscarNomeCriador = async () => {
-      if (!tarefa.criado_por_id) return;
-      try {
-        const usuarios = await base44.entities.User.filter({ id: tarefa.criado_por_id });
-        if (usuarios.length > 0) {
-          setCriadoPorNome(usuarios[0].full_name || usuarios[0].email);
+    const buscarNomes = async () => {
+      const ids = [
+        { id: tarefa.criado_por_id, setter: setCriadoPorNome },
+        { id: tarefa.atribuido_para_id, setter: setAtribuidoParaNome },
+        { id: tarefa.solicitante_id, setter: setSolicitanteNome },
+      ].filter(({ id }) => !!id);
+
+      await Promise.all(ids.map(async ({ id, setter }) => {
+        try {
+          const result = await base44.entities.User.filter({ id });
+          if (result.length > 0) {
+            setter(result[0].full_name || result[0].email);
+          }
+        } catch (err) {
+          console.error("Erro ao buscar usuário:", err);
         }
-      } catch (err) {
-        console.error("Erro ao buscar criador:", err);
-      }
+      }));
     };
-    buscarNomeCriador();
-  }, [tarefa.criado_por_id]);
+    buscarNomes();
+  }, [tarefa.criado_por_id, tarefa.atribuido_para_id, tarefa.solicitante_id]);
+
+  // Gap #5 — controle de permissão: pode editar quem criou, é o consultor ou está atribuído
+  const podeEditar = !user || (
+    user.id === tarefa.criado_por_id ||
+    user.id === tarefa.consultor_id ||
+    user.id === tarefa.atribuido_para_id
+  );
 
   // Mutation para concluir tarefa
   const concludirMutation = useMutation({
@@ -155,7 +171,7 @@ export default function TarefaBacklogDetalhe({ tarefa, onVoltar, onEditar, onCon
               {concludirMutation.isPending ? 'Concluindo...' : 'Concluir Tarefa'}
             </Button>
           )}
-          {onEditar && (
+          {onEditar && podeEditar && (
             <Button variant="outline" size="sm" onClick={() => onEditar(tarefa)}>
               Editar
             </Button>
@@ -240,18 +256,18 @@ export default function TarefaBacklogDetalhe({ tarefa, onVoltar, onEditar, onCon
                 </div>
                 <div>
                   <p className="text-xs text-gray-500 mb-1">Atribuído para</p>
-                  <p className="text-sm font-medium">{tarefa.atribuido_para_id || "—"}</p>
+                  <p className="text-sm font-medium">{atribuidoParaNome || "—"}</p>
                 </div>
                 <div>
-                    <p className="text-xs text-gray-500 mb-1">Criado por</p>
-                    <Badge variant="secondary" className="text-xs">
-                      <User className="w-3 h-3 mr-1" />
-                      {criadoPorNome || tarefa.created_by?.split('@')[0] || "—"}
-                    </Badge>
-                  </div>
+                  <p className="text-xs text-gray-500 mb-1">Criado por</p>
+                  <Badge variant="secondary" className="text-xs">
+                    <User className="w-3 h-3 mr-1" />
+                    {criadoPorNome || tarefa.created_by?.split('@')[0] || "—"}
+                  </Badge>
+                </div>
                 <div>
                   <p className="text-xs text-gray-500 mb-1">Solicitante</p>
-                  <p className="text-sm">{tarefa.solicitante_id || "—"}</p>
+                  <p className="text-sm">{solicitanteNome || "—"}</p>
                 </div>
                 {tarefa.data_atribuicao && (
                   <div>
