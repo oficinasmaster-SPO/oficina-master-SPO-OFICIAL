@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, User, Calendar, Clock, Tag, AlertCircle, FileText, CheckCircle, ExternalLink } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { ArrowLeft, User, Calendar, Clock, Tag, AlertCircle, FileText, CheckCircle, ExternalLink, Play, Lock, Paperclip } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import TarefaBacklogAnexosVisualizador from "./TarefaBacklogAnexosVisualizador";
+import TarefaBacklogMediaUpload from "./TarefaBacklogMediaUpload";
 
 const STATUS_CONFIG = {
   aberta:      { label: "Aberta",       className: "bg-gray-100 text-gray-800" },
@@ -83,6 +86,14 @@ export default function TarefaBacklogDetalhe({ tarefa, user, onVoltar, onEditar,
   const [atribuidoParaNome, setAtribuidoParaNome] = useState(null);
   const [solicitanteNome, setSolicitanteNome] = useState(null);
 
+  // Painel de execução do executor (não-criador)
+  const [notasExecucao, setNotasExecucao] = useState(tarefa?.notas || '');
+  const [anexosExecucao, setAnexosExecucao] = useState(tarefa?.anexos || []);
+  const [motivoBloqueio, setMotivoBloqueio] = useState(tarefa?.motivo_bloqueio || '');
+  const [showBloquearForm, setShowBloquearForm] = useState(false);
+
+  const queryClient = useQueryClient();
+
   // Buscar nomes de usuários pelo ID (criadoPor, atribuidoPara, solicitante) em paralelo
   useEffect(() => {
     const buscarNomes = async () => {
@@ -106,19 +117,31 @@ export default function TarefaBacklogDetalhe({ tarefa, user, onVoltar, onEditar,
     buscarNomes();
   }, [tarefa.criado_por_id, tarefa.atribuido_para_id, tarefa.solicitante_id]);
 
-  // Gap #5 — controle de permissão: pode editar quem criou, é o consultor ou está atribuído
-  const podeEditar = !user || (
-    user.id === tarefa.criado_por_id ||
-    user.id === tarefa.consultor_id ||
-    user.id === tarefa.atribuido_para_id
+  // Criador/admin = acesso total ao formulário de edição
+  const ehCriador = !user || user.id === tarefa.criado_por_id || user.role === 'admin';
+  // Executor = consultor responsável ou atribuído, mas NÃO é o criador
+  const ehExecutor = !ehCriador && (
+    user?.id === tarefa.consultor_id || user?.id === tarefa.atribuido_para_id
   );
+  // Botão "Editar" só para criador/admin
+  const podeEditar = ehCriador;
+
+  // Mutation genérica de update de tarefa
+  const updateMutation = useMutation({
+    mutationFn: async (dados) => base44.entities.TarefaBacklog.update(tarefa.id, dados),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['tarefa-historico', tarefa.id]);
+    }
+  });
 
   // Mutation para concluir tarefa
   const concludirMutation = useMutation({
     mutationFn: async () => {
       return await base44.entities.TarefaBacklog.update(tarefa.id, {
         status: 'concluida',
-        data_conclusao: new Date().toISOString()
+        data_conclusao: new Date().toISOString(),
+        notas: notasExecucao || tarefa.notas,
+        anexos: anexosExecucao.length > 0 ? anexosExecucao : tarefa.anexos,
       });
     },
     onSuccess: () => {
@@ -130,6 +153,37 @@ export default function TarefaBacklogDetalhe({ tarefa, user, onVoltar, onEditar,
       toast.error('Erro ao concluir tarefa');
       console.error(error);
     }
+  });
+
+  // Iniciar tarefa automaticamente (status aberta → em_execucao)
+  const iniciarMutation = useMutation({
+    mutationFn: async () => base44.entities.TarefaBacklog.update(tarefa.id, { status: 'em_execucao' }),
+    onSuccess: () => {
+      toast.success('Tarefa iniciada!');
+      if (onConcluir) onConcluir(); // recarrega a lista pai
+    }
+  });
+
+  // Bloquear tarefa
+  const bloquearMutation = useMutation({
+    mutationFn: async () => base44.entities.TarefaBacklog.update(tarefa.id, {
+      status: 'bloqueada',
+      motivo_bloqueio: motivoBloqueio
+    }),
+    onSuccess: () => {
+      toast.warning('Tarefa marcada como bloqueada.');
+      setShowBloquearForm(false);
+      if (onConcluir) onConcluir();
+    }
+  });
+
+  // Salvar notas/anexos sem mudar status
+  const salvarExecucaoMutation = useMutation({
+    mutationFn: async () => base44.entities.TarefaBacklog.update(tarefa.id, {
+      notas: notasExecucao,
+      anexos: anexosExecucao,
+    }),
+    onSuccess: () => toast.success('Progresso salvo!'),
   });
 
   const { data: historico = [], isLoading: loadingHistorico } = useQuery({
@@ -372,6 +426,117 @@ export default function TarefaBacklogDetalhe({ tarefa, user, onVoltar, onEditar,
       </div>
 
       <TarefaBacklogAnexosVisualizador tarefa={tarefa} />
+
+      {/* ── Painel de Execução — visível para o executor (consultor/atribuído não-criador) ── */}
+      {ehExecutor && tarefa.status !== 'concluida' && (
+        <Card className="border-blue-200 bg-blue-50">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base text-blue-900 flex items-center gap-2">
+              <Play className="w-4 h-4" /> Painel de Execução
+            </CardTitle>
+            <p className="text-xs text-blue-700">Registre seu progresso, adicione evidências e atualize o status.</p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+
+            {/* Ações de status */}
+            <div className="flex flex-wrap gap-2">
+              {tarefa.status === 'aberta' && (
+                <Button
+                  size="sm"
+                  className="bg-blue-600 hover:bg-blue-700 text-white gap-2"
+                  onClick={() => iniciarMutation.mutate()}
+                  disabled={iniciarMutation.isPending}
+                >
+                  <Play className="w-4 h-4" />
+                  {iniciarMutation.isPending ? 'Iniciando...' : '▶ Iniciar Tarefa'}
+                </Button>
+              )}
+              {tarefa.status === 'em_execucao' && (
+                <Badge className="bg-blue-100 text-blue-800 text-xs px-3 py-1">Em execução</Badge>
+              )}
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-red-300 text-red-600 hover:bg-red-50 gap-2"
+                onClick={() => setShowBloquearForm(!showBloquearForm)}
+              >
+                <Lock className="w-4 h-4" /> Bloquear
+              </Button>
+            </div>
+
+            {/* Form de bloqueio */}
+            {showBloquearForm && (
+              <div className="space-y-2">
+                <Label className="text-sm text-red-700">Motivo do bloqueio *</Label>
+                <Textarea
+                  value={motivoBloqueio}
+                  onChange={(e) => setMotivoBloqueio(e.target.value)}
+                  placeholder="Descreva o que está impedindo a execução..."
+                  rows={2}
+                />
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    className="bg-red-600 hover:bg-red-700 text-white"
+                    onClick={() => bloquearMutation.mutate()}
+                    disabled={!motivoBloqueio || bloquearMutation.isPending}
+                  >
+                    Confirmar Bloqueio
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setShowBloquearForm(false)}>Cancelar</Button>
+                </div>
+              </div>
+            )}
+
+            {/* Notas de execução / evidência textual */}
+            <div>
+              <Label className="text-sm text-blue-900">Notas / Evidência do que foi feito</Label>
+              <Textarea
+                value={notasExecucao}
+                onChange={(e) => setNotasExecucao(e.target.value)}
+                placeholder="Descreva o que foi realizado, resultados, observações..."
+                rows={3}
+                className="mt-1"
+              />
+            </div>
+
+            {/* Upload de evidências (imagens, arquivos, links) */}
+            <div>
+              <Label className="text-sm text-blue-900 flex items-center gap-1">
+                <Paperclip className="w-3.5 h-3.5" /> Anexos / Evidências
+              </Label>
+              <div className="mt-1">
+                <TarefaBacklogMediaUpload
+                  anexos={anexosExecucao}
+                  onAnexosChange={setAnexosExecucao}
+                />
+              </div>
+            </div>
+
+            {/* Botões finais */}
+            <div className="flex flex-wrap gap-2 pt-2 border-t border-blue-200">
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-blue-300 text-blue-700"
+                onClick={() => salvarExecucaoMutation.mutate()}
+                disabled={salvarExecucaoMutation.isPending}
+              >
+                {salvarExecucaoMutation.isPending ? 'Salvando...' : 'Salvar Progresso'}
+              </Button>
+              <Button
+                size="sm"
+                className="bg-green-600 hover:bg-green-700 text-white gap-2"
+                onClick={() => concludirMutation.mutate()}
+                disabled={concludirMutation.isPending}
+              >
+                <CheckCircle className="w-4 h-4" />
+                {concludirMutation.isPending ? 'Concluindo...' : '✓ Concluir Tarefa'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
