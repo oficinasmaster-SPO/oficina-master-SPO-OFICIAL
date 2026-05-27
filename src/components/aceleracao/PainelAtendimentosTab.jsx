@@ -179,10 +179,36 @@ export default function PainelAtendimentosTab({ state }) {
         return true;
       })
       .sort((a, b) => {
+        const hoje = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+
+        const getGrupo = (item) => {
+          const itemDate = (item.data_agendada || "").substring(0, 10);
+          // 1º — Realizados sem ATA (pendentes de conclusão) — sempre no topo
+          if (item.status === 'realizado' && !item.ata_id) return 1;
+          // 2º — De hoje (não finalizados)
+          if (itemDate === hoje && item.status !== 'concluido' && item.status !== 'cancelado') return 2;
+          // 3º — Atrasados
+          if (item.status === 'atrasado') return 3;
+          // 4º — Futuros (data > hoje, não finalizados)
+          if (itemDate > hoje && item.status !== 'concluido' && item.status !== 'cancelado') return 4;
+          // 5º — Concluídos e cancelados
+          return 5;
+        };
+
+        const grupoA = getGrupo(a);
+        const grupoB = getGrupo(b);
+
+        if (grupoA !== grupoB) return grupoA - grupoB;
+
         const dateA = a.data_agendada || "";
         const dateB = b.data_agendada || "";
-        // Datas ISO 8601 podem ser ordenadas alfabeticamente, muito mais rápido que criar instâncias de Date
-        return dateB.localeCompare(dateA);
+
+        // Ordem interna por grupo:
+        if (grupoA === 1) return dateA.localeCompare(dateB); // mais antigo primeiro
+        if (grupoA === 2) return dateA.localeCompare(dateB); // mais cedo no dia primeiro
+        if (grupoA === 3) return dateB.localeCompare(dateA); // mais recente primeiro
+        if (grupoA === 4) return dateA.localeCompare(dateB); // mais próximo primeiro
+        return dateB.localeCompare(dateA);                   // concluídos: mais recente primeiro
       });
   }, [atendimentos, activeTab, filtros.dataInicio, filtros.dataFim, debouncedSearch, workshopMap]);
 
