@@ -153,15 +153,14 @@ Deno.serve(withAuth(async (req, { base44, user }) => {
         }
 
         // DS-SINGLE-01: SEMPRE buscar workshops via consulting_firm_id quando disponível
-        // Removida a condição 'availableWorkshops.length === 0' — o dono da firma também
-        // precisa ver os workshops dos clientes (não só o próprio workshop)
+        // PERF-FIX-04: Limitado a 200 (era 500) — reduz payload e tempo de resposta
         const userConsultingFirmId = user.data?.consulting_firm_id;
         if (userConsultingFirmId) {
             try {
                 const firmWorkshops = await base44.asServiceRole.entities.Workshop.filter(
                     { consulting_firm_id: userConsultingFirmId },
                     'name',
-                    500
+                    200
                 );
                 for (const ws of (firmWorkshops || [])) {
                     if (!seenIds.has(ws.id)) {
