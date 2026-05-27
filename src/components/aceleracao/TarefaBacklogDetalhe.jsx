@@ -41,42 +41,35 @@ function TimelineItem({ evento }) {
   const dataHora = evento.data_hora ? new Date(evento.data_hora) : null;
 
   return (
-    <div className="flex gap-3 relative">
-      {/* linha vertical */}
-      <div className="flex flex-col items-center">
-        <div className={`w-3 h-3 rounded-full mt-1 flex-shrink-0 ${config.cor}`} />
-        <div className="w-px flex-1 bg-gray-200 mt-1" />
-      </div>
+    <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-100">
+      {/* Dot */}
+      <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${config.cor}`} />
 
-      <div className="pb-5 flex-1">
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            <span className="font-medium text-sm text-gray-900">{config.icone} {config.label}</span>
-            {evento.usuario_nome && (
-              <span className="text-sm text-gray-600"> por <strong>{evento.usuario_nome}</strong></span>
+      {/* Label + autor */}
+      <div className="flex-1 min-w-0">
+        <span className="text-sm font-medium text-gray-800">{config.label}</span>
+        {evento.usuario_nome && (
+          <span className="text-xs text-gray-500 ml-1">por {evento.usuario_nome.split(' ')[0]}</span>
+        )}
+        {(evento.valor_anterior || evento.valor_novo) && (
+          <div className="flex items-center gap-1 mt-0.5">
+            {evento.valor_anterior && (
+              <span className="text-xs line-through text-red-400 truncate max-w-[80px]">{evento.valor_anterior}</span>
             )}
-            {(evento.valor_anterior || evento.valor_novo) && (
-              <div className="mt-1 text-xs text-gray-500 space-x-2">
-                {evento.valor_anterior && (
-                  <span className="line-through text-red-400">{evento.valor_anterior}</span>
-                )}
-                {evento.valor_anterior && evento.valor_novo && <span>→</span>}
-                {evento.valor_novo && (
-                  <span className="text-green-600 font-medium">{evento.valor_novo}</span>
-                )}
-              </div>
-            )}
-            {evento.campo && evento.campo !== 'geral' && (
-              <p className="text-xs text-gray-400 mt-0.5">Campo: {evento.campo}</p>
+            {evento.valor_anterior && evento.valor_novo && <span className="text-gray-400 text-xs">→</span>}
+            {evento.valor_novo && (
+              <span className="text-xs text-green-600 font-medium truncate max-w-[80px]">{evento.valor_novo}</span>
             )}
           </div>
-          {dataHora && (
-            <span className="text-xs text-gray-400 whitespace-nowrap flex-shrink-0">
-              {format(dataHora, "dd/MM HH:mm", { locale: ptBR })}
-            </span>
-          )}
-        </div>
+        )}
       </div>
+
+      {/* Data */}
+      {dataHora && (
+        <span className="text-xs text-gray-400 whitespace-nowrap flex-shrink-0 bg-gray-100 px-2 py-0.5 rounded-full">
+          {format(dataHora, "dd/MM HH:mm", { locale: ptBR })}
+        </span>
+      )}
     </div>
   );
 }
@@ -261,169 +254,171 @@ export default function TarefaBacklogDetalhe({ tarefa, user, onVoltar, onEditar,
         </div>
       )}
 
-      <div className="grid md:grid-cols-3 gap-6">
+      {/* ── Barra de Status horizontal ── */}
+      <Card className="border-0 bg-gray-50">
+        <CardContent className="py-3 px-5">
+          <div className="flex flex-wrap items-center gap-6">
+            <div className="flex items-center gap-2">
+              <Tag className="w-3.5 h-3.5 text-gray-400" />
+              <span className="text-xs text-gray-500">Status:</span>
+              <Badge className={statusCfg.className}>{statusCfg.label}</Badge>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-500">Prioridade:</span>
+              <Badge className={prioridadeCfg.className}>{prioridadeCfg.label}</Badge>
+            </div>
+            <div className="flex items-center gap-2">
+              <Calendar className="w-3.5 h-3.5 text-gray-400" />
+              <span className="text-xs text-gray-500">Prazo:</span>
+              <span className="text-sm font-medium">
+                {tarefa.prazo ? format(new Date(tarefa.prazo), "dd/MM/yyyy", { locale: ptBR }) : "—"}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Clock className="w-3.5 h-3.5 text-gray-400" />
+              <span className="text-xs text-gray-500">Estimado:</span>
+              <span className="text-sm font-medium">{tarefa.tempo_estimado_horas}h</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-500">Criado em:</span>
+              <span className="text-xs text-gray-600">
+                {tarefa.data_criacao
+                  ? format(new Date(tarefa.data_criacao), "dd/MM/yyyy HH:mm", { locale: ptBR })
+                  : tarefa.created_date
+                  ? format(new Date(tarefa.created_date), "dd/MM/yyyy HH:mm", { locale: ptBR })
+                  : "—"}
+              </span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ── Grid principal: Dados + Responsáveis ── */}
+      <div className="grid md:grid-cols-2 gap-6">
         {/* Dados Gerais */}
-        <div className="md:col-span-2 space-y-4">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <FileText className="w-4 h-4" /> Dados Gerais
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {tarefa.descricao && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <FileText className="w-4 h-4" /> Dados Gerais
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {tarefa.descricao && (
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Descrição</p>
+                <p className="text-sm text-gray-800 leading-relaxed">{tarefa.descricao}</p>
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-3 pt-2 border-t">
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Cliente</p>
+                <p className="text-sm font-medium">{tarefa.cliente_nome || "—"}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Origem</p>
+                <Badge variant="outline" className="text-xs capitalize">{tarefa.origem}</Badge>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Impacto</p>
+                <p className="text-sm capitalize">{tarefa.impacto || "—"}</p>
+              </div>
+              {tarefa.tempo_real_horas && (
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">Descrição</p>
-                  <p className="text-sm text-gray-800">{tarefa.descricao}</p>
+                  <p className="text-xs text-gray-500 mb-1">Tempo Real</p>
+                  <p className="text-sm font-medium">{tarefa.tempo_real_horas}h</p>
                 </div>
               )}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">Cliente</p>
-                  <p className="text-sm font-medium">{tarefa.cliente_nome || "—"}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">Origem</p>
-                  <Badge variant="outline" className="text-xs capitalize">{tarefa.origem}</Badge>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">Prazo</p>
-                  <p className="text-sm font-medium flex items-center gap-1">
-                    <Calendar className="w-3 h-3" />
-                    {tarefa.prazo ? format(new Date(tarefa.prazo), "dd/MM/yyyy", { locale: ptBR }) : "—"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">Tempo Estimado</p>
-                  <p className="text-sm font-medium flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    {tarefa.tempo_estimado_horas}h
-                    {tarefa.tempo_real_horas ? ` / real: ${tarefa.tempo_real_horas}h` : ""}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">Impacto</p>
-                  <p className="text-sm capitalize">{tarefa.impacto || "—"}</p>
-                </div>
-                {tarefa.motivo_bloqueio && (
-                  <div className="col-span-2">
-                    <p className="text-xs text-gray-500 mb-1 flex items-center gap-1">
-                      <AlertCircle className="w-3 h-3 text-red-500" /> Motivo do Bloqueio
-                    </p>
-                    <p className="text-sm text-red-700">{tarefa.motivo_bloqueio}</p>
-                  </div>
-                )}
-                {tarefa.notas && (
-                  <div className="col-span-2">
-                    <p className="text-xs text-gray-500 mb-1">Notas</p>
-                    <p className="text-sm text-gray-600">{tarefa.notas}</p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Responsável */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <User className="w-4 h-4" /> Responsáveis
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">Consultor</p>
-                  <p className="text-sm font-medium">{tarefa.consultor_nome || "—"}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">Atribuído para</p>
-                  <p className="text-sm font-medium">{atribuidoParaNome || "—"}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">Criado por</p>
-                  <Badge variant="secondary" className="text-xs">
-                    <User className="w-3 h-3 mr-1" />
-                    {criadoPorNome || tarefa.created_by?.split('@')[0] || "—"}
-                  </Badge>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">Solicitante</p>
-                  <p className="text-sm">{solicitanteNome || "—"}</p>
-                </div>
-                {tarefa.data_atribuicao && (
-                  <div>
-                    <p className="text-xs text-gray-500 mb-1">Data Atribuição</p>
-                    <p className="text-sm">
-                      {format(new Date(tarefa.data_atribuicao), "dd/MM/yyyy HH:mm", { locale: ptBR })}
-                    </p>
-                  </div>
-                )}
-                {tarefa.data_conclusao && (
-                  <div>
-                    <p className="text-xs text-gray-500 mb-1">Data Conclusão</p>
-                    <p className="text-sm text-green-700 font-medium">
-                      {format(new Date(tarefa.data_conclusao), "dd/MM/yyyy HH:mm", { locale: ptBR })}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Status + Histórico */}
-        <div className="space-y-4">
-          {/* Status */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Tag className="w-4 h-4" /> Status
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div>
-                <p className="text-xs text-gray-500 mb-1">Status Atual</p>
-                <Badge className={statusCfg.className}>{statusCfg.label}</Badge>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 mb-1">Prioridade</p>
-                <Badge className={prioridadeCfg.className}>{prioridadeCfg.label}</Badge>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 mb-1">Criado em</p>
-                <p className="text-xs text-gray-700">
-                  {tarefa.data_criacao
-                    ? format(new Date(tarefa.data_criacao), "dd/MM/yyyy HH:mm", { locale: ptBR })
-                    : tarefa.created_date
-                    ? format(new Date(tarefa.created_date), "dd/MM/yyyy HH:mm", { locale: ptBR })
-                    : "—"}
+            </div>
+            {tarefa.motivo_bloqueio && (
+              <div className="rounded-lg bg-red-50 border border-red-100 px-3 py-2">
+                <p className="text-xs text-red-500 mb-1 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" /> Motivo do Bloqueio
                 </p>
+                <p className="text-sm text-red-700">{tarefa.motivo_bloqueio}</p>
               </div>
-            </CardContent>
-          </Card>
+            )}
+            {tarefa.notas && (
+              <div className="rounded-lg bg-yellow-50 border border-yellow-100 px-3 py-2">
+                <p className="text-xs text-gray-500 mb-1">Notas</p>
+                <p className="text-sm text-gray-700">{tarefa.notas}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-          {/* Histórico / Timeline */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">📋 Histórico</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {loadingHistorico ? (
-                <p className="text-sm text-gray-400 text-center py-4">Carregando...</p>
-              ) : historico.length === 0 ? (
-                <p className="text-sm text-gray-400 text-center py-4">Nenhum evento registrado ainda.</p>
-              ) : (
-                <div className="max-h-80 overflow-y-auto pr-1">
-                  {historico.map((evento) => (
-                    <TimelineItem key={evento.id} evento={evento} />
-                  ))}
+        {/* Responsáveis */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <User className="w-4 h-4" /> Responsáveis
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Consultor</p>
+                <p className="text-sm font-medium">{tarefa.consultor_nome || "—"}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Atribuído para</p>
+                <p className="text-sm font-medium">{atribuidoParaNome || "—"}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Criado por</p>
+                <Badge variant="secondary" className="text-xs">
+                  <User className="w-3 h-3 mr-1" />
+                  {criadoPorNome || tarefa.created_by?.split('@')[0] || "—"}
+                </Badge>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Solicitante</p>
+                <p className="text-sm">{solicitanteNome || "—"}</p>
+              </div>
+              {tarefa.data_atribuicao && (
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">Data Atribuição</p>
+                  <p className="text-sm">{format(new Date(tarefa.data_atribuicao), "dd/MM/yyyy HH:mm", { locale: ptBR })}</p>
                 </div>
               )}
-            </CardContent>
-          </Card>
-        </div>
+              {tarefa.data_conclusao && (
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">Data Conclusão</p>
+                  <p className="text-sm text-green-700 font-medium">
+                    {format(new Date(tarefa.data_conclusao), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                  </p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
+
+      {/* ── Histórico em largura total com itens horizontais ── */}
+      <Card>
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base flex items-center gap-2">
+              📋 Histórico de Alterações
+            </CardTitle>
+            {historico.length > 0 && (
+              <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-full">{historico.length} eventos</span>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {loadingHistorico ? (
+            <p className="text-sm text-gray-400 text-center py-6">Carregando histórico...</p>
+          ) : historico.length === 0 ? (
+            <p className="text-sm text-gray-400 text-center py-6">Nenhum evento registrado ainda.</p>
+          ) : (
+            <div className="space-y-1 max-h-64 overflow-y-auto">
+              {historico.map((evento) => (
+                <TimelineItem key={evento.id} evento={evento} />
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <TarefaBacklogAnexosVisualizador tarefa={tarefa} />
 
