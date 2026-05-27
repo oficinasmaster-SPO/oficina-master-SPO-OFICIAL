@@ -63,6 +63,15 @@
       "type": "string",
       "description": "ID do registro de origem (atendimento, pedido, etc)"
     },
+    "origem_data": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora do atendimento/ATA de origem"
+    },
+    "origem_titulo": {
+      "type": "string",
+      "description": "T\u00edtulo do atendimento de origem (cache para exibi\u00e7\u00e3o)"
+    },
     "prazo": {
       "type": "string",
       "format": "date",

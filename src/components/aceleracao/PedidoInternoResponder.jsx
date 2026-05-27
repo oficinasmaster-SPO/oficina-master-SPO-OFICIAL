@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import PedidoInternoVisualizador from "./PedidoInternoVisualizador";
+import PedidoInternoMediaUpload from "./PedidoInternoMediaUpload";
 
 const STATUS_LABELS = {
   pendente: { label: "Pendente", className: "bg-gray-100 text-gray-800" },
@@ -37,6 +38,7 @@ const PRIORIDADE_LABELS = {
 
 export default function PedidoInternoResponder({ pedido, user, onCancel, onSuccess }) {
   const [resposta, setResposta] = useState(pedido.resposta || "");
+  const [midiasAnexas, setMidiasAnexas] = useState([]);
 
   const isReadOnly = pedido.status === 'concluido';
   const statusBadge = STATUS_LABELS[pedido.status] || STATUS_LABELS.pendente;
@@ -68,11 +70,14 @@ export default function PedidoInternoResponder({ pedido, user, onCancel, onSucce
         timestamp: now
       });
 
+      // Mescla as mídias existentes do pedido com as novas anexadas pelo responsável
+      const midiasExistentes = pedido.midias_anexas || [];
       const updateData = {
         resposta,
         status: 'concluido',
         historico: [...historicoAtual, ...novasEntradas],
         data_conclusao: now,
+        midias_anexas: [...midiasExistentes, ...midiasAnexas],
       };
 
       if (!pedido.data_primeira_resposta) {
@@ -161,6 +166,14 @@ export default function PedidoInternoResponder({ pedido, user, onCancel, onSucce
                   onChange={(e) => setResposta(e.target.value)}
                   placeholder="Descreva sua resposta, decisão ou encaminhamento..."
                   rows={5}
+                />
+              </div>
+
+              <div>
+                <Label className="mb-2 block">Evidências (opcional)</Label>
+                <PedidoInternoMediaUpload
+                  midias={midiasAnexas}
+                  onChange={setMidiasAnexas}
                 />
               </div>
 
