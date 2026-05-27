@@ -115,7 +115,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Persiste todas as notificações
+    // Persiste notificações in-app + dispara e-mail nos eventos de criação/atribuição
     for (const notif of notificacoes) {
       try {
         await base44.asServiceRole.entities.Notification.create({
@@ -132,6 +132,68 @@ Deno.serve(async (req) => {
         });
       } catch (e) {
         console.error('Erro ao criar notificação:', e.message);
+      }
+
+      // Envia e-mail apenas nos eventos de criação e atribuição
+      if (notif.tipo === 'tarefa_criada' || notif.tipo === 'tarefa_atribuida') {
+        try {
+          // Busca o e-mail do responsável
+          const users = await base44.asServiceRole.entities.User.filter({ id: notif.user_id });
+          const responsavel = users?.[0];
+          if (responsavel?.email) {
+            const prioridade = data?.prioridade || 'media';
+            const prazo = data?.prazo || '';
+            const clienteNome = data?.cliente_nome || '';
+            const descricao = data?.descricao || '';
+
+            const prioridadeLabel = { baixa: 'Baixa', media: 'Média', alta: 'Alta', critica: '🔴 Crítica' }[prioridade] || prioridade;
+            const acao = notif.tipo === 'tarefa_criada' ? 'criada e atribuída' : 'atribuída';
+
+            const htmlBody = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: Arial, sans-serif; background: #f5f5f5; margin: 0; padding: 20px;">
+  <div style="max-width: 600px; margin: 0 auto; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+    <div style="background: #dc2626; padding: 24px 32px;">
+      <h1 style="color: #fff; margin: 0; font-size: 18px;">📋 Nova Tarefa ${acao} a você</h1>
+    </div>
+    <div style="padding: 32px;">
+      <h2 style="color: #111; font-size: 20px; margin: 0 0 8px 0;">${data.titulo}</h2>
+      ${clienteNome ? `<p style="color: #6b7280; margin: 0 0 20px 0; font-size: 14px;">🏢 Cliente: <strong>${clienteNome}</strong></p>` : ''}
+      ${descricao ? `
+      <div style="background: #f9fafb; border-left: 4px solid #dc2626; padding: 16px; border-radius: 4px; margin-bottom: 20px;">
+        <p style="color: #374151; margin: 0; font-size: 14px; line-height: 1.6; white-space: pre-line;">${descricao}</p>
+      </div>` : ''}
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px;">
+        <tr>
+          <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; color: #6b7280; font-size: 14px; width: 40%;">Prioridade</td>
+          <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; color: #111; font-size: 14px; font-weight: 600;">${prioridadeLabel}</td>
+        </tr>
+        ${prazo ? `<tr>
+          <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; color: #6b7280; font-size: 14px;">Prazo</td>
+          <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; color: #111; font-size: 14px; font-weight: 600;">${prazo}</td>
+        </tr>` : ''}
+        <tr>
+          <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Criado por</td>
+          <td style="padding: 8px 0; color: #111; font-size: 14px;">${data?.consultor_nome || 'Sistema'}</td>
+        </tr>
+      </table>
+      <p style="color: #6b7280; font-size: 13px; margin: 0;">Acesse a plataforma Oficinas Master para ver todos os detalhes e gerenciar esta tarefa.</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+            await base44.asServiceRole.integrations.Core.SendEmail({
+              to: responsavel.email,
+              subject: `[Backlog] Nova tarefa: ${data.titulo}${clienteNome ? ` — ${clienteNome}` : ''}`,
+              body: htmlBody
+            });
+          }
+        } catch (emailErr) {
+          console.error('Erro ao enviar e-mail de tarefa:', emailErr.message);
+        }
       }
     }
 
