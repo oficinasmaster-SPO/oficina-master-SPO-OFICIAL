@@ -144,13 +144,15 @@ export default function Layout({ children, currentPageName }) {
   const [showLoading, setShowLoading] = useState(false);
   useEffect(() => {
     let timeout;
-    if (isAuthenticated && !isPublicPage && isLoadingWorkshop) {
-      timeout = setTimeout(() => setShowLoading(true), 300); // 300ms delay to prevent flashes
+    // Admins e global admin pages não precisam de workshop — não exibir spinner
+    const needsWorkshop = isAuthenticated && !isPublicPage && isLoadingWorkshop && user?.role !== 'admin' && !isGlobalAdminPage;
+    if (needsWorkshop) {
+      timeout = setTimeout(() => setShowLoading(true), 300);
     } else {
       setShowLoading(false);
     }
     return () => clearTimeout(timeout);
-  }, [isAuthenticated, isPublicPage, isLoadingWorkshop]);
+  }, [isAuthenticated, isPublicPage, isLoadingWorkshop, user?.role, isGlobalAdminPage]);
 
   return (
       <OnboardingGate user={user} isAuthenticated={isAuthenticated}>
@@ -158,11 +160,11 @@ export default function Layout({ children, currentPageName }) {
         <PlanLimitModal />
         {isAuthenticated && user && <VoucherPendingDialog user={user} />}
         
-        {/* Debug de Permissões - Logs no Console F12 */}
-        {isAuthenticated && user && (
+        {/* Debug de Permissões - DESABILITADO EM PRODUÇÃO (impacta performance) */}
+        {false && isAuthenticated && user && (
           <PermissionDebugLogger 
             pageName={currentPageName} 
-            enabled={true} 
+            enabled={false} 
           />
         )}
 
@@ -322,7 +324,7 @@ export default function Layout({ children, currentPageName }) {
             <main className="flex-1">
               <div className={`${shouldShowMenus ? 'px-4 sm:px-6 lg:px-8 py-6' : ''}`}>
                 {shouldShowMenus && <Breadcrumbs />}
-                {isAuthenticated && !isPublicPage && isLoadingWorkshop ? (
+                {isAuthenticated && !isPublicPage && isLoadingWorkshop && user?.role !== 'admin' && !isGlobalAdminPage ? (
                   <div className="min-h-[60vh] flex items-center justify-center">
                     {showLoading ? <WheelLoader size="lg" text="Carregando dados..." /> : null}
                   </div>
