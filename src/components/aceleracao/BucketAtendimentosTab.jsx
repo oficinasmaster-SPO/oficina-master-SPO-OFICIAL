@@ -27,7 +27,7 @@ export default function BucketAtendimentosTab({ state }) {
   // Sincronizar com OperationalSyncManager para workshops selecionados
   const { invalidate: invalidateAll } = useOperationalSync(null, user?.id, user);
 
-  // Fetch pending ContractAttendances (bucket items)
+  // Fetch pending ContractAttendances (bucket items) + enrich with workshop names
   const { data: bucketItems = [], isLoading } = useQuery({
     queryKey: ['bucket-atendimentos'],
     queryFn: async () => {
@@ -36,7 +36,34 @@ export default function BucketAtendimentosTab({ state }) {
         'scheduled_date',
         500
       );
-      return items.filter(i => !i.consultoria_atendimento_id);
+      const pending = items.filter(i => !i.consultoria_atendimento_id);
+
+      // Collect workshop IDs not already in workshopMap so we can enrich
+      const missingIds = [...new Set(
+        pending
+          .map(i => i.workshop_id)
+          .filter(id => id && !workshopMap?.[id])
+      )];
+
+      let extraMap = {};
+      if (missingIds.length > 0) {
+        // Batch fetch missing workshops via BFF (has asServiceRole)
+        try {
+          const res = await base44.functions.invoke('getUserWorkshops', { workshopIds: missingIds });
+          const fetched = res?.data?.workshops || [];
+          for (const ws of fetched) {
+            extraMap[ws.id] = ws;
+          }
+        } catch {
+          // silently skip — items will show as 'Oficina' fallback
+        }
+      }
+
+      // Attach workshop_name to each item for stable search/display
+      return pending.map(item => ({
+        ...item,
+        _workshopName: (workshopMap?.[item.workshop_id]?.name || extraMap[item.workshop_id]?.name || '').toLowerCase()
+      }));
     },
     staleTime: 2 * 60 * 1000
   });
@@ -144,11 +171,9 @@ export default function BucketAtendimentosTab({ state }) {
           </CardContent>
         </Card>
       ) : (() => {
-        const filtered = search.trim()
-          ? bucketItems.filter(item => {
-              const name = workshopMap?.[item.workshop_id]?.name || '';
-              return name.toLowerCase().includes(search.toLowerCase());
-            })
+        const q = search.trim().toLowerCase();
+        const filtered = q
+          ? bucketItems.filter(item => item._workshopName?.includes(q))
           : bucketItems;
         const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
         const paginated = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
@@ -165,12 +190,13 @@ export default function BucketAtendimentosTab({ state }) {
             <div className="grid gap-3">
               {paginated.map((item) => {
                 const workshop = workshopMap?.[item.workshop_id];
+                const workshopName = workshop?.name || (item._workshopName ? item._workshopName.replace(/\b\w/g, c => c.toUpperCase()) : 'Oficina');
                 return (
                   <Card key={item.id} className="border-l-4 border-l-indigo-500 hover:shadow-md transition-shadow">
                     <CardContent className="py-4 flex items-center justify-between gap-4">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="font-semibold text-gray-900 truncate">{workshop?.name || 'Oficina'}</span>
+                          <span className="font-semibold text-gray-900 truncate">{workshopName}</span>
                           <Badge variant="outline" className="text-xs shrink-0">#{item.sequence_number || '-'}</Badge>
                         </div>
                         <div className="flex items-center gap-4 text-sm text-gray-500">
