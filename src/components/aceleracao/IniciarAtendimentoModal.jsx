@@ -37,6 +37,7 @@ import { criarProximoSuporteFU } from "@/components/aceleracao/suporte/SuporteFo
 import { useToasts } from "@/components/aceleracao/ToastContainer";
 import { useClientDemands } from "@/components/aceleracao/hooks/useClientDemands";
 import SuporteFormBanner from "@/components/aceleracao/suporte/SuporteFormBanner";
+import ClientHistoryFloatingPanel from "@/components/aceleracao/ClientHistoryFloatingPanel";
 
 const RESULTADO_COLORS = {
   atendeu: "bg-green-100 text-green-700 border-green-300",
