@@ -37,12 +37,17 @@ Deno.serve(async (req) => {
 
     // ── Buscar o item de origem ──
     let origem = null;
-    if (tipo === 'tarefa_backlog') {
-      const items = await base44.asServiceRole.entities.TarefaBacklog.filter({ id: origem_id });
-      origem = items?.[0] || null;
-    } else {
-      const items = await base44.asServiceRole.entities.PedidoInterno.filter({ id: origem_id });
-      origem = items?.[0] || null;
+    try {
+      if (tipo === 'tarefa_backlog') {
+        const items = await base44.asServiceRole.entities.TarefaBacklog.filter({ id: origem_id });
+        origem = items?.[0] || null;
+      } else {
+        const items = await base44.asServiceRole.entities.PedidoInterno.filter({ id: origem_id });
+        origem = items?.[0] || null;
+      }
+    } catch {
+      // SDK pode lançar exceção para IDs inválidos — tratar como not found
+      origem = null;
     }
 
     if (!origem) {

@@ -43,6 +43,15 @@ Deno.serve(async (req) => {
       prazoStr = prazo.toISOString().split('T')[0];
     }
 
+    // Tentar obter consulting_firm_id do consultor para respeitar RLS
+    let consultingFirmId = null;
+    if (tarefa.consultor_id) {
+      try {
+        const users = await base44.asServiceRole.entities.User.filter({ id: tarefa.consultor_id });
+        consultingFirmId = users?.[0]?.data?.consulting_firm_id || null;
+      } catch { /* não crítico */ }
+    }
+
     const fuData = {
       workshop_id: tarefa.cliente_id,
       workshop_name: tarefa.cliente_nome || null,
@@ -61,6 +70,7 @@ Deno.serve(async (req) => {
       origem_solicitante_nome: null,
       is_completed: false,
       notes: `Follow-up de tarefa: ${tarefa.titulo || ''}`,
+      consulting_firm_id: consultingFirmId,
     };
 
     const novoFU = await base44.asServiceRole.entities.FollowUpReminder.create(fuData);

@@ -39,18 +39,26 @@ const STATUS_COLORS = {
 export default function OrigemDerivadaBanner({ followUp, onVerAta }) {
   const [statusAtual, setStatusAtual] = useState(followUp?.origem_status || null);
 
+  // Reset do status quando o followUp muda
+  useEffect(() => {
+    setStatusAtual(followUp?.origem_status || null);
+  }, [followUp?.id, followUp?.origem_status]);
+
   // Sincronização lazy do status em background
   useEffect(() => {
     if (!followUp?.id || !isOrigemDerivadaFlow(followUp)) return;
+    const origemId = followUp.origem_tarefa_id || followUp.origem_pedido_id;
+    if (!origemId) return;
+
     let cancelled = false;
 
     const syncStatus = async () => {
       try {
-        if (followUp.origin_type === 'tarefa_backlog' && followUp.origem_tarefa_id) {
-          const items = await base44.entities.TarefaBacklog.filter({ id: followUp.origem_tarefa_id });
+        if (followUp.origin_type === 'tarefa_backlog') {
+          const items = await base44.entities.TarefaBacklog.filter({ id: origemId });
           if (!cancelled && items?.[0]?.status) setStatusAtual(items[0].status);
-        } else if (followUp.origin_type === 'pedido_interno' && followUp.origem_pedido_id) {
-          const items = await base44.entities.PedidoInterno.filter({ id: followUp.origem_pedido_id });
+        } else if (followUp.origin_type === 'pedido_interno') {
+          const items = await base44.entities.PedidoInterno.filter({ id: origemId });
           if (!cancelled && items?.[0]?.status) setStatusAtual(items[0].status);
         }
       } catch {
@@ -60,7 +68,7 @@ export default function OrigemDerivadaBanner({ followUp, onVerAta }) {
 
     syncStatus();
     return () => { cancelled = true; };
-  }, [followUp?.id]);
+  }, [followUp?.id, followUp?.origin_type, followUp?.origem_tarefa_id, followUp?.origem_pedido_id]);
 
   if (!isOrigemDerivadaFlow(followUp)) return null;
 

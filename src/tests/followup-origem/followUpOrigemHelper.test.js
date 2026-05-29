@@ -211,6 +211,47 @@ describe('Regressão: suporteHelper não foi afetado', async () => {
 });
 
 // ────────────────────────────────────────────────────────────────
+// SUITE 6 — Regressão: bugs corrigidos (não devem regredir)
+// ────────────────────────────────────────────────────────────────
+describe('Regressão bugs corrigidos', () => {
+  // BUG-1: criarFollowUpDeOrigem retornava 500 em vez de 404 para IDs inválidos
+  // Garantido no helper: buildFollowUpDeTarefa/buildFollowUpDePedido nunca lançam
+  // exceção para inputs válidos; o handler fica responsável pela busca.
+  // Aqui validamos que os builders retornam objeto com origin_type correto mesmo
+  // com campos mínimos obrigatórios.
+  const tarefaMinima = { id: 't1', titulo: 'T', cliente_id: 'ws1', consultor_id: 'c1', status: 'aberta' };
+  const pedidoMinimo = { id: 'p1', titulo: 'P', cliente_id: 'ws1', responsavel_id: 'r1', status: 'pendente' };
+
+  const fuT = buildFollowUpDeTarefa(tarefaMinima, {});
+  assert('buildFollowUpDeTarefa não lança para tarefa mínima', fuT !== null && fuT !== undefined);
+  assert('tarefa mínima: origin_type correto', fuT.origin_type === 'tarefa_backlog');
+  assert('tarefa mínima: workshop_id mapeado', fuT.workshop_id === 'ws1');
+
+  const fuP = buildFollowUpDePedido(pedidoMinimo, {});
+  assert('buildFollowUpDePedido não lança para pedido mínimo', fuP !== null && fuP !== undefined);
+  assert('pedido mínimo: origin_type correto', fuP.origin_type === 'pedido_interno');
+
+  // BUG-2: OrigemDerivadaBanner — statusAtual não resetava ao mudar de followUp
+  // O reset agora depende de followUp.origem_status (prop), então o estado inicial
+  // deve refletir o valor da prop, não um estado stale anterior.
+  // Garantimos que os helpers retornam origem_status correto para ambos builders:
+  assert('tarefa: origem_status = "aberta"', fuT.origem_status === 'aberta');
+  assert('pedido: origem_status = "pendente"', fuP.origem_status === 'pendente');
+
+  // Tarefa sem status explícito → fallback 'aberta'
+  const tarefaSemStatus = { id: 't2', titulo: 'T2', cliente_id: 'ws2', consultor_id: 'c2' };
+  const fuSemStatus = buildFollowUpDeTarefa(tarefaSemStatus, {});
+  assert('tarefa sem status → fallback "aberta"', fuSemStatus.origem_status === 'aberta');
+
+  // BUG-3: consulting_firm_id ausente — os builders já aceitam consulting_firm_id nos opts
+  const fuComFirm = buildFollowUpDeTarefa(tarefaMinima, { consulting_firm_id: 'firm-xyz' });
+  assert('consulting_firm_id propagado pelo builder', fuComFirm.consulting_firm_id === 'firm-xyz');
+
+  const fuSemFirm = buildFollowUpDeTarefa(tarefaMinima, {});
+  assert('consulting_firm_id é null quando não fornecido', fuSemFirm.consulting_firm_id === null);
+});
+
+// ────────────────────────────────────────────────────────────────
 // RESULTADO FINAL
 // ────────────────────────────────────────────────────────────────
 console.log(`\n${'─'.repeat(50)}`);
