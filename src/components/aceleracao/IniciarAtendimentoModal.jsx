@@ -37,6 +37,7 @@ import { criarProximoSuporteFU } from "@/components/aceleracao/suporte/SuporteFo
 import { useToasts } from "@/components/aceleracao/ToastContainer";
 import { useClientDemands } from "@/components/aceleracao/hooks/useClientDemands";
 import SuporteFormBanner from "@/components/aceleracao/suporte/SuporteFormBanner";
+import OrigemDerivadaBanner from "@/components/aceleracao/followups/OrigemDerivadaBanner";
 import ClientHistoryFloatingPanel from "@/components/aceleracao/ClientHistoryFloatingPanel";
 import { isSuporteFlow, gerarSuporteId } from "@/utils/suporteHelper";
 
@@ -382,8 +383,6 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
     if (savedDraft) {
       try {
         const draft = JSON.parse(savedDraft);
-        console.log('✅ Rascunho carregado:', draft);
-        
         // Restaurar todos os campos
         setCanais(draft.canais || []);
         setResultado(draft.resultado || "");
@@ -402,9 +401,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
         setCronometroAtivo(draft.cronometroAtivo !== false);
         
         toast.success("Rascunho restaurado! Pronto para continuar.");
-      } catch (err) {
-        console.error('Erro ao carregar rascunho:', err);
-      }
+      } catch { /* rascunho corrompido — ignorar */ }
     }
   }, [followUp?.id]);
 
@@ -1101,8 +1098,16 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
           <div className="overflow-y-auto border-r border-gray-200 px-4 py-4" style={{ flex: '2 1 0%', minWidth: '320px', maxWidth: '42%' }}>
            <div className="space-y-6 max-w-2xl px-2 py-2 bg-white rounded-lg shadow-[inset_0_2px_8px_rgba(0,0,0,0.05)]">
              {/* Banner Suporte */}
-             <SuporteFormBanner followUp={followUp} />
-             {/* Canal */}
+              <SuporteFormBanner followUp={followUp} />
+              {/* Banner Origem Derivada (Tarefa/Pedido) */}
+              <OrigemDerivadaBanner
+                followUp={followUp}
+                onVerAta={(ataId) => {
+                  const ataEncontrada = atas.find(a => a.id === ataId);
+                  if (ataEncontrada) setSelectedAta(ataEncontrada);
+                }}
+              />
+              {/* Canal */}
               <div>
                 <label className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2 block">
                   Canais de contato *
