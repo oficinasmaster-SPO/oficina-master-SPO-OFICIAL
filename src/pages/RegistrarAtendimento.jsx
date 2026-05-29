@@ -37,6 +37,7 @@ import ClientIntelligenceViewer from "@/components/inteligencia/ClientIntelligen
 import { INTELLIGENCE_AREAS, INTELLIGENCE_TYPES } from "@/components/lib/clientIntelligenceConstants";
 import { useRegistroMeta } from "@/components/hooks/useRegistroMeta";
 import RegistroMetaBadge from "@/components/aceleracao/RegistroMetaBadge";
+import ClientHistoryFloatingPanel from "@/components/aceleracao/ClientHistoryFloatingPanel";
 
 export default function RegistrarAtendimento({ isModal = false, onClose, onSaved, atendimentoId: atendimentoIdProp, consultoresExternos, isReadOnly = false, origemTela = "RegistrarAtendimento", initialData = null }) {
   const navigate = useNavigate();
@@ -332,6 +333,16 @@ export default function RegistrarAtendimento({ isModal = false, onClose, onSaved
 
   const [viewerOpen, setViewerOpen] = useState(false);
   const [selectedIntelligence, setSelectedIntelligence] = useState(null);
+
+  // ── Floating panel: auto-show when workshop is selected ──
+  const [showFloatingPanel, setShowFloatingPanel] = useState(false);
+  const prevWorkshopIdRef = useRef(null);
+  useEffect(() => {
+    if (formData.workshop_id && formData.workshop_id !== prevWorkshopIdRef.current) {
+      prevWorkshopIdRef.current = formData.workshop_id;
+      setShowFloatingPanel(true);
+    }
+  }, [formData.workshop_id]);
 
   const { data: todasAulas } = useQuery({
     queryKey: ['todas-aulas-publicadas'],
@@ -1104,8 +1115,21 @@ export default function RegistrarAtendimento({ isModal = false, onClose, onSaved
     </>
   );
 
+  // ── Floating panel (shared — renders regardless of isModal) ──
+  const selectedWorkshop = workshops?.find(w => w.id === formData.workshop_id);
+  const floatingPanel = showFloatingPanel && formData.workshop_id ? (
+    <ClientHistoryFloatingPanel
+      workshopId={formData.workshop_id}
+      workshopName={selectedWorkshop?.name || formData.workshop_name || ""}
+      planId={selectedWorkshop?.planoAtual || ""}
+      onClose={() => setShowFloatingPanel(false)}
+    />
+  ) : null;
+
   if (isModal) {
     return (
+      <>
+        {floatingPanel}
       <div
         className={`fixed inset-0 z-[10000] flex items-center justify-center p-4 sm:p-6 transition-opacity duration-250 ${isClosing ? 'opacity-0' : 'opacity-100'}`}
         style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}
@@ -1266,10 +1290,13 @@ export default function RegistrarAtendimento({ isModal = false, onClose, onSaved
           </div>
         </div>
       </div>
+      </>
     );
   }
 
   return (
+    <>
+      {floatingPanel}
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Modal de conflito fora do form/sticky para evitar stacking context */}
       <ConflitosHorarioModal
@@ -1418,5 +1445,6 @@ export default function RegistrarAtendimento({ isModal = false, onClose, onSaved
         </div>
       </form>
     </div>
+    </>
   );
 }
