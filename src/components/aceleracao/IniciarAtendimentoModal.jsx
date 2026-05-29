@@ -38,6 +38,7 @@ import { useToasts } from "@/components/aceleracao/ToastContainer";
 import { useClientDemands } from "@/components/aceleracao/hooks/useClientDemands";
 import SuporteFormBanner from "@/components/aceleracao/suporte/SuporteFormBanner";
 import ClientHistoryFloatingPanel from "@/components/aceleracao/ClientHistoryFloatingPanel";
+import { isSuporteFlow, gerarSuporteId } from "@/utils/suporteHelper";
 
 
 const RESULTADO_COLORS = {
@@ -299,13 +300,6 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
      onNavegar?.(novoFU);
    }, [followUp?.id, onNavegar]);
 
-  // ── Gerador de ID rastreável de suporte ──
-  const gerarSuporteId = () => {
-    const ts = Date.now();
-    const rand = Math.random().toString(36).substr(2, 5).toUpperCase();
-    return `SUP-${ts}-${rand}`;
-  };
-
   // ── Carregador de cliente — abre suporte rastreável com prazo 24h ──
   const carregarCliente = useCallback(async (clientData) => {
     try {
@@ -413,8 +407,6 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
       }
     }
   }, [followUp?.id]);
-
-
 
   // Intervalo unificado — um único setInterval para timer e duração
   useEffect(() => {
@@ -575,8 +567,6 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
     }
   };
 
-  // Dica gerada apenas quando o usuário clicar no botão ↺ do post-it
-
   const buildSystemPrompt = () => {
     const resumoAtas = atas.slice(0, 5).map(a =>
       `- ${a.tipo_aceleracao || a.tipo_atendimento || 'Reunião'} (${a.meeting_date || ''}): próximos passos: ${typeof a.proximos_passos === 'string' ? a.proximos_passos : Array.isArray(a.proximos_passos) && a.proximos_passos.length ? (typeof a.proximos_passos[0] === 'string' ? a.proximos_passos[0] : a.proximos_passos[0]?.descricao||'') : 'não registrado'}`
@@ -639,9 +629,6 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
   const handleSaveDraft = async () => {
     setSaving(true);
     try {
-      console.log('Iniciando salvamento de rascunho...');
-      console.log('followUp:', followUp);
-      
       if (!followUp || !followUp.id) {
         toast.error("Erro: follow-up não identificado");
         setSaving(false);
@@ -649,7 +636,6 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
       }
 
       setSavingStep("Salvando rascunho...");
-      
       // Salvar dados em uma estrutura temporária
        const draftData = {
          followUp_id: followUp.id,
@@ -675,9 +661,6 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
        // Salvar no localStorage com a key baseada em followUp.id
        const storageKey = `draft_atendimento_${followUp.id}`;
        localStorage.setItem(storageKey, JSON.stringify(draftData));
-       console.log('✅ Rascunho salvo em:', storageKey);
-       console.log('Dados salvos:', draftData);
-      
       await new Promise(r => setTimeout(r, 800));
       setSavingStep("completed");
       await new Promise(r => setTimeout(r, 1000));
@@ -714,7 +697,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
     setActiveStepIndex(0);
     setShowCheckpointModal(false);
 
-    const isSuporteFlow = followUp.origin_type === 'suporte' || followUp.origin_type === 'suporte_checkin';
+    const isFluxoSuporte = isSuporteFlow(followUp);
 
     try {
       // STEP 0 — Se for suporte local (ainda não salvo no BD), criar o FollowUpReminder primeiro
@@ -750,7 +733,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
         duracao,
         humor,
         engajamento,
-        observacoes: isSuporteFlow ? `[SUPORTE ${followUp.suporte_id || ''}] ${observacoes}` : observacoes,
+        observacoes: isFluxoSuporte ? `[SUPORTE ${followUp.suporte_id || ''}] ${observacoes}` : observacoes,
         compromissos,
         proximoPasso,
         proxData,
@@ -830,7 +813,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
       setActiveStepIndex(2);
 
       // Suporte: lógica de próximo FU dedicada (check-in +7d se resolvido, re-agenda amanhã se não)
-      if (isSuporteFlow) {
+      if (isFluxoSuporte) {
         novoFollowUp = await criarProximoSuporteFU({ followUp, resultado });
       }
       // Auto-reagendamento para amanhã: nao_atendeu ou aguardando resposta (fluxo normal)
@@ -865,7 +848,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
            consulting_firm_id: followUp.consulting_firm_id || null,
            suporte_id: followUp.suporte_id || null,
          });
-      } else if (!isSuporteFlow && (proximoPasso === "reagendar" || decision === "next_week" || decision === "in_X_days") && (proxData || metadata?.date)) {
+      } else if (!isFluxoSuporte && (proximoPasso === "reagendar" || decision === "next_week" || decision === "in_X_days") && (proxData || metadata?.date)) {
         // Reagendamento: usa data do checkpoint (next_week/in_X_days) ou data manual do formulário
         const dataParaAgendar = metadata?.date || proxData;
         const nextSeq = (followUp.sequence_number || 1) + 1;
@@ -1026,6 +1009,18 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
                 );
               })}
             </div>
+          </div>
+        )}
+
+        {/* BANNER SUPORTE — topo do modal, visível acima do header */}
+        {isSuporteFlow(followUp) && (
+          <div role="status" aria-label="Modo Suporte Ativo" className="bg-amber-500 text-amber-950 px-4 py-2 flex items-center gap-2 flex-shrink-0 border-b-2 border-amber-600">
+            <span className="text-base leading-none flex-shrink-0">{followUp.origin_type === 'suporte_checkin' ? '🔔' : '🛟'}</span>
+            <span className="text-xs font-bold uppercase tracking-wide">{followUp.origin_type === 'suporte_checkin' ? 'Check-in de Suporte' : 'Modo Suporte Ativo'}</span>
+            {followUp.suporte_id && (
+              <span className="text-[11px] font-mono bg-amber-400/60 border border-amber-600/40 rounded px-2 py-0.5 ml-1">{followUp.suporte_id}</span>
+            )}
+            <span className="ml-auto text-[11px] opacity-80 hidden sm:block">Atendimento fora do fluxo padrão</span>
           </div>
         )}
 
