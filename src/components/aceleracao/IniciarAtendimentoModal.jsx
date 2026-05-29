@@ -707,6 +707,8 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
   };
 
   const handleCheckpointDecision = async (decision, metadata, fusCheckpoint = []) => {
+    // ── Guard anti-duplo-clique: se já está salvando, ignora ──
+    if (saving) return;
     setSaving(true);
     setActiveStepIndex(0);
     setShowCheckpointModal(false);

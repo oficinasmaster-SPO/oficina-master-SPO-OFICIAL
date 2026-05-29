@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { useIdempotentAction } from "@/hooks/useIdempotentAction";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +16,7 @@ import NextSteps from "@/components/aceleracao/NextSteps";
 import AtaSaveConfirmDialog from "@/components/aceleracao/AtaSaveConfirmDialog";
 
 export default function GerarAtaModal({ atendimento, workshop, planoAceleracao, onClose, onSaved }) {
-  const [loading, setLoading] = useState(false);
+  const { execute: executeAtaSave, running: loading } = useIdempotentAction();
   const [showAISummary, setShowAISummary] = useState(false);
   const [aiSummary, setAISummary] = useState(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -195,7 +196,7 @@ export default function GerarAtaModal({ atendimento, workshop, planoAceleracao, 
   const handleSave = async (status = "rascunho") => {
     setShowConfirmDialog(false);
 
-    setLoading(true);
+    await executeAtaSave(async () => {
     try {
       const ataCount = await base44.entities.MeetingMinutes.list();
       const code = `AT.${String(ataCount.length + 1).padStart(4, '0')}`;
@@ -245,9 +246,8 @@ export default function GerarAtaModal({ atendimento, workshop, planoAceleracao, 
     } catch (error) {
       console.error("Erro ao salvar ATA:", error);
       toast.error("Erro ao salvar ATA: " + (error.message || "Verifique os campos obrigatórios"));
-    } finally {
-      setLoading(false);
     }
+    }); // end executeAtaSave
   };
 
   return (
