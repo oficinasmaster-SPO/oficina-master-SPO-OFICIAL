@@ -290,7 +290,7 @@ const CANAL_ICON_MAP = {
   meet:       { icon: Video,          bg: "bg-purple-500", title: "Aguardando retorno via Meet" },
 };
 
-export default function FollowUpList({ reminders, remindersConcluidos = [], today, isLoading, onSelect, filterPill, onFilterPill, seqByReminderId = {}, statsByWorkshopId = {} }) {
+export default function FollowUpList({ reminders, remindersConcluidos = [], today, isLoading, onSelect, filterPill, onFilterPill, seqByReminderId = {}, statsByWorkshopId = {}, onSuporteRapido }) {
   const [selectedCompleted, setSelectedCompleted] = useState(null);
   const [search, setSearch] = useState("");
   const { byWorkshop: concluidosIndex, byFollowupId: concluidosByFuid, sequenceByFollowupId } = useConcluidosIndex();
@@ -461,6 +461,18 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
             </span>
           )}
         </div>
+
+        {/* Botão Suporte Rápido — ao lado do card Empresas */}
+        {onSuporteRapido && (
+          <button
+            onClick={onSuporteRapido}
+            title="Suporte Rápido — atender cliente sem follow-up agendado"
+            className="flex items-center gap-1.5 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 hover:bg-amber-100 transition-colors text-amber-700 font-semibold text-xs"
+          >
+            <span className="text-sm leading-none">🛟</span>
+            Suporte
+          </button>
+        )}
       </div>
 
       {/* Pills */}

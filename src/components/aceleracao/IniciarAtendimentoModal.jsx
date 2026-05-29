@@ -39,6 +39,7 @@ import { useClientDemands } from "@/components/aceleracao/hooks/useClientDemands
 import SuporteFormBanner from "@/components/aceleracao/suporte/SuporteFormBanner";
 import ClientHistoryFloatingPanel from "@/components/aceleracao/ClientHistoryFloatingPanel";
 
+
 const RESULTADO_COLORS = {
   atendeu: "bg-green-100 text-green-700 border-green-300",
   nao_atendeu: "bg-red-100 text-red-700 border-red-300",
@@ -133,7 +134,7 @@ function renderMarkdown(text) {
     });
 }
 
-export default function IniciarAtendimentoModal({ followUp: followUpInicial, cliente, onClose, onSaved, fusConcatenados = [], proximoFU = null, onProximoFollowUp, filaReminders = [], onNavegar }) {
+export default function IniciarAtendimentoModal({ followUp: followUpInicial, cliente, onClose, onSaved, fusConcatenados = [], proximoFU = null, onProximoFollowUp, filaReminders = [], onNavegar, openClientSelectorOnMount = false }) {
   // Validar filaReminders — pode vir undefined
   const validFilaReminders = Array.isArray(filaReminders) ? filaReminders : [];
   const { user } = useAuth();
@@ -177,7 +178,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
   const [fuSpSelecionados, setFuSpSelecionados] = useState([]);
   const [activePanel, setActivePanel] = useState('atas');
   const [selectedSprintId, setSelectedSprintId] = useState(null);
-  const [showClientSelector, setShowClientSelector] = useState(false);
+  const [showClientSelector, setShowClientSelector] = useState(openClientSelectorOnMount);
   const [clienteAtual, setClienteAtual] = useState(cliente);
   const [showRegistrarAtendimento, setShowRegistrarAtendimento] = useState(false);
   const [showCheckpointModal, setShowCheckpointModal] = useState(false);

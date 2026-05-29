@@ -25,6 +25,7 @@ import RelatoriosTab from "./RelatoriosTab";
 import TaxaRealizacaoRelatorio from "./TaxaRealizacaoRelatorio";
 import SugestoesAgendamentoTab from "./sugestoes/SugestoesAgendamentoTab";
 import { useFollowUpSequence } from "@/hooks/useFollowUpSequence";
+import IniciarAtendimentoModal from "@/components/aceleracao/IniciarAtendimentoModal";
 
 // ── Componentes de módulo (fora do corpo do componente para evitar re-mount) ──
 
@@ -168,6 +169,7 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
   const [crmFilterPill, setCrmFilterPill] = useState("todos");
   const [selectedConcluido, setSelectedConcluido] = useState(null);
   const [animating, setAnimating] = useState(false);
+  const [showSuporteRapido, setShowSuporteRapido] = useState(false);
 
   const today = new Date().toISOString().split("T")[0];
 
@@ -552,6 +554,7 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
             onFilterPill={setCrmFilterPill}
             seqByReminderId={seqByReminderId}
             statsByWorkshopId={statsByWorkshopId}
+            onSuporteRapido={() => setShowSuporteRapido(true)}
           />
         )
       )}
@@ -745,6 +748,20 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
         <RelatoriosTab />
       )}
       </div>
+
+      {/* Modal Suporte Rápido — abre ClientSelectorGrid imediatamente */}
+      {showSuporteRapido && (
+        <IniciarAtendimentoModal
+          followUp={null}
+          cliente={null}
+          openClientSelectorOnMount={true}
+          onClose={() => setShowSuporteRapido(false)}
+          onSaved={() => {
+            setShowSuporteRapido(false);
+            queryClient.invalidateQueries({ queryKey: ["follow-up-reminders-tab"] });
+          }}
+        />
+      )}
       </div>
       );
       }

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BarChart3, Calendar, CalendarRange, FileText, Users, Activity, Plus, Loader2, Lightbulb, List, Zap, ClipboardCheck } from "lucide-react";
 import RegistroAtendimentoMassaModal from "@/components/aceleracao/RegistroAtendimentoMassaModal";
+import IniciarAtendimentoModal from "@/components/aceleracao/IniciarAtendimentoModal";
 import ActiveFiltersBar from "@/components/aceleracao/ActiveFiltersBar";
 import TabSkeleton from "@/components/aceleracao/TabSkeleton";
 import TabErrorBoundary from "@/components/aceleracao/TabErrorBoundary";
@@ -57,6 +58,7 @@ export default function ControleAceleracaoView({ state }) {
   } = state;
 
   const [showMassRegistration, setShowMassRegistration] = useState(false);
+  const [showSuporteRapido, setShowSuporteRapido] = useState(false);
 
   // Track visited tabs — lazy-mount on first visit, keep mounted after
   const [visitedTabs, setVisitedTabs] = useState(() => new Set([activeTab]));
@@ -239,6 +241,33 @@ export default function ControleAceleracaoView({ state }) {
             Central de Aceleração
           </button>
 
+              {/* Botão âmbar — Suporte Rápido */}
+          <button
+            onClick={() => setShowSuporteRapido(true)}
+            className="action-btn"
+            style={{
+              height: "2.45rem",
+              padding: "0 1.225rem",
+              borderRadius: "0.7rem",
+              border: "none",
+              background: "linear-gradient(135deg, hsl(38 92% 52%), hsl(32 90% 42%))",
+              color: "#fff",
+              fontSize: "0.7rem",
+              fontWeight: 600,
+              letterSpacing: "-0.01em",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "0.44rem",
+              cursor: "pointer",
+              boxShadow: "0 14px 28px -8px hsl(38 90% 45% / 0.55), 0 6px 12px -4px hsl(38 90% 45% / 0.35), inset 0 1px 0 hsl(0 0% 100% / 0.22)",
+            }}
+            onMouseEnter={e => e.currentTarget.style.boxShadow = "0 22px 44px -10px hsl(38 90% 45% / 0.7), 0 10px 20px -6px hsl(38 90% 45% / 0.45), inset 0 1px 0 hsl(0 0% 100% / 0.30)"}
+            onMouseLeave={e => e.currentTarget.style.boxShadow = "0 14px 28px -8px hsl(38 90% 45% / 0.55), 0 6px 12px -4px hsl(38 90% 45% / 0.35), inset 0 1px 0 hsl(0 0% 100% / 0.22)"}
+          >
+            <span className="action-btn-icon" style={{fontSize: "0.85rem"}}>🛟</span>
+            Suporte Rápido
+          </button>
+
           {/* Botão outline — Registro em Massa */}
           <button
             onClick={handleOpenMassRegistration}
@@ -308,6 +337,17 @@ export default function ControleAceleracaoView({ state }) {
         onClose={() => setShowMassRegistration(false)}
         user={user}
       />
+
+      {/* Modal Suporte Rápido — abre ClientSelectorGrid imediatamente */}
+      {showSuporteRapido && (
+        <IniciarAtendimentoModal
+          followUp={null}
+          cliente={null}
+          openClientSelectorOnMount={true}
+          onClose={() => setShowSuporteRapido(false)}
+          onSaved={() => setShowSuporteRapido(false)}
+        />
+      )}
 
       {/* Active Filters Bar — sempre visível quando há filtros */}
       {hasActiveFilters && (
