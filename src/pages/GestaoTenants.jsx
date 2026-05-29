@@ -10,9 +10,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
-import { Building2, Briefcase, Plus, Pencil, Trash2, Loader2, ShieldAlert, Search, Users, User as UserIcon, Zap } from 'lucide-react';
+import { Building2, Briefcase, Plus, Pencil, Trash2, Loader2, ShieldAlert, Search, Users, User as UserIcon, Zap, RefreshCw } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
+import GerarAtendimentosPlanoButton from '@/components/aceleracao/GerarAtendimentosPlanoButton';
 
 export default function GestaoTenants() {
   const { user } = useAuth();
@@ -448,16 +449,24 @@ export default function GestaoTenants() {
                             <TableCell>{ownerUser?.email || '-'}</TableCell>
                             <TableCell>{company.created_date ? new Date(company.created_date).toLocaleDateString('pt-BR') : '-'}</TableCell>
                             <TableCell className="text-right">
-                              <Button variant="ghost" size="icon" onClick={() => handleOpenCompanyModal(company)}>
-                                <Pencil className="w-4 h-4" />
-                              </Button>
-                              <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-700" onClick={() => {
-                                if (window.confirm("Tem certeza que deseja remover esta oficina e o usuário dono vinculado?")) {
-                                  deleteCompanyMutation.mutate(company);
-                                }
-                              }}>
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
+                              <div className="flex items-center justify-end gap-1">
+                                <GerarAtendimentosPlanoButton
+                                  workshopId={company.id}
+                                  workshopName={company.name}
+                                  size="sm"
+                                  variant="ghost"
+                                />
+                                <Button variant="ghost" size="icon" onClick={() => handleOpenCompanyModal(company)}>
+                                  <Pencil className="w-4 h-4" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-700" onClick={() => {
+                                  if (window.confirm("Tem certeza que deseja remover esta oficina e o usuário dono vinculado?")) {
+                                    deleteCompanyMutation.mutate(company);
+                                  }
+                                }}>
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
                             </TableCell>
                           </TableRow>
                         );

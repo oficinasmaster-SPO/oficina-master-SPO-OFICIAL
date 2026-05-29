@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, X, Plus, Star, Map, Lock, ListChecks, Settings2, Zap, BookOpen, ExternalLink, PlayCircle, ChevronDown, ChevronUp, ChevronRight, RotateCcw, AlertTriangle, Lightbulb, PlaySquare, BarChart2, TrendingUp, MessageSquare, Circle, Clock, RefreshCw } from "lucide-react";
+import GerarAtendimentosPlanoButton from './GerarAtendimentosPlanoButton';
 import CamadaEstrategica from './CamadaEstrategica';
 import SprintPhaseDetailModalRedesigned from './SprintPhaseDetailModalRedesigned';
 import { getDefaultPhasesForMission } from './sprintMissionTasks';
@@ -1027,7 +1028,17 @@ export default function ConsultoriaClienteTab({ client, mode = "contextual", glo
       <div className="flex items-center gap-2 pb-2 border-b">
         <Lightbulb className="w-5 h-5 text-amber-500" />
         <h3 className="font-semibold text-gray-900">Módulo de Consultoria</h3>
-        <Badge variant="outline" className="text-xs ml-auto">4 Camadas</Badge>
+        <div className="ml-auto flex items-center gap-2">
+          {workshopId && (
+            <GerarAtendimentosPlanoButton
+              workshopId={workshopId}
+              workshopName={client?.name}
+              size="sm"
+              variant="outline"
+            />
+          )}
+          <Badge variant="outline" className="text-xs">4 Camadas</Badge>
+        </div>
       </div>
 
       <Tabs defaultValue="estrategico">
