@@ -47,6 +47,9 @@ Deno.serve(withAuth(async (req, { base44, user }) => {
             // Request sem body — continuar com lista completa
         }
 
+        // Declarar userProfileWorkshopId no topo para evitar hoisting error em qualquer branch
+        const userProfileWorkshopId = user.data?.workshop_id || user.workshop_id;
+
         // ATEND-01 FIX-COMPLEMENTAR: Batch — aceita array de workshopIds para buscar múltiplos de uma vez
         if (body?.workshopIds && Array.isArray(body.workshopIds)) {
             const results = await Promise.all(
@@ -67,7 +70,6 @@ Deno.serve(withAuth(async (req, { base44, user }) => {
                 return null;
             });
             
-            // QA-FIX-03: Log quando workshop não existe
             if (!ws) {
                 console.warn(`[getUserWorkshops] Workshop ${body.workshopId} não encontrado para usuário ${user.email}`);
             }
@@ -95,9 +97,6 @@ Deno.serve(withAuth(async (req, { base44, user }) => {
         // --- SERVICE: UserWorkshopsService ---
         let availableWorkshops = [];
         const seenIds = new Set();
-
-        // FIX-01: Adicionar workshop do perfil como fallback se nenhum for encontrado
-        const userProfileWorkshopId = user.data?.workshop_id || user.workshop_id;
 
         // GAP-01: usar asServiceRole em todas as queries — base44.entities usa RLS que pode bloquear
         // consultores sem consulting_firm_id no perfil ou sem owner_id/partner_ids nos workshops

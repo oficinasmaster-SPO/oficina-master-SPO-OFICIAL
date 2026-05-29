@@ -38,7 +38,7 @@ export default function BucketAtendimentosTab({ state }) {
       );
       const pending = items.filter(i => !i.consultoria_atendimento_id);
 
-      // Collect workshop IDs not already in workshopMap so we can enrich
+      // Collect ALL unique workshop IDs missing from workshopMap
       const missingIds = [...new Set(
         pending
           .map(i => i.workshop_id)
@@ -47,15 +47,19 @@ export default function BucketAtendimentosTab({ state }) {
 
       let extraMap = {};
       if (missingIds.length > 0) {
-        // Batch fetch missing workshops via BFF (has asServiceRole)
-        try {
-          const res = await base44.functions.invoke('getUserWorkshops', { workshopIds: missingIds });
-          const fetched = res?.data?.workshops || [];
-          for (const ws of fetched) {
-            extraMap[ws.id] = ws;
+        // Batch fetch em lotes de 20 para evitar rate limit
+        const chunkSize = 20;
+        for (let i = 0; i < missingIds.length; i += chunkSize) {
+          const chunk = missingIds.slice(i, i + chunkSize);
+          try {
+            const res = await base44.functions.invoke('getUserWorkshops', { workshopIds: chunk });
+            const fetched = res?.data?.workshops || [];
+            for (const ws of fetched) {
+              if (ws?.id) extraMap[ws.id] = ws;
+            }
+          } catch {
+            // chunk falhou — continua com os próximos
           }
-        } catch {
-          // silently skip — items will show as 'Oficina' fallback
         }
       }
 
