@@ -38,6 +38,7 @@ function getLastRealizados(atendimentos = [], max = 5) {
     .slice(0, max)
     .map(a => ({
       tipo: a.tipo_atendimento || "—",
+      consultor: a.consultor_nome || null,
       data: a.data_agendada ? a.data_agendada.split("T")[0] : null,
     }));
 }
@@ -154,6 +155,16 @@ await test("data é extraída corretamente removendo parte de hora", () => {
 await test("Atendimento sem data_agendada retorna data=null sem crash", () => {
   const atendimentos = [{ status: "realizado", tipo_atendimento: "T", data_agendada: undefined }];
   assertEqual(getLastRealizados(atendimentos)[0].data, null, "data deve ser null");
+});
+
+await test("consultor_nome é preservado no resultado", () => {
+  const atendimentos = [{ status: "realizado", tipo_atendimento: "Mentoria", consultor_nome: "Carlos Silva", data_agendada: "2026-05-08T10:00:00Z" }];
+  assertEqual(getLastRealizados(atendimentos)[0].consultor, "Carlos Silva", "consultor deve ser Carlos Silva");
+});
+
+await test("Atendimento sem consultor_nome retorna consultor=null sem crash", () => {
+  const atendimentos = [{ status: "realizado", tipo_atendimento: "Mentoria", consultor_nome: undefined, data_agendada: "2026-05-08T10:00:00Z" }];
+  assertEqual(getLastRealizados(atendimentos)[0].consultor, null, "consultor deve ser null");
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

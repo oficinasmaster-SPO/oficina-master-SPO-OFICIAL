@@ -89,6 +89,7 @@ export default function ClientHistoryFloatingPanel({ workshopId, workshopName, p
           .slice(0, 5)
           .map(a => ({
             tipo: a.tipo_atendimento || "—",
+            consultor: a.consultor_nome || null,
             data: a.data_agendada ? a.data_agendada.split("T")[0] : null,
           }));
 
@@ -235,6 +236,11 @@ export default function ClientHistoryFloatingPanel({ workshopId, workshopName, p
                       <div key={i} className="flex items-center gap-1.5">
                         <span className="w-1 h-1 rounded-full bg-blue-400 flex-shrink-0" />
                         <span className="text-[11px] text-gray-600 truncate flex-1">{a.tipo}</span>
+                        {a.consultor && (
+                          <span className="text-[10px] text-blue-500 truncate max-w-[70px]" title={a.consultor}>
+                            {a.consultor.split(" ")[0]}
+                          </span>
+                        )}
                         {a.data && (
                           <span className="text-[10px] text-gray-400 flex-shrink-0">
                             {a.data.split("-").reverse().join("/")}
