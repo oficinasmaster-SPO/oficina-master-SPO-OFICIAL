@@ -20,7 +20,8 @@ async function createNotification(base44, userId, titulo, mensagem, pedidoId) {
   try {
     await base44.asServiceRole.entities.Notification.create({
       user_id: userId,
-      titulo,
+      type: 'pedido_interno',
+      title: titulo,
       message: mensagem,
       is_read: false,
       metadata: { pedido_id: pedidoId }

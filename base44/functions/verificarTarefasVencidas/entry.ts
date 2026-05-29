@@ -30,11 +30,11 @@ Deno.serve(async (req) => {
 
         try {
           if (tarefa.workshop_id) {
-            const workshop = await base44.asServiceRole.entities.Workshop.read(tarefa.workshop_id);
+            const workshop = await base44.asServiceRole.entities.Workshop.get(tarefa.workshop_id);
             if (workshop) workshopName = workshop.name;
           }
-          const consultor = await base44.asServiceRole.entities.User.read(tarefa.atribuido_para_id);
-          if (consultor) consultorName = consultor.full_name;
+          const consultorList = await base44.asServiceRole.entities.User.filter({ id: tarefa.atribuido_para_id }, '', 1);
+          if (consultorList?.[0]) consultorName = consultorList[0].full_name;
         } catch (err) {
           console.log('Erro ao buscar Workshop/Consultor:', err.message);
         }
