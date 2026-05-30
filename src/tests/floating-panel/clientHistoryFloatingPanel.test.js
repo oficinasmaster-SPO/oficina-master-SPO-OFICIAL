@@ -20,7 +20,7 @@ function groupBucketByType(buckets = []) {
   const bucketByType = {};
   for (const b of buckets) {
     const key = b.attendance_type_id;
-    if (!key) continue;
+    if (!key || key === "migrated") continue; // FIX: ignora registros legados de migração
     if (!bucketByType[key]) {
       bucketByType[key] = { name: b.attendance_type_name || key, total: 0, done: 0 };
     }
@@ -119,6 +119,29 @@ await test("Item sem attendance_type_id é ignorado silenciosamente", () => {
 
 await test("Array vazio retorna {} sem erros", () => {
   assertEqual(Object.keys(groupBucketByType([])).length, 0, "deve ser {}");
+});
+
+await test("REGRESSÃO: registros com attendance_type_id='migrated' são ignorados", () => {
+  const buckets = [
+    { attendance_type_id: "migrated", attendance_type_name: "Onboarding", status: "pendente", consultoria_atendimento_id: null },
+    { attendance_type_id: "migrated", attendance_type_name: "Avaliação Perfil", status: "pendente", consultoria_atendimento_id: null },
+    { attendance_type_id: "migrated", attendance_type_name: "Treinamento", status: "agendado", consultoria_atendimento_id: "atend_real" },
+  ];
+  const result = groupBucketByType(buckets);
+  assertEqual(Object.keys(result).length, 0, "registros migrated devem retornar {} — não colapsar em 1 bucket falso");
+});
+
+await test("REGRESSÃO: mix de migrated + válidos — apenas válidos aparecem", () => {
+  const buckets = [
+    { attendance_type_id: "migrated",    attendance_type_name: "Onboarding legado",  status: "pendente", consultoria_atendimento_id: null },
+    { attendance_type_id: "uuid_real_1", attendance_type_name: "Onboarding novo",    status: "pendente", consultoria_atendimento_id: null },
+    { attendance_type_id: "uuid_real_2", attendance_type_name: "Diagnóstico",        status: "realizado", consultoria_atendimento_id: null },
+  ];
+  const result = groupBucketByType(buckets);
+  assertEqual(Object.keys(result).length, 2, "deve ter 2 tipos válidos, não 3");
+  assert(!result["migrated"], '"migrated" não deve ser uma chave no resultado');
+  assert(result["uuid_real_1"], "uuid_real_1 deve existir");
+  assert(result["uuid_real_2"], "uuid_real_2 deve existir");
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

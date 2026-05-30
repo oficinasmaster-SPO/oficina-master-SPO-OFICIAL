@@ -71,9 +71,14 @@ export default function ClientHistoryFloatingPanel({ workshopId, workshopName, p
         if (cancelled) return;
 
         // Agrupar bucket por tipo
+        // NOTA: registros com attendance_type_id="migrated" são dados legados de backfill
+        // (criados em 16/04/2026 antes da normalização). São ignorados aqui — a função
+        // repairMigratedAttendances corrige esses dados na fonte.
+        const migratedCount = (buckets || []).filter(b => b.attendance_type_id === 'migrated').length;
         const bucketByType = {};
         for (const b of (buckets || [])) {
           const key = b.attendance_type_id;
+          if (!key || key === 'migrated') continue; // ignora registros de migração legada
           if (!bucketByType[key]) {
             bucketByType[key] = { name: b.attendance_type_name || key, total: 0, done: 0 };
           }
@@ -93,7 +98,7 @@ export default function ClientHistoryFloatingPanel({ workshopId, workshopName, p
             data: a.data_agendada ? a.data_agendada.split("T")[0] : null,
           }));
 
-        setData({ bucketByType, ultimos });
+        setData({ bucketByType, ultimos, migratedCount });
       } catch {
         // falha silenciosa — painel simplesmente mostra estado vazio
         if (!cancelled) setData({ bucketByType: {}, ultimos: [] });
@@ -199,6 +204,13 @@ export default function ClientHistoryFloatingPanel({ workshopId, workshopName, p
                     <span className="text-sm font-bold text-gray-900">{completedTypes}</span>
                     <span className="text-xs text-gray-400">/{totalTypes} tipos concluídos</span>
                   </div>
+                </div>
+              )}
+
+              {/* Aviso de dados legados pendentes de repair */}
+              {data.migratedCount > 0 && bucketEntries.length === 0 && (
+                <div className="mx-3 my-2 px-2 py-1.5 bg-amber-50 border border-amber-200 rounded text-[10px] text-amber-700 leading-snug">
+                  ⚠️ Atendimentos do plano em migração. Execute <span className="font-bold">repairMigratedAttendances</span> para corrigir.
                 </div>
               )}
 
