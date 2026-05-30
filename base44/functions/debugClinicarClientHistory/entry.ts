@@ -16,11 +16,26 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Admin only' }, { status: 403 });
     }
 
-    // Workshop ID do cliente Cliniciar (ajustar conforme necessário)
-    const WORKSHOP_ID = req.query?.workshop_id || '694b16563c4d785878c96e88'; // Cliniciar
-    const PLAN_ID = 'PRATA'; // ou o plano correto
+    // Buscar workshop por NOME
+    const allWorkshops = await base44.asServiceRole.entities.Workshop.list(null, 1000);
+    const cliniciarWorkshop = (allWorkshops || []).find(w => 
+      w.name?.toLowerCase().includes('clinic') ||
+      w.razao_social?.toLowerCase().includes('clinic')
+    );
+    
+    if (!cliniciarWorkshop) {
+      return Response.json({
+        error: 'Workshop "Cliniciar" não encontrado',
+        workshops_com_cliniciar: (allWorkshops || [])
+          .filter(w => w.name?.includes('Clinic') || w.name?.includes('clinic'))
+          .map(w => ({ id: w.id, name: w.name }))
+      }, { status: 404 });
+    }
 
-    console.log(`🔍 Auditoria Cliente Cliniciar — Workshop: ${WORKSHOP_ID}`);
+    const WORKSHOP_ID = cliniciarWorkshop.id;
+    const PLAN_ID = cliniciarWorkshop.planoAtual || 'PRATA';
+
+    console.log(`🔍 Auditoria Cliente: ${cliniciarWorkshop.name} (${WORKSHOP_ID})`);
 
     // 1. Buscar ContractAttendance (bucket do plano) — TODOS, sem filtro
     const bucketsAll = await base44.asServiceRole.entities.ContractAttendance.list(null, 500);
