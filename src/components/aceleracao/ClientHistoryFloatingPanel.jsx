@@ -70,22 +70,43 @@ export default function ClientHistoryFloatingPanel({ workshopId, workshopName, p
         ]);
         if (cancelled) return;
 
-        // Agrupar bucket por tipo
-        // NOTA: registros com attendance_type_id="migrated" são dados legados de backfill
-        // (criados em 16/04/2026 antes da normalização). São ignorados aqui — a função
-        // repairMigratedAttendances corrige esses dados na fonte.
+        // Agrupar bucket por tipo com deduplicação
+        // PROBLEMA: repairMigratedAttendances regenerou atendimentos SEM link com ConsultoriaAtendimento realizados
+        // SOLUÇÃO: deduplicar por tipo, priorizando o que tem consultoria_atendimento_id ou data mais antiga
         const migratedCount = (buckets || []).filter(b => b.attendance_type_id === 'migrated').length;
-        const bucketByType = {};
+        
+        // Step 1: Agrupar por tipo
+        const groupedByType = {};
         for (const b of (buckets || [])) {
           const key = b.attendance_type_id;
-          if (!key || key === 'migrated') continue; // ignora registros de migração legada
-          if (!bucketByType[key]) {
-            bucketByType[key] = { name: b.attendance_type_name || key, total: 0, done: 0 };
+          if (!key || key === 'migrated') continue;
+          if (!groupedByType[key]) {
+            groupedByType[key] = [];
           }
-          bucketByType[key].total++;
-          if (b.status === "realizado" || b.consultoria_atendimento_id) {
-            bucketByType[key].done++;
+          groupedByType[key].push(b);
+        }
+        
+        // Step 2: Deduplicar — priorizar o que tem consultoria_atendimento_id, senão o mais antigo
+        const bucketByType = {};
+        for (const [typeId, items] of Object.entries(groupedByType)) {
+          const withLink = items.filter(a => a.consultoria_atendimento_id);
+          let selected;
+          
+          if (withLink.length > 0) {
+            // Priorizar o que tem link (ordenar por data para pegar o mais antigo se múltiplos)
+            withLink.sort((a, b) => new Date(a.scheduled_date) - new Date(b.scheduled_date));
+            selected = withLink[0];
+          } else {
+            // Nenhum tem link → pegar o mais antigo
+            items.sort((a, b) => new Date(a.scheduled_date) - new Date(b.scheduled_date));
+            selected = items[0];
           }
+          
+          bucketByType[typeId] = {
+            name: selected.attendance_type_name || typeId,
+            total: 1, // Após dedup, sempre 1 por tipo
+            done: selected.consultoria_atendimento_id ? 1 : 0
+          };
         }
 
         // Últimos atendimentos realizados (máx 5 para exibição)
