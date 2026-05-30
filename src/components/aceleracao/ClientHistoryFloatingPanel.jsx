@@ -105,7 +105,9 @@ export default function ClientHistoryFloatingPanel({ workshopId, workshopName, p
           bucketByType[typeId] = {
             name: selected.attendance_type_name || typeId,
             total: 1, // Após dedup, sempre 1 por tipo
-            done: selected.consultoria_atendimento_id ? 1 : 0
+            done: selected.consultoria_atendimento_id ? 1 : 0,
+            sequence_number: selected.sequence_number || 0, // Ordem de prioridade (1º, 2º, 3º...)
+            sequence_display: selected.sequence_number > 0 ? `${selected.sequence_number}º` : null
           };
         }
 
@@ -158,7 +160,15 @@ export default function ClientHistoryFloatingPanel({ workshopId, workshopName, p
   if (!workshopId) return null;
 
   const planColor = PLAN_COLORS[planId] || PLAN_COLORS.FREE;
-  const bucketEntries = data ? Object.entries(data.bucketByType) : [];
+  let bucketEntries = data ? Object.entries(data.bucketByType) : [];
+  
+  // Ordenar por sequence_number (1º, 2º, 3º... depois sem ordem)
+  bucketEntries = bucketEntries.sort(([, a], [, b]) => {
+    const aSeq = a.sequence_number || Infinity;
+    const bSeq = b.sequence_number || Infinity;
+    return aSeq - bSeq;
+  });
+  
   const totalTypes = bucketEntries.length;
   const completedTypes = bucketEntries.filter(([, v]) => v.done >= v.total && v.total > 0).length;
 
@@ -238,12 +248,23 @@ export default function ClientHistoryFloatingPanel({ workshopId, workshopName, p
               {/* Lista por tipo */}
               {bucketEntries.length > 0 ? (
                 <div className="px-3 py-2 space-y-2.5">
-                  {bucketEntries.map(([typeId, { name, done, total }]) => (
+                  {bucketEntries.map(([typeId, { name, done, total, sequence_display, sequence_number }]) => (
                     <div key={typeId}>
                       <div className="flex items-center justify-between mb-0.5">
-                        <p className="text-[11px] text-gray-700 font-medium truncate flex-1 mr-2" title={name}>
-                          {name}
-                        </p>
+                        <div className="flex items-center gap-1.5 flex-1 mr-2">
+                          {sequence_display && (
+                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded min-w-fit ${
+                              done >= total && total > 0 
+                                ? 'bg-green-100 text-green-700'
+                                : 'bg-blue-100 text-blue-700'
+                            }`}>
+                              {sequence_display}
+                            </span>
+                          )}
+                          <p className="text-[11px] text-gray-700 font-medium truncate" title={name}>
+                            {name}
+                          </p>
+                        </div>
                         {done >= total && total > 0 && (
                           <span className="text-[9px] font-bold text-green-600 bg-green-50 px-1 rounded flex-shrink-0">✓</span>
                         )}
