@@ -64,11 +64,18 @@ export default function ClientHistoryFloatingPanel({ workshopId, workshopName, p
 
     const load = async () => {
       try {
-        const [buckets, realizados] = await Promise.all([
+        const [buckets, realizados, planRules] = await Promise.all([
           base44.entities.ContractAttendance.filter({ workshop_id: workshopId }, null, 200),
           base44.entities.ConsultoriaAtendimento.filter({ workshop_id: workshopId }, '-data_agendada', 100),
+          base44.entities.PlanAttendanceRule.filter({ plan_id: planId }, null, 200),
         ]);
         if (cancelled) return;
+
+        // Criar map: attendance_type_id → sequence_number (de PlanAttendanceRule)
+        const sequenceMap = {};
+        for (const rule of (planRules || [])) {
+          sequenceMap[rule.attendance_type_id] = rule.sequence_number || 0;
+        }
 
         // Agrupar bucket por tipo com deduplicação
         // PROBLEMA: repairMigratedAttendances regenerou atendimentos SEM link com ConsultoriaAtendimento realizados
@@ -102,12 +109,13 @@ export default function ClientHistoryFloatingPanel({ workshopId, workshopName, p
             selected = items[0];
           }
           
+          const seqNum = sequenceMap[typeId] || 0;
           bucketByType[typeId] = {
             name: selected.attendance_type_name || typeId,
             total: 1, // Após dedup, sempre 1 por tipo
             done: selected.consultoria_atendimento_id ? 1 : 0,
-            sequence_number: selected.sequence_number || 0, // Ordem de prioridade (1º, 2º, 3º...)
-            sequence_display: selected.sequence_number > 0 ? `${selected.sequence_number}º` : null
+            sequence_number: seqNum, // Ordem de prioridade vem de PlanAttendanceRule
+            sequence_display: seqNum > 0 ? `${seqNum}º` : null
           };
         }
 
