@@ -137,7 +137,7 @@ export default function Cadastro() {
       const newWorkshop = await base44.entities.Workshop.create({
         identificador: workshopId,
         owner_id: user.id,
-        consulting_firm_id: user.consulting_firm_id || '69bab264d7c3fe5d367c3959',
+        consulting_firm_id: user.consulting_firm_id || import.meta.env.VITE_CONSULTING_FIRM_ID,
         name: "",
         city: "A Definir",
         state: "UF",
@@ -174,15 +174,17 @@ export default function Cadastro() {
       // Also create an Employee record for the owner since it wasn't created on signup
       await base44.entities.Employee.create({
         workshop_id: newWorkshop.id,
-        consulting_firm_id: user.consulting_firm_id || '69bab264d7c3fe5d367c3959',
+        consulting_firm_id: user.consulting_firm_id || import.meta.env.VITE_CONSULTING_FIRM_ID,
         user_id: user.id,
         full_name: user.full_name || user.email.split('@')[0],
         email: user.email,
         position: 'Sócio/Proprietário',
         job_role: 'socio',
         area: 'gerencia',
-        tipo_vinculo: 'interno',
-        is_internal: true,
+        // Sócio de oficina cliente é EXTERNO — corrigido de 'interno' (bug)
+        user_type: 'external',
+        tipo_vinculo: 'cliente',  // legado — mantido para retrocompatibilidade
+        is_internal: false,       // legado — mantido para retrocompatibilidade
         is_partner: true,
         status: 'ativo',
         user_status: 'ativo',
