@@ -91,8 +91,11 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
       setJobDescriptions(descriptions.filter(d => !userWorkshop || d.workshop_id === userWorkshop.id));
 
       const allProfiles = await base44.entities.UserProfile.list();
+      // Perfis internos/sistema nunca aparecem no cadastro de colaboradores de oficinas
       setProfiles(allProfiles.filter(p => 
         p.status === 'ativo' && 
+        p.type !== 'interno' &&
+        p.type !== 'sistema' &&
         (!p.workshop_id || p.workshop_id === userWorkshop?.id)
       ));
     } catch (error) {
@@ -412,12 +415,9 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
                             <SelectTrigger><SelectValue placeholder="Selecione o perfil..." /></SelectTrigger>
                             <SelectContent>
                               <SelectItem value="none">Nenhum perfil</SelectItem>
-                              {(user?.role === 'admin' 
-                                ? profiles 
-                                : profiles.filter(p => p.type !== 'interno' && p.type !== 'sistema')
-                              ).map(profile => (
+                              {profiles.filter(p => p.type !== 'interno' && p.type !== 'sistema').map(profile => (
                                 <SelectItem key={profile.id} value={profile.id}>
-                                  {profile.name} {user?.role === 'admin' && `(${profile.type})`}
+                                  {profile.name}
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -428,7 +428,7 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
                           <Select value={formData.job_role} onValueChange={(value) => setFormData({...formData, job_role: value})}>
                             <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                             <SelectContent>
-                              {(user?.role === 'admin' ? jobRoles : jobRoles.filter(role => role.category !== 'interna')).map((role) => (
+                              {jobRoles.filter(role => role.category !== 'interna').map((role) => (
                                 <SelectItem key={role.value} value={role.value}>{role.label}</SelectItem>
                               ))}
                             </SelectContent>

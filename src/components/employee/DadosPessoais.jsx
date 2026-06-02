@@ -54,21 +54,12 @@ export default function DadosPessoais({ employee, onUpdate }) {
   });
 
   const handleSave = async () => {
-    // Validação: bloquear perfis internos para usuários não-admin
-    const internalRoles = ['acelerador', 'consultor'];
-    if (currentUser?.role !== 'admin' && internalRoles.includes(formData.job_role)) {
-      toast.error("Este perfil é restrito a administradores.");
-      return;
-    }
-    
     await onUpdate(formData);
     setEditing(false);
   };
 
-  // Filtrar perfis disponíveis conforme role do usuário
-  const availableJobRoles = currentUser?.role === 'admin' 
-    ? jobRoles 
-    : jobRoles.filter(role => role.category !== 'interna');
+  // Perfis internos nunca aparecem na edição de colaboradores de oficinas
+  const availableJobRoles = jobRoles.filter(role => role.category !== 'interna');
 
   const handlePhotoUpload = async (e) => {
     const file = e.target.files?.[0];
