@@ -10,6 +10,10 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Search, Brain, User, Calendar, Building } from "lucide-react";
 import { format } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function HistoricoDISC() {
   const navigate = useNavigate();
@@ -20,6 +24,7 @@ export default function HistoricoDISC() {
   const [searchTerm, setSearchTerm] = useState("");
   const [workshopFilter, setWorkshopFilter] = useState("all");
   const [userRole, setUserRole] = useState(null);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -40,7 +45,11 @@ export default function HistoricoDISC() {
         workshopsData = await base44.entities.Workshop.filter({ owner_id: user.id });
       }
 
-      setWorkshops(workshopsData);
+      // Ordenar oficinas alfabeticamente
+      const sortedWorkshops = workshopsData.sort((a, b) => 
+        a.name.localeCompare(b.name)
+      );
+      setWorkshops(sortedWorkshops);
 
       // Se tiver apenas uma oficina, selecionar automaticamente
       if (workshopsData.length === 1) {
@@ -111,19 +120,66 @@ export default function HistoricoDISC() {
           <Card>
             <CardContent className="p-4 flex gap-4 items-center">
               <Building className="text-gray-400" />
-              <Select value={workshopFilter} onValueChange={setWorkshopFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecionar oficina" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas as Oficinas</SelectItem>
-                  {workshops.map((ws) => (
-                    <SelectItem key={ws.id} value={ws.id}>
-                      {ws.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover open={open} onOpenChange={setOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={open}
+                    className="flex-1 justify-between"
+                  >
+                    <span className="truncate">
+                      {workshopFilter === "all" 
+                        ? "Todas as Oficinas" 
+                        : workshops.find((ws) => ws.id === workshopFilter)?.name || "Selecionar oficina"}
+                    </span>
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[var(--popover-trigger-width)] p-0">
+                  <Command>
+                    <CommandInput placeholder="Pesquisar oficina..." />
+                    <CommandList>
+                      <CommandEmpty>Nenhuma oficina encontrada.</CommandEmpty>
+                      <CommandGroup>
+                        <CommandItem
+                          value="all"
+                          onSelect={() => {
+                            setWorkshopFilter("all");
+                            setOpen(false);
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              workshopFilter === "all" ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          Todas as Oficinas
+                        </CommandItem>
+                        {workshops.map((ws) => (
+                          <CommandItem
+                            key={ws.id}
+                            value={ws.name}
+                            onSelect={() => {
+                              setWorkshopFilter(ws.id);
+                              setOpen(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                workshopFilter === ws.id ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            {ws.name}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </CardContent>
           </Card>
         </div>
