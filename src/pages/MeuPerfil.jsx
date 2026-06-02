@@ -94,7 +94,7 @@ export default function MeuPerfil() {
       if (isAssisting && workshopId) {
         employees = await base44.entities.Employee.filter({ 
           workshop_id: workshopId,
-          tipo_vinculo: 'cliente'
+          user_type: 'external'
         });
       } else {
         // Caso contrário, buscar employee do usuário logado
