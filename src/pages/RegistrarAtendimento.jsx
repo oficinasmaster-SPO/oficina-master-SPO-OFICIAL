@@ -209,7 +209,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, onSaved
       const all = await base44.entities.Workshop.filter({ status: 'ativo' }, 'name', 5000);
       return all.filter(w => w.planoAtual && w.planoAtual !== 'FREE');
     },
-    enabled: user?.role === 'admin' || user?.job_role === 'acelerador',
+    enabled: user?.role === 'admin' || user?.user_type === 'internal',
     staleTime: 10 * 60 * 1000
   });
 
