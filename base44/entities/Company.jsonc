@@ -1,0 +1,91 @@
+{
+  "name": "Company",
+  "type": "object",
+  "properties": {
+    "consulting_firm_id": {
+      "type": "string",
+      "description": "ID do escrit\u00f3rio de consultoria que gerencia esta empresa cliente."
+    },
+    "name": {
+      "type": "string",
+      "description": "Nome da empresa (matriz ou grupo empresarial)"
+    },
+    "cnpj": {
+      "type": "string",
+      "description": "CNPJ da empresa matriz"
+    },
+    "description": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o da empresa"
+    },
+    "logo_url": {
+      "type": "string",
+      "description": "URL da logo da empresa"
+    },
+    "owner_user_id": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio principal (admin) do cliente."
+    }
+  },
+  "required": [
+    "name",
+    "consulting_firm_id",
+    "owner_user_id"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        },
+        {
+          "owner_user_id": "{{user.id}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        },
+        {
+          "owner_user_id": "{{user.id}}"
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        }
+      ]
+    }
+  }
+}

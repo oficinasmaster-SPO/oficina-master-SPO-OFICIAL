@@ -1,0 +1,221 @@
+{
+  "name": "Goal",
+  "type": "object",
+  "properties": {
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "periodo": {
+      "type": "string",
+      "enum": [
+        "diario",
+        "semanal",
+        "mensal",
+        "anual"
+      ],
+      "description": "Per\u00edodo da meta"
+    },
+    "data_inicio": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de in\u00edcio"
+    },
+    "data_fim": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de fim"
+    },
+    "area": {
+      "type": "string",
+      "enum": [
+        "vendas",
+        "comercial",
+        "marketing",
+        "tecnico",
+        "pateo",
+        "financeiro",
+        "lideranca",
+        "geral"
+      ],
+      "description": "\u00c1rea da meta"
+    },
+    "responsavel_id": {
+      "type": "string",
+      "description": "ID do funcion\u00e1rio respons\u00e1vel (opcional)"
+    },
+    "metricas": {
+      "type": "object",
+      "properties": {
+        "volume_clientes": {
+          "type": "object",
+          "properties": {
+            "meta": {
+              "type": "number"
+            },
+            "realizado": {
+              "type": "number",
+              "default": 0
+            }
+          }
+        },
+        "faturamento_pecas": {
+          "type": "object",
+          "properties": {
+            "meta": {
+              "type": "number"
+            },
+            "realizado": {
+              "type": "number",
+              "default": 0
+            }
+          }
+        },
+        "faturamento_servicos": {
+          "type": "object",
+          "properties": {
+            "meta": {
+              "type": "number"
+            },
+            "realizado": {
+              "type": "number",
+              "default": 0
+            }
+          }
+        },
+        "rentabilidade": {
+          "type": "object",
+          "properties": {
+            "meta": {
+              "type": "number"
+            },
+            "realizado": {
+              "type": "number",
+              "default": 0
+            }
+          }
+        },
+        "lucro": {
+          "type": "object",
+          "properties": {
+            "meta": {
+              "type": "number"
+            },
+            "realizado": {
+              "type": "number",
+              "default": 0
+            }
+          }
+        },
+        "ticket_medio_pecas": {
+          "type": "object",
+          "properties": {
+            "meta": {
+              "type": "number"
+            },
+            "realizado": {
+              "type": "number",
+              "default": 0
+            }
+          }
+        },
+        "ticket_medio_servicos": {
+          "type": "object",
+          "properties": {
+            "meta": {
+              "type": "number"
+            },
+            "realizado": {
+              "type": "number",
+              "default": 0
+            }
+          }
+        }
+      },
+      "description": "M\u00e9tricas da meta"
+    },
+    "observacoes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es sobre a meta"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ativa",
+        "concluida",
+        "cancelada"
+      ],
+      "default": "ativa",
+      "description": "Status da meta"
+    },
+    "percentual_atingido": {
+      "type": "number",
+      "default": 0,
+      "description": "Percentual atingido da meta"
+    }
+  },
+  "required": [
+    "workshop_id",
+    "periodo",
+    "data_inicio",
+    "data_fim",
+    "area"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        }
+      ]
+    }
+  }
+}

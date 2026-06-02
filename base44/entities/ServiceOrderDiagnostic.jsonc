@@ -1,0 +1,301 @@
+{
+  "name": "ServiceOrderDiagnostic",
+  "type": "object",
+  "properties": {
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "company_id": {
+      "type": "string",
+      "description": "ID da empresa"
+    },
+    "consulting_firm_id": {
+      "type": "string",
+      "description": "ID da consultoria"
+    },
+    "evaluator_id": {
+      "type": "string",
+      "description": "ID do avaliador"
+    },
+    "os_number": {
+      "type": "string",
+      "description": "N\u00famero da Ordem de Servi\u00e7o"
+    },
+    "reference_month": {
+      "type": "string",
+      "description": "M\u00eas de refer\u00eancia (YYYY-MM)"
+    },
+    "productive_technicians": {
+      "type": "integer",
+      "description": "Quantidade de t\u00e9cnicos produtivos (obtido do DRE)"
+    },
+    "monthly_hours": {
+      "type": "number",
+      "default": 219,
+      "description": "Horas dispon\u00edveis no m\u00eas por t\u00e9cnico (obtido do DRE)"
+    },
+    "operational_costs": {
+      "type": "number",
+      "description": "Custos operacionais totais (obtido do DRE)"
+    },
+    "people_costs": {
+      "type": "number",
+      "description": "Custos com pessoas (obtido do DRE)"
+    },
+    "prolabore": {
+      "type": "number",
+      "description": "Pr\u00f3-labore dos s\u00f3cios (obtido do DRE)"
+    },
+    "parts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "sale_value": {
+            "type": "number",
+            "description": "Valor total de venda"
+          },
+          "cost_value": {
+            "type": "number",
+            "description": "Valor total de custo"
+          },
+          "is_commodity": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      },
+      "description": "Lista de pe\u00e7as da OS"
+    },
+    "services": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "estimated_time": {
+            "type": "number",
+            "description": "Tempo calculado automaticamente"
+          },
+          "charged_value": {
+            "type": "number",
+            "description": "Valor total cobrado"
+          },
+          "description_steps": {
+            "type": "string"
+          },
+          "is_commodity": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      },
+      "description": "Lista de servi\u00e7os da OS"
+    },
+    "third_party_services": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "cost": {
+            "type": "number"
+          }
+        }
+      },
+      "description": "Servi\u00e7os de terceiros (ret\u00edfica, etc)"
+    },
+    "total_parts_sale": {
+      "type": "number",
+      "description": "Valor total de venda das pe\u00e7as"
+    },
+    "total_parts_cost": {
+      "type": "number",
+      "description": "Custo total das pe\u00e7as"
+    },
+    "total_services": {
+      "type": "number",
+      "description": "Valor total dos servi\u00e7os"
+    },
+    "total_third_party_costs": {
+      "type": "number",
+      "description": "Custo total de servi\u00e7os de terceiros"
+    },
+    "total_os": {
+      "type": "number",
+      "description": "Valor total da OS"
+    },
+    "investment_percentage": {
+      "type": "number",
+      "description": "Percentual de investimento (I30)"
+    },
+    "revenue_percentage": {
+      "type": "number",
+      "description": "Percentual de renda (R70)"
+    },
+    "ideal_hour_value": {
+      "type": "number",
+      "description": "Valor hora ideal calculado (TCMP\u00b2 do DRE)"
+    },
+    "current_hour_value": {
+      "type": "number",
+      "description": "Valor hora atual praticado"
+    },
+    "tcmp2_ideal_value": {
+      "type": "number",
+      "description": "Valor ideal segundo TCMP\u00b2 (tempo \u00d7 2 \u00d7 valor hora)"
+    },
+    "tcmp2_difference": {
+      "type": "number",
+      "description": "Diferen\u00e7a entre valor cobrado e ideal"
+    },
+    "classification": {
+      "type": "string",
+      "enum": [
+        "aprovada",
+        "alerta_renda",
+        "alerta_investimento",
+        "reprovada",
+        "perfeita"
+      ],
+      "description": "Classifica\u00e7\u00e3o da OS"
+    },
+    "recommendations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Recomenda\u00e7\u00f5es autom\u00e1ticas"
+    },
+    "checklist": {
+      "type": "object",
+      "properties": {
+        "conferiu_commodities": {
+          "type": "boolean",
+          "default": false
+        },
+        "solicitou_tempo_tecnico": {
+          "type": "boolean",
+          "default": false
+        },
+        "aplicou_tcmp2": {
+          "type": "boolean",
+          "default": false
+        },
+        "conferiu_r70_i30": {
+          "type": "boolean",
+          "default": false
+        },
+        "aumentou_mao_obra": {
+          "type": "boolean",
+          "default": false
+        },
+        "descreveu_passos": {
+          "type": "boolean",
+          "default": false
+        },
+        "conferiu_valor_minimo": {
+          "type": "boolean",
+          "default": false
+        },
+        "validou_sfv": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "description": "Checklist de execu\u00e7\u00e3o"
+    },
+    "completed": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "workshop_id",
+    "evaluator_id",
+    "os_number"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        },
+        {
+          "company_id": "{{user.data.company_id}}"
+        },
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        },
+        {
+          "company_id": "{{user.data.company_id}}"
+        },
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        },
+        {
+          "company_id": "{{user.data.company_id}}"
+        },
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        }
+      ]
+    }
+  }
+}

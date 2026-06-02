@@ -1,0 +1,156 @@
+{
+  "name": "WorkloadDiagnostic",
+  "type": "object",
+  "properties": {
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "period_start": {
+      "type": "string",
+      "format": "date"
+    },
+    "period_end": {
+      "type": "string",
+      "format": "date"
+    },
+    "workload_data": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "employee_id": {
+            "type": "string"
+          },
+          "position_title": {
+            "type": "string"
+          },
+          "weekly_hours_worked": {
+            "type": "number"
+          },
+          "ideal_weekly_hours": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "overall_health": {
+      "type": "string",
+      "enum": [
+        "excelente",
+        "bom",
+        "atencao",
+        "critico"
+      ]
+    },
+    "analysis_results": {
+      "type": "object",
+      "properties": {
+        "overloaded_employees": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "employee_id": {
+                "type": "string"
+              },
+              "overload_percentage": {
+                "type": "number"
+              },
+              "recommendation": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "underutilized_employees": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "employee_id": {
+                "type": "string"
+              },
+              "utilization_percentage": {
+                "type": "number"
+              },
+              "recommendation": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "redistribution_suggestions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "from_employee_id": {
+                "type": "string"
+              },
+              "to_employee_id": {
+                "type": "string"
+              },
+              "justification": {
+                "type": "string"
+              },
+              "tasks_to_transfer": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "workshop_id",
+    "period_start",
+    "period_end",
+    "workload_data"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

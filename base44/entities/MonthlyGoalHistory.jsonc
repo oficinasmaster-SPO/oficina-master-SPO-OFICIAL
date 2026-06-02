@@ -1,0 +1,244 @@
+{
+  "name": "MonthlyGoalHistory",
+  "type": "object",
+  "properties": {
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "entity_type": {
+      "type": "string",
+      "enum": [
+        "workshop",
+        "employee"
+      ],
+      "description": "Tipo: oficina ou colaborador"
+    },
+    "entity_id": {
+      "type": "string",
+      "description": "ID da oficina ou colaborador"
+    },
+    "employee_id": {
+      "type": "string",
+      "description": "ID do colaborador (se entity_type=employee)"
+    },
+    "employee_role": {
+      "type": "string",
+      "description": "Fun\u00e7\u00e3o do colaborador"
+    },
+    "reference_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data espec\u00edfica do registro"
+    },
+    "month": {
+      "type": "string",
+      "description": "M\u00eas de refer\u00eancia (YYYY-MM)"
+    },
+    "projected_total": {
+      "type": "number",
+      "default": 0,
+      "description": "Meta projetada (Target Revenue Total)"
+    },
+    "achieved_total": {
+      "type": "number",
+      "default": 0,
+      "description": "Valor realizado total (Actual Revenue Total)"
+    },
+    "revenue_total": {
+      "type": "number",
+      "default": 0,
+      "description": "Faturamento total (pe\u00e7as + servi\u00e7os)"
+    },
+    "revenue_parts": {
+      "type": "number",
+      "default": 0,
+      "description": "Faturamento de pe\u00e7as"
+    },
+    "revenue_services": {
+      "type": "number",
+      "default": 0,
+      "description": "Faturamento de servi\u00e7os"
+    },
+    "average_ticket": {
+      "type": "number",
+      "default": 0,
+      "description": "Ticket m\u00e9dio"
+    },
+    "customer_volume": {
+      "type": "integer",
+      "default": 0,
+      "description": "Quantidade de clientes"
+    },
+    "target_revenue_parts": {
+      "type": "number",
+      "default": 0,
+      "description": "Meta de faturamento de pe\u00e7as"
+    },
+    "target_revenue_services": {
+      "type": "number",
+      "default": 0,
+      "description": "Meta de faturamento de servi\u00e7os"
+    },
+    "target_average_ticket": {
+      "type": "number",
+      "default": 0,
+      "description": "Meta de ticket m\u00e9dio"
+    },
+    "target_customer_volume": {
+      "type": "integer",
+      "default": 0,
+      "description": "Meta de quantidade de clientes"
+    },
+    "target_r70_i30_score": {
+      "type": "number",
+      "default": 0
+    },
+    "actual_r70_i30_score": {
+      "type": "number",
+      "default": 0
+    },
+    "target_tcmp2_value": {
+      "type": "number",
+      "default": 0
+    },
+    "actual_tcmp2_value": {
+      "type": "number",
+      "default": 0
+    },
+    "target_sales_gps_score": {
+      "type": "number",
+      "default": 0
+    },
+    "actual_sales_gps_score": {
+      "type": "number",
+      "default": 0
+    },
+    "target_kit_master_score": {
+      "type": "number",
+      "default": 0
+    },
+    "actual_kit_master_score": {
+      "type": "number",
+      "default": 0
+    },
+    "r70_i30": {
+      "type": "object",
+      "properties": {
+        "r70": {
+          "type": "number",
+          "default": 70
+        },
+        "i30": {
+          "type": "number",
+          "default": 30
+        }
+      }
+    },
+    "tcmp2": {
+      "type": "number",
+      "default": 0,
+      "description": "TCMP\u00b2 do per\u00edodo"
+    },
+    "pave_commercial": {
+      "type": "number",
+      "default": 0
+    },
+    "kit_master": {
+      "type": "number",
+      "default": 0
+    },
+    "sales_base": {
+      "type": "number",
+      "default": 0
+    },
+    "sales_marketing": {
+      "type": "number",
+      "default": 0
+    },
+    "clients_delivered": {
+      "type": "integer",
+      "default": 0
+    },
+    "gps_vendas": {
+      "type": "integer",
+      "default": 0
+    },
+    "clients_scheduled_base": {
+      "type": "integer",
+      "default": 0
+    },
+    "clients_delivered_base": {
+      "type": "integer",
+      "default": 0
+    },
+    "clients_scheduled_mkt": {
+      "type": "integer",
+      "default": 0
+    },
+    "clients_delivered_mkt": {
+      "type": "integer",
+      "default": 0
+    },
+    "clients_scheduled_referral": {
+      "type": "integer",
+      "default": 0
+    },
+    "clients_delivered_referral": {
+      "type": "integer",
+      "default": 0
+    },
+    "marketing_data": {
+      "type": "object",
+      "properties": {
+        "leads_generated": {
+          "type": "integer",
+          "default": 0
+        },
+        "leads_scheduled": {
+          "type": "integer",
+          "default": 0
+        },
+        "leads_showed_up": {
+          "type": "integer",
+          "default": 0
+        },
+        "leads_sold": {
+          "type": "integer",
+          "default": 0
+        },
+        "invested_value": {
+          "type": "number",
+          "default": 0
+        },
+        "revenue_from_traffic": {
+          "type": "number",
+          "default": 0
+        },
+        "cost_per_sale": {
+          "type": "number",
+          "default": 0
+        }
+      }
+    },
+    "revenue_distribution": {
+      "type": "object",
+      "description": "Distribui\u00e7\u00e3o de faturamento por colaborador"
+    },
+    "rework_count": {
+      "type": "integer",
+      "default": 0,
+      "description": "Quantidade de retrabalhos"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es"
+    }
+  },
+  "required": [
+    "workshop_id",
+    "entity_type",
+    "reference_date",
+    "month"
+  ]
+}

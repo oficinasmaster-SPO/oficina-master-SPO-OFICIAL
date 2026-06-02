@@ -1,0 +1,107 @@
+{
+  "name": "EmployeeKPI",
+  "type": "object",
+  "properties": {
+    "employee_id": {
+      "type": "string",
+      "description": "ID do colaborador"
+    },
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "kpi_name": {
+      "type": "string",
+      "description": "Nome do KPI"
+    },
+    "description": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o do indicador"
+    },
+    "target_value": {
+      "type": "number",
+      "description": "Meta a ser atingida"
+    },
+    "current_value": {
+      "type": "number",
+      "default": 0,
+      "description": "Valor atual"
+    },
+    "unit": {
+      "type": "string",
+      "description": "Unidade de medida (%, R$, unidades, etc)"
+    },
+    "period": {
+      "type": "string",
+      "enum": [
+        "diario",
+        "semanal",
+        "mensal",
+        "trimestral",
+        "anual"
+      ],
+      "default": "mensal"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "producao",
+        "qualidade",
+        "vendas",
+        "atendimento",
+        "eficiencia",
+        "outros"
+      ],
+      "description": "Categoria do KPI"
+    },
+    "weight": {
+      "type": "number",
+      "default": 1,
+      "description": "Peso do KPI na avalia\u00e7\u00e3o geral"
+    },
+    "history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "value": {
+            "type": "number"
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Hist\u00f3rico de valores"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ativo",
+        "pausado",
+        "concluido"
+      ],
+      "default": "ativo"
+    }
+  },
+  "required": [
+    "employee_id",
+    "workshop_id",
+    "kpi_name",
+    "target_value"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": true,
+    "update": true,
+    "delete": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}

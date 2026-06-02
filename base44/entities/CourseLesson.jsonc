@@ -1,0 +1,128 @@
+{
+  "name": "CourseLesson",
+  "type": "object",
+  "properties": {
+    "module_id": {
+      "type": "string",
+      "description": "ID do m\u00f3dulo pai"
+    },
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "content_type": {
+      "type": "string",
+      "enum": [
+        "video_youtube",
+        "video_upload",
+        "text",
+        "pdf"
+      ],
+      "default": "video_youtube"
+    },
+    "content_url": {
+      "type": "string",
+      "description": "URL do conte\u00fado"
+    },
+    "duration_minutes": {
+      "type": "integer",
+      "default": 0
+    },
+    "order": {
+      "type": "integer",
+      "default": 0
+    },
+    "transcript": {
+      "type": "string",
+      "description": "Transcri\u00e7\u00e3o para IA"
+    },
+    "progression_rules": {
+      "type": "object",
+      "properties": {
+        "can_advance_if_failed": {
+          "type": "boolean",
+          "default": true,
+          "description": "Permite avan\u00e7ar mesmo reprovado na avalia\u00e7\u00e3o"
+        },
+        "can_retake_assessment": {
+          "type": "boolean",
+          "default": true,
+          "description": "Permite refazer avalia\u00e7\u00e3o"
+        },
+        "can_skip_to_assessment": {
+          "type": "boolean",
+          "default": true,
+          "description": "Permite pular direto para avalia\u00e7\u00e3o"
+        },
+        "next_lesson_unlock": {
+          "type": "string",
+          "enum": [
+            "always",
+            "after_completion",
+            "after_assessment_attempt"
+          ],
+          "default": "always",
+          "description": "Condi\u00e7\u00e3o para liberar pr\u00f3xima aula"
+        },
+        "require_assessment_pass": {
+          "type": "boolean",
+          "default": false,
+          "description": "Exige aprova\u00e7\u00e3o na avalia\u00e7\u00e3o para considerar completa"
+        }
+      },
+      "default": {
+        "can_advance_if_failed": true,
+        "can_retake_assessment": true,
+        "can_skip_to_assessment": true,
+        "next_lesson_unlock": "always",
+        "require_assessment_pass": false
+      }
+    }
+  },
+  "required": [
+    "module_id",
+    "title",
+    "content_type"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "created_by": "{{user.email}}"
+        }
+      ]
+    },
+    "read": true,
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "created_by": "{{user.email}}"
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "created_by": "{{user.email}}"
+        }
+      ]
+    }
+  }
+}

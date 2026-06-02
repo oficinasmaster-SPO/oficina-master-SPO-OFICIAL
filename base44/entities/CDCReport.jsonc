@@ -1,0 +1,142 @@
+{
+  "name": "CDCReport",
+  "type": "object",
+  "properties": {
+    "cdc_record_id": {
+      "type": "string",
+      "description": "ID do registro CDC original"
+    },
+    "employee_id": {
+      "type": "string",
+      "description": "ID do colaborador"
+    },
+    "scores": {
+      "type": "object",
+      "properties": {
+        "leadership": {
+          "type": "number",
+          "description": "Score Lideran\u00e7a (0-100)"
+        },
+        "commitment": {
+          "type": "number",
+          "description": "Score Comprometimento (0-100)"
+        },
+        "culture_alignment": {
+          "type": "number",
+          "description": "Score Alinhamento Cultural (0-100)"
+        },
+        "growth_potential": {
+          "type": "number",
+          "description": "Score Potencial de Crescimento (0-100)"
+        }
+      },
+      "description": "Pontua\u00e7\u00f5es geradas pela IA"
+    },
+    "analysis": {
+      "type": "object",
+      "properties": {
+        "behavioral": {
+          "type": "string",
+          "description": "An\u00e1lise comportamental"
+        },
+        "leadership_potential": {
+          "type": "string",
+          "description": "Indica\u00e7\u00e3o de potencial de lideran\u00e7a"
+        },
+        "commitment_level": {
+          "type": "string",
+          "description": "N\u00edvel de comprometimento"
+        },
+        "risk_alerts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Alertas de risco"
+        },
+        "development_plan": {
+          "type": "object",
+          "properties": {
+            "short_term": {
+              "type": "string",
+              "description": "Curto prazo"
+            },
+            "medium_term": {
+              "type": "string",
+              "description": "M\u00e9dio prazo"
+            },
+            "long_term": {
+              "type": "string",
+              "description": "Longo prazo"
+            }
+          },
+          "description": "Plano de desenvolvimento"
+        },
+        "custom_message": {
+          "type": "string",
+          "description": "Mensagem personalizada"
+        }
+      },
+      "description": "An\u00e1lises textuais geradas pela IA"
+    }
+  },
+  "required": [
+    "cdc_record_id",
+    "employee_id"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,210 @@
+{
+  "name": "DebtAnalysis",
+  "type": "object",
+  "properties": {
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "evaluator_id": {
+      "type": "string",
+      "description": "ID do avaliador"
+    },
+    "meses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "mes": {
+            "type": "integer"
+          },
+          "pecas": {
+            "type": "number"
+          },
+          "financiamento": {
+            "type": "number"
+          },
+          "consorcio": {
+            "type": "number"
+          },
+          "processos_judiciais": {
+            "type": "number"
+          },
+          "investimento": {
+            "type": "number"
+          },
+          "receita_prevista": {
+            "type": "number"
+          },
+          "dividas_total": {
+            "type": "number"
+          },
+          "comprometimento": {
+            "type": "number"
+          },
+          "classificacao": {
+            "type": "string",
+            "enum": [
+              "EXCELENTE",
+              "SAUDAVEL",
+              "ATENCAO",
+              "ALERTA_VERMELHO",
+              "CRITICO"
+            ]
+          },
+          "recomendacao": {
+            "type": "string"
+          },
+          "custo_previsto_pecas": {
+            "type": "number",
+            "default": 0,
+            "description": "Custo previsto com compra de pe\u00e7as"
+          },
+          "custo_previsto_administrativo": {
+            "type": "number",
+            "default": 0,
+            "description": "Custos administrativos e operacionais"
+          }
+        }
+      },
+      "description": "Dados mensais de endividamento"
+    },
+    "endividamento_total_12m": {
+      "type": "number",
+      "description": "Soma total das d\u00edvidas dos 12 meses"
+    },
+    "custo_total_pecas_12m": {
+      "type": "number",
+      "default": 0,
+      "description": "Custo total previsto com pe\u00e7as em 12 meses"
+    },
+    "custo_total_administrativo_12m": {
+      "type": "number",
+      "default": 0,
+      "description": "Custo total administrativo em 12 meses"
+    },
+    "mes_maior_comprometimento": {
+      "type": "integer"
+    },
+    "mes_menor_comprometimento": {
+      "type": "integer"
+    },
+    "media_anual_comprometimento": {
+      "type": "number"
+    },
+    "risco_anual": {
+      "type": "string",
+      "enum": [
+        "EXCELENTE",
+        "SAUDAVEL",
+        "ATENCAO",
+        "ALERTA_VERMELHO",
+        "CRITICO"
+      ]
+    },
+    "projecoes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "mes": {
+            "type": "integer"
+          },
+          "cenario": {
+            "type": "string",
+            "enum": [
+              "otimista",
+              "realista",
+              "pessimista"
+            ]
+          },
+          "comprometimento_projetado": {
+            "type": "number"
+          }
+        }
+      },
+      "description": "Proje\u00e7\u00f5es de cen\u00e1rios futuros"
+    },
+    "relatorio_ia": {
+      "type": "string",
+      "description": "Relat\u00f3rio gerado por IA"
+    },
+    "ponto_equilibrio": {
+      "type": "number",
+      "description": "Ponto de equil\u00edbrio calculado"
+    },
+    "feedback_vendas_pct": {
+      "type": "number",
+      "description": "Porcentagem de aumento de vendas necess\u00e1ria"
+    },
+    "caixa_liquido_projetado": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "mes": {
+            "type": "integer"
+          },
+          "valor": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "completed": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "workshop_id",
+    "evaluator_id",
+    "meses"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

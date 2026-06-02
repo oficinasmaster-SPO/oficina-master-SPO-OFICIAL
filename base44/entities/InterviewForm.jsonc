@@ -1,0 +1,158 @@
+{
+  "name": "InterviewForm",
+  "type": "object",
+  "properties": {
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "form_name": {
+      "type": "string",
+      "description": "Nome do formul\u00e1rio (ex: Formul\u00e1rio T\u00e9cnico Eletricista)"
+    },
+    "form_type": {
+      "type": "string",
+      "enum": [
+        "pre_entrevista",
+        "tecnico",
+        "comportamental",
+        "cultural",
+        "vendas",
+        "custom",
+        "lead_score"
+      ],
+      "default": "custom",
+      "description": "Tipo do formul\u00e1rio"
+    },
+    "position": {
+      "type": "string",
+      "description": "Cargo espec\u00edfico (ex: Eletricista, Mec\u00e2nico, Vendedor)"
+    },
+    "description": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o do formul\u00e1rio"
+    },
+    "is_lead_score_form": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se \u00e9 um formul\u00e1rio de Lead Score"
+    },
+    "scoring_criteria": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "block": {
+            "type": "string",
+            "enum": [
+              "tecnico",
+              "comportamental",
+              "cultural",
+              "historico"
+            ],
+            "description": "Bloco da avalia\u00e7\u00e3o"
+          },
+          "criteria_name": {
+            "type": "string",
+            "description": "Nome do crit\u00e9rio"
+          },
+          "max_points": {
+            "type": "number",
+            "description": "Pontua\u00e7\u00e3o m\u00e1xima"
+          },
+          "weight": {
+            "type": "number",
+            "description": "Peso no c\u00e1lculo final"
+          },
+          "question": {
+            "type": "string",
+            "description": "Pergunta para avaliar o crit\u00e9rio"
+          },
+          "scoring_guide": {
+            "type": "string",
+            "description": "Guia de pontua\u00e7\u00e3o"
+          },
+          "job_role": {
+            "type": "string",
+            "description": "Cargo vinculado ao checklist"
+          },
+          "checklist_type": {
+            "type": "string",
+            "description": "Tipo do checklist para categoriza\u00e7\u00e3o"
+          },
+          "has_checklist": {
+            "type": "boolean",
+            "default": false,
+            "description": "Se este crit\u00e9rio possui checklist"
+          },
+          "checklist_items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "category": {
+                  "type": "string",
+                  "description": "Categoria do item (ex: Mec\u00e2nica, El\u00e9trica)"
+                },
+                "text": {
+                  "type": "string",
+                  "description": "Texto do item do checklist"
+                },
+                "points": {
+                  "type": "number",
+                  "default": 1,
+                  "description": "Pontos por item marcado"
+                }
+              }
+            },
+            "description": "Itens do checklist do crit\u00e9rio"
+          }
+        }
+      },
+      "description": "Crit\u00e9rios de pontua\u00e7\u00e3o para Lead Score"
+    },
+    "questions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "question_text": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "tecnica",
+              "comportamental",
+              "cultural"
+            ]
+          },
+          "weight": {
+            "type": "number",
+            "default": 1
+          },
+          "expected_answer": {
+            "type": "string"
+          },
+          "scoring_guide": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Lista de perguntas do formul\u00e1rio (formato antigo)"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "is_default_template": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se \u00e9 template padr\u00e3o do sistema"
+    }
+  },
+  "required": [
+    "workshop_id",
+    "form_name"
+  ]
+}

@@ -1,0 +1,238 @@
+{
+  "name": "InstructionDocument",
+  "type": "object",
+  "properties": {
+    "parent_map_id": {
+      "type": "string",
+      "description": "ID do MAP pai"
+    },
+    "parent_it_id": {
+      "type": "string",
+      "description": "ID da IT pai (se for documento de apoio)"
+    },
+    "code": {
+      "type": "string",
+      "description": "C\u00f3digo (IT-0001 ou FR-0001)"
+    },
+    "title": {
+      "type": "string",
+      "description": "T\u00edtulo da IT ou Formul\u00e1rio/Registro"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "IT",
+        "FR"
+      ],
+      "description": "IT = Instru\u00e7\u00e3o de Trabalho, FR = Formul\u00e1rio/Registro"
+    },
+    "description": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o resumida"
+    },
+    "content": {
+      "type": "object",
+      "properties": {
+        "objetivo": {
+          "type": "string",
+          "description": "Objetivo espec\u00edfico da IT"
+        },
+        "campo_aplicacao": {
+          "type": "string",
+          "description": "Quando e para quem a IT deve ser aplicada"
+        },
+        "informacoes_complementares": {
+          "type": "string",
+          "description": "Orienta\u00e7\u00f5es, regras de conduta, restri\u00e7\u00f5es"
+        },
+        "fluxo_descricao": {
+          "type": "string",
+          "description": "Passo a passo sequencial da execu\u00e7\u00e3o"
+        },
+        "fluxo_image_url": {
+          "type": "string",
+          "description": "URL da imagem do fluxograma da IT"
+        },
+        "atividades": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "atividade": {
+                "type": "string"
+              },
+              "responsavel": {
+                "type": "string"
+              },
+              "frequencia": {
+                "type": "string"
+              },
+              "observacao": {
+                "type": "string"
+              }
+            }
+          },
+          "description": "Atividades e responsabilidades operacionais"
+        },
+        "matriz_riscos": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "risco": {
+                "type": "string"
+              },
+              "categoria": {
+                "type": "string"
+              },
+              "causa": {
+                "type": "string"
+              },
+              "impacto": {
+                "type": "string"
+              },
+              "controle": {
+                "type": "string"
+              }
+            }
+          },
+          "description": "Matriz de riscos operacionais (m\u00ednimo 3)"
+        },
+        "inter_relacoes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "area": {
+                "type": "string"
+              },
+              "interacao": {
+                "type": "string"
+              }
+            }
+          },
+          "description": "\u00c1reas que interagem na execu\u00e7\u00e3o"
+        },
+        "indicadores": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "nome": {
+                "type": "string"
+              },
+              "formula": {
+                "type": "string"
+              },
+              "meta": {
+                "type": "string"
+              },
+              "frequencia": {
+                "type": "string"
+              }
+            }
+          },
+          "description": "Indicadores espec\u00edficos da IT (m\u00ednimo 1)"
+        },
+        "evidencia_execucao": {
+          "type": "object",
+          "properties": {
+            "tipo_evidencia": {
+              "type": "string",
+              "description": "Tipo de registro que comprova execu\u00e7\u00e3o"
+            },
+            "descricao": {
+              "type": "string",
+              "description": "O que deve ser registrado"
+            },
+            "periodo_retencao": {
+              "type": "string",
+              "enum": [
+                "1_ano",
+                "2_anos",
+                "3_anos",
+                "5_anos",
+                "10_anos",
+                "permanente",
+                "conforme_lei"
+              ],
+              "description": "Por quanto tempo a evid\u00eancia deve ser mantida"
+            },
+            "justificativa_retencao": {
+              "type": "string",
+              "description": "Justificativa do per\u00edodo de reten\u00e7\u00e3o escolhido"
+            }
+          },
+          "description": "Evid\u00eancia obrigat\u00f3ria de execu\u00e7\u00e3o e controle de registro"
+        }
+      }
+    },
+    "file_url": {
+      "type": "string",
+      "description": "URL do arquivo (PDF, Excel, etc)"
+    },
+    "version": {
+      "type": "string",
+      "default": "1",
+      "description": "Vers\u00e3o do documento"
+    },
+    "version_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "changed_by": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "origin": {
+            "type": "string",
+            "enum": [
+              "auditoria",
+              "indicador",
+              "nao_conformidade",
+              "melhoria_continua",
+              "outro"
+            ]
+          },
+          "expected_impact": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Hist\u00f3rico de vers\u00f5es da IT"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ativo",
+        "obsoleto",
+        "em_revisao"
+      ],
+      "default": "ativo"
+    },
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "order": {
+      "type": "integer",
+      "default": 0,
+      "description": "Ordem dentro do MAP/IT"
+    }
+  },
+  "required": [
+    "parent_map_id",
+    "title",
+    "type"
+  ]
+}

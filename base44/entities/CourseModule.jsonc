@@ -1,0 +1,109 @@
+{
+  "name": "CourseModule",
+  "type": "object",
+  "properties": {
+    "course_id": {
+      "type": "string",
+      "description": "ID do curso pai - obrigat\u00f3rio, nunca nulo"
+    },
+    "title": {
+      "type": "string",
+      "description": "T\u00edtulo do m\u00f3dulo"
+    },
+    "description": {
+      "type": "string"
+    },
+    "objective": {
+      "type": "string",
+      "description": "Objetivo pedag\u00f3gico do m\u00f3dulo - O que o aluno deve aprender"
+    },
+    "expected_outcome": {
+      "type": "string",
+      "description": "Resultado esperado ao completar o m\u00f3dulo"
+    },
+    "order": {
+      "type": "integer",
+      "default": 0
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ativo",
+        "oculto",
+        "em_revisao"
+      ],
+      "default": "ativo",
+      "description": "Estado interno do m\u00f3dulo"
+    },
+    "cover_images": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Capas din\u00e2micas do m\u00f3dulo"
+    },
+    "estimated_duration_minutes": {
+      "type": "integer",
+      "default": 0,
+      "description": "Dura\u00e7\u00e3o estimada total do m\u00f3dulo"
+    },
+    "actual_avg_duration_minutes": {
+      "type": "number",
+      "default": 0,
+      "description": "Dura\u00e7\u00e3o m\u00e9dia real dos alunos - calculado automaticamente"
+    },
+    "completion_rate": {
+      "type": "number",
+      "default": 0,
+      "description": "Taxa de conclus\u00e3o do m\u00f3dulo (%)"
+    },
+    "last_content_update": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data da \u00faltima modifica\u00e7\u00e3o de conte\u00fado"
+    }
+  },
+  "required": [
+    "course_id",
+    "title"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "created_by": "{{user.email}}"
+        }
+      ]
+    },
+    "read": true,
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "created_by": "{{user.email}}"
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "created_by": "{{user.email}}"
+        }
+      ]
+    }
+  }
+}

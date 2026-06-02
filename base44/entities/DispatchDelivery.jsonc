@@ -1,0 +1,60 @@
+{
+  "name": "DispatchDelivery",
+  "type": "object",
+  "properties": {
+    "batch_dispatch_id": {
+      "type": "string",
+      "description": "ID do BatchDispatch relacionado"
+    },
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina destinat\u00e1ria"
+    },
+    "workshop_name": {
+      "type": "string",
+      "description": "Nome da oficina"
+    },
+    "delivery_type": {
+      "type": "string",
+      "enum": [
+        "email",
+        "whatsapp",
+        "notification"
+      ],
+      "description": "Tipo de entrega"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pendente",
+        "enviado",
+        "falha",
+        "lido"
+      ],
+      "default": "pendente",
+      "description": "Status da entrega"
+    },
+    "recipient": {
+      "type": "string",
+      "description": "E-mail ou n\u00famero de telefone do destinat\u00e1rio"
+    },
+    "sent_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora de envio"
+    },
+    "error_message": {
+      "type": "string",
+      "description": "Mensagem de erro se falhou"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Dados adicionais do envio"
+    }
+  },
+  "required": [
+    "batch_dispatch_id",
+    "workshop_id",
+    "delivery_type"
+  ]
+}

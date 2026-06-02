@@ -1,0 +1,297 @@
+{
+  "name": "UserPermission",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio (Rela\u00e7\u00e3o 1-1: User \u2194 UserPermission) - Cada usu\u00e1rio tem um registro \u00fanico de permiss\u00f5es"
+    },
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina (Rela\u00e7\u00e3o 1-N: Workshop \u2192 UserPermission)"
+    },
+    "profile_id": {
+      "type": "string",
+      "description": "ID do perfil atribu\u00eddo (Rela\u00e7\u00e3o 1-1: UserProfile \u2192 UserPermission)"
+    },
+    "custom_role_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "IDs das roles customizadas atribu\u00eddas (Rela\u00e7\u00e3o 1-N: UserPermission \u2192 CustomRole)"
+    },
+    "permission_level": {
+      "type": "string",
+      "enum": [
+        "admin",
+        "editor",
+        "visualizador",
+        "personalizado"
+      ],
+      "default": "visualizador",
+      "description": "N\u00edvel de permiss\u00e3o global"
+    },
+    "modules_access": {
+      "type": "object",
+      "properties": {
+        "dashboard": {
+          "type": "object",
+          "properties": {
+            "view": {
+              "type": "boolean",
+              "default": true
+            },
+            "edit": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        },
+        "cadastros": {
+          "type": "object",
+          "properties": {
+            "view": {
+              "type": "boolean",
+              "default": false
+            },
+            "edit": {
+              "type": "boolean",
+              "default": false
+            },
+            "delete": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        },
+        "patio": {
+          "type": "object",
+          "properties": {
+            "view": {
+              "type": "boolean",
+              "default": false
+            },
+            "edit": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        },
+        "resultados": {
+          "type": "object",
+          "properties": {
+            "view": {
+              "type": "boolean",
+              "default": false
+            },
+            "edit": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        },
+        "pessoas": {
+          "type": "object",
+          "properties": {
+            "view": {
+              "type": "boolean",
+              "default": false
+            },
+            "edit": {
+              "type": "boolean",
+              "default": false
+            },
+            "delete": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        },
+        "diagnosticos": {
+          "type": "object",
+          "properties": {
+            "view": {
+              "type": "boolean",
+              "default": false
+            },
+            "create": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        },
+        "processos": {
+          "type": "object",
+          "properties": {
+            "view": {
+              "type": "boolean",
+              "default": false
+            },
+            "edit": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        },
+        "documentos": {
+          "type": "object",
+          "properties": {
+            "view": {
+              "type": "boolean",
+              "default": false
+            },
+            "upload": {
+              "type": "boolean",
+              "default": false
+            },
+            "delete": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        },
+        "cultura": {
+          "type": "object",
+          "properties": {
+            "view": {
+              "type": "boolean",
+              "default": false
+            },
+            "edit": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        },
+        "treinamentos": {
+          "type": "object",
+          "properties": {
+            "view": {
+              "type": "boolean",
+              "default": true
+            },
+            "create": {
+              "type": "boolean",
+              "default": false
+            },
+            "manage": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        },
+        "gestao": {
+          "type": "object",
+          "properties": {
+            "view": {
+              "type": "boolean",
+              "default": false
+            },
+            "edit": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        },
+        "admin": {
+          "type": "object",
+          "properties": {
+            "users": {
+              "type": "boolean",
+              "default": false,
+              "description": "Gerenciar usu\u00e1rios (Rela\u00e7\u00e3o 1-N: Admin \u2192 User)"
+            },
+            "permissions": {
+              "type": "boolean",
+              "default": false,
+              "description": "Gerenciar permiss\u00f5es (Rela\u00e7\u00e3o 1-N: Admin \u2192 UserPermission)"
+            },
+            "settings": {
+              "type": "boolean",
+              "default": false,
+              "description": "Gerenciar configura\u00e7\u00f5es do sistema"
+            },
+            "roles": {
+              "type": "boolean",
+              "default": false,
+              "description": "Gerenciar roles customizadas (Rela\u00e7\u00e3o 1-N: Admin \u2192 CustomRole)"
+            }
+          }
+        }
+      },
+      "description": "Permiss\u00f5es espec\u00edficas por m\u00f3dulo"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se as permiss\u00f5es personalizadas est\u00e3o ativas"
+    },
+    "approved_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data de aprova\u00e7\u00e3o das permiss\u00f5es"
+    },
+    "approved_by": {
+      "type": "string",
+      "description": "ID do admin que aprovou (Rela\u00e7\u00e3o 1-N: Admin \u2192 UserPermission[approved_by])"
+    },
+    "audit_log": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "changed_by": {
+            "type": "string",
+            "description": "ID do usu\u00e1rio que fez a altera\u00e7\u00e3o"
+          },
+          "changed_by_email": {
+            "type": "string",
+            "description": "Email do usu\u00e1rio que fez a altera\u00e7\u00e3o"
+          },
+          "changed_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "action": {
+            "type": "string",
+            "description": "Tipo de a\u00e7\u00e3o (create, update, delete)"
+          },
+          "field_changed": {
+            "type": "string",
+            "description": "Campo que foi alterado"
+          },
+          "old_value": {
+            "type": "string"
+          },
+          "new_value": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Log de auditoria (Rela\u00e7\u00e3o 1-N: UserPermission \u2192 AuditLog)"
+    }
+  },
+  "required": [
+    "user_id",
+    "permission_level"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": true,
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

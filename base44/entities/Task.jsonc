@@ -1,0 +1,490 @@
+{
+  "name": "Task",
+  "type": "object",
+  "properties": {
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "company_id": {
+      "type": "string",
+      "description": "ID da empresa"
+    },
+    "consulting_firm_id": {
+      "type": "string",
+      "description": "ID da consultoria"
+    },
+    "employee_id": {
+      "type": "string",
+      "description": "ID do colaborador vinculado (T\u00e9cnico Principal)"
+    },
+    "title": {
+      "type": "string",
+      "description": "T\u00edtulo da tarefa"
+    },
+    "description": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o detalhada"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pendente",
+        "em_andamento",
+        "pausada",
+        "concluida",
+        "cancelada"
+      ],
+      "default": "pendente",
+      "description": "Status da tarefa"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "baixa",
+        "media",
+        "alta",
+        "urgente"
+      ],
+      "default": "media",
+      "description": "Prioridade"
+    },
+    "assigned_to": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "IDs dos usu\u00e1rios atribu\u00eddos"
+    },
+    "assigned_team": {
+      "type": "string",
+      "enum": [
+        "vendas",
+        "comercial",
+        "marketing",
+        "tecnico",
+        "administrativo",
+        "financeiro",
+        "gerencia"
+      ],
+      "description": "Equipe atribu\u00edda"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data de vencimento"
+    },
+    "completed_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data de conclus\u00e3o"
+    },
+    "progress": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100,
+      "default": 0,
+      "description": "Percentual de progresso"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Tags/categorias"
+    },
+    "attachments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "uploaded_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    },
+    "comments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "string"
+          },
+          "user_name": {
+            "type": "string"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    },
+    "is_overdue": {
+      "type": "boolean",
+      "default": false
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "IDs das tarefas que precisam ser conclu\u00eddas antes desta"
+    },
+    "reminder_settings": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "email_reminder": {
+          "type": "boolean",
+          "default": true
+        },
+        "app_notification": {
+          "type": "boolean",
+          "default": true
+        },
+        "reminder_before": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "value": {
+                "type": "integer"
+              },
+              "unit": {
+                "type": "string",
+                "enum": [
+                  "minutes",
+                  "hours",
+                  "days"
+                ]
+              }
+            }
+          },
+          "description": "Lembretes antes do vencimento"
+        }
+      }
+    },
+    "is_recurring": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se a tarefa \u00e9 recorrente"
+    },
+    "recurrence_pattern": {
+      "type": "string",
+      "enum": [
+        "diariamente",
+        "semanalmente",
+        "quinzenalmente",
+        "mensalmente",
+        "personalizado"
+      ],
+      "description": "Padr\u00e3o de recorr\u00eancia"
+    },
+    "recurrence_days": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "domingo",
+          "segunda",
+          "terca",
+          "quarta",
+          "quinta",
+          "sexta",
+          "sabado"
+        ]
+      },
+      "description": "Dias espec\u00edficos para recorr\u00eancia personalizada"
+    },
+    "recurrence_end_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data final da recorr\u00eancia"
+    },
+    "parent_task_id": {
+      "type": "string",
+      "description": "ID da tarefa pai (para tarefas geradas por recorr\u00eancia)"
+    },
+    "predicted_time_minutes": {
+      "type": "integer",
+      "default": 0,
+      "description": "Tempo previsto em minutos (QGP)"
+    },
+    "actual_time_minutes": {
+      "type": "integer",
+      "default": 0,
+      "description": "Tempo executado em minutos"
+    },
+    "time_tracking": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "string"
+          },
+          "start_time": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "end_time": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "duration_minutes": {
+            "type": "integer"
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Registros de tempo trabalhado"
+    },
+    "task_type": {
+      "type": "string",
+      "enum": [
+        "geral",
+        "qgp_solicitacao_servico",
+        "qgp_aviso_entrega",
+        "qgp_tcmp2",
+        "qgp_retrabalho",
+        "qgp_aguardando"
+      ],
+      "default": "geral",
+      "description": "Tipo da tarefa (geral ou QGP)"
+    },
+    "qgp_data": {
+      "type": "object",
+      "properties": {
+        "os_number": {
+          "type": "string",
+          "description": "N\u00famero da O.S. vinculada"
+        },
+        "os_file_url": {
+          "type": "string",
+          "description": "URL do arquivo/imagem da O.S."
+        },
+        "vehicle_model": {
+          "type": "string",
+          "description": "Modelo do ve\u00edculo"
+        },
+        "vehicle_plate": {
+          "type": "string",
+          "description": "Placa do ve\u00edculo"
+        },
+        "client_name": {
+          "type": "string",
+          "description": "Nome do cliente"
+        },
+        "salesperson_id": {
+          "type": "string",
+          "description": "ID do Vendedor respons\u00e1vel"
+        },
+        "service_type": {
+          "type": "string",
+          "description": "Tipo de servi\u00e7o"
+        },
+        "delivery_date": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Data prevista de entrega (Geral)"
+        },
+        "delivery_status": {
+          "type": "string",
+          "enum": [
+            "no_prazo",
+            "atrasado",
+            "entregue",
+            "aguardando_cliente"
+          ],
+          "description": "Status da entrega"
+        },
+        "waiting_reason": {
+          "type": "string",
+          "enum": [
+            "peca",
+            "terceiro",
+            "aprovacao_cliente",
+            "autorizacao",
+            "pagamento",
+            "outros"
+          ],
+          "description": "Motivo da parada"
+        },
+        "pauses": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "start_time": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "end_time": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "reason": {
+                "type": "string"
+              },
+              "duration_minutes": {
+                "type": "integer"
+              }
+            }
+          },
+          "description": "Hist\u00f3rico de pausas"
+        },
+        "rework_reason": {
+          "type": "string",
+          "description": "Motivo do retrabalho"
+        },
+        "rework_count": {
+          "type": "integer",
+          "default": 0,
+          "description": "Quantidade de retrabalhos"
+        },
+        "waiting_since": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Aguardando desde"
+        },
+        "waiting_notes": {
+          "type": "string",
+          "description": "Observa\u00e7\u00f5es sobre a espera"
+        }
+      },
+      "description": "Dados espec\u00edficos do QGP"
+    },
+    "ai_epi": {
+      "type": "string",
+      "description": "EPIs recomendados pela IA"
+    },
+    "ai_specificity": {
+      "type": "string",
+      "description": "Detalhes espec\u00edficos da execu\u00e7\u00e3o gerados pela IA"
+    },
+    "ai_steps": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Passo a passo gerado pela IA"
+    },
+    "ai_success_indicator": {
+      "type": "string",
+      "description": "Indicador de sucesso da tarefa"
+    }
+  },
+  "required": [
+    "workshop_id",
+    "title",
+    "status",
+    "priority"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "assigned_to": {
+            "$in": [
+              "{{user.id}}"
+            ]
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        },
+        {
+          "company_id": "{{user.data.company_id}}"
+        },
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "assigned_to": {
+            "$in": [
+              "{{user.id}}"
+            ]
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        },
+        {
+          "company_id": "{{user.data.company_id}}"
+        },
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        },
+        {
+          "company_id": "{{user.data.company_id}}"
+        },
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        }
+      ]
+    }
+  }
+}

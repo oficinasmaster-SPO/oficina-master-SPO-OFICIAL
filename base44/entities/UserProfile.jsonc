@@ -1,0 +1,323 @@
+{
+  "name": "UserProfile",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Nome do perfil de acesso"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "interno",
+        "externo",
+        "sistema"
+      ],
+      "description": "Tipo do perfil"
+    },
+    "permission_type": {
+      "type": "string",
+      "enum": [
+        "job_role",
+        "role",
+        "custom_role"
+      ],
+      "default": "job_role",
+      "description": "Tipo de vincula\u00e7\u00e3o de permiss\u00e3o"
+    },
+    "custom_role_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "IDs das roles customizadas atribu\u00eddas a este perfil (Rela\u00e7\u00e3o 1-N: UserProfile \u2192 CustomRole)"
+    },
+    "job_roles": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "socio",
+          "socio_interno",
+          "diretor",
+          "supervisor_loja",
+          "gerente",
+          "lider_tecnico",
+          "financeiro",
+          "rh",
+          "tecnico",
+          "funilaria_pintura",
+          "comercial",
+          "consultor_vendas",
+          "marketing",
+          "estoque",
+          "administrativo",
+          "motoboy",
+          "lavador",
+          "acelerador",
+          "consultor",
+          "outros"
+        ]
+      },
+      "description": "Fun\u00e7\u00f5es espec\u00edficas vinculadas a este perfil"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ativo",
+        "inativo"
+      ],
+      "default": "ativo",
+      "description": "Status do perfil"
+    },
+    "description": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o do perfil"
+    },
+    "roles": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Lista de roles vinculadas ao perfil"
+    },
+    "sidebar_permissions": {
+      "type": "object",
+      "description": "Permiss\u00f5es da sidebar",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "view": {
+            "type": "boolean",
+            "default": false
+          },
+          "edit": {
+            "type": "boolean",
+            "default": false
+          },
+          "delete": {
+            "type": "boolean",
+            "default": false
+          },
+          "create": {
+            "type": "boolean",
+            "default": false
+          },
+          "export": {
+            "type": "boolean",
+            "default": false
+          },
+          "approve": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      }
+    },
+    "module_permissions": {
+      "type": "object",
+      "description": "Permiss\u00f5es por m\u00f3dulo",
+      "properties": {
+        "dashboard": {
+          "type": "string",
+          "enum": [
+            "total",
+            "visualizacao",
+            "bloqueado"
+          ],
+          "default": "bloqueado"
+        },
+        "cadastros": {
+          "type": "string",
+          "enum": [
+            "total",
+            "visualizacao",
+            "bloqueado"
+          ],
+          "default": "bloqueado"
+        },
+        "patio": {
+          "type": "string",
+          "enum": [
+            "total",
+            "visualizacao",
+            "bloqueado"
+          ],
+          "default": "bloqueado"
+        },
+        "resultados": {
+          "type": "string",
+          "enum": [
+            "total",
+            "visualizacao",
+            "bloqueado"
+          ],
+          "default": "bloqueado"
+        },
+        "pessoas": {
+          "type": "string",
+          "enum": [
+            "total",
+            "visualizacao",
+            "bloqueado"
+          ],
+          "default": "bloqueado"
+        },
+        "diagnosticos": {
+          "type": "string",
+          "enum": [
+            "total",
+            "visualizacao",
+            "bloqueado"
+          ],
+          "default": "bloqueado"
+        },
+        "processos": {
+          "type": "string",
+          "enum": [
+            "total",
+            "visualizacao",
+            "bloqueado"
+          ],
+          "default": "bloqueado"
+        },
+        "documentos": {
+          "type": "string",
+          "enum": [
+            "total",
+            "visualizacao",
+            "bloqueado"
+          ],
+          "default": "bloqueado"
+        },
+        "cultura": {
+          "type": "string",
+          "enum": [
+            "total",
+            "visualizacao",
+            "bloqueado"
+          ],
+          "default": "bloqueado"
+        },
+        "treinamentos": {
+          "type": "string",
+          "enum": [
+            "total",
+            "visualizacao",
+            "bloqueado"
+          ],
+          "default": "bloqueado"
+        },
+        "gestao": {
+          "type": "string",
+          "enum": [
+            "total",
+            "visualizacao",
+            "bloqueado"
+          ],
+          "default": "bloqueado"
+        },
+        "aceleracao": {
+          "type": "string",
+          "enum": [
+            "total",
+            "visualizacao",
+            "bloqueado"
+          ],
+          "default": "bloqueado"
+        },
+        "admin": {
+          "type": "string",
+          "enum": [
+            "total",
+            "visualizacao",
+            "bloqueado"
+          ],
+          "default": "bloqueado"
+        }
+      }
+    },
+    "modules_allowed": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Lista de p\u00e1ginas/m\u00f3dulos que este perfil pode acessar"
+    },
+    "users_count": {
+      "type": "integer",
+      "default": 0,
+      "description": "Quantidade de usu\u00e1rios vinculados (Rela\u00e7\u00e3o 1-N: UserProfile \u2192 User)"
+    },
+    "cloned_from": {
+      "type": "string",
+      "description": "ID do perfil base usado para cria\u00e7\u00e3o"
+    },
+    "is_system": {
+      "type": "boolean",
+      "default": false,
+      "description": "Perfil do sistema (n\u00e3o edit\u00e1vel)"
+    },
+    "audit_log": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "changed_by": {
+            "type": "string",
+            "description": "ID do usu\u00e1rio que fez a altera\u00e7\u00e3o"
+          },
+          "changed_by_email": {
+            "type": "string",
+            "description": "Email do usu\u00e1rio que fez a altera\u00e7\u00e3o"
+          },
+          "changed_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "action": {
+            "type": "string",
+            "description": "Tipo de a\u00e7\u00e3o"
+          },
+          "field_changed": {
+            "type": "string",
+            "description": "Campo que foi alterado"
+          },
+          "old_value": {
+            "type": "string"
+          },
+          "new_value": {
+            "type": "string"
+          },
+          "affected_users_count": {
+            "type": "integer",
+            "description": "Quantidade de usu\u00e1rios afetados pela altera\u00e7\u00e3o"
+          }
+        }
+      },
+      "description": "Log de auditoria de altera\u00e7\u00f5es (Rela\u00e7\u00e3o 1-N: UserProfile \u2192 AuditLog)"
+    }
+  },
+  "required": [
+    "name",
+    "type"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": true,
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

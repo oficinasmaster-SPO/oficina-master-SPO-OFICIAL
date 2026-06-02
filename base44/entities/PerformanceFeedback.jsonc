@@ -1,0 +1,108 @@
+{
+  "name": "PerformanceFeedback",
+  "type": "object",
+  "properties": {
+    "employee_id": {
+      "type": "string",
+      "description": "ID do colaborador avaliado"
+    },
+    "manager_id": {
+      "type": "string",
+      "description": "ID do gestor que deu o feedback"
+    },
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "feedback_type": {
+      "type": "string",
+      "enum": [
+        "reconhecimento",
+        "construtivo",
+        "alerta",
+        "one_on_one"
+      ],
+      "description": "Tipo de feedback"
+    },
+    "title": {
+      "type": "string",
+      "description": "T\u00edtulo do feedback"
+    },
+    "content": {
+      "type": "string",
+      "description": "Conte\u00fado do feedback"
+    },
+    "kpis_mentioned": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "IDs dos KPIs relacionados"
+    },
+    "action_plan": {
+      "type": "string",
+      "description": "Plano de a\u00e7\u00e3o acordado"
+    },
+    "acknowledged": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se o colaborador reconheceu o feedback"
+    },
+    "acknowledged_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "employee_response": {
+      "type": "string",
+      "description": "Resposta do colaborador"
+    },
+    "follow_up_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data para follow-up"
+    },
+    "follow_up_notes": {
+      "type": "string",
+      "description": "Notas do follow-up"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pendente",
+        "reconhecido",
+        "em_acao",
+        "concluido"
+      ],
+      "default": "pendente"
+    }
+  },
+  "required": [
+    "employee_id",
+    "manager_id",
+    "workshop_id",
+    "feedback_type",
+    "content"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "manager_id": "{{user.id}}"
+        },
+        {
+          "employee_id": "{{user.id}}"
+        }
+      ]
+    },
+    "update": true,
+    "delete": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}

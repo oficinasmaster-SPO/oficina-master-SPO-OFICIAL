@@ -1,0 +1,247 @@
+{
+  "name": "PerformanceMatrixDiagnostic",
+  "type": "object",
+  "properties": {
+    "employee_id": {
+      "type": "string",
+      "description": "ID do colaborador avaliado"
+    },
+    "evaluator_id": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio que fez a avalia\u00e7\u00e3o"
+    },
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "company_id": {
+      "type": "string",
+      "description": "ID da empresa"
+    },
+    "consulting_firm_id": {
+      "type": "string",
+      "description": "ID da consultoria"
+    },
+    "evaluation_type": {
+      "type": "string",
+      "enum": [
+        "manager",
+        "self"
+      ],
+      "default": "manager",
+      "description": "Tipo de avalia\u00e7\u00e3o: Gestor ou Autoavalia\u00e7\u00e3o"
+    },
+    "technical_scores": {
+      "type": "object",
+      "properties": {
+        "conhece_funcao": {
+          "type": "number"
+        },
+        "atinge_resultados": {
+          "type": "number"
+        },
+        "baixo_retrabalho": {
+          "type": "number"
+        },
+        "trabalha_alto_nivel": {
+          "type": "number"
+        },
+        "toma_decisoes": {
+          "type": "number"
+        },
+        "contribui_ideias": {
+          "type": "number"
+        },
+        "produz_qualidade": {
+          "type": "number"
+        },
+        "prioridade_certa": {
+          "type": "number"
+        },
+        "sistemas_eficientes": {
+          "type": "number"
+        },
+        "transmite_informacoes": {
+          "type": "number"
+        },
+        "cumpre_compromissos": {
+          "type": "number"
+        },
+        "informa_impossibilidades": {
+          "type": "number"
+        },
+        "da_recebe_feedback": {
+          "type": "number"
+        },
+        "excede_expectativas": {
+          "type": "number"
+        },
+        "busca_conhecimento": {
+          "type": "number"
+        },
+        "compreende_tecnologias": {
+          "type": "number"
+        },
+        "desenvolvimento_profissional": {
+          "type": "number"
+        }
+      },
+      "description": "Notas dos 17 crit\u00e9rios t\u00e9cnicos (0-10)"
+    },
+    "emotional_scores": {
+      "type": "object",
+      "properties": {
+        "autoconfianca": {
+          "type": "number"
+        },
+        "autocontrole": {
+          "type": "number"
+        },
+        "superacao": {
+          "type": "number"
+        },
+        "iniciativa": {
+          "type": "number"
+        },
+        "transparencia": {
+          "type": "number"
+        },
+        "flexibilidade": {
+          "type": "number"
+        },
+        "otimismo": {
+          "type": "number"
+        },
+        "empatia": {
+          "type": "number"
+        },
+        "servico": {
+          "type": "number"
+        },
+        "lideranca": {
+          "type": "number"
+        },
+        "influencia": {
+          "type": "number"
+        },
+        "gerenciamento_conflitos": {
+          "type": "number"
+        },
+        "trabalho_equipe": {
+          "type": "number"
+        }
+      },
+      "description": "Notas dos 13 crit\u00e9rios emocionais (0-10)"
+    },
+    "technical_average": {
+      "type": "number",
+      "description": "M\u00e9dia das compet\u00eancias t\u00e9cnicas"
+    },
+    "emotional_average": {
+      "type": "number",
+      "description": "M\u00e9dia das compet\u00eancias emocionais"
+    },
+    "classification": {
+      "type": "string",
+      "enum": [
+        "demissao",
+        "treinamento_tecnico",
+        "treinamento_emocional",
+        "observacao",
+        "reconhecimento",
+        "investimento"
+      ],
+      "description": "Classifica\u00e7\u00e3o na matriz"
+    },
+    "recommendation": {
+      "type": "string",
+      "description": "Recomenda\u00e7\u00e3o autom\u00e1tica baseada na classifica\u00e7\u00e3o"
+    },
+    "completed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Diagn\u00f3stico completo"
+    }
+  },
+  "required": [
+    "employee_id",
+    "evaluator_id",
+    "technical_scores",
+    "emotional_scores"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        },
+        {
+          "company_id": "{{user.data.company_id}}"
+        },
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        },
+        {
+          "company_id": "{{user.data.company_id}}"
+        },
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        },
+        {
+          "company_id": "{{user.data.company_id}}"
+        },
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        }
+      ]
+    }
+  }
+}

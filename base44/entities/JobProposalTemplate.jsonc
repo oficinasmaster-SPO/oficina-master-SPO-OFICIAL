@@ -1,0 +1,131 @@
+{
+  "name": "JobProposalTemplate",
+  "type": "object",
+  "properties": {
+    "workshop_id": {
+      "type": "string"
+    },
+    "template_name": {
+      "type": "string",
+      "description": "Nome do template"
+    },
+    "position": {
+      "type": "string",
+      "description": "Cargo vinculado"
+    },
+    "reports_to": {
+      "type": "string"
+    },
+    "function_objective": {
+      "type": "string"
+    },
+    "main_responsibilities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "secondary_responsibilities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "contract_type": {
+      "type": "string",
+      "enum": [
+        "clt",
+        "pj",
+        "estagio",
+        "freelancer"
+      ]
+    },
+    "workload": {
+      "type": "string"
+    },
+    "work_schedule": {
+      "type": "string"
+    },
+    "work_location": {
+      "type": "string"
+    },
+    "work_model": {
+      "type": "string",
+      "enum": [
+        "presencial",
+        "remoto",
+        "hibrido"
+      ]
+    },
+    "fixed_salary": {
+      "type": "number"
+    },
+    "variable_bonus": {
+      "type": "number"
+    },
+    "salary_readjustment": {
+      "type": "string"
+    },
+    "benefits": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "value": {
+            "type": "number"
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "success_criteria_30d": {
+      "type": "string"
+    },
+    "success_criteria_60d": {
+      "type": "string"
+    },
+    "success_criteria_90d": {
+      "type": "string"
+    },
+    "career_path": {
+      "type": "string"
+    },
+    "future_positions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "proposal_validity": {
+      "type": "string"
+    },
+    "responsible_contact": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        }
+      }
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "workshop_id",
+    "template_name",
+    "position"
+  ]
+}

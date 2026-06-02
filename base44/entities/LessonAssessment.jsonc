@@ -1,0 +1,114 @@
+{
+  "name": "LessonAssessment",
+  "type": "object",
+  "properties": {
+    "lesson_id": {
+      "type": "string",
+      "description": "ID da aula relacionada"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "quiz",
+        "exercise",
+        "poll"
+      ],
+      "description": "Tipo de avalia\u00e7\u00e3o"
+    },
+    "title": {
+      "type": "string",
+      "description": "T\u00edtulo da avalia\u00e7\u00e3o"
+    },
+    "description": {
+      "type": "string",
+      "description": "Instru\u00e7\u00f5es"
+    },
+    "questions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "multiple_choice",
+              "text",
+              "boolean"
+            ]
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Op\u00e7\u00f5es para m\u00faltipla escolha"
+          },
+          "correct_answer": {
+            "type": "string",
+            "description": "\u00cdndice ou valor da resposta correta"
+          }
+        }
+      },
+      "description": "Lista de perguntas"
+    },
+    "ai_prompt_template": {
+      "type": "string",
+      "description": "Instru\u00e7\u00f5es para a IA gerar feedback sobre as respostas"
+    },
+    "passing_score": {
+      "type": "number",
+      "default": 70,
+      "description": "Nota m\u00ednima para aprova\u00e7\u00e3o (0-100)"
+    }
+  },
+  "required": [
+    "lesson_id",
+    "type",
+    "questions"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "created_by": "{{user.email}}"
+        }
+      ]
+    },
+    "read": true,
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "created_by": "{{user.email}}"
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "created_by": "{{user.email}}"
+        }
+      ]
+    }
+  }
+}

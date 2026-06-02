@@ -1,0 +1,113 @@
+{
+  "name": "Position",
+  "type": "object",
+  "properties": {
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "company_id": {
+      "type": "string",
+      "description": "ID da empresa"
+    },
+    "consulting_firm_id": {
+      "type": "string",
+      "description": "ID da consultoria"
+    },
+    "title": {
+      "type": "string",
+      "description": "T\u00edtulo do cargo"
+    },
+    "level": {
+      "type": "string",
+      "enum": [
+        "socio",
+        "gerente",
+        "coordenador",
+        "tecnico",
+        "auxiliar"
+      ],
+      "description": "N\u00edvel hier\u00e1rquico"
+    },
+    "parent_position_id": {
+      "type": "string",
+      "description": "ID do cargo superior (para organograma)"
+    },
+    "ideal_weekly_hours": {
+      "type": "number",
+      "default": 40,
+      "description": "Horas semanais ideais"
+    },
+    "responsibilities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Responsabilidades do cargo"
+    }
+  },
+  "required": [
+    "workshop_id",
+    "title",
+    "level"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        },
+        {
+          "company_id": "{{user.data.company_id}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        },
+        {
+          "company_id": "{{user.data.company_id}}"
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        },
+        {
+          "company_id": "{{user.data.company_id}}"
+        }
+      ]
+    }
+  }
+}

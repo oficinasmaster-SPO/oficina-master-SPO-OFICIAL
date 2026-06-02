@@ -1,0 +1,175 @@
+{
+  "name": "CompanyRegiment",
+  "type": "object",
+  "properties": {
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "document_code": {
+      "type": "string",
+      "description": "C\u00f3digo \u00fanico do documento (ex: RI-2024-001)"
+    },
+    "version": {
+      "type": "string",
+      "description": "Vers\u00e3o do documento (ex: 1.0, 2.0)"
+    },
+    "effective_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de vig\u00eancia"
+    },
+    "replaces_previous": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se substitui vers\u00f5es anteriores"
+    },
+    "identification": {
+      "type": "object",
+      "properties": {
+        "company_name": {
+          "type": "string"
+        },
+        "cnpj": {
+          "type": "string"
+        },
+        "address": {
+          "type": "string"
+        }
+      },
+      "description": "Dados de identifica\u00e7\u00e3o da empresa"
+    },
+    "objective": {
+      "type": "string",
+      "description": "Objetivo do regimento interno"
+    },
+    "sections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "subsections": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "number": {
+                  "type": "string"
+                },
+                "content": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "description": "Se\u00e7\u00f5es hier\u00e1rquicas do regimento"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "active",
+        "archived"
+      ],
+      "default": "draft",
+      "description": "Status do regimento"
+    },
+    "published_by": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio que publicou"
+    },
+    "published_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data de publica\u00e7\u00e3o"
+    },
+    "warning_legal_text": {
+      "type": "string",
+      "description": "Texto legal padr\u00e3o para advert\u00eancias"
+    },
+    "acknowledgment_text": {
+      "type": "string",
+      "description": "Texto de ci\u00eancia e compromisso"
+    },
+    "final_provisions": {
+      "type": "string",
+      "description": "Disposi\u00e7\u00f5es finais do regimento"
+    },
+    "acknowledgments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "string"
+          },
+          "user_email": {
+            "type": "string"
+          },
+          "user_name": {
+            "type": "string"
+          },
+          "acknowledged_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ip_address": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Registro de ci\u00eancia dos colaboradores"
+    }
+  },
+  "required": [
+    "workshop_id",
+    "version"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": true,
+    "update": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

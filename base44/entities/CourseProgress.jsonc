@@ -1,0 +1,81 @@
+{
+  "name": "CourseProgress",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio/colaborador"
+    },
+    "course_id": {
+      "type": "string"
+    },
+    "lesson_id": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "not_started",
+        "in_progress",
+        "completed"
+      ],
+      "default": "not_started"
+    },
+    "progress_percentage": {
+      "type": "number",
+      "default": 0,
+      "description": "Porcentagem assistida (0-100)"
+    },
+    "last_watched_position": {
+      "type": "number",
+      "default": 0,
+      "description": "Posi\u00e7\u00e3o em segundos onde parou"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "watch_time_seconds": {
+      "type": "integer",
+      "default": 0,
+      "description": "Tempo total assistido"
+    }
+  },
+  "required": [
+    "user_id",
+    "course_id",
+    "lesson_id"
+  ],
+  "rls": {
+    "create": true,
+    "read": {
+      "$or": [
+        {
+          "user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

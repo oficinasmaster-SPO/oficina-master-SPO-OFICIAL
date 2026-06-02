@@ -1,0 +1,88 @@
+{
+  "name": "OnboardingChecklist",
+  "type": "object",
+  "properties": {
+    "candidate_id": {
+      "type": "string"
+    },
+    "employee_id": {
+      "type": "string",
+      "description": "ID do Employee ap\u00f3s convers\u00e3o"
+    },
+    "workshop_id": {
+      "type": "string"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de in\u00edcio"
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "dia_1",
+              "semana_1",
+              "30_dias",
+              "60_dias",
+              "90_dias"
+            ]
+          },
+          "responsible_id": {
+            "type": "string"
+          },
+          "completed": {
+            "type": "boolean",
+            "default": false
+          },
+          "completed_date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "completed_by": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "completion_percentage": {
+      "type": "number",
+      "default": 0,
+      "description": "% de integra\u00e7\u00e3o conclu\u00edda"
+    },
+    "acceptance_signature": {
+      "type": "string",
+      "description": "Assinatura digital do colaborador"
+    },
+    "acceptance_date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "em_andamento",
+        "concluido",
+        "atrasado"
+      ],
+      "default": "em_andamento"
+    }
+  },
+  "required": [
+    "workshop_id",
+    "start_date"
+  ]
+}

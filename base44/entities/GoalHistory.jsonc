@@ -1,0 +1,129 @@
+{
+  "name": "GoalHistory",
+  "type": "object",
+  "properties": {
+    "entity_id": {
+      "type": "string",
+      "description": "ID da oficina ou do colaborador"
+    },
+    "entity_type": {
+      "type": "string",
+      "enum": [
+        "workshop",
+        "employee"
+      ],
+      "description": "Tipo de entidade (oficina ou colaborador)"
+    },
+    "month_year": {
+      "type": "string",
+      "description": "M\u00eas/Ano de refer\u00eancia (YYYY-MM)"
+    },
+    "goal_established": {
+      "type": "number",
+      "description": "Valor da meta definida"
+    },
+    "result_achieved": {
+      "type": "number",
+      "description": "Valor do resultado alcan\u00e7ado"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "red",
+        "yellow",
+        "green"
+      ],
+      "description": "Status calculado (vermelho < 85%, amarelo 85-99%, verde >= 100%)"
+    },
+    "percentage_achieved": {
+      "type": "number",
+      "description": "Percentual de atingimento"
+    },
+    "detailed_data": {
+      "type": "object",
+      "description": "Dados detalhados (ranking, indicadores, etc)",
+      "additionalProperties": true
+    },
+    "ai_insights": {
+      "type": "object",
+      "properties": {
+        "summary": {
+          "type": "string"
+        },
+        "risks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "opportunities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "suggestions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "forecast": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "required": [
+    "entity_id",
+    "entity_type",
+    "month_year",
+    "goal_established",
+    "result_achieved",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "entity_id": "{{user.id}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

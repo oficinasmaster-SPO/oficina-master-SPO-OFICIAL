@@ -1,0 +1,86 @@
+{
+  "name": "WorkshopAutomation",
+  "type": "object",
+  "properties": {
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "enabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se a automa\u00e7\u00e3o est\u00e1 ativa geral"
+    },
+    "whatsapp_enabled": {
+      "type": "boolean",
+      "default": false
+    },
+    "frequency": {
+      "type": "string",
+      "enum": [
+        "diario",
+        "semanal",
+        "apenas_eventos"
+      ],
+      "default": "apenas_eventos"
+    },
+    "recipients": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "employee_id": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "active": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "description": "Lista de colaboradores configurados para receber"
+    },
+    "selected_categories": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Categorias de mensagens ativas (ex: bom_dia, meta_batida)"
+    }
+  },
+  "required": [
+    "workshop_id"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

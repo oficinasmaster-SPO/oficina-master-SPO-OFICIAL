@@ -1,0 +1,53 @@
+{
+  "name": "InterviewQuestion",
+  "type": "object",
+  "properties": {
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina (null para perguntas padr\u00e3o do sistema)"
+    },
+    "question_text": {
+      "type": "string",
+      "description": "Texto da pergunta"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "tecnica",
+        "comportamental",
+        "cultural"
+      ],
+      "description": "Categoria da pergunta"
+    },
+    "position": {
+      "type": "string",
+      "description": "Cargo espec\u00edfico (vazio para todas)"
+    },
+    "weight": {
+      "type": "number",
+      "default": 1,
+      "description": "Peso da pergunta no score final"
+    },
+    "is_system_default": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se \u00e9 pergunta padr\u00e3o do sistema"
+    },
+    "expected_answer": {
+      "type": "string",
+      "description": "Resposta esperada (opcional)"
+    },
+    "scoring_guide": {
+      "type": "string",
+      "description": "Guia de pontua\u00e7\u00e3o"
+    },
+    "active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "question_text",
+    "category"
+  ]
+}

@@ -1,0 +1,283 @@
+{
+  "name": "JobDescription",
+  "type": "object",
+  "properties": {
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "employee_id": {
+      "type": "string",
+      "description": "ID do colaborador (opcional)"
+    },
+    "job_title": {
+      "type": "string",
+      "description": "Nome do cargo"
+    },
+    "area": {
+      "type": "string",
+      "enum": [
+        "vendas",
+        "comercial",
+        "marketing",
+        "tecnico",
+        "administrativo",
+        "financeiro",
+        "gerencia",
+        "operacional",
+        "rh",
+        "outros"
+      ],
+      "description": "\u00c1rea de atua\u00e7\u00e3o"
+    },
+    "previous_experience": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "item": {
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "desired": {
+            "type": "boolean"
+          }
+        }
+      },
+      "description": "Experi\u00eancia pr\u00e9via"
+    },
+    "education": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "item": {
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "desired": {
+            "type": "boolean"
+          }
+        }
+      },
+      "description": "Forma\u00e7\u00e3o escolar"
+    },
+    "knowledge": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "item": {
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "desired": {
+            "type": "boolean"
+          }
+        }
+      },
+      "description": "Conhecimentos"
+    },
+    "clients": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "item": {
+            "type": "string"
+          },
+          "internal": {
+            "type": "boolean"
+          },
+          "external": {
+            "type": "boolean"
+          }
+        }
+      },
+      "description": "Clientes internos e externos"
+    },
+    "main_activities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Principais atividades do cargo"
+    },
+    "main_responsibilities": {
+      "type": "string",
+      "description": "Principais responsabilidades"
+    },
+    "co_responsibilities": {
+      "type": "string",
+      "description": "Co-responsabilidades"
+    },
+    "personal_attributes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "item": {
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "desired": {
+            "type": "boolean"
+          }
+        }
+      },
+      "description": "Atributos pessoais"
+    },
+    "inherent_risks": {
+      "type": "string",
+      "description": "Riscos inerentes ao cargo"
+    },
+    "equipment_tools": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "M\u00e1quinas, equipamentos, ferramentas"
+    },
+    "managed_information": {
+      "type": "string",
+      "description": "Informa\u00e7\u00f5es administradas pelo cargo"
+    },
+    "working_conditions": {
+      "type": "string",
+      "description": "Condi\u00e7\u00f5es de trabalho"
+    },
+    "physical_effort": {
+      "type": "string",
+      "description": "Esfor\u00e7o f\u00edsico"
+    },
+    "mental_effort": {
+      "type": "string",
+      "description": "Esfor\u00e7o mental"
+    },
+    "visual_effort": {
+      "type": "string",
+      "description": "Esfor\u00e7o visual"
+    },
+    "financial_transactions": {
+      "type": "string",
+      "description": "Volume de transa\u00e7\u00f5es financeiras"
+    },
+    "third_party_safety": {
+      "type": "string",
+      "description": "Responsabilidades pela seguran\u00e7a de terceiros"
+    },
+    "contact_responsibilities": {
+      "type": "string",
+      "description": "Responsabilidades por contatos"
+    },
+    "indicators": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "item": {
+            "type": "string",
+            "description": "Descri\u00e7\u00e3o do indicador"
+          },
+          "target_value": {
+            "type": "string",
+            "description": "N\u00famero/Quantidade alvo"
+          },
+          "percentage_weight": {
+            "type": "string",
+            "description": "% quando aplicado"
+          },
+          "frequency": {
+            "type": "string",
+            "enum": [
+              "diario",
+              "semanal",
+              "mensal"
+            ],
+            "description": "Frequ\u00eancia"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "desired": {
+            "type": "boolean"
+          }
+        }
+      },
+      "description": "Indicadores"
+    },
+    "trainings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Treinamentos necess\u00e1rios"
+    },
+    "generated_by_ai": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se foi gerado por IA"
+    },
+    "pdf_url": {
+      "type": "string",
+      "description": "URL do PDF gerado"
+    }
+  },
+  "required": [
+    "job_title"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "name": "Action",
+  "type": "object",
+  "properties": {
+    "diagnostic_id": {
+      "type": "string",
+      "description": "ID do diagn\u00f3stico"
+    },
+    "action_plan_id": {
+      "type": "string",
+      "description": "ID do plano de a\u00e7\u00e3o"
+    },
+    "title": {
+      "type": "string",
+      "description": "T\u00edtulo da a\u00e7\u00e3o"
+    },
+    "description": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o detalhada da a\u00e7\u00e3o"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "vendas",
+        "prospeccao",
+        "precificacao",
+        "pessoas"
+      ],
+      "description": "Categoria da a\u00e7\u00e3o"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "a_fazer",
+        "em_andamento",
+        "concluido"
+      ],
+      "default": "a_fazer",
+      "description": "Status atual"
+    },
+    "deadline_days": {
+      "type": "integer",
+      "description": "Prazo em dias a partir da cria\u00e7\u00e3o"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de vencimento calculada"
+    },
+    "order": {
+      "type": "integer",
+      "description": "Ordem de exibi\u00e7\u00e3o"
+    }
+  },
+  "required": [
+    "diagnostic_id",
+    "title",
+    "category"
+  ]
+}

@@ -1,0 +1,101 @@
+{
+  "name": "BatchDispatch",
+  "type": "object",
+  "properties": {
+    "disparo_id": {
+      "type": "string",
+      "description": "ID \u00fanico do disparo (DP001, DP002, etc)"
+    },
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina respons\u00e1vel pelo disparo"
+    },
+    "consultor_id": {
+      "type": "string",
+      "description": "ID do consultor que criou o disparo"
+    },
+    "consultor_nome": {
+      "type": "string",
+      "description": "Nome do consultor"
+    },
+    "grupo_nome": {
+      "type": "string",
+      "description": "Nome do grupo de clientes"
+    },
+    "tipo_atendimento": {
+      "type": "string",
+      "description": "Tipo de atendimento"
+    },
+    "data_agendada": {
+      "type": "string",
+      "format": "date",
+      "description": "Data agendada do atendimento"
+    },
+    "hora_agendada": {
+      "type": "string",
+      "description": "Hora agendada (HH:MM)"
+    },
+    "duracao_minutos": {
+      "type": "integer",
+      "default": 60
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "agendado",
+        "realizado",
+        "cancelado"
+      ],
+      "default": "agendado"
+    },
+    "clientes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "workshop_id": {
+            "type": "string"
+          },
+          "nome": {
+            "type": "string"
+          },
+          "cidade": {
+            "type": "string"
+          },
+          "plano": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Lista de clientes afetados"
+    },
+    "total_clientes": {
+      "type": "integer",
+      "description": "Total de clientes"
+    },
+    "pauta": {
+      "type": "string"
+    },
+    "objetivos": {
+      "type": "string"
+    },
+    "observacoes": {
+      "type": "string"
+    },
+    "atendimentos_criados": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "IDs dos atendimentos criados"
+    }
+  },
+  "required": [
+    "disparo_id",
+    "workshop_id",
+    "consultor_id",
+    "tipo_atendimento",
+    "data_agendada",
+    "total_clientes"
+  ]
+}

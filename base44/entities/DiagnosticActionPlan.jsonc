@@ -1,0 +1,261 @@
+{
+  "name": "DiagnosticActionPlan",
+  "type": "object",
+  "properties": {
+    "diagnostic_id": {
+      "type": "string",
+      "description": "ID do diagn\u00f3stico vinculado"
+    },
+    "diagnostic_type": {
+      "type": "string",
+      "enum": [
+        "Diagnostic",
+        "EntrepreneurDiagnostic",
+        "CollaboratorMaturityDiagnostic",
+        "ProductivityDiagnostic",
+        "PerformanceMatrixDiagnostic",
+        "ServiceOrderDiagnostic",
+        "DISCDiagnostic",
+        "ProcessAssessment",
+        "DebtAnalysis",
+        "ManagementDiagnostic",
+        "WorkloadDiagnostic"
+      ],
+      "description": "Tipo de diagn\u00f3stico"
+    },
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "employee_id": {
+      "type": "string",
+      "description": "ID do colaborador (se aplic\u00e1vel)"
+    },
+    "version": {
+      "type": "integer",
+      "default": 1,
+      "description": "Vers\u00e3o do plano (1 = original, 2+ = refinado)"
+    },
+    "previous_version_id": {
+      "type": "string",
+      "description": "ID da vers\u00e3o anterior (se refinado)"
+    },
+    "generated_from_justifications": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se foi gerado usando justificativas do usu\u00e1rio"
+    },
+    "plan_data": {
+      "type": "object",
+      "properties": {
+        "diagnostic_summary": {
+          "type": "string",
+          "description": "Resumo do diagn\u00f3stico"
+        },
+        "main_objective": {
+          "type": "string",
+          "description": "Objetivo principal (90 dias)"
+        },
+        "action_directions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "area_name": {
+                "type": "string"
+              },
+              "direction": {
+                "type": "string"
+              },
+              "priority": {
+                "type": "string",
+                "enum": [
+                  "alta",
+                  "media",
+                  "baixa"
+                ]
+              }
+            }
+          },
+          "description": "Direcionamentos por \u00e1rea"
+        },
+        "timeline_plan": {
+          "type": "object",
+          "properties": {
+            "short_term": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "A\u00e7\u00f5es de curto prazo (0-30 dias)"
+            },
+            "medium_term": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "A\u00e7\u00f5es de m\u00e9dio prazo (30-60 dias)"
+            },
+            "long_term": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "A\u00e7\u00f5es de longo prazo (60-90 dias)"
+            }
+          }
+        },
+        "implementation_schedule": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "activity_name": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "deadline_days": {
+                "type": "integer"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "pendente",
+                  "em_andamento",
+                  "concluida"
+                ],
+                "default": "pendente"
+              },
+              "completed_date": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
+        },
+        "key_indicators": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "indicator_name": {
+                "type": "string"
+              },
+              "current_value": {
+                "type": "string"
+              },
+              "target_value": {
+                "type": "string"
+              },
+              "measurement_frequency": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "next_steps_week": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Pr\u00f3ximos passos para esta semana"
+        }
+      }
+    },
+    "user_feedback": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "feedback_date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "feedback_type": {
+            "type": "string",
+            "enum": [
+              "text",
+              "audio"
+            ]
+          },
+          "content": {
+            "type": "string"
+          },
+          "audio_url": {
+            "type": "string"
+          },
+          "transcription": {
+            "type": "string"
+          },
+          "user_name": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "refinement_notes": {
+      "type": "string",
+      "description": "Notas sobre o refinamento feito pela IA"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ativo",
+        "refinado",
+        "concluido",
+        "arquivado"
+      ],
+      "default": "ativo",
+      "description": "Status do plano"
+    },
+    "completion_percentage": {
+      "type": "number",
+      "default": 0,
+      "description": "Percentual de conclus\u00e3o do plano"
+    },
+    "generated_by_ai": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "diagnostic_id",
+    "diagnostic_type"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

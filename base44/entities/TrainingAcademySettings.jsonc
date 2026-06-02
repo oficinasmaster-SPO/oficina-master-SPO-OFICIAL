@@ -1,0 +1,274 @@
+{
+  "name": "TrainingAcademySettings",
+  "type": "object",
+  "properties": {
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina (null para configura\u00e7\u00e3o global)"
+    },
+    "academy_enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Academia ativa/inativa"
+    },
+    "default_home_section": {
+      "type": "string",
+      "enum": [
+        "continue_assistindo",
+        "recomendados",
+        "novos_cursos",
+        "categorias"
+      ],
+      "default": "continue_assistindo",
+      "description": "Se\u00e7\u00e3o inicial padr\u00e3o na vitrine"
+    },
+    "show_progress_globally": {
+      "type": "boolean",
+      "default": true,
+      "description": "Exibir progresso nos cards de curso"
+    },
+    "allow_resume_last_lesson": {
+      "type": "boolean",
+      "default": true,
+      "description": "Permitir retomar da \u00faltima aula"
+    },
+    "academy_visibility": {
+      "type": "string",
+      "enum": [
+        "global",
+        "por_oficina",
+        "por_perfil"
+      ],
+      "default": "global",
+      "description": "Controle de visibilidade da academia"
+    },
+    "default_access_level": {
+      "type": "string",
+      "enum": [
+        "livre",
+        "restrito",
+        "sob_convite"
+      ],
+      "default": "livre",
+      "description": "N\u00edvel de acesso padr\u00e3o aos cursos"
+    },
+    "enable_course_reminders": {
+      "type": "boolean",
+      "default": true,
+      "description": "Ativar lembretes de cursos"
+    },
+    "enable_analytics_tracking": {
+      "type": "boolean",
+      "default": true,
+      "description": "Ativar coleta de analytics"
+    },
+    "display_settings": {
+      "type": "object",
+      "properties": {
+        "show_duration": {
+          "type": "boolean",
+          "default": true
+        },
+        "show_difficulty": {
+          "type": "boolean",
+          "default": true
+        },
+        "show_coming_soon": {
+          "type": "boolean",
+          "default": true
+        },
+        "show_course_trailer": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "description": "Configura\u00e7\u00f5es de exibi\u00e7\u00e3o de elementos"
+    },
+    "progress_settings": {
+      "type": "object",
+      "properties": {
+        "auto_save_progress": {
+          "type": "boolean",
+          "default": true
+        },
+        "allow_skip_lessons": {
+          "type": "boolean",
+          "default": true
+        },
+        "require_sequential_completion": {
+          "type": "boolean",
+          "default": false
+        },
+        "mark_complete_threshold": {
+          "type": "number",
+          "default": 90,
+          "description": "% m\u00ednimo para marcar aula como conclu\u00edda"
+        }
+      },
+      "description": "Regras de progresso e continuidade"
+    },
+    "reminder_settings": {
+      "type": "object",
+      "properties": {
+        "new_course_reminder": {
+          "type": "boolean",
+          "default": true
+        },
+        "inactivity_reminder": {
+          "type": "boolean",
+          "default": true
+        },
+        "inactivity_days": {
+          "type": "integer",
+          "default": 7
+        },
+        "incomplete_reminder": {
+          "type": "boolean",
+          "default": true
+        },
+        "notification_channels": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "in_app",
+              "email",
+              "push"
+            ]
+          },
+          "default": [
+            "in_app"
+          ]
+        }
+      },
+      "description": "Configura\u00e7\u00f5es de lembretes e engajamento"
+    },
+    "analytics_settings": {
+      "type": "object",
+      "properties": {
+        "default_period": {
+          "type": "string",
+          "enum": [
+            "semanal",
+            "mensal",
+            "trimestral"
+          ],
+          "default": "mensal"
+        },
+        "visible_to_roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "admin",
+            "gestor"
+          ]
+        }
+      },
+      "description": "Configura\u00e7\u00f5es de analytics e monitoramento"
+    },
+    "custom_categories": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ativa",
+              "oculta"
+            ]
+          },
+          "order": {
+            "type": "integer"
+          },
+          "icon": {
+            "type": "string"
+          },
+          "color": {
+            "type": "string"
+          }
+        }
+      },
+      "default": [],
+      "description": "Categorias personalizadas da academia"
+    },
+    "last_updated": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u00daltima atualiza\u00e7\u00e3o das configura\u00e7\u00f5es"
+    },
+    "updated_by": {
+      "type": "string",
+      "description": "Usu\u00e1rio que fez a \u00faltima atualiza\u00e7\u00e3o"
+    },
+    "change_log": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "user": {
+            "type": "string"
+          },
+          "field": {
+            "type": "string"
+          },
+          "old_value": {
+            "type": "string"
+          },
+          "new_value": {
+            "type": "string"
+          }
+        }
+      },
+      "default": [],
+      "description": "Log de altera\u00e7\u00f5es nas configura\u00e7\u00f5es"
+    }
+  },
+  "required": [
+    "academy_enabled"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "workshop_id": "{{user.workshop_id}}"
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "name": "LessonAssessmentResult",
+  "type": "object",
+  "properties": {
+    "employee_id": {
+      "type": "string",
+      "description": "ID do colaborador"
+    },
+    "assessment_id": {
+      "type": "string",
+      "description": "ID da avalia\u00e7\u00e3o"
+    },
+    "score": {
+      "type": "number",
+      "description": "Nota obtida (0-100)"
+    },
+    "passed": {
+      "type": "boolean",
+      "default": false
+    },
+    "answers": {
+      "type": "object",
+      "description": "Respostas do colaborador (JSON)"
+    },
+    "ai_feedback": {
+      "type": "string",
+      "description": "Feedback gerado pela IA"
+    },
+    "attempt_date": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "employee_id",
+    "assessment_id",
+    "attempt_date"
+  ],
+  "rls": {
+    "create": true,
+    "read": true,
+    "update": true,
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

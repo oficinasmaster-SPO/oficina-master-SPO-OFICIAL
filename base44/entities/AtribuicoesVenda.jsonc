@@ -1,0 +1,62 @@
+{
+  "name": "AtribuicoesVenda",
+  "type": "object",
+  "properties": {
+    "venda_id": {
+      "type": "string",
+      "description": "ID da venda/servi\u00e7o (FK para VendasServicos)"
+    },
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "pessoa_id": {
+      "type": "string",
+      "description": "ID do colaborador (Employee) ou 'marketing_team', 'sdr_team', etc."
+    },
+    "pessoa_nome": {
+      "type": "string",
+      "description": "Nome da pessoa/equipe"
+    },
+    "equipe": {
+      "type": "string",
+      "enum": [
+        "marketing",
+        "sdr_telemarketing",
+        "comercial_vendas",
+        "atendimento",
+        "tecnico",
+        "outros"
+      ],
+      "description": "Equipe respons\u00e1vel"
+    },
+    "papel": {
+      "type": "string",
+      "enum": [
+        "gerou_lead",
+        "agendou",
+        "vendeu",
+        "atendeu",
+        "executou",
+        "apoiou"
+      ],
+      "description": "Papel desempenhado na venda"
+    },
+    "percentual_credito": {
+      "type": "number",
+      "default": 1.0,
+      "description": "Percentual de cr\u00e9dito (sempre 1.0 = 100%)"
+    },
+    "valor_credito": {
+      "type": "number",
+      "description": "Valor de cr\u00e9dito = valor_total da venda (cada participante recebe 100%)"
+    }
+  },
+  "required": [
+    "venda_id",
+    "workshop_id",
+    "pessoa_id",
+    "equipe",
+    "papel"
+  ]
+}

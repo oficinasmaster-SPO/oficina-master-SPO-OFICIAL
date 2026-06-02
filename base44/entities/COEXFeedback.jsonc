@@ -1,0 +1,53 @@
+{
+  "name": "COEXFeedback",
+  "type": "object",
+  "properties": {
+    "contract_id": {
+      "type": "string",
+      "description": "ID do contrato COEX"
+    },
+    "employee_id": {
+      "type": "string",
+      "description": "ID do colaborador avaliado"
+    },
+    "evaluator_id": {
+      "type": "string",
+      "description": "ID do avaliador (RH, Dono, Gestor)"
+    },
+    "month_reference": {
+      "type": "string",
+      "description": "M\u00eas de refer\u00eancia (YYYY-MM)"
+    },
+    "feedback_text": {
+      "type": "string",
+      "description": "Texto do feedback"
+    },
+    "compliance_rating": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5,
+      "description": "N\u00edvel de cumprimento (1-5)"
+    },
+    "feedback_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data do feedback"
+    }
+  },
+  "required": [
+    "contract_id",
+    "employee_id",
+    "evaluator_id",
+    "feedback_text"
+  ],
+  "rls": {
+    "create": true,
+    "read": true,
+    "update": true,
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

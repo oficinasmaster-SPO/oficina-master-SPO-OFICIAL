@@ -1,0 +1,56 @@
+{
+  "name": "ClientIntelligenceChecklistProgress",
+  "type": "object",
+  "properties": {
+    "intelligence_id": {
+      "type": "string",
+      "description": "ID da intelig\u00eancia do cliente"
+    },
+    "checklist_id": {
+      "type": "string",
+      "description": "ID do checklist"
+    },
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "checked_items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "item_id": {
+            "type": "string",
+            "description": "ID do item do checklist"
+          },
+          "checked": {
+            "type": "boolean",
+            "default": false,
+            "description": "Se o item foi marcado"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Notas sobre o item (opcional)"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "\u00daltima vez que o item foi atualizado"
+          }
+        }
+      },
+      "description": "Progresso dos items do checklist"
+    },
+    "completion_percentage": {
+      "type": "number",
+      "default": 0,
+      "description": "Percentual de conclus\u00e3o (0-100)"
+    }
+  },
+  "required": [
+    "intelligence_id",
+    "checklist_id",
+    "workshop_id",
+    "checked_items"
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "name": "OrgChartNode",
+  "type": "object",
+  "properties": {
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "node_id": {
+      "type": "string",
+      "description": "ID \u00fanico do n\u00f3 no organograma"
+    },
+    "parent_node_id": {
+      "type": "string",
+      "description": "ID do n\u00f3 pai (null para raiz)"
+    },
+    "title": {
+      "type": "string",
+      "description": "T\u00edtulo do cargo/posi\u00e7\u00e3o (ex: Gerente Geral, L\u00edder de Vendas)"
+    },
+    "area": {
+      "type": "string",
+      "enum": [
+        "diretoria",
+        "vendas",
+        "comercial",
+        "marketing",
+        "financeiro",
+        "estoque",
+        "operacao",
+        "tecnico",
+        "administrativo",
+        "rh",
+        "outros"
+      ],
+      "description": "\u00c1rea/Departamento"
+    },
+    "level": {
+      "type": "integer",
+      "default": 1,
+      "description": "N\u00edvel hier\u00e1rquico (1=topo, 2=ger\u00eancia, 3=lideran\u00e7a, 4=equipe)"
+    },
+    "employee_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "IDs dos colaboradores que ocupam esta posi\u00e7\u00e3o"
+    },
+    "order": {
+      "type": "integer",
+      "default": 0,
+      "description": "Ordem de exibi\u00e7\u00e3o entre irm\u00e3os"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se o n\u00f3 est\u00e1 ativo no organograma"
+    },
+    "color": {
+      "type": "string",
+      "default": "#EF4444",
+      "description": "Cor da caixa no organograma"
+    }
+  },
+  "required": [
+    "workshop_id",
+    "node_id",
+    "title"
+  ]
+}

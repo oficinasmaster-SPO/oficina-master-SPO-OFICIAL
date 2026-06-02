@@ -1,0 +1,83 @@
+{
+  "name": "ConsultoriaAvaliacao",
+  "type": "object",
+  "properties": {
+    "atendimento_id": {
+      "type": "string",
+      "description": "ID do atendimento avaliado"
+    },
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina cliente"
+    },
+    "avaliador_nome": {
+      "type": "string",
+      "description": "Nome de quem avaliou"
+    },
+    "avaliador_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Email de quem avaliou"
+    },
+    "nota": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5,
+      "description": "Nota de 1 a 5"
+    },
+    "foi_satisfatorio": {
+      "type": "boolean",
+      "description": "Se o atendimento foi satisfat\u00f3rio"
+    },
+    "observacoes": {
+      "type": "string",
+      "description": "Feedback e observa\u00e7\u00f5es do cliente"
+    },
+    "aspectos_positivos": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Aspectos positivos destacados"
+    },
+    "aspectos_melhorar": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Aspectos a melhorar"
+    },
+    "recomendaria": {
+      "type": "boolean",
+      "description": "Se recomendaria o servi\u00e7o"
+    }
+  },
+  "required": [
+    "atendimento_id",
+    "workshop_id",
+    "nota"
+  ],
+  "rls": {
+    "create": true,
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "created_by": "{{user.email}}"
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

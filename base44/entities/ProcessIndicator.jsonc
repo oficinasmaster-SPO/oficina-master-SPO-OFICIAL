@@ -1,0 +1,153 @@
+{
+  "name": "ProcessIndicator",
+  "type": "object",
+  "properties": {
+    "process_id": {
+      "type": "string",
+      "description": "ID do MAP"
+    },
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "name": {
+      "type": "string",
+      "description": "Nome do indicador"
+    },
+    "description": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o do KPI"
+    },
+    "measurement_type": {
+      "type": "string",
+      "enum": [
+        "numero",
+        "percentual",
+        "tempo",
+        "monetario"
+      ],
+      "description": "Tipo de medi\u00e7\u00e3o"
+    },
+    "target_value": {
+      "type": "number",
+      "description": "Meta/valor alvo"
+    },
+    "current_value": {
+      "type": "number",
+      "description": "Valor atual"
+    },
+    "measurement_frequency": {
+      "type": "string",
+      "enum": [
+        "diario",
+        "semanal",
+        "quinzenal",
+        "mensal",
+        "trimestral",
+        "anual"
+      ],
+      "default": "mensal",
+      "description": "Frequ\u00eancia de medi\u00e7\u00e3o"
+    },
+    "responsible_id": {
+      "type": "string",
+      "description": "Respons\u00e1vel pelo acompanhamento"
+    },
+    "data_source": {
+      "type": "string",
+      "description": "Fonte dos dados (planilha, sistema, etc)"
+    },
+    "calculation_formula": {
+      "type": "string",
+      "description": "F\u00f3rmula de c\u00e1lculo"
+    },
+    "historical_data": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "period": {
+            "type": "string"
+          },
+          "value": {
+            "type": "number"
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Hist\u00f3rico de medi\u00e7\u00f5es"
+    },
+    "analysis_meetings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "participants": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "summary": {
+            "type": "string"
+          },
+          "actions": {
+            "type": "string"
+          },
+          "ata_url": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Reuni\u00f5es de an\u00e1lise"
+    },
+    "attachments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "planilha",
+              "relatorio",
+              "grafico",
+              "documento"
+            ]
+          },
+          "file_url": {
+            "type": "string"
+          },
+          "uploaded_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "description": "Anexos (planilhas, relat\u00f3rios, gr\u00e1ficos)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ativo",
+        "inativo",
+        "em_definicao"
+      ],
+      "default": "ativo"
+    }
+  },
+  "required": [
+    "process_id",
+    "workshop_id",
+    "name"
+  ]
+}

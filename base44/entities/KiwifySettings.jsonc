@@ -1,0 +1,76 @@
+{
+  "name": "KiwifySettings",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string",
+      "description": "Client ID da Kiwify para a integra\u00e7\u00e3o"
+    },
+    "account_id": {
+      "type": "string",
+      "description": "ID da conta Kiwify"
+    },
+    "default_success_redirect_url": {
+      "type": "string",
+      "description": "URL de redirecionamento padr\u00e3o ap\u00f3s pagamento bem-sucedido"
+    },
+    "default_failure_redirect_url": {
+      "type": "string",
+      "description": "URL de redirecionamento padr\u00e3o ap\u00f3s pagamento falho"
+    },
+    "plan_mappings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "internal_plan_id": {
+            "type": "string",
+            "description": "ID do plano interno (e.g., 'BRONZE', 'GOLD')"
+          },
+          "kiwify_product_id": {
+            "type": "string",
+            "description": "ID do produto/plano correspondente na Kiwify"
+          },
+          "checkout_url": {
+            "type": "string",
+            "description": "Link fixo de checkout da Kiwify (e.g., https://pay.kiwify.com.br/5FpagLC)"
+          }
+        },
+        "required": [
+          "internal_plan_id",
+          "kiwify_product_id",
+          "checkout_url"
+        ]
+      },
+      "description": "Mapeamento entre IDs de planos internos e produtos Kiwify"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se a integra\u00e7\u00e3o est\u00e1 ativa"
+    }
+  },
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "required": []
+}

@@ -1,0 +1,81 @@
+{
+  "name": "UserSession",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "user_email": {
+      "type": "string"
+    },
+    "user_name": {
+      "type": "string"
+    },
+    "workshop_id": {
+      "type": "string"
+    },
+    "session_id": {
+      "type": "string",
+      "description": "ID \u00fanico da sess\u00e3o"
+    },
+    "login_time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_activity_time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "logout_time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "total_time_seconds": {
+      "type": "integer",
+      "default": 0,
+      "description": "Tempo total da sess\u00e3o"
+    },
+    "active_time_seconds": {
+      "type": "integer",
+      "default": 0,
+      "description": "Tempo ativo (sem idle)"
+    },
+    "idle_time_seconds": {
+      "type": "integer",
+      "default": 0
+    },
+    "pages_visited": {
+      "type": "integer",
+      "default": 0
+    },
+    "actions_performed": {
+      "type": "integer",
+      "default": 0
+    },
+    "device_info": {
+      "type": "object"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "user_id",
+    "session_id"
+  ],
+  "rls": {
+    "create": true,
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": true,
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

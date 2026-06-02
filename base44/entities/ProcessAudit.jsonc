@@ -1,0 +1,187 @@
+{
+  "name": "ProcessAudit",
+  "type": "object",
+  "properties": {
+    "process_id": {
+      "type": "string",
+      "description": "ID do MAP/IT auditado"
+    },
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "audit_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data da auditoria"
+    },
+    "auditor_id": {
+      "type": "string",
+      "description": "ID do auditor"
+    },
+    "auditor_name": {
+      "type": "string",
+      "description": "Nome do auditor"
+    },
+    "audit_type": {
+      "type": "string",
+      "enum": [
+        "interna",
+        "externa",
+        "consultoria",
+        "certificacao"
+      ],
+      "default": "interna",
+      "description": "Tipo de auditoria"
+    },
+    "conformity_checklist": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "item": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "conforme",
+              "nao_conforme",
+              "nao_aplicavel"
+            ]
+          },
+          "evidence": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Checklist de conformidade"
+    },
+    "non_conformities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "critica",
+              "maior",
+              "menor"
+            ]
+          },
+          "root_cause": {
+            "type": "string"
+          },
+          "corrective_action": {
+            "type": "string"
+          },
+          "responsible": {
+            "type": "string"
+          },
+          "deadline": {
+            "type": "string",
+            "format": "date"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "aberta",
+              "em_tratamento",
+              "concluida",
+              "verificada"
+            ],
+            "default": "aberta"
+          }
+        }
+      },
+      "description": "N\u00e3o conformidades identificadas"
+    },
+    "action_plan": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "what": {
+            "type": "string",
+            "description": "O que fazer"
+          },
+          "why": {
+            "type": "string",
+            "description": "Por que fazer"
+          },
+          "where": {
+            "type": "string",
+            "description": "Onde fazer"
+          },
+          "when": {
+            "type": "string",
+            "format": "date",
+            "description": "Quando fazer"
+          },
+          "who": {
+            "type": "string",
+            "description": "Quem ir\u00e1 fazer"
+          },
+          "how": {
+            "type": "string",
+            "description": "Como fazer"
+          },
+          "how_much": {
+            "type": "number",
+            "description": "Quanto custar\u00e1"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pendente",
+              "em_andamento",
+              "concluida"
+            ],
+            "default": "pendente"
+          }
+        }
+      },
+      "description": "Plano de a\u00e7\u00e3o 5W2H"
+    },
+    "overall_score": {
+      "type": "number",
+      "description": "Nota geral da auditoria (0-100)"
+    },
+    "recommendations": {
+      "type": "string",
+      "description": "Recomenda\u00e7\u00f5es gerais"
+    },
+    "next_audit_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Pr\u00f3xima auditoria programada"
+    },
+    "attachments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "file_url": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Anexos da auditoria"
+    }
+  },
+  "required": [
+    "process_id",
+    "workshop_id",
+    "audit_date"
+  ]
+}

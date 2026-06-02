@@ -1,0 +1,331 @@
+{
+  "name": "Candidate",
+  "type": "object",
+  "properties": {
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "full_name": {
+      "type": "string",
+      "description": "Nome completo do candidato"
+    },
+    "email": {
+      "type": "string",
+      "format": "email"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "city": {
+      "type": "string",
+      "description": "Cidade"
+    },
+    "neighborhood": {
+      "type": "string",
+      "description": "Bairro"
+    },
+    "desired_position": {
+      "type": "string",
+      "description": "Cargo pretendido"
+    },
+    "origin_channel": {
+      "type": "string",
+      "enum": [
+        "google_ads",
+        "facebook_ads",
+        "meta_ads",
+        "indicacao_interna",
+        "indicacao_externa",
+        "cadastro_manual"
+      ],
+      "description": "Canal de origem do lead"
+    },
+    "campaign_name": {
+      "type": "string",
+      "description": "Nome da campanha/an\u00fancio"
+    },
+    "campaign_id": {
+      "type": "string",
+      "description": "ID da campanha externa"
+    },
+    "assigned_interviewer_id": {
+      "type": "string",
+      "description": "ID do gestor/entrevistador respons\u00e1vel"
+    },
+    "assigned_interviewer_name": {
+      "type": "string",
+      "description": "Nome do gestor/entrevistador respons\u00e1vel"
+    },
+    "disqualification_reason": {
+      "type": "string",
+      "enum": [
+        "nao_adequado_perfil",
+        "falta_maturidade",
+        "nao_responde",
+        "entrevista_sem_resposta"
+      ],
+      "description": "Motivo de desqualifica\u00e7\u00e3o"
+    },
+    "disqualification_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data da desqualifica\u00e7\u00e3o"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "novo_lead",
+        "em_analise",
+        "em_entrevista",
+        "aprovado",
+        "reprovado",
+        "contratado"
+      ],
+      "default": "novo_lead"
+    },
+    "lead_score": {
+      "type": "number",
+      "description": "Pontua\u00e7\u00e3o final do candidato (0-100)"
+    },
+    "technical_score": {
+      "type": "number",
+      "description": "Avalia\u00e7\u00e3o t\u00e9cnica (0-100)"
+    },
+    "behavioral_score": {
+      "type": "number",
+      "description": "Avalia\u00e7\u00e3o comportamental (0-100)"
+    },
+    "cultural_score": {
+      "type": "number",
+      "description": "Avalia\u00e7\u00e3o cultural (0-100)"
+    },
+    "interviewer_recommendation": {
+      "type": "string",
+      "enum": [
+        "A",
+        "B",
+        "C"
+      ],
+      "description": "Recomenda\u00e7\u00e3o do entrevistador"
+    },
+    "interviewer_notes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es do entrevistador"
+    },
+    "work_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "company_name": {
+            "type": "string"
+          },
+          "position": {
+            "type": "string"
+          },
+          "direct_leader": {
+            "type": "string"
+          },
+          "duration": {
+            "type": "string"
+          },
+          "reason_for_leaving": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Hist\u00f3rico profissional (\u00faltimas 2-3 empresas)"
+    },
+    "years_of_experience": {
+      "type": "number",
+      "description": "Anos de experi\u00eancia na fun\u00e7\u00e3o"
+    },
+    "autonomous_activities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Atividades executadas com autonomia"
+    },
+    "needs_support_activities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Atividades que precisa apoio"
+    },
+    "courses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "course_name": {
+            "type": "string"
+          },
+          "institution": {
+            "type": "string"
+          },
+          "instructor": {
+            "type": "string"
+          },
+          "workload": {
+            "type": "string"
+          },
+          "last_update_year": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Cursos e capacita\u00e7\u00f5es"
+    },
+    "self_technical_rating": {
+      "type": "number",
+      "description": "Autoavalia\u00e7\u00e3o t\u00e9cnica (0-10)"
+    },
+    "main_strength": {
+      "type": "string",
+      "description": "Maior ponto forte na fun\u00e7\u00e3o"
+    },
+    "improvement_point": {
+      "type": "string",
+      "description": "Ponto que precisa evoluir"
+    },
+    "reason_for_opportunity": {
+      "type": "string",
+      "description": "Motivo de buscar nova oportunidade"
+    },
+    "long_term_expectations": {
+      "type": "string",
+      "description": "O que espera de uma empresa para permanecer"
+    },
+    "best_leader": {
+      "type": "string",
+      "description": "Melhor l\u00edder que teve e por qu\u00ea"
+    },
+    "availability": {
+      "type": "string",
+      "description": "Disponibilidade de in\u00edcio"
+    },
+    "salary_expectation": {
+      "type": "number",
+      "description": "Pretens\u00e3o salarial"
+    },
+    "previous_salary": {
+      "type": "number",
+      "description": "Sal\u00e1rio na empresa anterior"
+    },
+    "bad_month_salary_claim": {
+      "type": "string",
+      "description": "Resposta do candidato sobre sal\u00e1rio no m\u00eas ruim"
+    },
+    "salary_credibility_percentage": {
+      "type": "number",
+      "description": "Percentual de credibilidade da resposta (0-100)"
+    },
+    "desired_regime": {
+      "type": "string",
+      "enum": [
+        "clt",
+        "pj",
+        "experiencia"
+      ],
+      "description": "Regime de trabalho desejado"
+    },
+    "current_company": {
+      "type": "string"
+    },
+    "previous_company": {
+      "type": "string"
+    },
+    "reason_for_leaving": {
+      "type": "string"
+    },
+    "expectations": {
+      "type": "string",
+      "description": "Expectativas do candidato"
+    },
+    "life_moment": {
+      "type": "string",
+      "description": "Momento de vida atual"
+    },
+    "dreams": {
+      "type": "string",
+      "description": "Sonhos declarados"
+    },
+    "script_reaction": {
+      "type": "string",
+      "enum": [
+        "interessado",
+        "neutro",
+        "desalinhado"
+      ],
+      "description": "Rea\u00e7\u00e3o ao script de cultura"
+    },
+    "proposal_status": {
+      "type": "string",
+      "enum": [
+        "pendente",
+        "enviada",
+        "aceita",
+        "recusada",
+        "em_negociacao"
+      ]
+    },
+    "employee_id": {
+      "type": "string",
+      "description": "ID do Employee ap\u00f3s contrata\u00e7\u00e3o"
+    },
+    "timeline": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "action": {
+            "type": "string"
+          },
+          "user_id": {
+            "type": "string"
+          },
+          "details": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Hist\u00f3rico de intera\u00e7\u00f5es"
+    },
+    "disc_status": {
+      "type": "string",
+      "enum": [
+        "pendente",
+        "enviado",
+        "concluido"
+      ],
+      "default": "pendente",
+      "description": "Status do teste DISC do candidato"
+    },
+    "disc_result_id": {
+      "type": "string",
+      "description": "ID do diagn\u00f3stico DISC conclu\u00eddo"
+    },
+    "disc_profile": {
+      "type": "string",
+      "description": "Perfil DISC principal"
+    },
+    "disc_public_token": {
+      "type": "string",
+      "description": "Token para o candidato responder o DISC"
+    }
+  },
+  "required": [
+    "workshop_id",
+    "full_name",
+    "phone",
+    "desired_position",
+    "origin_channel"
+  ]
+}

@@ -20,7 +20,7 @@
     },
     "categoria": {
       "type": "string",
-      "description": "Categoria do lan\u00e7amento (operacional, pessoas, marketing, manutencao, terceirizados, administrativo, financeiro, pecas_estoque, pecas_aplicadas, servicos, outras)"
+      "description": "Categoria do lan\u00e7amento"
     },
     "subcategoria": {
       "type": "string",
@@ -38,6 +38,16 @@
       "type": "boolean",
       "default": true,
       "description": "Se este lan\u00e7amento entra no c\u00e1lculo do TCMP\u00b2. Autom\u00e1tico pela categoria."
+    },
+    "data_vencimento": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de vencimento da obriga\u00e7\u00e3o (ex: boleto, fatura). Usado no DFC para proje\u00e7\u00e3o."
+    },
+    "data_pagamento": {
+      "type": "string",
+      "format": "date",
+      "description": "Data em que o pagamento/recebimento foi efetivado no caixa. Vazio = pendente no DFC."
     }
   },
   "required": [

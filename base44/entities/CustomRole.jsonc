@@ -1,0 +1,124 @@
+{
+  "name": "CustomRole",
+  "type": "object",
+  "properties": {
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina (Rela\u00e7\u00e3o 1-N: Workshop \u2192 CustomRole)"
+    },
+    "name": {
+      "type": "string",
+      "description": "Nome da role customizada"
+    },
+    "description": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o da role e suas responsabilidades"
+    },
+    "system_roles": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "IDs das system roles atribu\u00eddas (ex: dashboard.view, employees.edit) (Rela\u00e7\u00e3o 1-N: CustomRole \u2192 SystemRole)"
+    },
+    "entity_permissions": {
+      "type": "object",
+      "description": "Permiss\u00f5es granulares CRUD por entidade (ex: {employees: [create, read, update], clients: [read]})",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "enum": [
+            "create",
+            "read",
+            "update",
+            "delete"
+          ]
+        }
+      }
+    },
+    "users_count": {
+      "type": "integer",
+      "default": 0,
+      "description": "Quantidade de usu\u00e1rios/perfis que usam esta role (Rela\u00e7\u00e3o 1-N: CustomRole \u2192 UserProfile)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ativo",
+        "inativo"
+      ],
+      "default": "ativo",
+      "description": "Status da role"
+    },
+    "created_by": {
+      "type": "string",
+      "description": "Email do administrador que criou (Rela\u00e7\u00e3o 1-N: User \u2192 CustomRole)"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data de cria\u00e7\u00e3o"
+    },
+    "audit_log": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "changed_by": {
+            "type": "string",
+            "description": "ID do usu\u00e1rio que fez a altera\u00e7\u00e3o"
+          },
+          "changed_by_email": {
+            "type": "string",
+            "description": "Email do usu\u00e1rio que fez a altera\u00e7\u00e3o"
+          },
+          "changed_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "action": {
+            "type": "string",
+            "description": "Tipo de a\u00e7\u00e3o"
+          },
+          "field_changed": {
+            "type": "string"
+          },
+          "old_value": {
+            "type": "string"
+          },
+          "new_value": {
+            "type": "string"
+          },
+          "affected_users_count": {
+            "type": "integer",
+            "description": "Quantidade de usu\u00e1rios afetados pela altera\u00e7\u00e3o"
+          }
+        }
+      },
+      "description": "Log de auditoria (Rela\u00e7\u00e3o 1-N: CustomRole \u2192 AuditLog)"
+    }
+  },
+  "required": [
+    "name",
+    "system_roles"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": true,
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -1,0 +1,117 @@
+{
+  "name": "UserGameProfile",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio"
+    },
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "xp": {
+      "type": "integer",
+      "default": 0,
+      "description": "Pontos de experi\u00eancia"
+    },
+    "level": {
+      "type": "integer",
+      "default": 1,
+      "description": "N\u00edvel atual (1-6)"
+    },
+    "level_name": {
+      "type": "string",
+      "enum": [
+        "Iniciante",
+        "Bronze",
+        "Prata",
+        "Ouro",
+        "Diamante",
+        "Elite Master"
+      ],
+      "default": "Iniciante"
+    },
+    "badges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "badge_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "icon": {
+            "type": "string"
+          },
+          "earned_date": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "description": "Conquistas desbloqueadas"
+    },
+    "total_actions": {
+      "type": "integer",
+      "default": 0,
+      "description": "Total de a\u00e7\u00f5es realizadas"
+    },
+    "platform_usage_hours": {
+      "type": "number",
+      "default": 0,
+      "description": "Horas de uso da plataforma"
+    },
+    "diagnostics_completed": {
+      "type": "integer",
+      "default": 0
+    },
+    "goals_achieved": {
+      "type": "integer",
+      "default": 0
+    },
+    "checklists_completed": {
+      "type": "integer",
+      "default": 0
+    }
+  },
+  "required": [
+    "user_id"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "data.user_id": "{{user.data.job_role}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

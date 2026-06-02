@@ -1,0 +1,231 @@
+{
+  "name": "Challenge",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "T\u00edtulo do desafio"
+    },
+    "description": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o detalhada"
+    },
+    "scope": {
+      "type": "string",
+      "enum": [
+        "global",
+        "workshop"
+      ],
+      "default": "workshop",
+      "description": "Escopo do desafio (Global ou Oficina)"
+    },
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina (obrigat\u00f3rio se scope = workshop)"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "diario",
+        "semanal",
+        "mensal",
+        "personalizado"
+      ],
+      "default": "semanal"
+    },
+    "target_type": {
+      "type": "string",
+      "enum": [
+        "individual",
+        "equipe",
+        "oficina"
+      ],
+      "description": "Tipo de participante"
+    },
+    "target_area": {
+      "type": "string",
+      "enum": [
+        "vendas",
+        "comercial",
+        "marketing",
+        "tecnico",
+        "administrativo",
+        "financeiro",
+        "gerencia",
+        "todos"
+      ],
+      "default": "todos"
+    },
+    "metric": {
+      "type": "string",
+      "description": "C\u00f3digo da m\u00e9trica (ProductivityMetric.code)"
+    },
+    "metric_target_direction": {
+      "type": "string",
+      "enum": [
+        "higher_is_better",
+        "lower_is_better"
+      ],
+      "default": "higher_is_better"
+    },
+    "goal_value": {
+      "type": "number",
+      "description": "Valor da meta"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "reward_xp": {
+      "type": "integer",
+      "default": 100,
+      "description": "XP concedido ao completar"
+    },
+    "reward_badge": {
+      "type": "string",
+      "description": "Badge especial do desafio"
+    },
+    "additional_reward_type": {
+      "type": "string",
+      "enum": [
+        "none",
+        "money",
+        "day_off",
+        "gift",
+        "course",
+        "other"
+      ],
+      "default": "none",
+      "description": "Tipo de recompensa adicional"
+    },
+    "additional_reward_description": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o da recompensa adicional (ex: R$ 200,00, Um dia de folga)"
+    },
+    "participants": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "string"
+          },
+          "current_value": {
+            "type": "number"
+          },
+          "completed": {
+            "type": "boolean"
+          },
+          "completed_date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "evidence_url": {
+            "type": "string",
+            "description": "URL da evid\u00eancia principal"
+          },
+          "evidence_urls": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "URLs de m\u00faltiplas evid\u00eancias"
+          },
+          "evidence_notes": {
+            "type": "string",
+            "description": "Observa\u00e7\u00f5es sobre o progresso"
+          },
+          "evidence_type": {
+            "type": "string",
+            "enum": [
+              "upload",
+              "daily_log"
+            ],
+            "description": "Tipo de evid\u00eancia"
+          },
+          "evidence_ref_id": {
+            "type": "string",
+            "description": "ID do registro de refer\u00eancia (se daily_log)"
+          },
+          "evidence_date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "last_update": {
+            "type": "string",
+            "format": "date-time",
+            "description": "\u00daltima atualiza\u00e7\u00e3o de progresso"
+          }
+        }
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ativo",
+        "concluido",
+        "expirado"
+      ],
+      "default": "ativo"
+    },
+    "completion_justification": {
+      "type": "string",
+      "description": "Justificativa da finaliza\u00e7\u00e3o (dono da oficina)"
+    },
+    "completion_evidence_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "URLs das evid\u00eancias anexadas na finaliza\u00e7\u00e3o"
+    },
+    "completion_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data de finaliza\u00e7\u00e3o"
+    },
+    "completed_by_user_id": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio que finalizou (dono)"
+    },
+    "leaderboard": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "string"
+          },
+          "user_name": {
+            "type": "string"
+          },
+          "value": {
+            "type": "number"
+          },
+          "position": {
+            "type": "integer"
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "title",
+    "type",
+    "target_type",
+    "metric",
+    "goal_value",
+    "start_date",
+    "end_date"
+  ],
+  "rls": {
+    "create": true,
+    "read": true,
+    "update": true,
+    "delete": true
+  }
+}

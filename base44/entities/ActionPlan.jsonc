@@ -1,0 +1,61 @@
+{
+  "name": "ActionPlan",
+  "type": "object",
+  "properties": {
+    "diagnostic_id": {
+      "type": "string",
+      "description": "ID do diagn\u00f3stico"
+    },
+    "phase": {
+      "type": "integer",
+      "enum": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "description": "Fase da oficina"
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "vendas",
+              "prospeccao",
+              "precificacao",
+              "pessoas"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "a_fazer",
+              "em_andamento",
+              "concluido"
+            ],
+            "default": "a_fazer"
+          },
+          "deadline_days": {
+            "type": "integer"
+          }
+        }
+      },
+      "description": "Lista de a\u00e7\u00f5es recomendadas"
+    }
+  },
+  "required": [
+    "diagnostic_id",
+    "phase",
+    "actions"
+  ]
+}

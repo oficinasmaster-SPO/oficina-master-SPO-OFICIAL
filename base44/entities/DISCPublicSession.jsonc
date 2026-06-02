@@ -1,0 +1,79 @@
+{
+  "name": "DISCPublicSession",
+  "type": "object",
+  "properties": {
+    "workshop_id": {
+      "type": "string"
+    },
+    "session_type": {
+      "type": "string",
+      "enum": [
+        "colaborador_interno",
+        "candidato_externo"
+      ],
+      "default": "candidato_externo"
+    },
+    "candidate_name": {
+      "type": "string"
+    },
+    "candidate_phone": {
+      "type": "string"
+    },
+    "candidate_email": {
+      "type": "string"
+    },
+    "employee_id": {
+      "type": "string",
+      "description": "ID do colaborador (se for interno)"
+    },
+    "process_id": {
+      "type": "string",
+      "description": "ID do processo seletivo (opcional)"
+    },
+    "token": {
+      "type": "string",
+      "description": "UUID do convite \u00fanico"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pendente",
+        "concluido"
+      ],
+      "default": "pendente"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "result_id": {
+      "type": "string",
+      "description": "ID do DISCDiagnostic gerado"
+    }
+  },
+  "required": [
+    "workshop_id",
+    "token"
+  ],
+  "rls": {
+    "create": true,
+    "read": true,
+    "update": true,
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "name": "InternalNotice",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "T\u00edtulo do aviso"
+    },
+    "content": {
+      "type": "string",
+      "description": "Conte\u00fado da mensagem"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "baixa",
+        "media",
+        "alta"
+      ],
+      "default": "media",
+      "description": "Prioridade do aviso"
+    },
+    "target_app_roles": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Lista de app_roles que podem ver este aviso (vazio = todos)"
+    },
+    "active": {
+      "type": "boolean",
+      "default": true
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "title",
+    "content"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": true,
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

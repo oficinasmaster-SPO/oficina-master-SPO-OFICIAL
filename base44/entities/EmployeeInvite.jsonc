@@ -1,0 +1,150 @@
+{
+  "name": "EmployeeInvite",
+  "type": "object",
+  "properties": {
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina (Rela\u00e7\u00e3o 1-N: Workshop \u2192 EmployeeInvite)"
+    },
+    "employee_id": {
+      "type": "string",
+      "description": "ID do Employee vinculado (Rela\u00e7\u00e3o 1-1: EmployeeInvite \u2194 Employee) - Cada convite est\u00e1 vinculado a um \u00fanico colaborador"
+    },
+    "admin_responsavel_id": {
+      "type": "string",
+      "description": "ID do admin que criou o convite (Rela\u00e7\u00e3o 1-N: Admin \u2192 EmployeeInvite)"
+    },
+    "profile_id": {
+      "type": "string",
+      "description": "ID do perfil de acesso pr\u00e9-aprovado (Rela\u00e7\u00e3o 1-1: EmployeeInvite \u2192 UserProfile)"
+    },
+    "name": {
+      "type": "string",
+      "description": "Nome do convidado"
+    },
+    "email": {
+      "type": "string",
+      "format": "email",
+      "description": "Email \u00fanico do convidado"
+    },
+    "position": {
+      "type": "string",
+      "description": "Cargo do convidado"
+    },
+    "area": {
+      "type": "string",
+      "description": "\u00c1rea de atua\u00e7\u00e3o"
+    },
+    "job_role": {
+      "type": "string",
+      "description": "Fun\u00e7\u00e3o no sistema"
+    },
+    "company_id": {
+      "type": "string",
+      "description": "ID da empresa (para convites internos)"
+    },
+    "invite_type": {
+      "type": "string",
+      "enum": [
+        "workshop",
+        "internal"
+      ],
+      "default": "workshop",
+      "description": "Tipo de convite: workshop (cliente) ou internal (staff)"
+    },
+    "invite_token": {
+      "type": "string",
+      "description": "Token \u00fanico do convite - usado para validar o link"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data de expira\u00e7\u00e3o do convite"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "enviado",
+        "acessado",
+        "concluido",
+        "expirado"
+      ],
+      "default": "enviado",
+      "description": "Status do convite"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data de conclus\u00e3o/aceita\u00e7\u00e3o"
+    },
+    "resent_count": {
+      "type": "integer",
+      "default": 0,
+      "description": "Contador de reenvios"
+    },
+    "last_resent_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data do \u00faltimo reenvio"
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "role": {
+          "type": "string",
+          "description": "Fun\u00e7\u00e3o Base44 (admin, user, etc)"
+        },
+        "custom_data": {
+          "type": "object",
+          "description": "Dados customizados adicionais"
+        }
+      },
+      "description": "Dados adicionais do convite"
+    },
+    "audit_log": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "changed_by": {
+            "type": "string",
+            "description": "ID do usu\u00e1rio que fez a altera\u00e7\u00e3o"
+          },
+          "changed_by_email": {
+            "type": "string",
+            "description": "Email do usu\u00e1rio que fez a altera\u00e7\u00e3o"
+          },
+          "changed_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "action": {
+            "type": "string"
+          },
+          "field_changed": {
+            "type": "string"
+          },
+          "old_value": {
+            "type": "string"
+          },
+          "new_value": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Log de auditoria (Rela\u00e7\u00e3o 1-N: EmployeeInvite \u2192 AuditLog)"
+    }
+  },
+  "required": [
+    "name",
+    "email",
+    "invite_token",
+    "workshop_id"
+  ],
+  "rls": {
+    "create": true,
+    "read": true,
+    "update": true,
+    "delete": true
+  }
+}

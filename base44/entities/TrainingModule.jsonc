@@ -1,0 +1,93 @@
+{
+  "name": "TrainingModule",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "T\u00edtulo do m\u00f3dulo"
+    },
+    "description": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o do conte\u00fado do m\u00f3dulo"
+    },
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina (se for conte\u00fado espec\u00edfico) ou null para global"
+    },
+    "cover_image_url": {
+      "type": "string",
+      "description": "URL da imagem de capa"
+    },
+    "order": {
+      "type": "integer",
+      "default": 0,
+      "description": "Ordem de exibi\u00e7\u00e3o"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "rascunho",
+        "publicado",
+        "arquivado"
+      ],
+      "default": "rascunho"
+    },
+    "target_roles": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Cargos alvo para este m\u00f3dulo (opcional)"
+    },
+    "assigned_to_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "IDs dos colaboradores que t\u00eam acesso a este m\u00f3dulo. Se vazio, todos t\u00eam acesso."
+    }
+  },
+  "required": [
+    "title"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "created_by": "{{user.email}}"
+        }
+      ]
+    },
+    "read": true,
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "created_by": "{{user.email}}"
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "created_by": "{{user.email}}"
+        }
+      ]
+    }
+  }
+}

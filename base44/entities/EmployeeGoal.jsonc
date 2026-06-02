@@ -1,0 +1,144 @@
+{
+  "name": "EmployeeGoal",
+  "type": "object",
+  "properties": {
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "employee_id": {
+      "type": "string",
+      "description": "ID do colaborador"
+    },
+    "area": {
+      "type": "string",
+      "enum": [
+        "vendas",
+        "comercial",
+        "marketing",
+        "tecnico",
+        "financeiro",
+        "geral"
+      ],
+      "description": "\u00c1rea do colaborador"
+    },
+    "goal_type": {
+      "type": "string",
+      "enum": [
+        "production_parts",
+        "production_parts_sales",
+        "production_services",
+        "sales_services",
+        "total_production",
+        "customer_volume",
+        "custom"
+      ],
+      "description": "Tipo de meta"
+    },
+    "period": {
+      "type": "string",
+      "description": "Per\u00edodo (YYYY-MM)"
+    },
+    "goal_value": {
+      "type": "number",
+      "default": 0,
+      "description": "Valor da meta"
+    },
+    "current_value": {
+      "type": "number",
+      "default": 0,
+      "description": "Valor atual realizado"
+    },
+    "daily_goal": {
+      "type": "number",
+      "default": 0,
+      "description": "Meta di\u00e1ria (goal_value / 22)"
+    },
+    "achievement_percentage": {
+      "type": "number",
+      "default": 0,
+      "description": "Percentual atingido"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ativa",
+        "atingida",
+        "em_alerta",
+        "cancelada"
+      ],
+      "default": "ativa",
+      "description": "Status da meta"
+    },
+    "deadline": {
+      "type": "string",
+      "format": "date",
+      "description": "Prazo final da meta"
+    },
+    "area_goal_id": {
+      "type": "string",
+      "description": "ID da meta de \u00e1rea relacionada (opcional)"
+    },
+    "central_goal_id": {
+      "type": "string",
+      "description": "ID da meta central relacionada (opcional)"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es sobre a meta"
+    }
+  },
+  "required": [
+    "workshop_id",
+    "employee_id",
+    "goal_type",
+    "period",
+    "goal_value"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

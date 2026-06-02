@@ -1,0 +1,102 @@
+{
+  "name": "ProcessAssessment",
+  "type": "object",
+  "properties": {
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "evaluator_id": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio que realizou a avalia\u00e7\u00e3o"
+    },
+    "assessment_type": {
+      "type": "string",
+      "enum": [
+        "vendas",
+        "comercial",
+        "marketing",
+        "pessoas",
+        "financeiro",
+        "empresarial",
+        "area_geral",
+        "ma3"
+      ],
+      "description": "Tipo de avalia\u00e7\u00e3o de processo"
+    },
+    "answers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "question_key": {
+            "type": "string"
+          },
+          "question_label": {
+            "type": "string"
+          },
+          "score": {
+            "type": "number"
+          },
+          "situacao": {
+            "type": "string"
+          },
+          "justificativa": {
+            "type": "string"
+          },
+          "audio_url": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Respostas detalhadas com contexto por pergunta"
+    },
+    "scores": {
+      "type": "object",
+      "description": "Pontua\u00e7\u00f5es para cada crit\u00e9rio avaliado"
+    },
+    "average_score": {
+      "type": "number",
+      "description": "M\u00e9dia geral das pontua\u00e7\u00f5es"
+    },
+    "strengths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Pontos fortes identificados"
+    },
+    "weaknesses": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Pontos fracos identificados"
+    },
+    "bottlenecks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Gargalos cr\u00edticos"
+    },
+    "ai_recommendations": {
+      "type": "string",
+      "description": "Recomenda\u00e7\u00f5es geradas pela IA"
+    },
+    "user_feedback": {
+      "type": "string",
+      "description": "Feedback adicional do usu\u00e1rio para a IA"
+    },
+    "completed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Indica se a avalia\u00e7\u00e3o foi conclu\u00edda"
+    }
+  },
+  "required": [
+    "evaluator_id",
+    "assessment_type",
+    "scores"
+  ]
+}

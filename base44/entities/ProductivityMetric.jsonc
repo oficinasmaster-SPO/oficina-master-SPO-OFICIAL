@@ -1,0 +1,109 @@
+{
+  "name": "ProductivityMetric",
+  "type": "object",
+  "properties": {
+    "code": {
+      "type": "string",
+      "description": "C\u00f3digo \u00fanico da m\u00e9trica (ex: total_vendas)"
+    },
+    "name": {
+      "type": "string",
+      "description": "Nome vis\u00edvel (ex: Maior Vendedor)"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "vendas",
+        "comercial",
+        "tecnico",
+        "estoque",
+        "financeiro",
+        "rh",
+        "zeladoria",
+        "lava_jato",
+        "qualidade"
+      ],
+      "description": "Categoria funcional"
+    },
+    "data_type": {
+      "type": "string",
+      "enum": [
+        "number",
+        "currency",
+        "text",
+        "boolean",
+        "percentage"
+      ],
+      "description": "Tipo de dado visual"
+    },
+    "aggregation_type": {
+      "type": "string",
+      "enum": [
+        "sum",
+        "avg",
+        "count",
+        "max",
+        "min"
+      ],
+      "default": "sum",
+      "description": "Como consolidar os dados (Soma, M\u00e9dia, Contagem...)"
+    },
+    "optimization_direction": {
+      "type": "string",
+      "enum": [
+        "higher_is_better",
+        "lower_is_better"
+      ],
+      "default": "higher_is_better",
+      "description": "Dire\u00e7\u00e3o da meta (Mais \u00e9 melhor ou Menos \u00e9 melhor)"
+    },
+    "description": {
+      "type": "string",
+      "description": "Instru\u00e7\u00f5es de preenchimento"
+    },
+    "requires_evidence": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se exige upload de foto/arquivo"
+    },
+    "vehicle_category_filter": {
+      "type": "string",
+      "enum": [
+        "all",
+        "moto",
+        "car",
+        "truck"
+      ],
+      "default": "all",
+      "description": "Filtro espec\u00edfico de ve\u00edculo (opcional)"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "code",
+    "name",
+    "category",
+    "data_type"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": true,
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

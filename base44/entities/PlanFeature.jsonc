@@ -1,0 +1,202 @@
+{
+  "name": "PlanFeature",
+  "type": "object",
+  "properties": {
+    "plan_id": {
+      "type": "string",
+      "description": "ID do plano (ex: FREE, BASIC, STANDARD, PROFESSIONAL, ENTERPRISE)"
+    },
+    "plan_name": {
+      "type": "string",
+      "description": "Nome do plano"
+    },
+    "plan_description": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o do plano"
+    },
+    "is_popular": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se \u00e9 o plano mais popular"
+    },
+    "is_recommended": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se \u00e9 recomendado"
+    },
+    "badge_text": {
+      "type": "string",
+      "description": "Texto do badge (ex: 'Mais Popular', 'Melhor custo-benef\u00edcio')"
+    },
+    "price_monthly": {
+      "type": "number",
+      "description": "Pre\u00e7o mensal"
+    },
+    "price_annual": {
+      "type": "number",
+      "description": "Pre\u00e7o anual"
+    },
+    "price_display_monthly": {
+      "type": "string",
+      "description": "Pre\u00e7o mensal formatado para exibi\u00e7\u00e3o"
+    },
+    "price_display_annual": {
+      "type": "string",
+      "description": "Pre\u00e7o anual formatado para exibi\u00e7\u00e3o"
+    },
+    "kiwify_checkout_url_monthly": {
+      "type": "string",
+      "description": "Link de checkout da Kiwify para ciclo mensal"
+    },
+    "kiwify_checkout_url_annual": {
+      "type": "string",
+      "description": "Link de checkout da Kiwify para ciclo anual"
+    },
+    "kiwify_checkout_url": {
+      "type": "string",
+      "description": "Link de checkout padr\u00e3o (retrocompatibilidade)"
+    },
+    "features_highlights": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "5-8 principais recursos para exibir no card"
+    },
+    "features_allowed": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Lista de IDs das funcionalidades permitidas"
+    },
+    "features_blocked": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Lista de IDs das funcionalidades bloqueadas"
+    },
+    "modules_allowed": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Lista de IDs dos m\u00f3dulos permitidos"
+    },
+    "cronograma_features": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Lista de IDs das funcionalidades que devem aparecer no cronograma"
+    },
+    "cronograma_modules": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Lista de IDs dos m\u00f3dulos que devem aparecer no cronograma"
+    },
+    "limits": {
+      "type": "object",
+      "properties": {
+        "max_employees": {
+          "type": "integer",
+          "default": -1,
+          "description": "-1 = ilimitado"
+        },
+        "max_diagnostics_per_month": {
+          "type": "integer",
+          "default": -1,
+          "description": "-1 = ilimitado"
+        },
+        "max_branches": {
+          "type": "integer",
+          "default": -1,
+          "description": "-1 = ilimitado"
+        },
+        "storage_gb": {
+          "type": "integer",
+          "default": 5
+        }
+      },
+      "description": "Limites do plano"
+    },
+    "comparison_features": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string",
+            "description": "Categoria do recurso (ex: 'Colabora\u00e7\u00e3o', 'Processos', 'Relat\u00f3rios')"
+          },
+          "feature_key": {
+            "type": "string",
+            "description": "Chave \u00fanica do recurso"
+          },
+          "feature_label": {
+            "type": "string",
+            "description": "Nome exibido do recurso"
+          },
+          "value_type": {
+            "type": "string",
+            "enum": [
+              "boolean",
+              "number",
+              "text"
+            ],
+            "description": "Tipo de valor"
+          },
+          "value": {
+            "description": "Valor do recurso para este plano (boolean, number ou string)"
+          }
+        }
+      },
+      "description": "Recursos para tabela comparativa"
+    },
+    "order": {
+      "type": "integer",
+      "default": 0,
+      "description": "Ordem de exibi\u00e7\u00e3o"
+    },
+    "active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se o plano est\u00e1 ativo"
+    },
+    "target_audience": {
+      "type": "string",
+      "enum": [
+        "cliente",
+        "interno",
+        "todos"
+      ],
+      "default": "cliente",
+      "description": "P\u00fablico-alvo do plano"
+    }
+  },
+  "required": [
+    "plan_id",
+    "plan_name"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": true,
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

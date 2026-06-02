@@ -1,0 +1,92 @@
+{
+  "name": "ClientIntelligenceChecklist",
+  "type": "object",
+  "properties": {
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "area": {
+      "type": "string",
+      "enum": [
+        "vendas_conversao",
+        "marketing_demanda",
+        "operacao_tecnica",
+        "gestao_processos",
+        "financeiro",
+        "pessoas_contratacao",
+        "estoque_compras",
+        "precificacao_margem",
+        "atendimento_experiencia",
+        "lideranca_dono"
+      ],
+      "description": "\u00c1rea principal (n\u00edvel 1) - define qual checklist"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "dor",
+        "duvida",
+        "desejo",
+        "risco",
+        "evolucao"
+      ],
+      "description": "Tipo de problema/situa\u00e7\u00e3o"
+    },
+    "title": {
+      "type": "string",
+      "description": "Nome do checklist"
+    },
+    "description": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o do checklist"
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "ID \u00fanico do item"
+          },
+          "label": {
+            "type": "string",
+            "description": "R\u00f3tulo do item"
+          },
+          "category": {
+            "type": "string",
+            "description": "Categoria do item (opcional para organiza\u00e7\u00e3o)"
+          },
+          "order": {
+            "type": "integer",
+            "description": "Ordem de exibi\u00e7\u00e3o"
+          }
+        }
+      },
+      "description": "Items do checklist"
+    },
+    "is_default": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se \u00e9 um checklist padr\u00e3o da sistema"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ativo",
+        "inativo",
+        "arquivado"
+      ],
+      "default": "ativo",
+      "description": "Status do checklist"
+    }
+  },
+  "required": [
+    "workshop_id",
+    "area",
+    "type",
+    "title",
+    "items"
+  ]
+}

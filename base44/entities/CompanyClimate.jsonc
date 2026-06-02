@@ -1,0 +1,203 @@
+{
+  "name": "CompanyClimate",
+  "type": "object",
+  "properties": {
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "reference_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de refer\u00eancia da pesquisa"
+    },
+    "overall_score": {
+      "type": "number",
+      "description": "Nota geral de clima (0-10)"
+    },
+    "dimensions": {
+      "type": "object",
+      "properties": {
+        "leadership": {
+          "type": "object",
+          "properties": {
+            "score": {
+              "type": "number"
+            },
+            "feedback": {
+              "type": "string"
+            }
+          }
+        },
+        "communication": {
+          "type": "object",
+          "properties": {
+            "score": {
+              "type": "number"
+            },
+            "feedback": {
+              "type": "string"
+            }
+          }
+        },
+        "recognition": {
+          "type": "object",
+          "properties": {
+            "score": {
+              "type": "number"
+            },
+            "feedback": {
+              "type": "string"
+            }
+          }
+        },
+        "development": {
+          "type": "object",
+          "properties": {
+            "score": {
+              "type": "number"
+            },
+            "feedback": {
+              "type": "string"
+            }
+          }
+        },
+        "work_environment": {
+          "type": "object",
+          "properties": {
+            "score": {
+              "type": "number"
+            },
+            "feedback": {
+              "type": "string"
+            }
+          }
+        },
+        "compensation": {
+          "type": "object",
+          "properties": {
+            "score": {
+              "type": "number"
+            },
+            "feedback": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "employee_responses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "employee_id": {
+            "type": "string"
+          },
+          "anonymous": {
+            "type": "boolean",
+            "default": true
+          },
+          "responses": {
+            "type": "object"
+          },
+          "comments": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "action_plan": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "issue": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "responsible": {
+            "type": "string"
+          },
+          "deadline": {
+            "type": "string",
+            "format": "date"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pendente",
+              "em_andamento",
+              "concluida"
+            ]
+          }
+        }
+      }
+    },
+    "participation_rate": {
+      "type": "number",
+      "description": "Taxa de participa\u00e7\u00e3o (%)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "aberta",
+        "fechada",
+        "analisada"
+      ],
+      "default": "aberta"
+    }
+  },
+  "required": [
+    "workshop_id",
+    "reference_date"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

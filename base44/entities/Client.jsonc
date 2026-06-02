@@ -1,0 +1,57 @@
+{
+  "name": "Client",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Nome completo do cliente"
+    },
+    "phone": {
+      "type": "string",
+      "description": "N\u00famero de telefone do cliente"
+    },
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina vinculada"
+    },
+    "last_evaluation_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data da \u00faltima avalia\u00e7\u00e3o"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Notas internas sobre o cliente"
+    },
+    "next_follow_up": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data agendada para pr\u00f3ximo contato"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ativo",
+        "inativo",
+        "risco"
+      ],
+      "default": "ativo",
+      "description": "Status do relacionamento"
+    }
+  },
+  "required": [
+    "name",
+    "phone",
+    "workshop_id"
+  ],
+  "rls": {
+    "create": true,
+    "read": true,
+    "update": true,
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

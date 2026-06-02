@@ -1,0 +1,132 @@
+{
+  "name": "CronogramaTemplateItem",
+  "type": "object",
+  "properties": {
+    "plan_id": {
+      "type": "string",
+      "description": "ID do plano (FREE, START, BRONZE, PRATA, GOLD, IOM, MILLIONS)"
+    },
+    "item_tipo": {
+      "type": "string",
+      "enum": [
+        "funcionalidade",
+        "modulo",
+        "atendimento",
+        "diagnostico",
+        "treinamento",
+        "processo"
+      ],
+      "description": "Tipo do item na jornada"
+    },
+    "item_id": {
+      "type": "string",
+      "description": "ID do item referenciado (attendance_type_id, module_id, feature_id, etc)"
+    },
+    "titulo": {
+      "type": "string",
+      "description": "T\u00edtulo exib\u00edvel do item na jornada"
+    },
+    "descricao": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o do que o cliente deve fazer/alcan\u00e7ar"
+    },
+    "fase": {
+      "type": "string",
+      "description": "Fase da jornada (ex: estrutura, crescimento, escala, diagnostico)"
+    },
+    "subfase": {
+      "type": "string",
+      "description": "Sub-fase opcional para granularidade (ex: semana_1, mes_1)"
+    },
+    "ordem": {
+      "type": "integer",
+      "default": 0,
+      "description": "Ordem dentro da fase"
+    },
+    "obrigatorio": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se o item \u00e9 obrigat\u00f3rio para avan\u00e7ar de fase"
+    },
+    "auto_start": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se o item inicia automaticamente quando o contrato ativa"
+    },
+    "dias_para_inicio": {
+      "type": "integer",
+      "default": 0,
+      "description": "Dias ap\u00f3s ativa\u00e7\u00e3o do contrato para iniciar este item"
+    },
+    "prazo_conclusao_dias": {
+      "type": "integer",
+      "default": 30,
+      "description": "Prazo em dias para concluir ap\u00f3s o in\u00edcio"
+    },
+    "depends_on_item_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "IDs de outros CronogramaTemplateItem que devem estar conclu\u00eddos antes"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Configura\u00e7\u00f5es espec\u00edficas por tipo. Para atendimento: {scheduling_type, frequency_days, total_allowed, start_from_contract_date, allow_anticipation, event_based}",
+      "properties": {
+        "scheduling_type": {
+          "type": "string",
+          "enum": [
+            "frequency",
+            "event_based"
+          ],
+          "description": "Tipo de agendamento (apenas para item_tipo=atendimento)"
+        },
+        "frequency_days": {
+          "type": "integer",
+          "description": "Intervalo em dias entre sess\u00f5es (apenas frequency)"
+        },
+        "total_allowed": {
+          "type": "integer",
+          "description": "Total de sess\u00f5es/inst\u00e2ncias permitidas"
+        },
+        "start_from_contract_date": {
+          "type": "boolean",
+          "default": true
+        },
+        "allow_anticipation": {
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
+    "ativo": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se o item est\u00e1 ativo no template do plano"
+    }
+  },
+  "required": [
+    "plan_id",
+    "item_tipo",
+    "titulo"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": true,
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

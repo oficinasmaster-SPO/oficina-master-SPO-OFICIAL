@@ -1,0 +1,71 @@
+{
+  "name": "KiwifyWebhookLog",
+  "type": "object",
+  "properties": {
+    "event_type": {
+      "type": "string",
+      "description": "Tipo do evento recebido (compra_aprovada, compra_recusada, etc)"
+    },
+    "payload": {
+      "type": "object",
+      "description": "Payload completo recebido da Kiwify"
+    },
+    "customer_email": {
+      "type": "string",
+      "description": "Email do cliente"
+    },
+    "product_id": {
+      "type": "string",
+      "description": "ID do produto na Kiwify"
+    },
+    "order_id": {
+      "type": "string",
+      "description": "ID do pedido"
+    },
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina associada (se encontrada)"
+    },
+    "processing_status": {
+      "type": "string",
+      "enum": [
+        "success",
+        "error",
+        "warning"
+      ],
+      "default": "success",
+      "description": "Status do processamento"
+    },
+    "processing_message": {
+      "type": "string",
+      "description": "Mensagem de resultado do processamento"
+    },
+    "received_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora de recebimento"
+    }
+  },
+  "required": [
+    "event_type",
+    "payload"
+  ],
+  "rls": {
+    "create": true,
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

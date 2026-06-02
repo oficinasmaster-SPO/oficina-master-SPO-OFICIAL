@@ -1,0 +1,71 @@
+{
+  "name": "SerasaConsultaLog",
+  "type": "object",
+  "properties": {
+    "documento": {
+      "type": "string",
+      "description": "CNPJ ou CPF consultado"
+    },
+    "tipo_consulta": {
+      "type": "string",
+      "enum": [
+        "CNPJ",
+        "CPF"
+      ],
+      "description": "Tipo de documento consultado"
+    },
+    "score": {
+      "type": "number",
+      "description": "Score de cr\u00e9dito retornado"
+    },
+    "risco": {
+      "type": "string",
+      "enum": [
+        "baixo",
+        "medio",
+        "alto",
+        "desconhecido"
+      ],
+      "description": "N\u00edvel de risco calculado"
+    },
+    "resultado": {
+      "type": "object",
+      "description": "Resultado completo da consulta Serasa"
+    },
+    "contract_id": {
+      "type": "string",
+      "description": "ID do contrato relacionado (se aplic\u00e1vel)"
+    },
+    "consulted_by": {
+      "type": "string",
+      "description": "Email do usu\u00e1rio que realizou a consulta"
+    },
+    "data": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data e hora da consulta"
+    }
+  },
+  "required": [
+    "documento",
+    "tipo_consulta"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": false,
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

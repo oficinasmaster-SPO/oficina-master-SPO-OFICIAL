@@ -1,0 +1,59 @@
+{
+  "name": "COEXFeedbackReminder",
+  "type": "object",
+  "properties": {
+    "contract_id": {
+      "type": "string",
+      "description": "ID do contrato COEX vinculado"
+    },
+    "employee_id": {
+      "type": "string",
+      "description": "ID do colaborador"
+    },
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data limite para o feedback"
+    },
+    "month_reference": {
+      "type": "string",
+      "description": "M\u00eas de refer\u00eancia (YYYY-MM)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "completed",
+        "overdue"
+      ],
+      "default": "pending",
+      "description": "Status do lembrete"
+    },
+    "target_roles": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Pap\u00e9is que devem receber este lembrete (admin, rh, gestor)"
+    }
+  },
+  "required": [
+    "contract_id",
+    "employee_id",
+    "due_date"
+  ],
+  "rls": {
+    "create": true,
+    "read": true,
+    "update": true,
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

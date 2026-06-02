@@ -1,0 +1,64 @@
+{
+  "name": "UserProgress",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio"
+    },
+    "onboarding_completed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se completou o onboarding"
+    },
+    "tour_step": {
+      "type": "integer",
+      "default": 0,
+      "description": "Passo atual do tour"
+    },
+    "tour_completed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se completou o tour"
+    },
+    "checklist_items": {
+      "type": "object",
+      "properties": {
+        "cadastrou_oficina": {
+          "type": "boolean",
+          "default": false
+        },
+        "fez_primeiro_diagnostico": {
+          "type": "boolean",
+          "default": false
+        },
+        "visualizou_resultado": {
+          "type": "boolean",
+          "default": false
+        },
+        "acessou_plano_acao": {
+          "type": "boolean",
+          "default": false
+        },
+        "explorou_dashboard": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "description": "Itens do checklist de onboarding"
+    },
+    "last_login_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data do \u00faltimo login"
+    },
+    "first_login_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data do primeiro login"
+    }
+  },
+  "required": [
+    "user_id"
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "name": "HelpVideo",
+  "type": "object",
+  "properties": {
+    "page_name": {
+      "type": "string",
+      "description": "Nome da p\u00e1gina"
+    },
+    "title": {
+      "type": "string",
+      "description": "T\u00edtulo da ajuda"
+    },
+    "description": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o"
+    },
+    "video_url": {
+      "type": "string",
+      "description": "URL do v\u00eddeo embed"
+    },
+    "faqs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "question": {
+            "type": "string"
+          },
+          "answer": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Perguntas frequentes"
+    },
+    "full_video_url": {
+      "type": "string",
+      "description": "URL do v\u00eddeo completo"
+    },
+    "enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "V\u00eddeo ativo"
+    }
+  },
+  "required": [
+    "page_name",
+    "title"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

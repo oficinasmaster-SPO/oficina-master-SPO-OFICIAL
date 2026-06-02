@@ -1,0 +1,91 @@
+{
+  "name": "AreaGoal",
+  "type": "object",
+  "properties": {
+    "workshop_id": {
+      "type": "string"
+    },
+    "area": {
+      "type": "string",
+      "enum": [
+        "vendas",
+        "comercial",
+        "tecnico",
+        "financeiro",
+        "marketing",
+        "pessoas"
+      ],
+      "description": "\u00c1rea da meta"
+    },
+    "period": {
+      "type": "string",
+      "description": "Per\u00edodo (YYYY-MM)"
+    },
+    "goal_value": {
+      "type": "number",
+      "description": "Valor da meta"
+    },
+    "current_value": {
+      "type": "number",
+      "default": 0,
+      "description": "Valor atual"
+    },
+    "achievement_percentage": {
+      "type": "number",
+      "default": 0
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "atingida",
+        "em_progresso",
+        "em_alerta",
+        "critica"
+      ],
+      "default": "em_progresso"
+    },
+    "metric_type": {
+      "type": "string",
+      "description": "Tipo da m\u00e9trica (faturamento, conversao, etc)"
+    }
+  },
+  "required": [
+    "workshop_id",
+    "area",
+    "goal_value"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

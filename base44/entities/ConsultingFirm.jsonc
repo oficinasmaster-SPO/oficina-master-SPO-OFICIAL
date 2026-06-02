@@ -1,0 +1,73 @@
+{
+  "name": "ConsultingFirm",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Nome do escrit\u00f3rio de consultoria"
+    },
+    "owner_user_id": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio principal (admin) do escrit\u00f3rio de consultoria"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ativo",
+        "inativo",
+        "pendente"
+      ],
+      "default": "pendente",
+      "description": "Status do escrit\u00f3rio de consultoria"
+    },
+    "branding_logo_url": {
+      "type": "string",
+      "description": "URL da logo para branding personalizado do escrit\u00f3rio"
+    },
+    "contact_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Email de contato do escrit\u00f3rio"
+    }
+  },
+  "required": [
+    "name",
+    "owner_user_id"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "owner_user_id": "{{user.id}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "owner_user_id": "{{user.id}}"
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

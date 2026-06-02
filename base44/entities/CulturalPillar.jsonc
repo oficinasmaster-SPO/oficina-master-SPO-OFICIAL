@@ -1,0 +1,66 @@
+{
+  "name": "CulturalPillar",
+  "type": "object",
+  "properties": {
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "name": {
+      "type": "string",
+      "description": "Nome do pilar (Prop\u00f3sito, Valores, Miss\u00e3o, Vis\u00e3o, etc)"
+    },
+    "description": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o detalhada do pilar"
+    },
+    "color": {
+      "type": "string",
+      "description": "Cor de identifica\u00e7\u00e3o (hex)",
+      "default": "#3b82f6"
+    },
+    "icon": {
+      "type": "string",
+      "description": "Nome do \u00edcone lucide-react"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "proposito",
+        "valores",
+        "missao",
+        "visao",
+        "comportamentos",
+        "rituais",
+        "outros"
+      ],
+      "description": "Tipo do pilar cultural"
+    },
+    "priority": {
+      "type": "integer",
+      "default": 1,
+      "description": "Prioridade/ordem de exibi\u00e7\u00e3o"
+    },
+    "active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se o pilar est\u00e1 ativo"
+    },
+    "target_frequency": {
+      "type": "string",
+      "enum": [
+        "diaria",
+        "semanal",
+        "quinzenal",
+        "mensal",
+        "trimestral"
+      ],
+      "description": "Frequ\u00eancia ideal de trabalho deste pilar"
+    }
+  },
+  "required": [
+    "workshop_id",
+    "name",
+    "type"
+  ]
+}

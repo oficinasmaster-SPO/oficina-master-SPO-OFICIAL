@@ -1,0 +1,127 @@
+{
+  "name": "CustomerFeedback",
+  "type": "object",
+  "properties": {
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "client_id": {
+      "type": "string",
+      "description": "ID do cliente vinculado"
+    },
+    "customer_name": {
+      "type": "string",
+      "description": "Nome do Cliente"
+    },
+    "customer_phone": {
+      "type": "string",
+      "description": "Telefone do Cliente"
+    },
+    "nps_score": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 10,
+      "description": "Pontua\u00e7\u00e3o NPS (0-10)"
+    },
+    "sales_service_clarity_score": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 10,
+      "description": "Vendas - Atendimento e informa\u00e7\u00f5es claras (0-10)"
+    },
+    "technical_service_score": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 10,
+      "description": "Produ\u00e7\u00e3o - Informa\u00e7\u00f5es t\u00e9cnicas e servi\u00e7o (0-10)"
+    },
+    "infrastructure_score": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 10,
+      "description": "Estrutura - Salas, ambientes e banheiros (0-10)"
+    },
+    "delight_score": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 10,
+      "description": "Encantamento - Servi\u00e7o al\u00e9m do combinado (0-10)"
+    },
+    "comment": {
+      "type": "string",
+      "description": "Coment\u00e1rio/Recomenda\u00e7\u00e3o Livre"
+    },
+    "area": {
+      "type": "string",
+      "enum": [
+        "vendas",
+        "comercial",
+        "marketing",
+        "tecnico",
+        "administrativo",
+        "financeiro",
+        "gerencia",
+        "geral"
+      ],
+      "default": "geral",
+      "description": "\u00c1rea relacionada ao feedback"
+    },
+    "employee_id": {
+      "type": "string",
+      "description": "ID do colaborador avaliado (opcional)"
+    },
+    "contacted": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se o cliente j\u00e1 foi contatado sobre o feedback"
+    },
+    "resolution_notes": {
+      "type": "string",
+      "description": "Notas sobre a resolu\u00e7\u00e3o do feedback"
+    }
+  },
+  "required": [
+    "workshop_id",
+    "nps_score"
+  ],
+  "rls": {
+    "create": true,
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

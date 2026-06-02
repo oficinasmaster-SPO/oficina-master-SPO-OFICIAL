@@ -1,0 +1,153 @@
+{
+  "name": "Diagnostic",
+  "type": "object",
+  "properties": {
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "user_id": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio que respondeu"
+    },
+    "answers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "question_id": {
+            "type": "integer"
+          },
+          "selected_option": {
+            "type": "string",
+            "enum": [
+              "A",
+              "B",
+              "C",
+              "D"
+            ]
+          },
+          "justificativa_texto": {
+            "type": "string",
+            "description": "Justificativa obrigat\u00f3ria do usu\u00e1rio"
+          },
+          "justificativa_audio_url": {
+            "type": "string",
+            "description": "URL do \u00e1udio de justificativa (opcional)"
+          },
+          "observacoes": {
+            "type": "string",
+            "description": "Observa\u00e7\u00f5es adicionais opcionais"
+          }
+        }
+      },
+      "description": "Respostas do diagn\u00f3stico com justificativas"
+    },
+    "phase": {
+      "type": "integer",
+      "enum": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "description": "Fase identificada"
+    },
+    "dominant_letter": {
+      "type": "string",
+      "enum": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ],
+      "description": "Letra predominante"
+    },
+    "letter_distribution": {
+      "type": "object",
+      "description": "Distribui\u00e7\u00e3o de letras para an\u00e1lise secund\u00e1ria",
+      "properties": {
+        "A": {
+          "type": "integer",
+          "default": 0
+        },
+        "B": {
+          "type": "integer",
+          "default": 0
+        },
+        "C": {
+          "type": "integer",
+          "default": 0
+        },
+        "D": {
+          "type": "integer",
+          "default": 0
+        }
+      }
+    },
+    "result_summary": {
+      "type": "object",
+      "description": "Se\u00e7\u00e3o '02 Resultados' da ATA",
+      "properties": {
+        "executive_summary": {
+          "type": "string"
+        },
+        "phase_distribution_text": {
+          "type": "string"
+        },
+        "critical_findings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "3-5 descobertas cr\u00edticas"
+        }
+      }
+    },
+    "decisions_deliberations": {
+      "type": "object",
+      "description": "Se\u00e7\u00e3o '03 Decis\u00f5es/Delibera\u00e7\u00f5es' da ATA",
+      "properties": {
+        "agreed_priorities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Prioridades acordadas com o cliente"
+        },
+        "constraints_identified": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Limita\u00e7\u00f5es/restri\u00e7\u00f5es identificadas"
+        },
+        "next_meeting_date": {
+          "type": "string",
+          "format": "date"
+        }
+      }
+    },
+    "implementation_checklist_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "IDs das tarefas criadas no DiagnosticActionPlan"
+    },
+    "justifications_completed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Indica se todas as justificativas foram preenchidas"
+    },
+    "completed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Diagn\u00f3stico completo"
+    }
+  },
+  "required": [
+    "user_id",
+    "answers"
+  ]
+}

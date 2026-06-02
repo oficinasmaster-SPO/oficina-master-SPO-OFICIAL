@@ -1,0 +1,65 @@
+{
+  "name": "RegimentAcknowledgment",
+  "type": "object",
+  "properties": {
+    "regiment_id": {
+      "type": "string",
+      "description": "ID do regimento"
+    },
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "user_id": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Email do usu\u00e1rio"
+    },
+    "user_name": {
+      "type": "string",
+      "description": "Nome do usu\u00e1rio"
+    },
+    "acknowledged_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora da visualiza\u00e7\u00e3o"
+    },
+    "document_type": {
+      "type": "string",
+      "enum": [
+        "regimento",
+        "manual_cultura"
+      ],
+      "description": "Tipo de documento visualizado"
+    },
+    "document_version": {
+      "type": "string",
+      "description": "Vers\u00e3o do documento"
+    }
+  },
+  "required": [
+    "workshop_id",
+    "user_id",
+    "document_type"
+  ],
+  "rls": {
+    "create": true,
+    "read": {
+      "$or": [
+        {
+          "user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": false,
+    "delete": false
+  }
+}

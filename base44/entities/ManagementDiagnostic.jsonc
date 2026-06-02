@@ -1,0 +1,313 @@
+{
+  "name": "ManagementDiagnostic",
+  "type": "object",
+  "properties": {
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "reference_month": {
+      "type": "string",
+      "format": "date",
+      "description": "M\u00eas de refer\u00eancia"
+    },
+    "total_revenue": {
+      "type": "number",
+      "description": "R/M TOTAL R$"
+    },
+    "desired_revenue": {
+      "type": "number",
+      "description": "R/DESEJADA R$"
+    },
+    "partners": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "employee_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "presence_percentage": {
+            "type": "number"
+          },
+          "delivery_value": {
+            "type": "number"
+          },
+          "best_month_clients": {
+            "type": "integer",
+            "default": 0
+          }
+        }
+      },
+      "description": "S\u00f3cios"
+    },
+    "managers": {
+      "type": "object",
+      "properties": {
+        "general": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "employee_id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "presence_percentage": {
+                "type": "number"
+              },
+              "best_month_clients": {
+                "type": "integer",
+                "default": 0
+              }
+            }
+          }
+        },
+        "financial": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "employee_id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "presence_percentage": {
+                "type": "number"
+              },
+              "best_month_clients": {
+                "type": "integer",
+                "default": 0
+              }
+            }
+          }
+        },
+        "stock": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "employee_id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "presence_percentage": {
+                "type": "number"
+              },
+              "best_month_clients": {
+                "type": "integer",
+                "default": 0
+              }
+            }
+          }
+        }
+      }
+    },
+    "operational": {
+      "type": "object",
+      "properties": {
+        "sales": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "employee_id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "delivery_value": {
+                "type": "number"
+              },
+              "presence_percentage": {
+                "type": "number"
+              },
+              "best_month_clients": {
+                "type": "integer",
+                "default": 0
+              }
+            }
+          }
+        },
+        "commercial": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "employee_id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "delivery_value": {
+                "type": "number"
+              },
+              "presence_percentage": {
+                "type": "number"
+              },
+              "best_month_clients": {
+                "type": "integer",
+                "default": 0
+              }
+            }
+          }
+        },
+        "marketing": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "employee_id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "delivery_value": {
+                "type": "number"
+              },
+              "presence_percentage": {
+                "type": "number"
+              },
+              "best_month_clients": {
+                "type": "integer",
+                "default": 0
+              }
+            }
+          }
+        }
+      }
+    },
+    "technical": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "employee_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "delivery_value": {
+            "type": "number"
+          },
+          "presence_percentage": {
+            "type": "number"
+          },
+          "best_month_clients": {
+            "type": "integer",
+            "default": 0
+          }
+        }
+      }
+    },
+    "auxiliary": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "employee_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "delivery_value": {
+            "type": "number"
+          },
+          "presence_percentage": {
+            "type": "number"
+          },
+          "best_month_clients": {
+            "type": "integer",
+            "default": 0
+          }
+        }
+      }
+    },
+    "third_party": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "value": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "goal_breakdown_id": {
+      "type": "string",
+      "description": "ID do GoalBreakdown gerado automaticamente"
+    },
+    "completed": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "workshop_id",
+    "reference_month"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

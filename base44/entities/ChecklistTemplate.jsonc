@@ -1,0 +1,75 @@
+{
+  "name": "ChecklistTemplate",
+  "type": "object",
+  "properties": {
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "template_name": {
+      "type": "string",
+      "description": "Nome do template (ex: Checklist T\u00e9cnico Mec\u00e2nico)"
+    },
+    "job_role": {
+      "type": "string",
+      "enum": [
+        "tecnico",
+        "vendas",
+        "telemarketing",
+        "estoque",
+        "financeiro",
+        "administrativo",
+        "gerente",
+        "outros"
+      ],
+      "description": "Cargo vinculado ao checklist"
+    },
+    "checklist_type": {
+      "type": "string",
+      "enum": [
+        "conhecimento_tecnico",
+        "experiencia_pratica",
+        "capacidade_diagnostico",
+        "habilidades_vendas",
+        "atendimento_cliente",
+        "organizacao",
+        "financeiro",
+        "custom"
+      ],
+      "description": "Tipo de checklist"
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "points": {
+            "type": "number",
+            "default": 1
+          }
+        }
+      },
+      "description": "Itens do checklist"
+    },
+    "description": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o do checklist"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "workshop_id",
+    "template_name",
+    "job_role",
+    "items"
+  ]
+}

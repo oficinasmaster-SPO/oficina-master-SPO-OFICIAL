@@ -1,0 +1,105 @@
+{
+  "name": "EmployeeTrainingProgress",
+  "type": "object",
+  "properties": {
+    "employee_id": {
+      "type": "string",
+      "description": "ID do colaborador"
+    },
+    "course_id": {
+      "type": "string",
+      "description": "ID do curso (opcional para navega\u00e7\u00e3o)"
+    },
+    "module_id": {
+      "type": "string",
+      "description": "ID do m\u00f3dulo"
+    },
+    "lesson_id": {
+      "type": "string",
+      "description": "ID da aula"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "not_started",
+        "in_progress",
+        "completed",
+        "completed_with_failure"
+      ],
+      "default": "not_started",
+      "description": "Status da aula"
+    },
+    "progress_percentage": {
+      "type": "number",
+      "default": 0,
+      "description": "Porcentagem de progresso (0-100)"
+    },
+    "watch_time_seconds": {
+      "type": "integer",
+      "default": 0,
+      "description": "Tempo total assistido em segundos"
+    },
+    "last_watched_position": {
+      "type": "number",
+      "default": 0,
+      "description": "Posi\u00e7\u00e3o onde parou (em segundos)"
+    },
+    "completed_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data de conclus\u00e3o"
+    },
+    "last_access_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u00daltimo acesso"
+    },
+    "assessment_attempts": {
+      "type": "integer",
+      "default": 0,
+      "description": "N\u00famero de tentativas na avalia\u00e7\u00e3o"
+    },
+    "best_assessment_score": {
+      "type": "number",
+      "default": 0,
+      "description": "Melhor nota na avalia\u00e7\u00e3o"
+    }
+  },
+  "required": [
+    "employee_id",
+    "module_id",
+    "lesson_id"
+  ],
+  "rls": {
+    "create": true,
+    "read": {
+      "$or": [
+        {
+          "employee_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "employee_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

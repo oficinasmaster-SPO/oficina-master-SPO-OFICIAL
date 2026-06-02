@@ -1,0 +1,100 @@
+{
+  "name": "UserActivityLog",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Email do usu\u00e1rio"
+    },
+    "user_name": {
+      "type": "string",
+      "description": "Nome do usu\u00e1rio"
+    },
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "workshop_name": {
+      "type": "string",
+      "description": "Nome da oficina"
+    },
+    "activity_type": {
+      "type": "string",
+      "enum": [
+        "page_view",
+        "login",
+        "logout",
+        "action",
+        "idle_start",
+        "idle_end"
+      ],
+      "description": "Tipo de atividade"
+    },
+    "page_url": {
+      "type": "string",
+      "description": "URL da p\u00e1gina visitada"
+    },
+    "page_name": {
+      "type": "string",
+      "description": "Nome da p\u00e1gina"
+    },
+    "action_description": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o da a\u00e7\u00e3o realizada"
+    },
+    "time_spent_seconds": {
+      "type": "integer",
+      "default": 0,
+      "description": "Tempo gasto na p\u00e1gina (segundos)"
+    },
+    "session_id": {
+      "type": "string",
+      "description": "ID da sess\u00e3o do usu\u00e1rio"
+    },
+    "device_info": {
+      "type": "object",
+      "properties": {
+        "browser": {
+          "type": "string"
+        },
+        "os": {
+          "type": "string"
+        },
+        "screen_resolution": {
+          "type": "string"
+        }
+      }
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora da atividade"
+    }
+  },
+  "required": [
+    "user_id",
+    "activity_type"
+  ],
+  "rls": {
+    "create": true,
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

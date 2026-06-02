@@ -1,0 +1,58 @@
+{
+  "name": "CultureScript",
+  "type": "object",
+  "properties": {
+    "workshop_id": {
+      "type": "string"
+    },
+    "position": {
+      "type": "string",
+      "description": "Cargo espec\u00edfico (vazio para script geral)"
+    },
+    "company_history": {
+      "type": "string",
+      "description": "Hist\u00f3ria da empresa"
+    },
+    "mission": {
+      "type": "string"
+    },
+    "vision": {
+      "type": "string"
+    },
+    "values": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "growth_opportunities": {
+      "type": "string",
+      "description": "Oportunidades de crescimento"
+    },
+    "not_fit_profile": {
+      "type": "string",
+      "description": "Perfil de quem n\u00e3o se adapta"
+    },
+    "success_stories": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "employee_name": {
+            "type": "string"
+          },
+          "story": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "workshop_id"
+  ]
+}

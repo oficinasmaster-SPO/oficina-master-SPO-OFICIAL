@@ -1,0 +1,150 @@
+{
+  "name": "CDCRecord",
+  "type": "object",
+  "properties": {
+    "employee_id": {
+      "type": "string"
+    },
+    "workshop_id": {
+      "type": "string"
+    },
+    "evaluator_id": {
+      "type": "string"
+    },
+    "nickname": {
+      "type": "string"
+    },
+    "birth_date": {
+      "type": "string"
+    },
+    "children": {
+      "type": "string"
+    },
+    "spouse_type": {
+      "type": "string",
+      "enum": [
+        "namorado",
+        "namorada",
+        "esposo",
+        "esposa",
+        "companheiro",
+        "companheira",
+        "noivo",
+        "noiva"
+      ],
+      "description": "Tipo de relacionamento"
+    },
+    "spouse_name": {
+      "type": "string",
+      "description": "Nome do c\u00f4njuge/namorado(a)"
+    },
+    "spouse_phone": {
+      "type": "string",
+      "description": "Telefone do c\u00f4njuge/namorado(a)"
+    },
+    "big_dream": {
+      "type": "string"
+    },
+    "hobbies": {
+      "type": "string"
+    },
+    "talents": {
+      "type": "string"
+    },
+    "favorite_food": {
+      "type": "string"
+    },
+    "personal_challenges": {
+      "type": "string"
+    },
+    "company_expectations": {
+      "type": "string"
+    },
+    "strengths": {
+      "type": "string"
+    },
+    "areas_to_develop": {
+      "type": "string"
+    },
+    "professional_skills": {
+      "type": "string"
+    },
+    "disc_profile": {
+      "type": "string"
+    },
+    "communication_channel": {
+      "type": "string"
+    },
+    "main_values": {
+      "type": "string"
+    },
+    "date": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "employee_id",
+    "workshop_id"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "evaluator_id": "{{user.id}}"
+        },
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

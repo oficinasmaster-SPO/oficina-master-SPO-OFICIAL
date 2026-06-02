@@ -1,0 +1,120 @@
+{
+  "name": "COEXContract",
+  "type": "object",
+  "properties": {
+    "employee_id": {
+      "type": "string",
+      "description": "ID do colaborador"
+    },
+    "gestor_id": {
+      "type": "string",
+      "description": "ID do gestor respons\u00e1vel"
+    },
+    "department": {
+      "type": "string",
+      "description": "Departamento"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de in\u00edcio"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de fim"
+    },
+    "deliverables_goals": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Entreg\u00e1veis e metas"
+    },
+    "behavior_attitude": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Comportamentos e atitudes esperados"
+    },
+    "next_alignment_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data do pr\u00f3ximo alinhamento"
+    },
+    "employee_signature": {
+      "type": "string",
+      "description": "Assinatura do colaborador"
+    },
+    "gestor_signature": {
+      "type": "string",
+      "description": "Assinatura do gestor"
+    },
+    "pdf_url": {
+      "type": "string",
+      "description": "URL do PDF gerado"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ativo",
+        "expirado",
+        "renovado"
+      ],
+      "default": "ativo"
+    }
+  },
+  "required": [
+    "employee_id",
+    "gestor_id",
+    "start_date",
+    "end_date"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

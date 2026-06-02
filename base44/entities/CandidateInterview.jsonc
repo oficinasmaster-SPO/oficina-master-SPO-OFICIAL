@@ -1,0 +1,136 @@
+{
+  "name": "CandidateInterview",
+  "type": "object",
+  "properties": {
+    "candidate_id": {
+      "type": "string",
+      "description": "ID do candidato"
+    },
+    "workshop_id": {
+      "type": "string"
+    },
+    "interviewer_id": {
+      "type": "string",
+      "description": "ID do entrevistador"
+    },
+    "interview_date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "forms_used": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "form_id": {
+            "type": "string"
+          },
+          "form_name": {
+            "type": "string"
+          },
+          "form_type": {
+            "type": "string"
+          },
+          "is_lead_score": {
+            "type": "boolean"
+          },
+          "answers": {
+            "type": "array"
+          },
+          "scores": {
+            "type": "object"
+          },
+          "completed": {
+            "type": "boolean"
+          }
+        }
+      },
+      "description": "Lista de formul\u00e1rios utilizados na entrevista"
+    },
+    "form_used_id": {
+      "type": "string",
+      "description": "ID do formul\u00e1rio PPE utilizado (deprecated - usar forms_used)"
+    },
+    "form_used_name": {
+      "type": "string",
+      "description": "Nome do formul\u00e1rio PPE utilizado (deprecated)"
+    },
+    "script_used_id": {
+      "type": "string",
+      "description": "ID do script de sonho utilizado"
+    },
+    "script_content": {
+      "type": "string",
+      "description": "Conte\u00fado do script apresentado"
+    },
+    "answers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "question_id": {
+            "type": "string"
+          },
+          "question_text": {
+            "type": "string"
+          },
+          "answer": {
+            "type": "string"
+          },
+          "score": {
+            "type": "number",
+            "description": "Pontua\u00e7\u00e3o 0-10"
+          }
+        }
+      }
+    },
+    "technical_score": {
+      "type": "number",
+      "description": "M\u00e9dia das perguntas t\u00e9cnicas"
+    },
+    "behavioral_score": {
+      "type": "number",
+      "description": "M\u00e9dia das perguntas comportamentais"
+    },
+    "cultural_score": {
+      "type": "number",
+      "description": "M\u00e9dia das perguntas culturais"
+    },
+    "final_score": {
+      "type": "number",
+      "description": "Lead Score final (0-100)"
+    },
+    "seniority_level": {
+      "type": "string",
+      "enum": [
+        "junior",
+        "pleno",
+        "senior",
+        "master"
+      ],
+      "description": "N\u00edvel de senioridade calculado automaticamente"
+    },
+    "recommendation": {
+      "type": "string",
+      "enum": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ],
+      "description": "A = Contratar / B = Avaliar mais / C = Risco / D = N\u00e3o contratar"
+    },
+    "interviewer_notes": {
+      "type": "string"
+    },
+    "completed": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "candidate_id",
+    "workshop_id",
+    "interviewer_id"
+  ]
+}

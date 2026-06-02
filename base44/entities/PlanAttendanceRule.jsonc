@@ -1,0 +1,74 @@
+{
+  "name": "PlanAttendanceRule",
+  "type": "object",
+  "properties": {
+    "plan_id": {
+      "type": "string",
+      "description": "ID do plano (FREE, START, BRONZE, etc)"
+    },
+    "attendance_type_id": {
+      "type": "string",
+      "description": "ID do tipo de atendimento"
+    },
+    "attendance_type_name": {
+      "type": "string",
+      "description": "Nome do tipo (cache)"
+    },
+    "total_allowed": {
+      "type": "integer",
+      "description": "Quantidade total permitida no plano"
+    },
+    "scheduling_type": {
+      "type": "string",
+      "enum": [
+        "frequency",
+        "event_based"
+      ],
+      "default": "frequency",
+      "description": "Tipo: por frequ\u00eancia ou baseado em eventos do calend\u00e1rio"
+    },
+    "frequency_days": {
+      "type": "integer",
+      "description": "Frequ\u00eancia em dias (usado quando scheduling_type = frequency)"
+    },
+    "start_from_contract_date": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se inicia a partir da data de ativa\u00e7\u00e3o do contrato"
+    },
+    "allow_anticipation": {
+      "type": "boolean",
+      "default": true,
+      "description": "Permite antecipar atendimentos"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se a regra est\u00e1 ativa"
+    }
+  },
+  "required": [
+    "plan_id",
+    "attendance_type_id",
+    "total_allowed",
+    "scheduling_type"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": true,
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "name": "OrganizationStructure",
+  "type": "object",
+  "properties": {
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "employee_id": {
+      "type": "string",
+      "description": "ID do colaborador"
+    },
+    "manager_id": {
+      "type": "string",
+      "description": "ID do gestor direto"
+    },
+    "department": {
+      "type": "string",
+      "description": "Departamento"
+    },
+    "team": {
+      "type": "string",
+      "description": "Equipe"
+    },
+    "hierarchy_level": {
+      "type": "integer",
+      "default": 1,
+      "description": "N\u00edvel hier\u00e1rquico (1=topo)"
+    },
+    "direct_reports": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "IDs dos subordinados diretos"
+    }
+  },
+  "required": [
+    "workshop_id",
+    "employee_id"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": true,
+    "update": true,
+    "delete": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}

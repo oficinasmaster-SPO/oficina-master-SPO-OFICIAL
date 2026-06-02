@@ -1,0 +1,109 @@
+{
+  "name": "SalesTraining",
+  "type": "object",
+  "properties": {
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "user_id": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio que fez o treinamento"
+    },
+    "scenario_type": {
+      "type": "string",
+      "enum": [
+        "objecao_preco",
+        "cliente_indeciso",
+        "reclamacao_servico",
+        "venda_servico_adicional",
+        "negociacao_desconto",
+        "fechamento_venda",
+        "prospeccao_cliente",
+        "pos_venda"
+      ],
+      "description": "Tipo de cen\u00e1rio de treinamento"
+    },
+    "audio_url": {
+      "type": "string",
+      "description": "URL do \u00e1udio gravado"
+    },
+    "transcription": {
+      "type": "string",
+      "description": "Transcri\u00e7\u00e3o do \u00e1udio"
+    },
+    "ai_evaluation": {
+      "type": "object",
+      "properties": {
+        "score": {
+          "type": "number",
+          "description": "Nota de 0 a 10"
+        },
+        "strengths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "improvements": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "feedback": {
+          "type": "string"
+        },
+        "suggested_response": {
+          "type": "string"
+        }
+      }
+    },
+    "duration_seconds": {
+      "type": "integer",
+      "description": "Dura\u00e7\u00e3o do \u00e1udio em segundos"
+    },
+    "completed": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "user_id",
+    "scenario_type"
+  ],
+  "rls": {
+    "create": {
+      "user_id": "{{user.id}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

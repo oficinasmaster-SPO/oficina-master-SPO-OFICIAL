@@ -1,0 +1,103 @@
+{
+  "name": "RBACLog",
+  "type": "object",
+  "properties": {
+    "action_type": {
+      "type": "string",
+      "enum": [
+        "profile_created",
+        "profile_updated",
+        "profile_deleted",
+        "role_created",
+        "role_updated",
+        "role_deleted",
+        "granular_permission_updated",
+        "permission_request_approved",
+        "permission_request_rejected",
+        "user_permission_changed"
+      ],
+      "description": "Tipo de a\u00e7\u00e3o realizada"
+    },
+    "performed_by": {
+      "type": "string",
+      "description": "Email do usu\u00e1rio que realizou a a\u00e7\u00e3o"
+    },
+    "performed_by_name": {
+      "type": "string",
+      "description": "Nome do usu\u00e1rio que realizou a a\u00e7\u00e3o"
+    },
+    "target_type": {
+      "type": "string",
+      "enum": [
+        "profile",
+        "role",
+        "granular_config",
+        "employee",
+        "user"
+      ],
+      "description": "Tipo de recurso afetado"
+    },
+    "target_id": {
+      "type": "string",
+      "description": "ID do recurso afetado"
+    },
+    "target_name": {
+      "type": "string",
+      "description": "Nome do recurso afetado"
+    },
+    "changes": {
+      "type": "object",
+      "properties": {
+        "before": {
+          "type": "object",
+          "description": "Estado anterior"
+        },
+        "after": {
+          "type": "object",
+          "description": "Estado posterior"
+        }
+      },
+      "description": "Detalhes das mudan\u00e7as"
+    },
+    "affected_users_count": {
+      "type": "integer",
+      "default": 0,
+      "description": "Quantidade de usu\u00e1rios impactados"
+    },
+    "ip_address": {
+      "type": "string",
+      "description": "Endere\u00e7o IP de origem"
+    },
+    "user_agent": {
+      "type": "string",
+      "description": "Navegador/dispositivo usado"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es adicionais"
+    }
+  },
+  "required": [
+    "action_type",
+    "performed_by",
+    "target_type"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": false,
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

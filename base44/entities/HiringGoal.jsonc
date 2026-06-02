@@ -1,0 +1,106 @@
+{
+  "name": "HiringGoal",
+  "type": "object",
+  "properties": {
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "position": {
+      "type": "string",
+      "description": "Cargo para contrata\u00e7\u00e3o"
+    },
+    "target_hires": {
+      "type": "integer",
+      "default": 1,
+      "description": "Meta de contrata\u00e7\u00f5es"
+    },
+    "target_leads_per_day": {
+      "type": "integer",
+      "default": 5,
+      "description": "Meta de leads por dia"
+    },
+    "conversion_rate": {
+      "type": "number",
+      "default": 10,
+      "description": "Taxa de convers\u00e3o (%) - padr\u00e3o 10% (1 em 10)"
+    },
+    "required_leads": {
+      "type": "integer",
+      "description": "Leads necess\u00e1rios (calculado automaticamente)"
+    },
+    "funnel_leads": {
+      "type": "integer",
+      "default": 0,
+      "description": "1. Leads gerados"
+    },
+    "funnel_contacted": {
+      "type": "integer",
+      "default": 0,
+      "description": "2. Contatos realizados"
+    },
+    "funnel_interviewed": {
+      "type": "integer",
+      "default": 0,
+      "description": "3. Entrevistas realizadas"
+    },
+    "funnel_approved": {
+      "type": "integer",
+      "default": 0,
+      "description": "4. Aprovados/qualificados"
+    },
+    "funnel_proposal_sent": {
+      "type": "integer",
+      "default": 0,
+      "description": "5. Propostas enviadas"
+    },
+    "funnel_proposal_accepted": {
+      "type": "integer",
+      "default": 0,
+      "description": "6. Propostas aceitas"
+    },
+    "funnel_hired": {
+      "type": "integer",
+      "default": 0,
+      "description": "7. Contrata\u00e7\u00f5es efetivas"
+    },
+    "average_days_to_hire": {
+      "type": "number",
+      "default": 0,
+      "description": "Tempo m\u00e9dio para preencher vaga (dias)"
+    },
+    "deadline": {
+      "type": "string",
+      "format": "date",
+      "description": "Prazo para atingir a meta"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "baixa",
+        "media",
+        "alta",
+        "urgente"
+      ],
+      "default": "media"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ativa",
+        "concluida",
+        "pausada"
+      ],
+      "default": "ativa"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es sobre a meta"
+    }
+  },
+  "required": [
+    "workshop_id",
+    "position",
+    "target_hires"
+  ]
+}

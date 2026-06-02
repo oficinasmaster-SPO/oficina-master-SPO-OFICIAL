@@ -1,0 +1,79 @@
+{
+  "name": "LessonContentHistory",
+  "type": "object",
+  "properties": {
+    "lesson_id": {
+      "type": "string",
+      "description": "ID da aula modificada"
+    },
+    "changed_by": {
+      "type": "string",
+      "description": "Email do usu\u00e1rio que fez a altera\u00e7\u00e3o"
+    },
+    "change_type": {
+      "type": "string",
+      "enum": [
+        "content_update",
+        "assessment_update",
+        "rules_update",
+        "metadata_update"
+      ],
+      "description": "Tipo de altera\u00e7\u00e3o realizada"
+    },
+    "previous_value": {
+      "type": "object",
+      "description": "Valor anterior (snapshot)"
+    },
+    "new_value": {
+      "type": "object",
+      "description": "Novo valor (snapshot)"
+    },
+    "change_reason": {
+      "type": "string",
+      "description": "Motivo da altera\u00e7\u00e3o fornecido pelo gestor"
+    },
+    "impacted_students_count": {
+      "type": "integer",
+      "default": 0,
+      "description": "Quantos alunos foram impactados"
+    },
+    "change_timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data e hora da altera\u00e7\u00e3o"
+    }
+  },
+  "required": [
+    "lesson_id",
+    "changed_by",
+    "change_type"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "changed_by": "{{user.email}}"
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "changed_by": "{{user.email}}"
+        }
+      ]
+    },
+    "update": false,
+    "delete": false
+  }
+}

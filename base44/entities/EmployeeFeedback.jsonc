@@ -1,0 +1,135 @@
+{
+  "name": "EmployeeFeedback",
+  "type": "object",
+  "properties": {
+    "custom_id": {
+      "type": "string",
+      "description": "ID customizado (F001, F002, etc)"
+    },
+    "employee_id": {
+      "type": "string",
+      "description": "ID do colaborador que recebeu o feedback"
+    },
+    "evaluator_id": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio que deu o feedback"
+    },
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "feedback_type": {
+      "type": "string",
+      "enum": [
+        "positivo",
+        "corretivo",
+        "one_on_one"
+      ],
+      "description": "Tipo de feedback"
+    },
+    "feedback_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data do feedback"
+    },
+    "content": {
+      "type": "string",
+      "description": "Conte\u00fado do feedback"
+    },
+    "action_plan": {
+      "type": "string",
+      "description": "Plano de a\u00e7\u00e3o detalhado"
+    },
+    "action_plan_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "in_progress",
+        "implemented"
+      ],
+      "default": "pending",
+      "description": "Status do plano de a\u00e7\u00e3o"
+    },
+    "audio_url": {
+      "type": "string",
+      "description": "URL do \u00e1udio gravado"
+    },
+    "email_sent": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se foi enviado por email"
+    },
+    "email_sent_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora do envio do email"
+    },
+    "employee_acknowledged": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se o colaborador deu ci\u00eancia"
+    },
+    "employee_acknowledged_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora da ci\u00eancia"
+    }
+  },
+  "required": [
+    "employee_id",
+    "evaluator_id",
+    "workshop_id",
+    "feedback_type",
+    "content"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "evaluator_id": "{{user.id}}"
+        },
+        {
+          "employee_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "evaluator_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

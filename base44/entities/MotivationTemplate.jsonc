@@ -1,0 +1,57 @@
+{
+  "name": "MotivationTemplate",
+  "type": "object",
+  "properties": {
+    "content": {
+      "type": "string",
+      "description": "Texto da mensagem com placeholders (ex: {nome}, {meta})"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "bom_dia",
+        "meta_batida",
+        "alerta_atraso",
+        "fechamento_semana",
+        "aniversario"
+      ],
+      "default": "bom_dia"
+    },
+    "tone": {
+      "type": "string",
+      "enum": [
+        "formal",
+        "divertido",
+        "inspirador",
+        "direto"
+      ],
+      "default": "inspirador"
+    },
+    "active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "content",
+    "category"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": true,
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

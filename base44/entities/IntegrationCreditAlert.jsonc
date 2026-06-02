@@ -1,0 +1,60 @@
+{
+  "name": "IntegrationCreditAlert",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio"
+    },
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "alert_type": {
+      "type": "string",
+      "enum": [
+        "warning_70",
+        "critical_90",
+        "limit_100"
+      ],
+      "description": "Tipo do alerta"
+    },
+    "credits_used": {
+      "type": "integer",
+      "description": "Cr\u00e9ditos usados no momento do alerta"
+    },
+    "credits_limit": {
+      "type": "integer",
+      "description": "Limite de cr\u00e9ditos do plano"
+    },
+    "percentage": {
+      "type": "number",
+      "description": "Percentual de uso"
+    },
+    "user_tier": {
+      "type": "string",
+      "description": "Tier do usu\u00e1rio no momento"
+    },
+    "email_sent": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se e-mail foi enviado"
+    },
+    "in_app_sent": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se notifica\u00e7\u00e3o in-app foi criada"
+    },
+    "month_year": {
+      "type": "string",
+      "description": "M\u00eas/Ano do alerta (YYYY-MM)"
+    }
+  },
+  "required": [
+    "user_id",
+    "alert_type",
+    "credits_used",
+    "credits_limit",
+    "month_year"
+  ]
+}

@@ -1,0 +1,104 @@
+{
+  "name": "DocumentNotificationPreference",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio"
+    },
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina"
+    },
+    "expiring_documents_enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Notificar sobre documentos pr\u00f3ximos do vencimento"
+    },
+    "expiring_documents_days": {
+      "type": "array",
+      "items": {
+        "type": "integer"
+      },
+      "default": [
+        7,
+        15,
+        30
+      ],
+      "description": "Dias antes do vencimento para notificar (ex: 7, 15, 30)"
+    },
+    "new_documents_enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Notificar sobre novos documentos"
+    },
+    "interested_categories": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "governanca",
+          "juridico_regimento",
+          "rh_pessoas",
+          "operacional",
+          "tecnico",
+          "comercial",
+          "financeiro",
+          "treinamento",
+          "auditoria_dados"
+        ]
+      },
+      "description": "Categorias de interesse do usu\u00e1rio"
+    },
+    "legal_updates_enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Notificar sobre documentos com mudan\u00e7as legais"
+    },
+    "high_legal_impact_enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Notificar sobre documentos de alto impacto jur\u00eddico"
+    },
+    "weekly_summary_enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Enviar resumo semanal"
+    },
+    "weekly_summary_day": {
+      "type": "string",
+      "enum": [
+        "monday",
+        "friday"
+      ],
+      "default": "monday",
+      "description": "Dia da semana para enviar resumo"
+    },
+    "email_notifications": {
+      "type": "boolean",
+      "default": false,
+      "description": "Enviar notifica\u00e7\u00f5es por email"
+    },
+    "in_app_notifications": {
+      "type": "boolean",
+      "default": true,
+      "description": "Notifica\u00e7\u00f5es in-app"
+    }
+  },
+  "required": [
+    "user_id",
+    "workshop_id"
+  ],
+  "rls": {
+    "create": true,
+    "read": {
+      "user_id": "{{user.id}}"
+    },
+    "update": {
+      "user_id": "{{user.id}}"
+    },
+    "delete": {
+      "user_id": "{{user.id}}"
+    }
+  }
+}
