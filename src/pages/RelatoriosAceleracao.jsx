@@ -226,7 +226,7 @@ export default function RelatoriosAceleracao() {
     }
   };
 
-  if (!user || (user.role !== 'admin' && user.job_role !== 'acelerador')) {
+  if (!user || (user.user_type !== 'internal' && user.role !== 'admin')) {
     return (
       <div className="text-center py-12">
         <p className="text-gray-600">Acesso restrito</p>
