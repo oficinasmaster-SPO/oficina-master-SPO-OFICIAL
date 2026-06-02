@@ -78,10 +78,10 @@ export default function UsuariosAdmin() {
   const { data: adminUsers = [], isLoading } = useQuery({
     queryKey: ['admin-users'],
     queryFn: async () => {
-      // Buscar APENAS colaboradores marcados como 'interno' no banco
-      // Evita trazer sócios de clientes que possam estar marcados com is_internal = true
+      // Buscar APENAS colaboradores internos (equipe Oficinas Master)
+      // Usa user_type como fonte canônica — substitui tipo_vinculo que era inconsistente
       const internalEmployees = await base44.entities.Employee.filter({
-        tipo_vinculo: 'interno'
+        user_type: 'internal'
       }, '-created_date', 1000);
       return internalEmployees || [];
     }
