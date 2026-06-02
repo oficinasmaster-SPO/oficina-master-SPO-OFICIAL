@@ -1,0 +1,58 @@
+name: SPO — CI / Testes
+
+on:
+  push:
+    branches: [main, develop, staging]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  test:
+    name: Rodar testes
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Rodar testes unitários (Vitest)
+        run: npm test
+        env:
+          VITE_CONSULTING_FIRM_ID: ${{ secrets.CONSULTING_FIRM_ID }}
+          NODE_ENV: test
+
+      - name: Publicar resultado dos testes
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: coverage/
+          retention-days: 7
+
+  check-regression:
+    name: Checar regressões críticas
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Rodar apenas specs de regressão
+        run: npx vitest run tests/regression.spec.js
+        env:
+          VITE_CONSULTING_FIRM_ID: ${{ secrets.CONSULTING_FIRM_ID }}

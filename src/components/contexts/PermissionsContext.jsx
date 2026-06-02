@@ -8,6 +8,32 @@ import { useQuery } from "@tanstack/react-query";
 
 const PermissionsContext = createContext(null);
 
+// IDs mapeados para as roles reais de systemRoles.jsx
+// WARN-01 corrigido: mapeamento anterior usava strings inexistentes
+// ('user_create', 'admin_full') que nunca estavam em permissions[]
+const ACTION_PERMISSIONS = {
+  'criar_usuario':     ['admin.users', 'employees.create'],
+  'editar_usuario':    ['admin.users', 'employees.edit'],
+  'deletar_usuario':   ['admin.users', 'employees.delete'],
+  'gerenciar_roles':   ['admin.profiles'],
+  'gerenciar_planos':  ['admin.users'],
+  'aprovar_usuarios':  ['admin.users'],
+  'ver_dashboard':     ['dashboard.view'],
+  'gerenciar_oficina': ['workshop.edit'],
+};
+
+const RESOURCE_TO_PERM_MAP = {
+  employees:   { read: 'employees.view', create: 'employees.create', update: 'employees.edit', delete: 'employees.delete' },
+  workshop:    { read: 'workshop.view', update: 'workshop.manage_goals' },
+  diagnostics: { read: 'diagnostics.view', create: 'diagnostics.create' },
+  processes:   { read: 'processes.view', create: 'processes.create' },
+  documents:   { read: 'documents.upload', create: 'documents.upload' },
+  training:    { read: 'training.view', create: 'training.create', update: 'training.manage' },
+  culture:     { read: 'culture.view', create: 'culture.edit', update: 'culture.manage_rituals' },
+  operations:  { read: 'operations.view_qgp', create: 'operations.manage_tasks' },
+  dashboard:   { read: 'dashboard.view' },
+};
+
 export function PermissionsProvider({ children }) {
   const { workshopId, workshop, isAdminMode } = useWorkshopContext();
   const { user } = useAuth();
@@ -38,7 +64,7 @@ export function PermissionsProvider({ children }) {
 
       // Admin com acesso total
       if (user.role === 'admin' && (isAdminMode || !workshopId)) {
-        await Promise.all(queries); // Espera a granularConfig
+        await Promise.all(queries);
         aggregatedPermissions = systemRoles.flatMap(m => m.roles.map(r => r.id));
         return {
           permissions: [...new Set(aggregatedPermissions)],
@@ -54,7 +80,7 @@ export function PermissionsProvider({ children }) {
       if (workshopId) {
         const wsPromise = workshop ? Promise.resolve(workshop) : base44.entities.Workshop.get(workshopId).catch(() => null);
         const empPromise = base44.entities.Employee.filter({ user_id: user.id, workshop_id: workshopId }).catch(() => null);
-        
+
         const [ws, employees] = await Promise.all([wsPromise, empPromise]);
 
         if (employees && employees.length > 0) {
@@ -98,7 +124,7 @@ export function PermissionsProvider({ children }) {
 
         const customRoleIds = userProfile.data?.custom_role_ids || userProfile.custom_role_ids || [];
         if (customRoleIds && customRoleIds.length > 0) {
-          const customRolesPromises = customRoleIds.map(roleId => 
+          const customRolesPromises = customRoleIds.map(roleId =>
             base44.entities.CustomRole.get(roleId).catch(() => null)
           );
           const roles = await Promise.all(customRolesPromises);
@@ -126,18 +152,18 @@ export function PermissionsProvider({ children }) {
         granularConfig
       };
     },
-    staleTime: 10 * 60 * 1000, // 10 min de cache
+    staleTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
     enabled: !!user
   });
 
-  const { 
-    permissions = [], 
-    profile = null, 
-    customRole = null, 
-    currentRole = null, 
-    isOwnerOrPartner = false, 
-    granularConfig = {} 
+  const {
+    permissions = [],
+    profile = null,
+    customRole = null,
+    currentRole = null,
+    isOwnerOrPartner = false,
+    granularConfig = {}
   } = permissionsData || {};
 
   const hasPermission = (permissionId) => {
@@ -156,46 +182,32 @@ export function PermissionsProvider({ children }) {
       if (profile?.job_roles && profile.job_roles.length > 0) {
         for (const jobRole of profile.job_roles) {
           const roleConfig = granularConfig[jobRole];
-          if (roleConfig && roleConfig.resources && roleConfig.resources[resourceId]) {
+          if (roleConfig?.resources?.[resourceId]) {
             const actions = roleConfig.resources[resourceId].actions || [];
             if (actions.includes(actionId)) return true;
           }
         }
       }
-      
+
       // 2. Atalhos por cargo
       if (profile?.job_roles?.includes('socio') && resourceId === 'employees') return true;
       if ((profile?.job_roles?.includes('diretor') || profile?.job_roles?.includes('gerente')) && resourceId === 'employees') {
-        if (actionId === 'read' || actionId === 'create' || actionId === 'update') return true;
+        if (['read', 'create', 'update'].includes(actionId)) return true;
       }
-      
+
       // 3. Verificar module_permissions do perfil
       if (profile?.module_permissions) {
         const moduleAccess = profile.module_permissions[resourceId];
         if (moduleAccess === 'total') return true;
         if (moduleAccess === 'visualizacao' && actionId === 'read') return true;
       }
-      
-      // 4. Fallback: se nenhuma configuração granular existe, verificar permissão de página
-      // Isso permite que usuários com permissão de nível de página acessem os recursos
-      const resourceToPagePermMap = {
-        employees: { read: 'employees.view', create: 'employees.create', update: 'employees.edit', delete: 'employees.delete' },
-        workshop: { read: 'workshop.view', update: 'workshop.manage_goals' },
-        diagnostics: { read: 'diagnostics.view', create: 'diagnostics.create' },
-        processes: { read: 'processes.view', create: 'processes.create' },
-        documents: { read: 'documents.upload', create: 'documents.upload' },
-        training: { read: 'training.view', create: 'training.create', update: 'training.manage' },
-        culture: { read: 'culture.view', create: 'culture.edit', update: 'culture.manage_rituals' },
-        operations: { read: 'operations.view_qgp', create: 'operations.manage_tasks' },
-        dashboard: { read: 'dashboard.view' },
-      };
-      const permMap = resourceToPagePermMap[resourceId];
-      if (permMap && permMap[actionId]) {
-        if (permissions.includes(permMap[actionId])) return true;
-      }
-      
+
+      // 4. Fallback: verificar permissão de página
+      const permMap = RESOURCE_TO_PERM_MAP[resourceId];
+      if (permMap && permMap[actionId] && permissions.includes(permMap[actionId])) return true;
+
       return false;
-    } catch (error) {
+    } catch {
       return false;
     }
   };
@@ -213,7 +225,7 @@ export function PermissionsProvider({ children }) {
       if (requiredPermission === "public_authenticated") return !!user;
 
       return hasPermission(requiredPermission);
-    } catch (error) {
+    } catch {
       return user?.role === 'admin';
     }
   };
@@ -222,24 +234,13 @@ export function PermissionsProvider({ children }) {
     if (!user) return false;
     if (user.role === 'admin' && isAdminMode) return true;
 
-    const actionPermissions = {
-      'criar_usuario': ['user_create', 'admin_full'],
-      'editar_usuario': ['user_update', 'admin_full'],
-      'deletar_usuario': ['user_delete', 'admin_full'],
-      'gerenciar_roles': ['roles_manage', 'admin_full'],
-      'gerenciar_planos': ['plans_manage', 'admin_full'],
-      'aprovar_usuarios': ['user_approve', 'admin_full'],
-      'ver_dashboard': ['dashboard_view', 'admin_full'],
-      'gerenciar_oficina': ['workshop_manage', 'admin_full'],
-    };
-
-    const requiredPerms = actionPermissions[action] || [];
+    const requiredPerms = ACTION_PERMISSIONS[action] || [];
     return requiredPerms.some(perm => permissions.includes(perm));
   };
 
-  const isInternal = () => {
-    return user?.is_internal === true || user?.tipo_vinculo === 'interno';
-  };
+  // Fonte canônica: user_type. Campos legados (is_internal, tipo_vinculo) mantidos
+  // apenas para retrocompatibilidade — não usar em lógica nova.
+  const isInternal = () => user?.user_type === 'internal';
 
   const value = useMemo(() => ({
     user: user || null,
