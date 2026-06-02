@@ -13,14 +13,14 @@ export default function MetricasAceleracao({ user }) {
       const workshops = await base44.entities.Workshop.list();
       return workshops.filter(w => w.planoAtual && w.planoAtual !== 'FREE');
     },
-    enabled: user?.role === 'admin' || user?.job_role === 'acelerador'
+    enabled: user?.role === 'admin' || user?.user_type === 'internal'
   });
 
   // Buscar atendimentos
   const { data: atendimentos = [] } = useQuery({
     queryKey: ['atendimentos-aceleracao-metricas'],
     queryFn: () => base44.entities.ConsultoriaAtendimento.list(),
-    enabled: user?.role === 'admin' || user?.job_role === 'acelerador'
+    enabled: user?.role === 'admin' || user?.user_type === 'internal'
   });
 
   // Calcular métricas
