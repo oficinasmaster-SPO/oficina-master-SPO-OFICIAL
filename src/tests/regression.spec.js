@@ -185,7 +185,7 @@ describe('ConsultingFirm — ID não deve ser hardcoded', () => {
   const HARDCODED_ID = '69bab264d7c3fe5d367c3959';
 
   it('VITE_CONSULTING_FIRM_ID deve estar definido no ambiente', () => {
-    const firmId = process.env.VITE_CONSULTING_FIRM_ID || HARDCODED_ID;
+    const firmId = import.meta.env?.VITE_CONSULTING_FIRM_ID || HARDCODED_ID;
     expect(firmId).toBeTruthy();
     expect(firmId).toHaveLength(24);
   });
