@@ -7,15 +7,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Search, Brain, User, Calendar } from "lucide-react";
+import { Loader2, Search, Brain, User, Calendar, Building } from "lucide-react";
 import { format } from "date-fns";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function HistoricoDISC() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [diagnostics, setDiagnostics] = useState([]);
   const [employees, setEmployees] = useState([]);
+  const [workshops, setWorkshops] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [workshopFilter, setWorkshopFilter] = useState("all");
+  const [userRole, setUserRole] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -24,11 +28,28 @@ export default function HistoricoDISC() {
   const loadData = async () => {
     try {
       const user = await base44.auth.me();
-      const workshops = await base44.entities.Workshop.filter({ owner_id: user.id });
-      const workshopId = workshops[0]?.id;
+      setUserRole(user.role);
 
+      // Carregar oficinas
+      let workshopsData = [];
+      if (user.role === 'admin') {
+        // Admin vê todas as oficinas
+        workshopsData = await base44.entities.Workshop.list();
+      } else {
+        // Outros usuários vêem apenas suas oficinas
+        workshopsData = await base44.entities.Workshop.filter({ owner_id: user.id });
+      }
+
+      setWorkshops(workshopsData);
+
+      // Se tiver apenas uma oficina, selecionar automaticamente
+      if (workshopsData.length === 1) {
+        setWorkshopFilter(workshopsData[0].id);
+      }
+
+      // Carregar diagnósticos e employees
       const [diagsData, empsData] = await Promise.all([
-        base44.entities.DISCDiagnostic.filter({ workshop_id: workshopId }, '-created_date'),
+        base44.entities.DISCDiagnostic.list('-created_date'),
         base44.entities.Employee.list()
       ]);
 
@@ -45,7 +66,17 @@ export default function HistoricoDISC() {
     return employees.find(e => e.id === id)?.full_name || "Candidato/Externo";
   };
 
+  const getWorkshopName = (id) => {
+    return workshops.find(w => w.id === id)?.name || "Oficina Desconhecida";
+  };
+
   const filteredDiagnostics = diagnostics.filter(d => {
+    // Filtro por oficina
+    if (workshopFilter !== "all" && d.workshop_id !== workshopFilter) {
+      return false;
+    }
+
+    // Filtro por nome
     const name = d.employee_id ? getEmployeeName(d.employee_id) : d.candidate_name;
     return name?.toLowerCase().includes(searchTerm.toLowerCase());
   });
@@ -63,17 +94,39 @@ export default function HistoricoDISC() {
           <Button onClick={() => navigate(createPageUrl("DiagnosticoDISC"))}>Novo Diagnóstico</Button>
         </div>
 
-        <Card className="mb-6">
-          <CardContent className="p-4 flex gap-4 items-center">
-            <Search className="text-gray-400" />
-            <Input 
-              placeholder="Buscar por nome..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="border-none shadow-none focus-visible:ring-0"
-            />
-          </CardContent>
-        </Card>
+        {/* Filtros */}
+        <div className="grid gap-4 md:grid-cols-2 mb-6">
+          <Card>
+            <CardContent className="p-4 flex gap-4 items-center">
+              <Search className="text-gray-400" />
+              <Input 
+                placeholder="Buscar por nome..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="border-none shadow-none focus-visible:ring-0"
+              />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4 flex gap-4 items-center">
+              <Building className="text-gray-400" />
+              <Select value={workshopFilter} onValueChange={setWorkshopFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecionar oficina" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas as Oficinas</SelectItem>
+                  {workshops.map((ws) => (
+                    <SelectItem key={ws.id} value={ws.id}>
+                      {ws.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </CardContent>
+          </Card>
+        </div>
 
         <Card>
           <Table>
@@ -81,6 +134,7 @@ export default function HistoricoDISC() {
               <TableRow>
                 <TableHead>Data</TableHead>
                 <TableHead>Avaliado</TableHead>
+                {userRole === 'admin' && <TableHead>Oficina</TableHead>}
                 <TableHead>Tipo</TableHead>
                 <TableHead>Perfil Dominante</TableHead>
                 <TableHead>Ações</TableHead>
@@ -103,6 +157,14 @@ export default function HistoricoDISC() {
                       </span>
                     </div>
                   </TableCell>
+                  {userRole === 'admin' && (
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Building className="w-4 h-4 text-gray-400" />
+                        {getWorkshopName(diag.workshop_id)}
+                      </div>
+                    </TableCell>
+                  )}
                   <TableCell>
                     <Badge variant={diag.evaluation_type === 'self' ? 'secondary' : 'default'}>
                       {diag.evaluation_type === 'self' ? 'Autoavaliação' : 'Gestor'}
@@ -127,6 +189,10 @@ export default function HistoricoDISC() {
             </TableBody>
           </Table>
         </Card>
+
+        <div className="mt-4 text-sm text-gray-600">
+          <p>Total: {filteredDiagnostics.length} diagnóstico(s) {workshopFilter !== "all" ? `de ${getWorkshopName(workshopFilter)}` : ''}</p>
+        </div>
       </div>
     </div>
   );
