@@ -1066,16 +1066,14 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
     // Admin sempre tem acesso total
     if (isAdmin) return true;
 
-    // Verificar permissões específicas de acelerador
+    // Itens de acelerador: apenas internos com job_role acelerador/consultor/mentor
     if (item.aceleradorOnly && !isAcelerador) return false;
 
-    // Verificação de adminOnly removida em favor do RBAC granular
-    
     // Sistema RBAC Granular: Verificar permissão granular se definida
     if (item.requiredPermission) {
       return hasPermission(item.requiredPermission);
     }
-    
+
     // Fallback: permite acesso se não há permissão definida
     return true;
   };
