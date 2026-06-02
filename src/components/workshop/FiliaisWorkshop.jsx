@@ -78,9 +78,11 @@ export default function FiliaisWorkshop({ workshop }) {
           job_role: "socio",
           user_status: "ativo",
           status: "ativo",
-          tipo_vinculo: "interno",
+          // Sócio de filial é cliente externo — não equipe Oficinas Master
+          user_type: "external",
+          tipo_vinculo: "cliente",  // legado — mantido para retrocompatibilidade
           area: "gerencia",
-          is_internal: true,
+          is_internal: false,       // legado — mantido para retrocompatibilidade
           is_partner: true,
           company_id: workshop.id,
           owner_id: workshop.owner_id || user.id,
