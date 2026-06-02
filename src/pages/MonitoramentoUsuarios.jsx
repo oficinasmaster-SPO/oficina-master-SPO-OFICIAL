@@ -128,8 +128,8 @@ export default function MonitoramentoUsuarios() {
     // Filtro de tipo de usuário
     if (filters.userType !== 'all') {
       const userIds = filters.userType === 'internal'
-        ? allUsers.filter(u => u.tipo_vinculo === 'interno' || u.is_internal).map(u => u.user_id).filter(Boolean)
-        : allUsers.filter(u => u.tipo_vinculo !== 'interno' && !u.is_internal).map(u => u.user_id).filter(Boolean);
+        ? allUsers.filter(u => u.user_type === 'internal').map(u => u.user_id).filter(Boolean)
+        : allUsers.filter(u => u.user_type === 'external').map(u => u.user_id).filter(Boolean);
       
       filtered.sessions = filtered.sessions.filter(s => userIds.includes(s.user_id));
       filtered.activities = filtered.activities.filter(a => userIds.includes(a.user_id));
