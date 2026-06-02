@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Loader2, Home, Users, Briefcase, Sparkles, X } from "lucide-react";
+import { Loader2, Users, Briefcase, Sparkles } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Cell } from "recharts";
 import { profileInfo } from "@/components/disc/DISCQuestions";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -74,7 +74,7 @@ export default function ResultadoDISCModal({ open, onOpenChange, diagnosticId })
       setEmployee(emp);
 
       if (currentDiagnostic.team_name) {
-        await loadTeamComparison(currentDiagnostic.team_name, currentDiag);
+        await loadTeamComparison(currentDiagnostic.team_name, currentDiagnostic);
       }
     } catch (error) {
       console.error(error);
@@ -222,19 +222,35 @@ export default function ResultadoDISCModal({ open, onOpenChange, diagnosticId })
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle className="text-2xl">Resultado - Teste DISC</DialogTitle>
-            <Button variant="ghost" size="icon" onClick={handleClose}>
-              <X className="w-5 h-5" />
-            </Button>
+        <DialogHeader className="sticky top-0 bg-white z-10 pb-4 border-b">
+          <div className="text-center space-y-3">
+            <div className="flex items-center justify-center gap-3">
+              <div className="w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-2xl" style={{ backgroundColor: dominantProfile.color }}>
+                {diagnostic.dominant_profile.charAt(0).toUpperCase()}
+              </div>
+              <div className="text-left">
+                <DialogTitle className="text-2xl font-bold">{employee?.full_name || 'Candidato'}</DialogTitle>
+                <p className="text-muted-foreground">{employee?.position || diagnostic.evaluation_type === 'self' ? 'Autoavaliação' : 'Avaliação'}</p>
+              </div>
+            </div>
+            <div className="flex items-center justify-center gap-4">
+              <div className="text-center">
+                <p className="text-4xl font-bold" style={{ color: dominantProfile.color }}>{scores[diagnostic.dominant_profile].toFixed(0)}%</p>
+                <p className="text-sm text-muted-foreground">Perfil Predominante</p>
+              </div>
+              <div className="h-12 w-px bg-gray-200" />
+              <div className="text-left">
+                <p className="text-lg font-semibold text-gray-900">{dominantProfile.title}</p>
+                <p className="text-sm text-gray-600">{dominantProfile.description.substring(0, 60)}...</p>
+              </div>
+            </div>
+            {diagnostic.is_leader && (
+              <span className="inline-flex items-center gap-2 bg-purple-100 text-purple-800 px-4 py-2 rounded-full text-sm font-semibold">
+                <Users className="w-4 h-4" />
+                👑 Perfil de Líder
+              </span>
+            )}
           </div>
-          {employee && (
-            <p className="text-muted-foreground">{employee.full_name} - {employee.position}</p>
-          )}
-          {diagnostic.is_leader && (
-            <span className="inline-block bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-semibold mt-2">👑 Líder</span>
-          )}
         </DialogHeader>
 
         <div className="space-y-6 mt-4">
@@ -424,7 +440,7 @@ export default function ResultadoDISCModal({ open, onOpenChange, diagnosticId })
 
           <div className="flex justify-center pt-4 border-t">
             <Button variant="outline" onClick={handleClose} className="px-8">
-              <Home className="w-4 h-4 mr-2" />Voltar ao Início
+              Fechar
             </Button>
           </div>
         </div>
