@@ -4,6 +4,7 @@ import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Badge } from "@/components/ui/badge";
 import { usePermissions } from "@/components/hooks/usePermissions";
+import { useUserType } from "@/hooks/useUserType";
 import { useAssistanceMode } from "@/components/hooks/useAssistanceMode";
 import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 import { useAdminMode } from "@/components/hooks/useAdminMode";
@@ -209,6 +210,7 @@ function UserProfileSection({ user, collapsed, workshop }) {
 export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
   const location = useLocation();
   const { profile, currentRole, hasPermission, canAccessPage } = usePermissions();
+  const { isInternal, isAcelerador, isAdmin } = useUserType();
   const { queryString } = useAssistanceMode();
   const { workshop: userWorkshop } = useWorkshopContext();
   const { getAdminUrl } = useAdminMode();
@@ -283,9 +285,8 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
     setExpandedGroups([]);
   }, [location.pathname]);
 
-  // Verificar se o usuário é acelerador baseado na role da oficina atual
-  const effectiveRole = currentRole || user?.job_role;
-  const isAcelerador = effectiveRole === 'acelerador' || user?.role === 'admin';
+  // isAcelerador e isInternal agora vêm do useUserType() — fonte canônica user_type
+  // Removido: effectiveRole === 'acelerador' || user?.role === 'admin' (padrão legado)
 
   const navigationGroups = [
     {
@@ -1063,7 +1064,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
     if (!user) return false;
 
     // Admin sempre tem acesso total
-    if (user.role === 'admin') return true;
+    if (isAdmin) return true;
 
     // Verificar permissões específicas de acelerador
     if (item.aceleradorOnly && !isAcelerador) return false;

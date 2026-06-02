@@ -38,6 +38,7 @@ jobs:
           path: coverage/
           retention-days: 7
 
+  # Job separado que bloqueia merge se testes críticos falharem
   check-regression:
     name: Checar regressões críticas
     runs-on: ubuntu-latest
@@ -53,6 +54,6 @@ jobs:
       - run: npm ci
 
       - name: Rodar apenas specs de regressão
-        run: npx vitest run tests/regression.spec.js
+        run: npx vitest run src/tests/regression.spec.js
         env:
           VITE_CONSULTING_FIRM_ID: ${{ secrets.CONSULTING_FIRM_ID }}
