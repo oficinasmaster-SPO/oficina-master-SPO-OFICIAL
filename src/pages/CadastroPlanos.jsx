@@ -242,7 +242,7 @@ export default function CadastroPlanos() {
         planoAtual: selectedPlan,
         dataAssinatura: new Date().toISOString(),
         owner_id: currentUser.id,
-        consulting_firm_id: currentUser.consulting_firm_id || '69bab264d7c3fe5d367c3959'
+        consulting_firm_id: currentUser.consulting_firm_id || import.meta.env.VITE_CONSULTING_FIRM_ID
       };
 
       if (userWorkshop) {
@@ -264,15 +264,17 @@ export default function CadastroPlanos() {
         // Also create an Employee record for the owner since it wasn't created on signup
         await base44.entities.Employee.create({
           workshop_id: newWorkshop.id,
-          consulting_firm_id: currentUser.consulting_firm_id || '69bab264d7c3fe5d367c3959',
+          consulting_firm_id: currentUser.consulting_firm_id || import.meta.env.VITE_CONSULTING_FIRM_ID,
           user_id: currentUser.id,
           full_name: currentUser.full_name || currentUser.email.split('@')[0],
           email: currentUser.email,
           position: 'Sócio/Proprietário',
           job_role: 'diretor',
           area: 'gerencia',
-          tipo_vinculo: 'interno',
-          is_internal: true,
+          // Proprietário de oficina cliente é EXTERNO — corrigido de 'interno' (bug)
+          user_type: 'external',
+          tipo_vinculo: 'cliente',  // legado — mantido para retrocompatibilidade
+          is_internal: false,       // legado — mantido para retrocompatibilidade
           is_partner: true,
           status: 'ativo',
           user_status: 'ativo',
