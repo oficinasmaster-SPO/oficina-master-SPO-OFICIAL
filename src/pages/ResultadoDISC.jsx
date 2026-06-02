@@ -222,34 +222,34 @@ export default function ResultadoDISCModal({ open, onOpenChange, diagnosticId })
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="sticky top-0 bg-white z-10 pb-4 border-b">
-          <div className="text-center space-y-3">
-            <div className="flex items-center justify-center gap-3">
-              <div className="w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-2xl" style={{ backgroundColor: dominantProfile.color }}>
+        <DialogHeader className="sticky top-0 bg-white z-10 pb-4 border-b shadow-md" style={{ boxShadow: '0 5px 10px rgba(0,0,0,0.1)' }}>
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center gap-4 text-left">
+              <div className="w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-2xl flex-shrink-0" style={{ backgroundColor: dominantProfile.color }}>
                 {diagnostic.dominant_profile.charAt(0).toUpperCase()}
               </div>
-              <div className="text-left">
+              <div>
                 <DialogTitle className="text-2xl font-bold">{employee?.full_name || 'Candidato'}</DialogTitle>
                 <p className="text-muted-foreground">{employee?.position || diagnostic.evaluation_type === 'self' ? 'Autoavaliação' : 'Avaliação'}</p>
+                {diagnostic.is_leader && (
+                  <span className="inline-flex items-center gap-1 bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-xs font-semibold mt-1">
+                    <Users className="w-3 h-3" />
+                    👑 Líder
+                  </span>
+                )}
               </div>
             </div>
-            <div className="flex items-center justify-center gap-4">
-              <div className="text-center">
-                <p className="text-4xl font-bold" style={{ color: dominantProfile.color }}>{scores[diagnostic.dominant_profile].toFixed(0)}%</p>
-                <p className="text-sm text-muted-foreground">Perfil Predominante</p>
+            <div className="flex items-center gap-6 text-right">
+              <div>
+                <p className="text-5xl font-bold" style={{ color: dominantProfile.color }}>{scores[diagnostic.dominant_profile].toFixed(0)}%</p>
+                <p className="text-xs text-muted-foreground">Perfil Predominante</p>
               </div>
-              <div className="h-12 w-px bg-gray-200" />
-              <div className="text-left">
+              <div className="h-16 w-px bg-gray-200" />
+              <div>
                 <p className="text-lg font-semibold text-gray-900">{dominantProfile.title}</p>
-                <p className="text-sm text-gray-600">{dominantProfile.description.substring(0, 60)}...</p>
+                <p className="text-sm text-gray-600 max-w-[200px] truncate">{dominantProfile.description.substring(0, 50)}...</p>
               </div>
             </div>
-            {diagnostic.is_leader && (
-              <span className="inline-flex items-center gap-2 bg-purple-100 text-purple-800 px-4 py-2 rounded-full text-sm font-semibold">
-                <Users className="w-4 h-4" />
-                👑 Perfil de Líder
-              </span>
-            )}
           </div>
         </DialogHeader>
 
