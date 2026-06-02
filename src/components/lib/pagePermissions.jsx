@@ -64,7 +64,6 @@ export const pagePermissions = {
   ResultadoDISC: "diagnostics.view",
   DiagnosticoGerencial: "diagnostics.create",
   DiagnosticoComercial: "diagnostics.create",
-  HistoricoDISC: "diagnostics.view",
   HistoricoMaturidade: "diagnostics.view",
   HistoricoDesempenho: "diagnostics.view",
   ResponderDISC: "diagnostics.create",

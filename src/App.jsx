@@ -44,6 +44,7 @@ const AdminTemplatesBacklog = lazy(() => import('@/pages/AdminTemplatesBacklog')
 const DiagnosticoRiscos = lazy(() => import('@/pages/DiagnosticoRiscos'));
 const DashboardTempoAtencao = lazy(() => import('@/pages/DashboardTempoAtencao'));
 const HistoricoDiagnosticos = lazy(() => import('@/pages/HistoricoDiagnosticos'));
+const HistoricoDISC = lazy(() => import('@/pages/HistoricoDISC'));
 const DreMockup = lazy(() => import('@/pages/DreMockup'));
 const GerenciarSubcategorias = lazy(() => import('@/pages/GerenciarSubcategorias'));
 const RelatoriosAnuais = lazy(() => import('@/pages/RelatoriosAnuais'));
@@ -216,6 +217,16 @@ const AuthenticatedApp = () => {
       <Route path="/HistoricoDiagnosticos" element={
         <LayoutWrapper currentPageName="HistoricoDiagnosticos">
           <HistoricoDiagnosticos />
+        </LayoutWrapper>
+      } />
+      <Route path="/HistoricoDISC" element={
+        <LayoutWrapper currentPageName="HistoricoDISC">
+          <PageAccessControl 
+            requiredJobRoles={['socio', 'socio_interno', 'consultor', 'mentor']}
+            adminOnly={false}
+          >
+            <HistoricoDISC />
+          </PageAccessControl>
         </LayoutWrapper>
       } />
       <Route path="/MeuAgendamento" element={
