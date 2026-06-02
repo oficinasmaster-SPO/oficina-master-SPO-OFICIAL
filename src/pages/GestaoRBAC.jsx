@@ -23,15 +23,8 @@ export default function GestaoRBAC() {
       try {
         const currentUser = await base44.auth.me();
         setUser(currentUser);
-        
-        const employees = await base44.entities.Employee.filter({ user_id: currentUser.id });
-        const employee = employees && employees.length > 0 ? employees[0] : null;
-        
-        const hasInternalAccess = currentUser.role === 'admin' || 
-                                  currentUser.is_internal === true || 
-                                  employee?.tipo_vinculo === 'interno';
-        
-        setIsInternal(hasInternalAccess);
+        // Fonte canônica: user_type — sem query extra ao Employee
+        setIsInternal(currentUser.role === 'admin' || currentUser.user_type === 'internal');
       } catch (error) {
         console.error("Erro ao verificar acesso:", error);
         setIsInternal(false);
@@ -39,7 +32,6 @@ export default function GestaoRBAC() {
         setLoading(false);
       }
     };
-    
     checkInternalAccess();
   }, []);
 
