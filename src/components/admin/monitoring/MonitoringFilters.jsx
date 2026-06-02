@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, Filter, X, Save } from "lucide-react";
+import { Search, Filter, X } from "lucide-react";
 
 export default function MonitoringFilters({ 
   onFiltersChange,
@@ -52,8 +52,9 @@ export default function MonitoringFilters({
     return value !== '';
   });
 
-  const internalUsers = allUsers.filter(u => u.tipo_vinculo === 'interno' || u.is_internal);
-  const externalUsers = allUsers.filter(u => u.tipo_vinculo !== 'interno' && !u.is_internal);
+  // Usa user_type como fonte canônica (substituiu tipo_vinculo/is_internal)
+  const internalUsers = allUsers.filter(u => u.user_type === 'internal');
+  const externalUsers = allUsers.filter(u => u.user_type === 'external');
 
   return (
     <Card className="border-2 border-indigo-100">
@@ -91,7 +92,7 @@ export default function MonitoringFilters({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={null}>Todos</SelectItem>
-                {filters.userType === 'internal' || filters.userType === 'all' ? (
+                {(filters.userType === 'internal' || filters.userType === 'all') && internalUsers.length > 0 && (
                   <>
                     <div className="px-2 py-1.5 text-xs font-semibold text-gray-500">INTERNOS</div>
                     {internalUsers.map(u => (
@@ -100,8 +101,8 @@ export default function MonitoringFilters({
                       </SelectItem>
                     ))}
                   </>
-                ) : null}
-                {filters.userType === 'external' || filters.userType === 'all' ? (
+                )}
+                {(filters.userType === 'external' || filters.userType === 'all') && externalUsers.length > 0 && (
                   <>
                     <div className="px-2 py-1.5 text-xs font-semibold text-gray-500">EXTERNOS</div>
                     {externalUsers.map(u => (
@@ -110,7 +111,7 @@ export default function MonitoringFilters({
                       </SelectItem>
                     ))}
                   </>
-                ) : null}
+                )}
               </SelectContent>
             </Select>
 
