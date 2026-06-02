@@ -221,9 +221,9 @@ export default function ResultadoDISCModal({ open, onOpenChange, diagnosticId })
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="sticky top-0 bg-white z-10 pb-4 border-b shadow-md" style={{ boxShadow: '0 5px 10px rgba(0,0,0,0.1)' }}>
-          <div className="flex items-center justify-between w-full">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden p-0">
+        <DialogHeader className="bg-white border-b shadow-md" style={{ boxShadow: '0 5px 10px rgba(0,0,0,0.1)' }}>
+          <div className="flex items-center justify-between w-full px-6 py-4">
             <div className="flex items-center gap-4 text-left">
               <div className="w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-2xl flex-shrink-0" style={{ backgroundColor: dominantProfile.color }}>
                 {diagnostic.dominant_profile.charAt(0).toUpperCase()}
@@ -253,19 +253,8 @@ export default function ResultadoDISCModal({ open, onOpenChange, diagnosticId })
           </div>
         </DialogHeader>
 
-        <div className="space-y-6 mt-4">
-          <Card className="border-2 shadow-xl" style={{ borderColor: dominantProfile.color }}>
-            <CardContent className="p-8">
-              <div className="text-center">
-                <div className="inline-flex items-center justify-center w-20 h-20 rounded-full mb-4" style={{ backgroundColor: dominantProfile.color + '20' }}>
-                  <span className="text-4xl font-bold" style={{ color: dominantProfile.color }}>{diagnostic.dominant_profile.charAt(0).toUpperCase()}</span>
-                </div>
-                <h2 className="text-3xl font-bold text-gray-900 mb-2">Perfil Predominante: {dominantProfile.title}</h2>
-                <p className="text-lg text-gray-600 mb-6">{dominantProfile.description}</p>
-                <div className="text-6xl font-bold mb-2" style={{ color: dominantProfile.color }}>{scores[diagnostic.dominant_profile].toFixed(0)}%</div>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="space-y-6 p-6 overflow-y-auto max-h-[calc(90vh-100px)]">
+
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
