@@ -56,6 +56,14 @@ export default function ResultadoDISCModal({ open, onOpenChange, diagnosticId })
         return;
       }
 
+      // Verificar se o diagnóstico pertence à workshop do usuário atual
+      const userWorkshopId = currentUserEmployee?.workshop_id;
+      if (userWorkshopId && currentDiagnostic.workshop_id !== userWorkshopId) {
+        toast.error("Acesso não permitido - diagnóstico de outra oficina");
+        handleClose();
+        return;
+      }
+
       setDiagnostic(currentDiagnostic);
 
       let emp = null;
@@ -66,7 +74,7 @@ export default function ResultadoDISCModal({ open, onOpenChange, diagnosticId })
       setEmployee(emp);
 
       if (currentDiagnostic.team_name) {
-        await loadTeamComparison(currentDiagnostic.team_name, currentDiagnostic);
+        await loadTeamComparison(currentDiagnostic.team_name, currentDiag);
       }
     } catch (error) {
       console.error(error);
@@ -338,17 +346,17 @@ export default function ResultadoDISCModal({ open, onOpenChange, diagnosticId })
                   <CardTitle>Funções Recomendadas</CardTitle>
                   <CardDescription>Baseado no perfil DISC identificado</CardDescription>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {diagnostic.recommended_roles?.map((role, index) => (
-                    <div key={index} className="bg-indigo-50 rounded-lg p-4 border border-indigo-200">
-                      <p className="font-semibold text-indigo-900">{role}</p>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {diagnostic.recommended_roles?.map((role, index) => (
+                  <div key={index} className="bg-indigo-50 rounded-lg p-4 border border-indigo-200">
+                    <p className="font-semibold text-indigo-900">{role}</p>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
           </Card>
 
           <Card>
