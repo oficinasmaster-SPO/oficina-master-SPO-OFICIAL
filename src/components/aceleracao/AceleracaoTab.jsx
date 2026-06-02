@@ -58,7 +58,7 @@ export default function AceleracaoTab({ workshop, user }) {
       });
       return workshops.filter(w => w.planoAtual && w.planoAtual !== 'FREE');
     },
-    enabled: user?.role === 'admin' || user?.job_role === 'acelerador'
+    enabled: user?.role === 'admin' || user?.user_type === 'internal'
   });
 
   // Estatísticas
