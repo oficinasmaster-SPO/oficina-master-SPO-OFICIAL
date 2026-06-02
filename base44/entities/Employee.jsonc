@@ -173,6 +173,15 @@
       "default": "outros",
       "description": "Fun\u00e7\u00e3o espec\u00edfica no sistema"
     },
+    "user_type": {
+      "type": "string",
+      "enum": [
+        "internal",
+        "external"
+      ],
+      "default": "external",
+      "description": "Tipo can\u00f4nico do usu\u00e1rio: internal = equipe Oficinas Master | external = cliente/oficina. Fonte \u00fanica de verdade \u2014 populado no cadastro e no backfill."
+    },
     "tipo_vinculo": {
       "type": "string",
       "enum": [
@@ -180,7 +189,7 @@
         "cliente"
       ],
       "default": "cliente",
-      "description": "Tipo de v\u00ednculo: interno (funcion\u00e1rio) ou cliente (externo)"
+      "description": "Tipo de v\u00ednculo: interno (funcion\u00e1rio) ou cliente (externo). Mantido para retrocompatibilidade \u2014 usar user_type como fonte can\u00f4nica."
     },
     "area": {
       "type": "string",
@@ -209,7 +218,7 @@
     "is_internal": {
       "type": "boolean",
       "default": false,
-      "description": "Indica se \u00e9 membro interno da empresa"
+      "description": "Indica se \u00e9 membro interno da empresa. Mantido para retrocompatibilidade \u2014 usar user_type como fonte can\u00f4nica."
     },
     "is_partner": {
       "type": "boolean",

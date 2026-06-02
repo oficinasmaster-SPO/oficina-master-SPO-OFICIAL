@@ -11,9 +11,18 @@
       ],
       "default": "user"
     },
+    "user_type": {
+      "type": "string",
+      "enum": [
+        "internal",
+        "external"
+      ],
+      "default": "external",
+      "description": "Tipo can\u00f4nico do usu\u00e1rio: internal = equipe Oficinas Master | external = cliente/oficina"
+    },
     "consulting_firm_id": {
       "type": "string",
-      "description": "ID do escrit\u00f3rio de consultoria ao qual este usu\u00e1rio pertence."
+      "description": "ID do escrit\u00f3rio de consultoria ao qual este usu\u00e1rio pertence. Preenchido apenas para user_type=internal."
     },
     "company_id": {
       "type": "string",
@@ -22,6 +31,9 @@
     "job_role": {
       "type": "string",
       "enum": [
+        "acelerador",
+        "consultor",
+        "mentor",
         "socio",
         "diretor",
         "supervisor_loja",
@@ -38,9 +50,6 @@
         "administrativo",
         "motoboy",
         "lavador",
-        "acelerador",
-        "consultor",
-        "mentor",
         "outros"
       ],
       "default": "outros",
@@ -52,11 +61,35 @@
     },
     "workshop_id": {
       "type": "string",
-      "description": "ID da oficina principal do usu\u00e1rio, se aplic\u00e1vel."
+      "description": "ID da oficina principal do usu\u00e1rio. Preenchido apenas para user_type=external."
     }
   },
   "rls": {
-    "read": true,
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "id": "{{user.id}}"
+        },
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        }
+      ]
+    },
     "update": {
       "$or": [
         {
@@ -71,16 +104,9 @@
         },
         {
           "id": "{{user.id}}"
-        },
-        {
-          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
         }
       ]
     }
   },
-  "required": [
-    "consulting_firm_id",
-    "profile_id",
-    "workshop_id"
-  ]
+  "required": []
 }

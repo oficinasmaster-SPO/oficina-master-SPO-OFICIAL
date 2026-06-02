@@ -4,42 +4,94 @@
   "properties": {
     "name": {
       "type": "string",
-      "description": "Nome do escrit\u00f3rio de consultoria"
+      "description": "Nome fantasia da consultoria (ex: Oficinas Master)"
     },
-    "owner_user_id": {
+    "razao_social": {
       "type": "string",
-      "description": "ID do usu\u00e1rio principal (admin) do escrit\u00f3rio de consultoria"
+      "description": "Raz\u00e3o social"
+    },
+    "cnpj": {
+      "type": "string",
+      "description": "CNPJ da consultoria"
+    },
+    "email": {
+      "type": "string",
+      "format": "email",
+      "description": "Email principal"
+    },
+    "telefone": {
+      "type": "string",
+      "description": "Telefone principal"
+    },
+    "logo_url": {
+      "type": "string",
+      "description": "URL do logotipo"
+    },
+    "owner_id": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio propriet\u00e1rio/admin principal da consultoria"
+    },
+    "consultant_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "IDs dos consultores/aceleradores/mentores vinculados a esta firma"
+    },
+    "plan_type": {
+      "type": "string",
+      "enum": [
+        "starter",
+        "growth",
+        "enterprise"
+      ],
+      "default": "enterprise",
+      "description": "Tipo de plano da consultoria"
+    },
+    "max_workshops": {
+      "type": "integer",
+      "description": "M\u00e1ximo de workshops gerenciados"
     },
     "status": {
       "type": "string",
       "enum": [
         "ativo",
         "inativo",
-        "pendente"
+        "suspenso"
       ],
-      "default": "pendente",
-      "description": "Status do escrit\u00f3rio de consultoria"
+      "default": "ativo",
+      "description": "Status da consultoria"
     },
-    "branding_logo_url": {
-      "type": "string",
-      "description": "URL da logo para branding personalizado do escrit\u00f3rio"
+    "allowed_domains": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Dom\u00ednios de email permitidos para cadastro interno (ex: oficinasmaster.com.br)"
     },
-    "contact_email": {
-      "type": "string",
-      "format": "email",
-      "description": "Email de contato do escrit\u00f3rio"
+    "brand_colors": {
+      "type": "object",
+      "properties": {
+        "primary": {
+          "type": "string"
+        },
+        "secondary": {
+          "type": "string"
+        }
+      },
+      "description": "Cores da marca para personaliza\u00e7\u00e3o"
+    },
+    "settings": {
+      "type": "object",
+      "description": "Configura\u00e7\u00f5es gerais da consultoria (JSON livre)"
     }
   },
   "required": [
     "name",
-    "owner_user_id"
+    "cnpj",
+    "owner_id"
   ],
   "rls": {
-    "create": {
-      "user_condition": {
-        "role": "admin"
-      }
-    },
     "read": {
       "$or": [
         {
@@ -48,9 +100,19 @@
           }
         },
         {
-          "owner_user_id": "{{user.id}}"
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "owner_id": "{{user.id}}"
         }
       ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
     },
     "update": {
       "$or": [
@@ -60,7 +122,7 @@
           }
         },
         {
-          "owner_user_id": "{{user.id}}"
+          "owner_id": "{{user.id}}"
         }
       ]
     },
