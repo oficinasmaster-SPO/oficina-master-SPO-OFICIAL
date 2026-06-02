@@ -14,6 +14,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import ResultadoDISCModal from "@/pages/ResultadoDISC";
 
 export default function HistoricoDISC() {
   const navigate = useNavigate();
@@ -25,6 +26,8 @@ export default function HistoricoDISC() {
   const [workshopFilter, setWorkshopFilter] = useState("all");
   const [userRole, setUserRole] = useState(null);
   const [open, setOpen] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedDiagnosticId, setSelectedDiagnosticId] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -77,6 +80,11 @@ export default function HistoricoDISC() {
 
   const getWorkshopName = (id) => {
     return workshops.find(w => w.id === id)?.name || "Oficina Desconhecida";
+  };
+
+  const handleVerResultado = (diagnosticId) => {
+    setSelectedDiagnosticId(diagnosticId);
+    setModalOpen(true);
   };
 
   const filteredDiagnostics = diagnostics.filter(d => {
@@ -235,7 +243,7 @@ export default function HistoricoDISC() {
                     <Button 
                       variant="outline" 
                       size="sm"
-                      onClick={() => navigate(createPageUrl("ResultadoDISC") + `?id=${diag.id}`)}
+                      onClick={() => handleVerResultado(diag.id)}
                     >
                       Ver Resultado
                     </Button>
@@ -250,6 +258,13 @@ export default function HistoricoDISC() {
           <p>Total: {filteredDiagnostics.length} diagnóstico(s) {workshopFilter !== "all" ? `de ${getWorkshopName(workshopFilter)}` : ''}</p>
         </div>
       </div>
+
+      {/* Modal de Resultado DISC */}
+      <ResultadoDISCModal
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        diagnosticId={selectedDiagnosticId}
+      />
     </div>
   );
 }
