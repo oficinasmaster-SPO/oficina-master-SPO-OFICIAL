@@ -102,7 +102,7 @@ export default function CronogramaGeral({ isTab = false }) {
   });
 
   // Verificar acesso
-  if (!user || (user.role !== 'admin' && user.job_role !== 'acelerador')) {
+  if (!user || (user.user_type !== 'internal' && user.role !== 'admin')) {
     return (
       <div className="max-w-4xl mx-auto text-center py-12">
         <div className="bg-red-50 border-2 border-red-200 rounded-lg p-8">
