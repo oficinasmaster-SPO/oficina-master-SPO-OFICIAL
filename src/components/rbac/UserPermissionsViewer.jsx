@@ -113,7 +113,7 @@ export default function UserPermissionsViewer() {
   const internalUsers = users.filter(u => {
     if (u.role === 'admin') return true;
     const emp = employees.find(e => e.user_id === u.id);
-    return emp?.tipo_vinculo === 'interno' || emp?.is_internal === true || emp?.job_role === 'socio' || emp?.job_role === 'socio_interno';
+    return emp?.user_type === 'internal';
   });
   const externalUsers = users.filter(u => !internalUsers.includes(u));
 
