@@ -6,6 +6,7 @@ import { Loader2, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import HistoricoFilters from '@/components/diagnostico/HistoricoFilters';
 import HistoricoCard from '@/components/diagnostico/HistoricoCard';
+import { getUserWorkshopId, isAdminOrInternal } from '@/utils/userUtils';
 import { Button } from '@/components/ui/button';
 
 const ITEMS_PER_PAGE = 50;
@@ -42,17 +43,13 @@ export default function HistoricoDiagnosticos() {
       if (!user) return { diagnostics: [] };
       
       try {
-        // Em modo Admin, usar admin_workshop_id; caso contrário, usar workshop_id do user
-        // CRÍTICO: Se user tem workshop_id, SEMPRE usar (nunca deixar como null/undefined)
-        const targetWorkshopId = user._adminModeWorkshopId || 
-                               user.data?.workshop_id || 
-                               (user.workshop_id) ||  // Fallback direto no user
-                               null;
+        // Em modo Admin, usar admin_workshop_id; caso contrário, resolver user.workshop_id via utilitário
+        const targetWorkshopId = user._adminModeWorkshopId || getUserWorkshopId(user) || null;
         
         const result = await base44.functions.invoke('getDiagnosticHistory', {
           workshop_id: targetWorkshopId,
           user_id: user.id,
-          isAdmin: user.role === 'admin' || !!user.data?.consulting_firm_id,
+          isAdmin: isAdminOrInternal(user),
           // CRÍTICO: Indica se está em modo visualização admin (vendo cliente específico)
           adminModeActive: !!user._adminModeWorkshopId
         });
@@ -116,7 +113,7 @@ export default function HistoricoDiagnosticos() {
   }
 
   const diagnostics = historyData?.diagnostics || [];
-  const isAdminMode = user.role === 'admin' || user.data?.consulting_firm_id;
+  const isAdminMode = isAdminOrInternal(user);
   const showCompanyFilter = isAdminMode;
 
   // Paginação
@@ -128,7 +125,6 @@ export default function HistoricoDiagnosticos() {
     // Navegar para a página de resultado baseado no tipo de diagnóstico
     const diagnosticTypeRoutes = {
       entrepreneur_diagnostic: '/DiagnosticoEmpresario',
-      // Add more mappings as needed
     };
     
     const route = diagnosticTypeRoutes[diagnostic.diagnostic_type] || '/Historico';
