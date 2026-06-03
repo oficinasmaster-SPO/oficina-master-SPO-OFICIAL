@@ -17,7 +17,8 @@ export default function UserFormDialog({
   customRoles = [],
   admins,
   onSubmit,
-  isLoading
+  isLoading,
+  currentUser
 }) {
   const [selectedProfileId, setSelectedProfileId] = useState(selectedUser?.profile_id || "");
    const [selectedCustomRoles, setSelectedCustomRoles] = useState(selectedUser?.custom_role_ids || []);
@@ -93,7 +94,7 @@ export default function UserFormDialog({
        position: formDataObj.get('position'),
        area: formData.area,
        job_role: formData.job_role,
-       workshop_id: formData.workshop_id,
+       consulting_firm_id: currentUser?.data?.consulting_firm_id || currentUser?.consulting_firm_id || null,
        profile_id: selectedProfileId,
        custom_role_ids: selectedCustomRoles,
        user_status: formDataObj.get('user_status') || 'ativo',
@@ -218,13 +219,14 @@ export default function UserFormDialog({
                </div>
 
                <div>
-                 <Label>Workshop ID *</Label>
-                 <Input 
-                   value={formData.workshop_id}
-                   onChange={(e) => setFormData({...formData, workshop_id: e.target.value})}
-                   placeholder="ID da loja/oficina"
-                 />
-               </div>
+                  <Label className="text-gray-500">Consultoria (Tenant)</Label>
+                  <Input 
+                    value={currentUser?.data?.consulting_firm_id || currentUser?.consulting_firm_id || "— será atribuído automaticamente —"}
+                    disabled
+                    className="bg-gray-50 text-gray-500 text-xs"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">Atribuído automaticamente ao tenant da sua consultoria</p>
+                </div>
              </div>
             </div>
 

@@ -720,6 +720,7 @@ export default function UsuariosAdmin() {
         admins={adminList}
         onSubmit={handleSubmit}
         isLoading={createUserMutation.isPending || updateUserMutation.isPending}
+        currentUser={currentUser}
       />
 
       {/* Modal Cadastro Direto */}
