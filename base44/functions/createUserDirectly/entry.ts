@@ -37,7 +37,8 @@ Deno.serve(async (req) => {
       area, 
       job_role, 
       profile_id, 
-      workshop_id, 
+      workshop_id,         // opcional para usuário externo/oficina
+      consulting_firm_id: bodyConsultingFirmId, // para usuário interno
       role = "user",
       data_nascimento,
       idempotencyKey
@@ -49,26 +50,29 @@ Deno.serve(async (req) => {
     }
     
     if (!name || typeof name !== 'string' || name.length > 255 ||
-        !email || typeof email !== 'string' || email.length > 255 ||
-        !workshop_id || typeof workshop_id !== 'string') {
-      return Response.json({ success: false, error: { code: 'MISSING_FIELDS', message: 'Campos obrigatórios ausentes ou inválidos (name, email, workshop_id)' } }, { status: 400 });
+        !email || typeof email !== 'string' || email.length > 255) {
+      return Response.json({ success: false, error: { code: 'MISSING_FIELDS', message: 'Campos obrigatórios ausentes ou inválidos (name, email)' } }, { status: 400 });
     }
 
-    // Cross-tenant: só bloqueia se o admin for de uma oficina específica (não admin global)
-    if (currentUser.role !== 'admin' && currentUser.data?.workshop_id && currentUser.data?.workshop_id !== workshop_id) {
-       return Response.json({ success: false, error: { code: 'FORBIDDEN', message: 'Acesso cross-tenant negado' } }, { status: 403 });
+    // Para usuário interno: consulting_firm_id é obrigatório (sem workshop)
+    // Para usuário externo: workshop_id é obrigatório
+    const isInternalUser = !workshop_id && !!bodyConsultingFirmId;
+    if (!workshop_id && !bodyConsultingFirmId) {
+      return Response.json({ success: false, error: { code: 'MISSING_FIELDS', message: 'Informe workshop_id (externo) ou consulting_firm_id (interno)' } }, { status: 400 });
     }
 
     async function validateBusinessRules(data, context) {
-      const { email, workshop_id, profile_id } = data;
+      const { email, workshop_id, profile_id, isInternalUser } = data;
       const { base44 } = context;
       
-      const workshop = await base44.asServiceRole.entities.Workshop.get(workshop_id);
-      if (!workshop) {
-        throw { code: 'INVALID_STATE', message: 'Oficina especificada não existe' };
+      // Só valida workshop se for usuário externo
+      if (!isInternalUser) {
+        const workshop = await base44.asServiceRole.entities.Workshop.get(workshop_id);
+        if (!workshop) {
+          throw { code: 'INVALID_STATE', message: 'Oficina especificada não existe' };
+        }
       }
       
-      // Só valida perfil se foi informado
       if (profile_id) {
         const profile = await base44.asServiceRole.entities.UserProfile.get(profile_id);
         if (!profile) {
@@ -76,17 +80,20 @@ Deno.serve(async (req) => {
         }
       }
 
-      const existingEmployees = await base44.asServiceRole.entities.Employee.filter({ email, workshop_id });
+      // Verifica duplicidade por email
+      const filterField = isInternalUser ? {} : { workshop_id };
+      const existingEmployees = await base44.asServiceRole.entities.Employee.filter({ email, ...filterField });
       if (existingEmployees && existingEmployees.length > 0) {
-        throw { code: 'BUSINESS_RULE_VIOLATION', message: 'Já existe um colaborador com este email nesta oficina' };
+        throw { code: 'BUSINESS_RULE_VIOLATION', message: 'Já existe um colaborador com este email' };
       }
     }
 
-    // Se profile_id não foi enviado, busca o primeiro perfil externo ativo como fallback
+    // Se profile_id não foi enviado, busca perfil compatível como fallback
     let finalProfileIdResolved = profile_id;
     if (!finalProfileIdResolved) {
       try {
-        const profiles = await base44.asServiceRole.entities.UserProfile.filter({ type: 'externo', status: 'ativo' });
+        const profileType = isInternalUser ? 'interno' : 'externo';
+        const profiles = await base44.asServiceRole.entities.UserProfile.filter({ type: profileType, status: 'ativo' });
         if (profiles && profiles.length > 0) {
           finalProfileIdResolved = profiles[0].id;
           console.log("📋 Profile_id resolvido automaticamente:", finalProfileIdResolved);
@@ -97,7 +104,7 @@ Deno.serve(async (req) => {
     }
 
     try {
-      await validateBusinessRules({ email, workshop_id, profile_id: finalProfileIdResolved }, { base44 });
+      await validateBusinessRules({ email, workshop_id, profile_id: finalProfileIdResolved, isInternalUser }, { base44 });
     } catch (ruleError) {
       return Response.json({ success: false, error: ruleError }, { status: 400 });
     }
@@ -109,17 +116,29 @@ Deno.serve(async (req) => {
 
     console.log("👤 Convidando usuário:", email);
     
-    // Buscar a oficina para obter a qual consultoria ela pertence (necessário no multi-tenant)
-    let consulting_firm_id = null;
+    // Determinar consulting_firm_id e nome da organização
+    let consulting_firm_id = bodyConsultingFirmId || null;
     let workshop_name = 'Oficinas Master Acelerador';
-    try {
-      const ws = await base44.asServiceRole.entities.Workshop.get(workshop_id);
-      if (ws) {
-        consulting_firm_id = ws.consulting_firm_id || null;
-        if (ws.name) workshop_name = ws.name;
+    
+    if (!isInternalUser && workshop_id) {
+      // Usuário externo: busca dados da oficina
+      try {
+        const ws = await base44.asServiceRole.entities.Workshop.get(workshop_id);
+        if (ws) {
+          consulting_firm_id = ws.consulting_firm_id || consulting_firm_id;
+          if (ws.name) workshop_name = ws.name;
+        }
+      } catch(e) {
+        console.error("⚠️ Aviso: Falha ao buscar dados da oficina:", e.message);
       }
-    } catch(e) {
-      console.error("⚠️ Aviso: Falha ao buscar dados da oficina:", e.message);
+    } else if (isInternalUser && consulting_firm_id) {
+      // Usuário interno: busca nome da consultoria
+      try {
+        const firm = await base44.asServiceRole.entities.ConsultingFirm.get(consulting_firm_id);
+        if (firm?.name) workshop_name = firm.name;
+      } catch(e) {
+        console.warn("⚠️ Aviso: Falha ao buscar nome da consultoria:", e.message);
+      }
     }
     
     // O profile_id resolvido é a fonte da verdade para as permissões
@@ -168,7 +187,7 @@ Deno.serve(async (req) => {
     // Criar Employee com os dados
     console.log("👥 Criando Employee...");
     const employee = await base44.asServiceRole.entities.Employee.create({
-      workshop_id: workshop_id,
+      workshop_id: isInternalUser ? null : workshop_id,
       consulting_firm_id: consulting_firm_id,
       user_id: inviteResult.id,
       full_name: name,
@@ -176,11 +195,12 @@ Deno.serve(async (req) => {
       telefone: telefone || '',
       position: position || 'Colaborador',
       job_role: job_role || 'outros',
-      area: area || 'tecnico',
+      area: area || 'administrativo',
       profile_id: finalProfileId,
       user_status: 'pending',
-      is_internal: true,
-      tipo_vinculo: 'interno',
+      user_type: isInternalUser ? 'internal' : 'external',
+      is_internal: isInternalUser,
+      tipo_vinculo: isInternalUser ? 'interno' : 'cliente',
       admin_responsavel_id: currentUser.id,
       hire_date: new Date().toISOString().split('T')[0],
       data_nascimento: data_nascimento || null
@@ -193,16 +213,17 @@ Deno.serve(async (req) => {
     // Atualizar User com dados customizados usando SERVICE ROLE (não afeta sessão)
     console.log("🔄 Atualizando dados do User...");
     const userData = {
-      workshop_id: workshop_id,
+      workshop_id: isInternalUser ? null : workshop_id,
       consulting_firm_id: consulting_firm_id,
       profile_id: finalProfileId,
       position: position || 'Colaborador',
       job_role: job_role || 'outros',
-      area: area || 'tecnico',
+      area: area || 'administrativo',
       telefone: telefone || '',
       hire_date: new Date().toISOString().split('T')[0],
       user_status: 'pending',
-      is_internal: true,
+      user_type: isInternalUser ? 'internal' : 'external',
+      is_internal: isInternalUser,
       invite_id: invite.id,
       admin_responsavel_id: currentUser.id
     };
