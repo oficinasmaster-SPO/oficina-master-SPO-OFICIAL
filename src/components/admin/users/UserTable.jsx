@@ -168,13 +168,23 @@ export default function UserTable({
                     >
                       <Mail className="w-4 h-4" />
                     </Button>
-                    {user.role !== 'admin' && onPromoteToAdmin && (
+                    {user.role !== 'admin' && onPromoteToAdmin ? (
                       <Button
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-amber-600 hover:bg-amber-50"
                         onClick={() => onPromoteToAdmin(user)}
                         title="Promover para Admin"
+                      >
+                        <Shield className="w-4 h-4" />
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-gray-300 cursor-not-allowed"
+                        disabled
+                        title="Usuário já é Admin"
                       >
                         <Shield className="w-4 h-4" />
                       </Button>
