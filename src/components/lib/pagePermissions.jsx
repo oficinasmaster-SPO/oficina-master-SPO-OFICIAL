@@ -179,6 +179,7 @@ export const pagePermissions = {
   ContasPagar: "financeiro.view",
   ConciliacaoBancaria: "financeiro.view",
   RelatoriosAnuais: "financeiro.view",
+  DashboardFinanceiro: "financeiro.view",
 
   // Diagnósticos (páginas ausentes)
   HistoricoDiagnosticos: "diagnostics.view",

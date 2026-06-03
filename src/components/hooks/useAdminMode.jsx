@@ -1,19 +1,29 @@
 import { useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
+import { useAuth } from '@/lib/AuthContext';
 
 export function useAdminMode() {
   const [isAdminMode, setIsAdminMode] = useState(false);
   const [adminWorkshopId, setAdminWorkshopId] = useState(null);
   const location = useLocation();
+  const { user } = useAuth();
 
   useEffect(() => {
+    // RISK-03: Modo Admin só pode ser ativado por admin ou usuário interno
+    const canUseAdminMode = user?.role === 'admin' || user?.user_type === 'internal';
+
     // Não ativar modo admin em páginas de primeiro acesso
     const isPublicPage = location.pathname.toLowerCase().includes('primeiroacesso') || 
                         location.pathname.toLowerCase().includes('primeiroaçesso');
     
-    if (isPublicPage) {
+    if (isPublicPage || !canUseAdminMode) {
       setIsAdminMode(false);
       setAdminWorkshopId(null);
+      // Limpar storage se usuário não tem permissão
+      if (!canUseAdminMode) {
+        sessionStorage.removeItem('admin_workshop_id');
+        localStorage.removeItem('admin_workshop_id');
+      }
       return;
     }
 
@@ -24,20 +34,18 @@ export function useAdminMode() {
       setIsAdminMode(true);
       setAdminWorkshopId(workshopId);
       sessionStorage.setItem('admin_workshop_id', workshopId);
-      console.log('🔧 Modo Admin ativado para workshop:', workshopId);
     } else {
       // Tenta recuperar do sessionStorage
       const storedWorkshopId = sessionStorage.getItem('admin_workshop_id');
       if (storedWorkshopId) {
         setIsAdminMode(true);
         setAdminWorkshopId(storedWorkshopId);
-        console.log('🔧 Modo Admin recuperado do storage:', storedWorkshopId);
       } else {
         setIsAdminMode(false);
         setAdminWorkshopId(null);
       }
     }
-  }, [location.pathname, location.search]);
+  }, [location.pathname, location.search, user?.id, user?.role, user?.user_type]);
 
   const exitAdminMode = () => {
     sessionStorage.removeItem('admin_workshop_id');
