@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,104 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { UserPlus, Copy, Check, Send, Users, Building2 } from "lucide-react";
+import { UserPlus, Copy, Check, Send, Users, Building2, Search, ChevronDown, X } from "lucide-react";
+
+function WorkshopSearchSelect({ workshops, value, onChange }) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const containerRef = useRef(null);
+  const searchRef = useRef(null);
+
+  const selected = workshops.find(w => w.id === value);
+  const filtered = workshops.filter(w =>
+    w.name.toLowerCase().includes(search.toLowerCase()) ||
+    (w.city || "").toLowerCase().includes(search.toLowerCase())
+  );
+
+  useEffect(() => {
+    if (open && searchRef.current) searchRef.current.focus();
+  }, [open]);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setOpen(false);
+        setSearch("");
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleSelect = (id) => {
+    onChange(id);
+    setOpen(false);
+    setSearch("");
+  };
+
+  const handleClear = (e) => {
+    e.stopPropagation();
+    onChange("");
+    setSearch("");
+  };
+
+  return (
+    <div ref={containerRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className="flex items-center justify-between w-full h-10 px-3 py-2 text-sm border border-input rounded-md bg-background hover:bg-accent/30 transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
+      >
+        <span className={selected ? "text-foreground" : "text-muted-foreground"}>
+          {selected ? selected.name : "Selecione a oficina"}
+        </span>
+        <div className="flex items-center gap-1">
+          {value && (
+            <span onClick={handleClear} className="hover:text-destructive p-0.5 rounded">
+              <X className="w-3 h-3" />
+            </span>
+          )}
+          <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
+        </div>
+      </button>
+
+      {open && (
+        <div className="absolute z-50 w-full mt-1 bg-white border border-border rounded-md shadow-lg">
+          <div className="p-2 border-b border-border">
+            <div className="flex items-center gap-2 px-2 py-1 border border-border rounded-md bg-gray-50">
+              <Search className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+              <input
+                ref={searchRef}
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Buscar oficina..."
+                className="flex-1 text-sm bg-transparent outline-none"
+              />
+            </div>
+          </div>
+          <div className="overflow-y-auto max-h-48 scrollbar-thin">
+            {filtered.length === 0 ? (
+              <div className="px-3 py-4 text-sm text-center text-muted-foreground">Nenhuma oficina encontrada</div>
+            ) : (
+              filtered.map(w => (
+                <button
+                  key={w.id}
+                  type="button"
+                  onClick={() => handleSelect(w.id)}
+                  className={`w-full text-left px-3 py-2 text-sm hover:bg-accent/50 transition-colors ${w.id === value ? "bg-accent font-medium" : ""}`}
+                >
+                  <span>{w.name}</span>
+                  {w.city && <span className="ml-1 text-xs text-muted-foreground">· {w.city}</span>}
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 const EMPTY_INTERNO = {
   name: "",
@@ -360,12 +457,11 @@ export default function CadastroUsuarioDiretoModal({ open, onClose }) {
                   </div>
                   <div>
                     <Label>Oficina *</Label>
-                    <Select value={formExterno.workshop_id} onValueChange={(v) => setFormExterno({...formExterno, workshop_id: v})}>
-                      <SelectTrigger><SelectValue placeholder="Selecione a oficina" /></SelectTrigger>
-                      <SelectContent>
-                        {workshops.map(w => <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+                    <WorkshopSearchSelect
+                      workshops={workshops}
+                      value={formExterno.workshop_id}
+                      onChange={(v) => setFormExterno({...formExterno, workshop_id: v})}
+                    />
                   </div>
                   <div>
                     <Label>Cargo</Label>
