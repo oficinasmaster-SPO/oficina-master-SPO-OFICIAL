@@ -1,7 +1,7 @@
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, Clock, Eye, Edit, Key, Trash2, Mail, FileText } from "lucide-react";
+import { AlertCircle, Clock, Eye, Edit, Key, Trash2, Mail, FileText, Shield } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -14,7 +14,8 @@ export default function UserTable({
   onResetPassword,
   onResendAccess,
   onViewAudit, 
-  onDelete 
+  onDelete,
+  onPromoteToAdmin
 }) {
   const getStatusBadge = (status) => {
     const badges = {
@@ -167,6 +168,17 @@ export default function UserTable({
                     >
                       <Mail className="w-4 h-4" />
                     </Button>
+                    {user.role !== 'admin' && onPromoteToAdmin && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-amber-600 hover:bg-amber-50"
+                        onClick={() => onPromoteToAdmin(user)}
+                        title="Promover para Admin"
+                      >
+                        <Shield className="w-4 h-4" />
+                      </Button>
+                    )}
                     <Button
                       variant="ghost"
                       size="icon"

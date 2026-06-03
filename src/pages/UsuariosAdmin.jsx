@@ -543,6 +543,34 @@ export default function UsuariosAdmin() {
     }
   };
 
+  const handlePromoteToAdmin = (user) => {
+    if (confirm(`Promover ${user.full_name} para Administrador?\n\nEle terá acesso total ao sistema.`)) {
+      const changes = { 
+        action: 'updated', 
+        field: 'role',
+        oldValue: user.role,
+        newValue: 'admin'
+      };
+
+      updateUserMutation.mutate({ 
+        userId: user.id, 
+        data: {
+          ...user,
+          role: 'admin',
+          full_name: user.full_name,
+          telefone: user.telefone,
+          position: user.position,
+          area: user.area,
+          job_role: user.job_role,
+          profile_id: user.profile_id,
+          custom_role_ids: user.custom_role_ids,
+          user_status: user.user_status
+        },
+        changes 
+      });
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
@@ -611,6 +639,7 @@ export default function UsuariosAdmin() {
               setAuditViewOpen(true);
             }}
             onDelete={handleDelete}
+            onPromoteToAdmin={handlePromoteToAdmin}
           />
         </CardContent>
       </Card>
