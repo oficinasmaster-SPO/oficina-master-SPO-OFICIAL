@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { getUserWorkshopId, getUserConsultingFirmId } from "@/utils/userUtils";
 
 /**
  * Hook que determina as permissões do usuário sobre um sprint.
@@ -32,12 +33,12 @@ export function useSprintPermissions(sprint, user, workshop) {
     const isConsultor =
       isAdmin ||
       sprint.consultor_id === user.id ||
-      (user.data?.consulting_firm_id && sprint.consulting_firm_id === user.data.consulting_firm_id);
+      (getUserConsultingFirmId(user) && sprint.consulting_firm_id === getUserConsultingFirmId(user));
     
     const isOficina =
       !isConsultor && (
         (workshop && sprint.workshop_id === workshop.id) ||
-        (user.data?.workshop_id && sprint.workshop_id === user.data.workshop_id)
+        (getUserWorkshopId(user) && sprint.workshop_id === getUserWorkshopId(user))
       );
 
     const sprintCompleted = sprint.status === "completed";
