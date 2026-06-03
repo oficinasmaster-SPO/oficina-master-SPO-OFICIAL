@@ -111,6 +111,7 @@ const EMPTY_INTERNO = {
   email: "",
   telefone: "",
   job_role: "consultor",
+  profile_id: "",
 };
 
 const EMPTY_EXTERNO = {
@@ -420,7 +421,17 @@ export default function CadastroUsuarioDiretoModal({ open, onClose }) {
                       </SelectContent>
                     </Select>
                   </div>
-
+                  {profilesInternos.length > 0 && (
+                    <div className="md:col-span-2">
+                      <Label>Perfil de Acesso</Label>
+                      <Select value={formInterno.profile_id || ''} onValueChange={(v) => setFormInterno({...formInterno, profile_id: v})}>
+                        <SelectTrigger><SelectValue placeholder="Selecione um perfil" /></SelectTrigger>
+                        <SelectContent>
+                          {profilesInternos.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                 </div>
                 <Button type="submit" disabled={isPending} className="w-full">
                   {isPending ? 'Enviando convite...' : 'Enviar Convite por Email'}
@@ -465,7 +476,17 @@ export default function CadastroUsuarioDiretoModal({ open, onClose }) {
                       </SelectContent>
                     </Select>
                   </div>
-
+                  {profilesExternos.length > 0 && (
+                    <div className="md:col-span-2">
+                      <Label>Perfil de Acesso</Label>
+                      <Select value={formExterno.profile_id || ''} onValueChange={(v) => setFormExterno({...formExterno, profile_id: v})}>
+                        <SelectTrigger><SelectValue placeholder="Selecione um perfil" /></SelectTrigger>
+                        <SelectContent>
+                          {profilesExternos.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                 </div>
                 <Button type="submit" disabled={isPending} className="w-full">
                   {isPending ? 'Criando usuário...' : 'Criar Usuário Externo'}
