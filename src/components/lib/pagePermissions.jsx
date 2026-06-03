@@ -174,6 +174,26 @@ export const pagePermissions = {
   RelatorioUsuario: "admin.audit",
   TesteUsuarios: "admin.system_config",
   
+  // Financeiro avançado
+  ContasReceber: "financeiro.view",
+  ContasPagar: "financeiro.view",
+  ConciliacaoBancaria: "financeiro.view",
+  RelatoriosAnuais: "financeiro.view",
+
+  // Diagnósticos (páginas ausentes)
+  HistoricoDiagnosticos: "diagnostics.view",
+  CentralAvaliacoes: "diagnostics.view",
+  MatrizDesempenho: "diagnostics.view",
+  DiagnosticoRiscos: "diagnostics.view",
+  AutoavaliacaoDesempenho: "diagnostics.create",
+
+  // Pessoas (páginas ausentes)
+  DescricaoCargos: "employees.view",
+  MeuAgendamento: "public_authenticated",
+
+  // Aceleração / Admin (páginas ausentes)
+  DashboardTempoAtencao: "admin.audit",
+
   // Páginas públicas (sem permissão necessária)
   PrimeiroAcesso: null,
   Cadastro: null,

@@ -36,8 +36,8 @@ export function PermissionsProvider({ children }) {
           .catch(() => {})
       );
 
-      // Admin com acesso total
-      if (user.role === 'admin' && (isAdminMode || !workshopId)) {
+      // Admin ou usuário interno têm acesso total
+      if (user.role === 'admin' || user.user_type === 'internal') {
         await Promise.all(queries); // Espera a granularConfig
         aggregatedPermissions = systemRoles.flatMap(m => m.roles.map(r => r.id));
         return {
@@ -144,7 +144,7 @@ export function PermissionsProvider({ children }) {
 
   const hasPermission = (permissionId) => {
     if (!user) return false;
-    if (user.role === 'admin' && isAdminMode) return true;
+    if (user.role === 'admin' || user.user_type === 'internal') return true;
     return permissions.includes(permissionId);
   };
 
@@ -205,7 +205,7 @@ export function PermissionsProvider({ children }) {
   const canAccessPage = (pageName) => {
     try {
       if (!user) return false;
-      if (user.role === 'admin' && isAdminMode) return true;
+      if (user.role === 'admin' || user.user_type === 'internal') return true;
 
       const isPublicPage = pagePermissions[pageName] === null;
       if (isPublicPage) return true;
@@ -222,7 +222,7 @@ export function PermissionsProvider({ children }) {
 
   const canPerform = (action) => {
     if (!user) return false;
-    if (user.role === 'admin' && isAdminMode) return true;
+    if (user.role === 'admin' || user.user_type === 'internal') return true;
 
     // IDs mapeados para as roles reais de systemRoles.jsx
     // WARN-01 corrigido: mapeamento anterior usava strings inexistentes
