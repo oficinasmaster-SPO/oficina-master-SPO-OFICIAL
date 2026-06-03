@@ -205,6 +205,7 @@ export default function UserFormDialog({
                    <SelectContent>
                      <SelectItem value="acelerador">Acelerador</SelectItem>
                      <SelectItem value="consultor">Consultor</SelectItem>
+                     <SelectItem value="mentor">Mentor</SelectItem>
                      <SelectItem value="socio_interno">Sócio Interno</SelectItem>
                      <SelectItem value="diretor">Diretor</SelectItem>
                      <SelectItem value="financeiro">Financeiro</SelectItem>
@@ -244,12 +245,12 @@ export default function UserFormDialog({
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  {!profiles || profiles.length === 0 ? (
+                  {!profiles || profiles.filter(p => p.type === 'interno' || p.type === 'sistema').length === 0 ? (
                     <div className="p-2 text-xs text-gray-500 text-center">
                       Nenhum perfil interno disponível
                     </div>
                   ) : (
-                    profiles.map(profile => (
+                    profiles.filter(p => p.type === 'interno' || p.type === 'sistema').map(profile => (
                       <SelectItem key={profile.id} value={profile.id}>
                         {profile.name}
                         {profile.is_system && " (Sistema)"}
