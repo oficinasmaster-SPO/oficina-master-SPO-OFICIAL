@@ -37,10 +37,62 @@ export const jobRoles = [
 ];
 
 export const jobRoleCategories = {
-  gestao: { label: "Gestão", color: "bg-purple-100 text-purple-700" },
-  operacional: { label: "Operacional", color: "bg-blue-100 text-blue-700" },
-  vendas: { label: "Vendas", color: "bg-green-100 text-green-700" },
-  administrativo: { label: "Administrativo", color: "bg-yellow-100 text-yellow-700" },
-  interna: { label: "Funções Internas", color: "bg-orange-100 text-orange-700" },
-  outros: { label: "Outros", color: "bg-gray-100 text-gray-700" }
+  gestao:        { label: "Gestão",           color: "bg-purple-100 text-purple-700" },
+  operacional:   { label: "Operacional",      color: "bg-blue-100 text-blue-700" },
+  vendas:        { label: "Vendas",           color: "bg-green-100 text-green-700" },
+  administrativo:{ label: "Administrativo",   color: "bg-yellow-100 text-yellow-700" },
+  interna:       { label: "Funções Internas", color: "bg-orange-100 text-orange-700" },
+  outros:        { label: "Outros",           color: "bg-gray-100 text-gray-700" }
 };
+
+// ─── LISTAS DERIVADAS — fonte única de verdade para guards de acesso ──────────
+// Importar estas constantes em vez de definir arrays hardcoded em cada componente.
+// Exemplo: import { LEADER_JOB_ROLES } from '@/components/lib/jobRoles';
+
+/** Roles com poder de liderança/gestão dentro de uma oficina cliente.
+ *  Podem ver resultados de outros colaboradores, aprovar avaliações, etc. */
+export const LEADER_JOB_ROLES = jobRoles
+  .filter(r => ["executive", "management", "coordination"].includes(r.level))
+  .map(r => r.value);
+// → ["socio", "socio_interno", "diretor", "supervisor_loja", "gerente", "lider_tecnico"]
+
+/** Roles com acesso a dados financeiros (DRE, DFC, salários). */
+export const FINANCIAL_JOB_ROLES = jobRoles
+  .filter(r => ["executive", "management"].includes(r.level) || r.value === "financeiro")
+  .map(r => r.value);
+// → ["socio", "socio_interno", "diretor", "supervisor_loja", "gerente", "financeiro"]
+
+/** Roles que podem gerenciar documentos e advertências. */
+export const MANAGER_JOB_ROLES = jobRoles
+  .filter(r => ["executive", "management"].includes(r.level))
+  .map(r => r.value);
+// → ["socio", "socio_interno", "diretor", "supervisor_loja", "gerente"]
+
+/** Roles que podem gerenciar RH (documentos, contratações, demissões). */
+export const HR_MANAGER_JOB_ROLES = [
+  ...jobRoles.filter(r => ["executive", "management"].includes(r.level)).map(r => r.value),
+  "rh"
+];
+// → ["socio", "socio_interno", "diretor", "supervisor_loja", "gerente", "rh"]
+
+/** Roles exclusivamente internas da Oficinas Master (não são clientes). */
+export const INTERNAL_JOB_ROLES = jobRoles
+  .filter(r => r.category === "interna")
+  .map(r => r.value);
+// → ["acelerador", "consultor", "mentor"]
+
+/** Roles de módulo RH com acesso ao Portal do Colaborador — aba Equipe. */
+export const TEAM_PORTAL_JOB_ROLES = jobRoles
+  .filter(r => ["executive", "management", "coordination"].includes(r.level) || r.value === "rh")
+  .map(r => r.value);
+// → ["socio", "socio_interno", "diretor", "supervisor_loja", "gerente", "lider_tecnico", "rh"]
+
+/** Helper: retorna o label de um job_role pelo value. */
+export function getJobRoleLabel(value) {
+  return jobRoles.find(r => r.value === value)?.label ?? value;
+}
+
+/** Helper: retorna a categoria de um job_role pelo value. */
+export function getJobRoleCategory(value) {
+  return jobRoles.find(r => r.value === value)?.category ?? "outros";
+}
