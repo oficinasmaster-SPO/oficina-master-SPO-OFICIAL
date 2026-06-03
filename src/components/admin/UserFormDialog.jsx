@@ -82,8 +82,8 @@ export default function UserFormDialog({
     const formDataObj = new FormData(e.target);
     
     // Validar campos obrigatórios
-    if (!selectedProfileId) {
-      alert("Por favor, selecione um perfil");
+    if (!selectedProfileId || selectedProfileId.trim() === "") {
+      alert("❌ Perfil de Usuário é obrigatório. Todo novo usuário deve ter um perfil de acesso definido.");
       return;
     }
     
@@ -235,15 +235,17 @@ export default function UserFormDialog({
             <h3 className="text-sm font-semibold text-gray-900 border-b pb-2">Perfil de Acesso</h3>
             
             <div>
-              <Label>Perfil *</Label>
+              <Label className={!selectedProfileId ? "text-red-600 font-semibold" : ""}>
+                Perfil de Usuário * {!selectedProfileId && <span className="text-red-600">(Obrigatório)</span>}
+              </Label>
               <Select 
                 value={selectedProfileId}
                 onValueChange={setSelectedProfileId}
                 required
               >
-                <SelectTrigger>
+                <SelectTrigger className={!selectedProfileId && isCreateMode ? "border-red-300 bg-red-50" : ""}>
                   <SelectValue placeholder="Selecione o perfil de acesso">
-                    {selectedProfile ? selectedProfile.name : "Selecione o perfil de acesso"}
+                    {selectedProfile ? selectedProfile.name : "⚠️ Selecione o perfil de acesso"}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
@@ -261,8 +263,8 @@ export default function UserFormDialog({
                   )}
                 </SelectContent>
               </Select>
-              <p className="text-xs text-gray-500 mt-1">
-                O usuário herdará todas as permissões do perfil selecionado
+              <p className={`text-xs mt-1 ${!selectedProfileId ? "text-red-600 font-medium" : "text-gray-500"}`}>
+                {!selectedProfileId ? "🔴 Este campo é obrigatório para criar o usuário" : "O usuário herdará todas as permissões do perfil selecionado"}
               </p>
             </div>
 
