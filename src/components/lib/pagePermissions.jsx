@@ -147,6 +147,14 @@ export const pagePermissions = {
   DocumentacaoRBAC: "admin.rbac",
 
   // Processos
+
+  // Processos
+  GerenciarProcessos: "admin",
+  ManualProcessos: "processes.view",
+  MeusProcessos: "processes.view",
+  VisualizarProcesso: "processes.view",
+
+  // Processos
   GerenciarProcessos: "processes.manage",
   ManualProcessos: "processes.view",
   MeusProcessos: "processes.view",
@@ -180,7 +188,6 @@ export const pagePermissions = {
   RelatoriosAvancados: "analytics.view",
   RelatoriosInteligencia: "analytics.view",
   Clientes: "clients.view",
-  ClientRegistration: null,
   CadastroSucesso: null,
 
   // Aceleração / Consultoria
@@ -225,8 +232,6 @@ export const pagePermissions = {
   CompletarPerfil: "public_authenticated",
 
   // Páginas públicas (sem permissão necessária)
-  PrimeiroAcesso: null,
-  Cadastro: null,
   ClientRegistration: null,
 
   // Página pública para autenticados (qualquer usuário logado pode acessar)
