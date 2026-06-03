@@ -44,15 +44,6 @@ export default function UsuariosAdmin() {
   });
 
   const { data: profiles = [] } = useQuery({
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isAuditDialogOpen, setIsAuditDialogOpen] = useState(false);
-  const [isDetailsDrawerOpen, setIsDetailsDrawerOpen] = useState(false);
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isPromoteDialogOpen, setIsPromoteDialogOpen] = useState(false);
-  const [permissionRequestData, setPermissionRequestData] = useState(null);
-
-  const { data: profiles = [] } = useQuery({
     queryKey: ['user-profiles'],
     queryFn: async () => {
       const profiles = await base44.entities.UserProfile.list();
