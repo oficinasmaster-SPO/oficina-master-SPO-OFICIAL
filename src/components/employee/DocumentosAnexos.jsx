@@ -8,6 +8,7 @@ import { Plus, FileText, Camera, Download, Trash2, Loader2 } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
+import { MANAGER_JOB_ROLES, HR_MANAGER_JOB_ROLES } from "@/components/lib/jobRoles";
 
 export default function DocumentosAnexos({ employee, onUpdate }) {
   const [showDocDialog, setShowDocDialog] = useState(false);
@@ -65,7 +66,7 @@ export default function DocumentosAnexos({ employee, onUpdate }) {
         // Buscar gestores (owner e admins)
         const managers = await base44.entities.Employee.filter({
           workshop_id: employee.workshop_id,
-          job_role: { $in: ['socio', 'diretor', 'gerente', 'supervisor_loja'] }
+          job_role: { $in: MANAGER_JOB_ROLES }
         });
 
         // Criar notificações para cada gestor
@@ -126,7 +127,7 @@ export default function DocumentosAnexos({ employee, onUpdate }) {
         const currentUser = await base44.auth.me();
         const managers = await base44.entities.Employee.filter({
           workshop_id: employee.workshop_id,
-          job_role: { $in: ['socio', 'diretor', 'gerente', 'rh', 'supervisor_loja'] }
+          job_role: { $in: HR_MANAGER_JOB_ROLES }
         });
 
         for (const manager of managers) {
