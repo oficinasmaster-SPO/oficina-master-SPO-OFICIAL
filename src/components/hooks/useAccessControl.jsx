@@ -1,4 +1,5 @@
 import { useAuth } from "@/lib/AuthContext";
+import { getUserJobRole } from "@/utils/userUtils";
 
 export function useAccessControl(allowedRoles = []) {
   const { user } = useAuth();
@@ -8,7 +9,7 @@ export function useAccessControl(allowedRoles = []) {
     if (user.role === 'admin') return true;
     if (allowedRoles.length === 0) return true;
     
-    const userJobRole = user.data?.job_role || user.job_role;
+    const userJobRole = getUserJobRole(user);
     return allowedRoles.includes(userJobRole);
   };
   
