@@ -16,7 +16,7 @@ import { TenantProvider } from '@/components/contexts/TenantContext';
 import { AttendanceTypeProvider } from '@/components/contexts/AttendanceTypeContext';
 import { TemplateLibraryProvider } from '@/components/aceleracao/contexts/TemplateLibraryContext';
 import { DraftPersistenceProvider } from '@/components/contexts/DraftPersistenceContext';
-import PageAccessControl from '@/components/auth/PageAccessControl';
+import RouteGuard from '@/components/auth/RouteGuard';
 import { pagePermissions } from '@/components/lib/pagePermissions';
 import { PermissionsProvider } from '@/components/contexts/PermissionsContext';
 import { lazy } from 'react';
@@ -44,7 +44,6 @@ const AdminTemplatesBacklog = lazy(() => import('@/pages/AdminTemplatesBacklog')
 const DiagnosticoRiscos = lazy(() => import('@/pages/DiagnosticoRiscos'));
 const DashboardTempoAtencao = lazy(() => import('@/pages/DashboardTempoAtencao'));
 const HistoricoDiagnosticos = lazy(() => import('@/pages/HistoricoDiagnosticos'));
-const HistoricoDISC = lazy(() => import('@/pages/HistoricoDISC'));
 const DreMockup = lazy(() => import('@/pages/DreMockup'));
 const GerenciarSubcategorias = lazy(() => import('@/pages/GerenciarSubcategorias'));
 const RelatoriosAnuais = lazy(() => import('@/pages/RelatoriosAnuais'));
@@ -59,9 +58,16 @@ const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
 const MainPage = mainPageKey ? Pages[mainPageKey] : <></>;
 
-const LayoutWrapper = ({ children, currentPageName }) => Layout ?
-  <Layout currentPageName={currentPageName}>{children}</Layout>
-  : <>{children}</>;
+const LayoutWrapper = ({ children, currentPageName, adminOnly = false }) => {
+  const content = (
+    <RouteGuard pageName={currentPageName} adminOnly={adminOnly}>
+      {children}
+    </RouteGuard>
+  );
+  return Layout
+    ? <Layout currentPageName={currentPageName}>{content}</Layout>
+    : <>{content}</>;
+};
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, isAuthenticated, navigateToLogin, logout } = useAuth();
@@ -143,23 +149,17 @@ const AuthenticatedApp = () => {
       } />
       <Route path="/DescricaoCargos" element={
         <LayoutWrapper currentPageName="DescricaoCargos">
-          <PageAccessControl requiredPermissions={pagePermissions['DescricaoCargos'] ? [pagePermissions['DescricaoCargos']] : []}>
-            <DescricaoCargos />
-          </PageAccessControl>
+          <DescricaoCargos />
         </LayoutWrapper>
       } />
       <Route path="/CentralAvaliacoes" element={
         <LayoutWrapper currentPageName="CentralAvaliacoes">
-          <PageAccessControl requiredPermissions={pagePermissions['CentralAvaliacoes'] ? [pagePermissions['CentralAvaliacoes']] : []}>
-            <CentralAvaliacoes />
-          </PageAccessControl>
+          <CentralAvaliacoes />
         </LayoutWrapper>
       } />
       <Route path="/MatrizDesempenho" element={
         <LayoutWrapper currentPageName="MatrizDesempenho">
-          <PageAccessControl requiredPermissions={pagePermissions['MatrizDesempenho'] ? [pagePermissions['MatrizDesempenho']] : []}>
-            <MatrizDesempenho />
-          </PageAccessControl>
+          <MatrizDesempenho />
         </LayoutWrapper>
       } />
       <Route path="/ControleAceleracao" element={
@@ -191,18 +191,14 @@ const AuthenticatedApp = () => {
         </LayoutWrapper>
       } />
       <Route path="/AdminQADashboard" element={
-        <PageAccessControl adminOnly={true}>
-          <LayoutWrapper currentPageName="AdminQADashboard">
-            <QADashboard />
-          </LayoutWrapper>
-        </PageAccessControl>
+        <LayoutWrapper currentPageName="AdminQADashboard" adminOnly={true}>
+          <QADashboard />
+        </LayoutWrapper>
       } />
       <Route path="/AdminTemplatesBacklog" element={
-        <PageAccessControl adminOnly={true}>
-          <LayoutWrapper currentPageName="AdminTemplatesBacklog">
-            <AdminTemplatesBacklog />
-          </LayoutWrapper>
-        </PageAccessControl>
+        <LayoutWrapper currentPageName="AdminTemplatesBacklog" adminOnly={true}>
+          <AdminTemplatesBacklog />
+        </LayoutWrapper>
       } />
       <Route path="/DiagnosticoRiscos" element={
         <LayoutWrapper currentPageName="DiagnosticoRiscos">
@@ -217,16 +213,6 @@ const AuthenticatedApp = () => {
       <Route path="/HistoricoDiagnosticos" element={
         <LayoutWrapper currentPageName="HistoricoDiagnosticos">
           <HistoricoDiagnosticos />
-        </LayoutWrapper>
-      } />
-      <Route path="/HistoricoDISC" element={
-        <LayoutWrapper currentPageName="HistoricoDISC">
-          <PageAccessControl 
-            requiredJobRoles={['socio', 'socio_interno', 'consultor', 'mentor']}
-            adminOnly={false}
-          >
-            <HistoricoDISC />
-          </PageAccessControl>
         </LayoutWrapper>
       } />
       <Route path="/MeuAgendamento" element={
@@ -244,25 +230,15 @@ const AuthenticatedApp = () => {
             path={`/${path}`}
             element={
               <LayoutWrapper currentPageName={path}>
-                {!isPublic ? (
-                  <PageAccessControl 
-                    requiredPermissions={reqPerm && reqPerm !== "public_authenticated" ? [reqPerm] : []}
-                  >
-                    <Page />
-                  </PageAccessControl>
-                ) : (
-                  <Page />
-                )}
+                <Page />
               </LayoutWrapper>
             }
           />
         );
       })}
       <Route path="/GerenciarSubcategorias" element={
-        <LayoutWrapper currentPageName="GerenciarSubcategorias">
-          <PageAccessControl adminOnly={true}>
-            <GerenciarSubcategorias />
-          </PageAccessControl>
+        <LayoutWrapper currentPageName="GerenciarSubcategorias" adminOnly={true}>
+          <GerenciarSubcategorias />
         </LayoutWrapper>
       } />
       <Route path="/RelatoriosAnuais" element={
@@ -291,17 +267,13 @@ const AuthenticatedApp = () => {
         </LayoutWrapper>
       } />
       <Route path="/CorrigirParcelasDuplicadas" element={
-        <LayoutWrapper currentPageName="CorrigirParcelasDuplicadas">
-          <PageAccessControl adminOnly={true}>
-            <CorrigirParcelasDuplicadas />
-          </PageAccessControl>
+        <LayoutWrapper currentPageName="CorrigirParcelasDuplicadas" adminOnly={true}>
+          <CorrigirParcelasDuplicadas />
         </LayoutWrapper>
       } />
       <Route path="/BackfillSaldosHistoricos" element={
-        <LayoutWrapper currentPageName="BackfillSaldosHistoricos">
-          <PageAccessControl adminOnly={true}>
-            <BackfillSaldosHistoricos />
-          </PageAccessControl>
+        <LayoutWrapper currentPageName="BackfillSaldosHistoricos" adminOnly={true}>
+          <BackfillSaldosHistoricos />
         </LayoutWrapper>
       } />
       <Route path="*" element={<PageNotFound />} />
