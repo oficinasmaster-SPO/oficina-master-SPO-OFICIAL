@@ -203,16 +203,14 @@ export default function UserFormDialog({
                      <SelectValue placeholder="Selecione a função" />
                    </SelectTrigger>
                    <SelectContent>
-                     <SelectItem value="socio">Sócio</SelectItem>
-                     <SelectItem value="diretor">Diretor</SelectItem>
-                     <SelectItem value="gerente">Gerente</SelectItem>
-                     <SelectItem value="supervisor_loja">Supervisor Loja</SelectItem>
-                     <SelectItem value="lider_tecnico">Líder Técnico</SelectItem>
-                     <SelectItem value="tecnico">Técnico</SelectItem>
-                     <SelectItem value="administrativo">Administrativo</SelectItem>
-                     <SelectItem value="financeiro">Financeiro</SelectItem>
-                     <SelectItem value="comercial">Comercial</SelectItem>
+                     <SelectItem value="acelerador">Acelerador</SelectItem>
                      <SelectItem value="consultor">Consultor</SelectItem>
+                     <SelectItem value="socio_interno">Sócio Interno</SelectItem>
+                     <SelectItem value="diretor">Diretor</SelectItem>
+                     <SelectItem value="financeiro">Financeiro</SelectItem>
+                     <SelectItem value="rh">RH</SelectItem>
+                     <SelectItem value="marketing">Marketing</SelectItem>
+                     <SelectItem value="administrativo">Administrativo</SelectItem>
                      <SelectItem value="outros">Outros</SelectItem>
                    </SelectContent>
                  </Select>
