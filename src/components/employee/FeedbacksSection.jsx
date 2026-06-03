@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { MANAGER_JOB_ROLES } from "@/components/lib/jobRoles";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, MessageSquare, ThumbsUp, ThumbsDown, Users, Wand2, Printer, Filter, Calendar, CheckCircle2, Clock, AlertCircle, Target, Activity, Mic, Mail, Loader2, Eye, TrendingUp } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -30,7 +31,7 @@ export default function FeedbacksSection({ employee }) {
         const employees = await base44.entities.Employee.filter({ user_id: user.id });
         const userEmployee = employees?.[0];
         
-        const managerRoles = ['socio', 'diretor', 'supervisor_loja', 'gerente'];
+        const managerRoles = MANAGER_JOB_ROLES;
         setIsManager(user.role === 'admin' || managerRoles.includes(userEmployee?.job_role));
       } catch (error) {
         console.error(error);
