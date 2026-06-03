@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/AuthContext";
 import { base44 } from "@/api/base44Client";
 import { LEADER_JOB_ROLES } from "@/components/lib/jobRoles";
+import { getUserJobRole } from "@/utils/userUtils";
 
 /**
  * useEvaluationPermissions
@@ -65,7 +66,7 @@ export function useEvaluationPermissions() {
 
   const isAdmin    = user.role === "admin";
   const isInternal = user.user_type === "internal"; // internos veem tudo
-  const isLeader   = LEADER_JOB_ROLES.includes(user.job_role || user.data?.job_role);
+  const isLeader   = LEADER_JOB_ROLES.includes(getUserJobRole(user));
 
   /**
    * canViewResult(diagnosticEmployeeId)
