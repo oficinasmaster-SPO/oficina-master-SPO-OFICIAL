@@ -1,209 +1,228 @@
-/**
- * Mapeamento centralizado de páginas para permissões granulares
- * Fonte única da verdade para controle de acesso baseado em páginas
- * 
- * IMPORTANTE: Este arquivo é usado no browser (frontend)
- * Não use require(), fs, path ou qualquer dependência Node.js
- */
+import { systemRoles } from "./systemRoles";
 
+/**
+ * Mapeamento de permissões necessárias para acessar cada página
+ * 
+ * Convenções:
+ * - null = página pública (não requer autenticação)
+ * - "public_authenticated" = requer autenticação, mas sem permissão específica
+ * - "module.permission" = requer permissão granular específica
+ * - "admin" = requer role admin no User
+ */
 export const pagePermissions = {
-  // Dashboard e Analytics
-  Home: "dashboard.view",
-  Dashboard: "dashboard.view",
-  DashboardOverview: "dashboard.view",
-  
-  // Gestão de Oficina
-  GestaoOficina: "workshop.view",
-  DesdobramentoMeta: "workshop.manage_goals",
-  HistoricoMetas: "workshop.manage_goals",
-  PainelMetas: "workshop.manage_goals",
-  DRETCMP2: "financeiro.view",
-  ConsolidadoMensal: "financeiro.view",
-  DreMockup: "financeiro.view",
-  
-  // Gestão de Pessoas
-  Colaboradores: "employees.view",
-  CadastroColaborador: "employees.create",
-  DetalhesColaborador: "employees.view",
-  ConvidarColaborador: "employees.create",
-  CESPECanal: "employees.create",
-  CESPEEntrevista: "employees.create",
-  CESPESonho: "employees.create",
-  CESPEProposta: "employees.create",
-  CESPEIntegracao: "employees.create",
-  MonitoramentoRH: "employees.view",
-  DescricoesCargo: "employees.view",
-  CriarDescricaoCargo: "employees.create",
-  EditarDescricaoCargo: "employees.edit",
-  Organograma: "employees.view",
-  PortalColaborador: "employees.view",
-  Feedbacks: "employees.view",
-  
-  // Financeiro
-  DiagnosticoEndividamento: "financeiro.view",
-  ResultadoEndividamento: "financeiro.view",
-  
-  // Diagnósticos
-  SelecionarDiagnostico: "diagnostics.view",
-  Questionario: "diagnostics.create",
-  Resultado: "diagnostics.view",
-  Historico: "diagnostics.view",
-  DiagnosticoEmpresario: "diagnostics.create",
-  ResultadoEmpresario: "diagnostics.view",
-  DiagnosticoMaturidade: "diagnostics.create",
-  ResultadoMaturidade: "diagnostics.view",
-  DiagnosticoProducao: "diagnostics.create",
-  ResultadoProducao: "diagnostics.view",
-  DiagnosticoDesempenho: "diagnostics.create",
-  ResultadoDesempenho: "diagnostics.view",
-  DiagnosticoCarga: "diagnostics.create",
-  ResultadoCarga: "diagnostics.view",
-  DiagnosticoOS: "diagnostics.create",
-  ResultadoOS: "diagnostics.view",
-  DiagnosticoDISC: "diagnostics.create",
-  ResultadoDISC: "diagnostics.view",
-  DiagnosticoGerencial: "diagnostics.create",
-  DiagnosticoComercial: "diagnostics.create",
-  HistoricoMaturidade: "diagnostics.view",
-  HistoricoDesempenho: "diagnostics.view",
-  ResponderDISC: "diagnostics.create",
-  ResponderMaturidade: "diagnostics.create",
-  
-  // Autoavaliações
-  Autoavaliacoes: "diagnostics.view",
-  AutoavaliacaoVendas: "diagnostics.create",
-  AutoavaliacaoComercial: "diagnostics.create",
-  AutoavaliacaoMarketing: "diagnostics.create",
-  AutoavaliacaoPessoas: "diagnostics.create",
-  AutoavaliacaoFinanceiro: "diagnostics.create",
-  AutoavaliacaoEmpresarial: "diagnostics.create",
-  AutoavaliacaoMA3: "diagnostics.create",
-  ResultadoAutoavaliacao: "diagnostics.view",
-  
-  // Processos e Documentos
+  // Home
+  Home: "public_authenticated",
+
+  // Dashboard
+  Dashboard: "public_authenticated",
+  DashboardOverview: "public_authenticated",
+
+  // Admin / Global
+  GestaoTenants: "admin",
+  GestaoEmpresas: "admin",
+  GestaoUsuariosEmpresas: "admin",
+  GestaoRBAC: "admin.rbac",
+  GestaoOficina: "admin",
+  ConfiguracoesKiwify: "admin",
+  Integracoes: "admin",
+  GerenciarPlanos: "admin",
+  AdminProdutividade: "admin",
+  AdminDesafios: "admin",
+  AdminMensagens: "admin",
+  AdminNotificacoes: "admin",
+  GerenciarToursVideos: "admin",
+  GerenciarProcessos: "admin",
+  AuditoriaPermissoes: "admin.rbac",
+  LogsAuditoriaRBAC: "admin.rbac",
+  UsuariosAdmin: "admin.rbac",
+  MonitoramentoUsuarios: "admin.rbac",
+  ConfiguracaoPermissoesGranulares: "admin.rbac",
+  DiagnosticoPlano: "admin",
+  TesteOpenAI: "admin",
+  AdminQADashboard: "admin",
+  AdminTemplatesBacklog: "admin",
+  CadastroUsuarioDireto: "admin",
+  TestUsuarios: "admin",
+
+  // Cultura
+  CulturaOrganizacional: "culture.view",
+  MissaoVisaoValores: "culture.view",
+  DocumentacaoCompleta: "culture.view",
+  Regimento: "culture.view",
+  RituaisAculturamento: "culture.rituals",
+  Rituais: "culture.rituals",
+  CriarRitualMAP: "culture.rituals",
+  ManualProcessos: "processes.view",
   MeusProcessos: "processes.view",
   VisualizarProcesso: "processes.view",
-  GerenciarProcessos: "processes.create",
-  RepositorioDocumentos: "documents.upload",
-  EvidenceUpload: "documents.upload",
-  
-  // Cultura Organizacional
-  CulturaOrganizacional: "culture.view",
-  MissaoVisaoValores: "culture.edit",
-  Rituais: "culture.view",
-  RituaisAculturamento: "culture.manage_rituals",
-  CronogramaAculturacao: "culture.manage_rituals",
-  PesquisaClima: "culture.view",
-  ResponderPesquisaClima: "culture.view",
-  ResultadoClima: "culture.view",
-  
+  GerenciarChecklists: "processes.checklists",
+  MapaChecklists: "processes.checklists",
+  RepositorioDocumentos: "documents.view",
+  DocumentosProcessos: "documents.view",
+
+  // Diagnósticos
+  SelecionarDiagnostico: "diagnostics.create",
+  DiagnosticoDISC: "diagnostics.create",
+  ResultadoDISC: "diagnostics.view",
+  HistoricoDISC: "diagnostics.view",
+  AutoavaliacaoDISC: "diagnostics.create",
+  PublicDISC: null,
+  PublicNPS: null,
+  PublicFeedback: null,
+  DiagnosticoMaturidade: "diagnostics.create",
+  ResultadoMaturidade: "diagnostics.view",
+  AutoavaliacaoMaturidade: "diagnostics.create",
+  HistoricoMaturidade: "diagnostics.view",
+  DiagnosticoCarga: "diagnostics.create",
+  ResultadoCarga: "diagnostics.view",
+  AutoavaliacaoCarga: "diagnostics.create",
+  DiagnosticoDesempenho: "diagnostics.create",
+  ResultadoDesempenho: "diagnostics.view",
+  AutoavaliacaoDesempenho: "diagnostics.create",
+  HistoricoDesempenho: "diagnostics.view",
+  MatrizDesempenho: "diagnostics.view",
+  DiagnosticoEmpresario: "diagnostics.create",
+  ResultadoEmpresario: "diagnostics.view",
+  AutoavaliacaoEmpresarial: "diagnostics.create",
+  DiagnosticoEndividamento: "diagnostics.create",
+  ResultadoEndividamento: "diagnostics.view",
+  AutoavaliacaoEndividamento: "diagnostics.create",
+  DiagnosticoGerencial: "diagnostics.create",
+  ResultadoGerencial: "diagnostics.view",
+  AutoavaliacaoGerencial: "diagnostics.create",
+  DiagnosticoOS: "diagnostics.create",
+  ResultadoOS: "diagnostics.view",
+  AutoavaliacaoOS: "diagnostics.create",
+  DiagnosticoProducao: "diagnostics.create",
+  ResultadoProducao: "diagnostics.view",
+  AutoavaliacaoProducao: "diagnostics.create",
+  GraficosProducao: "diagnostics.view",
+  DiagnosticoComercial: "diagnostics.create",
+  ResultadoComercial: "diagnostics.view",
+  AutoavaliacaoComercial: "diagnostics.create",
+  DiagnosticoFinanceiro: "diagnostics.create",
+  ResultadoFinanceiro: "diagnostics.view",
+  AutoavaliacaoFinanceiro: "diagnostics.create",
+  DiagnosticoVendas: "diagnostics.create",
+  ResultadoVendas: "diagnostics.view",
+  AutoavaliacaoVendas: "diagnostics.create",
+  DiagnosticoMarketing: "diagnostics.create",
+  ResultadoMarketing: "diagnostics.view",
+  AutoavaliacaoMarketing: "diagnostics.create",
+  DiagnosticoPessoas: "diagnostics.create",
+  ResultadoPessoas: "diagnostics.view",
+  AutoavaliacaoPessoas: "diagnostics.create",
+  DiagnosticoMA3: "diagnostics.create",
+  ResultadoMA3: "diagnostics.view",
+  AutoavaliacaoMA3: "diagnostics.create",
+  CentralAvaliacoes: "diagnostics.view",
+  HistoricoDiagnosticos: "diagnostics.view",
+  DiagnosticoRiscos: "diagnostics.view",
+  DashboardTempoAtencao: "admin.audit",
+
+  // Pessoas / Colaboradores
+  Colaboradores: "employees.view",
+  CadastroColaborador: "employees.create",
+  ConvidarColaborador: "employees.create",
+  DetalhesColaborador: "employees.view",
+  DescricaoCargos: "employees.view",
+  CriarDescricaoCargo: "employees.create",
+  EditarDescricaoCargo: "employees.edit",
+  PortalColaborador: "public_authenticated",
+  MeuPerfil: "public_authenticated",
+  CDCList: "employees.cdc",
+  CDCForm: "employees.cdc",
+  RelatorioCDC: "employees.cdc",
+  AnalisesRH: "employees.view",
+  MonitoramentoRH: "employees.view",
+  Feedbacks: "employees.feedback",
+  PesquisaClima: "employees.climate",
+  ResponderPesquisaClima: "public_authenticated",
+  ResultadoClima: "employees.climate",
+  Autoavaliacoes: "employees.view",
+  Organograma: "employees.view",
+  OrganogramaFuncional: "employees.view",
+  GestaoRoles: "admin.rbac",
+  GerenciarRoles: "admin.rbac",
+  DocumentacaoRBAC: "admin.rbac",
+
+  // Processos
+  GerenciarProcessos: "processes.manage",
+  ManualProcessos: "processes.view",
+  MeusProcessos: "processes.view",
+  VisualizarProcesso: "processes.view",
+
   // Treinamentos
-  MeusTreinamentos: "training.view",
-  GerenciarTreinamentos: "training.manage",
-  AcompanhamentoTreinamento: "training.evaluate",
   AcademiaTreinamento: "training.view",
-  GerenciarModulo: "training.create",
-  GerenciarAula: "training.create",
-  AssistirAula: "training.view",
-  AssistirCurso: "training.view",
-  GerenciarModulosCurso: "training.create",
+  GerenciarTreinamentos: "training.manage",
+  MeusTreinamentos: "public_authenticated",
+  AssistirCurso: "public_authenticated",
+  AssistirAula: "public_authenticated",
   ConfiguracaoAcademia: "training.manage",
-  
-  // Operações e QGP
-  QGPBoard: "operations.view_qgp",
-  TechnicianQGP: "operations.view_qgp",
-  RegistroDiario: "operations.daily_log",
-  DicasOperacao: "operations.view_qgp",
-  
-  // Gestão e Tarefas
-  Tarefas: "operations.manage_tasks",
-  PlanoAcao: "operations.manage_tasks",
-  PainelAcoes: "operations.manage_tasks",
-  
+
   // Gamificação
-  Gamificacao: "operations.view_qgp",
-  GestaoDesafios: "operations.manage_tasks",
-  
-  // IA e Analytics
-  IAAnalytics: "diagnostics.ai_access",
-  
-  // Clientes e CDC/COEX
-  Clientes: "employees.view",
-  CDCList: "processes.view",
-  CDCForm: "processes.create",
-  COEXList: "processes.view",
-  COEXForm: "processes.create",
-  PublicFeedback: "culture.view",
-  
-  // Notificações
-  Notificacoes: "dashboard.view",
-  
-  // Aceleração (apenas consultores internos)
-  ControleAceleracao: "acceleration.manage",
-  PainelClienteAceleracao: "acceleration.view",
-  RelatoriosAceleracao: "acceleration.manage",
-  CronogramaImplementacao: "acceleration.manage",
-  CronogramaConsultoria: "acceleration.manage",
-  RegistrarAtendimento: "acceleration.manage",
-  CronogramaDetalhado: "acceleration.manage",
-  AvaliarAtendimento: "acceleration.manage",
-  CronogramaGeral: "acceleration.manage",
-  AcessoAceleracao: "acceleration.view",
-  RelatoriosAvancados: "acceleration.manage",
-  
-  // Ranking
-  RankingBrasil: "dashboard.view",
-  
-  // Admin
-  TesteOpenAI: "diagnostics.ai_access",
-  DashboardFinanceiro: "admin.system_config",
-  ConfiguracoesKiwify: "admin.system_config",
-  GestaoUsuariosEmpresas: "admin.users",
-  GestaoTenants: "admin.users",
-  GestaoEmpresas: "admin.users",
-  UsuariosAdmin: "admin.users",
-  CadastroUsuarioDireto: "admin.users",
-  GestaoRBAC: "admin.profiles",
-  GestaoPerfis: "admin.profiles",
-  ConfiguracaoPermissoesGranulares: "admin.system_config",
-  LogsAuditoriaRBAC: "admin.audit",
-  GerenciarPlanos: "admin.system_config",
-  CadastroPlanos: "admin.system_config",
-  Planos: "admin.system_config",
-  MeuPlano: "dashboard.view",
-  GerenciarToursVideos: "admin.system_config",
-  AdminProdutividade: "admin.system_config",
-  AdminDesafios: "admin.system_config",
-  AdminMensagens: "admin.system_config",
-  AdminNotificacoes: "admin.system_config",
-  CalendarioEventos: "admin.system_config",
-  MonitoramentoUsuarios: "admin.audit",
-  AuditLogs: "admin.audit",
-  RelatorioUsuario: "admin.audit",
-  TesteUsuarios: "admin.system_config",
-  DiagnosticoPlano: "admin.system_config",
-  Integracoes: "admin.system_config",
-  
-  // Financeiro avançado
+  Gamificacao: "public_authenticated",
+  RankingBrasil: "public_authenticated",
+  Desafios: "public_authenticated",
+
+  // Gestão
+  Dashboard: "dashboard.view",
+  PainelMetas: "goals.view",
+  DesdobramentoMeta: "goals.create",
+  HistoricoMetas: "goals.view",
+  PainelAcoes: "actions.view",
+  Tarefas: "tasks.view",
+  RegistroDiario: "productivity.view",
+  QGPBoard: "qgp.view",
+  TechnicianQGP: "qgp.technician",
+  DicasOperacao: "qgp.view",
+  IAAnalytics: "analytics.view",
+  RelatoriosAvancados: "analytics.view",
+  RelatoriosInteligencia: "analytics.view",
+  Clientes: "clients.view",
+  ClientRegistration: null,
+  CadastroSucesso: null,
+
+  // Aceleração / Consultoria
+  ControleAceleracao: "aceleracao.view",
+  AcessoAceleracao: "aceleracao.view",
+  PainelClienteAceleracao: "aceleracao.view",
+  RelatoriosAceleracao: "aceleracao.view",
+  CronogramaAculturacao: "aceleracao.view",
+  CronogramaImplementacao: "aceleracao.view",
+  CronogramaGeral: "aceleracao.view",
+  CronogramaDetalhado: "aceleracao.view",
+  RegistrarAtendimento: "aceleracao.create",
+  AvaliarAtendimento: "aceleracao.create",
+  MeuAgendamento: "public_authenticated",
+  CentralFollowUp: "aceleracao.view",
+  CentralProximosPassos: "aceleracao.view",
+  ProximosPassosConsultoria: "aceleracao.view",
+  ConsultoriaGlobal: "aceleracao.view",
+  ListagemClientesSprints: "aceleracao.view",
+
+  // Financeiro
+  DRETCMP2: "financeiro.view",
+  DreMockup: "financeiro.view",
+  DashboardFinanceiro: "financeiro.view",
   ContasReceber: "financeiro.view",
   ContasPagar: "financeiro.view",
   ConciliacaoBancaria: "financeiro.view",
   RelatoriosAnuais: "financeiro.view",
-  DashboardFinanceiro: "financeiro.view",
+  GerenciarSubcategorias: "admin.financeiro",
+  CorrigirParcelasDuplicadas: "admin.financeiro",
+  BackfillSaldosHistoricos: "admin.financeiro",
 
-  // Diagnósticos (páginas ausentes)
-  HistoricoDiagnosticos: "diagnostics.view",
-  CentralAvaliacoes: "diagnostics.view",
-  MatrizDesempenho: "diagnostics.view",
-  DiagnosticoRiscos: "diagnostics.view",
-  AutoavaliacaoDesempenho: "diagnostics.create",
+  // Planos
+  Planos: "public_authenticated",
+  BemVindoPlanos: "public_authenticated",
+  MeuPlano: "public_authenticated",
+  CadastroPlanos: "admin",
 
-  // Pessoas (páginas ausentes)
-  DescricaoCargos: "employees.view",
-  MeuAgendamento: "public_authenticated",
-
-  // Aceleração / Admin (páginas ausentes)
-  DashboardTempoAtencao: "admin.audit",
+  // Primeiros Acessos
+  PrimeiroAcesso: null,
+  Cadastro: null,
+  CompletarPerfil: "public_authenticated",
 
   // Páginas públicas (sem permissão necessária)
   PrimeiroAcesso: null,

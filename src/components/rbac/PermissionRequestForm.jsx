@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2, ShieldAlert } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
-export default function PermissionRequestForm({ 
+export function PermissionRequestForm({ 
   open,
   onClose,
   employee,
@@ -129,3 +129,5 @@ export default function PermissionRequestForm({
     </Dialog>
   );
 }
+
+export default PermissionRequestForm;
