@@ -186,14 +186,10 @@ export default function UsuariosAdmin() {
         job_role: data.job_role,
         workshop_id: data.workshop_id,
         profile_id: data.profile_id,
+        custom_role_ids: data.custom_role_ids,
         user_status: data.user_status,
         audit_log: [...currentAuditLog, auditEntry]
       };
-
-      // Adiciona custom_role_ids se fornecido
-      if (data.custom_role_ids !== undefined) {
-        updateData.custom_role_ids = data.custom_role_ids;
-      }
 
       const updatedEmployee = await base44.entities.Employee.update(userId, updateData);
 
@@ -206,12 +202,9 @@ export default function UsuariosAdmin() {
           position: data.position,
           area: data.area,
           job_role: data.job_role,
-          workshop_id: data.workshop_id
+          workshop_id: data.workshop_id,
+          role: data.role || selectedUser.role
         };
-
-        if (data.role) {
-          userUpdateData.role = data.role;
-        }
 
         await base44.entities.User.update(selectedUser.user_id, userUpdateData);
       }
@@ -300,10 +293,36 @@ export default function UsuariosAdmin() {
       const profileChanged = selectedUser.profile_id !== data.profile_id;
       const customRolesChanged = JSON.stringify(selectedUser.custom_role_ids || []) !== JSON.stringify(data.custom_role_ids || []);
       const statusChanged = selectedUser.user_status !== data.user_status;
+      const roleChanged = selectedUser.role !== data.role;
       
-      const requiresApproval = profileChanged || customRolesChanged || statusChanged;
+      // Admin editando admin → aplica direto, apenas log no histórico
+      const isTargetUserAdmin = selectedUser.role === 'admin';
+      const isEditingAdmin = isTargetUserAdmin && (profileChanged || customRolesChanged || statusChanged || roleChanged);
 
-      if (requiresApproval) {
+      if (isEditingAdmin) {
+        // Admin pode editar outro admin diretamente - apenas registrar no histórico
+        const fieldsChanged = [];
+        if (profileChanged) fieldsChanged.push('profile_id');
+        if (customRolesChanged) fieldsChanged.push('custom_role_ids');
+        if (statusChanged) fieldsChanged.push('user_status');
+        if (roleChanged) fieldsChanged.push('role');
+        if (selectedUser.position !== data.position) fieldsChanged.push('position');
+        if (selectedUser.area !== data.area) fieldsChanged.push('area');
+        if (selectedUser.job_role !== data.job_role) fieldsChanged.push('job_role');
+
+        const changes = { 
+          action: 'updated', 
+          field: fieldsChanged.join(', ') || 'dados_gerais', 
+          oldValue: '', 
+          newValue: '' 
+        };
+
+        updateUserMutation.mutate({ 
+          userId: selectedUser.id, 
+          data,
+          changes 
+        });
+      } else if (profileChanged || customRolesChanged || statusChanged) {
         // Preparar dados para solicitação de aprovação
         let requestData;
         
