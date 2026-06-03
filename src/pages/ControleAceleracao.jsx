@@ -4,7 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import useControleAceleracaoState from "@/components/hooks/useControleAceleracaoState";
 import ControleAceleracaoView from "@/components/aceleracao/ControleAceleracaoView";
-import PageAccessControl from "@/components/auth/PageAccessControl";
 import WheelLoader from "@/components/ui/WheelLoader";
 import SugestaoHorarioPendentePoup from "@/components/aceleracao/SugestaoHorarioPendentePoup";
 
@@ -61,12 +60,9 @@ export default function ControleAceleracao() {
   }
 
   return (
-    <PageAccessControl
-      requiredPermissions={["acceleration.manage"]}
-      requiredJobRoles={["acelerador", "consultor", "mentor"]}
-    >
+    <>
       <ControleAceleracaoView state={state} />
-      
+
       {/* Popup para sugestões pendentes */}
       {atendimentoPendente && (
         <SugestaoHorarioPendentePoup
@@ -75,6 +71,6 @@ export default function ControleAceleracao() {
           atendimento={atendimentoPendente}
         />
       )}
-    </PageAccessControl>
+    </>
   );
 }
