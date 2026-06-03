@@ -2,8 +2,8 @@ import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
-import { Loader2 } from "lucide-react";
 import WheelLoader from "@/components/ui/WheelLoader";
+import { getUserWorkshopId } from "@/utils/userUtils";
 
 /**
  * OnboardingGate: Controla o acesso baseado no status de onboarding do usuário.
@@ -59,7 +59,7 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
       if (shouldBypass) return;
 
       // Verificações síncronas primeiro (sem I/O) — resolve 95% dos casos instantaneamente
-      const hasWorkshop = !!(user.workshop_id || user.data?.workshop_id);
+      const hasWorkshop = !!getUserWorkshopId(user);
 
       if (user.profile_completed === false && user.first_access_completed === true) {
         navigate(createPageUrl("CompletarPerfil")); return;
