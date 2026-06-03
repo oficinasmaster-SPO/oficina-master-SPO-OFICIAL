@@ -58,7 +58,9 @@ export function PermissionsProvider({ children }) {
         const [ws, employees] = await Promise.all([wsPromise, empPromise]);
 
         if (employees && employees.length > 0) {
-          if (employees[0].profile_id) activeProfileId = employees[0].profile_id;
+          // Usar profile_id do Employee apenas se preenchido — senão manter do User
+          // Antes: if (employees[0].profile_id) — perdia o profile do User quando Employee.profile_id era null
+          activeProfileId = employees[0].profile_id || user.profile_id;
           if (employees[0].job_role) activeRole = employees[0].job_role;
         } else if (ws && (ws.owner_id === user.id || (ws.partner_ids && ws.partner_ids.includes(user.id)))) {
           isOwnerOrPartner = true;
