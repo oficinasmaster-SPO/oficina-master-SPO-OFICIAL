@@ -19,6 +19,7 @@ import ApprovalBanner from "@/components/admin/users/ApprovalBanner";
 import PermissionRequestForm from "@/components/rbac/PermissionRequestForm";
 import { usePermissionChangeRequest, prepareProfileChangeRequest, prepareCustomRolesChangeRequest, prepareStatusChangeRequest } from "@/components/rbac/hooks/usePermissionChangeRequest";
 import AuditHistoryViewer from "@/components/rbac/audit/AuditHistoryViewer";
+import CadastroUsuarioDiretoModal from "@/components/admin/CadastroUsuarioDiretoModal";
 
 export default function UsuariosAdmin() {
   const queryClient = useQueryClient();
@@ -33,6 +34,7 @@ export default function UsuariosAdmin() {
   const { createRequest, isCreating } = usePermissionChangeRequest();
   const [auditViewOpen, setAuditViewOpen] = useState(false);
   const [userForAudit, setUserForAudit] = useState(null);
+  const [cadastroDiretoOpen, setCadastroDiretoOpen] = useState(false);
   const [filters, setFilters] = useState({
     search: "",
     position: "",
@@ -533,17 +535,26 @@ export default function UsuariosAdmin() {
             Gerencie consultores e aceleradores da equipe interna
           </p>
         </div>
-        <Button 
-          onClick={() => {
-            setSelectedUser(null);
-            setIsCreateMode(true);
-            setIsDialogOpen(true);
-          }}
-          className="bg-indigo-600 hover:bg-indigo-700"
-        >
-          <UserPlus className="w-4 h-4 mr-2" />
-          Novo Usuário Admin
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setCadastroDiretoOpen(true)}
+          >
+            <UserPlus className="w-4 h-4 mr-2" />
+            Cadastro Direto
+          </Button>
+          <Button 
+            onClick={() => {
+              setSelectedUser(null);
+              setIsCreateMode(true);
+              setIsDialogOpen(true);
+            }}
+            className="bg-indigo-600 hover:bg-indigo-700"
+          >
+            <UserPlus className="w-4 h-4 mr-2" />
+            Novo Usuário Admin
+          </Button>
+        </div>
       </div>
 
       {/* Cards de Resumo */}
@@ -709,6 +720,12 @@ export default function UsuariosAdmin() {
         admins={adminList}
         onSubmit={handleSubmit}
         isLoading={createUserMutation.isPending || updateUserMutation.isPending}
+      />
+
+      {/* Modal Cadastro Direto */}
+      <CadastroUsuarioDiretoModal
+        open={cadastroDiretoOpen}
+        onClose={() => setCadastroDiretoOpen(false)}
       />
 
       {/* Dialog de Auditoria */}

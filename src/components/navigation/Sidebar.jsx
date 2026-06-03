@@ -928,15 +928,6 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           requiredPermission: 'admin.system_config'
         },
         { 
-          name: 'Cadastro Direto User', 
-          href: createPageUrl('CadastroUsuarioDireto'), 
-          icon: UserPlus,
-          description: 'Criar usuário direto no sistema',
-          globalAdminOnly: true,
-          highlight: true,
-          requiredPermission: 'admin.users'
-        },
-        { 
           name: 'Debug Permissões', 
           href: createPageUrl('TestUsuarios'), 
           icon: Bug,
