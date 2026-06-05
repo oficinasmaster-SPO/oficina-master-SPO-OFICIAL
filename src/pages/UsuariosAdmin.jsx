@@ -19,6 +19,7 @@ import CadastroUsuarioDiretoModal from "@/components/admin/CadastroUsuarioDireto
 import UserAuditDialog from "@/components/admin/UserAuditDialog";
 import UserDetailsDrawer from "@/components/admin/users/UserDetailsDrawer";
 import PromoteToAdminDialog from "@/components/admin/PromoteToAdminDialog";
+import PermissionExceptionsModal from "@/components/admin/PermissionExceptionsModal";
 import { PermissionRequestForm } from "@/components/rbac/PermissionRequestForm";
 import { usePermissionChangeRequest } from "@/components/rbac/hooks/usePermissionChangeRequest";
 
@@ -32,6 +33,7 @@ export default function UsuariosAdmin() {
   const [isAuditDialogOpen, setIsAuditDialogOpen] = useState(false);
   const [isDetailsDrawerOpen, setIsDetailsDrawerOpen] = useState(false);
   const [isPromoteDialogOpen, setIsPromoteDialogOpen] = useState(false);
+  const [isPermissionModalOpen, setIsPermissionModalOpen] = useState(false);
   const [permissionRequestData, setPermissionRequestData] = useState(null);
   const queryClient = useQueryClient();
 
@@ -216,7 +218,7 @@ export default function UsuariosAdmin() {
           <p className="text-gray-600 mt-1">Gerencie usuários, perfis e permissões do sistema</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => window.location.href = '/GestaoPermissoesExternas'}>
+          <Button variant="outline" onClick={() => setIsPermissionModalOpen(true)}>
             <Users className="w-4 h-4 mr-2" />
             Permissões por Usuário
           </Button>
@@ -462,6 +464,12 @@ export default function UsuariosAdmin() {
           requestedValue={permissionRequestData.requestedValue}
         />
       )}
+
+      <PermissionExceptionsModal
+        open={isPermissionModalOpen}
+        onOpenChange={setIsPermissionModalOpen}
+        user={selectedUser}
+      />
     </div>
   );
 }
