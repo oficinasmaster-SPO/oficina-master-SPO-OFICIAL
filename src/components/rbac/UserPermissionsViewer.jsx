@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { User, Shield, Search, Eye, AlertTriangle, CheckCircle2, Lock, Users, Building2, UserCheck } from "lucide-react";
+import { User, Shield, Search, AlertTriangle, CheckCircle2, Lock, Users, Building2, UserCheck } from "lucide-react";
 import { systemRoles } from "@/components/lib/systemRoles";
 import { toast } from "sonner";
 import UserPermissionsEditor from "./UserPermissionsEditor";
@@ -54,18 +54,6 @@ export default function UserPermissionsViewer() {
 
   const selectedUser = users.find(u => u.id === selectedUserId);
   
-  const handleImpersonate = async (userId, userEmail) => {
-    try {
-      await base44.functions.invoke('impersonateUser', { target_user_id: userId });
-      toast.success(`Você está visualizando como: ${userEmail}`);
-      setTimeout(() => {
-        window.location.reload();
-      }, 1500);
-    } catch (error) {
-      toast.error("Erro ao impersonar usuário: " + error.message);
-    }
-  };
-
   const getUserPermissionsSummary = (user) => {
     if (!user) return null;
 
@@ -275,14 +263,7 @@ export default function UserPermissionsViewer() {
                   Relatório consolidado de perfis, roles e acessos
                 </CardDescription>
               </div>
-              <Button
-                onClick={() => handleImpersonate(selectedUser.id, selectedUser.email)}
-                variant="outline"
-                className="gap-2"
-              >
-                <Eye className="w-4 h-4" />
-                Impersonar Usuário
-              </Button>
+
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
