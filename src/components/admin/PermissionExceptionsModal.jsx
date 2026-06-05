@@ -13,20 +13,24 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import PermissionExceptionEditor from "@/components/permissions/ExternalUserManagement/PermissionExceptionEditor";
 
 export default function PermissionExceptionsModal({ open, onOpenChange }) {
+  const [selectedWorkshopId, setSelectedWorkshopId] = useState(null);
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [showEditor, setShowEditor] = useState(false);
   const queryClient = useQueryClient();
 
-  // Busca todos os usuários do sistema
-  const { data: allUsers = [] } = useQuery({
-    queryKey: ['all-users-permissions'],
+  // Busca workshops da consultoria usando getUserWorkshops
+  const { data: workshops = [], error: workshopsError } = useQuery({
+    queryKey: ['workshops-list-permissions'],
     queryFn: async () => {
       try {
-        const users = await base44.asServiceRole.entities.User.list();
-        console.log('[PermissionExceptionsModal] Fetched users:', users?.length || 0);
-        return Array.isArray(users) ? users : [];
+        console.log('[PermissionExceptionsModal] Fetching workshops...');
+        const response = await base44.functions.invoke('getUserWorkshops', {});
+        console.log('[PermissionExceptionsModal] getUserWorkshops response:', response);
+        const wsList = response?.data?.workshops || [];
+        console.log('[PermissionExceptionsModal] Workshops count:', wsList.length);
+        return wsList;
       } catch (error) {
-        console.error('[PermissionExceptionsModal] Error fetching users:', error);
+        console.error('[PermissionExceptionsModal] Error fetching workshops:', error);
         return [];
       }
     },
@@ -34,7 +38,27 @@ export default function PermissionExceptionsModal({ open, onOpenChange }) {
     staleTime: 5 * 60 * 1000
   });
 
-  // Busca exceções do usuário selecionado (sem filtro de workshop)
+  // Busca usuários da oficina selecionada
+  const { data: employees = [] } = useQuery({
+    queryKey: ['employees-in-workshop', selectedWorkshopId],
+    queryFn: async () => {
+      if (!selectedWorkshopId) return [];
+      
+      try {
+        const employees = await base44.asServiceRole.entities.Employee.filter({
+          workshop_id: selectedWorkshopId
+        });
+        console.log(`[PermissionExceptionsModal] ${employees?.length || 0} employees na oficina ${selectedWorkshopId}`);
+        return Array.isArray(employees) ? employees : [];
+      } catch (error) {
+        console.error('Erro ao buscar employees:', error);
+        return [];
+      }
+    },
+    enabled: !!selectedWorkshopId && open
+  });
+
+  // Busca exceções do usuário selecionado
   const { data: exceptions = [] } = useQuery({
     queryKey: ['user-permission-exceptions', selectedUserId],
     queryFn: async () => {
@@ -43,7 +67,14 @@ export default function PermissionExceptionsModal({ open, onOpenChange }) {
       const response = await base44.functions.invoke('getUserPermissionExceptions', { 
         user_id: selectedUserId 
       });
-      return response.data.exceptions || [];
+      let excs = response.data.exceptions || [];
+      
+      // Filtra por oficina se selecionada
+      if (selectedWorkshopId) {
+        excs = excs.filter(exc => exc.workshop_id === selectedWorkshopId);
+      }
+      
+      return excs;
     },
     enabled: !!selectedUserId && open
   });
@@ -63,8 +94,8 @@ export default function PermissionExceptionsModal({ open, onOpenChange }) {
   });
 
   const handleAddException = () => {
-    if (!selectedUserId) {
-      toast.error('Selecione um usuário primeiro');
+    if (!selectedUserId || !selectedWorkshopId) {
+      toast.error('Selecione uma oficina e um usuário primeiro');
       return;
     }
     setShowEditor(true);
@@ -94,6 +125,21 @@ export default function PermissionExceptionsModal({ open, onOpenChange }) {
           </DialogHeader>
 
           <div className="flex-1 overflow-y-auto space-y-4">
+            {/* Debug info */}
+            {open && (
+              <div className="text-xs text-gray-400">
+                Workshops: {workshops.length} | Employees: {employees.length} | Selected: {selectedWorkshopId || 'none'} / {selectedUserId || 'none'}
+              </div>
+            )}
+
+            {/* Error Banner */}
+            {workshopsError && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="text-sm text-red-800 font-semibold">Erro ao carregar oficinas</p>
+                <p className="text-xs text-red-600 mt-1">{workshopsError.message}</p>
+              </div>
+            )}
+
             {/* Info Banner */}
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
               <div className="flex items-start gap-3">
@@ -107,34 +153,71 @@ export default function PermissionExceptionsModal({ open, onOpenChange }) {
               </div>
             </div>
 
-            {/* Seletor de Usuário */}
-            <div>
-              <Label htmlFor="filter-user" className="text-sm font-medium text-gray-700">
-                Usuário *
-              </Label>
-              <Select 
-                value={selectedUserId || ""} 
-                onValueChange={setSelectedUserId}
-              >
-                <SelectTrigger id="filter-user">
-                  <SelectValue placeholder="Selecione um usuário..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {allUsers.length === 0 ? (
-                    <div className="p-2 text-xs text-gray-500">Nenhum usuário encontrado</div>
-                  ) : (
-                    allUsers.map(user => (
-                      <SelectItem key={user.id} value={user.id}>
-                        {user.full_name || user.email}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
+            {/* Filtros em Cascata */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="filter-workshop" className="text-sm font-medium text-gray-700">
+                  Oficina *
+                </Label>
+                <Select 
+                  value={selectedWorkshopId || ""} 
+                  onValueChange={(value) => {
+                    setSelectedWorkshopId(value);
+                    setSelectedUserId(null);
+                  }}
+                >
+                  <SelectTrigger id="filter-workshop">
+                    <SelectValue placeholder="Selecione uma oficina..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {workshops.length === 0 ? (
+                      <div className="p-2 text-xs text-gray-500">Nenhuma oficina disponível</div>
+                    ) : (
+                      workshops.map(ws => (
+                        <SelectItem key={ws.id} value={ws.id}>
+                          {ws.name}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="filter-user" className="text-sm font-medium text-gray-700">
+                  Usuário *
+                </Label>
+                <Select 
+                  value={selectedUserId || ""} 
+                  onValueChange={setSelectedUserId}
+                  disabled={!selectedWorkshopId}
+                >
+                  <SelectTrigger id="filter-user">
+                    <SelectValue 
+                      placeholder={
+                        selectedWorkshopId 
+                          ? (employees.length > 0 ? "Selecione um usuário..." : "Nenhum usuário nesta oficina")
+                          : "Selecione uma oficina primeiro"
+                      } 
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {employees.length === 0 ? (
+                      <div className="p-2 text-xs text-gray-500">Nenhum usuário encontrado</div>
+                    ) : (
+                      employees.map(emp => (
+                        <SelectItem key={emp.user_id} value={emp.user_id}>
+                          {emp.full_name} - {emp.job_role}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             {/* Botão Adicionar */}
-            {selectedUserId && (
+            {selectedUserId && selectedWorkshopId && (
               <div className="flex justify-end">
                 <Button 
                   onClick={handleAddException}
@@ -147,12 +230,12 @@ export default function PermissionExceptionsModal({ open, onOpenChange }) {
             )}
 
             {/* Lista de Exceções */}
-            {!selectedUserId ? (
+            {!selectedUserId || !selectedWorkshopId ? (
               <div className="text-center py-12 text-gray-500">
                 <Shield className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                <p className="text-lg font-medium text-gray-700">Selecione um usuário</p>
+                <p className="text-lg font-medium text-gray-700">Selecione uma oficina e usuário</p>
                 <p className="text-sm text-gray-500 mt-1">
-                  Use o filtro acima para visualizar as permissões individuais
+                  Use os filtros acima para visualizar as permissões individuais
                 </p>
               </div>
             ) : exceptions.length === 0 ? (
@@ -240,14 +323,16 @@ export default function PermissionExceptionsModal({ open, onOpenChange }) {
       </Dialog>
 
       {/* Modal Editor de Exceção */}
-      {showEditor && selectedUserId && (
+      {showEditor && selectedUserId && selectedWorkshopId && (
         <PermissionExceptionEditor
           open={showEditor}
           onOpenChange={handleCloseEditor}
           user={{
             user_id: selectedUserId,
-            full_name: allUsers.find(u => u.id === selectedUserId)?.full_name || '',
-            email: allUsers.find(u => u.id === selectedUserId)?.email || ''
+            workshop_id: selectedWorkshopId,
+            full_name: employees.find(e => e.user_id === selectedUserId)?.full_name || '',
+            email: employees.find(e => e.user_id === selectedUserId)?.email || '',
+            workshop_name: workshops.find(w => w.id === selectedWorkshopId)?.name || ''
           }}
         />
       )}
