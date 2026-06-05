@@ -1005,6 +1005,14 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           requiredPermission: 'admin.users'
         },
         { 
+          name: 'Permissões Externas', 
+          href: createPageUrl('GestaoPermissoesExternas'), 
+          icon: Shield,
+          description: 'Gerenciar permissões de usuários externos',
+          globalAdminOnly: true,
+          requiredPermission: 'admin.users'
+        },
+        { 
           name: 'Monitoramento de Usuários', 
           href: createPageUrl('MonitoramentoUsuarios'), 
           icon: Activity,
