@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Edit, Copy, Power, Trash2, Shield, AlertCircle, Users, RefreshCw, Eye, MoreVertical } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
@@ -133,22 +134,6 @@ export default function ProfilesManagement() {
     setDetailsModalOpen(true);
   };
 
-  if (viewMode === "edit" && selectedProfile) {
-    return (
-      <ProfileEditor
-        profile={selectedProfile}
-        onBack={() => {
-          setViewMode("list");
-          setSelectedProfile(null);
-        }}
-        onSave={() => {
-          setViewMode("list");
-          setSelectedProfile(null);
-        }}
-      />
-    );
-  }
-
   if (showCreator) {
     return (
       <ProfileCreator
@@ -267,6 +252,21 @@ export default function ProfilesManagement() {
           setProfileForDetails(null);
         }}
       />
+
+      {/* Modal de Edição */}
+      <Dialog open={viewMode === "edit" && !!selectedProfile} onOpenChange={(v) => { if (!v) { setViewMode("list"); setSelectedProfile(null); } }}>
+        <DialogContent className="max-w-5xl w-full h-[90vh] flex flex-col p-0">
+          <ScrollArea className="flex-1 p-6">
+            {selectedProfile && (
+              <ProfileEditor
+                profile={selectedProfile}
+                onBack={() => { setViewMode("list"); setSelectedProfile(null); }}
+                onSave={() => { setViewMode("list"); setSelectedProfile(null); }}
+              />
+            )}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!deleteDialogProfile} onOpenChange={(v) => { if (!v) { setDeleteDialogProfile(null); setDeleteConfirmText(""); } }}>
         <DialogContent>
