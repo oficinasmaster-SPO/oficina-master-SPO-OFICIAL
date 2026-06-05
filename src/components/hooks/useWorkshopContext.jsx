@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAdminMode } from './useAdminMode';
 import { useTenant } from '@/components/contexts/TenantContext';
 import { base44 } from '@/api/base44Client';
+import { getImpersonationData } from '@/components/shared/ImpersonationBanner';
 
 /**
  * Hook que SEMPRE retorna o workshop correto:
@@ -12,11 +13,34 @@ import { base44 } from '@/api/base44Client';
 export function useWorkshopContext() {
   const { isAdminMode, adminWorkshopId } = useAdminMode();
   const { selectedFirmId, selectedCompanyId, changeCompany, isLoading: isTenantLoading, user: tenantUser } = useTenant();
+  
+  // Verificar se está em modo de impersonação
+  const impersonationData = useMemo(() => getImpersonationData(), []);
+  const isImpersonating = !!impersonationData;
+  const targetUser = impersonationData?.target_user;
 
   // 1. Busca a lista de workshops disponíveis do usuário. Isso ocorre apenas uma vez e é cacheado.
+  // IMP-01: Em modo de impersonação, usa o workshop do usuário alvo diretamente
   const { data: available = [], isLoading: isAvailableLoading } = useQuery({
-    queryKey: ['workshops-available', tenantUser?.id],
+    queryKey: ['workshops-available', isImpersonating ? targetUser?.id : tenantUser?.id],
     queryFn: async () => {
+      // Se estiver impersonando, retorna apenas o workshop do usuário alvo
+      if (isImpersonating && targetUser?.workshop_id) {
+        try {
+          const response = await base44.functions.invoke('getUserWorkshops', {
+            workshopId: targetUser.workshop_id
+          });
+          if (response?.data?.workshops?.length > 0) {
+            return response.data.workshops;
+          }
+        } catch (err) {
+          console.warn('Erro ao buscar workshop impersonado:', err?.message);
+        }
+        // Fallback: criar objeto mínimo do workshop
+        return [{ id: targetUser.workshop_id, name: 'Workshop (Impersonação)' }];
+      }
+      
+      // Comportamento normal (sem impersonação)
       const user = tenantUser || await base44.auth.me().catch(() => null);
       if (!user) return [];
 
@@ -28,7 +52,6 @@ export function useWorkshopContext() {
       } catch (err) {
         const status = err?.status || err?.response?.status;
         if (status === 429) {
-          // LOAD-04: rate limit — lançar erro para que o React Query mantenha o cache anterior (keepPreviousData)
           throw new Error('rate_limit');
         }
         console.warn('Erro ao buscar workshops via BFF:', status || err?.message);
@@ -37,39 +60,38 @@ export function useWorkshopContext() {
       return [];
     },
     enabled: !isTenantLoading,
-    staleTime: 2 * 60 * 1000, // DS-FIX-D1: reduzido de 15min → 2min para refletir dados corrigidos mais rápido
+    staleTime: 2 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     retry: (failureCount, error) => {
-      // LOAD-04: retry automático após rate limit (aguarda 8s)
       if (error?.message === 'rate_limit') return failureCount < 2;
       return failureCount < 1;
     },
     retryDelay: (attempt, error) => error?.message === 'rate_limit' ? 8000 : 5000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
-    // LOAD-04: manter dados anteriores em caso de erro — não limpar workshop em erros transitórios
     placeholderData: (previousData) => previousData,
   });
 
   // 2. Determina o workshop atual DE FORMA SÍNCRONA baseado na lista 'available'
-  // FIX-03: Priorizar selectedCompanyId > available > profile.workshop_id
+  // IMP-02: Em modo de impersonação, usa APENAS o workshop do usuário alvo
   let userWorkshop = null;
   let missingWorkshopIdToFetch = null;
 
-  if (isAdminMode && adminWorkshopId) {
+  if (isImpersonating && targetUser?.workshop_id) {
+    // IMP-03: Forçar uso do workshop do usuário impersonado
+    userWorkshop = available.find(w => w.id === targetUser.workshop_id);
+    if (!userWorkshop) missingWorkshopIdToFetch = targetUser.workshop_id;
+  } else if (isAdminMode && adminWorkshopId) {
     userWorkshop = available.find(w => w.id === adminWorkshopId);
     if (!userWorkshop) missingWorkshopIdToFetch = adminWorkshopId;
   } else if (selectedCompanyId) {
     userWorkshop = available.find(w => w.id === selectedCompanyId);
-    // FIX-03: Se selectedCompanyId não está em available, buscar mesmo que seja diferente do perfil
     if (!userWorkshop) missingWorkshopIdToFetch = selectedCompanyId;
   } else if (available.length > 0) {
     userWorkshop = available.find(w => !w.company_id) || available[0];
   } else if (tenantUser) {
-    // FIX-03: Se BFF retornou vazio, tentar profile.workshop_id como fallback
     const userWorkshopId = tenantUser?.data?.workshop_id || tenantUser?.workshop_id;
     if (userWorkshopId) {
-      // Sempre buscar do perfil se BFF não retornou nada
       missingWorkshopIdToFetch = userWorkshopId;
     }
   }

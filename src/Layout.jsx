@@ -37,7 +37,12 @@ export default function Layout({ children, currentPageName }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { isAdminMode, getAdminUrl } = useAdminMode();
   const { workshop, workshopId, workshopsDisponiveis, setCurrentWorkshop, isLoading: isLoadingWorkshop } = useWorkshopContext();
+  const impersonationData = getImpersonationData();
   const [cssVersion] = useState(Date.now()); // Timestamp fixo por sessão para evitar re-requests
+  
+  // Usar dados do usuário alvo durante impersonação
+  const displayUser = impersonationData?.target_user || user;
+  const displayWorkshopId = impersonationData?.target_user?.workshop_id || workshopId;
   
   // Rastrear acesso a módulos automaticamente
       useModuleTracking(workshop);
@@ -71,12 +76,12 @@ export default function Layout({ children, currentPageName }) {
 
 
   const { data: notifications = [] } = useQuery({
-    queryKey: ['notifications', user?.id],
+    queryKey: ['notifications', displayUser?.id],
     queryFn: async () => {
       try {
-        if (!user?.id) return [];
+        if (!displayUser?.id) return [];
         const notifications = await base44.entities.Notification.filter({
-          user_id: user.id,
+          user_id: displayUser.id,
           is_read: false
         }, '-created_date', 20);
         return Array.isArray(notifications) ? notifications : [];
@@ -84,7 +89,7 @@ export default function Layout({ children, currentPageName }) {
         return [];
       }
     },
-    enabled: !!user?.id && isAuthenticated && !isCheckingAuth,
+    enabled: !!displayUser?.id && isAuthenticated && !isCheckingAuth,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -118,16 +123,16 @@ export default function Layout({ children, currentPageName }) {
 
   // Verificar se onboarding pendente considerando o workshop REAL (não só o ID do perfil)
   const hasValidWorkshop = !!workshop && !workshop._partial;
-  const userHasWorkshopId = !!(user?.workshop_id || user?.data?.workshop_id);
+  const userHasWorkshopId = !!(displayUser?.workshop_id || displayUser?.data?.workshop_id);
   
-  const isPendingOnboarding = user?.role !== 'admin' && (
-                              user?.cadastro_em_andamento === true || 
-                              user?.first_access_completed === false || 
-                              user?.profile_completed === false ||
+  const isPendingOnboarding = displayUser?.role !== 'admin' && (
+                              displayUser?.cadastro_em_andamento === true || 
+                              displayUser?.first_access_completed === false || 
+                              displayUser?.profile_completed === false ||
                               (!userHasWorkshopId && !isLoadingWorkshop)
                             );
 
-  const shouldShowMenus = isAuthenticated && !isPublicPage && !isPendingOnboarding && (hasValidWorkshop || isAdminMode || user?.role === 'admin');
+  const shouldShowMenus = isAuthenticated && !isPublicPage && !isPendingOnboarding && (hasValidWorkshop || isAdminMode || displayUser?.role === 'admin');
 
   // IMPORTANTE: Desabilitar modo Admin em páginas de primeiro acesso
   const isFirstAccessPage = location.pathname.toLowerCase().includes('primeiroacesso');
@@ -138,7 +143,7 @@ export default function Layout({ children, currentPageName }) {
   }
 
   const globalAdminPages = ['/', '/home', '/dashboard', '/dashboardfinanceiro', '/configuracoeskiwify', '/gestaousuariosempresas', '/gestaotenants', '/gestaoempresas', '/adminprodutividade', '/admindesafios', '/gerenciarplanos', '/calendarioeventos', '/cadastrousuariodireto', '/testusuarios', '/adminmensagens', '/adminnotificacoes', '/gerenciartoursvideos', '/gerenciarprocessos', '/gestaorbac', '/configuracaopermissoesgranulares', '/logsauditoriarbac', '/usuariosadmin', '/monitoramentousuarios', '/diagnosticoplano', '/integracoes', '/testeopenai', '/adminqadashboard'];
-  const isGlobalAdminPage = (isAdminMode || user?.role === 'admin') && globalAdminPages.some(p => location.pathname.toLowerCase() === p || location.pathname.toLowerCase().startsWith(p + '/'));
+  const isGlobalAdminPage = (isAdminMode || displayUser?.role === 'admin') && globalAdminPages.some(p => location.pathname.toLowerCase() === p || location.pathname.toLowerCase().startsWith(p + '/'));
   const pagesWithoutWorkshopRequired = ['/controleaceleracao'];
   const isPageWithoutWorkshopRequired = pagesWithoutWorkshopRequired.some(p => location.pathname.toLowerCase() === p || location.pathname.toLowerCase().startsWith(p + '/'));
 
@@ -146,23 +151,23 @@ export default function Layout({ children, currentPageName }) {
   useEffect(() => {
     let timeout;
     // Admins e global admin pages não precisam de workshop — não exibir spinner
-    const needsWorkshop = isAuthenticated && !isPublicPage && isLoadingWorkshop && user?.role !== 'admin' && !isGlobalAdminPage;
+    const needsWorkshop = isAuthenticated && !isPublicPage && isLoadingWorkshop && displayUser?.role !== 'admin' && !isGlobalAdminPage;
     if (needsWorkshop) {
       timeout = setTimeout(() => setShowLoading(true), 300);
     } else {
       setShowLoading(false);
     }
     return () => clearTimeout(timeout);
-  }, [isAuthenticated, isPublicPage, isLoadingWorkshop, user?.role, isGlobalAdminPage]);
+  }, [isAuthenticated, isPublicPage, isLoadingWorkshop, displayUser?.role, isGlobalAdminPage]);
 
   return (
-      <OnboardingGate user={user} isAuthenticated={isAuthenticated}>
+      <OnboardingGate user={displayUser} isAuthenticated={isAuthenticated}>
       <div className="min-h-screen bg-gray-50">
         <PlanLimitModal />
-        {isAuthenticated && user && <VoucherPendingDialog user={user} />}
+        {isAuthenticated && displayUser && <VoucherPendingDialog user={displayUser} />}
         
         {/* Debug de Permissões - DESABILITADO EM PRODUÇÃO (impacta performance) */}
-        {false && isAuthenticated && user && (
+        {false && isAuthenticated && displayUser && (
           <PermissionDebugLogger 
             pageName={currentPageName} 
             enabled={false} 
@@ -171,17 +176,18 @@ export default function Layout({ children, currentPageName }) {
 
         {shouldShowMenus && (
           <Sidebar 
-            user={user}
+            user={displayUser}
             unreadCount={unreadCount}
             isOpen={sidebarOpen}
             onClose={() => setSidebarOpen(false)}
+            workshopId={displayWorkshopId}
           />
         )}
 
       {/* {isAuthenticated && <ActivityTracker user={user} workshop={workshop} />} */}
-      {isAuthenticated && user && (
+      {isAuthenticated && displayUser && (
         <>
-          <NotificationListener user={user} />
+          <NotificationListener user={displayUser} />
           <NotificationPermissionBanner />
         </>
       )}
@@ -193,7 +199,7 @@ export default function Layout({ children, currentPageName }) {
               )}
       
       <ImpersonationBanner />
-      {isAuthenticated && user && <AssistanceModeBanner user={user} />}
+      {isAuthenticated && displayUser && <AssistanceModeBanner user={displayUser} />}
               {isAuthenticated && isAdminMode && workshop && <AdminModeBanner workshop={workshop} />}
               {shouldShowMenus && (
           <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-30 print:hidden">
@@ -213,10 +219,10 @@ export default function Layout({ children, currentPageName }) {
               )}
 
               <Link to={createPageUrl("Home")} className={`flex items-center gap-2 ${isAuthenticated ? 'lg:hidden' : ''}`}>
-                <img src="https://media.base44.com/images/public/69540822472c4a70b54d47aa/121a4c254_Horizontal_Fundo_Claro.png" alt="Oficinas Master" className="h-10 sm:h-12 object-contain" />
+                <img src="https://media.base44.com/images/public/69540822472c47aa/121a4c254_Horizontal_Fundo_Claro.png" alt="Oficinas Master" className="h-10 sm:h-12 object-contain" />
               </Link>
 
-              {isAuthenticated && user && <TenantSelector />}
+              {isAuthenticated && displayUser && <TenantSelector />}
 
               {/* Global Search Bar */}
               {isAuthenticated && workshop && (
@@ -226,7 +232,7 @@ export default function Layout({ children, currentPageName }) {
               )}
 
               <div className="flex items-center gap-4 ml-auto">
-                {isAuthenticated && user && (
+                {isAuthenticated && displayUser && (
                   <Link
                     to={createPageUrl("Notificacoes")}
                     className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors"
@@ -243,7 +249,7 @@ export default function Layout({ children, currentPageName }) {
                 <div className="flex items-center gap-3">
                   {isCheckingAuth ? (
                     <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse" />
-                  ) : isAuthenticated && user ? (
+                  ) : isAuthenticated && displayUser ? (
                     <>
                       <div className="hidden md:block text-right">
                         {isLoadingWorkshop ? (
@@ -251,6 +257,16 @@ export default function Layout({ children, currentPageName }) {
                             <div className="h-4 w-24 bg-gray-200 rounded mb-1" />
                             <div className="h-3 w-16 bg-gray-100 rounded" />
                           </div>
+                        ) : impersonationData ? (
+                          // Durante impersonação, mostra dados do usuário alvo
+                          <>
+                            <p className="text-sm font-medium text-gray-900">
+                              {displayUser.full_name || displayUser.email}
+                            </p>
+                            <p className="text-xs text-gray-600">
+                              {displayUser.position || displayUser.job_role || 'Usuário'}
+                            </p>
+                          </>
                         ) : workshopsDisponiveis && workshopsDisponiveis.length > 1 ? (
                           <DropdownMenu>
                             <DropdownMenuTrigger className="flex items-center gap-2 hover:bg-gray-50 p-2 rounded-md transition-colors focus:outline-none">
@@ -326,7 +342,7 @@ export default function Layout({ children, currentPageName }) {
             <main className="flex-1">
               <div className={`${shouldShowMenus ? 'px-4 sm:px-6 lg:px-8 py-6' : ''}`}>
                 {shouldShowMenus && <Breadcrumbs />}
-                {isAuthenticated && !isPublicPage && isLoadingWorkshop && user?.role !== 'admin' && !isGlobalAdminPage ? (
+                {isAuthenticated && !isPublicPage && isLoadingWorkshop && displayUser?.role !== 'admin' && !isGlobalAdminPage ? (
                   <div className="min-h-[60vh] flex items-center justify-center">
                     {showLoading ? <WheelLoader size="lg" text="Carregando dados..." /> : null}
                   </div>
@@ -352,7 +368,7 @@ export default function Layout({ children, currentPageName }) {
                           <p className="text-gray-600 mb-6 max-w-md">Sua oficina está inativa. Por favor, procure um administrador do sistema para reativar o acesso.</p>
                           <Button variant="outline" onClick={handleLogout}>Sair</Button>
                         </div>
-                      ) : (user?.role !== 'admin' && !location.pathname.toLowerCase().includes('meuplano') && (workshop?.planStatus !== 'active' && workshop?.planStatus !== 'trial')) ? (
+                      ) : (displayUser?.role !== 'admin' && !location.pathname.toLowerCase().includes('meuplano') && (workshop?.planStatus !== 'active' && workshop?.planStatus !== 'trial')) ? (
                         <div className="min-h-[60vh] flex flex-col items-center justify-center text-center p-6">
                           <div className="bg-red-100 p-6 rounded-full w-24 h-24 flex items-center justify-center mb-6">
                             <AlertCircle className="w-12 h-12 text-red-600" />
@@ -364,7 +380,7 @@ export default function Layout({ children, currentPageName }) {
                           </Button>
                         </div>
                       ) : (
-                        <SharedDataProvider workshop={workshop} workshopId={workshopId} userId={user?.id}>
+                        <SharedDataProvider workshop={workshop} workshopId={workshopId} userId={displayUser?.id}>
                           {children}
                         </SharedDataProvider>
                       )

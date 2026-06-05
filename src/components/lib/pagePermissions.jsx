@@ -31,7 +31,6 @@ export const pagePermissions = {
   AdminMensagens: "admin",
   AdminNotificacoes: "admin",
   GerenciarToursVideos: "admin",
-  GerenciarProcessos: "admin",
   AuditoriaPermissoes: "admin.rbac",
   LogsAuditoriaRBAC: "admin.rbac",
   UsuariosAdmin: "admin.rbac",
@@ -52,9 +51,6 @@ export const pagePermissions = {
   RituaisAculturamento: "culture.rituals",
   Rituais: "culture.rituals",
   CriarRitualMAP: "culture.rituals",
-  ManualProcessos: "processes.view",
-  MeusProcessos: "processes.view",
-  VisualizarProcesso: "processes.view",
   GerenciarChecklists: "processes.checklists",
   MapaChecklists: "processes.checklists",
   RepositorioDocumentos: "documents.view",
@@ -129,7 +125,6 @@ export const pagePermissions = {
   CriarDescricaoCargo: "employees.create",
   EditarDescricaoCargo: "employees.edit",
   PortalColaborador: "public_authenticated",
-  MeuPerfil: "public_authenticated",
   CDCList: "employees.cdc",
   CDCForm: "employees.cdc",
   RelatorioCDC: "employees.cdc",
@@ -146,20 +141,6 @@ export const pagePermissions = {
   GerenciarRoles: "admin.rbac",
   DocumentacaoRBAC: "admin.rbac",
 
-  // Processos
-
-  // Processos
-  GerenciarProcessos: "admin",
-  ManualProcessos: "processes.view",
-  MeusProcessos: "processes.view",
-  VisualizarProcesso: "processes.view",
-
-  // Processos
-  GerenciarProcessos: "processes.manage",
-  ManualProcessos: "processes.view",
-  MeusProcessos: "processes.view",
-  VisualizarProcesso: "processes.view",
-
   // Treinamentos
   AcademiaTreinamento: "training.view",
   GerenciarTreinamentos: "training.manage",
@@ -174,7 +155,6 @@ export const pagePermissions = {
   Desafios: "public_authenticated",
 
   // Gestão
-  Dashboard: "dashboard.view",
   PainelMetas: "goals.view",
   DesdobramentoMeta: "goals.create",
   HistoricoMetas: "goals.view",
@@ -233,9 +213,6 @@ export const pagePermissions = {
 
   // Páginas públicas (sem permissão necessária)
   ClientRegistration: null,
-
-  // Página pública para autenticados (qualquer usuário logado pode acessar)
-  MeuPerfil: "public_authenticated",
 };
 
 /**
