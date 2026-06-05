@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 Deno.serve(async (req) => {
   try {
@@ -27,46 +27,52 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Usuário não encontrado' }, { status: 404 });
     }
 
-    // Registrar auditoria
+    // Buscar Employee vinculado para dados extras
+    let employeeData = null;
     try {
-      await base44.asServiceRole.functions.invoke('auditLog', {
-        user_id: admin.id,
-        action: 'user_impersonation',
-        entity_type: 'User',
-        entity_id: target_user_id,
-        details: {
-          admin_email: admin.email,
-          target_email: targetUser.email,
-          target_name: targetUser.full_name,
-          timestamp: new Date().toISOString()
-        }
-      });
-    } catch (auditError) {
-      console.error("⚠️ Erro ao registrar auditoria:", auditError);
+      const employees = await base44.asServiceRole.entities.Employee.filter({ user_id: target_user_id });
+      if (employees && employees.length > 0) {
+        employeeData = employees[0];
+      }
+    } catch (e) {
+      console.log('Sem employee vinculado:', e.message);
     }
 
-    // Criar sessão de impersonação
-    // Armazenar admin_id original para poder reverter depois
-    await base44.asServiceRole.entities.UserSession.create({
-      user_id: target_user_id,
-      admin_id: admin.id,
-      session_type: 'impersonation',
-      started_at: new Date().toISOString(),
-      metadata: {
+    // Registrar auditoria
+    try {
+      await base44.asServiceRole.functions.invoke('logRBACAction', {
+        action: 'impersonation_started',
+        admin_id: admin.id,
         admin_email: admin.email,
-        target_email: targetUser.email
-      }
-    });
+        target_user_id: targetUser.id,
+        target_email: targetUser.email,
+        target_name: targetUser.full_name,
+        timestamp: new Date().toISOString()
+      });
+    } catch (auditError) {
+      console.warn("⚠️ Auditoria falhou (não crítico):", auditError.message);
+    }
 
-    console.log("✅ Impersonação iniciada com sucesso");
+    console.log("✅ Dados de impersonação preparados com sucesso");
 
     return Response.json({ 
       success: true,
       message: `Visualizando como: ${targetUser.email}`,
+      admin: {
+        id: admin.id,
+        email: admin.email,
+        full_name: admin.full_name
+      },
       target_user: {
         id: targetUser.id,
         email: targetUser.email,
-        full_name: targetUser.full_name
+        full_name: targetUser.full_name,
+        role: targetUser.role,
+        workshop_id: targetUser.workshop_id || targetUser.data?.workshop_id,
+        position: employeeData?.position || null,
+        job_role: employeeData?.job_role || null,
+        profile_id: employeeData?.profile_id || null,
+        user_type: employeeData?.user_type || null,
       }
     });
 

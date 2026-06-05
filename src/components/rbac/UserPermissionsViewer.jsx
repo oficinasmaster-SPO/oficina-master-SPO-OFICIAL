@@ -6,10 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { User, Shield, Search, AlertTriangle, CheckCircle2, Lock, Users, Building2, UserCheck } from "lucide-react";
+import { User, Shield, Search, Eye, AlertTriangle, CheckCircle2, Lock, Users, Building2, UserCheck } from "lucide-react";
 import { systemRoles } from "@/components/lib/systemRoles";
 import { toast } from "sonner";
 import UserPermissionsEditor from "./UserPermissionsEditor";
+import { startImpersonation } from "@/components/shared/ImpersonationBanner";
 
 export default function UserPermissionsViewer() {
   const [searchEmail, setSearchEmail] = useState("");
@@ -53,7 +54,25 @@ export default function UserPermissionsViewer() {
   );
 
   const selectedUser = users.find(u => u.id === selectedUserId);
-  
+
+  const handleImpersonate = async (targetUser) => {
+    try {
+      const response = await base44.functions.invoke('impersonateUser', { target_user_id: targetUser.id });
+      if (!response.data?.success) throw new Error(response.data?.error || 'Falha na impersonação');
+
+      startImpersonation({
+        target_user: response.data.target_user,
+        admin: response.data.admin,
+        started_at: new Date().toISOString(),
+      });
+
+      toast.success(`Iniciando visualização como ${targetUser.full_name || targetUser.email}...`);
+      setTimeout(() => window.location.reload(), 800);
+    } catch (error) {
+      toast.error("Erro ao impersonar: " + error.message);
+    }
+  };
+
   const getUserPermissionsSummary = (user) => {
     if (!user) return null;
 
@@ -263,7 +282,16 @@ export default function UserPermissionsViewer() {
                   Relatório consolidado de perfis, roles e acessos
                 </CardDescription>
               </div>
-
+              {selectedUser.role !== 'admin' && (
+                <Button
+                  onClick={() => handleImpersonate(selectedUser)}
+                  variant="outline"
+                  className="gap-2 border-orange-300 text-orange-700 hover:bg-orange-50"
+                >
+                  <Eye className="w-4 h-4" />
+                  Impersonar
+                </Button>
+              )}
             </div>
           </CardHeader>
           <CardContent className="space-y-6">

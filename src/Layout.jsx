@@ -16,6 +16,7 @@ import NotificationPermissionBanner from "@/components/notifications/Notificatio
 // import ActivityTracker from "@/components/tracking/ActivityTracker";
 import AssistanceModeBanner from "@/components/shared/AssistanceModeBanner.jsx";
 import AdminModeBanner from "@/components/shared/AdminModeBanner.jsx";
+import ImpersonationBanner, { getImpersonationData } from "@/components/shared/ImpersonationBanner.jsx";
 import { useAdminMode } from "@/components/hooks/useAdminMode";
 import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 
@@ -191,6 +192,7 @@ export default function Layout({ children, currentPageName }) {
                 <link rel="stylesheet" href={`${workshop.custom_css_url}?v=${cssVersion}`} />
               )}
       
+      <ImpersonationBanner />
       {isAuthenticated && user && <AssistanceModeBanner user={user} />}
               {isAuthenticated && isAdminMode && workshop && <AdminModeBanner workshop={workshop} />}
               {shouldShowMenus && (
