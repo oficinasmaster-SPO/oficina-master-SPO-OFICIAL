@@ -23,6 +23,7 @@ import { lazy } from 'react';
 import QADashboard from '@/components/monitoring/QADashboard';
 import WheelLoader from '@/components/ui/WheelLoader';
 import ErrorBoundary from '@/components/shared/ErrorBoundary';
+import ImpersonationCacheInvalidator from '@/components/shared/ImpersonationCacheInvalidator';
 
 const Home = lazy(() => import('@/pages/Home'));
 const GestaoTenants = lazy(() => import('@/pages/GestaoTenants'));
@@ -302,6 +303,7 @@ function App() {
                 <DraftPersistenceProvider>
                   <ToastProvider>
                     <Router>
+                      <ImpersonationCacheInvalidator />
                       <PermissionsProvider>
                         <NavigationTracker />
                         <AuthenticatedApp />

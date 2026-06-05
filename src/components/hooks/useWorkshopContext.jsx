@@ -18,6 +18,11 @@ export function useWorkshopContext() {
   const impersonationData = useMemo(() => getImpersonationData(), []);
   const isImpersonating = !!impersonationData;
   const targetUser = impersonationData?.target_user;
+  
+  // CRITICAL: Em impersonação, IGNORAR selectedCompanyId e admin mode — usar APENAS do usuário alvo
+  const effectiveAdminMode = isImpersonating ? false : isAdminMode;
+  const effectiveAdminWorkshopId = isImpersonating ? null : adminWorkshopId;
+  const effectiveSelectedCompanyId = isImpersonating ? null : selectedCompanyId;
 
   // 1. Busca a lista de workshops disponíveis do usuário. Isso ocorre apenas uma vez e é cacheado.
   // IMP-01: Em modo de impersonação, usa o workshop do usuário alvo diretamente
@@ -81,12 +86,12 @@ export function useWorkshopContext() {
     // IMP-03: Forçar uso do workshop do usuário impersonado
     userWorkshop = available.find(w => w.id === targetUser.workshop_id);
     if (!userWorkshop) missingWorkshopIdToFetch = targetUser.workshop_id;
-  } else if (isAdminMode && adminWorkshopId) {
-    userWorkshop = available.find(w => w.id === adminWorkshopId);
-    if (!userWorkshop) missingWorkshopIdToFetch = adminWorkshopId;
-  } else if (selectedCompanyId) {
-    userWorkshop = available.find(w => w.id === selectedCompanyId);
-    if (!userWorkshop) missingWorkshopIdToFetch = selectedCompanyId;
+  } else if (effectiveAdminMode && effectiveAdminWorkshopId) {
+    userWorkshop = available.find(w => w.id === effectiveAdminWorkshopId);
+    if (!userWorkshop) missingWorkshopIdToFetch = effectiveAdminWorkshopId;
+  } else if (effectiveSelectedCompanyId) {
+    userWorkshop = available.find(w => w.id === effectiveSelectedCompanyId);
+    if (!userWorkshop) missingWorkshopIdToFetch = effectiveSelectedCompanyId;
   } else if (available.length > 0) {
     userWorkshop = available.find(w => !w.company_id) || available[0];
   } else if (tenantUser) {
@@ -166,6 +171,6 @@ export function useWorkshopContext() {
     workshopsDisponiveis,
     setCurrentWorkshop,
     isLoading,
-    isAdminMode
+    isAdminMode: effectiveAdminMode
   };
 }
