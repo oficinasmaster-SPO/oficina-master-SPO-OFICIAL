@@ -231,7 +231,10 @@ export default function UsuariosAdmin() {
           onOpenChange={setIsEditDialogOpen}
           selectedUser={selectedUser}
           profiles={profiles}
-          onSubmit={(data) => updateUserMutation.mutate({ id: selectedUser.id, data })}
+          onSubmit={(data) => {
+            updateUserMutation.mutate({ id: selectedUser.id, data });
+            setIsEditDialogOpen(false);
+          }}
         />
       )}
 
@@ -268,7 +271,10 @@ export default function UsuariosAdmin() {
           open={isPromoteDialogOpen}
           onOpenChange={setIsPromoteDialogOpen}
           user={selectedUser}
-          onConfirm={() => updateUserMutation.mutate({ id: selectedUser.id, data: { role: 'admin' } })}
+          onConfirm={() => {
+            updateUserMutation.mutate({ id: selectedUser.id, data: { role: 'admin' } });
+            setIsPromoteDialogOpen(false);
+          }}
         />
       )}
 

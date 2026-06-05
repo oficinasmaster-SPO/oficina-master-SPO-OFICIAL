@@ -5,19 +5,21 @@ import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Shield, AlertTriangle, Loader2 } from "lucide-react";
 
-export default function PromoteToAdminDialog({ open, user, onConfirm, onCancel, isLoading }) {
+export default function PromoteToAdminDialog({ open, onOpenChange, user, onConfirm, onCancel, isLoading }) {
   const [confirmText, setConfirmText] = useState("");
 
   const handleConfirm = () => {
     if (confirmText === "ADMIN") {
       onConfirm();
       setConfirmText("");
+      onOpenChange?.(false);
     }
   };
 
   const handleClose = () => {
     setConfirmText("");
-    onCancel();
+    onCancel?.();
+    onOpenChange?.(false);
   };
 
   if (!user) return null;

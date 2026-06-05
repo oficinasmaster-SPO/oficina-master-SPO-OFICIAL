@@ -10,7 +10,8 @@ import { Loader2, AlertTriangle, CheckCircle } from "lucide-react";
 
 export default function UserFormDialog({ 
   open, 
-  onClose, 
+  onClose,
+  onOpenChange,
   isCreateMode, 
   selectedUser, 
   profiles,
@@ -20,6 +21,10 @@ export default function UserFormDialog({
   isLoading,
   currentUser
 }) {
+  const handleClose = () => {
+    onClose?.();
+    onOpenChange?.(false);
+  };
   const [selectedProfileId, setSelectedProfileId] = useState(selectedUser?.profile_id || "");
    const [selectedCustomRoles, setSelectedCustomRoles] = useState(selectedUser?.custom_role_ids || []);
    const [formData, setFormData] = useState({
@@ -110,7 +115,7 @@ export default function UserFormDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
@@ -390,7 +395,7 @@ export default function UserFormDialog({
             <Button 
               type="button" 
               variant="outline" 
-              onClick={onClose}
+              onClick={handleClose}
               disabled={isLoading}
             >
               Cancelar
