@@ -76,15 +76,52 @@ export default function UserDetailsDrawer({
     enabled: !!userProfileData?.profile_id && open
   });
 
-  // Busca exceções de permissão do usuário
-  const { data: exceptions = [] } = useQuery({
-    queryKey: ['user-permission-exceptions', user?.id],
+  // Estado para filtros de exceções
+  const [filterWorkshopId, setFilterWorkshopId] = useState(null);
+  const [filterUserId, setFilterUserId] = useState(user?.id || null);
+
+  // Busca workshops para o filtro
+  const { data: workshopsForFilter = [] } = useQuery({
+    queryKey: ['workshops-for-filter'],
     queryFn: async () => {
-      if (!user?.id) return [];
-      const response = await base44.functions.invoke('getUserPermissionExceptions', { user_id: user.id });
-      return response.data.exceptions || [];
+      if (!employeeData?.consulting_firm_id) return [];
+      const workshops = await base44.asServiceRole.entities.Workshop.filter({
+        consulting_firm_id: employeeData.consulting_firm_id
+      });
+      return Array.isArray(workshops) ? workshops : [];
     },
-    enabled: !!user?.id && selectedTab === 'permissoes-individuais'
+    enabled: !!employeeData?.consulting_firm_id && selectedTab === 'permissoes-individuais'
+  });
+
+  // Busca usuários da oficina selecionada
+  const { data: usersInWorkshop = [] } = useQuery({
+    queryKey: ['users-in-workshop', filterWorkshopId],
+    queryFn: async () => {
+      if (!filterWorkshopId) return [];
+      const employees = await base44.asServiceRole.entities.Employee.filter({
+        workshop_id: filterWorkshopId
+      });
+      return Array.isArray(employees) ? employees : [];
+    },
+    enabled: !!filterWorkshopId && selectedTab === 'permissoes-individuais'
+  });
+
+  // Busca exceções de permissão do usuário filtrado
+  const { data: exceptions = [] } = useQuery({
+    queryKey: ['user-permission-exceptions', filterUserId, filterWorkshopId],
+    queryFn: async () => {
+      if (!filterUserId) return [];
+      const response = await base44.functions.invoke('getUserPermissionExceptions', { user_id: filterUserId });
+      let excs = response.data.exceptions || [];
+      
+      // Se oficina está filtrada, filtra as exceções
+      if (filterWorkshopId) {
+        excs = excs.filter(exc => exc.workshop_id === filterWorkshopId);
+      }
+      
+      return excs;
+    },
+    enabled: !!filterUserId && selectedTab === 'permissoes-individuais'
   });
 
   if (!user) return null;
@@ -453,65 +490,114 @@ export default function UserDetailsDrawer({
               </p>
             </div>
 
-            {exceptions.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">
-                <Shield className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-                <p>Nenhuma permissão individual cadastrada.</p>
-                <p className="text-sm">O usuário segue estritamente o perfil de acesso.</p>
+            {/* Filtros em cascata: Oficina → Usuário */}
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-600 block mb-2">Filtrar por Oficina</label>
+                  <Select value={filterWorkshopId || ""} onValueChange={setFilterWorkshopId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione uma oficina..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {workshopsForFilter.map(ws => (
+                        <SelectItem key={ws.id} value={ws.id}>
+                          {ws.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-600 block mb-2">Filtrar por Usuário</label>
+                  <Select 
+                    value={filterUserId || ""} 
+                    onValueChange={setFilterUserId}
+                    disabled={!filterWorkshopId}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={filterWorkshopId ? "Selecione um usuário..." : "Selecione uma oficina primeiro"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {usersInWorkshop.map(emp => (
+                        <SelectItem key={emp.user_id} value={emp.user_id}>
+                          {emp.full_name} ({emp.job_role})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-            ) : (
-              <div className="space-y-2">
-                {exceptions.map((exception) => (
-                  <div key={exception.id} className="border rounded-lg p-3 flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Badge className={
-                          exception.permission_type === 'module_permission' ? 'bg-blue-100 text-blue-700' :
-                          exception.permission_type === 'sidebar_permission' ? 'bg-purple-100 text-purple-700' :
-                          'bg-gray-100 text-gray-700'
-                        }>
-                          {exception.permission_type === 'module_permission' ? 'Módulo' :
-                           exception.permission_type === 'sidebar_permission' ? 'Sidebar' : 'Página'}
-                        </Badge>
-                        <Badge className={exception.granted ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}>
-                          {exception.granted ? 'Concede' : 'Nega'}
-                        </Badge>
-                        {exception.expires_at && (
-                          <Badge variant="outline" className="text-xs">
-                            Expira: {format(new Date(exception.expires_at), "dd/MM/yyyy", { locale: ptBR })}
+            </div>
+
+            {/* Exibição das exceções */}
+            {filterUserId && filterWorkshopId ? (
+              exceptions.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  <Shield className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+                  <p>Nenhuma permissão individual cadastrada.</p>
+                  <p className="text-sm">O usuário segue estritamente o perfil de acesso.</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {exceptions.map((exception) => (
+                    <div key={exception.id} className="border rounded-lg p-3 flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Badge className={
+                            exception.permission_type === 'module_permission' ? 'bg-blue-100 text-blue-700' :
+                            exception.permission_type === 'sidebar_permission' ? 'bg-purple-100 text-purple-700' :
+                            'bg-gray-100 text-gray-700'
+                          }>
+                            {exception.permission_type === 'module_permission' ? 'Módulo' :
+                             exception.permission_type === 'sidebar_permission' ? 'Sidebar' : 'Página'}
                           </Badge>
+                          <Badge className={exception.granted ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}>
+                            {exception.granted ? 'Concede' : 'Nega'}
+                          </Badge>
+                          {exception.expires_at && (
+                            <Badge variant="outline" className="text-xs">
+                              Expira: {format(new Date(exception.expires_at), "dd/MM/yyyy", { locale: ptBR })}
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="font-medium text-gray-900">{exception.permission_label || exception.permission_key}</p>
+                        {exception.justification && (
+                          <p className="text-xs text-gray-600 mt-1">
+                            <strong>Justificativa:</strong> {exception.justification}
+                          </p>
                         )}
-                      </div>
-                      <p className="font-medium text-gray-900">{exception.permission_label || exception.permission_key}</p>
-                      {exception.justification && (
-                        <p className="text-xs text-gray-600 mt-1">
-                          <strong>Justificativa:</strong> {exception.justification}
+                        <p className="text-xs text-gray-500 mt-1">
+                          Criado por: {exception.created_by_name || exception.created_by} em {format(new Date(exception.created_at || exception.created_date), "dd/MM/yyyy", { locale: ptBR })}
                         </p>
-                      )}
-                      <p className="text-xs text-gray-500 mt-1">
-                        Criado por: {exception.created_by_name || exception.created_by} em {format(new Date(exception.created_at || exception.created_date), "dd/MM/yyyy", { locale: ptBR })}
-                      </p>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-red-600 hover:text-red-700"
-                      onClick={async () => {
-                        if (window.confirm('Remover esta exceção?')) {
-                          try {
-                            await base44.functions.invoke('removeUserPermissionException', { exception_id: exception.id });
-                            queryClient.invalidateQueries({ queryKey: ['user-permission-exceptions'] });
-                            toast.success('Exceção removida');
-                          } catch (error) {
-                            toast.error('Erro ao remover: ' + error.message);
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-red-600 hover:text-red-700"
+                        onClick={async () => {
+                          if (window.confirm('Remover esta exceção?')) {
+                            try {
+                              await base44.functions.invoke('removeUserPermissionException', { exception_id: exception.id });
+                              queryClient.invalidateQueries({ queryKey: ['user-permission-exceptions'] });
+                              toast.success('Exceção removida');
+                            } catch (error) {
+                              toast.error('Erro ao remover: ' + error.message);
+                            }
                           }
-                        }
-                      }}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ))}
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <Shield className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+                <p className="text-sm">Selecione uma oficina e um usuário para visualizar as exceções de permissão.</p>
               </div>
             )}
           </TabsContent>
