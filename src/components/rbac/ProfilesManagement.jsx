@@ -255,16 +255,14 @@ export default function ProfilesManagement() {
 
       {/* Modal de Edição */}
       <Dialog open={viewMode === "edit" && !!selectedProfile} onOpenChange={(v) => { if (!v) { setViewMode("list"); setSelectedProfile(null); } }}>
-        <DialogContent className="max-w-5xl w-full h-[90vh] flex flex-col p-0">
-          <ScrollArea className="flex-1 p-6">
-            {selectedProfile && (
-              <ProfileEditor
-                profile={selectedProfile}
-                onBack={() => { setViewMode("list"); setSelectedProfile(null); }}
-                onSave={() => { setViewMode("list"); setSelectedProfile(null); }}
-              />
-            )}
-          </ScrollArea>
+        <DialogContent className="max-w-6xl w-full h-[95vh] flex flex-col p-0 gap-0 overflow-hidden">
+          {selectedProfile && (
+            <ProfileEditor
+              profile={selectedProfile}
+              onBack={() => { setViewMode("list"); setSelectedProfile(null); }}
+              onSave={() => { setViewMode("list"); setSelectedProfile(null); }}
+            />
+          )}
         </DialogContent>
       </Dialog>
 

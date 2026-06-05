@@ -68,61 +68,84 @@ export default function ProfileEditor({ profile, onBack }) {
 
   if (showPreview) {
     return (
-      <ProfilePreview
-        profile={editedProfile}
-        onBack={() => setShowPreview(false)}
-      />
+      <div className="flex flex-col h-full">
+        <ProfilePreview
+          profile={editedProfile}
+          onBack={() => setShowPreview(false)}
+        />
+      </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button onClick={onBack} variant="outline" size="sm">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Voltar
-          </Button>
+    <div className="flex flex-col h-full overflow-hidden">
+      {/* Header fixo destacado */}
+      <div className="flex items-center justify-between px-6 py-4 bg-white border-b shadow-sm shrink-0">
+        <div className="flex items-center gap-3">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              {profile.name}
-            </h1>
-            <p className="text-gray-600 mt-1">
-              Edite as permissões deste perfil
-            </p>
+            <h1 className="text-xl font-bold text-gray-900 leading-tight">{profile.name}</h1>
+            <p className="text-xs text-gray-500">Edite as permissões deste perfil</p>
           </div>
         </div>
-        <div className="flex gap-3">
+        <div className="flex items-center gap-2">
           <Button
             onClick={() => setShowPreview(true)}
-            variant="outline"
-            className="gap-2"
+            variant="ghost"
+            size="icon"
+            title="Pré-visualizar"
+            className="hover:bg-red-50 hover:text-red-600"
           >
             <Eye className="w-4 h-4" />
-            Pré-visualizar
+          </Button>
+          <Button
+            onClick={onBack}
+            variant="ghost"
+            size="icon"
+            title="Voltar"
+            className="hover:bg-red-50 hover:text-red-600"
+          >
+            <ArrowLeft className="w-4 h-4" />
           </Button>
           <Button
             onClick={handleSave}
             disabled={updateMutation.isPending}
-            className="gap-2"
+            size="sm"
+            className="bg-red-600 hover:bg-red-700 text-white gap-2 ml-1"
           >
             <Save className="w-4 h-4" />
-            {updateMutation.isPending ? "Salvando..." : "Salvar Alterações"}
+            {updateMutation.isPending ? "Salvando..." : "Salvar"}
           </Button>
         </div>
       </div>
 
-      <Tabs defaultValue="basic_info" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="basic_info">Informações Básicas</TabsTrigger>
-          <TabsTrigger value="custom_roles">Roles Customizadas</TabsTrigger>
-          <TabsTrigger value="roles">Roles do Sistema</TabsTrigger>
-          <TabsTrigger value="job_roles">Funções Vinculadas</TabsTrigger>
-          <TabsTrigger value="sidebar">Permissões da Sidebar</TabsTrigger>
-          <TabsTrigger value="modules">Módulos e Cadastros</TabsTrigger>
-          <TabsTrigger value="report">Relatório de Permissões</TabsTrigger>
-          <TabsTrigger value="impact">Análise de Impacto</TabsTrigger>
-        </TabsList>
+      <Tabs defaultValue="basic_info" className="flex flex-col flex-1 overflow-hidden">
+        {/* Nav tabs fixo */}
+        <div className="border-b bg-gray-50 shrink-0 px-6">
+          <TabsList className="bg-transparent h-auto p-0 gap-0 rounded-none">
+            {[
+              { value: "basic_info", label: "Informações Básicas" },
+              { value: "custom_roles", label: "Roles Customizadas" },
+              { value: "roles", label: "Roles do Sistema" },
+              { value: "job_roles", label: "Funções Vinculadas" },
+              { value: "sidebar", label: "Permissões da Sidebar" },
+              { value: "modules", label: "Módulos e Cadastros" },
+              { value: "report", label: "Relatório" },
+              { value: "impact", label: "Análise de Impacto" },
+            ].map((tab) => (
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-red-600 data-[state=active]:text-red-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none hover:text-red-500 hover:bg-red-50 text-xs px-3 py-3 transition-colors"
+              >
+                {tab.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
+
+        {/* Área de scroll do conteúdo */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-6">
 
         <TabsContent value="basic_info">
           <Card>
@@ -238,6 +261,8 @@ export default function ProfileEditor({ profile, onBack }) {
             originalProfile={profile}
           />
         </TabsContent>
+          </div>
+        </div>
       </Tabs>
     </div>
   );
