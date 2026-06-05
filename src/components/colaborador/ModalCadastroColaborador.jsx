@@ -133,7 +133,24 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
       return;
     }
 
+    // Validar email duplicado antes de criar
     setSubmitting(true);
+    try {
+      const validationResponse = await base44.functions.invoke('validateEmployeeEmail', {
+        email: formData.email,
+        workshop_id: workshop.id
+      });
+
+      if (!validationResponse.data.success) {
+        toast.error(validationResponse.data.error || "Email já cadastrado nesta oficina");
+        setSubmitting(false);
+        return;
+      }
+    } catch (error) {
+      toast.error("Erro ao validar email: " + error.message);
+      setSubmitting(false);
+      return;
+    }
 
     try {
       const totalCost = formData.salary + formData.commission + formData.bonus + 
