@@ -458,10 +458,14 @@ export default function UsuariosAdmin() {
         <PermissionRequestForm
           open={!!permissionRequestData}
           onOpenChange={(open) => !open && setPermissionRequestData(null)}
-          user={permissionRequestData.user}
-          field={permissionRequestData.field}
-          currentValue={permissionRequestData.currentValue}
-          requestedValue={permissionRequestData.requestedValue}
+          employee={permissionRequestData.user}
+          changeType="profile_change"
+          newProfileName={permissionRequestData.requestedValue === 'admin' ? 'Admin' : 'User'}
+          currentProfileName={permissionRequestData.currentValue === 'admin' ? 'Admin' : 'User'}
+          onSubmit={(justification) => {
+            // Implementar lógica de solicitação
+            setPermissionRequestData(null);
+          }}
         />
       )}
 

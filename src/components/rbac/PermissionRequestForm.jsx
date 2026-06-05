@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 
 export function PermissionRequestForm({ 
   open,
-  onClose,
+  onOpenChange,
   employee,
   changeType,
   newProfileName,
@@ -37,7 +37,7 @@ export function PermissionRequestForm({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -106,7 +106,7 @@ export function PermissionRequestForm({
           </div>
           
           <div className="flex gap-3 justify-end pt-4 border-t">
-            <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
+            <Button type="button" variant="outline" onClick={() => onOpenChange?.(false)} disabled={isLoading}>
               Cancelar
             </Button>
             <Button 
