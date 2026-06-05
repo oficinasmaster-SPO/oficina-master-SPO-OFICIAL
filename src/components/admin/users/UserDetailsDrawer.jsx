@@ -7,11 +7,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { 
   User, Shield, Activity, History, Key, Copy, CheckCircle, XCircle,
-  AlertCircle, Clock 
+  AlertCircle, Clock, Plus, Trash2 
 } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+import { base44 } from "@/api/base44Client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 export default function UserDetailsDrawer({ 
   open, 
@@ -26,6 +28,19 @@ export default function UserDetailsDrawer({
 }) {
   const [copiedField, setCopiedField] = useState(null);
   const [selectedProfileId, setSelectedProfileId] = useState(user?.profile_id || "");
+  const [selectedTab, setSelectedTab] = useState("dados");
+  const queryClient = useQueryClient();
+
+  // Busca exceções de permissão do usuário
+  const { data: exceptions = [] } = useQuery({
+    queryKey: ['user-permission-exceptions', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const response = await base44.functions.invoke('getUserPermissionExceptions', { user_id: user.id });
+      return response.data.exceptions || [];
+    },
+    enabled: !!user?.id && selectedTab === 'permissoes-individuais'
+  });
 
   if (!user) return null;
 
@@ -119,8 +134,8 @@ export default function UserDetailsDrawer({
           </div>
         )}
 
-        <Tabs defaultValue="dados" className="flex-1 overflow-hidden flex flex-col">
-          <TabsList className="grid w-full grid-cols-4">
+        <Tabs value={selectedTab} onValueChange={setSelectedTab} className="flex-1 overflow-hidden flex flex-col">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="dados">
               <User className="w-4 h-4 mr-2" />
               Dados
@@ -128,6 +143,10 @@ export default function UserDetailsDrawer({
             <TabsTrigger value="permissoes">
               <Shield className="w-4 h-4 mr-2" />
               Permissões
+            </TabsTrigger>
+            <TabsTrigger value="permissoes-individuais">
+              <Plus className="w-4 h-4 mr-2" />
+              Exceções
             </TabsTrigger>
             <TabsTrigger value="atividade">
               <Activity className="w-4 h-4 mr-2" />
@@ -237,6 +256,78 @@ export default function UserDetailsDrawer({
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+          </TabsContent>
+
+          {/* ABA 3: PERMISSÕES INDIVIDUAIS (EXCEÇÕES) */}
+          <TabsContent value="permissoes-individuais" className="flex-1 overflow-y-auto space-y-4">
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+              <p className="text-sm text-amber-900 font-semibold">⚠️ Permissões Individuais</p>
+              <p className="text-xs text-amber-700 mt-1">
+                Estas permissões são exceções que sobrescrevem o perfil de acesso. Use com cautela.
+              </p>
+            </div>
+
+            {exceptions.length === 0 ? (
+              <div className="text-center py-12 text-gray-500">
+                <Shield className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+                <p>Nenhuma permissão individual cadastrada.</p>
+                <p className="text-sm">O usuário segue estritamente o perfil de acesso.</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {exceptions.map((exception) => (
+                  <div key={exception.id} className="border rounded-lg p-3 flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Badge className={
+                          exception.permission_type === 'module_permission' ? 'bg-blue-100 text-blue-700' :
+                          exception.permission_type === 'sidebar_permission' ? 'bg-purple-100 text-purple-700' :
+                          'bg-gray-100 text-gray-700'
+                        }>
+                          {exception.permission_type === 'module_permission' ? 'Módulo' :
+                           exception.permission_type === 'sidebar_permission' ? 'Sidebar' : 'Página'}
+                        </Badge>
+                        <Badge className={exception.granted ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}>
+                          {exception.granted ? 'Concede' : 'Nega'}
+                        </Badge>
+                        {exception.expires_at && (
+                          <Badge variant="outline" className="text-xs">
+                            Expira: {format(new Date(exception.expires_at), "dd/MM/yyyy", { locale: ptBR })}
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="font-medium text-gray-900">{exception.permission_label || exception.permission_key}</p>
+                      {exception.justification && (
+                        <p className="text-xs text-gray-600 mt-1">
+                          <strong>Justificativa:</strong> {exception.justification}
+                        </p>
+                      )}
+                      <p className="text-xs text-gray-500 mt-1">
+                        Criado por: {exception.created_by_name || exception.created_by} em {format(new Date(exception.created_at || exception.created_date), "dd/MM/yyyy", { locale: ptBR })}
+                      </p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-red-600 hover:text-red-700"
+                      onClick={async () => {
+                        if (window.confirm('Remover esta exceção?')) {
+                          try {
+                            await base44.functions.invoke('removeUserPermissionException', { exception_id: exception.id });
+                            queryClient.invalidateQueries({ queryKey: ['user-permission-exceptions'] });
+                            toast.success('Exceção removida');
+                          } catch (error) {
+                            toast.error('Erro ao remover: ' + error.message);
+                          }
+                        }
+                      }}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
               </div>
             )}
           </TabsContent>

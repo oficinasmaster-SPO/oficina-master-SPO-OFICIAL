@@ -1,0 +1,128 @@
+{
+  "name": "UserPermissionException",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio (Rela\u00e7\u00e3o N-1: User \u2192 UserPermissionException)"
+    },
+    "employee_id": {
+      "type": "string",
+      "description": "ID do employee (Rela\u00e7\u00e3o N-1: Employee \u2192 UserPermissionException)"
+    },
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina (Rela\u00e7\u00e3o N-1: Workshop \u2192 UserPermissionException)"
+    },
+    "permission_type": {
+      "type": "string",
+      "enum": [
+        "module_permission",
+        "sidebar_permission",
+        "page_access"
+      ],
+      "description": "Tipo de permiss\u00e3o: module_permission (dashboard.view), sidebar_permission (menu item), page_access (/pagina)"
+    },
+    "permission_key": {
+      "type": "string",
+      "description": "Chave da permiss\u00e3o (ex: dashboard.view, processos.edit, /financeiro)"
+    },
+    "permission_label": {
+      "type": "string",
+      "description": "Nome leg\u00edvel da permiss\u00e3o (ex: 'Dashboard Financeiro', 'Editar Processos')"
+    },
+    "granted": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se true = concede permiss\u00e3o, se false = nega permiss\u00e3o (bloqueio expl\u00edcito)"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se a exce\u00e7\u00e3o est\u00e1 ativa"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data de expira\u00e7\u00e3o da exce\u00e7\u00e3o (opcional)"
+    },
+    "justification": {
+      "type": "string",
+      "description": "Justificativa para concess\u00e3o/nega\u00e7\u00e3o da permiss\u00e3o"
+    },
+    "created_by": {
+      "type": "string",
+      "description": "Email do admin que criou (Rela\u00e7\u00e3o N-1: User \u2192 UserPermissionException)"
+    },
+    "created_by_name": {
+      "type": "string",
+      "description": "Nome do admin que criou (cache)"
+    },
+    "audit_log": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "changed_by": {
+            "type": "string",
+            "description": "ID do usu\u00e1rio que fez a altera\u00e7\u00e3o"
+          },
+          "changed_by_email": {
+            "type": "string",
+            "description": "Email do usu\u00e1rio que fez a altera\u00e7\u00e3o"
+          },
+          "changed_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "action": {
+            "type": "string",
+            "description": "Tipo de a\u00e7\u00e3o (create, update, delete)"
+          },
+          "field_changed": {
+            "type": "string"
+          },
+          "old_value": {
+            "type": "string"
+          },
+          "new_value": {
+            "type": "string"
+          },
+          "justification": {
+            "type": "string",
+            "description": "Justificativa da altera\u00e7\u00e3o"
+          }
+        }
+      },
+      "description": "Log de auditoria (Rela\u00e7\u00e3o 1-N: UserPermissionException \u2192 AuditLog)"
+    }
+  },
+  "required": [
+    "user_id",
+    "permission_type",
+    "permission_key",
+    "granted"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
