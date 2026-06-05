@@ -159,7 +159,8 @@ const JOB_ROLES_EXTERNOS = [
   { value: "outros", label: "Outros" },
 ];
 
-export default function CadastroUsuarioDiretoModal({ open, onClose }) {
+export default function CadastroUsuarioDiretoModal({ open, onClose, onOpenChange }) {
+  const closeModal = onClose || ((v) => onOpenChange && onOpenChange(v === undefined ? false : v));
   const queryClient = useQueryClient();
   const [tab, setTab] = useState("interno"); // "interno" | "externo"
   const [copied, setCopied] = useState(false);
@@ -252,7 +253,7 @@ export default function CadastroUsuarioDiretoModal({ open, onClose }) {
     setFormInterno(EMPTY_INTERNO);
     setFormExterno(EMPTY_EXTERNO);
     setTab("interno");
-    onClose();
+    closeModal(false);
   };
 
   const handleCopyLink = () => {
@@ -283,7 +284,7 @@ export default function CadastroUsuarioDiretoModal({ open, onClose }) {
   const inviteLink = createdUser?.invite_link || createdUser?.link;
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
+    <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
