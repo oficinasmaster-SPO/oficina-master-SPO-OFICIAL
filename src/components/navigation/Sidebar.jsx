@@ -850,6 +850,32 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       icon: Shield,
       items: [
         { 
+          name: 'Gestão de Empresas', 
+          href: createPageUrl('GestaoEmpresas'), 
+          icon: Briefcase,
+          description: 'Gerencie empresas da sua consultoria',
+          highlight: true,
+          requiredPermission: 'admin.users'
+        },
+        { 
+          name: 'Gestão de Usuários', 
+          href: createPageUrl('UsuariosAdmin'), 
+          icon: Users,
+          description: 'Consultores e aceleradores do sistema',
+          globalAdminOnly: true,
+          highlight: true,
+          requiredPermission: 'admin.users'
+        },
+        { 
+          name: 'Gestão RBAC', 
+          href: createPageUrl('GestaoRBAC'), 
+          icon: Shield,
+          description: 'Perfis e permissões centralizados',
+          globalAdminOnly: true,
+          highlight: true,
+          requiredPermission: 'admin.profiles'
+        },
+        { 
           name: 'Dashboard Financeiro', 
           href: createPageUrl('DashboardFinanceiro'), 
           icon: DollarSign,
@@ -885,15 +911,6 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           globalAdminOnly: true,
           requiredPermission: 'admin.users'
         },
-        { 
-          name: 'Minhas Empresas', 
-          href: createPageUrl('GestaoEmpresas'), 
-          icon: Briefcase,
-          description: 'Gerencie empresas da sua consultoria',
-          highlight: true,
-          requiredPermission: 'admin.users'
-        },
-
         { 
           name: 'Config. Produtividade', 
           href: createPageUrl('AdminProdutividade'), 
@@ -952,7 +969,6 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           globalAdminOnly: true,
           requiredPermission: 'admin.system_config'
         },
-
         { 
           name: 'Gerenciar Tours e Vídeos', 
           href: createPageUrl('GerenciarToursVideos'), 
@@ -970,30 +986,12 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           requiredPermission: 'admin.system_config'
         },
         { 
-          name: 'Gestão RBAC', 
-          href: createPageUrl('GestaoRBAC'), 
-          icon: Shield,
-          description: 'Perfis e permissões centralizados',
-          globalAdminOnly: true,
-          highlight: true,
-          requiredPermission: 'admin.profiles'
-        },
-        { 
           name: 'Logs de Auditoria RBAC', 
           href: createPageUrl('LogsAuditoriaRBAC'), 
           icon: Activity,
           description: 'Histórico de alterações em permissões',
           globalAdminOnly: true,
           requiredPermission: 'admin.audit'
-        },
-        { 
-          name: 'Usuários Internos', 
-          href: createPageUrl('UsuariosAdmin'), 
-          icon: Users,
-          description: 'Consultores e aceleradores do sistema',
-          globalAdminOnly: true,
-          highlight: true,
-          requiredPermission: 'admin.users'
         },
         { 
           name: 'Permissões Externas', 
