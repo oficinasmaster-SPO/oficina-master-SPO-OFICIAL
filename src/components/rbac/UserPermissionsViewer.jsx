@@ -49,10 +49,52 @@ export default function UserPermissionsViewer() {
     },
   });
 
-  const filteredUsers = users.filter(u => 
-    u.email?.toLowerCase().includes(searchEmail.toLowerCase()) ||
-    u.full_name?.toLowerCase().includes(searchEmail.toLowerCase())
-  );
+  const { data: workshops = [] } = useQuery({
+    queryKey: ["all-workshops"],
+    queryFn: async () => {
+      const data = await base44.asServiceRole.entities.Workshop.list();
+      return data || [];
+    },
+  });
+
+  // Busca inteligente por múltiplos campos
+  const filteredUsers = users.filter(u => {
+    if (!searchEmail.trim()) return false;
+    
+    const searchLower = searchEmail.toLowerCase();
+    
+    // Buscar no usuário
+    const userMatches = 
+      u.email?.toLowerCase().includes(searchLower) ||
+      u.full_name?.toLowerCase().includes(searchLower);
+    
+    if (userMatches) return true;
+    
+    // Buscar no employee vinculado (telefone, posição, etc)
+    const emp = employees.find(e => e.user_id === u.id);
+    if (emp) {
+      const employeeMatches = 
+        emp.telefone?.includes(searchEmail) ||
+        emp.position?.toLowerCase().includes(searchLower) ||
+        emp.full_name?.toLowerCase().includes(searchLower);
+      
+      if (employeeMatches) return true;
+      
+      // Buscar na workshop vinculada
+      if (emp.workshop_id) {
+        const ws = workshops.find(w => w.id === emp.workshop_id);
+        if (ws) {
+          const workshopMatches = 
+            ws.name?.toLowerCase().includes(searchLower) ||
+            ws.city?.toLowerCase().includes(searchLower);
+          
+          if (workshopMatches) return true;
+        }
+      }
+    }
+    
+    return false;
+  });
 
   const selectedUser = users.find(u => u.id === selectedUserId);
 
@@ -239,13 +281,13 @@ export default function UserPermissionsViewer() {
             Pesquisar Usuário
           </CardTitle>
           <CardDescription>
-            Busque por email ou nome para visualizar as permissões consolidadas
+            Busque por nome, email, telefone ou oficina para visualizar as permissões consolidadas
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex gap-3">
             <Input
-              placeholder="Digite email ou nome do usuário..."
+              placeholder="Digite nome, email, telefone ou oficina..."
               value={searchEmail}
               onChange={(e) => setSearchEmail(e.target.value)}
               className="flex-1"
@@ -271,17 +313,33 @@ export default function UserPermissionsViewer() {
                         selectedUserId === user.id ? 'bg-blue-50' : ''
                       }`}
                     >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <User className="w-4 h-4 text-gray-400" />
-                          <div>
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <User className="w-4 h-4 text-gray-400 flex-shrink-0" />
                             <p className="font-medium text-gray-900">{user.full_name || user.email}</p>
-                            <p className="text-sm text-gray-500">{user.email}</p>
                           </div>
+                          {user.role === 'admin' && (
+                            <Badge className="bg-red-100 text-red-700 flex-shrink-0">Admin</Badge>
+                          )}
                         </div>
-                        {user.role === 'admin' && (
-                          <Badge className="bg-red-100 text-red-700">Admin</Badge>
-                        )}
+                        <div className="text-xs text-gray-500 ml-7 space-y-0.5">
+                          <p>{user.email}</p>
+                          {(() => {
+                            const emp = employees.find(e => e.user_id === user.id);
+                            if (emp) {
+                              const ws = workshops.find(w => w.id === emp.workshop_id);
+                              return (
+                                <>
+                                  {emp.telefone && <p>Tel: {emp.telefone}</p>}
+                                  {emp.position && <p>{emp.position}</p>}
+                                  {ws && <p>Oficina: {ws.name}</p>}
+                                </>
+                              );
+                            }
+                            return null;
+                          })()}
+                        </div>
                       </div>
                     </button>
                   ))}
