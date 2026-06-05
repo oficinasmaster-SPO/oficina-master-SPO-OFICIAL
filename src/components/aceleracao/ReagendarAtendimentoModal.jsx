@@ -105,6 +105,9 @@ export default function ReagendarAtendimentoModal({ atendimento, workshop, onClo
     try {
       const user = await base44.auth.me();
       const novaDataHora = `${novaData}T${novoHorario}:00`;
+      const startDateTime = new Date(`${novaData}T${novoHorario}:00`);
+      const duracao = atendimento.duracao_minutos || 60;
+      const endDateTime = new Date(startDateTime.getTime() + duracao * 60000);
 
       const statusFinal = 'reagendado';
 
@@ -126,26 +129,57 @@ export default function ReagendarAtendimentoModal({ atendimento, workshop, onClo
         updateData.motivo_cancelamento_empresa = motivoSelecionado;
       }
 
-      // Remover evento antigo do Google Calendar
+      // Atualizar evento do Google Calendar (se existir)
       if (atendimento.google_event_id) {
         try {
-          await base44.functions.invoke('deleteGoogleMeetEvent', { eventId: atendimento.google_event_id });
-          toast.success("Evento antigo removido do Google Calendar.");
+          const dataFormatada = startDateTime.toLocaleDateString('pt-BR');
+          const horaFormatada = startDateTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+          const dataAnterior = new Date(atendimento.data_agendada).toLocaleString('pt-BR');
+          
+          const statusLabel = STATUS_POS_VENDA[statusPosvenda] || statusPosvenda || 'Reagendamento';
+          const respLabel = RESPONSABILIDADE_OPTIONS[responsabilidade] || responsabilidade || '';
+          const motivoLabel = motivosFiltrados[motivoSelecionado] || motivoSelecionado || '';
+
+          const descricaoTexto = [
+            `📋 REAGENDAMENTO DE ATENDIMENTO`,
+            ``,
+            `🏢 Cliente: ${workshop?.name || 'N/A'}`,
+            `📅 Data anterior: ${dataAnterior}`,
+            `📅 Nova data: ${dataFormatada} às ${horaFormatada}`,
+            ``,
+            `📌 Status: ${statusLabel}`,
+            respLabel ? `👤 Responsabilidade: ${respLabel}` : '',
+            motivoLabel ? `💬 Motivo: ${motivoLabel}` : '',
+            descricaoManual ? `\n📝 Observações: ${descricaoManual}` : '',
+            ``,
+            `---`,
+            `Reunião atualizada automaticamente pelo sistema Oficinas Master.`,
+          ].filter(Boolean).join('\n');
+
+          const result = await base44.functions.invoke('updateGoogleMeetEvent', {
+            eventId: atendimento.google_event_id,
+            summary: `🔄 Reagendamento - ${workshop?.name || 'Cliente'} - Oficinas Master`,
+            description: descricaoTexto,
+            startDateTime: startDateTime.toISOString(),
+            endDateTime: endDateTime.toISOString()
+          });
+
+          if (result?.data?.success) {
+            updateData.google_meet_link = result.data.meetLink || atendimento.google_meet_link;
+            updateData.google_calendar_link = result.data.htmlLink || atendimento.google_calendar_link;
+            toast.success("Evento atualizado no Google Calendar com sucesso!");
+          }
         } catch (e) {
-          console.error("Erro ao deletar evento do google:", e);
+          console.error("Erro ao atualizar evento do google:", e);
+          toast.warning("Não foi possível atualizar o Google Calendar. O reagendamento foi realizado apenas no sistema.");
         }
       }
 
-      // Se criou novo Meet, salvar no atendimento
-      if (novoMeetLink) {
+      // Se criou novo Meet (e não tinha evento antigo), salvar no atendimento
+      if (novoMeetLink && !atendimento.google_event_id) {
         updateData.google_meet_link = novoMeetLink;
         updateData.google_event_id = novoEventId;
         updateData.google_calendar_link = novoCalendarLink;
-      } else {
-        // Limpar dados antigos se não criou novo
-        updateData.google_event_id = null;
-        updateData.google_meet_link = null;
-        updateData.google_calendar_link = null;
       }
 
       await base44.entities.ConsultoriaAtendimento.update(atendimento.id, updateData);
