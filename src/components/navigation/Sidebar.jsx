@@ -979,15 +979,6 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           requiredPermission: 'admin.profiles'
         },
         { 
-          name: 'Permissões Granulares', 
-          href: createPageUrl('ConfiguracaoPermissoesGranulares'), 
-          icon: Settings,
-          description: 'Configure por cargo e módulo',
-          globalAdminOnly: true,
-          highlight: true,
-          requiredPermission: 'admin.system_config'
-        },
-        { 
           name: 'Logs de Auditoria RBAC', 
           href: createPageUrl('LogsAuditoriaRBAC'), 
           icon: Activity,

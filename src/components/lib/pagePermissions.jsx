@@ -35,7 +35,6 @@ export const pagePermissions = {
   LogsAuditoriaRBAC: "admin.rbac",
   UsuariosAdmin: "admin.rbac",
   MonitoramentoUsuarios: "admin.rbac",
-  ConfiguracaoPermissoesGranulares: "admin.rbac",
   DiagnosticoPlano: "admin",
   TesteOpenAI: "admin",
   AdminQADashboard: "admin",

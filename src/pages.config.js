@@ -54,7 +54,6 @@ const ClientRegistration = lazy(() => import('./pages/ClientRegistration'));
 const Clientes = lazy(() => import('./pages/Clientes'));
 const Colaboradores = lazy(() => import('./pages/Colaboradores'));
 const ConfiguracaoAcademia = lazy(() => import('./pages/ConfiguracaoAcademia'));
-const ConfiguracaoPermissoesGranulares = lazy(() => import('./pages/ConfiguracaoPermissoesGranulares'));
 const ConfiguracoesKiwify = lazy(() => import('./pages/ConfiguracoesKiwify'));
 const ConfiguracoesNotificacao = lazy(() => import('./pages/ConfiguracoesNotificacao'));
 const ConsolidadoMensal = lazy(() => import('./pages/ConsolidadoMensal'));
@@ -232,7 +231,6 @@ export const PAGES = {
     "Clientes": Clientes,
     "Colaboradores": Colaboradores,
     "ConfiguracaoAcademia": ConfiguracaoAcademia,
-    "ConfiguracaoPermissoesGranulares": ConfiguracaoPermissoesGranulares,
     "ConfiguracoesKiwify": ConfiguracoesKiwify,
     "ConfiguracoesNotificacao": ConfiguracoesNotificacao,
     "ConsolidadoMensal": ConsolidadoMensal,
