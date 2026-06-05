@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, User } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Loader2, User, Brain, History, Play } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { discQuestions } from "@/components/disc/DISCQuestions";
 import { useEvaluationPermissions } from "@/components/hooks/useEvaluationPermissions";
 import RestrictedAccess from "@/components/auth/RestrictedAccess";
+import { useQuery } from "@tanstack/react-query";
 
 export default function AutoavaliacaoDISC() {
   const navigate = useNavigate();
@@ -17,12 +18,35 @@ export default function AutoavaliacaoDISC() {
   const [employee, setEmployee] = useState(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState([]);
+  const [started, setStarted] = useState(false);
+  const [hasPreviousEvaluation, setHasPreviousEvaluation] = useState(false);
 
   const { canSelfEvaluate } = useEvaluationPermissions(employee);
+
+  // Verificar se já existe autoavaliação
+  const { data: previousEvaluations } = useQuery({
+    queryKey: ['disc-autoevaluations', employee?.id],
+    queryFn: async () => {
+      if (!employee?.id) return [];
+      const evaluations = await base44.entities.DISCDiagnostic.filter({
+        employee_id: employee.id,
+        evaluation_type: 'self',
+        completed: true
+      }, '-created_date', 1);
+      return evaluations;
+    },
+    enabled: !!employee?.id
+  });
 
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+    if (previousEvaluations && previousEvaluations.length > 0) {
+      setHasPreviousEvaluation(true);
+    }
+  }, [previousEvaluations]);
 
   const loadData = async () => {
     try {
@@ -53,6 +77,15 @@ export default function AutoavaliacaoDISC() {
     } else {
       submitAutoEvaluation(newAnswers);
     }
+  };
+
+  const handleCancel = () => {
+    if (answers.length > 0) {
+      toast.warning("Progresso não será salvo");
+    }
+    setStarted(false);
+    setCurrentQuestion(0);
+    setAnswers([]);
   };
 
   const submitAutoEvaluation = async (finalAnswers) => {
@@ -111,6 +144,88 @@ export default function AutoavaliacaoDISC() {
     return <RestrictedAccess message="Apenas o próprio colaborador pode realizar esta autoavaliação." />;
   }
 
+  // Tela de boas-vindas
+  if (!started) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 py-8 px-4 flex items-center justify-center">
+        <div className="max-w-2xl w-full">
+          <Card className="shadow-2xl border-2 border-purple-200">
+            <CardHeader className="bg-gradient-to-r from-purple-600 to-pink-600 text-white text-center">
+              <Brain className="w-16 h-16 mx-auto mb-4" />
+              <CardTitle className="text-3xl">Autoavaliação DISC</CardTitle>
+              <CardDescription className="text-purple-100 text-lg mt-2">
+                {employee?.full_name}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-8 space-y-6">
+              <div className="space-y-4">
+                <p className="text-gray-700 text-lg text-center">
+                  Descubra seu perfil comportamental através da metodologia DISC. Esta avaliação irá identificar suas tendências naturais em quatro dimensões:
+                </p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+                    <h4 className="font-bold text-red-900">Executor (D)</h4>
+                    <p className="text-sm text-red-700">Determinação, decisão e foco em resultados</p>
+                  </div>
+                  <div className="bg-amber-50 p-4 rounded-lg border border-amber-200">
+                    <h4 className="font-bold text-amber-900">Comunicador (I)</h4>
+                    <p className="text-sm text-amber-700">Influência, interação e otimismo</p>
+                  </div>
+                  <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                    <h4 className="font-bold text-green-900">Planejador (S)</h4>
+                    <p className="text-sm text-green-700">Estabilidade, paciência e trabalho em equipe</p>
+                  </div>
+                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                    <h4 className="font-bold text-blue-900">Analista (C)</h4>
+                    <p className="text-sm text-blue-700">Precisão, análise e qualidade</p>
+                  </div>
+                </div>
+                <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                  <p className="text-sm text-purple-900">
+                    <strong>⏱️ Tempo estimado:</strong> 10-15 minutos | <strong>📝 {discQuestions.length} perguntas</strong>
+                  </p>
+                </div>
+              </div>
+
+              {hasPreviousEvaluation && (
+                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                  <p className="text-blue-900 mb-3">
+                    <strong>✓ Você já completou uma autoavaliação DISC anteriormente.</strong>
+                  </p>
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate(createPageUrl("HistoricoDISC"))}
+                    className="w-full"
+                  >
+                    <History className="w-4 h-4 mr-2" />
+                    Ver meu histórico e resultados
+                  </Button>
+                </div>
+              )}
+
+              <div className="flex gap-4 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => navigate(createPageUrl("Home"))}
+                  className="flex-1"
+                >
+                  Voltar
+                </Button>
+                <Button
+                  onClick={() => setStarted(true)}
+                  className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-6 text-lg"
+                >
+                  <Play className="w-5 h-5 mr-2" />
+                  Iniciar Autoavaliação
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   const question = discQuestions[currentQuestion];
   const progress = ((currentQuestion + 1) / discQuestions.length) * 100;
 
@@ -119,10 +234,20 @@ export default function AutoavaliacaoDISC() {
       <div className="max-w-5xl mx-auto">
         <Card className="shadow-2xl border-2 border-purple-200 mb-6">
           <CardHeader className="bg-gradient-to-r from-purple-600 to-pink-600 text-white">
-            <CardTitle className="flex items-center gap-2">
-              <User className="w-6 h-6" />
-              Autoavaliação DISC - {employee?.full_name}
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <User className="w-6 h-6" />
+                Autoavaliação DISC - {employee?.full_name}
+              </CardTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCancel}
+                className="text-white border-white hover:bg-white/20"
+              >
+                Cancelar
+              </Button>
+            </div>
             <p className="text-purple-100 text-sm mt-1">
               Pergunta {currentQuestion + 1} de {discQuestions.length}
             </p>
