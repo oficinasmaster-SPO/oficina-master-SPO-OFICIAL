@@ -79,6 +79,29 @@ export default function UsuariosAdmin() {
     setCurrentPage(Math.max(1, Math.min(page, totalPages)));
   };
 
+  const getPaginationItems = () => {
+    const items = [];
+    const range = 1; // Mostra 1 página antes e 1 depois da atual
+    
+    items.push(1); // Sempre primeira
+    
+    if (currentPage - range > 2) {
+      items.push('...');
+    }
+    
+    for (let i = Math.max(2, currentPage - range); i <= Math.min(totalPages - 1, currentPage + range); i++) {
+      if (!items.includes(i)) items.push(i);
+    }
+    
+    if (currentPage + range < totalPages - 1) {
+      items.push('...');
+    }
+    
+    if (totalPages > 1) items.push(totalPages); // Sempre última
+    
+    return items;
+  };
+
   const updateUserMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.User.update(id, data),
     onSuccess: () => {
@@ -331,7 +354,7 @@ export default function UsuariosAdmin() {
                 <span className="font-medium">{Math.min(currentPage * itemsPerPage, filteredUsers.length)}</span> de{' '}
                 <span className="font-medium">{filteredUsers.length}</span> usuários
               </p>
-              <div className="flex gap-2">
+              <div className="flex gap-1 items-center">
                 <Button
                   variant="outline"
                   size="sm"
@@ -340,19 +363,22 @@ export default function UsuariosAdmin() {
                 >
                   Anterior
                 </Button>
-                <div className="flex gap-1">
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                    <Button
-                      key={page}
-                      variant={currentPage === page ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => goToPage(page)}
-                      className={currentPage === page ? 'bg-primary text-primary-foreground' : ''}
-                    >
-                      {page}
-                    </Button>
-                  ))}
-                </div>
+                {getPaginationItems().map((item, idx) => (
+                  <div key={idx}>
+                    {item === '...' ? (
+                      <span className="px-2 text-gray-500">...</span>
+                    ) : (
+                      <Button
+                        variant={currentPage === item ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => goToPage(item)}
+                        className={currentPage === item ? 'bg-primary text-primary-foreground' : ''}
+                      >
+                        {item}
+                      </Button>
+                    )}
+                  </div>
+                ))}
                 <Button
                   variant="outline"
                   size="sm"
