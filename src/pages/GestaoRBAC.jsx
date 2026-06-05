@@ -13,7 +13,11 @@ import RBACAnalyticsDashboard from "@/components/rbac/analytics/RBACAnalyticsDas
 import PendingRequestsList from "@/components/rbac/PendingRequestsList";
 
 export default function GestaoRBAC() {
-  const [activeTab, setActiveTab] = useState("profiles");
+  const initialTab = () => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('tab') === 'usuarios' ? 'user-permissions' : 'profiles';
+  };
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [user, setUser] = useState(null);
   const [isInternal, setIsInternal] = useState(false);
   const [loading, setLoading] = useState(true);

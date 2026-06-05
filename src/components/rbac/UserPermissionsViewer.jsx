@@ -67,7 +67,8 @@ export default function UserPermissionsViewer() {
       });
 
       toast.success(`Iniciando visualização como ${targetUser.full_name || targetUser.email}...`);
-      setTimeout(() => window.location.reload(), 800);
+      // Redireciona para Home após iniciar impersonação
+      setTimeout(() => { window.location.href = '/'; }, 800);
     } catch (error) {
       toast.error("Erro ao impersonar: " + error.message);
     }

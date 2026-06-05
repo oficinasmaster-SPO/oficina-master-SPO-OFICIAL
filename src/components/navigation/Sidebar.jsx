@@ -1080,10 +1080,14 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
 
       <aside 
         className={cn(
-          "fixed top-0 left-0 h-full bg-white border-r border-gray-200 z-50 transition-all duration-300 flex flex-col print:hidden",
+          "fixed left-0 bg-white border-r border-gray-200 z-50 transition-all duration-300 flex flex-col print:hidden",
           isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
           isCollapsed ? "w-16" : "w-64"
         )}
+        style={{
+          top: 'var(--imp-bar-height, 0px)',
+          height: 'calc(100vh - var(--imp-bar-height, 0px))',
+        }}
       >
         <div className={cn(
           "border-b border-gray-200 transition-all",
