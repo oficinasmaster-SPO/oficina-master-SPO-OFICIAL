@@ -110,18 +110,12 @@ export default function UserPermissionsViewer() {
   const summary = getUserPermissionsSummary(selectedUser);
 
   // Classificar usuários em internos / externos
-  // Interno = admin da plataforma OU employee da equipe Oficinas Master (tem consulting_firm_id mas NÃO tem workshop_id)
-  // e com job_role de equipe interna (consultor, mentor, acelerador, sócio_interno, diretor)
-  const INTERNAL_JOB_ROLES = ['consultor', 'mentor', 'acelerador', 'socio_interno', 'diretor', 'supervisor_loja'];
+  // Fonte canônica: user_type === 'internal' no Employee (ou admin na plataforma)
   const internalUsers = users.filter(u => {
     if (u.role === 'admin') return true;
     const emp = employees.find(e => e.user_id === u.id || e.email === u.email);
     if (!emp) return false;
-    // Membro da equipe OM: tem consulting_firm_id, NÃO tem workshop_id, e job_role interno
-    const hasConsultingFirm = !!(emp.consulting_firm_id);
-    const hasNoWorkshop = !emp.workshop_id;
-    const isInternalRole = INTERNAL_JOB_ROLES.includes(emp.job_role);
-    return hasConsultingFirm && hasNoWorkshop && isInternalRole;
+    return emp.user_type === 'internal';
   });
   const externalUsers = users.filter(u => !internalUsers.includes(u));
 
