@@ -106,6 +106,9 @@ function WorkshopSearchSelect({ workshops, value, onChange }) {
   );
 }
 
+// ID da ConsultingFirm "Oficinas Master" — fonte canônica para todos os internos
+const OM_CONSULTING_FIRM_ID = "69bab264d7c3fe5d367c3959";
+
 const EMPTY_INTERNO = {
   name: "",
   email: "",
@@ -188,35 +191,14 @@ export default function CadastroUsuarioDiretoModal({ open, onClose }) {
   const profilesInternos = profiles.filter(p => p.type === 'interno' || p.type === 'sistema');
   const profilesExternos = profiles.filter(p => p.type === 'externo' || (!p.type));
 
-  const sendInviteMutation = useMutation({
-    mutationFn: async (data) => {
-      const response = await base44.functions.invoke('sendEmployeeInvite', data);
-      return response.data;
-    },
-    onSuccess: (data) => {
-      if (data?.success !== false) {
-        toast.success('Convite enviado com sucesso!');
-        setCreatedUser(data);
-        queryClient.invalidateQueries({ queryKey: ['admin-users'] });
-        queryClient.invalidateQueries({ queryKey: ['employees'] });
-      } else {
-        toast.error(data.error || 'Erro ao enviar convite');
-      }
-    },
-    onError: (error) => {
-      const msg = error?.response?.data?.error || error?.message || 'Erro desconhecido';
-      toast.error('Erro: ' + msg);
-    }
-  });
-
-  const createExternoMutation = useMutation({
+  const createUserMutation = useMutation({
     mutationFn: async (data) => {
       const response = await base44.functions.invoke('createUserDirectly', data);
       return response.data;
     },
     onSuccess: (data) => {
       if (data?.success !== false) {
-        toast.success('Usuário externo criado com sucesso!');
+        toast.success(tab === 'interno' ? 'Usuário interno criado com sucesso!' : 'Usuário externo criado com sucesso!');
         setCreatedUser(data?.data || data);
         queryClient.invalidateQueries({ queryKey: ['admin-users'] });
         queryClient.invalidateQueries({ queryKey: ['employees'] });
@@ -230,16 +212,19 @@ export default function CadastroUsuarioDiretoModal({ open, onClose }) {
     }
   });
 
+
+
   const handleSubmitInterno = (e) => {
     e.preventDefault();
     if (!formInterno.name || !formInterno.email) {
       toast.error('Preencha nome e email');
       return;
     }
-    sendInviteMutation.mutate({
+    createUserMutation.mutate({
       ...formInterno,
+      consulting_firm_id: OM_CONSULTING_FIRM_ID,
       user_type: 'internal',
-      role: 'user', // nunca admin global por aqui
+      role: 'user',
       tipo_vinculo: 'interno',
       is_internal: true,
     });
@@ -254,12 +239,12 @@ export default function CadastroUsuarioDiretoModal({ open, onClose }) {
     const payload = {
       ...formExterno,
       user_type: 'external',
-      role: 'user', // nunca admin global
+      role: 'user',
       tipo_vinculo: 'cliente',
       is_internal: false,
     };
     if (!payload.profile_id) delete payload.profile_id;
-    createExternoMutation.mutate(payload);
+    createUserMutation.mutate(payload);
   };
 
   const handleClose = () => {
@@ -293,7 +278,7 @@ export default function CadastroUsuarioDiretoModal({ open, onClose }) {
     }
   };
 
-  const isPending = sendInviteMutation.isPending || createExternoMutation.isPending;
+  const isPending = createUserMutation.isPending;
   const currentTelefone = tab === 'interno' ? formInterno.telefone : formExterno.telefone;
   const inviteLink = createdUser?.invite_link || createdUser?.link;
 
@@ -434,7 +419,7 @@ export default function CadastroUsuarioDiretoModal({ open, onClose }) {
                   )}
                 </div>
                 <Button type="submit" disabled={isPending} className="w-full">
-                  {isPending ? 'Enviando convite...' : 'Enviar Convite por Email'}
+                  {isPending ? 'Criando usuário...' : 'Criar Usuário Interno'}
                 </Button>
               </form>
             )}
