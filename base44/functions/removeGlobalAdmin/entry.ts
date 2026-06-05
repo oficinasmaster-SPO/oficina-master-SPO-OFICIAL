@@ -9,18 +9,17 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized - Admin access required' }, { status: 403 });
     }
 
-    // IDs dos usuários que perderão o admin global (mantendo acesso como admin de suas oficinas)
+    // IDs confirmados via consulta direta — admins de oficina que devem ser rebaixados para "user"
     const usersToRemoveAdmin = [
-      '6a1d93ba34d2a1ddf4b0554f', // rasselanclaudio@gmail.com
-      '6a1a0adf5921e972144cf742', // rh@francosautocenter.com.br
-      '69cd7ba394a362513647ddc7', // aoficinamsg@gmail.com (Priscila Zacarias)
-      '69cd60b762bf218c34b6d023', // renovacao.automotivo@gmail.com
-      '69cd1712ab7232e7795b8ec7', // alemaomotoseresgate@gmail.com
-      '69cacf41f17def79a168dc41', // admcarbanleandrocosta@gmail.com
-      '69ca6a257232d630eea0ab1a', // oficinaconexao.cta@gmail.com
-      '69c2d6e32736187c525de5f1', // feer.rodsil@gmail.com
-      '69bd7165c4db882dd251f590', // conorb@base44.com (Conor Boyle - Platform)
-      // +1 usuário com dados truncados - precisaríamos do ID completo
+      '69bc114601e0c4f5c72f1d78', // adm@autoeletricamateuzzo.com.br
+      '69b32a18b35052f707a0652f', // gilcar.autocenter@gmail.com
+      '69a5c33f37458da0bdd58be5', // peralta.jur@gmail.com
+      '69a1f813c9263408caad87c7', // eulerdurigueto123@gmail.com
+      '69a1ec0ac8437822124df48b', // chiquinhodabateria@hotmail.com
+      '69a19b8ddd6e6650b356ba37', // gtcentroautomotivocfs@gmail.com
+      '69a09b1562dadb12ad50e9ee', // luna301280@gmail.com
+      '699f027bd007d61ca23974e1', // andrefrancodiretor@gmail.com
+      '699c987a93c6d5d16d2cfc54', // rafaelaspl@hotmail.com
     ];
 
     const results = [];
@@ -28,31 +27,16 @@ Deno.serve(async (req) => {
 
     for (const userId of usersToRemoveAdmin) {
       try {
-        // Atualizar role de "admin" para "user"
-        await base44.asServiceRole.entities.User.update(userId, {
-          role: 'user',
-          data: {
-            role: 'user'
-          }
-        });
-
-        results.push({
-          userId,
-          status: 'success',
-          message: 'Admin global removido com sucesso'
-        });
+        await base44.asServiceRole.entities.User.update(userId, { role: 'user' });
+        results.push({ userId, status: 'success', message: 'Admin global removido com sucesso' });
       } catch (error) {
-        errors.push({
-          userId,
-          status: 'error',
-          message: error.message
-        });
+        errors.push({ userId, status: 'error', message: error.message });
       }
     }
 
     return Response.json({
       success: true,
-      message: `Processo concluído: ${results.length} usuários atualizados, ${errors.length} erros`,
+      message: `Processo concluído: ${results.length} atualizados, ${errors.length} erros`,
       results,
       errors
     });
