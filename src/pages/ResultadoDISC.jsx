@@ -166,7 +166,7 @@ export default function ResultadoDISCModal({ open, onOpenChange, diagnosticId })
 
   if (loading || permissionsLoading) {
     return (
-      <Dialog open={open} onOpenChange={handleClose}>
+      <Dialog open={open} onOpenChange={() => handleClose()}>
         <DialogContent className="max-w-2xl">
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
@@ -180,7 +180,7 @@ export default function ResultadoDISCModal({ open, onOpenChange, diagnosticId })
 
   if (!isLeader && currentUserEmployee?.id !== diagnostic.employee_id) {
     return (
-      <Dialog open={open} onOpenChange={handleClose}>
+      <Dialog open={open} onOpenChange={() => handleClose()}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Acesso Restrito</DialogTitle>
@@ -220,7 +220,7 @@ export default function ResultadoDISCModal({ open, onOpenChange, diagnosticId })
   ] : null;
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
+    <Dialog open={open} onOpenChange={() => handleClose()}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden p-0">
         <DialogHeader className="bg-white border-b shadow-md" style={{ boxShadow: '0 5px 10px rgba(0,0,0,0.1)' }}>
           <div className="flex items-center justify-between w-full px-6 py-4">
