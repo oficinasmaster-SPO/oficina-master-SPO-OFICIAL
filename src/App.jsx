@@ -54,7 +54,6 @@ const DashboardFinanceiro = lazy(() => import('@/pages/DashboardFinanceiro'));
 const CorrigirParcelasDuplicadas = lazy(() => import('@/pages/CorrigirParcelasDuplicadas'));
 const BackfillSaldosHistoricos = lazy(() => import('@/pages/BackfillSaldosHistoricos'));
 const UsuariosAdmin = lazy(() => import('@/pages/UsuariosAdmin'));
-const GestaoPermissoesExternas = lazy(() => import('@/pages/GestaoPermissoesExternas'));
 
 
 const { Pages, Layout, mainPage } = pagesConfig;
@@ -282,11 +281,6 @@ const AuthenticatedApp = () => {
       <Route path="/UsuariosAdmin" element={
         <LayoutWrapper currentPageName="UsuariosAdmin" adminOnly={true}>
           <UsuariosAdmin />
-        </LayoutWrapper>
-      } />
-      <Route path="/GestaoPermissoesExternas" element={
-        <LayoutWrapper currentPageName="GestaoPermissoesExternas" adminOnly={true}>
-          <GestaoPermissoesExternas />
         </LayoutWrapper>
       } />
       <Route path="*" element={<PageNotFound />} />

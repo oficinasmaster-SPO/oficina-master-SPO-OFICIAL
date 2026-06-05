@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { MoreVertical, UserPlus, Loader2, Eye, Edit, Key, Trash2, Mail, FileText, Shield, Search } from "lucide-react";
+import { MoreVertical, UserPlus, Loader2, Eye, Edit, Key, Trash2, Mail, FileText, Shield, Search, Users } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -215,10 +215,16 @@ export default function UsuariosAdmin() {
           <h1 className="text-3xl font-bold text-gray-900">Gestão de Usuários</h1>
           <p className="text-gray-600 mt-1">Gerencie usuários, perfis e permissões do sistema</p>
         </div>
-        <Button onClick={() => setIsCreateDialogOpen(true)}>
-          <UserPlus className="w-4 h-4 mr-2" />
-          Novo Usuário
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => window.location.href = '/GestaoPermissoesExternas'}>
+            <Users className="w-4 h-4 mr-2" />
+            Permissões por Usuário
+          </Button>
+          <Button onClick={() => setIsCreateDialogOpen(true)}>
+            <UserPlus className="w-4 h-4 mr-2" />
+            Novo Usuário
+          </Button>
+        </div>
       </div>
 
       <Card>
