@@ -7,13 +7,13 @@ import { Search, Filter, X } from "lucide-react";
 
 export default function UserFilters({ 
   filters, 
-  onFiltersChange, 
+  onFilterChange, 
   profiles, 
   admins,
   onClearFilters 
 }) {
   const updateFilter = (key, value) => {
-    onFiltersChange({ ...filters, [key]: value });
+    onFilterChange({ ...filters, [key]: value });
   };
 
   const activeFiltersCount = Object.values(filters).filter(v => 
