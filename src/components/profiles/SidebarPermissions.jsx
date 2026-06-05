@@ -1,11 +1,14 @@
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
 import { sidebarStructure } from "@/components/lib/sidebarStructure";
 
 export default function SidebarPermissions({ profile, onChange }) {
   const permissions = profile.sidebar_permissions || {};
+  const [search, setSearch] = useState("");
 
   const updatePermission = (itemKey, permissionType, value) => {
     const updated = {
@@ -42,9 +45,37 @@ export default function SidebarPermissions({ profile, onChange }) {
     });
   };
 
+  const searchLower = search.toLowerCase().trim();
+
+  const filteredStructure = sidebarStructure.map((group) => ({
+    ...group,
+    items: (group.items || []).filter(
+      (item) =>
+        !searchLower ||
+        item.name.toLowerCase().includes(searchLower) ||
+        (item.description || "").toLowerCase().includes(searchLower) ||
+        group.label.toLowerCase().includes(searchLower)
+    ),
+  })).filter((group) => group.items.length > 0);
+
   return (
     <div className="space-y-4">
-      {sidebarStructure.map((group) => {
+      {/* Campo de pesquisa */}
+      <div className="relative w-[280px]">
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Buscar função ou módulo..."
+          className="pl-8 h-8 text-sm"
+        />
+      </div>
+
+      {filteredStructure.length === 0 && (
+        <p className="text-sm text-gray-500 text-center py-6">Nenhuma função encontrada para "{search}"</p>
+      )}
+
+      {filteredStructure.map((group) => {
         const groupItems = group.items || [];
         const allChecked = groupItems.length > 0 && groupItems.every((item) => {
           const itemKey = `${group.id}_${item.name}`;
