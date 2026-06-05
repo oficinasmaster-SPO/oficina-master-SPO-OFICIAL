@@ -60,7 +60,7 @@ export default function UserPermissionsViewer() {
 
   // Busca inteligente por múltiplos campos
   const filteredUsers = users.filter(u => {
-    if (!searchEmail.trim()) return false;
+    if (!searchEmail.trim()) return true; // Mostra todos se vazio
     
     const searchLower = searchEmail.toLowerCase();
     
@@ -71,13 +71,15 @@ export default function UserPermissionsViewer() {
     
     if (userMatches) return true;
     
-    // Buscar no employee vinculado (telefone, posição, etc)
+    // Buscar no employee vinculado (nome, telefone, posição, etc)
     const emp = employees.find(e => e.user_id === u.id);
     if (emp) {
       const employeeMatches = 
         emp.telefone?.includes(searchEmail) ||
         emp.position?.toLowerCase().includes(searchLower) ||
-        emp.full_name?.toLowerCase().includes(searchLower);
+        emp.full_name?.toLowerCase().includes(searchLower) ||
+        emp.cpf?.includes(searchEmail) ||
+        emp.rg?.includes(searchLower);
       
       if (employeeMatches) return true;
       
@@ -87,7 +89,8 @@ export default function UserPermissionsViewer() {
         if (ws) {
           const workshopMatches = 
             ws.name?.toLowerCase().includes(searchLower) ||
-            ws.city?.toLowerCase().includes(searchLower);
+            ws.city?.toLowerCase().includes(searchLower) ||
+            ws.estado?.toLowerCase().includes(searchLower);
           
           if (workshopMatches) return true;
         }
