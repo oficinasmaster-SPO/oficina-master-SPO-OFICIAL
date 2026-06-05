@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Shield, Users, Briefcase, Layout, FileText } from "lucide-react";
+import { Shield, Users, Briefcase, Layout, FileText, UserCircle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { jobRoles } from "@/components/lib/jobRoles";
@@ -24,7 +24,8 @@ export default function ProfileDetailsModal({ profile, open, onClose }) {
 
   if (!profile || !open) return null;
 
-  const usersCount = employees.filter(e => e?.profile_id === profile?.id).length;
+  const linkedEmployees = employees.filter(e => e?.profile_id === profile?.id);
+  const usersCount = linkedEmployees.length;
   const profileCustomRoles = customRoles.filter(r => 
     profile?.custom_role_ids?.includes(r?.id)
   );
@@ -99,7 +100,32 @@ export default function ProfileDetailsModal({ profile, open, onClose }) {
               </CardContent>
             </Card>
 
-            {/* 2. DESCRIÇÃO E FINALIDADE */}
+            {/* 2. USUÁRIOS VINCULADOS */}
+            <Card>
+              <CardContent className="pt-6">
+                <h3 className="text-lg font-bold mb-4 flex items-center gap-2 border-b pb-2">
+                  <Users className="w-5 h-5" />
+                  2. USUÁRIOS VINCULADOS ({usersCount})
+                </h3>
+                {linkedEmployees.length === 0 ? (
+                  <p className="text-sm text-gray-500 italic">Nenhum usuário vinculado a este perfil.</p>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {linkedEmployees.map(emp => (
+                      <div key={emp.id} className="flex items-center gap-3 p-2 border rounded-lg bg-gray-50">
+                        <UserCircle className="w-8 h-8 text-gray-400 shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">{emp.full_name || "Sem nome"}</p>
+                          <p className="text-xs text-gray-500 truncate">{emp.email || emp.position || ""}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* 3. DESCRIÇÃO E FINALIDADE */}
             {profile.description && (
               <Card>
                 <CardContent className="pt-6">
@@ -114,13 +140,13 @@ export default function ProfileDetailsModal({ profile, open, onClose }) {
               </Card>
             )}
 
-            {/* 3. FUNÇÕES E CARGOS ASSOCIADOS */}
+            {/* 4. FUNÇÕES E CARGOS ASSOCIADOS */}
             {profile.job_roles && profile.job_roles.length > 0 && (
               <Card>
                 <CardContent className="pt-6">
                   <h3 className="text-lg font-bold mb-4 flex items-center gap-2 border-b pb-2">
                     <Briefcase className="w-5 h-5" />
-                    3. FUNÇÕES E CARGOS ASSOCIADOS
+                    4. FUNÇÕES E CARGOS ASSOCIADOS
                   </h3>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                     {profile.job_roles.map(jr => (
