@@ -24,6 +24,8 @@ import { usePermissionChangeRequest } from "@/components/rbac/hooks/usePermissio
 
 export default function UsuariosAdmin() {
   const [search, setSearch] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const [selectedUser, setSelectedUser] = useState(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -65,6 +67,17 @@ export default function UsuariosAdmin() {
       u.full_name?.toLowerCase().includes(searchLower)
     );
   }, [users, search]);
+
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+  const paginatedUsers = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    return filteredUsers.slice(start, end);
+  }, [filteredUsers, currentPage, itemsPerPage]);
+
+  const goToPage = (page) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+  };
 
   const updateUserMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.User.update(id, data),
@@ -213,14 +226,14 @@ export default function UsuariosAdmin() {
                 </tr>
               </thead>
               <tbody>
-                {filteredUsers.length === 0 ? (
+                {paginatedUsers.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="py-12 text-center text-gray-500">
                       Nenhum usuário encontrado
                     </td>
                   </tr>
                 ) : (
-                  filteredUsers.map((user) => (
+                  paginatedUsers.map((user) => (
                     <tr 
                       key={user.id} 
                       className="border-b hover:bg-gray-50/50 transition-colors"
@@ -310,6 +323,47 @@ export default function UsuariosAdmin() {
               </tbody>
             </table>
           </div>
+          
+          {totalPages > 1 && (
+            <div className="border-t px-4 py-3 flex items-center justify-between">
+              <p className="text-sm text-gray-600">
+                Mostrando <span className="font-medium">{(currentPage - 1) * itemsPerPage + 1}</span> até{' '}
+                <span className="font-medium">{Math.min(currentPage * itemsPerPage, filteredUsers.length)}</span> de{' '}
+                <span className="font-medium">{filteredUsers.length}</span> usuários
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => goToPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  Anterior
+                </Button>
+                <div className="flex gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <Button
+                      key={page}
+                      variant={currentPage === page ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => goToPage(page)}
+                      className={currentPage === page ? 'bg-primary text-primary-foreground' : ''}
+                    >
+                      {page}
+                    </Button>
+                  ))}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => goToPage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  Próxima
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
