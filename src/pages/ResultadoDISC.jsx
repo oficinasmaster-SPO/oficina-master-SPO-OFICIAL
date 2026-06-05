@@ -66,14 +66,6 @@ export default function ResultadoDISCModal({ open, onOpenChange, diagnosticId })
         return;
       }
 
-      // Verificar se o diagnóstico pertence à workshop do usuário atual
-      const userWorkshopId = currentEmployee?.workshop_id;
-      if (userWorkshopId && currentDiagnostic.workshop_id !== userWorkshopId) {
-        toast.error("Acesso não permitido - diagnóstico de outra oficina");
-        handleClose();
-        return;
-      }
-
       setDiagnostic(currentDiagnostic);
 
       let emp = null;
