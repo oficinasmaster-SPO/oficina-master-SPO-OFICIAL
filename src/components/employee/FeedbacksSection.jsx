@@ -755,7 +755,7 @@ export default function FeedbacksSection({ employee }) {
               <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
                 <p className="text-xs text-blue-800 font-medium mb-1">📝 Editando feedback de:</p>
                 <p className="text-sm text-blue-900">
-                  {allEmployees.find(e => e.id === editingFeedback.employee_id)?.full_name || 'Colaborador'}
+                  {editingFeedback?.employee_id ? (allEmployees.find(e => e.id === editingFeedback.employee_id)?.full_name || 'Colaborador') : 'Colaborador'}
                 </p>
               </div>
 
