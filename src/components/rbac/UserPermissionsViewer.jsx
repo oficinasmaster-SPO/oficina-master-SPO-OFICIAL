@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { User, Shield, Search, Eye, AlertTriangle, CheckCircle2, Lock, Users, Building2, UserCheck } from "lucide-react";
+import { User, Shield, Search, Eye, AlertTriangle, CheckCircle2, Lock, Users, Building2, UserCheck, Loader2 } from "lucide-react";
 import { systemRoles } from "@/components/lib/systemRoles";
 import { toast } from "sonner";
 import UserPermissionsEditor from "./UserPermissionsEditor";
@@ -15,6 +15,7 @@ import { startImpersonation } from "@/components/shared/ImpersonationBanner";
 export default function UserPermissionsViewer() {
   const [searchEmail, setSearchEmail] = useState("");
   const [selectedUserId, setSelectedUserId] = useState(null);
+  const [impersonating, setImpersonating] = useState(false);
 
   const { data: users = [] } = useQuery({
     queryKey: ["all-users"],
@@ -56,6 +57,7 @@ export default function UserPermissionsViewer() {
   const selectedUser = users.find(u => u.id === selectedUserId);
 
   const handleImpersonate = async (targetUser) => {
+    setImpersonating(targetUser.id);
     try {
       const response = await base44.functions.invoke('impersonateUser', { target_user_id: targetUser.id });
       if (!response.data?.success) throw new Error(response.data?.error || 'Falha na impersonação');
@@ -66,10 +68,10 @@ export default function UserPermissionsViewer() {
         started_at: new Date().toISOString(),
       });
 
-      toast.success(`Iniciando visualização como ${targetUser.full_name || targetUser.email}...`);
-      // Redireciona para Home após iniciar impersonação
-      setTimeout(() => { window.location.href = '/'; }, 800);
+      // Overlay fica visível até a página mudar
+      window.location.href = '/';
     } catch (error) {
+      setImpersonating(false);
       toast.error("Erro ao impersonar: " + error.message);
     }
   };
@@ -128,7 +130,27 @@ export default function UserPermissionsViewer() {
   const externalUsers = users.filter(u => !internalUsers.includes(u));
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
+      {/* Overlay de loading ao impersonar */}
+      {impersonating && (
+        <div className="fixed inset-0 z-[300] flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl px-10 py-8 flex flex-col items-center gap-4 max-w-xs w-full mx-4">
+            <div className="w-16 h-16 rounded-full bg-orange-100 flex items-center justify-center">
+              <Eye className="w-8 h-8 text-orange-600 animate-pulse" />
+            </div>
+            <Loader2 className="w-6 h-6 text-orange-500 animate-spin" />
+            <div className="text-center">
+              <p className="font-semibold text-gray-900 text-base">Iniciando impersonação</p>
+              <p className="text-sm text-gray-500 mt-1">
+                Carregando visão de<br />
+                <span className="font-medium text-orange-600">
+                  {users.find(u => u.id === impersonating)?.full_name || users.find(u => u.id === impersonating)?.email}
+                </span>
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Listagem agrupada */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Internos */}

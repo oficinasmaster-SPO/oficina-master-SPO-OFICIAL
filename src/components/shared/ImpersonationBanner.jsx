@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react';
-import { Eye, X, User, Shield } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Eye, X, User, Shield, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export const IMPERSONATION_KEY = 'om_impersonation';
@@ -23,8 +23,8 @@ export function stopImpersonation() {
 }
 
 export default function ImpersonationBanner() {
-  const navigate = useNavigate();
   const data = getImpersonationData();
+  const [exiting, setExiting] = useState(false);
 
   // Aplica/remove CSS var na raiz para que sidebar e layout se ajustem
   useEffect(() => {
@@ -43,8 +43,9 @@ export default function ImpersonationBanner() {
   const { target_user, admin } = data;
 
   const handleExit = () => {
+    setExiting(true);
     stopImpersonation();
-    // Volta para GestaoRBAC na aba de usuários
+    // Overlay fica visível até a página mudar
     window.location.href = '/GestaoRBAC?tab=usuarios';
   };
 
@@ -133,15 +134,34 @@ export default function ImpersonationBanner() {
           </div>
 
           {/* Right */}
-          <button onClick={handleExit} className="imp-exit-btn" aria-label="Sair do modo impersonação">
-            <X size={13} strokeWidth={2.75} />
-            <span>Sair</span>
+          <button onClick={handleExit} disabled={exiting} className="imp-exit-btn" aria-label="Sair do modo impersonação">
+            {exiting
+              ? <Loader2 size={13} className="animate-spin" />
+              : <X size={13} strokeWidth={2.75} />
+            }
+            <span>{exiting ? 'Saindo...' : 'Sair'}</span>
           </button>
         </div>
       </div>
 
       {/* Spacer para empurrar o conteúdo abaixo da barra fixed */}
       <div style={{ height: `${IMP_BAR_HEIGHT}px` }} className="print:hidden" />
+
+      {/* Overlay de loading ao sair da impersonação */}
+      {exiting && (
+        <div className="fixed inset-0 z-[300] flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl px-10 py-8 flex flex-col items-center gap-4 max-w-xs w-full mx-4">
+            <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
+              <Shield className="w-8 h-8 text-blue-600 animate-pulse" />
+            </div>
+            <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
+            <div className="text-center">
+              <p className="font-semibold text-gray-900 text-base">Saindo da impersonação</p>
+              <p className="text-sm text-gray-500 mt-1">Restaurando sua sessão original...</p>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
