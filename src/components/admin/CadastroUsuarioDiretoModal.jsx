@@ -418,9 +418,14 @@ export default function CadastroUsuarioDiretoModal({ open, onClose }) {
                     </div>
                   )}
                 </div>
-                <Button type="submit" disabled={isPending} className="w-full">
-                  {isPending ? 'Criando usuário...' : 'Criar Usuário Interno'}
-                </Button>
+                <div className="flex gap-2">
+                  <Button type="button" variant="outline" onClick={handleClose} className="flex-1">
+                    Fechar
+                  </Button>
+                  <Button type="submit" disabled={isPending} className="flex-1">
+                    {isPending ? 'Criando usuário...' : 'Criar Usuário Interno'}
+                  </Button>
+                </div>
               </form>
             )}
 
@@ -473,9 +478,14 @@ export default function CadastroUsuarioDiretoModal({ open, onClose }) {
                     </div>
                   )}
                 </div>
-                <Button type="submit" disabled={isPending} className="w-full">
-                  {isPending ? 'Criando usuário...' : 'Criar Usuário Externo'}
-                </Button>
+                <div className="flex gap-2">
+                  <Button type="button" variant="outline" onClick={handleClose} className="flex-1">
+                    Fechar
+                  </Button>
+                  <Button type="submit" disabled={isPending} className="flex-1">
+                    {isPending ? 'Criando usuário...' : 'Criar Usuário Externo'}
+                  </Button>
+                </div>
               </form>
             )}
           </div>
