@@ -21,6 +21,7 @@ export default function FeedbacksSection({ employee }) {
   const queryClient = useQueryClient();
   const [currentUser, setCurrentUser] = useState(null);
   const [isManager, setIsManager] = useState(false);
+  const [canGiveAcknowledge, setCanGiveAcknowledge] = useState(false);
 
   useEffect(() => {
     const checkRole = async () => {
@@ -29,7 +30,13 @@ export default function FeedbacksSection({ employee }) {
         setCurrentUser(user);
         const employees = await base44.entities.Employee.filter({ user_id: user.id });
         const userEmployee = employees?.[0];
+        
+        // isManager: pode criar/editar feedbacks (apenas da mesma oficina)
         setIsManager(user.role === 'admin' || MANAGER_JOB_ROLES.includes(userEmployee?.job_role));
+        
+        // canGiveAcknowledge: pode dar ciência em QUALQUER feedback (sócios, diretores, RH, financeiro, gerentes)
+        const gestorsRoles = ['admin', 'socio', 'socio_interno', 'diretor', 'gerente', 'lider_tecnico', 'rh', 'financeiro'];
+        setCanGiveAcknowledge(user.role === 'admin' || gestorsRoles.includes(userEmployee?.job_role));
       } catch (error) {
         console.error(error);
       }
@@ -314,7 +321,8 @@ export default function FeedbacksSection({ employee }) {
   const handleViewDetail = async (feedback) => {
     setSelectedFeedbackDetail(feedback);
     setShowDetailModal(true);
-    if (!isManager && !feedback.employee_acknowledged) {
+    // Auto-dar ciência apenas se NÃO for gestor (colaborador comum visualizando seu feedback)
+    if (!canGiveAcknowledge && !feedback.employee_acknowledged) {
       try {
         await base44.entities.EmployeeFeedback.update(feedback.id, {
           employee_acknowledged: true,
@@ -705,7 +713,7 @@ export default function FeedbacksSection({ employee }) {
                     {selectedFeedbackDetail.email_sent ? "Reenviar Email" : "Enviar Email"}
                   </Button>
                 </div>
-                {isManager && (
+                {canGiveAcknowledge && (
                   <div className="flex flex-col gap-1">
                     <Button variant="outline" size="sm" onClick={() => handleAcknowledge(selectedFeedbackDetail)} disabled={selectedFeedbackDetail.employee_acknowledged} className={selectedFeedbackDetail.employee_acknowledged ? "bg-green-100 opacity-70" : ""}>
                       <CheckCircle2 className="w-3 h-3 mr-1" />
