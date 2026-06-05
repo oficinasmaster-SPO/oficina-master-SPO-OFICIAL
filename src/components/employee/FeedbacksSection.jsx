@@ -110,7 +110,7 @@ export default function FeedbacksSection({ employee }) {
       
       return await base44.entities.EmployeeFeedback.create({
         custom_id: customId,
-        type: data.type,
+        feedback_type: data.type,
         content: data.content,
         action_plan: data.action_plan || null,
         action_plan_deadline: data.action_plan_deadline || null,
@@ -370,7 +370,8 @@ export default function FeedbacksSection({ employee }) {
   };
 
   const filteredFeedbacks = feedbacks.filter(fb => {
-    const typeMatch = filters.type === "all" || fb.type === filters.type;
+    const fbType = fb.feedback_type || fb.type; // Suporta ambos os campos
+    const typeMatch = filters.type === "all" || fbType === filters.type;
     const statusMatch = filters.status === "all" || fb.action_plan_status === filters.status || (!fb.action_plan && filters.status === 'sem_plano');
     const employeeMatch = filters.employee_id === "all" || fb.employee_id === filters.employee_id;
     return typeMatch && statusMatch && employeeMatch;
@@ -380,6 +381,11 @@ export default function FeedbacksSection({ employee }) {
     positivo: { icon: ThumbsUp, color: "border-green-200 bg-green-50", badge: "bg-green-100 text-green-800" },
     negativo: { icon: ThumbsDown, color: "border-red-200 bg-red-50", badge: "bg-red-100 text-red-800" },
     one_on_one: { icon: Users, color: "border-blue-200 bg-blue-50", badge: "bg-blue-100 text-blue-800" }
+  };
+
+  const getFeedbackTypeDisplay = (feedback) => {
+    // Suporta ambos os campos para compatibilidade
+    return feedback.feedback_type || feedback.type;
   };
 
   const statusConfig = {
@@ -482,9 +488,10 @@ export default function FeedbacksSection({ employee }) {
               </thead>
               <tbody className="divide-y">
                 {filteredFeedbacks.map((feedback) => {
-                  const config = feedbackConfig[feedback.type] || feedbackConfig.one_on_one;
-                  const Icon = config.icon;
-                  const employeeData = allEmployees.find(e => e.id === feedback.employee_id);
+                   const feedbackType = getFeedbackTypeDisplay(feedback);
+                   const config = feedbackConfig[feedbackType] || feedbackConfig.one_on_one;
+                   const Icon = config.icon;
+                   const employeeData = allEmployees.find(e => e.id === feedback.employee_id);
 
                   return (
                     <tr key={feedback.id} className="hover:bg-gray-50 transition-colors">
@@ -498,7 +505,7 @@ export default function FeedbacksSection({ employee }) {
                           <div className={`p-1.5 rounded ${config.badge}`}>
                             <Icon className="w-3.5 h-3.5" />
                           </div>
-                          <span className="text-sm font-medium capitalize">{feedback.type?.replace('_', ' ')}</span>
+                          <span className="text-sm font-medium capitalize">{feedbackType?.replace('_', ' ')}</span>
                         </div>
                       </td>
                       {isManager && (
@@ -785,7 +792,7 @@ export default function FeedbacksSection({ employee }) {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-xs text-gray-500">Tipo</Label>
-                  <p className="text-sm font-medium capitalize">{selectedFeedbackDetail.type?.replace('_', ' ')}</p>
+                  <p className="text-sm font-medium capitalize">{getFeedbackTypeDisplay(selectedFeedbackDetail)?.replace('_', ' ')}</p>
                 </div>
                 <div>
                   <Label className="text-xs text-gray-500">Data</Label>
