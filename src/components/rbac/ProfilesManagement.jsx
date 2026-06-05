@@ -6,6 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Edit, Copy, Power, Trash2, Shield, AlertCircle, Users, RefreshCw, Eye, MoreVertical } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import ProfileEditor from "@/components/profiles/ProfileEditor";
 import ProfileCreator from "@/components/profiles/ProfileCreator";
@@ -19,6 +22,8 @@ export default function ProfilesManagement() {
   const [viewMode, setViewMode] = useState("list");
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [profileForDetails, setProfileForDetails] = useState(null);
+  const [deleteDialogProfile, setDeleteDialogProfile] = useState(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const queryClient = useQueryClient();
 
   const { data: profiles = [], isLoading, refetch } = useQuery({
@@ -111,8 +116,15 @@ export default function ProfilesManagement() {
       toast.error(`Perfil possui ${usersCount} usuário(s) vinculado(s)`);
       return;
     }
-    if (confirm(`Excluir perfil "${profile.name}"?`)) {
-      deleteMutation.mutate(profile.id);
+    setDeleteConfirmText("");
+    setDeleteDialogProfile(profile);
+  };
+
+  const confirmDelete = () => {
+    if (deleteConfirmText === deleteDialogProfile?.name) {
+      deleteMutation.mutate(deleteDialogProfile.id);
+      setDeleteDialogProfile(null);
+      setDeleteConfirmText("");
     }
   };
 
@@ -255,6 +267,47 @@ export default function ProfilesManagement() {
           setProfileForDetails(null);
         }}
       />
+
+      <Dialog open={!!deleteDialogProfile} onOpenChange={(v) => { if (!v) { setDeleteDialogProfile(null); setDeleteConfirmText(""); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-red-600 flex items-center gap-2">
+              <Trash2 className="w-5 h-5" /> Excluir Perfil
+            </DialogTitle>
+            <DialogDescription>
+              Esta ação é <strong>irreversível</strong>. Para confirmar, digite exatamente o nome do perfil abaixo:
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="bg-gray-100 rounded px-3 py-2 text-sm font-mono font-semibold text-gray-800 select-all">
+              {deleteDialogProfile?.name}
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="delete-confirm-input">Nome do perfil</Label>
+              <Input
+                id="delete-confirm-input"
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder="Digite o nome para confirmar"
+                onKeyDown={(e) => e.key === 'Enter' && confirmDelete()}
+                autoFocus
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setDeleteDialogProfile(null); setDeleteConfirmText(""); }}>
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              disabled={deleteConfirmText !== deleteDialogProfile?.name || deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? "Excluindo..." : "Excluir Permanentemente"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
