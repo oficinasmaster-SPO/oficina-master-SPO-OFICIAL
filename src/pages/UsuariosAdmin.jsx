@@ -1,31 +1,29 @@
 import React, { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { Shield, UserPlus, Loader2 } from "lucide-react";
+import { MoreVertical, UserPlus, Loader2, Eye, Edit, Key, Trash2, Mail, FileText, Shield, Search } from "lucide-react";
 import { toast } from "sonner";
-import { differenceInDays } from "date-fns";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import UserFormDialog from "@/components/admin/UserFormDialog";
 import CadastroUsuarioDiretoModal from "@/components/admin/CadastroUsuarioDiretoModal";
 import UserAuditDialog from "@/components/admin/UserAuditDialog";
 import UserDetailsDrawer from "@/components/admin/users/UserDetailsDrawer";
-import UserTable from "@/components/admin/users/UserTable";
-import UserFilters from "@/components/admin/users/UserFilters";
-import UserStatsCards from "@/components/admin/users/UserStatsCards";
 import PromoteToAdminDialog from "@/components/admin/PromoteToAdminDialog";
 import { PermissionRequestForm } from "@/components/rbac/PermissionRequestForm";
 import { usePermissionChangeRequest } from "@/components/rbac/hooks/usePermissionChangeRequest";
-import AuditHistoryViewer from "@/components/rbac/audit/AuditHistoryViewer";
 
 export default function UsuariosAdmin() {
-  const [filters, setFilters] = useState({
-    search: '',
-    status: 'all',
-    profile: 'all',
-    responsible: 'all',
-    activity: 'all'
-  });
+  const [search, setSearch] = useState('');
   const [selectedUser, setSelectedUser] = useState(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -59,44 +57,14 @@ export default function UsuariosAdmin() {
     }
   });
 
-  const admins = useMemo(() => 
-    users.filter(u => u.role === 'admin'), 
-    [users]
-  );
-
   const filteredUsers = useMemo(() => {
-    let filtered = users;
+    if (!search) return users;
     
-    if (filters.search) {
-      const search = filters.search.toLowerCase();
-      filtered = filtered.filter(u => 
-        u.full_name?.toLowerCase().includes(search) ||
-        u.email?.toLowerCase().includes(search)
-      );
-    }
-    
-    if (filters.status && filters.status !== 'all') {
-      filtered = filtered.filter(u => u.user_status === filters.status);
-    }
-    
-    if (filters.profile && filters.profile !== 'all') {
-      filtered = filtered.filter(u => u.profile_id === filters.profile);
-    }
-    
-    if (filters.responsible && filters.responsible !== 'all') {
-      filtered = filtered.filter(u => u.admin_responsavel_id === filters.responsible);
-    }
-    
-    if (filters.activity && filters.activity === 'inactive_30d') {
-      filtered = filtered.filter(u => {
-        const loginDate = u.last_login_at || u.first_login_at;
-        if (!loginDate) return true;
-        return differenceInDays(new Date(), new Date(loginDate)) > 30;
-      });
-    }
-    
-    return filtered;
-  }, [users, filters]);
+    const searchLower = search.toLowerCase();
+    return users.filter(u => 
+      u.full_name?.toLowerCase().includes(searchLower)
+    );
+  }, [users, search]);
 
   const updateUserMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.User.update(id, data),
@@ -173,6 +141,29 @@ export default function UsuariosAdmin() {
     });
   };
 
+  const getProfileName = (profileId) => {
+    const profile = profiles.find(p => p.id === profileId);
+    return profile?.name || "Sem perfil";
+  };
+
+  const getCargo = (user) => {
+    const employee = employees.find(e => e.user_id === user.id);
+    return employee?.position || user.position || "Não definido";
+  };
+
+  const getLastLoginDisplay = (user) => {
+    const loginDate = user.last_login_at || user.first_login_at;
+    if (!loginDate) return "Nunca acessou";
+    const now = new Date();
+    const login = new Date(loginDate);
+    const diffDays = Math.floor((now - login) / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return "Hoje";
+    if (diffDays === 1) return "Ontem";
+    if (diffDays <= 7) return `${diffDays} dias atrás`;
+    return login.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  };
+
   if (isLoadingUsers) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -188,40 +179,137 @@ export default function UsuariosAdmin() {
           <h1 className="text-3xl font-bold text-gray-900">Gestão de Usuários</h1>
           <p className="text-gray-600 mt-1">Gerencie usuários, perfis e permissões do sistema</p>
         </div>
-        <div className="flex gap-2">
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
-            <UserPlus className="w-4 h-4 mr-2" />
-            Novo Usuário
-          </Button>
-        </div>
+        <Button onClick={() => setIsCreateDialogOpen(true)}>
+          <UserPlus className="w-4 h-4 mr-2" />
+          Novo Usuário
+        </Button>
       </div>
 
-      <UserStatsCards 
-        users={users} 
-        onCardClick={(filter) => setFilters(prev => ({ ...prev, ...filter }))} 
-      />
-
-      <UserFilters 
-        filters={filters}
-        onFilterChange={setFilters}
-        profiles={profiles}
-        admins={admins}
-      />
+      <Card>
+        <CardContent className="p-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              placeholder="Buscar por nome..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardContent className="p-0">
-          <UserTable
-            users={filteredUsers}
-            profiles={profiles}
-            admins={admins}
-            onViewDetails={handleViewDetails}
-            onEdit={handleEdit}
-            onResetPassword={handleResetPassword}
-            onResendAccess={handleResendAccess}
-            onViewAudit={handleViewAudit}
-            onDelete={handleDelete}
-            onPromoteToAdmin={handlePromoteToAdmin}
-          />
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b bg-gray-50/50">
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Usuário</th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Cargo</th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Perfil</th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Último Login</th>
+                  <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredUsers.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="py-12 text-center text-gray-500">
+                      Nenhum usuário encontrado
+                    </td>
+                  </tr>
+                ) : (
+                  filteredUsers.map((user) => (
+                    <tr 
+                      key={user.id} 
+                      className="border-b hover:bg-gray-50/50 transition-colors"
+                    >
+                      <td className="py-3 px-4">
+                        <div>
+                          <p className="font-medium text-gray-900">{user.full_name}</p>
+                          <p className="text-sm text-gray-500">{user.email}</p>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className="text-sm text-gray-700">{getCargo(user)}</span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <Badge variant="outline" className="text-xs">
+                          {getProfileName(user.profile_id)}
+                        </Badge>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-sm text-gray-700">{getLastLoginDisplay(user)}</span>
+                          <Badge 
+                            className={`w-fit text-xs ${
+                              user.user_status === 'active' ? 'bg-green-100 text-green-700' :
+                              user.user_status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                              user.user_status === 'blocked' ? 'bg-red-100 text-red-700' :
+                              'bg-gray-100 text-gray-700'
+                            }`}
+                          >
+                            {user.user_status === 'active' ? 'Ativo' :
+                             user.user_status === 'pending' ? 'Pendente' :
+                             user.user_status === 'blocked' ? 'Bloqueado' : 'Inativo'}
+                          </Badge>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex justify-end">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreVertical className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuItem onClick={() => handleViewDetails(user)}>
+                                <Eye className="w-4 h-4 mr-2" />
+                                Ver Detalhes
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleEdit(user)}>
+                                <Edit className="w-4 h-4 mr-2" />
+                                Editar
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleViewAudit(user)}>
+                                <FileText className="w-4 h-4 mr-2" />
+                                Auditoria
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => handleResetPassword(user)}>
+                                <Key className="w-4 h-4 mr-2" />
+                                Resetar Senha
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleResendAccess(user)}>
+                                <Mail className="w-4 h-4 mr-2" />
+                                Reenviar Acesso
+                              </DropdownMenuItem>
+                              {user.role !== 'admin' && (
+                                <DropdownMenuItem onClick={() => handlePromoteToAdmin(user)}>
+                                  <Shield className="w-4 h-4 mr-2" />
+                                  Promover para Admin
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem 
+                                onClick={() => handleDelete(user)}
+                                className="text-red-600"
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Excluir
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </CardContent>
       </Card>
 
