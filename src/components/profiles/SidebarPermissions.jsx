@@ -28,11 +28,11 @@ export default function SidebarPermissions({ profile, onChange }) {
       const itemKey = `${groupId}_${item.name}`;
       updated[itemKey] = {
         view: value,
-        edit: false,
-        create: false,
-        delete: false,
-        export: false,
-        approve: false,
+        edit: value,
+        create: value,
+        delete: value,
+        export: value,
+        approve: value,
       };
     });
 
@@ -46,9 +46,10 @@ export default function SidebarPermissions({ profile, onChange }) {
     <div className="space-y-4">
       {sidebarStructure.map((group) => {
         const groupItems = group.items || [];
-        const allChecked = groupItems.every((item) => {
+        const allChecked = groupItems.length > 0 && groupItems.every((item) => {
           const itemKey = `${group.id}_${item.name}`;
-          return permissions[itemKey]?.view;
+          const p = permissions[itemKey] || {};
+          return p.view && p.edit && p.create && p.delete && p.export && p.approve;
         });
 
         return (
