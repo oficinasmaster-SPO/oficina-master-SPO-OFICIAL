@@ -20,6 +20,7 @@ export default function GestaoEmpresas() {
   const [editingCompany, setEditingCompany] = useState(null);
 
   const myFirmId = user?.data?.consulting_firm_id || selectedFirmId;
+  const isAdmin = user?.role === 'admin';
 
   // States for Company Form
   const [companyFormData, setCompanyFormData] = useState({
@@ -97,8 +98,6 @@ export default function GestaoEmpresas() {
       logo_url: ''
     });
   };
-
-  const isAdmin = user?.role === 'admin';
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
