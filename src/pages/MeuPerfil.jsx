@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
+import { getEffectiveUser } from "@/components/hooks/useImpersonation";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, User, FileText, MessageSquare, AlertTriangle, Award, TrendingUp, FileCheck, Heart, Activity, GraduationCap, BarChart3, Rocket, Target, Shield, BookOpen } from "lucide-react";
@@ -27,6 +29,7 @@ import JobDescriptionTab from "../components/employee/JobDescriptionTab";
 
 export default function MeuPerfil() {
   const location = useLocation();
+  const { user: contextUser } = useAuth(); // ✅ Usa usuário do contexto (com impersonação)
   const [loading, setLoading] = useState(true);
   // HMR trigger
   const [employee, setEmployee] = useState(null);
@@ -48,8 +51,8 @@ export default function MeuPerfil() {
       
       setAssistanceMode(isAssisting && !!workshopId);
       
-      // Se é onboarding com token, processar convite primeiro
-      if (isOnboarding && inviteToken) {
+      // ✅ SKIP onboarding se em impersonação
+      if (isOnboarding && inviteToken && !contextUser?._isImpersonated) {
         try {
           const tokenResponse = await base44.functions.invoke('validateInviteToken', { token: inviteToken });
           if (tokenResponse.data.success) {
@@ -80,10 +83,12 @@ export default function MeuPerfil() {
       }
 
       // Busca usuário (pode ser o atualizado acima ou o da sessão atual)
-      const currentUser = await base44.auth.me();
-      setUser(currentUser);
+       const currentUser = contextUser || await base44.auth.me();
+       // ✅ Usa usuário do contexto se disponível (inclui impersonação)
+       const effectiveCurrentUser = getEffectiveUser(currentUser);
+       setUser(effectiveCurrentUser);
 
-      if (!currentUser) {
+      if (!effectiveCurrentUser) {
         toast.error("Usuário não autenticado");
         base44.auth.redirectToLogin();
         return;
@@ -97,13 +102,13 @@ export default function MeuPerfil() {
           user_type: 'external'
         });
       } else {
-        // Caso contrário, buscar employee do usuário logado
-        employees = await base44.entities.Employee.filter({ user_id: currentUser.id });
+        // Caso contrário, buscar employee do usuário logado (efetivo com impersonação)
+        employees = await base44.entities.Employee.filter({ user_id: effectiveCurrentUser.id });
 
         // Fallback: Se não encontrou por ID, tentar por email
         if (!employees || employees.length === 0) {
-          console.warn("⚠️ Employee não encontrado por ID, tentando por email:", currentUser.email);
-          employees = await base44.entities.Employee.filter({ email: currentUser.email });
+          console.warn("⚠️ Employee não encontrado por ID, tentando por email:", effectiveCurrentUser.email);
+          employees = await base44.entities.Employee.filter({ email: effectiveCurrentUser.email });
         }
 
         // Tentar recuperação via Backend (Service Role) se ainda não encontrou ou para garantir vínculo
@@ -123,7 +128,7 @@ export default function MeuPerfil() {
                     console.log("✅ Usando dados do employee retornados pelo backend");
                     employees = [linkResponse.data.employee];
                     // Atualizar usuário localmente se workshop mudou
-                    if (linkResponse.data.workshop_id && user.workshop_id !== linkResponse.data.workshop_id) {
+                    if (linkResponse.data.workshop_id && effectiveCurrentUser.workshop_id !== linkResponse.data.workshop_id) {
                         setUser(prev => ({ ...prev, workshop_id: linkResponse.data.workshop_id }));
                     }
                 } 
@@ -133,7 +138,7 @@ export default function MeuPerfil() {
                      const freshEmployee = await base44.entities.Employee.get(linkResponse.data.employee_id);
                      if (freshEmployee) {
                         employees = [freshEmployee];
-                        if (linkResponse.data.workshop_id && user.workshop_id !== linkResponse.data.workshop_id) {
+                        if (linkResponse.data.workshop_id && effectiveCurrentUser.workshop_id !== linkResponse.data.workshop_id) {
                             setUser(prev => ({ ...prev, workshop_id: linkResponse.data.workshop_id }));
                         }
                      }
@@ -154,7 +159,7 @@ export default function MeuPerfil() {
       } else if (!isAssisting) {
         // Employee será criado automaticamente pela automação quando EmployeeInviteAcceptance for criado
         // Se ainda assim não existir, é porque o usuário não foi convidado corretamente
-        console.warn("Employee não encontrado para usuário:", currentUser.id);
+        console.warn("Employee não encontrado para usuário:", effectiveCurrentUser.id);
       } else {
         toast.error("Nenhum colaborador encontrado nesta oficina");
       }
