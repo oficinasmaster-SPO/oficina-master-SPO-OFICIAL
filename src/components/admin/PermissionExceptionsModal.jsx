@@ -18,19 +18,24 @@ export default function PermissionExceptionsModal({ open, onOpenChange }) {
   const [showEditor, setShowEditor] = useState(false);
   const queryClient = useQueryClient();
 
-  // Busca workshops da consultoria
-  const { data: workshops = [] } = useQuery({
-    queryKey: ['workshops-list'],
+  // Busca workshops da consultoria usando getUserWorkshops
+  const { data: workshops = [], error: workshopsError } = useQuery({
+    queryKey: ['workshops-list-permissions'],
     queryFn: async () => {
-      const user = await base44.auth.me();
-      if (!user?.data?.consulting_firm_id) return [];
-      
-      const workshops = await base44.asServiceRole.entities.Workshop.filter({
-        consulting_firm_id: user.data.consulting_firm_id
-      });
-      return Array.isArray(workshops) ? workshops : [];
+      try {
+        console.log('[PermissionExceptionsModal] Fetching workshops...');
+        const response = await base44.functions.invoke('getUserWorkshops', {});
+        console.log('[PermissionExceptionsModal] getUserWorkshops response:', response);
+        const wsList = response?.data?.workshops || [];
+        console.log('[PermissionExceptionsModal] Workshops count:', wsList.length);
+        return wsList;
+      } catch (error) {
+        console.error('[PermissionExceptionsModal] Error fetching workshops:', error);
+        return [];
+      }
     },
-    enabled: open
+    enabled: open,
+    staleTime: 5 * 60 * 1000
   });
 
   // Busca usuários da oficina selecionada
@@ -39,10 +44,16 @@ export default function PermissionExceptionsModal({ open, onOpenChange }) {
     queryFn: async () => {
       if (!selectedWorkshopId) return [];
       
-      const employees = await base44.asServiceRole.entities.Employee.filter({
-        workshop_id: selectedWorkshopId
-      });
-      return Array.isArray(employees) ? employees : [];
+      try {
+        const employees = await base44.asServiceRole.entities.Employee.filter({
+          workshop_id: selectedWorkshopId
+        });
+        console.log(`[PermissionExceptionsModal] ${employees?.length || 0} employees na oficina ${selectedWorkshopId}`);
+        return Array.isArray(employees) ? employees : [];
+      } catch (error) {
+        console.error('Erro ao buscar employees:', error);
+        return [];
+      }
     },
     enabled: !!selectedWorkshopId && open
   });
@@ -114,6 +125,21 @@ export default function PermissionExceptionsModal({ open, onOpenChange }) {
           </DialogHeader>
 
           <div className="flex-1 overflow-y-auto space-y-4">
+            {/* Debug info */}
+            {open && (
+              <div className="text-xs text-gray-400">
+                Workshops: {workshops.length} | Employees: {employees.length} | Selected: {selectedWorkshopId || 'none'} / {selectedUserId || 'none'}
+              </div>
+            )}
+
+            {/* Error Banner */}
+            {workshopsError && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="text-sm text-red-800 font-semibold">Erro ao carregar oficinas</p>
+                <p className="text-xs text-red-600 mt-1">{workshopsError.message}</p>
+              </div>
+            )}
+
             {/* Info Banner */}
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
               <div className="flex items-start gap-3">
@@ -144,11 +170,15 @@ export default function PermissionExceptionsModal({ open, onOpenChange }) {
                     <SelectValue placeholder="Selecione uma oficina..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {workshops.map(ws => (
-                      <SelectItem key={ws.id} value={ws.id}>
-                        {ws.name}
-                      </SelectItem>
-                    ))}
+                    {workshops.length === 0 ? (
+                      <div className="p-2 text-xs text-gray-500">Nenhuma oficina disponível</div>
+                    ) : (
+                      workshops.map(ws => (
+                        <SelectItem key={ws.id} value={ws.id}>
+                          {ws.name}
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
               </div>
@@ -166,17 +196,21 @@ export default function PermissionExceptionsModal({ open, onOpenChange }) {
                     <SelectValue 
                       placeholder={
                         selectedWorkshopId 
-                          ? "Selecione um usuário..." 
+                          ? (employees.length > 0 ? "Selecione um usuário..." : "Nenhum usuário nesta oficina")
                           : "Selecione uma oficina primeiro"
                       } 
                     />
                   </SelectTrigger>
                   <SelectContent>
-                    {employees.map(emp => (
-                      <SelectItem key={emp.user_id} value={emp.user_id}>
-                        {emp.full_name} - {emp.job_role}
-                      </SelectItem>
-                    ))}
+                    {employees.length === 0 ? (
+                      <div className="p-2 text-xs text-gray-500">Nenhum usuário encontrado</div>
+                    ) : (
+                      employees.map(emp => (
+                        <SelectItem key={emp.user_id} value={emp.user_id}>
+                          {emp.full_name} - {emp.job_role}
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
               </div>
