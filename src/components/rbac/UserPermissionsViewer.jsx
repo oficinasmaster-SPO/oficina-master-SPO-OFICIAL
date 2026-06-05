@@ -211,7 +211,8 @@ export default function UserPermissionsViewer() {
                 <p className="p-4 text-sm text-gray-500 text-center">Nenhum usuário interno</p>
               ) : internalUsers.map(u => {
                 const emp = employees.find(e => e.user_id === u.id);
-                const initials = (u.full_name || u.email)
+                const displayName = emp?.full_name || u.full_name || u.email;
+                const initials = displayName
                   .split(' ')
                   .map(part => part[0])
                   .join('')
@@ -224,11 +225,11 @@ export default function UserPermissionsViewer() {
                     className={`w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-gray-50 transition-colors ${selectedUserId === u.id ? 'bg-blue-50' : ''}`}
                   >
                     <Avatar className="w-8 h-8 flex-shrink-0">
-                      <AvatarImage src={emp?.profile_picture_url} alt={u.full_name} />
+                      <AvatarImage src={emp?.profile_picture_url} alt={displayName} />
                       <AvatarFallback className="bg-blue-100 text-blue-700 font-semibold text-xs">{initials}</AvatarFallback>
                     </Avatar>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-gray-900 truncate">{u.full_name}</p>
+                      <p className="text-sm font-medium text-gray-900 truncate">{displayName}</p>
                       <p className="text-xs text-gray-500 truncate">{u.email}</p>
                     </div>
                     {u.role === 'admin' ? (
@@ -258,7 +259,8 @@ export default function UserPermissionsViewer() {
                 <p className="p-4 text-sm text-gray-500 text-center">Nenhum usuário externo</p>
               ) : externalUsers.map(u => {
                 const emp = employees.find(e => e.user_id === u.id);
-                const initials = (u.full_name || u.email)
+                const displayName = emp?.full_name || u.full_name || u.email;
+                const initials = displayName
                   .split(' ')
                   .map(part => part[0])
                   .join('')
@@ -271,11 +273,11 @@ export default function UserPermissionsViewer() {
                     className={`w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-gray-50 transition-colors ${selectedUserId === u.id ? 'bg-green-50' : ''}`}
                   >
                     <Avatar className="w-8 h-8 flex-shrink-0">
-                      <AvatarImage src={emp?.profile_picture_url} alt={u.full_name} />
+                      <AvatarImage src={emp?.profile_picture_url} alt={displayName} />
                       <AvatarFallback className="bg-green-100 text-green-700 font-semibold text-xs">{initials}</AvatarFallback>
                     </Avatar>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-gray-900 truncate">{u.full_name}</p>
+                      <p className="text-sm font-medium text-gray-900 truncate">{displayName}</p>
                       <p className="text-xs text-gray-500 truncate">{u.email}</p>
                     </div>
                     {emp?.position && (
