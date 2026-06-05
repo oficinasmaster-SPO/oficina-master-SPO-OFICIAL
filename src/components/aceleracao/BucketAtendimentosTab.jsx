@@ -8,13 +8,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, Clock, Inbox, Loader2, CalendarPlus, Search, X } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Calendar, Inbox, Loader2, CalendarPlus, Search, X, Trash2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { formatDateTimeBR } from "@/utils/timezone";
 import { useOperationalSync } from "@/hooks/useOperationalSync";
 
-const ITEMS_PER_PAGE = 15;
+const ITEMS_PER_PAGE = 10;
 
 export default function BucketAtendimentosTab({ state }) {
   const { workshops, workshopMap, consultores, user } = state;
@@ -23,11 +24,11 @@ export default function BucketAtendimentosTab({ state }) {
   const [agendarForm, setAgendarForm] = useState({ data: '', hora: '', consultor_id: '' });
   const [currentPage, setCurrentPage] = useState(1);
   const [search, setSearch] = useState("");
+  const [selectedItems, setSelectedItems] = useState(new Set());
 
-  // Sincronizar com OperationalSyncManager para workshops selecionados
-  const { invalidate: invalidateAll } = useOperationalSync(null, user?.id, user);
+  const operationalSync = useOperationalSync(null, user?.id, user);
+  const invalidateAll = operationalSync?.invalidate || (() => {});
 
-  // Fetch pending ContractAttendances (bucket items) + enrich with workshop names
   const { data: bucketItems = [], isLoading } = useQuery({
     queryKey: ['bucket-atendimentos'],
     queryFn: async () => {
@@ -38,7 +39,6 @@ export default function BucketAtendimentosTab({ state }) {
       );
       const pending = items.filter(i => !i.consultoria_atendimento_id);
 
-      // Collect ALL unique workshop IDs missing from workshopMap
       const missingIds = [...new Set(
         pending
           .map(i => i.workshop_id)
@@ -47,7 +47,6 @@ export default function BucketAtendimentosTab({ state }) {
 
       let extraMap = {};
       if (missingIds.length > 0) {
-        // Batch fetch em lotes de 20 para evitar rate limit
         const chunkSize = 20;
         for (let i = 0; i < missingIds.length; i += chunkSize) {
           const chunk = missingIds.slice(i, i + chunkSize);
@@ -58,12 +57,11 @@ export default function BucketAtendimentosTab({ state }) {
               if (ws?.id) extraMap[ws.id] = ws;
             }
           } catch {
-            // chunk falhou — continua com os próximos
+            // continua
           }
         }
       }
 
-      // Attach workshop_name to each item for stable search/display
       return pending.map(item => ({
         ...item,
         _workshopName: (workshopMap?.[item.workshop_id]?.name || extraMap[item.workshop_id]?.name || '').toLowerCase()
@@ -76,7 +74,6 @@ export default function BucketAtendimentosTab({ state }) {
     mutationFn: async ({ bucketItem, data, hora, consultor_id }) => {
       const consultor = consultores?.find(c => c.id === consultor_id);
       const dataHora = `${data}T${hora}:00`;
-      // Create ConsultoriaAtendimento
       const atendimento = await base44.entities.ConsultoriaAtendimento.create({
         workshop_id: bucketItem.workshop_id,
         tipo_atendimento: bucketItem.attendance_type_name || 'acompanhamento_mensal',
@@ -89,7 +86,6 @@ export default function BucketAtendimentosTab({ state }) {
         pauta: [],
         objetivos: []
       });
-      // Link ContractAttendance
       await base44.entities.ContractAttendance.update(bucketItem.id, {
         consultoria_atendimento_id: atendimento.id,
         status: 'agendado'
@@ -99,20 +95,97 @@ export default function BucketAtendimentosTab({ state }) {
     onSuccess: () => {
       toast.success("Atendimento agendado com sucesso!");
       queryClient.invalidateQueries({ queryKey: ['bucket-atendimentos'] });
-      queryClient.invalidateQueries({ queryKey: ['atendimentos-acelerador'] }); // Sincroniza reunioes-futuras automaticamente
-      // Sincronizar todos os dados operacionais
+      queryClient.invalidateQueries({ queryKey: ['atendimentos-acelerador'] });
       invalidateAll();
       setAgendarDialog({ open: false, item: null });
       setAgendarForm({ data: '', hora: '', consultor_id: '' });
       setCurrentPage(1);
+      setSelectedItems(new Set());
     },
-    onError: (err) => toast.error("Erro: " + err.message)
+    onError: (err) => {
+      console.error("Erro ao agendar:", err);
+      toast.error("Erro ao agendar: " + err.message);
+    }
   });
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids) => {
+      const idsArray = Array.from(ids);
+      for (const id of idsArray) {
+        await base44.entities.ContractAttendance.delete(id);
+      }
+      return idsArray;
+    },
+    onSuccess: (deletedIds) => {
+      toast.success(`${deletedIds.length} atendimento(s) excluído(s) com sucesso!`);
+      queryClient.invalidateQueries({ queryKey: ['bucket-atendimentos'] });
+      setSelectedItems(new Set());
+      setCurrentPage(1);
+    },
+    onError: (err) => {
+      console.error("Erro ao excluir:", err);
+      toast.error("Erro ao excluir: " + err.message);
+    }
+  });
+
+  const toggleSelectItem = (id) => {
+    setSelectedItems(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
 
   const openAgendar = (item) => {
     const preDate = item.scheduled_date ? new Date(item.scheduled_date).toISOString().split('T')[0] : '';
     setAgendarForm({ data: preDate, hora: '09:00', consultor_id: user?.id || '' });
     setAgendarDialog({ open: true, item });
+  };
+
+  const renderPagination = (totalPages) => {
+    const pages = [];
+    const maxVisible = 5;
+    
+    if (totalPages <= maxVisible) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 3; i++) pages.push(i);
+        pages.push('...');
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1);
+        pages.push('...');
+        for (let i = totalPages - 2; i <= totalPages; i++) pages.push(i);
+      } else {
+        pages.push(1);
+        pages.push('...');
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) pages.push(i);
+        pages.push('...');
+        pages.push(totalPages);
+      }
+    }
+
+    return pages.map((page, idx) => {
+      if (page === '...') {
+        return <span key={idx} className="px-2 text-gray-400">...</span>;
+      }
+      return (
+        <Button
+          key={page}
+          variant={page === currentPage ? "default" : "outline"}
+          size="sm"
+          className={`w-8 h-8 p-0 ${page === currentPage ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : ''}`}
+          onClick={() => setCurrentPage(page)}
+        >
+          {page}
+        </Button>
+      );
+    });
   };
 
   return (
@@ -123,14 +196,34 @@ export default function BucketAtendimentosTab({ state }) {
             <Inbox className="w-5 h-5 text-indigo-600" />
             Bucket de Atendimentos
           </h3>
-          <p className="text-sm text-gray-500">Atendimentos gerados automaticamente aguardando agendamento por um consultor</p>
+          <p className="text-sm text-gray-500">Atendimentos gerados automaticamente aguardando agendamento</p>
         </div>
         <Badge className="bg-indigo-100 text-indigo-800 text-sm px-3 py-1">
           {bucketItems.length} pendente{bucketItems.length !== 1 ? 's' : ''}
         </Badge>
       </div>
 
-      {/* Busca por cliente */}
+      {selectedItems.size > 0 && (
+        <div className="flex items-center justify-between bg-indigo-50 border border-indigo-200 rounded-lg p-3">
+          <p className="text-sm text-indigo-700 font-medium">
+            {selectedItems.size} item(s) selecionado(s)
+          </p>
+          <Button
+            size="sm"
+            variant="destructive"
+            onClick={() => {
+              if (confirm(`Tem certeza que deseja excluir ${selectedItems.size} atendimento(s)?`)) {
+                bulkDeleteMutation.mutate(selectedItems);
+              }
+            }}
+            disabled={bulkDeleteMutation.isPending}
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            {bulkDeleteMutation.isPending ? 'Excluindo...' : 'Excluir Selecionados'}
+          </Button>
+        </div>
+      )}
+
       <div className="relative max-w-sm">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
         <Input
@@ -152,16 +245,10 @@ export default function BucketAtendimentosTab({ state }) {
             <Card key={i} className="border-l-4 border-l-indigo-200">
               <CardContent className="py-4 flex items-center justify-between gap-4">
                 <div className="flex-1 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Skeleton className="h-4 w-40" />
-                    <Skeleton className="h-4 w-8 rounded-full" />
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <Skeleton className="h-3 w-32" />
-                    <Skeleton className="h-3 w-24" />
-                  </div>
+                  <Skeleton className="h-4 w-40" />
+                  <Skeleton className="h-3 w-32" />
                 </div>
-                <Skeleton className="h-8 w-24 rounded-md" />
+                <Skeleton className="h-8 w-24" />
               </CardContent>
             </Card>
           ))}
@@ -171,16 +258,14 @@ export default function BucketAtendimentosTab({ state }) {
           <CardContent className="py-12 text-center">
             <Inbox className="w-12 h-12 text-gray-300 mx-auto mb-3" />
             <p className="text-gray-500">Nenhum atendimento pendente no bucket</p>
-            <p className="text-sm text-gray-400">Atendimentos são gerados automaticamente ao ativar contratos com regras de frequência</p>
           </CardContent>
         </Card>
       ) : (() => {
         const q = search.trim().toLowerCase();
-        const filtered = q
-          ? bucketItems.filter(item => item._workshopName?.includes(q))
-          : bucketItems;
+        const filtered = q ? bucketItems.filter(item => item._workshopName?.includes(q)) : bucketItems;
         const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
         const paginated = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
         return (
           <>
             {filtered.length === 0 && (
@@ -197,7 +282,12 @@ export default function BucketAtendimentosTab({ state }) {
                 const workshopName = workshop?.name || (item._workshopName ? item._workshopName.replace(/\b\w/g, c => c.toUpperCase()) : 'Oficina');
                 return (
                   <Card key={item.id} className="border-l-4 border-l-indigo-500 hover:shadow-md transition-shadow">
-                    <CardContent className="py-4 flex items-center justify-between gap-4">
+                    <CardContent className="py-4 flex items-center gap-4">
+                      <Checkbox
+                        checked={selectedItems.has(item.id)}
+                        onCheckedChange={() => toggleSelectItem(item.id)}
+                        className="shrink-0"
+                      />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <span className="font-semibold text-gray-900 truncate">{workshopName}</span>
@@ -224,23 +314,13 @@ export default function BucketAtendimentosTab({ state }) {
             {totalPages > 1 && (
               <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
                 <p className="text-sm text-gray-500">
-                  Mostrando {(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)} de {filtered.length}
+                  {filtered.length} item(s)
                 </p>
                 <div className="flex items-center gap-1">
                   <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>
                     Anterior
                   </Button>
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                    <Button
-                      key={page}
-                      variant={page === currentPage ? "default" : "outline"}
-                      size="sm"
-                      className={`w-8 h-8 p-0 ${page === currentPage ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : ''}`}
-                      onClick={() => setCurrentPage(page)}
-                    >
-                      {page}
-                    </Button>
-                  ))}
+                  {renderPagination(totalPages)}
                   <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>
                     Próxima
                   </Button>
@@ -251,7 +331,6 @@ export default function BucketAtendimentosTab({ state }) {
         );
       })()}
 
-      {/* Agendar Dialog */}
       <Dialog open={agendarDialog.open} onOpenChange={(o) => setAgendarDialog({ open: o, item: o ? agendarDialog.item : null })}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
