@@ -5,17 +5,29 @@ import { pagePermissions } from "@/components/lib/pagePermissions";
 import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 import { useAuth } from "@/lib/AuthContext";
 import { useQuery } from "@tanstack/react-query";
+import { useImpersonation } from "@/components/hooks/useImpersonation";
 
 const PermissionsContext = createContext(null);
 
 export function PermissionsProvider({ children }) {
-  const { workshopId, workshop, isAdminMode } = useWorkshopContext();
-  const { user } = useAuth();
+  const { workshopId: realWorkshopId, workshop: realWorkshop, isAdminMode } = useWorkshopContext();
+  const { user: realUser } = useAuth();
+  const { isImpersonating, effectiveUser } = useImpersonation();
+  
+  // Usar usuário efetivo (impersonado) ou usuário real
+  const user = effectiveUser || realUser;
+  
+  // Em impersonação, usar workshop_id do usuário alvo
+  const workshopId = isImpersonating && effectiveUser?.workshop_id ? effectiveUser.workshop_id : realWorkshopId;
+  const workshop = realWorkshop; // Manter workshop do contexto
 
   const { data: permissionsData, isLoading: loading } = useQuery({
-    queryKey: ['permissions', user?.id, workshopId, isAdminMode],
+    queryKey: ['permissions', user?.id, workshopId, isAdminMode, isImpersonating],
     queryFn: async () => {
       if (!user) return { permissions: [], profile: null, customRole: null, currentRole: null, isOwnerOrPartner: false, granularConfig: {} };
+      
+      // Em impersonação, NÃO aplicar lógica de admin/internal — usar permissões do usuário alvo
+      const isImpersonated = user._isImpersonated === true;
 
       let aggregatedPermissions = [];
       let activeRole = user.role === 'admin' ? 'admin' : (user.job_role || 'outros');
@@ -36,8 +48,8 @@ export function PermissionsProvider({ children }) {
           .catch(() => {})
       );
 
-      // Admin ou usuário interno têm acesso total
-      if (user.role === 'admin' || user.user_type === 'internal') {
+      // Admin ou usuário interno têm acesso total — MAS NÃO em impersonação!
+      if ((user.role === 'admin' || user.user_type === 'internal') && !isImpersonated) {
         await Promise.all(queries); // Espera a granularConfig
         aggregatedPermissions = systemRoles.flatMap(m => m.roles.map(r => r.id));
         return {
@@ -52,7 +64,10 @@ export function PermissionsProvider({ children }) {
 
       // Se oficina está selecionada, busca dados do colaborador em paralelo
       if (workshopId) {
-        const wsPromise = workshop ? Promise.resolve(workshop) : base44.entities.Workshop.get(workshopId).catch(() => null);
+        // Em impersonação, buscar workshop do usuário alvo
+        const wsPromise = (workshop && workshop.id === workshopId) 
+          ? Promise.resolve(workshop) 
+          : base44.entities.Workshop.get(workshopId).catch(() => null);
         const empPromise = base44.entities.Employee.filter({ user_id: user.id, workshop_id: workshopId }).catch(() => null);
         
         const [ws, employees] = await Promise.all([wsPromise, empPromise]);
@@ -144,14 +159,17 @@ export function PermissionsProvider({ children }) {
 
   const hasPermission = (permissionId) => {
     if (!user) return false;
-    if (user.role === 'admin' || user.user_type === 'internal') return true;
+    // Em impersonação, NÃO usar permissões de admin — usar permissões do usuário alvo
+    const isImpersonated = user._isImpersonated === true;
+    if ((user.role === 'admin' || user.user_type === 'internal') && !isImpersonated) return true;
     return permissions.includes(permissionId);
   };
 
   const hasGranularPermission = async (resourceId, actionId) => {
     if (!user) return false;
-    if (user.role === 'admin') return true;
-    if (isOwnerOrPartner) return true;
+    const isImpersonated = user._isImpersonated === true;
+    if ((user.role === 'admin') && !isImpersonated) return true;
+    if (isOwnerOrPartner && !isImpersonated) return true;
 
     try {
       // 1. Verificar granular config por job_role do perfil
@@ -205,7 +223,8 @@ export function PermissionsProvider({ children }) {
   const canAccessPage = (pageName) => {
     try {
       if (!user) return false;
-      if (user.role === 'admin' || user.user_type === 'internal') return true;
+      const isImpersonated = user._isImpersonated === true;
+      if ((user.role === 'admin' || user.user_type === 'internal') && !isImpersonated) return true;
 
       const isPublicPage = pagePermissions[pageName] === null;
       if (isPublicPage) return true;
@@ -224,7 +243,8 @@ export function PermissionsProvider({ children }) {
 
   const canPerform = (action) => {
     if (!user) return false;
-    if (user.role === 'admin' || user.user_type === 'internal') return true;
+    const isImpersonated = user._isImpersonated === true;
+    if ((user.role === 'admin' || user.user_type === 'internal') && !isImpersonated) return true;
 
     // IDs mapeados para as roles reais de systemRoles.jsx
     // WARN-01 corrigido: mapeamento anterior usava strings inexistentes
@@ -247,7 +267,9 @@ export function PermissionsProvider({ children }) {
   // Fonte canônica: user_type. Campos legados (is_internal, tipo_vinculo) mantidos
   // apenas para retrocompatibilidade — não usar em lógica nova.
   const isInternal = () => {
-    return user?.user_type === 'internal';
+    const isImpersonated = user._isImpersonated === true;
+    // Em impersonação, usar user_type do usuário alvo
+    return user?.user_type === 'internal' && !isImpersonated;
   };
 
   const value = useMemo(() => ({
