@@ -44,8 +44,24 @@ export default function HistoricoDISC() {
         // Admin vê todas as oficinas
         workshopsData = await base44.entities.Workshop.list();
       } else {
-        // Outros usuários vêem apenas suas oficinas
-        workshopsData = await base44.entities.Workshop.filter({ owner_id: user.id });
+        // Outros usuários vêem oficinas onde são owner, partner ou employee
+        const userEmployees = await base44.entities.Employee.filter({ user_id: user.id });
+        const workshopIds = new Set();
+        
+        // Adicionar oficinas onde é owner
+        const ownedWorkshops = await base44.entities.Workshop.filter({ owner_id: user.id });
+        ownedWorkshops.forEach(w => workshopIds.add(w.id));
+        
+        // Adicionar oficinas onde é employee
+        userEmployees.forEach(emp => {
+          if (emp.workshop_id) workshopIds.add(emp.workshop_id);
+        });
+        
+        // Filtrar oficinas pelos IDs coletados
+        if (workshopIds.size > 0) {
+          workshopsData = await base44.entities.Workshop.list();
+          workshopsData = workshopsData.filter(w => workshopIds.has(w.id));
+        }
       }
 
       // Ordenar oficinas alfabeticamente

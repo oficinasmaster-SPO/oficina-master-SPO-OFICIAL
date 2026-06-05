@@ -66,7 +66,9 @@ export function useEvaluationPermissions() {
 
   const isAdmin    = user.role === "admin";
   const isInternal = user.user_type === "internal"; // internos veem tudo
-  const isLeader   = LEADER_JOB_ROLES.includes(getUserJobRole(user));
+  // Job role vem do Employee, não do User — usar currentUserEmployee
+  const userJobRole = currentUserEmployee?.job_role || getUserJobRole(user);
+  const isLeader   = LEADER_JOB_ROLES.includes(userJobRole);
 
   /**
    * canViewResult(diagnosticEmployeeId)

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -28,7 +29,8 @@ export default function ResultadoDISCModal({ open, onOpenChange, diagnosticId })
   const [showActionPlanDetails, setShowActionPlanDetails] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const queryClient = useQueryClient();
-  const { isLeader, currentUserEmployee, loading: permissionsLoading } = useEvaluationPermissions();
+  const { isLeader, isInternal, isAdmin, currentUserEmployee, loading: permissionsLoading } = useEvaluationPermissions();
+  const { user } = useAuth();
 
   const handleClose = () => {
     onOpenChange(false);
@@ -47,6 +49,14 @@ export default function ResultadoDISCModal({ open, onOpenChange, diagnosticId })
   const loadData = async () => {
     try {
       setLoading(true);
+      
+      // Buscar employee do usuário atual se ainda não tiver
+      let currentEmployee = currentUserEmployee;
+      if (!currentEmployee) {
+        const employees = await base44.entities.Employee.filter({ user_id: user.id });
+        currentEmployee = employees.length > 0 ? employees[0] : null;
+      }
+      
       const diagnosticsList = await base44.entities.DISCDiagnostic.filter({ id: diagnosticId });
       const currentDiagnostic = diagnosticsList[0];
 
@@ -57,7 +67,7 @@ export default function ResultadoDISCModal({ open, onOpenChange, diagnosticId })
       }
 
       // Verificar se o diagnóstico pertence à workshop do usuário atual
-      const userWorkshopId = currentUserEmployee?.workshop_id;
+      const userWorkshopId = currentEmployee?.workshop_id;
       if (userWorkshopId && currentDiagnostic.workshop_id !== userWorkshopId) {
         toast.error("Acesso não permitido - diagnóstico de outra oficina");
         handleClose();
@@ -178,7 +188,8 @@ export default function ResultadoDISCModal({ open, onOpenChange, diagnosticId })
 
   if (!open || !diagnostic) return null;
 
-  if (!isLeader && currentUserEmployee?.id !== diagnostic.employee_id) {
+  // Admin e internos sempre têm acesso
+  if (!isAdmin && !isInternal && !isLeader && currentUserEmployee?.id !== diagnostic.employee_id) {
     return (
       <Dialog open={open} onOpenChange={() => handleClose()}>
         <DialogContent className="max-w-2xl">
