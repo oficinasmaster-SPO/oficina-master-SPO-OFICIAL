@@ -190,8 +190,12 @@ export default function UsuariosAdmin() {
   };
 
   const getLastLoginDisplay = (user) => {
-    const loginDate = user.last_login_at || user.first_login_at;
+    // Buscar dados de login do Employee (fonte de verdade)
+    const employee = employees.find(e => e.user_id === user.id);
+    const loginDate = employee?.last_login_at || employee?.first_login_at;
+    
     if (!loginDate) return "Nunca acessou";
+    
     const now = new Date();
     const login = new Date(loginDate);
     const diffDays = Math.floor((now - login) / (1000 * 60 * 60 * 24));
