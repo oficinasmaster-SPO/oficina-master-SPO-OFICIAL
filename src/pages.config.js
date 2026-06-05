@@ -47,7 +47,6 @@ const Cadastro = lazy(() => import('./pages/Cadastro'));
 const CadastroColaborador = lazy(() => import('./pages/CadastroColaborador'));
 const CadastroPlanos = lazy(() => import('./pages/CadastroPlanos'));
 const CadastroSucesso = lazy(() => import('./pages/CadastroSucesso'));
-const CadastroUsuarioDireto = lazy(() => import('./pages/CadastroUsuarioDireto'));
 const CalendarioEventos = lazy(() => import('./pages/CalendarioEventos'));
 const ChatGestorOficina = lazy(() => import('./pages/ChatGestorOficina'));
 const ChatQGPTecnico = lazy(() => import('./pages/ChatQGPTecnico'));
@@ -226,7 +225,6 @@ export const PAGES = {
     "CadastroColaborador": CadastroColaborador,
     "CadastroPlanos": CadastroPlanos,
     "CadastroSucesso": CadastroSucesso,
-    "CadastroUsuarioDireto": CadastroUsuarioDireto,
     "CalendarioEventos": CalendarioEventos,
     "ChatGestorOficina": ChatGestorOficina,
     "ChatQGPTecnico": ChatQGPTecnico,
