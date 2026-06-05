@@ -1,5 +1,21 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
+// ✅ FUNÇÃO HELPER PARA OBTER USUÁRIO EFETIVO COM IMPERSONAÇÃO
+function getEffectiveUser(rawUser) {
+  try {
+    const impersonationDataStr = globalThis.impersonationData;
+    if (impersonationDataStr) {
+      const impersonationData = JSON.parse(impersonationDataStr);
+      if (impersonationData?.target_user) {
+        return impersonationData.target_user;
+      }
+    }
+  } catch (e) {
+    // Fallback se houver problema ao parsear
+  }
+  return rawUser;
+}
+
 // Cache em memória no servidor (persiste entre requests no mesmo isolate Deno)
 const workshopCache = new Map();
 const CACHE_TTL_MS = 2 * 60 * 1000; // 2 minutos
@@ -31,7 +47,10 @@ const withAuth = (handler) => async (req) => {
             return Response.json({ error: 'Unauthorized: Autenticação obrigatória.' }, { status: 401 });
         }
 
-        return await handler(req, { base44, user });
+        // ✅ USAR USUÁRIO EFETIVO (com impersonação se ativa)
+        const effectiveUser = getEffectiveUser(user);
+
+        return await handler(req, { base44, user: effectiveUser });
     } catch (error) {
         return Response.json({ error: error.message }, { status: 500 });
     }

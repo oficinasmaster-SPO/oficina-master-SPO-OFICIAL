@@ -11,6 +11,9 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'workshopId e mes obrigatórios' }, { status: 400 });
     }
 
+    // ✅ DEBUG: Log do workshop sendo consultado
+    console.log(`[getFinancialDashboard] Buscando dados para workshop: ${workshopId}, usuário: ${user.email}`);
+
     // Chama FinancialEngine via SDK
     const [kpisRes, budgetRes, cashFlowRes] = await Promise.all([
       base44.functions.invoke('FinancialEngine', { action: 'getKPIs', params: { mes, workshopId } }),
