@@ -24,7 +24,7 @@ export default function ResultadoMaturidade() {
   const [showActionPlanDetails, setShowActionPlanDetails] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const queryClient = useQueryClient();
-  const { isLeader, currentUserEmployee, loading: permissionsLoading } = useEvaluationPermissions();
+  const { isLeader, isInternal, isAdmin, currentUserEmployee, loading: permissionsLoading } = useEvaluationPermissions();
 
   const { data: actionPlan } = useQuery({
     queryKey: ['action-plan', diagnostic?.id],
@@ -136,7 +136,7 @@ export default function ResultadoMaturidade() {
 
   if (!diagnostic || !employee) return null;
 
-  if (!isLeader && currentUserEmployee?.id !== diagnostic.employee_id) {
+  if (!isAdmin && !isInternal && !isLeader && currentUserEmployee?.id !== diagnostic.employee_id) {
     return (
       <div className="min-h-[50vh] flex items-center justify-center p-4">
         <Card className="max-w-md w-full border-red-200 bg-red-50">

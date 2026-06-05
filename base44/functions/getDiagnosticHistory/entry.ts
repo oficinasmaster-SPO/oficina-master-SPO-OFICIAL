@@ -24,8 +24,8 @@ Deno.serve(async (req) => {
     } else if (isAdmin && workshop_id && !adminModeActive) {
       // Admin normal com workshop_id específico (mas não em modo visualização)
       filterCondition = { workshop_id };
-    } else if (user.role === 'admin' && !workshop_id && !adminModeActive) {
-      // Admin vendo todos (sem modo visualização)
+    } else if ((user.role === 'admin' || user.user_type === 'internal') && !workshop_id && !adminModeActive) {
+      // Admin ou interno vendo todos (sem modo visualização)
       filterCondition = {};
     } else if (user.data?.consulting_firm_id && !workshop_id) {
       // Consultor vendo todos os clientes da sua consultoria
