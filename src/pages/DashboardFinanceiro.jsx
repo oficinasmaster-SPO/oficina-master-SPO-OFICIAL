@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
@@ -7,6 +7,15 @@ import { base44 } from "@/api/base44Client";
 
 export default function DashboardFinanceiro() {
   const { workshop } = useWorkshopContext();
+
+  // ✅ DEBUG: Verificar qual workshop está sendo usado
+  React.useEffect(() => {
+    console.log('[DashboardFinanceiro] Workshop atual:', {
+      id: workshop?.id,
+      name: workshop?.name,
+      consulting_firm_id: workshop?.consulting_firm_id
+    });
+  }, [workshop]);
 
   const { data: kpis, isLoading } = useQuery({
     queryKey: ['dashboard-financeiro', workshop?.id],

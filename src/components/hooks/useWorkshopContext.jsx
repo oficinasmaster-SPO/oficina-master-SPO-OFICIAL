@@ -140,16 +140,6 @@ export function useWorkshopContext() {
   // FIX-05: Debug logging para auxiliar diagnóstico
   // QA-FIX-01: Adicionado log de erro quando workshop não existe
   useEffect(() => {
-    // ✅ DEBUG: Log sempre para impersonação
-    if (isImpersonating) {
-      console.log('[useWorkshopContext] IMPERSONAÇÃO ATIVA:', {
-        targetUserId: targetUser?.id,
-        targetWorkshopId: targetUser?.workshop_id,
-        resolvedWorkshop: workshop?.id,
-        resolvedWorkshopName: workshop?.name
-      });
-    }
-
     if (!workshop && !isLoading) {
       console.warn('DEBUG [useWorkshopContext]:', {
         available: available.length,

@@ -50,6 +50,14 @@ const withAuth = (handler) => async (req) => {
         // ✅ USAR USUÁRIO EFETIVO (com impersonação se ativa)
         const effectiveUser = getEffectiveUser(user);
 
+        // ✅ DEBUG: Log para diagnóstico
+        console.log('[getUserWorkshops] User:', {
+          original: user.email,
+          effective: effectiveUser.email,
+          originalWorkshopId: user.data?.workshop_id,
+          effectiveWorkshopId: effectiveUser.data?.workshop_id
+        });
+
         return await handler(req, { base44, user: effectiveUser });
     } catch (error) {
         return Response.json({ error: error.message }, { status: 500 });
