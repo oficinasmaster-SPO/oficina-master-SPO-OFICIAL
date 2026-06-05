@@ -435,8 +435,8 @@ export default function UsuariosAdmin() {
           open={isDetailsDrawerOpen}
           onOpenChange={setIsDetailsDrawerOpen}
           user={selectedUser}
-          profiles={profiles}
-          employees={employees}
+          profile={profiles.find(p => p.id === selectedUser.profile_id)}
+          admin={users.find(u => u.id === selectedUser.admin_responsavel_id)}
           onUpdate={(data) => updateUserMutation.mutate({ id: selectedUser.id, data })}
           onRequestPermissionChange={handleRequestPermissionChange}
         />
