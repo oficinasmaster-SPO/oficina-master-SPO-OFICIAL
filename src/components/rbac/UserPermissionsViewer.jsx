@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { User, Shield, Search, Eye, AlertTriangle, CheckCircle2, Lock, Users, Building2, UserCheck, Loader2 } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { systemRoles } from "@/components/lib/systemRoles";
 import { toast } from "sonner";
 import UserPermissionsEditor from "./UserPermissionsEditor";
@@ -210,17 +211,24 @@ export default function UserPermissionsViewer() {
                 <p className="p-4 text-sm text-gray-500 text-center">Nenhum usuário interno</p>
               ) : internalUsers.map(u => {
                 const emp = employees.find(e => e.user_id === u.id);
+                const initials = (u.full_name || u.email)
+                  .split(' ')
+                  .map(part => part[0])
+                  .join('')
+                  .toUpperCase()
+                  .slice(0, 2);
                 return (
                   <button
                     key={u.id}
                     onClick={() => setSelectedUserId(u.id)}
                     className={`w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-gray-50 transition-colors ${selectedUserId === u.id ? 'bg-blue-50' : ''}`}
                   >
-                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                      <User className="w-4 h-4 text-blue-600" />
-                    </div>
+                    <Avatar className="w-8 h-8 flex-shrink-0">
+                      <AvatarImage src={emp?.profile_picture_url} alt={u.full_name} />
+                      <AvatarFallback className="bg-blue-100 text-blue-700 font-semibold text-xs">{initials}</AvatarFallback>
+                    </Avatar>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-gray-900 truncate">{u.full_name || u.email}</p>
+                      <p className="text-sm font-medium text-gray-900 truncate">{u.full_name}</p>
                       <p className="text-xs text-gray-500 truncate">{u.email}</p>
                     </div>
                     {u.role === 'admin' ? (
@@ -250,17 +258,24 @@ export default function UserPermissionsViewer() {
                 <p className="p-4 text-sm text-gray-500 text-center">Nenhum usuário externo</p>
               ) : externalUsers.map(u => {
                 const emp = employees.find(e => e.user_id === u.id);
+                const initials = (u.full_name || u.email)
+                  .split(' ')
+                  .map(part => part[0])
+                  .join('')
+                  .toUpperCase()
+                  .slice(0, 2);
                 return (
                   <button
                     key={u.id}
                     onClick={() => setSelectedUserId(u.id)}
                     className={`w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-gray-50 transition-colors ${selectedUserId === u.id ? 'bg-green-50' : ''}`}
                   >
-                    <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                      <User className="w-4 h-4 text-green-600" />
-                    </div>
+                    <Avatar className="w-8 h-8 flex-shrink-0">
+                      <AvatarImage src={emp?.profile_picture_url} alt={u.full_name} />
+                      <AvatarFallback className="bg-green-100 text-green-700 font-semibold text-xs">{initials}</AvatarFallback>
+                    </Avatar>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-gray-900 truncate">{u.full_name || u.email}</p>
+                      <p className="text-sm font-medium text-gray-900 truncate">{u.full_name}</p>
                       <p className="text-xs text-gray-500 truncate">{u.email}</p>
                     </div>
                     {emp?.position && (
