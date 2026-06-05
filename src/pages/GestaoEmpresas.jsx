@@ -31,14 +31,18 @@ export default function GestaoEmpresas() {
   });
 
   const { data: companies, isLoading: loadingCompanies } = useQuery({
-    queryKey: ['my-companies', myFirmId],
-    queryFn: () => myFirmId ? base44.entities.Company.filter({ consulting_firm_id: myFirmId }) : [],
-    enabled: !!myFirmId
+    queryKey: ['my-companies', myFirmId, isAdmin],
+    queryFn: () => isAdmin && !myFirmId 
+      ? base44.entities.Company.list() 
+      : myFirmId 
+        ? base44.entities.Company.filter({ consulting_firm_id: myFirmId }) 
+        : [],
+    enabled: !!user
   });
 
   const saveCompanyMutation = useMutation({
     mutationFn: async (data) => {
-      const payload = { ...data, consulting_firm_id: myFirmId };
+      const payload = myFirmId ? { ...data, consulting_firm_id: myFirmId } : { ...data };
       if (editingCompany) {
         return await base44.entities.Company.update(editingCompany.id, payload);
       } else {
@@ -94,15 +98,7 @@ export default function GestaoEmpresas() {
     });
   };
 
-  if (!user || !myFirmId) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
-        <ShieldAlert className="w-16 h-16 text-red-500 mb-4" />
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Acesso Negado</h2>
-        <p className="text-gray-600">Você não possui uma consultoria vinculada ou não tem permissão para acessar esta área.</p>
-      </div>
-    );
-  }
+  const isAdmin = user?.role === 'admin';
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
