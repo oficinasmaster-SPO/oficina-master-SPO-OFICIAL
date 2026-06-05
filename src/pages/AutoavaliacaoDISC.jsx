@@ -9,7 +9,6 @@ import { createPageUrl } from "@/utils";
 import { discQuestions } from "@/components/disc/DISCQuestions";
 import { useEvaluationPermissions } from "@/components/hooks/useEvaluationPermissions";
 import RestrictedAccess from "@/components/auth/RestrictedAccess";
-import { useQuery } from "@tanstack/react-query";
 
 export default function AutoavaliacaoDISC() {
   const navigate = useNavigate();
@@ -19,34 +18,12 @@ export default function AutoavaliacaoDISC() {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState([]);
   const [started, setStarted] = useState(false);
-  const [hasPreviousEvaluation, setHasPreviousEvaluation] = useState(false);
 
   const { canSelfEvaluate } = useEvaluationPermissions(employee);
-
-  // Verificar se já existe autoavaliação
-  const { data: previousEvaluations } = useQuery({
-    queryKey: ['disc-autoevaluations', employee?.id],
-    queryFn: async () => {
-      if (!employee?.id) return [];
-      const evaluations = await base44.entities.DISCDiagnostic.filter({
-        employee_id: employee.id,
-        evaluation_type: 'self',
-        completed: true
-      }, '-created_date', 1);
-      return evaluations;
-    },
-    enabled: !!employee?.id
-  });
 
   useEffect(() => {
     loadData();
   }, []);
-
-  useEffect(() => {
-    if (previousEvaluations && previousEvaluations.length > 0) {
-      setHasPreviousEvaluation(true);
-    }
-  }, [previousEvaluations]);
 
   const loadData = async () => {
     try {
@@ -186,22 +163,6 @@ export default function AutoavaliacaoDISC() {
                   </p>
                 </div>
               </div>
-
-              {hasPreviousEvaluation && (
-                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                  <p className="text-blue-900 mb-3">
-                    <strong>✓ Você já completou uma autoavaliação DISC anteriormente.</strong>
-                  </p>
-                  <Button
-                    variant="outline"
-                    onClick={() => navigate(createPageUrl("HistoricoDISC"))}
-                    className="w-full"
-                  >
-                    <History className="w-4 h-4 mr-2" />
-                    Ver meu histórico e resultados
-                  </Button>
-                </div>
-              )}
 
               <div className="flex gap-4 pt-4">
                 <Button
