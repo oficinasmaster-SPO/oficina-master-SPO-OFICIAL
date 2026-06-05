@@ -4,7 +4,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, Shield, Users } from "lucide-react";
+import { Plus, Edit, Trash2, Shield, Users, MoreVertical } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import RoleFormDialog from "@/components/roles/RoleFormDialog";
@@ -176,20 +177,26 @@ export default function RolesManagement() {
                     <p className="text-sm text-gray-600 mt-1">{role.description}</p>
                     <p className="text-xs text-gray-500 mt-2">{usersCount} usuários</p>
                   </div>
-                  <div className="flex gap-2">
-                    <Button onClick={() => handleEdit(role)} variant="outline" size="sm" className="gap-2">
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button 
-                      onClick={() => handleDelete(role)} 
-                      variant="destructive" 
-                      size="sm"
-                      disabled={usersCount > 0}
-                      className="gap-2"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm">
+                        <MoreVertical className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleEdit(role)} className="gap-2">
+                        <Edit className="w-4 h-4" /> Editar
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => handleDelete(role)}
+                        disabled={usersCount > 0}
+                        className="gap-2 text-red-600 focus:text-red-600"
+                      >
+                        <Trash2 className="w-4 h-4" /> Excluir
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               );
             })}

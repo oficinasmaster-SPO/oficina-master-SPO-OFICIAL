@@ -4,7 +4,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Copy, Power, Trash2, Shield, AlertCircle, Users, RefreshCw, Eye } from "lucide-react";
+import { Plus, Edit, Copy, Power, Trash2, Shield, AlertCircle, Users, RefreshCw, Eye, MoreVertical } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import ProfileEditor from "@/components/profiles/ProfileEditor";
 import ProfileCreator from "@/components/profiles/ProfileCreator";
@@ -281,29 +282,35 @@ function ProfileSection({ title, subtitle, profiles, onEdit, onDuplicate, onTogg
                   </div>
                   <p className="text-xs text-gray-500 mt-2">{usersCount} usuários</p>
                 </div>
-                <div className="flex gap-2">
-                  <Button onClick={() => onViewDetails(profile)} variant="outline" size="sm" className="gap-2" title="Ver detalhes completos">
-                    <Eye className="w-4 h-4" />
-                  </Button>
-                  <Button onClick={() => onEdit(profile)} variant="outline" size="sm" className="gap-2">
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                  <Button onClick={() => onDuplicate(profile)} variant="outline" size="sm" className="gap-2">
-                    <Copy className="w-4 h-4" />
-                  </Button>
-                  <Button onClick={() => onToggleStatus(profile)} variant="outline" size="sm" className="gap-2">
-                    <Power className="w-4 h-4" />
-                  </Button>
-                  <Button 
-                    onClick={() => onDelete(profile)} 
-                    variant="destructive" 
-                    size="sm"
-                    disabled={usersCount > 0}
-                    className="gap-2"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm">
+                      <MoreVertical className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => onViewDetails(profile)} className="gap-2">
+                      <Eye className="w-4 h-4" /> Ver detalhes
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onEdit(profile)} className="gap-2">
+                      <Edit className="w-4 h-4" /> Editar
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onDuplicate(profile)} className="gap-2">
+                      <Copy className="w-4 h-4" /> Duplicar
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onToggleStatus(profile)} className="gap-2">
+                      <Power className="w-4 h-4" /> {profile.status === 'ativo' ? 'Desativar' : 'Ativar'}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => onDelete(profile)}
+                      disabled={usersCount > 0}
+                      className="gap-2 text-red-600 focus:text-red-600"
+                    >
+                      <Trash2 className="w-4 h-4" /> Excluir
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             );
           })}
