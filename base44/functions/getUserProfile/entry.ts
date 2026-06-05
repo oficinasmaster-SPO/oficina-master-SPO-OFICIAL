@@ -5,63 +5,62 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     
     // Autenticar usuário
-    const user = await base44.auth.me();
-    if (!user) {
+    const authUser = await base44.auth.me();
+    if (!authUser) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    console.log("🔍 [getUserProfile] Buscando Employee para:", user.email);
+    // Parse do payload
+    const { user_id } = await req.json().catch(() => ({}));
+    const targetUserId = user_id || authUser.id;
 
-    // Buscar Employee pelo email OU user_id do usuário usando service role
-    let employees = await base44.entities.Employee.filter({ 
-      email: user.email 
-    });
+    console.log("🔍 [getUserProfile] Buscando dados para user_id:", targetUserId);
 
-    // Se não encontrar por email, buscar por user_id
-    if (!employees || employees.length === 0) {
-      console.log("⚠️ [getUserProfile] Tentando buscar por user_id:", user.id);
-      employees = await base44.entities.Employee.filter({ 
-        user_id: user.id 
-      });
+    // Buscar User alvo
+    const users = await base44.asServiceRole.entities.User.filter({ id: targetUserId });
+    const targetUser = Array.isArray(users) ? users[0] : null;
+    
+    if (!targetUser) {
+      return Response.json({ error: 'User not found' }, { status: 404 });
     }
+
+    // Buscar Employee pelo user_id
+    let employees = await base44.asServiceRole.entities.Employee.filter({ 
+      user_id: targetUserId 
+    });
 
     console.log("📦 [getUserProfile] Employees encontrados:", employees?.length || 0);
 
-    if (!employees || employees.length === 0) {
-      console.log("⚠️ [getUserProfile] Employee não encontrado para:", user.email);
-      
-      // Retorna perfil do próprio User se existir
-      return Response.json({ 
-        success: true,
-        employee_id: null,
-        profile_id: user.profile_id || null,
-        custom_role_ids: user.custom_role_ids || [],
-        job_role: user.job_role || null,
-        message: 'Using User profile data'
-      }, { status: 200 });
+    let employeeData = null;
+    let workshopData = null;
+    let profileData = null;
+
+    if (employees && employees.length > 0) {
+      const employee = employees[0];
+      employeeData = employee;
+      console.log("✅ [getUserProfile] Employee encontrado:", employee.id);
+
+      // Buscar Workshop
+      if (employee.workshop_id) {
+        const workshops = await base44.asServiceRole.entities.Workshop.filter({ id: employee.workshop_id });
+        workshopData = Array.isArray(workshops) ? workshops[0] : null;
+      }
+
+      // Buscar UserProfile
+      if (employee.profile_id) {
+        const profiles = await base44.asServiceRole.entities.UserProfile.filter({ id: employee.profile_id });
+        profileData = Array.isArray(profiles) ? profiles[0] : null;
+      }
     }
 
-    const employee = employees[0];
-    console.log("✅ [getUserProfile] Employee encontrado:", employee.id);
-    console.log("📋 [getUserProfile] Profile ID:", employee.profile_id);
-
-    // Vincular user_id ao Employee se ainda não tiver
-    if (!employee.user_id || employee.user_id !== user.id) {
-      await base44.entities.Employee.update(employee.id, {
-        user_id: user.id
-      });
-      console.log("🔗 [getUserProfile] User vinculado ao Employee");
-    }
-
-    // Retornar sucesso mesmo se não tiver profile_id
-    // O sistema de permissões tratará com permissões vazias até a aprovação
+    // Retornar dados completos
     return Response.json({ 
       success: true,
-      employee_id: employee.id,
-      profile_id: employee.profile_id || null,
-      custom_role_ids: employee.custom_role_ids || [],
-      job_role: employee.job_role || null,
-      message: employee.profile_id ? 'Profile found' : 'No profile assigned yet'
+      user: targetUser,
+      employee: employeeData,
+      workshop: workshopData,
+      profile: profileData,
+      message: employeeData ? 'Complete data returned' : 'User found but no employee record'
     });
   } catch (error) {
     console.error("❌ [getUserProfile] Erro:", error);

@@ -131,7 +131,7 @@ export default function UsuariosAdmin() {
     setIsEditDialogOpen(true);
   };
 
-  const handleViewDetails = (user) => {
+  const handleViewDetails = async (user) => {
     setSelectedUser(user);
     setIsDetailsDrawerOpen(true);
   };

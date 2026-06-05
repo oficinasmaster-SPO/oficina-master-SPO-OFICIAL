@@ -31,39 +31,49 @@ export default function UserDetailsDrawer({
   const [selectedTab, setSelectedTab] = useState("dados");
   const queryClient = useQueryClient();
 
-  // Busca dados enriquecidos do usuário (employee + workshop)
-  const { data: enrichedUserData } = useQuery({
-    queryKey: ['user-details-enriched', user?.id],
+  // Busca dados completos do usuário via getUserProfile
+  const { data: userProfileData, isLoading: isLoadingProfile } = useQuery({
+    queryKey: ['user-profile-complete', user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
       
-      // Busca employee data
-      let employeeData = null;
-      try {
-        const employees = await base44.entities.Employee.filter({ user_id: user.id });
-        employeeData = Array.isArray(employees) ? employees[0] : null;
-      } catch (error) {
-        console.error('Erro ao buscar employee:', error);
-      }
-      
-      // Busca workshop data
-      let workshopData = null;
-      const workshopId = employeeData?.workshop_id || user.workshop_id;
-      if (workshopId) {
-        try {
-          const workshops = await base44.entities.Workshop.filter({ id: workshopId });
-          workshopData = Array.isArray(workshops) ? workshops[0] : null;
-        } catch (error) {
-          console.error('Erro ao buscar workshop:', error);
-        }
-      }
-      
-      return {
-        employee_data: employeeData || null,
-        workshop_data: workshopData || null
-      };
+      const response = await base44.functions.invoke('getUserProfile', { user_id: user.id });
+      return response.data;
     },
-    enabled: !!user?.id && open // Só busca quando drawer está aberto
+    enabled: !!user?.id && open
+  });
+
+  // Busca Employee para dados complementares
+  const { data: employeeData } = useQuery({
+    queryKey: ['user-employee', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const employees = await base44.entities.Employee.filter({ user_id: user.id });
+      return Array.isArray(employees) ? employees[0] : null;
+    },
+    enabled: !!user?.id && open
+  });
+
+  // Busca Workshop
+  const { data: workshopData } = useQuery({
+    queryKey: ['user-workshop', employeeData?.workshop_id],
+    queryFn: async () => {
+      if (!employeeData?.workshop_id) return null;
+      const workshops = await base44.entities.Workshop.filter({ id: employeeData.workshop_id });
+      return Array.isArray(workshops) ? workshops[0] : null;
+    },
+    enabled: !!employeeData?.workshop_id && open
+  });
+
+  // Busca UserProfile completo
+  const { data: fullProfile } = useQuery({
+    queryKey: ['user-profile-details', userProfileData?.profile_id],
+    queryFn: async () => {
+      if (!userProfileData?.profile_id) return null;
+      const profiles = await base44.entities.UserProfile.filter({ id: userProfileData.profile_id });
+      return Array.isArray(profiles) ? profiles[0] : null;
+    },
+    enabled: !!userProfileData?.profile_id && open
   });
 
   // Busca exceções de permissão do usuário
@@ -77,12 +87,9 @@ export default function UserDetailsDrawer({
     enabled: !!user?.id && selectedTab === 'permissoes-individuais'
   });
 
-  // Merge dos dados enriquecidos com o user
-  const userWithDetails = enrichedUserData 
-    ? { ...user, ...enrichedUserData }
-    : user;
+  if (!user) return null;
 
-  if (!userWithDetails) return null;
+  const isLoading = isLoadingProfile;
 
   const handleCopy = (text, field) => {
     navigator.clipboard.writeText(text);
@@ -101,9 +108,9 @@ export default function UserDetailsDrawer({
     return badges[status] || badges.pending;
   };
 
-  const statusBadge = getStatusBadge(userWithDetails.user_status);
-  const diasSemLogin = userWithDetails.last_login_at 
-    ? differenceInDays(new Date(), new Date(userWithDetails.last_login_at))
+  const statusBadge = getStatusBadge(user.user_status);
+  const diasSemLogin = employeeData?.last_login_at 
+    ? differenceInDays(new Date(), new Date(employeeData.last_login_at))
     : null;
 
   return (
@@ -115,14 +122,14 @@ export default function UserDetailsDrawer({
               <User className="w-5 h-5 text-blue-600" />
             </div>
             <div>
-              <p className="text-xl font-bold">{userWithDetails.full_name}</p>
-              <p className="text-sm text-gray-500 font-normal">{userWithDetails.position}</p>
+              <p className="text-xl font-bold">{user.full_name}</p>
+              <p className="text-sm text-gray-500 font-normal">{employeeData?.position || user.position}</p>
             </div>
           </DialogTitle>
         </DialogHeader>
 
         {/* Banner de Aprovação */}
-        {userWithDetails?.user_status === 'pending' && onApprove && (
+        {user?.user_status === 'pending' && onApprove && (
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 space-y-3">
             <div className="flex items-center gap-2 text-yellow-800">
               <Clock className="w-5 h-5" />
@@ -209,17 +216,17 @@ export default function UserDetailsDrawer({
               <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium text-gray-600">Nome Completo</label>
-                <p className="text-gray-900 mt-1">{userWithDetails.full_name}</p>
+                <p className="text-gray-900 mt-1">{user.full_name}</p>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-600">Email (Login)</label>
                 <div className="flex items-center gap-2 mt-1">
-                  <p className="text-gray-900">{userWithDetails.email}</p>
+                  <p className="text-gray-900">{user.email}</p>
                   <Button 
                     variant="ghost" 
                     size="icon" 
                     className="h-6 w-6"
-                    onClick={() => handleCopy(userWithDetails.email, 'Email')}
+                    onClick={() => handleCopy(user.email, 'Email')}
                   >
                     {copiedField === 'Email' ? <CheckCircle className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
                   </Button>
@@ -227,11 +234,11 @@ export default function UserDetailsDrawer({
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-600">Telefone</label>
-                <p className="text-gray-900 mt-1">{userWithDetails.telefone || "Não informado"}</p>
+                <p className="text-gray-900 mt-1">{employeeData?.telefone || user.telefone || "Não informado"}</p>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-600">Cargo</label>
-                <p className="text-gray-900 mt-1">{userWithDetails.position}</p>
+                <p className="text-gray-900 mt-1">{employeeData?.position || user.position}</p>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-600">Status</label>
@@ -241,12 +248,12 @@ export default function UserDetailsDrawer({
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-600">Role</label>
-                <Badge variant="outline" className="mt-1">{userWithDetails.role || "user"}</Badge>
+                <Badge variant="outline" className="mt-1">{user.role || "user"}</Badge>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-600">Criado em</label>
                 <p className="text-gray-900 mt-1">
-                  {format(new Date(userWithDetails.created_date), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                  {format(new Date(user.created_date), "dd/MM/yyyy HH:mm", { locale: ptBR })}
                 </p>
               </div>
               <div>
@@ -256,96 +263,96 @@ export default function UserDetailsDrawer({
               </div>
             </div>
 
-            {/* Dados do Employee */}
-            {userWithDetails.employee_data && (
+            {/* Dados do Colaborador */}
+            {employeeData && (
               <div className="border rounded-lg p-4 bg-blue-50">
                 <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                   <Shield className="w-4 h-4" />
-                  Dados do Colaborador
+                  Dados do Colaborador (Employee)
                 </h4>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-medium text-gray-600">Employee ID</label>
-                    <p className="text-gray-900 mt-1 font-mono text-xs">{userWithDetails.employee_data.id}</p>
+                    <p className="text-gray-900 mt-1 font-mono text-xs">{employeeData.id}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-600">Cargo</label>
-                    <p className="text-gray-900 mt-1">{userWithDetails.employee_data.position}</p>
+                    <p className="text-gray-900 mt-1">{employeeData.position}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-600">Job Role</label>
-                    <Badge variant="outline" className="mt-1">{userWithDetails.employee_data.job_role}</Badge>
+                    <Badge variant="outline" className="mt-1">{employeeData.job_role}</Badge>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-600">Área</label>
-                    <p className="text-gray-900 mt-1">{userWithDetails.employee_data.area || "Não definida"}</p>
+                    <p className="text-gray-900 mt-1">{employeeData.area || "Não definida"}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-600">Tipo</label>
-                    <Badge className={userWithDetails.employee_data.user_type === 'internal' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}>
-                      {userWithDetails.employee_data.user_type === 'internal' ? 'Interno' : 'Externo'}
+                    <Badge className={employeeData.user_type === 'internal' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}>
+                      {employeeData.user_type === 'internal' ? 'Interno' : 'Externo'}
                     </Badge>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-600">Sócio</label>
-                    <Badge className={userWithDetails.employee_data.is_partner ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}>
-                      {userWithDetails.employee_data.is_partner ? '✅ Sim' : '❌ Não'}
+                    <Badge className={employeeData.is_partner ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}>
+                      {employeeData.is_partner ? '✅ Sim' : '❌ Não'}
                     </Badge>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-600">Contratação</label>
                     <p className="text-gray-900 mt-1">
-                      {userWithDetails.employee_data.hire_date ? format(new Date(userWithDetails.employee_data.hire_date), "dd/MM/yyyy", { locale: ptBR }) : "Não informado"}
+                      {employeeData.hire_date ? format(new Date(employeeData.hire_date), "dd/MM/yyyy", { locale: ptBR }) : "Não informado"}
                     </p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-600">Status</label>
-                    <Badge className={userWithDetails.employee_data.status === 'ativo' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}>
-                      {userWithDetails.employee_data.status || 'ativo'}
+                    <Badge className={employeeData.status === 'ativo' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}>
+                      {employeeData.status || 'ativo'}
                     </Badge>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Dados da Oficina */}
-            {userWithDetails.workshop_data && (
+            {/* Oficina Vinculada */}
+            {workshopData && (
               <div className="border rounded-lg p-4 bg-green-50">
                 <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                   <Activity className="w-4 h-4" />
-                  Oficina Vinculada
+                  Oficina Vinculada (Workshop)
                 </h4>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="col-span-2">
                     <label className="text-sm font-medium text-gray-600">Nome da Oficina</label>
-                    <p className="text-gray-900 mt-1 font-semibold">{userWithDetails.workshop_data.name}</p>
+                    <p className="text-gray-900 mt-1 font-semibold">{workshopData.name}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-600">Workshop ID</label>
-                    <p className="text-gray-900 mt-1 font-mono text-xs">{userWithDetails.workshop_data.id}</p>
+                    <p className="text-gray-900 mt-1 font-mono text-xs">{workshopData.id}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-600">CNPJ</label>
-                    <p className="text-gray-900 mt-1">{userWithDetails.workshop_data.cnpj || "Não informado"}</p>
+                    <p className="text-gray-900 mt-1">{workshopData.cnpj || "Não informado"}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-600">Cidade</label>
-                    <p className="text-gray-900 mt-1">{userWithDetails.workshop_data.city} - {userWithDetails.workshop_data.state}</p>
+                    <p className="text-gray-900 mt-1">{workshopData.city} - {workshopData.state}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-600">Segmento</label>
-                    <p className="text-gray-900 mt-1">{userWithDetails.workshop_data.segment_auto || userWithDetails.workshop_data.segment || "Não definido"}</p>
+                    <p className="text-gray-900 mt-1">{workshopData.segment_auto || workshopData.segment || "Não definido"}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-600">Plano</label>
                     <Badge className="bg-gradient-to-r from-purple-100 to-blue-100 text-purple-700">
-                      {userWithDetails.workshop_data.planoAtual || userWithDetails.workshop_data.plan_type || "FREE"}
+                      {workshopData.planoAtual || workshopData.plan_type || "FREE"}
                     </Badge>
                   </div>
                   <div className="col-span-2">
                     <label className="text-sm font-medium text-gray-600">Proprietário</label>
-                    <Badge className={userWithDetails.workshop_data.owner_id === userWithDetails.id ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}>
-                      {userWithDetails.workshop_data.owner_id === userWithDetails.id ? '✅ Este usuário é o proprietário' : 'Outro proprietário'}
+                    <Badge className={workshopData.owner_id === user.id ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}>
+                      {workshopData.owner_id === user.id ? '✅ Este usuário é o proprietário' : 'Outro proprietário'}
                     </Badge>
                   </div>
                 </div>
@@ -353,39 +360,45 @@ export default function UserDetailsDrawer({
             )}
 
             {/* Perfil de Acesso */}
-            <div className="border rounded-lg p-4 bg-purple-50">
-              <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                <Key className="w-4 h-4" />
-                Perfil de Acesso (UserProfile)
-              </h4>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-600">Profile ID</label>
-                  <p className="text-gray-900 mt-1 font-mono text-xs">{profile?.id || "N/A"}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-600">Nome do Perfil</label>
-                  <Badge variant="outline" className="mt-1">{profile?.name || "Sem perfil"}</Badge>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-600">Tipo</label>
-                  <Badge className={profile?.type === 'sistema' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'}>
-                    {profile?.type === 'sistema' ? 'Sistema (não editável)' : profile?.type || 'N/A'}
-                  </Badge>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-600">Permission Type</label>
-                  <p className="text-gray-900 mt-1">{profile?.permission_type || "job_role"}</p>
+            {fullProfile && (
+              <div className="border rounded-lg p-4 bg-purple-50">
+                <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                  <Key className="w-4 h-4" />
+                  Perfil de Acesso (UserProfile)
+                </h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Profile ID</label>
+                    <p className="text-gray-900 mt-1 font-mono text-xs">{fullProfile.id}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Nome do Perfil</label>
+                    <Badge variant="outline" className="mt-1">{fullProfile.name}</Badge>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Tipo</label>
+                    <Badge className={fullProfile.type === 'sistema' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'}>
+                      {fullProfile.type === 'sistema' ? 'Sistema (não editável)' : fullProfile.type || 'N/A'}
+                    </Badge>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Permission Type</label>
+                    <p className="text-gray-900 mt-1">{fullProfile.permission_type || "job_role"}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Custom Roles</label>
+                    <p className="text-gray-900 mt-1 text-sm">{fullProfile.custom_role_ids?.length || 0} roles vinculadas</p>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </TabsContent>
 
           {/* ABA 2: PERMISSÕES */}
           <TabsContent value="permissoes" className="flex-1 overflow-y-auto space-y-4">
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <p className="text-sm text-blue-900">
-                <strong>Perfil:</strong> {profile?.name || "Sem perfil"}
+                <strong>Perfil:</strong> {fullProfile?.name || userProfileData?.profile_id || "Sem perfil"}
               </p>
               <p className="text-xs text-blue-700 mt-1">
                 As permissões abaixo são herdadas do perfil de acesso vinculado.
@@ -396,7 +409,7 @@ export default function UserDetailsDrawer({
             <div>
               <h4 className="font-semibold text-gray-900 mb-3">Permissões de Módulos</h4>
               <div className="grid grid-cols-2 gap-2">
-                {profile?.module_permissions && Object.entries(profile.module_permissions).map(([module, level]) => (
+                {fullProfile?.module_permissions && Object.entries(fullProfile.module_permissions).map(([module, level]) => (
                   <div key={module} className="flex items-center justify-between p-2 border rounded">
                     <span className="text-sm capitalize">{module.replace(/_/g, ' ')}</span>
                     <Badge className={
@@ -412,11 +425,11 @@ export default function UserDetailsDrawer({
             </div>
 
             {/* Sidebar */}
-            {profile?.sidebar_permissions && (
+            {fullProfile?.sidebar_permissions && (
               <div>
                 <h4 className="font-semibold text-gray-900 mb-3">Permissões de Sidebar</h4>
                 <div className="space-y-1 max-h-60 overflow-y-auto">
-                  {Object.entries(profile.sidebar_permissions).map(([item, perms]) => (
+                  {Object.entries(fullProfile.sidebar_permissions).map(([item, perms]) => (
                     <div key={item} className="flex items-center justify-between p-2 border rounded text-sm">
                       <span>{item}</span>
                       <div className="flex gap-1">
@@ -505,7 +518,7 @@ export default function UserDetailsDrawer({
 
           {/* ABA 3: ATIVIDADE */}
           <TabsContent value="atividade" className="flex-1 overflow-y-auto space-y-4">
-            {!userWithDetails.first_login_at ? (
+            {!employeeData?.first_login_at ? (
               <div className="bg-orange-50 border border-orange-200 rounded-lg p-6 text-center">
                 <AlertCircle className="w-12 h-12 mx-auto text-orange-600 mb-3" />
                 <h3 className="font-semibold text-orange-900 mb-2">Aguardando Primeiro Acesso</h3>
@@ -513,7 +526,7 @@ export default function UserDetailsDrawer({
                   Este usuário ainda não realizou o primeiro login no sistema.
                 </p>
                 <Button 
-                  onClick={() => onResetPassword(userWithDetails)}
+                  onClick={() => onResetPassword(user)}
                   className="bg-orange-600 hover:bg-orange-700"
                 >
                   <Key className="w-4 h-4 mr-2" />
@@ -529,7 +542,7 @@ export default function UserDetailsDrawer({
                       <span className="text-sm font-medium text-gray-600">Primeiro Acesso</span>
                     </div>
                     <p className="text-lg font-semibold text-gray-900">
-                      {format(new Date(userWithDetails.first_login_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                      {format(new Date(employeeData.first_login_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
                     </p>
                   </div>
 
@@ -539,8 +552,8 @@ export default function UserDetailsDrawer({
                       <span className="text-sm font-medium text-gray-600">Último Login</span>
                     </div>
                     <p className="text-lg font-semibold text-gray-900">
-                      {userWithDetails.last_login_at 
-                        ? format(new Date(userWithDetails.last_login_at), "dd/MM/yyyy HH:mm", { locale: ptBR })
+                      {employeeData.last_login_at 
+                        ? format(new Date(employeeData.last_login_at), "dd/MM/yyyy HH:mm", { locale: ptBR })
                         : "Nunca"
                       }
                     </p>
@@ -563,7 +576,7 @@ export default function UserDetailsDrawer({
 
                 <div>
                   <Button 
-                    onClick={() => onResetPassword(userWithDetails)}
+                    onClick={() => onResetPassword(user)}
                     variant="outline"
                     className="w-full"
                   >
@@ -577,14 +590,14 @@ export default function UserDetailsDrawer({
 
           {/* ABA 4: AUDITORIA */}
           <TabsContent value="auditoria" className="flex-1 overflow-y-auto">
-            {!userWithDetails.audit_log || userWithDetails.audit_log.length === 0 ? (
+            {!employeeData?.audit_log || employeeData.audit_log.length === 0 ? (
               <div className="text-center py-12 text-gray-500">
                 <History className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-                <p>Nenhuma alteração registrada ainda.</p>
+                <p>Nenhuma alteração registrada no Employee.</p>
               </div>
             ) : (
               <div className="space-y-3">
-                {userWithDetails.audit_log
+                {employeeData.audit_log
                   .sort((a, b) => new Date(b.changed_at) - new Date(a.changed_at))
                   .map((log, idx) => (
                   <div key={idx} className="border-l-4 border-blue-500 pl-4 py-3 bg-gray-50 rounded-r">
