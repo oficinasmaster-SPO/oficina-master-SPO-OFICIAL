@@ -2,13 +2,11 @@ import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Loader2, User, Brain, History, Play } from "lucide-react";
+import { Loader2, User, Brain, Play } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { discQuestions } from "@/components/disc/DISCQuestions";
-import { useEvaluationPermissions } from "@/components/hooks/useEvaluationPermissions";
-import RestrictedAccess from "@/components/auth/RestrictedAccess";
 
 export default function AutoavaliacaoDISC() {
   const navigate = useNavigate();
@@ -18,8 +16,6 @@ export default function AutoavaliacaoDISC() {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState([]);
   const [started, setStarted] = useState(false);
-
-  const { canSelfEvaluate } = useEvaluationPermissions(employee);
 
   useEffect(() => {
     loadData();
@@ -33,9 +29,6 @@ export default function AutoavaliacaoDISC() {
       const employees = await base44.entities.Employee.filter({ user_id: currentUser.id });
       if (employees && employees.length > 0) {
         setEmployee(employees[0]);
-      } else {
-        toast.error("Perfil de colaborador não encontrado");
-        navigate(createPageUrl("MeuPerfil"));
       }
     } catch (error) {
       console.error(error);
@@ -115,10 +108,6 @@ export default function AutoavaliacaoDISC() {
         <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
       </div>
     );
-  }
-
-  if (!canSelfEvaluate) {
-    return <RestrictedAccess message="Apenas o próprio colaborador pode realizar esta autoavaliação." />;
   }
 
   // Tela de boas-vindas
