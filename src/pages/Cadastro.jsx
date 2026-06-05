@@ -63,7 +63,17 @@ export default function Cadastro() {
       const workshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
       
       if (workshops && workshops.length > 0) {
-        setWorkshop(workshops[0]);
+        // Priorizar oficina em status "rascunho" (cadastro incompleto)
+        const workshopRascunho = workshops.find(w => w.status === 'rascunho');
+        const workshopAtiva = workshops.find(w => w.status === 'ativo');
+        
+        // Se tem rascunho, usar ele (cadastro incompleto)
+        if (workshopRascunho) {
+          setWorkshop(workshopRascunho);
+          toast.info("Você tem um cadastro em andamento. Continue de onde parou!");
+        } else {
+          setWorkshop(workshopAtiva || workshops[0]);
+        }
       } else {
         // Se não é owner e já tem workshop_id (colaborador)
         if (currentUser.workshop_id) {
@@ -121,6 +131,21 @@ export default function Cadastro() {
   const handleCreateWorkshop = async () => {
     if (!user) return;
     
+    // Verificar se já existe oficina em andamento
+    const existingWorkshops = await base44.entities.Workshop.filter({ owner_id: user.id });
+    if (existingWorkshops && existingWorkshops.length > 0) {
+      const workshopEmAndamento = existingWorkshops.find(w => 
+        (!w.name || w.name === "") && w.status === 'ativo'
+      );
+      
+      if (workshopEmAndamento) {
+        // Reutilizar oficina incompleta
+        setWorkshop(workshopEmAndamento);
+        toast.info("Continuando cadastro iniciado anteriormente");
+        return;
+      }
+    }
+    
     setCreating(true);
     setErrorMsg(null);
     try {
@@ -141,7 +166,7 @@ export default function Cadastro() {
         name: "",
         city: "A Definir",
         state: "UF",
-        status: "ativo",
+        status: "rascunho",
         employees_count: 1,
         years_in_business: 1,
         is_franchisee: false,
@@ -286,6 +311,11 @@ export default function Cadastro() {
       };
       
       await base44.auth.updateMe(updates);
+      
+      // Atualizar status da oficina para "ativo" apenas quando finalizar
+      if (workshop && workshop.status === 'rascunho') {
+        await base44.entities.Workshop.update(workshop.id, { status: 'ativo' });
+      }
     } catch (e) {
       console.error("Erro ao atualizar status do usuário:", e);
     }
