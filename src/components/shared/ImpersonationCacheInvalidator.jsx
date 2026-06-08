@@ -8,7 +8,8 @@ import { getImpersonationData } from './ImpersonationBanner';
  */
 export default function ImpersonationCacheInvalidator() {
   const queryClient = useQueryClient();
-  const lastImpersonationStateRef = useRef(null);
+  // Inicializar com o estado atual para evitar falso positivo no primeiro render
+  const lastImpersonationStateRef = useRef(!!getImpersonationData());
 
   useEffect(() => {
     const impersonationData = getImpersonationData();
