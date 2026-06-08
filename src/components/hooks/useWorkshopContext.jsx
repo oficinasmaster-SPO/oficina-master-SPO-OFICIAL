@@ -46,7 +46,7 @@ export function useWorkshopContext() {
       }
       
       // Comportamento normal (sem impersonação)
-      const user = tenantUser || await base44.auth.me().catch(() => null);
+      const user = tenantUser;
       if (!user) return [];
 
       try {
