@@ -34,51 +34,23 @@ export const AuthProvider = ({ children }) => {
         interceptResponses: true
       });
       
+      // Sempre buscar public settings primeiro (nunca requer auth)
+      let publicSettings = null;
       try {
-        // Disparar as duas requisições em paralelo quando há token
-        if (appParams.token) {
-          const [publicSettings] = await Promise.all([
-            appClient.get(`/prod/public-settings/by-id/${appParams.appId}`),
-            checkUserAuth()
-          ]);
-          setAppPublicSettings(publicSettings);
-        } else {
-          const publicSettings = await appClient.get(`/prod/public-settings/by-id/${appParams.appId}`);
-          setAppPublicSettings(publicSettings);
-          setIsLoadingAuth(false);
-          setIsAuthenticated(false);
-        }
-        setIsLoadingPublicSettings(false);
-      } catch (appError) {
-        console.error('App state check failed:', appError);
-        
-        // Handle app-level errors
-        if (appError.status === 403 && appError.data?.extra_data?.reason) {
-          const reason = appError.data.extra_data.reason;
-          if (reason === 'auth_required') {
-            setAuthError({
-              type: 'auth_required',
-              message: 'Authentication required'
-            });
-          } else if (reason === 'user_not_registered') {
-            setAuthError({
-              type: 'user_not_registered',
-              message: 'User not registered for this app'
-            });
-          } else {
-            setAuthError({
-              type: reason,
-              message: appError.message
-            });
-          }
-        } else {
-          setAuthError({
-            type: 'unknown',
-            message: appError.message || 'Failed to load app'
-          });
-        }
-        setIsLoadingPublicSettings(false);
+        publicSettings = await appClient.get(`/prod/public-settings/by-id/${appParams.appId}`);
+        setAppPublicSettings(publicSettings);
+      } catch (settingsError) {
+        // Se falhar nas public settings, só logar — não bloquear o app
+        console.error('Failed to load public settings:', settingsError);
+      }
+      setIsLoadingPublicSettings(false);
+
+      // Tentar autenticar apenas se há token disponível
+      if (appParams.token) {
+        await checkUserAuth();
+      } else {
         setIsLoadingAuth(false);
+        setIsAuthenticated(false);
       }
     } catch (error) {
       console.error('Unexpected error:', error);
@@ -99,13 +71,10 @@ export const AuthProvider = ({ children }) => {
       try {
         currentUser = await base44.auth.me();
       } catch (meError) {
-        // Se o app é público e não há token, simplesmente marcar como não autenticado
-        if (meError?.status === 401) {
-          setIsLoadingAuth(false);
-          setIsAuthenticated(false);
-          return;
-        }
-        throw meError;
+        // Token inválido/expirado = não autenticado, redirecionar para login normalmente
+        setIsLoadingAuth(false);
+        setIsAuthenticated(false);
+        return;
       }
       
       if (!currentUser) {
@@ -142,28 +111,12 @@ export const AuthProvider = ({ children }) => {
       setIsLoadingAuth(false);
     } catch (error) {
       console.error('User auth check failed:', error);
+      // Qualquer erro no checkUserAuth = não autenticado, mas NÃO bloquear com authError
+      // O ProtectedRoute vai redirecionar para /login normalmente
       setIsLoadingAuth(false);
       setIsAuthenticated(false);
-      
-      // SYNC-03: distinguir 403 de sessão expirada vs 403 de rate limit ou permissão
-      // Só deslogar em 401 ou em 403 com reason: auth_required
-      if (error.status === 401) {
-        setAuthError({
-          type: 'auth_required',
-          message: 'Authentication required'
-        });
-      } else if (error.status === 403) {
-        // Verificar se é realmente problema de auth ou apenas permissão/rate limit
-        const reason = error.data?.extra_data?.reason || error.data?.error || '';
-        const isAuthError = reason === 'auth_required' || reason === 'token_expired' || reason === 'invalid_token';
-        if (isAuthError) {
-          setAuthError({
-            type: 'auth_required',
-            message: 'Authentication required'
-          });
-        }
-        // 403 de rate limit ou admin-only: ignorar — não deslogar
-      }
+      setUser(null);
+      // Só setar authError para erros de conta (inativo, não registrado) — nunca para 401/token expirado
     }
   };
 

@@ -114,9 +114,6 @@ const AuthenticatedApp = () => {
   if (authError && !isPublicPath) {
     if (authError.type === 'user_not_registered') {
       return <UserNotRegisteredError />;
-    } else if (authError.type === 'auth_required') {
-      // ProtectedRoute handles the redirect to /login
-      return null;
     } else if (authError.type === 'account_inactive') {
       return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
