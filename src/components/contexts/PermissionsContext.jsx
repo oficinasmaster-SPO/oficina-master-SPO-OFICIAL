@@ -252,8 +252,8 @@ export function PermissionsProvider({ children }) {
       if (isPublicPage) return true;
 
       const requiredPermission = pagePermissions[pageName];
-      // RISK-04: páginas não mapeadas requerem autenticação básica (não ficam abertas)
-      if (requiredPermission === undefined) return hasPermission('dashboard.view');
+      // Segurança (Fail-Close): Se não está mapeado, o acesso é estritamente negado.
+      if (requiredPermission === undefined) return false;
       if (requiredPermission === null) return true; // explicitamente pública
       if (requiredPermission === "public_authenticated") return !!user;
 

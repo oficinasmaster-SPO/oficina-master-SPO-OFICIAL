@@ -1057,8 +1057,14 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
     // Itens de acelerador: apenas internos com job_role acelerador/consultor/mentor
     if (item.aceleradorOnly && !isAcelerador) return false;
 
-    // Sistema RBAC Granular: Verificar permissão granular se definida
-    if (item.requiredPermission) {
+    // Sistema RBAC Granular: Centralizado na ÚNICA fonte de verdade (pagePermissions via canAccessPage)
+    // Extrai o nome da página da URL (ex: "/GestaoOficina?..." -> "GestaoOficina")
+    const pageKey = item.href ? item.href.split('?')[0].split('/').filter(Boolean).pop() : null;
+
+    if (pageKey && pageKey !== '') {
+      return canAccessPage(pageKey);
+    } else if (item.requiredPermission) {
+      // Fallback
       return hasPermission(item.requiredPermission);
     }
 
