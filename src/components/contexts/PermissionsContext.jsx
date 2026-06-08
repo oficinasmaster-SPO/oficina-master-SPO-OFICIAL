@@ -68,7 +68,7 @@ export function PermissionsProvider({ children }) {
         const wsPromise = (workshop && workshop.id === workshopId) 
           ? Promise.resolve(workshop) 
           : base44.entities.Workshop.get(workshopId).catch(() => null);
-        const empPromise = base44.entities.Employee.filter({ user_id: user.id, workshop_id: workshopId }).catch(() => null);
+        const empPromise = base44.entities.Employee.filter({ user_id: user.id }).catch(() => null);
         
         const [ws, employees] = await Promise.all([wsPromise, empPromise]);
 
