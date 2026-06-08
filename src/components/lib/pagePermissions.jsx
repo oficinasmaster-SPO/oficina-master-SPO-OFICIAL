@@ -105,6 +105,7 @@ export const pagePermissions = {
   AutoavaliacaoMA3: "diagnostics.create",
   CentralAvaliacoes: "diagnostics.view",
   HistoricoDiagnosticos: "diagnostics.view",
+  Historico: "diagnostics.view",
   DiagnosticoRiscos: "diagnostics.view",
   DashboardTempoAtencao: "acceleration.manage",
 
