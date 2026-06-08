@@ -237,6 +237,17 @@ export function PermissionsProvider({ children }) {
       const isImpersonated = user._isImpersonated === true;
       if ((user.role === 'admin' || user.user_type === 'internal') && !isImpersonated) return true;
 
+      // Sócio/proprietário tem acesso total a todas as páginas não-admin
+      if (isOwnerOrPartner && !isImpersonated) {
+        const requiredPermission = pagePermissions[pageName];
+        // Só bloquear páginas que exigem role 'admin' explicitamente (plataforma admin)
+        if (requiredPermission === 'admin') return false;
+        if (requiredPermission === 'admin.rbac') return false;
+        if (requiredPermission === 'admin.financeiro') return false;
+        if (requiredPermission === 'admin.audit') return false;
+        return true;
+      }
+
       const isPublicPage = pagePermissions[pageName] === null;
       if (isPublicPage) return true;
 
@@ -289,13 +300,14 @@ export function PermissionsProvider({ children }) {
     customRole,
     currentRole,
     permissions,
+    isOwnerOrPartner,
     loading,
     hasPermission,
     hasGranularPermission,
     canAccessPage,
     canPerform,
     isInternal,
-  }), [user, profile, customRole, currentRole, permissions, loading, isOwnerOrPartner, granularConfig]);
+  }), [user, profile, customRole, currentRole, permissions, isOwnerOrPartner, loading, granularConfig]);
 
   return (
     <PermissionsContext.Provider value={value}>
