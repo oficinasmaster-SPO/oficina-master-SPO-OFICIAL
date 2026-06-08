@@ -1,42 +1,27 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const userEmail = "andrehenri9@gmail.com";
-    const administrativeProfileId = "69593151faf2794306bd2f41"; // ID do perfil 'Financeiro / Administrativo'
+    const user = await base44.auth.me();
 
-    console.log(`🔄 Reparando perfil para: ${userEmail}`);
-
-    // 1. Buscar Employee
-    let employees = await base44.entities.Employee.filter({ email: userEmail });
-    
-    if (!employees || employees.length === 0) {
-        return Response.json({ error: "Employee não encontrado para este email" }, { status: 404 });
+    if (!user || user.role !== 'admin') {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const employee = employees[0];
-    console.log("✅ Employee encontrado:", employee.id, "Profile ID atual:", employee.profile_id);
+    const body = await req.json().catch(() => ({}));
+    const { userId, ...updateData } = body;
 
-    // 2. Atualizar com o profile_id correto
-    const updated = await base44.entities.Employee.update(employee.id, {
-        job_role: "administrativo",
-        area: "administrativo",
-        position: "Administrativo",
-        profile_id: administrativeProfileId,
-        user_status: "ativo"
-    });
+    if (!userId) {
+      return Response.json({ error: 'userId é obrigatório' }, { status: 400 });
+    }
 
-    return Response.json({
-        success: true,
-        message: "Perfil atualizado com sucesso",
-        previous_profile_id: employee.profile_id,
-        new_profile_id: updated.profile_id,
-        employee: updated
-    });
+    // Atualizar user via asServiceRole.entities.User
+    const updated = await base44.asServiceRole.entities.User.update(userId, updateData);
 
+    return Response.json({ success: true, updated });
   } catch (error) {
-    console.error("❌ Erro:", error);
+    console.error('Erro:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
