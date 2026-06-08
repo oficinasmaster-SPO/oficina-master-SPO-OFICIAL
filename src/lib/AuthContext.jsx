@@ -95,8 +95,25 @@ export const AuthProvider = ({ children }) => {
     try {
       // Now check if the user is authenticated
       setIsLoadingAuth(true);
-      const currentUser = await base44.auth.me();
+      let currentUser;
+      try {
+        currentUser = await base44.auth.me();
+      } catch (meError) {
+        // Se o app é público e não há token, simplesmente marcar como não autenticado
+        if (meError?.status === 401) {
+          setIsLoadingAuth(false);
+          setIsAuthenticated(false);
+          return;
+        }
+        throw meError;
+      }
       
+      if (!currentUser) {
+        setIsLoadingAuth(false);
+        setIsAuthenticated(false);
+        return;
+      }
+
       // Aplicar impersonação se ativo
       const effectiveUser = getEffectiveUser(currentUser);
       
