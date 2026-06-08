@@ -62,26 +62,37 @@ export function PermissionsProvider({ children }) {
         };
       }
 
-      // Se oficina está selecionada, busca dados do colaborador em paralelo
-      if (workshopId) {
-        // Em impersonação, buscar workshop do usuário alvo
-        const wsPromise = (workshop && workshop.id === workshopId) 
-          ? Promise.resolve(workshop) 
-          : base44.entities.Workshop.get(workshopId).catch(() => null);
-        const empPromise = base44.entities.Employee.filter({ user_id: user.id }).catch(() => null);
-        
-        const [ws, employees] = await Promise.all([wsPromise, empPromise]);
+      // Busca dados do colaborador e do workshop em paralelo
+      // CORREÇÃO: buscar Employee sempre por user_id (sem filtro workshop_id para evitar race condition)
+      // e buscar workshop pelo workshopId do user.data se ainda não disponível no contexto
+      const effectiveWorkshopId = workshopId || user?.data?.workshop_id || user?.workshop_id;
+      
+      const wsPromise = effectiveWorkshopId
+        ? ((workshop && workshop.id === effectiveWorkshopId)
+          ? Promise.resolve(workshop)
+          : base44.entities.Workshop.get(effectiveWorkshopId).catch(() => null))
+        : Promise.resolve(null);
+      
+      // CORREÇÃO BUG #1: filtrar Employee apenas por user_id — sem workshop_id para evitar race condition
+      const empPromise = base44.entities.Employee.filter({ user_id: user.id }).catch(() => null);
+      
+      const [ws, employees] = await Promise.all([wsPromise, empPromise]);
 
-        if (employees && employees.length > 0) {
-          // Usar profile_id do Employee apenas se preenchido — senão manter do User
-          // Antes: if (employees[0].profile_id) — perdia o profile do User quando Employee.profile_id era null
-          activeProfileId = employees[0].profile_id || user.profile_id;
-          if (employees[0].job_role) activeRole = employees[0].job_role;
-        } else if (ws && (ws.owner_id === user.id || (ws.partner_ids && ws.partner_ids.includes(user.id)))) {
-          isOwnerOrPartner = true;
-          aggregatedPermissions = systemRoles.flatMap(m => m.roles.map(r => r.id));
-          activeRole = 'socio';
-        }
+      if (employees && employees.length > 0) {
+        // Pegar o Employee vinculado ao workshop correto, se houver múltiplos
+        const matchingEmployee = effectiveWorkshopId
+          ? (employees.find(e => e.workshop_id === effectiveWorkshopId) || employees[0])
+          : employees[0];
+        activeProfileId = matchingEmployee.profile_id || user.profile_id || user.data?.profile_id;
+        if (matchingEmployee.job_role) activeRole = matchingEmployee.job_role;
+      }
+      
+      // CORREÇÃO BUG #4: verificar owner_id independente de ter encontrado Employee
+      if (ws && (ws.owner_id === user.id || (ws.partner_ids && ws.partner_ids.includes(user.id)))) {
+        isOwnerOrPartner = true;
+        // owner/sócio sempre tem acesso total — mas ainda carrega o profile para granularidade
+        aggregatedPermissions = systemRoles.flatMap(m => m.roles.map(r => r.id));
+        if (!employees || employees.length === 0) activeRole = 'socio';
       }
 
       let userProfile = null;
