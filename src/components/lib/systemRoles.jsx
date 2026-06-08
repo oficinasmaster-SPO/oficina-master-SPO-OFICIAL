@@ -90,6 +90,24 @@ export const systemRoles = [
         description: "Controlar níveis de acesso e permissões de colaboradores. Permite aprovar novos usuários, definir perfis de acesso e modificar permissões individuais.",
         permissions: ["view", "edit", "approve"],
       },
+      {
+        id: "employees.cdc",
+        name: "CDC (Contrato de Desempenho)",
+        description: "Acessar, criar e gerenciar CDCs de colaboradores",
+        permissions: ["view", "create", "edit"],
+      },
+      {
+        id: "employees.climate",
+        name: "Pesquisa de Clima",
+        description: "Gerenciar e visualizar pesquisas de clima organizacional",
+        permissions: ["view", "create"],
+      },
+      {
+        id: "employees.feedback",
+        name: "Feedbacks",
+        description: "Registrar e visualizar feedbacks de colaboradores",
+        permissions: ["view", "create"],
+      },
     ],
   },
   {
@@ -170,6 +188,18 @@ export const systemRoles = [
         name: "Editar Processos",
         description: "Alterar processos existentes",
         permissions: ["view", "edit"],
+      },
+      {
+        id: "processes.checklists",
+        name: "Gerenciar Checklists",
+        description: "Criar e gerenciar checklists de processos",
+        permissions: ["view", "create", "edit"],
+      },
+      {
+        id: "documents.view",
+        name: "Visualizar Documentos",
+        description: "Acessar repositório de documentos",
+        permissions: ["view"],
       },
       {
         id: "documents.upload",
@@ -258,6 +288,63 @@ export const systemRoles = [
         description: "Lançar produção diária",
         permissions: ["view", "create"],
       },
+      {
+        id: "operations.technician_qgp",
+        name: "QGP Técnico",
+        description: "Acesso ao painel QGP do técnico",
+        permissions: ["view", "create"],
+      },
+    ],
+  },
+  {
+    id: "goals",
+    name: "Metas & Ações",
+    icon: BarChart4,
+    roles: [
+      {
+        id: "goals.view",
+        name: "Visualizar Metas",
+        description: "Ver painel de metas e histórico",
+        permissions: ["view"],
+      },
+      {
+        id: "goals.create",
+        name: "Criar/Desdobrar Metas",
+        description: "Criar metas e desdobramentos",
+        permissions: ["view", "create", "edit"],
+      },
+      {
+        id: "actions.view",
+        name: "Visualizar Plano de Ações",
+        description: "Ver painel de ações e tarefas estratégicas",
+        permissions: ["view"],
+      },
+    ],
+  },
+  {
+    id: "analytics",
+    name: "Analytics & Relatórios",
+    icon: LayoutDashboard,
+    roles: [
+      {
+        id: "analytics.view",
+        name: "Acessar Analytics & Relatórios",
+        description: "Ver relatórios avançados e IA analytics",
+        permissions: ["view"],
+      },
+    ],
+  },
+  {
+    id: "clients",
+    name: "Clientes",
+    icon: Users,
+    roles: [
+      {
+        id: "clients.view",
+        name: "Visualizar Clientes",
+        description: "Ver cadastro e dados de clientes",
+        permissions: ["view"],
+      },
     ],
   },
   {
@@ -307,6 +394,18 @@ export const systemRoles = [
         name: "Auditoria",
         description: "Ver logs e auditoria completa",
         permissions: ["view"],
+      },
+      {
+        id: "admin.rbac",
+        name: "Gestão RBAC",
+        description: "Gerenciar roles, perfis e permissões granulares",
+        permissions: ["view", "edit", "create", "delete"],
+      },
+      {
+        id: "admin.financeiro",
+        name: "Admin Financeiro",
+        description: "Operações administrativas financeiras (subcategorias, backfill, correções)",
+        permissions: ["view", "edit", "create", "delete"],
       },
     ],
   },
