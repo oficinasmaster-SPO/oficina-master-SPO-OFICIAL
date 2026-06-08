@@ -7,16 +7,15 @@ Deno.serve(async (req) => {
         const payload = await req.json();
         
         let userResult = null;
-        let workshopsResult = null;
         
-        if (payload.action === 'check_user') {
+        if (payload.action === 'check_user_workshop') {
             const users = await base44.asServiceRole.entities.User.filter({ email: payload.email });
-            userResult = users.length > 0 ? users[0] : null;
-            return Response.json({ user: userResult });
-        } else if (payload.action === 'check_workshops') {
-            const workshops = await base44.asServiceRole.entities.Workshop.list();
-            const nameless = workshops.filter(w => !w.name || w.name.trim() === '');
-            return Response.json({ workshops: nameless });
+            if (users.length > 0) {
+                const user = users[0];
+                const employees = await base44.asServiceRole.entities.Employee.filter({ user_id: user.id });
+                return Response.json({ user, employees });
+            }
+            return Response.json({ user: null });
         }
         
         return Response.json({ error: 'invalid action' });
