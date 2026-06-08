@@ -68,7 +68,13 @@ export function useEvaluationPermissions() {
   const isInternal = user.user_type === "internal"; // internos veem tudo
   // Job role vem do Employee, não do User — usar currentUserEmployee
   const userJobRole = currentUserEmployee?.job_role || getUserJobRole(user);
-  const isLeader   = LEADER_JOB_ROLES.includes(userJobRole);
+  // isLeader: job_role de liderança OU é sócio/owner da oficina
+  // Fallback rápido via user.data antes de currentUserEmployee carregar
+  const userDataJobRole = user?.data?.job_role;
+  const isLeader   = LEADER_JOB_ROLES.includes(userJobRole) || 
+                     LEADER_JOB_ROLES.includes(userDataJobRole) ||
+                     (currentUserEmployee?.is_partner === true) ||
+                     (currentUserEmployee?.owner_id === user.id);
 
   /**
    * canViewResult(diagnosticEmployeeId)
