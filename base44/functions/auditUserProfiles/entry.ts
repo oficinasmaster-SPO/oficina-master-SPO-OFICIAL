@@ -15,7 +15,8 @@ const systemRolesCatalog = [
   "analytics.view",
   "clients.view",
   "acceleration.view",
-  "admin.users", "admin.profiles", "admin.system_config", "admin.audit", "admin.rbac", "admin.financeiro"
+  "admin.users", "admin.profiles", "admin.system_config", "admin.audit", "admin.rbac", "admin.financeiro",
+  "acceleration.manage"
 ];
 
 Deno.serve(async (req) => {
@@ -110,7 +111,15 @@ Deno.serve(async (req) => {
         const empProfile = profileMap.get(emp.profile_id);
         if (empProfile && empProfile.job_roles && empProfile.job_roles.length > 0) {
           // Verifica se o cargo do employee está dentro dos cargos suportados pelo perfil
-          if (!empProfile.job_roles.includes(emp.job_role)) {
+          let isMismatch = !empProfile.job_roles.includes(emp.job_role);
+          
+          // Se o employee tem um job_role que não está na lista padrão, ele cai no 'Colaborador Básico' (que tem job_role 'outros')
+          const isCustomRole = !['socio', 'diretor', 'gerente', 'supervisor_loja', 'lider_tecnico', 'financeiro', 'rh', 'tecnico', 'comercial', 'consultor_vendas', 'marketing', 'administrativo', 'acelerador', 'consultor', 'mentor', 'outros', 'socio_interno'].includes(emp.job_role);
+          if (isCustomRole && empProfile.name === 'Colaborador Básico') {
+            isMismatch = false; // Não é mismatch se ele caiu no genérico corretamente
+          }
+
+          if (isMismatch) {
             report.issues.employees_with_job_role_mismatch.push({
               employee_id: emp.id,
               employee_name: emp.full_name,
