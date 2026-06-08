@@ -28,16 +28,30 @@ const JOB_ROLE_TO_PROFILE = {
  */
 async function getOrCreateDefaultProfile(base44, jobRole, workshopId) {
   const profileName = JOB_ROLE_TO_PROFILE[jobRole] || 'Colaborador Básico';
+  const type = ['acelerador', 'consultor', 'mentor', 'socio_interno'].includes(jobRole) ? 'interno' : 'externo';
   
   try {
     // Buscar perfil existente
     const profiles = await base44.asServiceRole.entities.UserProfile.filter({ 
-      name: profileName,
-      type: 'interno'
+      name: profileName
     });
     
     if (profiles && profiles.length > 0) {
-      return profiles[0];
+      const existingProfile = profiles[0];
+      const expectedRoles = getDefaultRoles(jobRole);
+      const currentRoles = existingProfile.roles || [];
+      
+      const hasLegacyRoles = currentRoles.some(r => r.includes('_') && !r.includes('.'));
+      
+      if (hasLegacyRoles || currentRoles.length === 0 || existingProfile.type !== type) {
+         await base44.asServiceRole.entities.UserProfile.update(existingProfile.id, {
+            roles: expectedRoles,
+            type: type
+         });
+         existingProfile.roles = expectedRoles;
+         existingProfile.type = type;
+      }
+      return existingProfile;
     }
     
     // Criar perfil padrão se não existir
@@ -137,24 +151,62 @@ function getDefaultModulePermissions(jobRole) {
 function getDefaultRoles(jobRole) {
   switch(jobRole) {
     case 'socio':
+    case 'socio_interno':
     case 'diretor':
-      return ['admin_full', 'dashboard_view', 'employees_full', 'workshops_full'];
+      return [
+        'dashboard.view', 'dashboard.edit', 'dashboard.export',
+        'workshop.view', 'workshop.edit', 'workshop.manage_goals',
+        'employees.view', 'employees.create', 'employees.edit', 'employees.delete', 'employees.manage_permissions', 'employees.cdc', 'employees.climate', 'employees.feedback',
+        'financeiro.view', 'financeiro.edit', 'financeiro.approve', 'financeiro.export',
+        'diagnostics.view', 'diagnostics.create', 'diagnostics.ai_access',
+        'processes.view', 'processes.create', 'processes.edit', 'processes.checklists', 'documents.view', 'documents.upload',
+        'culture.view', 'culture.edit', 'culture.manage_rituals',
+        'training.view', 'training.create', 'training.manage', 'training.evaluate',
+        'operations.view_qgp', 'operations.manage_tasks', 'operations.daily_log', 'operations.technician_qgp',
+        'goals.view', 'goals.create', 'actions.view',
+        'analytics.view',
+        'clients.view',
+        'acceleration.view'
+      ];
       
     case 'gerente':
     case 'supervisor_loja':
-      return ['dashboard_view', 'employees_view', 'employees_edit', 'tasks_full'];
+      return [
+        'dashboard.view', 'dashboard.edit',
+        'workshop.view', 'workshop.manage_goals',
+        'employees.view', 'employees.create', 'employees.edit', 'employees.cdc', 'employees.climate', 'employees.feedback',
+        'processes.view', 'processes.checklists', 'documents.view', 'documents.upload',
+        'operations.view_qgp', 'operations.manage_tasks', 'operations.daily_log',
+        'goals.view', 'goals.create', 'actions.view',
+        'clients.view'
+      ];
       
     case 'lider_tecnico':
-      return ['dashboard_view', 'employees_view', 'tasks_view'];
+      return [
+        'dashboard.view', 
+        'employees.view', 
+        'operations.view_qgp', 'operations.manage_tasks', 'operations.daily_log',
+        'processes.view', 'documents.view'
+      ];
       
     case 'financeiro':
-      return ['dashboard_view', 'finances_full', 'reports_view'];
+      return [
+        'dashboard.view', 
+        'financeiro.view', 'financeiro.edit', 'financeiro.export',
+        'documents.view', 'documents.upload'
+      ];
       
     case 'rh':
-      return ['employees_full', 'training_full', 'culture_full'];
+      return [
+        'dashboard.view',
+        'employees.view', 'employees.create', 'employees.edit', 'employees.cdc', 'employees.climate', 'employees.feedback',
+        'training.view', 'training.create', 'training.manage', 'training.evaluate',
+        'culture.view', 'culture.edit', 'culture.manage_rituals',
+        'documents.view', 'documents.upload'
+      ];
       
     default:
-      return ['dashboard_view', 'tasks_view'];
+      return ['dashboard.view', 'operations.view_qgp', 'operations.daily_log'];
   }
 }
 

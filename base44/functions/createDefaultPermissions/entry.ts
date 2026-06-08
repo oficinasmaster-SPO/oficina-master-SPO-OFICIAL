@@ -2,6 +2,43 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
 // Define permissões padrão por job_role
 const DEFAULT_PERMISSIONS = {
+  // SÓCIO - Acesso completo
+  socio: {
+    permission_level: "admin",
+    modules_access: {
+      dashboard: { view: true, edit: true },
+      cadastros: { view: true, edit: true, delete: true },
+      patio: { view: true, edit: true },
+      resultados: { view: true, edit: true },
+      pessoas: { view: true, edit: true, delete: true },
+      diagnosticos: { view: true, create: true },
+      processos: { view: true, edit: true },
+      documentos: { view: true, upload: true, delete: true },
+      cultura: { view: true, edit: true },
+      treinamentos: { view: true, create: true, manage: true },
+      gestao: { view: true, edit: true },
+      admin: { users: true, permissions: true, settings: true }
+    }
+  },
+
+  socio_interno: {
+    permission_level: "admin",
+    modules_access: {
+      dashboard: { view: true, edit: true },
+      cadastros: { view: true, edit: true, delete: true },
+      patio: { view: true, edit: true },
+      resultados: { view: true, edit: true },
+      pessoas: { view: true, edit: true, delete: true },
+      diagnosticos: { view: true, create: true },
+      processos: { view: true, edit: true },
+      documentos: { view: true, upload: true, delete: true },
+      cultura: { view: true, edit: true },
+      treinamentos: { view: true, create: true, manage: true },
+      gestao: { view: true, edit: true },
+      admin: { users: true, permissions: true, settings: true }
+    }
+  },
+
   // DIRETORIA - Acesso completo
   diretor: {
     permission_level: "admin",
