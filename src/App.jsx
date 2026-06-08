@@ -7,7 +7,12 @@ import { queryClientInstance } from '@/lib/query-client'
 import VisualEditAgent from '@/lib/VisualEditAgent'
 import NavigationTracker from '@/lib/NavigationTracker'
 import { pagesConfig } from './pages.config'
-import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, useLocation, Navigate } from 'react-router-dom';
+import Login from '@/pages/Login';
+import Register from '@/pages/Register';
+import ForgotPassword from '@/pages/ForgotPassword';
+import ResetPassword from '@/pages/ResetPassword';
+import ProtectedRoute from '@/components/ProtectedRoute';
 import { ToastProvider } from '@/components/aceleracao/ToastContainer';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
@@ -110,8 +115,7 @@ const AuthenticatedApp = () => {
     if (authError.type === 'user_not_registered') {
       return <UserNotRegisteredError />;
     } else if (authError.type === 'auth_required') {
-      // Redirect to login automatically
-      navigateToLogin();
+      // ProtectedRoute handles the redirect to /login
       return null;
     } else if (authError.type === 'account_inactive') {
       return (
@@ -140,151 +144,54 @@ const AuthenticatedApp = () => {
   return (
     <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><WheelLoader size="xl" /></div>}>
       <Routes>
-      <Route path="/" element={
-        <LayoutWrapper currentPageName="Home">
-          <Home />
-        </LayoutWrapper>
-      } />
-      <Route path="/CompletarPerfil" element={
-        <LayoutWrapper currentPageName="CompletarPerfil">
-          <CompletarPerfil />
-        </LayoutWrapper>
-      } />
-      <Route path="/DescricaoCargos" element={
-        <LayoutWrapper currentPageName="DescricaoCargos">
-          <DescricaoCargos />
-        </LayoutWrapper>
-      } />
-      <Route path="/CentralAvaliacoes" element={
-        <LayoutWrapper currentPageName="CentralAvaliacoes">
-          <CentralAvaliacoes />
-        </LayoutWrapper>
-      } />
-      <Route path="/MatrizDesempenho" element={
-        <LayoutWrapper currentPageName="MatrizDesempenho">
-          <MatrizDesempenho />
-        </LayoutWrapper>
-      } />
-      <Route path="/ControleAceleracao" element={
-        <LayoutWrapper currentPageName="ControleAceleracao">
-          <ControleAceleracao />
-        </LayoutWrapper>
-      } />
-      <Route path="/ConsultoriaGlobal" element={
-        <LayoutWrapper currentPageName="ConsultoriaGlobal">
-          <ConsultoriaGlobal />
-        </LayoutWrapper>
-      } />
-      <Route path="/CentralFollowUp" element={
-        <LayoutWrapper currentPageName="CentralFollowUp">
-          <CentralFollowUp />
-        </LayoutWrapper>
-      } />
-      <Route path="/PublicNPS" element={<PublicNPS />} />
-      <Route path="/PublicDISC" element={<PublicDISC />} />
-      <Route path="/BemVindoPlanos" element={<BemVindoPlanos />} />
-      <Route path="/ListagemClientesSprints" element={
-        <LayoutWrapper currentPageName="ListagemClientesSprints">
-          <ListagemClientesSprints />
-        </LayoutWrapper>
-      } />
-      <Route path="/CentralProximosPassos" element={
-        <LayoutWrapper currentPageName="CentralProximosPassos">
-          <CentralProximosPassos />
-        </LayoutWrapper>
-      } />
-      <Route path="/AdminQADashboard" element={
-        <LayoutWrapper currentPageName="AdminQADashboard" adminOnly={true}>
-          <QADashboard />
-        </LayoutWrapper>
-      } />
-      <Route path="/AdminTemplatesBacklog" element={
-        <LayoutWrapper currentPageName="AdminTemplatesBacklog" adminOnly={true}>
-          <AdminTemplatesBacklog />
-        </LayoutWrapper>
-      } />
-      <Route path="/DiagnosticoRiscos" element={
-        <LayoutWrapper currentPageName="DiagnosticoRiscos">
-          <DiagnosticoRiscos />
-        </LayoutWrapper>
-      } />
-      <Route path="/DashboardTempoAtencao" element={
-        <LayoutWrapper currentPageName="DashboardTempoAtencao">
-          <DashboardTempoAtencao />
-        </LayoutWrapper>
-      } />
-      <Route path="/HistoricoDiagnosticos" element={
-        <LayoutWrapper currentPageName="HistoricoDiagnosticos">
-          <HistoricoDiagnosticos />
-        </LayoutWrapper>
-      } />
-      <Route path="/MeuAgendamento" element={
-        <LayoutWrapper currentPageName="MeuAgendamento">
-          <MeuAgendamento />
-        </LayoutWrapper>
-      } />
-      {Object.entries(Pages).map(([path, Page]) => {
-        const reqPerm = pagePermissions[path];
-        const isPublic = reqPerm === null;
+        {/* Auth routes — always public */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
-        return (
-          <Route
-            key={path}
-            path={`/${path}`}
-            element={
-              <LayoutWrapper currentPageName={path}>
-                <Page />
-              </LayoutWrapper>
-            }
-          />
-        );
-      })}
-      <Route path="/GerenciarSubcategorias" element={
-        <LayoutWrapper currentPageName="GerenciarSubcategorias" adminOnly={true}>
-          <GerenciarSubcategorias />
-        </LayoutWrapper>
-      } />
-      <Route path="/RelatoriosAnuais" element={
-        <LayoutWrapper currentPageName="RelatoriosAnuais">
-          <RelatoriosAnuais />
-        </LayoutWrapper>
-      } />
-      <Route path="/ContasReceber" element={
-        <LayoutWrapper currentPageName="ContasReceber">
-          <ContasReceber />
-        </LayoutWrapper>
-      } />
-      <Route path="/ContasPagar" element={
-        <LayoutWrapper currentPageName="ContasPagar">
-          <ContasPagar />
-        </LayoutWrapper>
-      } />
-      <Route path="/ConciliacaoBancaria" element={
-        <LayoutWrapper currentPageName="ConciliacaoBancaria">
-          <ConciliacaoBancaria />
-        </LayoutWrapper>
-      } />
-      <Route path="/DashboardFinanceiro" element={
-        <LayoutWrapper currentPageName="DashboardFinanceiro">
-          <DashboardFinanceiro />
-        </LayoutWrapper>
-      } />
-      <Route path="/CorrigirParcelasDuplicadas" element={
-        <LayoutWrapper currentPageName="CorrigirParcelasDuplicadas" adminOnly={true}>
-          <CorrigirParcelasDuplicadas />
-        </LayoutWrapper>
-      } />
-      <Route path="/BackfillSaldosHistoricos" element={
-        <LayoutWrapper currentPageName="BackfillSaldosHistoricos" adminOnly={true}>
-          <BackfillSaldosHistoricos />
-        </LayoutWrapper>
-      } />
-      <Route path="/UsuariosAdmin" element={
-        <LayoutWrapper currentPageName="UsuariosAdmin" adminOnly={true}>
-          <UsuariosAdmin />
-        </LayoutWrapper>
-      } />
-      <Route path="*" element={<PageNotFound />} />
+        {/* Truly public pages — no login required */}
+        <Route path="/" element={<LayoutWrapper currentPageName="Home"><Home /></LayoutWrapper>} />
+        <Route path="/PublicNPS" element={<PublicNPS />} />
+        <Route path="/PublicDISC" element={<PublicDISC />} />
+        <Route path="/BemVindoPlanos" element={<BemVindoPlanos />} />
+
+        {/* All other pages require authentication */}
+        <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
+          <Route path="/CompletarPerfil" element={<LayoutWrapper currentPageName="CompletarPerfil"><CompletarPerfil /></LayoutWrapper>} />
+          <Route path="/DescricaoCargos" element={<LayoutWrapper currentPageName="DescricaoCargos"><DescricaoCargos /></LayoutWrapper>} />
+          <Route path="/CentralAvaliacoes" element={<LayoutWrapper currentPageName="CentralAvaliacoes"><CentralAvaliacoes /></LayoutWrapper>} />
+          <Route path="/MatrizDesempenho" element={<LayoutWrapper currentPageName="MatrizDesempenho"><MatrizDesempenho /></LayoutWrapper>} />
+          <Route path="/ControleAceleracao" element={<LayoutWrapper currentPageName="ControleAceleracao"><ControleAceleracao /></LayoutWrapper>} />
+          <Route path="/ConsultoriaGlobal" element={<LayoutWrapper currentPageName="ConsultoriaGlobal"><ConsultoriaGlobal /></LayoutWrapper>} />
+          <Route path="/CentralFollowUp" element={<LayoutWrapper currentPageName="CentralFollowUp"><CentralFollowUp /></LayoutWrapper>} />
+          <Route path="/ListagemClientesSprints" element={<LayoutWrapper currentPageName="ListagemClientesSprints"><ListagemClientesSprints /></LayoutWrapper>} />
+          <Route path="/CentralProximosPassos" element={<LayoutWrapper currentPageName="CentralProximosPassos"><CentralProximosPassos /></LayoutWrapper>} />
+          <Route path="/AdminQADashboard" element={<LayoutWrapper currentPageName="AdminQADashboard" adminOnly={true}><QADashboard /></LayoutWrapper>} />
+          <Route path="/AdminTemplatesBacklog" element={<LayoutWrapper currentPageName="AdminTemplatesBacklog" adminOnly={true}><AdminTemplatesBacklog /></LayoutWrapper>} />
+          <Route path="/DiagnosticoRiscos" element={<LayoutWrapper currentPageName="DiagnosticoRiscos"><DiagnosticoRiscos /></LayoutWrapper>} />
+          <Route path="/DashboardTempoAtencao" element={<LayoutWrapper currentPageName="DashboardTempoAtencao"><DashboardTempoAtencao /></LayoutWrapper>} />
+          <Route path="/HistoricoDiagnosticos" element={<LayoutWrapper currentPageName="HistoricoDiagnosticos"><HistoricoDiagnosticos /></LayoutWrapper>} />
+          <Route path="/MeuAgendamento" element={<LayoutWrapper currentPageName="MeuAgendamento"><MeuAgendamento /></LayoutWrapper>} />
+          <Route path="/GerenciarSubcategorias" element={<LayoutWrapper currentPageName="GerenciarSubcategorias" adminOnly={true}><GerenciarSubcategorias /></LayoutWrapper>} />
+          <Route path="/RelatoriosAnuais" element={<LayoutWrapper currentPageName="RelatoriosAnuais"><RelatoriosAnuais /></LayoutWrapper>} />
+          <Route path="/ContasReceber" element={<LayoutWrapper currentPageName="ContasReceber"><ContasReceber /></LayoutWrapper>} />
+          <Route path="/ContasPagar" element={<LayoutWrapper currentPageName="ContasPagar"><ContasPagar /></LayoutWrapper>} />
+          <Route path="/ConciliacaoBancaria" element={<LayoutWrapper currentPageName="ConciliacaoBancaria"><ConciliacaoBancaria /></LayoutWrapper>} />
+          <Route path="/DashboardFinanceiro" element={<LayoutWrapper currentPageName="DashboardFinanceiro"><DashboardFinanceiro /></LayoutWrapper>} />
+          <Route path="/CorrigirParcelasDuplicadas" element={<LayoutWrapper currentPageName="CorrigirParcelasDuplicadas" adminOnly={true}><CorrigirParcelasDuplicadas /></LayoutWrapper>} />
+          <Route path="/BackfillSaldosHistoricos" element={<LayoutWrapper currentPageName="BackfillSaldosHistoricos" adminOnly={true}><BackfillSaldosHistoricos /></LayoutWrapper>} />
+          <Route path="/UsuariosAdmin" element={<LayoutWrapper currentPageName="UsuariosAdmin" adminOnly={true}><UsuariosAdmin /></LayoutWrapper>} />
+          {Object.entries(Pages).map(([path, Page]) => (
+            <Route
+              key={path}
+              path={`/${path}`}
+              element={<LayoutWrapper currentPageName={path}><Page /></LayoutWrapper>}
+            />
+          ))}
+        </Route>
+
+        <Route path="*" element={<PageNotFound />} />
       </Routes>
     </Suspense>
   );
