@@ -195,6 +195,48 @@ Após validar com dados reais:
 - [x] Tabela canônica documentada (Fase 1)
 - [x] Auditoria de cargos operacionais (Fase 2)
 - [x] Modo observação implementado (Fase 2.5)
-- [ ] Coleta de métricas (Em andamento)
+- [x] Telemetria implementada (Fase 3.5)
+  - [x] Entity `ProfileSuggestionTelemetry` criada
+  - [x] Função `logProfileSuggestion` registrada eventos
+  - [x] Dashboard de métricas criado
+- [ ] Coleta de métricas (Em andamento - aguardando dados reais)
 - [ ] Validação com usuários (Pendente)
-- [ ] Tornar obrigatório (Fase 3 - Futuro)
+- [ ] Tornar obrigatório (Fase 4 - Futuro)
+
+## Fase 3.5 - Telemetria
+
+### O que foi implementado
+
+1. **Entity**: `ProfileSuggestionTelemetry`
+   - Registra: `event_type`, `job_role`, `suggested_profile`, `chosen_profile`
+   - Eventos: `generated`, `accepted`, `rejected`
+
+2. **Backend**: `logProfileSuggestion.js`
+   - Valida eventos
+   - Registra no banco de dados
+   - Acesso restrito a admin
+
+3. **Frontend**: Integração no `ModalCadastroColaborador`
+   - Registra quando sugestão é gerada
+   - Registra quando usuário aceita
+   - Registra quando usuário rejeita
+
+4. **Dashboard**: `/DashboardTelemetriaPerfis` (admin only)
+   - KPIs: total geradas, aceitas, rejeitadas, taxa de aceitação
+   - Gráficos por job_role
+   - Top 5 cargos com mais rejeições
+   - Tabela detalhada com status
+
+### Critérios de Aprovação (Fase 4)
+
+| Métrica | Status | Ação |
+|---------|--------|------|
+| Aceitação > 90% | ✅ Excelente | Tornar obrigatório |
+| Aceitação 80–90% | ⚠️ Boa | Ajustes menores |
+| Aceitação < 80% | ❌ Ruim | Revisar mapeamento |
+
+### Como Acessar
+
+- URL: `/DashboardTelemetriaPerfis`
+- Permissão: Admin apenas
+- Dados: Todos os workshops

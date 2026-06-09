@@ -77,7 +77,7 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
     return () => window.removeEventListener('keydown', handleEsc);
   }, [isOpen, onClose]);
 
-  // Buscar sugestão de perfil quando job_role muda
+  // Buscar sugestão de perfil quando job_role muda (com telemetria - Fase 3.5)
   useEffect(() => {
     if (!formData.job_role || !workshop?.id) {
       setProfileSuggestion(null);
@@ -95,6 +95,14 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
 
         if (response.data.success && response.data.has_suggestion) {
           setProfileSuggestion(response.data);
+          // Telemetria: sugestão gerada
+          await base44.functions.invoke('logProfileSuggestion', {
+            event_type: 'profile_suggestion_generated',
+            job_role: formData.job_role,
+            suggested_profile_id: response.data.suggested_profile_id,
+            suggested_profile_name: response.data.suggested_profile_name,
+            workshop_id: workshop.id
+          });
         } else {
           setProfileSuggestion(null);
         }
@@ -493,9 +501,31 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
                             job_role={formData.job_role}
                             onApplySuggestion={(profileId) => {
                               setFormData({...formData, user_profile_id: profileId});
+                              // Telemetria: sugestão aceita
+                              base44.functions.invoke('logProfileSuggestion', {
+                                event_type: 'profile_suggestion_accepted',
+                                job_role: formData.job_role,
+                                suggested_profile_id: profileSuggestion?.suggested_profile_id,
+                                suggested_profile_name: profileSuggestion?.suggested_profile_name,
+                                chosen_profile_id: profileId,
+                                chosen_profile_name: profiles.find(p => p.id === profileId)?.name,
+                                workshop_id: workshop.id
+                              }).catch(console.error);
                               setProfileSuggestion(null);
                             }}
-                            onDismiss={() => setProfileSuggestion(null)}
+                            onDismiss={() => {
+                              // Telemetria: sugestão rejeitada
+                              base44.functions.invoke('logProfileSuggestion', {
+                                event_type: 'profile_suggestion_rejected',
+                                job_role: formData.job_role,
+                                suggested_profile_id: profileSuggestion?.suggested_profile_id,
+                                suggested_profile_name: profileSuggestion?.suggested_profile_name,
+                                chosen_profile_id: formData.user_profile_id,
+                                chosen_profile_name: profiles.find(p => p.id === formData.user_profile_id)?.name,
+                                workshop_id: workshop.id
+                              }).catch(console.error);
+                              setProfileSuggestion(null);
+                            }}
                           />
                         </div>
                         <div>

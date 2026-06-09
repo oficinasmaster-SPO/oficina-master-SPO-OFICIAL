@@ -5,55 +5,68 @@
     "event_type": {
       "type": "string",
       "enum": [
-        "profile_suggestion_generated",
-        "profile_suggestion_accepted",
-        "profile_suggestion_rejected"
+        "suggestion_shown",
+        "suggestion_accepted",
+        "suggestion_rejected"
       ],
-      "description": "Tipo de evento de telemetria"
-    },
-    "job_role": {
-      "type": "string",
-      "description": "Job role que gerou a sugest\u00e3o"
-    },
-    "suggested_profile_id": {
-      "type": "string",
-      "description": "ID do perfil sugerido (can\u00f4nico)"
-    },
-    "suggested_profile_name": {
-      "type": "string",
-      "description": "Nome do perfil sugerido"
-    },
-    "chosen_profile_id": {
-      "type": "string",
-      "description": "ID do perfil escolhido (pode ser igual ao sugerido ou diferente)"
-    },
-    "chosen_profile_name": {
-      "type": "string",
-      "description": "Nome do perfil escolhido"
+      "description": "Tipo de evento: sugest\u00e3o exibida, aceita ou rejeitada"
     },
     "workshop_id": {
       "type": "string",
       "description": "ID da oficina"
     },
+    "job_role": {
+      "type": "string",
+      "description": "Job role selecionado"
+    },
+    "suggested_profile_id": {
+      "type": "string",
+      "description": "ID do perfil sugerido"
+    },
+    "suggested_profile_name": {
+      "type": "string",
+      "description": "Nome do perfil sugerido"
+    },
+    "selected_profile_id": {
+      "type": "string",
+      "description": "ID do perfil selecionado pelo usu\u00e1rio (pode ser igual ao sugerido)"
+    },
     "user_id": {
       "type": "string",
-      "description": "ID do usu\u00e1rio que realizou a a\u00e7\u00e3o"
+      "description": "ID do usu\u00e1rio que fez a sele\u00e7\u00e3o"
     },
     "user_email": {
       "type": "string",
       "description": "Email do usu\u00e1rio (cache)"
+    },
+    "accepted": {
+      "type": "boolean",
+      "description": "Se o usu\u00e1rio aceitou a sugest\u00e3o"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora do evento"
     }
   },
   "required": [
     "event_type",
-    "job_role"
+    "job_role",
+    "accepted"
   ],
   "rls": {
     "create": true,
     "read": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
     },
     "update": {
       "user_condition": {
