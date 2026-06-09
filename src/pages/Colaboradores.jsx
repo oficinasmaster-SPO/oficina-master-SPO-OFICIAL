@@ -68,9 +68,14 @@ export default function Colaboradores() {
     queryFn: () => base44.auth.me()
   });
 
-  const { workshop } = useWorkshopContext();
+  const { workshop, isLoading: isWorkshopLoading } = useWorkshopContext();
 
-  const { employees = [], isLoading } = useOptimizedEmployees(workshop?.id);
+  const { employees = [], isLoading: isEmployeesLoading } = useOptimizedEmployees(workshop?.id);
+
+  // DEFESA: aguardar AMBOS — workshop precisa estar resolvido antes de julgar employees.
+  // Sem isso, useOptimizedEmployees pode retornar [] prematuramente enquanto
+  // workshop?.id ainda é undefined (useWorkshopContext ainda carregando).
+  const isLoading = isWorkshopLoading || isEmployeesLoading;
 
   const { data: coexContracts = [] } = useQuery({
     queryKey: ['coex-contracts'],
