@@ -4,31 +4,31 @@ import { useNavigate } from 'react-router-dom';
 
 export const IMP_BAR_HEIGHT = 48;
 
-// Chave isolada por adminUserId — evita vazamento de contexto de impersonação
-// entre sessões de usuários diferentes no mesmo browser.
-export function impersonationKey(adminUserId) {
-  return adminUserId ? `om_impersonation_${adminUserId}` : 'om_impersonation';
+// Namespace por email do admin — mais estavel que userId em migrações
+export function impersonationKey(adminEmail) {
+  return adminEmail
+    ? 'om_impersonation_' + adminEmail.toLowerCase()
+    : 'om_impersonation';
 }
 
-export function getImpersonationData(adminUserId) {
+export function getImpersonationData(adminEmail) {
   try {
-    // Tentar chave por userId primeiro; fallback na chave global legada
-    const key = impersonationKey(adminUserId);
+    const key = impersonationKey(adminEmail);
     const raw = localStorage.getItem(key)
-      || localStorage.getItem('om_impersonation'); // migração
+      || localStorage.getItem('om_impersonation'); // migração legado
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
   }
 }
 
-export function startImpersonation(data, adminUserId) {
+export function startImpersonation(data, adminEmail) {
   localStorage.removeItem('om_impersonation'); // limpar chave global legada
-  localStorage.setItem(impersonationKey(adminUserId), JSON.stringify(data));
+  localStorage.setItem(impersonationKey(adminEmail), JSON.stringify(data));
 }
 
-export function stopImpersonation(adminUserId) {
-  localStorage.removeItem(impersonationKey(adminUserId));
+export function stopImpersonation(adminEmail) {
+  localStorage.removeItem(impersonationKey(adminEmail));
   localStorage.removeItem('om_impersonation'); // limpar legado
 }
 
@@ -36,7 +36,7 @@ import { useAuth } from '@/lib/AuthContext';
 
 export default function ImpersonationBanner() {
   const { user } = useAuth();
-  const data = getImpersonationData(user?.id);
+  const data = getImpersonationData(user?.email);
   const [exiting, setExiting] = useState(false);
 
   // Aplica/remove CSS var na raiz para que sidebar e layout se ajustem
@@ -57,7 +57,7 @@ export default function ImpersonationBanner() {
 
   const handleExit = () => {
     setExiting(true);
-    stopImpersonation(admin?.id);
+    stopImpersonation(admin?.email);
     // Overlay fica visível até a página mudar
     window.location.href = '/GestaoRBAC?tab=usuarios';
   };

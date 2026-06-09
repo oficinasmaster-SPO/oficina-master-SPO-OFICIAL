@@ -37,7 +37,7 @@ export default function Layout({ children, currentPageName }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { isAdminMode, getAdminUrl } = useAdminMode();
   const { workshop, workshopId, workshopsDisponiveis, setCurrentWorkshop, isLoading: isLoadingWorkshop } = useWorkshopContext();
-  const impersonationData = getImpersonationData(user?.id);
+  const impersonationData = getImpersonationData(user?.email);
   const [cssVersion] = useState(Date.now()); // Timestamp fixo por sessão para evitar re-requests
   
   // Usar dados do usuário alvo durante impersonação
@@ -102,14 +102,12 @@ export default function Layout({ children, currentPageName }) {
       localStorage.removeItem('lastVisitedRouteData');
 
       // S2-D1: Limpar chaves de tenant no logout para evitar vazamento cross-session.
-      // Auditoria Base44 (06/2026): handleLogout nao limpava essas chaves,
-      // permitindo que o proximo usuario no mesmo browser herdasse contexto de tenant.
-      // Remove chaves por userId E legados globais.
-      const uid = displayUser?.id || user?.id;
-      if (uid) {
-        localStorage.removeItem('selected_company_id_' + uid);
-        localStorage.removeItem('selected_firm_id_' + uid);
-        localStorage.removeItem('om_impersonation_' + uid);
+      // Usa email como namespace (mesma decisão do TenantContext S2).
+      const email = displayUser?.email?.toLowerCase() || user?.email?.toLowerCase();
+      if (email) {
+        localStorage.removeItem('selected_company_id_' + email);
+        localStorage.removeItem('selected_firm_id_' + email);
+        localStorage.removeItem('om_impersonation_' + email);
       }
       localStorage.removeItem('selected_company_id');
       localStorage.removeItem('selected_firm_id');

@@ -11,10 +11,10 @@ export default function ImpersonationCacheInvalidator() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   // Inicializar com o estado atual para evitar falso positivo no primeiro render
-  const lastImpersonationStateRef = useRef(!!getImpersonationData(user?.id));
+  const lastImpersonationStateRef = useRef(!!getImpersonationData(user?.email));
 
   useEffect(() => {
-    const impersonationData = getImpersonationData(user?.id);
+    const impersonationData = getImpersonationData(user?.email);
     const isCurrentlyImpersonating = !!impersonationData;
     const wasImpersonating = lastImpersonationStateRef.current;
 

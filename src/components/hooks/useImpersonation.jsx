@@ -8,7 +8,7 @@ import { useAuth } from '@/lib/AuthContext';
  */
 export function useImpersonation() {
   const { user: realUser } = useAuth();
-  const impersonationData = useMemo(() => getImpersonationData(realUser?.id), [realUser?.id]);
+  const impersonationData = useMemo(() => getImpersonationData(realUser?.email), [realUser?.email]);
 
   if (!impersonationData || !realUser) {
     return {
@@ -60,7 +60,7 @@ export function useImpersonation() {
  * Pode ser usado fora de componentes React
  */
 export function getEffectiveUser(realUser) {
-  const data = getImpersonationData(realUser?.id);
+  const data = getImpersonationData(realUser?.email);
   
   if (!data || !data.target_user || !realUser) {
     return realUser;

@@ -4,6 +4,22 @@ import { queryClientInstance } from '@/lib/query-client';
 import { useAuth } from '@/lib/AuthContext';
 import WheelLoader from '@/components/ui/WheelLoader';
 
+// ─── localStorage helpers com namespace por email do usuário ──────────────────
+// Usa email (não userId) como namespace — mais estável em cenários de migração,
+// merge de contas ou troca de provider auth.
+// localStorage aceita @ e . em chaves sem restrições.
+function companyKey(userEmail) {
+  return userEmail
+    ? 'selected_company_id_' + userEmail.toLowerCase()
+    : 'selected_company_id';
+}
+function firmKey(userEmail) {
+  return userEmail
+    ? 'selected_firm_id_' + userEmail.toLowerCase()
+    : 'selected_firm_id';
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 const TenantContext = createContext();
 
 export function TenantProvider({ children }) {
@@ -12,7 +28,11 @@ export function TenantProvider({ children }) {
   
   // Consulting Firm State
   const [consultingFirm, setConsultingFirm] = useState(null);
-  const [selectedFirmId, setSelectedFirmId] = useState(() => localStorage.getItem('selected_firm_id'));
+  const [selectedFirmId, setSelectedFirmId] = useState(() => {
+    // Migração: tenta chave por userId primeiro (não disponível no init, userId ainda não carregado)
+    // Na primeira carga, usa a chave global legada como fallback
+    return localStorage.getItem('selected_firm_id') || null;
+  });
   
   // Company State
   const [company, setCompany] = useState(null);
@@ -49,10 +69,19 @@ export function TenantProvider({ children }) {
           let firmIdToLoad = selectedFirmId;
           
           // Se não tem firm selecionado no localStorage, usa o do usuário default
-          if (!firmIdToLoad && currentUser.data?.consulting_firm_id) {
-             firmIdToLoad = currentUser.data.consulting_firm_id;
-             setSelectedFirmId(firmIdToLoad);
-             localStorage.setItem('selected_firm_id', firmIdToLoad);
+          if (!firmIdToLoad) {
+            // Tentar migrar da chave global para a chave por email
+            const legacyFirmId = localStorage.getItem('selected_firm_id');
+            if (legacyFirmId) {
+              firmIdToLoad = legacyFirmId;
+              localStorage.removeItem('selected_firm_id'); // limpar chave global
+              localStorage.setItem(firmKey(currentUser.email), firmIdToLoad);
+              setSelectedFirmId(firmIdToLoad);
+            } else if (currentUser.data?.consulting_firm_id) {
+              firmIdToLoad = currentUser.data.consulting_firm_id;
+              setSelectedFirmId(firmIdToLoad);
+              localStorage.setItem(firmKey(currentUser.email), firmIdToLoad);
+            }
           }
           
           if (firmIdToLoad) {
@@ -66,7 +95,13 @@ export function TenantProvider({ children }) {
           
           // LOAD-03: usar apenas o ID do localStorage/perfil sem validar via query
           // A validação real acontece em useWorkshopContext via getUserWorkshops (BFF)
-          const storedCompanyId = localStorage.getItem('selected_company_id');
+          // Migração: se existe chave global legada, migrar para chave por email
+          const legacyCompanyId = localStorage.getItem('selected_company_id');
+          if (legacyCompanyId) {
+            localStorage.setItem(companyKey(currentUser.email), legacyCompanyId);
+            localStorage.removeItem('selected_company_id');
+          }
+          const storedCompanyId = localStorage.getItem(companyKey(currentUser.email));
           const compIdToLoad = storedCompanyId
             || currentUser.data?.workshop_id
             || currentUser.data?.company_id
@@ -99,10 +134,12 @@ export function TenantProvider({ children }) {
   }, [isLoadingAuth, isAuthenticated, authUser?.id, selectedFirmId, companySwitch]);
 
   const changeConsultingFirm = (firmId) => {
+    const email = user?.email;
     if (firmId) {
-      localStorage.setItem('selected_firm_id', firmId);
+      localStorage.setItem(firmKey(email), firmId);
     } else {
-      localStorage.removeItem('selected_firm_id');
+      localStorage.removeItem(firmKey(email));
+      localStorage.removeItem('selected_firm_id'); // limpar legado
     }
     setSelectedFirmId(firmId);
     // Reset company when firm changes
@@ -115,10 +152,12 @@ export function TenantProvider({ children }) {
 
     setIsSwitching(true);
 
+    const email = user?.email;
     if (compId) {
-      localStorage.setItem('selected_company_id', compId);
+      localStorage.setItem(companyKey(email), compId);
     } else {
-      localStorage.removeItem('selected_company_id');
+      localStorage.removeItem(companyKey(email));
+      localStorage.removeItem('selected_company_id'); // limpar legado
     }
     
     // Limpa o cache global ao trocar de tenant para evitar vazamento visual
