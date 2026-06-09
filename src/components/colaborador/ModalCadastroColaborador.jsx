@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, Save, UserPlus, User, DollarSign, TrendingUp, Plus, Trash2, X, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { jobRoles } from "@/components/lib/jobRoles";
+import { CANONICAL_PROFILE_JOB_ROLES } from "@/components/lib/canonicalProfiles";
 import { motion, AnimatePresence } from "framer-motion";
 import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 
@@ -91,11 +92,11 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
       setJobDescriptions(descriptions.filter(d => !userWorkshop || d.workshop_id === userWorkshop.id));
 
       const allProfiles = await base44.entities.UserProfile.list();
+      // Whitelist de perfis canônicos externos (Fase 3 SPO)
       // Perfis internos/sistema nunca aparecem no cadastro de colaboradores de oficinas
       setProfiles(allProfiles.filter(p => 
         p.status === 'ativo' && 
-        p.type !== 'interno' &&
-        p.type !== 'sistema' &&
+        p.job_roles?.some(role => CANONICAL_PROFILE_JOB_ROLES.includes(role)) &&
         (!p.workshop_id || p.workshop_id === userWorkshop?.id)
       ));
     } catch (error) {
@@ -432,7 +433,7 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
                             <SelectTrigger><SelectValue placeholder="Selecione o perfil..." /></SelectTrigger>
                             <SelectContent>
                               <SelectItem value="none">Nenhum perfil</SelectItem>
-                              {profiles.filter(p => p.type !== 'interno' && p.type !== 'sistema').map(profile => (
+                              {profiles.map(profile => (
                                 <SelectItem key={profile.id} value={profile.id}>
                                   {profile.name}
                                 </SelectItem>

@@ -15,6 +15,8 @@ import EmailPreview from "@/components/convite/EmailPreview";
 import WhatsAppButton from "@/components/convite/WhatsAppButton";
 import StatusBadge from "@/components/convite/StatusBadge";
 import { jobRoles } from "@/components/lib/jobRoles";
+
+
 import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 import { useNavigate } from "react-router-dom";
 
@@ -53,17 +55,18 @@ export default function ConvidarColaborador() {
     queryFn: async () => {
       const allProfiles = await base44.entities.UserProfile.list();
       
-      // Filtro de segurança: perfis devem ser do tipo adequado E pertencer ao workshop/tenant atual
-      // Se UserProfile não tiver workshop_id explícito, assume-se perfis globais ou criados pelo admin
+      // WHITELIST: apenas perfis canônicos aprovados aparecem no cadastro.
+      // Isso impede que perfis criados acidentalmente com type=externo
+      // apareçam automaticamente para todas as oficinas.
       const filtered = allProfiles.filter(p => 
-        (p.type === 'externo' || p.type === 'cliente' || p.type === 'interno') && 
         p.status === 'ativo' &&
+        p.job_roles?.some(role => CANONICAL_PROFILE_JOB_ROLES.includes(role)) &&
         // Verifica se o perfil pertence ao workshop do admin (Isolamento Multi-tenant)
         // Se p.workshop_id existir, deve bater. Se não existir, assume perfil de sistema (global).
         (!p.workshop_id || p.workshop_id === workshop?.id)
       );
       
-      console.log("📋 Perfis filtrados por segurança:", filtered);
+      console.log("📋 Perfis filtrados por segurança (whitelist canônica):", filtered);
       return filtered;
     },
     enabled: !!workshop?.id // Só busca quando tiver oficina carregada

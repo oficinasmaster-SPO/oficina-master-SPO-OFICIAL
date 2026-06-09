@@ -9,6 +9,7 @@ import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFoo
 import { Loader2, CheckCircle2, User, Upload, Save, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { jobRoles } from "@/components/lib/jobRoles";
+import { CANONICAL_PROFILE_IDS } from "@/components/lib/canonicalProfiles";
 
 const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack, onEditingChange }, ref) => {
   const [loading, setLoading] = useState(true);
@@ -83,13 +84,15 @@ const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack, on
       const allProfiles = await base44.entities.UserProfile.list();
       console.log("📊 allProfiles total:", allProfiles.length);
       
+      // Whitelist de perfis canônicos externos (Fase 3 SPO)
       // Filtra apenas ativos e garante que não apareçam perfis de outras oficinas
       const filtered = allProfiles.filter(p => 
-        p.status === 'ativo' && 
+        p.status === 'ativo' &&
+        p.job_roles?.some(role => CANONICAL_PROFILE_JOB_ROLES.includes(role)) &&
         (!p.workshop_id || p.workshop_id === workshop?.id)
       );
       setProfiles(filtered);
-      console.log("📊 profiles filtrados:", filtered.length);
+      console.log("📊 profiles filtrados (whitelist canônica):", filtered.length);
 
       // Tenta encontrar especificamente o Socio/Proprietário (externo)
       const socioProfile = filtered.find(p => 
