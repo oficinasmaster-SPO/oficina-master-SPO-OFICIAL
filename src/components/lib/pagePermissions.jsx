@@ -143,6 +143,7 @@ export const pagePermissions = {
   CESPESonho: "employees.create",
 
   // Treinamentos
+  TreinamentoVendas: "training.view",
   AcademiaTreinamento: "training.view",
   GerenciarTreinamentos: "training.manage",
   MeusTreinamentos: "training.view",

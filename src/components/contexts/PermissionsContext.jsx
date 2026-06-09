@@ -245,6 +245,8 @@ export function PermissionsProvider({ children }) {
         if (requiredPermission === 'admin.rbac') return false;
         if (requiredPermission === 'admin.financeiro') return false;
         if (requiredPermission === 'admin.audit') return false;
+        if (requiredPermission === 'admin.profiles') return false;
+        if (requiredPermission === 'admin.system_config') return false;
         return true;
       }
 
