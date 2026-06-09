@@ -1061,6 +1061,14 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
     // Extrai o nome da página da URL (ex: "/GestaoOficina?..." -> "GestaoOficina")
     const pageKey = item.href ? item.href.split('?')[0].split('/').filter(Boolean).pop() : null;
 
+    // FALLBACK: Usuário sem Employee/Profile (recém-criado) tem acesso mínimo
+    // Isso evita tela em branco no sidebar — depois o autoAssignProfile resolve
+    const hasNoProfile = !profile && (!user.job_role || user.job_role === 'outros');
+    const essentialPages = ['DashboardOverview', 'MeuPerfil', 'Planos', 'Notificacoes'];
+    if (hasNoProfile && pageKey && essentialPages.includes(pageKey)) {
+      return true;
+    }
+
     if (pageKey && pageKey !== '') {
       return canAccessPage(pageKey);
     } else if (item.requiredPermission) {
