@@ -9,7 +9,7 @@ import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFoo
 import { Loader2, CheckCircle2, User, Upload, Save, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { jobRoles } from "@/components/lib/jobRoles";
-import { CANONICAL_PROFILE_IDS } from "@/components/lib/canonicalProfiles";
+import { CANONICAL_PROFILE_IDS, CANONICAL_PROFILE_JOB_ROLES } from "@/components/lib/canonicalProfiles";
 
 const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack, onEditingChange }, ref) => {
   const [loading, setLoading] = useState(true);

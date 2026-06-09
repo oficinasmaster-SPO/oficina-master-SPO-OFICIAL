@@ -15,6 +15,7 @@ import EmailPreview from "@/components/convite/EmailPreview";
 import WhatsAppButton from "@/components/convite/WhatsAppButton";
 import StatusBadge from "@/components/convite/StatusBadge";
 import { jobRoles } from "@/components/lib/jobRoles";
+import { CANONICAL_PROFILE_JOB_ROLES } from "@/components/lib/canonicalProfiles";
 
 
 import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
