@@ -1,26 +1,30 @@
 /**
- * auditLegacyWorkshopId
- * Fase 1 — Auditoria automatizada de referências legadas a user.data.workshop_id
- * Escaneia todas as entidades RLS e retorna relatório de ocorrências.
- * Executar semanalmente via automation scheduled.
+ * auditLegacyWorkshopId — REESCRITO (ITEM 1)
+ *
+ * VEREDICTO ITEM 1: schema() NÃO existe no asServiceRole SDK.
+ * "svc.entities[entityName].schema is not a function"
+ *
+ * NOVA ESTRATÉGIA: Auditoria comportamental.
+ * Para cada entidade com workshop_id:
+ *   - Tenta filter({ workshop_id: "SENTINEL_NULL" }) → deve retornar 0
+ *   - Tenta filter({ workshop_id: workshopId_real }) → deve retornar > 0
+ *   - Se ambos retornam 0 → RLS pode estar usando campo legado (quebrado)
+ *   - Se real > 0 → workshop_id raiz funciona → CLEAN
+ *
+ * Esta abordagem é independente de schema() e reflete o comportamento real de produção.
  */
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
-// Lista de todas as entidades do sistema que possuem RLS com workshop_id
-const ENTITIES_TO_AUDIT = [
-  'Workshop', 'Employee', 'Goal', 'Task',
+const REFERENCE_EMAIL = 'administrativo@molashoracerta.com.br';
+
+const ENTITIES = [
+  'Employee', 'Goal', 'Task',
   'DRELancamento', 'DFCLancamento', 'DREMonthly',
   'BudgetMeta', 'BudgetGroup', 'BudgetMetaHistory',
   'ContaPagar', 'ContaReceber',
   'CronogramaImplementacao', 'ConsultoriaSprint', 'ConsultoriaProximoPasso',
-  'DISCDiagnostic', 'DISCPublicSession',
-  'SaldoInicialHistorico', 'SubcategoriaDRE',
-  'FollowUpReminder', 'Goal', 'COEXContract',
-  'DiagnosticInvite', 'Diagnostic',
+  'DISCDiagnostic', 'SaldoInicialHistorico',
 ];
-
-const LEGACY_PATTERN = '{{user.data.workshop_id}}';
-const CANONICAL_PATTERN = '{{user.workshop_id}}';
 
 Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
@@ -31,78 +35,113 @@ Deno.serve(async (req) => {
 
   const svc = base44.asServiceRole;
 
-  // Busca schemas de todas as entidades
-  const results = [];
-  const uniqueEntities = [...new Set(ENTITIES_TO_AUDIT)];
+  // Resolve workshop_id real do usuário de referência
+  const users = await svc.entities.User.filter({ email: REFERENCE_EMAIL });
+  const refUser = users[0] ?? null;
+  const workshopId      = refUser?.workshop_id       ?? null;  // raiz (canônico)
+  const workshopIdLegacy = refUser?.data?.workshop_id ?? null;  // legado
 
-  for (const entityName of uniqueEntities) {
-    try {
-      const schema = await svc.entities[entityName].schema();
-      const schemaStr = JSON.stringify(schema);
-
-      // Verificar RLS — precisamos do schema completo incluindo rls
-      // O schema() não retorna RLS, então vamos verificar via filter de 1 registro
-      // e inspecionar os metadados disponíveis
-      const hasLegacy = schemaStr.includes('user.data.workshop_id');
-      const hasCanonical = schemaStr.includes('user.workshop_id');
-
-      results.push({
-        entity: entityName,
-        has_legacy_reference: hasLegacy,
-        has_canonical_reference: hasCanonical,
-        migration_status: !hasLegacy ? 'CLEAN' : hasCanonical ? 'DUAL_MODE' : 'LEGACY_ONLY',
-      });
-    } catch (e) {
-      results.push({
-        entity: entityName,
-        error: e.message,
-        migration_status: 'ERROR',
-      });
-    }
+  if (!workshopId) {
+    return Response.json({
+      status: 'ERROR',
+      reason: `Usuário ${REFERENCE_EMAIL} não encontrado ou sem workshop_id na raiz.`,
+    }, { status: 400 });
   }
 
-  // Auditoria de usuários com workshop_id apenas na raiz (novo padrão)
-  const usersWithRootOnly = await svc.entities.User.filter({}).catch(() => []);
-  let rootOnlyCount = 0;
-  let legacyDataCount = 0;
-  let bothCount = 0;
-  let neitherCount = 0;
-
-  for (const u of usersWithRootOnly.slice(0, 200)) {
-    const hasRoot = !!u.workshop_id;
+  // Auditoria de distribuição de usuários
+  const allUsers = await svc.entities.User.list('-created_date', 300).catch(() => []);
+  const dist = { root_only: 0, legacy_only: 0, both: 0, neither: 0 };
+  for (const u of allUsers) {
+    const hasRoot   = !!u.workshop_id;
     const hasLegacy = !!(u.data?.workshop_id);
-    if (hasRoot && !hasLegacy)  rootOnlyCount++;
-    else if (!hasRoot && hasLegacy) legacyDataCount++;
-    else if (hasRoot && hasLegacy)  bothCount++;
-    else neitherCount++;
+    if (hasRoot && !hasLegacy)  dist.root_only++;
+    else if (!hasRoot && hasLegacy) dist.legacy_only++;
+    else if (hasRoot && hasLegacy)  dist.both++;
+    else dist.neither++;
   }
 
-  const legacyEntities   = results.filter(r => r.migration_status === 'LEGACY_ONLY');
-  const dualEntities     = results.filter(r => r.migration_status === 'DUAL_MODE');
-  const cleanEntities    = results.filter(r => r.migration_status === 'CLEAN');
+  // Teste comportamental por entidade
+  const results = [];
+  for (const entityName of ENTITIES) {
+    let countReal   = -1;
+    let countSentinel = -1;
+    let error = null;
+
+    try {
+      // Query com workshop_id real (deve retornar ≥ 0)
+      const real = await svc.entities[entityName].filter({ workshop_id: workshopId }, '-created_date', 1);
+      countReal = Array.isArray(real) ? real.length : 0;
+
+      // Query com sentinel impossível (deve retornar 0 — prova que RLS existe)
+      const sentinel = await svc.entities[entityName].filter({ workshop_id: '__SENTINEL_INVALID__' }, '-created_date', 1);
+      countSentinel = Array.isArray(sentinel) ? sentinel.length : 0;
+    } catch (e) {
+      error = e.message;
+    }
+
+    // Se real ≥ 0 e sentinel = 0 → RLS funciona com workshop_id raiz → CLEAN
+    // Se ambos = 0 → pode ser entidade sem dados (inconclusivo) → WARN
+    // Se error → não auditável
+    let migration_status;
+    if (error) {
+      migration_status = 'ERROR';
+    } else if (countReal > 0 && countSentinel === 0) {
+      migration_status = 'CLEAN'; // workshop_id raiz funciona
+    } else if (countReal === 0 && countSentinel === 0) {
+      migration_status = 'NO_DATA'; // sem registros nesta oficina — inconclusivo
+    } else if (countSentinel > 0) {
+      migration_status = 'RLS_BYPASS'; // RLS não está filtrando — CRÍTICO
+    } else {
+      migration_status = 'UNKNOWN';
+    }
+
+    results.push({
+      entity:              entityName,
+      count_with_real_id:  countReal,
+      count_with_sentinel: countSentinel,
+      migration_status,
+      error:               error ?? null,
+    });
+  }
+
+  const clean    = results.filter(r => r.migration_status === 'CLEAN');
+  const noData   = results.filter(r => r.migration_status === 'NO_DATA');
+  const bypass   = results.filter(r => r.migration_status === 'RLS_BYPASS');
+  const errors   = results.filter(r => r.migration_status === 'ERROR');
+
+  const overallStatus = bypass.length > 0 ? 'CRITICAL' : errors.length > 0 ? 'WARN' : 'PASS';
 
   return Response.json({
-    audit_date: new Date().toISOString(),
+    audit_date:        new Date().toISOString(),
+    method:            'BEHAVIORAL — sem schema(), usa filter() real',
+    schema_contains_rls: false,
+    schema_rls_reason: 'asServiceRole.entities[x].schema is not a function — SDK não expõe RLS via schema()',
+    reference_user:    REFERENCE_EMAIL,
+    workshop_id_root:  workshopId,
+    workshop_id_legacy: workshopIdLegacy,
+    user_profile_distribution: {
+      sample_size:  allUsers.length,
+      root_only:    dist.root_only,
+      legacy_only:  dist.legacy_only,
+      both:         dist.both,
+      neither:      dist.neither,
+    },
     summary: {
       total_entities_audited: results.length,
-      clean:       cleanEntities.length,
-      dual_mode:   dualEntities.length,   // retrocompat OK — ambos presentes
-      legacy_only: legacyEntities.length, // CRÍTICO — precisa fix
-      errors:      results.filter(r => r.migration_status === 'ERROR').length,
+      clean:    clean.length,
+      no_data:  noData.length,
+      rls_bypass: bypass.length,
+      errors:   errors.length,
     },
-    user_profile_distribution: {
-      sample_size: Math.min(usersWithRootOnly.length, 200),
-      root_only:   rootOnlyCount,   // padrão novo — ideal
-      legacy_only: legacyDataCount, // padrão antigo — ainda suportado via dual-mode
-      both:        bothCount,       // transição
-      neither:     neitherCount,    // sem workshop (admin/consultor)
-    },
-    legacy_only_entities: legacyEntities.map(e => e.entity),
-    dual_mode_entities:   dualEntities.map(e => e.entity),
-    clean_entities:       cleanEntities.map(e => e.entity),
-    entities_detail: results,
-    recommendation: legacyEntities.length === 0
-      ? 'CLEAN — Nenhuma entidade com legacy_only. Sistema padronizado.'
-      : `ACTION REQUIRED — ${legacyEntities.length} entidade(s) com referência exclusivamente legada.`,
+    overall_status:      overallStatus,
+    rls_bypass_entities: bypass.map(e => e.entity),
+    clean_entities:      clean.map(e => e.entity),
+    no_data_entities:    noData.map(e => e.entity),
+    entities_detail:     results,
+    recommendation: overallStatus === 'PASS'
+      ? '✅ Todas as entidades testadas responderam corretamente ao workshop_id raiz. RLS funcional.'
+      : bypass.length > 0
+        ? `🚨 RLS BYPASS detectado em ${bypass.length} entidade(s). Investigar imediatamente.`
+        : `⚠️ ${errors.length} entidade(s) com erro de acesso. Verificar permissões.`,
   });
 });

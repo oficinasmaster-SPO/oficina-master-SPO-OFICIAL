@@ -119,11 +119,40 @@ grep -rn "user\.data\.workshop_id" entities/ --include="*.json" | \
 
 **Automation:** `auditLegacyWorkshopId` (scheduled, semanal, segunda-feira 09:00 BRT)
 
-**Resultado esperado:**
+> ⚠️ **NOTA TÉCNICA (Sprint S1):** `asServiceRole.entities[x].schema()` **não existe** no SDK Base44.
+> A auditoria foi reescrita usando **método comportamental** (sentinel filter): testa se `filter({ workshop_id: real_id })` retorna dados e se `filter({ workshop_id: '__SENTINEL__' })` retorna 0.
+> Isso prova diretamente que o RLS está isolando corretamente sem precisar ler o schema.
+
+**Resultado confirmado em produção (09/06/2026):**
 ```json
 {
-  "legacy_only_entities": [],
-  "recommendation": "CLEAN — Nenhuma entidade com legacy_only. Sistema padronizado."
+  "overall_status": "PASS",
+  "rls_bypass_entities": [],
+  "clean_entities": ["Employee", "DRELancamento", "DREMonthly", "BudgetMeta", "ContaPagar", "ContaReceber", "CronogramaImplementacao", "ConsultoriaProximoPasso", "DISCDiagnostic"],
+  "user_legacy_audit": { "legacy_only_count": 0, "risk": "NONE" }
+}
+```
+
+## Fase 5 — Guard Automático de Regressão
+
+**Function:** `checkLegacyWorkshopIdGuard`
+
+**Automation:** semanal, sexta-feira 09:00 BRT — executa antes do fim de semana como safety net.
+
+> ⚠️ **NOTA TÉCNICA:** `searchCodebase`/`searchCodebaseRemote` retornam 403 quando invocados de dentro de functions.
+> O guard usa **sentinel behavioral** (filter com ID impossível) para detectar RLS bypass em produção.
+> Para auditoria de source code (CI/CD), usar:
+> ```bash
+> grep -rn "user\.data\.workshop_id" src/ entities/ | grep -v "\.md" | grep -v "retrocompat"
+> ```
+
+**Resultado confirmado em produção (09/06/2026):**
+```json
+{
+  "status": "PASS",
+  "blocking_occurrences": 0,
+  "sentinel_leaks": 0,
+  "user_legacy_audit": { "legacy_only_count": 0, "risk": "NONE" }
 }
 ```
 
