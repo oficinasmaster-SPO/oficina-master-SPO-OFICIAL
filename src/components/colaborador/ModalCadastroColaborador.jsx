@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { jobRoles } from "@/components/lib/jobRoles";
 import { CANONICAL_PROFILE_JOB_ROLES } from "@/components/lib/canonicalProfiles";
 import { motion, AnimatePresence } from "framer-motion";
+import ProfileSuggestionBanner from "./ProfileSuggestionBanner";
 import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 
 export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess }) {
@@ -24,6 +25,8 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
   const [jobDescriptions, setJobDescriptions] = useState([]);
   const [profiles, setProfiles] = useState([]);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [profileSuggestion, setProfileSuggestion] = useState(null);
+  const [checkingSuggestion, setCheckingSuggestion] = useState(false);
   
   const [formData, setFormData] = useState({
     workshop_id: "", full_name: "", cpf: "", rg: "", data_nascimento: "", telefone: "", email: "",
@@ -73,6 +76,38 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
     window.addEventListener('keydown', handleEsc);
     return () => window.removeEventListener('keydown', handleEsc);
   }, [isOpen, onClose]);
+
+  // Buscar sugestão de perfil quando job_role muda
+  useEffect(() => {
+    if (!formData.job_role || !workshop?.id) {
+      setProfileSuggestion(null);
+      return;
+    }
+
+    const checkSuggestion = async () => {
+      setCheckingSuggestion(true);
+      try {
+        const response = await base44.functions.invoke('autoAssignProfile', {
+          job_role: formData.job_role,
+          workshop_id: workshop.id,
+          current_profile_id: formData.user_profile_id
+        });
+
+        if (response.data.success && response.data.has_suggestion) {
+          setProfileSuggestion(response.data);
+        } else {
+          setProfileSuggestion(null);
+        }
+      } catch (error) {
+        console.error('Erro ao verificar sugestão:', error);
+        setProfileSuggestion(null);
+      } finally {
+        setCheckingSuggestion(false);
+      }
+    };
+
+    checkSuggestion();
+  }, [formData.job_role, workshop?.id, formData.user_profile_id]);
 
   const loadData = async () => {
     setLoading(true);
@@ -451,6 +486,17 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
                               ))}
                             </SelectContent>
                           </Select>
+                          
+                          <ProfileSuggestionBanner
+                            profileSuggestion={profileSuggestion}
+                            checkingSuggestion={checkingSuggestion}
+                            job_role={formData.job_role}
+                            onApplySuggestion={(profileId) => {
+                              setFormData({...formData, user_profile_id: profileId});
+                              setProfileSuggestion(null);
+                            }}
+                            onDismiss={() => setProfileSuggestion(null)}
+                          />
                         </div>
                         <div>
                           <Label>Área</Label>

@@ -1,8 +1,9 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 /**
  * Regras de atribuição automática de perfil por job_role
  * Mapeamento: job_role -> profile_name
+ * Tabela oficial congelada (Fase 1)
  */
 const JOB_ROLE_TO_PROFILE = {
   'socio': 'Sócio - Acesso Total',
@@ -10,204 +11,33 @@ const JOB_ROLE_TO_PROFILE = {
   'gerente': 'Gerente - Gestão Operacional',
   'supervisor_loja': 'Supervisor - Operação e Equipe',
   'lider_tecnico': 'Líder Técnico - Coordenação Técnica',
-  'financeiro': 'Financeiro - Gestão Financeira',
+  'financeiro': 'Financeiro - Controle Financeiro',
   'rh': 'RH - Gestão de Pessoas',
   'tecnico': 'Técnico - Execução e Produção',
+  'funilaria_pintura': 'Técnico - Funilaria e Pintura',
   'comercial': 'Comercial - Vendas e Atendimento',
   'consultor_vendas': 'Vendedor - Atendimento ao Cliente',
   'marketing': 'Marketing - Comunicação e Marketing',
-  'administrativo': 'Administrativo - Suporte e Administração',
+  'administrativo': 'Administrativo - Suporte Interno',
+  'estoque': 'Estoque - Controle de Peças',
   'acelerador': 'Acelerador',
   'consultor': 'Consultor',
   'mentor': 'Mentor',
-  'outros': 'Colaborador Básico'
+  'motoboy': 'Outros - Acesso Básico',
+  'lavador': 'Outros - Acesso Básico',
+  'outros': 'Outros - Acesso Básico'
 };
 
 /**
- * Busca ou cria perfil padrão baseado no job_role
+ * Busca perfil existente pelo nome
  */
-async function getOrCreateDefaultProfile(base44, jobRole, workshopId) {
-  const profileName = JOB_ROLE_TO_PROFILE[jobRole] || 'Colaborador Básico';
-  const type = ['acelerador', 'consultor', 'mentor', 'socio_interno'].includes(jobRole) ? 'interno' : 'externo';
+async function findProfileByName(base44, profileName) {
+  const profiles = await base44.asServiceRole.entities.UserProfile.filter({ 
+    name: profileName,
+    status: 'ativo'
+  });
   
-  try {
-    // Buscar perfil existente
-    const profiles = await base44.asServiceRole.entities.UserProfile.filter({ 
-      name: profileName
-    });
-    
-    if (profiles && profiles.length > 0) {
-      const existingProfile = profiles[0];
-      const expectedRoles = getDefaultRoles(jobRole);
-      const currentRoles = existingProfile.roles || [];
-      
-      const hasLegacyRoles = currentRoles.some(r => r.includes('_') && !r.includes('.'));
-      
-      if (hasLegacyRoles || currentRoles.length === 0 || existingProfile.type !== type) {
-         await base44.asServiceRole.entities.UserProfile.update(existingProfile.id, {
-            roles: expectedRoles,
-            type: type
-         });
-         existingProfile.roles = expectedRoles;
-         existingProfile.type = type;
-      }
-      return existingProfile;
-    }
-    
-    // Criar perfil padrão se não existir
-    const newProfile = await base44.asServiceRole.entities.UserProfile.create({
-      name: profileName,
-      type: 'interno',
-      job_roles: [jobRole],
-      status: 'ativo',
-      description: `Perfil padrão para ${profileName}`,
-      module_permissions: getDefaultModulePermissions(jobRole),
-      roles: getDefaultRoles(jobRole)
-    });
-    
-    console.log(`✅ Perfil criado: ${profileName} para job_role: ${jobRole}`);
-    return newProfile;
-  } catch (error) {
-    console.error('Erro ao buscar/criar perfil:', error);
-    return null;
-  }
-}
-
-/**
- * Define permissões de módulo padrão por job_role
- */
-function getDefaultModulePermissions(jobRole) {
-  const basePermissions = {
-    dashboard: 'visualizacao',
-    cadastros: 'bloqueado',
-    patio: 'bloqueado',
-    resultados: 'bloqueado',
-    pessoas: 'bloqueado',
-    diagnosticos: 'bloqueado',
-    processos: 'bloqueado',
-    documentos: 'bloqueado',
-    cultura: 'bloqueado',
-    treinamentos: 'visualizacao',
-    gestao: 'bloqueado',
-    aceleracao: 'bloqueado',
-    admin: 'bloqueado'
-  };
-  
-  // Ajustar por nível hierárquico
-  switch(jobRole) {
-    case 'socio':
-    case 'diretor':
-      return Object.keys(basePermissions).reduce((acc, key) => {
-        acc[key] = 'total';
-        return acc;
-      }, {});
-      
-    case 'gerente':
-    case 'supervisor_loja':
-      return {
-        ...basePermissions,
-        dashboard: 'total',
-        cadastros: 'total',
-        patio: 'total',
-        pessoas: 'total',
-        diagnosticos: 'total',
-        processos: 'visualizacao',
-        resultados: 'total'
-      };
-      
-    case 'lider_tecnico':
-      return {
-        ...basePermissions,
-        dashboard: 'visualizacao',
-        patio: 'total',
-        processos: 'visualizacao',
-        documentos: 'visualizacao'
-      };
-      
-    case 'financeiro':
-      return {
-        ...basePermissions,
-        dashboard: 'total',
-        resultados: 'total',
-        gestao: 'total'
-      };
-      
-    case 'rh':
-      return {
-        ...basePermissions,
-        pessoas: 'total',
-        cultura: 'total',
-        treinamentos: 'total'
-      };
-      
-    default:
-      return basePermissions;
-  }
-}
-
-/**
- * Define roles padrão por job_role
- */
-function getDefaultRoles(jobRole) {
-  switch(jobRole) {
-    case 'socio':
-    case 'socio_interno':
-    case 'diretor':
-      return [
-        'dashboard.view', 'dashboard.edit', 'dashboard.export',
-        'workshop.view', 'workshop.edit', 'workshop.manage_goals',
-        'employees.view', 'employees.create', 'employees.edit', 'employees.delete', 'employees.manage_permissions', 'employees.cdc', 'employees.climate', 'employees.feedback',
-        'financeiro.view', 'financeiro.edit', 'financeiro.approve', 'financeiro.export',
-        'diagnostics.view', 'diagnostics.create', 'diagnostics.ai_access',
-        'processes.view', 'processes.create', 'processes.edit', 'processes.checklists', 'documents.view', 'documents.upload',
-        'culture.view', 'culture.edit', 'culture.manage_rituals',
-        'training.view', 'training.create', 'training.manage', 'training.evaluate',
-        'operations.view_qgp', 'operations.manage_tasks', 'operations.daily_log', 'operations.technician_qgp',
-        'goals.view', 'goals.create', 'actions.view',
-        'analytics.view',
-        'clients.view',
-        'acceleration.view'
-      ];
-      
-    case 'gerente':
-    case 'supervisor_loja':
-      return [
-        'dashboard.view', 'dashboard.edit',
-        'workshop.view', 'workshop.manage_goals',
-        'employees.view', 'employees.create', 'employees.edit', 'employees.cdc', 'employees.climate', 'employees.feedback',
-        'processes.view', 'processes.checklists', 'documents.view', 'documents.upload',
-        'operations.view_qgp', 'operations.manage_tasks', 'operations.daily_log',
-        'goals.view', 'goals.create', 'actions.view',
-        'clients.view'
-      ];
-      
-    case 'lider_tecnico':
-      return [
-        'dashboard.view', 
-        'employees.view', 
-        'operations.view_qgp', 'operations.manage_tasks', 'operations.daily_log',
-        'processes.view', 'documents.view'
-      ];
-      
-    case 'financeiro':
-      return [
-        'dashboard.view', 
-        'financeiro.view', 'financeiro.edit', 'financeiro.export',
-        'documents.view', 'documents.upload'
-      ];
-      
-    case 'rh':
-      return [
-        'dashboard.view',
-        'employees.view', 'employees.create', 'employees.edit', 'employees.cdc', 'employees.climate', 'employees.feedback',
-        'training.view', 'training.create', 'training.manage', 'training.evaluate',
-        'culture.view', 'culture.edit', 'culture.manage_rituals',
-        'documents.view', 'documents.upload'
-      ];
-      
-    default:
-      return ['dashboard.view', 'operations.view_qgp', 'operations.daily_log'];
-  }
+  return profiles && profiles.length > 0 ? profiles[0] : null;
 }
 
 Deno.serve(async (req) => {
@@ -220,8 +50,57 @@ Deno.serve(async (req) => {
     }
     
     const payload = await req.json();
-    const { employee_id, job_role, force = false } = payload;
+    const { 
+      employee_id, 
+      job_role, 
+      workshop_id,
+      current_profile_id,
+      force = false 
+    } = payload;
     
+    // Modo observação: apenas sugere, não aplica (UI do modal)
+    if (job_role && !employee_id) {
+      const profileName = JOB_ROLE_TO_PROFILE[job_role];
+      
+      if (!profileName) {
+        return Response.json({
+          success: true,
+          has_suggestion: false,
+          message: 'Sem sugestão para este job_role'
+        });
+      }
+      
+      const profile = await findProfileByName(base44, profileName);
+      
+      if (!profile) {
+        return Response.json({
+          success: true,
+          has_suggestion: false,
+          message: 'Perfil sugerido não existe',
+          suggested_profile_name: profileName
+        });
+      }
+      
+      // Verificar se já está usando o perfil sugerido
+      if (current_profile_id === profile.id) {
+        return Response.json({
+          success: true,
+          has_suggestion: false,
+          message: 'Já está usando o perfil sugerido'
+        });
+      }
+      
+      return Response.json({
+        success: true,
+        has_suggestion: true,
+        suggested_profile_id: profile.id,
+        suggested_profile_name: profile.name,
+        job_role: job_role,
+        message: `Sugestão: ${profile.name}`
+      });
+    }
+    
+    // Modo aplicação: requer employee_id (backend/automação)
     if (!employee_id || !job_role) {
       return Response.json({ 
         error: 'employee_id e job_role são obrigatórios' 
@@ -245,13 +124,14 @@ Deno.serve(async (req) => {
       });
     }
     
-    // Buscar ou criar perfil padrão
-    const profile = await getOrCreateDefaultProfile(base44, job_role, employee.workshop_id);
+    // Buscar perfil padrão
+    const profileName = JOB_ROLE_TO_PROFILE[job_role] || 'Outros - Acesso Básico';
+    const profile = await findProfileByName(base44, profileName);
     
     if (!profile) {
       return Response.json({ 
-        error: 'Não foi possível criar perfil padrão' 
-      }, { status: 500 });
+        error: 'Perfil padrão não encontrado' 
+      }, { status: 404 });
     }
     
     // Atribuir perfil ao employee
