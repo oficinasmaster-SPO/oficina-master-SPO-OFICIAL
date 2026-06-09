@@ -3,26 +3,23 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 /**
  * Regras de atribuição automática de perfil por job_role
  * Mapeamento: job_role -> profile_name
- * Tabela oficial congelada (Fase 1)
+ * TABELA CANÔNICA OFICIAL - FASE 4 (Pré-Seleção Automática)
  */
 const JOB_ROLE_TO_PROFILE = {
   'socio': 'Sócio - Acesso Total',
   'diretor': 'Diretor - Gestão Estratégica',
   'gerente': 'Gerente - Gestão Operacional',
   'supervisor_loja': 'Supervisor - Operação e Equipe',
-  'lider_tecnico': 'Líder Técnico - Coordenação Técnica',
-  'financeiro': 'Financeiro - Controle Financeiro',
   'rh': 'RH - Gestão de Pessoas',
-  'tecnico': 'Técnico - Execução e Produção',
-  'funilaria_pintura': 'Técnico - Funilaria e Pintura',
+  'financeiro': 'Financeiro - Controle Financeiro',
+  'lider_tecnico': 'Líder Técnico - Coordenação Técnica',
   'comercial': 'Comercial - Vendas e Atendimento',
-  'consultor_vendas': 'Vendedor - Atendimento ao Cliente',
+  'consultor_vendas': 'Comercial - Vendas e Atendimento',
   'marketing': 'Marketing - Comunicação e Marketing',
-  'administrativo': 'Administrativo - Suporte Interno',
-  'estoque': 'Estoque - Controle de Peças',
-  'acelerador': 'Acelerador',
+  'tecnico': 'Vendedor - Atendimento ao Cliente', // Fallback temporário - perfil técnico será criado
+  'funilaria_pintura': 'Vendedor - Atendimento ao Cliente', // Fallback temporário
+  'administrativo': 'Financeiro - Controle Financeiro',
   'consultor': 'Consultor',
-  'mentor': 'Mentor',
   'motoboy': 'Outros - Acesso Básico',
   'lavador': 'Outros - Acesso Básico',
   'outros': 'Outros - Acesso Básico'

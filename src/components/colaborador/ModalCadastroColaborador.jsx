@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, Save, UserPlus, User, DollarSign, TrendingUp, Plus, Trash2, X, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { jobRoles } from "@/components/lib/jobRoles";
-import { CANONICAL_PROFILE_JOB_ROLES } from "@/components/lib/canonicalProfiles";
+import { CANONICAL_PROFILE_JOB_ROLES, CANONICAL_PROFILE_MAPPING, getCanonicalProfileByJobRole, isCanonicalJobRole } from "@/components/lib/canonicalProfiles";
 import { motion, AnimatePresence } from "framer-motion";
 import ProfileSuggestionBanner from "./ProfileSuggestionBanner";
 import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
@@ -27,6 +27,8 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
   const [uploadingImage, setUploadingImage] = useState(false);
   const [profileSuggestion, setProfileSuggestion] = useState(null);
   const [checkingSuggestion, setCheckingSuggestion] = useState(false);
+  const [profileWasManuallyChanged, setProfileWasManuallyChanged] = useState(false);
+  const [profileAutoApplied, setProfileAutoApplied] = useState(false);
   
   const [formData, setFormData] = useState({
     workshop_id: "", full_name: "", cpf: "", rg: "", data_nascimento: "", telefone: "", email: "",
@@ -77,14 +79,23 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
     return () => window.removeEventListener('keydown', handleEsc);
   }, [isOpen, onClose]);
 
-  // Buscar sugestão de perfil quando job_role muda (com telemetria - Fase 3.5)
+  // FASE 4: Auto-apply canonical profile when job_role changes (only if user hasn't manually selected)
   useEffect(() => {
     if (!formData.job_role || !workshop?.id) {
       setProfileSuggestion(null);
       return;
     }
 
-    const checkSuggestion = async () => {
+    // Don't auto-apply if user already manually changed the profile
+    if (profileWasManuallyChanged) {
+      console.info('[PROFILE_OVERRIDE] User manually changed profile, skipping auto-apply', {
+        job_role: formData.job_role,
+        current_profile_id: formData.user_profile_id
+      });
+      return;
+    }
+
+    const applyCanonicalProfile = async () => {
       setCheckingSuggestion(true);
       try {
         const response = await base44.functions.invoke('autoAssignProfile', {
@@ -94,7 +105,16 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
         });
 
         if (response.data.success && response.data.has_suggestion) {
-          setProfileSuggestion(response.data);
+          // FASE 4: Auto-apply the canonical profile
+          setFormData(prev => ({ ...prev, user_profile_id: response.data.suggested_profile_id }));
+          setProfileAutoApplied(true);
+          
+          console.info('[AUTO_ASSIGN]', {
+            job_role: formData.job_role,
+            suggested_profile: response.data.suggested_profile_name,
+            applied: true
+          });
+
           // Telemetria: sugestão gerada
           await base44.functions.invoke('logProfileSuggestion', {
             event_type: 'profile_suggestion_generated',
@@ -105,17 +125,19 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
           });
         } else {
           setProfileSuggestion(null);
+          setProfileAutoApplied(false);
         }
       } catch (error) {
-        console.error('Erro ao verificar sugestão:', error);
+        console.error('Erro ao aplicar perfil canônico:', error);
         setProfileSuggestion(null);
+        setProfileAutoApplied(false);
       } finally {
         setCheckingSuggestion(false);
       }
     };
 
-    checkSuggestion();
-  }, [formData.job_role, workshop?.id, formData.user_profile_id]);
+    applyCanonicalProfile();
+  }, [formData.job_role, workshop?.id]);
 
   const loadData = async () => {
     setLoading(true);
@@ -211,6 +233,16 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
         if (selectedProfile) {
           userRoles = selectedProfile.roles || [];
         }
+      }
+
+      // FASE 4: Log telemetry if profile was auto-applied
+      if (profileAutoApplied && formData.user_profile_id) {
+        console.info('[AUTO_ASSIGN_SAVE]', {
+          job_role: formData.job_role,
+          profile_id: formData.user_profile_id,
+          profile_name: profiles.find(p => p.id === formData.user_profile_id)?.name,
+          was_manual: profileWasManuallyChanged
+        });
       }
 
       const formDataToSend = { ...formData, production_percentage: productionPercentage };
@@ -461,7 +493,20 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
                           <Select 
                             value={formData.user_profile_id || "none"} 
                             onValueChange={(value) => {
+                              const previousProfileId = formData.user_profile_id;
                               const selectedProfile = profiles.find(p => p.id === value);
+                              
+                              // FASE 4: Track manual override
+                              if (previousProfileId && previousProfileId !== value) {
+                                console.info('[PROFILE_OVERRIDE]', {
+                                  previous_profile: previousProfileId,
+                                  new_profile: value,
+                                  profile_name: selectedProfile?.name
+                                });
+                                setProfileWasManuallyChanged(true);
+                                setProfileAutoApplied(false);
+                              }
+                              
                               if (selectedProfile) {
                                 const newJobRole = selectedProfile.permission_type === 'job_role' && 
                                                   selectedProfile.job_roles?.length > 0 
@@ -483,10 +528,36 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
                               ))}
                             </SelectContent>
                           </Select>
+                          
+                          {/* FASE 4: Badge indicating auto-apply or manual selection */}
+                          {profileAutoApplied && !profileWasManuallyChanged && (
+                            <div className="mt-2 flex items-center gap-2 text-sm text-blue-700 bg-blue-50 px-3 py-1.5 rounded-md border border-blue-200">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              <span>Perfil selecionado automaticamente com base no cargo.</span>
+                            </div>
+                          )}
+                          {profileWasManuallyChanged && (
+                            <div className="mt-2 flex items-center gap-2 text-sm text-green-700 bg-green-50 px-3 py-1.5 rounded-md border border-green-200">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              <span>Perfil definido manualmente.</span>
+                            </div>
+                          )}
                         </div>
                         <div>
                           <Label>Função do Sistema</Label>
-                          <Select value={formData.job_role} onValueChange={(value) => setFormData({...formData, job_role: value})}>
+                          <Select 
+                            value={formData.job_role} 
+                            onValueChange={(value) => {
+                              // FASE 4: Reset manual flag when job_role changes
+                              setProfileWasManuallyChanged(false);
+                              setProfileAutoApplied(false);
+                              setFormData({...formData, job_role: value});
+                            }}
+                          >
                             <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                             <SelectContent>
                               {jobRoles.filter(role => role.category !== 'interna').map((role) => (
@@ -499,29 +570,13 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
                             profileSuggestion={profileSuggestion}
                             checkingSuggestion={checkingSuggestion}
                             job_role={formData.job_role}
-                            onApplySuggestion={(profileId) => {
-                              setFormData({...formData, user_profile_id: profileId});
-                              // Telemetria: sugestão aceita
-                              base44.functions.invoke('logProfileSuggestion', {
-                                event_type: 'profile_suggestion_accepted',
-                                job_role: formData.job_role,
-                                suggested_profile_id: profileSuggestion?.suggested_profile_id,
-                                suggested_profile_name: profileSuggestion?.suggested_profile_name,
-                                chosen_profile_id: profileId,
-                                chosen_profile_name: profiles.find(p => p.id === profileId)?.name,
-                                workshop_id: workshop.id
-                              }).catch(console.error);
-                              setProfileSuggestion(null);
-                            }}
                             onDismiss={() => {
-                              // Telemetria: sugestão rejeitada
+                              // Telemetria: sugestão visualizada (Fase 4 - já aplicada automaticamente)
                               base44.functions.invoke('logProfileSuggestion', {
-                                event_type: 'profile_suggestion_rejected',
+                                event_type: 'profile_suggestion_generated',
                                 job_role: formData.job_role,
                                 suggested_profile_id: profileSuggestion?.suggested_profile_id,
                                 suggested_profile_name: profileSuggestion?.suggested_profile_name,
-                                chosen_profile_id: formData.user_profile_id,
-                                chosen_profile_name: profiles.find(p => p.id === formData.user_profile_id)?.name,
                                 workshop_id: workshop.id
                               }).catch(console.error);
                               setProfileSuggestion(null);
