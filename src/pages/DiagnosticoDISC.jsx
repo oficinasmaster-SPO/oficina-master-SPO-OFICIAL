@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import TrackingWrapper from "@/components/shared/TrackingWrapper";
 import EvaluationGate from "@/components/evaluations/EvaluationGate";
 import { useEvaluationPermissions } from "@/components/hooks/useEvaluationPermissions";
+import ResultadoDISCModal from "@/pages/ResultadoDISC";
 
 export default function DiagnosticoDISC() {
   const navigate = useNavigate();
@@ -37,6 +38,8 @@ export default function DiagnosticoDISC() {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [generatingInvite, setGeneratingInvite] = useState(false);
   const [candidateName, setCandidateName] = useState("");
+  const [resultModalOpen, setResultModalOpen] = useState(false);
+  const [resultDiagnosticId, setResultDiagnosticId] = useState(null);
 
   const { canEvaluate, isLeader: hasLeaderPerms, currentUserEmployee } = useEvaluationPermissions();
 
@@ -213,7 +216,8 @@ export default function DiagnosticoDISC() {
       if (response.data.error) throw new Error(response.data.error);
 
       toast.success("Teste DISC concluído!");
-      navigate(createPageUrl("ResultadoDISC") + `?id=${response.data.id}`);
+      setResultDiagnosticId(response.data.id);
+      setResultModalOpen(true);
     } catch (error) {
       console.error(error);
       toast.error("Erro ao salvar diagnóstico");
@@ -597,6 +601,11 @@ export default function DiagnosticoDISC() {
         </form>
       </div>
     </div>
+    <ResultadoDISCModal
+        open={resultModalOpen}
+        onOpenChange={setResultModalOpen}
+        diagnosticId={resultDiagnosticId}
+      />
     </TrackingWrapper>
   );
 }
