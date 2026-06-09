@@ -100,25 +100,31 @@ export default function Layout({ children, currentPageName }) {
       // Limpar histórico de navegação no logout
       localStorage.removeItem('lastVisitedRoute');
       localStorage.removeItem('lastVisitedRouteData');
+    } catch (_) {}
 
-      // S2-D1: Limpar chaves de tenant no logout para evitar vazamento cross-session.
-      // Usa email como namespace (mesma decisão do TenantContext S2).
+    // S2-D1: Limpeza de tenant isolada em try/finally.
+    // O finally garante que o logout acontece mesmo se
+    // qualquer removeItem falhar (storage cheio, modo privado, etc).
+    try {
       const email = displayUser?.email?.toLowerCase() || user?.email?.toLowerCase();
       if (email) {
         localStorage.removeItem('selected_company_id_' + email);
         localStorage.removeItem('selected_firm_id_' + email);
         localStorage.removeItem('om_impersonation_' + email);
       }
+      // Limpar chaves globais legadas
       localStorage.removeItem('selected_company_id');
       localStorage.removeItem('selected_firm_id');
       localStorage.removeItem('om_impersonation');
       localStorage.removeItem('admin_workshop_id');
-
-      await base44.auth.logout();
-      window.location.href = createPageUrl("Home");
-    } catch (error) {
-      console.error("Logout error:", error);
-      window.location.href = createPageUrl("Home");
+    } finally {
+      try {
+        await base44.auth.logout();
+        window.location.href = createPageUrl('Home');
+      } catch (error) {
+        console.error('Logout error:', error);
+        window.location.href = createPageUrl('Home');
+      }
     }
   };
 
