@@ -70,7 +70,13 @@ export function TenantProvider({ children }) {
           const compIdToLoad = storedCompanyId
             || currentUser.data?.workshop_id
             || currentUser.data?.company_id
+            || currentUser.workshop_id
             || null;
+          // FIX-GILMARA: currentUser.workshop_id é o campo raiz do User no banco.
+          // O Base44 armazena workshop_id na raiz E em data.workshop_id.
+          // Sem este fallback, usuários cujo data.workshop_id está vazio ficavam
+          // com selectedCompanyId = null quando o localStorage era limpo,
+          // forçando uma query BFF extra e causando lista de colaboradores vazia.
 
           if (!cancelled) {
             setSelectedCompanyId(compIdToLoad);
