@@ -160,7 +160,8 @@ Deno.serve(async (req) => {
       });
       
       if (workshop_id) {
-        await base44.functions.invoke('incrementPlanUsage', { tenantId: workshop_id, resource: 'reports', amount: 1 });
+        base44.functions.invoke('incrementPlanUsage', { tenantId: workshop_id, resource: 'reports', amount: 1 })
+          .catch(err => console.warn('[incrementPlanUsage] falhou (não crítico):', err?.message));
       }
       
       return Response.json({ success: true, id: diagnostic.id, diagnostic });
@@ -181,7 +182,8 @@ Deno.serve(async (req) => {
       });
 
       if (workshop_id) {
-        await base44.functions.invoke('incrementPlanUsage', { tenantId: workshop_id, resource: 'reports', amount: 1 });
+        base44.functions.invoke('incrementPlanUsage', { tenantId: workshop_id, resource: 'reports', amount: 1 })
+          .catch(err => console.warn('[incrementPlanUsage] falhou (não crítico):', err?.message));
       }
       
       // Update user progress checklist
@@ -229,7 +231,8 @@ Deno.serve(async (req) => {
       });
 
       if (workshop_id) {
-        await base44.functions.invoke('incrementPlanUsage', { tenantId: workshop_id, resource: 'reports', amount: 1 });
+        base44.functions.invoke('incrementPlanUsage', { tenantId: workshop_id, resource: 'reports', amount: 1 })
+          .catch(err => console.warn('[incrementPlanUsage] falhou (não crítico):', err?.message));
       }
       
       return Response.json({ success: true, id: diagnostic.id, diagnostic });
@@ -259,7 +262,8 @@ Deno.serve(async (req) => {
       });
 
       if (workshop_id) {
-        await base44.functions.invoke('incrementPlanUsage', { tenantId: workshop_id, resource: 'reports', amount: 1 });
+        base44.functions.invoke('incrementPlanUsage', { tenantId: workshop_id, resource: 'reports', amount: 1 })
+          .catch(err => console.warn('[incrementPlanUsage] falhou (não crítico):', err?.message));
       }
 
       return Response.json({ success: true, id: diagnostic.id, diagnostic });
