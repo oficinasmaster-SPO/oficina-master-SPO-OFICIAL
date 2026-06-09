@@ -26,7 +26,7 @@
         "liquidacao",
         "exclusao"
       ],
-      "description": "Tipo de altera\u00e7\u00e3o: criacao (primeiro registro), edicao (mudan\u00e7a manual), liquidacao (pagamento/recebimento), exclusao"
+      "description": "Tipo de altera\u00e7\u00e3o"
     },
     "valor_anterior": {
       "type": "number",
@@ -38,6 +38,7 @@
     },
     "detalhes_anteriores": {
       "type": "object",
+      "description": "Snapshot completo dos detalhes antes da altera\u00e7\u00e3o",
       "properties": {
         "bancos": {
           "type": "array",
@@ -76,11 +77,11 @@
         "caixa": {
           "type": "number"
         }
-      },
-      "description": "Snapshot completo dos detalhes antes da altera\u00e7\u00e3o"
+      }
     },
     "detalhes_novos": {
       "type": "object",
+      "description": "Snapshot completo dos detalhes ap\u00f3s a altera\u00e7\u00e3o",
       "properties": {
         "bancos": {
           "type": "array",
@@ -119,12 +120,11 @@
         "caixa": {
           "type": "number"
         }
-      },
-      "description": "Snapshot completo dos detalhes ap\u00f3s a altera\u00e7\u00e3o"
+      }
     },
     "campo_alterado": {
       "type": "string",
-      "description": "Qual campo foi alterado (ex: 'bancos.0.saldo', 'caixa', 'maquinas_cartao.1.saldo')"
+      "description": "Qual campo foi alterado (ex: 'bancos.0.saldo', 'caixa')"
     },
     "valor_delta": {
       "type": "number",
@@ -138,7 +138,7 @@
         "liquidacao_recebimento",
         "backfill"
       ],
-      "description": "Origem da altera\u00e7\u00e3o (qual modal/a\u00e7\u00e3o disparou)"
+      "description": "Origem da altera\u00e7\u00e3o"
     },
     "liquidacao_id": {
       "type": "string",
@@ -196,6 +196,9 @@
           "workshop_id": "{{user.data.workshop_id}}"
         },
         {
+          "workshop_id": "{{user.workshop_id}}"
+        },
+        {
           "user_condition": {
             "role": "admin"
           }
@@ -206,6 +209,9 @@
       "$or": [
         {
           "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "workshop_id": "{{user.workshop_id}}"
         },
         {
           "user_condition": {

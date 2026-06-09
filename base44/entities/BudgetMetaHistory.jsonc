@@ -105,6 +105,9 @@
           "workshop_id": "{{user.data.workshop_id}}"
         },
         {
+          "workshop_id": "{{user.workshop_id}}"
+        },
+        {
           "user_condition": {
             "role": "admin"
           }
@@ -115,6 +118,9 @@
       "$or": [
         {
           "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "workshop_id": "{{user.workshop_id}}"
         },
         {
           "user_condition": {

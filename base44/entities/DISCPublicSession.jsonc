@@ -72,6 +72,9 @@
         },
         {
           "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "workshop_id": "{{user.workshop_id}}"
         }
       ]
     }
