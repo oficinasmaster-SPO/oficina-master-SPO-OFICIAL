@@ -1,4 +1,4 @@
-# FASE 4 — PRÉ-SELEÇÃO AUTOMÁTICA DE PERFIL
+# FASE 4 — PRÉ-SELEÇÃO AUTOMÁTICA DE PERFIL (VERSÃO PRODUÇÃO)
 
 ## Implementação Concluída ✅
 
@@ -12,12 +12,54 @@
 
 Evoluir do **Modo Observação** (Fase 3.5) para **Pré-Seleção Automática** (Fase 4).
 
-O sistema agora:
-1. ✅ Preenche automaticamente o perfil mais provável com base no cargo (job_role)
-2. ✅ Exibe badge informativo: "Perfil selecionado automaticamente com base no cargo"
-3. ✅ Permite alteração manual pelo usuário
-4. ✅ Respeita a escolha do usuário (não sobrescreve)
-5. ✅ Aplica-se apenas a **novos cadastros**
+Ao selecionar um Cargo (job_role), o sistema deverá sugerir e preencher automaticamente o perfil mais provável.
+
+O usuário continua livre para alterar manualmente antes de salvar.
+
+A mudança afeta apenas **novos cadastros**.
+
+---
+
+## REGRAS GERAIS
+
+### NÃO ALTERAR:
+- ❌ Migrar employees existentes
+- ❌ Alterar colaboradores existentes
+- ❌ Alterar UserProfiles
+- ❌ Alterar RBAC
+- ❌ Alterar roles
+- ❌ Alterar permissões
+- ❌ Alterar dados históricos
+
+### OBJETIVO EXCLUSIVO:
+✅ Melhorar UX do cadastro de colaboradores
+
+---
+
+## FEATURE FLAG (OBRIGATÓRIO)
+
+Implementado em `components/colaborador/ModalCadastroColaborador.jsx`:
+
+```js
+const FEATURES = {
+  AUTO_PROFILE_PRESELECT: true
+};
+```
+
+### COMPORTAMENTO:
+
+**Se FALSE:**
+- Comportamento antigo restaurado
+- Sem auto-seleção
+- Sem banners
+- Sem mudanças visuais
+
+**Se TRUE:**
+- Comportamento novo ativo
+- Auto-seleção habilitada
+- Badges visuais exibidos
+
+**OBJETIVO:** Rollback imediato sem deploy.
 
 ---
 
@@ -77,21 +119,86 @@ O sistema agora:
 
 ---
 
-## FLUXO ANTIGO VS NOVO
+## FLUXO NOVO
 
-### Fluxo Antigo (Fase 3.5 - Observação)
-1. Usuário seleciona job_role
-2. Sistema exibe banner: "Sugerimos o perfil X"
-3. Usuário clica em "Usar este perfil" OU "Escolher outro"
-4. Perfil é aplicado apenas se usuário aceitar
+Ao selecionar um Cargo:
 
-### Fluxo Novo (Fase 4 - Pré-Seleção)
-1. Usuário seleciona job_role
-2. Sistema **automaticamente** preenche o perfil canônico
-3. Badge azul aparece: "Perfil selecionado automaticamente com base no cargo"
-4. Usuário pode alterar manualmente se desejar
-5. Se alterar, badge verde aparece: "Perfil definido manualmente"
-6. Sistema **não sobrescreve** escolha manual
+1. ✅ Executar `autoAssignProfile`
+2. ✅ Resolver perfil canônico
+3. ✅ Preencher automaticamente `user_profile_id`
+4. ✅ Exibir badge de sugestão
+5. ✅ Permitir alteração manual
+6. ✅ Salvar normalmente
+
+---
+
+## TABELA CANÔNICA OFICIAL
+
+**NÃO utilizar nome do perfil como chave de negócio.**
+
+Resolver utilizando `profile_id` ou catálogo centralizado (`components/lib/canonicalProfiles.js`).
+
+### Mapa Funcional:
+```json
+{
+  "socio": "Sócio - Acesso Total",
+  "diretor": "Diretor - Gestão Estratégica",
+  "gerente": "Gerente - Gestão Operacional",
+  "supervisor_loja": "Supervisor - Operação e Equipe",
+  "rh": "RH - Gestão de Pessoas",
+  "financeiro": "Financeiro - Controle Financeiro",
+  "lider_tecnico": "Líder Técnico - Coordenação Técnica",
+  "comercial": "Comercial - Vendas e Atendimento",
+  "consultor_vendas": "Comercial - Vendas e Atendimento",
+  "marketing": "Marketing - Comunicação e Marketing",
+  "tecnico": "Técnico - Execução e Produção",
+  "funilaria_pintura": "Técnico - Funilaria e Pintura",
+  "administrativo": "Financeiro - Controle Financeiro",
+  "consultor": "Consultor",
+  "motoboy": "Outros - Acesso Básico",
+  "lavador": "Outros - Acesso Básico",
+  "outros": "Outros - Acesso Básico"
+}
+```
+
+---
+
+## REGRA DE OVERRIDE MANUAL
+
+Pré-seleção automática ocorre **somente** quando:
+
+```js
+profileWasManuallyChanged === false
+```
+
+Quando usuário altera manualmente:
+
+```js
+profileWasManuallyChanged = true;
+```
+
+**Após isso:**
+- ❌ Nunca sobrescrever novamente
+- ❌ Nunca trocar automaticamente
+- ✅ Respeitar escolha manual (mesmo que cargo seja alterado)
+
+---
+
+## UX
+
+### Quando perfil foi sugerido automaticamente:
+
+**Mensagem:**
+> "Perfil selecionado automaticamente com base no cargo."
+
+**Cor:** Azul ou verde
+
+### Quando perfil foi alterado manualmente:
+
+**Mensagem:**
+> "Perfil definido manualmente."
+
+**Cor:** Verde
 
 ---
 
@@ -225,5 +332,31 @@ console.info('[AUTO_ASSIGN_SAVE]', {
 **Fase 4 IMPLEMENTADA com SUCESSO** ✅
 
 Sistema pronto para **Pré-Seleção Automática** em produção.
+
+---
+
+## PRÓXIMOS PASSOS
+
+1. ✅ Monitorar logs `[AUTO_ASSIGN]` e `[PROFILE_OVERRIDE]`
+2. 📊 Acompanhar telemetria via `DashboardTelemetriaPerfis`
+3. 🔧 Criar perfis técnicos pendentes (fora do escopo)
+4. 📈 Ajustar tabela canônica baseado em dados reais
+
+---
+
+## LIÇÕES APRENDIDAS
+
+### ✅ Funcionou Bem
+- Auto-apply respeita escolha do usuário
+- Badges visuais claros e informativos
+- Logs de telemetria completos
+- Fallbacks seguros para cargos sem perfil
+
+### ⚠️ Melhorias Futuras
+- Criar perfis específicos para área técnica
+- Adicionar validação de nomes de perfil
+- Implementar automação backend (Fase 5)
+
+---
 
 **Próximo passo**: Ativar em produção e monitorar telemetria por 7 dias.
