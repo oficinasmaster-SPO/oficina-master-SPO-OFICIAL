@@ -15,7 +15,7 @@ export function useWorkshopContext() {
   const { selectedFirmId, selectedCompanyId, changeCompany, isLoading: isTenantLoading, user: tenantUser } = useTenant();
   
   // Verificar se está em modo de impersonação
-  const impersonationData = useMemo(() => getImpersonationData(), []);
+  const impersonationData = useMemo(() => getImpersonationData(tenantUser?.id), [tenantUser?.id]);
   const isImpersonating = !!impersonationData;
   const targetUser = impersonationData?.target_user;
   

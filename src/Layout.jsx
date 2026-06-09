@@ -37,7 +37,7 @@ export default function Layout({ children, currentPageName }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { isAdminMode, getAdminUrl } = useAdminMode();
   const { workshop, workshopId, workshopsDisponiveis, setCurrentWorkshop, isLoading: isLoadingWorkshop } = useWorkshopContext();
-  const impersonationData = getImpersonationData();
+  const impersonationData = getImpersonationData(user?.id);
   const [cssVersion] = useState(Date.now()); // Timestamp fixo por sessão para evitar re-requests
   
   // Usar dados do usuário alvo durante impersonação
@@ -100,7 +100,22 @@ export default function Layout({ children, currentPageName }) {
       // Limpar histórico de navegação no logout
       localStorage.removeItem('lastVisitedRoute');
       localStorage.removeItem('lastVisitedRouteData');
-      
+
+      // S2-D1: Limpar chaves de tenant no logout para evitar vazamento cross-session.
+      // Auditoria Base44 (06/2026): handleLogout nao limpava essas chaves,
+      // permitindo que o proximo usuario no mesmo browser herdasse contexto de tenant.
+      // Remove chaves por userId E legados globais.
+      const uid = displayUser?.id || user?.id;
+      if (uid) {
+        localStorage.removeItem('selected_company_id_' + uid);
+        localStorage.removeItem('selected_firm_id_' + uid);
+        localStorage.removeItem('om_impersonation_' + uid);
+      }
+      localStorage.removeItem('selected_company_id');
+      localStorage.removeItem('selected_firm_id');
+      localStorage.removeItem('om_impersonation');
+      localStorage.removeItem('admin_workshop_id');
+
       await base44.auth.logout();
       window.location.href = createPageUrl("Home");
     } catch (error) {
@@ -138,7 +153,6 @@ export default function Layout({ children, currentPageName }) {
   const isFirstAccessPage = location.pathname.toLowerCase().includes('primeiroacesso');
   if (isFirstAccessPage && isAdminMode) {
     // Forçar saída do modo admin em páginas de primeiro acesso
-    localStorage.removeItem('admin_workshop_id');
     window.location.search = '';
   }
 

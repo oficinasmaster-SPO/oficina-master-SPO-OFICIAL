@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { getImpersonationData } from './ImpersonationBanner';
+import { useAuth } from '@/lib/AuthContext';
 
 /**
  * Invalida todo o cache de queries quando entra/sai de impersonação
@@ -8,11 +9,12 @@ import { getImpersonationData } from './ImpersonationBanner';
  */
 export default function ImpersonationCacheInvalidator() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   // Inicializar com o estado atual para evitar falso positivo no primeiro render
-  const lastImpersonationStateRef = useRef(!!getImpersonationData());
+  const lastImpersonationStateRef = useRef(!!getImpersonationData(user?.id));
 
   useEffect(() => {
-    const impersonationData = getImpersonationData();
+    const impersonationData = getImpersonationData(user?.id);
     const isCurrentlyImpersonating = !!impersonationData;
     const wasImpersonating = lastImpersonationStateRef.current;
 

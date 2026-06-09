@@ -2,28 +2,41 @@ import React, { useEffect, useState } from 'react';
 import { Eye, X, User, Shield, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-export const IMPERSONATION_KEY = 'om_impersonation';
 export const IMP_BAR_HEIGHT = 48;
 
-export function getImpersonationData() {
+// Chave isolada por adminUserId — evita vazamento de contexto de impersonação
+// entre sessões de usuários diferentes no mesmo browser.
+export function impersonationKey(adminUserId) {
+  return adminUserId ? `om_impersonation_${adminUserId}` : 'om_impersonation';
+}
+
+export function getImpersonationData(adminUserId) {
   try {
-    const raw = localStorage.getItem(IMPERSONATION_KEY);
+    // Tentar chave por userId primeiro; fallback na chave global legada
+    const key = impersonationKey(adminUserId);
+    const raw = localStorage.getItem(key)
+      || localStorage.getItem('om_impersonation'); // migração
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
   }
 }
 
-export function startImpersonation(data) {
-  localStorage.setItem(IMPERSONATION_KEY, JSON.stringify(data));
+export function startImpersonation(data, adminUserId) {
+  localStorage.removeItem('om_impersonation'); // limpar chave global legada
+  localStorage.setItem(impersonationKey(adminUserId), JSON.stringify(data));
 }
 
-export function stopImpersonation() {
-  localStorage.removeItem(IMPERSONATION_KEY);
+export function stopImpersonation(adminUserId) {
+  localStorage.removeItem(impersonationKey(adminUserId));
+  localStorage.removeItem('om_impersonation'); // limpar legado
 }
+
+import { useAuth } from '@/lib/AuthContext';
 
 export default function ImpersonationBanner() {
-  const data = getImpersonationData();
+  const { user } = useAuth();
+  const data = getImpersonationData(user?.id);
   const [exiting, setExiting] = useState(false);
 
   // Aplica/remove CSS var na raiz para que sidebar e layout se ajustem
@@ -44,7 +57,7 @@ export default function ImpersonationBanner() {
 
   const handleExit = () => {
     setExiting(true);
-    stopImpersonation();
+    stopImpersonation(admin?.id);
     // Overlay fica visível até a página mudar
     window.location.href = '/GestaoRBAC?tab=usuarios';
   };

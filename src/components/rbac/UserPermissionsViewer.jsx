@@ -112,7 +112,7 @@ export default function UserPermissionsViewer() {
         target_user: response.data.target_user,
         admin: response.data.admin,
         started_at: new Date().toISOString(),
-      });
+      }, response.data.admin.id);
 
       // Overlay fica visível até a página mudar
       window.location.href = '/';
