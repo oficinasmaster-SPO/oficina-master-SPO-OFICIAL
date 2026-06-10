@@ -52,7 +52,6 @@ export const CANONICAL_PROFILE_IDS = [
 // Cargos operacionais (tecnico, eletricista, funilaria, lavador, motoboy, estoque)
 // mapeiam para "Técnico - Acesso Operacional" — o perfil com acesso operacional mínimo.
 // Isso é intencional: cargo RH ≠ perfil RBAC. Um mecânico não precisa de um perfil "Mecânico".
-// Nome correto em produção desde 2026-06-10 (era "Vendedor - Atendimento ao Cliente").
 export const CANONICAL_PROFILE_MAPPING = {
   // Gestão
   "socio":           "Sócio - Acesso Total",
