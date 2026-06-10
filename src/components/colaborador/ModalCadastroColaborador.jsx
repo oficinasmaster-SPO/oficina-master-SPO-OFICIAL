@@ -157,11 +157,13 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
       setJobDescriptions(descriptions.filter(d => !userWorkshop || d.workshop_id === userWorkshop.id));
 
       const allProfiles = await base44.entities.UserProfile.list();
-      // Whitelist de perfis canônicos externos (Fase 3 SPO)
-      // Perfis internos/sistema nunca aparecem no cadastro de colaboradores de oficinas
-      setProfiles(allProfiles.filter(p => 
-        p.status === 'ativo' && 
-        p.job_roles?.some(role => CANONICAL_PROFILE_JOB_ROLES.includes(role)) &&
+      // Filtro por ID fixo — mais seguro que filtrar por type ou job_role.
+      // CANONICAL_PROFILE_IDS exclui Admin System e qualquer perfil criado acidentalmente.
+      // Aplica para todos os usuários, incluindo admin — no cadastro de colaboradores
+      // de oficinas clientes nunca deve aparecer perfil de uso interno da plataforma.
+      setProfiles(allProfiles.filter(p =>
+        p.status === 'ativo' &&
+        CANONICAL_PROFILE_IDS.includes(p.id) &&
         (!p.workshop_id || p.workshop_id === userWorkshop?.id)
       ));
     } catch (error) {
@@ -560,7 +562,7 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
                           >
                             <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                             <SelectContent>
-                              {jobRoles.filter(role => role.category !== 'interna').map((role) => (
+                              {jobRoles.filter(role => role.category !== 'interna' && role.value !== 'socio_interno').map((role) => (
                                 <SelectItem key={role.value} value={role.value}>{role.label}</SelectItem>
                               ))}
                             </SelectContent>
