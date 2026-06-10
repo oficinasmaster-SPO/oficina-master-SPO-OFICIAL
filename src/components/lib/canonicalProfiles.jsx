@@ -1,4 +1,3 @@
-// Vitor Albuquerque da Costa - DEV
 // Catálogo canônico de perfis externos do SPO.
 // Atualizar aqui quando um novo perfil canônico for aprovado e criado no Base44.
 // Nunca adicionar perfis de uso interno (equipe Oficinas Master) nesta lista.
@@ -53,6 +52,7 @@ export const CANONICAL_PROFILE_IDS = [
 // Cargos operacionais (tecnico, eletricista, funilaria, lavador, motoboy, estoque)
 // mapeiam para "Técnico - Acesso Operacional" — o perfil com acesso operacional mínimo.
 // Isso é intencional: cargo RH ≠ perfil RBAC. Um mecânico não precisa de um perfil "Mecânico".
+// Nome correto em produção desde 2026-06-10 (era "Vendedor - Atendimento ao Cliente").
 export const CANONICAL_PROFILE_MAPPING = {
   // Gestão
   "socio":           "Sócio - Acesso Total",
@@ -66,7 +66,7 @@ export const CANONICAL_PROFILE_MAPPING = {
   "lider_tecnico":   "Líder Técnico - Coordenação Técnica",
   // Vendas e Atendimento
   "comercial":       "Comercial - Vendas e Atendimento",
-  "consultor_vendas":"Técnico - Acesso Operacional",
+  "consultor_vendas":"Comercial - Vendas e Atendimento",
   "marketing":       "Marketing - Comunicação e Marketing",
   // Operacional (todos com acesso mínimo operacional)
   "tecnico":         "Técnico - Acesso Operacional",
