@@ -3,17 +3,36 @@ import { base44 } from "@/api/base44Client";
 import { systemRoles } from "@/components/lib/systemRoles";
 
 /**
+ * @deprecated W3 FIX (2026-06-10)
+ * Este hook lia User.profile_id diretamente — dado legado não lido pelo PermissionsContext.
+ * Fonte canônica: Employee.profile_id → UserProfile.roles via PermissionsContext.
+ * Prefira usePermissionsContext() para lógica de autorização.
+ * Mantido apenas para compatibilidade com componentes que ainda o importam.
+ *
  * Hook para gerenciar permissões baseadas em roles customizadas
  * Combina as system roles das CustomRoles atribuídas ao perfil do usuário
  */
 export function useRolePermissions(user) {
-  const { data: profile } = useQuery({
-    queryKey: ["user-profile", user?.profile_id],
+  // W3 FIX: busca Employee.profile_id em vez de User.profile_id
+  const { data: employeeProfileId } = useQuery({
+    queryKey: ["employee-profile-id", user?.id],
     queryFn: async () => {
-      if (!user?.profile_id) return null;
-      return await base44.entities.UserProfile.get(user.profile_id);
+      if (!user?.id) return null;
+      const employees = await base44.entities.Employee.filter({ user_id: user.id });
+      return employees?.[0]?.profile_id || null;
     },
-    enabled: !!user?.profile_id,
+    enabled: !!user?.id,
+  });
+
+  const profileId = employeeProfileId;
+
+  const { data: profile } = useQuery({
+    queryKey: ["user-profile", profileId],
+    queryFn: async () => {
+      if (!profileId) return null;
+      return await base44.entities.UserProfile.get(profileId);
+    },
+    enabled: !!profileId,
   });
 
   const { data: customRoles = [] } = useQuery({
