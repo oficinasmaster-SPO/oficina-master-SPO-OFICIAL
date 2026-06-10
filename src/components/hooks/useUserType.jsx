@@ -55,22 +55,28 @@ export function useUserType() {
   const isAdmin      = user.role === 'admin';
   const isSuperAdmin = user.role === 'super_admin';
 
+  // NOTA (2026-06-10): user.job_role foi removido do User como fonte de autorização.
+  // Aqui é usado APENAS para derivações de UX/display — não para controle de acesso.
+  // Fonte canônica de autorização: Employee.profile_id → UserProfile.roles (PermissionsContext).
+  const jobRole = user.job_role || null;
+
   // Funções específicas dentro do tipo internal
-  const isConsultor  = isInternal && user.job_role === 'consultor';
-  const isAcelerador = isInternal && user.job_role === 'acelerador';
-  const isMentor     = isInternal && user.job_role === 'mentor';
+  const isConsultor  = isInternal && jobRole === 'consultor';
+  const isAcelerador = isInternal && jobRole === 'acelerador';
+  const isMentor     = isInternal && jobRole === 'mentor';
 
   // Qualquer membro interno da equipe (consultor, acelerador ou mentor)
-  const isConsultingTeam = isInternal && INTERNAL_JOB_ROLES.includes(user.job_role);
+  const isConsultingTeam = isInternal && INTERNAL_JOB_ROLES.includes(jobRole);
 
   // Sócio/dono de oficina cliente
-  const isSocio = isExternal && OWNER_JOB_ROLES.includes(user.job_role);
+  const isSocio = isExternal && OWNER_JOB_ROLES.includes(jobRole);
 
   // Acesso a dados financeiros (salary, DRE, DFC)
+  // AUTORIZAÇÃO REAL: via PermissionsContext. Esta flag é só indicativa para UI.
   const hasFinancialAccess =
     isAdmin ||
     isInternal ||
-    (isExternal && FINANCIAL_JOB_ROLES.includes(user.job_role));
+    (isExternal && FINANCIAL_JOB_ROLES.includes(jobRole));
 
   return {
     // Tipo primário
