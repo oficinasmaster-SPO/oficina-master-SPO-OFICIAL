@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
+import { useAuth } from "@/lib/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -50,60 +52,29 @@ export default function CronogramaConsultoria() {
     dateTo: ""
   });
 
-  // Carregar usuário
-  const { data: user } = useQuery({
-    queryKey: ['current-user'],
-    queryFn: () => base44.auth.me()
+  // FIX DS-CRONOGRAMA-01: usar useWorkshopContext() em vez de resolução manual.
+  // A resolução manual usava owner_id/employee do admin logado — não da oficina cliente.
+  // useWorkshopContext() usa TenantContext + getUserWorkshops (asServiceRole) e respeita
+  // o workshop selecionado no TenantSelector — mesmo padrão do ControleAceleracao.
+  const { user } = useAuth();
+  const { workshop, workshopId: ctxWorkshopId, isLoading: isWorkshopLoading } = useWorkshopContext();
+
+  // Query param ?workshop_id= tem precedência — permite links diretos de ControleAceleracao
+  const urlWorkshopId = new URLSearchParams(window.location.search).get('workshop_id');
+  const activeWorkshopId = urlWorkshopId || ctxWorkshopId || null;
+
+  // Se veio por URL param, buscar o workshop para exibir o nome no header
+  const { data: urlWorkshop } = useQuery({
+    queryKey: ['workshop-by-url-id', urlWorkshopId],
+    queryFn: () => base44.entities.Workshop.get(urlWorkshopId),
+    enabled: !!urlWorkshopId && urlWorkshopId !== ctxWorkshopId,
+    staleTime: 10 * 60 * 1000,
   });
 
-  // Resolver workshop do contexto ativo
-  const { data: workshop } = useQuery({
-    queryKey: ['workshop-context', user?.id],
-    queryFn: async () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const urlWorkshopId = urlParams.get('workshop_id');
-
-      if (urlWorkshopId) {
-        try {
-          return await base44.entities.Workshop.get(urlWorkshopId);
-        } catch (e) {
-          console.error(`CronogramaConsultoria: Workshop/Company com ID ${urlWorkshopId} não encontrado.`, e);
-        }
-      }
-
-      const workshopId = user?.workshop_id || user?.data?.workshop_id;
-      if (workshopId) {
-        try {
-          return await base44.entities.Workshop.get(workshopId);
-        } catch (e) {
-          console.error(`CronogramaConsultoria: Workshop ID inválido.`, e);
-        }
-      }
-
-      // Fallback único: proprietário ou employee
-      try {
-        const [byOwner, byEmployee] = await Promise.all([
-          base44.entities.Workshop.filter({ owner_id: user.id }, '-created_date', 1).catch(() => []),
-          base44.entities.Employee.filter({ user_id: user.id }, undefined, 1).then(emps => {
-            if (emps.length > 0 && emps[0].workshop_id) {
-              return base44.entities.Workshop.get(emps[0].workshop_id).catch(() => null);
-            }
-            return null;
-          }).catch(() => null)
-        ]);
-
-        return byOwner?.[0] || byEmployee || null;
-      } catch (e) {
-        console.error(`CronogramaConsultoria: Erro ao resolver workshop:`, e);
-        return null;
-      }
-    },
-    enabled: !!user,
-    staleTime: 5 * 60 * 1000, // Cache por 5 min
-    retry: 1 // Apenas 1 retry
-  });
-
-  const activeWorkshopId = workshop?.id;
+  // Workshop efetivo para exibição
+  const activeWorkshop = urlWorkshopId && urlWorkshopId !== ctxWorkshopId
+    ? (urlWorkshop || workshop)
+    : workshop;
 
   // ✅ Filtro único por empresa logada — sem exceções por perfil
   // NOTA: queryKey alinhado com o usado em ControleAceleracao para que invalidações funcionem
@@ -203,7 +174,7 @@ export default function CronogramaConsultoria() {
     onError: () => toast.error("Erro ao confirmar presença. Tente novamente."),
   });
 
-  const isLoading = loadingAtendimentos || loadingAtas || loadingFollowUps;
+  const isLoading = isWorkshopLoading || loadingAtendimentos || loadingAtas || loadingFollowUps;
 
   const getStatusColor = (status) => {
     const colors = {
@@ -251,7 +222,7 @@ export default function CronogramaConsultoria() {
             Cronograma de Atendimento
           </h1>
           <p className="text-gray-600 mt-1">
-            {workshop?.name && <span className="font-medium text-blue-700">{workshop.name}</span>}
+            {activeWorkshop?.name && <span className="font-medium text-blue-700">{activeWorkshop.name}</span>}
           </p>
         </div>
 
@@ -267,17 +238,17 @@ export default function CronogramaConsultoria() {
       </div>
 
       {/* Card de resumo da oficina */}
-      {workshop && (
+      {activeWorkshop && (
         <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div>
                 <p className="text-sm text-blue-600 font-medium">Plano Atual</p>
-                <p className="text-2xl font-bold text-blue-900">{workshop.planoAtual || 'FREE'}</p>
+                <p className="text-2xl font-bold text-blue-900">{activeWorkshop?.planoAtual || 'FREE'}</p>
               </div>
               <div>
                 <p className="text-sm text-blue-600 font-medium">Fase da Oficina</p>
-                <p className="text-2xl font-bold text-blue-900">Fase {workshop.maturity_level || 1}</p>
+                <p className="text-2xl font-bold text-blue-900">Fase {activeWorkshop?.maturity_level || 1}</p>
               </div>
               <div>
                 <p className="text-sm text-blue-600 font-medium">Próximos Agendamentos</p>
@@ -466,7 +437,7 @@ export default function CronogramaConsultoria() {
           <AtaSearchFilters
             filters={filters}
             onFiltersChange={setFilters}
-            workshops={workshop ? [workshop] : []}
+            workshops={activeWorkshop ? [activeWorkshop] : []}
             consultores={consultores || []}
             onClearFilters={() => setFilters({
               searchTerm: "",
@@ -692,11 +663,11 @@ export default function CronogramaConsultoria() {
 
         {/* ABA 5: Eventos */}
         <TabsContent value="eventos" className="mt-4">
-          {workshop ? (
+          {activeWorkshop ? (
             <EventosTab
-              workshop={workshop}
+              workshop={activeWorkshop}
               activeWorkshopId={activeWorkshopId}
-              planoAtual={workshop.planoAtual || workshop.data?.planoAtual}
+              planoAtual={activeWorkshop?.planoAtual || activeWorkshop?.data?.planoAtual}
               user={user}
             />
           ) : (
