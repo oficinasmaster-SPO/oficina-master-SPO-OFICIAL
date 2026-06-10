@@ -38,7 +38,7 @@ export const pagePermissions = {
   CulturaOrganizacional: "culture.view",
   MissaoVisaoValores: "culture.edit",
   DocumentacaoCompleta: "culture.view",
-  Regimento: "culture.edit",
+  Regimento: "culture.view",
   RituaisAculturamento: "culture.manage_rituals",
   Rituais: "culture.manage_rituals",
   CriarRitualMAP: "culture.manage_rituals",
