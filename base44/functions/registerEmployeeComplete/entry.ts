@@ -55,12 +55,11 @@ Deno.serve(async (req) => {
     if (existingUsers && existingUsers.length > 0) {
       const existingUser = existingUsers[0];
       userId = existingUser.id;
+      // job_role e area removidos do User (2026-06-10) — não são fonte de autorização
       await base44.asServiceRole.entities.User.update(userId, {
         workshop_id: workshop_id,
         consulting_firm_id: consulting_firm_id,
         position: formData.position,
-        job_role: formData.job_role || 'outros',
-        area: formData.area || 'tecnico',
         telefone: formData.telefone || '',
         hire_date: formData.hire_date || new Date().toISOString().split('T')[0],
         user_status: 'ativo'
@@ -80,17 +79,12 @@ Deno.serve(async (req) => {
 
       if (createdUser) {
         userId = createdUser.id;
-        const workshopIdentifier = workshop?.identificador || workshop_id;
-        const finalProfileId = formData.user_profile_id || `${workshopIdentifier}.auto`;
-
+        // profile_id, job_role e area removidos do User (2026-06-10) — não são fonte de autorização
         await base44.asServiceRole.entities.User.update(userId, {
           full_name: formData.full_name,
           workshop_id: workshop_id,
           consulting_firm_id: consulting_firm_id,
-          profile_id: finalProfileId,
           position: formData.position || 'Colaborador',
-          job_role: formData.job_role || 'outros',
-          area: formData.area || 'tecnico',
           telefone: formData.telefone || '',
           hire_date: formData.hire_date || new Date().toISOString().split('T')[0],
           user_status: 'pending',

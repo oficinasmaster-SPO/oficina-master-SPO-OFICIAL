@@ -68,7 +68,8 @@ Deno.serve(async (req) => {
 
     console.log(`✅ EmployeeInviteAcceptance criado: ${acceptance.id}`);
 
-    // Forçar atualização do User com dados espelhados do vínculo principal
+    // Atualizar User com dados de contexto — profile_id removido (2026-06-10)
+    // Autorização vem exclusivamente de Employee.profile_id → UserProfile.roles
     const updateData = {};
     updateData.first_access_completed = true;
     updateData.profile_completed = false;
@@ -76,12 +77,9 @@ Deno.serve(async (req) => {
     if (secureWorkshopId) {
       updateData.workshop_id = secureWorkshopId;
     }
-    if (secureProfileId) {
-      updateData.profile_id = secureProfileId;
-    }
     
     await base44.asServiceRole.entities.User.update(user.id, updateData);
-    console.log(`✅ User atualizado com workshop/profile e onboarding pulado:`, updateData);
+    console.log(`✅ User atualizado com workshop e onboarding flags:`, updateData);
 
     return Response.json({
       success: true,

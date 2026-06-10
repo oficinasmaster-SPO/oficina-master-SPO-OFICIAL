@@ -153,19 +153,19 @@ Deno.serve(async (req) => {
     });
     console.log(`✅ Employee atualizado: user_id = ${userId}`);
     
-    // 2. Atualizar User: usar DADOS SEGUROS
-    console.log("📝 [2/4] Atualizando User com referências seguras...");
+    // 2. Atualizar User: apenas dados de contexto/sessão — profile_id removido (2026-06-10)
+    // Autorização vem exclusivamente de Employee.profile_id → UserProfile.roles
+    console.log("📝 [2/4] Atualizando User com referências de contexto...");
     await base44.asServiceRole.entities.User.update(userId, {
       invite_id: invite_id,
-      profile_id: secureProfileId,  // USANDO ID SEGURO
-      workshop_id: secureWorkshopId, // USANDO ID SEGURO
+      workshop_id: secureWorkshopId,
       consulting_firm_id: secureConsultingFirmId,
       user_status: 'active',
       first_login_at: now,
       last_login_at: now,
       approved_at: now
     });
-    console.log(`✅ User atualizado: invite_id=${invite_id}, profile_id=${secureProfileId}, workshop_id=${secureWorkshopId}`);
+    console.log(`✅ User atualizado: invite_id=${invite_id}, workshop_id=${secureWorkshopId}`);
 
     // 3. Marcar EmployeeInvite como concluído
     console.log("📝 [3/4] Marcando EmployeeInvite como concluído...");
