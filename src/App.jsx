@@ -60,6 +60,7 @@ const DashboardFinanceiro = lazy(() => import('@/pages/DashboardFinanceiro'));
 const CorrigirParcelasDuplicadas = lazy(() => import('@/pages/CorrigirParcelasDuplicadas'));
 const BackfillSaldosHistoricos = lazy(() => import('@/pages/BackfillSaldosHistoricos'));
 const UsuariosAdmin = lazy(() => import('@/pages/UsuariosAdmin'));
+const RepairOrphanEmployees = lazy(() => import('@/pages/RepairOrphanEmployees'));
 const DashboardTelemetriaPerfis = lazy(() => import('@/pages/DashboardTelemetriaPerfis'));
 
 
@@ -180,6 +181,7 @@ const AuthenticatedApp = () => {
           <Route path="/CorrigirParcelasDuplicadas" element={<LayoutWrapper currentPageName="CorrigirParcelasDuplicadas" adminOnly={true}><CorrigirParcelasDuplicadas /></LayoutWrapper>} />
           <Route path="/BackfillSaldosHistoricos" element={<LayoutWrapper currentPageName="BackfillSaldosHistoricos" adminOnly={true}><BackfillSaldosHistoricos /></LayoutWrapper>} />
           <Route path="/UsuariosAdmin" element={<LayoutWrapper currentPageName="UsuariosAdmin" adminOnly={true}><UsuariosAdmin /></LayoutWrapper>} />
+          <Route path="/RepairOrphanEmployees" element={<LayoutWrapper currentPageName="RepairOrphanEmployees" adminOnly={true}><RepairOrphanEmployees /></LayoutWrapper>} />
           <Route path="/DashboardTelemetriaPerfis" element={<LayoutWrapper currentPageName="DashboardTelemetriaPerfis" adminOnly={true}><DashboardTelemetriaPerfis /></LayoutWrapper>} />
           {Object.entries(Pages).map(([path, Page]) => (
             <Route
