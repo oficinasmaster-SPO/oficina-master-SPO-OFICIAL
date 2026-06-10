@@ -1,15 +1,26 @@
 import { format } from "date-fns";
 
 /**
- * Gera e abre uma janela de impressão profissional para o Regimento Interno.
- * Totalmente isolada do app — sem dialogs, sidebars ou estilos do navegador.
+ * Abre uma janela de impressão CORPORATIVA para o Regimento Interno.
+ *
+ * REGRAS:
+ * - Cabeçalho institucional APENAS na primeira página
+ * - Rodapé "Regimento Interno | Página X de Y" em TODAS as páginas
+ * - NUNCA exibe "Empresa não identificada", "CNPJ não informado", "about:blank", data/hora do navegador
+ * - Dados ausentes = não renderiza nada (sem placeholder)
  */
 export function openRegimentPrint(regiment, workshop, employee = null) {
   const now = new Date();
-  const generatedAt = format(now, "dd/MM/yyyy 'às' HH:mm");
   const effectiveDate = regiment.effective_date
     ? format(new Date(regiment.effective_date), 'dd/MM/yyyy')
-    : '-';
+    : null;
+
+  const workshopName = workshop?.name || null;
+  const workshopCnpj = workshop?.cnpj || null;
+  const documentCode = regiment.document_code || null;
+  const version = regiment.version || null;
+
+  const hasHeaderData = workshopName || workshopCnpj || documentCode || version || effectiveDate;
 
   const replacePlaceholders = (text) => {
     if (!text || !employee) return text || '';
@@ -27,164 +38,221 @@ export function openRegimentPrint(regiment, workshop, employee = null) {
     return t;
   };
 
+  const headerMetaLines = [];
+  if (workshopCnpj) headerMetaLines.push(`CNPJ: ${workshopCnpj}`);
+  if (documentCode) headerMetaLines.push(`Código: ${documentCode}`);
+  if (version) headerMetaLines.push(`Versão: ${version}`);
+  if (effectiveDate) headerMetaLines.push(`Vigência: ${effectiveDate}`);
+
+  const headerHTML = hasHeaderData ? `
+  <div class="cover-header">
+    ${workshopName ? `<h1>${workshopName}</h1>` : ''}
+    <h2>REGIMENTO INTERNO</h2>
+    ${headerMetaLines.length > 0 ? `<div class="cover-meta">${headerMetaLines.join(' &nbsp;|&nbsp; ')}</div>` : ''}
+  </div>` : '';
+
+  const logoHTML = workshop?.logo_url
+    ? `<div class="cover-logo"><img src="${workshop.logo_url}" alt="" /></div>`
+    : '';
+
   const sectionsHTML = (regiment.sections || [])
-    .map(
-      (s) => `
-    <div class="section-block">
-      <h3 class="section-title">${s.number} ${s.title}</h3>
-      ${s.content ? `<div class="section-content">${replacePlaceholders(s.content)}</div>` : ''}
+    .map((s) => `
+    <section class="reg-section">
+      <h3 class="reg-section-title">${s.number} ${s.title}</h3>
+      ${s.content ? `<div class="reg-section-content">${replacePlaceholders(s.content)}</div>` : ''}
       ${(s.subsections || [])
-        .map(
-          (sub) => `
-        <div class="subsection">
+        .map((sub) => `
+        <div class="reg-subsection">
           <p><strong>${sub.number}</strong> ${replacePlaceholders(sub.content)}</p>
-        </div>`
-        )
+        </div>`)
         .join('')}
-    </div>`
-    )
+    </section>`)
     .join('');
 
+  const fileName = workshopName
+    ? `Regimento Interno - ${workshopName}`
+    : 'Regimento Interno';
+
   const html = `<!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
   <meta charset="utf-8" />
-  <title>Regimento Interno — ${workshop?.name || 'Documento'}</title>
+  <title>${fileName}</title>
   <style>
     @page {
       size: A4 portrait;
-      margin: 24mm 12mm 12mm 12mm;
+      margin: 18mm 16mm 18mm 16mm;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       font-family: 'Segoe UI', system-ui, -apple-system, Arial, sans-serif;
-      font-size: 12pt;
+      font-size: 11pt;
       line-height: 1.45;
-      color: #111827;
+      color: #1f2937;
       background: white;
-      counter-reset: page-num 0;
+      counter-reset: page;
     }
 
-    /* ═══════════════ CABEÇALHO CORPORATIVO (todas as páginas) ═══════════════ */
-    .print-header {
-      position: fixed;
-      top: 0;
-      left: 12mm;
-      right: 12mm;
-      height: 20mm;
-      border-bottom: 1.2px solid #1e3a5f;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      padding-bottom: 2mm;
-    }
-
-    .print-header-left { font-size: 8pt; color: #374151; line-height: 1.4; }
-    .print-header-left .company-name { font-size: 10pt; font-weight: 700; color: #111827; }
-    .print-header-right { text-align: right; font-size: 7.5pt; color: #6b7280; line-height: 1.5; }
-    .print-header-right strong { color: #374151; }
-
-    /* ═══════════════ RODAPÉ CORPORATIVO (todas as páginas) ═══════════════ */
+    /* ═══════════ RODAPÉ (TODAS AS PÁGINAS) ═══════════ */
     .print-footer {
       position: fixed;
       bottom: 0;
-      left: 12mm;
-      right: 12mm;
+      left: 16mm;
+      right: 16mm;
       height: 10mm;
       border-top: 0.8px solid #d1d5db;
       padding-top: 2mm;
       text-align: center;
       font-size: 7.5pt;
-      color: #6b7280;
-      counter-increment: page-num;
+      color: #4b5563;
+      background: white;
+    }
+    .print-footer::after {
+      counter-increment: page;
+      content: "Regimento Interno | Página " counter(page);
     }
 
-    /* ═══════════════ TÍTULO DO DOCUMENTO (primeira página) ═══════════════ */
-    .doc-title-block {
+    /* ═══════════ CAPA (PRIMEIRA PÁGINA) ═══════════ */
+    .cover-logo {
       text-align: center;
-      border-bottom: 1.8px solid #1e3a5f;
-      padding-bottom: 14px;
+      margin-bottom: 10px;
+    }
+    .cover-logo img {
+      height: 52px;
+      object-fit: contain;
+    }
+
+    .cover-header {
+      text-align: center;
+      border-bottom: 2px solid #1e3a5f;
+      padding-bottom: 16px;
       margin-bottom: 28px;
     }
+    .cover-header h1 {
+      font-size: 16pt;
+      font-weight: 700;
+      color: #111827;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+    }
+    .cover-header h2 {
+      font-size: 20pt;
+      font-weight: 700;
+      color: #111827;
+      letter-spacing: 2px;
+      margin-bottom: 8px;
+    }
+    .cover-header .cover-meta {
+      font-size: 8pt;
+      color: #4b5563;
+      line-height: 1.6;
+    }
 
-    .doc-title-block img { height: 50px; display: block; margin: 0 auto 10px; }
-    .doc-title-block h1 { font-size: 20pt; font-weight: 700; color: #111827; margin-bottom: 4px; letter-spacing: 2px; }
-    .doc-title-block h2 { font-size: 14pt; font-weight: 600; color: #374151; margin-bottom: 6px; }
-    .doc-title-block .doc-note { font-size: 7.5pt; color: #9ca3af; font-style: italic; margin-top: 10px; }
+    /* ═══════════ SEÇÕES ═══════════ */
+    .reg-section {
+      break-inside: avoid;
+      page-break-inside: avoid;
+      margin-bottom: 14px;
+    }
 
-    /* ═══════════════ SEÇÕES ═══════════════ */
-    .section-block { margin-bottom: 14px; page-break-inside: avoid; break-inside: avoid; }
+    .reg-section-title {
+      font-size: 11pt;
+      font-weight: 700;
+      color: #111827;
+      margin: 20px 0 6px 0;
+      padding-bottom: 3px;
+      border-bottom: 1px solid #d1d5db;
+      text-transform: uppercase;
+      break-after: avoid;
+      page-break-after: avoid;
+    }
 
-    h3.section-title {
+    .reg-section-content {
+      font-size: 10.5pt;
+      line-height: 1.55;
+      color: #1f2937;
+      white-space: pre-line;
+      margin-bottom: 8px;
+    }
+
+    .reg-subsection {
+      margin-left: 16px;
+      margin-bottom: 3px;
+    }
+    .reg-subsection p {
+      font-size: 10.5pt;
+      line-height: 1.55;
+    }
+    .reg-subsection strong {
+      font-weight: 600;
+      color: #374151;
+    }
+
+    /* ═══════════ ASSINATURAS (NOVA PÁGINA) ═══════════ */
+    .signature-page {
+      break-before: page;
+      page-break-before: always;
+      margin-top: 20px;
+    }
+    .signature-page h3 {
       font-size: 12pt;
       font-weight: 700;
-      color: #1e3a5f;
-      margin: 18px 0 6px 0;
-      padding-bottom: 3px;
-      border-bottom: 1px solid #cbd5e1;
+      color: #111827;
+      margin-bottom: 14px;
+      padding-bottom: 5px;
+      border-bottom: 2px solid #1e3a5f;
       text-transform: uppercase;
-      page-break-after: avoid;
+      text-align: center;
       break-after: avoid;
+      page-break-after: avoid;
     }
-
-    .section-content { font-size: 11pt; line-height: 1.5; color: #1f2937; white-space: pre-line; margin-bottom: 8px; }
-
-    .subsection { margin-left: 16px; margin-bottom: 4px; }
-    .subsection p { font-size: 11pt; line-height: 1.5; }
-    .subsection strong { font-weight: 600; color: #374151; }
-
-    /* ═══════════════ PÁGINA DE ASSINATURAS ═══════════════ */
-    .signature-page { page-break-before: always; break-before: page; }
-
-    .signature-page h3 {
-      font-size: 13pt; font-weight: 700; color: #111827; margin-bottom: 10px;
-      padding-bottom: 4px; border-bottom: 2px solid #1e3a5f;
-      text-transform: uppercase; text-align: center;
+    .signature-page .declaration {
+      font-size: 10.5pt;
+      color: #374151;
+      text-align: center;
+      margin-bottom: 30px;
+      font-style: italic;
     }
-
-    .signature-page .declaration { font-size: 11pt; color: #374151; text-align: center; margin-bottom: 30px; font-style: italic; }
-
-    .sig-field { margin-bottom: 22px; }
-    .sig-field .sig-label { font-size: 9pt; font-weight: 600; color: #374151; margin-top: 2px; }
-    .sig-field .sig-line { border-bottom: 1px solid #6b7280; padding-bottom: 2px; min-height: 18px; }
-
-    .sig-row { display: flex; gap: 40px; margin-bottom: 18px; }
-    .sig-row .sig-field { flex: 1; margin-bottom: 0; }
-
-    .sig-footer-note { text-align: center; font-size: 8pt; color: #9ca3af; font-style: italic; margin-top: 36px; }
-
-    .text-center { text-align: center; }
+    .sig-field {
+      margin-bottom: 20px;
+    }
+    .sig-field .sig-label {
+      font-size: 8pt;
+      color: #4b5563;
+      margin-top: 2px;
+    }
+    .sig-field .sig-line {
+      border-bottom: 1px solid #6b7280;
+      min-height: 18px;
+    }
+    .sig-row {
+      display: flex;
+      gap: 40px;
+      margin-bottom: 16px;
+    }
+    .sig-row .sig-field {
+      flex: 1;
+      margin-bottom: 0;
+    }
+    .sig-footer-note {
+      text-align: center;
+      font-size: 7.5pt;
+      color: #9ca3af;
+      font-style: italic;
+      margin-top: 32px;
+    }
   </style>
 </head>
 <body>
 
-  <div class="print-header">
-    <div class="print-header-left">
-      <div class="company-name">${workshop?.name || 'Empresa não identificada'}</div>
-      <div>${workshop?.cnpj ? `CNPJ: ${workshop.cnpj}` : 'CNPJ não informado'}</div>
-    </div>
-    <div class="print-header-right">
-      <div><strong>Regimento Interno</strong></div>
-      <div>Código: ${regiment.document_code || '-'}</div>
-      <div>Versão: ${regiment.version || '-'}</div>
-      <div>Vigência: ${effectiveDate}</div>
-    </div>
-  </div>
-
-  <div class="print-footer">
-    Regimento Interno &nbsp;|&nbsp; Página <span class="page-num"></span> &nbsp;|&nbsp; Emitido em ${generatedAt}
-  </div>
-
-  <div class="doc-title-block">
-    ${workshop?.logo_url ? `<img src="${workshop.logo_url}" alt="Logo" />` : ''}
-    <h1>REGIMENTO INTERNO</h1>
-    <h2>${workshop?.name || ''}</h2>
-    <div class="doc-note">Documento Jurídico e Operacional</div>
-  </div>
+  ${logoHTML}
+  ${headerHTML}
 
   ${sectionsHTML}
+
+  <div class="print-footer"></div>
 
   <div class="signature-page">
     <h3>CIÊNCIA E ASSINATURA</h3>
@@ -235,6 +303,6 @@ export function openRegimentPrint(regiment, workshop, employee = null) {
 
   setTimeout(() => {
     w.print();
-    w.close();
-  }, 600);
+    // Não fecha automaticamente — o usuário decide após a impressão
+  }, 500);
 }
