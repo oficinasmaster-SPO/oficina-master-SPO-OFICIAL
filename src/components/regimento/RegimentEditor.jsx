@@ -15,6 +15,36 @@ const DEFAULT_TEXTS = {
   final_provisions: "Os casos omissos serão avaliados pela direção da empresa. A empresa se reserva o direito de atualizar este regimento, comunicando previamente os colaboradores sobre as alterações."
 };
 
+const SECTION_DESCRIPTIONS = {
+  identification: "Preencha os dados de identificação da empresa e do documento.",
+  legal: "Defina a base jurídica que fundamenta o regimento interno.",
+  duties: "Estabeleça as obrigações e responsabilidades de cada colaborador.",
+  prohibited: "Liste as condutas expressamente proibidas no ambiente de trabalho.",
+  schedule: "Configure regras de jornada, horários e controle de ponto.",
+  absences: "Defina regras para faltas, atrasos, atestados médicos e afastamentos.",
+  penalties: "Configure a escala de penalidades, advertências e medidas disciplinares.",
+  resignation: "Estabeleça os procedimentos para pedido de demissão voluntária.",
+  safety: "Defina as regras obrigatórias de segurança e uso de EPIs.",
+  resources: "Regulamente o uso de equipamentos, internet e patrimônio da empresa.",
+  confidentiality: "Estabeleça as regras de sigilo e proteção de informações.",
+  social: "Regulamente a utilização de celular, redes sociais e imagem corporativa.",
+  conduct: "Estabeleça os padrões de comportamento e ética profissional.",
+  dress: "Defina as regras de vestimenta e apresentação pessoal.",
+  training: "Configure as políticas de treinamento e desenvolvimento.",
+  benefits: "Descreva os benefícios e programas de reconhecimento.",
+  lgpd: "Estabeleça as diretrizes de proteção de dados pessoais (LGPD).",
+  contracts: "Defina os procedimentos para alteração de contratos e atendimento.",
+  vehicles: "Regulamente a responsabilidade sobre veículos de clientes.",
+  parts: "Estabeleça regras para danos a peças e componentes.",
+  equipment: "Defina procedimentos para operação de elevadores e equipamentos pesados.",
+  diagnosis: "Configure o processo de diagnóstico e ordem de serviço.",
+  rework: "Estabeleça políticas de retrabalho e desempenho técnico.",
+  organization: "Defina os padrões de organização e limpeza do ambiente.",
+  tools: "Regulamente o uso e responsabilidade sobre ferramentas.",
+  exit: "Defina os procedimentos de desligamento e entrega de bens.",
+  final: "Configure as disposições finais, textos legais e termos de ciência."
+};
+
 const SECTION_GROUPS = [
   { id: "identification", label: "Identificação", icon: "📋" },
   { id: "legal", label: "Base Legal", icon: "⚖️", sectionIds: ["0"] },
@@ -179,7 +209,7 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
     return (
       <div className="space-y-5">
         {sections.map(section => (
-          <div key={section.id} className="border rounded-lg p-5 bg-white">
+          <div key={section.id} className="border rounded-xl p-6 bg-white shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h4 className="font-semibold text-base text-gray-900">{section.number} {section.title}</h4>
@@ -205,7 +235,7 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
                         newSections[si].subsections[index].content = e.target.value;
                         setFormData({ ...formData, sections: newSections });
                       }}
-                      className="text-sm min-h-[100px]"
+                      className="text-sm leading-6 min-h-[150px] resize-y"
                       placeholder="Digite o conteúdo deste item..."
                     />
                   </div>
@@ -266,7 +296,7 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
       </div>
       <div>
         <Label className="text-xs text-gray-500">Objetivo do Regimento</Label>
-        <Textarea rows={5} value={formData.objective || ""} onChange={(e) => setFormData({ ...formData, objective: e.target.value })} className="bg-blue-50/50 mt-1 min-h-[110px]" />
+        <Textarea rows={5} value={formData.objective || ""} onChange={(e) => setFormData({ ...formData, objective: e.target.value })} className="bg-blue-50/50 mt-1 text-sm leading-6 min-h-[160px] resize-y" />
       </div>
     </div>
   );
@@ -299,15 +329,15 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
     <div className="space-y-5">
       <div>
         <Label className="text-xs text-gray-500">Texto Legal para Advertências</Label>
-        <Textarea rows={5} value={formData.warning_legal_text || ""} onChange={(e) => setFormData({ ...formData, warning_legal_text: e.target.value })} className="bg-red-50/50 mt-1 text-sm min-h-[110px]" />
+        <Textarea rows={5} value={formData.warning_legal_text || ""} onChange={(e) => setFormData({ ...formData, warning_legal_text: e.target.value })} className="bg-red-50/50 mt-1 text-sm leading-6 min-h-[160px] resize-y" />
       </div>
       <div>
         <Label className="text-xs text-gray-500">Texto de Ciência e Compromisso</Label>
-        <Textarea rows={5} value={formData.acknowledgment_text || ""} onChange={(e) => setFormData({ ...formData, acknowledgment_text: e.target.value })} className="bg-green-50/50 mt-1 text-sm min-h-[110px]" />
+        <Textarea rows={5} value={formData.acknowledgment_text || ""} onChange={(e) => setFormData({ ...formData, acknowledgment_text: e.target.value })} className="bg-green-50/50 mt-1 text-sm leading-6 min-h-[160px] resize-y" />
       </div>
       <div>
         <Label className="text-xs text-gray-500">Disposições Finais</Label>
-        <Textarea rows={5} value={formData.final_provisions || ""} onChange={(e) => setFormData({ ...formData, final_provisions: e.target.value })} className="mt-1 text-sm min-h-[110px]" />
+        <Textarea rows={5} value={formData.final_provisions || ""} onChange={(e) => setFormData({ ...formData, final_provisions: e.target.value })} className="mt-1 text-sm leading-6 min-h-[160px] resize-y" />
       </div>
       {renderSectionEditor(["28"])}
       <div className="bg-green-50 border border-green-200 rounded-lg p-4">
@@ -322,6 +352,10 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
       </div>
     </div>
   );
+
+  const getSectionDescription = (sectionId) => {
+    return SECTION_DESCRIPTIONS[sectionId] || "Configure o conteúdo desta seção do regimento.";
+  };
 
   const sectionRenderers = {
     identification: renderIdentification,
@@ -339,12 +373,12 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
       return sectionRenderers[activeSection]();
     }
 
-    // Default: section-based
     if (group.sectionIds) {
       return (
         <div className="space-y-4">
-          <div className="bg-gray-50 border rounded-lg p-3 text-sm text-gray-600">
-            {group.label} — CLT e normas aplicáveis
+          <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
+            <h3 className="font-semibold text-blue-900">{group.label}</h3>
+            <p className="text-sm text-blue-700 mt-1">{getSectionDescription(group.id)}</p>
           </div>
           {renderSectionEditor(group.sectionIds)}
         </div>
@@ -360,9 +394,9 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
   return (
     <div className="h-full flex flex-col bg-white">
       {/* HEADER */}
-      <header className="shrink-0 border-b bg-white px-6 py-3 flex items-center justify-between shadow-[0_2px_8px_rgba(0,0,0,0.06)] z-10 relative">
-        <div className="flex items-center gap-3 min-w-0">
-          <Button variant="ghost" size="icon" onClick={onCancel} className="shrink-0">
+      <header className="shrink-0 border-b bg-white px-6 py-4 flex items-start justify-between shadow-[0_4px_16px_rgba(0,0,0,0.08)] z-10 relative">
+        <div className="flex items-start gap-3 min-w-0">
+          <Button variant="ghost" size="icon" onClick={onCancel} className="shrink-0 mt-0.5">
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div className="min-w-0">
@@ -372,14 +406,14 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
                   {regiment.document_code}
                 </span>
               )}
-              <h2 className="font-semibold text-gray-900 truncate">
+              <h2 className="font-semibold text-lg text-gray-900">
                 {regiment?.id ? 'Editar' : 'Novo'} Regimento Interno
               </h2>
-              <p className="text-xs text-gray-400 mt-1 max-w-xl leading-relaxed">
-                Personalize o Regimento Interno da sua empresa definindo regras, responsabilidades, direitos, deveres e procedimentos aplicáveis aos colaboradores.
-              </p>
             </div>
-            <p className="text-xs text-gray-500 truncate mt-1">
+            <p className="text-sm text-gray-500 mt-2 max-w-4xl leading-relaxed">
+              Personalize o Regimento Interno da sua empresa definindo regras, responsabilidades, direitos, deveres e procedimentos aplicáveis aos colaboradores. Cada seção pode ser adaptada à realidade da sua oficina, garantindo alinhamento operacional, organizacional e jurídico.
+            </p>
+            <p className="text-xs text-gray-400 mt-1">
               {formData.identification?.company_name || "Empresa"} — v{formData.version}
             </p>
           </div>
@@ -408,8 +442,8 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
                 onClick={() => setActiveSection(group.id)}
                 className={`w-full text-left px-3 py-2.5 rounded-lg text-sm flex items-center gap-2.5 transition-all duration-200 border-l-[3px]
                   ${activeSection === group.id
-                    ? 'bg-white shadow-sm border-gray-200 text-gray-900 font-semibold border-l-blue-600'
-                    : 'text-gray-600 hover:bg-white/70 hover:text-gray-800 hover:shadow-sm border-l-transparent'
+                    ? 'bg-blue-50 text-blue-900 font-semibold border-l-blue-600 shadow-sm'
+                    : 'text-gray-600 hover:bg-blue-50 hover:text-blue-900 hover:border-l-blue-300 hover:shadow-sm border-l-transparent'
                   }`}
               >
                 <span className="text-base shrink-0">{group.icon}</span>
@@ -420,15 +454,15 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
         </aside>
 
         {/* CONTENT */}
-        <main className="flex-1 overflow-y-auto p-6 px-8 scrollbar-thin">
-          <div className="max-w-4xl">
+        <main className="flex-1 overflow-y-auto p-6 scrollbar-thin">
+          <div className="w-full max-w-none">
             {renderContent()}
           </div>
         </main>
       </div>
 
       {/* FOOTER */}
-      <footer className="shrink-0 border-t bg-gray-50/80 px-6 py-2.5 flex items-center justify-between text-xs text-gray-500 shadow-[0_-2px_8px_rgba(0,0,0,0.06)] z-10 relative">
+      <footer className="shrink-0 border-t bg-gray-50/80 px-6 py-2.5 flex items-center justify-between text-xs text-gray-500 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] z-10 relative">
         <div className="flex items-center gap-4">
           <span className="flex items-center gap-1.5">
             <span className={`w-2 h-2 rounded-full ${formData.status === 'active' ? 'bg-green-500' : formData.status === 'draft' ? 'bg-yellow-400' : 'bg-gray-400'}`} />
@@ -438,6 +472,8 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
           <span>Versão: <strong>{formData.version}</strong></span>
           <span>|</span>
           <span>Seções: <strong>{formData.sections?.length || 0}</strong></span>
+          <span>|</span>
+          <span>Itens: <strong>{formData.sections?.reduce((acc, s) => acc + (s.subsections?.length || 0), 0)}</strong></span>
         </div>
         <div>
           {formData.updated_date && (
