@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowLeft, Save, Send, Plus, Trash2, FileText } from "lucide-react";
+import { ArrowLeft, Save, Send, Plus, Trash2, FileText, ChevronDown } from "lucide-react";
 
 const DEFAULT_TEXTS = {
   objective: "Este regimento tem como finalidade disciplinar a relação de trabalho, garantindo um ambiente seguro, produtivo e alinhado à legislação vigente.",
@@ -45,39 +45,82 @@ const SECTION_DESCRIPTIONS = {
   final: "Configure as disposições finais, textos legais e termos de ciência."
 };
 
-const SECTION_GROUPS = [
-  { id: "identification", label: "Identificação", icon: "📋" },
-  { id: "legal", label: "Base Legal", icon: "⚖️", sectionIds: ["0"] },
-  { id: "duties", label: "Deveres", icon: "✅", sectionIds: ["1"] },
-  { id: "prohibited", label: "Proibições", icon: "🚫", sectionIds: ["2"] },
-  { id: "schedule", label: "Jornada", icon: "⏰", sectionIds: ["3"] },
-  { id: "absences", label: "Faltas", icon: "📅", sectionIds: ["4"] },
-  { id: "penalties", label: "Penalidades", icon: "⚠️", sectionIds: ["5", "6", "7", "8"] },
-  { id: "resignation", label: "Demissão", icon: "👋", sectionIds: ["9"] },
-  { id: "safety", label: "Segurança", icon: "🦺", sectionIds: ["10"] },
-  { id: "resources", label: "Recursos", icon: "💻", sectionIds: ["11"] },
-  { id: "confidentiality", label: "Sigilo", icon: "🔒", sectionIds: ["12"] },
-  { id: "social", label: "Redes Sociais", icon: "📱", sectionIds: ["13"] },
-  { id: "conduct", label: "Conduta", icon: "🤝", sectionIds: ["14"] },
-  { id: "dress", label: "Vestimenta", icon: "👔", sectionIds: ["15"] },
-  { id: "training", label: "Treinamento", icon: "📚", sectionIds: ["16"] },
-  { id: "benefits", label: "Benefícios", icon: "🎁", sectionIds: ["17"] },
-  { id: "lgpd", label: "LGPD", icon: "🛡️", sectionIds: ["18"] },
-  { id: "contracts", label: "Contratos", icon: "📄", sectionIds: ["19"] },
-  { id: "vehicles", label: "Veículos", icon: "🚗", sectionIds: ["20"] },
-  { id: "parts", label: "Peças/Danos", icon: "🔧", sectionIds: ["21"] },
-  { id: "equipment", label: "Equipamentos", icon: "🏗️", sectionIds: ["22"] },
-  { id: "diagnosis", label: "Diagnóstico", icon: "📋", sectionIds: ["23"] },
-  { id: "rework", label: "Retrabalho", icon: "🔄", sectionIds: ["24"] },
-  { id: "organization", label: "Organização", icon: "🧹", sectionIds: ["25"] },
-  { id: "tools", label: "Ferramentas", icon: "🧰", sectionIds: ["26"] },
-  { id: "exit", label: "Desligamento", icon: "📦", sectionIds: ["27"] },
-  { id: "final", label: "Disposições Finais", icon: "📝", sectionIds: ["28"] }
+const CATEGORY_GROUPS = [
+  {
+    id: "dados_gerais",
+    label: "Dados Gerais",
+    icon: "📋",
+    items: [
+      { id: "identification", label: "Identificação", icon: "🏢" },
+      { id: "legal", label: "Base Legal", icon: "⚖️", sectionIds: ["0"] },
+    ]
+  },
+  {
+    id: "recursos_humanos",
+    label: "Recursos Humanos",
+    icon: "👥",
+    items: [
+      { id: "duties", label: "Deveres", icon: "✅", sectionIds: ["1"] },
+      { id: "prohibited", label: "Proibições", icon: "🚫", sectionIds: ["2"] },
+      { id: "schedule", label: "Jornada", icon: "⏰", sectionIds: ["3"] },
+      { id: "absences", label: "Faltas", icon: "📅", sectionIds: ["4"] },
+      { id: "benefits", label: "Benefícios", icon: "🎁", sectionIds: ["17"] },
+      { id: "training", label: "Treinamentos", icon: "📚", sectionIds: ["16"] },
+    ]
+  },
+  {
+    id: "penalidades",
+    label: "Penalidades",
+    icon: "⚠️",
+    items: [
+      { id: "penalties", label: "Penalidades", icon: "⚡", sectionIds: ["5", "6", "7", "8"] },
+    ]
+  },
+  {
+    id: "compliance",
+    label: "Compliance",
+    icon: "🛡️",
+    items: [
+      { id: "resignation", label: "Demissão", icon: "👋", sectionIds: ["9"] },
+      { id: "safety", label: "Segurança", icon: "🦺", sectionIds: ["10"] },
+      { id: "resources", label: "Recursos", icon: "💻", sectionIds: ["11"] },
+      { id: "confidentiality", label: "Sigilo", icon: "🔒", sectionIds: ["12"] },
+      { id: "social", label: "Redes Sociais", icon: "📱", sectionIds: ["13"] },
+      { id: "conduct", label: "Conduta", icon: "🤝", sectionIds: ["14"] },
+      { id: "dress", label: "Vestimenta", icon: "👔", sectionIds: ["15"] },
+      { id: "lgpd", label: "LGPD", icon: "🔐", sectionIds: ["18"] },
+    ]
+  },
+  {
+    id: "operacao",
+    label: "Operação Oficina",
+    icon: "🔧",
+    items: [
+      { id: "contracts", label: "Contratos", icon: "📄", sectionIds: ["19"] },
+      { id: "vehicles", label: "Veículos", icon: "🚗", sectionIds: ["20"] },
+      { id: "parts", label: "Peças/Danos", icon: "🔩", sectionIds: ["21"] },
+      { id: "equipment", label: "Equipamentos", icon: "🏗️", sectionIds: ["22"] },
+      { id: "diagnosis", label: "Diagnóstico", icon: "🔍", sectionIds: ["23"] },
+      { id: "rework", label: "Retrabalho", icon: "🔄", sectionIds: ["24"] },
+      { id: "organization", label: "Organização", icon: "🧹", sectionIds: ["25"] },
+      { id: "tools", label: "Ferramentas", icon: "🧰", sectionIds: ["26"] },
+    ]
+  },
+  {
+    id: "encerramento",
+    label: "Encerramento",
+    icon: "📝",
+    items: [
+      { id: "exit", label: "Desligamento", icon: "📦", sectionIds: ["27"] },
+      { id: "final", label: "Disposições Finais", icon: "📜", sectionIds: ["28"] },
+    ]
+  }
 ];
 
 export default function RegimentEditor({ regiment, workshop, onSave, onCancel }) {
   const queryClient = useQueryClient();
   const [activeSection, setActiveSection] = useState("identification");
+  const [openGroup, setOpenGroup] = useState("dados_gerais");
 
   const [formData, setFormData] = useState(() => {
     if (regiment) {
@@ -155,6 +198,15 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
       toast.error("Erro: " + error.message);
     }
   });
+
+  const handleSectionClick = (sectionId, groupId) => {
+    setActiveSection(sectionId);
+    setOpenGroup(groupId);
+  };
+
+  const handleToggleGroup = (groupId) => {
+    setOpenGroup(prev => prev === groupId ? null : groupId);
+  };
 
   const handleSaveDraft = () => {
     saveMutation.mutate(formData);
@@ -365,22 +417,22 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
   };
 
   const renderContent = () => {
-    const group = SECTION_GROUPS.find(g => g.id === activeSection);
-    if (!group) return null;
+    const allItems = CATEGORY_GROUPS.flatMap(g => g.items);
+    const item = allItems.find(i => i.id === activeSection);
+    if (!item) return null;
 
-    // Special renderers
     if (sectionRenderers[activeSection]) {
       return sectionRenderers[activeSection]();
     }
 
-    if (group.sectionIds) {
+    if (item.sectionIds) {
       return (
         <div className="space-y-4">
           <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
-            <h3 className="font-semibold text-blue-900">{group.label}</h3>
-            <p className="text-sm text-blue-700 mt-1">{getSectionDescription(group.id)}</p>
+            <h3 className="font-semibold text-blue-900">{item.label}</h3>
+            <p className="text-sm text-blue-700 mt-1">{getSectionDescription(item.id)}</p>
           </div>
-          {renderSectionEditor(group.sectionIds)}
+          {renderSectionEditor(item.sectionIds)}
         </div>
       );
     }
@@ -393,8 +445,8 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
 
   return (
     <div className="h-full flex flex-col bg-white">
-      {/* HEADER */}
-      <header className="shrink-0 border-b bg-white px-6 py-4 flex items-start justify-between shadow-[0_4px_16px_rgba(0,0,0,0.08)] z-10 relative">
+      {/* HEADER — fixo */}
+      <header className="shrink-0 border-b bg-white px-6 py-4 flex items-start justify-between shadow-[0_4px_16px_rgba(0,0,0,0.08)] z-10">
         <div className="flex items-start gap-3 min-w-0">
           <Button variant="ghost" size="icon" onClick={onCancel} className="shrink-0 mt-0.5">
             <ArrowLeft className="w-5 h-5" />
@@ -428,41 +480,67 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
         </div>
       </header>
 
-      {/* BODY */}
+      {/* BODY — flex-1 min-h-0 é CRÍTICO para o scroll funcionar */}
       <div className="flex flex-1 min-h-0">
-        {/* SIDEBAR */}
-        <aside className="w-[260px] shrink-0 border-r bg-gray-50/80 flex flex-col overflow-hidden">
-          <div className="px-3 pt-3 pb-2 text-[10px] font-semibold text-gray-400 uppercase tracking-widest">
+        {/* SIDEBAR — fixa na largura, scroll interno */}
+        <aside className="w-[260px] shrink-0 border-r bg-gray-50/80 flex flex-col">
+          <div className="px-3 pt-3 pb-2 text-[10px] font-semibold text-gray-400 uppercase tracking-widest shrink-0">
             Navegação
           </div>
-          <nav className="flex-1 overflow-y-auto px-2 pb-4 space-y-0.5 scrollbar-thin">
-            {SECTION_GROUPS.map(group => (
-              <button
-                key={group.id}
-                onClick={() => setActiveSection(group.id)}
-                className={`w-full text-left px-3 py-2.5 rounded-lg text-sm flex items-center gap-2.5 transition-all duration-200 border-l-[3px]
-                  ${activeSection === group.id
-                    ? 'bg-blue-50 text-blue-900 font-semibold border-l-blue-600 shadow-sm'
-                    : 'text-gray-600 hover:bg-blue-50 hover:text-blue-900 hover:border-l-blue-300 hover:shadow-sm border-l-transparent'
-                  }`}
-              >
-                <span className="text-base shrink-0">{group.icon}</span>
-                <span className="truncate">{group.label}</span>
-              </button>
-            ))}
+          <nav className="flex-1 overflow-y-auto px-2 pb-4 scrollbar-thin">
+            {CATEGORY_GROUPS.map(group => {
+              const isOpen = openGroup === group.id;
+              return (
+                <div key={group.id} className="mb-0.5">
+                  {/* Accordion header */}
+                  <button
+                    onClick={() => handleToggleGroup(group.id)}
+                    className={`w-full text-left px-3 py-2.5 rounded-lg text-sm flex items-center gap-2.5 transition-all duration-200
+                      ${isOpen
+                        ? 'bg-blue-50 text-blue-900 font-semibold shadow-sm'
+                        : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                  >
+                    <span className="text-base shrink-0">{group.icon}</span>
+                    <span className="flex-1 truncate">{group.label}</span>
+                    <ChevronDown className={`w-4 h-4 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {/* Accordion items */}
+                  {isOpen && (
+                    <div className="ml-1 mt-0.5 space-y-0.5 border-l-2 border-blue-200 pl-2">
+                      {group.items.map(item => (
+                        <button
+                          key={item.id}
+                          onClick={() => handleSectionClick(item.id, group.id)}
+                          className={`w-full text-left px-3 py-2 rounded-lg text-sm flex items-center gap-2.5 transition-all duration-150
+                            ${activeSection === item.id
+                              ? 'bg-blue-100 text-blue-900 font-semibold border-l-[3px] border-l-blue-600'
+                              : 'text-gray-600 hover:bg-blue-50/60 hover:text-blue-900 border-l-[3px] border-l-transparent'
+                            }`}
+                        >
+                          <span className="text-sm shrink-0">{item.icon}</span>
+                          <span className="truncate">{item.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </nav>
         </aside>
 
-        {/* CONTENT */}
+        {/* CONTENT — scroll vertical próprio */}
         <main className="flex-1 overflow-y-auto p-6 scrollbar-thin">
-          <div className="w-full max-w-none">
+          <div className="w-full max-w-none pb-8">
             {renderContent()}
           </div>
         </main>
       </div>
 
-      {/* FOOTER */}
-      <footer className="shrink-0 border-t bg-gray-50/80 px-6 py-2.5 flex items-center justify-between text-xs text-gray-500 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] z-10 relative">
+      {/* FOOTER — fixo */}
+      <footer className="shrink-0 border-t bg-gray-50/80 px-6 py-2.5 flex items-center justify-between text-xs text-gray-500 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] z-10">
         <div className="flex items-center gap-4">
           <span className="flex items-center gap-1.5">
             <span className={`w-2 h-2 rounded-full ${formData.status === 'active' ? 'bg-green-500' : formData.status === 'draft' ? 'bg-yellow-400' : 'bg-gray-400'}`} />

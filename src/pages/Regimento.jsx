@@ -287,7 +287,7 @@ export default function Regimento() {
       <Dialog open={showEditor} onOpenChange={(open) => {
         if (!open) { setShowEditor(false); setSelectedRegiment(null); }
       }}>
-        <DialogContent className="w-[96vw] max-w-[1600px] h-[92vh] p-0 overflow-hidden">
+        <DialogContent className="w-[96vw] max-w-[1600px] h-[92vh] p-0 overflow-hidden !flex !flex-col !gap-0" hideClose>
           {selectedRegiment && workshop && (
             <RegimentEditor
               regiment={selectedRegiment}
