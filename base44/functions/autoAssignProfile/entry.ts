@@ -1,52 +1,50 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
-/**
- * Regras de atribuição automática de perfil por job_role
- * Mapeamento: job_role -> profile_name
- * TABELA CANÔNICA OFICIAL - FASE 4 (Pré-Seleção Automática)
- */
-// TABELA CANÔNICA OFICIAL
-// Mapeamento job_role → profile_name para pré-seleção automática.
-// Todos os perfis referenciados aqui DEVEM existir no banco (validados em 2026-06-09).
-// Cargos operacionais mapeiam para "Vendedor - Atendimento ao Cliente" — intencional.
-// Cargo RH ≠ perfil RBAC. Um mecânico não precisa de um perfil "Mecânico".
-const JOB_ROLE_TO_PROFILE = {
+// TABELA CANÔNICA OFICIAL — job_role → profile_id FIXO
+// Mapeamento por ID elimina dependência de nome do perfil no banco.
+// Se o nome mudar, o mapeamento continua funcionando.
+// IDs validados em 2026-06-09 via auditoria MCP.
+// Cargos operacionais → Técnico - Acesso Operacional (acesso mínimo — intencional).
+const JOB_ROLE_TO_PROFILE_ID = {
   // Gestão
-  'socio': 'Sócio - Acesso Total',
-  'diretor': 'Diretor - Gestão Estratégica',
-  'gerente': 'Gerente - Gestão Operacional',
-  'supervisor_loja': 'Supervisor - Operação e Equipe',
+  'socio':           '6a272f8ea3fa8dd02ca7350e', // Sócio - Acesso Total
+  'diretor':         '6a272f8a983951dfc5cf3493', // Diretor - Gestão Estratégica
+  'gerente':         '6a272f8976cba10c3232779a', // Gerente - Gestão Operacional
+  'supervisor_loja': '6a272f91b92f3d2dfe6344be', // Supervisor - Operação e Equipe
   // Especialistas
-  'rh': 'RH - Gestão de Pessoas',
-  'financeiro': 'Financeiro - Controle Financeiro',
-  'administrativo': 'Financeiro - Controle Financeiro',
-  'lider_tecnico': 'Líder Técnico - Coordenação Técnica',
+  'rh':              '6a272f883b2162c800073ace', // RH - Gestão de Pessoas
+  'financeiro':      '6a285fc9f76402dd73736656', // Financeiro - Controle Financeiro
+  'administrativo':  '6a285fc9f76402dd73736656', // Financeiro - Controle Financeiro
+  'lider_tecnico':   '6a272f85fc4b85767f964421', // Líder Técnico - Coordenação Técnica
   // Vendas e Atendimento
-  'comercial': 'Comercial - Vendas e Atendimento',
-  'consultor_vendas': 'Vendedor - Atendimento ao Cliente',
-  'marketing': 'Marketing - Comunicação e Marketing',
-  // Operacional (todos com acesso mínimo operacional — intencional)
-  'tecnico': 'Vendedor - Atendimento ao Cliente',
-  'eletricista': 'Vendedor - Atendimento ao Cliente',
-  'funilaria_pintura': 'Vendedor - Atendimento ao Cliente',
-  'estoque': 'Vendedor - Atendimento ao Cliente',
-  'motoboy': 'Vendedor - Atendimento ao Cliente',
-  'lavador': 'Vendedor - Atendimento ao Cliente',
-  'outros': 'Vendedor - Atendimento ao Cliente',
+  'comercial':       '6a272f96bc6eedd434194fcf', // Comercial - Vendas e Atendimento
+  'consultor_vendas':'6a272f876b16129b2f5f31be', // Técnico - Acesso Operacional
+  'marketing':       '6a272f99aaeffc72c503fa5e', // Marketing - Comunicação e Marketing
+  // Operacional (acesso mínimo — cargo RH ≠ perfil RBAC, mecânico não precisa de perfil Mecânico)
+  'tecnico':         '6a272f876b16129b2f5f31be', // Técnico - Acesso Operacional
+  'eletricista':     '6a272f876b16129b2f5f31be', // Técnico - Acesso Operacional
+  'funilaria_pintura':'6a272f876b16129b2f5f31be', // Técnico - Acesso Operacional
+  'estoque':         '6a272f876b16129b2f5f31be', // Técnico - Acesso Operacional
+  'motoboy':         '6a272f876b16129b2f5f31be', // Técnico - Acesso Operacional
+  'lavador':         '6a272f876b16129b2f5f31be', // Técnico - Acesso Operacional
+  'outros':          '6a272f876b16129b2f5f31be', // Técnico - Acesso Operacional
   // Internos (equipe Oficinas Master)
-  'consultor': 'Consultor',
+  'consultor':       '6a272f95957fe29d2e8a888a', // Consultor
 };
 
+// ID de fallback quando job_role não tem mapeamento
+const FALLBACK_PROFILE_ID = '6a272f876b16129b2f5f31be'; // Técnico - Acesso Operacional
+
 /**
- * Busca perfil existente pelo nome
+ * Busca perfil existente pelo ID fixo — robusto a renomeações
  */
-async function findProfileByName(base44, profileName) {
-  const profiles = await base44.asServiceRole.entities.UserProfile.filter({ 
-    name: profileName,
-    status: 'ativo'
-  });
-  
-  return profiles && profiles.length > 0 ? profiles[0] : null;
+async function findProfileById(base44, profileId) {
+  try {
+    const profile = await base44.asServiceRole.entities.UserProfile.get(profileId);
+    return profile?.status === 'ativo' ? profile : null;
+  } catch {
+    return null;
+  }
 }
 
 Deno.serve(async (req) => {
@@ -69,9 +67,9 @@ Deno.serve(async (req) => {
     
     // Modo observação: apenas sugere, não aplica (UI do modal)
     if (job_role && !employee_id) {
-      const profileName = JOB_ROLE_TO_PROFILE[job_role];
+      const profileId = JOB_ROLE_TO_PROFILE_ID[job_role];
       
-      if (!profileName) {
+      if (!profileId) {
         return Response.json({
           success: true,
           has_suggestion: false,
@@ -79,14 +77,14 @@ Deno.serve(async (req) => {
         });
       }
       
-      const profile = await findProfileByName(base44, profileName);
+      const profile = await findProfileById(base44, profileId);
       
       if (!profile) {
         return Response.json({
           success: true,
           has_suggestion: false,
-          message: 'Perfil sugerido não existe',
-          suggested_profile_name: profileName
+          message: 'Perfil sugerido não encontrado no banco',
+          suggested_profile_id: profileId
         });
       }
       
@@ -134,8 +132,8 @@ Deno.serve(async (req) => {
     }
     
     // Buscar perfil padrão
-    const profileName = JOB_ROLE_TO_PROFILE[job_role] || 'Outros - Acesso Básico';
-    const profile = await findProfileByName(base44, profileName);
+    const profileId = JOB_ROLE_TO_PROFILE_ID[job_role] || FALLBACK_PROFILE_ID;
+    const profile = await findProfileById(base44, profileId);
     
     if (!profile) {
       return Response.json({ 
