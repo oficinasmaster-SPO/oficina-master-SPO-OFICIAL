@@ -6,7 +6,7 @@ import { ArrowLeft, Printer, CheckCircle2 } from "lucide-react";
 import { format } from "date-fns";
 import { base44 } from "@/api/base44Client";
 import { useMutation } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { openRegimentPrint } from "@/components/regimento/RegimentPrintTemplate";
 
 export default function RegimentViewer({ regiment, workshop, employee, onClose, autoAcknowledge = false }) {
   const [hasAcknowledged, setHasAcknowledged] = React.useState(false);
@@ -25,9 +25,7 @@ export default function RegimentViewer({ regiment, workshop, employee, onClose, 
         document_version: regiment.version
       });
     },
-    onSuccess: () => {
-      setHasAcknowledged(true);
-    }
+    onSuccess: () => setHasAcknowledged(true),
   });
 
   useEffect(() => {
@@ -36,65 +34,15 @@ export default function RegimentViewer({ regiment, workshop, employee, onClose, 
     }
   }, [autoAcknowledge]);
 
-  const handlePrint = () => {
-    const printContent = document.getElementById('regiment-print-content');
-    if (!printContent) return;
-
-    const printWindow = window.open('', '_blank', 'width=900,height=700');
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8" />
-          <title>Regimento Interno</title>
-          <style>
-            @page { size: A4 portrait; margin: 20mm; }
-            * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
-            body { background: white; color: #000; font-size: 11pt; line-height: 1.6; }
-
-            h1 { font-size: 22pt; font-weight: bold; margin-bottom: 6px; }
-            h2 { font-size: 14pt; font-weight: 600; margin-bottom: 4px; }
-            h3 { font-size: 13pt; font-weight: bold; margin: 20px 0 6px 0; padding-bottom: 4px; border-bottom: 2px solid #000; text-transform: uppercase; }
-            p { margin-bottom: 8px; }
-            strong { font-weight: bold; }
-
-            .doc-header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 16px; margin-bottom: 24px; }
-            .doc-header img { height: 60px; display: block; margin: 0 auto 12px; }
-            .doc-header .meta { font-size: 10pt; color: #444; margin-top: 6px; }
-            .doc-header .italic { font-size: 9pt; color: #666; font-style: italic; margin-top: 4px; }
-
-            .section-block { margin-bottom: 20px; page-break-inside: avoid; }
-            .section-content { font-size: 11pt; line-height: 1.6; white-space: pre-line; margin-bottom: 10px; }
-            .subsection { margin-left: 20px; margin-bottom: 6px; font-size: 10.5pt; }
-
-            .signature-area { border-top: 2px solid #000; padding-top: 20px; margin-top: 40px; page-break-inside: avoid; }
-            .sig-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 20px; }
-            .sig-line { border-top: 1.5px solid #000; padding-top: 6px; margin-top: 48px; text-align: center; font-size: 10pt; font-weight: bold; }
-            .footer-note { text-align: center; font-size: 9pt; color: #555; font-style: italic; margin-top: 12px; }
-          </style>
-        </head>
-        <body>
-          ${printContent.innerHTML}
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
-    printWindow.focus();
-    setTimeout(() => {
-      printWindow.print();
-      printWindow.close();
-    }, 500);
-  };
+  const handlePrint = () => openRegimentPrint(regiment, workshop, employee);
 
   const replacePlaceholders = (text) => {
     if (!text || !employee) return text;
-
     let updatedText = text;
     const now = new Date();
     const formattedDate = format(now, 'dd/MM/yyyy');
     const admissionDate = employee.hire_date ? format(new Date(employee.hire_date), 'dd/MM/yyyy') : '__/__/____';
     const location = workshop ? `${workshop.city || ''}/${workshop.state || ''}` : '';
-
     updatedText = updatedText.replace(/Nome completo:\s*\[X+\]/g, `Nome completo: ${employee.full_name || '________________________________'}`);
     updatedText = updatedText.replace(/CPF:\s*\[X+\.?X+\.?X+\-?X+\]/g, `CPF: ${employee.cpf || '___________'}`);
     updatedText = updatedText.replace(/RG:\s*\[X+\]/g, `RG: ${employee.rg || '___________'}`);
@@ -102,32 +50,12 @@ export default function RegimentViewer({ regiment, workshop, employee, onClose, 
     updatedText = updatedText.replace(/Data de Admissão:\s*\[X+\/X+\/X+\]/g, `Data de Admissão: ${admissionDate}`);
     updatedText = updatedText.replace(/Data de Ciência do Regimento:\s*\[X+\/X+\/X+\]/g, `Data de Ciência do Regimento: ${formattedDate}`);
     updatedText = updatedText.replace(/Local:\s*\[X+\]/g, `Local: ${location || '____________________'}`);
-
     return updatedText;
   };
 
-  const renderSection = (section, index) => {
-    return (
-      <div key={section.id || index} className="section-block page-break-inside-avoid mb-6">
-        <h3 className="section-title">
-          {section.number} {section.title}
-        </h3>
-        {section.content && (
-          <div className="section-content mb-3">{replacePlaceholders(section.content)}</div>
-        )}
-        {section.subsections?.map((subsection, subIndex) => (
-          <div key={subsection.id || subIndex} className="subsection ml-6 mb-2">
-            <p className="text-sm">
-              <strong>{subsection.number}</strong> {replacePlaceholders(subsection.content)}
-            </p>
-          </div>
-        ))}
-      </div>
-    );
-  };
-
   return (
-    <div className="max-w-5xl mx-auto space-y-4 print:max-w-full">
+    <div className="max-w-5xl mx-auto space-y-4">
+      {/* Barra de ferramentas — preview */}
       <Card className="border-2 border-blue-200 print:hidden">
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -166,73 +94,56 @@ export default function RegimentViewer({ regiment, workshop, employee, onClose, 
         </CardHeader>
       </Card>
 
-      <Card className="print-container regiment-print-content">
+      {/* Conteúdo de leitura */}
+      <Card>
         <CardContent className="p-8 space-y-6">
-          {/* Conteúdo printável — capturado pelo handlePrint via id */}
-          <div id="regiment-print-content">
-            {/* Cabeçalho */}
-            <div className="doc-header text-center border-b-2 border-gray-900 pb-4 mb-6">
-              {workshop?.logo_url && (
-                <img src={workshop.logo_url} alt="Logo" className="h-16 mx-auto mb-4 object-contain" />
+          <div className="text-center border-b-2 border-gray-200 pb-6 mb-6">
+            {workshop?.logo_url && (
+              <img src={workshop.logo_url} alt="Logo" className="h-16 mx-auto mb-4 object-contain" />
+            )}
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">REGIMENTO INTERNO</h1>
+            <h2 className="text-xl font-semibold text-gray-700">{workshop?.name}</h2>
+            <p className="text-sm text-gray-500 mt-2">
+              CNPJ: {workshop?.cnpj} | {workshop?.endereco_completo}
+            </p>
+            <div className="flex items-center justify-center gap-4 mt-3 text-sm text-gray-600">
+              {regiment.document_code && (
+                <><span>Código: <strong>{regiment.document_code}</strong></span><span>·</span></>
               )}
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">REGIMENTO INTERNO</h1>
-              <h2 className="text-xl font-semibold text-gray-800">{workshop?.name}</h2>
-              <p className="meta text-sm text-gray-600 mt-2">
-                CNPJ: {workshop?.cnpj} | {workshop?.endereco_completo}
-              </p>
-              <div className="flex items-center justify-center gap-4 mt-3 text-sm">
-                {regiment.document_code && (
-                  <><span>Código: <strong>{regiment.document_code}</strong></span><span>•</span></>
-                )}
-                <span>Versão: <strong>{regiment.version}</strong></span>
-                <span>•</span>
-                <span>Vigência: <strong>{regiment.effective_date ? format(new Date(regiment.effective_date), 'dd/MM/yyyy') : '-'}</strong></span>
-              </div>
-              <p className="italic text-xs text-gray-500 mt-2">
-                Documento Jurídico e Operacional | Aberto para Complementação
-              </p>
+              <span>Versão: <strong>{regiment.version}</strong></span>
+              <span>·</span>
+              <span>Vigência: <strong>{regiment.effective_date ? format(new Date(regiment.effective_date), 'dd/MM/yyyy') : '-'}</strong></span>
             </div>
+          </div>
 
-            {/* Seções */}
-            {regiment.sections?.map((section, index) => renderSection(section, index))}
-
-            {/* Assinatura */}
-            <div className="signature-area border-t-2 border-gray-900 pt-6 mt-8">
-              <h3 className="section-title mb-4">CIÊNCIA E ASSINATURA</h3>
-              <p className="section-content mb-6">
-                Declaro que li, compreendi e estou ciente de todas as normas deste Regimento Interno.
-              </p>
-              <div className="sig-grid grid grid-cols-2 gap-8 mb-6">
-                <div className="text-center">
-                  <div className="sig-line border-t-2 border-gray-900 pt-2 mt-12">
-                    <p className="text-sm font-semibold">Nome do Colaborador</p>
-                  </div>
+          {regiment.sections?.map((section, idx) => (
+            <div key={section.id || idx} className="mb-6">
+              <h3 className="text-base font-bold text-gray-900 mb-2 uppercase border-b border-gray-200 pb-1">
+                {section.number} {section.title}
+              </h3>
+              {section.content && (
+                <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line mb-3">
+                  {replacePlaceholders(section.content)}
+                </p>
+              )}
+              {section.subsections?.map((sub, sIdx) => (
+                <div key={sub.id || sIdx} className="ml-6 mb-2">
+                  <p className="text-sm text-gray-700">
+                    <strong>{sub.number}</strong> {replacePlaceholders(sub.content)}
+                  </p>
                 </div>
-                <div className="text-center">
-                  <div className="sig-line border-t-2 border-gray-900 pt-2 mt-12">
-                    <p className="text-sm font-semibold">Assinatura</p>
-                  </div>
-                </div>
-              </div>
-              <div className="sig-grid grid grid-cols-2 gap-8 mb-6">
-                <div className="text-center">
-                  <div className="sig-line border-t-2 border-gray-900 pt-2 mt-12">
-                    <p className="text-sm font-semibold">Data</p>
-                  </div>
-                </div>
-                <div className="text-center">
-                  <div className="sig-line border-t-2 border-gray-900 pt-2 mt-12">
-                    <p className="text-sm font-semibold">Testemunha (se necessário)</p>
-                  </div>
-                </div>
-              </div>
-              <p className="footer-note text-xs text-center text-gray-500 italic mt-6">
-                Este documento é parte integrante do contrato de trabalho.
-              </p>
-              <p className="footer-note text-xs text-center text-gray-500 mt-2">
-                Documento gerado em {format(new Date(), "dd/MM/yyyy 'às' HH:mm")}
-              </p>
+              ))}
             </div>
+          ))}
+
+          <div className="border-t-2 border-gray-200 pt-6 mt-8">
+            <h3 className="text-base font-bold text-gray-900 mb-4 uppercase">CIÊNCIA E ASSINATURA</h3>
+            <p className="text-sm text-gray-600 italic mb-6">
+              Declaro que li, compreendi e estou ciente de todas as normas deste Regimento Interno.
+            </p>
+            <p className="text-xs text-center text-gray-400 mt-6">
+              Documento gerado em {format(new Date(), "dd/MM/yyyy 'às' HH:mm")}
+            </p>
           </div>
         </CardContent>
       </Card>
