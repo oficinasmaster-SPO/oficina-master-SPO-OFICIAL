@@ -1,8 +1,20 @@
 # 📘 Arquitetura de Identidade e Acesso (IAM)
 
+> **Versão:** 2.0 — Atualizado em 2026-06-10  
+> **Status:** ✅ Estável — modelo canônico confirmado e auditado  
+> **Regressão:** rlsRegressionLote1 + Lote2 = 100% PASS (15 cenários)
+
+---
+
 ## Visão Geral
 
-O sistema utiliza uma arquitetura de **3 camadas** para gerenciar identidade, dados profissionais e permissões de acesso. Esta separação permite flexibilidade para diferentes tipos de usuários (funcionários, clientes, candidatos) e controle granular de permissões.
+O sistema utiliza uma arquitetura de **3 camadas** para gerenciar identidade, dados profissionais e permissões de acesso:
+
+```
+User (Auth)  →  Employee (RH + perfil)  →  UserProfile (RBAC)
+```
+
+A autorização é **completamente desacoplada** do `User`. O `PermissionsContext` resolve permissões exclusivamente via `Employee.profile_id → UserProfile.roles`.
 
 ---
 
@@ -10,395 +22,197 @@ O sistema utiliza uma arquitetura de **3 camadas** para gerenciar identidade, da
 
 ### 1. **User** (Entidade Built-in do Base44)
 
-**Propósito:** Gerenciar autenticação e acesso básico ao sistema.
+**Propósito:** Autenticação, sessões e roteamento de acesso básico.
 
-**Campos Principais:**
+**Campos canônicos ativos:**
 ```json
 {
   "id": "69984abc620579000193d920",
-  "email": "mateus.mtssaraiva@gmail.com",
-  "full_name": "mateus.mtssaraiva",
-  "role": "admin",
-  "is_verified": true,
-  "data": {
-    "workshop_id": "695408b3ed74bfeb60d708c0",
-    "consulting_firm_id": "69bab264d7c3fe5d367c3959",
-    "first_access_completed": true,
-    "profile_completed": true,
-    "is_collaborator": true,
-    "role": "admin"
-  }
+  "email": "joao@oficina.com",
+  "full_name": "João Silva",
+  "role": "user",
+  "user_type": "external",
+  "workshop_id": "695408b3ed74bfeb60d708c0",
+  "consulting_firm_id": null
 }
 ```
+
+**⚠️ Campos DEPRECATED (não usar para autorização):**
+| Campo | Status | Razão |
+|-------|--------|-------|
+| `profile_id` | ❌ DEPRECATED 2026-06-10 | Ignorado pelo engine de permissões. Usar `Employee.profile_id`. |
+| `job_role` | ❌ DEPRECATED 2026-06-10 | Não determina acesso. Usar `Employee.job_role` para display/UX apenas. |
 
 **Características:**
 - ✅ Obrigatório para **qualquer pessoa** que acessa o sistema
 - ✅ Gerencia login, senha, sessões, tokens de API
-- ✅ Role básico: `admin` ou `user`
-- ✅ Pode existir **sem** Employee (ex: clientes externos)
-- ✅ Campos imutáveis: `id`, `email`, `created_date`
-
-**Casos de Uso:**
-| Cenário | User Existe? |
-|---------|-------------|
-| Funcionário interno | ✅ Sim |
-| Cliente/oficina | ✅ Sim |
-| Candidato em processo seletivo | ✅ Sim (acesso limitado) |
-| Ex-funcionário | ❌ (desativado) |
+- ✅ `role` define apenas `admin` vs `user` (controle de plataforma)
+- ✅ `user_type` é a fonte canônica de `internal` vs `external`
 
 ---
 
-### 2. **Employee** (Entidade Customizada)
+### 2. **Employee** (Entidade Customizada) — **Fonte canônica de autorização**
 
-**Propósito:** Armazenar dados profissionais e de RH.
+**Propósito:** Dados profissionais/RH + vínculo com `UserProfile` (permissões).
 
-**Campos Principais:**
+**Campos relevantes para autorização:**
 ```json
 {
   "id": "69984a68bad6fd3a6c490b78",
   "user_id": "69984abc620579000193d920",
-  "full_name": "Mateus Silveira Sairaiva",
-  "email": "mateus.mtssaraiva@gmail.com",
-  "cpf": "0964799950",
-  "rg": "131802650",
-  "data_nascimento": "1996-05-18",
-  "telefone": "4499494382",
-  "position": "Head Marketing",
-  "job_role": "marketing",
-  "area": "marketing",
+  "profile_id": "6a272f8ea3fa8dd02ca7350e",
+  "job_role": "socio",
   "user_type": "internal",
-  "tipo_vinculo": "interno",
-  "user_status": "ativo",
-  "profile_id": "6981e1904f21fbeca5620f73",
-  "workshop_id": "695408b3ed74bfeb60d708c0",
-  "company_id": "69bab329dd0a253653721ca2",
-  "consulting_firm_id": "69bab264d7c3fe5d367c3959",
-  "salary": 0.0,
-  "commission": 0.0,
-  "bonus": 0.0,
-  "benefits": [],
-  "hire_date": "",
-  "profile_picture_url": "...",
-  "digital_signature_url": "",
-  "work_contract_url": "",
-  "career_history": [],
-  "contract_history": [],
-  "audit_log": []
-}
-```
-
-**Características:**
-- ✅ **Opcional** - apenas para funcionários internos
-- ✅ Contém dados sensíveis de RH (salário, CPF, RG)
-- ✅ Mantém histórico profissional (cargo, contratos)
-- ✅ Link explícito para User via `user_id`
-- ✅ Link para UserProfile via `profile_id`
-
-**Campos Sensíveis (RLS):**
-- `salary`, `commission`, `bonus`, `benefits` - Apenas admin e próprio usuário
-- `cpf`, `rg`, `data_nascimento` - Apenas admin e RH
-- `audit_log`, `contract_history` - Apenas admin
-
-**Casos de Uso:**
-| Cenário | Employee Existe? |
-|---------|-----------------|
-| Funcionário interno | ✅ Sim |
-| Cliente/oficina | ❌ Não |
-| Candidato (não contratado) | ❌ Não |
-| Ex-funcionário | ✅ Sim (histórico mantido) |
-
----
-
-### 3. **UserProfile** (Entidade Customizada)
-
-**Propósito:** Definir permissões granulares de acesso (RBAC - Role-Based Access Control).
-
-**Campos Principais:**
-```json
-{
-  "id": "69f216f1ff2a38a5612e8842",
-  "name": "Perfil Admin Completo",
-  "type": "interno",
-  "permission_type": "job_role",
-  "job_roles": ["marketing", "comercial", "gerencia"],
   "status": "ativo",
-  "description": "Perfil com acesso total para administradores",
-  "roles": ["dashboard_view", "employees_view", "employees_edit", "..."],
-  "sidebar_permissions": {
-    "dashboard_Visão Geral": {
-      "view": true,
-      "edit": true,
-      "create": true,
-      "delete": true,
-      "export": true,
-      "approve": true
-    },
-    "pessoas_Colaboradores": {
-      "view": true,
-      "edit": true,
-      "create": true,
-      "delete": true,
-      "export": true,
-      "approve": true
-    }
-    // ... mais módulos
-  },
-  "module_permissions": {
-    "dashboard": "total",
-    "cadastros": "total",
-    "pessoas": "total",
-    "gestao": "total",
-    "admin": "total"
-  },
-  "modules_allowed": ["dashboard", "cadastros", "pessoas", "..."],
-  "users_count": 0,
-  "is_system": false,
-  "audit_log": []
+  "workshop_id": "695408b3ed74bfeb60d708c0",
+  "consulting_firm_id": "69bab264d7c3fe5d367c3959"
 }
 ```
 
 **Características:**
-- ✅ **Reutilizável** - Múltiplos funcionários podem compartilhar o mesmo profile
-- ✅ Controle granular por tela/módulo
-- ✅ 6 tipos de permissão: `view`, `edit`, `create`, `delete`, `export`, `approve`
-- ✅ Pode ser baseado em `job_role` ou `custom_role`
-- ✅ Audit log de alterações de permissão
-
-**Tipos de Profile:**
-| Tipo | Descrição | Exemplo |
-|------|-----------|---------|
-| `job_role` | Vinculado a cargo | "Gerente", "Técnico" |
-| `role` | Vinculado ao role do User | "admin", "user" |
-| `custom_role` | Roles customizadas | "Gestor Financeiro" |
+- ✅ `Employee.profile_id` → fonte **única** de autorização granular
+- ✅ `Employee.status = "ativo"` é verificado antes de resolver permissões
+- ✅ Múltiplos Employees podem compartilhar o mesmo `UserProfile`
+- ✅ Link explícito para User via `user_id`
 
 ---
 
-## 🔗 Relacionamentos entre Entidades
+### 3. **UserProfile** (Entidade Customizada) — **Engine de permissões**
 
-```
-┌─────────────┐         ┌──────────────┐         ┌──────────────┐
-│    User     │────────▶│   Employee   │────────▶│ UserProfile  │
-│ (Auth/Login)│  1:1    │  (Dados RH)  │  N:1    │ (Permissões) │
-└─────────────┘         └──────────────┘         └──────────────┘
-      │                        │                        │
-      │                        │                        │
-      ▼                        ▼                        ▼
-  workshop_id            workshop_id              (compartilhado)
-  consulting_firm_id     consulting_firm_id
-```
+**Propósito:** Definir permissões granulares (RBAC).
 
-**Regras de Vinculação:**
-
-1. **User → Employee** (1:1)
-   - `Employee.user_id` referencia `User.id`
-   - Nem todo User tem Employee
-   - Todo Employee tem exatamente 1 User
-
-2. **Employee → UserProfile** (N:1)
-   - `Employee.profile_id` referencia `UserProfile.id`
-   - Múltiplos Employees podem compartilhar o mesmo Profile
-   - Profile é reutilizável por cargo/função
-
-3. **User → Workshop** (N:1)
-   - `User.data.workshop_id` referencia `Workshop.id`
-   - Define a oficina principal do usuário
-
----
-
-## 🎯 Casos de Uso por Tipo de Usuário
-
-### 1. **Funcionário Interno**
-```
-User ✅ → Employee ✅ → UserProfile ✅
-```
-**Exemplo:** Mateus (Head Marketing)
-- User: Login, email, role=admin
-- Employee: CPF, salário, cargo, foto
-- Profile: Permissões completas de admin
-
-### 2. **Cliente (Dono de Oficina)**
-```
-User ✅ → Employee ❌ → UserProfile ❌
-```
-**Exemplo:** João (Oficina Silva)
-- User: Login, email, role=user, workshop_id
-- Employee: Não se aplica (não é funcionário)
-- Profile: Permissões limitadas à própria oficina
-
-### 3. **Candidato em Processo Seletivo**
-```
-User ✅ → Employee ❌ → UserProfile ❌
-```
-**Exemplo:** Maria (Candidata)
-- User: Login temporário, email
-- Employee: Não existe (ainda não foi contratada)
-- Profile: Acesso apenas ao teste DISC/avaliação
-
-### 4. **Ex-Funcionário**
-```
-User ❌ → Employee ✅ → UserProfile ✅
-```
-**Exemplo:** Pedro (Desligado)
-- User: Desativado (não pode logar)
-- Employee: Mantido (histórico, contratos)
-- Profile: Mantido (auditoria)
-
----
-
-## 🔐 Regras de Segurança (RLS)
-
-### User Entity
 ```json
 {
-  "read": {
-    "$or": [
-      {"user_id": "{{user.id}}"},
-      {"email": "{{user.email}}"},
-      {"role": "admin"},
-      {"consulting_firm_id": "{{user.data.consulting_firm_id}}"},
-      {"workshop_id": "{{user.data.workshop_id}}"}
-    ]
-  },
-  "update": {
-    "$or": [
-      {"user_id": "{{user.id}}"},
-      {"role": "admin"}
-    ]
-  },
-  "delete": {"role": "admin"}
-}
-```
-
-### Employee Entity
-```json
-{
-  "read": {
-    "$or": [
-      {"user_id": "{{user.id}}"},
-      {"created_by": "{{user.email}}"},
-      {"role": "admin"},
-      {"consulting_firm_id": "{{user.data.consulting_firm_id}}"},
-      {"workshop_id": "{{user.data.workshop_id}}"}
-    ]
-  },
-  "update": {
-    "$or": [
-      {"user_id": "{{user.id}}"},
-      {"owner_id": "{{user.id}}"},
-      {"admin_responsavel_id": "{{user.id}}"},
-      {"role": "admin"}
-    ]
-  }
-}
-```
-
-### UserProfile Entity
-```json
-{
-  "read": true,
-  "create": {"role": "admin"},
-  "update": {"role": "admin"},
-  "delete": {"role": "admin"}
+  "id": "6a272f8ea3fa8dd02ca7350e",
+  "name": "Sócio - Acesso Total",
+  "roles": ["dashboard_view", "employees_view", "employees_edit", "..."],
+  "sidebar_permissions": { ... },
+  "module_permissions": { "dashboard": "total", ... },
+  "status": "ativo"
 }
 ```
 
 ---
 
-## 📊 Fluxo de Consulta de Usuário Completo
+## 🔗 Chain Canônica de Autorização
 
-### Passo 1: Buscar User pelo email
-```javascript
-const user = await base44.entities.User.filter({
-  email: "mateus.mtssaraiva@gmail.com"
-});
+```
+PermissionsContext
+  └─ busca Employee ativo por user_id
+       └─ lê Employee.profile_id
+            └─ busca UserProfile por profile_id
+                 └─ resolve roles[] + sidebar_permissions
+                      └─ expõe hasPermission() / canAccessPage()
 ```
 
-### Passo 2: Buscar Employee pelo user_id
-```javascript
-const employee = await base44.entities.Employee.filter({
-  user_id: user.id
-});
-```
+**Regra de ouro:** Se o Employee não tem `profile_id` ou está `status != ativo`, o usuário não tem permissões granulares (mas pode ainda ter acesso por `isOwnerOrPartner` ou `role === 'admin'`).
 
-### Passo 3: Buscar UserProfile pelo profile_id
-```javascript
-const profile = await base44.entities.UserProfile.get({
-  id: employee.profile_id
-});
-```
+---
 
-### Resultado Consolidado
-```javascript
-{
-  user: { ... },      // Auth e dados básicos
-  employee: { ... },  // Dados profissionais
-  profile: { ... }    // Permissões
-}
+## 🎯 Casos de Uso
+
+| Perfil | User | Employee | UserProfile | Acesso via |
+|--------|------|----------|-------------|------------|
+| Admin plataforma | ✅ role=admin | ✅ | qualquer | `user.role === 'admin'` bypassa tudo |
+| Equipe interna | ✅ user_type=internal | ✅ | ✅ | `user_type=internal` bypassa RouteGuard |
+| Dono de oficina | ✅ | ✅ profile_id=Sócio | ✅ | `Employee.profile_id → UserProfile` |
+| Colaborador oficina | ✅ | ✅ profile_id=X | ✅ | `Employee.profile_id → UserProfile` |
+| Candidato externo | ✅ | ❌ | ❌ | Acesso limitado (páginas públicas) |
+
+---
+
+## 🔐 Fluxo de Autorização (RouteGuard)
+
+```
+RouteGuard(pageName)
+  1. user.role === 'admin'        → acesso total (bypass)
+  2. user.user_type === 'internal' → acesso total (bypass)
+  3. adminOnly === true            → 403 (apenas admin/internal)
+  4. !canAccessPage(pageName)     → 403 (RBAC granular via PermissionsContext)
+  5. ✅ acesso liberado
 ```
 
 ---
 
-## 🛠️ Funções Auxiliares Sugeridas
+## 🔄 Fluxo de Onboarding (Convite → Acesso)
 
-### 1. `getUserCompleteData(userId)`
-Retorna dados completos de um usuário (User + Employee + Profile).
-
-### 2. `checkUserPermission(userId, pageName, action)`
-Verifica se usuário tem permissão para uma ação específica.
-
-### 3. `getUsersByWorkshop(workshopId)`
-Lista todos os usuários (User + Employee) de uma oficina.
-
-### 4. `getUsersByProfile(profileId)`
-Lista todos os funcionários vinculados a um perfil.
-
-### 5. `syncUserEmployeeData(userId)`
-Garante consistência entre User e Employee (ex: email, nome).
+```
+1. Admin cria EmployeeInvite (com profile_id pré-selecionado)
+2. Email enviado → usuário clica no link
+3. createUserOnFirstAccess():
+   - Cria/atualiza User (email, workshop_id)
+   - Atualiza Employee (user_id, profile_id, status=ativo)
+   - Cria EmployeeInviteAcceptance (dispara automação)
+4. PermissionsContext carrega Employee → profile_id → UserProfile
+5. Usuário tem acesso conforme perfil atribuído
+```
 
 ---
 
-## 📝 Boas Práticas
+## ⚙️ autoAssignProfile
 
-### ✅ Sempre Fazer
-1. Buscar User primeiro (fonte primária de autenticação)
-2. Verificar RLS antes de acessar dados sensíveis
-3. Manter consistência entre User.email e Employee.email
-4. Usar `user_type` como fonte canônica (internal/external)
-5. Auditoria de alterações de permissão
+Função backend que atribui `profile_id` ao `Employee` com base no `job_role`:
 
-### ❌ Nunca Fazer
-1. Assumir que todo User tem Employee
-2. Acessar dados de Employee sem verificar RLS
-3. Modificar UserProfile sem ser admin
-4. Excluir Employee (apenas inativar)
-5. Duplicar dados entre User e Employee (manter só o necessário)
+```
+job_role → JOB_ROLE_TO_PROFILE_ID[job_role] → Employee.profile_id
+```
+
+**Importante:** Grava **exclusivamente** em `Employee.profile_id`. Nunca escreve em `User.profile_id`.
 
 ---
 
-## 🔄 Cenários de Migração
+## 📊 Mapeamento job_role → UserProfile (tabela canônica)
 
-### Novo Funcionário
-1. Criar User (convite por email)
-2. Criar Employee (dados de RH)
-3. Atribuir UserProfile (permissões do cargo)
-4. Link: `Employee.user_id = User.id`
+| job_role | UserProfile | Profile ID |
+|----------|-------------|------------|
+| socio | Sócio - Acesso Total | `6a272f8ea3fa8dd02ca7350e` |
+| diretor | Diretor - Gestão Estratégica | `6a272f8a983951dfc5cf3493` |
+| gerente | Gerente - Gestão Operacional | `6a272f8976cba10c3232779a` |
+| rh | RH - Gestão de Pessoas | `6a272f883b2162c800073ace` |
+| financeiro | Financeiro - Controle Financeiro | `6a285fc9f76402dd73736656` |
+| lider_tecnico | Líder Técnico - Coordenação Técnica | `6a272f85fc4b85767f964421` |
+| comercial / consultor_vendas | Comercial - Vendas e Atendimento | `6a272f96bc6eedd434194fcf` |
+| marketing | Marketing - Comunicação | `6a272f99aaeffc72c503fa5e` |
+| tecnico / outros (operacional) | Técnico - Acesso Operacional | `6a272f876b16129b2f5f31be` |
+| consultor (interno) | Consultor | `6a272f95957fe29d2e8a888a` |
 
-### Promoção/Mudança de Cargo
-1. Atualizar Employee.position e Employee.job_role
-2. Atualizar Employee.profile_id (se necessário)
-3. Manter audit_log da mudança
+---
 
-### Desligamento
-1. User: Manter (histórico de login)
-2. Employee: Manter `user_status = "inativo"`
-3. Profile: Manter (auditoria)
-4. **Nunca excluir** registros
+## 🚫 Anti-patterns (Nunca Fazer)
 
-### Cliente vira Funcionário
-1. User: Já existe (role=user → admin se necessário)
-2. Criar Employee (dados de RH)
-3. Atribuir UserProfile
-4. Atualizar `user_type = "internal"`
+```javascript
+// ❌ ERRADO — profile_id do User é deprecated e ignorado
+const profileId = user.profile_id;
+const profileId = user.data.profile_id;
+
+// ❌ ERRADO — job_role do User não determina acesso
+if (user.job_role === 'socio') { ... }
+
+// ✅ CORRETO — sempre via PermissionsContext
+const { hasPermission, canAccessPage } = usePermissions();
+if (hasPermission('dashboard.view')) { ... }
+
+// ✅ CORRETO — tipo de usuário via campo canônico
+const isInternal = user.user_type === 'internal';
+
+// ✅ CORRETO — perfil de acesso sempre via Employee
+const employee = await Employee.filter({ user_id: user.id });
+const profileId = employee.profile_id; // fonte canônica
+```
+
+---
+
+## ✅ Checklist de Saúde do Sistema
+
+| Verificação | Função | Status (2026-06-10) |
+|-------------|--------|---------------------|
+| Regressão RLS Lote 1 (9 cenários) | `rlsRegressionLote1` | ✅ 100% PASS |
+| Regressão RLS Lote 2 (6 cenários) | `rlsRegressionLote2` | ✅ 100% PASS |
+| Leituras legadas `user.profile_id` | Auditoria P4.A | ✅ Removidas |
+| `autoAssignProfile` grava em Employee | Auditoria P4.B | ✅ Confirmado |
+| `profile_id` / `job_role` no User.json | P4.C | ✅ Marcados DEPRECATED |
+| `useUserType` usa `job_role` apenas para UX | P4.A | ✅ Anotado |
+| RouteGuard sem leituras legadas | Auditoria P4.A | ✅ Limpo |
 
 ---
 
@@ -407,21 +221,16 @@ Garante consistência entre User e Employee (ex: email, nome).
 | Termo | Definição |
 |-------|-----------|
 | **User** | Entidade de autenticação (built-in Base44) |
-| **Employee** | Entidade de dados profissionais (customizada) |
-| **UserProfile** | Entidade de permissões RBAC (customizada) |
-| **RLS** | Row-Level Security (segurança por linha) |
-| **RBAC** | Role-Based Access Control |
-| **user_type** | Campo canônico: `internal` vs `external` |
-| **job_role** | Função específica no sistema (ex: "marketing") |
-| **profile_id** | Link entre Employee e UserProfile |
+| **Employee** | Entidade de dados profissionais + link de autorização |
+| **UserProfile** | Entidade de permissões RBAC (engine de acesso) |
+| **profile_id** | Chave de autorização canônica — existe em `Employee`, não em `User` |
+| **user_type** | Campo canônico: `internal` (equipe OM) vs `external` (cliente) |
+| **job_role** | Função no sistema — relevante apenas no `Employee`, deprecated no `User` |
+| **RLS** | Row-Level Security (filtro de dados por usuário) |
+| **RBAC** | Role-Based Access Control (controle de acesso por perfil) |
+| **PermissionsContext** | Hook React que resolve a chain `Employee → profile_id → UserProfile` |
 
 ---
 
-## 📞 Suporte
-
-Para dúvidas sobre esta arquitetura, consultar:
-- Documentação Base44: https://docs.base44.app
-- Equipe de Desenvolvimento: oficinasmaster@gmail.com
-
-**Última Atualização:** 2026-06-02  
-**Versão:** 1.0
+**Contato:** oficinasmaster@gmail.com  
+**Última Atualização:** 2026-06-10 | **Versão:** 2.0
