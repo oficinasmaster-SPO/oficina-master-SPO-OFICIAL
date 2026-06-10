@@ -5,24 +5,36 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
  * Mapeamento: job_role -> profile_name
  * TABELA CANÔNICA OFICIAL - FASE 4 (Pré-Seleção Automática)
  */
+// TABELA CANÔNICA OFICIAL
+// Mapeamento job_role → profile_name para pré-seleção automática.
+// Todos os perfis referenciados aqui DEVEM existir no banco (validados em 2026-06-09).
+// Cargos operacionais mapeiam para "Vendedor - Atendimento ao Cliente" — intencional.
+// Cargo RH ≠ perfil RBAC. Um mecânico não precisa de um perfil "Mecânico".
 const JOB_ROLE_TO_PROFILE = {
+  // Gestão
   'socio': 'Sócio - Acesso Total',
   'diretor': 'Diretor - Gestão Estratégica',
   'gerente': 'Gerente - Gestão Operacional',
   'supervisor_loja': 'Supervisor - Operação e Equipe',
+  // Especialistas
   'rh': 'RH - Gestão de Pessoas',
   'financeiro': 'Financeiro - Controle Financeiro',
-  'lider_tecnico': 'Líder Técnico - Coordenação Técnica',
-  'comercial': 'Comercial - Vendas e Atendimento',
-  'consultor_vendas': 'Comercial - Vendas e Atendimento',
-  'marketing': 'Marketing - Comunicação e Marketing',
-  'tecnico': 'Vendedor - Atendimento ao Cliente', // Fallback temporário - perfil técnico será criado
-  'funilaria_pintura': 'Vendedor - Atendimento ao Cliente', // Fallback temporário
   'administrativo': 'Financeiro - Controle Financeiro',
+  'lider_tecnico': 'Líder Técnico - Coordenação Técnica',
+  // Vendas e Atendimento
+  'comercial': 'Comercial - Vendas e Atendimento',
+  'consultor_vendas': 'Vendedor - Atendimento ao Cliente',
+  'marketing': 'Marketing - Comunicação e Marketing',
+  // Operacional (todos com acesso mínimo operacional — intencional)
+  'tecnico': 'Vendedor - Atendimento ao Cliente',
+  'eletricista': 'Vendedor - Atendimento ao Cliente',
+  'funilaria_pintura': 'Vendedor - Atendimento ao Cliente',
+  'estoque': 'Vendedor - Atendimento ao Cliente',
+  'motoboy': 'Vendedor - Atendimento ao Cliente',
+  'lavador': 'Vendedor - Atendimento ao Cliente',
+  'outros': 'Vendedor - Atendimento ao Cliente',
+  // Internos (equipe Oficinas Master)
   'consultor': 'Consultor',
-  'motoboy': 'Outros - Acesso Básico',
-  'lavador': 'Outros - Acesso Básico',
-  'outros': 'Outros - Acesso Básico'
 };
 
 /**
