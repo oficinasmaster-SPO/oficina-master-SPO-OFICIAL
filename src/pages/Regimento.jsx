@@ -6,41 +6,21 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { BookOpen, Plus, Eye, Edit, Archive, FileText, CheckCircle2, Clock } from "lucide-react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import RegimentEditor from "@/components/regimento/RegimentEditor";
 import RegimentViewer from "@/components/regimento/RegimentViewer";
+import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
+import { useAuth } from "@/lib/AuthContext";
 
 export default function Regimento() {
-  const [user, setUser] = useState(null);
-  const [workshop, setWorkshop] = useState(null);
+  const { user } = useAuth();
+  const { workshop, isLoading: isWorkshopLoading } = useWorkshopContext();
   const [showEditor, setShowEditor] = useState(false);
   const [selectedRegiment, setSelectedRegiment] = useState(null);
   const [showViewer, setShowViewer] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
-
-  React.useEffect(() => {
-    const init = async () => {
-      try {
-        const currentUser = await base44.auth.me();
-        setUser(currentUser);
-
-        const workshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
-        const userWorkshop = workshops?.[0];
-        
-        if (!userWorkshop && currentUser.workshop_id) {
-          const ws = await base44.entities.Workshop.get(currentUser.workshop_id);
-          setWorkshop(ws);
-        } else {
-          setWorkshop(userWorkshop);
-        }
-      } catch (error) {
-        console.error(error);
-      }
-    };
-    init();
-  }, []);
 
   const { data: regiments = [], isLoading, refetch } = useQuery({
     queryKey: ['regiments', workshop?.id],
@@ -114,7 +94,7 @@ export default function Regimento() {
         </CardHeader>
       </Card>
 
-      {isLoading ? (
+      {(isLoading || isWorkshopLoading) ? (
         <div className="flex justify-center py-20">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
         </div>
@@ -299,12 +279,12 @@ export default function Regimento() {
         </Tabs>
       )}
 
-      {/* Editor Modal */}
-      <Sheet open={showEditor} onOpenChange={(open) => {
+      {/* Editor Dialog */}
+      <Dialog open={showEditor} onOpenChange={(open) => {
         if (!open) { setShowEditor(false); setSelectedRegiment(null); }
       }}>
-        <SheetContent side="right" className="w-full sm:max-w-3xl p-0 overflow-y-auto">
-          {selectedRegiment && (
+        <DialogContent className="max-w-4xl max-h-[90vh] p-0 overflow-y-auto">
+          {selectedRegiment && workshop && (
             <RegimentEditor
               regiment={selectedRegiment}
               workshop={workshop}
@@ -319,14 +299,14 @@ export default function Regimento() {
               }}
             />
           )}
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
 
-      {/* Viewer Modal */}
-      <Sheet open={showViewer} onOpenChange={(open) => {
+      {/* Viewer Dialog */}
+      <Dialog open={showViewer} onOpenChange={(open) => {
         if (!open) { setShowViewer(false); setSelectedRegiment(null); }
       }}>
-        <SheetContent side="right" className="w-full sm:max-w-3xl p-0 overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] p-0 overflow-y-auto">
           {selectedRegiment && (
             <RegimentViewer
               regiment={selectedRegiment}
@@ -336,8 +316,8 @@ export default function Regimento() {
               }}
             />
           )}
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
