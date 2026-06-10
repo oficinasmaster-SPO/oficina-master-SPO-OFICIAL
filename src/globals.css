@@ -139,6 +139,16 @@
     display: none !important;
   }
 
+  /* Corrigir wrapper do Radix Popper — deve ser static para multi-page */
+  [data-radix-popper-content-wrapper] {
+    position: static !important;
+    width: 100% !important;
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+    transform: none !important;
+  }
+
   /* Show print-only elements */
   .print\\:block {
     display: block !important;
