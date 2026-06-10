@@ -429,7 +429,37 @@ Deno.serve(async (req) => {
     }
 
     const user = await base44.auth.me();
-    const workshop = await base44.entities.Workshop.get(workshop_id);
+    
+    console.error('[createDefaultRegiment] DIAG - user.id:', user.id);
+    console.error('[createDefaultRegiment] DIAG - user.email:', user.email);
+    console.error('[createDefaultRegiment] DIAG - user.role:', user.role);
+    console.error('[createDefaultRegiment] DIAG - user.data.workshop_id:', user.data?.workshop_id);
+    console.error('[createDefaultRegiment] DIAG - workshop_id recebido:', workshop_id);
+
+    // Usa service role para validar existência do workshop (evita bloqueio de RLS do usuário)
+    const workshop = await base44.asServiceRole.entities.Workshop.get(workshop_id);
+
+    if (!workshop) {
+      return Response.json({ error: 'Workshop não encontrado' }, { status: 404 });
+    }
+
+    // Verifica se o usuário tem vínculo com o workshop
+    const isAdmin = user.role === 'admin';
+    const isOwner = user.id === workshop.owner_id;
+    const isPartner = workshop.partner_ids?.includes(user.id);
+    const isWorkshopMember = user.data?.workshop_id === workshop_id;
+    
+    console.error('[createDefaultRegiment] DIAG - isAdmin:', isAdmin);
+    console.error('[createDefaultRegiment] DIAG - isOwner:', isOwner);
+    console.error('[createDefaultRegiment] DIAG - isPartner:', isPartner);
+    console.error('[createDefaultRegiment] DIAG - isWorkshopMember:', isWorkshopMember);
+    
+    if (!isAdmin && !isOwner && !isPartner && !isWorkshopMember) {
+      return Response.json({ 
+        error: 'Usuário não tem vínculo com este workshop',
+        details: { isAdmin, isOwner, isPartner, isWorkshopMember }
+      }, { status: 403 });
+    }
 
     // Buscar último código para gerar sequencial
     const existingRegiments = await base44.entities.CompanyRegiment.filter({ workshop_id }, '-created_date', 1);
@@ -464,7 +494,9 @@ Deno.serve(async (req) => {
       message: 'Regimento padrão jurídico completo criado com sucesso'
     });
   } catch (error) {
-    console.error('Erro ao criar regimento padrão:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[createDefaultRegiment] ERRO:', error.message);
+    console.error('[createDefaultRegiment] STACK:', error.stack);
+    console.error('[createDefaultRegiment] FULL ERROR:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
+    return Response.json({ error: error.message, stack: error.stack?.split('\n')?.slice(0, 5) }, { status: 500 });
   }
 });
