@@ -60,7 +60,11 @@ export default function Regimento() {
         setShowEditor(true);
       }
     } catch (error) {
-      toast.error("Erro: " + error.message);
+      const msg = error?.response?.data?.error 
+        || error?.response?.data?.details 
+        || error?.message 
+        || 'Erro desconhecido';
+      toast.error(typeof msg === 'object' ? JSON.stringify(msg) : "Erro: " + msg);
     } finally {
       setIsCreating(false);
     }

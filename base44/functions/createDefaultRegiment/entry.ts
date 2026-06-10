@@ -436,26 +436,6 @@ Deno.serve(async (req) => {
     console.error('[createDefaultRegiment] DIAG - user.data.workshop_id:', user.data?.workshop_id);
     console.error('[createDefaultRegiment] DIAG - workshop_id recebido:', workshop_id);
 
-    // ============ DIAGNÓSTICO TEMPORÁRIO - CompanyRegiment.create mínimo ============
-    console.error('[DIAG] user.role:', user.role);
-    try {
-      const testRegiment = await base44.entities.CompanyRegiment.create({
-        workshop_id,
-        document_code: 'DIAG-' + Date.now(),
-        version: '1.0',
-        effective_date: new Date().toISOString().split('T')[0],
-        objective: 'TESTE',
-        sections: [],
-        status: 'draft'
-      });
-      console.error('[DIAG] SUCCESS - regiment_id:', testRegiment.id);
-      return Response.json({ step: 'create OK', regiment_id: testRegiment.id, user_role: user.role });
-    } catch (e) {
-      console.error('[DIAG] FAIL -', e.message);
-      return Response.json({ step: 'create FAIL', error: e.message, full: String(e), user_role: user.role }, { status: 500 });
-    }
-    // ============ FIM DIAGNÓSTICO ============
-
     // Usa service role para validar existência do workshop (evita bloqueio de RLS do usuário)
     const workshop = await base44.asServiceRole.entities.Workshop.get(workshop_id);
 
@@ -481,8 +461,8 @@ Deno.serve(async (req) => {
       }, { status: 403 });
     }
 
-    // Buscar último código para gerar sequencial
-    const existingRegiments = await base44.entities.CompanyRegiment.filter({ workshop_id }, '-created_date', 1);
+    // Buscar último código para gerar sequencial (asServiceRole evita restrições de RLS)
+    const existingRegiments = await base44.asServiceRole.entities.CompanyRegiment.filter({ workshop_id }, '-created_date', 1);
     let nextNumber = 1;
 
     if (existingRegiments.length > 0 && existingRegiments[0].document_code) {
@@ -495,7 +475,9 @@ Deno.serve(async (req) => {
 
     const document_code = `RI-${String(nextNumber).padStart(4, '0')}`;
 
-    const regiment = await base44.entities.CompanyRegiment.create({
+    // asServiceRole: essencial para donos de oficina (não-admins) criarem registros
+    // pois o RLS create do CompanyRegiment usa {{user.email}} que é frágil em funções
+    const regiment = await base44.asServiceRole.entities.CompanyRegiment.create({
       workshop_id,
       document_code,
       version: "1.0",
