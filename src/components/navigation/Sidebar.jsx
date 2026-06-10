@@ -348,6 +348,14 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           highlight: true,
           requiredPermission: 'workshop.view'
         },
+        { 
+          name: 'Regimento Interno', 
+          href: createPageUrl('Regimento'), 
+          icon: BookOpen,
+          description: 'Normas e políticas da oficina',
+          highlight: true,
+          requiredPermission: 'culture.view'
+        },
       ]
     },
     {
