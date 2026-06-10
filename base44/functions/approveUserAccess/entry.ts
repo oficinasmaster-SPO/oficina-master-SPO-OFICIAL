@@ -85,7 +85,7 @@ Deno.serve(async (req) => {
     // Buscar User atualizado para pegar dados corretos
     const userRecord = await base44.entities.User.get(userId);
     const jobRole = employee.job_role || userRecord?.job_role || 'outros';
-    let finalProfileId = profile_id || employee.profile_id || userRecord?.profile_id;
+    let finalProfileId = profile_id || employee.profile_id;
     
     if (!finalProfileId) {
       const allProfiles = await base44.entities.UserProfile.list();
@@ -98,11 +98,14 @@ Deno.serve(async (req) => {
 
     const employeeActiveStatus = employee.tipo_vinculo === 'cliente' ? 'ativo' : 'active';
 
+    // CERTIFICADO_100 FIX W1 (2026-06-10):
+    // User.profile_id removido deste update.
+    // Fonte de verdade canônica: Employee.profile_id → UserProfile.roles.
+    // User.profile_id não é lido pelo PermissionsContext.
     await base44.entities.User.update(userId, {
       user_status: 'active',
       approved_at: new Date().toISOString(),
-      approved_by: admin.id,
-      profile_id: finalProfileId || null,
+      approved_by: currentUser.id,
       workshop_id: employee.workshop_id || null
     });
 
@@ -112,23 +115,17 @@ Deno.serve(async (req) => {
       profile_id: finalProfileId || null
     });
 
-    // Buscar o perfil e vincular as custom_role_ids ao UserProfile
+    // Vincular custom_role_ids do UserProfile ao Employee (não ao User)
     if (finalProfileId) {
       try {
         const selectedProfile = await base44.entities.UserProfile.get(finalProfileId);
         
         if (selectedProfile && selectedProfile.custom_role_ids && selectedProfile.custom_role_ids.length > 0) {
-          // Atualizar User com as custom_role_ids do perfil
-          await base44.entities.User.update(userId, {
-            custom_role_ids: selectedProfile.custom_role_ids
-          });
-
-          // Atualizar Employee também
           await base44.entities.Employee.update(employee.id, {
             custom_role_ids: selectedProfile.custom_role_ids
           });
           
-          console.log('✅ Custom roles vinculadas:', selectedProfile.custom_role_ids);
+          console.log('✅ Custom roles vinculadas ao Employee:', selectedProfile.custom_role_ids);
         }
       } catch (error) {
         console.error('⚠️ Erro ao vincular custom roles (não crítico):', error);
