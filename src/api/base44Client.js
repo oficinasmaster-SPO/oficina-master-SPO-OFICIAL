@@ -74,13 +74,25 @@ const globalQueue = new RequestQueue(5);
 window.fetch = (url, options) => globalQueue.fetch(url, options);
 // ---------------------------------------------------------------
 
-const { appId, serverUrl, token, functionsVersion } = appParams;
+const { appId, serverUrl, functionsVersion } = appParams;
+
+// Ler token da URL diretamente caso o appParams não o tenha capturado
+// (pode acontecer em iframes/preview quando localStorage está bloqueado)
+const _urlToken = (() => {
+  try {
+    return new URLSearchParams(window.location.search).get('access_token');
+  } catch { return null; }
+})();
+const _storedToken = (() => {
+  try { return localStorage.getItem('base44_access_token'); } catch { return null; }
+})();
+const resolvedToken = _urlToken || _storedToken || appParams.token;
 
 //Create a client with authentication required
 export const base44 = createClient({
   appId,
   serverUrl,
-  token,
+  token: resolvedToken,
   functionsVersion,
   requiresAuth: true
 });
