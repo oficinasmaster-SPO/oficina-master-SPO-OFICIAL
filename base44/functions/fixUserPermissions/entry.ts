@@ -1,11 +1,10 @@
 /**
  * @deprecated
- * Legacy RBAC Migration Script — corrigia permissões de um usuário específico por email.
+ * Legacy RBAC Migration Script
  * Não utilizar.
  * Mantido apenas para referência histórica.
  * Data de deprecação: 2026-06-10
  * Motivo: catálogo canônico RBAC consolidado — scripts de migração pontual não são mais necessários.
- *        O fluxo ativo é autoAssignProfile (entry.ts) que usa JOB_ROLE_TO_PROFILE_ID (IDs fixos).
  */
 
 Deno.serve(async () => {
@@ -31,29 +30,33 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized: Admin access required' }, { status: 403 });
     }
 
+    // Buscar usuário
     const users = await base44.entities.User.filter({ email });
     if (!users || users.length === 0) {
       return Response.json({ error: 'Usuário não encontrado' }, { status: 404 });
     }
     const user = users[0];
 
+    // Buscar Employee vinculado
     const employees = await base44.entities.Employee.filter({ email });
     if (!employees || employees.length === 0) {
       return Response.json({ error: 'Employee não encontrado' }, { status: 404 });
     }
     const employee = employees[0];
 
+    // Buscar perfil de Técnico ativo
     const profiles = await base44.entities.UserProfile.filter({
       type: 'interno',
       status: 'ativo'
     });
-
-    let techProfile = profiles.find(p =>
-      p.job_roles?.includes('tecnico') ||
+    
+    let techProfile = profiles.find(p => 
+      p.job_roles?.includes('tecnico') || 
       p.name?.toLowerCase().includes('técnico') ||
       p.name?.toLowerCase().includes('tecnico')
     );
 
+    // Se não encontrou, criar perfil básico de técnico
     if (!techProfile) {
       techProfile = await base44.entities.UserProfile.create({
         name: 'Técnico Operacional',
@@ -71,12 +74,14 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Atualizar Employee com profile_id correto
     await base44.entities.Employee.update(employee.id, {
       profile_id: techProfile.id,
       user_status: 'ativo',
       job_role: 'tecnico'
     });
 
+    // Atualizar User
     await base44.entities.User.update(user.id, {
       user_status: 'ativo'
     });
@@ -97,7 +102,7 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('Erro:', error);
-    return Response.json({
+    return Response.json({ 
       error: error.message,
       details: error.toString()
     }, { status: 500 });
