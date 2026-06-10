@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { BookOpen, Plus, Eye, Edit, Archive, FileText, CheckCircle2, Clock } from "lucide-react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import RegimentEditor from "@/components/regimento/RegimentEditor";
@@ -299,11 +299,11 @@ export default function Regimento() {
         </Tabs>
       )}
 
-      {/* Editor Modal */}
-      <Sheet open={showEditor} onOpenChange={(open) => {
+      {/* Editor Dialog */}
+      <Dialog open={showEditor} onOpenChange={(open) => {
         if (!open) { setShowEditor(false); setSelectedRegiment(null); }
       }}>
-        <SheetContent side="right" className="w-full sm:max-w-3xl p-0 overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] p-0 overflow-y-auto">
           {selectedRegiment && (
             <RegimentEditor
               regiment={selectedRegiment}
@@ -319,14 +319,14 @@ export default function Regimento() {
               }}
             />
           )}
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
 
-      {/* Viewer Modal */}
-      <Sheet open={showViewer} onOpenChange={(open) => {
+      {/* Viewer Dialog */}
+      <Dialog open={showViewer} onOpenChange={(open) => {
         if (!open) { setShowViewer(false); setSelectedRegiment(null); }
       }}>
-        <SheetContent side="right" className="w-full sm:max-w-3xl p-0 overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] p-0 overflow-y-auto">
           {selectedRegiment && (
             <RegimentViewer
               regiment={selectedRegiment}
@@ -336,8 +336,8 @@ export default function Regimento() {
               }}
             />
           )}
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
