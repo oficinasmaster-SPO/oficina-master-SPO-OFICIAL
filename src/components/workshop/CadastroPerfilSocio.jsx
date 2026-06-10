@@ -84,11 +84,12 @@ const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack, on
       const allProfiles = await base44.entities.UserProfile.list();
       console.log("📊 allProfiles total:", allProfiles.length);
       
-      // Whitelist de perfis canônicos externos (Fase 3 SPO)
-      // Filtra apenas ativos e garante que não apareçam perfis de outras oficinas
-      const filtered = allProfiles.filter(p => 
+      // Filtro por ID fixo — exclui Admin System e qualquer perfil interno
+      // mesmo quando acessado por conta admin. /cadastro é porta de entrada
+      // de novos sócios e nunca deve expor perfis da plataforma.
+      const filtered = allProfiles.filter(p =>
         p.status === 'ativo' &&
-        p.job_roles?.some(role => CANONICAL_PROFILE_JOB_ROLES.includes(role)) &&
+        CANONICAL_PROFILE_IDS.includes(p.id) &&
         (!p.workshop_id || p.workshop_id === workshop?.id)
       );
       setProfiles(filtered);
@@ -461,9 +462,9 @@ const CadastroPerfilSocio = forwardRef(({ workshop, user, onComplete, onBack, on
                   <SelectValue placeholder="Selecione uma função" />
                 </SelectTrigger>
                 <SelectContent>
-                  {(currentUser?.role === 'admin' 
-                    ? jobRoles 
-                    : jobRoles.filter(role => role.category !== 'consultoria')
+                  {(currentUser?.role === 'admin'
+                    ? jobRoles.filter(role => role.category !== 'interna' && role.value !== 'socio_interno')
+                    : jobRoles.filter(role => role.category !== 'interna' && role.value !== 'socio_interno')
                   ).map((role) => (
                     <SelectItem key={role.value} value={role.value}>
                       {role.label}
