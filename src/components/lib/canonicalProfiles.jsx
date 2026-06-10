@@ -1,3 +1,4 @@
+// Vitor Albuquerque da Costa - DEV
 // Catálogo canônico de perfis externos do SPO.
 // Atualizar aqui quando um novo perfil canônico for aprovado e criado no Base44.
 // Nunca adicionar perfis de uso interno (equipe Oficinas Master) nesta lista.
