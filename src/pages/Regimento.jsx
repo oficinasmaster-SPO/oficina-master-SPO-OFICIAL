@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { BookOpen, Plus, Eye, Edit, Archive, FileText, CheckCircle2, Clock } from "lucide-react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import RegimentEditor from "@/components/regimento/RegimentEditor";
@@ -17,6 +18,7 @@ export default function Regimento() {
   const [showEditor, setShowEditor] = useState(false);
   const [selectedRegiment, setSelectedRegiment] = useState(null);
   const [showViewer, setShowViewer] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
 
   React.useEffect(() => {
     const init = async () => {
@@ -66,47 +68,23 @@ export default function Regimento() {
 
   const handleCreateNew = async () => {
     try {
+      setIsCreating(true);
       const response = await base44.functions.invoke('createDefaultRegiment', {
         workshop_id: workshop.id
       });
-      if (response.data.success) {
+      if (response.data.success && response.data.regiment_id) {
         toast.success("Modelo padrão criado!");
-        refetch();
+        await refetch();
+        const newRegiment = await base44.entities.CompanyRegiment.get(response.data.regiment_id);
+        setSelectedRegiment(newRegiment);
+        setShowEditor(true);
       }
     } catch (error) {
       toast.error("Erro: " + error.message);
+    } finally {
+      setIsCreating(false);
     }
   };
-
-  if (showEditor) {
-    return (
-      <RegimentEditor
-        regiment={selectedRegiment}
-        workshop={workshop}
-        onSave={() => {
-          refetch();
-          setShowEditor(false);
-          setSelectedRegiment(null);
-        }}
-        onCancel={() => {
-          setShowEditor(false);
-          setSelectedRegiment(null);
-        }}
-      />
-    );
-  }
-
-  if (showViewer) {
-    return (
-      <RegimentViewer
-        regiment={selectedRegiment}
-        onClose={() => {
-          setShowViewer(false);
-          setSelectedRegiment(null);
-        }}
-      />
-    );
-  }
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -124,9 +102,13 @@ export default function Regimento() {
                 </p>
               </div>
             </div>
-            <Button onClick={handleCreateNew} className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="w-4 h-4 mr-2" />
-              Novo Regimento
+            <Button onClick={handleCreateNew} className="bg-blue-600 hover:bg-blue-700" disabled={isCreating}>
+              {isCreating ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+              ) : (
+                <Plus className="w-4 h-4 mr-2" />
+              )}
+              {isCreating ? "Criando..." : "Novo Regimento"}
             </Button>
           </div>
         </CardHeader>
@@ -316,6 +298,46 @@ export default function Regimento() {
           </TabsContent>
         </Tabs>
       )}
+
+      {/* Editor Modal */}
+      <Sheet open={showEditor} onOpenChange={(open) => {
+        if (!open) { setShowEditor(false); setSelectedRegiment(null); }
+      }}>
+        <SheetContent side="right" className="w-full sm:max-w-3xl p-0 overflow-y-auto">
+          {selectedRegiment && (
+            <RegimentEditor
+              regiment={selectedRegiment}
+              workshop={workshop}
+              onSave={() => {
+                refetch();
+                setShowEditor(false);
+                setSelectedRegiment(null);
+              }}
+              onCancel={() => {
+                setShowEditor(false);
+                setSelectedRegiment(null);
+              }}
+            />
+          )}
+        </SheetContent>
+      </Sheet>
+
+      {/* Viewer Modal */}
+      <Sheet open={showViewer} onOpenChange={(open) => {
+        if (!open) { setShowViewer(false); setSelectedRegiment(null); }
+      }}>
+        <SheetContent side="right" className="w-full sm:max-w-3xl p-0 overflow-y-auto">
+          {selectedRegiment && (
+            <RegimentViewer
+              regiment={selectedRegiment}
+              onClose={() => {
+                setShowViewer(false);
+                setSelectedRegiment(null);
+              }}
+            />
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
