@@ -170,19 +170,15 @@ export function PermissionsProvider({ children }) {
     granularConfig = {} 
   } = permissionsData || {};
 
-  // FALLBACK: Usuário sem Employee/Profile (recém-criado) recebe permissões mínimas
-  // Isso evita bloqueio total do sidebar enquanto autoAssignProfile não roda
-  const hasMinimalPermissions = permissions.length === 0 && !profile && user && user.role !== 'admin';
-  const effectivePermissions = hasMinimalPermissions 
-    ? ['dashboard.view', 'operations.view_qgp'] 
-    : permissions;
+  // Sem fallback: usuário sem Employee.profile_id tem permissions = []
+  // Admin tem bypass completo via queryFn acima.
 
   const hasPermission = (permissionId) => {
     if (!user) return false;
     // Em impersonação, NÃO usar permissões de admin — usar permissões do usuário alvo
     const isImpersonated = user._isImpersonated === true;
     if ((user.role === 'admin' || user.user_type === 'internal') && !isImpersonated) return true;
-    return effectivePermissions.includes(permissionId);
+    return permissions.includes(permissionId);
   };
 
   const hasGranularPermission = async (resourceId, actionId) => {
@@ -268,10 +264,6 @@ export function PermissionsProvider({ children }) {
       if (requiredPermission === null) return true; // explicitamente pública
       if (requiredPermission === "public_authenticated") return !!user;
 
-      // FALLBACK: usuário sem perfil pode acessar páginas essenciais
-      const essentialPages = ['DashboardOverview', 'MeuPerfil', 'Planos', 'Notificacoes'];
-      if (hasMinimalPermissions && essentialPages.includes(pageName)) return true;
-
       return hasPermission(requiredPermission);
     } catch (error) {
       return user?.role === 'admin';
@@ -314,7 +306,7 @@ export function PermissionsProvider({ children }) {
     profile,
     customRole,
     currentRole,
-    permissions: effectivePermissions,
+    permissions,
     isOwnerOrPartner,
     loading,
     hasPermission,
@@ -322,7 +314,7 @@ export function PermissionsProvider({ children }) {
     canAccessPage,
     canPerform,
     isInternal,
-  }), [user, profile, customRole, currentRole, effectivePermissions, isOwnerOrPartner, loading, granularConfig, hasMinimalPermissions]);
+  }), [user, profile, customRole, currentRole, permissions, isOwnerOrPartner, loading, granularConfig]);
 
   return (
     <PermissionsContext.Provider value={value}>
