@@ -37,13 +37,11 @@ Deno.serve(async (req) => {
     } else {
       try {
         let profile = null;
-        if (user.profile_id) {
-          profile = await base44.entities.UserProfile.get(user.profile_id);
-        } else {
-          const employees = await base44.entities.Employee.filter({ user_id: user.id });
-          if (employees && employees.length > 0 && employees[0].profile_id) {
-            profile = await base44.entities.UserProfile.get(employees[0].profile_id);
-          }
+        // W2 FIX (2026-06-10): Employee.profile_id é a fonte canônica.
+        // User.profile_id removido como fallback — dado legado não lido pelo PermissionsContext.
+        const callerEmployees = await base44.entities.Employee.filter({ user_id: user.id });
+        if (callerEmployees && callerEmployees.length > 0 && callerEmployees[0].profile_id) {
+          profile = await base44.entities.UserProfile.get(callerEmployees[0].profile_id);
         }
 
         if (profile && profile.job_roles && profile.job_roles.length > 0) {
