@@ -53,7 +53,7 @@ export function openRegimentPrint(regiment, workshop, employee = null) {
   <style>
     @page {
       size: A4 portrait;
-      margin: 26mm 12mm 16mm 12mm;
+      margin: 24mm 12mm 12mm 12mm;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -112,9 +112,7 @@ export function openRegimentPrint(regiment, workshop, employee = null) {
     .doc-title-block img { height: 50px; display: block; margin: 0 auto 10px; }
     .doc-title-block h1 { font-size: 20pt; font-weight: 700; color: #111827; margin-bottom: 4px; letter-spacing: 2px; }
     .doc-title-block h2 { font-size: 14pt; font-weight: 600; color: #374151; margin-bottom: 6px; }
-    .doc-title-block .meta-line { font-size: 9pt; color: #4b5563; margin-top: 5px; }
-    .doc-title-block .meta-line strong { color: #1f2937; }
-    .doc-title-block .doc-note { font-size: 7.5pt; color: #9ca3af; font-style: italic; margin-top: 3px; }
+    .doc-title-block .doc-note { font-size: 7.5pt; color: #9ca3af; font-style: italic; margin-top: 10px; }
 
     /* ═══════════════ SEÇÕES ═══════════════ */
     .section-block { margin-bottom: 14px; page-break-inside: avoid; break-inside: avoid; }
@@ -164,8 +162,8 @@ export function openRegimentPrint(regiment, workshop, employee = null) {
 
   <div class="print-header">
     <div class="print-header-left">
-      <div class="company-name">${workshop?.name || '______________________________'}</div>
-      <div>CNPJ: ${workshop?.cnpj || '______________________________'}</div>
+      <div class="company-name">${workshop?.name || 'Empresa não identificada'}</div>
+      <div>${workshop?.cnpj ? `CNPJ: ${workshop.cnpj}` : 'CNPJ não informado'}</div>
     </div>
     <div class="print-header-right">
       <div><strong>Regimento Interno</strong></div>
@@ -183,14 +181,6 @@ export function openRegimentPrint(regiment, workshop, employee = null) {
     ${workshop?.logo_url ? `<img src="${workshop.logo_url}" alt="Logo" />` : ''}
     <h1>REGIMENTO INTERNO</h1>
     <h2>${workshop?.name || ''}</h2>
-    <div class="meta-line">
-      CNPJ: ${workshop?.cnpj || '-'} &nbsp;|&nbsp; ${workshop?.endereco_completo || ''}
-    </div>
-    <div class="meta-line">
-      Código: <strong>${regiment.document_code || '-'}</strong> &nbsp;|&nbsp;
-      Versão: <strong>${regiment.version || '-'}</strong> &nbsp;|&nbsp;
-      Vigência: <strong>${effectiveDate}</strong>
-    </div>
     <div class="doc-note">Documento Jurídico e Operacional</div>
   </div>
 
