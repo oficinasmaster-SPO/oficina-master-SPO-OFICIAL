@@ -96,9 +96,8 @@ export function PermissionsProvider({ children }) {
       }
 
       let userProfile = null;
-      let customRoleObj = null;
 
-      // Carregar UserProfile e CustomRole em paralelo
+      // Carregar UserProfile via Employee.profile_id (única fonte canônica)
       if (activeProfileId) {
         queries.push(
           base44.entities.UserProfile.get(activeProfileId)
@@ -107,15 +106,8 @@ export function PermissionsProvider({ children }) {
         );
       }
 
-      // NOTA: User.profile_id e user.data.profile_id foram removidos como fonte de permissões (2026-06-10).
-      // Fonte canônica: Employee.profile_id → UserProfile.roles
-      if (user.custom_role_id) {
-        queries.push(
-          base44.entities.CustomRole.get(user.custom_role_id)
-            .then(r => { customRoleObj = r; })
-            .catch(e => console.warn("Erro ao carregar CustomRole", e))
-        );
-      }
+      // NOTA: User.profile_id, user.data.profile_id e user.custom_role_id foram removidos (2026-06-10).
+      // Fonte canônica única: Employee.profile_id → UserProfile.roles (+ UserProfile.custom_role_ids)
 
       if (queries.length > 0) {
         await Promise.all(queries);
@@ -141,16 +133,10 @@ export function PermissionsProvider({ children }) {
         }
       }
 
-      // Consolidar permissões do CustomRole
-      if (customRoleObj && customRoleObj.id) {
-        const roleSysRoles = customRoleObj.data?.system_roles || customRoleObj.system_roles || [];
-        aggregatedPermissions = [...aggregatedPermissions, ...roleSysRoles];
-      }
-
       return {
         permissions: [...new Set(aggregatedPermissions)],
         profile: userProfile,
-        customRole: customRoleObj,
+        customRole: null, // CustomRole via User foi removido; CustomRoles do UserProfile já consolidados acima.
         currentRole: activeRole,
         isOwnerOrPartner,
         granularConfig
