@@ -197,7 +197,7 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
                   <div className="flex-1">
                     <Label className="text-xs text-gray-500 font-medium mb-1 block">{sub.number}</Label>
                     <Textarea
-                      rows={3}
+                      rows={4}
                       value={sub.content}
                       onChange={(e) => {
                         const newSections = [...(formData.sections || [])];
@@ -205,7 +205,7 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
                         newSections[si].subsections[index].content = e.target.value;
                         setFormData({ ...formData, sections: newSections });
                       }}
-                      className="text-sm"
+                      className="text-sm min-h-[100px]"
                       placeholder="Digite o conteúdo deste item..."
                     />
                   </div>
@@ -266,7 +266,7 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
       </div>
       <div>
         <Label className="text-xs text-gray-500">Objetivo do Regimento</Label>
-        <Textarea rows={4} value={formData.objective || ""} onChange={(e) => setFormData({ ...formData, objective: e.target.value })} className="bg-blue-50/50 mt-1" />
+        <Textarea rows={5} value={formData.objective || ""} onChange={(e) => setFormData({ ...formData, objective: e.target.value })} className="bg-blue-50/50 mt-1 min-h-[110px]" />
       </div>
     </div>
   );
@@ -299,15 +299,15 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
     <div className="space-y-5">
       <div>
         <Label className="text-xs text-gray-500">Texto Legal para Advertências</Label>
-        <Textarea rows={3} value={formData.warning_legal_text || ""} onChange={(e) => setFormData({ ...formData, warning_legal_text: e.target.value })} className="bg-red-50/50 mt-1 text-sm" />
+        <Textarea rows={5} value={formData.warning_legal_text || ""} onChange={(e) => setFormData({ ...formData, warning_legal_text: e.target.value })} className="bg-red-50/50 mt-1 text-sm min-h-[110px]" />
       </div>
       <div>
         <Label className="text-xs text-gray-500">Texto de Ciência e Compromisso</Label>
-        <Textarea rows={3} value={formData.acknowledgment_text || ""} onChange={(e) => setFormData({ ...formData, acknowledgment_text: e.target.value })} className="bg-green-50/50 mt-1 text-sm" />
+        <Textarea rows={5} value={formData.acknowledgment_text || ""} onChange={(e) => setFormData({ ...formData, acknowledgment_text: e.target.value })} className="bg-green-50/50 mt-1 text-sm min-h-[110px]" />
       </div>
       <div>
         <Label className="text-xs text-gray-500">Disposições Finais</Label>
-        <Textarea rows={3} value={formData.final_provisions || ""} onChange={(e) => setFormData({ ...formData, final_provisions: e.target.value })} className="mt-1 text-sm" />
+        <Textarea rows={5} value={formData.final_provisions || ""} onChange={(e) => setFormData({ ...formData, final_provisions: e.target.value })} className="mt-1 text-sm min-h-[110px]" />
       </div>
       {renderSectionEditor(["28"])}
       <div className="bg-green-50 border border-green-200 rounded-lg p-4">
@@ -360,7 +360,7 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
   return (
     <div className="h-full flex flex-col bg-white">
       {/* HEADER */}
-      <header className="shrink-0 border-b bg-white px-6 py-3 flex items-center justify-between">
+      <header className="shrink-0 border-b bg-white px-6 py-3 flex items-center justify-between shadow-[0_2px_8px_rgba(0,0,0,0.06)] z-10 relative">
         <div className="flex items-center gap-3 min-w-0">
           <Button variant="ghost" size="icon" onClick={onCancel} className="shrink-0">
             <ArrowLeft className="w-5 h-5" />
@@ -375,8 +375,11 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
               <h2 className="font-semibold text-gray-900 truncate">
                 {regiment?.id ? 'Editar' : 'Novo'} Regimento Interno
               </h2>
+              <p className="text-xs text-gray-400 mt-1 max-w-xl leading-relaxed">
+                Personalize o Regimento Interno da sua empresa definindo regras, responsabilidades, direitos, deveres e procedimentos aplicáveis aos colaboradores.
+              </p>
             </div>
-            <p className="text-xs text-gray-500 truncate">
+            <p className="text-xs text-gray-500 truncate mt-1">
               {formData.identification?.company_name || "Empresa"} — v{formData.version}
             </p>
           </div>
@@ -394,19 +397,19 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
       {/* BODY */}
       <div className="flex flex-1 min-h-0">
         {/* SIDEBAR */}
-        <aside className="w-[260px] shrink-0 border-r bg-gray-50/80 flex flex-col">
+        <aside className="w-[260px] shrink-0 border-r bg-gray-50/80 flex flex-col overflow-hidden">
           <div className="px-3 pt-3 pb-2 text-[10px] font-semibold text-gray-400 uppercase tracking-widest">
             Navegação
           </div>
-          <nav className="flex-1 overflow-y-auto px-2 pb-4 space-y-0.5">
+          <nav className="flex-1 overflow-y-auto px-2 pb-4 space-y-0.5 scrollbar-thin">
             {SECTION_GROUPS.map(group => (
               <button
                 key={group.id}
                 onClick={() => setActiveSection(group.id)}
-                className={`w-full text-left px-3 py-2 rounded-md text-sm flex items-center gap-2.5 transition-colors
+                className={`w-full text-left px-3 py-2.5 rounded-lg text-sm flex items-center gap-2.5 transition-all duration-200 border-l-[3px]
                   ${activeSection === group.id
-                    ? 'bg-white shadow-sm border border-gray-200 text-gray-900 font-medium'
-                    : 'text-gray-600 hover:bg-white/60 hover:text-gray-900'
+                    ? 'bg-white shadow-sm border-gray-200 text-gray-900 font-semibold border-l-blue-600'
+                    : 'text-gray-600 hover:bg-white/70 hover:text-gray-800 hover:shadow-sm border-l-transparent'
                   }`}
               >
                 <span className="text-base shrink-0">{group.icon}</span>
@@ -417,15 +420,15 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
         </aside>
 
         {/* CONTENT */}
-        <main className="flex-1 overflow-y-auto p-6">
-          <div className="max-w-3xl">
+        <main className="flex-1 overflow-y-auto p-6 px-8 scrollbar-thin">
+          <div className="max-w-4xl">
             {renderContent()}
           </div>
         </main>
       </div>
 
       {/* FOOTER */}
-      <footer className="shrink-0 border-t bg-gray-50/80 px-6 py-2.5 flex items-center justify-between text-xs text-gray-500">
+      <footer className="shrink-0 border-t bg-gray-50/80 px-6 py-2.5 flex items-center justify-between text-xs text-gray-500 shadow-[0_-2px_8px_rgba(0,0,0,0.06)] z-10 relative">
         <div className="flex items-center gap-4">
           <span className="flex items-center gap-1.5">
             <span className={`w-2 h-2 rounded-full ${formData.status === 'active' ? 'bg-green-500' : formData.status === 'draft' ? 'bg-yellow-400' : 'bg-gray-400'}`} />
