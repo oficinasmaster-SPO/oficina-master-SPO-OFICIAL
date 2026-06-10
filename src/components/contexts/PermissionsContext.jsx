@@ -30,8 +30,8 @@ export function PermissionsProvider({ children }) {
       const isImpersonated = user._isImpersonated === true;
 
       let aggregatedPermissions = [];
-      let activeRole = user.role === 'admin' ? 'admin' : (user.job_role || 'outros');
-      let activeProfileId = user.profile_id;
+      let activeRole = user.role === 'admin' ? 'admin' : 'outros';
+      let activeProfileId = null; // Fonte canônica: Employee.profile_id exclusivamente
       let isOwnerOrPartner = false;
       let granularConfig = {};
 
@@ -83,7 +83,7 @@ export function PermissionsProvider({ children }) {
         const matchingEmployee = effectiveWorkshopId
           ? (employees.find(e => e.workshop_id === effectiveWorkshopId) || employees[0])
           : employees[0];
-        activeProfileId = matchingEmployee.profile_id || user.profile_id || user.data?.profile_id;
+        activeProfileId = matchingEmployee.profile_id || null; // Canônico: apenas Employee.profile_id
         if (matchingEmployee.job_role) activeRole = matchingEmployee.job_role;
       }
       
@@ -107,6 +107,8 @@ export function PermissionsProvider({ children }) {
         );
       }
 
+      // NOTA: User.profile_id e user.data.profile_id foram removidos como fonte de permissões (2026-06-10).
+      // Fonte canônica: Employee.profile_id → UserProfile.roles
       if (user.custom_role_id) {
         queries.push(
           base44.entities.CustomRole.get(user.custom_role_id)
