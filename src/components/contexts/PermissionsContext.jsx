@@ -79,10 +79,13 @@ export function PermissionsProvider({ children }) {
       const [ws, employees] = await Promise.all([wsPromise, empPromise]);
 
       if (employees && employees.length > 0) {
+        // Filtrar apenas employees ativos para evitar que registro inativo seja retornado (P3.A 2026-06-10)
+        const activeEmployees = employees.filter(e => e.status === 'ativo' || e.user_status === 'ativo');
+        const pool = activeEmployees.length > 0 ? activeEmployees : employees;
         // Pegar o Employee vinculado ao workshop correto, se houver múltiplos
         const matchingEmployee = effectiveWorkshopId
-          ? (employees.find(e => e.workshop_id === effectiveWorkshopId) || employees[0])
-          : employees[0];
+          ? (pool.find(e => e.workshop_id === effectiveWorkshopId) || pool[0])
+          : pool[0];
         activeProfileId = matchingEmployee.profile_id || null; // Canônico: apenas Employee.profile_id
         if (matchingEmployee.job_role) activeRole = matchingEmployee.job_role;
       }
