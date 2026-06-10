@@ -18,7 +18,7 @@ const JOB_ROLE_TO_PROFILE_ID = {
   'lider_tecnico':   '6a272f85fc4b85767f964421', // Líder Técnico - Coordenação Técnica
   // Vendas e Atendimento
   'comercial':       '6a272f96bc6eedd434194fcf', // Comercial - Vendas e Atendimento
-  'consultor_vendas':'6a272f876b16129b2f5f31be', // Técnico - Acesso Operacional
+  'consultor_vendas':'6a272f96bc6eedd434194fcf', // Comercial - Vendas e Atendimento
   'marketing':       '6a272f99aaeffc72c503fa5e', // Marketing - Comunicação e Marketing
   // Operacional (acesso mínimo — cargo RH ≠ perfil RBAC, mecânico não precisa de perfil Mecânico)
   'tecnico':         '6a272f876b16129b2f5f31be', // Técnico - Acesso Operacional
