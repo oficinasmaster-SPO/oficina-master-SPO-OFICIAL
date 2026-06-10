@@ -120,7 +120,7 @@ export default function RegimentViewer({ regiment, workshop, employee, onClose, 
         </CardHeader>
       </Card>
 
-      <Card className="print-container">
+      <Card className="print-container regiment-print-content">
         <CardContent className="p-8 space-y-6">
           {/* Cabeçalho com Logo */}
           <div className="text-center border-b-2 border-gray-900 pb-4 mb-6">

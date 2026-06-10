@@ -310,7 +310,7 @@ export default function Regimento() {
       <Dialog open={showViewer} onOpenChange={(open) => {
         if (!open) { setShowViewer(false); setSelectedRegiment(null); }
       }}>
-        <DialogContent className="max-w-4xl max-h-[90vh] p-0 overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] p-0 overflow-y-auto regiment-print-viewer">
           {selectedRegiment && (
             <RegimentViewer
               regiment={selectedRegiment}

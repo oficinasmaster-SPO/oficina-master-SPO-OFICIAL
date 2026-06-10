@@ -98,6 +98,47 @@
     display: none !important;
   }
 
+  /* Regiment Viewer Dialog — manter visível na impressão */
+  .regiment-print-viewer[role="dialog"] {
+    display: flex !important;
+    flex-direction: column !important;
+    position: static !important;
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+    transform: none !important;
+    left: auto !important;
+    top: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    background: white !important;
+  }
+
+  /* Regiment Viewer — permitir quebra natural de página no conteúdo */
+  .regiment-print-viewer .card,
+  .regiment-print-viewer [class*="Card"] {
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  /* Regiment sections — evitar quebras no meio de uma seção */
+  .page-break-inside-avoid {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Esconder overlay escuro do Dialog na impressão */
+  div[class*="bg-black/80"][class*="fixed inset-0"] {
+    display: none !important;
+  }
+
   /* Show print-only elements */
   .print\\:block {
     display: block !important;
