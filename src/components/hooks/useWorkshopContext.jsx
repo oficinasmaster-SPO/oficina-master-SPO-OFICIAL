@@ -135,7 +135,21 @@ export function useWorkshopContext() {
   // isLoading só é true se AINDA estamos carregando dados iniciais
   // Se o fetch do workshop individual terminou (mesmo sem resultado), não estamos mais loading
   const isFetchingMissing = !!missingWorkshopIdToFetch && isFetchedLoading && !userWorkshop;
-  const isLoading = isTenantLoading || isAvailableLoading || isFetchingMissing;
+
+  // FIX RACE-CONDITION: Cobre a janela cega entre available=[] ter carregado
+  // e o workshop_id do usuário ainda não ter sido resolvido pelo TenantContext.
+  // Sem isso: isLoading=false + workshop=null → flash de "Nenhuma oficina vinculada".
+  // Com isso: mantém isLoading=true enquanto o usuário claramente tem um workshop pendente.
+  const pendingWorkshopId = tenantUser?.workshop_id
+    || tenantUser?.data?.workshop_id
+    || effectiveSelectedCompanyId
+    || effectiveAdminWorkshopId;
+  const userHasPendingWorkshop = !isAvailableLoading
+    && available.length === 0
+    && !!pendingWorkshopId
+    && !workshop;
+
+  const isLoading = isTenantLoading || isAvailableLoading || isFetchingMissing || userHasPendingWorkshop;
 
   // FIX-05: Debug logging para auxiliar diagnóstico
   // QA-FIX-01: Adicionado log de erro quando workshop não existe
