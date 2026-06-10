@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, Save, UserPlus, User, DollarSign, TrendingUp, Plus, Trash2, X, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { jobRoles } from "@/components/lib/jobRoles";
-import { CANONICAL_PROFILE_JOB_ROLES, CANONICAL_PROFILE_MAPPING, getCanonicalProfileByJobRole, isCanonicalJobRole } from "@/components/lib/canonicalProfiles";
+import { CANONICAL_PROFILE_IDS, CANONICAL_PROFILE_JOB_ROLES, CANONICAL_PROFILE_MAPPING, getCanonicalProfileByJobRole, isCanonicalJobRole } from "@/components/lib/canonicalProfiles";
 import { motion, AnimatePresence } from "framer-motion";
 import ProfileSuggestionBanner from "./ProfileSuggestionBanner";
 import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
