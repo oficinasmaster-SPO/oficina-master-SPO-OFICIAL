@@ -145,7 +145,10 @@ export default function Home() {
   // Mostra loading enquanto: verifica auth, ou está autenticado mas user/workshop ainda não chegaram
   const isDataLoading = isCheckingAuth 
     || (isAuthenticated && !user)
-    || (isAuthenticated && isLoadingWorkshop) 
+    || (isAuthenticated && isLoadingWorkshop)
+    // FIX RACE-CONDITION: user tem workshop_id mas workshop ainda não chegou
+    // Sem isso: isLoadingWorkshop=false + workshop=null → flash "Nenhuma oficina vinculada"
+    || (isAuthenticated && !!user && !workshop && !!(user.workshop_id || user.data?.workshop_id))
     || (isAuthenticated && !!user && !!tenant && isLoadingProgress);
 
   if (isDataLoading) {
