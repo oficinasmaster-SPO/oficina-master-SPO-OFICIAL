@@ -281,17 +281,8 @@ export default function CadastroPlanos() {
           hire_date: new Date().toISOString().split('T')[0]
         });
 
-        // Criar permissões completas para o proprietário
-        try {
-          await base44.functions.invoke('createDefaultPermissions', {
-            user_id: currentUser.id,
-            workshop_id: newWorkshop.id,
-            job_role: 'diretor'
-          });
-          console.log("✅ Permissões criadas para proprietário");
-        } catch (permError) {
-          console.error("Erro ao criar permissões:", permError);
-        }
+        // Permissões agora vêm de Employee.profile_id → UserProfile.roles (RBAC canônico)
+        // createDefaultPermissions foi depreciada em 2026-06-10
 
         toast.success("Oficina cadastrada e plano escolhido!");
       }

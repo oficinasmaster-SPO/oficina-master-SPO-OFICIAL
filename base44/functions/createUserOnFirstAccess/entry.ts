@@ -176,40 +176,13 @@ Deno.serve(async (req) => {
     });
     console.log(`✅ EmployeeInvite concluído: employee_id = ${employee.id}`);
     
-    // 4. Criar UserPermission usando DADOS SEGUROS
-    console.log("📝 [4/4] Criando/atualizando UserPermission com dados seguros...");
-    try {
-      const existingPermissions = await base44.asServiceRole.entities.UserPermission.filter({ user_id: userId });
-      
-      if (existingPermissions && existingPermissions.length > 0) {
-        // Atualizar permissão existente
-        await base44.asServiceRole.entities.UserPermission.update(existingPermissions[0].id, {
-          profile_id: secureProfileId, // USANDO ID SEGURO
-          workshop_id: secureWorkshopId,
-          is_active: true,
-          approved_at: now,
-          approved_by: invite.admin_responsavel_id
-        });
-        console.log("✅ UserPermission atualizada");
-      } else {
-        // Criar nova permissão
-        await base44.asServiceRole.entities.UserPermission.create({
-          user_id: userId,
-          profile_id: secureProfileId, // USANDO ID SEGURO
-          workshop_id: secureWorkshopId,
-          permission_level: 'visualizador',
-          is_active: true,
-          approved_at: now,
-          approved_by: invite.admin_responsavel_id
-        });
-        console.log("✅ UserPermission criada");
-      }
-    } catch (e) {
-      console.error("⚠️ Erro ao gerenciar UserPermission:", e);
-    }
+    // 4. UserPermission — REMOVIDO (2026-06-10)
+    // UserPermission.modules_access não é mais fonte de autorização.
+    // A fonte canônica é Employee.profile_id → UserProfile.roles.
+    console.log("📝 [4/4] UserPermission removida — permissões virão de UserProfile.roles");
 
     // 5. Criar EmployeeInviteAcceptance com DADOS SEGUROS
-    console.log("📝 [5/5] Criando EmployeeInviteAcceptance para automação...");
+    console.log("📝 [4/4] Criando EmployeeInviteAcceptance para automação...");
     try {
       await base44.asServiceRole.entities.EmployeeInviteAcceptance.create({
         user_id: userId,

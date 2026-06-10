@@ -1,6 +1,12 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
-// Define permissões padrão por job_role
+// === DEPRECATED 2026-06-10 ===
+// UserPermission.modules_access não é mais consumido pelo PermissionsContext.
+// A fonte canônica é Employee.profile_id → UserProfile.roles.
+// Esta função criava dados órfãos (UserPermission) que nunca eram lidos para autorização.
+// Mantida como stub para não quebrar chamadores — apenas loga e retorna sucesso vazio.
+
+// Define permissões padrão por job_role (mantido para referência histórica)
 const DEFAULT_PERMISSIONS = {
   // SÓCIO - Acesso completo
   socio: {
@@ -362,57 +368,21 @@ const DEFAULT_PERMISSIONS = {
 };
 
 Deno.serve(async (req) => {
-  const base44 = createClientFromRequest(req);
-  
   try {
     const { user_id, workshop_id, job_role } = await req.json();
-
-    if (!user_id || !workshop_id || !job_role) {
-      return Response.json({ 
-        success: false, 
-        error: 'user_id, workshop_id e job_role são obrigatórios' 
-      }, { status: 400 });
-    }
-
-    // Buscar permissões padrão para o job_role
-    const defaultPerms = DEFAULT_PERMISSIONS[job_role] || DEFAULT_PERMISSIONS.outros;
-
-    console.log("🔧 Criando permissões para:", job_role);
-    console.log("📋 Permissões aplicadas:", defaultPerms.permission_level);
-
-    // Verificar se já existe permissão para este usuário
-    const existing = await base44.asServiceRole.entities.UserPermission.filter({ 
-      user_id: user_id,
-      workshop_id: workshop_id
-    });
-
-    let permission;
-    if (existing && existing.length > 0) {
-      // Atualizar existente
-      permission = await base44.asServiceRole.entities.UserPermission.update(existing[0].id, {
-        ...defaultPerms,
-        is_active: true
-      });
-      console.log("✅ Permissões atualizadas para user:", user_id);
-    } else {
-      // Criar nova
-      permission = await base44.asServiceRole.entities.UserPermission.create({
-        user_id: user_id,
-        workshop_id: workshop_id,
-        ...defaultPerms,
-        is_active: true
-      });
-      console.log("✅ Permissões criadas para user:", user_id);
-    }
-
+    
+    console.warn('⚠️ createDefaultPermissions está depreciada (2026-06-10).');
+    console.warn('   UserPermission.modules_access não é mais fonte de autorização.');
+    console.warn('   A fonte canônica é Employee.profile_id → UserProfile.roles.');
+    console.warn(`   Chamada recebida: user=${user_id} workshop=${workshop_id} role=${job_role} — ignorada.`);
+    
     return Response.json({ 
       success: true, 
-      permission_id: permission.id,
-      permission_level: defaultPerms.permission_level
+      deprecated: true,
+      message: 'Função depreciada. UserProfile.roles é a fonte canônica de permissões.',
+      permission_level: 'n/a'
     });
-
   } catch (error) {
-    console.error('❌ Erro ao criar permissões:', error);
     return Response.json({ 
       success: false, 
       error: error.message 
