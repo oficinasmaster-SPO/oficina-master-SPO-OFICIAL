@@ -144,7 +144,22 @@
   ],
   "rls": {
     "create": {
-      "created_by": "{{user.email}}"
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "workshop_id": "{{user.workshop_id}}"
+        }
+      ]
     },
     "read": true,
     "update": {
@@ -156,6 +171,12 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "workshop_id": "{{user.workshop_id}}"
         }
       ]
     },
@@ -168,6 +189,12 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "workshop_id": "{{user.workshop_id}}"
         }
       ]
     }

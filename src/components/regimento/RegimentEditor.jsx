@@ -1,15 +1,12 @@
 import React, { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowLeft, Save, Send, Plus, Trash2 } from "lucide-react";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { ArrowLeft, Save, Send, Plus, Trash2, FileText } from "lucide-react";
 
 const DEFAULT_TEXTS = {
   objective: "Este regimento tem como finalidade disciplinar a relação de trabalho, garantindo um ambiente seguro, produtivo e alinhado à legislação vigente.",
@@ -19,37 +16,39 @@ const DEFAULT_TEXTS = {
 };
 
 const SECTION_GROUPS = [
-  { value: "identification", label: "Identificação", icon: "📋" },
-  { value: "legal", label: "Base Legal", icon: "⚖️", sectionIds: ["0"] },
-  { value: "duties", label: "Deveres", icon: "✅", sectionIds: ["1"] },
-  { value: "prohibited", label: "Proibições", icon: "🚫", sectionIds: ["2"] },
-  { value: "schedule", label: "Jornada", icon: "⏰", sectionIds: ["3"] },
-  { value: "absences", label: "Faltas", icon: "📅", sectionIds: ["4"] },
-  { value: "penalties", label: "Penalidades", icon: "⚠️", sectionIds: ["5", "6", "7", "8"] },
-  { value: "resignation", label: "Demissão", icon: "👋", sectionIds: ["9"] },
-  { value: "safety", label: "Segurança", icon: "🦺", sectionIds: ["10"] },
-  { value: "resources", label: "Recursos", icon: "💻", sectionIds: ["11"] },
-  { value: "confidentiality", label: "Sigilo", icon: "🔒", sectionIds: ["12"] },
-  { value: "social", label: "Redes Sociais", icon: "📱", sectionIds: ["13"] },
-  { value: "conduct", label: "Conduta", icon: "🤝", sectionIds: ["14"] },
-  { value: "dress", label: "Vestimenta", icon: "👔", sectionIds: ["15"] },
-  { value: "training", label: "Treinamento", icon: "📚", sectionIds: ["16"] },
-  { value: "benefits", label: "Benefícios", icon: "🎁", sectionIds: ["17"] },
-  { value: "lgpd", label: "LGPD", icon: "🛡️", sectionIds: ["18"] },
-  { value: "contracts", label: "Contratos", icon: "📄", sectionIds: ["19"] },
-  { value: "vehicles", label: "Veículos", icon: "🚗", sectionIds: ["20"] },
-  { value: "parts", label: "Peças/Danos", icon: "🔧", sectionIds: ["21"] },
-  { value: "equipment", label: "Equipamentos", icon: "🏗️", sectionIds: ["22"] },
-  { value: "diagnosis", label: "Diagnóstico", icon: "📋", sectionIds: ["23"] },
-  { value: "rework", label: "Retrabalho", icon: "🔄", sectionIds: ["24"] },
-  { value: "organization", label: "Organização", icon: "🧹", sectionIds: ["25"] },
-  { value: "tools", label: "Ferramentas", icon: "🧰", sectionIds: ["26"] },
-  { value: "exit", label: "Desligamento", icon: "📦", sectionIds: ["27"] },
-  { value: "final", label: "Finais", icon: "📝", sectionIds: ["28"] }
+  { id: "identification", label: "Identificação", icon: "📋" },
+  { id: "legal", label: "Base Legal", icon: "⚖️", sectionIds: ["0"] },
+  { id: "duties", label: "Deveres", icon: "✅", sectionIds: ["1"] },
+  { id: "prohibited", label: "Proibições", icon: "🚫", sectionIds: ["2"] },
+  { id: "schedule", label: "Jornada", icon: "⏰", sectionIds: ["3"] },
+  { id: "absences", label: "Faltas", icon: "📅", sectionIds: ["4"] },
+  { id: "penalties", label: "Penalidades", icon: "⚠️", sectionIds: ["5", "6", "7", "8"] },
+  { id: "resignation", label: "Demissão", icon: "👋", sectionIds: ["9"] },
+  { id: "safety", label: "Segurança", icon: "🦺", sectionIds: ["10"] },
+  { id: "resources", label: "Recursos", icon: "💻", sectionIds: ["11"] },
+  { id: "confidentiality", label: "Sigilo", icon: "🔒", sectionIds: ["12"] },
+  { id: "social", label: "Redes Sociais", icon: "📱", sectionIds: ["13"] },
+  { id: "conduct", label: "Conduta", icon: "🤝", sectionIds: ["14"] },
+  { id: "dress", label: "Vestimenta", icon: "👔", sectionIds: ["15"] },
+  { id: "training", label: "Treinamento", icon: "📚", sectionIds: ["16"] },
+  { id: "benefits", label: "Benefícios", icon: "🎁", sectionIds: ["17"] },
+  { id: "lgpd", label: "LGPD", icon: "🛡️", sectionIds: ["18"] },
+  { id: "contracts", label: "Contratos", icon: "📄", sectionIds: ["19"] },
+  { id: "vehicles", label: "Veículos", icon: "🚗", sectionIds: ["20"] },
+  { id: "parts", label: "Peças/Danos", icon: "🔧", sectionIds: ["21"] },
+  { id: "equipment", label: "Equipamentos", icon: "🏗️", sectionIds: ["22"] },
+  { id: "diagnosis", label: "Diagnóstico", icon: "📋", sectionIds: ["23"] },
+  { id: "rework", label: "Retrabalho", icon: "🔄", sectionIds: ["24"] },
+  { id: "organization", label: "Organização", icon: "🧹", sectionIds: ["25"] },
+  { id: "tools", label: "Ferramentas", icon: "🧰", sectionIds: ["26"] },
+  { id: "exit", label: "Desligamento", icon: "📦", sectionIds: ["27"] },
+  { id: "final", label: "Disposições Finais", icon: "📝", sectionIds: ["28"] }
 ];
 
 export default function RegimentEditor({ regiment, workshop, onSave, onCancel }) {
   const queryClient = useQueryClient();
+  const [activeSection, setActiveSection] = useState("identification");
+
   const [formData, setFormData] = useState(() => {
     if (regiment) {
       return {
@@ -142,86 +141,71 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
   const addSubsection = (sectionId) => {
     const newSections = [...(formData.sections || [])];
     const sectionIndex = newSections.findIndex(s => s.id === sectionId);
-    
     if (sectionIndex === -1) return;
-
     const section = newSections[sectionIndex];
     const subsections = section.subsections || [];
     const lastSubNumber = subsections.length > 0 
       ? parseFloat(subsections[subsections.length - 1].number) 
       : parseFloat(section.number);
-    
     const newSubNumber = (Math.floor(lastSubNumber) + (subsections.length + 1) * 0.1).toFixed(1);
-    
-    const newSubsection = {
+    newSections[sectionIndex].subsections = [...subsections, {
       id: `${sectionId}.${subsections.length + 1}`,
       number: newSubNumber,
       content: ""
-    };
-
-    newSections[sectionIndex].subsections = [...subsections, newSubsection];
+    }];
     setFormData({ ...formData, sections: newSections });
   };
 
   const removeSubsection = (sectionId, subIndex) => {
     const newSections = [...(formData.sections || [])];
     const sectionIndex = newSections.findIndex(s => s.id === sectionId);
-    
     if (sectionIndex === -1) return;
-    
     newSections[sectionIndex].subsections.splice(subIndex, 1);
     setFormData({ ...formData, sections: newSections });
   };
 
-  const renderSectionEditor = (sectionIds, title, description) => {
+  const renderSectionEditor = (sectionIds) => {
     const sections = formData.sections?.filter(s => sectionIds.includes(s.id)) || [];
-    
     if (sections.length === 0) {
       return (
-        <div className="text-center py-8 text-gray-500">
+        <div className="text-center py-12 text-gray-400">
+          <FileText className="w-12 h-12 mx-auto mb-3 opacity-30" />
           <p>Seção não encontrada no regimento</p>
-          <p className="text-xs mt-2">IDs esperados: {sectionIds.join(", ")}</p>
+          <p className="text-xs mt-1">IDs esperados: {sectionIds.join(", ")}</p>
         </div>
       );
     }
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-5">
         {sections.map(section => (
-          <div key={section.id} className="border rounded-lg p-4">
+          <div key={section.id} className="border rounded-lg p-5 bg-white">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h4 className="font-semibold text-base">{section.number} {section.title}</h4>
+                <h4 className="font-semibold text-base text-gray-900">{section.number} {section.title}</h4>
                 {section.content && (
-                  <p className="text-sm text-gray-600 mt-1">{section.content}</p>
+                  <p className="text-sm text-gray-500 mt-1">{section.content}</p>
                 )}
               </div>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => addSubsection(section.id)}
-                className="gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Adicionar Item
+              <Button size="sm" variant="outline" onClick={() => addSubsection(section.id)} className="gap-1.5">
+                <Plus className="w-3.5 h-3.5" /> Adicionar Item
               </Button>
             </div>
-
             <div className="space-y-3">
               {section.subsections?.map((sub, index) => (
                 <div key={sub.id} className="flex gap-2 items-start">
                   <div className="flex-1">
-                    <Label className="text-xs text-gray-600 font-medium">{sub.number}</Label>
+                    <Label className="text-xs text-gray-500 font-medium mb-1 block">{sub.number}</Label>
                     <Textarea
                       rows={3}
                       value={sub.content}
                       onChange={(e) => {
                         const newSections = [...(formData.sections || [])];
-                        const sectionIndex = newSections.findIndex(s => s.id === section.id);
-                        newSections[sectionIndex].subsections[index].content = e.target.value;
+                        const si = newSections.findIndex(s => s.id === section.id);
+                        newSections[si].subsections[index].content = e.target.value;
                         setFormData({ ...formData, sections: newSections });
                       }}
-                      className="text-sm mt-1"
+                      className="text-sm"
                       placeholder="Digite o conteúdo deste item..."
                     />
                   </div>
@@ -229,7 +213,7 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
                     size="icon"
                     variant="ghost"
                     onClick={() => removeSubsection(section.id, index)}
-                    className="text-red-500 hover:text-red-700 hover:bg-red-50 mt-6"
+                    className="text-red-500 hover:text-red-700 hover:bg-red-50 mt-6 shrink-0"
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
@@ -242,491 +226,222 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
     );
   };
 
-  return (
-    <div className="max-w-7xl mx-auto space-y-4">
-      <Card className="border-2 border-blue-200">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Button variant="ghost" size="icon" onClick={onCancel}>
-                <ArrowLeft className="w-5 h-5" />
-              </Button>
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  {regiment?.document_code && (
-                    <span className="bg-blue-600 text-white text-xs font-mono px-2 py-1 rounded">{regiment.document_code}</span>
-                  )}
-                  {regiment?.id ? 'Editar' : 'Novo'} Regimento Interno
-                </CardTitle>
-                <p className="text-sm text-gray-600 mt-1">Versão {formData.version} • {formData.sections?.length || 0} seções</p>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={handleSaveDraft} disabled={saveMutation.isPending}>
-                <Save className="w-4 h-4 mr-2" />
-                Salvar Rascunho
-              </Button>
-              <Button onClick={handlePublish} disabled={publishMutation.isPending} className="bg-green-600 hover:bg-green-700">
-                <Send className="w-4 h-4 mr-2" />
-                Publicar e Ativar
-              </Button>
-            </div>
+  const renderIdentification = () => (
+    <div className="space-y-5">
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label className="text-xs text-gray-500">Nome da Empresa *</Label>
+          <Input
+            value={formData.identification?.company_name || ""}
+            onChange={(e) => setFormData({ ...formData, identification: { ...formData.identification, company_name: e.target.value } })}
+            className="bg-blue-50/50 mt-1"
+          />
+        </div>
+        <div>
+          <Label className="text-xs text-gray-500">CNPJ *</Label>
+          <Input
+            value={formData.identification?.cnpj || ""}
+            onChange={(e) => setFormData({ ...formData, identification: { ...formData.identification, cnpj: e.target.value } })}
+            className="bg-blue-50/50 mt-1"
+          />
+        </div>
+      </div>
+      <div>
+        <Label className="text-xs text-gray-500">Endereço Completo *</Label>
+        <Input
+          value={formData.identification?.address || ""}
+          onChange={(e) => setFormData({ ...formData, identification: { ...formData.identification, address: e.target.value } })}
+          className="bg-blue-50/50 mt-1"
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label className="text-xs text-gray-500">Versão do Documento *</Label>
+          <Input value={formData.version || ""} onChange={(e) => setFormData({ ...formData, version: e.target.value })} className="mt-1" placeholder="1.0" />
+        </div>
+        <div>
+          <Label className="text-xs text-gray-500">Data de Vigência *</Label>
+          <Input type="date" value={formData.effective_date || ""} onChange={(e) => setFormData({ ...formData, effective_date: e.target.value })} className="mt-1" />
+        </div>
+      </div>
+      <div>
+        <Label className="text-xs text-gray-500">Objetivo do Regimento</Label>
+        <Textarea rows={4} value={formData.objective || ""} onChange={(e) => setFormData({ ...formData, objective: e.target.value })} className="bg-blue-50/50 mt-1" />
+      </div>
+    </div>
+  );
+
+  const renderLegalBase = () => (
+    <div className="space-y-5">
+      <div className="bg-gray-50 border rounded-lg p-4 text-sm text-gray-600">
+        <strong className="text-gray-800">Fundamentação:</strong> CLT art. 2º, 158, 482 | CF art. 7º | NRs
+      </div>
+      {renderSectionEditor(["0"])}
+    </div>
+  );
+
+  const renderPenalties = () => (
+    <div className="space-y-5">
+      <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+        <h4 className="font-bold text-orange-900 text-sm mb-2">Princípios Jurídicos Obrigatórios:</h4>
+        <ul className="text-sm text-orange-800 space-y-0.5 list-disc list-inside">
+          <li>Gradualidade (não pular etapas)</li>
+          <li>Proporcionalidade (punição compatível)</li>
+          <li>Imediatidade (punir logo após ciência)</li>
+          <li>Registro documental (tudo escrito)</li>
+        </ul>
+      </div>
+      {renderSectionEditor(["5", "6", "7", "8"])}
+    </div>
+  );
+
+  const renderFinal = () => (
+    <div className="space-y-5">
+      <div>
+        <Label className="text-xs text-gray-500">Texto Legal para Advertências</Label>
+        <Textarea rows={3} value={formData.warning_legal_text || ""} onChange={(e) => setFormData({ ...formData, warning_legal_text: e.target.value })} className="bg-red-50/50 mt-1 text-sm" />
+      </div>
+      <div>
+        <Label className="text-xs text-gray-500">Texto de Ciência e Compromisso</Label>
+        <Textarea rows={3} value={formData.acknowledgment_text || ""} onChange={(e) => setFormData({ ...formData, acknowledgment_text: e.target.value })} className="bg-green-50/50 mt-1 text-sm" />
+      </div>
+      <div>
+        <Label className="text-xs text-gray-500">Disposições Finais</Label>
+        <Textarea rows={3} value={formData.final_provisions || ""} onChange={(e) => setFormData({ ...formData, final_provisions: e.target.value })} className="mt-1 text-sm" />
+      </div>
+      {renderSectionEditor(["28"])}
+      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+        <h4 className="font-bold text-green-900 text-sm mb-2">Blindagem Jurídica Completa:</h4>
+        <ul className="text-sm text-green-800 space-y-0.5">
+          <li>Protege a empresa em processos trabalhistas</li>
+          <li>Dá poder legal ao gestor</li>
+          <li>Sustenta advertência, suspensão e justa causa</li>
+          <li>Específico para oficinas mecânicas</li>
+          <li>Nível corporativo de proteção jurídica</li>
+        </ul>
+      </div>
+    </div>
+  );
+
+  const sectionRenderers = {
+    identification: renderIdentification,
+    legal: renderLegalBase,
+    penalties: renderPenalties,
+    final: renderFinal,
+  };
+
+  const renderContent = () => {
+    const group = SECTION_GROUPS.find(g => g.id === activeSection);
+    if (!group) return null;
+
+    // Special renderers
+    if (sectionRenderers[activeSection]) {
+      return sectionRenderers[activeSection]();
+    }
+
+    // Default: section-based
+    if (group.sectionIds) {
+      return (
+        <div className="space-y-4">
+          <div className="bg-gray-50 border rounded-lg p-3 text-sm text-gray-600">
+            {group.label} — CLT e normas aplicáveis
           </div>
-        </CardHeader>
-      </Card>
+          {renderSectionEditor(group.sectionIds)}
+        </div>
+      );
+    }
 
-      <Tabs defaultValue="identification" className="space-y-4">
-        <ScrollArea className="w-full whitespace-nowrap">
-          <TabsList className="inline-flex w-auto bg-white border p-1">
+    return null;
+  };
+
+  const statusLabel = { draft: "Rascunho", active: "Ativo", archived: "Arquivado" };
+  const statusColor = { draft: "bg-yellow-100 text-yellow-800", active: "bg-green-100 text-green-800", archived: "bg-gray-200 text-gray-700" };
+
+  return (
+    <div className="h-full flex flex-col bg-white">
+      {/* HEADER */}
+      <header className="shrink-0 border-b bg-white px-6 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-3 min-w-0">
+          <Button variant="ghost" size="icon" onClick={onCancel} className="shrink-0">
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              {regiment?.document_code && (
+                <span className="bg-blue-600 text-white text-xs font-mono px-2 py-0.5 rounded shrink-0">
+                  {regiment.document_code}
+                </span>
+              )}
+              <h2 className="font-semibold text-gray-900 truncate">
+                {regiment?.id ? 'Editar' : 'Novo'} Regimento Interno
+              </h2>
+            </div>
+            <p className="text-xs text-gray-500 truncate">
+              {formData.identification?.company_name || "Empresa"} — v{formData.version}
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-2 shrink-0">
+          <Button variant="outline" size="sm" onClick={handleSaveDraft} disabled={saveMutation.isPending} className="gap-1.5">
+            <Save className="w-4 h-4" /> Salvar Rascunho
+          </Button>
+          <Button size="sm" onClick={handlePublish} disabled={publishMutation.isPending} className="bg-green-600 hover:bg-green-700 gap-1.5">
+            <Send className="w-4 h-4" /> Publicar e Ativar
+          </Button>
+        </div>
+      </header>
+
+      {/* BODY */}
+      <div className="flex flex-1 min-h-0">
+        {/* SIDEBAR */}
+        <aside className="w-[260px] shrink-0 border-r bg-gray-50/80 flex flex-col">
+          <div className="px-3 pt-3 pb-2 text-[10px] font-semibold text-gray-400 uppercase tracking-widest">
+            Navegação
+          </div>
+          <nav className="flex-1 overflow-y-auto px-2 pb-4 space-y-0.5">
             {SECTION_GROUPS.map(group => (
-              <TabsTrigger key={group.value} value={group.value} className="text-xs px-3">
-                {group.icon} {group.label}
-              </TabsTrigger>
+              <button
+                key={group.id}
+                onClick={() => setActiveSection(group.id)}
+                className={`w-full text-left px-3 py-2 rounded-md text-sm flex items-center gap-2.5 transition-colors
+                  ${activeSection === group.id
+                    ? 'bg-white shadow-sm border border-gray-200 text-gray-900 font-medium'
+                    : 'text-gray-600 hover:bg-white/60 hover:text-gray-900'
+                  }`}
+              >
+                <span className="text-base shrink-0">{group.icon}</span>
+                <span className="truncate">{group.label}</span>
+              </button>
             ))}
-          </TabsList>
-          <ScrollBar orientation="horizontal" />
-        </ScrollArea>
+          </nav>
+        </aside>
 
-        <TabsContent value="identification">
-          <Card>
-            <CardHeader>
-              <CardTitle>📋 Identificação do Documento</CardTitle>
-              <p className="text-xs text-gray-500 mt-1">Dados preenchidos automaticamente do cadastro da oficina</p>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Nome da Empresa *</Label>
-                  <Input
-                    value={formData.identification?.company_name || ""}
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      identification: { ...formData.identification, company_name: e.target.value }
-                    })}
-                    className="bg-blue-50"
-                  />
-                </div>
-                <div>
-                  <Label>CNPJ *</Label>
-                  <Input
-                    value={formData.identification?.cnpj || ""}
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      identification: { ...formData.identification, cnpj: e.target.value }
-                    })}
-                    className="bg-blue-50"
-                  />
-                </div>
-              </div>
+        {/* CONTENT */}
+        <main className="flex-1 overflow-y-auto p-6">
+          <div className="max-w-3xl">
+            {renderContent()}
+          </div>
+        </main>
+      </div>
 
-              <div>
-                <Label>Endereço Completo *</Label>
-                <Input
-                  value={formData.identification?.address || ""}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    identification: { ...formData.identification, address: e.target.value }
-                  })}
-                  className="bg-blue-50"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Versão do Documento *</Label>
-                  <Input
-                    value={formData.version || ""}
-                    onChange={(e) => setFormData({ ...formData, version: e.target.value })}
-                    placeholder="Ex: 1.0, 2.0"
-                  />
-                </div>
-                <div>
-                  <Label>Data de Vigência *</Label>
-                  <Input
-                    type="date"
-                    value={formData.effective_date || ""}
-                    onChange={(e) => setFormData({ ...formData, effective_date: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label>Objetivo do Regimento</Label>
-                <Textarea
-                  rows={4}
-                  value={formData.objective || ""}
-                  onChange={(e) => setFormData({ ...formData, objective: e.target.value })}
-                  className="bg-blue-50"
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="legal">
-          <Card>
-            <CardHeader>
-              <CardTitle>⚖️ Base Legal e Poder Diretivo</CardTitle>
-              <p className="text-sm text-gray-600">CLT art. 2º, 158, 482 | CF art. 7º | NRs</p>
-            </CardHeader>
-            <CardContent>
-              {renderSectionEditor(["0"], "Base Legal", "Fundamento jurídico do regimento")}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="duties">
-          <Card>
-            <CardHeader>
-              <CardTitle>✅ Deveres do Colaborador</CardTitle>
-              <p className="text-sm text-gray-600">CLT art. 158</p>
-            </CardHeader>
-            <CardContent>
-              {renderSectionEditor(["1"], "Deveres", "Obrigações do colaborador")}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="prohibited">
-          <Card>
-            <CardHeader>
-              <CardTitle>🚫 Condutas Expressamente Proibidas</CardTitle>
-              <p className="text-sm text-gray-600">CLT art. 482</p>
-            </CardHeader>
-            <CardContent>
-              {renderSectionEditor(["2"], "Proibições", "Faltas disciplinares")}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="schedule">
-          <Card>
-            <CardHeader>
-              <CardTitle>⏰ Jornada de Trabalho e Ponto</CardTitle>
-              <p className="text-sm text-gray-600">CLT art. 58, 74</p>
-            </CardHeader>
-            <CardContent>
-              {renderSectionEditor(["3"], "Jornada", "Horários e controle")}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="absences">
-          <Card>
-            <CardHeader>
-              <CardTitle>📅 Faltas, Atestados e Afastamentos</CardTitle>
-              <p className="text-sm text-gray-600">CLT art. 473</p>
-            </CardHeader>
-            <CardContent>
-              {renderSectionEditor(["4"], "Faltas", "Ausências e justificativas")}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="penalties">
-          <Card>
-            <CardHeader>
-              <CardTitle>⚠️ Escala de Penalidades</CardTitle>
-              <p className="text-sm text-gray-600">CLT art. 482, 474</p>
-            </CardHeader>
-            <CardContent>
-              <div className="bg-orange-50 border-2 border-orange-200 rounded-lg p-4 mb-4">
-                <h4 className="font-bold text-orange-900 mb-2">Princípios Jurídicos Obrigatórios:</h4>
-                <ul className="text-sm text-orange-900 space-y-1 list-disc list-inside">
-                  <li>Gradualidade (não pular etapas)</li>
-                  <li>Proporcionalidade (punição compatível)</li>
-                  <li>Imediatidade (punir logo após ciência)</li>
-                  <li>Registro documental (tudo escrito)</li>
-                </ul>
-              </div>
-              {renderSectionEditor(["5", "6", "7", "8"], "Penalidades", "Advertência, suspensão e justa causa")}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="resignation">
-          <Card>
-            <CardHeader>
-              <CardTitle>👋 Pedido de Demissão pelo Colaborador</CardTitle>
-              <p className="text-sm text-gray-600">CLT - Aviso prévio e procedimentos</p>
-            </CardHeader>
-            <CardContent>
-              {renderSectionEditor(["9"], "Pedido de Demissão", "Desligamento voluntário")}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="safety">
-          <Card>
-            <CardHeader>
-              <CardTitle>🦺 Segurança e Saúde no Trabalho</CardTitle>
-              <p className="text-sm text-gray-600">NR-01, NR-06, NR-07, NR-12</p>
-            </CardHeader>
-            <CardContent>
-              {renderSectionEditor(["10"], "Segurança", "EPIs e procedimentos de segurança")}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="resources">
-          <Card>
-            <CardHeader>
-              <CardTitle>💻 Utilização de Recursos e Patrimônio</CardTitle>
-              <p className="text-sm text-gray-600">CLT art. 462 | Código Civil</p>
-            </CardHeader>
-            <CardContent>
-              {renderSectionEditor(["11"], "Recursos", "Equipamentos, internet e instalações")}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="confidentiality">
-          <Card>
-            <CardHeader>
-              <CardTitle>🔒 Sigilo e Confidencialidade</CardTitle>
-              <p className="text-sm text-gray-600">Código Civil | LGPD</p>
-            </CardHeader>
-            <CardContent>
-              {renderSectionEditor(["12"], "Sigilo", "Proteção de informações")}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="social">
-          <Card>
-            <CardHeader>
-              <CardTitle>📱 Celular, Redes Sociais e Imagem</CardTitle>
-              <p className="text-sm text-gray-600">Uso de tecnologia e proteção da imagem corporativa</p>
-            </CardHeader>
-            <CardContent>
-              {renderSectionEditor(["13"], "Redes Sociais", "Celular e publicações")}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="conduct">
-          <Card>
-            <CardHeader>
-              <CardTitle>🤝 Conduta Profissional e Relacionamento</CardTitle>
-              <p className="text-sm text-gray-600">CLT art. 482 | Assédio e discriminação</p>
-            </CardHeader>
-            <CardContent>
-              {renderSectionEditor(["14"], "Conduta", "Respeito e ética profissional")}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="dress">
-          <Card>
-            <CardHeader>
-              <CardTitle>👔 Vestimenta e Apresentação Pessoal</CardTitle>
-              <p className="text-sm text-gray-600">Padrão profissional</p>
-            </CardHeader>
-            <CardContent>
-              {renderSectionEditor(["15"], "Vestimenta", "Dress code e higiene")}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="training">
-          <Card>
-            <CardHeader>
-              <CardTitle>📚 Treinamento e Desenvolvimento</CardTitle>
-              <p className="text-sm text-gray-600">Capacitações obrigatórias</p>
-            </CardHeader>
-            <CardContent>
-              {renderSectionEditor(["16"], "Treinamento", "Participação em capacitações")}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="benefits">
-          <Card>
-            <CardHeader>
-              <CardTitle>🎁 Benefícios e Reconhecimento</CardTitle>
-              <p className="text-sm text-gray-600">Vale-alimentação, PLR, comissões</p>
-            </CardHeader>
-            <CardContent>
-              {renderSectionEditor(["17"], "Benefícios", "Programas de incentivo")}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="lgpd">
-          <Card>
-            <CardHeader>
-              <CardTitle>🛡️ Proteção de Dados (LGPD)</CardTitle>
-              <p className="text-sm text-gray-600">Lei 13.709/2018</p>
-            </CardHeader>
-            <CardContent>
-              {renderSectionEditor(["18"], "LGPD", "Privacidade e dados pessoais")}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="contracts">
-          <Card>
-            <CardHeader>
-              <CardTitle>📄 Alteração de Contratos e Atendimento</CardTitle>
-              <p className="text-sm text-gray-600">Procedimentos comerciais</p>
-            </CardHeader>
-            <CardContent>
-              {renderSectionEditor(["19"], "Contratos", "Modificações e atendimento")}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="vehicles">
-          <Card>
-            <CardHeader>
-              <CardTitle>🚗 Responsabilidade sobre Veículos de Clientes</CardTitle>
-              <p className="text-sm text-gray-600">Código Civil - Responsabilidade por dano</p>
-            </CardHeader>
-            <CardContent>
-              {renderSectionEditor(["20"], "Veículos", "Custódia, testes e acidentes")}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="parts">
-          <Card>
-            <CardHeader>
-              <CardTitle>🔧 Danos a Peças e Componentes</CardTitle>
-              <p className="text-sm text-gray-600">Prevenção de prejuízos técnicos</p>
-            </CardHeader>
-            <CardContent>
-              {renderSectionEditor(["21"], "Peças", "Procedimentos e responsabilização")}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="equipment">
-          <Card>
-            <CardHeader>
-              <CardTitle>🏗️ Elevadores e Equipamentos Pesados</CardTitle>
-              <p className="text-sm text-gray-600">NR-12 - Segurança em máquinas</p>
-            </CardHeader>
-            <CardContent>
-              {renderSectionEditor(["22"], "Equipamentos", "Operação de máquinas de risco")}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="diagnosis">
-          <Card>
-            <CardHeader>
-              <CardTitle>📋 Diagnóstico e Ordem de Serviço</CardTitle>
-              <p className="text-sm text-gray-600">Procedimentos obrigatórios</p>
-            </CardHeader>
-            <CardContent>
-              {renderSectionEditor(["23"], "Diagnóstico", "OS e aprovação do cliente")}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="rework">
-          <Card>
-            <CardHeader>
-              <CardTitle>🔄 Retrabalho e Desempenho Técnico</CardTitle>
-              <p className="text-sm text-gray-600">Qualidade e responsabilização</p>
-            </CardHeader>
-            <CardContent>
-              {renderSectionEditor(["24"], "Retrabalho", "Falhas operacionais")}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="organization">
-          <Card>
-            <CardHeader>
-              <CardTitle>🧹 Organização e Limpeza</CardTitle>
-              <p className="text-sm text-gray-600">NR-01 - Ambiente seguro</p>
-            </CardHeader>
-            <CardContent>
-              {renderSectionEditor(["25"], "Organização", "Manutenção do ambiente")}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="tools">
-          <Card>
-            <CardHeader>
-              <CardTitle>🧰 Ferramentas Pessoais e da Empresa</CardTitle>
-              <p className="text-sm text-gray-600">CLT art. 462 - Patrimônio</p>
-            </CardHeader>
-            <CardContent>
-              {renderSectionEditor(["26"], "Ferramentas", "Responsabilidade e devolução")}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="exit">
-          <Card>
-            <CardHeader>
-              <CardTitle>📦 Desligamento e Entrega de Bens</CardTitle>
-              <p className="text-sm text-gray-600">Procedimentos de rescisão</p>
-            </CardHeader>
-            <CardContent>
-              {renderSectionEditor(["27"], "Desligamento", "Quitação e entrega")}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="final">
-          <Card>
-            <CardHeader>
-              <CardTitle>📝 Disposições Finais e Assinatura</CardTitle>
-              <p className="text-sm text-gray-600">Validade jurídica do documento</p>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label>Texto Legal para Advertências</Label>
-                <Textarea
-                  rows={4}
-                  value={formData.warning_legal_text || ""}
-                  onChange={(e) => setFormData({ ...formData, warning_legal_text: e.target.value })}
-                  className="bg-red-50"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  ✔️ Fortalece juridicamente as advertências
-                </p>
-              </div>
-
-              <div>
-                <Label>Texto de Ciência e Compromisso</Label>
-                <Textarea
-                  rows={4}
-                  value={formData.acknowledgment_text || ""}
-                  onChange={(e) => setFormData({ ...formData, acknowledgment_text: e.target.value })}
-                  className="bg-green-50"
-                />
-              </div>
-
-              <div>
-                <Label>Disposições Finais</Label>
-                <Textarea
-                  rows={4}
-                  value={formData.final_provisions || ""}
-                  onChange={(e) => setFormData({ ...formData, final_provisions: e.target.value })}
-                />
-              </div>
-
-              {renderSectionEditor(["28"], "Finais", "Vigência e assinatura")}
-
-              <div className="bg-green-50 border-2 border-green-200 rounded-lg p-4 mt-6">
-                <h4 className="font-bold text-green-900 mb-2">🧠 Blindagem Jurídica Completa:</h4>
-                <ul className="text-sm text-green-900 space-y-1">
-                  <li>✔️ Protege a empresa em processos trabalhistas</li>
-                  <li>✔️ Dá poder legal ao gestor</li>
-                  <li>✔️ Sustenta advertência, suspensão e justa causa</li>
-                  <li>✔️ Específico para oficinas mecânicas</li>
-                  <li>✔️ Nível corporativo de proteção jurídica</li>
-                </ul>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      {/* FOOTER */}
+      <footer className="shrink-0 border-t bg-gray-50/80 px-6 py-2.5 flex items-center justify-between text-xs text-gray-500">
+        <div className="flex items-center gap-4">
+          <span className="flex items-center gap-1.5">
+            <span className={`w-2 h-2 rounded-full ${formData.status === 'active' ? 'bg-green-500' : formData.status === 'draft' ? 'bg-yellow-400' : 'bg-gray-400'}`} />
+            Status: <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${statusColor[formData.status] || statusColor.draft}`}>{statusLabel[formData.status] || "Rascunho"}</span>
+          </span>
+          <span>|</span>
+          <span>Versão: <strong>{formData.version}</strong></span>
+          <span>|</span>
+          <span>Seções: <strong>{formData.sections?.length || 0}</strong></span>
+        </div>
+        <div>
+          {formData.updated_date && (
+            <span>Última atualização: {new Date(formData.updated_date).toLocaleDateString('pt-BR')}</span>
+          )}
+        </div>
+      </footer>
     </div>
   );
 }
