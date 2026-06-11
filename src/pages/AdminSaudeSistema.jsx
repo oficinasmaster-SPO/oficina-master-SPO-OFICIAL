@@ -55,6 +55,11 @@ export default function AdminSaudeSistema() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
+
+  useEffect(() => {
+    base44.auth.me().then(setCurrentUser).catch(() => {});
+  }, []);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -158,7 +163,7 @@ export default function AdminSaudeSistema() {
           {/* ── CAMADA 6: AUTOMAÇÕES ── */}
           <section>
             <SectionLabel number="6" title="Automações" />
-            <AutomationsBlock data={data} />
+            <AutomationsBlock data={data} user={currentUser} />
           </section>
 
           {/* ── CAMADA 7: LEGADO ── */}

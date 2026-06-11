@@ -125,13 +125,33 @@ function ResultBanner({ result }) {
   );
 }
 
-export default function AutomationsBlock({ data }) {
+export default function AutomationsBlock({ data, onRefresh }) {
   const automations = data.automations || {};
 
   // Estado por função: null | "confirming" | "running" | { status, message, duration_ms }
   const [states, setStates] = useState({});
+  const [fullCheckState, setFullCheckState] = useState(null); // null | "confirming" | "running" | result
 
   const setState = (fnKey, val) => setStates(prev => ({ ...prev, [fnKey]: val }));
+
+  const handleFullCheck = async () => {
+    setFullCheckState("running");
+    const startedAt = Date.now();
+    try {
+      const res = await base44.functions.invoke("runSystemMaintenance", { action: "runFullCheck" });
+      const d = res?.data || {};
+      const duration_ms = d.duration_ms ?? (Date.now() - startedAt);
+      const issues = d.total_issues ?? 0;
+      const msg = issues > 0
+        ? `${issues} inconsistência${issues !== 1 ? "s" : ""} encontrada${issues !== 1 ? "s" : ""}`
+        : "Nenhuma inconsistência encontrada";
+      setFullCheckState({ status: "success", message: msg, duration_ms });
+      if (onRefresh) onRefresh();
+    } catch (err) {
+      const duration_ms = Date.now() - startedAt;
+      setFullCheckState({ status: "error", message: err?.response?.data?.error || err?.message || "Erro desconhecido", duration_ms });
+    }
+  };
 
   const handleRun = async (fnKey) => {
     const config = FUNCTIONS_CONFIG[fnKey];

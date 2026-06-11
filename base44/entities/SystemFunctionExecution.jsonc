@@ -1,0 +1,82 @@
+{
+  "name": "SystemFunctionExecution",
+  "type": "object",
+  "properties": {
+    "function_name": {
+      "type": "string",
+      "description": "Nome da fun\u00e7\u00e3o executada"
+    },
+    "executed_by": {
+      "type": "string",
+      "description": "Email do usu\u00e1rio que executou"
+    },
+    "executed_by_id": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio que executou"
+    },
+    "trigger_type": {
+      "type": "string",
+      "enum": [
+        "MANUAL",
+        "CRON",
+        "SYSTEM"
+      ],
+      "default": "MANUAL",
+      "description": "Tipo de disparo"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "In\u00edcio da execu\u00e7\u00e3o"
+    },
+    "finished_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Fim da execu\u00e7\u00e3o"
+    },
+    "duration_ms": {
+      "type": "integer",
+      "description": "Dura\u00e7\u00e3o em milissegundos"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "success",
+        "error"
+      ],
+      "default": "success"
+    },
+    "processed_count": {
+      "type": "integer",
+      "description": "Quantidade de registros processados"
+    },
+    "error_message": {
+      "type": "string",
+      "description": "Mensagem de erro, se houver"
+    },
+    "ip": {
+      "type": "string",
+      "description": "IP de origem"
+    }
+  },
+  "required": [
+    "function_name",
+    "trigger_type",
+    "started_at",
+    "status"
+  ],
+  "rls": {
+    "create": true,
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": false,
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
