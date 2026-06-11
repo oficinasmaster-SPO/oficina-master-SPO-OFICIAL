@@ -51,6 +51,20 @@
       "default": "aberto",
       "description": "Status da conta"
     },
+    "processing": {
+      "type": "boolean",
+      "default": false,
+      "description": "Lock otimista \u2014 true enquanto pagamento est\u00e1 sendo processado. Previne race condition de pagamento duplo simult\u00e2neo."
+    },
+    "processing_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp ISO do in\u00edcio do processamento. Locks com mais de 30s s\u00e3o considerados expirados."
+    },
+    "processing_by": {
+      "type": "string",
+      "description": "user_id de quem iniciou o processamento. Para auditoria de lock."
+    },
     "data_vencimento": {
       "type": "string",
       "format": "date",
