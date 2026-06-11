@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 const idempotencyCache = new Map();
 
@@ -162,9 +162,10 @@ Deno.serve(async (req) => {
     // O profile_id resolvido é a fonte da verdade para as permissões
     const finalProfileId = finalProfileIdResolved || profile_id;
 
-    // Convidar usuário via Base44 usando SERVICE ROLE (não afeta sessão do admin)
+    // Convidar usuário via Base44 — usa escopo do usuário autenticado (token do admin que fez a request)
+    // Isso NÃO afeta a sessão do admin; apenas convida o novo usuário
     console.log("📧 Convidando usuário via Base44 com role:", safeRole);
-    const inviteResult = await base44.asServiceRole.users.inviteUser(email, safeRole);
+    const inviteResult = await base44.users.inviteUser(email, safeRole);
     
     console.log("✅ Convite enviado pelo Base44 (email automático) - sessão do admin mantida");
 
