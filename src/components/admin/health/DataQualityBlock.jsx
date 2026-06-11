@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 
 function KpiCard({ label, value, status = "neutral", note = null }) {
   const styles = {
@@ -21,9 +21,51 @@ function KpiCard({ label, value, status = "neutral", note = null }) {
   );
 }
 
+function DuplicateEmployeesList({ groups }) {
+  const [expanded, setExpanded] = useState(false);
+  if (!groups || groups.length === 0) return null;
+  const visible = expanded ? groups : groups.slice(0, 5);
+  return (
+    <div className="mt-3 bg-red-50 border border-red-200 rounded-lg p-3">
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-xs font-semibold text-red-700">
+          {groups.length} grupo{groups.length > 1 ? "s" : ""} com user_id duplicado
+        </p>
+        <span className="text-xs text-red-500 bg-red-100 px-2 py-0.5 rounded-full">
+          Critério: mesmo user_id em &gt;1 Employee
+        </span>
+      </div>
+      <div className="space-y-2">
+        {visible.map((g, i) => (
+          <div key={i} className="bg-white rounded border border-red-100 p-2">
+            <p className="text-xs font-mono text-gray-500 mb-1 truncate">user_id: {g.user_id} · {g.count} registros</p>
+            {g.records.map((r, j) => (
+              <div key={j} className="flex items-center gap-2 text-xs text-gray-700 py-0.5 border-t border-gray-50 first:border-0">
+                <span className="w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0" />
+                <span className="font-medium truncate flex-1">{r.full_name || "—"}</span>
+                <span className="text-gray-400 truncate max-w-[140px]">{r.email}</span>
+                <span className="text-gray-400 font-mono text-[10px] flex-shrink-0">{r.job_role}</span>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+      {groups.length > 5 && (
+        <button
+          onClick={() => setExpanded(e => !e)}
+          className="mt-2 text-xs text-red-600 hover:text-red-800 font-medium"
+        >
+          {expanded ? "▲ Mostrar menos" : `▼ Ver mais ${groups.length - 5} grupos`}
+        </button>
+      )}
+    </div>
+  );
+}
+
 export default function DataQualityBlock({ data }) {
   const g = data.governance || {};
 
+  const duplicate_employee_groups = g.duplicate_employee_groups || [];
   const orphan_users     = g.orphan_users          ?? 0;
   const orphan_employees = g.employees_orphaned     ?? 0;
   const pending_invite   = g.employees_pending_invite ?? 0;
@@ -58,6 +100,7 @@ export default function DataQualityBlock({ data }) {
         <KpiCard label="Duplicate Users"     value={duplicate_users} status="critical" />
         <KpiCard label="Duplicate Employees" value={duplicate_emps}  status="critical" />
       </div>
+      {duplicate_emps > 0 && <DuplicateEmployeesList groups={duplicate_employee_groups} />}
 
       <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold mb-2">Órfãos Reais</p>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">

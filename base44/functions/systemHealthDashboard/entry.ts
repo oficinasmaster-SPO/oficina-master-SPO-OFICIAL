@@ -61,12 +61,23 @@ Deno.serve(async (req) => {
     }
     const duplicate_users = [...emailCount.values()].filter(c => c > 1).reduce((sum, c) => sum + c, 0);
 
-    // duplicate_employees (mesmo user_id)
+    // duplicate_employees (mesmo user_id) — mantém grupos para listagem
     const userIdCount = new Map();
     for (const emp of employees) {
       if (emp.user_id) userIdCount.set(emp.user_id, (userIdCount.get(emp.user_id) || 0) + 1);
     }
     const duplicate_employees = [...userIdCount.values()].filter(c => c > 1).reduce((sum, c) => sum + c, 0);
+    // grupos completos para exibição na UI
+    const duplicate_employee_groups = [...userIdCount.entries()]
+      .filter(([, c]) => c > 1)
+      .map(([userId, count]) => ({
+        user_id: userId,
+        count,
+        records: employees.filter(e => e.user_id === userId).map(e => ({
+          id: e.id, full_name: e.full_name, email: e.email,
+          workshop_id: e.workshop_id, job_role: e.job_role,
+        })),
+      }));
 
     // owners_with_wrong_profile
     let owners_with_wrong_profile = 0;
@@ -253,6 +264,31 @@ Deno.serve(async (req) => {
         timestamp: e.timestamp
       }));
 
+    // ─── PERSIST SNAPSHOT ─────────────────────────────────────────────────────
+    // Grava um snapshot por execução; usado pelo HealthTrendBlock para o gráfico
+    try {
+      await base44.asServiceRole.entities.SystemHealthSnapshot.create({
+        health_score,
+        status,
+        users_without_employee,
+        workshops_without_owner,
+        duplicate_users,
+        duplicate_employees,
+        employees_orphaned,
+        orphan_users: 0,
+        invites_expired,
+        invites_pending,
+        rbac_health,
+        timestamp: computed_at,
+      });
+    } catch (_) {}
+
+    // Buscar últimos 60 snapshots para o gráfico
+    let snapshots = [];
+    try {
+      snapshots = await base44.asServiceRole.entities.SystemHealthSnapshot.list('-timestamp', 60);
+    } catch (_) {}
+
     return Response.json({
       status,
       health_score,
@@ -267,6 +303,7 @@ Deno.serve(async (req) => {
         workshops_without_owner,
         duplicate_users,
         duplicate_employees,
+        duplicate_employee_groups,
         owners_with_wrong_profile,
         invites_pending,
         invites_expired,
@@ -309,7 +346,7 @@ Deno.serve(async (req) => {
       // Reservado para futuras métricas (Idempotência, Audit Log, Security, Financeiro)
       _reserved: {},
       timeline,
-      snapshots: [], // SystemHealthSnapshot — alimentar com automação diária
+      snapshots,
       score_breakdown,
       computed_at
     });

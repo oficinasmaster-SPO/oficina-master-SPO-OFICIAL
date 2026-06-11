@@ -33,11 +33,12 @@ export default function HealthTrendBlock({ data }) {
 
   const chartData = filtered.map(s => ({
     date: new Date(s.timestamp).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
-    health_score:           s.health_score          ?? 0,
-    users_without_employee: s.users_without_employee ?? 0,
-    workshops_without_owner:s.workshops_without_owner ?? 0,
-    invites_expired:        s.invites_expired        ?? 0,
-    orphan_employees:       s.orphan_employees       ?? 0,
+    health_score:            s.health_score            ?? 0,
+    users_without_employee:  s.users_without_employee  ?? 0,
+    workshops_without_owner: s.workshops_without_owner ?? 0,
+    invites_expired:         s.invites_expired         ?? 0,
+    // entidade usa employees_orphaned; fallback para orphan_employees (legado)
+    orphan_employees:        s.employees_orphaned ?? s.orphan_employees ?? 0,
   }));
 
   // Tendência: hoje vs ontem
