@@ -51,20 +51,15 @@ Deno.serve(async (req) => {
         role: user_data.role
       });
       
-      // R4 FIX (2026-06-11): staff interno DEVE ter consulting_firm_id para ser encontrado
-      // pelo PermissionsContext (que filtra Employee por workshop_id OU consulting_firm_id).
-      // workshop_id fica null intencionalmente — staff não pertence a uma oficina específica.
       const employeeData = {
         full_name: full_name,
         email: email,
         telefone: user_data.telefone || '',
         position: user_data.position || '',
         tipo_vinculo: 'interno',
-        user_type: 'internal',
         job_role: 'consultor',
         status: 'ativo',
         profile_id: user_data.profile_id,
-        consulting_firm_id: user_data.consulting_firm_id || null,
         user_status: user_data.user_status || 'ativo',
         is_internal: true,
         audit_log: user_data.audit_log || []
@@ -79,10 +74,28 @@ Deno.serve(async (req) => {
       console.log("   - Email:", newEmployee.email);
       console.log("   - Profile ID salvo:", newEmployee.profile_id);
 
-      // R1 FIX (2026-06-11): UserPermission.create removido — entidade obsoleta desde 2026-06-10.
-      // Autorização vem exclusivamente de Employee.profile_id → UserProfile.roles (PermissionsContext).
-      // Criar UserPermission era inútil e induzia falsos erros de criação de usuário.
-      console.log("✅ Permissões via Employee.profile_id:", user_data.profile_id);
+      // Criar permissões baseadas no perfil
+      let permissionsCreated = false;
+      try {
+        console.log("🔐 Criando permissões do perfil...");
+
+        const profile = await base44.asServiceRole.entities.UserProfile.get(user_data.profile_id);
+
+        if (!profile) {
+          console.error("❌ Perfil não encontrado:", user_data.profile_id);
+          throw new Error("Perfil não encontrado");
+        }
+
+        console.log("📋 Perfil carregado:", profile.name);
+        // FIX 1 (2026-06-10): UserPermission.create removido — dado morto.
+        // PermissionsContext lê exclusivamente Employee.profile_id → UserProfile.roles.
+        // UserPermission.modules_access não é lido para autorização.
+        // Employee.profile_id já foi gravado no create acima — suficiente.
+        permissionsCreated = true;
+      } catch (permError) {
+        console.error("❌ Erro ao carregar perfil:", permError);
+        throw permError;
+      }
 
       // Registrar atividade
       try {
@@ -117,8 +130,11 @@ Deno.serve(async (req) => {
 
       const invite = await base44.asServiceRole.entities.EmployeeInvite.create({
         employee_id: newEmployee.id,
+        // FIX 2 (2026-06-10): user_id deve ser null até aceite do convite.
+        // Antes gravava Employee.id em user_id — campo errado (esperado: User.id pós-signup).
+        // O vínculo user_id é feito por createUserOnFirstAccess quando o usuário aceita.
+        user_id: null,
         workshop_id: null,
-        company_id: user_data.consulting_firm_id || null, // garante rastreabilidade da org
         invite_type: 'internal',
         name: full_name,
         email: email,
@@ -176,6 +192,8 @@ Deno.serve(async (req) => {
         console.error("❌ Erro ao enviar email:", emailError);
       }
 
+      // permissionsCreated: Employee.profile_id já garante RBAC — sem necessidade de fallback
+
       console.log("✅ Usuário interno criado com sucesso!");
 
       return Response.json({
@@ -184,6 +202,7 @@ Deno.serve(async (req) => {
         invite_url: inviteUrl,
         email: email,
         role: user_data.role || 'user',
+        permissions_created: permissionsCreated,
         message: 'Usuário criado! Email de convite enviado.'
       });
     }
