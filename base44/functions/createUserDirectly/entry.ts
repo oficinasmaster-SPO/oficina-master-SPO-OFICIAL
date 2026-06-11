@@ -212,10 +212,11 @@ Deno.serve(async (req) => {
 
     // Atualizar User com dados customizados usando SERVICE ROLE (não afeta sessão)
     console.log("🔄 Atualizando dados do User...");
+    // R3 FIX (2026-06-11): profile_id removido de userData — campo [DEPRECATED 2026-06-10] no User.
+    // A autorização é lida de Employee.profile_id → UserProfile. Gravar em User era regressão de arquitetura.
     const userData = {
       workshop_id: isInternalUser ? null : workshop_id,
       consulting_firm_id: consulting_firm_id,
-      profile_id: finalProfileId,
       position: position || 'Colaborador',
       job_role: job_role || 'outros',
       area: area || 'administrativo',
