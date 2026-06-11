@@ -1,171 +1,223 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
-        const { event, data } = await req.json();
+        const { event, data, old_data } = await req.json();
 
-        // Validar evento de criação de User
-        if (event.type !== 'create' || event.entity_name !== 'User') {
+        // Verificar se é evento de criação de EmployeeInviteAcceptance
+        if (event.type !== 'create' || event.entity_name !== 'EmployeeInviteAcceptance') {
             return Response.json({ error: 'Invalid event' }, { status: 400 });
         }
 
-        const user = data;
+        const invitation = data;
         
-        if (!user || !user.id || !user.email) {
-            return Response.json({ error: 'Invalid user data' }, { status: 400 });
+        if (!invitation || !invitation.user_id || !invitation.workshop_id || !invitation.email) {
+            return Response.json({ error: 'Invalid invitation data' }, { status: 400 });
         }
 
-        console.log(`🔄 Processando criação de User: ${user.id} (${user.email})`);
-
-        // Segurança: Verificar se Employee já existe para este usuário
-        const existingEmployees = await base44.asServiceRole.entities.Employee.filter({
-            user_id: user.id
-        });
-
-        if (existingEmployees && existingEmployees.length > 0) {
-            console.log(`⚠️ Employee já existe para usuário ${user.id}`);
-            return Response.json({ 
-                success: false, 
-                message: 'Employee já criado para este usuário',
-                employee_id: existingEmployees[0].id
-            });
+        // Segurança: verificar se já foi processado
+        if (invitation.processed) {
+            console.log(`Convite ${invitation.id} já foi processado`);
+            return Response.json({ success: false, message: 'Convite já processado' });
         }
 
-        // Buscar EmployeeInvite vinculado ao usuário
-        let invite = null;
-        let workshopId = null;
-        let profileId = null;
-        let inviteConsultingFirmId = null;
-
-        if (user.invite_id) {
+        // Buscar dados originais do convite para obter job_role, area, etc
+        let inviteData = {};
+        if (invitation.invite_id) {
             try {
-                invite = await base44.asServiceRole.entities.EmployeeInvite.get(user.invite_id);
-                if (invite) {
-                    workshopId = invite.workshop_id;
-                    profileId = invite.profile_id;
-                    inviteConsultingFirmId = invite.consulting_firm_id || invite.metadata?.consulting_firm_id || null;
-                    console.log(`✅ EmployeeInvite encontrado: workshop_id=${workshopId}, profile_id=${profileId}`);
+                const originalInvite = await base44.asServiceRole.entities.EmployeeInvite.get(invitation.invite_id);
+                if (originalInvite) {
+                    inviteData = originalInvite;
+                    console.log("📄 Dados do convite original recuperados:", {
+                        job_role: inviteData.job_role,
+                        position: inviteData.position,
+                        area: inviteData.area,
+                        profile_id: inviteData.profile_id
+                    });
                 }
             } catch (e) {
-                console.warn(`⚠️ Erro ao buscar EmployeeInvite ${user.invite_id}:`, e.message);
+                console.warn("⚠️ Não foi possível buscar o convite original:", e);
             }
         }
 
-        // Se não tem workshop_id via invite, tentar via profile_id do user
-        if (!workshopId && user.profile_id) {
+        // Verificar se Employee já existe para este usuário
+        // Busca aprimorada para garantir vínculo correto com o Employee original do convite
+        let employeesFound = [];
+
+        // 1. Tentar pelo ID do employee original (vinculado ao convite)
+        if (inviteData.employee_id) {
             try {
-                const profile = await base44.asServiceRole.entities.UserProfile.get(user.profile_id);
-                if (profile && profile.workshop_id) {
-                    workshopId = profile.workshop_id;
-                    console.log(`✅ workshop_id obtido via UserProfile: ${workshopId}`);
+                const emp = await base44.asServiceRole.entities.Employee.get(inviteData.employee_id);
+                if (emp) {
+                    console.log(`✅ Employee original encontrado pelo ID: ${emp.id}`);
+                    employeesFound.push(emp);
                 }
             } catch (e) {
-                console.warn(`⚠️ Erro ao buscar UserProfile:`, e.message);
+                console.warn("⚠️ Employee original não encontrado pelo ID:", inviteData.employee_id);
             }
         }
 
-        // Fallback: usar workshop_id direto do user se existir
-        if (!workshopId && user.workshop_id) {
-            workshopId = user.workshop_id;
-            console.log(`✅ workshop_id obtido direto do User: ${workshopId}`);
+        // 2. Tentar pelo user_id (caso já vinculado anteriormente)
+        if (employeesFound.length === 0) {
+            const byUser = await base44.asServiceRole.entities.Employee.filter({
+                user_id: invitation.user_id
+            });
+            if (byUser.length > 0) {
+                console.log(`✅ Employee encontrado pelo user_id: ${byUser[0].id}`);
+                employeesFound = byUser;
+            }
         }
 
-        // Vincular novo usuário via Sign Up à consultoria padrão (Oficinas Master Aceleradora)
-        const defaultConsultingFirmId = '69bab264d7c3fe5d367c3959';
-        let updatedConsultingFirmId = null;
-
-        if (!user.consulting_firm_id && !invite) {
-            console.log(`✅ Atualizando User ${user.id} com consulting_firm_id padrão: ${defaultConsultingFirmId}`);
-            await base44.asServiceRole.entities.User.update(user.id, {
-                consulting_firm_id: defaultConsultingFirmId
+        // 3. Tentar pelo Email + Workshop (caso ainda não tenha user_id - cenário comum de convite)
+        if (employeesFound.length === 0 && invitation.email && invitation.workshop_id) {
+             console.log(`🔍 Buscando Employee por email ${invitation.email} na oficina ${invitation.workshop_id}...`);
+             const byEmail = await base44.asServiceRole.entities.Employee.filter({
+                email: invitation.email,
+                workshop_id: invitation.workshop_id
             });
-            updatedConsultingFirmId = defaultConsultingFirmId;
+            // Filtra para garantir que não pegue um employee já vinculado a OUTRO usuário (segurança)
+            const unlinked = byEmail.filter(e => !e.user_id || e.user_id === invitation.user_id);
+            if (unlinked.length > 0) {
+                console.log(`✅ Employee encontrado por email (não vinculado): ${unlinked[0].id}`);
+                employeesFound = [unlinked[0]];
+            }
         }
 
-        // Validar workshop_id obrigatório
-        if (!workshopId) {
-            console.error(`❌ Nenhum workshop_id encontrado para usuário ${user.id}`);
-            return Response.json({ 
-                success: false, 
-                message: 'workshop_id não encontrado - Employee não será criado, mas usuário foi processado',
-                user_id: user.id,
-                consulting_firm_id: updatedConsultingFirmId || user.consulting_firm_id,
-                details: 'Vincule o usuário a um convite ou workshop válido'
-            });
-        }
-
-        // P5 FIX (2026-06-10): removido user.profile_id como fallback — campo deprecated.
-        // User.profile_id não é lido pelo PermissionsContext e pode conter 'workshopId.auto'
-        // (string inválida gravada por registerEmployeeComplete em fluxos legados).
-        // Fonte canônica: profileId vindo do invite, ou FALLBACK_PROFILE_ID se ausente.
-        const FALLBACK_PROFILE_ID = '6a272f876b16129b2f5f31be'; // Técnico - Acesso Operacional
-        const employeeProfileId = profileId || FALLBACK_PROFILE_ID;
-
-        const existingEmployeeByEmail = await base44.asServiceRole.entities.Employee.filter({
-            email: user.email,
-            workshop_id: workshopId
-        });
-
-        if (existingEmployeeByEmail && existingEmployeeByEmail.length > 0) {
-            const employee = existingEmployeeByEmail[0];
-            await base44.asServiceRole.entities.Employee.update(employee.id, {
-                user_id: user.id,
-                consulting_firm_id: employee.consulting_firm_id || inviteConsultingFirmId || updatedConsultingFirmId || user.consulting_firm_id || defaultConsultingFirmId,
-                profile_id: employee.profile_id || employeeProfileId,
-                user_status: 'ativo'
-            });
-
-            return Response.json({ 
-                success: true, 
-                message: 'Employee existente vinculado automaticamente ao criar User',
-                employee_id: employee.id,
-                user_id: user.id,
-                workshop_id: workshopId,
-                profile_id: employee.profile_id || employeeProfileId || null
-            });
-        }
-
-        // Criar Employee record
+        let employee;
         const employeeData = {
-            workshop_id: workshopId,
-            consulting_firm_id: inviteConsultingFirmId || updatedConsultingFirmId || user.consulting_firm_id || defaultConsultingFirmId,
-            user_id: user.id,
-            full_name: user.full_name || user.email.split('@')[0],
-            email: user.email,
-            position: 'Colaborador',
-            job_role: 'outros',
-            area: 'administrativo',
+            workshop_id: invitation.workshop_id,
+            full_name: invitation.full_name || invitation.email.split('@')[0],
+            email: invitation.email,
+            // Usar dados do convite original ou defaults
+            position: inviteData.position || 'Colaborador',
+            job_role: inviteData.job_role || 'outros',
+            area: inviteData.area || 'administrativo',
             tipo_vinculo: 'cliente',
             status: 'ativo',
             user_status: 'ativo',
             hire_date: new Date().toISOString().split('T')[0]
         };
 
-        // Adicionar profile_id se disponível
-        if (employeeProfileId) {
-            employeeData.profile_id = employeeProfileId;
-            console.log(`📋 profile_id será vinculado: ${employeeProfileId}`);
+        // Adicionar profile_id se fornecido (prioridade: convite original > acceptance > null)
+        const targetProfileId = inviteData.profile_id || invitation.profile_id;
+        if (targetProfileId) {
+            employeeData.profile_id = targetProfileId;
         }
 
-        const newEmployee = await base44.asServiceRole.entities.Employee.create(employeeData);
+        if (employeesFound && employeesFound.length > 0) {
+            // ATUALIZAR Employee existente (Vincular ao usuário)
+            employee = employeesFound[0];
+            console.log(`🔗 Vinculando usuário ${invitation.user_id} ao Employee existente ${employee.id}...`);
 
-        console.log(`✅ Employee criado com sucesso: ${newEmployee.id}`);
-        console.log(`   - User ID: ${user.id}`);
-        console.log(`   - Workshop ID: ${workshopId}`);
-        console.log(`   - Profile ID: ${employeeProfileId || 'N/A'}`);
+            const updateData = {
+                user_id: invitation.user_id, // GARANTIR VÍNCULO
+                workshop_id: invitation.workshop_id,
+                user_status: 'ativo',
+                status: 'ativo',
+                first_login_at: new Date().toISOString() // Marcar primeiro acesso
+            };
+
+            // Atualizar profile_id se houver um novo
+            if (targetProfileId) {
+                updateData.profile_id = targetProfileId;
+            }
+
+            // Atualizar outros campos apenas se estiverem vazios no employee ou se quisermos forçar (opcional)
+            // Aqui vamos manter o existente se já tiver, mas garantir profile e workshop
+            
+            await base44.asServiceRole.entities.Employee.update(employee.id, updateData);
+
+            console.log(`✅ Employee atualizado: ${employee.id}`);
+        } else {
+            // Criar novo Employee se não existir
+            console.log(`Criando novo Employee para usuário ${invitation.user_id}`);
+            employeeData.user_id = invitation.user_id;
+            employee = await base44.asServiceRole.entities.Employee.create(employeeData);
+            console.log(`✅ Employee criado: ${employee.id}`);
+        }
+
+        const newEmployee = employee;
+
+        // 🔄 ATUALIZAR USER ENTITY (Garantir associação de perfil)
+        console.log(`🔄 Sincronizando User ${invitation.user_id}...`);
+        const userUpdateData = {
+            workshop_id: invitation.workshop_id
+        };
+
+        if (targetProfileId) {
+            userUpdateData.profile_id = targetProfileId;
+            
+            // Sincronizar Custom Roles do Perfil
+            try {
+                const profile = await base44.asServiceRole.entities.UserProfile.get(targetProfileId);
+                if (profile && profile.custom_role_ids && profile.custom_role_ids.length > 0) {
+                    userUpdateData.custom_role_ids = profile.custom_role_ids;
+                    
+                    // Também atualizar no Employee
+                    await base44.asServiceRole.entities.Employee.update(newEmployee.id, {
+                        custom_role_ids: profile.custom_role_ids
+                    });
+                    console.log("✅ Custom roles sincronizadas");
+                }
+            } catch (e) {
+                console.warn("⚠️ Erro ao buscar perfil para custom roles:", e);
+            }
+        }
+
+        // Forçar atualização do User
+        await base44.asServiceRole.entities.User.update(invitation.user_id, userUpdateData);
+        console.log(`✅ User atualizado com Profile: ${targetProfileId} e Workshop: ${invitation.workshop_id}`);
+
+        // Promover para admin se for sócio/proprietário ou owner do workshop
+        const shouldBeAdmin = 
+          (inviteData.job_role === 'socio' || inviteData.job_role === 'socio_interno') ||
+          (employeeData.job_role === 'socio' || employeeData.job_role === 'socio_interno');
+        
+        if (shouldBeAdmin) {
+          try {
+            const currentUser = await base44.asServiceRole.entities.User.get(invitation.user_id);
+            if (currentUser && currentUser.role !== 'admin') {
+              await base44.asServiceRole.entities.User.update(invitation.user_id, { role: 'admin' });
+              console.log(`🔑 Usuário ${invitation.user_id} promovido para ADMIN (sócio/proprietário)`);
+            }
+          } catch (e) {
+            console.error('⚠️ Erro ao promover sócio para admin:', e);
+          }
+        }
+
+        // Verificar se é owner do workshop
+        try {
+          const ws = await base44.asServiceRole.entities.Workshop.get(invitation.workshop_id);
+          if (ws && (ws.owner_id === invitation.user_id || (ws.partner_ids && ws.partner_ids.includes(invitation.user_id)))) {
+            const currentUser = await base44.asServiceRole.entities.User.get(invitation.user_id);
+            if (currentUser && currentUser.role !== 'admin') {
+              await base44.asServiceRole.entities.User.update(invitation.user_id, { role: 'admin' });
+              console.log(`🔑 Usuário ${invitation.user_id} promovido para ADMIN (owner/partner do workshop)`);
+            }
+          }
+        } catch (e) {
+          console.error('⚠️ Erro ao verificar ownership do workshop:', e);
+        }
+
+        // Marcar convite como processado
+        await base44.asServiceRole.entities.EmployeeInviteAcceptance.update(invitation.id, {
+            processed: true
+        });
+
+        console.log(`Employee criado/atualizado com sucesso: ${newEmployee.id} para usuário ${invitation.user_id}`);
 
         return Response.json({ 
             success: true, 
-            message: 'Employee criado automaticamente ao criar User',
+            message: 'Employee criado/atualizado e User sincronizado',
             employee_id: newEmployee.id,
-            user_id: user.id,
-            workshop_id: workshopId,
-            profile_id: employeeProfileId || null
+            user_id: invitation.user_id,
+            workshop_id: invitation.workshop_id,
+            profile_id: targetProfileId
         });
 
     } catch (error) {
-        console.error('❌ Erro ao criar Employee:', error);
+        console.error('Erro ao criar Employee:', error);
         return Response.json({ 
             error: error.message,
             details: error.stack 
