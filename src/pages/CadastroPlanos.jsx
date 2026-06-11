@@ -261,6 +261,11 @@ export default function CadastroPlanos() {
           position: 'Proprietário'
         });
 
+        // P1 FIX (2026-06-10): Employee.profile_id obrigatório desde a criação.
+        // Antes: campo ausente → janela onde permissions=[] até CadastroPerfilSocio completar.
+        // ID fixo do perfil Sócio - Acesso Total (44 roles) — sem dependência de busca textual.
+        const SOCIO_PROFILE_ID = '6a272f8ea3fa8dd02ca7350e';
+
         // Also create an Employee record for the owner since it wasn't created on signup
         await base44.entities.Employee.create({
           workshop_id: newWorkshop.id,
@@ -271,10 +276,10 @@ export default function CadastroPlanos() {
           position: 'Sócio/Proprietário',
           job_role: 'diretor',
           area: 'gerencia',
-          // Proprietário de oficina cliente é EXTERNO — corrigido de 'interno' (bug)
+          profile_id: SOCIO_PROFILE_ID,
           user_type: 'external',
-          tipo_vinculo: 'cliente',  // legado — mantido para retrocompatibilidade
-          is_internal: false,       // legado — mantido para retrocompatibilidade
+          tipo_vinculo: 'cliente',
+          is_internal: false,
           is_partner: true,
           status: 'ativo',
           user_status: 'ativo',
