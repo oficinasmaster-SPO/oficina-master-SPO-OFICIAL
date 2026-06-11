@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 function KpiCard({ label, value, status = "neutral", note = null }) {
   const styles = {
@@ -21,48 +22,47 @@ function KpiCard({ label, value, status = "neutral", note = null }) {
   );
 }
 
-function DuplicateEmployeesList({ groups }) {
-  const [expanded, setExpanded] = useState(false);
-  if (!groups || groups.length === 0) return null;
-  const visible = expanded ? groups : groups.slice(0, 5);
+function DuplicateEmployeesDrawer({ groups, open, onClose }) {
   return (
-    <div className="mt-3 bg-red-50 border border-red-200 rounded-lg p-3">
-      <div className="flex items-center justify-between mb-2">
-        <p className="text-xs font-semibold text-red-700">
-          {groups.length} grupo{groups.length > 1 ? "s" : ""} com user_id duplicado
-        </p>
-        <span className="text-xs text-red-500 bg-red-100 px-2 py-0.5 rounded-full">
-          Critério: mesmo user_id em &gt;1 Employee
-        </span>
-      </div>
-      <div className="space-y-2">
-        {visible.map((g, i) => (
-          <div key={i} className="bg-white rounded border border-red-100 p-2">
-            <p className="text-xs font-mono text-gray-500 mb-1 truncate">user_id: {g.user_id} · {g.count} registros</p>
-            {g.records.map((r, j) => (
-              <div key={j} className="flex items-center gap-2 text-xs text-gray-700 py-0.5 border-t border-gray-50 first:border-0">
-                <span className="w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0" />
-                <span className="font-medium truncate flex-1">{r.full_name || "—"}</span>
-                <span className="text-gray-400 truncate max-w-[140px]">{r.email}</span>
-                <span className="text-gray-400 font-mono text-[10px] flex-shrink-0">{r.job_role}</span>
+    <Sheet open={open} onOpenChange={onClose}>
+      <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
+        <SheetHeader className="mb-4">
+          <SheetTitle className="text-base">
+            Duplicate Employees —{" "}
+            <span className="text-red-600">{groups.length} grupo{groups.length > 1 ? "s" : ""}</span>
+          </SheetTitle>
+          <p className="text-xs text-gray-400">Critério: mesmo <code className="bg-gray-100 px-1 rounded">user_id</code> em mais de 1 registro Employee</p>
+        </SheetHeader>
+        <div className="space-y-3">
+          {groups.map((g, i) => (
+            <div key={i} className="bg-red-50 border border-red-100 rounded-lg p-3">
+              <p className="text-[11px] font-mono text-gray-400 mb-2 truncate">
+                user_id: {g.user_id} · <span className="text-red-600 font-semibold">{g.count} registros</span>
+              </p>
+              <div className="space-y-1">
+                {g.records.map((r, j) => (
+                  <div key={j} className="flex items-start gap-2 text-xs text-gray-700 py-1 border-t border-red-100 first:border-0">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0 mt-1" />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">{r.full_name || "—"}</p>
+                      <p className="text-gray-400 truncate">{r.email}</p>
+                    </div>
+                    <span className="text-[10px] font-mono text-gray-400 flex-shrink-0 bg-white border border-gray-200 px-1.5 py-0.5 rounded">
+                      {r.job_role}
+                    </span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        ))}
-      </div>
-      {groups.length > 5 && (
-        <button
-          onClick={() => setExpanded(e => !e)}
-          className="mt-2 text-xs text-red-600 hover:text-red-800 font-medium"
-        >
-          {expanded ? "▲ Mostrar menos" : `▼ Ver mais ${groups.length - 5} grupos`}
-        </button>
-      )}
-    </div>
+            </div>
+          ))}
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }
 
 export default function DataQualityBlock({ data }) {
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const g = data.governance || {};
 
   const duplicate_employee_groups = g.duplicate_employee_groups || [];
@@ -100,7 +100,21 @@ export default function DataQualityBlock({ data }) {
         <KpiCard label="Duplicate Users"     value={duplicate_users} status="critical" />
         <KpiCard label="Duplicate Employees" value={duplicate_emps}  status="critical" />
       </div>
-      {duplicate_emps > 0 && <DuplicateEmployeesList groups={duplicate_employee_groups} />}
+      {duplicate_emps > 0 && (
+        <>
+          <button
+            onClick={() => setDrawerOpen(true)}
+            className="w-full mt-1 mb-4 text-xs text-red-600 hover:text-red-800 font-medium bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg py-2 transition-colors"
+          >
+            Ver {duplicate_employee_groups.length} grupo{duplicate_employee_groups.length > 1 ? "s" : ""} com user_id duplicado →
+          </button>
+          <DuplicateEmployeesDrawer
+            groups={duplicate_employee_groups}
+            open={drawerOpen}
+            onClose={() => setDrawerOpen(false)}
+          />
+        </>
+      )}
 
       <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold mb-2">Órfãos Reais</p>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
