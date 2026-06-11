@@ -184,11 +184,41 @@ export default function AutomationsBlock({ data, onRefresh }) {
         ) : null
       )}
 
+      {/* Modal confirmação verificação completa */}
+      {fullCheckState === "confirming" && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-2xl p-6 max-w-sm w-full mx-4 border border-gray-200">
+            <h3 className="text-base font-bold text-gray-900 mb-2">Verificação Completa</h3>
+            <p className="text-sm text-gray-600 mb-1">Executar verificação completa do sistema?</p>
+            <p className="text-xs text-gray-400 mb-5">Irá executar em sequência:<br/>• auditRBACHealth<br/>• auditOrphanEmployees<br/>• auditOrphanUsers</p>
+            <div className="flex gap-3">
+              <button onClick={() => setFullCheckState(null)} className="flex-1 px-4 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50 transition-colors">Cancelar</button>
+              <button onClick={handleFullCheck} className="flex-1 px-4 py-2 rounded-lg bg-gray-900 hover:bg-gray-800 text-white text-sm font-semibold transition-colors">Executar Agora</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white rounded-xl border border-gray-200 p-5">
-        <h2 className="text-base font-semibold text-gray-900 mb-1">⚙️ Automações Monitoradas</h2>
-        <p className="text-xs text-gray-400 mb-4">
+        <div className="flex items-start justify-between gap-3 mb-1">
+          <h2 className="text-base font-semibold text-gray-900">⚙️ Automações Monitoradas</h2>
+          <button
+            onClick={() => setFullCheckState("confirming")}
+            disabled={fullCheckState === "running"}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-900 hover:bg-gray-800 text-white text-xs font-semibold transition-colors disabled:opacity-60 flex-shrink-0"
+          >
+            {fullCheckState === "running"
+              ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Verificando...</>
+              : <><Play className="w-3 h-3" /> Verificação Completa</>
+            }
+          </button>
+        </div>
+        <p className="text-xs text-gray-400 mb-3">
           Monitore execuções automáticas e dispare manualmente quando necessário
         </p>
+        {/* Resultado da verificação completa */}
+        <ResultBanner result={typeof fullCheckState === "object" && fullCheckState !== null && fullCheckState !== "running" && fullCheckState !== "confirming" ? fullCheckState : null} />
+        {fullCheckState && typeof fullCheckState === "object" && <div className="mb-3" />}
 
         <div className="space-y-3">
           {Object.entries(FUNCTIONS_CONFIG).map(([fnKey, config]) => {
