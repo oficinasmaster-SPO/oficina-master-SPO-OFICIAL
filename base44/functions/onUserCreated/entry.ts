@@ -26,16 +26,16 @@ Deno.serve(async (req) => {
       // Buscar oficina
       const workshop = await base44.asServiceRole.entities.Workshop.get(workshop_id).catch(() => null);
       
-      const workshopIdentifier = workshop?.identificador || workshop_id;
-      const allUsers = await base44.asServiceRole.entities.User.filter({ workshop_id: workshop_id });
-      const userCount = Array.isArray(allUsers) ? allUsers.length + 1 : 1;
-      const generatedProfileId = `${workshopIdentifier}.${String(userCount).padStart(2, '0')}`;
-      const finalProfileId = invite.profile_id || generatedProfileId;
+      // R2 FIX (2026-06-11): removida geração de generatedProfileId no formato "identificador.01"
+      // (string não-UUID que contaminava User.profile_id). User.profile_id é campo [DEPRECATED 2026-06-10].
+      // A autorização vem de Employee.profile_id — nunca de User.profile_id.
+      // Se invite.profile_id existir, usamos; caso contrário, deixamos em branco.
+      const finalProfileId = invite.profile_id || null;
 
       await base44.asServiceRole.entities.User.update(createdUser.id, {
         full_name: invite.name || createdUser.full_name,
         workshop_id: workshop_id,
-        profile_id: finalProfileId,
+        ...(finalProfileId ? { profile_id: finalProfileId } : {}),
         position: invite.position || 'Colaborador',
         job_role: invite.job_role || 'outros',
         area: invite.area || 'tecnico',
