@@ -41,6 +41,20 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Conta a receber não encontrada' }, { status: 404 });
     }
 
+    // DEDUP FIX (2026-06-10): bloquear pagamento duplo em conta já liquidada.
+    // Double-click ou retry de rede registraria dois lançamentos no DFC.
+    // Se a conta já está paga/liquidada, retornar sucesso idempotente.
+    if (contaReceber.status === 'pago' || contaReceber.status === 'liquidado') {
+      console.warn(`[DEDUP] ContaReceber ${conta_receber_id} já está ${contaReceber.status} — pagamento duplicado bloqueado`);
+      return Response.json({
+        success: true,
+        message: 'Pagamento já registrado anteriormente',
+        idempotent: true,
+        conta_receber_id,
+        status: contaReceber.status
+      });
+    }
+
     // Valida valor não exceder saldo aberto
     const valorAberto = contaReceber.valor_aberto || contaReceber.valor_original;
     if (valor_recebido > valorAberto + 0.01) { // tolerância de 1 centavo
