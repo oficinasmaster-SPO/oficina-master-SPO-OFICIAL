@@ -205,11 +205,13 @@ export default function PermissionExceptionsModal({ open, onOpenChange }) {
                     {employees.length === 0 ? (
                       <div className="p-2 text-xs text-gray-500">Nenhum usuário encontrado</div>
                     ) : (
-                      employees.map(emp => (
-                        <SelectItem key={emp.user_id} value={emp.user_id}>
-                          {emp.full_name} - {emp.job_role}
-                        </SelectItem>
-                      ))
+                      employees
+                        .filter(emp => !!emp.user_id) // C1 FIX: excluir employees sem user_id (sem login ativo)
+                        .map(emp => (
+                          <SelectItem key={emp.user_id} value={emp.user_id}>
+                            {emp.full_name} - {emp.job_role}
+                          </SelectItem>
+                        ))
                     )}
                   </SelectContent>
                 </Select>
@@ -330,6 +332,7 @@ export default function PermissionExceptionsModal({ open, onOpenChange }) {
           user={{
             user_id: selectedUserId,
             workshop_id: selectedWorkshopId,
+            employee_id: employees.find(e => e.user_id === selectedUserId)?.id || null, // C2 FIX
             full_name: employees.find(e => e.user_id === selectedUserId)?.full_name || '',
             email: employees.find(e => e.user_id === selectedUserId)?.email || '',
             workshop_name: workshops.find(w => w.id === selectedWorkshopId)?.name || ''
