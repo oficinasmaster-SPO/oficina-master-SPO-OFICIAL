@@ -51,15 +51,20 @@ Deno.serve(async (req) => {
         role: user_data.role
       });
       
+      // R4 FIX (2026-06-11): staff interno DEVE ter consulting_firm_id para ser encontrado
+      // pelo PermissionsContext (que filtra Employee por workshop_id OU consulting_firm_id).
+      // workshop_id fica null intencionalmente — staff não pertence a uma oficina específica.
       const employeeData = {
         full_name: full_name,
         email: email,
         telefone: user_data.telefone || '',
         position: user_data.position || '',
         tipo_vinculo: 'interno',
+        user_type: 'internal',
         job_role: 'consultor',
         status: 'ativo',
         profile_id: user_data.profile_id,
+        consulting_firm_id: user_data.consulting_firm_id || null,
         user_status: user_data.user_status || 'ativo',
         is_internal: true,
         audit_log: user_data.audit_log || []
@@ -113,12 +118,14 @@ Deno.serve(async (req) => {
       const invite = await base44.asServiceRole.entities.EmployeeInvite.create({
         employee_id: newEmployee.id,
         workshop_id: null,
+        company_id: user_data.consulting_firm_id || null, // garante rastreabilidade da org
         invite_type: 'internal',
         name: full_name,
         email: email,
         position: user_data.position,
         job_role: 'consultor',
         area: 'administrativo',
+        profile_id: user_data.profile_id,
         invite_token: inviteToken,
         status: 'enviado',
         sent_at: new Date().toISOString(),
