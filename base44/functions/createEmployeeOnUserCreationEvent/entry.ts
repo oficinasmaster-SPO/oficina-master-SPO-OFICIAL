@@ -95,8 +95,12 @@ Deno.serve(async (req) => {
             });
         }
 
-        // Usar profile_id do user se disponível, caso contrário do invite
-        const employeeProfileId = user.profile_id || profileId;
+        // P5 FIX (2026-06-10): removido user.profile_id como fallback — campo deprecated.
+        // User.profile_id não é lido pelo PermissionsContext e pode conter 'workshopId.auto'
+        // (string inválida gravada por registerEmployeeComplete em fluxos legados).
+        // Fonte canônica: profileId vindo do invite, ou FALLBACK_PROFILE_ID se ausente.
+        const FALLBACK_PROFILE_ID = '6a272f876b16129b2f5f31be'; // Técnico - Acesso Operacional
+        const employeeProfileId = profileId || FALLBACK_PROFILE_ID;
 
         const existingEmployeeByEmail = await base44.asServiceRole.entities.Employee.filter({
             email: user.email,
