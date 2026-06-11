@@ -102,12 +102,34 @@ Deno.serve(async (req) => {
         return Response.json({ error: 'Workshop não encontrado' }, { status: 404 });
       }
 
+      // DEDUP FIX (2026-06-10): Meta Ads reenvia o mesmo lead em caso de timeout.
+      // Dedup por leadgen_id (ID único do Meta) — se já existe, atualiza timeline apenas.
+      const phone = fieldMap.phone_number || fieldMap.phone || '';
+      const email = fieldMap.email || '';
+      const existingByLeadId = leadgen_id
+        ? await base44.asServiceRole.entities.Candidate.filter({ campaign_id: leadgen_id })
+        : [];
+
+      if (existingByLeadId.length > 0) {
+        const existing = existingByLeadId[0];
+        await base44.asServiceRole.entities.Candidate.update(existing.id, {
+          timeline: [...(existing.timeline || []), {
+            timestamp: new Date().toISOString(),
+            action: 'webhook_retry_ignorado',
+            user_id: 'system',
+            details: `Reenvio do Meta detectado para leadgen_id ${leadgen_id}`
+          }]
+        });
+        console.log(`[DEDUP] Lead ${leadgen_id} já existe (${existing.id}) — retry ignorado`);
+        return Response.json({ success: true, message: 'Lead já existe', candidate_id: existing.id });
+      }
+
       // Criar candidato automaticamente
       const candidateData = {
         workshop_id: workshop.id,
         full_name: fieldMap.full_name || fieldMap.name || 'Lead Meta Ads',
-        email: fieldMap.email || '',
-        phone: fieldMap.phone_number || fieldMap.phone || '',
+        email: email,
+        phone: phone,
         desired_position: fieldMap.cargo || fieldMap.position || 'A definir',
         origin_channel: fieldMap.utm_source?.includes('instagram') ? 'meta_ads' : 'facebook_ads',
         campaign_name: fieldMap.utm_campaign || form_id,
