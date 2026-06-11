@@ -1,5 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
+const SOCIO_PROFILE_ID = '6a272f8ea3fa8dd02ca7350e'; // Sócio - Acesso Total
+
 const systemRolesCatalog = [
   "dashboard.view", "dashboard.edit", "dashboard.export",
   "workshop.view", "workshop.edit", "workshop.manage_goals",
@@ -18,6 +20,7 @@ const systemRolesCatalog = [
 ];
 
 Deno.serve(async (req) => {
+  const startTime = Date.now();
   const base44 = createClientFromRequest(req);
   const user = await base44.auth.me();
 
@@ -26,15 +29,17 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const [profiles, employees, users, workshops] = await Promise.all([
+    const [profiles, employees, users, workshops, invites] = await Promise.all([
       base44.asServiceRole.entities.UserProfile.list(null, 1000),
       base44.asServiceRole.entities.Employee.list(null, 5000),
       base44.asServiceRole.entities.User.list(null, 5000),
-      base44.asServiceRole.entities.Workshop.list(null, 2000)
+      base44.asServiceRole.entities.Workshop.list(null, 2000),
+      base44.asServiceRole.entities.EmployeeInvite.list(null, 5000)
     ]);
 
     const profileMap = new Map(profiles.map(p => [p.id, p]));
     const employeeMap = new Map(employees.map(e => [e.user_id, e]));
+    const userIdSet = new Set(users.map(u => u.id));
 
     let missing_profiles = 0;
     let profile_mismatches = 0;
@@ -64,38 +69,66 @@ Deno.serve(async (req) => {
     }
 
     // R9 — Métricas de consistência User↔Employee↔Workshop
-
-    // users_without_employee: usuários não-admin sem Employee vinculado
-    const userIdSet = new Set(users.map(u => u.id));
     for (const u of users) {
       if (u.role !== 'admin' && !employeeMap.has(u.id)) {
         missing_employees++;
       }
     }
 
-    // employees_pending_invite: Employee sem user_id com convite ainda pendente/válido — informativo apenas
-    // employees_orphaned: Employee sem user_id SEM convite ativo — é o órfão real, deve gerar ALERT
-    const invites = await base44.asServiceRole.entities.EmployeeInvite.list(null, 5000);
-    const pendingInviteEmails = new Set(
-      invites.filter(i => i.status === 'enviado' || i.status === 'acessado').map(i => i.email?.toLowerCase())
-    );
+    // Duplicate users (mesmo email)
+    const emailCount = new Map();
+    for (const u of users) {
+      const email = u.email?.toLowerCase();
+      if (email) emailCount.set(email, (emailCount.get(email) || 0) + 1);
+    }
+    const duplicate_users = [...emailCount.values()].filter(c => c > 1).reduce((sum, c) => sum + c, 0);
 
-    let employees_pending_invite = 0;
-    let employees_orphaned = 0;
+    // Duplicate employees (mesmo user_id)
+    const userIdCount = new Map();
     for (const emp of employees) {
-      if (emp.user_id && userIdSet.has(emp.user_id)) continue; // vinculado corretamente
-      // sem user_id ou user_id inexistente
-      if (pendingInviteEmails.has(emp.email?.toLowerCase())) {
-        employees_pending_invite++; // convite ativo — aguardando aceite, legítimo
-      } else {
-        employees_orphaned++; // sem convite ativo — órfão real
+      if (emp.user_id) userIdCount.set(emp.user_id, (userIdCount.get(emp.user_id) || 0) + 1);
+    }
+    const duplicate_employees = [...userIdCount.values()].filter(c => c > 1).reduce((sum, c) => sum + c, 0);
+
+    // Owners externos sem profile_id correto (Sócio)
+    let owners_with_wrong_profile = 0;
+    for (const ws of workshops) {
+      if (ws.status === 'inativo') continue;
+      if (!ws.owner_id) continue;
+      const ownerEmp = employees.find(e => e.user_id === ws.owner_id && e.workshop_id === ws.id);
+      if (ownerEmp && ownerEmp.profile_id !== SOCIO_PROFILE_ID) {
+        owners_with_wrong_profile++;
       }
     }
 
-    // workshops_without_owner: Workshop sem owner_id ou com owner_id inexistente
+    // Métricas de invites
+    const invites_pending = invites.filter(i => i.status === 'enviado' || i.status === 'acessado').length;
+    const invites_expired = invites.filter(i => i.status === 'expirado').length;
+    const invites_accepted = invites.filter(i => i.status === 'concluido').length;
+    const invites_total = invites.length;
+    const invite_conversion_rate = invites_total > 0
+      ? Math.round((invites_accepted / invites_total) * 100 * 10) / 10
+      : 0;
+
+    // employees_pending_invite e employees_orphaned
+    const pendingInviteEmails = new Set(
+      invites.filter(i => i.status === 'enviado' || i.status === 'acessado').map(i => i.email?.toLowerCase())
+    );
+    let employees_pending_invite = 0;
+    let employees_orphaned = 0;
+    for (const emp of employees) {
+      if (emp.user_id && userIdSet.has(emp.user_id)) continue;
+      if (pendingInviteEmails.has(emp.email?.toLowerCase())) {
+        employees_pending_invite++;
+      } else {
+        employees_orphaned++;
+      }
+    }
+
+    // workshops_without_owner
     let workshops_without_owner = 0;
     for (const ws of workshops) {
-      if (ws.status === 'inativo') continue; // workshops inativos são esperados sem owner ativo
+      if (ws.status === 'inativo') continue;
       if (!ws.owner_id || !userIdSet.has(ws.owner_id)) {
         workshops_without_owner++;
       }
@@ -103,16 +136,24 @@ Deno.serve(async (req) => {
 
     // Thresholds de alerta
     const THRESHOLD_USERS_WITHOUT_EMPLOYEE = 10;
-    const THRESHOLD_EMPLOYEES_ORPHANED = 0; // qualquer órfão real deve alertar
     const alerts = [];
     if (missing_employees > THRESHOLD_USERS_WITHOUT_EMPLOYEE) {
       alerts.push(`users_without_employee=${missing_employees} excede threshold de ${THRESHOLD_USERS_WITHOUT_EMPLOYEE}`);
     }
-    if (employees_orphaned > THRESHOLD_EMPLOYEES_ORPHANED) {
+    if (employees_orphaned > 0) {
       alerts.push(`employees_orphaned=${employees_orphaned} (threshold=0) — Employee sem user_id e sem convite ativo`);
     }
     if (workshops_without_owner > 0) {
       alerts.push(`workshops_without_owner=${workshops_without_owner} (threshold=0)`);
+    }
+    if (duplicate_users > 0) {
+      alerts.push(`duplicate_users=${duplicate_users} — usuários com email duplicado`);
+    }
+    if (duplicate_employees > 0) {
+      alerts.push(`duplicate_employees=${duplicate_employees} — employees com mesmo user_id`);
+    }
+    if (owners_with_wrong_profile > 0) {
+      alerts.push(`owners_with_wrong_profile=${owners_with_wrong_profile} — owners externos sem perfil Sócio`);
     }
 
     if (alerts.length > 0) {
@@ -129,6 +170,29 @@ Deno.serve(async (req) => {
     let health = 100 - ((totalIssues / maxIssues) * 100);
     health = Math.max(0, Math.min(100, Math.round(health)));
 
+    // Tracking de execução
+    const duration_ms = Date.now() - startTime;
+    try {
+      await base44.asServiceRole.entities.SystemEventLog.create({
+        event_type: 'FUNCTION_EXECUTED',
+        entity_type: 'RBACHealth',
+        triggered_by: 'admin',
+        status: alerts.length > 0 ? 'warning' : 'success',
+        details: {
+          function_name: 'auditRBACHealth',
+          processed_count: users.length + employees.length,
+          duration_ms,
+          rbac_health: health,
+          alerts_count: alerts.length,
+          workshops_without_owner,
+          employees_orphaned,
+          duplicate_users,
+          duplicate_employees
+        },
+        timestamp: new Date().toISOString()
+      });
+    } catch (_) {}
+
     return Response.json({
       rbac_health: health,
       missing_profiles,
@@ -136,9 +200,19 @@ Deno.serve(async (req) => {
       invalid_roles,
       // R9/R15 — Métricas de consistência
       users_without_employee: missing_employees,
-      employees_pending_invite,   // informativo: aguardando aceite de convite
-      employees_orphaned,         // ALERT: sem user_id e sem convite ativo
+      employees_pending_invite,
+      employees_orphaned,
       workshops_without_owner,
+      // Novos campos
+      duplicate_users,
+      duplicate_employees,
+      owners_with_wrong_profile,
+      // Métricas de invites
+      invites_pending,
+      invites_expired,
+      invites_accepted,
+      invites_total,
+      invite_conversion_rate,
       alerts,
       timestamp: new Date().toISOString()
     });

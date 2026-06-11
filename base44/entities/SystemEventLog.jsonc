@@ -1,0 +1,119 @@
+{
+  "name": "SystemEventLog",
+  "type": "object",
+  "properties": {
+    "event_type": {
+      "type": "string",
+      "description": "Tipo do evento de sistema (ex: WORKSHOP_RECOVERY, FUNCTION_EXECUTED, LEGACY_ENDPOINT_CALLED)"
+    },
+    "entity_type": {
+      "type": "string",
+      "description": "Tipo da entidade afetada (Workshop, Employee, User, System)"
+    },
+    "entity_id": {
+      "type": "string",
+      "description": "ID da entidade afetada"
+    },
+    "entity_name": {
+      "type": "string",
+      "description": "Nome legivel da entidade afetada"
+    },
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina relacionada ao evento"
+    },
+    "workshop_name": {
+      "type": "string",
+      "description": "Nome da oficina relacionada"
+    },
+    "triggered_by": {
+      "type": "string",
+      "enum": [
+        "automation",
+        "admin",
+        "system",
+        "user"
+      ],
+      "description": "Origem do evento"
+    },
+    "triggered_by_user_id": {
+      "type": "string",
+      "description": "ID do admin/usuario que disparou"
+    },
+    "triggered_by_email": {
+      "type": "string",
+      "description": "Email do disparador"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "success",
+        "error",
+        "warning",
+        "info"
+      ],
+      "default": "success",
+      "description": "Status do evento"
+    },
+    "details": {
+      "type": "object",
+      "description": "Payload livre com dados contextuais do evento"
+    },
+    "function_name": {
+      "type": "string",
+      "description": "Nome da function executada (para FUNCTION_EXECUTED)"
+    },
+    "duration_ms": {
+      "type": "integer",
+      "description": "Duracao da execucao em ms"
+    },
+    "processed_count": {
+      "type": "integer",
+      "description": "Quantidade de registros processados"
+    },
+    "error_count": {
+      "type": "integer",
+      "default": 0,
+      "description": "Quantidade de erros na execucao"
+    },
+    "error_message": {
+      "type": "string",
+      "description": "Mensagem de erro (quando status=error)"
+    },
+    "ip": {
+      "type": "string",
+      "description": "IP do chamador (para LEGACY_ENDPOINT_CALLED)"
+    },
+    "user_agent": {
+      "type": "string",
+      "description": "User-Agent do chamador"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora do evento"
+    }
+  },
+  "required": [
+    "event_type",
+    "timestamp"
+  ],
+  "rls": {
+    "create": true,
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

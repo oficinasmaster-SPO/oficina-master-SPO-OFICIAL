@@ -4,6 +4,7 @@ const RESEND_THRESHOLD_DAYS = 3;  // Reenviar se convite enviado há mais de 3 d
 const EXPIRY_DAYS = 7;            // Convite expira em 7 dias
 
 Deno.serve(async (req) => {
+  const startTime = Date.now();
   const base44 = createClientFromRequest(req);
 
   try {
@@ -19,9 +20,11 @@ Deno.serve(async (req) => {
       status: { $in: ['enviado', 'acessado'] }
     }, '-created_date', 500);
 
+    const total_found = (activeInvites || []).length;
     let expired = 0;
     let resent = 0;
     let errors = 0;
+    let updated = 0;
 
     for (const invite of (activeInvites || [])) {
       const createdAt = new Date(invite.created_date);
@@ -33,6 +36,7 @@ Deno.serve(async (req) => {
         try {
           await base44.asServiceRole.entities.EmployeeInvite.update(invite.id, { status: 'expirado' });
           expired++;
+          updated++;
         } catch (e) {
           console.error(`Erro ao expirar convite ${invite.id}:`, e.message);
           errors++;
@@ -58,6 +62,7 @@ Deno.serve(async (req) => {
 
           console.log(`📧 Convite reenviado automaticamente: ${invite.email} (${Math.round(ageDays)} dias sem ativar)`);
           resent++;
+          updated++;
         } catch (e) {
           console.error(`Erro ao reenviar convite ${invite.id}:`, e.message);
           errors++;
@@ -66,6 +71,29 @@ Deno.serve(async (req) => {
     }
 
     console.log(`✅ Expirados: ${expired} | Reenviados: ${resent} | Erros: ${errors}`);
+
+    // Tracking de execução
+    const duration_ms = Date.now() - startTime;
+    try {
+      await base44.asServiceRole.entities.SystemEventLog.create({
+        event_type: 'FUNCTION_EXECUTED',
+        entity_type: 'EmployeeInvite',
+        triggered_by: 'automation',
+        status: errors > 0 ? 'warning' : 'success',
+        details: {
+          function_name: 'cleanupExpiredInvites',
+          processed_count: updated,
+          error_count: errors,
+          duration_ms,
+          total_found,
+          updated,
+          errors,
+          expired,
+          resent
+        },
+        timestamp: new Date().toISOString()
+      });
+    } catch (_) {}
 
     return Response.json({
       success: true,

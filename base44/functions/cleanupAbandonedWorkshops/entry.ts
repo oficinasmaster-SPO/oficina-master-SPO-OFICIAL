@@ -18,21 +18,26 @@ const ORPHAN_USER_NOTIFY_DAYS = 7;   // Notificar user órfão após 7 dias sem 
 const ORPHAN_USER_REMOVE_DAYS = 30;  // Remover user órfão após 30 dias sem completar cadastro
 const SOCIO_PROFILE_ID = '6a272f8ea3fa8dd02ca7350e'; // Sócio - Acesso Total
 
-// Telemetria estruturada para todas as ações de recuperação/limpeza
-async function logEvent(base44, tag, payload) {
-  const entry = { tag, timestamp: new Date().toISOString(), ...payload };
-  console.log(`[${tag}]`, JSON.stringify(entry));
+// Telemetria estruturada — grava em SystemEventLog
+async function logEvent(base44, event_type, payload) {
+  const timestamp = new Date().toISOString();
+  console.log(`[${event_type}]`, JSON.stringify({ event_type, timestamp, ...payload }));
   try {
-    await base44.asServiceRole.entities.UserActivityLog.create({
-      action: tag,
+    await base44.asServiceRole.entities.SystemEventLog.create({
+      event_type,
       entity_type: 'Workshop',
-      details: entry,
-      timestamp: entry.timestamp
+      entity_id: payload.workshop_id || null,
+      workshop_id: payload.workshop_id || null,
+      triggered_by: 'automation',
+      status: 'success',
+      details: payload,
+      timestamp
     });
   } catch (_) { /* telemetria nunca deve bloquear a operação principal */ }
 }
 
 Deno.serve(async (req) => {
+  const startTime = Date.now();
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
@@ -162,6 +167,28 @@ Deno.serve(async (req) => {
           });
         }
       }
+    }
+
+    // Tracking de execução — apenas em POST (não dry_run)
+    if (!dry_run) {
+      const duration_ms = Date.now() - startTime;
+      try {
+        await base44.asServiceRole.entities.SystemEventLog.create({
+          event_type: 'FUNCTION_EXECUTED',
+          entity_type: 'Workshop',
+          triggered_by: 'automation',
+          status: 'success',
+          details: {
+            function_name: 'cleanupAbandonedWorkshops',
+            processed_count: abandoned.length + recovered.length,
+            duration_ms,
+            rascunhos_encontrados: rascunhos.length,
+            abandoned: abandoned.length,
+            recovered: recovered.length
+          },
+          timestamp: new Date().toISOString()
+        });
+      } catch (_) {}
     }
 
     return Response.json({
