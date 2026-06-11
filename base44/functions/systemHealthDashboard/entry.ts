@@ -97,42 +97,25 @@ Deno.serve(async (req) => {
     const rbac_health = Math.max(0, Math.min(100, Math.round(100 - (totalIssues / maxIssues) * 100)));
 
     // ─── HEALTH SCORE (0-100) COM PENALIZAÇÕES ────────────────────────────────
-    // NOTA: employees_pending_invite NÃO penaliza o score (estado esperado)
+    // Penalizações FIXAS por tipo (não multiplicam por count)
+    // employees_pending_invite NÃO penaliza — estado operacional esperado
     let health_score = 100;
     const score_breakdown = [];
 
-    if (duplicate_users > 0) {
-      health_score -= 25;
-      score_breakdown.push({ reason: 'duplicate_users', count: duplicate_users, penalty: -25 });
-    }
-    if (duplicate_employees > 0) {
-      health_score -= 25;
-      score_breakdown.push({ reason: 'duplicate_employees', count: duplicate_employees, penalty: -25 });
-    }
-    if (workshops_without_owner > 0) {
-      const penalty = Math.min(workshops_without_owner * 20, 20);
+    const applyPenalty = (reason, count, penalty) => {
       health_score -= penalty;
-      score_breakdown.push({ reason: 'workshops_without_owner', count: workshops_without_owner, penalty: -penalty });
-    }
-    if (owners_with_wrong_profile > 0) {
-      health_score -= 20;
-      score_breakdown.push({ reason: 'owners_with_wrong_profile', count: owners_with_wrong_profile, penalty: -20 });
-    }
-    if (employees_orphaned > 0) {
-      const penalty = Math.min(employees_orphaned * 10, 10);
-      health_score -= penalty;
-      score_breakdown.push({ reason: 'orphan_employees', count: employees_orphaned, penalty: -penalty });
-    }
-    if (users_without_employee > 0) {
-      const penalty = Math.min(users_without_employee * 10, 10);
-      health_score -= penalty;
-      score_breakdown.push({ reason: 'users_without_employee', count: users_without_employee, penalty: -penalty });
-    }
-    if (invites_expired > 0) {
-      const penalty = Math.min(invites_expired, 10);
-      health_score -= penalty;
-      score_breakdown.push({ reason: 'invites_expired', count: invites_expired, penalty: -penalty });
-    }
+      score_breakdown.push({ reason, count, penalty: -penalty });
+    };
+
+    if (duplicate_users > 0)          applyPenalty('duplicate_users',           duplicate_users,          25);
+    if (duplicate_employees > 0)      applyPenalty('duplicate_employees',        duplicate_employees,      25);
+    if (workshops_without_owner > 0)  applyPenalty('workshops_without_owner',   workshops_without_owner,  20);
+    if (owners_with_wrong_profile > 0)applyPenalty('owners_with_wrong_profile', owners_with_wrong_profile,20);
+    if (employees_orphaned > 0)       applyPenalty('orphan_employees',          employees_orphaned,       10);
+    // orphan_users placeholder (auditOrphanUsers popula)
+    // users_without_employee não está no spec de penalizações — removido
+    if (invites_expired > 0)          applyPenalty('invites_expired',           invites_expired,           1);
+
     health_score = Math.max(0, health_score);
 
     // ─── STATUS ───────────────────────────────────────────────────────────────
@@ -218,11 +201,8 @@ Deno.serve(async (req) => {
       details: e.details
     }));
 
-    // Penalização de legacy no score
-    if (legacy24h > 0) {
-      health_score -= 10;
-      score_breakdown.push({ reason: 'legacy_endpoint_calls', count: legacy24h, penalty: -10 });
-    }
+    // Penalização de legacy no score (FIXA -10 se qualquer chamada nas 24h)
+    if (legacy24h > 0) applyPenalty('legacy_endpoint_calls', legacy24h, 10);
     health_score = Math.max(0, health_score);
 
     // Provisioning (identidade)
@@ -240,11 +220,9 @@ Deno.serve(async (req) => {
     }).length;
     const owners_total = workshops.filter(ws => ws.status === 'ativo' && ws.owner_id).length;
 
-    // Penalização de pending_workshop no score
+    // Penalização de pending_workshop no score (-1 por user, conforme spec)
     if (users_pending_workshop > 0) {
-      const penalty = Math.min(users_pending_workshop, 10);
-      health_score -= penalty;
-      score_breakdown.push({ reason: 'users_pending_workshop', count: users_pending_workshop, penalty: -penalty });
+      applyPenalty('users_pending_workshop', users_pending_workshop, users_pending_workshop);
       health_score = Math.max(0, health_score);
     }
 
