@@ -144,6 +144,36 @@ Deno.serve(async (req) => {
     // O profile_id resolvido é a fonte da verdade para as permissões
     const finalProfileId = finalProfileIdResolved || profile_id;
 
+    // ── Validação de Limite de Plano (somente para usuários externos com workshop) ──
+    // Deve ocorrer ANTES de inviteUser, Employee.create e EmployeeInvite.create.
+    if (!isInternalUser && workshop_id) {
+      try {
+        const planCheck = await base44.functions.invoke('checkPlanAccess', {
+          tenantId: workshop_id,
+          feature: 'usuarios',
+          action: 'check_limit'
+        });
+        if (planCheck.data?.success === false) {
+          const planErr = planCheck.data?.error;
+          // Limite excedido ou plano inativo — bloqueia sem criar nenhuma entidade
+          if (planErr === 'limite_excedido' || planErr?.code === 'PLAN_INACTIVE' || planErr?.code === 'TRIAL_EXPIRED') {
+            return Response.json({
+              success: false,
+              error: {
+                code: 'PLAN_RESTRICTION',
+                message: planCheck.data?.message || 'Limite do plano atingido. Faça upgrade para adicionar mais colaboradores.'
+              }
+            }, { status: 403 });
+          }
+          // Outros erros do checkPlanAccess (ex: tenant não encontrado) — loga e prossegue
+          console.warn("⚠️ checkPlanAccess retornou erro não-bloqueante:", planErr);
+        }
+      } catch (planCheckError) {
+        // Falha na chamada não deve bloquear o fluxo principal
+        console.warn("⚠️ Falha ao verificar limite de plano (non-fatal):", planCheckError.message);
+      }
+    }
+
     // Convidar usuário via Base44 usando SERVICE ROLE (não afeta sessão do admin)
     console.log("📧 Convidando usuário via Base44 com role:", safeRole);
     const inviteResult = await base44.asServiceRole.users.inviteUser(email, safeRole);
