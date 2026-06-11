@@ -159,8 +159,13 @@ export default function AutomationsBlock({ data, onRefresh }) {
     const startedAt = Date.now();
     try {
       const res = await base44.functions.invoke("runSystemMaintenance", { action: fnKey });
-      const duration_ms = res?.data?.duration_ms ?? (Date.now() - startedAt);
-      const message = config.resultFormatter(res?.data?.result || {});
+      const payload = res?.data || {};
+      const duration_ms = payload.duration_ms ?? (Date.now() - startedAt);
+      if (payload.error && !payload.success) {
+        setState(fnKey, { status: "error", message: payload.error, duration_ms });
+        return;
+      }
+      const message = config.resultFormatter(payload.result || {});
       setState(fnKey, { status: "success", message, duration_ms });
     } catch (err) {
       const duration_ms = Date.now() - startedAt;

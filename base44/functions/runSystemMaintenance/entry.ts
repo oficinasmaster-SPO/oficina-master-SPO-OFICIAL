@@ -15,10 +15,11 @@ async function runAction(base44, action, user, ip) {
   let errorMessage = null;
 
   try {
-    result = await base44.asServiceRole.functions.invoke(action, {});
+    const res = await base44.functions.invoke(action, {});
+    result = res?.data ?? res ?? null;
   } catch (err) {
     resultStatus = 'error';
-    errorMessage = err?.message || 'Erro desconhecido';
+    errorMessage = err?.response?.data?.error || err?.message || 'Erro desconhecido';
   }
 
   const duration_ms = Date.now() - startedAt;
@@ -91,9 +92,5 @@ Deno.serve(async (req) => {
 
   const { resultStatus, result, errorMessage, duration_ms } = await runAction(base44, action, user, ip);
 
-  if (resultStatus === 'error') {
-    return Response.json({ success: false, action, duration_ms, error: errorMessage }, { status: 500 });
-  }
-
-  return Response.json({ success: true, action, duration_ms, result });
+  return Response.json({ success: resultStatus === 'success', action, duration_ms, result, error: errorMessage });
 });
