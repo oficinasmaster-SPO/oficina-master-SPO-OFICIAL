@@ -247,29 +247,54 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
         });
       }
 
-      const formDataToSend = { ...formData, production_percentage: productionPercentage };
-      if (formDataToSend.user_profile_id === "none") { formDataToSend.user_profile_id = null; }
-      if (formDataToSend.job_description_id === "none") { formDataToSend.job_description_id = null; }
-      
-      const response = await base44.functions.invoke('registerEmployeeComplete', {
-        formData: formDataToSend,
+      const resolvedProfileId = formData.user_profile_id && formData.user_profile_id !== "none"
+        ? formData.user_profile_id
+        : null;
+      const resolvedJobDescriptionId = formData.job_description_id && formData.job_description_id !== "none"
+        ? formData.job_description_id
+        : null;
+
+      const response = await base44.functions.invoke('createUserDirectly', {
+        name: formData.full_name,
+        email: formData.email,
+        telefone: formData.telefone,
+        position: formData.position,
+        area: formData.area,
+        job_role: formData.job_role,
+        profile_id: resolvedProfileId,
         workshop_id: workshop.id,
-        isPartner: isPartner,
-        userRoles: userRoles
+        role: 'user',
+        data_nascimento: formData.data_nascimento || null,
+        // Campos RH
+        cpf: formData.cpf || null,
+        rg: formData.rg || null,
+        hire_date: formData.hire_date || null,
+        salary: formData.salary || 0,
+        commission: formData.commission || 0,
+        bonus: formData.bonus || 0,
+        benefits: formData.benefits || [],
+        production_parts: formData.production_parts || 0,
+        production_parts_sales: formData.production_parts_sales || 0,
+        production_services: formData.production_services || 0,
+        production_percentage: productionPercentage,
+        endereco: formData.endereco || null,
+        profile_picture_url: formData.profile_picture_url || null,
+        job_description_id: resolvedJobDescriptionId
       });
 
       if (!response.data.success) {
-        throw new Error(response.data.error || "Erro ao cadastrar colaborador");
+        throw new Error(response.data.error?.message || response.data.error || "Erro ao cadastrar colaborador");
       }
 
+      const responseData = response.data.data || response.data;
       toast.success("Colaborador cadastrado com sucesso!");
       
       if (window.confirm("Colaborador cadastrado! Deseja gerar e copiar o link do teste comportamental DISC para ele agora?")) {
          const uuid = crypto.randomUUID();
          await base44.entities.DISCPublicSession.create({
             workshop_id: workshop.id,
-            employee_id: response.data.employee_id,
-            candidate_name: formDataToSend.full_name || formData.full_name,
+            employee_id: responseData.employee_id,
+            candidate_name: formData.full_name,
             token: uuid,
             status: 'pending'
          });
@@ -280,7 +305,7 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
 
       if (window.confirm("Deseja enviar o link de acesso ao sistema manualmente via WhatsApp agora?")) {
          onClose();
-         navigate(createPageUrl("ConvidarColaborador") + `?id=${response.data.employee_id}`);
+         navigate(createPageUrl("ConvidarColaborador") + `?id=${responseData.employee_id}`);
          return;
       }
 
