@@ -70,8 +70,9 @@ export default function UserDetailsDrawer({
     queryKey: ['user-profile-details', userProfileData?.profile_id],
     queryFn: async () => {
       if (!userProfileData?.profile_id) return null;
-      const profiles = await base44.entities.UserProfile.filter({ id: userProfileData.profile_id });
-      return Array.isArray(profiles) ? profiles[0] : null;
+      // W6 FIX (2026-06-10): filter({ id }) não é suportado pelo SDK para campos raiz.
+      // Substituído por .get(id) que é o padrão correto.
+      return await base44.entities.UserProfile.get(userProfileData.profile_id).catch(() => null);
     },
     enabled: !!userProfileData?.profile_id && open
   });
