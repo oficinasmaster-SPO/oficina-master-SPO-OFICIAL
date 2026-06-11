@@ -22,9 +22,11 @@ const systemRolesCatalog = [
 Deno.serve(async (req) => {
   const startTime = Date.now();
   const base44 = createClientFromRequest(req);
-  const user = await base44.auth.me();
+  // Aceita chamadas diretas de admin OU chamadas internas via service role (sem user)
+  const user = await base44.auth.me().catch(() => null);
+  const isServiceRoleCall = !user && req.headers.get('x-service-role') === 'true';
 
-  if (user?.role !== 'admin') {
+  if (!isServiceRoleCall && user?.role !== 'admin') {
     return Response.json({ error: 'Acesso restrito a administradores' }, { status: 403 });
   }
 
