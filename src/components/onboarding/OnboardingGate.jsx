@@ -67,9 +67,26 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
       if (user.cadastro_em_andamento === true && user.role !== 'admin') {
         navigate(createPageUrl("Cadastro")); return;
       }
-      // R11: signup órfão — chegou sem convite, deve criar sua própria oficina
-      if (user.signup_type === 'orphan' && user.role !== 'admin' && !hasWorkshop) {
-        navigate(createPageUrl("Cadastro")); return;
+      // R11: signup órfão com carência de 10 minutos
+      // Conta nova (< 10 min) não redireciona — evita conflito durante onboarding normal.
+      // Conta antiga (> 10 min) sem workshop → forçar rota de cadastro.
+      const isOrphanSignup = user.signup_type === 'orphan' && user.role !== 'admin' && !hasWorkshop;
+      if (isOrphanSignup) {
+        const createdAt = new Date(user.created_date);
+        const ageMinutes = (Date.now() - createdAt.getTime()) / 60000;
+        if (ageMinutes > 10) {
+          // Telemetria: registrar redirect forçado
+          base44.analytics.track({
+            eventName: 'FORCED_ONBOARDING_REDIRECT',
+            properties: {
+              user_id: user.id,
+              email: user.email,
+              reason: 'orphan_signup',
+              age_minutes: Math.round(ageMinutes)
+            }
+          });
+          navigate(createPageUrl("Cadastro")); return;
+        }
       }
       // PERF-FIX-03: verificar convites APENAS se usuário não tem workshop e não é admin
       // e usar cache para não repetir a query em cada render/navegação
