@@ -26,10 +26,11 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const [profiles, employees, users] = await Promise.all([
+    const [profiles, employees, users, workshops] = await Promise.all([
       base44.asServiceRole.entities.UserProfile.list(null, 1000),
       base44.asServiceRole.entities.Employee.list(null, 5000),
-      base44.asServiceRole.entities.User.list(null, 5000)
+      base44.asServiceRole.entities.User.list(null, 5000),
+      base44.asServiceRole.entities.Workshop.list(null, 2000)
     ]);
 
     const profileMap = new Map(profiles.map(p => [p.id, p]));
@@ -62,11 +63,56 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Optional: check users without employee records
+    // R9 — Métricas de consistência User↔Employee↔Workshop
+
+    // users_without_employee: usuários não-admin sem Employee vinculado
+    const userIdSet = new Set(users.map(u => u.id));
     for (const u of users) {
       if (u.role !== 'admin' && !employeeMap.has(u.id)) {
         missing_employees++;
       }
+    }
+
+    // employees_without_user: Employee com user_id ausente ou apontando para User inexistente
+    // (exclui convites pendentes: user_status === 'pending')
+    let employees_without_user = 0;
+    for (const emp of employees) {
+      if (emp.user_status === 'pending') continue; // convite ainda não aceito — legítimo
+      if (!emp.user_id || !userIdSet.has(emp.user_id)) {
+        employees_without_user++;
+      }
+    }
+
+    // workshops_without_owner: Workshop sem owner_id ou com owner_id inexistente
+    let workshops_without_owner = 0;
+    for (const ws of workshops) {
+      if (ws.status === 'inativo') continue; // workshops inativos são esperados sem owner ativo
+      if (!ws.owner_id || !userIdSet.has(ws.owner_id)) {
+        workshops_without_owner++;
+      }
+    }
+
+    // Thresholds de alerta
+    const THRESHOLD_USERS_WITHOUT_EMPLOYEE = 10;
+    const THRESHOLD_EMPLOYEES_WITHOUT_USER = 5;
+    const alerts = [];
+    if (missing_employees > THRESHOLD_USERS_WITHOUT_EMPLOYEE) {
+      alerts.push(`users_without_employee=${missing_employees} excede threshold de ${THRESHOLD_USERS_WITHOUT_EMPLOYEE}`);
+    }
+    if (employees_without_user > THRESHOLD_EMPLOYEES_WITHOUT_USER) {
+      alerts.push(`employees_without_user=${employees_without_user} excede threshold de ${THRESHOLD_EMPLOYEES_WITHOUT_USER}`);
+    }
+    if (workshops_without_owner > 0) {
+      alerts.push(`workshops_without_owner=${workshops_without_owner} (threshold=0)`);
+    }
+
+    if (alerts.length > 0) {
+      console.log(JSON.stringify({
+        level: 'ALERT',
+        event: 'consistency_threshold_exceeded',
+        alerts,
+        timestamp: new Date().toISOString()
+      }));
     }
 
     const totalIssues = missing_profiles + profile_mismatches + invalid_roles;
@@ -79,7 +125,11 @@ Deno.serve(async (req) => {
       missing_profiles,
       profile_mismatches,
       invalid_roles,
-      missing_employees,
+      // R9 — Métricas de consistência
+      users_without_employee: missing_employees,
+      employees_without_user,
+      workshops_without_owner,
+      alerts,
       timestamp: new Date().toISOString()
     });
   } catch (error) {

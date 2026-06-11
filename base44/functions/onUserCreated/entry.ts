@@ -49,7 +49,42 @@ Deno.serve(async (req) => {
 
       console.log(`[onUserCreated] Dados complementares inseridos com sucesso para ${createdUser.email}`);
     } else {
-      console.log(`[onUserCreated] Nenhum EmployeeInvite encontrado para ${createdUser.email}`);
+      // R7 — Fallback: signup público sem convite
+      // Registra telemetria para facilitar diagnóstico de usuários pendentes de workshop.
+      console.log(`[onUserCreated] Nenhum EmployeeInvite encontrado para ${createdUser.email} — signup público`);
+
+      try {
+        // Emitir log estruturado para rastreamento
+        console.log(JSON.stringify({
+          level: 'TELEMETRY',
+          event: 'public_signup_no_invite',
+          user_id: createdUser.id,
+          email: createdUser.email,
+          has_workshop_id: !!createdUser.workshop_id,
+          has_consulting_firm_id: !!createdUser.consulting_firm_id,
+          role: createdUser.role,
+          timestamp: new Date().toISOString()
+        }));
+
+        // Criar notificação interna para admins se usuário ficou sem workshop após 
+        // ser criado sem convite (estado: pendente de workshop)
+        if (!createdUser.workshop_id) {
+          await base44.asServiceRole.entities.Notification.create({
+            user_id: createdUser.id,
+            type: 'pending_workshop',
+            title: 'Cadastro pendente',
+            message: 'Você ainda não está vinculado a uma oficina. Complete seu cadastro para acessar todas as funcionalidades.',
+            is_read: false,
+            metadata: {
+              event: 'public_signup_no_invite',
+              email: createdUser.email
+            }
+          }).catch(e => console.warn('[onUserCreated] Falha ao criar notificação de pending_workshop:', e.message));
+        }
+      } catch (telemetryError) {
+        // Falha de telemetria não deve bloquear o fluxo
+        console.warn('[onUserCreated] Erro na telemetria de signup público:', telemetryError.message);
+      }
     }
 
     return Response.json({ success: true });
