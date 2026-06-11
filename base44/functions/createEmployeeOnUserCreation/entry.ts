@@ -145,29 +145,27 @@ Deno.serve(async (req) => {
             workshop_id: invitation.workshop_id
         };
 
+        // R12 (2026-06-11): User.profile_id removido — campo oficialmente morto.
+        // A autorização vem exclusivamente de Employee.profile_id → UserProfile.roles → PermissionsContext.
+        // Sincronizar custom_role_ids no Employee (sem tocar User.profile_id).
         if (targetProfileId) {
-            userUpdateData.profile_id = targetProfileId;
-            
-            // Sincronizar Custom Roles do Perfil
             try {
                 const profile = await base44.asServiceRole.entities.UserProfile.get(targetProfileId);
                 if (profile && profile.custom_role_ids && profile.custom_role_ids.length > 0) {
                     userUpdateData.custom_role_ids = profile.custom_role_ids;
-                    
-                    // Também atualizar no Employee
                     await base44.asServiceRole.entities.Employee.update(newEmployee.id, {
                         custom_role_ids: profile.custom_role_ids
                     });
-                    console.log("✅ Custom roles sincronizadas");
+                    console.log("✅ Custom roles sincronizadas no Employee");
                 }
             } catch (e) {
                 console.warn("⚠️ Erro ao buscar perfil para custom roles:", e);
             }
         }
 
-        // Forçar atualização do User
+        // Atualizar User apenas com workshop_id (e custom_role_ids se houver)
         await base44.asServiceRole.entities.User.update(invitation.user_id, userUpdateData);
-        console.log(`✅ User atualizado com Profile: ${targetProfileId} e Workshop: ${invitation.workshop_id}`);
+        console.log(`✅ User atualizado com Workshop: ${invitation.workshop_id}`);
 
         // Promover para admin se for sócio/proprietário ou owner do workshop
         const shouldBeAdmin = 
