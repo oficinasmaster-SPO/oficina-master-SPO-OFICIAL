@@ -229,14 +229,15 @@ export default function GestaoUsuariosEmpresas() {
     let profileId = selectedUser.profile_id;
     if (jobRole) {
       try {
-        const allProfiles = await base44.entities.UserProfile.list();
-        const matchingProfile = (allProfiles || []).find(
-          (p) =>
-            p.status === "ativo" &&
-            p.job_roles &&
-            Array.isArray(p.job_roles) &&
-            p.job_roles.includes(jobRole)
-        );
+        // W8 FIX (2026-06-10): busca por job_roles substituída por autoAssignProfile (ID fixo).
+        // UserProfile.list() sem filtro expunha Admin System e perfis internos.
+        const assignResponse = await base44.functions.invoke('autoAssignProfile', {
+          job_role: jobRole,
+          current_profile_id: selectedUser.profile_id
+        });
+        const matchingProfile = assignResponse?.data?.has_suggestion
+          ? { id: assignResponse.data.suggested_profile_id, name: assignResponse.data.suggested_profile_name }
+          : null;
         if (matchingProfile) {
           profileId = matchingProfile.id;
           console.log(`✅ Auto-vinculado ao perfil: ${matchingProfile.name}`);
