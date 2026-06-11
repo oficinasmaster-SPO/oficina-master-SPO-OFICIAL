@@ -69,6 +69,12 @@ export default function FiliaisWorkshop({ workshop }) {
       // Criar vínculo de Colaborador (Sócio) para o dono na nova filial
       // Isso garante permissão de acesso imediato aos painéis baseados em perfis/roles
       try {
+        // P3 FIX (2026-06-10): profile_id obrigatório desde a criação do Employee da filial.
+        // Antes: campo ausente → owner da filial sem permissões indefinidamente
+        //        (não há CadastroPerfilSocio automático após criar filial).
+        // ID fixo Sócio - Acesso Total — mesmo padrão do P1 (CadastroPlanos).
+        const SOCIO_PROFILE_ID = '6a272f8ea3fa8dd02ca7350e';
+
         await base44.entities.Employee.create({
           workshop_id: filial.id,
           user_id: workshop.owner_id || user.id,
@@ -76,13 +82,13 @@ export default function FiliaisWorkshop({ workshop }) {
           email: user.email,
           position: "Sócio Proprietário",
           job_role: "socio",
+          profile_id: SOCIO_PROFILE_ID,
           user_status: "ativo",
           status: "ativo",
-          // Sócio de filial é cliente externo — não equipe Oficinas Master
           user_type: "external",
-          tipo_vinculo: "cliente",  // legado — mantido para retrocompatibilidade
+          tipo_vinculo: "cliente",
           area: "gerencia",
-          is_internal: false,       // legado — mantido para retrocompatibilidade
+          is_internal: false,
           is_partner: true,
           company_id: workshop.id,
           owner_id: workshop.owner_id || user.id,
