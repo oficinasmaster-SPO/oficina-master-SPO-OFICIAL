@@ -66,16 +66,11 @@ Deno.serve(async (req) => {
       });
     } else {
       await base44.users.inviteUser(email, 'user');
-      
-      let createdUser = null;
-      for (let i = 0; i < 10; i++) {
-        await new Promise(resolve => setTimeout(resolve, 200));
-        const users = await base44.asServiceRole.entities.User.filter({ email: email }, '-created_date', 1);
-        if (users && users.length > 0) {
-          createdUser = users[0];
-          break;
-        }
-      }
+
+      // Aguarda propagação assíncrona do convite (sem polling)
+      await new Promise(resolve => setTimeout(resolve, 800));
+      const invitedUsers = await base44.asServiceRole.entities.User.filter({ email: email }, '-created_date', 1);
+      const createdUser = (invitedUsers && invitedUsers.length > 0) ? invitedUsers[0] : null;
 
       if (createdUser) {
         userId = createdUser.id;
