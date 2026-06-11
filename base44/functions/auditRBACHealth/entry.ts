@@ -73,13 +73,22 @@ Deno.serve(async (req) => {
       }
     }
 
-    // employees_without_user: Employee com user_id ausente ou apontando para User inexistente
-    // (exclui convites pendentes: user_status === 'pending')
-    let employees_without_user = 0;
+    // employees_pending_invite: Employee sem user_id com convite ainda pendente/válido — informativo apenas
+    // employees_orphaned: Employee sem user_id SEM convite ativo — é o órfão real, deve gerar ALERT
+    const invites = await base44.asServiceRole.entities.EmployeeInvite.list(null, 5000);
+    const pendingInviteEmails = new Set(
+      invites.filter(i => i.status === 'enviado' || i.status === 'acessado').map(i => i.email?.toLowerCase())
+    );
+
+    let employees_pending_invite = 0;
+    let employees_orphaned = 0;
     for (const emp of employees) {
-      if (emp.user_status === 'pending') continue; // convite ainda não aceito — legítimo
-      if (!emp.user_id || !userIdSet.has(emp.user_id)) {
-        employees_without_user++;
+      if (emp.user_id && userIdSet.has(emp.user_id)) continue; // vinculado corretamente
+      // sem user_id ou user_id inexistente
+      if (pendingInviteEmails.has(emp.email?.toLowerCase())) {
+        employees_pending_invite++; // convite ativo — aguardando aceite, legítimo
+      } else {
+        employees_orphaned++; // sem convite ativo — órfão real
       }
     }
 
@@ -94,13 +103,13 @@ Deno.serve(async (req) => {
 
     // Thresholds de alerta
     const THRESHOLD_USERS_WITHOUT_EMPLOYEE = 10;
-    const THRESHOLD_EMPLOYEES_WITHOUT_USER = 5;
+    const THRESHOLD_EMPLOYEES_ORPHANED = 0; // qualquer órfão real deve alertar
     const alerts = [];
     if (missing_employees > THRESHOLD_USERS_WITHOUT_EMPLOYEE) {
       alerts.push(`users_without_employee=${missing_employees} excede threshold de ${THRESHOLD_USERS_WITHOUT_EMPLOYEE}`);
     }
-    if (employees_without_user > THRESHOLD_EMPLOYEES_WITHOUT_USER) {
-      alerts.push(`employees_without_user=${employees_without_user} excede threshold de ${THRESHOLD_EMPLOYEES_WITHOUT_USER}`);
+    if (employees_orphaned > THRESHOLD_EMPLOYEES_ORPHANED) {
+      alerts.push(`employees_orphaned=${employees_orphaned} (threshold=0) — Employee sem user_id e sem convite ativo`);
     }
     if (workshops_without_owner > 0) {
       alerts.push(`workshops_without_owner=${workshops_without_owner} (threshold=0)`);
@@ -125,9 +134,10 @@ Deno.serve(async (req) => {
       missing_profiles,
       profile_mismatches,
       invalid_roles,
-      // R9 — Métricas de consistência
+      // R9/R15 — Métricas de consistência
       users_without_employee: missing_employees,
-      employees_without_user,
+      employees_pending_invite,   // informativo: aguardando aceite de convite
+      employees_orphaned,         // ALERT: sem user_id e sem convite ativo
       workshops_without_owner,
       alerts,
       timestamp: new Date().toISOString()
