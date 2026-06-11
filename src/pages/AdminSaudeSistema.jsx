@@ -133,7 +133,7 @@ export default function AdminSaudeSistema() {
           {/* ── CAMADA 2: PROBLEMAS CRÍTICOS ── */}
           <section>
             <SectionLabel number="2" title="Problemas Críticos" />
-            <CriticalIssuesBlock data={data} />
+            <CriticalIssuesBlock data={data} onActionExecuted={fetchData} />
           </section>
 
           {/* ── CAMADA 3: GOVERNANÇA ── */}

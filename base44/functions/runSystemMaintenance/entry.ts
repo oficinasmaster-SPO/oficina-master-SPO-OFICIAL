@@ -1,6 +1,16 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
-const ALLOWED_ACTIONS = ['auditRBACHealth', 'cleanupExpiredInvites', 'cleanupAbandonedWorkshops'];
+const ALLOWED_ACTIONS = [
+  'auditRBACHealth',
+  'auditOrphanEmployees',
+  'auditOrphanUsers',
+  'cleanupExpiredInvites',
+  'cleanupAbandonedWorkshops',
+  'cleanupOrphanEmployees',
+  'repairOrphanEmployees',
+  'fixRBACProfiles',
+  'fixOrphanedWorkshopAdmins',
+];
 const FULL_CHECK_ACTIONS = ['auditRBACHealth', 'auditOrphanEmployees', 'auditOrphanUsers'];
 
 // ─── Lógica inline das ações (evita chamadas inter-função com problemas de auth) ───
@@ -159,12 +169,62 @@ async function execAuditOrphanUsers(sr) {
   return { orphans: orphans.length, total_users: users.length };
 }
 
+async function execCleanupOrphanEmployees(sr) {
+  // Delega para a função dedicada via service role
+  const employees = await sr.entities.Employee.list(null, 5000);
+  const users = await sr.entities.User.list(null, 5000);
+  const userIdSet = new Set(users.map(u => u.id));
+  const orphans = employees.filter(e => e.user_id && !userIdSet.has(e.user_id));
+  let cleaned = 0;
+  for (const emp of orphans) {
+    try {
+      await sr.entities.Employee.update(emp.id, { user_id: null });
+      cleaned++;
+    } catch (_) {}
+  }
+  return { orphans_found: orphans.length, cleaned, requires_manual: orphans.length - cleaned };
+}
+
+async function execRepairOrphanEmployees(sr) {
+  return execCleanupOrphanEmployees(sr);
+}
+
+async function execFixRBACProfiles(sr) {
+  const SOCIO_PROFILE_ID = '6a272f8ea3fa8dd02ca7350e';
+  const workshops = await sr.entities.Workshop.list(null, 2000);
+  const employees = await sr.entities.Employee.list(null, 5000);
+  let fixed = 0, failed = 0;
+  for (const ws of workshops) {
+    if (!ws.owner_id) continue;
+    const ownerEmp = employees.find(e => e.user_id === ws.owner_id && e.workshop_id === ws.id);
+    if (ownerEmp && ownerEmp.profile_id !== SOCIO_PROFILE_ID) {
+      try {
+        await sr.entities.Employee.update(ownerEmp.id, { profile_id: SOCIO_PROFILE_ID });
+        fixed++;
+      } catch (_) { failed++; }
+    }
+  }
+  return { fixed, failed, requires_manual: failed };
+}
+
+async function execFixOrphanedWorkshopAdmins(sr) {
+  const workshops = await sr.entities.Workshop.list(null, 2000);
+  const users = await sr.entities.User.list(null, 5000);
+  const userIdSet = new Set(users.map(u => u.id));
+  const problematic = workshops.filter(ws => ws.status !== 'inativo' && ws.owner_id && !userIdSet.has(ws.owner_id));
+  return { problematic: problematic.length, workshop_ids: problematic.map(w => w.id) };
+}
+
 const ACTION_EXECUTORS = {
   auditRBACHealth: execAuditRBACHealth,
-  cleanupExpiredInvites: execCleanupExpiredInvites,
-  cleanupAbandonedWorkshops: execCleanupAbandonedWorkshops,
   auditOrphanEmployees: execAuditOrphanEmployees,
   auditOrphanUsers: execAuditOrphanUsers,
+  cleanupExpiredInvites: execCleanupExpiredInvites,
+  cleanupAbandonedWorkshops: execCleanupAbandonedWorkshops,
+  cleanupOrphanEmployees: execCleanupOrphanEmployees,
+  repairOrphanEmployees: execRepairOrphanEmployees,
+  fixRBACProfiles: execFixRBACProfiles,
+  fixOrphanedWorkshopAdmins: execFixOrphanedWorkshopAdmins,
 };
 
 // ─── Executor genérico ───
