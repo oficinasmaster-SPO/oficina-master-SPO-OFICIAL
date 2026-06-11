@@ -22,6 +22,7 @@ import PromoteToAdminDialog from "@/components/admin/PromoteToAdminDialog";
 import PermissionExceptionsModal from "@/components/admin/PermissionExceptionsModal";
 import { PermissionRequestForm } from "@/components/rbac/PermissionRequestForm";
 import { usePermissionChangeRequest } from "@/components/rbac/hooks/usePermissionChangeRequest";
+import InviteStatsSection from "@/components/admin/InviteStatsSection";
 
 export default function UsuariosAdmin() {
   const [search, setSearch] = useState('');
@@ -232,6 +233,8 @@ export default function UsuariosAdmin() {
           </Button>
         </div>
       </div>
+
+      <InviteStatsSection />
 
       <Card>
         <CardContent className="p-4">
