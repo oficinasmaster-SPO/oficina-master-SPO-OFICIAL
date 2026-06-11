@@ -22,7 +22,6 @@ import PromoteToAdminDialog from "@/components/admin/PromoteToAdminDialog";
 import PermissionExceptionsModal from "@/components/admin/PermissionExceptionsModal";
 import { PermissionRequestForm } from "@/components/rbac/PermissionRequestForm";
 import { usePermissionChangeRequest } from "@/components/rbac/hooks/usePermissionChangeRequest";
-import InviteStatsSection from "@/components/admin/InviteStatsSection";
 
 export default function UsuariosAdmin() {
   const [search, setSearch] = useState('');
@@ -159,7 +158,9 @@ export default function UsuariosAdmin() {
 
   const handleResendAccess = async (user) => {
     try {
-      await base44.functions.invoke('createUserOnFirstAccess', { user_id: user.id });
+      // W4 FIX (2026-06-10): createUserOnFirstAccess espera invite_id, não user_id.
+      // Substituído por resendEmployeeInvite que localiza o invite pelo email e reenvia.
+      await base44.functions.invoke('resendEmployeeInvite', { email: user.email });
       toast.success('E-mail de acesso reenviado');
     } catch (error) {
       toast.error('Erro ao reenviar acesso: ' + error.message);
@@ -233,8 +234,6 @@ export default function UsuariosAdmin() {
           </Button>
         </div>
       </div>
-
-      <InviteStatsSection />
 
       <Card>
         <CardContent className="p-4">
