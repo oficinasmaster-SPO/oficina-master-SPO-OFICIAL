@@ -66,18 +66,29 @@ Deno.serve(async (req) => {
 
     const employeeId = idResponse.data?.employee_id || null;
 
-    // Buscar workshop para pegar seu identificador (Workshop ID)
-    const workshop = await base44.asServiceRole.entities.Workshop.get(workshop_id);
-    const workshopId = workshop?.identificador || workshop_id;
+    // P2 FIX (2026-06-10): substituído profile_id = 'workshopId.01' (string não-UUID) por
+    // busca do perfil canônico via job_role. O valor antigo causava UserProfile.get('001.01')
+    // → 404 silencioso → permissions=[]. Agora usa JOB_ROLE_TO_PROFILE_ID (IDs fixos).
+    const JOB_ROLE_TO_PROFILE_ID = {
+      'socio':            '6a272f8ea3fa8dd02ca7350e',
+      'diretor':          '6a272f8a983951dfc5cf3493',
+      'gerente':          '6a272f8976cba10c3232779a',
+      'supervisor_loja':  '6a272f91b92f3d2dfe6344be',
+      'rh':               '6a272f883b2162c800073ace',
+      'financeiro':       '6a285fc9f76402dd73736656',
+      'administrativo':   '6a285fc9f76402dd73736656',
+      'lider_tecnico':    '6a272f85fc4b85767f964421',
+      'comercial':        '6a272f96bc6eedd434194fcf',
+      'consultor_vendas': '6a272f96bc6eedd434194fcf',
+      'marketing':        '6a272f99aaeffc72c503fa5e',
+      'consultor':        '6a272f95957fe29d2e8a888a',
+    };
+    const FALLBACK_PROFILE_ID = '6a272f876b16129b2f5f31be'; // Técnico - Acesso Operacional
+    const resolvedProfileId = (profile_id && profile_id.length === 24)
+      ? profile_id  // ID UUID válido passado pelo chamador
+      : (JOB_ROLE_TO_PROFILE_ID[job_role] || FALLBACK_PROFILE_ID);
 
-    // Contar colaboradores existentes para gerar Profile ID automático
-    const allEmployees = await base44.asServiceRole.entities.Employee.filter({ workshop_id: workshop_id });
-    const employeeCount = Array.isArray(allEmployees) ? allEmployees.length + 1 : 1;
-    
-    // Gerar Profile ID: 001.01, 001.02, etc
-    const profileId = `${workshopId}.${String(employeeCount).padStart(2, '0')}`;
-
-    // 2. Criar Employee com Profile ID automático (INTERNO, não cliente)
+    // 2. Criar Employee com profile_id canônico (UUID válido)
     const employee = await base44.asServiceRole.entities.Employee.create({
       identificador: employeeId,
       full_name: name,
@@ -87,10 +98,10 @@ Deno.serve(async (req) => {
       area: area || 'tecnico',
       job_role: job_role || 'outros',
       status: 'ativo',
-      tipo_vinculo: 'interno', // CORRIGIDO: deve ser 'interno' para aparecer no UsuariosAdmin
+      tipo_vinculo: 'interno',
       is_internal: true,
       workshop_id: workshop_id,
-      profile_id: profileId, // OBRIGATÓRIO: usar o gerado, não o enviado
+      profile_id: resolvedProfileId,
       user_status: 'ativo',
       hire_date: new Date().toISOString().split('T')[0]
     });
@@ -114,7 +125,7 @@ Deno.serve(async (req) => {
         position: position || 'Colaborador',
         area: area || 'tecnico',
         job_role: job_role || 'outros',
-        profile_id: profile_id || profileId,
+        profile_id: resolvedProfileId,
         invite_token: inviteToken,
         invite_type: 'workshop',
         expires_at: expiresAt.toISOString(),
@@ -171,7 +182,7 @@ Deno.serve(async (req) => {
     const inviteDomain = `https://oficinasmastergtr.com`;
     
     const inviteLink = invite && invite.invite_token
-      ? `${inviteDomain}/PrimeiroAcesso?token=${invite.invite_token}&workshop_id=${workshop_id}&profile_id=${profileId}&employee_id=${employee.id}`
+      ? `${inviteDomain}/PrimeiroAcesso?token=${invite.invite_token}&workshop_id=${workshop_id}&profile_id=${resolvedProfileId}&employee_id=${employee.id}`
       : `${inviteDomain}/PrimeiroAcesso`;
 
     console.log("🔗 Convite encontrado:", invite?.invite_token, "Link:", inviteLink);
