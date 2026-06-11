@@ -227,7 +227,7 @@ export default function CadastroUsuarioDiretoModal({ open, onClose, onOpenChange
       user_type: 'internal',
       role: 'user',
       tipo_vinculo: 'interno',
-      is_internal: true,
+      // W7 FIX (2026-06-10): is_internal removido — campo deprecated. Fonte canônica: user_type.
     });
   };
 
@@ -242,7 +242,7 @@ export default function CadastroUsuarioDiretoModal({ open, onClose, onOpenChange
       user_type: 'external',
       role: 'user',
       tipo_vinculo: 'cliente',
-      is_internal: false,
+      // W7 FIX (2026-06-10): is_internal removido — campo deprecated.
     };
     if (!payload.profile_id) delete payload.profile_id;
     createUserMutation.mutate(payload);
