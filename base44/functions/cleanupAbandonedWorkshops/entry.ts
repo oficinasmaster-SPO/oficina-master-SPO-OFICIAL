@@ -1,180 +1,179 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
-// R3 FIX (Opção B): Limpeza periódica de workshops rascunho abandonados.
-//
-// Detecta workshops com status='rascunho' criados há mais de 48h e toma 3 ações:
-//
-// CASO 1: Tem Employee + tem nome → Promove para ativo
-//   Onboarding estava incompleto mas não abandonado — owner voltará e encontrará tudo pronto.
-//
-// CASO 2: Sem Employee + owner tem outro workshop ativo → Inativa
-//   Duplicata de onboarding abandonado — limpar para não confundir.
-//
-// CASO 3: Sem Employee + owner sem workshop ativo → Cria Employee placeholder (Sócio)
-//   Owner ficou sem Employee — recuperar acesso para quando voltar.
-//
-// GET ?dry_run=true → mostra o que faria sem alterar nada
-// POST {}           → executa as ações
+/**
+ * R3 — Limpeza de Workshops rascunho abandonados (Opção B)
+ *
+ * Detecta Workshops em status 'rascunho' com mais de 48h sem Employee vinculado.
+ * Esses são registros criados por Cadastro.jsx quando o usuário abandonou o
+ * onboarding antes de completar o cadastro do sócio.
+ *
+ * Agendamento recomendado: diário, às 03:00
+ *
+ * GET  ?dry_run=true → mostra o que seria inativado, sem alterar
+ * POST {}            → executa a limpeza
+ */
 
+const ABANDONED_THRESHOLD_HOURS = 48;
 const SOCIO_PROFILE_ID = '6a272f8ea3fa8dd02ca7350e'; // Sócio - Acesso Total
-const DEFAULT_CONSULTING_FIRM_ID = '69bab264d7c3fe5d367c3959';
+
+// Telemetria estruturada para todas as ações de recuperação/limpeza
+async function logEvent(base44, tag, payload) {
+  const entry = { tag, timestamp: new Date().toISOString(), ...payload };
+  console.log(`[${tag}]`, JSON.stringify(entry));
+  try {
+    await base44.asServiceRole.entities.UserActivityLog.create({
+      action: tag,
+      entity_type: 'Workshop',
+      details: entry,
+      timestamp: entry.timestamp
+    });
+  } catch (_) { /* telemetria nunca deve bloquear a operação principal */ }
+}
 
 Deno.serve(async (req) => {
+  try {
     const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me();
 
-    // Admin-only
-    try {
-        const currentUser = await base44.auth.me();
-        if (!currentUser || currentUser.role !== 'admin') {
-            return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
-        }
-    } catch (_) {
-        return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!user || user.role !== 'admin') {
+      return Response.json({ error: 'Apenas administradores' }, { status: 403 });
     }
 
     const url = new URL(req.url);
-    const dryRun = req.method === 'GET' || url.searchParams.get('dry_run') === 'true';
+    const dry_run = url.searchParams.get('dry_run') === 'true' || req.method === 'GET';
 
-    console.log(`🔍 cleanupAbandonedWorkshops — modo: ${dryRun ? 'DRY RUN' : 'EXECUÇÃO'}`);
+    const cutoff = new Date(Date.now() - ABANDONED_THRESHOLD_HOURS * 60 * 60 * 1000);
 
-    const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
-
-    // Buscar todos os workshops rascunho
+    // Buscar workshops rascunho
     const rascunhos = await base44.asServiceRole.entities.Workshop.filter({ status: 'rascunho' });
 
-    if (!rascunhos || rascunhos.length === 0) {
-        return Response.json({ success: true, message: 'Nenhum workshop rascunho encontrado.', processed: 0 });
-    }
+    const abandoned = [];
+    const recovered = [];
 
-    // Filtrar apenas os criados há mais de 48h
-    const antigos = rascunhos.filter(w => w.created_date && w.created_date < cutoff);
-    console.log(`📋 Workshops rascunho com >48h: ${antigos.length} de ${rascunhos.length} total`);
+    for (const ws of rascunhos) {
+      const createdAt = new Date(ws.created_date);
 
-    const results = {
-        dry_run: dryRun,
-        total_rascunhos: rascunhos.length,
-        total_antigos: antigos.length,
-        caso1_promovidos: [],
-        caso2_inativados: [],
-        caso3_employee_criado: [],
-        erros: []
-    };
+      // PROTEÇÃO: Recente (< 48h) — pode ainda estar em onboarding ativo. Não tocar.
+      if (createdAt > cutoff) continue;
 
-    for (const workshop of antigos) {
-        try {
-            const ownerId = workshop.owner_id;
-            if (!ownerId) {
-                results.erros.push({ workshop_id: workshop.id, reason: 'sem owner_id' });
-                continue;
-            }
-
-            // Buscar employees deste workshop
-            const employees = await base44.asServiceRole.entities.Employee.filter({
-                workshop_id: workshop.id
-            });
-            const hasEmployee = employees && employees.length > 0;
-            const hasName = !!(workshop.name && workshop.name.trim() !== '' && workshop.name !== 'A Definir');
-
-            if (hasEmployee && hasName) {
-                // CASO 1: Tem Employee + tem nome → Promover para ativo
-                console.log(`✅ [CASO 1] Workshop ${workshop.id} tem employee e nome — promovendo para ativo`);
-                results.caso1_promovidos.push({
-                    workshop_id: workshop.id,
-                    workshop_name: workshop.name,
-                    owner_id: ownerId,
-                    employee_count: employees.length
-                });
-                if (!dryRun) {
-                    await base44.asServiceRole.entities.Workshop.update(workshop.id, { status: 'ativo' });
-                }
-            } else if (!hasEmployee) {
-                // Verificar se owner tem outro workshop ativo
-                const outrosAtivos = await base44.asServiceRole.entities.Workshop.filter({
-                    owner_id: ownerId,
-                    status: 'ativo'
-                });
-                const hasOutroAtivo = outrosAtivos && outrosAtivos.length > 0;
-
-                if (hasOutroAtivo) {
-                    // CASO 2: Sem Employee + owner tem workshop ativo → Inativar (duplicata)
-                    console.log(`🗑️ [CASO 2] Workshop ${workshop.id} é duplicata abandonada — inativando`);
-                    results.caso2_inativados.push({
-                        workshop_id: workshop.id,
-                        workshop_name: workshop.name || '(sem nome)',
-                        owner_id: ownerId,
-                        workshop_ativo_existente: outrosAtivos[0].id
-                    });
-                    if (!dryRun) {
-                        await base44.asServiceRole.entities.Workshop.update(workshop.id, { status: 'inativo' });
-                    }
-                } else {
-                    // CASO 3: Sem Employee + owner sem workshop ativo → Criar Employee placeholder
-                    console.log(`🏗️ [CASO 3] Workshop ${workshop.id} sem Employee e sem ativo — criando Employee placeholder`);
-
-                    // Buscar dados do owner
-                    let ownerName = 'Proprietário';
-                    let ownerEmail = '';
-                    let consultingFirmId = workshop.consulting_firm_id || DEFAULT_CONSULTING_FIRM_ID;
-                    try {
-                        const ownerUser = await base44.asServiceRole.entities.User.get(ownerId);
-                        if (ownerUser) {
-                            ownerName = ownerUser.full_name || ownerUser.email?.split('@')[0] || 'Proprietário';
-                            ownerEmail = ownerUser.email || '';
-                            consultingFirmId = ownerUser.consulting_firm_id || consultingFirmId;
-                        }
-                    } catch (_) {}
-
-                    results.caso3_employee_criado.push({
-                        workshop_id: workshop.id,
-                        workshop_name: workshop.name || '(sem nome)',
-                        owner_id: ownerId,
-                        owner_email: ownerEmail
-                    });
-
-                    if (!dryRun) {
-                        await base44.asServiceRole.entities.Employee.create({
-                            workshop_id: workshop.id,
-                            consulting_firm_id: consultingFirmId,
-                            user_id: ownerId,
-                            full_name: ownerName,
-                            email: ownerEmail,
-                            position: 'Sócio/Proprietário',
-                            job_role: 'socio',
-                            area: 'gerencia',
-                            tipo_vinculo: 'cliente',
-                            user_type: 'external',
-                            is_partner: true,
-                            is_internal: false,
-                            status: 'ativo',
-                            user_status: 'ativo',
-                            profile_id: SOCIO_PROFILE_ID,
-                            hire_date: new Date().toISOString().split('T')[0]
-                        });
-                        // Não promover para ativo — onboarding ainda pode estar incompleto
-                        // Owner verá workshop rascunho e poderá continuar cadastro
-                    }
-                }
-            }
-            // hasEmployee mas sem nome: ignorar — owner ainda pode estar preenchendo
-        } catch (err) {
-            console.error(`❌ Erro ao processar workshop ${workshop.id}:`, err.message);
-            results.erros.push({ workshop_id: workshop.id, reason: err.message });
+      // Buscar owner para verificar último acesso
+      let ownerLastAccess = null;
+      try {
+        const ownerUser = await base44.asServiceRole.entities.User.get(ws.owner_id);
+        if (ownerUser?.last_login_at) {
+          ownerLastAccess = new Date(ownerUser.last_login_at);
         }
+      } catch (_) {}
+
+      // PROTEÇÃO: Owner acessou recentemente (< 48h) — onboarding pode estar em andamento. Não tocar.
+      if (ownerLastAccess && ownerLastAccess > cutoff) {
+        console.log(`⏭️ [R3] Workshop ${ws.id} ignorado — owner com acesso recente (${ownerLastAccess.toISOString()})`);
+        continue;
+      }
+
+      // Verificar se tem Employee ativo
+      const employees = await base44.asServiceRole.entities.Employee.filter({
+        workshop_id: ws.id,
+        status: 'ativo'
+      });
+
+      if (employees.length > 0) {
+        // Tem Employee e tem nome — onboarding incompleto mas não abandonado. Promover para ativo.
+        if (ws.name && ws.name.trim() !== '') {
+          recovered.push({
+            workshop_id: ws.id,
+            name: ws.name,
+            owner_id: ws.owner_id,
+            action: 'promote_to_ativo',
+            employee_count: employees.length
+          });
+          if (!dry_run) {
+            await base44.asServiceRole.entities.Workshop.update(ws.id, { status: 'ativo' });
+            await logEvent(base44, 'WORKSHOP_RECOVERY', {
+              workshop_id: ws.id,
+              owner_id: ws.owner_id,
+              action: 'promote_to_ativo',
+              reason: 'Rascunho com Employee e nome — promovido para ativo',
+              employee_count: employees.length
+            });
+          }
+        }
+        continue;
+      }
+
+      // Sem Employee — verificar se owner tem outro workshop ativo
+      const ownerWorkshops = await base44.asServiceRole.entities.Workshop.filter({
+        owner_id: ws.owner_id,
+        status: 'ativo'
+      });
+
+      if (ownerWorkshops.length > 0) {
+        // Owner tem workshop ativo — este rascunho é duplicata. Inativar.
+        abandoned.push({
+          workshop_id: ws.id,
+          name: ws.name || '(sem nome)',
+          owner_id: ws.owner_id,
+          created_date: ws.created_date,
+          age_hours: Math.round((Date.now() - createdAt.getTime()) / 3600000),
+          action: 'inativar_duplicata',
+          reason: 'Owner já tem workshop ativo'
+        });
+        if (!dry_run) {
+          await base44.asServiceRole.entities.Workshop.update(ws.id, { status: 'inativo' });
+          await logEvent(base44, 'WORKSHOP_DEACTIVATED', {
+            workshop_id: ws.id,
+            owner_id: ws.owner_id,
+            action: 'inativar_duplicata',
+            reason: 'Owner já tem workshop ativo — rascunho é duplicata'
+          });
+        }
+      } else {
+        // Owner sem workshop ativo — criar Employee placeholder para recuperar acesso.
+        abandoned.push({
+          workshop_id: ws.id,
+          name: ws.name || '(sem nome)',
+          owner_id: ws.owner_id,
+          created_date: ws.created_date,
+          age_hours: Math.round((Date.now() - createdAt.getTime()) / 3600000),
+          action: 'create_placeholder_employee',
+          reason: 'Signup abandonado — criando Employee para recuperar acesso'
+        });
+        if (!dry_run) {
+          await base44.asServiceRole.entities.Employee.create({
+            workshop_id: ws.id,
+            user_id: ws.owner_id,
+            full_name: 'Proprietário',
+            email: '',
+            job_role: 'socio',
+            profile_id: SOCIO_PROFILE_ID,
+            status: 'ativo',
+            user_status: 'ativo',
+            tipo_vinculo: 'cliente',
+            is_partner: true,
+            hire_date: new Date().toISOString().split('T')[0]
+          });
+          await logEvent(base44, 'OWNER_EMPLOYEE_CREATED', {
+            workshop_id: ws.id,
+            owner_id: ws.owner_id,
+            action: 'create_placeholder_employee',
+            reason: 'Signup abandonado — Employee placeholder criado para recuperar acesso'
+          });
+        }
+      }
     }
-
-    const summary = {
-        caso1_promovidos: results.caso1_promovidos.length,
-        caso2_inativados: results.caso2_inativados.length,
-        caso3_employee_criado: results.caso3_employee_criado.length,
-        erros: results.erros.length
-    };
-
-    console.log(`📊 Resumo: ${JSON.stringify(summary)}`);
 
     return Response.json({
-        success: true,
-        dry_run: dryRun,
-        summary,
-        details: results
+      mode: dry_run ? 'dry_run' : 'execute',
+      threshold_hours: ABANDONED_THRESHOLD_HOURS,
+      rascunhos_encontrados: rascunhos.length,
+      recentes_ignorados: rascunhos.length - abandoned.length - recovered.length,
+      recovered,
+      abandoned,
+      actions_taken: dry_run ? 0 : abandoned.length + recovered.length
     });
+
+  } catch (err) {
+    console.error('[R3] Erro:', err);
+    return Response.json({ error: err.message }, { status: 500 });
+  }
 });
