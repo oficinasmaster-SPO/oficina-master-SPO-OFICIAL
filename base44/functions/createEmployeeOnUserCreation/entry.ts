@@ -94,8 +94,8 @@ Deno.serve(async (req) => {
             job_role: inviteData.job_role || 'outros',
             area: inviteData.area || 'administrativo',
             tipo_vinculo: 'cliente',
-            status: 'ativo',
-            user_status: 'ativo',
+            status: 'pending',      // R16: novo Employee sem user_id ainda não aceitou convite
+            user_status: 'pending',
             hire_date: new Date().toISOString().split('T')[0]
         };
 

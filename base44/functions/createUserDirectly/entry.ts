@@ -227,6 +227,7 @@ Deno.serve(async (req) => {
       job_role: job_role || 'outros',
       area: area || 'administrativo',
       profile_id: finalProfileId,
+      status: 'pending',      // R16: Employee nasce como pending até /PrimeiroAcesso concluído
       user_status: 'pending',
       user_type: isInternalUser ? 'internal' : 'external',
       is_internal: isInternalUser,
