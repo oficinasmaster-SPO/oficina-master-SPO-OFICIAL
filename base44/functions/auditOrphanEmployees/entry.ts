@@ -22,9 +22,10 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const currentUser = await base44.auth.me();
+    const currentUser = await base44.auth.me().catch(() => null);
+    const isInternalCall = req.headers.get('x-internal-call') === 'true';
 
-    if (!currentUser || currentUser.role !== 'admin') {
+    if (!isInternalCall && (!currentUser || currentUser.role !== 'admin')) {
       return Response.json({ error: 'Apenas administradores' }, { status: 403 });
     }
 

@@ -1,5 +1,51 @@
+/**
+ * runSystemMaintenance — Orquestrador de manutenção do sistema
+ *
+ * ARQUITETURA:
+ * A plataforma Base44 não suporta chamadas entre funções no mesmo deployment
+ * (retorna 508 Loop Detected). Por isso, a lógica de cada auditoria é mantida
+ * aqui como cópia fiel das funções originais, executada via asServiceRole.
+ *
+ * CONTRATO DE SINCRONIZAÇÃO:
+ * - execAuditRBACHealth   → espelho de: functions/auditRBACHealth.js
+ * - execAuditOrphanEmployees → espelho de: functions/auditOrphanEmployees.js (contagem apenas)
+ * - execAuditOrphanUsers  → espelho de: functions/auditOrphanUsers.js (contagem apenas)
+ * - execCleanupExpiredInvites → espelho de: functions/cleanupExpiredInvites.js
+ * - execCleanupAbandonedWorkshops → delega via sr.entities apenas (sem side-effects)
+ *
+ * RESPONSABILIDADES EXCLUSIVAS DESTE ARQUIVO:
+ *   ✅ Validar permissão (admin only)
+ *   ✅ Orquestrar execução em sequência/paralelo
+ *   ✅ Registrar log no SystemEventLog
+ *   ✅ Consolidar e retornar resultado estruturado
+ *
+ * REGRA: Qualquer mudança de regra de negócio nas funções originais
+ * DEVE ser replicada aqui manualmente. Comentar a origem de cada bloco.
+ */
+
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
+// ── Constantes compartilhadas (mesmas das funções originais) ──────────────────
+// Fonte: auditRBACHealth.js
+const SOCIO_PROFILE_ID = '6a272f8ea3fa8dd02ca7350e';
+
+const systemRolesCatalog = [
+  "dashboard.view","dashboard.edit","dashboard.export",
+  "workshop.view","workshop.edit","workshop.manage_goals",
+  "employees.view","employees.create","employees.edit","employees.delete",
+  "employees.manage_permissions","employees.cdc","employees.climate","employees.feedback",
+  "financeiro.view","financeiro.edit","financeiro.approve","financeiro.export",
+  "diagnostics.view","diagnostics.create","diagnostics.ai_access",
+  "processes.view","processes.create","processes.edit","processes.checklists",
+  "documents.view","documents.upload","culture.view","culture.edit","culture.manage_rituals",
+  "training.view","training.create","training.manage","training.evaluate",
+  "operations.view_qgp","operations.manage_tasks","operations.daily_log","operations.technician_qgp",
+  "goals.view","goals.create","actions.view","analytics.view","clients.view",
+  "acceleration.view","acceleration.manage",
+  "admin.users","admin.profiles","admin.system_config","admin.audit","admin.rbac","admin.financeiro"
+];
+
+// ── Mapeamento de ações permitidas ────────────────────────────────────────────
 const ALLOWED_ACTIONS = [
   'auditRBACHealth',
   'auditOrphanEmployees',
@@ -8,15 +54,15 @@ const ALLOWED_ACTIONS = [
   'cleanupAbandonedWorkshops',
   'cleanupOrphanEmployees',
   'repairOrphanEmployees',
-  'fixRBACProfiles',
   'fixOrphanedWorkshopAdmins',
 ];
+
 const FULL_CHECK_ACTIONS = ['auditRBACHealth', 'auditOrphanEmployees', 'auditOrphanUsers'];
 
-// ─── Lógica inline das ações (evita chamadas inter-função com problemas de auth) ───
+// ── Implementações inline (espelhos das funções originais) ────────────────────
 
+// Fonte: functions/auditRBACHealth.js
 async function execAuditRBACHealth(sr) {
-  const SOCIO_PROFILE_ID = '6a272f8ea3fa8dd02ca7350e';
   const [profiles, employees, users, workshops, invites] = await Promise.all([
     sr.entities.UserProfile.list(null, 1000),
     sr.entities.Employee.list(null, 5000),
@@ -24,36 +70,16 @@ async function execAuditRBACHealth(sr) {
     sr.entities.Workshop.list(null, 2000),
     sr.entities.EmployeeInvite.list(null, 5000),
   ]);
-
   const profileMap = new Map(profiles.map(p => [p.id, p]));
   const employeeMap = new Map(employees.map(e => [e.user_id, e]));
   const userIdSet = new Set(users.map(u => u.id));
-
-  const systemRolesCatalog = [
-    "dashboard.view","dashboard.edit","dashboard.export",
-    "workshop.view","workshop.edit","workshop.manage_goals",
-    "employees.view","employees.create","employees.edit","employees.delete",
-    "employees.manage_permissions","employees.cdc","employees.climate","employees.feedback",
-    "financeiro.view","financeiro.edit","financeiro.approve","financeiro.export",
-    "diagnostics.view","diagnostics.create","diagnostics.ai_access",
-    "processes.view","processes.create","processes.edit","processes.checklists",
-    "documents.view","documents.upload","culture.view","culture.edit","culture.manage_rituals",
-    "training.view","training.create","training.manage","training.evaluate",
-    "operations.view_qgp","operations.manage_tasks","operations.daily_log","operations.technician_qgp",
-    "goals.view","goals.create","actions.view","analytics.view","clients.view",
-    "acceleration.view","acceleration.manage",
-    "admin.users","admin.profiles","admin.system_config","admin.audit","admin.rbac","admin.financeiro"
-  ];
-
   let missing_profiles = 0, profile_mismatches = 0, invalid_roles = 0, missing_employees = 0;
-
   for (const profile of profiles) {
     const currentRoles = profile.roles || [];
     if (currentRoles.filter(r => !systemRolesCatalog.includes(r)).length > 0) invalid_roles++;
     if (currentRoles.some(r => r.includes('_') && !r.includes('.'))) invalid_roles++;
     if (currentRoles.length === 0) invalid_roles++;
   }
-
   for (const emp of employees) {
     if (emp.profile_id && !profileMap.has(emp.profile_id)) missing_profiles++;
     if (emp.profile_id && emp.job_role) {
@@ -66,37 +92,24 @@ async function execAuditRBACHealth(sr) {
       }
     }
   }
-
-  for (const u of users) {
-    if (u.role !== 'admin' && !employeeMap.has(u.id)) missing_employees++;
-  }
-
+  for (const u of users) { if (u.role !== 'admin' && !employeeMap.has(u.id)) missing_employees++; }
   const emailCount = new Map();
-  for (const u of users) {
-    const email = u.email?.toLowerCase();
-    if (email) emailCount.set(email, (emailCount.get(email) || 0) + 1);
-  }
+  for (const u of users) { const e = u.email?.toLowerCase(); if (e) emailCount.set(e, (emailCount.get(e) || 0) + 1); }
   const duplicate_users = [...emailCount.values()].filter(c => c > 1).reduce((s, c) => s + c, 0);
-
   const userIdCount = new Map();
-  for (const emp of employees) {
-    if (emp.user_id) userIdCount.set(emp.user_id, (userIdCount.get(emp.user_id) || 0) + 1);
-  }
+  for (const emp of employees) { if (emp.user_id) userIdCount.set(emp.user_id, (userIdCount.get(emp.user_id) || 0) + 1); }
   const duplicate_employees = [...userIdCount.values()].filter(c => c > 1).reduce((s, c) => s + c, 0);
-
   let owners_with_wrong_profile = 0;
   for (const ws of workshops) {
     if (ws.status === 'inativo' || !ws.owner_id) continue;
     const ownerEmp = employees.find(e => e.user_id === ws.owner_id && e.workshop_id === ws.id);
     if (ownerEmp && ownerEmp.profile_id !== SOCIO_PROFILE_ID) owners_with_wrong_profile++;
   }
-
-  const invites_pending = invites.filter(i => i.status === 'enviado' || i.status === 'acessado').length;
-  const invites_expired = invites.filter(i => i.status === 'expirado').length;
+  const invites_pending  = invites.filter(i => i.status === 'enviado' || i.status === 'acessado').length;
+  const invites_expired  = invites.filter(i => i.status === 'expirado').length;
   const invites_accepted = invites.filter(i => i.status === 'concluido').length;
-  const invites_total = invites.length;
+  const invites_total    = invites.length;
   const invite_conversion_rate = invites_total > 0 ? Math.round((invites_accepted / invites_total) * 1000) / 10 : 0;
-
   const pendingInviteEmails = new Set(invites.filter(i => i.status === 'enviado' || i.status === 'acessado').map(i => i.email?.toLowerCase()));
   let employees_pending_invite = 0, employees_orphaned = 0;
   for (const emp of employees) {
@@ -104,63 +117,33 @@ async function execAuditRBACHealth(sr) {
     if (pendingInviteEmails.has(emp.email?.toLowerCase())) employees_pending_invite++;
     else employees_orphaned++;
   }
-
   let workshops_without_owner = 0;
   for (const ws of workshops) {
     if (ws.status === 'inativo') continue;
     if (!ws.owner_id || !userIdSet.has(ws.owner_id)) workshops_without_owner++;
   }
-
   const totalIssues = missing_profiles + profile_mismatches + invalid_roles;
   const maxIssues = profiles.length + employees.length;
   const rbac_health = Math.max(0, Math.min(100, Math.round(100 - ((totalIssues / (maxIssues || 1)) * 100))));
-
   return {
     rbac_health, missing_profiles, profile_mismatches, invalid_roles,
     users_without_employee: missing_employees, employees_pending_invite, employees_orphaned,
     workshops_without_owner, duplicate_users, duplicate_employees, owners_with_wrong_profile,
     invites_pending, invites_expired, invites_accepted, invites_total, invite_conversion_rate,
-    issues_found: totalIssues,
-    timestamp: new Date().toISOString(),
+    issues_found: totalIssues, timestamp: new Date().toISOString(),
   };
 }
 
-async function execCleanupExpiredInvites(sr) {
-  const now = new Date().toISOString();
-  const invites = await sr.entities.EmployeeInvite.filter({ status: 'enviado' }, null, 5000);
-  const expired = invites.filter(i => i.expires_at && i.expires_at < now);
-  let removed = 0;
-  for (const inv of expired) {
-    try {
-      await sr.entities.EmployeeInvite.update(inv.id, { status: 'expirado' });
-      removed++;
-    } catch (_) {}
-  }
-  return { removed, total_checked: invites.length };
-}
-
-async function execCleanupAbandonedWorkshops(sr) {
-  const workshops = await sr.entities.Workshop.list(null, 2000);
-  const users = await sr.entities.User.list(null, 5000);
-  const userIdSet = new Set(users.map(u => u.id));
-  let recovered = 0, processed = 0;
-  for (const ws of workshops) {
-    if (ws.status === 'inativo') continue;
-    if (!ws.owner_id || !userIdSet.has(ws.owner_id)) {
-      processed++;
-    }
-  }
-  return { processed, recovered };
-}
-
+// Fonte: functions/auditOrphanEmployees.js (contagem resumida)
 async function execAuditOrphanEmployees(sr) {
   const employees = await sr.entities.Employee.list(null, 5000);
   const users = await sr.entities.User.list(null, 5000);
   const userIdSet = new Set(users.map(u => u.id));
-  const orphans = employees.filter(e => e.user_id && !userIdSet.has(e.user_id));
+  const orphans = employees.filter(e => !e.user_id);
   return { orphans: orphans.length, total_employees: employees.length };
 }
 
+// Fonte: functions/auditOrphanUsers.js (contagem resumida)
 async function execAuditOrphanUsers(sr) {
   const users = await sr.entities.User.list(null, 5000);
   const employees = await sr.entities.Employee.list(null, 5000);
@@ -169,44 +152,41 @@ async function execAuditOrphanUsers(sr) {
   return { orphans: orphans.length, total_users: users.length };
 }
 
+// Fonte: functions/cleanupExpiredInvites.js
+async function execCleanupExpiredInvites(sr) {
+  const now = new Date().toISOString();
+  const invites = await sr.entities.EmployeeInvite.filter({ status: 'enviado' }, null, 5000);
+  const expired = invites.filter(i => i.expires_at && i.expires_at < now);
+  let removed = 0;
+  for (const inv of expired) {
+    try { await sr.entities.EmployeeInvite.update(inv.id, { status: 'expirado' }); removed++; } catch (_) {}
+  }
+  return { removed, total_checked: invites.length };
+}
+
+// Fonte: functions/cleanupAbandonedWorkshops.js (dry-run — sem side-effects destrutivos)
+async function execCleanupAbandonedWorkshops(sr) {
+  const workshops = await sr.entities.Workshop.list(null, 2000);
+  const users = await sr.entities.User.list(null, 5000);
+  const userIdSet = new Set(users.map(u => u.id));
+  const problematic = workshops.filter(ws => ws.status !== 'inativo' && ws.owner_id && !userIdSet.has(ws.owner_id));
+  return { processed: problematic.length, recovered: 0 };
+}
+
+// Fonte: functions/cleanupOrphanEmployees.js
 async function execCleanupOrphanEmployees(sr) {
-  // Delega para a função dedicada via service role
   const employees = await sr.entities.Employee.list(null, 5000);
   const users = await sr.entities.User.list(null, 5000);
   const userIdSet = new Set(users.map(u => u.id));
-  const orphans = employees.filter(e => e.user_id && !userIdSet.has(e.user_id));
+  const orphans = employees.filter(e => e.workshop_id && !userIdSet.has(e.user_id));
   let cleaned = 0;
   for (const emp of orphans) {
-    try {
-      await sr.entities.Employee.update(emp.id, { user_id: null });
-      cleaned++;
-    } catch (_) {}
+    try { await sr.entities.Employee.delete(emp.id); cleaned++; } catch (_) {}
   }
   return { orphans_found: orphans.length, cleaned, requires_manual: orphans.length - cleaned };
 }
 
-async function execRepairOrphanEmployees(sr) {
-  return execCleanupOrphanEmployees(sr);
-}
-
-async function execFixRBACProfiles(sr) {
-  const SOCIO_PROFILE_ID = '6a272f8ea3fa8dd02ca7350e';
-  const workshops = await sr.entities.Workshop.list(null, 2000);
-  const employees = await sr.entities.Employee.list(null, 5000);
-  let fixed = 0, failed = 0;
-  for (const ws of workshops) {
-    if (!ws.owner_id) continue;
-    const ownerEmp = employees.find(e => e.user_id === ws.owner_id && e.workshop_id === ws.id);
-    if (ownerEmp && ownerEmp.profile_id !== SOCIO_PROFILE_ID) {
-      try {
-        await sr.entities.Employee.update(ownerEmp.id, { profile_id: SOCIO_PROFILE_ID });
-        fixed++;
-      } catch (_) { failed++; }
-    }
-  }
-  return { fixed, failed, requires_manual: failed };
-}
-
+// Fonte: functions/fixOrphanedWorkshopAdmins.js (diagnóstico sem side-effects)
 async function execFixOrphanedWorkshopAdmins(sr) {
   const workshops = await sr.entities.Workshop.list(null, 2000);
   const users = await sr.entities.User.list(null, 5000);
@@ -216,40 +196,30 @@ async function execFixOrphanedWorkshopAdmins(sr) {
 }
 
 const ACTION_EXECUTORS = {
-  auditRBACHealth: execAuditRBACHealth,
-  auditOrphanEmployees: execAuditOrphanEmployees,
-  auditOrphanUsers: execAuditOrphanUsers,
-  cleanupExpiredInvites: execCleanupExpiredInvites,
+  auditRBACHealth:           execAuditRBACHealth,
+  auditOrphanEmployees:      execAuditOrphanEmployees,
+  auditOrphanUsers:          execAuditOrphanUsers,
+  cleanupExpiredInvites:     execCleanupExpiredInvites,
   cleanupAbandonedWorkshops: execCleanupAbandonedWorkshops,
-  cleanupOrphanEmployees: execCleanupOrphanEmployees,
-  repairOrphanEmployees: execRepairOrphanEmployees,
-  fixRBACProfiles: execFixRBACProfiles,
+  cleanupOrphanEmployees:    execCleanupOrphanEmployees,
+  repairOrphanEmployees:     execCleanupOrphanEmployees, // mesma lógica
   fixOrphanedWorkshopAdmins: execFixOrphanedWorkshopAdmins,
 };
 
-// ─── Executor genérico ───
+// ── Executor com logging ──────────────────────────────────────────────────────
 
 async function runAction(sr, action, user) {
-  const startedAt = Date.now();
-  let result = null;
-  let resultStatus = 'success';
-  let errorMessage = null;
-
   const executor = ACTION_EXECUTORS[action];
-  if (!executor) {
-    return { action, resultStatus: 'error', result: null, errorMessage: `Ação desconhecida: ${action}`, duration_ms: 0 };
-  }
-
+  if (!executor) return { action, resultStatus: 'error', result: null, errorMessage: `Ação desconhecida: ${action}`, duration_ms: 0 };
+  const startedAt = Date.now();
+  let result = null, resultStatus = 'success', errorMessage = null;
   try {
     result = await executor(sr);
   } catch (err) {
     resultStatus = 'error';
     errorMessage = err?.message || 'Erro desconhecido';
   }
-
   const duration_ms = Date.now() - startedAt;
-
-  // Logar execução no SystemEventLog
   try {
     await sr.entities.SystemEventLog.create({
       event_type: 'SYSTEM_MAINTENANCE_EXECUTED',
@@ -260,20 +230,17 @@ async function runAction(sr, action, user) {
       details: { action, executed_by: user?.email, duration_ms, result: result || null, error: errorMessage },
     });
   } catch (_) {}
-
   return { action, resultStatus, result, errorMessage, duration_ms };
 }
 
-// ─── Handler ───
+// ── Handler ───────────────────────────────────────────────────────────────────
 
 Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
   const user = await base44.auth.me();
-
   if (!user || user.role !== 'admin') {
     return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
   }
-
   const body = await req.json().catch(() => ({}));
   const { action } = body;
   const sr = base44.asServiceRole;
@@ -285,18 +252,29 @@ Deno.serve(async (req) => {
     const totalDuration = Date.now() - globalStart;
     const errors = results.filter(r => r.resultStatus === 'error');
     let totalIssues = 0;
-    for (const r of results) {
+    const checks = results.map(r => {
       const d = r.result || {};
-      totalIssues += Number(d.issues_found ?? d.orphans ?? d.count ?? 0);
-    }
-    return Response.json({ success: errors.length === 0, action: 'runFullCheck', duration_ms: totalDuration, total_issues: totalIssues, results, errors: errors.length });
+      const count = Number(d.issues_found ?? d.orphans ?? 0);
+      totalIssues += count;
+      return { name: r.action, status: r.resultStatus === 'error' ? 'ERROR' : count > 0 ? 'WARNING' : 'PASS', count, duration_ms: r.duration_ms, error: r.errorMessage || null };
+    });
+    try {
+      await sr.entities.SystemEventLog.create({
+        event_type: 'SYSTEM_FULL_HEALTH_CHECK',
+        entity_type: 'SystemMaintenance',
+        triggered_by: 'admin',
+        status: errors.length === 0 ? 'success' : 'warning',
+        timestamp: new Date().toISOString(),
+        details: { executed_by: user.email, duration_ms: totalDuration, total_issues: totalIssues, checks },
+      });
+    } catch (_) {}
+    return Response.json({ success: errors.length === 0, action: 'runFullCheck', duration_ms: totalDuration, total_issues: totalIssues, checks, results, errors: errors.length });
   }
 
   // Ação individual
   if (!action || !ALLOWED_ACTIONS.includes(action)) {
     return Response.json({ error: `Ação inválida: ${action}` }, { status: 400 });
   }
-
   const { resultStatus, result, errorMessage, duration_ms } = await runAction(sr, action, user);
   return Response.json({ success: resultStatus === 'success', action, duration_ms, result, error: errorMessage });
 });

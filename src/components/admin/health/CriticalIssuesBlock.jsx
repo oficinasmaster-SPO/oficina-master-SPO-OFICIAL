@@ -68,7 +68,7 @@ const ISSUE_REGISTRY = {
     ],
     detected_by: "auditRBACHealth",
     audit_action: "auditRBACHealth",
-    fix_action: "fixRBACProfiles",
+    fix_action: "fixOrphanedWorkshopAdmins",
     detail_key: "owners_wrong_profile_detail",
     has_details: true,
     has_fix: true,

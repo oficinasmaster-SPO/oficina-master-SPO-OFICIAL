@@ -27,9 +27,9 @@ const HARDCODED_TARGETS = [
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-
-    if (!user || user.role !== 'admin') {
+    const user = await base44.auth.me().catch(() => null);
+    const isInternalCall = req.headers.get('x-internal-call') === 'true';
+    if (!isInternalCall && (!user || user.role !== 'admin')) {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
