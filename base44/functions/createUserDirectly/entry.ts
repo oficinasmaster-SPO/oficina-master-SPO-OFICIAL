@@ -203,24 +203,7 @@ Deno.serve(async (req) => {
 
     console.log("✅ Convite criado:", invite.id);
 
-    // PRE-2 (2026-06-10): Atualizar Workshop.partner_ids quando job_role='socio'.
-    // registerEmployeeComplete fazia isso — necessário para Owner Override no PermissionsContext.
-    if (job_role === 'socio' && workshop_id) {
-      try {
-        const ws = await base44.asServiceRole.entities.Workshop.get(workshop_id);
-        if (ws) {
-          const currentPartnerIds = ws.partner_ids || [];
-          if (!currentPartnerIds.includes(inviteResult.id)) {
-            await base44.asServiceRole.entities.Workshop.update(workshop_id, {
-              partner_ids: [...currentPartnerIds, inviteResult.id]
-            });
-            console.log("✅ [PRE-2] Workshop.partner_ids atualizado para sócio:", inviteResult.id);
-          }
-        }
-      } catch(e) {
-        console.warn("⚠️ [PRE-2] Erro ao atualizar partner_ids:", e.message);
-      }
-    }
+    // PRE-2: partner_ids será atualizado APÓS criar o Employee (ver bloco abaixo)
 
     // Criar Employee com os dados
     console.log("👥 Criando Employee...");
@@ -261,6 +244,25 @@ Deno.serve(async (req) => {
     });
 
     console.log("✅ Employee criado:", employee.id);
+
+    // PRE-2 (fix): Atualizar Workshop.partner_ids para sócio/sócio_interno — após ter o user_id
+    if (['socio', 'socio_interno'].includes(job_role) && workshop_id && inviteResult?.id) {
+      try {
+        const wsArr = await base44.asServiceRole.entities.Workshop.filter({ id: workshop_id });
+        const ws = wsArr?.[0];
+        if (ws) {
+          const currentPartnerIds = ws.partner_ids || [];
+          if (!currentPartnerIds.includes(inviteResult.id)) {
+            await base44.asServiceRole.entities.Workshop.update(workshop_id, {
+              partner_ids: [...currentPartnerIds, inviteResult.id]
+            });
+            console.log("✅ [PRE-2] Workshop.partner_ids atualizado para sócio:", inviteResult.id);
+          }
+        }
+      } catch(e) {
+        console.warn("⚠️ [PRE-2] Erro ao atualizar partner_ids:", e.message);
+      }
+    }
 
     // A senha será definida pelo usuário no primeiro acesso via Sign up
 
