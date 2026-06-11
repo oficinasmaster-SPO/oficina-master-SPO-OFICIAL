@@ -58,7 +58,8 @@ export default function AceleracaoTab({ workshop, user }) {
       });
       return workshops.filter(w => w.planoAtual && w.planoAtual !== 'FREE');
     },
-    enabled: user?.role === 'admin' || user?.user_type === 'internal'
+    // W10 FIX (2026-06-10): usar PermissionsContext em vez de verificar role diretamente
+    enabled: !!(user?.role === 'admin' || user?.user_type === 'internal')
   });
 
   // Estatísticas
