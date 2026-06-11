@@ -189,12 +189,11 @@ export default function Cadastro() {
         console.error('⚠️ Erro ao promover para admin:', e);
       }
       
-      // Buscar o perfil de Sócio para atribuir automaticamente
-      const allProfiles = await base44.entities.UserProfile.list();
-      const socioProfile = allProfiles.find(p => 
-        p.status === 'ativo' && 
-        (p.name.toLowerCase().includes('sócio') || p.name.toLowerCase().includes('socio'))
-      );
+      // P4 FIX (2026-06-10): substituída busca textual por nome ('sócio') por ID fixo canônico.
+      // Antes: allProfiles.find(p => p.name.includes('sócio')) — frágil a renomeações.
+      //        Se nenhum perfil tivesse 'sócio' no nome, profile_id ficava undefined.
+      // Agora: ID fixo do perfil Sócio - Acesso Total (44 roles) — robusto a qualquer renomeação.
+      const SOCIO_PROFILE_ID = '6a272f8ea3fa8dd02ca7350e';
 
       // Also create an Employee record for the owner since it wasn't created on signup
       await base44.entities.Employee.create({
@@ -206,14 +205,13 @@ export default function Cadastro() {
         position: 'Sócio/Proprietário',
         job_role: 'socio',
         area: 'gerencia',
-        // Sócio de oficina cliente é EXTERNO — corrigido de 'interno' (bug)
         user_type: 'external',
-        tipo_vinculo: 'cliente',  // legado — mantido para retrocompatibilidade
-        is_internal: false,       // legado — mantido para retrocompatibilidade
+        tipo_vinculo: 'cliente',
+        is_internal: false,
         is_partner: true,
         status: 'ativo',
         user_status: 'ativo',
-        profile_id: socioProfile ? socioProfile.id : undefined,
+        profile_id: SOCIO_PROFILE_ID,
         hire_date: new Date().toISOString().split('T')[0]
       });
 
