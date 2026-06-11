@@ -83,16 +83,39 @@ Deno.serve(async (req) => {
             updatedConsultingFirmId = defaultConsultingFirmId;
         }
 
-        // Validar workshop_id obrigatório
+        // Validar workshop_id — se não encontrado, verificar se é signup público
         if (!workshopId) {
-            console.error(`❌ Nenhum workshop_id encontrado para usuário ${user.id}`);
-            return Response.json({ 
-                success: false, 
-                message: 'workshop_id não encontrado - Employee não será criado, mas usuário foi processado',
-                user_id: user.id,
-                consulting_firm_id: updatedConsultingFirmId || user.consulting_firm_id,
-                details: 'Vincule o usuário a um convite ou workshop válido'
-            });
+            // R3 FIX (Opção A): detectar signup público sem invite.
+            // Usuário que acabou de criar conta pode ter Workshop rascunho pendente.
+            // Cadastro.jsx cria Workshop ANTES do Employee — se o usuário abandona entre
+            // os dois, Workshop existe sem Employee. Aqui criamos o Employee placeholder
+            // para garantir que o usuário tenha permissões ao retornar.
+            if (!invite) {
+                try {
+                    const rascunhos = await base44.asServiceRole.entities.Workshop.filter({
+                        owner_id: user.id,
+                        status: 'rascunho'
+                    });
+                    if (rascunhos && rascunhos.length > 0) {
+                        workshopId = rascunhos[0].id;
+                        profileId = profileId || '6a272f8ea3fa8dd02ca7350e'; // Sócio - Acesso Total
+                        console.log(`🏗️ [R3] Workshop rascunho encontrado para signup público: ${workshopId}`);
+                    }
+                } catch (e) {
+                    console.warn(`⚠️ [R3] Erro ao buscar workshop rascunho:`, e.message);
+                }
+            }
+
+            if (!workshopId) {
+                console.error(`❌ Nenhum workshop_id encontrado para usuário ${user.id}`);
+                return Response.json({ 
+                    success: false, 
+                    message: 'workshop_id não encontrado - Employee não será criado, mas usuário foi processado',
+                    user_id: user.id,
+                    consulting_firm_id: updatedConsultingFirmId || user.consulting_firm_id,
+                    details: 'Vincule o usuário a um convite ou workshop válido'
+                });
+            }
         }
 
         // P5 FIX (2026-06-10): removido user.profile_id como fallback — campo deprecated.
