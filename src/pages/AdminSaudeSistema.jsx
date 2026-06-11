@@ -2,12 +2,16 @@ import React, { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { RefreshCw } from "lucide-react";
 import HealthStatusCard from "@/components/admin/health/HealthStatusCard";
-import GovernanceBlock from "@/components/admin/health/GovernanceBlock";
+import ExecutiveSummaryBlock from "@/components/admin/health/ExecutiveSummaryBlock";
+import IdentityProvisioningBlock from "@/components/admin/health/IdentityProvisioningBlock";
+import DataQualityBlock from "@/components/admin/health/DataQualityBlock";
+import RBACHealthBlock from "@/components/admin/health/RBACHealthBlock";
 import OnboardingHealthBlock from "@/components/admin/health/OnboardingHealthBlock";
 import RecoveryBlock from "@/components/admin/health/RecoveryBlock";
 import AutomationsBlock from "@/components/admin/health/AutomationsBlock";
 import LegacyBlock from "@/components/admin/health/LegacyBlock";
 import ObservabilityBlock from "@/components/admin/health/ObservabilityBlock";
+import HealthTrendBlock from "@/components/admin/health/HealthTrendBlock";
 import TimelineBlock from "@/components/admin/health/TimelineBlock";
 import ScoreBreakdownBlock from "@/components/admin/health/ScoreBreakdownBlock";
 
@@ -49,13 +53,11 @@ export default function AdminSaudeSistema() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Saúde do Sistema</h1>
           <p className="text-sm text-gray-500 mt-0.5">
-            Centro de Operações · Governança, RBAC, Onboarding, Observabilidade
+            Centro de Operações · Governança, RBAC, Identidade, Qualidade, Observabilidade
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-xs text-gray-400">
-            Atualizado às {formatTime(lastUpdated)}
-          </span>
+          <span className="text-xs text-gray-400">Atualizado às {formatTime(lastUpdated)}</span>
           <button
             onClick={fetchData}
             disabled={loading}
@@ -76,32 +78,46 @@ export default function AdminSaudeSistema() {
         </div>
       ) : data ? (
         <div className="space-y-6">
-          {/* STATUS GERAL */}
+
+          {/* 1. RESUMO EXECUTIVO */}
+          <ExecutiveSummaryBlock data={data} />
+
+          {/* 2. STATUS GERAL */}
           <HealthStatusCard data={data} />
 
-          {/* GOVERNANÇA */}
-          <GovernanceBlock data={data} />
-
-          {/* ONBOARDING + RECOVERY */}
+          {/* 3. IDENTIDADE + QUALIDADE */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <OnboardingHealthBlock data={data} />
-            <RecoveryBlock data={data} />
+            <IdentityProvisioningBlock data={data} />
+            <DataQualityBlock data={data} />
           </div>
 
-          {/* AUTOMAÇÕES */}
-          <AutomationsBlock data={data} />
+          {/* 4. RBAC + ONBOARDING */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <RBACHealthBlock data={data} />
+            <OnboardingHealthBlock data={data} />
+          </div>
 
-          {/* LEGACY + OBSERVABILIDADE */}
+          {/* 5. RECOVERY + AUTOMAÇÕES */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <RecoveryBlock data={data} />
+            <AutomationsBlock data={data} />
+          </div>
+
+          {/* 6. LEGACY + OBSERVABILIDADE */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <LegacyBlock data={data} />
             <ObservabilityBlock data={data} />
           </div>
 
-          {/* TIMELINE + SCORE */}
+          {/* 7. TENDÊNCIA + TIMELINE */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <HealthTrendBlock data={data} />
             <TimelineBlock data={data} />
-            <ScoreBreakdownBlock data={data} />
           </div>
+
+          {/* 8. SCORE BREAKDOWN */}
+          <ScoreBreakdownBlock data={data} />
+
         </div>
       ) : (
         <div className="text-center py-16 text-gray-400">

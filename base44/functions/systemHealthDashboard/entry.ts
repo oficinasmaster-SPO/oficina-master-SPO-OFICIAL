@@ -97,6 +97,7 @@ Deno.serve(async (req) => {
     const rbac_health = Math.max(0, Math.min(100, Math.round(100 - (totalIssues / maxIssues) * 100)));
 
     // ─── HEALTH SCORE (0-100) COM PENALIZAÇÕES ────────────────────────────────
+    // NOTA: employees_pending_invite NÃO penaliza o score (estado esperado)
     let health_score = 100;
     const score_breakdown = [];
 
@@ -109,7 +110,7 @@ Deno.serve(async (req) => {
       score_breakdown.push({ reason: 'duplicate_employees', count: duplicate_employees, penalty: -25 });
     }
     if (workshops_without_owner > 0) {
-      const penalty = workshops_without_owner * 20;
+      const penalty = Math.min(workshops_without_owner * 20, 20);
       health_score -= penalty;
       score_breakdown.push({ reason: 'workshops_without_owner', count: workshops_without_owner, penalty: -penalty });
     }
@@ -118,9 +119,14 @@ Deno.serve(async (req) => {
       score_breakdown.push({ reason: 'owners_with_wrong_profile', count: owners_with_wrong_profile, penalty: -20 });
     }
     if (employees_orphaned > 0) {
-      const penalty = employees_orphaned * 10;
+      const penalty = Math.min(employees_orphaned * 10, 10);
       health_score -= penalty;
-      score_breakdown.push({ reason: 'employees_orphaned', count: employees_orphaned, penalty: -penalty });
+      score_breakdown.push({ reason: 'orphan_employees', count: employees_orphaned, penalty: -penalty });
+    }
+    if (users_without_employee > 0) {
+      const penalty = Math.min(users_without_employee * 10, 10);
+      health_score -= penalty;
+      score_breakdown.push({ reason: 'users_without_employee', count: users_without_employee, penalty: -penalty });
     }
     if (invites_expired > 0) {
       const penalty = Math.min(invites_expired, 10);
@@ -196,14 +202,69 @@ Deno.serve(async (req) => {
 
     // Legacy calls
     const legacy24h = logs24h.filter(e => e.event_type === 'LEGACY_ENDPOINT_CALLED').length;
-    const legacy7d = logs7d.filter(e => e.event_type === 'LEGACY_ENDPOINT_CALLED').length;
+    const legacy7d  = logs7d.filter(e  => e.event_type === 'LEGACY_ENDPOINT_CALLED').length;
     const legacy30d = logs30d.filter(e => e.event_type === 'LEGACY_ENDPOINT_CALLED').length;
 
-    // Timeline (eventos de governança)
-    const governanceEvents = ['WORKSHOP_RECOVERY', 'WORKSHOP_DEACTIVATED', 'OWNER_EMPLOYEE_CREATED', 'FUNCTION_EXECUTED'];
+    // Legacy: última chamada + chamadas recentes
+    const legacyCalls = eventLogs
+      .filter(e => e.event_type === 'LEGACY_ENDPOINT_CALLED')
+      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    const lastLegacyCall = legacyCalls[0]
+      ? { endpoint: legacyCalls[0].details?.function_name, timestamp: legacyCalls[0].timestamp, caller_email: legacyCalls[0].details?.caller_email }
+      : null;
+    const recentLegacyCalls = legacyCalls.slice(0, 5).map(e => ({
+      endpoint: e.details?.function_name,
+      timestamp: e.timestamp,
+      details: e.details
+    }));
+
+    // Penalização de legacy no score
+    if (legacy24h > 0) {
+      health_score -= 10;
+      score_breakdown.push({ reason: 'legacy_endpoint_calls', count: legacy24h, penalty: -10 });
+    }
+    health_score = Math.max(0, health_score);
+
+    // Provisioning (identidade)
+    const users_created_invite  = invites.filter(i => i.status === 'concluido').length;
+    const users_created_public  = workshops.filter(ws => ws.status === 'ativo' && ws.planStatus).length; // proxy
+    const users_pending_workshop = users.filter(u => u.role !== 'admin' && !u.workshop_id && !u.data?.workshop_id).length;
+    const users_without_workshop = users.filter(u => u.role !== 'admin' && !u.workshop_id && !u.data?.workshop_id && !u.consulting_firm_id && !u.data?.consulting_firm_id).length;
+    const abandoned_signups = workshops.filter(ws => ws.status === 'inativo' && !ws.owner_id).length;
+
+    // Owners corretos
+    const owners_correct = workshops.filter(ws => {
+      if (ws.status === 'inativo' || !ws.owner_id) return false;
+      const ownerEmp = employees.find(e => e.user_id === ws.owner_id && e.workshop_id === ws.id);
+      return ownerEmp && ownerEmp.profile_id === SOCIO_PROFILE_ID;
+    }).length;
+    const owners_total = workshops.filter(ws => ws.status === 'ativo' && ws.owner_id).length;
+
+    // Penalização de pending_workshop no score
+    if (users_pending_workshop > 0) {
+      const penalty = Math.min(users_pending_workshop, 10);
+      health_score -= penalty;
+      score_breakdown.push({ reason: 'users_pending_workshop', count: users_pending_workshop, penalty: -penalty });
+      health_score = Math.max(0, health_score);
+    }
+
+    // Totais
+    const totals = {
+      users:     users.length,
+      employees: employees.length,
+      workshops: workshops.filter(ws => ws.status !== 'inativo').length,
+      owners:    owners_total,
+    };
+
+    // Timeline (todos os eventos relevantes)
+    const timelineEvents = [
+      'WORKSHOP_RECOVERY', 'WORKSHOP_DEACTIVATED', 'OWNER_EMPLOYEE_CREATED',
+      'FUNCTION_EXECUTED', 'LEGACY_ENDPOINT_CALLED', 'OWNER_PROFILE_CORRECTED',
+      'USER_CREATED', 'INVITE_CREATED', 'INVITE_ACCEPTED', 'INVITE_EXPIRED', 'USER_PENDING_WORKSHOP'
+    ];
     const timeline = eventLogs
-      .filter(e => governanceEvents.includes(e.event_type))
-      .slice(0, 30)
+      .filter(e => timelineEvents.includes(e.event_type))
+      .slice(0, 50)
       .map(e => ({
         event_type: e.event_type,
         status: e.status,
@@ -218,11 +279,13 @@ Deno.serve(async (req) => {
       status,
       health_score,
       alerts,
+      totals,
       governance: {
         rbac_health,
         users_without_employee,
         employees_pending_invite,
         employees_orphaned,
+        orphan_users: 0, // placeholder — auditOrphanUsers pode popular
         workshops_without_owner,
         duplicate_users,
         duplicate_employees,
@@ -232,6 +295,18 @@ Deno.serve(async (req) => {
         invites_accepted,
         invites_total,
         invite_conversion_rate
+      },
+      rbac: {
+        owners_correct,
+        owners_total,
+      },
+      provisioning: {
+        users_created_invite,
+        users_created_public,
+        users_pending_workshop,
+        users_without_workshop,
+        users_without_employee,
+        abandoned_signups,
       },
       recovery: {
         recoveries_7d: recoveries7d,
@@ -249,9 +324,14 @@ Deno.serve(async (req) => {
       legacy: {
         calls_24h: legacy24h,
         calls_7d: legacy7d,
-        calls_30d: legacy30d
+        calls_30d: legacy30d,
+        last_call: lastLegacyCall,
+        recent_calls: recentLegacyCalls,
       },
+      // Reservado para futuras métricas (Idempotência, Audit Log, Security, Financeiro)
+      _reserved: {},
       timeline,
+      snapshots: [], // SystemHealthSnapshot — alimentar com automação diária
       score_breakdown,
       computed_at
     });
