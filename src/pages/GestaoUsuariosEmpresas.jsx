@@ -331,29 +331,16 @@ export default function GestaoUsuariosEmpresas() {
       
       return matchesSearch && matchesEmpresa && matchesPlano && matchesEstado && 
              matchesCidade && matchesStatus && matchesFaturamento && matchesPermission;
+    }).sort((a, b) => {
+      if (!sortConfig.key) return 0;
+      let aValue = sortConfig.key === 'location' ? `${a.workshopCity} ${a.workshopState}`.trim() : a[sortConfig.key];
+      let bValue = sortConfig.key === 'location' ? `${b.workshopCity} ${b.workshopState}`.trim() : b[sortConfig.key];
+      if (!aValue) aValue = '';
+      if (!bValue) bValue = '';
+      if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
     });
-
-    let filtered = [...workshopsWithData];
-
-    if (sortConfig.key) {
-      filtered.sort((a, b) => {
-        let aValue = a[sortConfig.key];
-        let bValue = b[sortConfig.key];
-
-        if (sortConfig.key === 'location') {
-          aValue = `${a.workshopCity} ${a.workshopState}`.trim();
-          bValue = `${b.workshopCity} ${b.workshopState}`.trim();
-        }
-
-        if (!aValue) aValue = '';
-        if (!bValue) bValue = '';
-
-        if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
-        if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
-        return 0;
-      });
-    }
-    return filtered;
   }, [workshopsWithData, searchTerm, filters, currentUser, sortConfig]);
 
   const handleSort = (key) => {
