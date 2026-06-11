@@ -49,7 +49,7 @@ export default function UsuariosAdmin() {
     queryKey: ['user-profiles'],
     queryFn: async () => {
       const profiles = await base44.entities.UserProfile.list();
-      return Array.isArray(profiles) ? profiles : [];
+      return Array.isArray(profiles) ? profiles.filter(p => p.type !== 'sistema') : [];
     }
   });
 

@@ -207,7 +207,6 @@ export default function Cadastro() {
         area: 'gerencia',
         user_type: 'external',
         tipo_vinculo: 'cliente',
-        is_internal: false,
         is_partner: true,
         status: 'ativo',
         user_status: 'ativo',

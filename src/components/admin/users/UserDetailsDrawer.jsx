@@ -59,8 +59,7 @@ export default function UserDetailsDrawer({
     queryKey: ['user-workshop', employeeData?.workshop_id],
     queryFn: async () => {
       if (!employeeData?.workshop_id) return null;
-      const workshops = await base44.entities.Workshop.filter({ id: employeeData.workshop_id });
-      return Array.isArray(workshops) ? workshops[0] : null;
+      return await base44.entities.Workshop.get(employeeData.workshop_id).catch(() => null);
     },
     enabled: !!employeeData?.workshop_id && open
   });
