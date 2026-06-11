@@ -138,13 +138,14 @@ export default function AutomationsBlock({ data }) {
     setState(fnKey, "running");
     const startedAt = Date.now();
     try {
-      const res = await base44.functions.invoke(fnKey, {});
-      const duration_ms = Date.now() - startedAt;
-      const message = config.resultFormatter(res?.data || {});
+      const res = await base44.functions.invoke("runSystemMaintenance", { action: fnKey });
+      const duration_ms = res?.data?.duration_ms ?? (Date.now() - startedAt);
+      const message = config.resultFormatter(res?.data?.result || {});
       setState(fnKey, { status: "success", message, duration_ms });
     } catch (err) {
       const duration_ms = Date.now() - startedAt;
-      setState(fnKey, { status: "error", message: err?.response?.data?.error || err?.message || "Erro desconhecido", duration_ms });
+      const errMsg = err?.response?.data?.error || err?.message || "Erro desconhecido";
+      setState(fnKey, { status: "error", message: errMsg, duration_ms });
     }
   };
 
