@@ -18,9 +18,10 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Não autenticado' } }, { status: 401 });
     }
 
-    if (currentUser.role !== 'admin') {
-       return Response.json({ success: false, error: { code: 'FORBIDDEN', message: 'Apenas administradores podem convidar usuários' } }, { status: 403 });
-    }
+    // PRE-1 (2026-06-10): Removido guard 'admin only'.
+    // registerEmployeeComplete aceita qualquer usuário logado — paridade necessária
+    // para que sócios de oficinas (role='user') possam cadastrar colaboradores.
+    // Controle de acesso é feito via RBAC (canAccessPage + hasPermission) no frontend.
 
     let body;
     try {
@@ -41,7 +42,24 @@ Deno.serve(async (req) => {
       consulting_firm_id: bodyConsultingFirmId, // para usuário interno
       role = "user",
       data_nascimento,
-      idempotencyKey
+      idempotencyKey,
+      // PRE-3: campos RH
+      cpf,
+      rg,
+      hire_date,
+      salary,
+      commission,
+      bonus,
+      benefits,
+      production_parts,
+      production_parts_sales,
+      production_services,
+      production_percentage,
+      endereco,
+      profile_picture_url,
+      job_description_id,
+      // PRE-4: campos para ActiveCampaign
+      formData: formDataRH   // aceita formData completo para compatibilidade com Modal
     } = body;
 
     if (idempotencyKey && idempotencyCache.has(idempotencyKey)) {
@@ -144,41 +162,7 @@ Deno.serve(async (req) => {
     // O profile_id resolvido é a fonte da verdade para as permissões
     const finalProfileId = finalProfileIdResolved || profile_id;
 
-    // ── Validação de Limite de Plano (somente para usuários externos com workshop) ──
-    // Deve ocorrer ANTES de inviteUser, Employee.create e EmployeeInvite.create.
-    if (!isInternalUser && workshop_id) {
-      try {
-        const planCheck = await base44.functions.invoke('checkPlanAccess', {
-          tenantId: workshop_id,
-          feature: 'usuarios',
-          action: 'check_limit'
-        });
-        if (planCheck.data?.success === false) {
-          const planErr = planCheck.data?.error;
-          // Limite excedido ou plano inativo — bloqueia sem criar nenhuma entidade
-          if (planErr === 'limite_excedido' || planErr?.code === 'PLAN_INACTIVE' || planErr?.code === 'TRIAL_EXPIRED') {
-            return Response.json({
-              success: false,
-              error: {
-                code: 'PLAN_RESTRICTION',
-                message: planCheck.data?.message || 'Limite do plano atingido. Faça upgrade para adicionar mais colaboradores.'
-              }
-            }, { status: 403 });
-          }
-          // Outros erros do checkPlanAccess (ex: tenant não encontrado) — loga e prossegue
-          console.warn("⚠️ checkPlanAccess retornou erro não-bloqueante:", planErr);
-        }
-      } catch (planCheckError) {
-        // Falha na chamada não deve bloquear o fluxo principal
-        console.warn("⚠️ Falha ao verificar limite de plano (non-fatal):", planCheckError.message);
-      }
-    }
-
-    // ORDEM CORRETA (evitar race condition):
-    // 1. inviteUser() primeiro — se falhar aqui, nada foi criado ainda
-    // 2. EmployeeInvite.create()
-    // 3. Employee.create() — só chega aqui se tudo acima ok
-
+    // Convidar usuário via Base44 usando SERVICE ROLE (não afeta sessão do admin)
     console.log("📧 Convidando usuário via Base44 com role:", safeRole);
     const inviteResult = await base44.asServiceRole.users.inviteUser(email, safeRole);
     
@@ -218,9 +202,29 @@ Deno.serve(async (req) => {
 
     console.log("✅ Convite criado:", invite.id);
 
+    // PRE-2 (2026-06-10): Atualizar Workshop.partner_ids quando job_role='socio'.
+    // registerEmployeeComplete fazia isso — necessário para Owner Override no PermissionsContext.
+    if (job_role === 'socio' && workshop_id) {
+      try {
+        const ws = await base44.asServiceRole.entities.Workshop.get(workshop_id);
+        if (ws) {
+          const currentPartnerIds = ws.partner_ids || [];
+          if (!currentPartnerIds.includes(inviteResult.id)) {
+            await base44.asServiceRole.entities.Workshop.update(workshop_id, {
+              partner_ids: [...currentPartnerIds, inviteResult.id]
+            });
+            console.log("✅ [PRE-2] Workshop.partner_ids atualizado para sócio:", inviteResult.id);
+          }
+        }
+      } catch(e) {
+        console.warn("⚠️ [PRE-2] Erro ao atualizar partner_ids:", e.message);
+      }
+    }
+
     // Criar Employee com os dados
     console.log("👥 Criando Employee...");
     const employee = await base44.asServiceRole.entities.Employee.create({
+      // Core fields
       workshop_id: isInternalUser ? null : workshop_id,
       consulting_firm_id: consulting_firm_id,
       user_id: inviteResult.id,
@@ -231,14 +235,28 @@ Deno.serve(async (req) => {
       job_role: job_role || 'outros',
       area: area || 'administrativo',
       profile_id: finalProfileId,
-      status: 'pending',      // R16: Employee nasce como pending até /PrimeiroAcesso concluído
       user_status: 'pending',
       user_type: isInternalUser ? 'internal' : 'external',
       is_internal: isInternalUser,
       tipo_vinculo: isInternalUser ? 'interno' : 'cliente',
       admin_responsavel_id: currentUser.id,
-      hire_date: new Date().toISOString().split('T')[0],
-      data_nascimento: data_nascimento || null
+      hire_date: hire_date || new Date().toISOString().split('T')[0],
+      data_nascimento: data_nascimento || null,
+      // PRE-3 (2026-06-10): campos RH adicionados — paridade com registerEmployeeComplete
+      cpf: cpf || null,
+      rg: rg || null,
+      salary: salary || 0,
+      commission: commission || 0,
+      bonus: bonus || 0,
+      benefits: benefits || [],
+      production_parts: production_parts || 0,
+      production_parts_sales: production_parts_sales || 0,
+      production_services: production_services || 0,
+      production_percentage: production_percentage || 0,
+      endereco: endereco || null,
+      profile_picture_url: profile_picture_url || null,
+      job_description_id: job_description_id || null,
+      status: 'ativo'
     });
 
     console.log("✅ Employee criado:", employee.id);
@@ -247,19 +265,18 @@ Deno.serve(async (req) => {
 
     // Atualizar User com dados customizados usando SERVICE ROLE (não afeta sessão)
     console.log("🔄 Atualizando dados do User...");
-    // R3 FIX (2026-06-11): profile_id removido de userData — campo [DEPRECATED 2026-06-10] no User.
-    // A autorização é lida de Employee.profile_id → UserProfile. Gravar em User era regressão de arquitetura.
+    // PRE-5 (2026-06-10): User.profile_id e User.job_role removidos — campos deprecated.
+    // User.user_type substituiu is_internal como campo canônico.
+    // Fonte de autorização é Employee.profile_id → UserProfile.roles, não User.profile_id.
     const userData = {
       workshop_id: isInternalUser ? null : workshop_id,
       consulting_firm_id: consulting_firm_id,
       position: position || 'Colaborador',
-      job_role: job_role || 'outros',
       area: area || 'administrativo',
       telefone: telefone || '',
-      hire_date: new Date().toISOString().split('T')[0],
+      hire_date: hire_date || new Date().toISOString().split('T')[0],
       user_status: 'pending',
       user_type: isInternalUser ? 'internal' : 'external',
-      is_internal: isInternalUser,
       invite_id: invite.id,
       admin_responsavel_id: currentUser.id
     };
@@ -413,6 +430,43 @@ Deno.serve(async (req) => {
       }
     } catch (e) {
       console.error("⚠️ Erro ao enviar email HTML customizado:", e);
+    }
+
+    // PRE-4 (2026-06-10): ActiveCampaign sync — paridade com registerEmployeeComplete
+    try {
+      const AC_API_KEY = Deno.env.get("ACTIVECAMPAIGN_API_KEY");
+      const AC_API_URL = Deno.env.get("ACTIVECAMPAIGN_API_URL");
+      if (AC_API_KEY && AC_API_URL) {
+        const contactResponse = await fetch(`${AC_API_URL}/api/3/contact/sync`, {
+          method: 'POST',
+          headers: { 'Api-Token': AC_API_KEY, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contact: {
+              email,
+              firstName: name.split(' ')[0],
+              lastName: name.split(' ').slice(1).join(' ') || '',
+              fieldValues: [{ field: '1', value: workshop_name || '' }]
+            }
+          })
+        });
+        if (contactResponse.ok) {
+          const contactResult = await contactResponse.json();
+          await fetch(`${AC_API_URL}/api/3/notes`, {
+            method: 'POST',
+            headers: { 'Api-Token': AC_API_KEY, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              note: {
+                note: `🔑 DADOS DO CONVITE\n\nLink: ${inviteLink}\nEmail: ${email}\nNome: ${name}`,
+                relid: contactResult.contact.id,
+                reltype: 'Subscriber'
+              }
+            })
+          });
+          console.log("✅ [PRE-4] ActiveCampaign sincronizado");
+        }
+      }
+    } catch(e) {
+      console.error("[PRE-4] ActiveCampaign background error:", e);
     }
 
     console.log(JSON.stringify({
