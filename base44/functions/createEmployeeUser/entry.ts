@@ -152,13 +152,27 @@ Deno.serve(async (req) => {
     } catch (userError) {
       console.error("❌ [ERRO CRÍTICO] Falha ao solicitar criação de User:");
       console.error("   Mensagem:", userError.message);
-      
+
+      // R5: Rollback — deletar Employee e EmployeeInvite órfãos para evitar inconsistência
+      try {
+        await base44.asServiceRole.entities.Employee.delete(employee.id);
+        console.log("🔄 Rollback: Employee deletado:", employee.id);
+      } catch (rollbackError) {
+        console.error("⚠️ Falha no rollback do Employee:", rollbackError.message);
+      }
+      if (inviteId) {
+        try {
+          await base44.asServiceRole.entities.EmployeeInvite.delete(inviteId);
+          console.log("🔄 Rollback: EmployeeInvite deletado:", inviteId);
+        } catch (rollbackError) {
+          console.error("⚠️ Falha no rollback do EmployeeInvite:", rollbackError.message);
+        }
+      }
+
       return Response.json({ 
         success: false,
-        error: 'Falha ao iniciar criação do usuário no sistema',
-        details: userError.message,
-        employee_created: true,
-        employee_id: employee.id
+        error: 'Falha ao iniciar criação do usuário no sistema. Nenhum registro foi criado.',
+        details: userError.message
       }, { status: 500 });
     }
 
