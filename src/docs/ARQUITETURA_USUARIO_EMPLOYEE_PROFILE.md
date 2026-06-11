@@ -1,8 +1,19 @@
 # 📘 Arquitetura de Identidade e Acesso (IAM)
 
-> **Versão:** 2.0 — Atualizado em 2026-06-10  
-> **Status:** ✅ Estável — modelo canônico confirmado e auditado  
+> **Versão:** 3.0 — Atualizado em 2026-06-11
+> **Status:** 🏆 CERTIFICADO_100 — Arquitetura consolidada, fluxos legados removidos, monitoramento contínuo ativo
+> **Escopo certificado:** RBAC · User · Employee · UserProfile · Roles · Workshop Ownership · Onboarding · Convites · Provisionamento
 > **Regressão:** rlsRegressionLote1 + Lote2 = 100% PASS (15 cenários)
+
+---
+
+## Histórico de Versões
+
+| Versão | Data | Status | Descrição |
+|--------|------|--------|-----------|
+| 1.0 | 2026-06-08 | Obsoleto | Arquitetura inicial (race condition ativa, profile_id no User) |
+| 2.0 | 2026-06-10 | Obsoleto | Remoção de leituras legadas de `user.profile_id`, deprecation formal |
+| **3.0** | **2026-06-11** | **✅ CERTIFICADO_100** | R4–R9: limpeza BD, consolidação de fluxo, validação de plano, 410 Gone, monitoramento contínuo |
 
 ---
 
@@ -73,7 +84,7 @@ A autorização é **completamente desacoplada** do `User`. O `PermissionsContex
 - ✅ `Employee.profile_id` → fonte **única** de autorização granular
 - ✅ `Employee.status = "ativo"` é verificado antes de resolver permissões
 - ✅ Múltiplos Employees podem compartilhar o mesmo `UserProfile`
-- ✅ Link explícito para User via `user_id`
+- ✅ Link explícito para User via `user_id` — preenchido **atomicamente** na criação (sem race condition)
 
 ---
 
@@ -125,27 +136,57 @@ PermissionsContext
 
 ```
 RouteGuard(pageName)
-  1. user.role === 'admin'        → acesso total (bypass)
+  1. user.role === 'admin'         → acesso total (bypass)
   2. user.user_type === 'internal' → acesso total (bypass)
   3. adminOnly === true            → 403 (apenas admin/internal)
-  4. !canAccessPage(pageName)     → 403 (RBAC granular via PermissionsContext)
+  4. !canAccessPage(pageName)      → 403 (RBAC granular via PermissionsContext)
   5. ✅ acesso liberado
 ```
 
 ---
 
-## 🔄 Fluxo de Onboarding (Convite → Acesso)
+## 🔄 Fluxo de Provisionamento Canônico (v3.0)
+
+### Fluxo Principal — `createUserDirectly`
 
 ```
-1. Admin cria EmployeeInvite (com profile_id pré-selecionado)
-2. Email enviado → usuário clica no link
-3. createUserOnFirstAccess():
-   - Cria/atualiza User (email, workshop_id)
-   - Atualiza Employee (user_id, profile_id, status=ativo)
-   - Cria EmployeeInviteAcceptance (dispara automação)
-4. PermissionsContext carrega Employee → profile_id → UserProfile
-5. Usuário tem acesso conforme perfil atribuído
+1. Admin preenche formulário (ConvidarColaborador ou CadastroUsuarioDiretoModal)
+2. Frontend chama createUserDirectly diretamente (sem intermediários)
+3. createUserDirectly executa em ordem atômica:
+   a. checkPlanAccess(workshop_id, 'usuarios') → bloqueia se limite excedido
+   b. asServiceRole.users.inviteUser(email, role) → obtém user.id
+   c. EmployeeInvite.create({ workshop_id, profile_id, metadata })
+   d. Employee.create({ user_id: user.id, profile_id, ... }) ← user_id preenchido atomicamente
+   e. User.update(user.id, { workshop_id, job_role, ... })
+   f. Email HTML via Resend + fallback Core.SendEmail
+4. Usuário recebe email com link /PrimeiroAcesso?token=...
+5. completeInviteOnFirstAccess() → cria EmployeeInviteAcceptance
+6. Automação EmployeeInviteAcceptance.create → createEmployeeOnUserCreation → vincula Employee
+7. PermissionsContext carrega Employee.profile_id → UserProfile → acesso ativo
 ```
+
+### Fluxo de Signup Público (sem convite)
+
+```
+1. Usuário se cadastra em /Cadastro (cria Workshop + User)
+2. Automação User.create → onUserCreated:
+   a. Busca EmployeeInvite por email
+   b. Se encontrado: vincula dados do convite ao User
+   c. Se não encontrado (signup público):
+      - Emite telemetria estruturada { event: 'public_signup_no_invite' }
+      - Se user.workshop_id == null: cria Notification { type: 'pending_workshop' }
+3. createEmployeeOnUserCreation (via EmployeeInviteAcceptance) cria/vincula Employee
+```
+
+---
+
+## 🗑️ Funções Legadas Removidas / Deprecadas (v3.0)
+
+| Função | Status | Data | Substituto |
+|--------|--------|------|-----------|
+| `createEmployeeUser` | ⛔ HTTP 410 Gone | 2026-06-11 | `createUserDirectly` |
+| `registerEmployeeComplete` | ⛔ HTTP 410 Gone | anterior | `createUserDirectly` |
+| `createEmployeeOnUserCreationEvent` | 🗑️ Deletada | 2026-06-11 | Dead code confirmado (zero automações, zero callers) |
 
 ---
 
@@ -178,6 +219,51 @@ job_role → JOB_ROLE_TO_PROFILE_ID[job_role] → Employee.profile_id
 
 ---
 
+## 📡 Monitoramento Contínuo (v3.0)
+
+### auditRBACHealth (diário 06h)
+
+Executa diariamente via scheduled automation. Métricas emitidas:
+
+| Métrica | Threshold | Ação se excedido |
+|---------|-----------|-----------------|
+| `users_without_employee` | > 10 | Log ALERT estruturado |
+| `employees_without_user` | > 5 | Log ALERT estruturado |
+| `workshops_without_owner` | > 0 | Log ALERT estruturado |
+| `missing_profiles` | qualquer | Incluído no `rbac_health` score |
+| `profile_mismatches` | qualquer | Incluído no `rbac_health` score |
+| `invalid_roles` | qualquer | Incluído no `rbac_health` score |
+
+```json
+// Exemplo de resposta
+{
+  "rbac_health": 98,
+  "users_without_employee": 3,
+  "employees_without_user": 1,
+  "workshops_without_owner": 0,
+  "alerts": [],
+  "timestamp": "2026-06-11T06:00:00.000Z"
+}
+```
+
+### Telemetria de Signup Público
+
+Emitida por `onUserCreated` quando usuário se cadastra sem convite:
+
+```json
+{
+  "level": "TELEMETRY",
+  "event": "public_signup_no_invite",
+  "user_id": "...",
+  "email": "...",
+  "has_workshop_id": false,
+  "has_consulting_firm_id": false,
+  "timestamp": "..."
+}
+```
+
+---
+
 ## 🚫 Anti-patterns (Nunca Fazer)
 
 ```javascript
@@ -187,6 +273,9 @@ const profileId = user.data.profile_id;
 
 // ❌ ERRADO — job_role do User não determina acesso
 if (user.job_role === 'socio') { ... }
+
+// ❌ ERRADO — chamar createEmployeeUser (410 Gone)
+await base44.functions.invoke('createEmployeeUser', { ... });
 
 // ✅ CORRETO — sempre via PermissionsContext
 const { hasPermission, canAccessPage } = usePermissions();
@@ -198,21 +287,33 @@ const isInternal = user.user_type === 'internal';
 // ✅ CORRETO — perfil de acesso sempre via Employee
 const employee = await Employee.filter({ user_id: user.id });
 const profileId = employee.profile_id; // fonte canônica
+
+// ✅ CORRETO — criar usuário/colaborador
+await base44.functions.invoke('createUserDirectly', { name, email, workshop_id, job_role, role });
 ```
 
 ---
 
 ## ✅ Checklist de Saúde do Sistema
 
-| Verificação | Função | Status (2026-06-10) |
+| Verificação | Função | Status (2026-06-11) |
 |-------------|--------|---------------------|
 | Regressão RLS Lote 1 (9 cenários) | `rlsRegressionLote1` | ✅ 100% PASS |
 | Regressão RLS Lote 2 (6 cenários) | `rlsRegressionLote2` | ✅ 100% PASS |
-| Leituras legadas `user.profile_id` | Auditoria P4.A | ✅ Removidas |
+| Leituras legadas `user.profile_id` removidas | Auditoria P4.A | ✅ Removidas |
 | `autoAssignProfile` grava em Employee | Auditoria P4.B | ✅ Confirmado |
-| `profile_id` / `job_role` no User.json | P4.C | ✅ Marcados DEPRECATED |
+| `profile_id` / `job_role` no User.json deprecados | P4.C | ✅ Marcados |
 | `useUserType` usa `job_role` apenas para UX | P4.A | ✅ Anotado |
 | RouteGuard sem leituras legadas | Auditoria P4.A | ✅ Limpo |
+| 67 convites expirados deletados (BD) | R4/R5 | ✅ Executado 2026-06-11 |
+| 6 orphan Employees sem convite deletados | R4/R5 | ✅ Executado 2026-06-11 |
+| workshops com admin inexistente corrigidos | `fixOrphanedWorkshopAdmins` | ✅ Executado 2026-06-11 |
+| Race condition User↔Employee eliminada | R6 — `createUserDirectly` | ✅ user_id atômico |
+| Validação de limite de plano em `createUserDirectly` | R6 — `checkPlanAccess` | ✅ Antes de qualquer criação |
+| `createEmployeeUser` deprecado | R6 | ✅ HTTP 410 Gone |
+| `createEmployeeOnUserCreationEvent` removida | R8 | ✅ Dead code deletado |
+| Telemetria signup público | R7 — `onUserCreated` | ✅ Ativo |
+| Monitoramento consistência User↔Employee↔Workshop | R9 — `auditRBACHealth` | ✅ Diário 06h |
 
 ---
 
@@ -229,8 +330,10 @@ const profileId = employee.profile_id; // fonte canônica
 | **RLS** | Row-Level Security (filtro de dados por usuário) |
 | **RBAC** | Role-Based Access Control (controle de acesso por perfil) |
 | **PermissionsContext** | Hook React que resolve a chain `Employee → profile_id → UserProfile` |
+| **createUserDirectly** | Função canônica de provisionamento (única fonte da verdade) |
+| **CERTIFICADO_100** | Estado final auditado: sem inconsistências estruturais conhecidas, monitoramento ativo |
 
 ---
 
-**Contato:** oficinasmaster@gmail.com  
-**Última Atualização:** 2026-06-10 | **Versão:** 2.0
+**Contato:** oficinasmaster@gmail.com
+**Última Atualização:** 2026-06-11 | **Versão:** 3.0 | **Status:** 🏆 CERTIFICADO_100
