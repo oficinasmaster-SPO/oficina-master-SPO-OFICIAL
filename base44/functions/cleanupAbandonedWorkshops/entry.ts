@@ -14,6 +14,8 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
  */
 
 const ABANDONED_THRESHOLD_HOURS = 48;
+const ORPHAN_USER_NOTIFY_DAYS = 7;   // Notificar user órfão após 7 dias sem completar cadastro
+const ORPHAN_USER_REMOVE_DAYS = 30;  // Remover user órfão após 30 dias sem completar cadastro
 const SOCIO_PROFILE_ID = '6a272f8ea3fa8dd02ca7350e'; // Sócio - Acesso Total
 
 // Telemetria estruturada para todas as ações de recuperação/limpeza

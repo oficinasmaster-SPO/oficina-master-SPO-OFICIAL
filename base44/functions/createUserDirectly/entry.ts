@@ -174,7 +174,11 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Convidar usuário via Base44 usando SERVICE ROLE (não afeta sessão do admin)
+    // ORDEM CORRETA (evitar race condition):
+    // 1. inviteUser() primeiro — se falhar aqui, nada foi criado ainda
+    // 2. EmployeeInvite.create()
+    // 3. Employee.create() — só chega aqui se tudo acima ok
+
     console.log("📧 Convidando usuário via Base44 com role:", safeRole);
     const inviteResult = await base44.asServiceRole.users.inviteUser(email, safeRole);
     

@@ -181,9 +181,9 @@ export default function Cadastro() {
         cadastro_em_andamento: true
       });
 
-      // Promover owner para admin automaticamente
+      // Promover owner para admin automaticamente via updateUserRoleAdmin
       try {
-        await base44.functions.invoke('setUserRole', { userId: user.id, role: 'admin' });
+        await base44.functions.invoke('updateUserRoleAdmin', { user_id: user.id, role: 'admin' });
         console.log('✅ Usuário promovido para admin como owner do workshop');
       } catch (e) {
         console.error('⚠️ Erro ao promover para admin:', e);
