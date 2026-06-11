@@ -1,237 +1,80 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
+// R1 FIX (2026-06-11): Modo "novo" (user_data + email + full_name) estava criando Employee
+// sem nunca chamar inviteUser() — User nunca nascia, Employee ficava órfão permanentemente.
+// Solução: delegar para createUserDirectly que já implementa o fluxo canônico completo.
+// Modo "antigo" (employee_data + workshop_id) mantido para compatibilidade retroativa.
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    
-    // Validar autenticação usando service role
-    const { employee_data, workshop_id, employee_id, user_data, email, full_name, invite_type = 'workshop' } = await req.json();
+    const body = await req.json();
+    const { employee_data, workshop_id, user_data, email, full_name } = body;
 
-    // Modo novo: criar usuário interno
+    // Modo novo: criar usuário interno → delegar para createUserDirectly (fluxo canônico)
     if (user_data && email && full_name) {
-      console.log("=== Iniciando criação de usuário interno ===");
-      console.log("Email:", email);
-      console.log("Nome:", full_name);
-      console.log("Role:", user_data.role);
-      console.log("Profile ID:", user_data.profile_id);
+      console.log("🔄 [createUserForEmployee] Delegando para createUserDirectly (fluxo canônico)...");
+      console.log("   Email:", email, "| Profile ID:", user_data.profile_id);
 
-      // Verificar se já existe Employee com este email
-      const employees = await base44.asServiceRole.entities.Employee.filter({ email: email }, '-created_date', 1);
-      const existingEmployee = employees && employees.length > 0 ? employees[0] : null;
-      
-      if (existingEmployee) {
-        console.error("Já existe um colaborador com este email:", email);
-        return Response.json({ 
-          success: false,
-          error: 'Já existe um usuário com este email' 
-        }, { status: 400 });
-      }
-
-      // Gerar senha temporária forte
-      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%&*';
-      let tempPassword = '';
-      for (let i = 0; i < 12; i++) {
-        tempPassword += chars.charAt(Math.floor(Math.random() * chars.length));
-      }
-      console.log("✅ Senha temporária gerada:", tempPassword.substring(0, 4) + "...");
-
-      // Validar dados obrigatórios
       if (!user_data.profile_id) {
-        console.error("❌ Profile ID não fornecido");
-        return Response.json({ 
+        return Response.json({
           success: false,
-          error: 'Profile ID é obrigatório' 
+          error: 'Profile ID é obrigatório'
         }, { status: 400 });
       }
 
-      // Criar Employee com todos os dados
-      console.log("Criando Employee com:", {
-        email,
-        profile_id: user_data.profile_id,
-        role: user_data.role
-      });
-      
-      const employeeData = {
-        full_name: full_name,
-        email: email,
-        telefone: user_data.telefone || '',
-        position: user_data.position || '',
-        tipo_vinculo: 'interno',
-        job_role: 'consultor',
-        status: 'ativo',
-        profile_id: user_data.profile_id,
-        user_status: user_data.user_status || 'ativo',
-        is_internal: true,
-        audit_log: user_data.audit_log || []
-      };
-
-      console.log("📦 Dados completos do Employee antes de criar:", JSON.stringify(employeeData, null, 2));
-
-      const newEmployee = await base44.asServiceRole.entities.Employee.create(employeeData);
-
-      console.log("✅ Employee criado!");
-      console.log("   - ID:", newEmployee.id);
-      console.log("   - Email:", newEmployee.email);
-      console.log("   - Profile ID salvo:", newEmployee.profile_id);
-
-      // Criar permissões baseadas no perfil
-      let permissionsCreated = false;
-      try {
-        console.log("🔐 Criando permissões do perfil...");
-
-        const profile = await base44.asServiceRole.entities.UserProfile.get(user_data.profile_id);
-
-        if (!profile) {
-          console.error("❌ Perfil não encontrado:", user_data.profile_id);
-          throw new Error("Perfil não encontrado");
-        }
-
-        console.log("📋 Perfil carregado:", profile.name);
-        // FIX 1 (2026-06-10): UserPermission.create removido — dado morto.
-        // PermissionsContext lê exclusivamente Employee.profile_id → UserProfile.roles.
-        // UserPermission.modules_access não é lido para autorização.
-        // Employee.profile_id já foi gravado no create acima — suficiente.
-        permissionsCreated = true;
-      } catch (permError) {
-        console.error("❌ Erro ao carregar perfil:", permError);
-        throw permError;
-      }
-
-      // Registrar atividade
-      try {
-        console.log("📊 Registrando atividade de criação...");
-
-        const adminUser = await base44.auth.me();
-
-        await base44.asServiceRole.entities.UserActivityLog.create({
-          user_id: adminUser.id,
-          user_email: adminUser.email,
-          activity_type: 'user_created',
-          action: 'create',
-          module: 'admin_usuarios',
-          details: {
-            created_user_email: email,
-            created_user_name: full_name,
-            profile_id: user_data.profile_id,
-            role: user_data.role || 'user'
-          },
-          timestamp: new Date().toISOString()
-        });
-
-        console.log("✅ Atividade registrada");
-      } catch (activityError) {
-        console.error("❌ Erro ao registrar atividade:", activityError);
-      }
-
-      // Criar convite para primeiro acesso
-      const inviteToken = crypto.randomUUID();
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 7); // 7 dias para completar cadastro
-
-      const invite = await base44.asServiceRole.entities.EmployeeInvite.create({
-        employee_id: newEmployee.id,
-        // FIX 2 (2026-06-10): user_id deve ser null até aceite do convite.
-        // Antes gravava Employee.id em user_id — campo errado (esperado: User.id pós-signup).
-        // O vínculo user_id é feito por createUserOnFirstAccess quando o usuário aceita.
-        user_id: null,
-        workshop_id: null,
-        invite_type: 'internal',
+      // Delegar para createUserDirectly — é o fluxo canônico com inviteUser + Employee + email
+      const result = await base44.functions.invoke('createUserDirectly', {
         name: full_name,
         email: email,
-        position: user_data.position,
-        job_role: 'consultor',
-        area: 'administrativo',
+        telefone: user_data.telefone || '',
+        position: user_data.position || 'Consultor',
+        job_role: user_data.job_role || 'consultor',
         profile_id: user_data.profile_id,
-        invite_token: inviteToken,
-        status: 'enviado',
-        sent_at: new Date().toISOString(),
-        expires_at: expiresAt.toISOString()
+        consulting_firm_id: user_data.consulting_firm_id || null,
+        // sem workshop_id = usuário interno (isInternalUser = true em createUserDirectly)
+        role: user_data.role || 'user'
       });
 
-      console.log("✅ Convite criado:", invite.id);
-
-      // Enviar email com link de primeiro acesso
-      const origin = 'https://oficinasmastergtr.com';
-      const inviteUrl = `${origin}/PrimeiroAcesso?token=${inviteToken}`;
-
-      try {
-        await base44.asServiceRole.integrations.Core.SendEmail({
-          to: email,
-          subject: 'Bem-vindo à Equipe Oficinas Master - Complete seu Cadastro',
-          body: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #2563eb;">Olá, ${full_name}!</h2>
-              
-              <p>Você foi adicionado à equipe interna da <strong>Oficinas Master</strong> como <strong>${user_data.position}</strong>.</p>
-              
-              <p>Para começar a trabalhar, você precisa completar seu cadastro e criar sua senha de acesso.</p>
-              
-              <h3 style="color: #1e40af;">Complete seu Cadastro:</h3>
-              
-              <div style="text-align: center; margin: 30px 0;">
-                <a href="${inviteUrl}" 
-                   style="background-color: #2563eb; color: white; padding: 15px 30px; 
-                          text-decoration: none; border-radius: 8px; display: inline-block;
-                          font-weight: bold;">
-                  Completar Cadastro
-                </a>
-              </div>
-              
-              <p style="color: #666; font-size: 14px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
-                <strong>Importante:</strong> Este link expira em 7 dias. Se precisar de um novo link, entre em contato com o administrador.
-              </p>
-              
-              <p style="color: #666; font-size: 12px; margin-top: 20px;">
-                Email de login: <strong>${email}</strong>
-              </p>
-            </div>
-          `
-        });
-        console.log("✅ Email de convite enviado");
-      } catch (emailError) {
-        console.error("❌ Erro ao enviar email:", emailError);
+      if (!result.data?.success) {
+        return Response.json({
+          success: false,
+          error: result.data?.error?.message || result.data?.error || 'Erro ao criar usuário interno'
+        }, { status: 400 });
       }
 
-      // permissionsCreated: Employee.profile_id já garante RBAC — sem necessidade de fallback
-
-      console.log("✅ Usuário interno criado com sucesso!");
+      console.log("✅ [createUserForEmployee] Usuário interno criado via createUserDirectly:", result.data?.data?.user_id);
 
       return Response.json({
         success: true,
-        employee: newEmployee,
-        invite_url: inviteUrl,
+        employee: { id: result.data?.data?.employee_id },
+        invite_url: result.data?.data?.invite_link,
         email: email,
         role: user_data.role || 'user',
-        permissions_created: permissionsCreated,
         message: 'Usuário criado! Email de convite enviado.'
       });
     }
 
-    // Modo antigo: vincular employee a workshop
+    // Modo antigo: vincular employee a workshop (mantido para retrocompatibilidade)
     if (!employee_data || !workshop_id) {
       return Response.json({ error: 'Dados incompletos' }, { status: 400 });
     }
 
-    console.log("Criando User para:", employee_data.email);
+    console.log("Criando/atualizando User para:", employee_data.email);
 
-    // Buscar oficina para obter o consulting_firm_id
     let consulting_firm_id = null;
     try {
       const ws = await base44.asServiceRole.entities.Workshop.get(workshop_id);
-      if (ws) {
-        consulting_firm_id = ws.consulting_firm_id || null;
-      }
-    } catch(e) {
-      console.warn("Aviso: Falha ao buscar oficina para obter consulting_firm_id", e.message);
+      if (ws) consulting_firm_id = ws.consulting_firm_id || null;
+    } catch (e) {
+      console.warn("Aviso: Falha ao buscar oficina:", e.message);
     }
 
-    // Buscar se já existe User com este email
     const users = await base44.asServiceRole.entities.User.filter({ email: employee_data.email }, '-created_date', 1);
     const existingUser = users && users.length > 0 ? users[0] : null;
 
     if (existingUser) {
       console.log("User já existe, atualizando:", existingUser.id);
-      
       const updatedUser = await base44.asServiceRole.entities.User.update(existingUser.id, {
         workshop_id: workshop_id,
         consulting_firm_id: consulting_firm_id,
@@ -242,12 +85,7 @@ Deno.serve(async (req) => {
         hire_date: employee_data.hire_date || new Date().toISOString().split('T')[0],
         user_status: 'ativo'
       });
-
-      return Response.json({
-        success: true,
-        user_id: updatedUser.id,
-        message: 'User existente atualizado com sucesso'
-      });
+      return Response.json({ success: true, user_id: updatedUser.id, message: 'User existente atualizado com sucesso' });
     }
 
     return Response.json({
@@ -256,11 +94,7 @@ Deno.serve(async (req) => {
     }, { status: 400 });
 
   } catch (error) {
-    console.error("Erro ao criar User:", error);
-    console.error("Stack:", error.stack);
-    return Response.json({ 
-      success: false,
-      error: error.message || 'Erro ao criar usuário' 
-    }, { status: 500 });
+    console.error("Erro em createUserForEmployee:", error);
+    return Response.json({ success: false, error: error.message || 'Erro ao criar usuário' }, { status: 500 });
   }
 });
