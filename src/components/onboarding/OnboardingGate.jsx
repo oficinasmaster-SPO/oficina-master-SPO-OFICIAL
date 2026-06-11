@@ -67,6 +67,10 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
       if (user.cadastro_em_andamento === true && user.role !== 'admin') {
         navigate(createPageUrl("Cadastro")); return;
       }
+      // R11: signup órfão — chegou sem convite, deve criar sua própria oficina
+      if (user.signup_type === 'orphan' && user.role !== 'admin' && !hasWorkshop) {
+        navigate(createPageUrl("Cadastro")); return;
+      }
       // PERF-FIX-03: verificar convites APENAS se usuário não tem workshop e não é admin
       // e usar cache para não repetir a query em cada render/navegação
       const needsInviteCheck = user.role !== 'admin' && !hasWorkshop;

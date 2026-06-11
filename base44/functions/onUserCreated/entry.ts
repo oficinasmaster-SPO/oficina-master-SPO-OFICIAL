@@ -32,17 +32,18 @@ Deno.serve(async (req) => {
       // Se invite.profile_id existir, usamos; caso contrário, deixamos em branco.
       const finalProfileId = invite.profile_id || null;
 
+      // R11: NÃO setar workshop_id aqui — o User só deve receber workshop_id após aceitar
+      // o convite em /PrimeiroAcesso (completeInviteOnFirstAccess). Setar aqui causaria
+      // o OnboardingGate a ignorar o convite pendente e liberar acesso sem aceite formal.
       await base44.asServiceRole.entities.User.update(createdUser.id, {
         full_name: invite.name || createdUser.full_name,
-        workshop_id: workshop_id,
-        ...(finalProfileId ? { profile_id: finalProfileId } : {}),
         position: invite.position || 'Colaborador',
         job_role: invite.job_role || 'outros',
         area: invite.area || 'tecnico',
         telefone: invite.telefone || '',
         hire_date: new Date().toISOString().split('T')[0],
         user_status: 'pending',
-        is_internal: true,
+        is_internal: false,
         admin_responsavel_id: invite.admin_responsavel_id,
         profile_picture_url: null
       });
@@ -65,6 +66,12 @@ Deno.serve(async (req) => {
           role: createdUser.role,
           timestamp: new Date().toISOString()
         }));
+
+        // R11: Marcar signup órfão explicitamente para o OnboardingGate rotear para /Cadastro
+        await base44.asServiceRole.entities.User.update(createdUser.id, {
+          signup_type: 'orphan',        // sem convite → deve cadastrar sua própria oficina
+          first_access_completed: false // garante que OnboardingGate force rota de onboarding
+        }).catch(e => console.warn('[onUserCreated] Falha ao marcar signup_type orphan:', e.message));
 
         // Criar notificação interna para admins se usuário ficou sem workshop após 
         // ser criado sem convite (estado: pendente de workshop)
