@@ -62,6 +62,7 @@ const BackfillSaldosHistoricos = lazy(() => import('@/pages/BackfillSaldosHistor
 const UsuariosAdmin = lazy(() => import('@/pages/UsuariosAdmin'));
 const RepairOrphanEmployees = lazy(() => import('@/pages/RepairOrphanEmployees'));
 const DashboardTelemetriaPerfis = lazy(() => import('@/pages/DashboardTelemetriaPerfis'));
+const AdminSaudeSistema = lazy(() => import('@/pages/AdminSaudeSistema'));
 
 
 const { Pages, Layout, mainPage } = pagesConfig;
@@ -183,6 +184,7 @@ const AuthenticatedApp = () => {
           <Route path="/UsuariosAdmin" element={<LayoutWrapper currentPageName="UsuariosAdmin" adminOnly={true}><UsuariosAdmin /></LayoutWrapper>} />
           <Route path="/RepairOrphanEmployees" element={<LayoutWrapper currentPageName="RepairOrphanEmployees" adminOnly={true}><RepairOrphanEmployees /></LayoutWrapper>} />
           <Route path="/DashboardTelemetriaPerfis" element={<LayoutWrapper currentPageName="DashboardTelemetriaPerfis" adminOnly={true}><DashboardTelemetriaPerfis /></LayoutWrapper>} />
+          <Route path="/AdminSaudeSistema" element={<LayoutWrapper currentPageName="AdminSaudeSistema" adminOnly={true}><AdminSaudeSistema /></LayoutWrapper>} />
           {Object.entries(Pages).map(([path, Page]) => (
             <Route
               key={path}

@@ -994,6 +994,15 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           requiredPermission: 'admin.system_config'
         },
         { 
+          name: 'Saúde do Sistema', 
+          href: createPageUrl('AdminSaudeSistema'), 
+          icon: Activity,
+          description: 'Governança, RBAC, Onboarding, Observabilidade',
+          globalAdminOnly: true,
+          highlight: true,
+          requiredPermission: 'admin.audit'
+        },
+        { 
           name: 'Logs de Auditoria RBAC', 
           href: createPageUrl('LogsAuditoriaRBAC'), 
           icon: Activity,
