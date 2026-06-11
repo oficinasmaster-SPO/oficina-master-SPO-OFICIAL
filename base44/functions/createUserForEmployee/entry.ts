@@ -74,51 +74,10 @@ Deno.serve(async (req) => {
       console.log("   - Email:", newEmployee.email);
       console.log("   - Profile ID salvo:", newEmployee.profile_id);
 
-      // Criar permissões baseadas no perfil
-      let permissionsCreated = false;
-      try {
-        console.log("🔐 Criando permissões do perfil...");
-
-        const profile = await base44.asServiceRole.entities.UserProfile.get(user_data.profile_id);
-
-        if (!profile) {
-          console.error("❌ Perfil não encontrado:", user_data.profile_id);
-          throw new Error("Perfil não encontrado");
-        }
-
-        console.log("📋 Perfil carregado:", profile.name);
-        console.log("📋 Roles do perfil:", JSON.stringify(profile.roles || []));
-        console.log("📋 Módulos do perfil:", JSON.stringify(profile.module_permissions || {}));
-
-        // Criar UserPermission completa baseada no perfil
-        const permissionData = {
-          user_id: newEmployee.id,
-          user_email: email,
-          profile_id: user_data.profile_id,
-          profile_name: profile.name,
-          custom_roles: profile.roles || [],
-          custom_role_ids: profile.custom_role_ids || [],
-          module_permissions: profile.module_permissions || {},
-          sidebar_permissions: profile.sidebar_permissions || {},
-          is_active: true,
-          created_at: new Date().toISOString()
-        };
-
-        console.log("📤 Dados de permissão a serem salvos:", JSON.stringify(permissionData, null, 2));
-
-        const createdPermission = await base44.asServiceRole.entities.UserPermission.create(permissionData);
-
-        console.log("✅ Permissões criadas com sucesso!");
-        console.log("   - ID:", createdPermission.id);
-        console.log("   - Roles salvas:", JSON.stringify(createdPermission.custom_roles));
-        console.log("   - Módulos salvos:", Object.keys(createdPermission.module_permissions || {}).length);
-
-        permissionsCreated = true;
-      } catch (permError) {
-        console.error("❌ Erro ao criar permissões:", permError);
-        console.error("Stack:", permError.stack);
-        throw permError;
-      }
+      // R1 FIX (2026-06-11): UserPermission.create removido — entidade obsoleta desde 2026-06-10.
+      // Autorização vem exclusivamente de Employee.profile_id → UserProfile.roles (PermissionsContext).
+      // Criar UserPermission era inútil e induzia falsos erros de criação de usuário.
+      console.log("✅ Permissões via Employee.profile_id:", user_data.profile_id);
 
       // Registrar atividade
       try {
@@ -210,17 +169,6 @@ Deno.serve(async (req) => {
         console.error("❌ Erro ao enviar email:", emailError);
       }
 
-      // Validar se permissões foram criadas
-      if (!permissionsCreated) {
-        console.error("❌ Falha ao criar permissões - revertendo criação");
-        await base44.asServiceRole.entities.Employee.delete(newEmployee.id);
-        await base44.asServiceRole.entities.EmployeeInvite.delete(invite.id);
-        return Response.json({
-          success: false,
-          error: 'Falha ao criar permissões do usuário'
-        }, { status: 500 });
-      }
-
       console.log("✅ Usuário interno criado com sucesso!");
 
       return Response.json({
@@ -229,7 +177,6 @@ Deno.serve(async (req) => {
         invite_url: inviteUrl,
         email: email,
         role: user_data.role || 'user',
-        permissions_created: permissionsCreated,
         message: 'Usuário criado! Email de convite enviado.'
       });
     }
