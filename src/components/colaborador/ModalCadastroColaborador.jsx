@@ -247,19 +247,54 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
         });
       }
 
-      const formDataToSend = { ...formData, production_percentage: productionPercentage };
-      if (formDataToSend.user_profile_id === "none") formDataToSend.user_profile_id = null;
-      if (formDataToSend.job_description_id === "none") formDataToSend.job_description_id = null;
-      
-      const response = await base44.functions.invoke('registerEmployeeComplete', {
-        formData: formDataToSend,
-        workshop_id: workshop.id,
-        isPartner: isPartner,
-        userRoles: userRoles
+      const profileId = formData.user_profile_id === "none" ? null : (formData.user_profile_id || null);
+      const jobDescriptionId = formData.job_description_id === "none" ? null : (formData.job_description_id || null);
+
+      // MIGRAÇÃO P1 (2026-06-10): registerEmployeeComplete → createUserDirectly
+      // createUserDirectly é o fluxo canônico:
+      //   ✅ asServiceRole (não afeta sessão do admin)
+      //   ✅ idempotency key
+      //   ✅ Workshop.partner_ids atualizado para sócios
+      //   ✅ User.profile_id / User.job_role NÃO gravados (deprecated)
+      //   ✅ ActiveCampaign sync
+      //   ✅ Fallback Core.SendEmail se Resend falhar
+      const response = await base44.functions.invoke('createUserDirectly', {
+        // Identificação
+        name:               formData.full_name,
+        email:              formData.email,
+        workshop_id:        workshop.id,
+        // Cargo e perfil
+        position:           formData.position,
+        job_role:           formData.job_role || 'outros',
+        area:               formData.area || '',
+        profile_id:         profileId,
+        // Dados pessoais
+        telefone:           formData.telefone || '',
+        cpf:                formData.cpf || null,
+        rg:                 formData.rg || null,
+        data_nascimento:    formData.data_nascimento || null,
+        hire_date:          formData.hire_date || null,
+        // Foto
+        profile_picture_url: formData.profile_picture_url || null,
+        // RH / financeiro
+        salary:             formData.salary || 0,
+        commission:         formData.commission || 0,
+        bonus:              formData.bonus || 0,
+        benefits:           formData.benefits || [],
+        production_parts:       formData.production_parts || 0,
+        production_parts_sales: formData.production_parts_sales || 0,
+        production_services:    formData.production_services || 0,
+        production_percentage:  productionPercentage,
+        // Endereço
+        endereco:           formData.endereco || null,
+        // Outros
+        job_description_id: jobDescriptionId,
+        // Idempotency — previne double-submit
+        idempotencyKey:     `${workshop.id}-${formData.email}-${Date.now()}`
       });
 
       if (!response.data.success) {
-        throw new Error(response.data.error || "Erro ao cadastrar colaborador");
+        throw new Error(response.data.error?.message || response.data.error || "Erro ao cadastrar colaborador");
       }
 
       toast.success("Colaborador cadastrado com sucesso!");
@@ -268,7 +303,7 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
          const uuid = crypto.randomUUID();
          await base44.entities.DISCPublicSession.create({
             workshop_id: workshop.id,
-            employee_id: response.data.employee_id,
+            employee_id: response.data.data?.employee_id || response.data.employee_id,
             candidate_name: formDataToSend.full_name || formData.full_name,
             token: uuid,
             status: 'pending'
@@ -280,7 +315,7 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
 
       if (window.confirm("Deseja enviar o link de acesso ao sistema manualmente via WhatsApp agora?")) {
          onClose();
-         navigate(createPageUrl("ConvidarColaborador") + `?id=${response.data.employee_id}`);
+         navigate(createPageUrl("ConvidarColaborador") + `?id=${response.data.data?.employee_id || response.data.employee_id}`);
          return;
       }
 
