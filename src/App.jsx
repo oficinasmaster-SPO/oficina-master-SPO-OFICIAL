@@ -167,6 +167,7 @@ const AuthenticatedApp = () => {
           <Route path="/CentralFollowUp" element={<LayoutWrapper currentPageName="CentralFollowUp"><CentralFollowUp /></LayoutWrapper>} />
           <Route path="/ListagemClientesSprints" element={<LayoutWrapper currentPageName="ListagemClientesSprints"><ListagemClientesSprints /></LayoutWrapper>} />
           <Route path="/CentralProximosPassos" element={<LayoutWrapper currentPageName="CentralProximosPassos"><CentralProximosPassos /></LayoutWrapper>} />
+          <Route path="/ProximosPassosConsultoria" element={<LayoutWrapper currentPageName="ProximosPassosConsultoria"><ProximosPassosConsultoria /></LayoutWrapper>} />
           <Route path="/AdminQADashboard" element={<LayoutWrapper currentPageName="AdminQADashboard" adminOnly={true}><QADashboard /></LayoutWrapper>} />
           <Route path="/AdminTemplatesBacklog" element={<LayoutWrapper currentPageName="AdminTemplatesBacklog" adminOnly={true}><AdminTemplatesBacklog /></LayoutWrapper>} />
           <Route path="/DiagnosticoRiscos" element={<LayoutWrapper currentPageName="DiagnosticoRiscos"><DiagnosticoRiscos /></LayoutWrapper>} />

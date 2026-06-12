@@ -974,15 +974,6 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           requiredPermission: 'admin.system_config'
         },
         { 
-          name: 'Debug Permissões', 
-          href: createPageUrl('TestUsuarios'), 
-          icon: Bug,
-          description: 'Diagnóstico de permissões e perfis',
-          globalAdminOnly: true,
-          highlight: true,
-          requiredPermission: 'admin.system_config'
-        },
-        { 
           name: 'Templates de Mensagem', 
           href: createPageUrl('AdminMensagens'), 
           icon: MessageCircle,
@@ -1032,14 +1023,6 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           requiredPermission: 'admin.audit'
         },
         { 
-          name: 'Permissões Externas', 
-          href: createPageUrl('GestaoPermissoesExternas'), 
-          icon: Shield,
-          description: 'Gerenciar permissões de usuários externos',
-          globalAdminOnly: true,
-          requiredPermission: 'admin.users'
-        },
-        { 
           name: 'Monitoramento de Usuários', 
           href: createPageUrl('MonitoramentoUsuarios'), 
           icon: Activity,
@@ -1064,15 +1047,6 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           highlight: true,
           globalAdminOnly: true,
           requiredPermission: 'admin.system_config'
-        },
-        { 
-          name: 'Teste OpenAI', 
-          href: createPageUrl('TesteOpenAI'), 
-          icon: Sparkles,
-          description: 'Testar chave secundária',
-          highlight: true,
-          globalAdminOnly: true,
-          requiredPermission: 'diagnostics.ai_access'
         }
       ]
     }

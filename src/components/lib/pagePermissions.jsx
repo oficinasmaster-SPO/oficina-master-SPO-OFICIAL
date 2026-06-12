@@ -11,7 +11,6 @@ export const pagePermissions = {
   GestaoEmpresas: "admin.users",
   GestaoUsuariosEmpresas: "admin.users",
   GestaoRBAC: "admin.profiles",
-  GestaoPermissoesExternas: "admin.users",
   GestaoOficina: "workshop.view",
   ConfiguracoesKiwify: "admin.system_config",
   Integracoes: "admin.system_config",
@@ -29,11 +28,9 @@ export const pagePermissions = {
   DashboardTelemetriaPerfis: "admin",
   MonitoramentoUsuarios: "admin.audit",
   DiagnosticoPlano: "admin.system_config",
-  TesteOpenAI: "diagnostics.ai_access",
   AdminQADashboard: "admin",
   AdminTemplatesBacklog: "admin",
-  CadastroUsuarioDireto: "admin",
-  TestUsuarios: "admin.system_config",
+  CadastroUsuarioDireto: "admin", // @deprecated — fluxo absorvido pelo modal CadastroUsuarioDiretoModal em UsuariosAdmin
   CalendarioEventos: "admin.system_config",
   GerenciarProcessos: "admin.system_config",
 
@@ -49,7 +46,7 @@ export const pagePermissions = {
   GerenciarChecklists: "processes.checklists",
   MapaChecklists: "workshop.view",
   RepositorioDocumentos: "documents.upload",
-  DocumentosProcessos: "documents.view",
+  DocumentosProcessos: "documents.view", // @deprecated — existe apenas como componente em GestaoOficina, nunca foi página
 
   // Diagnósticos
   SelecionarDiagnostico: "diagnostics.view",
@@ -66,7 +63,6 @@ export const pagePermissions = {
   HistoricoMaturidade: "diagnostics.view",
   DiagnosticoCarga: "diagnostics.create",
   ResultadoCarga: "diagnostics.view",
-  AutoavaliacaoCarga: "diagnostics.create",
   DiagnosticoDesempenho: "diagnostics.create",
   ResultadoDesempenho: "diagnostics.view",
   AutoavaliacaoDesempenho: "diagnostics.create",
@@ -77,16 +73,12 @@ export const pagePermissions = {
   AutoavaliacaoEmpresarial: "diagnostics.create",
   DiagnosticoEndividamento: "financeiro.view",
   ResultadoEndividamento: "diagnostics.view",
-  AutoavaliacaoEndividamento: "diagnostics.create",
   DiagnosticoGerencial: "diagnostics.create",
   ResultadoGerencial: "diagnostics.view",
-  AutoavaliacaoGerencial: "diagnostics.create",
   DiagnosticoOS: "diagnostics.create",
   ResultadoOS: "diagnostics.view",
-  AutoavaliacaoOS: "diagnostics.create",
   DiagnosticoProducao: "diagnostics.create",
   ResultadoProducao: "diagnostics.view",
-  AutoavaliacaoProducao: "diagnostics.create",
   GraficosProducao: "diagnostics.view",
   DiagnosticoComercial: "diagnostics.create",
   ResultadoComercial: "diagnostics.view",
@@ -161,7 +153,6 @@ export const pagePermissions = {
   // Gamificação
   Gamificacao: "operations.view_qgp",
   RankingBrasil: "public_authenticated",
-  Desafios: "public_authenticated",
 
   // Gestão
   PainelMetas: "goals.view",
