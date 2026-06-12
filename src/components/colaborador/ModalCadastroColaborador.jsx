@@ -215,7 +215,9 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
         return;
       }
     } catch (error) {
-      toast.error("Erro ao validar email: " + error.message);
+      // 409 = email já existe — usar mensagem do body, não a mensagem técnica do axios
+      const serverMessage = error.response?.data?.error;
+      toast.error(serverMessage || "Este e-mail já está cadastrado nesta oficina");
       setSubmitting(false);
       return;
     }
