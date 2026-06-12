@@ -1,5 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
+import { pagePermissions as pagePermissionsMap } from "@/components/lib/pagePermissions";
+import { getNavigationGroups } from "@/components/navigation/navigationGroups";
+import { pagesConfig } from "@/pages.config";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Shield, Users, Key, Building2, AlertTriangle, Eye, Clock, FileText } from "lucide-react";
@@ -79,6 +82,59 @@ export default function DashboardAuditoriaRBAC() {
     enabled: user?.role === 'admin'
   });
 
+  const { data: allProfiles = [], isLoading: loadingAllProfiles } = useQuery({
+    queryKey: ['rbac-audit-all-profiles'],
+    queryFn: async () => {
+      const result = await base44.entities.UserProfile.list();
+      return Array.isArray(result) ? result : [];
+    },
+    enabled: user?.role === 'admin'
+  });
+
+  const {
+    unprotectedPages,
+    unusedPermissions,
+    deadMenus,
+    matrixData
+  } = useMemo(() => {
+    if (!allProfiles.length) return { unprotectedPages: [], unusedPermissions: [], deadMenus: [], matrixData: [] };
+
+    const pages = Object.keys(pagesConfig?.Pages || {});
+    const navGroups = getNavigationGroups(0);
+
+    const unprotectedPages = pages.filter(p => pagePermissionsMap[p] === undefined);
+
+    const systemPerms = new Set();
+    Object.values(pagePermissionsMap).forEach(perm => {
+      if (perm) systemPerms.add(perm);
+    });
+    
+    const menus = [];
+    navGroups.forEach(g => {
+      g.items.forEach(i => {
+        menus.push(i);
+        if (i.requiredPermission) systemPerms.add(i.requiredPermission);
+      });
+    });
+
+    const assignedPerms = new Set();
+    const matrixData = allProfiles.map(p => {
+      const roles = p.data?.roles || p.roles || [];
+      roles.forEach(r => assignedPerms.add(r));
+      return {
+        id: p.id,
+        name: p.name,
+        type: p.type,
+        roles
+      };
+    }).sort((a, b) => b.roles.length - a.roles.length);
+
+    const unusedPermissions = Array.from(systemPerms).filter(p => !assignedPerms.has(p));
+    const deadMenus = menus.filter(m => m.requiredPermission && unusedPermissions.includes(m.requiredPermission));
+
+    return { unprotectedPages, unusedPermissions, deadMenus, matrixData };
+  }, [allProfiles]);
+
   const { data: recentTenants = [], isLoading: loadingTenants } = useQuery({
     queryKey: ['rbac-audit-tenants'],
     queryFn: async () => {
@@ -123,7 +179,7 @@ export default function DashboardAuditoriaRBAC() {
     );
   }
 
-  const isLoading = loadingExceptions || loadingAdmins || loadingProfiles || loadingEmployees || loadingImpersonations || loadingTenants;
+  const isLoading = loadingExceptions || loadingAdmins || loadingProfiles || loadingEmployees || loadingImpersonations || loadingTenants || loadingAllProfiles;
 
   if (isLoading) {
     return <div className="flex items-center justify-center min-h-[60vh]"><WheelLoader size="xl" /></div>;
@@ -193,6 +249,7 @@ export default function DashboardAuditoriaRBAC() {
           <TabsTrigger value="admins">Permissões Administrativas</TabsTrigger>
           <TabsTrigger value="impersonation">Logs de Impersonação</TabsTrigger>
           <TabsTrigger value="tenants">Tenants Acessados</TabsTrigger>
+          <TabsTrigger value="coverage">Matriz & Cobertura</TabsTrigger>
         </TabsList>
 
         <TabsContent value="bypasses" className="mt-4">
@@ -412,6 +469,101 @@ export default function DashboardAuditoriaRBAC() {
                   </Table>
                 </div>
               )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="coverage" className="mt-4 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-amber-500" />
+                  Permissões Órfãs ({unusedPermissions?.length || 0})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-xs text-gray-500 mb-3">Registradas no código, mas nunca atribuídas a nenhum perfil.</p>
+                <div className="flex flex-wrap gap-1 max-h-32 overflow-y-auto scrollbar-thin">
+                  {unusedPermissions?.map(p => <Badge key={p} variant="destructive" className="text-xs font-mono">{p}</Badge>)}
+                  {unusedPermissions?.length === 0 && <span className="text-sm text-green-600">Nenhuma permissão órfã!</span>}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-blue-500" />
+                  Menus "Mortos" ({deadMenus?.length || 0})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-xs text-gray-500 mb-3">Menus que exigem uma permissão órfã (ninguém acessa).</p>
+                <div className="flex flex-col gap-1 max-h-32 overflow-y-auto scrollbar-thin">
+                  {deadMenus?.map(m => <span key={m.name} className="text-xs text-gray-700 font-medium">• {m.name} <span className="text-gray-400 font-normal">({m.requiredPermission})</span></span>)}
+                  {deadMenus?.length === 0 && <span className="text-sm text-green-600">Nenhum menu inacessível!</span>}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-red-500" />
+                  Páginas sem Proteção ({unprotectedPages?.length || 0})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-xs text-gray-500 mb-3">Rotas do pagesConfig não mapeadas no pagePermissions (abertas).</p>
+                <div className="flex flex-wrap gap-1 max-h-32 overflow-y-auto scrollbar-thin">
+                  {unprotectedPages?.map(p => <Badge key={p} variant="outline" className="text-xs font-mono">{p}</Badge>)}
+                  {unprotectedPages?.length === 0 && <span className="text-sm text-green-600">Todas as páginas protegidas!</span>}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Matriz de Perfis Efetivos</CardTitle>
+              <CardDescription>Lista completa de todos os perfis e suas respectivas permissões concedidas.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[30%]">Perfil</TableHead>
+                      <TableHead className="w-[10%] text-center">Permissões</TableHead>
+                      <TableHead className="w-[60%]">Lista de Acessos</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {matrixData?.map(p => (
+                      <TableRow key={p.id}>
+                        <TableCell>
+                          <div className="font-medium text-sm">{p.name}</div>
+                          <Badge variant="secondary" className="mt-1">{p.type}</Badge>
+                        </TableCell>
+                        <TableCell className="text-center font-bold text-gray-700">
+                          {p.roles.length}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-wrap gap-1">
+                            {p.roles.slice(0, 10).map(r => (
+                              <Badge key={r} variant="outline" className="text-xs bg-gray-50 font-mono text-gray-600">{r}</Badge>
+                            ))}
+                            {p.roles.length > 10 && (
+                              <Badge variant="outline" className="text-xs bg-gray-100">+ {p.roles.length - 10} outras</Badge>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
