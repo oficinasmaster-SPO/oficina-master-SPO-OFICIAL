@@ -139,7 +139,6 @@ Deno.serve(async (req) => {
         });
         if (assignResult?.data?.profile_id) {
           finalProfileIdResolved = assignResult.data.profile_id;
-          console.log("📋 Profile_id resolvido via autoAssignProfile:", finalProfileIdResolved, "para job_role:", job_role);
         }
       } catch(e) {
         console.warn("⚠️ autoAssignProfile falhou, tentando fallback por type:", e.message);
@@ -154,7 +153,6 @@ Deno.serve(async (req) => {
           // Ordenar por nome para garantir resultado determinístico
           profiles.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
           finalProfileIdResolved = profiles[0].id;
-          console.log("📋 Profile_id resolvido por fallback ordenado:", finalProfileIdResolved);
         }
       } catch(e) {
         console.warn("⚠️ Não foi possível resolver profile_id automaticamente:", e.message);
@@ -170,8 +168,6 @@ Deno.serve(async (req) => {
     // 4. Sanitizar payload de role enviada
     // Somente admins podem criar outros admins. Qualquer outro caller recebe 'user' forçado.
     const safeRole = (role === 'admin' && currentUser.role === 'admin') ? 'admin' : 'user';
-
-    console.log("👤 Convidando usuário:", email);
 
     // Determinar consulting_firm_id e nome da organização
     let consulting_firm_id = bodyConsultingFirmId || null;
@@ -201,14 +197,12 @@ Deno.serve(async (req) => {
     // O profile_id resolvido é a fonte da verdade para as permissões
     const finalProfileId = finalProfileIdResolved || profile_id;
 
-    // Convidar usuário via Base44 — base44.users.inviteUser é o método correto
-    console.log("📧 Convidando usuário via Base44 com role:", safeRole);
-    const inviteResult = await base44.users.inviteUser(email, safeRole);
+    // Convidar usuário via Base44 — asServiceRole para não depender do token do caller
+    const inviteResult = await base44.asServiceRole.users.inviteUser(email, safeRole);
     
     if (!inviteResult?.id) {
       throw new Error('Falha ao criar usuário: resposta inválida do inviteUser');
     }
-    console.log("✅ Usuário criado via inviteUser:", inviteResult.id);
 
     // Gerar token de convite
     const inviteToken = Math.random().toString(36).substring(2, 15) + 
@@ -242,12 +236,9 @@ Deno.serve(async (req) => {
       }
     });
 
-    console.log("✅ Convite criado:", invite.id);
-
     // PRE-2: partner_ids será atualizado APÓS criar o Employee (ver bloco abaixo)
 
     // Criar Employee com os dados
-    console.log("👥 Criando Employee...");
     const employee = await base44.asServiceRole.entities.Employee.create({
       // Core fields
       workshop_id: isInternalUser ? null : workshop_id,
@@ -284,8 +275,6 @@ Deno.serve(async (req) => {
       status: 'ativo'
     });
 
-    console.log("✅ Employee criado:", employee.id);
-
     // PRE-2 (fix): Atualizar Workshop.partner_ids para sócio/sócio_interno — após ter o user_id
     if (['socio', 'socio_interno'].includes(job_role) && workshop_id && inviteResult?.id) {
       try {
@@ -297,7 +286,6 @@ Deno.serve(async (req) => {
             await base44.asServiceRole.entities.Workshop.update(workshop_id, {
               partner_ids: [...currentPartnerIds, inviteResult.id]
             });
-            console.log("✅ [PRE-2] Workshop.partner_ids atualizado para sócio:", inviteResult.id);
           }
         }
       } catch(e) {
@@ -308,7 +296,6 @@ Deno.serve(async (req) => {
     // A senha será definida pelo usuário no primeiro acesso via Sign up
 
     // Atualizar User com dados customizados usando SERVICE ROLE (não afeta sessão)
-    console.log("🔄 Atualizando dados do User...");
     // PRE-5 (2026-06-10): User.profile_id e User.job_role removidos — campos deprecated.
     // User.user_type substituiu is_internal como campo canônico.
     // Fonte de autorização é Employee.profile_id → UserProfile.roles, não User.profile_id.
@@ -331,7 +318,6 @@ Deno.serve(async (req) => {
 
     // Atualizar via SERVICE ROLE (não afeta sessão do admin logado)
     await base44.asServiceRole.entities.User.update(inviteResult.id, userData);
-    console.log("✅ Dados customizados salvos no User");
 
     // Gerar link de convite com profile_id (sem workshop_id)
     const inviteDomain = `https://oficinasmastergtr.com`;
@@ -506,7 +492,6 @@ Deno.serve(async (req) => {
               }
             })
           });
-          console.log("✅ [PRE-4] ActiveCampaign sincronizado");
         }
       }
     } catch(e) {

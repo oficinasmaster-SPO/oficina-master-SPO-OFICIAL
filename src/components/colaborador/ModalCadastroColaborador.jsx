@@ -89,13 +89,7 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
     }
 
     // Don't auto-apply if user already manually changed the profile
-    if (profileWasManuallyChanged) {
-      console.info('[PROFILE_OVERRIDE] User manually changed profile, skipping auto-apply', {
-        job_role: formData.job_role,
-        current_profile_id: formData.user_profile_id
-      });
-      return;
-    }
+    if (profileWasManuallyChanged) return;
 
     const applyCanonicalProfile = async () => {
       setCheckingSuggestion(true);
@@ -111,11 +105,7 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
           setFormData(prev => ({ ...prev, user_profile_id: response.data.suggested_profile_id }));
           setProfileAutoApplied(true);
           
-          console.info('[AUTO_ASSIGN]', {
-            job_role: formData.job_role,
-            suggested_profile: response.data.suggested_profile_name,
-            applied: true
-          });
+
 
           // Telemetria: sugestão gerada
           await base44.functions.invoke('logProfileSuggestion', {
@@ -239,16 +229,6 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
         if (selectedProfile) {
           userRoles = selectedProfile.roles || [];
         }
-      }
-
-      // FASE 4: Log telemetry if profile was auto-applied
-      if (profileAutoApplied && formData.user_profile_id) {
-        console.info('[AUTO_ASSIGN_SAVE]', {
-          job_role: formData.job_role,
-          profile_id: formData.user_profile_id,
-          profile_name: profiles.find(p => p.id === formData.user_profile_id)?.name,
-          was_manual: profileWasManuallyChanged
-        });
       }
 
       const resolvedProfileId = formData.user_profile_id && formData.user_profile_id !== "none"
@@ -544,11 +524,6 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
                               
                               // FASE 4: Track manual override
                               if (previousProfileId && previousProfileId !== value) {
-                                console.info('[PROFILE_OVERRIDE]', {
-                                  previous_profile: previousProfileId,
-                                  new_profile: value,
-                                  profile_name: selectedProfile?.name
-                                });
                                 setProfileWasManuallyChanged(true);
                                 setProfileAutoApplied(false);
                               }
