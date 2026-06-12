@@ -209,8 +209,20 @@ function UserProfileSection({ user, collapsed, workshop }) {
 
 export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
   const location = useLocation();
-  const { profile, currentRole, hasPermission, canAccessPage } = usePermissions();
+  const { profile, currentRole, hasPermission, canAccessPage, permissions, loading: permissionsLoading } = usePermissions();
   const { isInternal, isAcelerador, isAdmin } = useUserType();
+
+  React.useEffect(() => {
+    console.log('[SIDEBAR_PERMISSIONS]', {
+      userId: user?.id,
+      permissionsLoading,
+      permissionsCount: permissions?.length,
+      isAdmin,
+      isAcelerador,
+      profileId: profile?.id,
+      permissions,
+    });
+  }, [permissions, permissionsLoading, isAdmin]);
   const { queryString } = useAssistanceMode();
   const { workshop: userWorkshop } = useWorkshopContext();
   const { getAdminUrl } = useAdminMode();

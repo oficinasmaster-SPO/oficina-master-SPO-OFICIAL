@@ -144,10 +144,22 @@ export function PermissionsProvider({ children }) {
         }
       }
 
+      const finalPermissions = [...new Set(aggregatedPermissions)];
+      console.log('[RBAC_FINAL]', {
+        userId: user?.id,
+        workshopId,
+        effectiveWorkshopId,
+        activeProfileId,
+        userProfileId: userProfile?.id,
+        profileRolesCount: (userProfile?.data?.roles || userProfile?.roles || []).length,
+        permissionsCount: finalPermissions.length,
+        isOwnerOrPartner,
+        permissions: finalPermissions
+      });
       return {
-        permissions: [...new Set(aggregatedPermissions)],
+        permissions: finalPermissions,
         profile: userProfile,
-        customRole: null, // CustomRole via User foi removido; CustomRoles do UserProfile já consolidados acima.
+        customRole: null,
         currentRole: activeRole,
         isOwnerOrPartner,
         granularConfig
@@ -166,6 +178,14 @@ export function PermissionsProvider({ children }) {
     isOwnerOrPartner = false, 
     granularConfig = {} 
   } = permissionsData || {};
+
+  console.log('[RBAC_QUERY_RESULT]', {
+    loading,
+    permissionsCount: permissions?.length,
+    hasData: !!permissionsData,
+    userId: user?.id,
+    workshopId,
+  });
 
   // Sem fallback: usuário sem Employee.profile_id tem permissions = []
   // Admin tem bypass completo via queryFn acima.
