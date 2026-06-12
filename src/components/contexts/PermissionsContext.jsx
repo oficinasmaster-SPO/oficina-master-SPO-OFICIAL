@@ -23,7 +23,6 @@ export function PermissionsProvider({ children }) {
 
   const { data: permissionsData, isLoading: loading } = useQuery({
     queryKey: ['permissions', user?.id, workshopId, isAdminMode, isImpersonating],
-    staleTime: 2 * 60 * 1000, // 2 minutos — reduzido para evitar cache stale após backfill
     gcTime: 5 * 60 * 1000,
     retry: 2,
     queryFn: async () => {
@@ -154,7 +153,7 @@ export function PermissionsProvider({ children }) {
         granularConfig
       };
     },
-    staleTime: 10 * 60 * 1000, // 10 min de cache
+    staleTime: 0, // sem cache — sempre refetch para garantir permissões frescas
     refetchOnWindowFocus: false,
     enabled: !!user
   });
