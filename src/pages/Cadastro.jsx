@@ -290,23 +290,38 @@ export default function Cadastro() {
   };
 
   const handleFinish = async () => {
-    try {
-      // Atualizar flags de onboarding para garantir que a finalização foi registrada
-      const updates = {
-        first_access_completed: true,
-        profile_completed: true,
-        cadastro_finalizado: true,
-        cadastro_em_andamento: false
-      };
-      
-      await base44.auth.updateMe(updates);
-      
-      // Atualizar status da oficina para "ativo" apenas quando finalizar
-      if (workshop && workshop.status === 'rascunho') {
-        await base44.entities.Workshop.update(workshop.id, { status: 'ativo' });
+    const updates = {
+      first_access_completed: true,
+      profile_completed: true,
+      cadastro_finalizado: true,
+      cadastro_em_andamento: false
+    };
+
+    // Tentar até 3 vezes para garantir que as flags sejam gravadas
+    let saved = false;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        await base44.auth.updateMe(updates);
+        saved = true;
+        break;
+      } catch (e) {
+        console.error(`[handleFinish] Tentativa ${attempt} falhou:`, e);
+        if (attempt < 3) await new Promise(r => setTimeout(r, 800));
       }
-    } catch (e) {
-      console.error("Erro ao atualizar status do usuário:", e);
+    }
+
+    if (!saved) {
+      toast.error("Não foi possível salvar a finalização do cadastro. Tente novamente.");
+      return;
+    }
+
+    // Atualizar status da oficina para "ativo" apenas quando finalizar
+    if (workshop && workshop.status === 'rascunho') {
+      try {
+        await base44.entities.Workshop.update(workshop.id, { status: 'ativo' });
+      } catch (e) {
+        console.error("[handleFinish] Erro ao ativar workshop:", e);
+      }
     }
 
     toast.success("Cadastro finalizado!");
