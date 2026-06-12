@@ -15,6 +15,39 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
+    // Blocklist de chaves administrativas — nunca podem ser concedidas via exceção individual
+    const BLOCKED_KEY_PREFIXES = [
+      'admin.',
+      '/GestaoTenants',
+      '/UsuariosAdmin',
+      '/GestaoRBAC',
+      '/GestaoEmpresas',
+      '/GestaoUsuariosEmpresas',
+      '/ConfiguracaoPermissoes',
+      '/ConfiguracaoPermissoesGranulares',
+      '/LogsAuditoria',
+      '/LogsAuditoriaRBAC',
+      '/DashboardFinanceiro',
+      '/AdminProdutividade',
+      '/AdminDesafios',
+      '/AdminMensagens',
+      '/AdminNotificacoes',
+      '/GerenciarPlanos',
+      '/DiagnosticoPlano',
+      '/Integracoes',
+      '/MonitoramentoUsuarios',
+      '/CadastroUsuarioDireto',
+      'gestao_tenants.',
+      'usuarios_admin.',
+      'gestao_rbac.',
+      'gestao_empresas.',
+    ];
+    const keyLower = permission_key.toLowerCase();
+    const isBlocked = BLOCKED_KEY_PREFIXES.some(p => keyLower.startsWith(p.toLowerCase()));
+    if (isBlocked) {
+      return Response.json({ error: 'Permissão administrativa não pode ser concedida via exceção individual. Use perfis de acesso.' }, { status: 403 });
+    }
+
     // Verifica se já existe exceção para esta permissão
     const existing = await base44.entities.UserPermissionException.filter({
       user_id: user_id,

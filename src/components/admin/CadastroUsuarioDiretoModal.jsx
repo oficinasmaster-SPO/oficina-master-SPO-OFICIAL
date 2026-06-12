@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { CANONICAL_PROFILE_IDS } from "@/components/lib/canonicalProfiles";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -188,9 +189,17 @@ export default function CadastroUsuarioDiretoModal({ open, onClose, onOpenChange
     staleTime: 5 * 60 * 1000
   });
 
-  // Filtra perfis por tipo
-  const profilesInternos = profiles.filter(p => p.type === 'interno' || p.type === 'sistema');
-  const profilesExternos = profiles.filter(p => p.type === 'externo' || (!p.type));
+  // W1 FIX: filtro por ID fixo em vez de type string frágil.
+  // Evita que perfis internos/sistema/mal-migrados apareçam no dropdown de externos.
+  const INTERNAL_PROFILE_IDS = [
+    "6a272f9bf281e7ca21d4726a", // Sócio - Interno
+    "6a272f95957fe29d2e8a888a", // Consultor
+    "6981e1904f21fbeca5620f73", // Marketing
+    "695a939e9cbc431cae22a69e", // Administrativo
+    "69591b8b6627f7b9b783618e", // CS - Customer Success
+  ];
+  const profilesInternos = profiles.filter(p => INTERNAL_PROFILE_IDS.includes(p.id) && p.status === 'ativo');
+  const profilesExternos = profiles.filter(p => CANONICAL_PROFILE_IDS.includes(p.id) && p.status === 'ativo');
 
   const createUserMutation = useMutation({
     mutationFn: async (data) => {

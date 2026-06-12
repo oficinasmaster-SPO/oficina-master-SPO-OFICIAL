@@ -128,9 +128,8 @@ Deno.serve(async (req) => {
     }
     
     // 4. Sanitizar payload de role enviada
-    // Se quiser garantir que mesmo admin não crie outros admins inadvertidamente, você pode forçar 'user' aqui,
-    // mas se for permitido admin criar admin, apenas restrinja aos dois valores.
-    const safeRole = ['user', 'admin'].includes(role) ? role : 'user';
+    // Somente admins podem criar outros admins. Qualquer outro caller recebe 'user' forçado.
+    const safeRole = (role === 'admin' && currentUser.role === 'admin') ? 'admin' : 'user';
 
     console.log("👤 Convidando usuário:", email);
     
