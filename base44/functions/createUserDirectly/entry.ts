@@ -201,11 +201,14 @@ Deno.serve(async (req) => {
     // O profile_id resolvido é a fonte da verdade para as permissões
     const finalProfileId = finalProfileIdResolved || profile_id;
 
-    // Convidar usuário via Base44 usando asServiceRole — funciona mesmo para callers com role='user'
+    // Convidar usuário via Base44 — base44.users.inviteUser é o método correto
     console.log("📧 Convidando usuário via Base44 com role:", safeRole);
-    const inviteResult = await base44.asServiceRole.users.inviteUser(email, safeRole);
+    const inviteResult = await base44.users.inviteUser(email, safeRole);
     
-    console.log("✅ Convite enviado pelo Base44 (email automático) - sessão do admin mantida", inviteResult.id);
+    if (!inviteResult?.id) {
+      throw new Error('Falha ao criar usuário: resposta inválida do inviteUser');
+    }
+    console.log("✅ Usuário criado via inviteUser:", inviteResult.id);
 
     // Gerar token de convite
     const inviteToken = Math.random().toString(36).substring(2, 15) + 
