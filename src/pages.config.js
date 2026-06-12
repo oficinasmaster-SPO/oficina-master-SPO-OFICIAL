@@ -69,7 +69,6 @@ const CulturaOrganizacional = lazy(() => import('./pages/CulturaOrganizacional')
 const DRETCMP2 = lazy(() => import('./pages/DRETCMP2'));
 const DreMockup = lazy(() => import('./pages/DreMockup'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
-const DashboardFinanceiro = lazy(() => import('./pages/DashboardFinanceiro'));
 const DashboardOverview = lazy(() => import('./pages/DashboardOverview'));
 const DescricoesCargo = lazy(() => import('./pages/DescricoesCargo'));
 const DesdobramentoMeta = lazy(() => import('./pages/DesdobramentoMeta'));
@@ -178,12 +177,9 @@ const SolicitarPermissoes = lazy(() => import('./pages/SolicitarPermissoes'));
 const Tarefas = lazy(() => import('./pages/Tarefas'));
 const TechnicianQGP = lazy(() => import('./pages/TechnicianQGP'));
 const TreinamentoVendas = lazy(() => import('./pages/TreinamentoVendas'));
-const UsuariosAdmin = lazy(() => import('./pages/UsuariosAdmin'));
 const VisualizarProcesso = lazy(() => import('./pages/VisualizarProcesso'));
 const GestaoTenants = lazy(() => import('./pages/GestaoTenants'));
 const GestaoEmpresas = lazy(() => import('./pages/GestaoEmpresas'));
-const PublicNPS = lazy(() => import('./pages/PublicNPS'));
-const PublicDISC = lazy(() => import('./pages/PublicDISC'));
 import __Layout from './Layout.jsx';
 
 export const PAGES = {
@@ -246,7 +242,6 @@ export const PAGES = {
     "DRETCMP2": DRETCMP2,
     "DreMockup": DreMockup,
     "Dashboard": Dashboard,
-    "DashboardFinanceiro": DashboardFinanceiro,
     "DashboardOverview": DashboardOverview,
     "DescricoesCargo": DescricoesCargo,
     "DesdobramentoMeta": DesdobramentoMeta,
@@ -355,12 +350,9 @@ export const PAGES = {
     "Tarefas": Tarefas,
     "TechnicianQGP": TechnicianQGP,
     "TreinamentoVendas": TreinamentoVendas,
-    "UsuariosAdmin": UsuariosAdmin,
     "VisualizarProcesso": VisualizarProcesso,
     "GestaoTenants": GestaoTenants,
     "GestaoEmpresas": GestaoEmpresas,
-    "PublicNPS": PublicNPS,
-    "PublicDISC": PublicDISC,
 }
 
 export const pagesConfig = {
