@@ -220,9 +220,17 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       isAdmin,
       isAcelerador,
       profileId: profile?.id,
-      permissions,
     });
   }, [permissions, permissionsLoading, isAdmin]);
+
+  console.log('SIDEBAR_RENDER', {
+    permissionsCount: permissions?.length,
+    isLoading: permissionsLoading,
+    profileId: profile?.id,
+    profileName: profile?.name,
+    sidebarPermissionsCount: Object.keys(profile?.sidebar_permissions || {}).length,
+    modulesAllowedCount: profile?.modules_allowed?.length,
+  });
   const { queryString } = useAssistanceMode();
   const { workshop: userWorkshop } = useWorkshopContext();
   const { getAdminUrl } = useAdminMode();
