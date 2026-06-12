@@ -49,7 +49,13 @@ export function PermissionsProvider({ children }) {
       );
 
       // Admin ou usuário interno têm acesso total — MAS NÃO em impersonação!
-      if ((user.role === 'admin' || user.user_type === 'internal') && !isImpersonated) {
+      // Resiliente a user_type=null: verificar também consulting_firm_id como fallback
+      const isInternalUser = user.user_type === 'internal' ||
+        (user.user_type == null && (
+          user.consulting_firm_id === '69bab264d7c3fe5d367c3959' ||
+          user.role === 'admin'
+        ));
+      if ((user.role === 'admin' || isInternalUser) && !isImpersonated) {
         await Promise.all(queries); // Espera a granularConfig
         aggregatedPermissions = systemRoles.flatMap(m => m.roles.map(r => r.id));
         return {
@@ -166,7 +172,9 @@ export function PermissionsProvider({ children }) {
     if (!user) return false;
     // Em impersonação, NÃO usar permissões de admin — usar permissões do usuário alvo
     const isImpersonated = user._isImpersonated === true;
-    if ((user.role === 'admin' || user.user_type === 'internal') && !isImpersonated) return true;
+    const isInternalCheck = user.user_type === 'internal' ||
+      (user.user_type == null && user.consulting_firm_id === '69bab264d7c3fe5d367c3959');
+    if ((user.role === 'admin' || isInternalCheck) && !isImpersonated) return true;
     return permissions.includes(permissionId);
   };
 
@@ -229,7 +237,9 @@ export function PermissionsProvider({ children }) {
     try {
       if (!user) return false;
       const isImpersonated = user._isImpersonated === true;
-      if ((user.role === 'admin' || user.user_type === 'internal') && !isImpersonated) return true;
+      const isInternalCheck = user.user_type === 'internal' ||
+        (user.user_type == null && user.consulting_firm_id === '69bab264d7c3fe5d367c3959');
+      if ((user.role === 'admin' || isInternalCheck) && !isImpersonated) return true;
 
       // Sócio/proprietário tem acesso total a todas as páginas não-admin
       if (isOwnerOrPartner && !isImpersonated) {
@@ -262,7 +272,9 @@ export function PermissionsProvider({ children }) {
   const canPerform = (action) => {
     if (!user) return false;
     const isImpersonated = user._isImpersonated === true;
-    if ((user.role === 'admin' || user.user_type === 'internal') && !isImpersonated) return true;
+    const isInternalCheck = user.user_type === 'internal' ||
+      (user.user_type == null && user.consulting_firm_id === '69bab264d7c3fe5d367c3959');
+    if ((user.role === 'admin' || isInternalCheck) && !isImpersonated) return true;
 
     // IDs mapeados para as roles reais de systemRoles.jsx
     // WARN-01 corrigido: mapeamento anterior usava strings inexistentes

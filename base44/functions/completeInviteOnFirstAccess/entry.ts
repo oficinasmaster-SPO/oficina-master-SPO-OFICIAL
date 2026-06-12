@@ -74,6 +74,10 @@ Deno.serve(async (req) => {
     updateData.first_access_completed = true;
     updateData.profile_completed = false;
 
+    // Gravar user_type canonicamente (R-UT-01, 2026-06-12)
+    // internal = convite do tipo 'internal' (equipe OM); external = qualquer outro
+    updateData.user_type = (invite.invite_type === 'internal') ? 'internal' : 'external';
+
     if (secureWorkshopId) {
       updateData.workshop_id = secureWorkshopId;
     }
