@@ -30,18 +30,18 @@ export default function RouteGuard({ children, pageName, adminOnly = false }) {
 
   if (!user) return null;
 
-  // 1. Admin tem acesso total
-  if (user.role === 'admin') return <>{children}</>;
+  // A validação de Admin / Interno é agora tratada de forma unificada dentro de canAccessPage.
+  // Evitamos a duplicação de "bypass" no RouteGuard.
 
-  // 2. Internos (equipe Oficinas Master) têm acesso total
-  if (user.user_type === 'internal') return <>{children}</>;
-
-  // 3. adminOnly — só admin e internos (já cobertos acima)
   if (adminOnly) {
-    return <AccessDenied navigate={navigate} reason="apenas_admin" />;
+    // Para rotas admin-only estritas, validamos o perfil de acesso global
+    const isInternal = user.user_type === 'internal' || user.consulting_firm_id === '69bab264d7c3fe5d367c3959';
+    if (user.role !== 'admin' && !isInternal) {
+      return <AccessDenied navigate={navigate} reason="apenas_admin" />;
+    }
   }
 
-  // 4. Verificação granular RBAC via pagePermissions + UserProfile + CustomRole
+  // Verificação granular RBAC centralizada (pagePermissions + UserProfile + CustomRole + Bypasses Globais)
   if (pageName && !canAccessPage(pageName)) {
     return <AccessDenied navigate={navigate} reason="sem_permissao" />;
   }

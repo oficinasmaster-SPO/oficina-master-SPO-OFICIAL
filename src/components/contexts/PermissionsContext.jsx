@@ -248,11 +248,11 @@ export function PermissionsProvider({ children }) {
         }
       }
       
-      // 2. Atalhos por cargo
-      if (profile?.job_roles?.includes('socio') && resourceId === 'employees') return true;
-      if ((profile?.job_roles?.includes('diretor') || profile?.job_roles?.includes('gerente')) && resourceId === 'employees') {
-        if (actionId === 'read' || actionId === 'create' || actionId === 'update') return true;
-      }
+      // 2. [REMOVIDO] Atalhos por cargo hardcoded.
+      // Anteriormente Sócios, Diretores e Gerentes tinham bypass fixo no código 
+      // para acessar/editar colaboradores (resourceId === 'employees').
+      // Agora o acesso é definido EXCLUSIVAMENTE pelo RBAC (granularConfig ou systemRoles).
+      // Isso impede que um "Superpoder" oculto burle as configurações visíveis no painel.
       
       // 3. Verificar module_permissions do perfil
       if (profile?.module_permissions) {
