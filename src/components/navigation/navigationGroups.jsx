@@ -581,7 +581,6 @@ export const getNavigationGroups = (unreadCount) => [
         description: 'Painel completo de gestão',
         highlight: true,
         globalAdminOnly: true,
-        aceleradorOnly: true,
         requiredPermission: 'acceleration.manage'
       },
       {
@@ -591,7 +590,6 @@ export const getNavigationGroups = (unreadCount) => [
         description: 'Gestão e envio de contratos',
         highlight: true,
         globalAdminOnly: true,
-        aceleradorOnly: true,
         requiredPermission: 'acceleration.manage'
       },
       {
@@ -600,7 +598,6 @@ export const getNavigationGroups = (unreadCount) => [
         icon: FileText,
         description: 'Testes, diagnósticos e desempenho',
         globalAdminOnly: true,
-        aceleradorOnly: true,
         requiredPermission: 'acceleration.manage'
       },
       {
@@ -609,7 +606,6 @@ export const getNavigationGroups = (unreadCount) => [
         icon: Clock,
         description: 'Horas dedicadas por consultor e cliente',
         globalAdminOnly: true,
-        aceleradorOnly: true,
         requiredPermission: 'acceleration.manage'
       }
     ]
