@@ -43,8 +43,7 @@ Deno.serve(async (req) => {
       invite = existingInvites[0];
       
       // Gerar novo invite_token aleatório
-      const newInviteToken = Math.random().toString(36).substring(2, 15) + 
-                            Math.random().toString(36).substring(2, 15);
+      const newInviteToken = crypto.randomUUID();
       
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 7);
@@ -89,8 +88,7 @@ Deno.serve(async (req) => {
 
     } else {
       // Criar novo convite
-      const inviteToken = Math.random().toString(36).substring(2, 15) + 
-                         Math.random().toString(36).substring(2, 15);
+      const inviteToken = crypto.randomUUID();
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 7);
 

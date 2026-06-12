@@ -167,7 +167,7 @@ Deno.serve(async (req) => {
     
     // 4. Sanitizar payload de role enviada
     // Somente admins podem criar outros admins. Qualquer outro caller recebe 'user' forçado.
-    const safeRole = (role === 'admin' && currentUser.role === 'admin') ? 'admin' : 'user';
+    const safeRole = 'user';
 
     // Determinar consulting_firm_id e nome da organização
     let consulting_firm_id = bodyConsultingFirmId || null;
@@ -205,8 +205,7 @@ Deno.serve(async (req) => {
     }
 
     // Gerar token de convite
-    const inviteToken = Math.random().toString(36).substring(2, 15) + 
-                       Math.random().toString(36).substring(2, 15);
+    const inviteToken = crypto.randomUUID();
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7); // 7 dias
 
