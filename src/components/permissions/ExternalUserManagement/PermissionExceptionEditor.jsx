@@ -19,6 +19,58 @@ import { toast } from "sonner";
 
 export default function PermissionExceptionEditor({ open, onOpenChange, user }) {
   const queryClient = useQueryClient();
+
+  // W-NEW-4 FIX (2026-06-12): Catálogo predefinido de chaves permitidas (não-admin).
+  // Elimina Input livre — usuário escolhe de uma lista curada, o que também garante
+  // que nenhuma chave da blocklist seja submetida acidentalmente.
+  const PERMISSION_CATALOG = {
+    module_permission: [
+      { key: 'dashboard.view', label: 'Dashboard — Visualizar' },
+      { key: 'dashboard.edit', label: 'Dashboard — Editar' },
+      { key: 'cadastros.view', label: 'Cadastros — Visualizar' },
+      { key: 'cadastros.edit', label: 'Cadastros — Editar' },
+      { key: 'patio.view', label: 'Pátio — Visualizar' },
+      { key: 'patio.edit', label: 'Pátio — Editar' },
+      { key: 'resultados.view', label: 'Resultados — Visualizar' },
+      { key: 'resultados.edit', label: 'Resultados — Editar' },
+      { key: 'pessoas.view', label: 'Pessoas — Visualizar' },
+      { key: 'pessoas.edit', label: 'Pessoas — Editar' },
+      { key: 'diagnosticos.view', label: 'Diagnósticos — Visualizar' },
+      { key: 'diagnosticos.create', label: 'Diagnósticos — Criar' },
+      { key: 'processos.view', label: 'Processos — Visualizar' },
+      { key: 'processos.edit', label: 'Processos — Editar' },
+      { key: 'documentos.view', label: 'Documentos — Visualizar' },
+      { key: 'documentos.upload', label: 'Documentos — Upload' },
+      { key: 'cultura.view', label: 'Cultura — Visualizar' },
+      { key: 'cultura.edit', label: 'Cultura — Editar' },
+      { key: 'treinamentos.view', label: 'Treinamentos — Visualizar' },
+      { key: 'treinamentos.create', label: 'Treinamentos — Criar' },
+      { key: 'gestao.view', label: 'Gestão — Visualizar' },
+      { key: 'gestao.edit', label: 'Gestão — Editar' },
+    ],
+    sidebar_permission: [
+      { key: '/Dashboard', label: 'Página: Dashboard' },
+      { key: '/Colaboradores', label: 'Página: Colaboradores' },
+      { key: '/Historico', label: 'Página: Histórico' },
+      { key: '/PainelMetas', label: 'Página: Painel de Metas' },
+      { key: '/MeusProcessos', label: 'Página: Meus Processos' },
+      { key: '/RepositorioDocumentos', label: 'Página: Repositório de Documentos' },
+      { key: '/MeusTreinamentos', label: 'Página: Meus Treinamentos' },
+      { key: '/GestaoOficina', label: 'Página: Gestão da Oficina' },
+      { key: '/Rituais', label: 'Página: Rituais' },
+      { key: '/CulturaOrganizacional', label: 'Página: Cultura Organizacional' },
+      { key: '/QGPBoard', label: 'Página: QGP Board' },
+      { key: '/Tarefas', label: 'Página: Tarefas' },
+      { key: '/DRETCMP2', label: 'Página: DRE/TCMP²' },
+      { key: '/ConsolidadoMensal', label: 'Página: Consolidado Mensal' },
+    ],
+    page_access: [
+      { key: '/MeuPerfil', label: 'Meu Perfil' },
+      { key: '/PortalColaborador', label: 'Portal do Colaborador' },
+      { key: '/SolicitarPermissoes', label: 'Solicitar Permissões' },
+    ]
+  };
+
   const [permissionType, setPermissionType] = useState("module_permission");
   const [permissionKey, setPermissionKey] = useState("");
   const [permissionLabel, setPermissionLabel] = useState("");
@@ -30,7 +82,10 @@ export default function PermissionExceptionEditor({ open, onOpenChange, user }) 
     queryKey: ['user-permission-exceptions', user?.user_id],
     queryFn: async () => {
       if (!user?.user_id) return [];
-      const response = await base44.functions.invoke('getUserPermissionExceptions', { user_id: user.user_id });
+      const response = await base44.functions.invoke('getUserPermissionExceptions', {
+        user_id: user.user_id,
+        workshop_id: user.workshop_id
+      });
       return response.data.exceptions || [];
     },
     enabled: !!user?.user_id && open
@@ -185,26 +240,27 @@ export default function PermissionExceptionEditor({ open, onOpenChange, user }) 
               </div>
 
               <div className="col-span-2">
-                <Label htmlFor="permission-key">Chave da Permissão</Label>
-                <Input
-                  id="permission-key"
-                  placeholder="Ex: dashboard.view, processos.edit, /financeiro"
+                <Label htmlFor="permission-key">Permissão</Label>
+                <Select
                   value={permissionKey}
-                  onChange={(e) => setPermissionKey(e.target.value)}
-                />
+                  onValueChange={(v) => {
+                    setPermissionKey(v);
+                    const item = (PERMISSION_CATALOG[permissionType] || []).find(p => p.key === v);
+                    setPermissionLabel(item?.label || v);
+                  }}
+                >
+                  <SelectTrigger id="permission-key">
+                    <SelectValue placeholder="Selecione uma permissão..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(PERMISSION_CATALOG[permissionType] || []).map(p => (
+                      <SelectItem key={p.key} value={p.key}>{p.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <p className="text-xs text-gray-500 mt-1">
-                  Formato: modulo.acao (ex: dashboard.view, processos.edit)
+                  Apenas permissões operacionais podem ser concedidas como exceção.
                 </p>
-              </div>
-
-              <div className="col-span-2">
-                <Label htmlFor="permission-label">Nome Legível</Label>
-                <Input
-                  id="permission-label"
-                  placeholder="Ex: Dashboard Financeiro, Editar Processos"
-                  value={permissionLabel}
-                  onChange={(e) => setPermissionLabel(e.target.value)}
-                />
               </div>
 
               <div className="col-span-2">

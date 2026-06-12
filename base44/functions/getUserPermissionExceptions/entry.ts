@@ -15,13 +15,18 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'user_id is required' }, { status: 400 });
     }
 
-    // W2 FIX (2026-06-12): Restringir leitura ao escopo do workshop quando fornecido,
-    // impedindo leitura cross-tenant de exceções de usuários de outras oficinas.
-    const filterQuery = workshop_id
-      ? { user_id, workshop_id, is_active: true }
-      : { user_id, is_active: true };
+    // W-NEW-2 FIX (2026-06-12): workshop_id obrigatório para garantir isolamento de tenant.
+    // Sem workshop_id, a query retornaria exceções de todos os tenants do user_id — inaceitável.
+    // Admins globais ainda precisam passar o workshop_id explicitamente para escopar a query.
+    if (!workshop_id) {
+      return Response.json({ error: 'workshop_id is required for tenant isolation' }, { status: 400 });
+    }
 
-    const exceptions = await base44.entities.UserPermissionException.filter(filterQuery);
+    const exceptions = await base44.entities.UserPermissionException.filter({
+      user_id,
+      workshop_id,
+      is_active: true
+    });
 
     return Response.json({ exceptions: exceptions || [] });
   } catch (error) {

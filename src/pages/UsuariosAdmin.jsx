@@ -167,6 +167,17 @@ export default function UsuariosAdmin() {
     }
   };
 
+  const promoteToAdminMutation = useMutation({
+    mutationFn: ({ userId }) => base44.functions.invoke('updateUserRoleAdmin', { userId, role: 'admin' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      toast.success('Usuário promovido a administrador com sucesso');
+    },
+    onError: (error) => {
+      toast.error('Erro ao promover: ' + error.message);
+    }
+  });
+
   const handlePromoteToAdmin = (user) => {
     setSelectedUser(user);
     setIsPromoteDialogOpen(true);
@@ -453,8 +464,9 @@ export default function UsuariosAdmin() {
           open={isPromoteDialogOpen}
           onOpenChange={setIsPromoteDialogOpen}
           user={selectedUser}
+          isLoading={promoteToAdminMutation.isPending}
           onConfirm={() => {
-            updateUserMutation.mutate({ id: selectedUser.id, data: { role: 'admin' } });
+            promoteToAdminMutation.mutate({ userId: selectedUser.id });
             setIsPromoteDialogOpen(false);
           }}
         />

@@ -15,6 +15,15 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
+    // W-NEW-3 FIX (2026-06-12): Validar que o workshop_id informado realmente existe,
+    // impedindo que um admin crie exceções com workshop_id arbitrário de outro tenant.
+    if (workshop_id) {
+      const ws = await base44.asServiceRole.entities.Workshop.get(workshop_id);
+      if (!ws) {
+        return Response.json({ error: 'Workshop informado não existe' }, { status: 400 });
+      }
+    }
+
     // Blocklist de chaves administrativas — nunca podem ser concedidas via exceção individual
     const BLOCKED_KEY_PREFIXES = [
       'admin.',
