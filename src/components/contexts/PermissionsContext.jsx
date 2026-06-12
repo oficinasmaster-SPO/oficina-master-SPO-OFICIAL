@@ -23,6 +23,9 @@ export function PermissionsProvider({ children }) {
 
   const { data: permissionsData, isLoading: loading } = useQuery({
     queryKey: ['permissions', user?.id, workshopId, isAdminMode, isImpersonating],
+    staleTime: 2 * 60 * 1000, // 2 minutos — reduzido para evitar cache stale após backfill
+    gcTime: 5 * 60 * 1000,
+    retry: 2,
     queryFn: async () => {
       if (!user) return { permissions: [], profile: null, customRole: null, currentRole: null, isOwnerOrPartner: false, granularConfig: {} };
       

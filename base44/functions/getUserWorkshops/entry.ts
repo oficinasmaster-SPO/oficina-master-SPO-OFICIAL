@@ -54,8 +54,8 @@ const withAuth = (handler) => async (req) => {
         console.log('[getUserWorkshops] User:', {
           original: user.email,
           effective: effectiveUser.email,
-          originalWorkshopId: user.data?.workshop_id,
-          effectiveWorkshopId: effectiveUser.data?.workshop_id
+          originalWorkshopId: user.data?.workshop_id || user.workshop_id,
+          effectiveWorkshopId: effectiveUser.data?.workshop_id || effectiveUser.workshop_id
         });
 
         return await handler(req, { base44, user: effectiveUser });
