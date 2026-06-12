@@ -361,7 +361,7 @@ export default function DadosPessoais({ employee, onUpdate }) {
               <Label>Mês de Referência</Label>
               <Input
                 type="month"
-                value={formData.best_month_history?.date || ""}
+                value={(formData.best_month_history?.date || "").substring(0, 7)}
                 onChange={(e) => setFormData({...formData, best_month_history: {...formData.best_month_history, date: e.target.value}})}
                 disabled={!editing}
               />
