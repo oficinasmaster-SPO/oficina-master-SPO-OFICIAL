@@ -274,23 +274,16 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
     if (item.public) return true;
     if (!user) return false;
 
-    // Admin sempre tem acesso total
-    if (isAdmin) return true;
-
-    // Itens de acelerador: apenas internos com job_role acelerador/consultor/mentor
-    if (item.aceleradorOnly && !isAcelerador) return false;
+    // O Bypass de Admin foi removido daqui pois o canAccessPage já o implementa.
+    // O bloqueio de Acelerador também foi removido. As abas de aceleração 
+    // já são controladas pela permissão (acceleration.manage) via RBAC.
 
     // Sistema RBAC Granular: Centralizado na ÚNICA fonte de verdade (pagePermissions via canAccessPage)
     // Extrai o nome da página da URL (ex: "/GestaoOficina?..." -> "GestaoOficina")
     const pageKey = item.href ? item.href.split('?')[0].split('/').filter(Boolean).pop() : null;
 
-    // FALLBACK: Usuário sem Employee/Profile (recém-criado) tem acesso mínimo
-    // Isso evita tela em branco no sidebar — depois o autoAssignProfile resolve
-    const hasNoProfile = !profile && (!user.job_role || user.job_role === 'outros');
-    const essentialPages = ['DashboardOverview', 'MeuPerfil', 'Planos', 'Notificacoes'];
-    if (hasNoProfile && pageKey && essentialPages.includes(pageKey)) {
-      return true;
-    }
+    // O fallback hardcoded foi removido. Rotas híbridas (ex: Planos, Perfil) 
+    // agora operam através do "public_authenticated" na pagePermissions.
 
     let result;
     let method;
@@ -489,9 +482,6 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
 
           <div className="space-y-6">
                     {navigationGroups.map((group) => {
-                      // Se o grupo é exclusivo para aceleradores, verificar acesso
-                      if (group.aceleradorOnly && !isAcelerador) return null;
-
                       const visibleItems = group.items.filter(canAccessItem);
                       if (visibleItems.length === 0) return null;
 
