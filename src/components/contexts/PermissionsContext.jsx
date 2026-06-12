@@ -75,6 +75,15 @@ export function PermissionsProvider({ children }) {
       // e buscar workshop pelo workshopId do user.data se ainda não disponível no contexto
       const effectiveWorkshopId = workshopId || user?.data?.workshop_id || user?.workshop_id;
       
+      console.log('[RBAC_WORKSHOP_RESOLVE]', {
+        userId: user?.id,
+        workshopId,
+        userDataWorkshopId: user?.data?.workshop_id,
+        userWorkshopId: user?.workshop_id,
+        effectiveWorkshopId,
+        workshopAlreadyLoaded: !!(workshop && workshop.id === effectiveWorkshopId),
+      });
+      
       const wsPromise = effectiveWorkshopId
         ? ((workshop && workshop.id === effectiveWorkshopId)
           ? Promise.resolve(workshop)
@@ -85,6 +94,15 @@ export function PermissionsProvider({ children }) {
       const empPromise = base44.entities.Employee.filter({ user_id: user.id }).catch(() => null);
       
       const [ws, employees] = await Promise.all([wsPromise, empPromise]);
+
+      console.log('[RBAC_FETCH_RESULT]', {
+        userId: user?.id,
+        wsFound: !!ws,
+        wsOwnerId: ws?.owner_id,
+        userIsOwner: ws?.owner_id === user?.id,
+        employeesCount: employees?.length,
+        employeeProfileIds: employees?.map(e => ({ id: e.id, profile_id: e.profile_id, status: e.status, user_status: e.user_status, workshop_id: e.workshop_id })),
+      });
 
       if (employees && employees.length > 0) {
         // Filtrar apenas employees ativos para evitar que registro inativo seja retornado (P3.A 2026-06-10)
