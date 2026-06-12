@@ -181,9 +181,16 @@ Deno.serve(async (req) => {
     // Convidar usuário via Base44 — usa escopo do usuário autenticado (token do admin que fez a request)
     // Isso NÃO afeta a sessão do admin; apenas convida o novo usuário
     console.log("📧 Convidando usuário via Base44 com role:", safeRole);
-    const inviteResult = await base44.users.inviteUser(email, safeRole);
+    await base44.users.inviteUser(email, safeRole);
     
-    console.log("✅ Convite enviado pelo Base44 (email automático) - sessão do admin mantida");
+    // Obter o ID real do usuário recém convidado
+    const createdUsers = await base44.asServiceRole.entities.User.filter({ email });
+    if (!createdUsers || createdUsers.length === 0) {
+      throw new Error("Erro ao localizar usuário recém convidado");
+    }
+    const inviteResult = { id: createdUsers[0].id };
+    
+    console.log("✅ Convite enviado pelo Base44 (email automático) - sessão do admin mantida", inviteResult.id);
 
     // Gerar token de convite
     const inviteToken = Math.random().toString(36).substring(2, 15) + 
