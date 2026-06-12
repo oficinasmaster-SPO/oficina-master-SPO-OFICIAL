@@ -142,9 +142,56 @@
     "workshop_id"
   ],
   "rls": {
-    "create": true,
-    "read": true,
-    "update": true,
-    "delete": true
+    "create": {
+      "$or": [
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "email": "{{user.email}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
   }
 }
