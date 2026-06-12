@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Save, UserPlus, User, DollarSign, TrendingUp, Plus, Trash2, X, Upload } from "lucide-react";
 import { toast } from "sonner";
+import InviteSuccessDialog from "@/components/convite/InviteSuccessDialog";
 import { jobRoles } from "@/components/lib/jobRoles";
 import { CANONICAL_PROFILE_IDS, CANONICAL_PROFILE_JOB_ROLES, CANONICAL_PROFILE_MAPPING, getCanonicalProfileByJobRole, isCanonicalJobRole } from "@/components/lib/canonicalProfiles";
 import { motion, AnimatePresence } from "framer-motion";
@@ -29,6 +30,7 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
   const [checkingSuggestion, setCheckingSuggestion] = useState(false);
   const [profileWasManuallyChanged, setProfileWasManuallyChanged] = useState(false);
   const [profileAutoApplied, setProfileAutoApplied] = useState(false);
+  const [successInvite, setSuccessInvite] = useState(null);
   
   const [formData, setFormData] = useState({
     workshop_id: "", full_name: "", cpf: "", rg: "", data_nascimento: "", telefone: "", email: "",
@@ -291,28 +293,23 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
       const responseData = response.data.data || response.data;
       toast.success("Colaborador cadastrado com sucesso!");
       
-      if (window.confirm("Colaborador cadastrado! Deseja gerar e copiar o link do teste comportamental DISC para ele agora?")) {
-         const uuid = crypto.randomUUID();
-         await base44.entities.DISCPublicSession.create({
-            workshop_id: workshop.id,
-            employee_id: responseData.employee_id,
-            candidate_name: formData.full_name,
-            token: uuid,
-            status: 'pending'
-         });
-         const link = `${window.location.origin}/PublicDISC?token=${uuid}`;
-         navigator.clipboard.writeText(link);
-         toast.success("Link do DISC copiado para a área de transferência!");
-      }
-
-      if (window.confirm("Deseja enviar o link de acesso ao sistema manualmente via WhatsApp agora?")) {
-         onClose();
-         navigate(createPageUrl("ConvidarColaborador") + `?id=${responseData.employee_id}`);
-         return;
-      }
-
+      setSuccessInvite({
+        ...responseData,
+        name: formData.full_name,
+        full_name: formData.full_name,
+        email: formData.email,
+        telefone: formData.telefone,
+        position: formData.position,
+        employee: {
+          id: responseData.employee_id,
+          full_name: formData.full_name,
+          email: formData.email,
+          telefone: formData.telefone,
+          position: formData.position,
+          created_date: new Date().toISOString()
+        }
+      });
       if (onSuccess) onSuccess();
-      onClose();
     } catch (error) {
       console.error(error);
       toast.error("Erro ao cadastrar");
@@ -327,8 +324,28 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
   const totalProduction = formData.production_parts + formData.production_parts_sales + formData.production_services;
   const productionPercentage = totalCost > 0 ? ((totalProduction / totalCost) * 100).toFixed(0) : 0;
 
+  const selectedProfileName = profiles.find(p => p.id === formData.user_profile_id)?.name || "-";
+
   return (
-    <AnimatePresence>
+    <>
+      <InviteSuccessDialog
+        open={!!successInvite}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSuccessInvite(null);
+            onClose();
+          }
+        }}
+        inviteData={successInvite}
+        workshopName={workshop?.name}
+        profileName={selectedProfileName}
+        onPreview={() => {
+          setSuccessInvite(null);
+          onClose();
+          navigate(createPageUrl("ConvidarColaborador") + `?id=${successInvite?.employee?.id || successInvite?.employee_id || ""}`);
+        }}
+      />
+      <AnimatePresence>
       {isOpen && (
         <div 
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
@@ -769,5 +786,6 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
         </div>
       )}
     </AnimatePresence>
+    </>
   );
 }
