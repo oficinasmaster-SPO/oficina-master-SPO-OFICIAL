@@ -106,15 +106,32 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Se profile_id não foi enviado, busca perfil compatível como fallback
+    // Se profile_id não foi enviado, busca perfil compatível via autoAssignProfile (determinístico por job_role)
     let finalProfileIdResolved = profile_id;
+    if (!finalProfileIdResolved && job_role) {
+      try {
+        const assignResult = await base44.asServiceRole.functions.invoke('autoAssignProfile', {
+          job_role: job_role,
+          user_type: isInternalUser ? 'internal' : 'external'
+        });
+        if (assignResult?.data?.profile_id) {
+          finalProfileIdResolved = assignResult.data.profile_id;
+          console.log("📋 Profile_id resolvido via autoAssignProfile:", finalProfileIdResolved, "para job_role:", job_role);
+        }
+      } catch(e) {
+        console.warn("⚠️ autoAssignProfile falhou, tentando fallback por type:", e.message);
+      }
+    }
+    // Fallback final: primeiro perfil ativo do tipo correto (apenas se autoAssignProfile falhou)
     if (!finalProfileIdResolved) {
       try {
         const profileType = isInternalUser ? 'interno' : 'externo';
         const profiles = await base44.asServiceRole.entities.UserProfile.filter({ type: profileType, status: 'ativo' });
         if (profiles && profiles.length > 0) {
+          // Ordenar por nome para garantir resultado determinístico
+          profiles.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
           finalProfileIdResolved = profiles[0].id;
-          console.log("📋 Profile_id resolvido automaticamente:", finalProfileIdResolved);
+          console.log("📋 Profile_id resolvido por fallback ordenado:", finalProfileIdResolved);
         }
       } catch(e) {
         console.warn("⚠️ Não foi possível resolver profile_id automaticamente:", e.message);

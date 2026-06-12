@@ -1,508 +1,240 @@
-import React, { useState, useRef, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
-import { CANONICAL_PROFILE_IDS } from "@/components/lib/canonicalProfiles";
-
-// IDs dos perfis internos da equipe Oficinas Master
-const INTERNAL_PROFILE_IDS = [
-  "6a272f9bf281e7ca21d4726a", // Sócio - Interno
-  "6a272f95957fe29d2e8a888a", // Consultor
-  "6981e1904f21fbeca5620f73", // Marketing
-  "695a939e9cbc431cae22a69e", // Administrativo
-  "69591b8b6627f7b9b783618e", // CS - Customer Success
-];
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import React, { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Shield, Trash2, Plus, AlertCircle } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
-import { UserPlus, Copy, Check, Send, Users, Building2, Search, ChevronDown, X } from "lucide-react";
+import { base44 } from "@/api/base44Client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import PermissionExceptionEditor from "@/components/permissions/ExternalUserManagement/PermissionExceptionEditor";
 
-function WorkshopSearchSelect({ workshops, value, onChange }) {
-  const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState("");
-  const containerRef = useRef(null);
-  const searchRef = useRef(null);
-
-  const selected = workshops.find(w => w.id === value);
-  const filtered = workshops.filter(w =>
-    w.name.toLowerCase().includes(search.toLowerCase()) ||
-    (w.city || "").toLowerCase().includes(search.toLowerCase())
-  );
-
-  useEffect(() => {
-    if (open && searchRef.current) searchRef.current.focus();
-  }, [open]);
-
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (containerRef.current && !containerRef.current.contains(e.target)) {
-        setOpen(false);
-        setSearch("");
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const handleSelect = (id) => {
-    onChange(id);
-    setOpen(false);
-    setSearch("");
-  };
-
-  const handleClear = (e) => {
-    e.stopPropagation();
-    onChange("");
-    setSearch("");
-  };
-
-  return (
-    <div ref={containerRef} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen(o => !o)}
-        className="flex items-center justify-between w-full h-10 px-3 py-2 text-sm border border-input rounded-md bg-background hover:bg-accent/30 transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
-      >
-        <span className={selected ? "text-foreground" : "text-muted-foreground"}>
-          {selected ? selected.name : "Selecione a oficina"}
-        </span>
-        <div className="flex items-center gap-1">
-          {value && (
-            <span onClick={handleClear} className="hover:text-destructive p-0.5 rounded">
-              <X className="w-3 h-3" />
-            </span>
-          )}
-          <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
-        </div>
-      </button>
-
-      {open && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-border rounded-md shadow-lg">
-          <div className="p-2 border-b border-border">
-            <div className="flex items-center gap-2 px-2 py-1 border border-border rounded-md bg-gray-50">
-              <Search className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
-              <input
-                ref={searchRef}
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Buscar oficina..."
-                className="flex-1 text-sm bg-transparent outline-none"
-              />
-            </div>
-          </div>
-          <div className="overflow-y-auto max-h-48 scrollbar-thin">
-            {filtered.length === 0 ? (
-              <div className="px-3 py-4 text-sm text-center text-muted-foreground">Nenhuma oficina encontrada</div>
-            ) : (
-              filtered.map(w => (
-                <button
-                  key={w.id}
-                  type="button"
-                  onClick={() => handleSelect(w.id)}
-                  className={`w-full text-left px-3 py-2 text-sm hover:bg-accent/50 transition-colors ${w.id === value ? "bg-accent font-medium" : ""}`}
-                >
-                  <span>{w.name}</span>
-                  {w.city && <span className="ml-1 text-xs text-muted-foreground">· {w.city}</span>}
-                </button>
-              ))
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ID da ConsultingFirm "Oficinas Master" — fonte canônica para todos os internos
-const OM_CONSULTING_FIRM_ID = "69bab264d7c3fe5d367c3959";
-
-const EMPTY_INTERNO = {
-  name: "",
-  email: "",
-  telefone: "",
-  job_role: "consultor",
-  profile_id: "",
-};
-
-const EMPTY_EXTERNO = {
-  name: "",
-  email: "",
-  telefone: "",
-  workshop_id: "",
-  position: "",
-  job_role: "outros",
-  profile_id: "",
-};
-
-const JOB_ROLES_INTERNOS = [
-  { value: "acelerador", label: "Acelerador" },
-  { value: "consultor", label: "Consultor" },
-  { value: "socio_interno", label: "Sócio Interno" },
-  { value: "diretor", label: "Diretor" },
-  { value: "financeiro", label: "Financeiro" },
-  { value: "rh", label: "RH" },
-  { value: "marketing", label: "Marketing" },
-  { value: "administrativo", label: "Administrativo" },
-  { value: "outros", label: "Outros" },
-];
-
-const JOB_ROLES_EXTERNOS = [
-  { value: "socio", label: "Sócio" },
-  { value: "diretor", label: "Diretor" },
-  { value: "supervisor_loja", label: "Supervisor de Loja" },
-  { value: "gerente", label: "Gerente" },
-  { value: "lider_tecnico", label: "Líder Técnico" },
-  { value: "financeiro", label: "Financeiro" },
-  { value: "rh", label: "RH" },
-  { value: "tecnico", label: "Técnico" },
-  { value: "funilaria_pintura", label: "Funilaria/Pintura" },
-  { value: "comercial", label: "Comercial" },
-  { value: "consultor_vendas", label: "Consultor de Vendas" },
-  { value: "marketing", label: "Marketing" },
-  { value: "estoque", label: "Estoque" },
-  { value: "administrativo", label: "Administrativo" },
-  { value: "motoboy", label: "Motoboy" },
-  { value: "lavador", label: "Lavador" },
-  { value: "outros", label: "Outros" },
-];
-
-export default function CadastroUsuarioDiretoModal({ open, onClose, onOpenChange }) {
-  const closeModal = onClose || ((v) => onOpenChange && onOpenChange(v === undefined ? false : v));
+export default function PermissionExceptionsModal({ open, onOpenChange }) {
+  const [selectedWorkshopId, setSelectedWorkshopId] = useState(null);
+  const [selectedUserId, setSelectedUserId] = useState(null);
+  const [showEditor, setShowEditor] = useState(false);
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState("interno"); // "interno" | "externo"
-  const [copied, setCopied] = useState(false);
-  const [createdUser, setCreatedUser] = useState(null);
-  const [formInterno, setFormInterno] = useState(EMPTY_INTERNO);
-  const [formExterno, setFormExterno] = useState(EMPTY_EXTERNO);
-
-  const { data: user } = useQuery({
-    queryKey: ['current-user'],
-    queryFn: () => base44.auth.me(),
-    staleTime: 5 * 60 * 1000
-  });
 
   const { data: workshops = [] } = useQuery({
-    queryKey: ['workshops-list'],
-    queryFn: () => base44.entities.Workshop.list(),
-    enabled: !!user && open,
-    staleTime: 5 * 60 * 1000
-  });
-
-  const { data: profiles = [] } = useQuery({
-    queryKey: ['profiles-list'],
-    queryFn: () => base44.entities.UserProfile.list(),
-    enabled: !!user && open,
-    staleTime: 5 * 60 * 1000
-  });
-
-  // W1 FIX (2026-06-10): filtro por ID fixo em vez de type string frágil.
-  // type=null/undefined em alguns perfis fazia Admin System aparecer nos externos.
-  const profilesInternos = profiles.filter(p => INTERNAL_PROFILE_IDS.includes(p.id) && p.status === 'ativo');
-  const profilesExternos = profiles.filter(p => CANONICAL_PROFILE_IDS.includes(p.id) && p.status === 'ativo');
-
-  const createUserMutation = useMutation({
-    mutationFn: async (data) => {
-      const response = await base44.functions.invoke('createUserDirectly', data);
-      return response.data;
-    },
-    onSuccess: (data) => {
-      if (data?.success !== false) {
-        toast.success(tab === 'interno' ? 'Usuário interno criado com sucesso!' : 'Usuário externo criado com sucesso!');
-        setCreatedUser(data?.data || data);
-        queryClient.invalidateQueries({ queryKey: ['admin-users'] });
-        queryClient.invalidateQueries({ queryKey: ['employees'] });
-      } else {
-        toast.error(data.error?.message || data.error || 'Erro ao criar usuário');
+    queryKey: ['workshops-list-permissions'],
+    queryFn: async () => {
+      try {
+        const response = await base44.functions.invoke('getUserWorkshops', {});
+        return response?.data?.workshops || [];
+      } catch {
+        return [];
       }
     },
-    onError: (error) => {
-      const msg = error?.response?.data?.error?.message || error?.message || 'Erro desconhecido';
-      toast.error('Erro: ' + msg);
-    }
+    enabled: open,
+    staleTime: 5 * 60 * 1000
   });
 
+  const { data: employees = [] } = useQuery({
+    queryKey: ['employees-in-workshop', selectedWorkshopId],
+    queryFn: async () => {
+      if (!selectedWorkshopId) return [];
+      try {
+        const emps = await base44.asServiceRole.entities.Employee.filter({ workshop_id: selectedWorkshopId });
+        return Array.isArray(emps) ? emps : [];
+      } catch {
+        return [];
+      }
+    },
+    enabled: !!selectedWorkshopId && open
+  });
 
+  const { data: exceptions = [] } = useQuery({
+    queryKey: ['user-permission-exceptions', selectedUserId, selectedWorkshopId],
+    queryFn: async () => {
+      if (!selectedUserId) return [];
+      // W2 FIX: passa workshop_id para escopo correto
+      const response = await base44.functions.invoke('getUserPermissionExceptions', {
+        user_id: selectedUserId,
+        workshop_id: selectedWorkshopId
+      });
+      return response.data.exceptions || [];
+    },
+    enabled: !!selectedUserId && open
+  });
 
-  const handleSubmitInterno = (e) => {
-    e.preventDefault();
-    if (!formInterno.name || !formInterno.email) {
-      toast.error('Preencha nome e email');
+  const removeMutation = useMutation({
+    mutationFn: (exception_id) => base44.functions.invoke('removeUserPermissionException', { exception_id }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user-permission-exceptions'] });
+      toast.success('Exceção removida com sucesso!');
+    },
+    onError: (error) => toast.error('Erro ao remover: ' + error.message)
+  });
+
+  const handleAddException = () => {
+    if (!selectedUserId || !selectedWorkshopId) {
+      toast.error('Selecione uma oficina e um usuário primeiro');
       return;
     }
-    createUserMutation.mutate({
-      ...formInterno,
-      consulting_firm_id: OM_CONSULTING_FIRM_ID,
-      user_type: 'internal',
-      role: 'user',
-      tipo_vinculo: 'interno',
-      // W7 FIX (2026-06-10): is_internal removido — campo deprecated. Fonte canônica: user_type.
-    });
+    setShowEditor(true);
   };
 
-  const handleSubmitExterno = (e) => {
-    e.preventDefault();
-    if (!formExterno.name || !formExterno.email || !formExterno.workshop_id) {
-      toast.error('Preencha nome, email e oficina');
-      return;
-    }
-    const payload = {
-      ...formExterno,
-      user_type: 'external',
-      role: 'user',
-      tipo_vinculo: 'cliente',
-      // W7 FIX (2026-06-10): is_internal removido — campo deprecated.
-    };
-    if (!payload.profile_id) delete payload.profile_id;
-    createUserMutation.mutate(payload);
+  const handleCloseEditor = () => {
+    setShowEditor(false);
+    queryClient.invalidateQueries({ queryKey: ['user-permission-exceptions'] });
   };
 
-  const handleClose = () => {
-    setCreatedUser(null);
-    setFormInterno(EMPTY_INTERNO);
-    setFormExterno(EMPTY_EXTERNO);
-    setTab("interno");
-    closeModal(false);
-  };
-
-  const handleCopyLink = () => {
-    const link = createdUser?.invite_link || createdUser?.link;
-    if (link) {
-      navigator.clipboard.writeText(link);
-      setCopied(true);
-      toast.success('Link copiado!');
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
-
-  const handleSendWhatsApp = () => {
-    const link = createdUser?.invite_link || createdUser?.link;
-    const telefone = tab === 'interno' ? formInterno.telefone : formExterno.telefone;
-    const name = tab === 'interno' ? formInterno.name : formExterno.name;
-    if (link && telefone) {
-      const phone = telefone.replace(/\D/g, '');
-      const message = encodeURIComponent(
-        `Olá ${name}!\n\nSeu acesso à plataforma Oficinas Master foi criado.\n\nClique no link abaixo para definir sua senha:\n${link}`
-      );
-      window.open(`https://wa.me/55${phone}?text=${message}`, '_blank');
-    }
-  };
-
-  const isPending = createUserMutation.isPending;
-  const currentTelefone = tab === 'interno' ? formInterno.telefone : formExterno.telefone;
-  const inviteLink = createdUser?.invite_link || createdUser?.link;
+  const selectedEmployee = employees.find(e => e.user_id === selectedUserId);
+  const selectedWorkshop = workshops.find(w => w.id === selectedWorkshopId);
 
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <UserPlus className="w-5 h-5" />
-            Novo Usuário
-          </DialogTitle>
-          <DialogDescription>
-            Crie usuários internos (equipe Oficinas Master) ou externos (colaboradores de oficinas clientes).
-          </DialogDescription>
-        </DialogHeader>
-
-        {createdUser ? (
-          <div className="space-y-4">
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <p className="font-semibold text-green-700 mb-1">✅ {tab === 'interno' ? 'Convite enviado' : 'Usuário criado'} com sucesso!</p>
-              <p className="text-sm text-green-600">Email: <strong>{createdUser.email || (tab === 'interno' ? formInterno.email : formExterno.email)}</strong></p>
-            </div>
-
-            {(createdUser.user_id || createdUser.id) && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                <Label className="text-sm text-blue-700 font-semibold">🔑 User ID</Label>
-                <div className="flex gap-2 mt-1">
-                  <Input value={createdUser.user_id || createdUser.id} readOnly className="flex-1 font-mono text-sm bg-white" />
-                  <Button variant="outline" size="icon" onClick={() => { navigator.clipboard.writeText(createdUser.user_id || createdUser.id); toast.success('User ID copiado!'); }}>
-                    <Copy className="w-4 h-4" />
-                  </Button>
-                </div>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              <div className="p-2 bg-amber-100 rounded-lg">
+                <Shield className="w-5 h-5 text-amber-600" />
               </div>
-            )}
-
-            {inviteLink && (
               <div>
-                <Label className="text-sm text-gray-600">Link de Primeiro Acesso</Label>
-                <div className="flex gap-2 mt-1">
-                  <Input value={inviteLink} readOnly className="flex-1" />
-                  <Button variant="outline" size="icon" onClick={handleCopyLink}>
-                    {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                  </Button>
-                </div>
+                <p className="text-xl font-bold">Permissões Individuais</p>
+                <p className="text-sm text-gray-500 font-normal">Gerencie exceções de permissão por usuário</p>
+              </div>
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto space-y-4">
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-amber-900">
+                  <strong>⚠️ Permissões Individuais (Exceções)</strong> sobrescrevem o perfil de acesso padrão. Use com cautela.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-sm font-medium text-gray-700">Oficina *</Label>
+                <Select
+                  value={selectedWorkshopId || ""}
+                  onValueChange={(v) => { setSelectedWorkshopId(v); setSelectedUserId(null); }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione uma oficina..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {workshops.map(ws => (
+                      <SelectItem key={ws.id} value={ws.id}>{ws.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label className="text-sm font-medium text-gray-700">Usuário *</Label>
+                <Select
+                  value={selectedUserId || ""}
+                  onValueChange={setSelectedUserId}
+                  disabled={!selectedWorkshopId}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={selectedWorkshopId ? "Selecione um usuário..." : "Selecione uma oficina primeiro"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {employees.filter(e => e.user_id).map(emp => (
+                      <SelectItem key={emp.user_id} value={emp.user_id}>
+                        {emp.full_name} — {emp.job_role}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {selectedUserId && selectedWorkshopId && (
+              <div className="flex justify-end">
+                <Button onClick={handleAddException} className="bg-amber-600 hover:bg-amber-700">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Adicionar Exceção
+                </Button>
               </div>
             )}
 
-            {currentTelefone && inviteLink && (
-              <Button onClick={handleSendWhatsApp} className="w-full bg-green-600 hover:bg-green-700">
-                <Send className="w-4 h-4 mr-2" />
-                Enviar por WhatsApp
-              </Button>
-            )}
-
-            <div className="flex gap-2">
-              <Button onClick={() => { setCreatedUser(null); setFormInterno(EMPTY_INTERNO); setFormExterno(EMPTY_EXTERNO); }} variant="outline" className="flex-1">
-                Criar Outro
-              </Button>
-              <Button onClick={handleClose} className="flex-1">Fechar</Button>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {/* Tabs de tipo */}
-            <div className="grid grid-cols-2 gap-2 p-1 bg-gray-100 rounded-lg">
-              <button
-                type="button"
-                onClick={() => setTab("interno")}
-                className={`flex items-center justify-center gap-2 py-2 px-3 rounded-md text-sm font-medium transition-all ${
-                  tab === "interno"
-                    ? "bg-white shadow text-gray-900"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
-              >
-                <Users className="w-4 h-4" />
-                Equipe Interna
-              </button>
-              <button
-                type="button"
-                onClick={() => setTab("externo")}
-                className={`flex items-center justify-center gap-2 py-2 px-3 rounded-md text-sm font-medium transition-all ${
-                  tab === "externo"
-                    ? "bg-white shadow text-gray-900"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
-              >
-                <Building2 className="w-4 h-4" />
-                Colaborador de Oficina
-              </button>
-            </div>
-
-            {/* Descrição do tipo */}
-            {tab === "interno" ? (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-700">
-                <strong>Equipe Interna:</strong> Consultores, aceleradores e membros da equipe Oficinas Master. Receberão um convite por email para definir sua senha. Role sempre <strong>user</strong> (sem admin global).
+            {!selectedUserId || !selectedWorkshopId ? (
+              <div className="text-center py-12 text-gray-500">
+                <Shield className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                <p className="text-lg font-medium text-gray-700">Selecione uma oficina e usuário</p>
+                <p className="text-sm mt-1">Use os filtros acima para visualizar as permissões individuais</p>
+              </div>
+            ) : exceptions.length === 0 ? (
+              <div className="text-center py-12 text-gray-500">
+                <Shield className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                <p className="text-lg font-medium text-gray-700">Nenhuma exceção cadastrada</p>
+                <p className="text-sm mt-1">Este usuário segue estritamente o perfil de acesso</p>
               </div>
             ) : (
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-700">
-                <strong>Colaborador de Oficina:</strong> Funcionários de uma oficina cliente. Obrigatório vincular a uma oficina. Role sempre <strong>user</strong>.
+              <div className="space-y-3">
+                {exceptions.map((exception) => (
+                  <div key={exception.id} className="border rounded-lg p-4 flex items-start justify-between hover:bg-gray-50">
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge className={
+                          exception.permission_type === 'module_permission' ? 'bg-blue-100 text-blue-700' :
+                          exception.permission_type === 'sidebar_permission' ? 'bg-purple-100 text-purple-700' :
+                          'bg-gray-100 text-gray-700'
+                        }>
+                          {exception.permission_type === 'module_permission' ? 'Módulo' :
+                           exception.permission_type === 'sidebar_permission' ? 'Sidebar' : 'Página'}
+                        </Badge>
+                        <Badge className={exception.granted ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}>
+                          {exception.granted ? '✅ Concede' : '❌ Nega'}
+                        </Badge>
+                      </div>
+                      <p className="font-semibold text-gray-900">{exception.permission_label || exception.permission_key}</p>
+                      <p className="text-sm text-gray-600">
+                        <span className="font-medium">Chave:</span>{' '}
+                        <code className="bg-gray-100 px-2 py-0.5 rounded text-xs">{exception.permission_key}</code>
+                      </p>
+                      {exception.justification && (
+                        <div className="bg-gray-50 p-2 rounded text-sm">
+                          <p className="font-medium text-gray-700">Justificativa:</p>
+                          <p className="text-gray-600 mt-1">{exception.justification}</p>
+                        </div>
+                      )}
+                      <p className="text-xs text-gray-500 pt-1 border-t">
+                        Criado por: {exception.created_by_name || exception.created_by} •{' '}
+                        {format(new Date(exception.created_at || exception.created_date), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                      </p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50 flex-shrink-0 ml-4"
+                      onClick={() => window.confirm('Deseja remover esta exceção?') && removeMutation.mutate(exception.id)}
+                      disabled={removeMutation.isPending}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
               </div>
             )}
-
-            {/* Formulário Interno */}
-            {tab === "interno" && (
-              <form onSubmit={handleSubmitInterno} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label>Nome Completo *</Label>
-                    <Input value={formInterno.name} onChange={(e) => setFormInterno({...formInterno, name: e.target.value})} placeholder="Nome do membro" required />
-                  </div>
-                  <div>
-                    <Label>Email *</Label>
-                    <Input type="email" value={formInterno.email} onChange={(e) => setFormInterno({...formInterno, email: e.target.value})} placeholder="email@oficinasmaster.com.br" required />
-                  </div>
-                  <div>
-                    <Label>Telefone (WhatsApp)</Label>
-                    <Input value={formInterno.telefone} onChange={(e) => setFormInterno({...formInterno, telefone: e.target.value})} placeholder="(11) 99999-9999" />
-                  </div>
-                  <div>
-                    <Label>Função</Label>
-                    <Select value={formInterno.job_role} onValueChange={(v) => setFormInterno({...formInterno, job_role: v})}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {JOB_ROLES_INTERNOS.map(r => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  {profilesInternos.length > 0 && (
-                    <div className="md:col-span-2">
-                      <Label>Perfil de Acesso</Label>
-                      <Select value={formInterno.profile_id || ''} onValueChange={(v) => setFormInterno({...formInterno, profile_id: v})}>
-                        <SelectTrigger><SelectValue placeholder="Selecione um perfil" /></SelectTrigger>
-                        <SelectContent>
-                          {profilesInternos.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-                </div>
-                <div className="flex gap-2">
-                  <Button type="button" variant="outline" onClick={handleClose} className="flex-1">
-                    Fechar
-                  </Button>
-                  <Button type="submit" disabled={isPending} className="flex-1">
-                    {isPending ? 'Criando usuário...' : 'Criar Usuário Interno'}
-                  </Button>
-                </div>
-              </form>
-            )}
-
-            {/* Formulário Externo */}
-            {tab === "externo" && (
-              <form onSubmit={handleSubmitExterno} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label>Nome Completo *</Label>
-                    <Input value={formExterno.name} onChange={(e) => setFormExterno({...formExterno, name: e.target.value})} placeholder="Nome do colaborador" required />
-                  </div>
-                  <div>
-                    <Label>Email *</Label>
-                    <Input type="email" value={formExterno.email} onChange={(e) => setFormExterno({...formExterno, email: e.target.value})} placeholder="email@exemplo.com" required />
-                  </div>
-                  <div>
-                    <Label>Telefone (WhatsApp)</Label>
-                    <Input value={formExterno.telefone} onChange={(e) => setFormExterno({...formExterno, telefone: e.target.value})} placeholder="(11) 99999-9999" />
-                  </div>
-                  <div>
-                    <Label>Oficina *</Label>
-                    <WorkshopSearchSelect
-                      workshops={workshops}
-                      value={formExterno.workshop_id}
-                      onChange={(v) => setFormExterno({...formExterno, workshop_id: v})}
-                    />
-                  </div>
-                  <div>
-                    <Label>Cargo</Label>
-                    <Input value={formExterno.position} onChange={(e) => setFormExterno({...formExterno, position: e.target.value})} placeholder="Ex: Mecânico, Gerente" />
-                  </div>
-                  <div>
-                    <Label>Função</Label>
-                    <Select value={formExterno.job_role} onValueChange={(v) => setFormExterno({...formExterno, job_role: v})}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {JOB_ROLES_EXTERNOS.map(r => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  {profilesExternos.length > 0 && (
-                    <div className="md:col-span-2">
-                      <Label>Perfil de Acesso</Label>
-                      <Select value={formExterno.profile_id || ''} onValueChange={(v) => setFormExterno({...formExterno, profile_id: v})}>
-                        <SelectTrigger><SelectValue placeholder="Selecione um perfil" /></SelectTrigger>
-                        <SelectContent>
-                          {profilesExternos.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-                </div>
-                <div className="flex gap-2">
-                  <Button type="button" variant="outline" onClick={handleClose} className="flex-1">
-                    Fechar
-                  </Button>
-                  <Button type="submit" disabled={isPending} className="flex-1">
-                    {isPending ? 'Criando usuário...' : 'Criar Usuário Externo'}
-                  </Button>
-                </div>
-              </form>
-            )}
           </div>
-        )}
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+
+      {showEditor && selectedUserId && selectedWorkshopId && (
+        <PermissionExceptionEditor
+          open={showEditor}
+          onOpenChange={handleCloseEditor}
+          user={{
+            user_id: selectedUserId,
+            workshop_id: selectedWorkshopId,
+            full_name: selectedEmployee?.full_name || '',
+            email: selectedEmployee?.email || '',
+            workshop_name: selectedWorkshop?.name || ''
+          }}
+        />
+      )}
+    </>
   );
 }
