@@ -264,7 +264,7 @@ export default function ConvidarColaborador() {
         throw new Error(response.data.error || "Erro ao criar colaborador");
       }
 
-      return { ...response.data, action: "created" };
+      return { ...response.data.data, success: true, action: "created" };
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["employees-list"] });
@@ -272,14 +272,16 @@ export default function ConvidarColaborador() {
       const enriched = {
         ...data,
         name: formData.name,
+        email: data.email || formData.email,
         telefone: formData.telefone,
+        invite_link: data.invite_link,
         position: getRoleLabel(formData.job_role),
         employee: {
-          ...(data.employee || {}),
           full_name: formData.name,
           email: data.email || formData.email,
           telefone: formData.telefone,
           position: getRoleLabel(formData.job_role),
+          profile_id: data.profile_id,
           created_date: new Date().toISOString(),
         },
       };
