@@ -1,5 +1,6 @@
 import { Outlet } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
+import { base44 } from '@/api/base44Client';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 
 const DefaultFallback = () => (
@@ -8,7 +9,7 @@ const DefaultFallback = () => (
   </div>
 );
 
-export default function ProtectedRoute({ fallback = <DefaultFallback />, unauthenticatedElement }) {
+export default function ProtectedRoute({ fallback = <DefaultFallback /> }) {
   const { isAuthenticated, isLoadingAuth, authError } = useAuth();
 
   if (isLoadingAuth) {
@@ -19,11 +20,13 @@ export default function ProtectedRoute({ fallback = <DefaultFallback />, unauthe
     if (authError.type === 'user_not_registered') {
       return <UserNotRegisteredError />;
     }
-    return unauthenticatedElement;
+    base44.auth.redirectToLogin(window.location.pathname);
+    return fallback;
   }
 
   if (!isAuthenticated) {
-    return unauthenticatedElement;
+    base44.auth.redirectToLogin(window.location.pathname);
+    return fallback;
   }
 
   return <Outlet />;

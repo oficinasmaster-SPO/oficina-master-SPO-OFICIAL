@@ -8,7 +8,6 @@ import VisualEditAgent from '@/lib/VisualEditAgent'
 import NavigationTracker from '@/lib/NavigationTracker'
 import { pagesConfig } from './pages.config'
 import { BrowserRouter as Router, Route, Routes, useLocation, Navigate } from 'react-router-dom';
-import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
 import ResetPassword from '@/pages/ResetPassword';
@@ -146,7 +145,6 @@ const AuthenticatedApp = () => {
     <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><WheelLoader size="xl" /></div>}>
       <Routes>
         {/* Auth routes — always public */}
-        <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
@@ -158,7 +156,7 @@ const AuthenticatedApp = () => {
         <Route path="/BemVindoPlanos" element={<BemVindoPlanos />} />
 
         {/* All other pages require authentication */}
-        <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
+        <Route element={<ProtectedRoute />}>
           <Route path="/CompletarPerfil" element={<LayoutWrapper currentPageName="CompletarPerfil"><CompletarPerfil /></LayoutWrapper>} />
           <Route path="/DescricaoCargos" element={<LayoutWrapper currentPageName="DescricaoCargos"><DescricaoCargos /></LayoutWrapper>} />
           <Route path="/CentralAvaliacoes" element={<LayoutWrapper currentPageName="CentralAvaliacoes"><CentralAvaliacoes /></LayoutWrapper>} />

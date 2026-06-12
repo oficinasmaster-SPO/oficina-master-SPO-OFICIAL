@@ -132,9 +132,9 @@ export default function Register() {
       footer={
         <>
           Already have an account?{" "}
-          <Link to="/login" className="text-primary font-medium hover:underline">
+          <button onClick={() => base44.auth.redirectToLogin()} className="text-primary font-medium hover:underline">
             Log in
-          </Link>
+          </button>
         </>
       }
     >
