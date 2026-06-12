@@ -9,6 +9,18 @@ import { useImpersonation } from "@/components/hooks/useImpersonation";
 
 const PermissionsContext = createContext(null);
 
+// FIX (2026-06-12): createPageUrl gera URLs em minúsculas (/colaboradores),
+// mas pagePermissions usa chaves PascalCase (Colaboradores). Lookup case-insensitive
+// para evitar fail-close indevido que escondia o sidebar de usuários externos.
+const pagePermissionsLower = Object.fromEntries(
+  Object.entries(pagePermissions).map(([k, v]) => [k.toLowerCase(), v])
+);
+const resolvePagePermission = (pageName) => {
+  if (!pageName) return undefined;
+  if (pageName in pagePermissions) return pagePermissions[pageName];
+  return pagePermissionsLower[String(pageName).toLowerCase()];
+};
+
 export function PermissionsProvider({ children }) {
   const { workshopId: realWorkshopId, workshop: realWorkshop, isAdminMode } = useWorkshopContext();
   const { user: realUser } = useAuth();
@@ -283,7 +295,7 @@ export function PermissionsProvider({ children }) {
 
       // Sócio/proprietário tem acesso total a todas as páginas não-admin
       if (isOwnerOrPartner && !isImpersonated) {
-        const requiredPermission = pagePermissions[pageName];
+        const requiredPermission = resolvePagePermission(pageName);
         // Só bloquear páginas que exigem role 'admin' explicitamente (plataforma admin)
         if (requiredPermission === 'admin') return false;
         if (requiredPermission === 'admin.rbac') return false;
@@ -294,10 +306,8 @@ export function PermissionsProvider({ children }) {
         return true;
       }
 
-      const isPublicPage = pagePermissions[pageName] === null;
-      if (isPublicPage) return true;
-
-      const requiredPermission = pagePermissions[pageName];
+      const requiredPermission = resolvePagePermission(pageName);
+      if (requiredPermission === null) return true; // página pública
       // Segurança (Fail-Close): Se não está mapeado, o acesso é estritamente negado.
       if (requiredPermission === undefined) return false;
       if (requiredPermission === null) return true; // explicitamente pública

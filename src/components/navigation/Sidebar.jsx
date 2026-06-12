@@ -1124,7 +1124,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
     // Logar apenas itens bloqueados OU itens específicos para debug
     const AUDIT_PAGES = ['Colaboradores', 'GestaoOficina', 'DashboardOverview', 'Tarefas', 'HistoricoMetas'];
     if (!result || (pageKey && AUDIT_PAGES.includes(pageKey))) {
-      const requiredPerm = pagePermissionsMap[pageKey];
+      const requiredPerm = pagePermissionsMap[pageKey] ?? Object.entries(pagePermissionsMap).find(([k]) => k.toLowerCase() === String(pageKey).toLowerCase())?.[1];
       const hasPermResult = requiredPerm ? permissions.includes(requiredPerm) : null;
 
       console.log('MENU_CHECK', {
