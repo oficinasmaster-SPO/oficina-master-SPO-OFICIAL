@@ -752,6 +752,15 @@ export const getNavigationGroups = (unreadCount) => [
         requiredPermission: 'admin.audit'
       },
       {
+        name: 'Auditoria de Acessos (RBAC)',
+        href: createPageUrl('DashboardAuditoriaRBAC'),
+        icon: Shield,
+        description: 'Bypasses, Admins e Tenants acessados',
+        globalAdminOnly: true,
+        highlight: true,
+        requiredPermission: 'admin.audit'
+      },
+      {
         name: 'Logs de Auditoria RBAC',
         href: createPageUrl('LogsAuditoriaRBAC'),
         icon: Activity,

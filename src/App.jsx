@@ -63,6 +63,7 @@ const UsuariosAdmin = lazy(() => import('@/pages/UsuariosAdmin'));
 const RepairOrphanEmployees = lazy(() => import('@/pages/RepairOrphanEmployees'));
 const DashboardTelemetriaPerfis = lazy(() => import('@/pages/DashboardTelemetriaPerfis'));
 const AdminSaudeSistema = lazy(() => import('@/pages/AdminSaudeSistema'));
+const DashboardAuditoriaRBAC = lazy(() => import('@/pages/DashboardAuditoriaRBAC'));
 
 
 const { Pages, Layout, mainPage } = pagesConfig;
@@ -186,6 +187,7 @@ const AuthenticatedApp = () => {
           <Route path="/RepairOrphanEmployees" element={<LayoutWrapper currentPageName="RepairOrphanEmployees" adminOnly={true}><RepairOrphanEmployees /></LayoutWrapper>} />
           <Route path="/DashboardTelemetriaPerfis" element={<LayoutWrapper currentPageName="DashboardTelemetriaPerfis" adminOnly={true}><DashboardTelemetriaPerfis /></LayoutWrapper>} />
           <Route path="/AdminSaudeSistema" element={<LayoutWrapper currentPageName="AdminSaudeSistema" adminOnly={true}><AdminSaudeSistema /></LayoutWrapper>} />
+          <Route path="/DashboardAuditoriaRBAC" element={<LayoutWrapper currentPageName="DashboardAuditoriaRBAC" adminOnly={true}><DashboardAuditoriaRBAC /></LayoutWrapper>} />
           {Object.entries(Pages).map(([path, Page]) => (
             <Route
               key={path}
