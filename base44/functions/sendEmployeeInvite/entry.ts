@@ -58,6 +58,18 @@ Deno.serve(async (req) => {
     if (existingUsers && existingUsers.length > 0) {
       userExists = true;
       console.log("✅ User já existe para:", email);
+      
+      // Cenário 4: Usuário já pertence a outra oficina
+      const u = existingUsers[0];
+      if (u.workshop_id && u.workshop_id !== workshop_id) {
+        return Response.json({ 
+          success: false, 
+          error: {
+            code: "BUSINESS_RULE_VIOLATION",
+            message: 'Este e-mail já está vinculado a outra oficina. O sistema não permite que o mesmo e-mail participe de múltiplas oficinas.' 
+          }
+        }, { status: 400 });
+      }
     }
 
     // Se User não existe, criar agora com todos os dados

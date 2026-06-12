@@ -176,19 +176,25 @@ export default function PrimeiroAcesso() {
         );
 
       case "error":
+        const isExpired = error && error.toLowerCase().includes('expirado');
         return (
           <div className="text-center animate-in fade-in zoom-in duration-500 delay-150 fill-mode-both">
             <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
               <AlertCircle className="w-8 h-8 text-red-600" />
             </div>
-            <h2 className="text-2xl font-bold text-red-900 mb-4">Convite Inválido</h2>
+            <h2 className="text-2xl font-bold text-red-900 mb-4">{isExpired ? "Convite Expirado" : "Convite Inválido"}</h2>
             <p className="text-gray-600 mb-6">{error}</p>
             <Button
-              onClick={() => window.location.href = createPageUrl("Home")}
+              onClick={() => {
+                // Ao dar logout, garante que a pessoa não vai cair no loop do OnboardingGate ao ir para a Home
+                base44.auth.logout().then(() => {
+                   window.location.href = createPageUrl("Home");
+                });
+              }}
               variant="outline"
               className="w-full"
             >
-              Voltar ao Início
+              Sair e Voltar ao Início
             </Button>
           </div>
         );

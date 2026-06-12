@@ -102,7 +102,19 @@ Deno.serve(async (req) => {
       const filterField = isInternalUser ? {} : { workshop_id };
       const existingEmployees = await base44.asServiceRole.entities.Employee.filter({ email, ...filterField });
       if (existingEmployees && existingEmployees.length > 0) {
-        throw { code: 'BUSINESS_RULE_VIOLATION', message: 'Já existe um colaborador com este email' };
+        throw { code: 'BUSINESS_RULE_VIOLATION', message: 'Já existe um colaborador com este email nesta oficina.' };
+      }
+
+      // Cenário 4: Usuário já pertence a outra oficina
+      if (!isInternalUser) {
+        const existingUsers = await base44.asServiceRole.entities.User.filter({ email });
+        if (existingUsers && existingUsers.length > 0) {
+          const u = existingUsers[0];
+          // Se já tem oficina e é diferente da atual, rejeitamos para evitar overwrite acidental, pois multi-tenant não é suportado nativamente pelo User.workshop_id
+          if (u.workshop_id && u.workshop_id !== workshop_id) {
+            throw { code: 'BUSINESS_RULE_VIOLATION', message: 'Este e-mail já está vinculado a outra oficina. O sistema não permite que o mesmo e-mail participe de múltiplas oficinas.' };
+          }
+        }
       }
     }
 

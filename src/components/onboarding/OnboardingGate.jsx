@@ -113,6 +113,17 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
               console.log("🚨 Detectado convite pendente. Redirecionando para PrimeiroAcesso", pendingInvite);
               window.location.href = redirectUrl;
               return;
+            } else if (invites.length > 0) {
+              // Cenário 3: Se tiver convite mas todos estão expirados ou já acessados (e o user não tem workshop)
+              // Em vez de ir pro fluxo de "Criar Oficina", direcionamos para o PrimeiroAcesso do convite mais recente
+              // Onde o validateInviteToken vai barrar e mostrar a mensagem explícita "Convite expirado"
+              invites.sort((a, b) => new Date(b.created_date || 0) - new Date(a.created_date || 0));
+              const latestInvite = invites[0];
+              const redirectUrl = `/PrimeiroAcesso?token=${latestInvite.invite_token}&profile_id=${latestInvite.profile_id || latestInvite.metadata?.profile_id || ''}`;
+              inviteCheckCache.set(user.id, { hasPendingInvite: true, redirectUrl });
+              console.log("🚨 Detectado convite expirado. Redirecionando para PrimeiroAcesso para exibir erro correto.", latestInvite);
+              window.location.href = redirectUrl;
+              return;
             } else {
               inviteCheckCache.set(user.id, { hasPendingInvite: false, redirectUrl: null });
             }
