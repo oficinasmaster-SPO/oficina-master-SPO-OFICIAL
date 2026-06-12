@@ -18,10 +18,21 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Não autenticado' } }, { status: 401 });
     }
 
-    // PRE-1 (2026-06-10): Removido guard 'admin only'.
-    // registerEmployeeComplete aceita qualquer usuário logado — paridade necessária
-    // para que sócios de oficinas (role='user') possam cadastrar colaboradores.
-    // Controle de acesso é feito via RBAC (canAccessPage + hasPermission) no frontend.
+    // Autorização: admins podem sempre convidar. Usuários comuns só podem se forem
+    // owner_id ou estiverem em partner_ids do workshop informado no body.
+    if (currentUser.role !== 'admin') {
+      const rawBody = await req.clone().json().catch(() => ({}));
+      const targetWorkshopId = rawBody.workshop_id;
+      if (!targetWorkshopId) {
+        return Response.json({ success: false, error: { code: 'FORBIDDEN', message: 'Apenas o dono ou sócios da oficina podem convidar colaboradores' } }, { status: 403 });
+      }
+      const ws = await base44.asServiceRole.entities.Workshop.get(targetWorkshopId).catch(() => null);
+      const isOwner = ws?.owner_id === currentUser.id;
+      const isPartner = Array.isArray(ws?.partner_ids) && ws.partner_ids.includes(currentUser.id);
+      if (!isOwner && !isPartner) {
+        return Response.json({ success: false, error: { code: 'FORBIDDEN', message: 'Apenas o dono ou sócios da oficina podem convidar colaboradores' } }, { status: 403 });
+      }
+    }
 
     let body;
     try {
@@ -161,7 +172,7 @@ Deno.serve(async (req) => {
     const safeRole = (role === 'admin' && currentUser.role === 'admin') ? 'admin' : 'user';
 
     console.log("👤 Convidando usuário:", email);
-    
+
     // Determinar consulting_firm_id e nome da organização
     let consulting_firm_id = bodyConsultingFirmId || null;
     let workshop_name = 'Oficinas Master Acelerador';
@@ -190,17 +201,9 @@ Deno.serve(async (req) => {
     // O profile_id resolvido é a fonte da verdade para as permissões
     const finalProfileId = finalProfileIdResolved || profile_id;
 
-    // Convidar usuário via Base44 — usa escopo do usuário autenticado (token do admin que fez a request)
-    // Isso NÃO afeta a sessão do admin; apenas convida o novo usuário
+    // Convidar usuário via Base44 usando asServiceRole — funciona mesmo para callers com role='user'
     console.log("📧 Convidando usuário via Base44 com role:", safeRole);
-    await base44.users.inviteUser(email, safeRole);
-    
-    // Obter o ID real do usuário recém convidado
-    const createdUsers = await base44.asServiceRole.entities.User.filter({ email });
-    if (!createdUsers || createdUsers.length === 0) {
-      throw new Error("Erro ao localizar usuário recém convidado");
-    }
-    const inviteResult = { id: createdUsers[0].id };
+    const inviteResult = await base44.asServiceRole.users.inviteUser(email, safeRole);
     
     console.log("✅ Convite enviado pelo Base44 (email automático) - sessão do admin mantida", inviteResult.id);
 

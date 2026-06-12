@@ -181,14 +181,6 @@ export default function Cadastro() {
         cadastro_em_andamento: true
       });
 
-      // Promover owner para admin automaticamente via updateUserRoleAdmin
-      try {
-        await base44.functions.invoke('updateUserRoleAdmin', { user_id: user.id, role: 'admin' });
-        console.log('✅ Usuário promovido para admin como owner do workshop');
-      } catch (e) {
-        console.error('⚠️ Erro ao promover para admin:', e);
-      }
-      
       // P4 FIX (2026-06-10): substituída busca textual por nome ('sócio') por ID fixo canônico.
       // Antes: allProfiles.find(p => p.name.includes('sócio')) — frágil a renomeações.
       //        Se nenhum perfil tivesse 'sócio' no nome, profile_id ficava undefined.
