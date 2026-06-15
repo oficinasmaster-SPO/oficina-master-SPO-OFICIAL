@@ -230,7 +230,7 @@ Deno.serve(async (req) => {
       job_role: job_role || 'outros',
       area: area || 'administrativo',
       profile_id: finalProfileId,
-      user_status: 'pending',
+      user_status: 'inativo', // aguarda aceite do convite
       user_type: isInternalUser ? 'internal' : 'external',
       is_internal: isInternalUser,
       tipo_vinculo: isInternalUser ? 'interno' : 'cliente',
@@ -269,8 +269,8 @@ Deno.serve(async (req) => {
       area: area || 'administrativo',
       telefone: telefone || '',
       hire_date: hire_date || new Date().toISOString().split('T')[0],
-      user_status: 'pending',
       user_type: isInternalUser ? 'internal' : 'external',
+      // user_status removido: User schema não tem este campo (ignorado silenciosamente)
       invite_id: invite.id,
       admin_responsavel_id: currentUser.id
     };
