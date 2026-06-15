@@ -9,11 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Save, UserPlus, User, DollarSign, TrendingUp, Plus, Trash2, X, Upload } from "lucide-react";
 import { toast } from "sonner";
-import InviteSuccessDialog from "@/components/convite/InviteSuccessDialog";
 import { jobRoles } from "@/components/lib/jobRoles";
-import { CANONICAL_PROFILE_IDS, CANONICAL_PROFILE_JOB_ROLES, CANONICAL_PROFILE_MAPPING, getCanonicalProfileByJobRole, isCanonicalJobRole } from "@/components/lib/canonicalProfiles";
 import { motion, AnimatePresence } from "framer-motion";
-import ProfileSuggestionBanner from "./ProfileSuggestionBanner";
 import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 
 export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess }) {
@@ -26,11 +23,6 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
   const [jobDescriptions, setJobDescriptions] = useState([]);
   const [profiles, setProfiles] = useState([]);
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [profileSuggestion, setProfileSuggestion] = useState(null);
-  const [checkingSuggestion, setCheckingSuggestion] = useState(false);
-  const [profileWasManuallyChanged, setProfileWasManuallyChanged] = useState(false);
-  const [profileAutoApplied, setProfileAutoApplied] = useState(false);
-  const [successInvite, setSuccessInvite] = useState(null);
   
   const [formData, setFormData] = useState({
     workshop_id: "", full_name: "", cpf: "", rg: "", data_nascimento: "", telefone: "", email: "",
@@ -81,56 +73,6 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
     return () => window.removeEventListener('keydown', handleEsc);
   }, [isOpen, onClose]);
 
-  // FASE 4: Auto-apply canonical profile when job_role changes (only if user hasn't manually selected)
-  useEffect(() => {
-    if (!formData.job_role || !workshop?.id) {
-      setProfileSuggestion(null);
-      return;
-    }
-
-    // Don't auto-apply if user already manually changed the profile
-    if (profileWasManuallyChanged) return;
-
-    const applyCanonicalProfile = async () => {
-      setCheckingSuggestion(true);
-      try {
-        const response = await base44.functions.invoke('autoAssignProfile', {
-          job_role: formData.job_role,
-          workshop_id: workshop.id,
-          current_profile_id: formData.user_profile_id
-        });
-
-        if (response.data.success && response.data.has_suggestion) {
-          // FASE 4: Auto-apply the canonical profile
-          setFormData(prev => ({ ...prev, user_profile_id: response.data.suggested_profile_id }));
-          setProfileAutoApplied(true);
-          
-
-
-          // Telemetria: sugestão gerada
-          await base44.functions.invoke('logProfileSuggestion', {
-            event_type: 'profile_suggestion_generated',
-            job_role: formData.job_role,
-            suggested_profile_id: response.data.suggested_profile_id,
-            suggested_profile_name: response.data.suggested_profile_name,
-            workshop_id: workshop.id
-          });
-        } else {
-          setProfileSuggestion(null);
-          setProfileAutoApplied(false);
-        }
-      } catch (error) {
-        console.error('Erro ao aplicar perfil canônico:', error);
-        setProfileSuggestion(null);
-        setProfileAutoApplied(false);
-      } finally {
-        setCheckingSuggestion(false);
-      }
-    };
-
-    applyCanonicalProfile();
-  }, [formData.job_role, workshop?.id]);
-
   const loadData = async () => {
     setLoading(true);
     try {
@@ -149,13 +91,11 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
       setJobDescriptions(descriptions.filter(d => !userWorkshop || d.workshop_id === userWorkshop.id));
 
       const allProfiles = await base44.entities.UserProfile.list();
-      // Filtro por ID fixo — mais seguro que filtrar por type ou job_role.
-      // CANONICAL_PROFILE_IDS exclui Admin System e qualquer perfil criado acidentalmente.
-      // Aplica para todos os usuários, incluindo admin — no cadastro de colaboradores
-      // de oficinas clientes nunca deve aparecer perfil de uso interno da plataforma.
-      setProfiles(allProfiles.filter(p =>
-        p.status === 'ativo' &&
-        CANONICAL_PROFILE_IDS.includes(p.id) &&
+      // Perfis internos/sistema nunca aparecem no cadastro de colaboradores de oficinas
+      setProfiles(allProfiles.filter(p => 
+        p.status === 'ativo' && 
+        p.type !== 'interno' &&
+        p.type !== 'sistema' &&
         (!p.workshop_id || p.workshop_id === userWorkshop?.id)
       ));
     } catch (error) {
@@ -207,9 +147,7 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
         return;
       }
     } catch (error) {
-      // 409 = email já existe — usar mensagem do body, não a mensagem técnica do axios
-      const serverMessage = error.response?.data?.error;
-      toast.error(serverMessage || "Este e-mail já está cadastrado nesta oficina");
+      toast.error("Erro ao validar email: " + error.message);
       setSubmitting(false);
       return;
     }
@@ -231,65 +169,69 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
         }
       }
 
-      const resolvedProfileId = formData.user_profile_id && formData.user_profile_id !== "none"
-        ? formData.user_profile_id
-        : null;
-      const resolvedJobDescriptionId = formData.job_description_id && formData.job_description_id !== "none"
-        ? formData.job_description_id
-        : null;
+      const formDataToSend = { ...formData, production_percentage: productionPercentage };
+      if (formDataToSend.user_profile_id === "none") formDataToSend.user_profile_id = null;
+      if (formDataToSend.job_description_id === "none") formDataToSend.job_description_id = null;
+      
+      // MIGRAÇÃO P1: registerEmployeeComplete → createUserDirectly (fluxo canônico)
+      const profileId = formData.user_profile_id === "none" ? null : (formData.user_profile_id || null);
+      const jobDescriptionId = formData.job_description_id === "none" ? null : (formData.job_description_id || null);
 
       const response = await base44.functions.invoke('createUserDirectly', {
-        name: formData.full_name,
-        email: formData.email,
-        telefone: formData.telefone,
-        position: formData.position,
-        area: formData.area,
-        job_role: formData.job_role,
-        profile_id: resolvedProfileId,
-        workshop_id: workshop.id,
-        role: 'user',
-        data_nascimento: formData.data_nascimento || null,
-        // Campos RH
-        cpf: formData.cpf || null,
-        rg: formData.rg || null,
-        hire_date: formData.hire_date || null,
-        salary: formData.salary || 0,
-        commission: formData.commission || 0,
-        bonus: formData.bonus || 0,
-        benefits: formData.benefits || [],
-        production_parts: formData.production_parts || 0,
-        production_parts_sales: formData.production_parts_sales || 0,
-        production_services: formData.production_services || 0,
-        production_percentage: productionPercentage,
-        endereco: formData.endereco || null,
+        name:               formData.full_name,
+        email:              formData.email,
+        workshop_id:        workshop.id,
+        position:           formData.position,
+        job_role:           formData.job_role || 'outros',
+        area:               formData.area || '',
+        profile_id:         profileId,
+        telefone:           formData.telefone || '',
+        cpf:                formData.cpf || null,
+        rg:                 formData.rg || null,
+        data_nascimento:    formData.data_nascimento || null,
+        hire_date:          formData.hire_date || null,
         profile_picture_url: formData.profile_picture_url || null,
-        job_description_id: resolvedJobDescriptionId
+        salary:             formData.salary || 0,
+        commission:         formData.commission || 0,
+        bonus:              formData.bonus || 0,
+        benefits:           formData.benefits || [],
+        production_parts:       formData.production_parts || 0,
+        production_parts_sales: formData.production_parts_sales || 0,
+        production_services:    formData.production_services || 0,
+        production_percentage:  productionPercentage,
+        endereco:           formData.endereco || null,
+        job_description_id: jobDescriptionId,
+        idempotencyKey:     `${workshop.id}-${formData.email}-${Date.now()}`
       });
 
       if (!response.data.success) {
         throw new Error(response.data.error?.message || response.data.error || "Erro ao cadastrar colaborador");
       }
 
-      const responseData = response.data.data || response.data;
       toast.success("Colaborador cadastrado com sucesso!");
       
-      setSuccessInvite({
-        ...responseData,
-        name: formData.full_name,
-        full_name: formData.full_name,
-        email: formData.email,
-        telefone: formData.telefone,
-        position: formData.position,
-        employee: {
-          id: responseData.employee_id,
-          full_name: formData.full_name,
-          email: formData.email,
-          telefone: formData.telefone,
-          position: formData.position,
-          created_date: new Date().toISOString()
-        }
-      });
+      if (window.confirm("Colaborador cadastrado! Deseja gerar e copiar o link do teste comportamental DISC para ele agora?")) {
+         const uuid = crypto.randomUUID();
+         await base44.entities.DISCPublicSession.create({
+            workshop_id: workshop.id,
+            employee_id: response.data.data?.employee_id || response.data.employee_id,
+            candidate_name: formDataToSend.full_name || formData.full_name,
+            token: uuid,
+            status: 'pending'
+         });
+         const link = `${window.location.origin}/PublicDISC?token=${uuid}`;
+         navigator.clipboard.writeText(link);
+         toast.success("Link do DISC copiado para a área de transferência!");
+      }
+
+      if (window.confirm("Deseja enviar o link de acesso ao sistema manualmente via WhatsApp agora?")) {
+         onClose();
+         navigate(createPageUrl("ConvidarColaborador") + `?id=${response.data.data?.employee_id || response.data.employee_id}`);
+         return;
+      }
+
       if (onSuccess) onSuccess();
+      onClose();
     } catch (error) {
       console.error(error);
       toast.error("Erro ao cadastrar");
@@ -304,28 +246,8 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
   const totalProduction = formData.production_parts + formData.production_parts_sales + formData.production_services;
   const productionPercentage = totalCost > 0 ? ((totalProduction / totalCost) * 100).toFixed(0) : 0;
 
-  const selectedProfileName = profiles.find(p => p.id === formData.user_profile_id)?.name || "-";
-
   return (
-    <>
-      <InviteSuccessDialog
-        open={!!successInvite}
-        onOpenChange={(open) => {
-          if (!open) {
-            setSuccessInvite(null);
-            onClose();
-          }
-        }}
-        inviteData={successInvite}
-        workshopName={workshop?.name}
-        profileName={selectedProfileName}
-        onPreview={() => {
-          setSuccessInvite(null);
-          onClose();
-          navigate(createPageUrl("ConvidarColaborador") + `?id=${successInvite?.employee?.id || successInvite?.employee_id || ""}`);
-        }}
-      />
-      <AnimatePresence>
+    <AnimatePresence>
       {isOpen && (
         <div 
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
@@ -519,15 +441,7 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
                           <Select 
                             value={formData.user_profile_id || "none"} 
                             onValueChange={(value) => {
-                              const previousProfileId = formData.user_profile_id;
                               const selectedProfile = profiles.find(p => p.id === value);
-                              
-                              // FASE 4: Track manual override
-                              if (previousProfileId && previousProfileId !== value) {
-                                setProfileWasManuallyChanged(true);
-                                setProfileAutoApplied(false);
-                              }
-                              
                               if (selectedProfile) {
                                 const newJobRole = selectedProfile.permission_type === 'job_role' && 
                                                   selectedProfile.job_roles?.length > 0 
@@ -542,67 +456,24 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
                             <SelectTrigger><SelectValue placeholder="Selecione o perfil..." /></SelectTrigger>
                             <SelectContent>
                               <SelectItem value="none">Nenhum perfil</SelectItem>
-                              {profiles.map(profile => (
+                              {profiles.filter(p => p.type !== 'interno' && p.type !== 'sistema').map(profile => (
                                 <SelectItem key={profile.id} value={profile.id}>
                                   {profile.name}
                                 </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
-                          
-                          {/* FASE 4: Badge indicating auto-apply or manual selection */}
-                          {profileAutoApplied && !profileWasManuallyChanged && (
-                            <div className="mt-2 flex items-center gap-2 text-sm text-blue-700 bg-blue-50 px-3 py-1.5 rounded-md border border-blue-200">
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
-                              <span>Perfil selecionado automaticamente com base no cargo.</span>
-                            </div>
-                          )}
-                          {profileWasManuallyChanged && (
-                            <div className="mt-2 flex items-center gap-2 text-sm text-green-700 bg-green-50 px-3 py-1.5 rounded-md border border-green-200">
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
-                              <span>Perfil definido manualmente.</span>
-                            </div>
-                          )}
                         </div>
                         <div>
                           <Label>Função do Sistema</Label>
-                          <Select 
-                            value={formData.job_role} 
-                            onValueChange={(value) => {
-                              // FASE 4: Reset manual flag when job_role changes
-                              setProfileWasManuallyChanged(false);
-                              setProfileAutoApplied(false);
-                              setFormData({...formData, job_role: value});
-                            }}
-                          >
+                          <Select value={formData.job_role} onValueChange={(value) => setFormData({...formData, job_role: value})}>
                             <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                             <SelectContent>
-                              {jobRoles.filter(role => role.category !== 'interna' && role.value !== 'socio_interno').map((role) => (
+                              {jobRoles.filter(role => role.category !== 'interna').map((role) => (
                                 <SelectItem key={role.value} value={role.value}>{role.label}</SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
-                          
-                          <ProfileSuggestionBanner
-                            profileSuggestion={profileSuggestion}
-                            checkingSuggestion={checkingSuggestion}
-                            job_role={formData.job_role}
-                            onDismiss={() => {
-                              // Telemetria: sugestão visualizada (Fase 4 - já aplicada automaticamente)
-                              base44.functions.invoke('logProfileSuggestion', {
-                                event_type: 'profile_suggestion_generated',
-                                job_role: formData.job_role,
-                                suggested_profile_id: profileSuggestion?.suggested_profile_id,
-                                suggested_profile_name: profileSuggestion?.suggested_profile_name,
-                                workshop_id: workshop.id
-                              }).catch(console.error);
-                              setProfileSuggestion(null);
-                            }}
-                          />
                         </div>
                         <div>
                           <Label>Área</Label>
@@ -761,6 +632,5 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
         </div>
       )}
     </AnimatePresence>
-    </>
   );
 }
