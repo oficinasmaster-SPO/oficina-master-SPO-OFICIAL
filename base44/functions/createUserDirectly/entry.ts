@@ -185,14 +185,14 @@ Deno.serve(async (req) => {
       invite_token: inviteToken,
       invite_type: 'workshop',
       expires_at: expiresAt.toISOString(),
-      status: "pendente",
+      status: "enviado",
       metadata: { 
-        // DADOS SEGUROS: Estes valores prevalecem sobre qualquer parâmetro de URL
         role: safeRole,
-        company_id: workshop_id, // Alias para workshop_id conforme solicitado
-        workshop_id: workshop_id,
-        consulting_firm_id: consulting_firm_id,
+        // Campos lidos por createUserOnFirstAccess para resolver workshop/profile
         profile_id: finalProfileId,
+        workshop_id: workshop_id,
+        company_id: workshop_id,
+        consulting_firm_id: consulting_firm_id,
         invited_at: new Date().toISOString()
       }
     });
