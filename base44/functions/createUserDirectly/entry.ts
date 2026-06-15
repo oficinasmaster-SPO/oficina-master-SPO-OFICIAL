@@ -161,38 +161,43 @@ Deno.serve(async (req) => {
 
     // Convidar usuário via Base44 usando SERVICE ROLE (não afeta sessão do admin)
     console.log("📧 Convidando usuário via Base44 com role:", safeRole);
-    // Verificar se User já existe no sistema antes de chamar inviteUser
-    // inviteUser lança "User not found" se o email já existe na plataforma Base44
+    // Verificar se User já existe antes de tentar criar
+    // base44.users.inviteUser retorna void — não retorna {id}
+    // base44.auth.inviteUser retorna {id} — é o método correto quando precisamos do ID
     let inviteResult = null;
+    
+    // 1. Verificar se já existe
     const existingUsers = await base44.asServiceRole.entities.User.filter({ email: email });
     
     if (existingUsers && existingUsers.length > 0) {
-      // User já existe — reutilizar o ID existente
       inviteResult = existingUsers[0];
-      console.log("ℹ️ User já existe no sistema, reutilizando:", inviteResult.id);
+      console.log("ℹ️ User já existe, reutilizando ID:", inviteResult.id);
       
-      // Verificar se já pertence a outra oficina
+      // Bloquear se pertence a outra oficina
       if (!isInternalUser && inviteResult.workshop_id && inviteResult.workshop_id !== workshop_id) {
         return Response.json({ 
           success: false, 
-          error: { 
-            code: 'BUSINESS_RULE_VIOLATION',
-            message: 'Este e-mail já está vinculado a outra oficina.' 
-          }
+          error: { code: 'BUSINESS_RULE_VIOLATION', message: 'Este e-mail já está vinculado a outra oficina.' }
         }, { status: 400 });
       }
     } else {
-      // User não existe — criar via inviteUser
-      console.log("🆕 Criando novo User para:", email);
-      inviteResult = await base44.users.inviteUser(email, safeRole);
+      // 2. Criar novo User — base44.auth.inviteUser retorna {id}
+      console.log("🆕 Criando novo User via auth.inviteUser para:", email);
+      inviteResult = await base44.auth.inviteUser(email, safeRole);
       
+      // 3. Se auth.inviteUser não retornou id, buscar pelo email
       if (!inviteResult?.id) {
-        throw new Error(`Falha ao criar usuário: resposta inválida para o email ${email}`);
+        console.warn("⚠️ auth.inviteUser não retornou id, buscando por email...");
+        await new Promise(r => setTimeout(r, 1000)); // aguarda 1s para o Base44 criar
+        const newUsers = await base44.asServiceRole.entities.User.filter({ email: email });
+        if (newUsers && newUsers.length > 0) {
+          inviteResult = newUsers[0];
+        } else {
+          throw new Error(`Falha ao criar usuário para o email ${email}. Tente novamente.`);
+        }
       }
-      console.log("✅ User criado via inviteUser:", inviteResult.id);
+      console.log("✅ User criado, ID:", inviteResult.id);
     }
-    
-    console.log("✅ User pronto — sessão do admin mantida");
 
     // Gerar token de convite
     const inviteToken = Math.random().toString(36).substring(2, 15) + 
