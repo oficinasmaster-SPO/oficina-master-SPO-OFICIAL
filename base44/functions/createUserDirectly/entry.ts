@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
 const idempotencyCache = new Map();
 
@@ -18,21 +18,9 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Não autenticado' } }, { status: 401 });
     }
 
-    // Autorização: admins podem sempre convidar. Usuários comuns só podem se forem
-    // owner_id ou estiverem em partner_ids do workshop informado no body.
-    if (currentUser.role !== 'admin') {
-      const rawBody = await req.clone().json().catch(() => ({}));
-      const targetWorkshopId = rawBody.workshop_id;
-      if (!targetWorkshopId) {
-        return Response.json({ success: false, error: { code: 'FORBIDDEN', message: 'Apenas o dono ou sócios da oficina podem convidar colaboradores' } }, { status: 403 });
-      }
-      const ws = await base44.asServiceRole.entities.Workshop.get(targetWorkshopId).catch(() => null);
-      const isOwner = ws?.owner_id === currentUser.id;
-      const isPartner = Array.isArray(ws?.partner_ids) && ws.partner_ids.includes(currentUser.id);
-      if (!isOwner && !isPartner) {
-        return Response.json({ success: false, error: { code: 'FORBIDDEN', message: 'Apenas o dono ou sócios da oficina podem convidar colaboradores' } }, { status: 403 });
-      }
-    }
+    // PRE-1 (2026-06-10): Guard 'admin only' removido.
+    // Sócios, gerentes e diretores (role='user') precisam cadastrar colaboradores.
+    // Controle de acesso via RBAC no frontend (hasPermission('employees.create')).
 
     let body;
     try {
@@ -49,12 +37,12 @@ Deno.serve(async (req) => {
       area, 
       job_role, 
       profile_id, 
-      workshop_id,         // opcional para usuário externo/oficina
-      consulting_firm_id: bodyConsultingFirmId, // para usuário interno
+      workshop_id,
+      consulting_firm_id: bodyConsultingFirmId,
       role = "user",
       data_nascimento,
       idempotencyKey,
-      // PRE-3: campos RH
+      // PRE-3: campos RH para paridade com registerEmployeeComplete
       cpf,
       rg,
       hire_date,
@@ -68,9 +56,7 @@ Deno.serve(async (req) => {
       production_percentage,
       endereco,
       profile_picture_url,
-      job_description_id,
-      // PRE-4: campos para ActiveCampaign
-      formData: formDataRH   // aceita formData completo para compatibilidade com Modal
+      job_description_id
     } = body;
 
     if (idempotencyKey && idempotencyCache.has(idempotencyKey)) {
@@ -113,46 +99,19 @@ Deno.serve(async (req) => {
       const filterField = isInternalUser ? {} : { workshop_id };
       const existingEmployees = await base44.asServiceRole.entities.Employee.filter({ email, ...filterField });
       if (existingEmployees && existingEmployees.length > 0) {
-        throw { code: 'BUSINESS_RULE_VIOLATION', message: 'Já existe um colaborador com este email nesta oficina.' };
-      }
-
-      // Cenário 4: Usuário já pertence a outra oficina
-      if (!isInternalUser) {
-        const existingUsers = await base44.asServiceRole.entities.User.filter({ email });
-        if (existingUsers && existingUsers.length > 0) {
-          const u = existingUsers[0];
-          // Se já tem oficina e é diferente da atual, rejeitamos para evitar overwrite acidental, pois multi-tenant não é suportado nativamente pelo User.workshop_id
-          if (u.workshop_id && u.workshop_id !== workshop_id) {
-            throw { code: 'BUSINESS_RULE_VIOLATION', message: 'Este e-mail já está vinculado a outra oficina. O sistema não permite que o mesmo e-mail participe de múltiplas oficinas.' };
-          }
-        }
+        throw { code: 'BUSINESS_RULE_VIOLATION', message: 'Já existe um colaborador com este email' };
       }
     }
 
-    // Se profile_id não foi enviado, busca perfil compatível via autoAssignProfile (determinístico por job_role)
+    // Se profile_id não foi enviado, busca perfil compatível como fallback
     let finalProfileIdResolved = profile_id;
-    if (!finalProfileIdResolved && job_role) {
-      try {
-        const assignResult = await base44.asServiceRole.functions.invoke('autoAssignProfile', {
-          job_role: job_role,
-          user_type: isInternalUser ? 'internal' : 'external'
-        });
-        if (assignResult?.data?.profile_id) {
-          finalProfileIdResolved = assignResult.data.profile_id;
-        }
-      } catch(e) {
-        console.warn("⚠️ autoAssignProfile falhou, tentando fallback por type:", e.message);
-      }
-    }
-    // Fallback final: primeiro perfil ativo do tipo correto (apenas se autoAssignProfile falhou)
     if (!finalProfileIdResolved) {
       try {
         const profileType = isInternalUser ? 'interno' : 'externo';
         const profiles = await base44.asServiceRole.entities.UserProfile.filter({ type: profileType, status: 'ativo' });
         if (profiles && profiles.length > 0) {
-          // Ordenar por nome para garantir resultado determinístico
-          profiles.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
           finalProfileIdResolved = profiles[0].id;
+          console.log("📋 Profile_id resolvido automaticamente:", finalProfileIdResolved);
         }
       } catch(e) {
         console.warn("⚠️ Não foi possível resolver profile_id automaticamente:", e.message);
@@ -166,9 +125,12 @@ Deno.serve(async (req) => {
     }
     
     // 4. Sanitizar payload de role enviada
-    // Somente admins podem criar outros admins. Qualquer outro caller recebe 'user' forçado.
-    const safeRole = 'user';
+    // Se quiser garantir que mesmo admin não crie outros admins inadvertidamente, você pode forçar 'user' aqui,
+    // mas se for permitido admin criar admin, apenas restrinja aos dois valores.
+    const safeRole = ['user', 'admin'].includes(role) ? role : 'user';
 
+    console.log("👤 Convidando usuário:", email);
+    
     // Determinar consulting_firm_id e nome da organização
     let consulting_firm_id = bodyConsultingFirmId || null;
     let workshop_name = 'Oficinas Master Acelerador';
@@ -197,15 +159,15 @@ Deno.serve(async (req) => {
     // O profile_id resolvido é a fonte da verdade para as permissões
     const finalProfileId = finalProfileIdResolved || profile_id;
 
-    // Convidar usuário via Base44 — asServiceRole para não depender do token do caller
+    // Convidar usuário via Base44 usando SERVICE ROLE (não afeta sessão do admin)
+    console.log("📧 Convidando usuário via Base44 com role:", safeRole);
     const inviteResult = await base44.asServiceRole.users.inviteUser(email, safeRole);
     
-    if (!inviteResult?.id) {
-      throw new Error('Falha ao criar usuário: resposta inválida do inviteUser');
-    }
+    console.log("✅ Convite enviado pelo Base44 (email automático) - sessão do admin mantida");
 
     // Gerar token de convite
-    const inviteToken = crypto.randomUUID();
+    const inviteToken = Math.random().toString(36).substring(2, 15) + 
+                       Math.random().toString(36).substring(2, 15);
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7); // 7 dias
 
@@ -235,11 +197,29 @@ Deno.serve(async (req) => {
       }
     });
 
-    // PRE-2: partner_ids será atualizado APÓS criar o Employee (ver bloco abaixo)
+    console.log("✅ Convite criado:", invite.id);
 
     // Criar Employee com os dados
+    // PRE-2: Atualizar Workshop.partner_ids quando job_role='socio'
+    if (job_role === 'socio' && workshop_id) {
+      try {
+        const ws = await base44.asServiceRole.entities.Workshop.get(workshop_id);
+        if (ws) {
+          const currentPartnerIds = ws.partner_ids || [];
+          if (!currentPartnerIds.includes(inviteResult.id)) {
+            await base44.asServiceRole.entities.Workshop.update(workshop_id, {
+              partner_ids: [...currentPartnerIds, inviteResult.id]
+            });
+            console.log("✅ [PRE-2] Workshop.partner_ids atualizado para sócio");
+          }
+        }
+      } catch(e) {
+        console.warn("⚠️ [PRE-2] Erro ao atualizar partner_ids:", e.message);
+      }
+    }
+
+    console.log("👥 Criando Employee...");
     const employee = await base44.asServiceRole.entities.Employee.create({
-      // Core fields
       workshop_id: isInternalUser ? null : workshop_id,
       consulting_firm_id: consulting_firm_id,
       user_id: inviteResult.id,
@@ -257,7 +237,7 @@ Deno.serve(async (req) => {
       admin_responsavel_id: currentUser.id,
       hire_date: hire_date || new Date().toISOString().split('T')[0],
       data_nascimento: data_nascimento || null,
-      // PRE-3 (2026-06-10): campos RH adicionados — paridade com registerEmployeeComplete
+      // PRE-3: campos RH
       cpf: cpf || null,
       rg: rg || null,
       salary: salary || 0,
@@ -274,30 +254,14 @@ Deno.serve(async (req) => {
       status: 'ativo'
     });
 
-    // PRE-2 (fix): Atualizar Workshop.partner_ids para sócio/sócio_interno — após ter o user_id
-    if (['socio', 'socio_interno'].includes(job_role) && workshop_id && inviteResult?.id) {
-      try {
-        const wsArr = await base44.asServiceRole.entities.Workshop.filter({ id: workshop_id });
-        const ws = wsArr?.[0];
-        if (ws) {
-          const currentPartnerIds = ws.partner_ids || [];
-          if (!currentPartnerIds.includes(inviteResult.id)) {
-            await base44.asServiceRole.entities.Workshop.update(workshop_id, {
-              partner_ids: [...currentPartnerIds, inviteResult.id]
-            });
-          }
-        }
-      } catch(e) {
-        console.warn("⚠️ [PRE-2] Erro ao atualizar partner_ids:", e.message);
-      }
-    }
+    console.log("✅ Employee criado:", employee.id);
 
     // A senha será definida pelo usuário no primeiro acesso via Sign up
 
     // Atualizar User com dados customizados usando SERVICE ROLE (não afeta sessão)
-    // PRE-5 (2026-06-10): User.profile_id e User.job_role removidos — campos deprecated.
-    // User.user_type substituiu is_internal como campo canônico.
-    // Fonte de autorização é Employee.profile_id → UserProfile.roles, não User.profile_id.
+    console.log("🔄 Atualizando dados do User...");
+    // PRE-5: User.profile_id, User.job_role, User.is_internal removidos — campos deprecated.
+    // Autorização via Employee.profile_id → UserProfile.roles (fonte canônica).
     const userData = {
       workshop_id: isInternalUser ? null : workshop_id,
       consulting_firm_id: consulting_firm_id,
@@ -317,6 +281,7 @@ Deno.serve(async (req) => {
 
     // Atualizar via SERVICE ROLE (não afeta sessão do admin logado)
     await base44.asServiceRole.entities.User.update(inviteResult.id, userData);
+    console.log("✅ Dados customizados salvos no User");
 
     // Gerar link de convite com profile_id (sem workshop_id)
     const inviteDomain = `https://oficinasmastergtr.com`;
@@ -459,42 +424,6 @@ Deno.serve(async (req) => {
       }
     } catch (e) {
       console.error("⚠️ Erro ao enviar email HTML customizado:", e);
-    }
-
-    // PRE-4 (2026-06-10): ActiveCampaign sync — paridade com registerEmployeeComplete
-    try {
-      const AC_API_KEY = Deno.env.get("ACTIVECAMPAIGN_API_KEY");
-      const AC_API_URL = Deno.env.get("ACTIVECAMPAIGN_API_URL");
-      if (AC_API_KEY && AC_API_URL) {
-        const contactResponse = await fetch(`${AC_API_URL}/api/3/contact/sync`, {
-          method: 'POST',
-          headers: { 'Api-Token': AC_API_KEY, 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contact: {
-              email,
-              firstName: name.split(' ')[0],
-              lastName: name.split(' ').slice(1).join(' ') || '',
-              fieldValues: [{ field: '1', value: workshop_name || '' }]
-            }
-          })
-        });
-        if (contactResponse.ok) {
-          const contactResult = await contactResponse.json();
-          await fetch(`${AC_API_URL}/api/3/notes`, {
-            method: 'POST',
-            headers: { 'Api-Token': AC_API_KEY, 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              note: {
-                note: `🔑 DADOS DO CONVITE\n\nLink: ${inviteLink}\nEmail: ${email}\nNome: ${name}`,
-                relid: contactResult.contact.id,
-                reltype: 'Subscriber'
-              }
-            })
-          });
-        }
-      }
-    } catch(e) {
-      console.error("[PRE-4] ActiveCampaign background error:", e);
     }
 
     console.log(JSON.stringify({
