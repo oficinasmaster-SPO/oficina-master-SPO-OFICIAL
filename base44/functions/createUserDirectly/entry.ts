@@ -161,14 +161,38 @@ Deno.serve(async (req) => {
 
     // Convidar usuário via Base44 usando SERVICE ROLE (não afeta sessão do admin)
     console.log("📧 Convidando usuário via Base44 com role:", safeRole);
-    // SDK 0.8.23: base44.users.inviteUser (asServiceRole.users não existe nesta versão)
-    const inviteResult = await base44.users.inviteUser(email, safeRole);
+    // Verificar se User já existe no sistema antes de chamar inviteUser
+    // inviteUser lança "User not found" se o email já existe na plataforma Base44
+    let inviteResult = null;
+    const existingUsers = await base44.asServiceRole.entities.User.filter({ email: email });
     
-    if (!inviteResult?.id) {
-      throw new Error(`Falha ao criar usuário no sistema: resposta inválida para o email ${email}. O email pode já estar cadastrado.`);
+    if (existingUsers && existingUsers.length > 0) {
+      // User já existe — reutilizar o ID existente
+      inviteResult = existingUsers[0];
+      console.log("ℹ️ User já existe no sistema, reutilizando:", inviteResult.id);
+      
+      // Verificar se já pertence a outra oficina
+      if (!isInternalUser && inviteResult.workshop_id && inviteResult.workshop_id !== workshop_id) {
+        return Response.json({ 
+          success: false, 
+          error: { 
+            code: 'BUSINESS_RULE_VIOLATION',
+            message: 'Este e-mail já está vinculado a outra oficina.' 
+          }
+        }, { status: 400 });
+      }
+    } else {
+      // User não existe — criar via inviteUser
+      console.log("🆕 Criando novo User para:", email);
+      inviteResult = await base44.users.inviteUser(email, safeRole);
+      
+      if (!inviteResult?.id) {
+        throw new Error(`Falha ao criar usuário: resposta inválida para o email ${email}`);
+      }
+      console.log("✅ User criado via inviteUser:", inviteResult.id);
     }
     
-    console.log("✅ Convite enviado pelo Base44 (email automático) - sessão do admin mantida");
+    console.log("✅ User pronto — sessão do admin mantida");
 
     // Gerar token de convite
     const inviteToken = Math.random().toString(36).substring(2, 15) + 
