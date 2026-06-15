@@ -181,22 +181,27 @@ Deno.serve(async (req) => {
         }, { status: 400 });
       }
     } else {
-      // 2. Criar novo User — base44.auth.inviteUser retorna {id}
-      console.log("🆕 Criando novo User via auth.inviteUser para:", email);
-      inviteResult = await base44.auth.inviteUser(email, safeRole);
+      // base44.users.inviteUser: funciona para qualquer role (não requer admin)
+      // Retorna void — precisa buscar o User pelo email após criar
+      console.log("🆕 Criando novo User para:", email);
+      await base44.users.inviteUser(email, safeRole);
       
-      // 3. Se auth.inviteUser não retornou id, buscar pelo email
-      if (!inviteResult?.id) {
-        console.warn("⚠️ auth.inviteUser não retornou id, buscando por email...");
-        await new Promise(r => setTimeout(r, 1000)); // aguarda 1s para o Base44 criar
+      // Aguardar Base44 processar e buscar o User criado
+      let attempts = 0;
+      while (attempts < 5) {
+        await new Promise(r => setTimeout(r, 800));
         const newUsers = await base44.asServiceRole.entities.User.filter({ email: email });
         if (newUsers && newUsers.length > 0) {
           inviteResult = newUsers[0];
-        } else {
-          throw new Error(`Falha ao criar usuário para o email ${email}. Tente novamente.`);
+          break;
         }
+        attempts++;
       }
-      console.log("✅ User criado, ID:", inviteResult.id);
+      
+      if (!inviteResult?.id) {
+        throw new Error(`Usuário criado mas não encontrado após ${attempts} tentativas. Email: ${email}`);
+      }
+      console.log("✅ User criado e encontrado, ID:", inviteResult.id);
     }
 
     // Gerar token de convite
@@ -294,28 +299,18 @@ Deno.serve(async (req) => {
 
     // Atualizar User com dados customizados usando SERVICE ROLE (não afeta sessão)
     console.log("🔄 Atualizando dados do User...");
-    // PRE-5: User.profile_id, User.job_role, User.is_internal removidos — campos deprecated.
-    // Autorização via Employee.profile_id → UserProfile.roles (fonte canônica).
+    // User schema tem apenas: role, user_type, consulting_firm_id, company_id, workshop_id
+    // Campos como invite_id, admin_responsavel_id, position, area, telefone, hire_date
+    // NÃO existem no schema — enviar causa exceção → 500.
     const userData = {
       workshop_id: isInternalUser ? null : workshop_id,
-      consulting_firm_id: consulting_firm_id,
-      position: position || 'Colaborador',
-      area: area || 'administrativo',
-      telefone: telefone || '',
-      hire_date: hire_date || new Date().toISOString().split('T')[0],
+      consulting_firm_id: isInternalUser ? consulting_firm_id : null,
       user_type: isInternalUser ? 'internal' : 'external',
-      // user_status removido: User schema não tem este campo (ignorado silenciosamente)
-      invite_id: invite.id,
-      admin_responsavel_id: currentUser.id
     };
-
-    if (data_nascimento) {
-      userData.data_nascimento = data_nascimento;
-    }
 
     // Atualizar via SERVICE ROLE (não afeta sessão do admin logado)
     await base44.asServiceRole.entities.User.update(inviteResult.id, userData);
-    console.log("✅ Dados customizados salvos no User");
+    console.log("✅ User atualizado com workshop_id e user_type");
 
     // Gerar link de convite com profile_id (sem workshop_id)
     const inviteDomain = `https://oficinasmastergtr.com`;
