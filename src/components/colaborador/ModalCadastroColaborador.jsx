@@ -234,7 +234,11 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
       onClose();
     } catch (error) {
       console.error(error);
-      toast.error("Erro ao cadastrar");
+      const msg = error?.response?.data?.error?.message 
+        || error?.response?.data?.error 
+        || error?.message 
+        || "Erro ao cadastrar colaborador";
+      toast.error(msg);
     } finally {
       setSubmitting(false);
     }

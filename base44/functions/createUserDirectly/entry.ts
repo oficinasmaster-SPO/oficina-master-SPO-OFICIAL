@@ -127,7 +127,7 @@ Deno.serve(async (req) => {
     // 4. Sanitizar payload de role enviada
     // Se quiser garantir que mesmo admin não crie outros admins inadvertidamente, você pode forçar 'user' aqui,
     // mas se for permitido admin criar admin, apenas restrinja aos dois valores.
-    const safeRole = ['user', 'admin'].includes(role) ? role : 'user';
+    const safeRole = 'user';
 
     console.log("👤 Convidando usuário:", email);
     
@@ -162,6 +162,10 @@ Deno.serve(async (req) => {
     // Convidar usuário via Base44 usando SERVICE ROLE (não afeta sessão do admin)
     console.log("📧 Convidando usuário via Base44 com role:", safeRole);
     const inviteResult = await base44.asServiceRole.users.inviteUser(email, safeRole);
+    
+    if (!inviteResult?.id) {
+      throw new Error(`Falha ao criar usuário no sistema: resposta inválida (email: ${email})`);
+    }
     
     console.log("✅ Convite enviado pelo Base44 (email automático) - sessão do admin mantida");
 
