@@ -36,8 +36,8 @@ export default function Home() {
   const { data: userProgress, isLoading: isLoadingProgress, refetch: refetchProgress } = useQuery({
     queryKey: ['user-progress', tenant?.id, user?.id],
     queryFn: async () => {
-      const progressList = await base44.entities.UserProgress.list();
-      let progress = (progressList || []).find(p => p.user_id === user.id);
+      const progressList = await base44.entities.UserProgress.filter({ user_id: user.id });
+      let progress = progressList?.[0];
 
       if (!progress) {
         progress = await base44.entities.UserProgress.create({
