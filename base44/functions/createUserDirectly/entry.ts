@@ -3,9 +3,12 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 const idempotencyCache = new Map();
 
 Deno.serve(async (req) => {
+  let employeeIdForRollback = null;
+  let inviteIdForRollback = null;
+
   try {
     const base44 = createClientFromRequest(req);
-    
+
     // 1. Validar autenticação
     let currentUser = null;
     try {
@@ -13,7 +16,7 @@ Deno.serve(async (req) => {
     } catch (e) {
       return Response.json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Não autenticado' } }, { status: 401 });
     }
-    
+
     if (!currentUser || !currentUser.id) {
       return Response.json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Não autenticado' } }, { status: 401 });
     }
@@ -29,17 +32,16 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, error: { code: 'INVALID_INPUT', message: 'Payload inválido' } }, { status: 400 });
     }
 
-    const { 
-      name, 
-      email, 
-      telefone, 
-      position, 
-      area, 
-      job_role, 
-      profile_id, 
+    const {
+      name,
+      email,
+      telefone,
+      position,
+      area,
+      job_role,
+      profile_id,
       workshop_id,
       consulting_firm_id: bodyConsultingFirmId,
-      role = "user",
       data_nascimento,
       idempotencyKey,
       // PRE-3: campos RH para paridade com registerEmployeeComplete
@@ -63,14 +65,12 @@ Deno.serve(async (req) => {
       const cached = idempotencyCache.get(idempotencyKey);
       return Response.json(cached.body, { status: cached.status });
     }
-    
+
     if (!name || typeof name !== 'string' || name.length > 255 ||
         !email || typeof email !== 'string' || email.length > 255) {
       return Response.json({ success: false, error: { code: 'MISSING_FIELDS', message: 'Campos obrigatórios ausentes ou inválidos (name, email)' } }, { status: 400 });
     }
 
-    // Para usuário interno: consulting_firm_id é obrigatório (sem workshop)
-    // Para usuário externo: workshop_id é obrigatório
     const isInternalUser = !workshop_id && !!bodyConsultingFirmId;
     if (!workshop_id && !bodyConsultingFirmId) {
       return Response.json({ success: false, error: { code: 'MISSING_FIELDS', message: 'Informe workshop_id (externo) ou consulting_firm_id (interno)' } }, { status: 400 });
@@ -79,15 +79,14 @@ Deno.serve(async (req) => {
     async function validateBusinessRules(data, context) {
       const { email, workshop_id, profile_id, isInternalUser } = data;
       const { base44 } = context;
-      
-      // Só valida workshop se for usuário externo
+
       if (!isInternalUser) {
         const workshop = await base44.asServiceRole.entities.Workshop.get(workshop_id);
         if (!workshop) {
           throw { code: 'INVALID_STATE', message: 'Oficina especificada não existe' };
         }
       }
-      
+
       if (profile_id) {
         const profile = await base44.asServiceRole.entities.UserProfile.get(profile_id);
         if (!profile) {
@@ -95,7 +94,7 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Verifica duplicidade por email
+      // Verifica duplicidade por email (em Employee — fonte de verdade do cadastro)
       const filterField = isInternalUser ? {} : { workshop_id };
       const existingEmployees = await base44.asServiceRole.entities.Employee.filter({ email, ...filterField });
       if (existingEmployees && existingEmployees.length > 0) {
@@ -103,7 +102,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Se profile_id não foi enviado, busca perfil compatível como fallback
+    // Resolver profile_id (fallback se não enviado)
     let finalProfileIdResolved = profile_id;
     if (!finalProfileIdResolved) {
       try {
@@ -113,7 +112,7 @@ Deno.serve(async (req) => {
           finalProfileIdResolved = profiles[0].id;
           console.log("📋 Profile_id resolvido automaticamente:", finalProfileIdResolved);
         }
-      } catch(e) {
+      } catch (e) {
         console.warn("⚠️ Não foi possível resolver profile_id automaticamente:", e.message);
       }
     }
@@ -123,94 +122,80 @@ Deno.serve(async (req) => {
     } catch (ruleError) {
       return Response.json({ success: false, error: ruleError }, { status: 400 });
     }
-    
-    // 4. Sanitizar payload de role enviada
-    // Se quiser garantir que mesmo admin não crie outros admins inadvertidamente, você pode forçar 'user' aqui,
-    // mas se for permitido admin criar admin, apenas restrinja aos dois valores.
+
     const safeRole = 'user'; // Colaboradores sempre criados como 'user' — nunca admin
 
-    console.log("👤 Convidando usuário:", email);
-    
     // Determinar consulting_firm_id e nome da organização
     let consulting_firm_id = bodyConsultingFirmId || null;
     let workshop_name = 'Oficinas Master Acelerador';
-    
+
     if (!isInternalUser && workshop_id) {
-      // Usuário externo: busca dados da oficina
       try {
         const ws = await base44.asServiceRole.entities.Workshop.get(workshop_id);
         if (ws) {
           consulting_firm_id = ws.consulting_firm_id || consulting_firm_id;
           if (ws.name) workshop_name = ws.name;
         }
-      } catch(e) {
+      } catch (e) {
         console.error("⚠️ Aviso: Falha ao buscar dados da oficina:", e.message);
       }
     } else if (isInternalUser && consulting_firm_id) {
-      // Usuário interno: busca nome da consultoria
       try {
         const firm = await base44.asServiceRole.entities.ConsultingFirm.get(consulting_firm_id);
         if (firm?.name) workshop_name = firm.name;
-      } catch(e) {
+      } catch (e) {
         console.warn("⚠️ Aviso: Falha ao buscar nome da consultoria:", e.message);
       }
     }
-    
-    // O profile_id resolvido é a fonte da verdade para as permissões
+
     const finalProfileId = finalProfileIdResolved || profile_id;
 
-    // Convidar usuário via Base44 usando SERVICE ROLE (não afeta sessão do admin)
-    console.log("📧 Convidando usuário via Base44 com role:", safeRole);
-    // Verificar se User já existe antes de tentar criar
-    // base44.users.inviteUser retorna void — não retorna {id}
-    // base44.auth.inviteUser retorna {id} — é o método correto quando precisamos do ID
-    let inviteResult = null;
-    
-    // 1. Verificar se já existe
-    const existingUsers = await base44.asServiceRole.entities.User.filter({ email: email });
-    
-    if (existingUsers && existingUsers.length > 0) {
-      inviteResult = existingUsers[0];
-      console.log("ℹ️ User já existe, reutilizando ID:", inviteResult.id);
-      
-      // Bloquear se pertence a outra oficina
-      if (!isInternalUser && inviteResult.workshop_id && inviteResult.workshop_id !== workshop_id) {
-        return Response.json({ 
-          success: false, 
-          error: { code: 'BUSINESS_RULE_VIOLATION', message: 'Este e-mail já está vinculado a outra oficina.' }
-        }, { status: 400 });
-      }
-    } else {
-      // base44.users.inviteUser: funciona para qualquer role (não requer admin)
-      // Retorna void — precisa buscar o User pelo email após criar
-      console.log("🆕 Criando novo User para:", email);
-      await base44.users.inviteUser(email, safeRole);
-      
-      // Aguardar Base44 processar e buscar o User criado
-      let attempts = 0;
-      while (attempts < 5) {
-        await new Promise(r => setTimeout(r, 800));
-        const newUsers = await base44.asServiceRole.entities.User.filter({ email: email });
-        if (newUsers && newUsers.length > 0) {
-          inviteResult = newUsers[0];
-          break;
+    // ═══════════════════════════════════════════════════════════════════
+    // REESCRITA (2026-06-16): removida a dependência de obter user_id
+    // de forma síncrona após inviteUser.
+    //
+    // base44.users.inviteUser() é um CONVITE DE PLATAFORMA assíncrono —
+    // não cria um registro imediato na entidade User. O User só passa a
+    // existir quando a pessoa convidada efetivamente aceita (signup).
+    // Por isso qualquer polling (mesmo com retries) para encontrar o User
+    // logo após o convite estava condenado a falhar.
+    //
+    // Novo fluxo, alinhado ao que createEmployeeOnUserCreation já espera:
+    //   1. Criar EmployeeInvite (token + metadata) — sem depender de user_id
+    //   2. Criar Employee com user_id = null, status/user_status = 'inativo'
+    //   3. Disparar convite via base44.users.inviteUser (fire-and-forget)
+    //   4. Quando o convite for aceito, completeInviteOnFirstAccess cria
+    //      EmployeeInviteAcceptance → createEmployeeOnUserCreation localiza
+    //      o Employee por email+workshop_id (mesmo sem user_id) e faz o
+    //      vínculo real de user_id + ativação nesse momento.
+    // ═══════════════════════════════════════════════════════════════════
+
+    // Se o User já existir (caso de convite repetido/re-tentativa), reutilizamos
+    let existingUserId = null;
+    try {
+      const existingUsers = await base44.asServiceRole.entities.User.filter({ email });
+      if (existingUsers && existingUsers.length > 0) {
+        const existingUser = existingUsers[0];
+        if (!isInternalUser && existingUser.workshop_id && existingUser.workshop_id !== workshop_id) {
+          return Response.json({
+            success: false,
+            error: { code: 'BUSINESS_RULE_VIOLATION', message: 'Este e-mail já está vinculado a outra oficina.' }
+          }, { status: 400 });
         }
-        attempts++;
+        existingUserId = existingUser.id;
+        console.log("ℹ️ User já existe no sistema, vínculo será imediato:", existingUserId);
       }
-      
-      if (!inviteResult?.id) {
-        throw new Error(`Usuário criado mas não encontrado após ${attempts} tentativas. Email: ${email}`);
-      }
-      console.log("✅ User criado e encontrado, ID:", inviteResult.id);
+    } catch (e) {
+      console.warn("⚠️ Falha ao verificar User existente (não bloqueante):", e.message);
     }
 
     // Gerar token de convite
-    const inviteToken = Math.random().toString(36).substring(2, 15) + 
-                       Math.random().toString(36).substring(2, 15);
+    const inviteToken = crypto.randomUUID().replace(/-/g, '');
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7); // 7 dias
 
-    // Criar convite com METADADOS SEGUROS (Fonte da verdade)
+    // 1. Criar EmployeeInvite — não depende de user_id
+    console.log("📝 Criando EmployeeInvite...");
     const invite = await base44.asServiceRole.entities.EmployeeInvite.create({
       workshop_id: workshop_id,
       consulting_firm_id: consulting_firm_id,
@@ -220,14 +205,13 @@ Deno.serve(async (req) => {
       position: position || 'Colaborador',
       area: area || 'tecnico',
       job_role: job_role || 'outros',
-      profile_id: finalProfileId, // Informativo na entidade raiz
+      profile_id: finalProfileId,
       invite_token: inviteToken,
       invite_type: 'workshop',
       expires_at: expiresAt.toISOString(),
       status: "enviado",
-      metadata: { 
+      metadata: {
         role: safeRole,
-        // Campos lidos por createUserOnFirstAccess para resolver workshop/profile
         profile_id: finalProfileId,
         workshop_id: workshop_id,
         company_id: workshop_id,
@@ -235,33 +219,15 @@ Deno.serve(async (req) => {
         invited_at: new Date().toISOString()
       }
     });
+    inviteIdForRollback = invite.id;
+    console.log("✅ EmployeeInvite criado:", invite.id);
 
-    console.log("✅ Convite criado:", invite.id);
-
-    // Criar Employee com os dados
-    // PRE-2: Atualizar Workshop.partner_ids quando job_role='socio'
-    if (job_role === 'socio' && workshop_id) {
-      try {
-        const ws = await base44.asServiceRole.entities.Workshop.get(workshop_id);
-        if (ws) {
-          const currentPartnerIds = ws.partner_ids || [];
-          if (!currentPartnerIds.includes(inviteResult.id)) {
-            await base44.asServiceRole.entities.Workshop.update(workshop_id, {
-              partner_ids: [...currentPartnerIds, inviteResult.id]
-            });
-            console.log("✅ [PRE-2] Workshop.partner_ids atualizado para sócio");
-          }
-        }
-      } catch(e) {
-        console.warn("⚠️ [PRE-2] Erro ao atualizar partner_ids:", e.message);
-      }
-    }
-
+    // 2. Criar Employee — user_id é null até o aceite (ou já vinculado se User existia)
     console.log("👥 Criando Employee...");
     const employee = await base44.asServiceRole.entities.Employee.create({
       workshop_id: isInternalUser ? null : workshop_id,
       consulting_firm_id: consulting_firm_id,
-      user_id: inviteResult.id,
+      user_id: existingUserId, // null até aceite, ou já vinculado se User pré-existente
       full_name: name,
       email: email,
       telefone: telefone || '',
@@ -269,14 +235,13 @@ Deno.serve(async (req) => {
       job_role: job_role || 'outros',
       area: area || 'administrativo',
       profile_id: finalProfileId,
-      user_status: 'inativo', // aguarda aceite do convite
+      user_status: existingUserId ? 'ativo' : 'inativo', // aguarda aceite do convite
       user_type: isInternalUser ? 'internal' : 'external',
       is_internal: isInternalUser,
       tipo_vinculo: isInternalUser ? 'interno' : 'cliente',
       admin_responsavel_id: currentUser.id,
       hire_date: hire_date || new Date().toISOString().split('T')[0],
       data_nascimento: data_nascimento || null,
-      // PRE-3: campos RH
       cpf: cpf || null,
       rg: rg || null,
       salary: salary || 0,
@@ -292,31 +257,64 @@ Deno.serve(async (req) => {
       job_description_id: job_description_id || null,
       status: 'ativo'
     });
-
+    employeeIdForRollback = employee.id;
     console.log("✅ Employee criado:", employee.id);
 
-    // A senha será definida pelo usuário no primeiro acesso via Sign up
+    // Vincular employee_id de volta no invite (createEmployeeOnUserCreation usa isso)
+    await base44.asServiceRole.entities.EmployeeInvite.update(invite.id, {
+      employee_id: employee.id
+    });
 
-    // Atualizar User com dados customizados usando SERVICE ROLE (não afeta sessão)
-    console.log("🔄 Atualizando dados do User...");
-    // User schema tem apenas: role, user_type, consulting_firm_id, company_id, workshop_id
-    // Campos como invite_id, admin_responsavel_id, position, area, telefone, hire_date
-    // NÃO existem no schema — enviar causa exceção → 500.
-    const userData = {
-      workshop_id: isInternalUser ? null : workshop_id,
-      consulting_firm_id: isInternalUser ? consulting_firm_id : null,
-      user_type: isInternalUser ? 'internal' : 'external',
-    };
+    // PRE-2: Atualizar Workshop.partner_ids quando job_role='socio' e já há um user vinculado
+    if (job_role === 'socio' && workshop_id && existingUserId) {
+      try {
+        const ws = await base44.asServiceRole.entities.Workshop.get(workshop_id);
+        if (ws) {
+          const currentPartnerIds = ws.partner_ids || [];
+          if (!currentPartnerIds.includes(existingUserId)) {
+            await base44.asServiceRole.entities.Workshop.update(workshop_id, {
+              partner_ids: [...currentPartnerIds, existingUserId]
+            });
+            console.log("✅ [PRE-2] Workshop.partner_ids atualizado para sócio");
+          }
+        }
+      } catch (e) {
+        console.warn("⚠️ [PRE-2] Erro ao atualizar partner_ids:", e.message);
+      }
+    }
 
-    // Atualizar via SERVICE ROLE (não afeta sessão do admin logado)
-    await base44.asServiceRole.entities.User.update(inviteResult.id, userData);
-    console.log("✅ User atualizado com workshop_id e user_type");
+    // 3. Disparar convite via Base44 — fire-and-forget, não bloqueia o sucesso da operação.
+    // Se o User já existia, não reenviamos convite de plataforma (ele já tem acesso).
+    if (!existingUserId) {
+      try {
+        await base44.users.inviteUser(email, safeRole);
+        console.log("✅ Convite de plataforma disparado para:", email);
+      } catch (e) {
+        // Não falha a operação — Employee e EmployeeInvite já foram criados com sucesso.
+        // O e-mail customizado abaixo ainda entrega o link de acesso.
+        console.warn("⚠️ Falha ao disparar inviteUser (não bloqueante):", e.message);
+      }
+    }
 
-    // Gerar link de convite com profile_id (sem workshop_id)
+    // Se o User já existe, atualizar com workshop_id/user_type imediatamente
+    if (existingUserId) {
+      try {
+        await base44.asServiceRole.entities.User.update(existingUserId, {
+          workshop_id: isInternalUser ? null : workshop_id,
+          consulting_firm_id: isInternalUser ? consulting_firm_id : null,
+          user_type: isInternalUser ? 'internal' : 'external'
+        });
+        console.log("✅ User existente atualizado com workshop_id e user_type");
+      } catch (e) {
+        console.warn("⚠️ Falha ao atualizar User existente (não bloqueante):", e.message);
+      }
+    }
+
+    // Gerar link de convite com profile_id e token (sem depender de workshop_id na URL)
     const inviteDomain = `https://oficinasmastergtr.com`;
     const inviteLink = `${inviteDomain}/PrimeiroAcesso?token=${inviteToken}&profile_id=${finalProfileId}`;
 
-    // Disparar o Email Customizado utilizando a integração nativa
+    // Disparar o Email Customizado (link de convite real do nosso sistema)
     const emailHtml = `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -331,10 +329,8 @@ Deno.serve(async (req) => {
   <tr>
     <td align="center">
 
-  <!-- CONTAINER -->
   <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px; background:#FFFFFF; border-radius:12px; overflow:hidden;">
 
-    <!-- HEADER -->
     <tr>
       <td style="background:linear-gradient(135deg,#0F172A,#1E293B); padding:20px; text-align:center; color:#FFFFFF;">
         <h2 style="margin:0; font-size:20px;">Oficinas Master</h2>
@@ -344,7 +340,6 @@ Deno.serve(async (req) => {
       </td>
     </tr>
 
-    <!-- CONTEÚDO -->
     <tr>
       <td style="padding:20px;">
 
@@ -361,7 +356,6 @@ Deno.serve(async (req) => {
           Para começar, acesse a plataforma e configure sua senha.
         </p>
 
-        <!-- BOX INFORMAÇÕES -->
         <table width="100%" cellpadding="0" cellspacing="0" style="background:#F9FAFB; border-radius:10px; margin:20px 0;">
           <tr>
             <td style="padding:14px; font-size:14px; color:#111827;">
@@ -372,7 +366,6 @@ Deno.serve(async (req) => {
           </tr>
         </table>
 
-        <!-- BOTÃO -->
         <table width="100%" cellpadding="0" cellspacing="0" style="margin:25px 0;">
           <tr>
             <td align="center">
@@ -384,7 +377,6 @@ Deno.serve(async (req) => {
           </tr>
         </table>
 
-        <!-- LINK ALTERNATIVO -->
         <p style="font-size:12px; color:#6B7280; margin-bottom:6px;">
           Se o botão não funcionar, copie e cole o link abaixo:
         </p>
@@ -393,13 +385,11 @@ Deno.serve(async (req) => {
           ${inviteLink}
         </p>
 
-        <!-- AVISO -->
         <p style="font-size:12px; color:#6B7280; margin-top:20px;">
           Por segurança, recomendamos alterar sua senha após o primeiro acesso.
         </p>
       </td>
     </tr>
-    <!-- FOOTER -->
     <tr>
         <td style="background:#F9FAFB; padding:16px; text-align:center; font-size:12px; color:#6B7280;">
           © 2026 Oficinas Master • Sistema de Gestão para Oficinas<br>
@@ -433,7 +423,7 @@ Deno.serve(async (req) => {
             html: emailHtml
           })
         });
-        
+
         const data = await response.json();
         if (!response.ok) {
           console.error("❌ Erro Resend:", data);
@@ -442,7 +432,7 @@ Deno.serve(async (req) => {
           console.log("✅ Email HTML enviado com sucesso via Resend! ID:", data.id);
         }
       }
-      
+
       if (!RESEND_API_KEY || resendFailed) {
         console.warn("⚠️ Fallback: Usando Core.SendEmail...");
         await base44.asServiceRole.integrations.Core.SendEmail({
@@ -452,29 +442,32 @@ Deno.serve(async (req) => {
         });
       }
     } catch (e) {
-      console.error("⚠️ Erro ao enviar email HTML customizado:", e);
+      console.error("⚠️ Erro ao enviar email HTML customizado (não bloqueante):", e);
     }
 
     console.log(JSON.stringify({
       level: 'AUDIT',
       userId: currentUser.id,
       action: 'CREATE',
-      entity: 'Employee/User',
+      entity: 'Employee/EmployeeInvite',
       before: null,
-      after: { email, workshop_id, profile_id },
+      after: { email, workshop_id, profile_id: finalProfileId, employee_id: employee.id },
       timestamp: new Date().toISOString()
     }));
 
-    const responseBody = { 
+    const responseBody = {
       success: true,
       data: {
-        message: 'Usuário criado e E-mail de convite enviado.',
-        user_id: inviteResult.id,
+        message: existingUserId
+          ? 'Colaborador vinculado e ativado imediatamente.'
+          : 'Colaborador cadastrado. Convite enviado — aguardando aceite.',
+        user_id: existingUserId, // pode ser null — só existirá após aceite
         email: email,
         profile_id: finalProfileId,
         invite_link: inviteLink,
         invite_id: invite.id,
-        employee_id: employee.id
+        employee_id: employee.id,
+        pending_acceptance: !existingUserId
       }
     };
 
@@ -487,7 +480,17 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('❌ ERRO DETALHADO createUserDirectly:', error?.message, error?.stack);
-    return Response.json({ 
+
+    // Rollback best-effort: se Employee ou Invite foram criados antes do erro,
+    // não deixamos lixo no banco silenciosamente — ao menos logamos para auditoria.
+    if (employeeIdForRollback || inviteIdForRollback) {
+      console.error('⚠️ Registros parcialmente criados antes do erro:', {
+        employee_id: employeeIdForRollback,
+        invite_id: inviteIdForRollback
+      });
+    }
+
+    return Response.json({
       success: false,
       error: { code: 'INTERNAL_ERROR', message: error?.message || 'Erro interno no servidor' }
     }, { status: 500 });
