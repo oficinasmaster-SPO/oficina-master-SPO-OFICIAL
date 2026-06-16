@@ -76,10 +76,11 @@ export default function Home() {
       acessou_plano_acao: userProgress.checklist_items?.acessou_plano_acao || false,
       explorou_dashboard: userProgress.checklist_items?.explorou_dashboard || false
     };
-    const hasChanges = JSON.stringify(updatedChecklist) !== JSON.stringify(userProgress.checklist_items);
+    const currentChecklist = userProgress.checklist_items ?? {};
+    const hasChanges = Object.keys(updatedChecklist).some(key => updatedChecklist[key] !== currentChecklist[key]);
     if (hasChanges) {
       base44.entities.UserProgress.update(userProgress.id, { checklist_items: updatedChecklist })
-        .then(() => queryClient.invalidateQueries({ queryKey: ['user-progress'] }))
+        .then(() => queryClient.invalidateQueries({ queryKey: ['user-progress', tenant?.id, user?.id] }))
         .catch(() => {});
     }
   }, [userProgress?.id, userDiagnostics.length, !!tenant]);
@@ -98,7 +99,7 @@ export default function Home() {
       if (!userProgress) return;
       try {
           await base44.entities.UserProgress.update(userProgress.id, updates);
-          queryClient.invalidateQueries({ queryKey: ['user-progress'] });
+          queryClient.invalidateQueries({ queryKey: ['user-progress', tenant?.id, user?.id] });
       } catch (error) {
           console.error("Failed to update user progress:", error);
       }
