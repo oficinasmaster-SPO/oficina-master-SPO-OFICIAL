@@ -89,6 +89,31 @@ export default function DRETCMP2() {
     };
   }, []);
 
+  // Resolve a oficina do usuário usando a hierarquia SPO correta:
+  // 1. user.workshop_id (campo direto no perfil)
+  // 2. Employee vinculado ao user_id
+  // 3. Workshop onde o usuário é owner_id (fallback para sócios legados)
+  const resolveCurrentWorkshop = async (user) => {
+    // Prioridade 1: workshop_id direto no perfil do usuário
+    const workshopId = user.workshop_id || user.data?.workshop_id;
+    if (workshopId) {
+      return await base44.entities.Workshop.get(workshopId);
+    }
+
+    // Prioridade 2: Employee vinculado ao user_id
+    const employees = await base44.entities.Employee.filter({ user_id: user.id });
+    if (employees?.length && employees[0].workshop_id) {
+      return await base44.entities.Workshop.get(employees[0].workshop_id);
+    }
+
+    // Prioridade 3: Workshop onde o usuário é owner (sócios legados)
+    const workshops = await base44.entities.Workshop.list();
+    const owned = Array.isArray(workshops) ? workshops.find(w => w.owner_id === user.id) : null;
+    if (owned) return owned;
+
+    return null;
+  };
+
   const loadData = async () => {
     try {
       const currentUser = await base44.auth.me();
@@ -99,19 +124,18 @@ export default function DRETCMP2() {
       const adminWorkshopId = urlParams.get('workshop_id');
 
       let userWorkshop = null;
-      
+
       if (adminWorkshopId && currentUser.role === 'admin') {
-        // Admin visualizando oficina específica
+        // Admin visualizando oficina específica via URL
         userWorkshop = await base44.entities.Workshop.get(adminWorkshopId);
         setIsAdminView(true);
       } else {
-        // Fluxo normal
-        const workshops = await base44.entities.Workshop.list();
-        const workshopsArray = Array.isArray(workshops) ? workshops : [];
-        userWorkshop = workshopsArray.find(w => w.owner_id === currentUser.id);
+        // Fluxo normal: resolve pelo SPO (não assume que o usuário é owner)
+        userWorkshop = await resolveCurrentWorkshop(currentUser);
 
         if (!userWorkshop) {
-          navigate(createPageUrl("Cadastro"));
+          toast.error('Nenhuma oficina vinculada ao seu perfil.');
+          navigate(createPageUrl('DashboardOverview'));
           return;
         }
         setIsAdminView(false);
