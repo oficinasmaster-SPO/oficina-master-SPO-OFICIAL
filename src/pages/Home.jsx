@@ -14,7 +14,7 @@ import DynamicHelpSystem from "@/components/help/DynamicHelpSystem";
 import QuickTipsBar from "@/components/help/QuickTipsBar";
 import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 import { getPhaseInfo } from "@/components/lib/phaseConstants";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/AuthContext";
 import { nowBrazilISO } from "@/utils/timezone";
 
@@ -33,7 +33,8 @@ export default function Home() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: userProgress, isLoading: isLoadingProgress, refetch: refetchProgress } = useQuery({
+  const queryClient = useQueryClient();
+  const { data: userProgress, isLoading: isLoadingProgress } = useQuery({
     queryKey: ['user-progress', tenant?.id, user?.id],
     queryFn: async () => {
       const progressList = await base44.entities.UserProgress.filter({ user_id: user.id });
@@ -78,7 +79,7 @@ export default function Home() {
     const hasChanges = JSON.stringify(updatedChecklist) !== JSON.stringify(userProgress.checklist_items);
     if (hasChanges) {
       base44.entities.UserProgress.update(userProgress.id, { checklist_items: updatedChecklist })
-        .then(() => refetchProgress())
+        .then(() => queryClient.invalidateQueries({ queryKey: ['user-progress'] }))
         .catch(() => {});
     }
   }, [userProgress?.id, userDiagnostics.length, !!tenant]);
@@ -97,7 +98,7 @@ export default function Home() {
       if (!userProgress) return;
       try {
           await base44.entities.UserProgress.update(userProgress.id, updates);
-          refetchProgress();
+          queryClient.invalidateQueries({ queryKey: ['user-progress'] });
       } catch (error) {
           console.error("Failed to update user progress:", error);
       }
