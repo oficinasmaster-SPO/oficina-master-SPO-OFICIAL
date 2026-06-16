@@ -188,14 +188,44 @@ Deno.serve(async (req) => {
 
     // ═══════════════════════════════════════════════════════
     // E4 — AUDITORIA RBAC
+    //
+    // FONTE CANÔNICA: UserProfile.roles[]
+    // Proibido auditar: sidebar_permissions, module_permissions, modules_allowed
+    // Regra SPO: sem roles → sem permissões → sem sidebar → Fail Close
     // ═══════════════════════════════════════════════════════
     const e4 = {
       total_profiles: profiles.length,
+      // 🔴 CRÍTICO: profile sem roles[] = nenhum usuário vinculado pode acessar nada
       profiles_sem_roles: [],
-      profiles_sem_sidebar_permissions: [],
-      profiles_sem_module_permissions: [],
+      // 🟡 WARNING: profile ativo com employees vinculados mas 0 roles
+      profiles_ativos_sem_roles_com_employees: [],
+      // 🔴 CRÍTICO: profile inativo mas employees ainda apontam para ele
       profiles_inativos_com_employees: [],
+      // INFO: profiles com roles[] mas roles desconhecidas (não listadas em pagePermissions)
+      profiles_com_roles_desconhecidas: [],
+      ok: 0,
     };
+
+    // Conjunto de todas as roles válidas derivadas de pagePermissions
+    const validRoles = new Set([
+      "dashboard.view", "dashboard.edit", "dashboard.export",
+      "workshop.view", "workshop.edit", "workshop.manage_goals",
+      "employees.view", "employees.create", "employees.edit", "employees.delete",
+      "employees.manage_permissions", "employees.cdc", "employees.climate", "employees.feedback",
+      "financeiro.view", "financeiro.edit", "financeiro.approve", "financeiro.export",
+      "diagnostics.view", "diagnostics.create", "diagnostics.ai_access",
+      "processes.view", "processes.create", "processes.edit", "processes.checklists",
+      "documents.view", "documents.upload",
+      "culture.view", "culture.edit", "culture.manage_rituals",
+      "training.view", "training.create", "training.manage", "training.evaluate",
+      "operations.view_qgp", "operations.manage_tasks", "operations.daily_log", "operations.technician_qgp",
+      "goals.view", "goals.create", "actions.view",
+      "analytics.view",
+      "clients.view",
+      "acceleration.view", "acceleration.manage",
+      "admin.users", "admin.profiles", "admin.system_config", "admin.audit", "admin.rbac", "admin.financeiro",
+      "admin",
+    ]);
 
     const empByProfileId = new Map();
     for (const emp of employees) {
@@ -206,24 +236,37 @@ Deno.serve(async (req) => {
     }
 
     for (const p of profiles) {
-      if (!p.roles || p.roles.length === 0) {
-        e4.profiles_sem_roles.push({ id: p.id, name: p.name, type: p.type });
+      const hasRoles = p.roles && p.roles.length > 0;
+      const linkedEmployees = empByProfileId.get(p.id) || [];
+
+      if (!hasRoles) {
+        e4.profiles_sem_roles.push({ id: p.id, name: p.name, type: p.type, status: p.status });
+        if (p.status !== 'inativo' && linkedEmployees.length > 0) {
+          e4.profiles_ativos_sem_roles_com_employees.push({
+            id: p.id, name: p.name,
+            employees_count: linkedEmployees.length
+          });
+        }
+      } else {
+        // Verificar roles desconhecidas
+        const unknownRoles = p.roles.filter(r => !validRoles.has(r));
+        if (unknownRoles.length > 0) {
+          e4.profiles_com_roles_desconhecidas.push({ id: p.id, name: p.name, unknown_roles: unknownRoles });
+        }
       }
-      if (!p.sidebar_permissions || Object.keys(p.sidebar_permissions).length === 0) {
-        e4.profiles_sem_sidebar_permissions.push({ id: p.id, name: p.name });
-      }
-      if (!p.module_permissions || Object.keys(p.module_permissions).length === 0) {
-        e4.profiles_sem_module_permissions.push({ id: p.id, name: p.name });
-      }
-      if (p.status === 'inativo' && empByProfileId.has(p.id)) {
+
+      if (p.status === 'inativo' && linkedEmployees.length > 0) {
         e4.profiles_inativos_com_employees.push({
           id: p.id, name: p.name,
-          employees_count: empByProfileId.get(p.id).length
+          employees_count: linkedEmployees.length
         });
       }
+
+      if (hasRoles && p.status !== 'inativo') e4.ok++;
     }
 
-    const e4_issues = e4.profiles_sem_roles.length + e4.profiles_inativos_com_employees.length;
+    // 🔴 Crítico: profiles ativos com employees e sem roles = Fail Close em produção
+    const e4_issues = e4.profiles_ativos_sem_roles_com_employees.length + e4.profiles_inativos_com_employees.length;
 
     // ═══════════════════════════════════════════════════════
     // E5 — AUDITORIA OWNERSHIP LEGADO
@@ -363,7 +406,7 @@ Deno.serve(async (req) => {
         e1_users:       { issues: e1_issues,  sem_workshop: e1.sem_workshop_id.length, email_dup: e1.email_duplicado.length, role_invalido: e1.role_invalido.length, onboarding_preso: e1.onboarding_preso.length },
         e2_employees:   { issues: e2_issues,  sem_profile: e2.sem_profile_id.length, profile_inexistente: e2.profile_inexistente.length, sem_workshop: e2.sem_workshop_id.length, sem_user_id_warning: e2.sem_user_id.length },
         e3_rls:         { issues: e3_issues,  entities_checked: e3.checked_entities.length },
-        e4_rbac:        { issues: e4_issues,  sem_roles: e4.profiles_sem_roles.length, inativos_com_emp: e4.profiles_inativos_com_employees.length },
+        e4_rbac:        { issues: e4_issues,  sem_roles: e4.profiles_sem_roles.length, ativos_sem_roles_com_employees: e4.profiles_ativos_sem_roles_com_employees.length, inativos_com_emp: e4.profiles_inativos_com_employees.length, roles_desconhecidas: e4.profiles_com_roles_desconhecidas.length },
         e5_ownership:   { issues: e5_issues,  sem_owner_valido: e5.workshops_sem_owner_valido.length, partner_ids_invalidos: e5.workshops_partner_ids_invalidos.length },
         e6_onboarding:  { issues: e6_issues,  sem_employee: e6.usuarios_sem_employee.length, workshop_inexistente: e6.usuarios_workshop_inexistente.length, convite_aceito_sem_employee: e6.convites_aceitos_sem_employee.length, convites_pendentes_sem_user: e6.convites_pendentes_sem_user.length },
       },
