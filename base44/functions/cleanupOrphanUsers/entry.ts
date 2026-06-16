@@ -1,37 +1,22 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
-// Lista fixa auditada em 2026-06-10 — CADASTRO_FANTASMA + WORKSHOP_DELETADO
-const ORPHAN_USER_IDS = [
-  "69737b66f9a1148bb7f9a0d4", // contatobrmecanica@gmail.com       — WORKSHOP_DELETADO
-  "697b97c88c4c2cfc90c22e56", // junior.andrade117@gmail.com        — CADASTRO_FANTASMA
-  "697b999aac7351a155716a4a", // diogo.souza19@hotmail.com          — CADASTRO_FANTASMA
-  "697ba00768c30ad48ca8f46d", // jf.acauto@gmail.com                — CADASTRO_FANTASMA
-  "697ba13ef2bafac48a8c6bd8", // jessicade.castro@outlook.com       — CADASTRO_FANTASMA
-  "697ba26945ed323ffd31960f", // geraldotag@gmail.com               — CADASTRO_FANTASMA
-  "698120e8d092ba67cb9f9388", // mecremi@yahoo.com.br               — CADASTRO_FANTASMA
-  "6984ec5475b6e03ca82eb772", // recuperadoraguinshop@gmail.com     — CADASTRO_FANTASMA
-  "6984edb1cb609fcef0a41ae2", // (outro cadastro fantasma)          — CADASTRO_FANTASMA
-  "69936b0dcdb6b4aff90bcd3b", // (outro cadastro fantasma)          — CADASTRO_FANTASMA
-  "69936bbfef3ec2957b8f2235", // (outro cadastro fantasma)          — CADASTRO_FANTASMA
-  "69936c4e823e3dccd5614fc7", // (outro cadastro fantasma)          — CADASTRO_FANTASMA
-  "699c982b123affeca4de73a5", // (outro cadastro fantasma)          — CADASTRO_FANTASMA
-  "69b3fe76103464dce24e76ce", // ghrs.guilherme@gmail.com           — CADASTRO_FANTASMA
-  "69bc5633199c0b5381395766", // mateus.ssaraiva01@gmail.com        — WORKSHOP_DELETADO
-  "69cd605c2503f4c88e1f1b28", // (outro cadastro fantasma)          — CADASTRO_FANTASMA
-  "69e91e36b838adb8d72841aa", // tatianedejota@gmail.com            — WORKSHOP_DELETADO
-  "6a0e0e8753967fd8c3e19837", // (outro cadastro fantasma)          — CADASTRO_FANTASMA
-  "6a0e0ef56b42b6f8abf2ebfa", // (outro cadastro fantasma)          — CADASTRO_FANTASMA
-  "6a0f6249b9de0c75652249ba", // (outro cadastro fantasma)          — CADASTRO_FANTASMA
-  "6a0f935bd02b4737c665107d", // (outro cadastro fantasma)          — CADASTRO_FANTASMA
-  "6a104c5db292c2b480f8e1c6", // (outro cadastro fantasma)          — CADASTRO_FANTASMA
-  "6a109433a5d8bddb8b2e61d6", // (outro cadastro fantasma)          — CADASTRO_FANTASMA
-  "6a15a6b353c0d4f811e87e8f", // (outro cadastro fantasma)          — CADASTRO_FANTASMA
-  "6a15dd418704e58f9c98589d", // (outro cadastro fantasma)          — CADASTRO_FANTASMA
-  "6a16f652d758291cea52df1c", // (outro cadastro fantasma)          — CADASTRO_FANTASMA
-  "6a171993a6025adf77961276", // (outro cadastro fantasma)          — CADASTRO_FANTASMA
-  "6a17cac7a7a64ed9cb3a4ba9", // (outro cadastro fantasma)          — CADASTRO_FANTASMA
-  "6a28043c08a3c03a97486e27", // (outro cadastro fantasma)          — CADASTRO_FANTASMA
-];
+// ═══════════════════════════════════════════════════════════════════════════
+// POLÍTICA DE EXCLUSÃO DE USUÁRIOS — ATUALIZADA 2026-06-16
+//
+// REGRA ABSOLUTA: NUNCA deletar um User que tenha Employee vinculado,
+// independentemente de ter logado ou não.
+//
+// Motivo: Motoboys, mecânicos, e outros colaboradores são cadastrados pelas
+// oficinas apenas para fins de dados (DRE, mapas financeiros, organograma).
+// Esses usuários nunca precisam logar no sistema — mas seus dados são
+// essenciais para o funcionamento das oficinas.
+//
+// Esta função agora é SOMENTE AUDITORIA — não deleta nada automaticamente.
+// Qualquer exclusão deve ser feita manualmente e com dupla confirmação.
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Lista vazia — política de não-deleção automática vigente
+const ORPHAN_USER_IDS = [];
 
 Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);

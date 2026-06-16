@@ -11,6 +11,17 @@
  */
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
+// ═══════════════════════════════════════════════════════════════════════════
+// POLÍTICA DE WORKSHOPS — ATUALIZADA 2026-06-16
+//
+// REGRA ABSOLUTA: NUNCA inativar ou excluir um Workshop com base em
+// falta de acesso do owner. Colaboradores (motoboys, mecânicos, etc.)
+// podem nunca logar no sistema, mas seus dados são essenciais para
+// o DRE, organograma e demais relatórios da oficina.
+//
+// Esta função apenas PROMOVE rascunhos para ativo quando elegível.
+// Nunca mais inativa workshops por abandono ou falta de acesso.
+// ═══════════════════════════════════════════════════════════════════════════
 const ABANDONED_THRESHOLD_HOURS = 48;
 const SOCIO_PROFILE_ID = '6a272f8ea3fa8dd02ca7350e';
 
@@ -74,11 +85,11 @@ Deno.serve(async (req) => {
 
       const ownerWorkshops = await base44.asServiceRole.entities.Workshop.filter({ owner_id: ws.owner_id, status: 'ativo' });
       if (ownerWorkshops.length > 0) {
-        abandoned.push({ workshop_id: ws.id, name: ws.name || '(sem nome)', owner_id: ws.owner_id, created_date: ws.created_date, age_hours: Math.round((Date.now() - createdAt.getTime()) / 3600000), action: 'inativar_duplicata', reason: 'Owner já tem workshop ativo' });
-        if (!dry_run) {
-          await base44.asServiceRole.entities.Workshop.update(ws.id, { status: 'inativo' });
-          await logEvent(base44, 'WORKSHOP_DEACTIVATED', { workshop_id: ws.id, owner_id: ws.owner_id, action: 'inativar_duplicata', reason: 'Owner já tem workshop ativo — rascunho é duplicata' });
-        }
+        // POLÍTICA 2026-06-16: Não inativar workshops mesmo que sejam duplicatas.
+        // O owner pode ter cadastrado colaboradores (motoboys, mecânicos, etc.) que
+        // nunca vão logar mas cujos dados são essenciais para DRE e relatórios.
+        // Apenas registra como informação, sem executar nenhuma ação.
+        abandoned.push({ workshop_id: ws.id, name: ws.name || '(sem nome)', owner_id: ws.owner_id, created_date: ws.created_date, age_hours: Math.round((Date.now() - createdAt.getTime()) / 3600000), action: 'SKIPPED_POLICY', reason: 'Política: nunca inativar workshop — dados podem ser essenciais' });
       } else {
         abandoned.push({ workshop_id: ws.id, name: ws.name || '(sem nome)', owner_id: ws.owner_id, created_date: ws.created_date, age_hours: Math.round((Date.now() - createdAt.getTime()) / 3600000), action: 'create_placeholder_employee', reason: 'Signup abandonado — criando Employee para recuperar acesso' });
         if (!dry_run) {
