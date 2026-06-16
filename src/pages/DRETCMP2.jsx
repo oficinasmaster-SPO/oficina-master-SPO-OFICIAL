@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
@@ -44,15 +44,15 @@ export default function DRETCMP2() {
   const [workshop, setWorkshop] = useState(null);
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
   const [viewMode, setViewMode] = useState("month");
+  const [activeTab, setActiveTab] = useState("receitas");
   const [formData, setFormData] = useState(getEmptyDRE());
+  const [savedFormData, setSavedFormData] = useState(getEmptyDRE());
   const [isAdminView, setIsAdminView] = useState(false);
   const [syncAlert, setSyncAlert] = useState(null);
+  const hasSyncedOnMount = useRef(false);
   const { syncDRETOMetas, resolveDiscrepancy, updateDREFromMonthlyGoals, isSyncing } = useSyncData();
 
-  function getCurrentMonth() {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  }
+  // B4: removida redefinição interna de getCurrentMonth
 
   function getEmptyDRE() {
     return {
@@ -143,6 +143,8 @@ export default function DRETCMP2() {
 
       setWorkshop(userWorkshop);
     } catch (error) {
+      // B6: toast antes de navegar
+      toast.error('Erro ao carregar dados da oficina. Tente novamente.');
       navigate(createPageUrl("Home"));
     }
   };
@@ -164,31 +166,28 @@ export default function DRETCMP2() {
 
   const currentDRE = dreList.find(d => d.month === selectedMonth);
 
-  // Sincronizar dados: consolidar registros diários → DRE → metas
+  // B2/B3: sync na montagem/troca de mês sem setTimeout e sem closure stale
+  // B12: flag hasSyncedOnMount evita double-sync com botão manual
   useEffect(() => {
-    if (workshop && viewMode === 'month') {
-      const syncData = async () => {
-        // 1. Consolidar dados diários para o DRE
-        await updateDREFromMonthlyGoals(workshop.id, selectedMonth);
-        // 2. Recarregar lista de DREs para mostrar valores atualizados
-        await queryClient.invalidateQueries({ queryKey: ['dre-list', workshop?.id] });
-        // 3. Sincronizar DRE com metas se existir
-        setTimeout(() => {
-          if (currentDRE) {
-            syncDRETOMetas(currentDRE.id, workshop.id, selectedMonth).then(result => {
-              if (result.requiresConfirmation) {
-                setSyncAlert({
-                  discrepancies: result.discrepancies,
-                  dre_id: currentDRE.id
-                });
-              }
-            });
-          }
-        }, 500);
-      };
-      syncData();
-    }
+    if (!workshop || viewMode !== 'month') return;
+    hasSyncedOnMount.current = false;
+    const syncData = async () => {
+      hasSyncedOnMount.current = true;
+      await updateDREFromMonthlyGoals(workshop.id, selectedMonth);
+      await queryClient.invalidateQueries({ queryKey: ['dre-list', workshop?.id] });
+    };
+    syncData();
   }, [workshop?.id, selectedMonth, viewMode]);
+
+  // B2/B3: syncDRETOMetas em useEffect separado que lê currentDRE como dependência explícita
+  useEffect(() => {
+    if (!workshop || !currentDRE || viewMode !== 'month') return;
+    syncDRETOMetas(currentDRE.id, workshop.id, selectedMonth).then(result => {
+      if (result?.requiresConfirmation) {
+        setSyncAlert({ discrepancies: result.discrepancies, dre_id: currentDRE.id });
+      }
+    });
+  }, [currentDRE?.id]);
 
   // Calculate Average DRE
   const averageData = useMemo(() => {
@@ -236,10 +235,11 @@ export default function DRETCMP2() {
   }, [dreList]);
 
   useEffect(() => {
+    let data;
     if (viewMode === 'average' && averageData) {
-      setFormData(averageData);
+      data = averageData;
     } else if (currentDRE) {
-      setFormData({
+      data = {
         productive_technicians: currentDRE.productive_technicians || 1,
         monthly_hours: currentDRE.monthly_hours || 219,
         revenue: currentDRE.revenue || { parts_applied: 0, services: 0, other: 0 },
@@ -247,10 +247,12 @@ export default function DRETCMP2() {
         costs_not_tcmp2: currentDRE.costs_not_tcmp2 || getEmptyDRE().costs_not_tcmp2,
         parts_cost: currentDRE.parts_cost || { parts_applied_cost: 0, parts_stock_purchase: 0 },
         notes: currentDRE.notes || ""
-      });
+      };
     } else {
-      setFormData(getEmptyDRE());
+      data = getEmptyDRE();
     }
+    setFormData(data);
+    setSavedFormData(data); // marca estado "salvo" sincronizado
   }, [currentDRE, selectedMonth, viewMode, averageData]);
 
   const saveMutation = useMutation({
@@ -269,11 +271,10 @@ export default function DRETCMP2() {
         return await base44.entities.DREMonthly.create(dreData);
       }
     },
-    onSuccess: async () => {
+    onSuccess: async (savedData) => {
       queryClient.invalidateQueries({ queryKey: ['dre-list'] });
       toast.success("DRE salvo com sucesso!");
-      
-      // Marcar módulo DRE como concluído
+      setSavedFormData(formData); // atualiza baseline "salvo" para remover badge "Não salvo"
       await markModuleCompleted(workshop.id, 'DRE', 'DRE mensal salvo com sucesso');
     },
     onError: () => {
@@ -306,8 +307,8 @@ export default function DRETCMP2() {
     const r70Percentage = totalRevenue > 0 ? (r70Base / totalRevenue) * 100 : 0;
     const i30Percentage = 100 - r70Percentage;
 
-    // Lucro
-    const totalCosts = totalCostsTcmp2 + totalCostsNotTcmp2 + partsAppliedCost;
+    // B1: partsStockPurchase incluído no totalCosts para cálculo correto de Lucro
+    const totalCosts = totalCostsTcmp2 + totalCostsNotTcmp2 + partsAppliedCost + partsStockPurchase;
     const profit = totalRevenue - totalCosts;
     const profitPercentage = totalRevenue > 0 ? (profit / totalRevenue) * 100 : 0;
 
@@ -324,6 +325,9 @@ export default function DRETCMP2() {
   };
 
   const calculated = calculateDRE(formData);
+
+  // 9: flag de dados não salvos (comparação rasa por JSON)
+  const hasUnsavedChanges = JSON.stringify(formData) !== JSON.stringify(savedFormData);
 
   const updateRevenue = (field, value) => {
     setFormData({
@@ -353,7 +357,7 @@ export default function DRETCMP2() {
     });
   };
 
-  // Chart Data
+  // Chart Data — 8: inclui fullMonth para gráfico clicável
   const chartData = [...dreList]
     .sort((a, b) => a.month.localeCompare(b.month))
     .map(d => {
@@ -412,11 +416,19 @@ export default function DRETCMP2() {
           />
         )}
         
-        {/* Modal FASE 2 */}
-        <FASE2EditorModal />
+        {/* Modal FASE 2 — B5: passar workshopId e mes */}
+        <FASE2EditorModal workshopId={workshop?.id} mes={selectedMonth} />
+
+        {/* 9: banner de dados não salvos */}
+        {hasUnsavedChanges && viewMode === 'month' && (
+          <div className="mb-4 flex items-center gap-2 px-4 py-2 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800 text-sm print:hidden">
+            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            Existem alterações não salvas neste mês.
+          </div>
+        )}
 
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-4">
             <Button variant="outline" onClick={() => navigate(createPageUrl("GestaoOficina"))}>
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -427,13 +439,14 @@ export default function DRETCMP2() {
               <p className="text-gray-600">{workshop.name}</p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          {/* 14: flex-wrap para mobile */}
+          <div className="flex flex-wrap items-center gap-3 justify-end">
             <Button variant="outline" onClick={() => window.print()} className="print:hidden">
               <Printer className="w-4 h-4 mr-2" />
               Imprimir
             </Button>
             
-            <div className="flex flex-col sm:flex-row gap-2 print:hidden">
+            <div className="flex flex-wrap gap-2 print:hidden">
               <Select value={viewMode} onValueChange={setViewMode}>
                 <SelectTrigger className="w-[140px]">
                   <SelectValue placeholder="Modo de Visualização" />
@@ -454,18 +467,23 @@ export default function DRETCMP2() {
                       const d = new Date();
                       d.setMonth(d.getMonth() - i);
                       const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                      const hasDRE = dreList.some(x => x.month === val);
                       const dreForMonth = dreList.find(x => x.month === val);
                       const tcmp2Value = dreForMonth?.calculated?.tcmp2_value;
                       
                       return (
                         <SelectItem key={val} value={val}>
-                          <span className="flex justify-between w-full gap-4">
-                            <span>{d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</span>
-                            {tcmp2Value && (
-                              <span className="text-gray-500 font-mono text-xs flex items-center">
-                                TCMP²: {formatCurrency(tcmp2Value)}
+                          {/* 7: badge visual de meses com/sem DRE */}
+                          <span className="flex items-center justify-between w-full gap-3">
+                            <span className="flex items-center gap-1.5">
+                              <span className={hasDRE ? 'text-green-500' : 'text-gray-300'}>●</span>
+                              {d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+                            </span>
+                            {tcmp2Value ? (
+                              <span className="text-gray-400 font-mono text-xs">
+                                {formatCurrency(tcmp2Value)}
                               </span>
-                            )}
+                            ) : null}
                           </span>
                         </SelectItem>
                       );
@@ -476,29 +494,36 @@ export default function DRETCMP2() {
             </div>
 
             {viewMode === 'month' && (
-              <>
+              <div className="flex flex-wrap gap-2 print:hidden">
+                {/* 12: botão manual com flag para evitar double-sync */}
                 <Button 
                   onClick={async () => {
+                    hasSyncedOnMount.current = true;
                     await updateDREFromMonthlyGoals(workshop.id, selectedMonth);
                     queryClient.invalidateQueries({ queryKey: ['dre-list', workshop?.id] });
                     toast.success("Receitas sincronizadas com sucesso!");
                   }}
                   disabled={isSyncing}
                   variant="outline"
-                  className="print:hidden"
                 >
                   {isSyncing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <TrendingUp className="w-4 h-4 mr-2" />}
                   Sincronizar Receitas
                 </Button>
+                {/* 9: badge "Não salvo" junto ao botão Salvar */}
                 <Button 
                   onClick={() => saveMutation.mutate(formData)}
                   disabled={saveMutation.isPending}
-                  className="bg-green-600 hover:bg-green-700 print:hidden"
+                  className={`${hasUnsavedChanges ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-green-600 hover:bg-green-700'} relative`}
                 >
                   {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
                   Salvar DRE
+                  {hasUnsavedChanges && (
+                    <span className="ml-2 bg-yellow-200 text-yellow-900 text-xs font-semibold px-1.5 py-0.5 rounded">
+                      Não salvo
+                    </span>
+                  )}
                 </Button>
-              </>
+              </div>
             )}
           </div>
         </div>
@@ -535,13 +560,24 @@ export default function DRETCMP2() {
                   />
                   <Legend />
                   <ReferenceLine y={averageTcmp2} label="Média" stroke="red" strokeDasharray="3 3" />
+                  {/* 8: gráfico clicável — muda mês e vai para aba receitas */}
                   <Line 
                     type="monotone" 
                     dataKey="tcmp2" 
                     name="TCMP²" 
                     stroke="#2563eb" 
                     strokeWidth={3}
-                    activeDot={{ r: 8 }} 
+                    activeDot={{ 
+                      r: 8, 
+                      onClick: (_, payload) => {
+                        if (payload?.payload?.fullMonth) {
+                          setSelectedMonth(payload.payload.fullMonth);
+                          setViewMode('month');
+                          setActiveTab('receitas');
+                        }
+                      },
+                      style: { cursor: 'pointer' }
+                    }}
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -563,6 +599,12 @@ export default function DRETCMP2() {
               <p className="text-xs mt-2 opacity-70">
                 {formData.productive_technicians} técnicos × {formData.monthly_hours}h
               </p>
+              {/* 11: dica inline quando TCMP² é zero */}
+              {calculated.tcmp2_value === 0 && (
+                <p className="text-xs mt-2 bg-white/20 rounded px-2 py-1">
+                  💡 Lance os custos na aba Custos TCMP² para calcular o valor hora
+                </p>
+              )}
             </CardContent>
           </Card>
 
@@ -611,8 +653,8 @@ export default function DRETCMP2() {
           <VencimentosCard workshopId={workshop.id} mes={selectedMonth} />
         )}
 
-        {/* Formulário DRE */}
-        <Tabs defaultValue="receitas" className="space-y-6">
+        {/* Formulário DRE — 8: controlled tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="bg-white shadow-md">
             <TabsTrigger value="receitas">💰 Receitas</TabsTrigger>
             <TabsTrigger value="custos_tcmp2">⚙️ Custos TCMP² (Entram)</TabsTrigger>
@@ -912,10 +954,18 @@ export default function DRETCMP2() {
           <TabsContent value="resumo">
             <Card>
               <CardHeader>
-                <CardTitle>📊 DRE - Demonstrativo de Resultados</CardTitle>
-                <CardDescription>
-                  {new Date(selectedMonth + '-01').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
-                </CardDescription>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>📊 DRE - Demonstrativo de Resultados</CardTitle>
+                    <CardDescription>
+                      {new Date(selectedMonth + '-01').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+                    </CardDescription>
+                  </div>
+                  {/* 13: botão de impressão dedicado na aba Resumo */}
+                  <Button variant="outline" size="sm" onClick={() => window.print()} className="print:hidden">
+                    🖨️ Imprimir Resumo
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -960,10 +1010,17 @@ export default function DRETCMP2() {
                     </div>
                   </div>
 
-                  {/* Custos NÃO TCMP² */}
+                  {/* B7: Custos NÃO TCMP² com linhas detalhadas */}
                   <div className="p-4 bg-orange-50 rounded-lg">
                     <h4 className="font-semibold text-orange-900 mb-2">CUSTOS NÃO TCMP² (Financeiros)</h4>
                     <div className="space-y-1 text-sm">
+                      <div className="flex justify-between"><span>Financiamentos</span><span>{formatCurrency(formData.costs_not_tcmp2.financing)}</span></div>
+                      <div className="flex justify-between"><span>Consórcios</span><span>{formatCurrency(formData.costs_not_tcmp2.consortium)}</span></div>
+                      <div className="flex justify-between"><span>Equipamentos Parcelados</span><span>{formatCurrency(formData.costs_not_tcmp2.equipment_installments)}</span></div>
+                      <div className="flex justify-between"><span>Boletos de Peças (Estoque)</span><span>{formatCurrency(formData.costs_not_tcmp2.parts_invoices)}</span></div>
+                      <div className="flex justify-between"><span>Processos Judiciais</span><span>{formatCurrency(formData.costs_not_tcmp2.legal_processes)}</span></div>
+                      <div className="flex justify-between"><span>Compra de Terreno/Imóvel</span><span>{formatCurrency(formData.costs_not_tcmp2.land_purchase)}</span></div>
+                      <div className="flex justify-between"><span>Investimentos Diversos</span><span>{formatCurrency(formData.costs_not_tcmp2.investments)}</span></div>
                       <div className="flex justify-between font-bold border-t pt-1 mt-2">
                         <span>TOTAL CUSTOS NÃO TCMP²</span>
                         <span>{formatCurrency(calculated.total_costs_not_tcmp2)}</span>
@@ -971,13 +1028,21 @@ export default function DRETCMP2() {
                     </div>
                   </div>
 
-                  {/* Peças */}
+                  {/* 10: Peças com estoque e total */}
                   <div className="p-4 bg-purple-50 rounded-lg">
                     <h4 className="font-semibold text-purple-900 mb-2">CUSTOS COM PEÇAS</h4>
                     <div className="space-y-1 text-sm">
                       <div className="flex justify-between">
                         <span>Peças Aplicadas</span>
                         <span>{formatCurrency(formData.parts_cost.parts_applied_cost)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Peças para Estoque</span>
+                        <span>{formatCurrency(formData.parts_cost.parts_stock_purchase)}</span>
+                      </div>
+                      <div className="flex justify-between font-bold border-t pt-1 mt-2">
+                        <span>TOTAL PEÇAS</span>
+                        <span>{formatCurrency((formData.parts_cost.parts_applied_cost || 0) + (formData.parts_cost.parts_stock_purchase || 0))}</span>
                       </div>
                     </div>
                   </div>
