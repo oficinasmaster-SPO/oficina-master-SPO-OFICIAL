@@ -7,8 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Plus, Trash2, Save, RotateCcw, Info } from "lucide-react";
+import { Plus, Trash2, Save, RotateCcw, Info, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const MESES = [
   { num: "01", nome: "Janeiro" },
@@ -108,7 +109,24 @@ export default function SazonalidadeEditor({ workshopId, onClose }) {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">📊 Distribuição Sazonal</h2>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          <TooltipProvider delayDuration={100}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button className="w-6 h-6 rounded-full border border-gray-300 flex items-center justify-center text-gray-400 hover:text-blue-600 hover:border-blue-400 transition-colors">
+                  <HelpCircle className="w-4 h-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="left" className="max-w-xs p-4 text-sm leading-relaxed space-y-2">
+                <p className="font-semibold text-gray-900">Para que serve a Distribuição Sazonal?</p>
+                <p>Se sua meta anual é <strong>R$ 1.200.000</strong>, dividir por 12 dá R$ 100.000 por mês — mas nem todo mês tem o mesmo volume.</p>
+                <p><strong>Os sliders</strong> definem quanto % do faturamento anual cada mês representa. Por padrão todos estão em <strong>8,33%</strong> (distribuição igual).</p>
+                <p className="text-blue-700 font-medium">Exemplo: Dezembro com 12% → meta de R$ 144.000. Janeiro com 6% → meta de R$ 72.000.</p>
+                <p><strong>Regra:</strong> A soma de todos os meses deve ser exatamente <strong>100%</strong>. Se aumentar um mês, diminua outro.</p>
+                <p><strong>"Distribuir Igual"</strong> volta tudo para 8,33%. Após salvar, o Controle Orçamentário aplica os pesos nas metas mensais automaticamente.</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           <Button variant="outline" onClick={handleDistribuirIgual}>
             <RotateCcw className="w-4 h-4 mr-2" />
             Distribuir Igual
