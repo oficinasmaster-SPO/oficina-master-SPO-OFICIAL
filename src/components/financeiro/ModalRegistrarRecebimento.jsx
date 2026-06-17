@@ -136,7 +136,10 @@ export default function ModalRegistrarRecebimento({ aberto, onFechar, conta, wor
       queryClient.invalidateQueries({ queryKey: ["contas-pagar"] });
       queryClient.invalidateQueries({ queryKey: ["contas-receber"] });
       queryClient.invalidateQueries({ queryKey: ["dre-lancamentos"] });
+      queryClient.invalidateQueries({ queryKey: ["dre-lancamentos-dfc"] });
       queryClient.invalidateQueries({ queryKey: ["budget-metas"] });
+      queryClient.invalidateQueries({ queryKey: ["contas-pagar-budget"] });
+      queryClient.invalidateQueries({ queryKey: ["contas-receber-budget"] });
       queryClient.invalidateQueries({ queryKey: ["liquidacoes"] });
       queryClient.invalidateQueries({ queryKey: ["dfc-manuais"] });
       queryClient.invalidateQueries({ queryKey: ["saldo-inicial-fontes"] });

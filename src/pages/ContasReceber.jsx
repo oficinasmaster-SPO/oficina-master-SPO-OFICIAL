@@ -207,7 +207,10 @@ export default function ContasReceber() {
             queryClient.invalidateQueries({ queryKey: ['dfc-manuais'] });
             queryClient.invalidateQueries({ queryKey: ['saldo-inicial-fontes'] });
             queryClient.invalidateQueries({ queryKey: ['dre-lancamentos'] });
+            queryClient.invalidateQueries({ queryKey: ['dre-lancamentos-dfc'] });
             queryClient.invalidateQueries({ queryKey: ['budget-metas'] });
+            queryClient.invalidateQueries({ queryKey: ['contas-pagar-budget'] });
+            queryClient.invalidateQueries({ queryKey: ['contas-receber-budget'] });
             refetch();
           }}
         />
