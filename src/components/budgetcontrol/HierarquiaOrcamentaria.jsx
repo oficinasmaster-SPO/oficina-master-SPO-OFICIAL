@@ -5,8 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Trash2, ChevronRight, ChevronDown, Save } from "lucide-react";
+import { Plus, Trash2, ChevronRight, ChevronDown, Save, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export default function HierarquiaOrcamentaria({ workshopId }) {
   const [grupos, setGrupos] = useState([]);
@@ -57,7 +58,30 @@ export default function HierarquiaOrcamentaria({ workshopId }) {
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-bold">📁 Hierarquia Orçamentária</h3>
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-bold">📁 Hierarquia Orçamentária</h3>
+        <TooltipProvider delayDuration={100}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button className="w-6 h-6 rounded-full border border-gray-300 flex items-center justify-center text-gray-400 hover:text-blue-600 hover:border-blue-400 transition-colors">
+                <HelpCircle className="w-4 h-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="left" className="max-w-xs p-4 text-sm leading-relaxed space-y-2">
+              <p className="font-semibold text-gray-900">Para que serve a Hierarquia Orçamentária?</p>
+              <p>Organiza suas despesas e receitas em <strong>grupos e subgrupos</strong>, com totais calculados automaticamente.</p>
+              <p className="text-blue-700 font-medium">Exemplo: Grupo "Folha de Pagamento" com filhos "Salários", "FGTS" e "Vale Transporte" — o grupo exibe o total somado.</p>
+              <p><strong>Tipos disponíveis:</strong></p>
+              <ul className="list-disc pl-4 space-y-1">
+                <li><strong>Receita</strong> — entradas de caixa</li>
+                <li><strong>Despesa</strong> — saídas operacionais</li>
+                <li><strong>Custo</strong> — custos diretos de produto/serviço</li>
+              </ul>
+              <p>Use a <strong>cor</strong> para identificar visualmente cada grupo nos gráficos e relatórios do Controle Orçamentário.</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
 
       {/* Formulário de novo grupo */}
       <Card>
