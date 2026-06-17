@@ -748,7 +748,7 @@ export default function DFCTab({ workshopId, mes }) {
 
   const isLoading = isDRELoading || isManuaisLoading;
 
-  if (isLoading) {
+  if (isLoading && periodo === "mensal") {
     return (
       <div className="flex items-center justify-center py-12">
         <Loader2 className="w-6 h-6 animate-spin text-blue-500 mr-2" />
