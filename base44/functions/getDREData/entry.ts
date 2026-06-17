@@ -12,6 +12,18 @@ Deno.serve(async (req) => {
     const { workshop_id } = await req.json().catch(() => ({}));
     if (!workshop_id) return Response.json({ error: 'workshop_id is required' }, { status: 400 });
 
+    // RFC-001 / B3: validação server-side de autorização
+    const isAdmin = user.role === 'admin' || user.data?.role === 'admin';
+    if (!isAdmin) {
+      const userWorkshopId = user.data?.workshop_id || user.workshop_id;
+      if (!userWorkshopId || userWorkshopId !== workshop_id) {
+        return Response.json(
+          { error: 'Acesso negado: workshop_id não pertence ao usuário autenticado' },
+          { status: 403 }
+        );
+      }
+    }
+
     const cacheKey = `dre_${workshop_id}`;
     const entry = cache.get(cacheKey);
     if (entry && (Date.now() - entry.timestamp) < CACHE_TTL_MS) {
