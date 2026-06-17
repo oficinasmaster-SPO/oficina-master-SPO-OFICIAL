@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { useMemo } from "react";
 import AdminViewBanner from "../components/shared/AdminViewBanner";
 import { useSyncData } from "../components/hooks/useSyncData";
+import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 import DiscrepancyAlert from "../components/sync/DiscrepancyAlert";
 import { markModuleCompleted } from "@/components/hooks/useModuleTracking";
 import DREAvancadoTab from "@/components/dre/DREAvancadoTab";
@@ -41,7 +42,6 @@ export default function DRETCMP2() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
-  const [workshop, setWorkshop] = useState(null);
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
   const [viewMode, setViewMode] = useState("month");
   const [activeTab, setActiveTab] = useState("receitas");
@@ -51,6 +51,9 @@ export default function DRETCMP2() {
   const [syncAlert, setSyncAlert] = useState(null);
   const hasSyncedOnMount = useRef(false);
   const { syncDRETOMetas, resolveDiscrepancy, updateDREFromMonthlyGoals, isSyncing } = useSyncData();
+
+  // Usa o contexto global de workshop — reage automaticamente à troca de oficina no seletor
+  const { workshop, isLoading: isLoadingWorkshop } = useWorkshopContext();
 
   // B4: removida redefinição interna de getCurrentMonth
 
@@ -72,10 +75,6 @@ export default function DRETCMP2() {
     };
   }
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
   // Escuta mudança de mês disparada pelos FiltroPeriodo internos (DRE Avançado e DFC)
   useEffect(() => {
     const handler = (e) => {
@@ -89,65 +88,21 @@ export default function DRETCMP2() {
     };
   }, []);
 
-  // Resolve a oficina do usuário usando a hierarquia SPO correta:
-  // 1. user.workshop_id (campo direto no perfil)
-  // 2. Employee vinculado ao user_id
-  // 3. Workshop onde o usuário é owner_id (fallback para sócios legados)
-  const resolveCurrentWorkshop = async (user) => {
-    // Prioridade 1: workshop_id direto no perfil do usuário
-    const workshopId = user.workshop_id || user.data?.workshop_id;
-    if (workshopId) {
-      return await base44.entities.Workshop.get(workshopId);
+  // Carrega usuário para verificar admin view via URL
+  useEffect(() => {
+    base44.auth.me().then(setUser).catch(() => {});
+  }, []);
+
+  // Detecta admin view via URL
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const adminWorkshopId = urlParams.get('workshop_id');
+    if (adminWorkshopId && user?.role === 'admin') {
+      setIsAdminView(true);
+    } else {
+      setIsAdminView(false);
     }
-
-    // Prioridade 2: Employee vinculado ao user_id
-    const employees = await base44.entities.Employee.filter({ user_id: user.id });
-    if (employees?.length && employees[0].workshop_id) {
-      return await base44.entities.Workshop.get(employees[0].workshop_id);
-    }
-
-    // Prioridade 3: Workshop onde o usuário é owner (sócios legados)
-    const workshops = await base44.entities.Workshop.list();
-    const owned = Array.isArray(workshops) ? workshops.find(w => w.owner_id === user.id) : null;
-    if (owned) return owned;
-
-    return null;
-  };
-
-  const loadData = async () => {
-    try {
-      const currentUser = await base44.auth.me();
-      setUser(currentUser);
-
-      // Verificar se há workshop_id na URL (admin visualizando)
-      const urlParams = new URLSearchParams(window.location.search);
-      const adminWorkshopId = urlParams.get('workshop_id');
-
-      let userWorkshop = null;
-
-      if (adminWorkshopId && currentUser.role === 'admin') {
-        // Admin visualizando oficina específica via URL
-        userWorkshop = await base44.entities.Workshop.get(adminWorkshopId);
-        setIsAdminView(true);
-      } else {
-        // Fluxo normal: resolve pelo SPO (não assume que o usuário é owner)
-        userWorkshop = await resolveCurrentWorkshop(currentUser);
-
-        if (!userWorkshop) {
-          toast.error('Nenhuma oficina vinculada ao seu perfil.');
-          navigate(createPageUrl('DashboardOverview'));
-          return;
-        }
-        setIsAdminView(false);
-      }
-
-      setWorkshop(userWorkshop);
-    } catch (error) {
-      // B6: toast antes de navegar
-      toast.error('Erro ao carregar dados da oficina. Tente novamente.');
-      navigate(createPageUrl("Home"));
-    }
-  };
+  }, [user]);
 
   const { data: dreList = [], isLoading } = useQuery({
     queryKey: ['dre-list', workshop?.id],
@@ -375,7 +330,7 @@ export default function DRETCMP2() {
     ? tcmp2Values.reduce((a, b) => a + b, 0) / tcmp2Values.length 
     : 0;
 
-  if (!workshop || isLoading) {
+  if (!workshop || isLoadingWorkshop || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
