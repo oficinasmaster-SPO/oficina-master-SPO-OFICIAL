@@ -119,6 +119,8 @@ export default function ModalRegistrarPagamentoConta({ aberto, onFechar, conta, 
     if (!valor || valor <= 0) { toast.error('Informe um valor válido'); return; }
     setSaving(true);
     try {
+      // FIX 7: passar fonte_selecionada para o backend — ele já atualiza o saldo da fonte,
+      // eliminando a duplicação de lógica com atualizarSaldoFonte no frontend
       await base44.functions.invoke("registrarLiquidacao", {
         workshop_id: workshopId,
         conta_pagar_id: conta.id,
@@ -129,10 +131,8 @@ export default function ModalRegistrarPagamentoConta({ aberto, onFechar, conta, 
         desconto_concedido: desconto,
         juros_recebido: juros,
         multa_recebida: multa,
+        fonte_selecionada: fonteSaida || undefined,
       });
-      if (fonteSaida && mes) {
-        await atualizarSaldoFonte(workshopId, mes, fonteSaida, valor, "subtrai", queryClient);
-      }
       queryClient.invalidateQueries({ queryKey: ["contas-pagar"] });
       queryClient.invalidateQueries({ queryKey: ["contas-receber"] });
       queryClient.invalidateQueries({ queryKey: ["dre-lancamentos"] });

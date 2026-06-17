@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 Deno.serve(async (req) => {
   try {
@@ -18,20 +18,12 @@ Deno.serve(async (req) => {
       }, { status: 400 });
     }
 
-    // Buscar todos os meses do ano
-    const todosLancamentos = [];
-    
-    for (let mes = 1; mes <= 12; mes++) {
-      const mesRef = `${ano}-${String(mes).padStart(2, '0')}`;
-      const lancamentos = await base44.entities.DRELancamento.filter({
-        workshop_id,
-        mes: mesRef
-      });
-      
-      if (lancamentos && lancamentos.length > 0) {
-        todosLancamentos.push(...lancamentos.map(l => ({ ...l, mes: mesRef })));
-      }
-    }
+    // FIX 2: uma única query para o ano inteiro com limite 500 (antes: 12 queries sequenciais sem limite, truncando em 50/mês)
+    const todosLancamentos = await base44.entities.DRELancamento.filter(
+      { workshop_id, mes: { $gte: `${ano}-01`, $lte: `${ano}-12` } },
+      "-created_date",
+      500
+    ) || [];
 
     // Agrupar por mês
     const meses = [];
