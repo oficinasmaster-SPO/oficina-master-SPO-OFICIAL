@@ -570,13 +570,13 @@ export default function DFCTab({ workshopId, mes }) {
         const contaP = mapaPagar[d.id];
         const conta = contaR || contaP;
         if (!conta) return d;
-        if (conta.status === "pago" && !d.data_pagamento && conta.data_primeiro_pagamento) {
-          return { ...d, data_pagamento: conta.data_primeiro_pagamento, status_conta: "pago" };
-        }
-        if (conta.status === "parcial") {
-          return { ...d, status_conta: "parcial", data_pagamento: d.data_pagamento || conta.data_primeiro_pagamento || null };
-        }
-        return { ...d, status_conta: conta.status };
+        // Sempre propaga o status da conta e a data de pagamento
+        const dataPagamento = conta.data_primeiro_pagamento || d.data_pagamento || null;
+        return {
+          ...d,
+          status_conta: conta.status,
+          data_pagamento: conta.status === "pago" ? (dataPagamento || d.data_pagamento) : (conta.status === "parcial" ? dataPagamento : d.data_pagamento),
+        };
       });
     },
     enabled: !!workshopId && !!mes,
@@ -624,6 +624,7 @@ export default function DFCTab({ workshopId, mes }) {
     queryKey: ["dfc-anual", workshopId, ano],
     queryFn: () => base44.functions.invoke('getDFCDataAnual', { workshop_id: workshopId, ano }),
     enabled: periodo === "anual" && !!workshopId && !!ano,
+    staleTime: 60_000,
   });
 
   const saldoInicialRecord = saldoInicialDB[0] || null;

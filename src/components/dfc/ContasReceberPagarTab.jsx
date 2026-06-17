@@ -495,8 +495,8 @@ export default function ContasReceberPagarTab({ workshopId, mes }) {
   const [contaReceberModal, setContaReceberModal] = useState(null);
   const [contaPagarModal, setContaPagarModal] = useState(null);
   const [periodo, setPeriodo] = useState("mensal"); // mensal | anual
-  const [ano, setAno] = useState(new Date().getFullYear());
-  const [mesSelecionado, setMesSelecionado] = useState(mes ? mes.split('-')[1] : new Date().getMonth() + 1);
+  const [ano, setAno] = useState(mes ? parseInt(mes.split('-')[0]) : new Date().getFullYear());
+  const [mesSelecionado, setMesSelecionado] = useState(mes ? mes.split('-')[1] : String(new Date().getMonth() + 1).padStart(2, '0'));
   
   // Calcular datas do filtro usando o estado reativo
   const mesPadded = String(mesSelecionado).padStart(2, '0');
@@ -509,7 +509,7 @@ export default function ContasReceberPagarTab({ workshopId, mes }) {
 
   // Buscar Contas a Receber com filtro
   const { data: contasReceber = [], isLoading: isReceberLoading, refetch: refetchReceber } = useQuery({
-    queryKey: ["contas-receber", workshopId, periodo, ano, mesSelecionado],
+    queryKey: ["contas-receber", workshopId, "tab", periodo, ano, mesSelecionado],
     queryFn: () => base44.entities.ContaReceber.filter({ 
       workshop_id: workshopId, 
       status: "aberto",
@@ -520,7 +520,7 @@ export default function ContasReceberPagarTab({ workshopId, mes }) {
 
   // Buscar Contas a Pagar com filtro
   const { data: contasPagar = [], isLoading: isPagarLoading, refetch: refetchPagar } = useQuery({
-    queryKey: ["contas-pagar", workshopId, periodo, ano, mesSelecionado],
+    queryKey: ["contas-pagar", workshopId, "tab", periodo, ano, mesSelecionado],
     queryFn: () => base44.entities.ContaPagar.filter({ 
       workshop_id: workshopId, 
       status: "aberto",

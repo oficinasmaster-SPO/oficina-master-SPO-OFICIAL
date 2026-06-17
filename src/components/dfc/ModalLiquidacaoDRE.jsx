@@ -153,8 +153,16 @@ export default function ModalLiquidacaoDRE({ item, workshopId, onFechar, onSalvo
         });
       }
 
-      // ✅ Atualizar queries (o backend já atualiza o saldo inicial agora)
-      if (fonteSelecionada && mesReferencia) {
+      // ✅ Invalidar todas as queries afetadas
+      queryClient.invalidateQueries({ queryKey: ["dre-lancamentos-dfc", workshopId] });
+      queryClient.invalidateQueries({ queryKey: ["dre-lancamentos", workshopId] });
+      queryClient.invalidateQueries({ queryKey: ["contas-receber", workshopId] });
+      queryClient.invalidateQueries({ queryKey: ["contas-pagar", workshopId] });
+      queryClient.invalidateQueries({ queryKey: ["dfc-manuais", workshopId] });
+      queryClient.invalidateQueries({ queryKey: ["budget-metas", workshopId] });
+      queryClient.invalidateQueries({ queryKey: ["contas-receber-budget", workshopId] });
+      queryClient.invalidateQueries({ queryKey: ["contas-pagar-budget", workshopId] });
+      if (mesReferencia) {
         queryClient.invalidateQueries({ queryKey: ["saldo-inicial-fontes", workshopId, mesReferencia] });
         queryClient.invalidateQueries({ queryKey: ["dfc-saldo", workshopId, mesReferencia] });
       }
