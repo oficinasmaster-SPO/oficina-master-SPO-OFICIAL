@@ -444,6 +444,98 @@ function SecaoFluxo({ titulo, icone, cor, itens, fluxo, onAddManual, onDelete, o
   );
 }
 
+// ─── DFC Anual ─────────────────────────────────────────────────────
+function DFCAnualView({ dados, isLoading, ano, fmt }) {
+  if (isLoading) return (
+    <div className="flex items-center justify-center py-12">
+      <Loader2 className="w-6 h-6 animate-spin text-blue-500 mr-2" />
+      <span className="text-gray-500">Carregando DFC anual...</span>
+    </div>
+  );
+
+  if (!dados) return (
+    <div className="text-center py-12 text-gray-400">
+      <p>Nenhum dado de DFC encontrado para {ano}.</p>
+    </div>
+  );
+
+  const { meses = [], total_anual = {}, grupos = [] } = dados?.data ?? dados;
+
+  return (
+    <div className="space-y-4">
+      {/* Cards de totais anuais */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {[
+          { label: "Operacional",  value: total_anual.operacional,  cor: "text-blue-600" },
+          { label: "Investimento", value: total_anual.investimento, cor: "text-amber-600" },
+          { label: "Financiamento",value: total_anual.financiamento,cor: "text-purple-600" },
+          { label: "Saldo Final",  value: total_anual.saldo_final,  cor: total_anual.saldo_final >= 0 ? "text-emerald-600" : "text-red-600" },
+        ].map(({ label, value, cor }) => (
+          <Card key={label}>
+            <CardContent className="pt-4 pb-3">
+              <p className="text-xs text-gray-500">{label}</p>
+              <p className={`text-lg font-bold ${cor}`}>{fmt(value)}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Gráfico de barras mensais */}
+      <Card>
+        <CardContent className="pt-4">
+          <p className="text-sm font-semibold text-gray-700 mb-3">📊 Saldo Mensal — {ano}</p>
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart data={meses} margin={{ top: 4, right: 8, left: 8, bottom: 4 }}>
+              <XAxis dataKey="mes_nome" tick={{ fontSize: 11 }} />
+              <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => `R$${(v/1000).toFixed(0)}k`} />
+              <Tooltip formatter={(v) => fmt(v)} />
+              <ReferenceLine y={0} stroke="#9ca3af" strokeDasharray="3 3" />
+              <Bar dataKey="saldo_final" name="Saldo" radius={[3,3,0,0]}>
+                {meses.map((entry, index) => (
+                  <Cell key={index} fill={entry.saldo_final >= 0 ? "#10b981" : "#ef4444"} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+
+      {/* Tabela por grupo */}
+      <Card>
+        <CardContent className="pt-4">
+          <p className="text-sm font-semibold text-gray-700 mb-3">📋 Resumo por Grupo — {ano}</p>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b text-xs text-gray-500">
+                <th className="text-left py-2">Grupo</th>
+                <th className="text-right py-2">Entradas</th>
+                <th className="text-right py-2">Saídas</th>
+                <th className="text-right py-2">Saldo</th>
+              </tr>
+            </thead>
+            <tbody>
+              {grupos.map((g) => (
+                <tr key={g.grupo} className="border-b last:border-0">
+                  <td className="py-2 font-medium capitalize">{g.label}</td>
+                  <td className="py-2 text-right text-emerald-600">{fmt(g.entradas)}</td>
+                  <td className="py-2 text-right text-red-500">{fmt(g.saidas)}</td>
+                  <td className={`py-2 text-right font-bold ${g.total >= 0 ? "text-emerald-700" : "text-red-600"}`}>{fmt(g.total)}</td>
+                </tr>
+              ))}
+              <tr className="bg-gray-50 font-bold text-sm">
+                <td className="py-2">Total Anual</td>
+                <td className="py-2 text-right text-emerald-600">{fmt(grupos.reduce((s,g) => s + g.entradas, 0))}</td>
+                <td className="py-2 text-right text-red-500">{fmt(grupos.reduce((s,g) => s + g.saidas, 0))}</td>
+                <td className={`py-2 text-right ${total_anual.saldo_final >= 0 ? "text-emerald-700" : "text-red-600"}`}>{fmt(total_anual.saldo_final)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 // ─── Componente principal ──────────────────────────────────────────
 export default function DFCTab({ workshopId, mes }) {
   const queryClient = useQueryClient();
@@ -525,6 +617,13 @@ export default function DFCTab({ workshopId, mes }) {
     queryKey: ["dfc-saldo", workshopId, mes],
     queryFn: () => base44.entities.DFCLancamento.filter({ workshop_id: workshopId, mes, grupo: "saldo_inicial" }),
     enabled: !!workshopId && !!mes,
+  });
+
+  // ── DFC Anual ──
+  const { data: dadosAnuaisDFC, isLoading: isLoadingAnual } = useQuery({
+    queryKey: ["dfc-anual", workshopId, ano],
+    queryFn: () => base44.functions.invoke('getDFCDataAnual', { workshop_id: workshopId, ano }),
+    enabled: periodo === "anual" && !!workshopId && !!ano,
   });
 
   const saldoInicialRecord = saldoInicialDB[0] || null;
@@ -683,19 +782,8 @@ export default function DFCTab({ workshopId, mes }) {
 
       {/* VIEW: DFC */}
       {!showContasTab && (<>
-      {/* Banner */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-sm text-blue-800">
-        <strong>Como funciona:</strong> Dados do <span className="font-semibold">DRE Avançado</span> são importados automaticamente{" "}
-        <Badge variant="outline" className="text-[10px] border-gray-300 text-gray-500 mx-1">DRE</Badge>.
-        Complemente com o saldo inicial, empréstimos e recebimentos que o DRE não captura.
-        {lancamentosDRE.length === 0 && (
-          <span className="block mt-1 text-amber-700 font-medium">
-            ⚠️ Nenhum lançamento no DRE Avançado para {mes}. Preencha a aba "DRE Avançado" primeiro.
-          </span>
-        )}
-      </div>
 
-      {/* Filtro de Período */}
+      {/* Filtro de Período — sempre visível */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <FiltroPeriodo
           mes={mesAtual}
@@ -716,6 +804,26 @@ export default function DFCTab({ workshopId, mes }) {
           }}
           onPeriodoChange={(novoPeriodo) => setPeriodo(novoPeriodo)}
         />
+      </div>
+
+      {/* Modo Anual */}
+      {periodo === "anual" && (
+        <DFCAnualView dados={dadosAnuaisDFC} isLoading={isLoadingAnual} ano={ano} fmt={fmt} />
+      )}
+
+      {/* Modo Mensal */}
+      {periodo === "mensal" && (<>
+
+      {/* Banner */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-sm text-blue-800">
+        <strong>Como funciona:</strong> Dados do <span className="font-semibold">DRE Avançado</span> são importados automaticamente{" "}
+        <Badge variant="outline" className="text-[10px] border-gray-300 text-gray-500 mx-1">DRE</Badge>.
+        Complemente com o saldo inicial, empréstimos e recebimentos que o DRE não captura.
+        {lancamentosDRE.length === 0 && (
+          <span className="block mt-1 text-amber-700 font-medium">
+            ⚠️ Nenhum lançamento no DRE Avançado para {mes}. Preencha a aba "DRE Avançado" primeiro.
+          </span>
+        )}
       </div>
 
       {/* Saldo Inicial + seletor de view */}
@@ -848,8 +956,9 @@ export default function DFCTab({ workshopId, mes }) {
         </CardContent>
       </Card>
       </>)}
+      </>)}
 
-      {/* Modal CRUD manual */}
+      {/* Modals — sempre visíveis */}
       <ModalLancamento
         aberto={modalAberto}
         onFechar={() => { setModalAberto(false); setLancamentoEdicao(null); }}
