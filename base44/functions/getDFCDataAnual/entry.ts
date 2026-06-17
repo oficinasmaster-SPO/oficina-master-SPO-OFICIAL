@@ -1,21 +1,15 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
-// Mapeamento de categoria DRE → grupo DFC (mesma lógica do mapDREtoDFC.js no frontend)
+// Mapeamento de categoria DRE → grupo DFC
 function mapCategoriaToGrupoDFC(lancamento) {
   const { categoria, subcategoria } = lancamento;
-
-  // Investimento
   if (["manutencao"].includes(categoria)) return "investimento";
   if (subcategoria === "Parcelamento de equipamento") return "investimento";
   if (subcategoria === "Compra de imóvel/terreno") return "investimento";
-
-  // Financiamento
   if (subcategoria === "Financiamento (veículo/imóvel)") return "financiamento";
   if (subcategoria === "Consórcio") return "financiamento";
   if (subcategoria === "Processos judiciais") return "financiamento";
   if (["financeiro"].includes(categoria)) return "financiamento";
-
-  // Padrão: operacional
   return "operacional";
 }
 
@@ -35,49 +29,76 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'ano e workshop_id são obrigatórios' }, { status: 400 });
     }
 
-    // Agrupar por mês
+    // Buscar TODOS os dados do ano em paralelo (uma query por entidade, não 12x cada)
+    const [dfcLancamentosAno, dreLancamentosAno] = await Promise.all([
+      base44.entities.DFCLancamento.filter(
+        { workshop_id, mes: { $gte: `${ano}-01`, $lte: `${ano}-12` } },
+        "-created_date", 500
+      ),
+      base44.entities.DRELancamento.filter(
+        { workshop_id, mes: { $gte: `${ano}-01`, $lte: `${ano}-12` } },
+        "-created_date", 500
+      ),
+    ]);
+
+    // Indexar por mês para acesso O(1)
+    const dfcPorMes = {};
+    const drePorMes = {};
+
+    for (const l of (dfcLancamentosAno || [])) {
+      if (!dfcPorMes[l.mes]) dfcPorMes[l.mes] = [];
+      dfcPorMes[l.mes].push(l);
+    }
+    for (const l of (dreLancamentosAno || [])) {
+      if (!drePorMes[l.mes]) drePorMes[l.mes] = [];
+      drePorMes[l.mes].push(l);
+    }
+
+    // Acumuladores para grupos anuais
+    const gruposMap = {
+      operacional:   { grupo: "operacional",   label: "Operacional",   total: 0, entradas: 0, saidas: 0 },
+      investimento:  { grupo: "investimento",  label: "Investimento",  total: 0, entradas: 0, saidas: 0 },
+      financiamento: { grupo: "financiamento", label: "Financiamento", total: 0, entradas: 0, saidas: 0 },
+    };
+
     const meses = [];
 
     for (let m = 1; m <= 12; m++) {
       const mesRef = `${ano}-${String(m).padStart(2, '0')}`;
 
-      // Busca lançamentos manuais do DFC
-      const dfcManuais = await base44.entities.DFCLancamento.filter(
-        { workshop_id, mes: mesRef, origem: "manual" }, "-created_date", 500
-      );
+      const dfcManuais = (dfcPorMes[mesRef] || []).filter(l => l.grupo !== "saldo_inicial" && l.origem === "manual");
+      const saldoRecord = (dfcPorMes[mesRef] || []).find(l => l.grupo === "saldo_inicial");
 
-      // Busca lançamentos do DRE e mapeia para grupos DFC
-      const dreLancamentos = await base44.entities.DRELancamento.filter(
-        { workshop_id, mes: mesRef }, "-created_date", 500
-      );
-
-      // Converte DRE → DFC items (mesma lógica do mapDREtoDFC)
-      const dreParaDFC = (dreLancamentos || []).map(l => ({
+      const dreParaDFC = (drePorMes[mesRef] || []).map(l => ({
         grupo: mapCategoriaToGrupoDFC(l),
         tipo: l.tipo === "receita" ? "entrada" : "saida",
         valor: l.valor || 0,
-        origem: "dre",
       }));
 
-      const todosItens = [
-        ...(dfcManuais || []).filter(l => l.grupo !== "saldo_inicial"),
-        ...dreParaDFC,
-      ];
+      const todosItens = [...dfcManuais, ...dreParaDFC];
 
       const calcFluxo = (grupo) =>
         todosItens
           .filter(i => i.grupo === grupo)
           .reduce((sum, i) => sum + (i.tipo === "entrada" ? i.valor : -i.valor), 0);
 
-      const operacional  = calcFluxo("operacional");
-      const investimento = calcFluxo("investimento");
+      const operacional   = calcFluxo("operacional");
+      const investimento  = calcFluxo("investimento");
       const financiamento = calcFluxo("financiamento");
 
-      // Saldo inicial do mês
-      const saldoRecords = await base44.entities.DFCLancamento.filter(
-        { workshop_id, mes: mesRef, grupo: "saldo_inicial" }, "-created_date", 1
-      );
-      const saldoInicial = saldoRecords?.[0]?.valor ?? saldoRecords?.[0]?.saldo_inicial ?? 0;
+      // Acumular nos grupos anuais
+      for (const item of todosItens) {
+        const g = gruposMap[item.grupo];
+        if (!g) continue;
+        if (item.tipo === "entrada") {
+          g.entradas += item.valor;
+        } else {
+          g.saidas += item.valor;
+        }
+        g.total += item.tipo === "entrada" ? item.valor : -item.valor;
+      }
+
+      const saldoInicial = saldoRecord?.valor ?? saldoRecord?.saldo_inicial ?? 0;
 
       meses.push({
         mes: mesRef,
@@ -90,45 +111,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Totais anuais
-    const totalAnualOperacional  = meses.reduce((s, m) => s + m.operacional,  0);
-    const totalAnualInvestimento = meses.reduce((s, m) => s + m.investimento, 0);
-    const totalAnualFinanciamento= meses.reduce((s, m) => s + m.financiamento,0);
-    const totalAnualSaldo        = totalAnualOperacional + totalAnualInvestimento + totalAnualFinanciamento;
-
-    // Grupos por entradas/saídas anuais
-    const gruposMap = {
-      operacional:   { grupo: "operacional",   label: "Operacional",   total: 0, entradas: 0, saidas: 0 },
-      investimento:  { grupo: "investimento",  label: "Investimento",  total: 0, entradas: 0, saidas: 0 },
-      financiamento: { grupo: "financiamento", label: "Financiamento", total: 0, entradas: 0, saidas: 0 },
-    };
-
-    for (let m = 1; m <= 12; m++) {
-      const mesRef = `${ano}-${String(m).padStart(2, '0')}`;
-
-      const dfcManuais = await base44.entities.DFCLancamento.filter(
-        { workshop_id, mes: mesRef, origem: "manual" }, "-created_date", 500
-      );
-      const dreLancamentos = await base44.entities.DRELancamento.filter(
-        { workshop_id, mes: mesRef }, "-created_date", 500
-      );
-      const dreParaDFC = (dreLancamentos || []).map(l => ({
-        grupo: mapCategoriaToGrupoDFC(l),
-        tipo: l.tipo === "receita" ? "entrada" : "saida",
-        valor: l.valor || 0,
-      }));
-
-      [...(dfcManuais || []).filter(l => l.grupo !== "saldo_inicial"), ...dreParaDFC].forEach(l => {
-        const g = gruposMap[l.grupo];
-        if (!g) return;
-        if (l.tipo === "entrada") {
-          g.entradas += l.valor || 0;
-        } else {
-          g.saidas += l.valor || 0;
-        }
-        g.total += l.tipo === "entrada" ? (l.valor || 0) : -(l.valor || 0);
-      });
-    }
+    const totalAnualOperacional   = meses.reduce((s, m) => s + m.operacional,   0);
+    const totalAnualInvestimento  = meses.reduce((s, m) => s + m.investimento,  0);
+    const totalAnualFinanciamento = meses.reduce((s, m) => s + m.financiamento, 0);
+    const totalAnualSaldo         = totalAnualOperacional + totalAnualInvestimento + totalAnualFinanciamento;
 
     return Response.json({
       success: true,
@@ -143,12 +129,11 @@ Deno.serve(async (req) => {
       media_mensal: {
         operacional:   totalAnualOperacional  / 12,
         investimento:  totalAnualInvestimento / 12,
-        financiamento: totalAnualFinanciamento/ 12,
+        financiamento: totalAnualFinanciamento / 12,
         saldo_final:   totalAnualSaldo        / 12,
       },
       meses,
       grupos: Object.values(gruposMap),
-      total_lancamentos: meses.reduce((s, m) => s + (m.operacional !== 0 || m.investimento !== 0 || m.financiamento !== 0 ? 1 : 0), 0),
     });
 
   } catch (error) {

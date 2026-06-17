@@ -508,14 +508,17 @@ export default function ContasReceberPagarTab({ workshopId, mes }) {
     : `${ano}-12-31`;
 
   // Buscar Contas a Receber com filtro
+  // status "$in" para mostrar aberto + parcial (parcial = pago parcialmente, ainda tem saldo)
+  // LIMIT 500 para evitar truncamento silencioso
   const { data: contasReceber = [], isLoading: isReceberLoading, refetch: refetchReceber } = useQuery({
     queryKey: ["contas-receber", workshopId, "tab", periodo, ano, mesSelecionado],
     queryFn: () => base44.entities.ContaReceber.filter({ 
       workshop_id: workshopId, 
-      status: "aberto",
+      status: { $in: ["aberto", "parcial"] },
       data_vencimento: { $gte: dataInicio, $lte: dataFim }
-    }),
+    }, "-data_vencimento", 500),
     enabled: !!workshopId,
+    staleTime: 30_000,
   });
 
   // Buscar Contas a Pagar com filtro
@@ -523,10 +526,11 @@ export default function ContasReceberPagarTab({ workshopId, mes }) {
     queryKey: ["contas-pagar", workshopId, "tab", periodo, ano, mesSelecionado],
     queryFn: () => base44.entities.ContaPagar.filter({ 
       workshop_id: workshopId, 
-      status: "aberto",
+      status: { $in: ["aberto", "parcial"] },
       data_vencimento: { $gte: dataInicio, $lte: dataFim }
-    }),
+    }, "-data_vencimento", 500),
     enabled: !!workshopId,
+    staleTime: 30_000,
   });
 
   const handleSuccess = () => {

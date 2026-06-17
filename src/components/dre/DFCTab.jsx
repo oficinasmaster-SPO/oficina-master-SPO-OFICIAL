@@ -557,11 +557,12 @@ export default function DFCTab({ workshopId, mes }) {
   const { data: lancamentosDRE = [], isLoading: isDRELoading, refetch: refetchDRE } = useQuery({
     queryKey: ["dre-lancamentos-dfc", workshopId, mes],
     queryFn: async () => {
-      const dres = await base44.entities.DRELancamento.filter({ workshop_id: workshopId, mes });
+      // LIMIT 500 em todas as queries para evitar truncamento silencioso
+      const dres = await base44.entities.DRELancamento.filter({ workshop_id: workshopId, mes }, "-created_date", 500);
       // Cruzar com ContaReceber/ContaPagar para pegar data_pagamento real
       const [contasReceber, contasPagar] = await Promise.all([
-        base44.entities.ContaReceber.filter({ workshop_id: workshopId }),
-        base44.entities.ContaPagar.filter({ workshop_id: workshopId }),
+        base44.entities.ContaReceber.filter({ workshop_id: workshopId }, "-created_date", 500),
+        base44.entities.ContaPagar.filter({ workshop_id: workshopId }, "-created_date", 500),
       ]);
       const mapaReceber = Object.fromEntries((contasReceber || []).map(c => [c.dre_lancamento_id, c]));
       const mapaPagar   = Object.fromEntries((contasPagar   || []).map(c => [c.dre_lancamento_id, c]));

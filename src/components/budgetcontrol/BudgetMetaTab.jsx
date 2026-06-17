@@ -128,6 +128,7 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
   });
 
   // Buscar lançamentos do DRE para comparação
+  // LIMIT 500 para evitar truncamento silencioso do default 50
   const { data: lancamentos = [], refetch: refetchLancamentos } = useQuery({
     queryKey: ["dre-lancamentos", workshopId, mes],
     queryFn: async () => {
@@ -135,23 +136,27 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
       const result = await base44.entities.DRELancamento.filter({
         workshop_id: workshopId,
         mes: mes
-      });
+      }, "-created_date", 500);
       return Array.isArray(result) ? result : [];
     },
-    enabled: !!workshopId && !!mes
+    enabled: !!workshopId && !!mes,
+    staleTime: 30_000,
   });
 
   // Buscar ContaReceber e ContaPagar para cruzar realizado via dre_lancamento_id
+  // LIMIT 500 para evitar truncamento silencioso do default 50
   const { data: contasReceber = [], refetch: refetchContasReceber } = useQuery({
     queryKey: ["contas-receber-budget", workshopId],
-    queryFn: () => base44.entities.ContaReceber.filter({ workshop_id: workshopId }),
-    enabled: !!workshopId
+    queryFn: () => base44.entities.ContaReceber.filter({ workshop_id: workshopId }, "-created_date", 500),
+    enabled: !!workshopId,
+    staleTime: 30_000,
   });
 
   const { data: contasPagar = [], refetch: refetchContasPagar } = useQuery({
     queryKey: ["contas-pagar-budget", workshopId],
-    queryFn: () => base44.entities.ContaPagar.filter({ workshop_id: workshopId }),
-    enabled: !!workshopId
+    queryFn: () => base44.entities.ContaPagar.filter({ workshop_id: workshopId }, "-created_date", 500),
+    enabled: !!workshopId,
+    staleTime: 30_000,
   });
 
   // Mapas de dre_lancamento_id → conta (para cruzamento rápido)
