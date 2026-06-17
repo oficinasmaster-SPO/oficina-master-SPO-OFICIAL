@@ -58,15 +58,32 @@ Deno.serve(async (req) => {
     const mediaMensalLucro = totalAnualLucro / 12;
     const margemMedia = totalAnualReceitas > 0 ? (totalAnualLucro / totalAnualReceitas) * 100 : 0;
 
+    // Labels legíveis por categoria
+    const CATEGORIA_LABELS = {
+      receita:         "Receita",
+      pessoas:         "Pessoas",
+      operacional:     "Operacional",
+      marketing:       "Marketing",
+      manutencao:      "Manutenção",
+      terceirizados:   "Terceirizados",
+      administrativo:  "Administrativo",
+      financeiro:      "Financeiro",
+      pecas:           "Peças",
+      pecas_estoque:   "Peças (Estoque)",
+      pecas_aplicadas: "Peças (Aplicadas)",
+      servicos:        "Serviços",
+      outras:          "Outras",
+    };
+
     // Agrupar por categoria (anual)
     const categoriasMap = {};
-    
+
     todosLancamentos.forEach(l => {
       const catKey = l.categoria;
       if (!categoriasMap[catKey]) {
         categoriasMap[catKey] = {
           categoria: catKey,
-          label: catKey,
+          label: CATEGORIA_LABELS[catKey] || (catKey ? catKey.charAt(0).toUpperCase() + catKey.slice(1) : "—"),
           tipo: l.tipo,
           total: 0,
           entra_tcmp2: l.entra_tcmp2 ?? true
