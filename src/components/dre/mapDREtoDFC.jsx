@@ -58,9 +58,10 @@ export function mapDREtoDFC(lancamentos = []) {
     const sub = l.subcategoria || "";
     const desc = l.descricao || sub || cat;
 
-    // Campos de data — propagados para ProjecaoCaixaView e badges de status
+    // Campos de data e status — propagados para ProjecaoCaixaView e badges de status
     const dataVencimento = l.data_vencimento || null;
     const dataPagamento  = l.data_pagamento  || null;
+    const statusConta    = l.status_conta    || null;
 
     // --- ENTRADAS ---
     if (l.tipo === "receita") {
@@ -73,6 +74,7 @@ export function mapDREtoDFC(lancamentos = []) {
         origem: "dre_automatico",
         data_vencimento: dataVencimento,
         data_pagamento:  dataPagamento,
+        status_conta:    statusConta,
       };
     }
 
@@ -101,6 +103,7 @@ export function mapDREtoDFC(lancamentos = []) {
       origem: "dre_automatico",
       data_vencimento: dataVencimento,
       data_pagamento:  dataPagamento,
+      status_conta:    statusConta,
     };
   });
 }
