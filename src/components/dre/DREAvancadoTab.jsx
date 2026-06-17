@@ -907,7 +907,7 @@ export default function DREAvancadoTab({ workshopId, mes, tecnicosCount, horasMe
             <div className="flex items-center justify-center py-16">
               <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
             </div>
-          ) : dadosAnuais?.total_anual ? (
+          ) : (dadosAnuais?.data ?? dadosAnuais)?.total_anual ? (
             <>
               {/* KPIs Anuais */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -916,8 +916,8 @@ export default function DREAvancadoTab({ workshopId, mes, tecnicosCount, horasMe
                     <CardTitle className="text-xs opacity-75">Receita Total Anual</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-2xl font-bold">{formatCurrency(dadosAnuais.total_anual.receitas)}</p>
-                    <p className="text-xs opacity-80 mt-1">Média mensal: {formatCurrency(dadosAnuais.media_mensal.receitas)}</p>
+                    <p className="text-2xl font-bold">{formatCurrency((dadosAnuais?.data ?? dadosAnuais).total_anual.receitas)}</p>
+                    <p className="text-xs opacity-80 mt-1">Média mensal: {formatCurrency((dadosAnuais?.data ?? dadosAnuais).media_mensal.receitas)}</p>
                   </CardContent>
                 </Card>
 
@@ -926,18 +926,18 @@ export default function DREAvancadoTab({ workshopId, mes, tecnicosCount, horasMe
                     <CardTitle className="text-xs opacity-75">Despesas Totais</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-2xl font-bold">{formatCurrency(dadosAnuais.total_anual.despesas)}</p>
-                    <p className="text-xs opacity-80 mt-1">Média mensal: {formatCurrency(dadosAnuais.media_mensal.despesas)}</p>
+                    <p className="text-2xl font-bold">{formatCurrency((dadosAnuais?.data ?? dadosAnuais).total_anual.despesas)}</p>
+                    <p className="text-xs opacity-80 mt-1">Média mensal: {formatCurrency((dadosAnuais?.data ?? dadosAnuais).media_mensal.despesas)}</p>
                   </CardContent>
                 </Card>
 
-                <Card className={`bg-gradient-to-br ${dadosAnuais.total_anual.lucro >= 0 ? "from-emerald-500 to-teal-600" : "from-red-500 to-rose-600"} text-white`}>
+                <Card className={`bg-gradient-to-br ${(dadosAnuais?.data ?? dadosAnuais).total_anual.lucro >= 0 ? "from-emerald-500 to-teal-600" : "from-red-500 to-rose-600"} text-white`}>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-xs opacity-75">Lucro Anual</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-2xl font-bold">{formatCurrency(dadosAnuais.total_anual.lucro)}</p>
-                    <p className="text-xs opacity-80 mt-1">Margem: {dadosAnuais.total_anual.margem.toFixed(1)}%</p>
+                    <p className="text-2xl font-bold">{formatCurrency((dadosAnuais?.data ?? dadosAnuais).total_anual.lucro)}</p>
+                    <p className="text-xs opacity-80 mt-1">Margem: {(dadosAnuais?.data ?? dadosAnuais).total_anual.margem.toFixed(1)}%</p>
                   </CardContent>
                 </Card>
 
@@ -946,8 +946,8 @@ export default function DREAvancadoTab({ workshopId, mes, tecnicosCount, horasMe
                     <CardTitle className="text-xs opacity-75">Total Lançamentos</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-2xl font-bold">{dadosAnuais.total_lancamentos}</p>
-                    <p className="text-xs opacity-80 mt-1">em {dadosAnuais.meses.filter(m => m.receitas > 0 || m.despesas > 0).length} meses</p>
+                    <p className="text-2xl font-bold">{(dadosAnuais?.data ?? dadosAnuais).total_lancamentos}</p>
+                    <p className="text-xs opacity-80 mt-1">em {(dadosAnuais?.data ?? dadosAnuais).meses.filter(m => m.receitas > 0 || m.despesas > 0).length} meses</p>
                   </CardContent>
                 </Card>
               </div>
@@ -960,7 +960,7 @@ export default function DREAvancadoTab({ workshopId, mes, tecnicosCount, horasMe
                 <CardContent>
                   <div className="h-[300px]">
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={dadosAnuais.meses}>
+                      <BarChart data={(dadosAnuais?.data ?? dadosAnuais).meses}>
                         <XAxis dataKey="mes_nome" tick={{ fontSize: 11 }} />
                         <YAxis tickFormatter={(v) => `R$ ${(v/1000).toFixed(0)}k`} tick={{ fontSize: 10 }} />
                         <Tooltip 
@@ -984,7 +984,7 @@ export default function DREAvancadoTab({ workshopId, mes, tecnicosCount, horasMe
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
-                    {dadosAnuais.categorias.map((cat) => (
+                    {(dadosAnuais?.data ?? dadosAnuais).categorias.map((cat) => (
                       <div key={cat.categoria} className="flex items-center justify-between py-2 border-b border-gray-100">
                         <div className="flex items-center gap-2">
                           <Badge variant="outline" className={cat.tipo === "receita" ? "border-green-300 text-green-700" : "border-red-300 text-red-700"}>

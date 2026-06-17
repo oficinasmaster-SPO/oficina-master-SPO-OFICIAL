@@ -133,16 +133,16 @@ export default function ModalRegistrarRecebimento({ aberto, onFechar, conta, wor
         multa_recebida: multa,
         fonte_selecionada: fonteDestino || undefined,
       });
-      queryClient.invalidateQueries({ queryKey: ["contas-pagar"] });
-      queryClient.invalidateQueries({ queryKey: ["contas-receber"] });
-      queryClient.invalidateQueries({ queryKey: ["dre-lancamentos"] });
-      queryClient.invalidateQueries({ queryKey: ["dre-lancamentos-dfc"] });
-      queryClient.invalidateQueries({ queryKey: ["budget-metas"] });
-      queryClient.invalidateQueries({ queryKey: ["contas-pagar-budget"] });
-      queryClient.invalidateQueries({ queryKey: ["contas-receber-budget"] });
-      queryClient.invalidateQueries({ queryKey: ["liquidacoes"] });
-      queryClient.invalidateQueries({ queryKey: ["dfc-manuais"] });
-      queryClient.invalidateQueries({ queryKey: ["saldo-inicial-fontes"] });
+      queryClient.invalidateQueries({ queryKey: ["contas-pagar", workshopId] });
+      queryClient.invalidateQueries({ queryKey: ["contas-receber", workshopId] });
+      queryClient.invalidateQueries({ queryKey: ["dre-lancamentos", workshopId] });
+      queryClient.invalidateQueries({ queryKey: ["dre-lancamentos-dfc", workshopId] });
+      queryClient.invalidateQueries({ queryKey: ["budget-metas", workshopId] });
+      queryClient.invalidateQueries({ queryKey: ["contas-pagar-budget", workshopId] });
+      queryClient.invalidateQueries({ queryKey: ["contas-receber-budget", workshopId] });
+      queryClient.invalidateQueries({ queryKey: ["liquidacoes", workshopId] });
+      queryClient.invalidateQueries({ queryKey: ["dfc-manuais", workshopId] });
+      queryClient.invalidateQueries({ queryKey: ["saldo-inicial-fontes", workshopId] });
       toast.success("Recebimento registrado!");
       onSuccess?.();
       onFechar();
