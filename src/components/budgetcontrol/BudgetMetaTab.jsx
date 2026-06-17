@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -170,7 +170,7 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
   );
 
   // refetchLiquidacoes mantido como alias para compatibilidade com useEffect existente
-  const refetchLiquidacoes = () => { refetchContasReceber(); refetchContasPagar(); };
+  const refetchLiquidacoes = useCallback(() => { refetchContasReceber(); refetchContasPagar(); }, [refetchContasReceber, refetchContasPagar]);
 
   // Real-time subscription: atualizar quando novo DRELancamento ou Liquidação é criado
   useEffect(() => {

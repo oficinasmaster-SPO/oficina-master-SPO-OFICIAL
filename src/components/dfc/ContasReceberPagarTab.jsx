@@ -544,6 +544,8 @@ export default function ContasReceberPagarTab({ workshopId, mes }) {
     queryClient.invalidateQueries({ queryKey: ["liquidacoes"] });
     queryClient.invalidateQueries({ queryKey: ["saldo-inicial-fontes"] });
     queryClient.invalidateQueries({ queryKey: ["budget-metas"] });
+    queryClient.invalidateQueries({ queryKey: ["contas-receber-budget"] });
+    queryClient.invalidateQueries({ queryKey: ["contas-pagar-budget"] });
   };
 
   const totalReceber = contasReceber.reduce((sum, c) => sum + (c.valor_aberto || 0), 0);
