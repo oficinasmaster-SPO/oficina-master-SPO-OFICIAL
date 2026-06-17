@@ -199,7 +199,7 @@ export default function ContasReceber() {
           onFechar={() => setContaSelecionada(null)}
           conta={contaSelecionada}
           workshopId={workshopId}
-          mes={mesAtual}
+          mes={contaSelecionada?.data_vencimento ? contaSelecionada.data_vencimento.slice(0, 7) : mesAtual}
           onSuccess={() => {
             setContaSelecionada(null);
             queryClient.invalidateQueries({ queryKey: ['contas-receber'] });

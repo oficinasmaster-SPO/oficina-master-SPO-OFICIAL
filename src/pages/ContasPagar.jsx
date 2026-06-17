@@ -211,7 +211,7 @@ export default function ContasPagar() {
           onFechar={() => setContaParaPagar(null)}
           conta={contaParaPagar}
           workshopId={workshop?.id}
-          mes={mesAtual}
+          mes={contaParaPagar?.data_vencimento ? contaParaPagar.data_vencimento.slice(0, 7) : mesAtual}
           onSuccess={() => {
             setContaParaPagar(null);
             queryClient.invalidateQueries({ queryKey: ['contas-pagar'] });

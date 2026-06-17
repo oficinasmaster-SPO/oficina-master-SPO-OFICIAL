@@ -782,17 +782,22 @@ export default function DREAvancadoTab({ workshopId, mes, tecnicosCount, horasMe
 
   // Real-time: atualizar quando novo DRELancamento é criado/deletado
   useEffect(() => {
-    if (!workshopId || !mes) return;
-    
+    if (!workshopId) return;
+
     const unsubscribe = base44.entities.DRELancamento.subscribe((event) => {
-      const relevante = event.data?.workshop_id === workshopId && event.data?.mes === mes;
-      if (relevante && (event.type === 'create' || event.type === 'delete' || event.type === 'update')) {
+      if (event.data?.workshop_id !== workshopId) return;
+      if (event.type !== 'create' && event.type !== 'delete' && event.type !== 'update') return;
+
+      const eventoMes = event.data?.mes || "";
+      if (periodo === "mensal" && eventoMes === mes) {
         refetch();
+      } else if (periodo === "anual" && eventoMes.startsWith(String(ano))) {
+        queryClient.invalidateQueries({ queryKey: ["dre-anual", workshopId, ano] });
       }
     });
 
     return unsubscribe;
-  }, [workshopId, mes, refetch]);
+  }, [workshopId, mes, ano, periodo, refetch, queryClient]);
 
   const refresh = () => refetch();
 
