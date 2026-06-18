@@ -216,8 +216,8 @@ export default function Layout({ children, currentPageName }) {
               {isAuthenticated && isAdminMode && workshop && <AdminModeBanner workshop={workshop} />}
               {shouldShowMenus &&
           <header className="bg-white shadow-sm border-b border-gray-200 fixed top-0 right-0 left-0 z-30 print:hidden" style={{ left: 'var(--sidebar-width, 16rem)' }}>
-          <div className="sm:px-6 lg:px-8 pl-4 pr-2">
-            <div className="flex items-center justify-between h-16">
+          <div className="h-16 sm:px-6 lg:px-8 px-4">
+            <div className="flex items-center justify-between h-full">
               {isAuthenticated &&
                 <button
                   onClick={() => setSidebarOpen(!sidebarOpen)}
