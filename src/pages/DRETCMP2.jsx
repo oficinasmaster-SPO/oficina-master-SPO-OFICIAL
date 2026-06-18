@@ -658,7 +658,7 @@ export default function DRETCMP2() {
                     <Label>Faturamento Peças Aplicadas (R$)</Label>
                     <InputMoeda
                       value={formData.revenue.parts_applied}
-                      onChange={(e) => updateRevenue('parts_applied', e.target.value)}
+                      onChange={(v) => updateRevenue('parts_applied', v)}
                       className="text-right"
                     />
                   </div>
@@ -666,7 +666,7 @@ export default function DRETCMP2() {
                     <Label>Faturamento Serviços (R$)</Label>
                     <InputMoeda
                       value={formData.revenue.services}
-                      onChange={(e) => updateRevenue('services', e.target.value)}
+                      onChange={(v) => updateRevenue('services', v)}
                       className="text-right"
                     />
                   </div>
@@ -674,7 +674,7 @@ export default function DRETCMP2() {
                     <Label>Outras Receitas (R$)</Label>
                     <InputMoeda
                       value={formData.revenue.other}
-                      onChange={(e) => updateRevenue('other', e.target.value)}
+                      onChange={(v) => updateRevenue('other', v)}
                       className="text-right"
                     />
                   </div>
@@ -706,7 +706,7 @@ export default function DRETCMP2() {
                     <Label>Operacionais (Aluguel, Energia, Água, Tel)</Label>
                     <InputMoeda
                       value={formData.costs_tcmp2.operational}
-                      onChange={(e) => updateCostsTcmp2('operational', e.target.value)}
+                      onChange={(v) => updateCostsTcmp2('operational', v)}
                       className="text-right"
                     />
                   </div>
@@ -714,7 +714,7 @@ export default function DRETCMP2() {
                     <Label>Pessoas (Salários, Encargos, Benefícios)</Label>
                     <InputMoeda
                       value={formData.costs_tcmp2.people}
-                      onChange={(e) => updateCostsTcmp2('people', e.target.value)}
+                      onChange={(v) => updateCostsTcmp2('people', v)}
                       className="text-right"
                     />
                   </div>
@@ -722,7 +722,7 @@ export default function DRETCMP2() {
                     <Label>Pró-labore dos Sócios</Label>
                     <InputMoeda
                       value={formData.costs_tcmp2.prolabore}
-                      onChange={(e) => updateCostsTcmp2('prolabore', e.target.value)}
+                      onChange={(v) => updateCostsTcmp2('prolabore', v)}
                       className="text-right"
                     />
                   </div>
@@ -730,7 +730,7 @@ export default function DRETCMP2() {
                     <Label>Marketing e Propaganda</Label>
                     <InputMoeda
                       value={formData.costs_tcmp2.marketing}
-                      onChange={(e) => updateCostsTcmp2('marketing', e.target.value)}
+                      onChange={(v) => updateCostsTcmp2('marketing', v)}
                       className="text-right"
                     />
                   </div>
@@ -738,7 +738,7 @@ export default function DRETCMP2() {
                     <Label>Manutenção (Predial e Equipamentos)</Label>
                     <InputMoeda
                       value={formData.costs_tcmp2.maintenance}
-                      onChange={(e) => updateCostsTcmp2('maintenance', e.target.value)}
+                      onChange={(v) => updateCostsTcmp2('maintenance', v)}
                       className="text-right"
                     />
                   </div>
@@ -746,7 +746,7 @@ export default function DRETCMP2() {
                     <Label>Serviços Terceirizados</Label>
                     <InputMoeda
                       value={formData.costs_tcmp2.third_party}
-                      onChange={(e) => updateCostsTcmp2('third_party', e.target.value)}
+                      onChange={(v) => updateCostsTcmp2('third_party', v)}
                       className="text-right"
                     />
                   </div>
@@ -754,7 +754,7 @@ export default function DRETCMP2() {
                     <Label>Despesas Administrativas</Label>
                     <InputMoeda
                       value={formData.costs_tcmp2.administrative}
-                      onChange={(e) => updateCostsTcmp2('administrative', e.target.value)}
+                      onChange={(v) => updateCostsTcmp2('administrative', v)}
                       className="text-right"
                     />
                   </div>
@@ -786,7 +786,7 @@ export default function DRETCMP2() {
                     <Label>Financiamentos</Label>
                     <InputMoeda
                       value={formData.costs_not_tcmp2.financing}
-                      onChange={(e) => updateCostsNotTcmp2('financing', e.target.value)}
+                      onChange={(v) => updateCostsNotTcmp2('financing', v)}
                       className="text-right"
                     />
                   </div>
@@ -794,7 +794,7 @@ export default function DRETCMP2() {
                     <Label>Consórcios</Label>
                     <InputMoeda
                       value={formData.costs_not_tcmp2.consortium}
-                      onChange={(e) => updateCostsNotTcmp2('consortium', e.target.value)}
+                      onChange={(v) => updateCostsNotTcmp2('consortium', v)}
                       className="text-right"
                     />
                   </div>
@@ -802,7 +802,7 @@ export default function DRETCMP2() {
                     <Label>Equipamentos Parcelados</Label>
                     <InputMoeda
                       value={formData.costs_not_tcmp2.equipment_installments}
-                      onChange={(e) => updateCostsNotTcmp2('equipment_installments', e.target.value)}
+                      onChange={(v) => updateCostsNotTcmp2('equipment_installments', v)}
                       className="text-right"
                     />
                   </div>
@@ -810,7 +810,7 @@ export default function DRETCMP2() {
                     <Label>Boletos de Peças (Estoque)</Label>
                     <InputMoeda
                       value={formData.costs_not_tcmp2.parts_invoices}
-                      onChange={(e) => updateCostsNotTcmp2('parts_invoices', e.target.value)}
+                      onChange={(v) => updateCostsNotTcmp2('parts_invoices', v)}
                       className="text-right"
                     />
                   </div>
@@ -818,7 +818,7 @@ export default function DRETCMP2() {
                     <Label>Processos Judiciais</Label>
                     <InputMoeda
                       value={formData.costs_not_tcmp2.legal_processes}
-                      onChange={(e) => updateCostsNotTcmp2('legal_processes', e.target.value)}
+                      onChange={(v) => updateCostsNotTcmp2('legal_processes', v)}
                       className="text-right"
                     />
                   </div>
@@ -826,7 +826,7 @@ export default function DRETCMP2() {
                     <Label>Compra de Terreno/Imóvel</Label>
                     <InputMoeda
                       value={formData.costs_not_tcmp2.land_purchase}
-                      onChange={(e) => updateCostsNotTcmp2('land_purchase', e.target.value)}
+                      onChange={(v) => updateCostsNotTcmp2('land_purchase', v)}
                       className="text-right"
                     />
                   </div>
@@ -834,7 +834,7 @@ export default function DRETCMP2() {
                     <Label>Investimentos Diversos</Label>
                     <InputMoeda
                       value={formData.costs_not_tcmp2.investments}
-                      onChange={(e) => updateCostsNotTcmp2('investments', e.target.value)}
+                      onChange={(v) => updateCostsNotTcmp2('investments', v)}
                       className="text-right"
                     />
                   </div>
@@ -866,7 +866,7 @@ export default function DRETCMP2() {
                     <Label>Custo das Peças APLICADAS no Mês (R$)</Label>
                     <InputMoeda
                       value={formData.parts_cost.parts_applied_cost}
-                      onChange={(e) => updatePartsCost('parts_applied_cost', e.target.value)}
+                      onChange={(v) => updatePartsCost('parts_applied_cost', v)}
                       className="text-right text-lg"
                     />
                     <p className="text-xs text-gray-500 mt-1">
@@ -877,7 +877,7 @@ export default function DRETCMP2() {
                     <Label>Peças Compradas para ESTOQUE (R$)</Label>
                     <InputMoeda
                       value={formData.parts_cost.parts_stock_purchase}
-                      onChange={(e) => updatePartsCost('parts_stock_purchase', e.target.value)}
+                      onChange={(v) => updatePartsCost('parts_stock_purchase', v)}
                       className="text-right text-lg"
                     />
                     <p className="text-xs text-gray-500 mt-1">
