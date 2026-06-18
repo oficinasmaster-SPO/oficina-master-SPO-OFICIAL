@@ -547,11 +547,16 @@ export default function DFCTab({ workshopId, mes }) {
   const [view, setView] = useState("grupos"); // "grupos" | "projecao"
   const [modalSaldoDetalhadoAberto, setModalSaldoDetalhadoAberto] = useState(false);
   const [periodo, setPeriodo] = useState("mensal"); // mensal | anual
-  const [ano, setAno] = useState(new Date().getFullYear());
   const [showContasTab, setShowContasTab] = useState(false);
   
   const mesAtual = mes ? mes.split('-')[1] : "01";
   const anoAtual = mes ? parseInt(mes.split('-')[0]) : new Date().getFullYear();
+
+  // Sincroniza ano com o prop mes (igual fix do DRE Avançado)
+  const [ano, setAno] = useState(anoAtual);
+  useEffect(() => {
+    setAno(anoAtual);
+  }, [anoAtual]);
 
   // ── Buscar DRELancamentos → mapeados automaticamente (Fase 3) ──
   const { data: lancamentosDRE = [], isLoading: isDRELoading, refetch: refetchDRE } = useQuery({
@@ -626,7 +631,7 @@ export default function DFCTab({ workshopId, mes }) {
   // ── DFC Anual ──
   const { data: dadosAnuaisDFC, isLoading: isLoadingAnual } = useQuery({
     queryKey: ["dfc-anual", workshopId, ano],
-    queryFn: () => base44.functions.invoke('getDFCDataAnual', { workshop_id: workshopId, ano }),
+    queryFn: () => base44.functions.invoke('getDFCDataAnual', { workshop_id: workshopId, ano: String(ano) }),
     enabled: periodo === "anual" && !!workshopId && !!ano,
     staleTime: 60_000,
   });
