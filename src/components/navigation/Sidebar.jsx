@@ -244,9 +244,9 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
 
 
 
+
       // Ignora erro
-    }};const toggleGroup = (groupId) => {
-    setExpandedGroups((prev) =>
+    }};const toggleGroup = (groupId) => {setExpandedGroups((prev) =>
     prev.includes(groupId) ?
     prev.filter((id) => id !== groupId) :
     [...prev, groupId]
@@ -364,7 +364,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
         }}>
         
         <div className={cn(
-          "border-b border-gray-200 transition-all px-6 py-4",
+          "border-b border-gray-200 transition-all px-6 py-2",
           isCollapsed ? "p-3" : ""
         )}>
           {isCollapsed ?
