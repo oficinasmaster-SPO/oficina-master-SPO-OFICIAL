@@ -37,6 +37,12 @@ const ITEMS_PADRAO = {
 };
 
 export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
+  const { data: colaboradores = [] } = useQuery({
+    queryKey: ["employees-budget", workshopId],
+    queryFn: () => base44.entities.Employee.filter({ workshop_id: workshopId, status: "ativo" }, "full_name", 100),
+    enabled: !!workshopId,
+    staleTime: 5 * 60 * 1000,
+  });
   const queryClient = useQueryClient();
   const [editingId, setEditingId] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -604,11 +610,19 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
                 </div>
                 <div>
                   <Label>Responsável</Label>
-                  <Input
+                  <Select
                     value={formData.responsavel_nome}
-                    onChange={(e) => setFormData({ ...formData, responsavel_nome: e.target.value })}
-                    placeholder="Nome do responsável"
-                  />
+                    onValueChange={(value) => setFormData({ ...formData, responsavel_nome: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione um colaborador..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {colaboradores.map(c => (
+                        <SelectItem key={c.id} value={c.full_name}>{c.full_name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <Label>Meta em % do Faturamento</Label>
@@ -616,9 +630,9 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
                     type="number"
                     min="0"
                     max="100"
-                    step="0.1"
-                    value={formData.meta_percentual}
-                    onChange={(e) => setFormData({ ...formData, meta_percentual: parseFloat(e.target.value) || 0 })}
+                    placeholder="Ex: 15"
+                    value={formData.meta_percentual === 0 ? "" : formData.meta_percentual}
+                    onChange={(e) => setFormData({ ...formData, meta_percentual: parseInt(e.target.value) || 0 })}
                   />
                 </div>
                 <div>
