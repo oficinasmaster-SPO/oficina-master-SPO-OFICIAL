@@ -760,16 +760,21 @@ export default function DREAvancadoTab({ workshopId, mes, tecnicosCount, horasMe
   const [showForm, setShowForm] = useState(null); // 'receita' | 'despesa' | null
   const [abaAtiva, setAbaAtiva] = useState("todos"); // todos | receitas | despesas | analise
   const [periodo, setPeriodo] = useState("mensal"); // mensal | anual
-  const [ano, setAno] = useState(new Date().getFullYear());
   
   // Extrair mês do parâmetro (formato YYYY-MM)
   const mesAtual = mes ? mes.split('-')[1] : "01";
   const anoAtual = mes ? parseInt(mes.split('-')[0]) : new Date().getFullYear();
 
+  // ano do seletor anual — sincroniza com anoAtual sempre que o prop mes mudar
+  const [ano, setAno] = useState(anoAtual);
+  useEffect(() => {
+    setAno(anoAtual);
+  }, [anoAtual]);
+
   // Query para dados anuais
   const { data: dadosAnuais, isLoading: isLoadingAnual } = useQuery({
     queryKey: ["dre-anual", workshopId, ano],
-    queryFn: () => base44.functions.invoke('getDREDataAnual', { workshop_id: workshopId, ano }),
+    queryFn: () => base44.functions.invoke('getDREDataAnual', { workshop_id: workshopId, ano: String(ano) }),
     enabled: periodo === "anual" && !!workshopId && !!ano
   });
 
