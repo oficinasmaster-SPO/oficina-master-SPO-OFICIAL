@@ -625,7 +625,20 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
                   </Select>
                 </div>
                 <div>
-                  <Label>Meta em % do Faturamento</Label>
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <Label className="mb-0">Meta em % do Faturamento</Label>
+                    <div className="relative group">
+                      <span className="w-4 h-4 rounded-full bg-gray-300 text-gray-700 text-[10px] font-bold flex items-center justify-center cursor-help select-none">?</span>
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 bg-gray-900 text-white text-xs rounded-lg p-3 shadow-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
+                        <p className="font-semibold mb-1">Como funciona a % ?</p>
+                        <p>A meta em R$ será calculada automaticamente como:</p>
+                        <p className="mt-1 bg-gray-700 rounded px-2 py-1 font-mono">Meta R$ = % × Faturamento Base</p>
+                        <p className="mt-1 text-gray-300">Ex: 15% com faturamento de R$ 50.000 → meta de R$ 7.500</p>
+                        <p className="mt-1 text-yellow-300 text-[10px]">Se preencher R$ Fixo, ele prevalece sobre o %.</p>
+                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
+                      </div>
+                    </div>
+                  </div>
                   <Input
                     type="number"
                     min="0"
@@ -634,6 +647,11 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
                     value={formData.meta_percentual === 0 ? "" : formData.meta_percentual}
                     onChange={(e) => setFormData({ ...formData, meta_percentual: parseInt(e.target.value) || 0 })}
                   />
+                  {formData.meta_percentual > 0 && formData.faturamento_meta_rs > 0 && (
+                    <p className="text-xs text-blue-600 mt-1">
+                      = {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format((formData.meta_percentual / 100) * formData.faturamento_meta_rs)}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <Label>OU Meta em R$ Fixo</Label>
