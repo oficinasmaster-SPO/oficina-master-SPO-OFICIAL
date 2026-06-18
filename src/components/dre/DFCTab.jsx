@@ -785,10 +785,10 @@ export default function DFCTab({ workshopId, mes }) {
       <div className="flex gap-3 mb-4">
         <button
           onClick={() => setShowContasTab(false)}
-          className={`flex-1 flex flex-col items-center justify-center gap-2 py-5 px-4 rounded-xl border-2 transition-all shadow-sm cursor-pointer
-            ${!showContasTab
-              ? "bg-blue-50 border-blue-400 shadow-md"
-              : "bg-white border-gray-200 hover:border-gray-300 hover:shadow"}`}>
+          className={`flex-1 flex flex-col items-center justify-center gap-2 py-5 px-4 rounded-xl border-2 transition-all shadow-sm cursor-pointer text-sm
+            ${!showContasTab ?
+          "bg-blue-50 border-blue-400 shadow-md" :
+          "bg-white border-gray-200 hover:border-gray-300 hover:shadow"}`}>
           <span className="text-3xl">💵</span>
           <span className={`text-sm font-semibold ${!showContasTab ? "text-blue-700" : "text-gray-600"}`}>
             Fluxo de Caixa (DFC)
@@ -797,9 +797,9 @@ export default function DFCTab({ workshopId, mes }) {
         <button
           onClick={() => setShowContasTab(true)}
           className={`flex-1 flex flex-col items-center justify-center gap-2 py-5 px-4 rounded-xl border-2 transition-all shadow-sm cursor-pointer
-            ${showContasTab
-              ? "bg-blue-50 border-blue-400 shadow-md"
-              : "bg-white border-gray-200 hover:border-gray-300 hover:shadow"}`}>
+            ${showContasTab ?
+          "bg-blue-50 border-blue-400 shadow-md" :
+          "bg-white border-gray-200 hover:border-gray-300 hover:shadow"}`}>
           <span className="text-3xl">📋</span>
           <span className={`text-sm font-semibold ${showContasTab ? "text-blue-700" : "text-gray-600"}`}>
             Contas a Receber/Pagar
@@ -898,9 +898,9 @@ export default function DFCTab({ workshopId, mes }) {
                 <p className="text-xs text-gray-500">Projeção: inicial + fluxos do mês</p>
               </div>
               <div className="flex items-center gap-2">
-                {saldoFinal >= 0
-                  ? <TrendingUp className="w-5 h-5 text-emerald-600" />
-                  : <TrendingDown className="w-5 h-5 text-red-600" />}
+                {saldoFinal >= 0 ?
+                    <TrendingUp className="w-5 h-5 text-emerald-600" /> :
+                    <TrendingDown className="w-5 h-5 text-red-600" />}
                 <p className={`text-xl font-bold ${saldoFinal >= 0 ? "text-emerald-700" : "text-red-700"}`}>
                   {fmt(saldoFinal)}
                 </p>
@@ -913,14 +913,14 @@ export default function DFCTab({ workshopId, mes }) {
       {/* Tabs de view */}
       <div className="flex gap-1 bg-gray-100 rounded-lg p-1 w-fit">
           <button
-                onClick={() => setView("grupos")}
-                className={`text-xs px-3 py-2 rounded-md font-medium transition-all ${view === "grupos" ? "bg-white shadow text-gray-900" : "text-gray-500 hover:text-gray-700"}`}>
+              onClick={() => setView("grupos")}
+              className={`text-xs px-3 py-2 rounded-md font-medium transition-all ${view === "grupos" ? "bg-white shadow text-gray-900" : "text-gray-500 hover:text-gray-700"}`}>
                 
             🗂️ Por Grupo
           </button>
           <button
-                onClick={() => setView("projecao")}
-                className={`text-xs px-3 py-2 rounded-md font-medium transition-all ${view === "projecao" ? "bg-white shadow text-gray-900" : "text-gray-500 hover:text-gray-700"}`}>
+              onClick={() => setView("projecao")}
+              className={`text-xs px-3 py-2 rounded-md font-medium transition-all ${view === "projecao" ? "bg-white shadow text-gray-900" : "text-gray-500 hover:text-gray-700"}`}>
                 
             📅 Projeção
           </button>
