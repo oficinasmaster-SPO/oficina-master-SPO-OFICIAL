@@ -115,7 +115,7 @@ function UserProfileSection({ user, collapsed, workshop }) {
   }
 
   return (
-    <div className="border-t border-gray-200 py-4 px-4 mx-1">
+    <div className="border-t border-gray-200 px-4 py-1">
       <div className="flex items-center gap-3">
         {employee?.profile_picture_url ?
         <img
@@ -242,9 +242,9 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       window.dispatchEvent(new CustomEvent('sidebar-toggle'));
     } catch {
 
+
       // Ignora erro
     }};
-
   const toggleGroup = (groupId) => {
     setExpandedGroups((prev) =>
     prev.includes(groupId) ?
