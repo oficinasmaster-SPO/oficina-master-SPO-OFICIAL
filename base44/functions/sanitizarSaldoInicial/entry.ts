@@ -44,16 +44,19 @@ Deno.serve(async (req) => {
     }
 
     // ── Classificar registros ──────────────────────────────────────
-    const isLegado = (r) =>
-      r.detalhes != null && (
-        r.detalhes.banco !== undefined ||
-        r.detalhes.maquina_cartao !== undefined
-      );
-
+    // Formato novo: tem bancos[] ou maquinas_cartao[] — independente de ter campos legados residuais
     const isNovo = (r) =>
       r.detalhes != null && (
         Array.isArray(r.detalhes.bancos) ||
         Array.isArray(r.detalhes.maquinas_cartao)
+      );
+
+    // Legado: tem campos banco/maquina_cartao MAS não tem o formato novo
+    const isLegado = (r) =>
+      !isNovo(r) &&
+      r.detalhes != null && (
+        r.detalhes.banco !== undefined ||
+        r.detalhes.maquina_cartao !== undefined
       );
 
     const legados = registros.filter(r => isLegado(r));
