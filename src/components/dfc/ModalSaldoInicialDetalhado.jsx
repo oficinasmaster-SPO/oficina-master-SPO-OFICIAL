@@ -124,7 +124,7 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
     queryKey: ["has-liquidacoes", workshopId, mes],
     queryFn: async () => {
       if (!workshopId || !mes) return false;
-      const liquidacoes = await base44.entities['LiquidaçãoFinanceira'].filter(
+      const liquidacoes = await base44.entities.LiquidacaoFinanceira.filter(
         { workshop_id: workshopId },
         '-data_liquidacao',
         1
@@ -696,7 +696,8 @@ function BancoRow({ banco, onUpdate, onRemove, disabled }) {
         <Label className="text-xs text-blue-700">Saldo (R$)</Label>
         <InputMoeda
           value={saldo}
-          onChange={(v) => { setSaldo(v); onUpdate(banco.id, "saldo", v); }}
+          onChange={(v) => setSaldo(v)}
+          onBlur={() => onUpdate(banco.id, "saldo", saldo)}
           className="mt-1 bg-white font-semibold text-sm"
           disabled={disabled}
         />
@@ -752,7 +753,8 @@ function MaquinaRow({ maquina, onUpdate, onRemove, disabled }) {
         <Label className="text-xs text-green-700">Recebíveis (R$)</Label>
         <InputMoeda
           value={saldo}
-          onChange={(v) => { setSaldo(v); onUpdate(maquina.id, "saldo", v); }}
+          onChange={(v) => setSaldo(v)}
+          onBlur={() => onUpdate(maquina.id, "saldo", saldo)}
           className="mt-1 bg-white font-semibold text-sm"
           disabled={disabled}
         />

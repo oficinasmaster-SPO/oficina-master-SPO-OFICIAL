@@ -238,15 +238,6 @@ export default function ContasPagar() {
           mes={contaParaPagar?.data_vencimento ? contaParaPagar.data_vencimento.slice(0, 7) : mesAtual}
           onSuccess={() => {
             setContaParaPagar(null);
-            queryClient.invalidateQueries({ queryKey: ['contas-pagar'] });
-            queryClient.invalidateQueries({ queryKey: ['liquidacoes'] });
-            queryClient.invalidateQueries({ queryKey: ['dfc-manuais'] });
-            queryClient.invalidateQueries({ queryKey: ['saldo-inicial-fontes'] });
-            queryClient.invalidateQueries({ queryKey: ['dre-lancamentos'] });
-            queryClient.invalidateQueries({ queryKey: ['dre-lancamentos-dfc'] });
-            queryClient.invalidateQueries({ queryKey: ['budget-metas'] });
-            queryClient.invalidateQueries({ queryKey: ['contas-pagar-budget'] });
-            queryClient.invalidateQueries({ queryKey: ['contas-receber-budget'] });
             refetch();
           }}
         />

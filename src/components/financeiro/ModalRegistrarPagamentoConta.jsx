@@ -161,7 +161,6 @@ export default function ModalRegistrarPagamentoConta({ aberto, onFechar, conta, 
         }],
       });
 
-      // Invalida todas as variantes de chave (com e sem mes)
       queryClient.invalidateQueries({ queryKey: ["contas-pagar"] });
       queryClient.invalidateQueries({ queryKey: ["contas-receber"] });
       queryClient.invalidateQueries({ queryKey: ["dre-lancamentos"] });
@@ -174,8 +173,8 @@ export default function ModalRegistrarPagamentoConta({ aberto, onFechar, conta, 
       queryClient.invalidateQueries({ queryKey: ["dfc-saldo"] });
       queryClient.invalidateQueries({ queryKey: ["saldoInicial"] });
       queryClient.invalidateQueries({ queryKey: ["saldo-inicial-fontes"] });
-      // Evento global para garantir atualização do card Comparação
       window.dispatchEvent(new CustomEvent('pagamento-registrado', { detail: { workshopId, mes } }));
+      window.dispatchEvent(new CustomEvent('liquidacao-registrada', { detail: { workshopId, mes } }));
       toast.success("Pagamento registrado!");
       onSuccess?.();
       onFechar();

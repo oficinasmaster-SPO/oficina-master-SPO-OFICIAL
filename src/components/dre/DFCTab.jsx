@@ -606,11 +606,22 @@ export default function DFCTab({ workshopId, mes }) {
 
     // Event listener para cross-tab sync
     const handleDREChange = () => refetchDRE();
+    const handleLiquidacao = () => {
+      refetchDRE();
+      queryClient.invalidateQueries({ queryKey: ["dfc-manuais", workshopId, mes] });
+      queryClient.invalidateQueries({ queryKey: ["dfc-saldo", workshopId, mes] });
+    };
     window.addEventListener('dre-lancamento-criado', handleDREChange);
+    window.addEventListener('liquidacao-registrada', handleLiquidacao);
+    window.addEventListener('pagamento-registrado', handleLiquidacao);
+    window.addEventListener('recebimento-registrado', handleLiquidacao);
 
     return () => {
       unsubscribe();
       window.removeEventListener('dre-lancamento-criado', handleDREChange);
+      window.removeEventListener('liquidacao-registrada', handleLiquidacao);
+      window.removeEventListener('pagamento-registrado', handleLiquidacao);
+      window.removeEventListener('recebimento-registrado', handleLiquidacao);
     };
   }, [workshopId, mes, refetchDRE]);
 

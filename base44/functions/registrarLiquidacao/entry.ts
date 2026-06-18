@@ -147,8 +147,7 @@ Deno.serve(async (req) => {
       grupo: 'operacional',
       descricao: `${tipo === 'recebimento' ? 'Recebimento' : 'Pagamento'} - ${conta.cliente_nome || conta.fornecedor_nome}`,
       valor: valor_liquidacao,
-      fonte_saida: tipo === 'pagamento' ? bancoSelecionado : null,
-      fonte_entrada: tipo === 'recebimento' ? bancoSelecionado : null,
+      fonte_saida: bancoSelecionado || null,
     });
 
     // 5. Atualizar saldo inicial da fonte selecionada
