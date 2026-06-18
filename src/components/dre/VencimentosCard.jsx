@@ -45,8 +45,8 @@ export default function VencimentosCard({ workshopId, mes }) {
   if (total === 0) return null;
 
   return (
-    <Card className="border-2 border-amber-200 bg-amber-50">
-      <CardContent className="p7 pt-1 pb-">
+    <Card className="border-2 border-amber-200 bg-amber-50 mx-1">
+      <CardContent className="p7 pt-1 pb- my-2 mx-6">
         <p className="text-sm font-semibold text-amber-800 mb-3">📅 Vencimentos DFC</p>
         <div className="space-y-2">
           {vencidos.length > 0 &&
