@@ -59,7 +59,9 @@ export function useSyncData() {
         return { success: false, requiresConfirmation: true, ...result.data };
       }
 
-      toast.success('Metas atualizadas com valores do DRE');
+      if (result.data?.updated) {
+        toast.success('Metas atualizadas com valores do DRE');
+      }
       return { success: true, requiresConfirmation: false, ...result.data };
     } catch (error) {
       const errorMsg = error.response?.data?.error || error.message;
@@ -105,7 +107,9 @@ export function useSyncData() {
         month
       });
 
-      toast.success('DRE atualizado com receitas do mês');
+      if (result.data?.updated) {
+        toast.success('DRE atualizado com receitas do mês');
+      }
       return { success: true, ...result.data };
     } catch (error) {
       const errorMsg = error.response?.data?.error || error.message;
