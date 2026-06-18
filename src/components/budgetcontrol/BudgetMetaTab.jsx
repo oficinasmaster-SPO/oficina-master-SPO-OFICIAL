@@ -129,7 +129,7 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
 
   // Buscar lançamentos do DRE para comparação
   // LIMIT 500 para evitar truncamento silencioso do default 50
-  const { data: lancamentos = [], refetch: refetchLancamentos } = useQuery({
+  const { data: lancamentos = [] } = useQuery({
     queryKey: ["dre-lancamentos", workshopId, mes],
     queryFn: async () => {
       if (!workshopId) return [];
@@ -143,19 +143,18 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
     staleTime: 0,
   });
 
-  // Buscar ContaReceber e ContaPagar para cruzar realizado via dre_lancamento_id
-  // LIMIT 500 para evitar truncamento silencioso do default 50
-  const { data: contasReceber = [], refetch: refetchContasReceber } = useQuery({
-    queryKey: ["contas-receber-budget", workshopId],
+  // Buscar ContaReceber e ContaPagar filtrados pelo mês para cruzar realizado via dre_lancamento_id
+  const { data: contasReceber = [] } = useQuery({
+    queryKey: ["contas-receber-budget", workshopId, mes],
     queryFn: () => base44.entities.ContaReceber.filter({ workshop_id: workshopId }, "-created_date", 500),
-    enabled: !!workshopId,
+    enabled: !!workshopId && !!mes,
     staleTime: 0,
   });
 
-  const { data: contasPagar = [], refetch: refetchContasPagar } = useQuery({
-    queryKey: ["contas-pagar-budget", workshopId],
+  const { data: contasPagar = [] } = useQuery({
+    queryKey: ["contas-pagar-budget", workshopId, mes],
     queryFn: () => base44.entities.ContaPagar.filter({ workshop_id: workshopId }, "-created_date", 500),
-    enabled: !!workshopId,
+    enabled: !!workshopId && !!mes,
     staleTime: 0,
   });
 
@@ -169,57 +168,55 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
     [contasPagar]
   );
 
-  // refetchLiquidacoes mantido como alias para compatibilidade com useEffect existente
-  const refetchLiquidacoes = useCallback(() => { refetchContasReceber(); refetchContasPagar(); }, [refetchContasReceber, refetchContasPagar]);
+  const invalidateAll = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["dre-lancamentos", workshopId, mes] });
+    queryClient.invalidateQueries({ queryKey: ["contas-receber-budget", workshopId, mes] });
+    queryClient.invalidateQueries({ queryKey: ["contas-pagar-budget", workshopId, mes] });
+    queryClient.invalidateQueries({ queryKey: ["budget-metas", workshopId, mes] });
+  }, [queryClient, workshopId, mes]);
 
-  // Real-time subscription: atualizar quando novo DRELancamento ou Liquidação é criado
+  // Real-time subscription: atualizar quando DRELancamento, ContaPagar ou ContaReceber mudar
   useEffect(() => {
     if (!workshopId || !mes) return;
 
+    const pulse = () => { setSyncPulse(true); setTimeout(() => setSyncPulse(false), 1500); };
+
     const unsubscribeDRE = base44.entities.DRELancamento.subscribe((event) => {
       if (event.data?.workshop_id === workshopId && event.data?.mes === mes) {
-        if (event.type === 'create' || event.type === 'delete' || event.type === 'update') {
-          setSyncPulse(true);
-          refetchLancamentos();
-          setTimeout(() => setSyncPulse(false), 1500);
-        }
+        pulse();
+        queryClient.invalidateQueries({ queryKey: ["dre-lancamentos", workshopId, mes] });
       }
     });
 
-    const unsubscribeLiq = base44.entities.ContaPagar.subscribe((event) => {
+    const unsubscribePagar = base44.entities.ContaPagar.subscribe((event) => {
       if (event.data?.workshop_id === workshopId) {
-        setSyncPulse(true);
-        queryClient.invalidateQueries({ queryKey: ["contas-pagar-budget", workshopId] });
-        queryClient.invalidateQueries({ queryKey: ["dre-lancamentos", workshopId, mes] });
-        setTimeout(() => setSyncPulse(false), 1500);
+        pulse();
+        queryClient.invalidateQueries({ queryKey: ["contas-pagar-budget", workshopId, mes] });
       }
     });
 
     const unsubscribeReceber = base44.entities.ContaReceber.subscribe((event) => {
       if (event.data?.workshop_id === workshopId) {
-        setSyncPulse(true);
-        queryClient.invalidateQueries({ queryKey: ["contas-receber-budget", workshopId] });
-        queryClient.invalidateQueries({ queryKey: ["dre-lancamentos", workshopId, mes] });
-        setTimeout(() => setSyncPulse(false), 1500);
+        pulse();
+        queryClient.invalidateQueries({ queryKey: ["contas-receber-budget", workshopId, mes] });
       }
     });
 
     const handleDREChange = (e) => {
       if (e.detail?.workshop_id === workshopId && e.detail?.mes === mes) {
-        setSyncPulse(true);
-        refetchLancamentos();
-        setTimeout(() => setSyncPulse(false), 1500);
+        pulse();
+        queryClient.invalidateQueries({ queryKey: ["dre-lancamentos", workshopId, mes] });
       }
     };
     window.addEventListener('dre-lancamento-criado', handleDREChange);
 
     return () => {
       unsubscribeDRE();
-      unsubscribeLiq();
+      unsubscribePagar();
       unsubscribeReceber();
       window.removeEventListener('dre-lancamento-criado', handleDREChange);
     };
-  }, [workshopId, mes, refetchLancamentos, refetchLiquidacoes]);
+  }, [workshopId, mes, queryClient]);
 
   // Criar/Atualizar meta
   const saveMutation = useMutation({
@@ -237,7 +234,7 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["budget-metas", workshopId, mes] });
+      invalidateAll();
       toast.success(editingId ? "Meta atualizada!" : "Meta criada!");
       resetForm();
     },
@@ -252,7 +249,7 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
       return await base44.entities.BudgetMeta.delete(id);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["budget-metas", workshopId, mes] });
+      invalidateAll();
       toast.success("Meta deletada!");
     },
     onError: () => {
