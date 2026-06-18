@@ -636,19 +636,28 @@ export default function DRETCMP2() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div>
                     <Label>Técnicos Produtivos</Label>
-                    <Input
-                      type="number"
-                      min="1"
+                    <input
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                       value={formData.productive_technicians}
-                      onChange={(e) => setFormData({ ...formData, productive_technicians: parseInt(e.target.value) || 1 })}
+                      onChange={(e) => {
+                        const v = e.target.value.replace(/\D/g, '');
+                        setFormData({ ...formData, productive_technicians: parseInt(v) || 1 });
+                      }}
                     />
                   </div>
                   <div>
                     <Label>Horas Disponíveis/Mês (por técnico)</Label>
-                    <Input
-                      type="number"
+                    <input
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                       value={formData.monthly_hours}
-                      onChange={(e) => setFormData({ ...formData, monthly_hours: parseFloat(e.target.value) || 219 })}
+                      onChange={(e) => {
+                        const v = e.target.value.replace(/\D/g, '');
+                        setFormData({ ...formData, monthly_hours: parseInt(v) || 219 });
+                      }}
                     />
                   </div>
                 </div>
@@ -680,9 +689,15 @@ export default function DRETCMP2() {
                   </div>
                 </div>
 
-                <div className="mt-4 p-4 bg-green-50 rounded-lg">
-                  <p className="text-sm text-green-700">Receita Total</p>
-                  <p className="text-3xl font-bold text-green-900">{formatCurrency(calculated.total_revenue)}</p>
+                <div className="mt-4 p-4 bg-green-50 rounded-lg flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-green-700">Receita Total</p>
+                    <p className="text-3xl font-bold text-green-900">{formatCurrency(calculated.total_revenue)}</p>
+                  </div>
+                  <Button onClick={() => saveMutation.mutate(formData)} disabled={saveMutation.isPending} className="bg-green-600 hover:bg-green-700">
+                    {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                    Salvar DRE
+                  </Button>
                 </div>
               </CardContent>
             </Card>
