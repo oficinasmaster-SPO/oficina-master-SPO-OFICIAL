@@ -150,20 +150,6 @@ export default function ModalRegistrarRecebimento({ aberto, onFechar, conta, wor
         fonte_selecionada: fonteDestino || undefined,
       });
 
-      // Gravar histórico de alteração
-      const user = await base44.auth.me();
-      const historicoAtual = conta.historico_alteracoes || [];
-      const fmt2 = (v) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v || 0);
-      await base44.entities.ContaReceber.update(conta.id, {
-        historico_alteracoes: [...historicoAtual, {
-          tipo: "recebimento_registrado",
-          usuario_nome: user?.full_name || user?.email || "—",
-          usuario_email: user?.email || "",
-          data_hora: new Date().toISOString(),
-          detalhes: `Recebimento de ${fmt2(valor)} via ${formaPagamento}${desconto > 0 ? `, desconto ${fmt2(desconto)}` : ""}${juros > 0 ? `, juros ${fmt2(juros)}` : ""}`,
-        }],
-      });
-
       queryClient.invalidateQueries({ queryKey: ["contas-pagar"] });
       queryClient.invalidateQueries({ queryKey: ["contas-receber"] });
       queryClient.invalidateQueries({ queryKey: ["dre-lancamentos"] });
