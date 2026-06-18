@@ -142,6 +142,8 @@ export default function ModalRegistrarRecebimento({ aberto, onFechar, conta, wor
       queryClient.invalidateQueries({ queryKey: ["contas-receber-budget", workshopId] });
       queryClient.invalidateQueries({ queryKey: ["liquidacoes", workshopId] });
       queryClient.invalidateQueries({ queryKey: ["dfc-manuais", workshopId] });
+      queryClient.invalidateQueries({ queryKey: ["dfc-saldo", workshopId] });
+      queryClient.invalidateQueries({ queryKey: ["saldoInicial", workshopId] });
       queryClient.invalidateQueries({ queryKey: ["saldo-inicial-fontes", workshopId] });
       toast.success("Recebimento registrado!");
       onSuccess?.();
