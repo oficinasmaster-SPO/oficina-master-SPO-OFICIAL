@@ -10,11 +10,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import {
   ChevronDown, ChevronRight, Plus, Trash2, Pencil, Wallet, Eye,
-  TrendingUp, TrendingDown, Building2, Landmark, Loader2
-} from "lucide-react";
+  TrendingUp, TrendingDown, Building2, Landmark, Loader2 } from
+"lucide-react";
 import {
-  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell, ReferenceLine, Legend
-} from "recharts";
+  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell, ReferenceLine, Legend } from
+"recharts";
 import { toast } from "sonner";
 import { mapDREtoDFC } from "./mapDREtoDFC";
 import ProjecaoCaixaView from "./ProjecaoCaixaView";
@@ -26,7 +26,7 @@ import ModalLiquidacaoDRE from "../dfc/ModalLiquidacaoDRE";
 
 // ─── Formatação ────────────────────────────────────────────────────
 const fmt = (v) =>
-  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v || 0);
+new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v || 0);
 
 // ─── Tooltip Waterfall ─────────────────────────────────────────────
 function WaterfallTooltip({ active, payload }) {
@@ -38,22 +38,22 @@ function WaterfallTooltip({ active, payload }) {
       <p className={`font-bold ${d.valor >= 0 ? "text-green-600" : "text-red-600"}`}>
         {d.valor >= 0 ? "+" : ""}{fmt(d.valor)}
       </p>
-      {d.saldoApos != null && (
-        <p className="text-gray-500 text-xs mt-1">Saldo após: {fmt(d.saldoApos)}</p>
-      )}
-    </div>
-  );
+      {d.saldoApos != null &&
+      <p className="text-gray-500 text-xs mt-1">Saldo após: {fmt(d.saldoApos)}</p>
+      }
+    </div>);
+
 }
 
 // ─── Gráfico Waterfall ─────────────────────────────────────────────
 function GraficoWaterfall({ saldoInicial, fluxoOp, fluxoInv, fluxoFin, saldoFinal }) {
   const barras = [
-    { label: "Saldo Inicial", valor: saldoInicial, tipo: "saldo" },
-    { label: "Operacional",   valor: fluxoOp,      tipo: fluxoOp  >= 0 ? "positivo" : "negativo" },
-    { label: "Investimento",  valor: fluxoInv,     tipo: fluxoInv >= 0 ? "positivo" : "negativo" },
-    { label: "Financiamento", valor: fluxoFin,     tipo: fluxoFin >= 0 ? "positivo" : "negativo" },
-    { label: "Saldo Final",   valor: saldoFinal,   tipo: "saldo" },
-  ];
+  { label: "Saldo Inicial", valor: saldoInicial, tipo: "saldo" },
+  { label: "Operacional", valor: fluxoOp, tipo: fluxoOp >= 0 ? "positivo" : "negativo" },
+  { label: "Investimento", valor: fluxoInv, tipo: fluxoInv >= 0 ? "positivo" : "negativo" },
+  { label: "Financiamento", valor: fluxoFin, tipo: fluxoFin >= 0 ? "positivo" : "negativo" },
+  { label: "Saldo Final", valor: saldoFinal, tipo: "saldo" }];
+
 
   let acumulado = 0;
   const dados = barras.map((b, i) => {
@@ -77,27 +77,27 @@ function GraficoWaterfall({ saldoInicial, fluxoOp, fluxoInv, fluxoFin, saldoFina
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={dados} margin={{ top: 10, right: 20, left: 10, bottom: 5 }}>
           <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-          <YAxis tickFormatter={v => fmt(v)} tick={{ fontSize: 10 }} width={90} />
+          <YAxis tickFormatter={(v) => fmt(v)} tick={{ fontSize: 10 }} width={90} />
           <Tooltip content={<WaterfallTooltip />} />
           <ReferenceLine y={0} stroke="#9ca3af" strokeWidth={1} />
           <Bar dataKey="base" stackId="w" fill="transparent" />
           <Bar dataKey="altura" stackId="w" radius={[4, 4, 0, 0]}>
-            {dados.map((d, i) => (
-              <Cell key={i} fill={cores[d.tipo]} />
-            ))}
+            {dados.map((d, i) =>
+            <Cell key={i} fill={cores[d.tipo]} />
+            )}
           </Bar>
         </BarChart>
       </ResponsiveContainer>
-    </div>
-  );
+    </div>);
+
 }
 
 // ─── Modal CRUD lançamento manual ─────────────────────────────────
 function ModalLancamento({ aberto, onFechar, onSalvar, isSaving, lancamentoEdicao, grupoInicial }) {
-  const [form, setForm] = useState({ 
-    grupo: "operacional", 
-    tipo: "entrada", 
-    descricao: "", 
+  const [form, setForm] = useState({
+    grupo: "operacional",
+    tipo: "entrada",
+    descricao: "",
     valor: "",
     fonte_saida: ""
   });
@@ -113,10 +113,10 @@ function ModalLancamento({ aberto, onFechar, onSalvar, isSaving, lancamentoEdica
           fonte_saida: lancamentoEdicao.fonte_saida || ""
         });
       } else {
-        setForm({ 
-          grupo: grupoInicial || "operacional", 
-          tipo: "entrada", 
-          descricao: "", 
+        setForm({
+          grupo: grupoInicial || "operacional",
+          tipo: "entrada",
+          descricao: "",
           valor: "",
           fonte_saida: ""
         });
@@ -138,7 +138,7 @@ function ModalLancamento({ aberto, onFechar, onSalvar, isSaving, lancamentoEdica
         <div className="space-y-4 py-2">
           <div>
             <Label>Grupo</Label>
-            <Select value={form.grupo || ""} onValueChange={v => setForm(f => ({ ...f, grupo: v }))}>
+            <Select value={form.grupo || ""} onValueChange={(v) => setForm((f) => ({ ...f, grupo: v }))}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione o grupo" />
               </SelectTrigger>
@@ -151,7 +151,7 @@ function ModalLancamento({ aberto, onFechar, onSalvar, isSaving, lancamentoEdica
           </div>
           <div>
             <Label>Tipo</Label>
-            <Select value={form.tipo || "entrada"} onValueChange={v => setForm(f => ({ ...f, tipo: v }))}>
+            <Select value={form.tipo || "entrada"} onValueChange={(v) => setForm((f) => ({ ...f, tipo: v }))}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione o tipo" />
               </SelectTrigger>
@@ -166,8 +166,8 @@ function ModalLancamento({ aberto, onFechar, onSalvar, isSaving, lancamentoEdica
             <Input
               placeholder="Ex: Empréstimo recebido, Recebimento parcelado..."
               value={form.descricao}
-              onChange={e => setForm(f => ({ ...f, descricao: e.target.value }))}
-            />
+              onChange={(e) => setForm((f) => ({ ...f, descricao: e.target.value }))} />
+            
           </div>
           <div>
             <Label>Valor (R$)</Label>
@@ -177,18 +177,18 @@ function ModalLancamento({ aberto, onFechar, onSalvar, isSaving, lancamentoEdica
               step="0.01"
               placeholder="0,00"
               value={form.valor}
-              onChange={e => setForm(f => ({ ...f, valor: e.target.value }))}
-            />
+              onChange={(e) => setForm((f) => ({ ...f, valor: e.target.value }))} />
+            
           </div>
           
           {/* Seletor de fonte de saída (apenas para saídas) */}
-          {form.tipo === "saida" && (
-            <FonteSaidaSelector
-              value={form.fonte_saida}
-              onChange={(fonte) => setForm(f => ({ ...f, fonte_saida: fonte }))}
-              disabled={false}
-            />
-          )}
+          {form.tipo === "saida" &&
+          <FonteSaidaSelector
+            value={form.fonte_saida}
+            onChange={(fonte) => setForm((f) => ({ ...f, fonte_saida: fonte }))}
+            disabled={false} />
+
+          }
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onFechar}>Cancelar</Button>
@@ -198,8 +198,8 @@ function ModalLancamento({ aberto, onFechar, onSalvar, isSaving, lancamentoEdica
           </Button>
         </DialogFooter>
       </DialogContent>
-    </Dialog>
-  );
+    </Dialog>);
+
 }
 
 // ─── Formatar data curta ───────────────────────────────────────────
@@ -219,8 +219,8 @@ function StatusPagamento({ item }) {
     return (
       <span className="text-[10px] font-medium text-emerald-600 bg-emerald-50 border border-emerald-200 rounded px-1.5 py-0.5 shrink-0">
         ✅ pago {fmtData(item.data_pagamento)}
-      </span>
-    );
+      </span>);
+
   }
 
   // 🟡 Parcialmente pago
@@ -228,8 +228,8 @@ function StatusPagamento({ item }) {
     return (
       <span className="text-[10px] font-medium text-yellow-700 bg-yellow-50 border border-yellow-300 rounded px-1.5 py-0.5 shrink-0">
         ◑ parcial {item.data_vencimento ? `· vence ${fmtData(item.data_vencimento)}` : ""}
-      </span>
-    );
+      </span>);
+
   }
 
   // ⚠️ Vencido ou 🕐 A vencer
@@ -238,8 +238,8 @@ function StatusPagamento({ item }) {
     return (
       <span className={`text-[10px] font-medium rounded px-1.5 py-0.5 shrink-0 ${vencido ? "text-red-600 bg-red-50 border border-red-200" : "text-amber-600 bg-amber-50 border border-amber-200"}`}>
         {vencido ? "⚠️" : "🕐"} vence {fmtData(item.data_vencimento)}
-      </span>
-    );
+      </span>);
+
   }
   return null;
 }
@@ -263,7 +263,7 @@ function ModalMarcarPagamento({ item, onFechar, onSalvo }) {
     try {
       await base44.entities.DRELancamento.update(item.id, {
         data_vencimento: dataVencimento || null,
-        data_pagamento:  dataPagamento  || null,
+        data_pagamento: dataPagamento || null
       });
       toast.success("Datas atualizadas!");
       onSalvo(); // onSalvo já fecha o modal (invalida query + setItemPagamento(null))
@@ -293,8 +293,8 @@ function ModalMarcarPagamento({ item, onFechar, onSalvo }) {
               type="date"
               className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 mt-1 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
               value={dataVencimento}
-              onChange={e => setDataVencimento(e.target.value)}
-            />
+              onChange={(e) => setDataVencimento(e.target.value)} />
+            
           </div>
           <div>
             <Label className="text-xs">Data de Pagamento <span className="text-gray-400">(preencha quando pago)</span></Label>
@@ -302,16 +302,16 @@ function ModalMarcarPagamento({ item, onFechar, onSalvo }) {
               type="date"
               className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 mt-1 bg-white focus:outline-none focus:ring-2 focus:ring-green-300"
               value={dataPagamento}
-              onChange={e => setDataPagamento(e.target.value)}
-            />
-            {dataPagamento && (
-              <button
-                onClick={() => setDataPagamento("")}
-                className="text-xs text-red-500 hover:text-red-700 mt-1"
-              >
+              onChange={(e) => setDataPagamento(e.target.value)} />
+            
+            {dataPagamento &&
+            <button
+              onClick={() => setDataPagamento("")}
+              className="text-xs text-red-500 hover:text-red-700 mt-1">
+              
                 Limpar (marcar como pendente)
               </button>
-            )}
+            }
           </div>
         </div>
         <DialogFooter>
@@ -322,8 +322,8 @@ function ModalMarcarPagamento({ item, onFechar, onSalvo }) {
           </Button>
         </DialogFooter>
       </DialogContent>
-    </Dialog>
-  );
+    </Dialog>);
+
 }
 
 // ─── Linha de item ─────────────────────────────────────────────────
@@ -338,15 +338,15 @@ function LinhaItem({ item, onDelete, onEdit, onMarcarPagamento }) {
   return (
     <div
       className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-gray-50 group cursor-pointer"
-      onClick={handleRowClick}
-    >
+      onClick={handleRowClick}>
+      
       <div className="flex items-center gap-2 flex-1 min-w-0">
         <Badge
           variant="outline"
-          className={`text-[10px] shrink-0 ${item.origem === "manual"
-            ? "border-blue-300 text-blue-600"
-            : "border-gray-300 text-gray-500"}`}
-        >
+          className={`text-[10px] shrink-0 ${item.origem === "manual" ?
+          "border-blue-300 text-blue-600" :
+          "border-gray-300 text-gray-500"}`}>
+          
           {item.origem === "manual" ? "Manual" : "DRE"}
         </Badge>
         <span className="text-sm text-gray-700 truncate">{item.descricao || "—"}</span>
@@ -356,27 +356,27 @@ function LinhaItem({ item, onDelete, onEdit, onMarcarPagamento }) {
         <span className={`text-sm font-semibold mr-2 ${item.tipo === "entrada" ? "text-green-700" : "text-red-600"}`}>
           {item.tipo === "entrada" ? "+" : "-"}{fmt(item.valor)}
         </span>
-        {item.origem === "manual" ? (
-          <>
+        {item.origem === "manual" ?
+        <>
             <button
-              onClick={(e) => { e.stopPropagation(); onEdit(item); }}
-              className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-blue-500 p-0.5"
-            >
+            onClick={(e) => {e.stopPropagation();onEdit(item);}}
+            className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-blue-500 p-0.5">
+            
               <Pencil className="w-3.5 h-3.5" />
             </button>
             <button
-              onClick={(e) => { e.stopPropagation(); onDelete(item); }}
-              className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-500 p-0.5"
-            >
+            onClick={(e) => {e.stopPropagation();onDelete(item);}}
+            className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-500 p-0.5">
+            
               <Trash2 className="w-3.5 h-3.5" />
             </button>
-          </>
-        ) : (
-          <span className="opacity-0 group-hover:opacity-60 text-xs text-gray-400 transition-opacity">📅</span>
-        )}
+          </> :
+
+        <span className="opacity-0 group-hover:opacity-60 text-xs text-gray-400 transition-opacity">📅</span>
+        }
       </div>
-    </div>
-  );
+    </div>);
+
 }
 
 // ─── Seção colapsável ──────────────────────────────────────────────
@@ -390,15 +390,15 @@ function SecaoFluxo({ titulo, icone, cor, itens, fluxo, onAddManual, onDelete, o
     return da.localeCompare(db);
   });
 
-  const entradas = ordenados.filter(i => i.tipo === "entrada");
-  const saidas   = ordenados.filter(i => i.tipo === "saida");
+  const entradas = ordenados.filter((i) => i.tipo === "entrada");
+  const saidas = ordenados.filter((i) => i.tipo === "saida");
 
   return (
     <div className={`border-2 rounded-xl overflow-hidden ${cor.border}`}>
       <button
-        onClick={() => setAberta(a => !a)}
-        className={`w-full flex items-center justify-between px-4 py-3 ${cor.header} text-left`}
-      >
+        onClick={() => setAberta((a) => !a)}
+        className={`w-full flex items-center justify-between px-4 py-3 ${cor.header} text-left`}>
+        
         <div className="flex items-center gap-2 font-semibold text-sm">
           {icone}
           {titulo}
@@ -409,39 +409,39 @@ function SecaoFluxo({ titulo, icone, cor, itens, fluxo, onAddManual, onDelete, o
         {aberta ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
       </button>
 
-      {aberta && (
-        <div className="p-4 space-y-3 bg-white">
-          {entradas.length > 0 && (
-            <div>
+      {aberta &&
+      <div className="p-4 space-y-3 bg-white">
+          {entradas.length > 0 &&
+        <div>
               <p className="text-xs font-semibold text-green-600 uppercase mb-1">Entradas</p>
-              {entradas.map((item, i) => (
-                <LinhaItem key={item.id || i} item={item} onDelete={onDelete} onEdit={onEdit} onMarcarPagamento={onMarcarPagamento} />
-              ))}
-            </div>
+              {entradas.map((item, i) =>
+          <LinhaItem key={item.id || i} item={item} onDelete={onDelete} onEdit={onEdit} onMarcarPagamento={onMarcarPagamento} />
           )}
-          {saidas.length > 0 && (
-            <div>
+            </div>
+        }
+          {saidas.length > 0 &&
+        <div>
               <p className="text-xs font-semibold text-red-600 uppercase mb-1">Saídas</p>
-              {saidas.map((item, i) => (
-                <LinhaItem key={item.id || i} item={item} onDelete={onDelete} onEdit={onEdit} onMarcarPagamento={onMarcarPagamento} />
-              ))}
+              {saidas.map((item, i) =>
+          <LinhaItem key={item.id || i} item={item} onDelete={onDelete} onEdit={onEdit} onMarcarPagamento={onMarcarPagamento} />
+          )}
             </div>
-          )}
-          {itens.length === 0 && (
-            <p className="text-sm text-gray-400 italic text-center py-2">Nenhum lançamento neste grupo</p>
-          )}
+        }
+          {itens.length === 0 &&
+        <p className="text-sm text-gray-400 italic text-center py-2">Nenhum lançamento neste grupo</p>
+        }
           <Button
-            variant="outline"
-            size="sm"
-            onClick={onAddManual}
-            className="w-full border-dashed text-gray-500 hover:text-gray-700 mt-1"
-          >
+          variant="outline"
+          size="sm"
+          onClick={onAddManual}
+          className="w-full border-dashed text-gray-500 hover:text-gray-700 mt-1 hidden">
+          
             <Plus className="w-3 h-3 mr-1" /> Adicionar lançamento manual
           </Button>
         </div>
-      )}
-    </div>
-  );
+      }
+    </div>);
+
 }
 
 // ─── DFC Anual ─────────────────────────────────────────────────────
@@ -450,14 +450,14 @@ function DFCAnualView({ dados, isLoading, ano, fmt }) {
     <div className="flex items-center justify-center py-12">
       <Loader2 className="w-6 h-6 animate-spin text-blue-500 mr-2" />
       <span className="text-gray-500">Carregando DFC anual...</span>
-    </div>
-  );
+    </div>);
+
 
   if (!dados) return (
     <div className="text-center py-12 text-gray-400">
       <p>Nenhum dado de DFC encontrado para {ano}.</p>
-    </div>
-  );
+    </div>);
+
 
   const { meses = [], total_anual = {}, grupos = [] } = dados?.data ?? dados;
 
@@ -466,18 +466,18 @@ function DFCAnualView({ dados, isLoading, ano, fmt }) {
       {/* Cards de totais anuais */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: "Operacional",  value: total_anual.operacional,  cor: "text-blue-600" },
-          { label: "Investimento", value: total_anual.investimento, cor: "text-amber-600" },
-          { label: "Financiamento",value: total_anual.financiamento,cor: "text-purple-600" },
-          { label: "Saldo Final",  value: total_anual.saldo_final,  cor: total_anual.saldo_final >= 0 ? "text-emerald-600" : "text-red-600" },
-        ].map(({ label, value, cor }) => (
-          <Card key={label}>
+        { label: "Operacional", value: total_anual.operacional, cor: "text-blue-600" },
+        { label: "Investimento", value: total_anual.investimento, cor: "text-amber-600" },
+        { label: "Financiamento", value: total_anual.financiamento, cor: "text-purple-600" },
+        { label: "Saldo Final", value: total_anual.saldo_final, cor: total_anual.saldo_final >= 0 ? "text-emerald-600" : "text-red-600" }].
+        map(({ label, value, cor }) =>
+        <Card key={label}>
             <CardContent className="pt-4 pb-3">
               <p className="text-xs text-gray-500">{label}</p>
               <p className={`text-lg font-bold ${cor}`}>{fmt(value)}</p>
             </CardContent>
           </Card>
-        ))}
+        )}
       </div>
 
       {/* Gráfico de barras mensais */}
@@ -487,13 +487,13 @@ function DFCAnualView({ dados, isLoading, ano, fmt }) {
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={meses} margin={{ top: 4, right: 8, left: 8, bottom: 4 }}>
               <XAxis dataKey="mes_nome" tick={{ fontSize: 11 }} />
-              <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => `R$${(v/1000).toFixed(0)}k`} />
+              <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} />
               <Tooltip formatter={(v) => fmt(v)} />
               <ReferenceLine y={0} stroke="#9ca3af" strokeDasharray="3 3" />
-              <Bar dataKey="saldo_final" name="Saldo" radius={[3,3,0,0]}>
-                {meses.map((entry, index) => (
-                  <Cell key={index} fill={entry.saldo_final >= 0 ? "#10b981" : "#ef4444"} />
-                ))}
+              <Bar dataKey="saldo_final" name="Saldo" radius={[3, 3, 0, 0]}>
+                {meses.map((entry, index) =>
+                <Cell key={index} fill={entry.saldo_final >= 0 ? "#10b981" : "#ef4444"} />
+                )}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
@@ -514,26 +514,26 @@ function DFCAnualView({ dados, isLoading, ano, fmt }) {
               </tr>
             </thead>
             <tbody>
-              {grupos.map((g) => (
-                <tr key={g.grupo} className="border-b last:border-0">
+              {grupos.map((g) =>
+              <tr key={g.grupo} className="border-b last:border-0">
                   <td className="py-2 font-medium capitalize">{g.label}</td>
                   <td className="py-2 text-right text-emerald-600">{fmt(g.entradas)}</td>
                   <td className="py-2 text-right text-red-500">{fmt(g.saidas)}</td>
                   <td className={`py-2 text-right font-bold ${g.total >= 0 ? "text-emerald-700" : "text-red-600"}`}>{fmt(g.total)}</td>
                 </tr>
-              ))}
+              )}
               <tr className="bg-gray-50 font-bold text-sm">
                 <td className="py-2">Total Anual</td>
-                <td className="py-2 text-right text-emerald-600">{fmt(grupos.reduce((s,g) => s + g.entradas, 0))}</td>
-                <td className="py-2 text-right text-red-500">{fmt(grupos.reduce((s,g) => s + g.saidas, 0))}</td>
+                <td className="py-2 text-right text-emerald-600">{fmt(grupos.reduce((s, g) => s + g.entradas, 0))}</td>
+                <td className="py-2 text-right text-red-500">{fmt(grupos.reduce((s, g) => s + g.saidas, 0))}</td>
                 <td className={`py-2 text-right ${total_anual.saldo_final >= 0 ? "text-emerald-700" : "text-red-600"}`}>{fmt(total_anual.saldo_final)}</td>
               </tr>
             </tbody>
           </table>
         </CardContent>
       </Card>
-    </div>
-  );
+    </div>);
+
 }
 
 // ─── Componente principal ──────────────────────────────────────────
@@ -548,7 +548,7 @@ export default function DFCTab({ workshopId, mes }) {
   const [modalSaldoDetalhadoAberto, setModalSaldoDetalhadoAberto] = useState(false);
   const [periodo, setPeriodo] = useState("mensal"); // mensal | anual
   const [showContasTab, setShowContasTab] = useState(false);
-  
+
   const mesAtual = mes ? mes.split('-')[1] : "01";
   const anoAtual = mes ? parseInt(mes.split('-')[0]) : new Date().getFullYear();
 
@@ -566,12 +566,12 @@ export default function DFCTab({ workshopId, mes }) {
       const dres = await base44.entities.DRELancamento.filter({ workshop_id: workshopId, mes }, "-created_date", 500);
       // Cruzar com ContaReceber/ContaPagar para pegar data_pagamento real
       const [contasReceber, contasPagar] = await Promise.all([
-        base44.entities.ContaReceber.filter({ workshop_id: workshopId }, "-created_date", 500),
-        base44.entities.ContaPagar.filter({ workshop_id: workshopId }, "-created_date", 500),
-      ]);
-      const mapaReceber = Object.fromEntries((contasReceber || []).map(c => [c.dre_lancamento_id, c]));
-      const mapaPagar   = Object.fromEntries((contasPagar   || []).map(c => [c.dre_lancamento_id, c]));
-      return dres.map(d => {
+      base44.entities.ContaReceber.filter({ workshop_id: workshopId }, "-created_date", 500),
+      base44.entities.ContaPagar.filter({ workshop_id: workshopId }, "-created_date", 500)]
+      );
+      const mapaReceber = Object.fromEntries((contasReceber || []).map((c) => [c.dre_lancamento_id, c]));
+      const mapaPagar = Object.fromEntries((contasPagar || []).map((c) => [c.dre_lancamento_id, c]));
+      return dres.map((d) => {
         const contaR = mapaReceber[d.id];
         const contaP = mapaPagar[d.id];
         const conta = contaR || contaP;
@@ -582,14 +582,14 @@ export default function DFCTab({ workshopId, mes }) {
         return {
           ...d,
           status_conta: conta.status,
-          data_pagamento: conta.status === "pago" || conta.status === "parcial"
-            ? dataPagamento
-            : d.data_pagamento,
+          data_pagamento: conta.status === "pago" || conta.status === "parcial" ?
+          dataPagamento :
+          d.data_pagamento
         };
       });
     },
     enabled: !!workshopId && !!mes,
-    staleTime: 0,
+    staleTime: 0
   });
 
   // BUG FIX #1: Real-time subscription para escutar novos lançamentos do DRE Avançado
@@ -629,14 +629,14 @@ export default function DFCTab({ workshopId, mes }) {
   const { data: manuaisDB = [], isLoading: isManuaisLoading } = useQuery({
     queryKey: ["dfc-manuais", workshopId, mes],
     queryFn: () => base44.entities.DFCLancamento.filter({ workshop_id: workshopId, mes, origem: "manual" }),
-    enabled: !!workshopId && !!mes,
+    enabled: !!workshopId && !!mes
   });
 
   // ── Buscar saldo inicial salvo (Fase 5) ────────────────────────
   const { data: saldoInicialDB = [] } = useQuery({
     queryKey: ["dfc-saldo", workshopId, mes],
     queryFn: () => base44.entities.DFCLancamento.filter({ workshop_id: workshopId, mes, grupo: "saldo_inicial" }),
-    enabled: !!workshopId && !!mes,
+    enabled: !!workshopId && !!mes
   });
 
   // ── DFC Anual ──
@@ -644,7 +644,7 @@ export default function DFCTab({ workshopId, mes }) {
     queryKey: ["dfc-anual", workshopId, ano],
     queryFn: () => base44.functions.invoke('getDFCDataAnual', { workshop_id: workshopId, ano: String(ano) }),
     enabled: periodo === "anual" && !!workshopId && !!ano,
-    staleTime: 60_000,
+    staleTime: 60_000
   });
 
   const saldoInicialRecord = saldoInicialDB[0] || null;
@@ -663,7 +663,7 @@ export default function DFCTab({ workshopId, mes }) {
       toast.success("Lançamento adicionado!");
       setModalAberto(false);
       setLancamentoEdicao(null);
-    },
+    }
   });
 
   const editarMutation = useMutation({
@@ -674,7 +674,7 @@ export default function DFCTab({ workshopId, mes }) {
       toast.success("Lançamento atualizado!");
       setModalAberto(false);
       setLancamentoEdicao(null);
-    },
+    }
   });
 
   const deletarMutation = useMutation({
@@ -683,7 +683,7 @@ export default function DFCTab({ workshopId, mes }) {
       queryClient.invalidateQueries({ queryKey: ["dfc-manuais", workshopId, mes] });
       queryClient.invalidateQueries({ queryKey: ["budget-metas", workshopId, mes] });
       toast.success("Lançamento removido!");
-    },
+    }
   });
 
   const salvarSaldoMutation = useMutation({
@@ -691,10 +691,10 @@ export default function DFCTab({ workshopId, mes }) {
       // Quando zerado pelo campo simples, limpa também os detalhes para manter consistência
       const detalhesLimpos = valor === 0 ? { bancos: [], maquinas_cartao: [], caixa: 0 } : undefined;
       if (saldoInicialRecord) {
-        return base44.entities.DFCLancamento.update(saldoInicialRecord.id, { 
+        return base44.entities.DFCLancamento.update(saldoInicialRecord.id, {
           saldo_inicial: valor,
           valor: valor,
-          ...(detalhesLimpos && { detalhes: detalhesLimpos }),
+          ...(detalhesLimpos && { detalhes: detalhesLimpos })
         });
       }
       return base44.entities.DFCLancamento.create({
@@ -705,37 +705,37 @@ export default function DFCTab({ workshopId, mes }) {
         descricao: "Saldo inicial do mês",
         valor: valor,
         origem: "manual",
-        saldo_inicial: valor,
+        saldo_inicial: valor
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["dfc-saldo", workshopId, mes] });
       queryClient.invalidateQueries({ queryKey: ["saldoInicial", workshopId, mes] });
       toast.success("Saldo inicial salvo!");
-    },
+    }
   });
 
   // ── Cálculos em tempo real (Fase 5) ───────────────────────────
   const dreParaDFC = useMemo(() => mapDREtoDFC(lancamentosDRE), [lancamentosDRE]);
-  const manuais    = useMemo(() => manuaisDB.map(m => ({ ...m, origem: "manual" })), [manuaisDB]);
+  const manuais = useMemo(() => manuaisDB.map((m) => ({ ...m, origem: "manual" })), [manuaisDB]);
   const todosItens = useMemo(() => [...dreParaDFC, ...manuais], [dreParaDFC, manuais]);
 
   // Cálculos memoizados por grupo para evitar re-cálculo desnecessário
   const itensPorGrupo = useMemo(() => ({
-    operacional:  todosItens.filter(i => i.grupo === "operacional"),
-    investimento: todosItens.filter(i => i.grupo === "investimento"),
-    financiamento: todosItens.filter(i => i.grupo === "financiamento"),
+    operacional: todosItens.filter((i) => i.grupo === "operacional"),
+    investimento: todosItens.filter((i) => i.grupo === "investimento"),
+    financiamento: todosItens.filter((i) => i.grupo === "financiamento")
   }), [todosItens]);
 
   const calcFluxo = (itens) =>
-    itens.reduce((s, i) => s + (i.tipo === "entrada" ? i.valor : -i.valor), 0);
+  itens.reduce((s, i) => s + (i.tipo === "entrada" ? i.valor : -i.valor), 0);
 
   // BUG FIX #5: cálculos usam o valor confirmado do banco, não o input local (que pode estar sendo editado)
   // O input local só é sincronizado para exibição; o valor real é saldoInicialSalvo
   const saldoInicial = saldoInicialSalvo;
-  const fluxoOp  = useMemo(() => calcFluxo(itensPorGrupo.operacional),  [itensPorGrupo.operacional]);
+  const fluxoOp = useMemo(() => calcFluxo(itensPorGrupo.operacional), [itensPorGrupo.operacional]);
   const fluxoInv = useMemo(() => calcFluxo(itensPorGrupo.investimento), [itensPorGrupo.investimento]);
-  const fluxoFin = useMemo(() => calcFluxo(itensPorGrupo.financiamento),[itensPorGrupo.financiamento]);
+  const fluxoFin = useMemo(() => calcFluxo(itensPorGrupo.financiamento), [itensPorGrupo.financiamento]);
   const saldoFinal = saldoInicial + fluxoOp + fluxoInv + fluxoFin;
 
   // ── Handlers ──────────────────────────────────────────────────
@@ -747,17 +747,17 @@ export default function DFCTab({ workshopId, mes }) {
 
   const handleSalvarModal = (form) => {
     if (lancamentoEdicao?.id) {
-      editarMutation.mutate({ 
-        id: lancamentoEdicao.id, 
-        data: { 
+      editarMutation.mutate({
+        id: lancamentoEdicao.id,
+        data: {
           ...form,
           // Limpar fonte_saida se for entrada
           fonte_saida: form.tipo === "entrada" ? null : form.fonte_saida
-        } 
+        }
       });
     } else {
-      criarMutation.mutate({ 
-        ...form, 
+      criarMutation.mutate({
+        ...form,
         origem: "manual",
         // Limpar fonte_saida se for entrada
         fonte_saida: form.tipo === "entrada" ? null : form.fonte_saida
@@ -765,7 +765,7 @@ export default function DFCTab({ workshopId, mes }) {
     }
   };
 
-  const handleDelete = (item) => { if (item.id) deletarMutation.mutate(item.id); };
+  const handleDelete = (item) => {if (item.id) deletarMutation.mutate(item.id);};
 
   const isLoading = isDRELoading || isManuaisLoading;
 
@@ -774,8 +774,8 @@ export default function DFCTab({ workshopId, mes }) {
       <div className="flex items-center justify-center py-12">
         <Loader2 className="w-6 h-6 animate-spin text-blue-500 mr-2" />
         <span className="text-gray-500 text-sm">Carregando fluxo de caixa...</span>
-      </div>
-    );
+      </div>);
+
   }
 
   return (
@@ -784,67 +784,67 @@ export default function DFCTab({ workshopId, mes }) {
       <div className="flex gap-1 bg-gray-100 rounded-lg p-1 mb-4">
         <button
           onClick={() => setShowContasTab(false)}
-          className={`text-xs px-3 py-2 rounded-md font-medium transition-all ${!showContasTab ? "bg-white shadow text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
-        >
+          className={`text-xs px-3 py-2 rounded-md font-medium transition-all ${!showContasTab ? "bg-white shadow text-gray-900" : "text-gray-500 hover:text-gray-700"}`}>
+          
           💵 Fluxo de Caixa (DFC)
         </button>
         <button
           onClick={() => setShowContasTab(true)}
-          className={`text-xs px-3 py-2 rounded-md font-medium transition-all ${showContasTab ? "bg-white shadow text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
-        >
+          className={`text-xs px-3 py-2 rounded-md font-medium transition-all ${showContasTab ? "bg-white shadow text-gray-900" : "text-gray-500 hover:text-gray-700"}`}>
+          
           📋 Contas a Receber/Pagar
         </button>
       </div>
 
       {/* VIEW: CONTAS */}
-      {showContasTab && (
-        <ContasReceberPagarTab workshopId={workshopId} mes={mes} />
-      )}
+      {showContasTab &&
+      <ContasReceberPagarTab workshopId={workshopId} mes={mes} />
+      }
 
       {/* VIEW: DFC */}
-      {!showContasTab && (<>
+      {!showContasTab && <>
 
       {/* Filtro de Período — sempre visível */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <FiltroPeriodo
-          mes={mesAtual}
-          ano={anoAtual}
-          periodo={periodo}
-          onMesChange={(novoMes) => {
-            const novaData = `${anoAtual}-${novoMes}`;
-            window.dispatchEvent(new CustomEvent('dfc-mudar-mes', { detail: { mes: novaData } }));
-          }}
-          onAnoChange={(novoAno) => {
-            const novoAnoInt = parseInt(novoAno);
-            setAno(novoAnoInt);
-            // No modo mensal: recompõe o mes completo com novo ano e propaga ao pai
-            if (periodo === "mensal") {
-              const novaData = `${novoAnoInt}-${mesAtual}`;
+            mes={mesAtual}
+            ano={anoAtual}
+            periodo={periodo}
+            onMesChange={(novoMes) => {
+              const novaData = `${anoAtual}-${novoMes}`;
               window.dispatchEvent(new CustomEvent('dfc-mudar-mes', { detail: { mes: novaData } }));
-            }
-          }}
-          onPeriodoChange={(novoPeriodo) => setPeriodo(novoPeriodo)}
-        />
+            }}
+            onAnoChange={(novoAno) => {
+              const novoAnoInt = parseInt(novoAno);
+              setAno(novoAnoInt);
+              // No modo mensal: recompõe o mes completo com novo ano e propaga ao pai
+              if (periodo === "mensal") {
+                const novaData = `${novoAnoInt}-${mesAtual}`;
+                window.dispatchEvent(new CustomEvent('dfc-mudar-mes', { detail: { mes: novaData } }));
+              }
+            }}
+            onPeriodoChange={(novoPeriodo) => setPeriodo(novoPeriodo)} />
+          
       </div>
 
       {/* Modo Anual */}
-      {periodo === "anual" && (
+      {periodo === "anual" &&
         <DFCAnualView dados={dadosAnuaisDFC} isLoading={isLoadingAnual} ano={ano} fmt={fmt} />
-      )}
+        }
 
       {/* Modo Mensal */}
-      {periodo === "mensal" && (<>
+      {periodo === "mensal" && <>
 
       {/* Banner */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-sm text-blue-800">
         <strong>Como funciona:</strong> Dados do <span className="font-semibold">DRE Avançado</span> são importados automaticamente{" "}
         <Badge variant="outline" className="text-[10px] border-gray-300 text-gray-500 mx-1">DRE</Badge>.
         Complemente com o saldo inicial, empréstimos e recebimentos que o DRE não captura.
-        {lancamentosDRE.length === 0 && (
-          <span className="block mt-1 text-amber-700 font-medium">
+        {lancamentosDRE.length === 0 &&
+            <span className="block mt-1 text-amber-700 font-medium">
             ⚠️ Nenhum lançamento no DRE Avançado para {mes}. Preencha a aba "DRE Avançado" primeiro.
           </span>
-        )}
+            }
       </div>
 
       {/* Saldo Inicial + seletor de view */}
@@ -862,12 +862,12 @@ export default function DFCTab({ workshopId, mes }) {
                   {saldoInicialSalvo.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </div>
                 <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setModalSaldoDetalhadoAberto(true)}
-                  className="shrink-0"
-                  title="Detalhar saldo inicial por banco, máquina e caixa"
-                >
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setModalSaldoDetalhadoAberto(true)}
+                      className="shrink-0"
+                      title="Detalhar saldo inicial por banco, máquina e caixa">
+                      
                   <Eye className="w-4 h-4" />
                 </Button>
               </div>
@@ -878,60 +878,60 @@ export default function DFCTab({ workshopId, mes }) {
         {/* Tabs de view */}
         <div className="flex gap-1 bg-gray-100 rounded-lg p-1 shrink-0">
           <button
-            onClick={() => setView("grupos")}
-            className={`text-xs px-3 py-2 rounded-md font-medium transition-all ${view === "grupos" ? "bg-white shadow text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
-          >
+                onClick={() => setView("grupos")}
+                className={`text-xs px-3 py-2 rounded-md font-medium transition-all ${view === "grupos" ? "bg-white shadow text-gray-900" : "text-gray-500 hover:text-gray-700"}`}>
+                
             🗂️ Por Grupo
           </button>
           <button
-            onClick={() => setView("projecao")}
-            className={`text-xs px-3 py-2 rounded-md font-medium transition-all ${view === "projecao" ? "bg-white shadow text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
-          >
+                onClick={() => setView("projecao")}
+                className={`text-xs px-3 py-2 rounded-md font-medium transition-all ${view === "projecao" ? "bg-white shadow text-gray-900" : "text-gray-500 hover:text-gray-700"}`}>
+                
             📅 Projeção
           </button>
         </div>
       </div>
 
       {/* VIEW: PROJEÇÃO */}
-      {view === "projecao" && (
-        <ProjecaoCaixaView todosItens={todosItens} saldoInicial={saldoInicial} onMarcarPagamento={setItemPagamento} />
-      )}
+      {view === "projecao" &&
+          <ProjecaoCaixaView todosItens={todosItens} saldoInicial={saldoInicial} onMarcarPagamento={setItemPagamento} />
+          }
 
       {/* VIEW: POR GRUPO — 3 Seções colapsáveis */}
-      {view === "grupos" && (<>
+      {view === "grupos" && <>
       <SecaoFluxo
-        titulo="Operacional"
-        icone={<Wallet className="w-4 h-4" />}
-        cor={{ border: "border-green-200", header: "bg-green-50 text-green-800" }}
-        itens={itensPorGrupo.operacional}
-        fluxo={fluxoOp}
-        onAddManual={() => abrirModal("operacional")}
-        onDelete={handleDelete}
-        onEdit={(item) => abrirModal("operacional", item)}
-        onMarcarPagamento={setItemPagamento}
-      />
+              titulo="Operacional"
+              icone={<Wallet className="w-4 h-4" />}
+              cor={{ border: "border-green-200", header: "bg-green-50 text-green-800" }}
+              itens={itensPorGrupo.operacional}
+              fluxo={fluxoOp}
+              onAddManual={() => abrirModal("operacional")}
+              onDelete={handleDelete}
+              onEdit={(item) => abrirModal("operacional", item)}
+              onMarcarPagamento={setItemPagamento} />
+            
       <SecaoFluxo
-        titulo="Investimento"
-        icone={<Building2 className="w-4 h-4" />}
-        cor={{ border: "border-blue-200", header: "bg-blue-50 text-blue-800" }}
-        itens={itensPorGrupo.investimento}
-        fluxo={fluxoInv}
-        onAddManual={() => abrirModal("investimento")}
-        onDelete={handleDelete}
-        onEdit={(item) => abrirModal("investimento", item)}
-        onMarcarPagamento={setItemPagamento}
-      />
+              titulo="Investimento"
+              icone={<Building2 className="w-4 h-4" />}
+              cor={{ border: "border-blue-200", header: "bg-blue-50 text-blue-800" }}
+              itens={itensPorGrupo.investimento}
+              fluxo={fluxoInv}
+              onAddManual={() => abrirModal("investimento")}
+              onDelete={handleDelete}
+              onEdit={(item) => abrirModal("investimento", item)}
+              onMarcarPagamento={setItemPagamento} />
+            
       <SecaoFluxo
-        titulo="Financiamento"
-        icone={<Landmark className="w-4 h-4" />}
-        cor={{ border: "border-purple-200", header: "bg-purple-50 text-purple-800" }}
-        itens={itensPorGrupo.financiamento}
-        fluxo={fluxoFin}
-        onAddManual={() => abrirModal("financiamento")}
-        onDelete={handleDelete}
-        onEdit={(item) => abrirModal("financiamento", item)}
-        onMarcarPagamento={setItemPagamento}
-      />
+              titulo="Financiamento"
+              icone={<Landmark className="w-4 h-4" />}
+              cor={{ border: "border-purple-200", header: "bg-purple-50 text-purple-800" }}
+              itens={itensPorGrupo.financiamento}
+              fluxo={fluxoFin}
+              onAddManual={() => abrirModal("financiamento")}
+              onDelete={handleDelete}
+              onEdit={(item) => abrirModal("financiamento", item)}
+              onMarcarPagamento={setItemPagamento} />
+            
 
       {/* Saldo Final — indicador verde/vermelho em tempo real */}
       <Card className={`border-2 ${saldoFinal >= 0 ? "border-emerald-400 bg-emerald-50" : "border-red-400 bg-red-50"}`}>
@@ -941,15 +941,15 @@ export default function DFCTab({ workshopId, mes }) {
               <p className="text-sm font-semibold text-gray-700">Saldo Final do Mês</p>
               <p className="text-xs text-gray-500">
                 {fmt(saldoInicial)} (ini){" "}
-                {fluxoOp  >= 0 ? "+" : ""}{fmt(fluxoOp)} (op){" "}
+                {fluxoOp >= 0 ? "+" : ""}{fmt(fluxoOp)} (op){" "}
                 {fluxoInv >= 0 ? "+" : ""}{fmt(fluxoInv)} (inv){" "}
                 {fluxoFin >= 0 ? "+" : ""}{fmt(fluxoFin)} (fin)
               </p>
             </div>
             <div className="flex items-center gap-2">
-              {saldoFinal >= 0
-                ? <TrendingUp  className="w-6 h-6 text-emerald-600" />
-                : <TrendingDown className="w-6 h-6 text-red-600" />}
+              {saldoFinal >= 0 ?
+                    <TrendingUp className="w-6 h-6 text-emerald-600" /> :
+                    <TrendingDown className="w-6 h-6 text-red-600" />}
               <p className={`text-3xl font-bold ${saldoFinal >= 0 ? "text-emerald-700" : "text-red-700"}`}>
                 {fmt(saldoFinal)}
               </p>
@@ -963,12 +963,12 @@ export default function DFCTab({ workshopId, mes }) {
         <CardContent className="pt-4">
           <p className="text-sm font-semibold text-gray-700 mb-3">📊 Waterfall — Composição do Saldo</p>
           <GraficoWaterfall
-            saldoInicial={saldoInicial}
-            fluxoOp={fluxoOp}
-            fluxoInv={fluxoInv}
-            fluxoFin={fluxoFin}
-            saldoFinal={saldoFinal}
-          />
+                  saldoInicial={saldoInicial}
+                  fluxoOp={fluxoOp}
+                  fluxoInv={fluxoInv}
+                  fluxoFin={fluxoFin}
+                  saldoFinal={saldoFinal} />
+                
           <div className="flex items-center gap-4 mt-2 justify-center text-xs text-gray-500">
             <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-blue-500 inline-block" /> Saldo</span>
             <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-emerald-500 inline-block" /> Positivo</span>
@@ -976,41 +976,41 @@ export default function DFCTab({ workshopId, mes }) {
           </div>
         </CardContent>
       </Card>
-      </>)}
-      </>)}
+      </>}
+      </>}
 
       {/* Modals — sempre visíveis */}
       <ModalLancamento
-        aberto={modalAberto}
-        onFechar={() => { setModalAberto(false); setLancamentoEdicao(null); }}
-        onSalvar={handleSalvarModal}
-        isSaving={criarMutation.isPending || editarMutation.isPending}
-        lancamentoEdicao={lancamentoEdicao}
-        grupoInicial={grupoModal}
-      />
+          aberto={modalAberto}
+          onFechar={() => {setModalAberto(false);setLancamentoEdicao(null);}}
+          onSalvar={handleSalvarModal}
+          isSaving={criarMutation.isPending || editarMutation.isPending}
+          lancamentoEdicao={lancamentoEdicao}
+          grupoInicial={grupoModal} />
+        
 
       {/* Modal liquidação DRE — abre ModalRegistrarPagamento ou ModalRegistrarRecebimento */}
       <ModalLiquidacaoDRE
-        item={itemPagamento}
-        workshopId={workshopId}
-        onFechar={() => setItemPagamento(null)}
-        onSalvo={() => {
-          queryClient.invalidateQueries({ queryKey: ["dre-lancamentos-dfc", workshopId, mes] });
-          queryClient.invalidateQueries({ queryKey: ["dre-lancamentos", workshopId, mes] });
-          queryClient.invalidateQueries({ queryKey: ["contas-receber", workshopId] });
-          queryClient.invalidateQueries({ queryKey: ["contas-pagar", workshopId] });
-          setItemPagamento(null);
-        }}
-      />
+          item={itemPagamento}
+          workshopId={workshopId}
+          onFechar={() => setItemPagamento(null)}
+          onSalvo={() => {
+            queryClient.invalidateQueries({ queryKey: ["dre-lancamentos-dfc", workshopId, mes] });
+            queryClient.invalidateQueries({ queryKey: ["dre-lancamentos", workshopId, mes] });
+            queryClient.invalidateQueries({ queryKey: ["contas-receber", workshopId] });
+            queryClient.invalidateQueries({ queryKey: ["contas-pagar", workshopId] });
+            setItemPagamento(null);
+          }} />
+        
 
       {/* Modal saldo inicial detalhado */}
       <ModalSaldoInicialDetalhado
-        aberto={modalSaldoDetalhadoAberto}
-        onFechar={() => setModalSaldoDetalhadoAberto(false)}
-        workshopId={workshopId}
-        mes={mes}
-      />
-      </>)}
-    </div>
-  );
+          aberto={modalSaldoDetalhadoAberto}
+          onFechar={() => setModalSaldoDetalhadoAberto(false)}
+          workshopId={workshopId}
+          mes={mes} />
+        
+      </>}
+    </div>);
+
 }
