@@ -54,16 +54,14 @@
     "processing": {
       "type": "boolean",
       "default": false,
-      "description": "Lock otimista \u2014 true enquanto pagamento est\u00e1 sendo processado. Previne race condition de pagamento duplo simult\u00e2neo."
+      "description": "Lock otimista"
     },
     "processing_at": {
       "type": "string",
-      "format": "date-time",
-      "description": "Timestamp ISO do in\u00edcio do processamento. Locks com mais de 30s s\u00e3o considerados expirados."
+      "format": "date-time"
     },
     "processing_by": {
-      "type": "string",
-      "description": "user_id de quem iniciou o processamento. Para auditoria de lock."
+      "type": "string"
     },
     "data_vencimento": {
       "type": "string",
@@ -81,8 +79,7 @@
       "description": "Data do primeiro pagamento"
     },
     "numero_documento": {
-      "type": "string",
-      "description": "N\u00famero do documento"
+      "type": "string"
     },
     "tipo_documento": {
       "type": "string",
@@ -92,8 +89,7 @@
         "duplicata",
         "carne",
         "boleto"
-      ],
-      "description": "Tipo de documento"
+      ]
     },
     "forma_pagamento": {
       "type": "string",
@@ -105,40 +101,59 @@
         "cartao_debito",
         "dinheiro",
         "cheque"
-      ],
-      "description": "Forma de pagamento"
+      ]
     },
     "parcela_numero": {
-      "type": "integer",
-      "description": "N\u00famero da parcela (1 de 8, 2 de 8...)"
+      "type": "integer"
     },
     "parcela_total": {
-      "type": "integer",
-      "description": "Total de parcelas"
+      "type": "integer"
     },
     "desconto": {
       "type": "number",
-      "default": 0,
-      "description": "Desconto concedido"
+      "default": 0
     },
     "juros": {
       "type": "number",
-      "default": 0,
-      "description": "Juros aplicados"
+      "default": 0
     },
     "multa": {
       "type": "number",
-      "default": 0,
-      "description": "Multa aplicada"
+      "default": 0
     },
     "dias_atraso": {
       "type": "integer",
-      "default": 0,
-      "description": "Dias de atraso"
+      "default": 0
     },
     "observacoes": {
-      "type": "string",
-      "description": "Observa\u00e7\u00f5es adicionais"
+      "type": "string"
+    },
+    "historico_alteracoes": {
+      "type": "array",
+      "description": "Hist\u00f3rico de altera\u00e7\u00f5es da conta",
+      "items": {
+        "type": "object",
+        "properties": {
+          "tipo": {
+            "type": "string",
+            "description": "Tipo da a\u00e7\u00e3o: criado, editado, recebimento_registrado, cancelado"
+          },
+          "usuario_nome": {
+            "type": "string"
+          },
+          "usuario_email": {
+            "type": "string"
+          },
+          "data_hora": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "detalhes": {
+            "type": "string",
+            "description": "Descri\u00e7\u00e3o da altera\u00e7\u00e3o"
+          }
+        }
+      }
     }
   },
   "required": [

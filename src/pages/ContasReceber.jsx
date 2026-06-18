@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, DollarSign, AlertCircle, Trash2 } from "lucide-react";
+import { Loader2, DollarSign, AlertCircle, Trash2, History, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -18,6 +18,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import ModalRegistrarRecebimento from "@/components/financeiro/ModalRegistrarRecebimento";
+import HistoricoAlteracoes from "@/components/financeiro/HistoricoAlteracoes";
 
 const fmt = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
 const fmtDate = (d) => d ? new Date(d).toLocaleDateString('pt-BR') : '—';
@@ -39,6 +40,7 @@ export default function ContasReceber() {
   const [filtroStatus, setFiltroStatus] = useState('todos');
   const [contaSelecionada, setContaSelecionada] = useState(null);
   const [contaParaDeletar, setContaParaDeletar] = useState(null);
+  const [contaHistoricoAberta, setContaHistoricoAberta] = useState(null);
   const [deletando, setDeletando] = useState(false);
   const [loadingReceber, setLoadingReceber] = useState(false);
 
@@ -177,6 +179,15 @@ export default function ContasReceber() {
                       Registrar
                     </Button>
                   )}
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-gray-500 hover:bg-gray-100"
+                    title="Histórico de alterações"
+                    onClick={() => setContaHistoricoAberta(contaHistoricoAberta === conta.id ? null : conta.id)}
+                  >
+                    {contaHistoricoAberta === conta.id ? <ChevronUp className="w-4 h-4" /> : <History className="w-4 h-4" />}
+                  </Button>
                   <Button 
                     size="sm" 
                     variant="ghost" 
@@ -187,6 +198,12 @@ export default function ContasReceber() {
                   </Button>
                 </div>
               </div>
+              {contaHistoricoAberta === conta.id && (
+                <div className="mt-3 pt-3 border-t border-gray-100">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Histórico de Alterações</p>
+                  <HistoricoAlteracoes historico={conta.historico_alteracoes || []} />
+                </div>
+              )}
             </CardContent>
           </Card>
         ))}

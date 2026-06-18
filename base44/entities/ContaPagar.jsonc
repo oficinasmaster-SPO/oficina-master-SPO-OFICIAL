@@ -19,24 +19,19 @@
       "description": "Nome do fornecedor"
     },
     "contato_telefone": {
-      "type": "string",
-      "description": "Telefone/WhatsApp para contato sobre esta conta"
+      "type": "string"
     },
     "contato_email": {
-      "type": "string",
-      "description": "E-mail para contato sobre esta conta"
+      "type": "string"
     },
     "valor_original": {
-      "type": "number",
-      "description": "Valor original da conta"
+      "type": "number"
     },
     "valor_aberto": {
-      "type": "number",
-      "description": "Valor ainda n\u00e3o pago"
+      "type": "number"
     },
     "valor_pago": {
-      "type": "number",
-      "description": "Valor j\u00e1 pago"
+      "type": "number"
     },
     "status": {
       "type": "string",
@@ -47,64 +42,77 @@
         "vencido",
         "cancelado"
       ],
-      "default": "aberto",
-      "description": "Status da conta"
+      "default": "aberto"
     },
     "processing": {
       "type": "boolean",
-      "default": false,
-      "description": "Lock otimista \u2014 true enquanto pagamento est\u00e1 sendo processado. Previne race condition de pagamento duplo simult\u00e2neo."
+      "default": false
     },
     "processing_at": {
       "type": "string",
-      "format": "date-time",
-      "description": "Timestamp ISO do in\u00edcio do processamento. Locks com mais de 30s s\u00e3o considerados expirados."
+      "format": "date-time"
     },
     "processing_by": {
-      "type": "string",
-      "description": "user_id de quem iniciou o processamento. Para auditoria de lock."
+      "type": "string"
     },
     "data_vencimento": {
       "type": "string",
-      "format": "date",
-      "description": "Data de vencimento"
+      "format": "date"
     },
     "data_emissao": {
       "type": "string",
-      "format": "date",
-      "description": "Data de emiss\u00e3o"
+      "format": "date"
     },
     "numero_documento": {
-      "type": "string",
-      "description": "N\u00famero do documento"
+      "type": "string"
     },
     "tipo_documento": {
-      "type": "string",
-      "description": "Tipo de documento"
+      "type": "string"
     },
     "forma_pagamento": {
-      "type": "string",
-      "description": "Forma de pagamento"
+      "type": "string"
     },
     "parcela_numero": {
-      "type": "integer",
-      "description": "N\u00famero da parcela"
+      "type": "integer"
     },
     "parcela_total": {
-      "type": "integer",
-      "description": "Total de parcelas"
+      "type": "integer"
     },
     "centro_custo": {
-      "type": "string",
-      "description": "Centro de custo"
+      "type": "string"
     },
     "categoria": {
-      "type": "string",
-      "description": "Categoria da despesa"
+      "type": "string"
     },
     "observacoes": {
-      "type": "string",
-      "description": "Observa\u00e7\u00f5es adicionais"
+      "type": "string"
+    },
+    "historico_alteracoes": {
+      "type": "array",
+      "description": "Hist\u00f3rico de altera\u00e7\u00f5es da conta",
+      "items": {
+        "type": "object",
+        "properties": {
+          "tipo": {
+            "type": "string",
+            "description": "Tipo da a\u00e7\u00e3o: criado, editado, pagamento_registrado, cancelado"
+          },
+          "usuario_nome": {
+            "type": "string"
+          },
+          "usuario_email": {
+            "type": "string"
+          },
+          "data_hora": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "detalhes": {
+            "type": "string",
+            "description": "Descri\u00e7\u00e3o da altera\u00e7\u00e3o"
+          }
+        }
+      }
     }
   },
   "required": [

@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Download, Trash2, Loader2, DollarSign } from "lucide-react";
+import { Download, Trash2, Loader2, DollarSign, History, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 import ModalRegistrarPagamentoConta from "@/components/financeiro/ModalRegistrarPagamentoConta";
+import HistoricoAlteracoes from "@/components/financeiro/HistoricoAlteracoes";
 
 export default function ContasPagar() {
   const { workshop } = useWorkshopContext();
@@ -31,6 +32,7 @@ export default function ContasPagar() {
   const [contaParaPagar, setContaParaPagar] = useState(null);
   const [deletando, setDeletando] = useState(false);
   const [loadingPagar, setLoadingPagar] = useState(false);
+  const [contaHistoricoAberta, setContaHistoricoAberta] = useState(null);
 
   const mesAtual = new Date().toISOString().slice(0, 7);
 
@@ -150,53 +152,75 @@ export default function ContasPagar() {
                   <TableHead>Valor Aberto</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
+                  <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {contas?.map((conta) => (
-                  <TableRow key={conta.id}>
-                    <TableCell>{conta.fornecedor_nome || '—'}</TableCell>
-                    <TableCell>
-                      {conta.data_vencimento
-                        ? format(new Date(conta.data_vencimento), 'dd/MM/yyyy', { locale: ptBR })
-                        : '—'}
-                    </TableCell>
-                    <TableCell>{conta.categoria || '—'}</TableCell>
-                    <TableCell>R$ {conta.valor_original?.toFixed(2)}</TableCell>
-                    <TableCell>R$ {(conta.valor_aberto || 0).toFixed(2)}</TableCell>
-                    <TableCell>
-                      <Badge variant={
-                        conta.status === 'pago' ? 'default' :
-                        conta.status === 'vencido' ? 'destructive' : 'secondary'
-                      }>
-                        {conta.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex gap-1 justify-end">
-                        {conta.status !== 'pago' && conta.status !== 'cancelado' && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-green-700 border-green-300 hover:bg-green-50"
-                            onClick={() => handleAbrirModalPagar(conta)}
-                            disabled={loadingPagar}
-                          >
-                            {loadingPagar ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <DollarSign className="w-3 h-3 mr-1" />}
-                            Pagar
-                          </Button>
-                        )}
+                <React.Fragment key={conta.id}>
+                <TableRow>
+                  <TableCell>{conta.fornecedor_nome || '—'}</TableCell>
+                  <TableCell>
+                    {conta.data_vencimento
+                      ? format(new Date(conta.data_vencimento), 'dd/MM/yyyy', { locale: ptBR })
+                      : '—'}
+                  </TableCell>
+                  <TableCell>{conta.categoria || '—'}</TableCell>
+                  <TableCell>R$ {conta.valor_original?.toFixed(2)}</TableCell>
+                  <TableCell>R$ {(conta.valor_aberto || 0).toFixed(2)}</TableCell>
+                  <TableCell>
+                    <Badge variant={
+                      conta.status === 'pago' ? 'default' :
+                      conta.status === 'vencido' ? 'destructive' : 'secondary'
+                    }>
+                      {conta.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex gap-1 justify-end">
+                      {conta.status !== 'pago' && conta.status !== 'cancelado' && (
                         <Button
                           size="sm"
-                          variant="ghost"
-                          className="text-red-600 hover:bg-red-50 hover:text-red-700"
-                          onClick={() => setContaParaDeletar(conta)}
+                          variant="outline"
+                          className="text-green-700 border-green-300 hover:bg-green-50"
+                          onClick={() => handleAbrirModalPagar(conta)}
+                          disabled={loadingPagar}
                         >
-                          <Trash2 className="w-4 h-4" />
+                          {loadingPagar ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <DollarSign className="w-3 h-3 mr-1" />}
+                          Pagar
                         </Button>
-                      </div>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                        onClick={() => setContaParaDeletar(conta)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-gray-400 hover:text-gray-700"
+                      title="Histórico de alterações"
+                      onClick={() => setContaHistoricoAberta(contaHistoricoAberta === conta.id ? null : conta.id)}
+                    >
+                      {contaHistoricoAberta === conta.id ? <ChevronUp className="w-4 h-4" /> : <History className="w-4 h-4" />}
+                    </Button>
+                  </TableCell>
+                </TableRow>
+                {contaHistoricoAberta === conta.id && (
+                  <TableRow>
+                    <TableCell colSpan={8} className="bg-gray-50 p-4">
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Histórico de Alterações</p>
+                      <HistoricoAlteracoes historico={conta.historico_alteracoes || []} />
                     </TableCell>
                   </TableRow>
+                )}
+                </React.Fragment>
                 ))}
               </TableBody>
             </Table>
