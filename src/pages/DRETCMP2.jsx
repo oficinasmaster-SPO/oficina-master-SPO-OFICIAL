@@ -760,9 +760,15 @@ export default function DRETCMP2() {
                   </div>
                 </div>
 
-                <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-                  <p className="text-sm text-blue-700">Total Custos TCMP²</p>
-                  <p className="text-3xl font-bold text-blue-900">{formatCurrency(calculated.total_costs_tcmp2)}</p>
+                <div className="mt-4 p-4 bg-blue-50 rounded-lg flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-blue-700">Total Custos TCMP²</p>
+                    <p className="text-3xl font-bold text-blue-900">{formatCurrency(calculated.total_costs_tcmp2)}</p>
+                  </div>
+                  <Button onClick={() => saveMutation.mutate(formData)} disabled={saveMutation.isPending} className="bg-green-600 hover:bg-green-700">
+                    {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                    Salvar DRE
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -840,9 +846,15 @@ export default function DRETCMP2() {
                   </div>
                 </div>
 
-                <div className="mt-4 p-4 bg-orange-50 rounded-lg">
-                  <p className="text-sm text-orange-700">Total Custos NÃO TCMP²</p>
-                  <p className="text-3xl font-bold text-orange-900">{formatCurrency(calculated.total_costs_not_tcmp2)}</p>
+                <div className="mt-4 p-4 bg-orange-50 rounded-lg flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-orange-700">Total Custos NÃO TCMP²</p>
+                    <p className="text-3xl font-bold text-orange-900">{formatCurrency(calculated.total_costs_not_tcmp2)}</p>
+                  </div>
+                  <Button onClick={() => saveMutation.mutate(formData)} disabled={saveMutation.isPending} className="bg-green-600 hover:bg-green-700">
+                    {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                    Salvar DRE
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -904,6 +916,12 @@ export default function DRETCMP2() {
                       <p className="text-2xl font-bold text-purple-600">{formatNumber(calculated.i30_percentage, 1)}%</p>
                     </div>
                   </div>
+                </div>
+                <div className="mt-4 flex justify-end">
+                  <Button onClick={() => saveMutation.mutate(formData)} disabled={saveMutation.isPending} className="bg-green-600 hover:bg-green-700">
+                    {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                    Salvar DRE
+                  </Button>
                 </div>
               </CardContent>
             </Card>
