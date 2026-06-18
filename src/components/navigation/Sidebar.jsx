@@ -363,9 +363,10 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           height: 'calc(100vh - var(--imp-bar-height, 0px))'
         }}>
         
-        <div className={cn(
-          "border-b border-gray-200 transition-all px-6 py-2",
-          isCollapsed ? "p-3" : ""
+        <div 
+          className={cn(
+            "h-16 border-b border-gray-200 flex items-center transition-all px-4",
+             isCollapsed && "justify-center px-2"
         )}>
           {isCollapsed ?
           <button
@@ -376,10 +377,10 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
               <Menu className="w-6 h-6 text-gray-700" />
             </button> :
 
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center justify-between gap-3 w-full">
               <Link to={getAdminUrl(createPageUrl('Home') + queryString)} className="flex items-center gap-3 flex-1 min-w-0 pr-2">
                 {userWorkshop?.logo_url ?
-              <div className="w-10 h-10 rounded-xl overflow-hidden bg-white border border-gray-200 flex items-center justify-center">
+              <div className="w-9 h-9 rounded-xl overflow-hidden bg-white border border-gray-200 flex items-center justify-center">
                     <img
                   src={userWorkshop.logo_url}
                   alt="Logo"
@@ -387,7 +388,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
                 
                   </div> :
 
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden relative">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center overflow-hidden relative">
                     <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--brand-primary))] to-[hsl(var(--brand-secondary))] opacity-90" />
                     <FileText className="w-6 h-6 text-black z-10 relative" />
                   </div>
