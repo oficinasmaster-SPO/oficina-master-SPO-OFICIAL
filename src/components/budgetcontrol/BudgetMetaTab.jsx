@@ -145,14 +145,14 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
 
   // Buscar ContaReceber e ContaPagar filtrados pelo mês para cruzar realizado via dre_lancamento_id
   const { data: contasReceber = [] } = useQuery({
-    queryKey: ["contas-receber-budget", workshopId, mes],
+    queryKey: ["contas-receber-budget", workshopId],
     queryFn: () => base44.entities.ContaReceber.filter({ workshop_id: workshopId }, "-created_date", 500),
     enabled: !!workshopId && !!mes,
     staleTime: 0,
   });
 
   const { data: contasPagar = [] } = useQuery({
-    queryKey: ["contas-pagar-budget", workshopId, mes],
+    queryKey: ["contas-pagar-budget", workshopId],
     queryFn: () => base44.entities.ContaPagar.filter({ workshop_id: workshopId }, "-created_date", 500),
     enabled: !!workshopId && !!mes,
     staleTime: 0,
@@ -170,8 +170,8 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
 
   const invalidateAll = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ["dre-lancamentos", workshopId, mes] });
-    queryClient.invalidateQueries({ queryKey: ["contas-receber-budget", workshopId, mes] });
-    queryClient.invalidateQueries({ queryKey: ["contas-pagar-budget", workshopId, mes] });
+    queryClient.invalidateQueries({ queryKey: ["contas-receber-budget", workshopId] });
+    queryClient.invalidateQueries({ queryKey: ["contas-pagar-budget", workshopId] });
     queryClient.invalidateQueries({ queryKey: ["budget-metas", workshopId, mes] });
   }, [queryClient, workshopId, mes]);
 
@@ -194,10 +194,9 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
 
     const unsubscribePagar = base44.entities.ContaPagar.subscribe((event) => {
       const wid = event.data?.workshop_id;
-      // Aceitar se workshop_id bater OU se vier nulo
       if (!wid || wid === workshopId) {
         pulse();
-        queryClient.invalidateQueries({ queryKey: ["contas-pagar-budget", workshopId, mes] });
+        queryClient.invalidateQueries({ queryKey: ["contas-pagar-budget", workshopId] });
       }
     });
 
@@ -205,7 +204,7 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
       const wid = event.data?.workshop_id;
       if (!wid || wid === workshopId) {
         pulse();
-        queryClient.invalidateQueries({ queryKey: ["contas-receber-budget", workshopId, mes] });
+        queryClient.invalidateQueries({ queryKey: ["contas-receber-budget", workshopId] });
       }
     });
 
@@ -220,11 +219,12 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
     // Escutar evento global disparado ao registrar pagamento/recebimento
     const handlePagamentoRegistrado = () => {
       pulse();
-      queryClient.invalidateQueries({ queryKey: ["contas-pagar-budget", workshopId, mes] });
-      queryClient.invalidateQueries({ queryKey: ["contas-receber-budget", workshopId, mes] });
+      queryClient.invalidateQueries({ queryKey: ["contas-pagar-budget", workshopId] });
+      queryClient.invalidateQueries({ queryKey: ["contas-receber-budget", workshopId] });
     };
     window.addEventListener('pagamento-registrado', handlePagamentoRegistrado);
     window.addEventListener('recebimento-registrado', handlePagamentoRegistrado);
+    window.addEventListener('liquidacao-registrada', handlePagamentoRegistrado);
 
     return () => {
       unsubscribeDRE();
@@ -233,6 +233,7 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
       window.removeEventListener('dre-lancamento-criado', handleDREChange);
       window.removeEventListener('pagamento-registrado', handlePagamentoRegistrado);
       window.removeEventListener('recebimento-registrado', handlePagamentoRegistrado);
+      window.removeEventListener('liquidacao-registrada', handlePagamentoRegistrado);
     };
   }, [workshopId, mes, queryClient]);
 
