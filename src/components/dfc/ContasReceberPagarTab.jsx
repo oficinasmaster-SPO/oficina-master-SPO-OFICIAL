@@ -511,38 +511,38 @@ export default function ContasReceberPagarTab({ workshopId, mes }) {
   // status "$in" para mostrar aberto + parcial (parcial = pago parcialmente, ainda tem saldo)
   // LIMIT 500 para evitar truncamento silencioso
   const { data: contasReceber = [], isLoading: isReceberLoading, refetch: refetchReceber } = useQuery({
-    queryKey: ["contas-receber", workshopId, "tab", periodo, ano, mesSelecionado],
+    queryKey: ["contas-receber", workshopId, periodo, ano, mesSelecionado],
     queryFn: () => base44.entities.ContaReceber.filter({ 
       workshop_id: workshopId, 
       status: { $in: ["aberto", "parcial"] },
       data_vencimento: { $gte: dataInicio, $lte: dataFim }
     }, "-data_vencimento", 500),
     enabled: !!workshopId,
-    staleTime: 30_000,
+    staleTime: 0,
   });
 
   // Buscar Contas a Pagar com filtro
   const { data: contasPagar = [], isLoading: isPagarLoading, refetch: refetchPagar } = useQuery({
-    queryKey: ["contas-pagar", workshopId, "tab", periodo, ano, mesSelecionado],
+    queryKey: ["contas-pagar", workshopId, periodo, ano, mesSelecionado],
     queryFn: () => base44.entities.ContaPagar.filter({ 
       workshop_id: workshopId, 
       status: { $in: ["aberto", "parcial"] },
       data_vencimento: { $gte: dataInicio, $lte: dataFim }
     }, "-data_vencimento", 500),
     enabled: !!workshopId,
-    staleTime: 30_000,
+    staleTime: 0,
   });
 
   const handleSuccess = () => {
-    refetchReceber();
-    refetchPagar();
-    queryClient.invalidateQueries({ queryKey: ["dfc-manuais"] });
-    queryClient.invalidateQueries({ queryKey: ["dre-lancamentos"] });
-    queryClient.invalidateQueries({ queryKey: ["dre-lancamentos-dfc"] });
-    queryClient.invalidateQueries({ queryKey: ["contas-receber"] });
-    queryClient.invalidateQueries({ queryKey: ["contas-pagar"] });
+    // Invalida TODAS as queries relacionadas (prefixo sem "tab" para alinhar com DFCTab)
+    queryClient.invalidateQueries({ queryKey: ["contas-receber", workshopId] });
+    queryClient.invalidateQueries({ queryKey: ["contas-pagar", workshopId] });
+    queryClient.invalidateQueries({ queryKey: ["dre-lancamentos-dfc", workshopId] });
+    queryClient.invalidateQueries({ queryKey: ["dre-lancamentos", workshopId] });
+    queryClient.invalidateQueries({ queryKey: ["dfc-manuais", workshopId] });
+    queryClient.invalidateQueries({ queryKey: ["dfc-saldo", workshopId] });
     queryClient.invalidateQueries({ queryKey: ["liquidacoes"] });
-    queryClient.invalidateQueries({ queryKey: ["saldo-inicial-fontes"] });
+    queryClient.invalidateQueries({ queryKey: ["saldo-inicial-fontes", workshopId] });
     queryClient.invalidateQueries({ queryKey: ["budget-metas"] });
     queryClient.invalidateQueries({ queryKey: ["contas-receber-budget"] });
     queryClient.invalidateQueries({ queryKey: ["contas-pagar-budget"] });
