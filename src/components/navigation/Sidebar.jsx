@@ -245,11 +245,11 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
 
 
 
+
       // Ignora erro
-    }};const toggleGroup = (groupId) => {setExpandedGroups((prev) =>
-    prev.includes(groupId) ?
-    prev.filter((id) => id !== groupId) :
-    [...prev, groupId]
+    }};const toggleGroup = (groupId) => {setExpandedGroups((prev) => prev.includes(groupId) ?
+      prev.filter((id) => id !== groupId) :
+      [...prev, groupId]
     );
   };
 
@@ -363,11 +363,11 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
           height: 'calc(100vh - var(--imp-bar-height, 0px))'
         }}>
         
-        <div 
+        <div
           className={cn(
-            "h-16 border-b border-gray-200 flex items-center transition-all px-4",
-             isCollapsed && "justify-center px-2"
-        )}>
+            "h-16 border-b border-gray-200 flex items-center transition-all px-1",
+            isCollapsed && "justify-center px-2"
+          )}>
           {isCollapsed ?
           <button
             onClick={toggleCollapse}
