@@ -197,7 +197,7 @@ export const pagePermissions = {
   // Financeiro
   DRETCMP2: "financeiro.view",
   DreMockup: "financeiro.view",
-  DashboardFinanceiro: "admin.system_config",
+  DashboardFinanceiro: "financeiro.view",
   ContasReceber: "financeiro.view",
   ContasPagar: "financeiro.view",
   ConciliacaoBancaria: "financeiro.view",
@@ -235,6 +235,9 @@ export const pagePermissions = {
 
   // Páginas públicas (sem permissão necessária)
   ClientRegistration: null,
+
+  // Páginas com rota no App.jsx sem entry anterior (fail-close fix)
+  DashboardAuditoriaRBAC: "admin.audit",
 };
 
 /**
