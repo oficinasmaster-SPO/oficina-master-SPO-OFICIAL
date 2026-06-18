@@ -405,7 +405,7 @@ export default function Layout({ children, currentPageName }) {
             </main>
 
         <footer className="bg-white border-t border-gray-200 mt-auto print:hidden">
-          <div className="sm:px-6 lg:px-8 pr-4 pl-3 pt-4 pb-5">
+          <div className="sm:px-6 lg:px-8 pr-4 pl-3 pt-4 pb-3">
             <div className="flex flex-col sm:flex-row justify-between items-center gap-2">
               <p className="text-sm text-gray-600">
                 © 2025 Oficinas Master. Todos os direitos reservados.
