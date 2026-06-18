@@ -17,26 +17,39 @@ function useFontesDinheiro(workshopId, mes) {
     queryKey: ["saldo-inicial-fontes", workshopId, mes],
     queryFn: async () => {
       if (!workshopId) return { bancos: [], maquinas_cartao: [], caixa: 0 };
+
+      // 1. Tenta primeiro o mês corrente
       if (mes) {
         const records = await base44.entities.DFCLancamento.filter(
-          { workshop_id: workshopId, mes, grupo: "saldo_inicial" }, "-created_date", 1
+          { workshop_id: workshopId, mes, grupo: "saldo_inicial" }, "-updated_date", 3
         );
-        if (records?.[0]?.detalhes) {
-          const d = records[0].detalhes;
-          if ((d.bancos?.length > 0) || (d.maquinas_cartao?.length > 0) || (d.caixa > 0)) {
+        for (const rec of (records || [])) {
+          const d = rec.detalhes;
+          if (d && ((d.bancos?.length > 0) || (d.maquinas_cartao?.length > 0))) {
             return { bancos: d.bancos || [], maquinas_cartao: d.maquinas_cartao || [], caixa: d.caixa || 0 };
           }
         }
       }
+
+      // 2. Fallback: busca qualquer mês recente que tenha contas cadastradas
       const allRecords = await base44.entities.DFCLancamento.filter(
-        { workshop_id: workshopId, grupo: "saldo_inicial" }, "-created_date", 5
+        { workshop_id: workshopId, grupo: "saldo_inicial" }, "-updated_date", 12
       );
+
       for (const rec of (allRecords || [])) {
         const d = rec.detalhes;
-        if (d && ((d.bancos?.length > 0) || (d.maquinas_cartao?.length > 0) || (d.caixa > 0))) {
-          return { bancos: d.bancos || [], maquinas_cartao: d.maquinas_cartao || [], caixa: d.caixa || 0 };
+        if (d && ((d.bancos?.length > 0) || (d.maquinas_cartao?.length > 0))) {
+          const ehMesmoMes = rec.mes === mes;
+          return {
+            bancos: (d.bancos || []).map(b => ehMesmoMes ? b : { ...b, saldo: 0 }),
+            maquinas_cartao: (d.maquinas_cartao || []).map(m => ehMesmoMes ? m : { ...m, saldo: 0 }),
+            caixa: ehMesmoMes ? (d.caixa || 0) : 0,
+            _de_outro_mes: !ehMesmoMes,
+            _mes_origem: rec.mes,
+          };
         }
       }
+
       return { bancos: [], maquinas_cartao: [], caixa: 0 };
     },
     enabled: !!workshopId,
@@ -298,28 +311,36 @@ export default function ModalRegistrarPagamentoConta({ aberto, onFechar, conta, 
                       <span>Nenhum banco ou máquina cadastrado no Saldo Inicial. Cadastre em <strong>Saldo Inicial Detalhado</strong>.</span>
                     </div>
                   ) : (
-                    <Select value={fonteSaida} onValueChange={setFonteSaida}>
-                      <SelectTrigger className="h-11 text-sm">
-                        <SelectValue placeholder="Selecione a fonte..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {bancos.map((b) => (
-                          <SelectItem key={`banco-${b.id}`} value={`banco:${b.id}:${b.nome}`}>
-                            🏦 {b.nome} — {fmt(b.saldo || 0)}
-                          </SelectItem>
-                        ))}
-                        {maquinas.map((m) => (
-                          <SelectItem key={`maq-${m.id}`} value={`maquina:${m.id}:${m.nome}`}>
-                            💳 {m.nome} — {fmt(m.saldo || 0)}
-                          </SelectItem>
-                        ))}
-                        {(fontes?.caixa > 0) && (
-                          <SelectItem value="caixa:caixa:Caixa">
-                            💵 Caixa — {fmt(fontes.caixa)}
-                          </SelectItem>
-                        )}
-                      </SelectContent>
-                    </Select>
+                    <>
+                      {fontes?._de_outro_mes && (
+                        <div className="mb-2 p-2 rounded-lg border border-blue-200 bg-blue-50 text-xs text-blue-700 flex items-start gap-1.5">
+                          <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+                          <span>Contas do mês {fontes._mes_origem} (saldo zerado). Configure o Saldo Inicial deste mês para ver os saldos.</span>
+                        </div>
+                      )}
+                      <Select value={fonteSaida} onValueChange={setFonteSaida}>
+                        <SelectTrigger className="h-11 text-sm">
+                          <SelectValue placeholder="Selecione a fonte..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {bancos.map((b) => (
+                            <SelectItem key={`banco-${b.id}`} value={`banco:${b.id}:${b.nome}`}>
+                              🏦 {b.nome}{b.saldo > 0 ? ` — ${fmt(b.saldo)}` : ""}
+                            </SelectItem>
+                          ))}
+                          {maquinas.map((m) => (
+                            <SelectItem key={`maq-${m.id}`} value={`maquina:${m.id}:${m.nome}`}>
+                              💳 {m.nome}{m.saldo > 0 ? ` — ${fmt(m.saldo)}` : ""}
+                            </SelectItem>
+                          ))}
+                          {(fontes?.caixa > 0) && (
+                            <SelectItem value="caixa:caixa:Caixa">
+                              💵 Caixa — {fmt(fontes.caixa)}
+                            </SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </>
                   )}
                 </div>
               </div>
