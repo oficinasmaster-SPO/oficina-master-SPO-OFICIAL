@@ -140,7 +140,7 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
       return Array.isArray(result) ? result : [];
     },
     enabled: !!workshopId && !!mes,
-    staleTime: 30_000,
+    staleTime: 0,
   });
 
   // Buscar ContaReceber e ContaPagar para cruzar realizado via dre_lancamento_id
@@ -149,14 +149,14 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
     queryKey: ["contas-receber-budget", workshopId],
     queryFn: () => base44.entities.ContaReceber.filter({ workshop_id: workshopId }, "-created_date", 500),
     enabled: !!workshopId,
-    staleTime: 30_000,
+    staleTime: 0,
   });
 
   const { data: contasPagar = [], refetch: refetchContasPagar } = useQuery({
     queryKey: ["contas-pagar-budget", workshopId],
     queryFn: () => base44.entities.ContaPagar.filter({ workshop_id: workshopId }, "-created_date", 500),
     enabled: !!workshopId,
-    staleTime: 30_000,
+    staleTime: 0,
   });
 
   // Mapas de dre_lancamento_id → conta (para cruzamento rápido)
@@ -189,7 +189,8 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
     const unsubscribeLiq = base44.entities.ContaPagar.subscribe((event) => {
       if (event.data?.workshop_id === workshopId) {
         setSyncPulse(true);
-        refetchLiquidacoes();
+        queryClient.invalidateQueries({ queryKey: ["contas-pagar-budget", workshopId] });
+        queryClient.invalidateQueries({ queryKey: ["dre-lancamentos", workshopId, mes] });
         setTimeout(() => setSyncPulse(false), 1500);
       }
     });
@@ -197,7 +198,8 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
     const unsubscribeReceber = base44.entities.ContaReceber.subscribe((event) => {
       if (event.data?.workshop_id === workshopId) {
         setSyncPulse(true);
-        refetchLiquidacoes();
+        queryClient.invalidateQueries({ queryKey: ["contas-receber-budget", workshopId] });
+        queryClient.invalidateQueries({ queryKey: ["dre-lancamentos", workshopId, mes] });
         setTimeout(() => setSyncPulse(false), 1500);
       }
     });
@@ -561,8 +563,8 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
                 <div>
                   <Label>Meta Total de Faturamento (R$)</Label>
                   <InputMoeda
-                    value={formData.faturamento_meta_rs}
-                    onChange={(e) => setFormData({ ...formData, faturamento_meta_rs: parseFloat(e.target.value) || 0 })}
+                   value={formData.faturamento_meta_rs}
+                   onChange={(v) => setFormData({ ...formData, faturamento_meta_rs: v })}
                   />
                 </div>
                 <div>
@@ -607,7 +609,7 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
                   <Label>OU Meta em R$ Fixo</Label>
                   <InputMoeda
                     value={formData.meta_fixa_rs}
-                    onChange={(e) => setFormData({ ...formData, meta_fixa_rs: parseFloat(e.target.value) || 0 })}
+                    onChange={(v) => setFormData({ ...formData, meta_fixa_rs: v })}
                   />
                 </div>
               </div>
