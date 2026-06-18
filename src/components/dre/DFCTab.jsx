@@ -23,6 +23,7 @@ import FonteSaidaSelector from "../dfc/FonteSaidaSelector";
 import FiltroPeriodo from "./FiltroPeriodo";
 import ContasReceberPagarTab from "../dfc/ContasReceberPagarTab";
 import ModalLiquidacaoDRE from "../dfc/ModalLiquidacaoDRE";
+import VencimentosCard from "./VencimentosCard";
 
 // ─── Formatação ────────────────────────────────────────────────────
 const fmt = (v) =>
@@ -834,6 +835,9 @@ export default function DFCTab({ workshopId, mes }) {
 
       {/* Modo Mensal */}
       {periodo === "mensal" && <>
+
+      {/* Vencimentos — card compacto de lembrete */}
+      <VencimentosCard workshopId={workshopId} mes={mes} compact />
 
       {/* Banner */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-sm text-blue-800">

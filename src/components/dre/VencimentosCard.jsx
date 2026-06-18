@@ -16,7 +16,7 @@ const fmtData = (d) => {
  * Card de próximos vencimentos (7 dias) para o Dashboard.
  * Props: workshopId, mes (YYYY-MM)
  */
-export default function VencimentosCard({ workshopId, mes }) {
+export default function VencimentosCard({ workshopId, mes, compact = false }) {
   const { data: lancamentos = [] } = useQuery({
     queryKey: ["dre-lancamentos-venc-card", workshopId, mes],
     queryFn: () => base44.entities.DRELancamento.filter({ workshop_id: workshopId, mes }),
@@ -43,6 +43,30 @@ export default function VencimentosCard({ workshopId, mes }) {
   const total = vencidos.length + venceHoje.length + proximos.length;
 
   if (total === 0) return null;
+
+  // Modo compacto: linha horizontal resumida para usar dentro de outras abas
+  if (compact) {
+    return (
+      <div className="flex flex-wrap items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg text-xs">
+        <span className="font-semibold text-amber-800">📅 Vencimentos:</span>
+        {vencidos.length > 0 && (
+          <span className="bg-red-100 border border-red-200 text-red-700 font-medium px-2 py-0.5 rounded-full">
+            🔴 {vencidos.length} em atraso · {fmt(vencidos.reduce((s, l) => s + l.valor, 0))}
+          </span>
+        )}
+        {venceHoje.length > 0 && (
+          <span className="bg-amber-100 border border-amber-300 text-amber-800 font-medium px-2 py-0.5 rounded-full">
+            ⚠️ {venceHoje.length} vence hoje · {fmt(venceHoje.reduce((s, l) => s + l.valor, 0))}
+          </span>
+        )}
+        {proximos.length > 0 && (
+          <span className="bg-gray-100 border border-gray-200 text-gray-600 px-2 py-0.5 rounded-full">
+            🕐 {proximos.length} nos próximos 7 dias
+          </span>
+        )}
+      </div>
+    );
+  }
 
   return (
     <Card className="border-2 border-amber-200 bg-amber-50 mx-12 pr-1">

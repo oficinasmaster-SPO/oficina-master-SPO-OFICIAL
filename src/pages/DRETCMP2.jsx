@@ -622,10 +622,7 @@ export default function DRETCMP2() {
           </Card>
         </div>
 
-        {/* Card de alertas de vencimento (Fase 4) */}
-        {viewMode === 'month' && workshop && (
-          <VencimentosCard workshopId={workshop.id} mes={selectedMonth} />
-        )}
+
 
         {/* Formulário DRE — 8: controlled tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
