@@ -215,7 +215,7 @@ export default function Layout({ children, currentPageName }) {
       {isAuthenticated && displayUser && <AssistanceModeBanner user={displayUser} />}
               {isAuthenticated && isAdminMode && workshop && <AdminModeBanner workshop={workshop} />}
               {shouldShowMenus &&
-          <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-30 print:hidden">
+          <header className="bg-white shadow-sm border-b border-gray-200 fixed top-0 right-0 left-0 z-30 print:hidden" style={{ left: 'var(--sidebar-width, 16rem)' }}>
           <div className="sm:px-6 lg:px-8 pl-4 pr-2">
             <div className="flex items-center justify-between h-16">
               {isAuthenticated &&
@@ -352,6 +352,7 @@ export default function Layout({ children, currentPageName }) {
             </header>
           }
 
+            <div className="h-16" /> {/* Espaçador para header fixo */}
             <main className="flex-1">
               <div className={`${shouldShowMenus ? 'px-4 sm:px-6 lg:px-8 py-6' : ''}`}>
                 {shouldShowMenus && <Breadcrumbs />}
