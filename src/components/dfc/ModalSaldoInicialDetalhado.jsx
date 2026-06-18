@@ -8,6 +8,7 @@ import { base44 } from "@/api/base44Client";
 import { Plus, X, Building2, CreditCard, Banknote, Loader2, CheckCircle2, FlaskConical } from "lucide-react";
 import { toast } from "sonner";
 import SimulacaoBanner from "./SimulacaoBanner";
+import { InputMoeda } from "@/components/ui/InputMoeda";
 
 const fmt = (v) => Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -435,14 +436,9 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
             
             <div>
               <Label className="text-xs">Saldo Inicial (R$)</Label>
-              <Input
-                type="number"
-                step="0.01"
-                min="0"
-                max="999999999.99"
-                value={formData.saldo || ''}
-                onChange={(e) => setFormData({ ...formData, saldo: parseFloat(e.target.value) || 0 })}
-                placeholder="0,00"
+              <InputMoeda
+                value={formData.saldo || 0}
+                onChange={(v) => setFormData({ ...formData, saldo: v })}
                 className="mt-1 text-sm font-semibold"
               />
             </div>
@@ -593,12 +589,9 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
               </h3>
               <div className="flex items-center gap-3">
                 <Label className="text-xs text-amber-700 whitespace-nowrap">Valor R$</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={localDetalhes.caixa}
-                  onChange={(e) => setCaixa(e.target.value)}
+                <InputMoeda
+                  value={localDetalhes.caixa || 0}
+                  onChange={(v) => setCaixa(v)}
                   onBlur={salvarCaixa}
                   disabled={bloqueadoPorLiquidacao}
                   className="w-44 bg-white font-semibold text-sm"
@@ -687,13 +680,9 @@ function BancoRow({ banco, onUpdate, onRemove, disabled }) {
       </div>
       <div>
         <Label className="text-xs text-blue-700">Saldo (R$)</Label>
-        <Input
-          type="number"
-          step="0.01"
-          min="0"
+        <InputMoeda
           value={saldo}
-          onChange={(e) => setSaldo(e.target.value)}
-          onBlur={() => onUpdate(banco.id, "saldo", parseFloat(saldo) || 0)}
+          onChange={(v) => { setSaldo(v); onUpdate(banco.id, "saldo", v); }}
           className="mt-1 bg-white font-semibold text-sm"
           disabled={disabled}
         />
@@ -747,13 +736,9 @@ function MaquinaRow({ maquina, onUpdate, onRemove, disabled }) {
       </div>
       <div>
         <Label className="text-xs text-green-700">Recebíveis (R$)</Label>
-        <Input
-          type="number"
-          step="0.01"
-          min="0"
+        <InputMoeda
           value={saldo}
-          onChange={(e) => setSaldo(e.target.value)}
-          onBlur={() => onUpdate(maquina.id, "saldo", parseFloat(saldo) || 0)}
+          onChange={(v) => { setSaldo(v); onUpdate(maquina.id, "saldo", v); }}
           className="mt-1 bg-white font-semibold text-sm"
           disabled={disabled}
         />
