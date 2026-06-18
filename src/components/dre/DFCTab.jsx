@@ -12,6 +12,7 @@ import {
   ChevronDown, ChevronRight, Plus, Trash2, Pencil, Wallet, Eye,
   TrendingUp, TrendingDown, Building2, Landmark, Loader2 } from
 "lucide-react";
+import { InputMoeda } from "@/components/ui/InputMoeda";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell, ReferenceLine, Legend } from
 "recharts";
@@ -172,15 +173,11 @@ function ModalLancamento({ aberto, onFechar, onSalvar, isSaving, lancamentoEdica
             
           </div>
           <div>
-            <Label>Valor (R$)</Label>
-            <Input
-              type="number"
-              min="0"
-              step="0.01"
-              placeholder="0,00"
-              value={form.valor}
-              onChange={(e) => setForm((f) => ({ ...f, valor: e.target.value }))} />
-            
+            <Label>Valor (R$) *</Label>
+            <InputMoeda
+              value={parseFloat(form.valor) || 0}
+              onChange={(e) => setForm((f) => ({ ...f, valor: e.target.value }))}
+              className="text-right" />
           </div>
           
           {/* Seletor de fonte de saída (apenas para saídas) */}
