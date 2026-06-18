@@ -782,18 +782,28 @@ export default function DFCTab({ workshopId, mes }) {
   return (
     <div className="space-y-6">
       {/* Toggle DFC vs Contas */}
-      <div className="flex gap-1 bg-gray-100 rounded-lg p-1 mb-4">
+      <div className="flex gap-3 mb-4">
         <button
           onClick={() => setShowContasTab(false)}
-          className={`text-xs px-3 py-2 rounded-md font-medium transition-all ${!showContasTab ? "bg-white shadow text-gray-900" : "text-gray-500 hover:text-gray-700"}`}>
-          
-          💵 Fluxo de Caixa (DFC)
+          className={`flex-1 flex flex-col items-center justify-center gap-2 py-5 px-4 rounded-xl border-2 transition-all shadow-sm cursor-pointer
+            ${!showContasTab
+              ? "bg-blue-50 border-blue-400 shadow-md"
+              : "bg-white border-gray-200 hover:border-gray-300 hover:shadow"}`}>
+          <span className="text-3xl">💵</span>
+          <span className={`text-sm font-semibold ${!showContasTab ? "text-blue-700" : "text-gray-600"}`}>
+            Fluxo de Caixa (DFC)
+          </span>
         </button>
         <button
           onClick={() => setShowContasTab(true)}
-          className={`text-xs px-3 py-2 rounded-md font-medium transition-all ${showContasTab ? "bg-white shadow text-gray-900" : "text-gray-500 hover:text-gray-700"}`}>
-          
-          📋 Contas a Receber/Pagar
+          className={`flex-1 flex flex-col items-center justify-center gap-2 py-5 px-4 rounded-xl border-2 transition-all shadow-sm cursor-pointer
+            ${showContasTab
+              ? "bg-blue-50 border-blue-400 shadow-md"
+              : "bg-white border-gray-200 hover:border-gray-300 hover:shadow"}`}>
+          <span className="text-3xl">📋</span>
+          <span className={`text-sm font-semibold ${showContasTab ? "text-blue-700" : "text-gray-600"}`}>
+            Contas a Receber/Pagar
+          </span>
         </button>
       </div>
 
