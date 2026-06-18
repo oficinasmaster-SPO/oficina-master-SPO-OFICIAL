@@ -246,9 +246,9 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
 
 
 
+
       // Ignora erro
-    }};const toggleGroup = (groupId) => {setExpandedGroups((prev) => prev.includes(groupId) ?
-      prev.filter((id) => id !== groupId) :
+    }};const toggleGroup = (groupId) => {setExpandedGroups((prev) => prev.includes(groupId) ? prev.filter((id) => id !== groupId) :
       [...prev, groupId]
     );
   };
@@ -365,8 +365,8 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
         
         <div
           className={cn(
-            "h-16 border-b border-gray-200 flex items-center transition-all px-1",
-            isCollapsed && "justify-center px-2"
+            "h-16 border-b border-gray-200 flex items-center transition-all",
+            isCollapsed && "justify-center"
           )}>
           {isCollapsed ?
           <button
@@ -409,7 +409,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
               </button>
               <button
               onClick={toggleCollapse}
-              className="hidden lg:flex p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
+              className="hidden lg:flex hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0 py-2 px-1"
               title="Recolher menu">
               
                 <ChevronLeft className="w-5 h-5 text-gray-600" />
