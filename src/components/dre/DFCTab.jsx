@@ -782,26 +782,26 @@ export default function DFCTab({ workshopId, mes }) {
   return (
     <div className="space-y-6">
       {/* Toggle DFC vs Contas */}
-      <div className="flex gap-3 mb-4">
+      <div className="flex gap-2 mb-4">
         <button
           onClick={() => setShowContasTab(false)}
-          className={`flex-1 flex flex-col items-center justify-center gap-2 py-5 px-4 rounded-xl border-2 transition-all shadow-sm cursor-pointer text-sm
+          className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg border-2 transition-all cursor-pointer text-xs
             ${!showContasTab ?
           "bg-blue-50 border-blue-400 shadow-md" :
           "bg-white border-gray-200 hover:border-gray-300 hover:shadow"}`}>
-          <span className="text-3xl">💵</span>
-          <span className={`text-sm font-semibold ${!showContasTab ? "text-blue-700" : "text-gray-600"}`}>
+          <span className="text-base">💵</span>
+          <span className={`text-xs font-semibold ${!showContasTab ? "text-blue-700" : "text-gray-600"}`}>
             Fluxo de Caixa (DFC)
           </span>
         </button>
         <button
           onClick={() => setShowContasTab(true)}
-          className={`flex-1 flex flex-col items-center justify-center gap-2 py-5 px-4 rounded-xl border-2 transition-all shadow-sm cursor-pointer
+          className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg border-2 transition-all cursor-pointer
             ${showContasTab ?
-          "bg-blue-50 border-blue-400 shadow-md" :
-          "bg-white border-gray-200 hover:border-gray-300 hover:shadow"}`}>
-          <span className="text-3xl">📋</span>
-          <span className={`text-sm font-semibold ${showContasTab ? "text-blue-700" : "text-gray-600"}`}>
+          "bg-blue-50 border-blue-400 shadow-sm" :
+          "bg-white border-gray-200 hover:border-gray-300"}`}>
+          <span className="text-base">📋</span>
+          <span className={`text-xs font-semibold ${showContasTab ? "text-blue-700" : "text-gray-600"}`}>
             Contas a Receber/Pagar
           </span>
         </button>
