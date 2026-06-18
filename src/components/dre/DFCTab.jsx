@@ -571,17 +571,20 @@ export default function DFCTab({ workshopId, mes }) {
         const contaP = mapaPagar[d.id];
         const conta = contaR || contaP;
         if (!conta) return d;
-        // Sempre propaga o status da conta e a data de pagamento
+        // Propaga status da conta e data de pagamento
+        // data_primeiro_pagamento é o único campo de data de pagamento no schema de ContaReceber/ContaPagar
         const dataPagamento = conta.data_primeiro_pagamento || d.data_pagamento || null;
         return {
           ...d,
           status_conta: conta.status,
-          data_pagamento: conta.status === "pago" ? (dataPagamento || d.data_pagamento) : (conta.status === "parcial" ? dataPagamento : d.data_pagamento),
+          data_pagamento: conta.status === "pago" || conta.status === "parcial"
+            ? dataPagamento
+            : d.data_pagamento,
         };
       });
     },
     enabled: !!workshopId && !!mes,
-    staleTime: 30_000,
+    staleTime: 0,
   });
 
   // BUG FIX #1: Real-time subscription para escutar novos lançamentos do DRE Avançado
