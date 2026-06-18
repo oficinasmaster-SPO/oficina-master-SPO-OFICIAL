@@ -128,8 +128,21 @@ export default function ModalRegistrarPagamentoConta({ aberto, onFechar, conta, 
   const temFontes = bancos.length > 0 || maquinas.length > 0 || (fontes?.caixa > 0);
   const valorLiquido = (valor || 0) + juros + multa - desconto;
 
+  // Saldo da fonte selecionada
+  const saldoFonteSelecionada = (() => {
+    if (!fonteSaida) return null;
+    const [tipo, id] = fonteSaida.split(":");
+    if (tipo === "banco") return bancos.find(b => b.id === id)?.saldo ?? null;
+    if (tipo === "maquina") return maquinas.find(m => m.id === id)?.saldo ?? null;
+    if (tipo === "caixa") return fontes?.caixa ?? null;
+    return null;
+  })();
+  const saldoInsuficiente = saldoFonteSelecionada !== null && valorLiquido > saldoFonteSelecionada;
+
   const handleSalvar = async () => {
     if (!valor || valor <= 0) { toast.error('Informe um valor válido'); return; }
+    if (!fonteSaida) { toast.error('Selecione de onde saiu o dinheiro'); return; }
+    if (saldoInsuficiente) { toast.error(`Saldo insuficiente. Disponível: ${fmt(saldoFonteSelecionada)}`); return; }
     setSaving(true);
     try {
       // FIX 7: passar fonte_selecionada para o backend — ele já atualiza o saldo da fonte,
@@ -291,8 +304,14 @@ export default function ModalRegistrarPagamentoConta({ aberto, onFechar, conta, 
 
                 <div>
                   <Label className="text-sm font-medium flex items-center gap-1.5 mb-1.5">
-                    <Building2 className="w-4 h-4 text-gray-500" /> De onde saiu o dinheiro?
+                    <Building2 className="w-4 h-4 text-gray-500" /> De onde saiu o dinheiro? *
                   </Label>
+                  {saldoInsuficiente && (
+                    <div className="mb-2 p-2 rounded-lg border border-red-200 bg-red-50 text-xs text-red-700 flex items-start gap-1.5">
+                      <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+                      <span>Saldo insuficiente. Disponível: <strong>{fmt(saldoFonteSelecionada)}</strong></span>
+                    </div>
+                  )}
                   {!temFontes ? (
                     <div className="p-3 rounded-lg border border-yellow-200 bg-yellow-50 text-xs text-yellow-800 flex items-start gap-2">
                       <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
@@ -344,7 +363,7 @@ export default function ModalRegistrarPagamentoConta({ aberto, onFechar, conta, 
           <Button
             size="lg"
             onClick={handleSalvar}
-            disabled={saving || !valor}
+            disabled={saving || !valor || !fonteSaida || saldoInsuficiente}
             className="flex-1 max-w-xs bg-red-600 hover:bg-red-700 text-white font-semibold text-base"
           >
             {saving ? (
