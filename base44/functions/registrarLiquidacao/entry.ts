@@ -43,12 +43,13 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Informe conta_receber_id ou conta_pagar_id' }, { status: 400 });
     }
 
-    // Busca a conta via asServiceRole para garantir acesso independente de RLS
+    // Busca a conta respeitando o RLS do usuário (por workshop_id)
     let conta;
     try {
-      conta = await base44.asServiceRole.entities[entityName].get(entidadeId);
+      const results = await base44.entities[entityName].filter({ id: entidadeId });
+      conta = results?.[0];
     } catch (_) {
-      return Response.json({ error: 'Conta não encontrada' }, { status: 404 });
+      return Response.json({ error: 'Conta não encontrada ou sem permissão de acesso' }, { status: 404 });
     }
     
     if (!conta) {
@@ -109,10 +110,10 @@ Deno.serve(async (req) => {
     if (!conta.data_primeiro_pagamento) {
       updatePayload.data_primeiro_pagamento = data_liquidacao;
     }
-    await base44.asServiceRole.entities[entityName].update(entidadeId, updatePayload);
+    await base44.entities[entityName].update(entidadeId, updatePayload);
 
     // 2. Cria LiquidacaoFinanceira
-    const liquidacao = await base44.asServiceRole.entities.LiquidacaoFinanceira.create({
+    const liquidacao = await base44.entities.LiquidacaoFinanceira.create({
       workshop_id: conta.workshop_id,
       conta_receber_id: conta_receber_id || null,
       conta_pagar_id: conta_pagar_id || null,
@@ -132,7 +133,7 @@ Deno.serve(async (req) => {
 
     // 3. Cria DFCLancamento
     const mesReferencia = String(data_liquidacao).slice(0, 7);
-    await base44.asServiceRole.entities.DFCLancamento.create({
+    await base44.entities.DFCLancamento.create({
       workshop_id: conta.workshop_id,
       mes: mesReferencia,
       origem: 'liquidacao_financeira',
@@ -146,7 +147,7 @@ Deno.serve(async (req) => {
     // 4. Atualiza saldo da fonte selecionada (se houver)
     if (fonte_selecionada) {
       try {
-        const records = await base44.asServiceRole.entities.DFCLancamento.filter({
+        const records = await base44.entities.DFCLancamento.filter({
           workshop_id: conta.workshop_id,
           mes: mesReferencia,
           grupo: 'saldo_inicial',
@@ -181,7 +182,7 @@ Deno.serve(async (req) => {
             + detalhes.maquinas_cartao.reduce((s, m) => s + (m.saldo || 0), 0)
             + detalhes.caixa;
           
-          await base44.asServiceRole.entities.DFCLancamento.update(registroSaldo.id, {
+          await base44.entities.DFCLancamento.update(registroSaldo.id, {
             detalhes,
             valor: novoTotal,
             saldo_inicial: novoTotal,
@@ -193,7 +194,7 @@ Deno.serve(async (req) => {
     // 5. Vincula DRELancamento se existir
     try {
       if (conta.dre_lancamento_id) {
-        await base44.asServiceRole.entities.DRELancamento.update(conta.dre_lancamento_id, {
+        await base44.entities.DRELancamento.update(conta.dre_lancamento_id, {
           data_pagamento: data_liquidacao
         });
       }
