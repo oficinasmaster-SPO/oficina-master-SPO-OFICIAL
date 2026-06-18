@@ -191,7 +191,7 @@ export default function ModalRegistrarRecebimento({ aberto, onFechar, conta, wor
 
   return (
     <Dialog open={aberto} onOpenChange={onFechar}>
-      <DialogContent className="max-w-2xl w-full p-0 gap-0 overflow-hidden">
+      <DialogContent className="max-w-2xl w-full p-0 gap-0 overflow-hidden [&>button]:hidden">
         {/* Header */}
         <DialogHeader className="px-6 py-4 border-b bg-green-50">
           <DialogTitle className="text-lg font-bold text-green-900 flex items-center gap-2">
