@@ -133,6 +133,7 @@ export default function ModalRegistrarRecebimento({ aberto, onFechar, conta, wor
 
   const handleSalvar = async () => {
     if (!valor || valor <= 0) { toast.error('Informe um valor válido'); return; }
+    if (!fonteDestino) { toast.error('Selecione onde vai entrar o dinheiro'); return; }
     setSaving(true);
     try {
       // FIX 7: passar fonte_selecionada para o backend — ele já atualiza o saldo da fonte,
@@ -294,7 +295,7 @@ export default function ModalRegistrarRecebimento({ aberto, onFechar, conta, wor
 
                 <div>
                   <Label className="text-sm font-medium flex items-center gap-1.5 mb-1.5">
-                    <Building2 className="w-4 h-4 text-gray-500" /> Onde vai entrar o dinheiro?
+                    <Building2 className="w-4 h-4 text-gray-500" /> Onde vai entrar o dinheiro? *
                   </Label>
                   {!temFontes ? (
                     <div className="p-3 rounded-lg border border-yellow-200 bg-yellow-50 text-xs text-yellow-800 flex items-start gap-2">
@@ -347,7 +348,7 @@ export default function ModalRegistrarRecebimento({ aberto, onFechar, conta, wor
           <Button
             size="lg"
             onClick={handleSalvar}
-            disabled={saving || !valor}
+            disabled={saving || !valor || !fonteDestino}
             className="flex-1 max-w-xs bg-green-600 hover:bg-green-700 text-white font-semibold text-base"
           >
             {saving ? (
