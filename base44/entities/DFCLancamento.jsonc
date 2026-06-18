@@ -18,7 +18,7 @@
         "financiamento",
         "saldo_inicial"
       ],
-      "description": "Grupo do fluxo de caixa: operacional, investimento, financiamento ou saldo_inicial (controle)"
+      "description": "Grupo do fluxo de caixa"
     },
     "tipo": {
       "type": "string",
@@ -43,29 +43,78 @@
         "dre_automatico"
       ],
       "default": "manual",
-      "description": "Se foi inserido manualmente pelo usu\u00e1rio ou mapeado automaticamente do DRE"
+      "description": "Se foi inserido manualmente ou mapeado do DRE"
     },
     "saldo_inicial": {
       "type": "number",
-      "description": "Saldo inicial do m\u00eas no caixa/banco. Usado apenas no registro de controle do m\u00eas (grupo=saldo_inicial)."
+      "description": "Saldo inicial do m\u00eas. Usado apenas no registro de controle (grupo=saldo_inicial)."
     },
     "detalhes": {
       "type": "object",
+      "description": "Detalhamento de onde est\u00e1 o dinheiro do saldo inicial (apenas para grupo=saldo_inicial)",
       "properties": {
         "banco": {
           "type": "number",
-          "description": "Valor em conta banc\u00e1ria"
+          "description": "[LEGADO] Valor em conta banc\u00e1ria"
         },
         "maquina_cartao": {
           "type": "number",
-          "description": "Valor em receb\u00edveis de m\u00e1quina de cart\u00e3o"
+          "description": "[LEGADO] Valor em receb\u00edveis de m\u00e1quina de cart\u00e3o"
         },
         "caixa": {
           "type": "number",
           "description": "Valor em dinheiro f\u00edsico"
+        },
+        "bancos": {
+          "type": "array",
+          "description": "Lista de contas banc\u00e1rias detalhadas",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "nome": {
+                "type": "string"
+              },
+              "tipo_conta": {
+                "type": "string"
+              },
+              "saldo": {
+                "type": "number"
+              },
+              "data": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "maquinas_cartao": {
+          "type": "array",
+          "description": "Lista de m\u00e1quinas de cart\u00e3o detalhadas",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "nome": {
+                "type": "string"
+              },
+              "gateway_pagamento": {
+                "type": "string"
+              },
+              "saldo": {
+                "type": "number"
+              },
+              "data": {
+                "type": "string"
+              }
+            }
+          }
         }
       },
-      "description": "Detalhamento de onde est\u00e1 o dinheiro do saldo inicial (apenas para grupo=saldo_inicial)"
+      "additionalProperties": true
     },
     "fonte_saida": {
       "type": "string",
@@ -74,7 +123,7 @@
         "maquina_cartao",
         "caixa"
       ],
-      "description": "De onde saiu o dinheiro para este lan\u00e7amento de sa\u00edda (apenas para grupo!=saldo_inicial e tipo=saida)"
+      "description": "De onde saiu o dinheiro para este lan\u00e7amento de sa\u00edda"
     }
   },
   "required": [
