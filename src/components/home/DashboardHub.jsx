@@ -761,8 +761,10 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
                 </div>
                 <h3 className="text-sm font-medium text-gray-500">TCMP2 (Valor Hora)</h3>
                 <div className="mt-1">
-                  <span className="text-2xl font-bold text-gray-900">R$ {dashboardMetrics?.tcmp2?.valor || 0},00</span>
-                  <p className="text-xs text-gray-500">Média atual da oficina</p>
+                  <span className="text-2xl font-bold text-gray-900">
+                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(dashboardMetrics?.tcmp2?.valor || 0)}
+                  </span>
+                  <p className="text-xs text-gray-500">Valor hora TCMP² do mês</p>
                 </div>
               </CardContent>
             </Card>
