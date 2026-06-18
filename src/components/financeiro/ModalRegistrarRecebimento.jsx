@@ -164,18 +164,21 @@ export default function ModalRegistrarRecebimento({ aberto, onFechar, conta, wor
         }],
       });
 
-      queryClient.invalidateQueries({ queryKey: ["contas-pagar", workshopId] });
-      queryClient.invalidateQueries({ queryKey: ["contas-receber", workshopId] });
-      queryClient.invalidateQueries({ queryKey: ["dre-lancamentos", workshopId] });
-      queryClient.invalidateQueries({ queryKey: ["dre-lancamentos-dfc", workshopId] });
-      queryClient.invalidateQueries({ queryKey: ["budget-metas", workshopId] });
-      queryClient.invalidateQueries({ queryKey: ["contas-pagar-budget", workshopId] });
-      queryClient.invalidateQueries({ queryKey: ["contas-receber-budget", workshopId] });
-      queryClient.invalidateQueries({ queryKey: ["liquidacoes", workshopId] });
-      queryClient.invalidateQueries({ queryKey: ["dfc-manuais", workshopId] });
-      queryClient.invalidateQueries({ queryKey: ["dfc-saldo", workshopId] });
-      queryClient.invalidateQueries({ queryKey: ["saldoInicial", workshopId] });
-      queryClient.invalidateQueries({ queryKey: ["saldo-inicial-fontes", workshopId] });
+      // Invalida todas as variantes de chave (com e sem mes)
+      queryClient.invalidateQueries({ queryKey: ["contas-pagar"] });
+      queryClient.invalidateQueries({ queryKey: ["contas-receber"] });
+      queryClient.invalidateQueries({ queryKey: ["dre-lancamentos"] });
+      queryClient.invalidateQueries({ queryKey: ["dre-lancamentos-dfc"] });
+      queryClient.invalidateQueries({ queryKey: ["budget-metas"] });
+      queryClient.invalidateQueries({ queryKey: ["contas-pagar-budget"] });
+      queryClient.invalidateQueries({ queryKey: ["contas-receber-budget"] });
+      queryClient.invalidateQueries({ queryKey: ["liquidacoes"] });
+      queryClient.invalidateQueries({ queryKey: ["dfc-manuais"] });
+      queryClient.invalidateQueries({ queryKey: ["dfc-saldo"] });
+      queryClient.invalidateQueries({ queryKey: ["saldoInicial"] });
+      queryClient.invalidateQueries({ queryKey: ["saldo-inicial-fontes"] });
+      // Evento global para garantir atualização do card Comparação
+      window.dispatchEvent(new CustomEvent('recebimento-registrado', { detail: { workshopId, mes } }));
       toast.success("Recebimento registrado!");
       onSuccess?.();
       onFechar();

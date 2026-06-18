@@ -176,27 +176,34 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
   }, [queryClient, workshopId, mes]);
 
   // Real-time subscription: atualizar quando DRELancamento, ContaPagar ou ContaReceber mudar
+  // Sem filtro restritivo no evento — payload pode vir nulo/parcial em registros grandes
   useEffect(() => {
     if (!workshopId || !mes) return;
 
     const pulse = () => { setSyncPulse(true); setTimeout(() => setSyncPulse(false), 1500); };
 
     const unsubscribeDRE = base44.entities.DRELancamento.subscribe((event) => {
-      if (event.data?.workshop_id === workshopId && event.data?.mes === mes) {
+      const wid = event.data?.workshop_id;
+      const emes = event.data?.mes;
+      // Aceitar se workshop_id bater OU se vier nulo (payload_too_large)
+      if (!wid || (wid === workshopId && emes === mes)) {
         pulse();
         queryClient.invalidateQueries({ queryKey: ["dre-lancamentos", workshopId, mes] });
       }
     });
 
     const unsubscribePagar = base44.entities.ContaPagar.subscribe((event) => {
-      if (event.data?.workshop_id === workshopId) {
+      const wid = event.data?.workshop_id;
+      // Aceitar se workshop_id bater OU se vier nulo
+      if (!wid || wid === workshopId) {
         pulse();
         queryClient.invalidateQueries({ queryKey: ["contas-pagar-budget", workshopId, mes] });
       }
     });
 
     const unsubscribeReceber = base44.entities.ContaReceber.subscribe((event) => {
-      if (event.data?.workshop_id === workshopId) {
+      const wid = event.data?.workshop_id;
+      if (!wid || wid === workshopId) {
         pulse();
         queryClient.invalidateQueries({ queryKey: ["contas-receber-budget", workshopId, mes] });
       }
@@ -210,11 +217,22 @@ export default function BudgetMetaTab({ workshopId, mes, onMetasLoaded }) {
     };
     window.addEventListener('dre-lancamento-criado', handleDREChange);
 
+    // Escutar evento global disparado ao registrar pagamento/recebimento
+    const handlePagamentoRegistrado = () => {
+      pulse();
+      queryClient.invalidateQueries({ queryKey: ["contas-pagar-budget", workshopId, mes] });
+      queryClient.invalidateQueries({ queryKey: ["contas-receber-budget", workshopId, mes] });
+    };
+    window.addEventListener('pagamento-registrado', handlePagamentoRegistrado);
+    window.addEventListener('recebimento-registrado', handlePagamentoRegistrado);
+
     return () => {
       unsubscribeDRE();
       unsubscribePagar();
       unsubscribeReceber();
       window.removeEventListener('dre-lancamento-criado', handleDREChange);
+      window.removeEventListener('pagamento-registrado', handlePagamentoRegistrado);
+      window.removeEventListener('recebimento-registrado', handlePagamentoRegistrado);
     };
   }, [workshopId, mes, queryClient]);
 
