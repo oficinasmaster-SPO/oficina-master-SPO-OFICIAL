@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { mapDREtoDFC } from "./mapDREtoDFC";
 import ProjecaoCaixaView from "./ProjecaoCaixaView";
 import ModalSaldoInicialDetalhado from "../dfc/ModalSaldoInicialDetalhado";
+import SaldoConsolidadoCard from "../dfc/SaldoConsolidadoCard";
 import FonteSaidaSelector from "../dfc/FonteSaidaSelector";
 import FiltroPeriodo from "./FiltroPeriodo";
 import ContasReceberPagarTab from "../dfc/ContasReceberPagarTab";
@@ -861,54 +862,14 @@ export default function DFCTab({ workshopId, mes }) {
             }
       </div>
 
-      {/* Saldo Inicial + Saldo Atual + seletor de view */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {/* Saldo Inicial */}
-        <Card className="border-2 border-gray-200">
-          <CardContent className="pt-4 pb-4">
-            <div className="flex items-center justify-between gap-4 flex-wrap">
-              <div>
-                <p className="text-sm font-semibold text-gray-700">Saldo Inicial do Mês</p>
-                <p className="text-xs text-gray-500">Quanto havia no caixa/banco em 01/{mes}</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-500">R$</span>
-                <div className="w-44 text-right font-semibold px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-gray-800">
-                  {saldoInicialSalvo.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </div>
-                <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setModalSaldoDetalhadoAberto(true)}
-                      className="shrink-0"
-                      title="Detalhar saldo inicial por banco, máquina e caixa">
-                  <Eye className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Saldo Atual */}
-        <Card className={`border-2 ${saldoFinal >= 0 ? "border-emerald-300 bg-emerald-50" : "border-red-300 bg-red-50"}`}>
-          <CardContent className="pt-4 pb-4">
-            <div className="flex items-center justify-between gap-4 flex-wrap">
-              <div>
-                <p className="text-sm font-semibold text-gray-700">Saldo Atual do Mês</p>
-                <p className="text-xs text-gray-500">Inicial ± entradas e saídas do mês</p>
-              </div>
-              <div className="flex items-center gap-2">
-                {saldoFinal >= 0 ?
-                    <TrendingUp className="w-5 h-5 text-emerald-600" /> :
-                    <TrendingDown className="w-5 h-5 text-red-600" />}
-                <p className={`text-xl font-bold ${saldoFinal >= 0 ? "text-emerald-700" : "text-red-700"}`}>
-                  {fmt(saldoFinal)}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Card consolidado Saldo */}
+      <SaldoConsolidadoCard
+        saldoInicial={saldoInicialSalvo}
+        saldoAtual={saldoFinal}
+        mes={mes}
+        fmt={fmt}
+        onVerDetalhe={() => setModalSaldoDetalhadoAberto(true)}
+      />
 
       {/* Tabs de view */}
       <div className="flex gap-1 bg-gray-100 rounded-lg p-1 w-fit">
