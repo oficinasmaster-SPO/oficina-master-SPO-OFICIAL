@@ -47,6 +47,7 @@ export default function DRETCMP2() {
   const [activeTab, setActiveTab] = useState("receitas");
   const [formData, setFormData] = useState(getEmptyDRE());
   const [savedFormData, setSavedFormData] = useState(getEmptyDRE());
+  const [editingTabs, setEditingTabs] = useState({ receitas: false, custos_tcmp2: false, custos_nao_tcmp2: false });
   const [isAdminView, setIsAdminView] = useState(false);
   const [syncAlert, setSyncAlert] = useState(null);
   const hasSyncedOnMount = useRef(false);
@@ -74,6 +75,11 @@ export default function DRETCMP2() {
       notes: ""
     };
   }
+
+  // Fechar modo edição ao trocar de mês
+  useEffect(() => {
+    setEditingTabs({ receitas: false, custos_tcmp2: false, custos_nao_tcmp2: false });
+  }, [selectedMonth]);
 
   // Escuta mudança de mês disparada pelos FiltroPeriodo internos (DRE Avançado e DFC)
   useEffect(() => {
@@ -304,6 +310,18 @@ export default function DRETCMP2() {
       ...formData,
       costs_not_tcmp2: { ...formData.costs_not_tcmp2, [field]: parseFloat(value) || 0 }
     });
+  };
+
+  const startEditing = (tab) => setEditingTabs(prev => ({ ...prev, [tab]: true }));
+  
+  const cancelEditing = (tab) => {
+    setFormData(savedFormData); // reverte para dados salvos
+    setEditingTabs(prev => ({ ...prev, [tab]: false }));
+  };
+
+  const saveAndClose = async (tab) => {
+    await saveMutation.mutateAsync(formData);
+    setEditingTabs(prev => ({ ...prev, [tab]: false }));
   };
 
   const updatePartsCost = (field, value) => {
@@ -626,74 +644,99 @@ export default function DRETCMP2() {
            <TabsContent value="receitas">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <DollarSign className="w-5 h-5 text-green-600" />
-                  Receitas do Mês
-                </CardTitle>
-                <CardDescription>Informe o faturamento do mês</CardDescription>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <DollarSign className="w-5 h-5 text-green-600" />
+                      Receitas do Mês
+                    </CardTitle>
+                    <CardDescription>Informe o faturamento do mês</CardDescription>
+                  </div>
+                  {!editingTabs.receitas ? (
+                    <Button variant="outline" onClick={() => startEditing('receitas')}>
+                      ✏️ Editar
+                    </Button>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Button variant="outline" onClick={() => cancelEditing('receitas')}>Cancelar</Button>
+                      <Button onClick={() => saveAndClose('receitas')} disabled={saveMutation.isPending} className="bg-green-600 hover:bg-green-700">
+                        {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                        Salvar
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div>
                     <Label>Técnicos Produtivos</Label>
-                    <input
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      placeholder="Número de técnicos em produção"
-                      className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                      value={formData.productive_technicians || ''}
-                      onChange={(e) => {
-                        const v = e.target.value.replace(/\D/g, '');
-                        setFormData({ ...formData, productive_technicians: v === '' ? '' : parseInt(v) });
-                      }}
-                      onBlur={(e) => {
-                        if (!e.target.value) setFormData(f => ({ ...f, productive_technicians: 1 }));
-                      }}
-                    />
+                    {editingTabs.receitas ? (
+                      <input
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        placeholder="Número de técnicos em produção"
+                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        value={formData.productive_technicians || ''}
+                        onChange={(e) => {
+                          const v = e.target.value.replace(/\D/g, '');
+                          setFormData({ ...formData, productive_technicians: v === '' ? '' : parseInt(v) });
+                        }}
+                        onBlur={(e) => {
+                          if (!e.target.value) setFormData(f => ({ ...f, productive_technicians: 1 }));
+                        }}
+                      />
+                    ) : (
+                      <div className="flex h-9 w-full items-center rounded-md border border-input bg-gray-50 px-3 py-1 text-sm font-medium">{formData.productive_technicians}</div>
+                    )}
                   </div>
                   <div>
                     <Label>Horas Disponíveis/Mês (por técnico)</Label>
-                    <input
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      placeholder="Total de horas /Mês"
-                      className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                      value={formData.monthly_hours || ''}
-                      onChange={(e) => {
-                        const v = e.target.value.replace(/\D/g, '');
-                        setFormData({ ...formData, monthly_hours: v === '' ? '' : parseInt(v) });
-                      }}
-                      onBlur={(e) => {
-                        if (!e.target.value) setFormData(f => ({ ...f, monthly_hours: 219 }));
-                      }}
-                    />
+                    {editingTabs.receitas ? (
+                      <input
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        placeholder="Total de horas /Mês"
+                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        value={formData.monthly_hours || ''}
+                        onChange={(e) => {
+                          const v = e.target.value.replace(/\D/g, '');
+                          setFormData({ ...formData, monthly_hours: v === '' ? '' : parseInt(v) });
+                        }}
+                        onBlur={(e) => {
+                          if (!e.target.value) setFormData(f => ({ ...f, monthly_hours: 219 }));
+                        }}
+                      />
+                    ) : (
+                      <div className="flex h-9 w-full items-center rounded-md border border-input bg-gray-50 px-3 py-1 text-sm font-medium">{formData.monthly_hours}h</div>
+                    )}
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <Label>Faturamento Peças Aplicadas (R$)</Label>
-                    <InputMoeda
-                      value={formData.revenue.parts_applied}
-                      onChange={(v) => updateRevenue('parts_applied', v)}
-                      className="text-right"
-                    />
+                    {editingTabs.receitas ? (
+                      <InputMoeda value={formData.revenue.parts_applied} onChange={(v) => updateRevenue('parts_applied', v)} className="text-right" />
+                    ) : (
+                      <div className="flex h-9 w-full items-center rounded-md border border-input bg-gray-50 px-3 py-1 text-sm font-medium">{formatCurrency(formData.revenue.parts_applied)}</div>
+                    )}
                   </div>
                   <div>
                     <Label>Faturamento Serviços (R$)</Label>
-                    <InputMoeda
-                      value={formData.revenue.services}
-                      onChange={(v) => updateRevenue('services', v)}
-                      className="text-right"
-                    />
+                    {editingTabs.receitas ? (
+                      <InputMoeda value={formData.revenue.services} onChange={(v) => updateRevenue('services', v)} className="text-right" />
+                    ) : (
+                      <div className="flex h-9 w-full items-center rounded-md border border-input bg-gray-50 px-3 py-1 text-sm font-medium">{formatCurrency(formData.revenue.services)}</div>
+                    )}
                   </div>
                   <div>
                     <Label>Outras Receitas (R$)</Label>
-                    <InputMoeda
-                      value={formData.revenue.other}
-                      onChange={(v) => updateRevenue('other', v)}
-                      className="text-right"
-                    />
+                    {editingTabs.receitas ? (
+                      <InputMoeda value={formData.revenue.other} onChange={(v) => updateRevenue('other', v)} className="text-right" />
+                    ) : (
+                      <div className="flex h-9 w-full items-center rounded-md border border-input bg-gray-50 px-3 py-1 text-sm font-medium">{formatCurrency(formData.revenue.other)}</div>
+                    )}
                   </div>
                 </div>
 
@@ -702,10 +745,6 @@ export default function DRETCMP2() {
                     <p className="text-sm text-green-700">Receita Total</p>
                     <p className="text-3xl font-bold text-green-900">{formatCurrency(calculated.total_revenue)}</p>
                   </div>
-                  <Button onClick={() => saveMutation.mutate(formData)} disabled={saveMutation.isPending} className="bg-green-600 hover:bg-green-700">
-                    {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-                    Salvar DRE
-                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -715,83 +754,59 @@ export default function DRETCMP2() {
           <TabsContent value="custos_tcmp2">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-blue-600" />
-                  Custos que ENTRAM no TCMP²
-                </CardTitle>
-                <CardDescription>
-                  Estes custos são usados para calcular o valor hora ideal (TCMP²)
-                </CardDescription>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <CheckCircle className="w-5 h-5 text-blue-600" />
+                      Custos que ENTRAM no TCMP²
+                    </CardTitle>
+                    <CardDescription>Estes custos são usados para calcular o valor hora ideal (TCMP²)</CardDescription>
+                  </div>
+                  {!editingTabs.custos_tcmp2 ? (
+                    <Button variant="outline" onClick={() => startEditing('custos_tcmp2')}>
+                      ✏️ Editar
+                    </Button>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Button variant="outline" onClick={() => cancelEditing('custos_tcmp2')}>Cancelar</Button>
+                      <Button onClick={() => saveAndClose('custos_tcmp2')} disabled={saveMutation.isPending} className="bg-green-600 hover:bg-green-700">
+                        {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                        Salvar
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <div>
-                    <Label>Operacionais (Aluguel, Energia, Água, Tel)</Label>
-                    <InputMoeda
-                      value={formData.costs_tcmp2.operational}
-                      onChange={(v) => updateCostsTcmp2('operational', v)}
-                      className="text-right"
-                    />
-                  </div>
-                  <div>
-                    <Label>Pessoas (Salários, Encargos, Benefícios)</Label>
-                    <InputMoeda
-                      value={formData.costs_tcmp2.people}
-                      onChange={(v) => updateCostsTcmp2('people', v)}
-                      className="text-right"
-                    />
-                  </div>
-                  <div>
-                    <Label>Pró-labore dos Sócios</Label>
-                    <InputMoeda
-                      value={formData.costs_tcmp2.prolabore}
-                      onChange={(v) => updateCostsTcmp2('prolabore', v)}
-                      className="text-right"
-                    />
-                  </div>
-                  <div>
-                    <Label>Marketing e Propaganda</Label>
-                    <InputMoeda
-                      value={formData.costs_tcmp2.marketing}
-                      onChange={(v) => updateCostsTcmp2('marketing', v)}
-                      className="text-right"
-                    />
-                  </div>
-                  <div>
-                    <Label>Manutenção (Predial e Equipamentos)</Label>
-                    <InputMoeda
-                      value={formData.costs_tcmp2.maintenance}
-                      onChange={(v) => updateCostsTcmp2('maintenance', v)}
-                      className="text-right"
-                    />
-                  </div>
-                  <div>
-                    <Label>Serviços Terceirizados</Label>
-                    <InputMoeda
-                      value={formData.costs_tcmp2.third_party}
-                      onChange={(v) => updateCostsTcmp2('third_party', v)}
-                      className="text-right"
-                    />
-                  </div>
-                  <div>
-                    <Label>Despesas Administrativas</Label>
-                    <InputMoeda
-                      value={formData.costs_tcmp2.administrative}
-                      onChange={(v) => updateCostsTcmp2('administrative', v)}
-                      className="text-right"
-                    />
-                  </div>
-                </div>
+                {(() => {
+                  const fields = [
+                    { key: 'operational', label: 'Operacionais (Aluguel, Energia, Água, Tel)' },
+                    { key: 'people', label: 'Pessoas (Salários, Encargos, Benefícios)' },
+                    { key: 'prolabore', label: 'Pró-labore dos Sócios' },
+                    { key: 'marketing', label: 'Marketing e Propaganda' },
+                    { key: 'maintenance', label: 'Manutenção (Predial e Equipamentos)' },
+                    { key: 'third_party', label: 'Serviços Terceirizados' },
+                    { key: 'administrative', label: 'Despesas Administrativas' },
+                  ];
+                  return (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {fields.map(({ key, label }) => (
+                        <div key={key}>
+                          <Label>{label}</Label>
+                          {editingTabs.custos_tcmp2 ? (
+                            <InputMoeda value={formData.costs_tcmp2[key]} onChange={(v) => updateCostsTcmp2(key, v)} className="text-right" />
+                          ) : (
+                            <div className="flex h-9 w-full items-center rounded-md border border-input bg-gray-50 px-3 py-1 text-sm font-medium">{formatCurrency(formData.costs_tcmp2[key])}</div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
 
-                <div className="mt-4 p-4 bg-blue-50 rounded-lg flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-blue-700">Total Custos TCMP²</p>
-                    <p className="text-3xl font-bold text-blue-900">{formatCurrency(calculated.total_costs_tcmp2)}</p>
-                  </div>
-                  <Button onClick={() => saveMutation.mutate(formData)} disabled={saveMutation.isPending} className="bg-green-600 hover:bg-green-700">
-                    {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-                    Salvar DRE
-                  </Button>
+                <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                  <p className="text-sm text-blue-700">Total Custos TCMP²</p>
+                  <p className="text-3xl font-bold text-blue-900">{formatCurrency(calculated.total_costs_tcmp2)}</p>
                 </div>
               </CardContent>
             </Card>
@@ -801,83 +816,59 @@ export default function DRETCMP2() {
           <TabsContent value="custos_nao_tcmp2">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <XCircle className="w-5 h-5 text-orange-600" />
-                  Custos que NÃO ENTRAM no TCMP²
-                </CardTitle>
-                <CardDescription>
-                  Estes custos são financeiros/investimentos e não devem compor o valor hora
-                </CardDescription>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <XCircle className="w-5 h-5 text-orange-600" />
+                      Custos que NÃO ENTRAM no TCMP²
+                    </CardTitle>
+                    <CardDescription>Estes custos são financeiros/investimentos e não devem compor o valor hora</CardDescription>
+                  </div>
+                  {!editingTabs.custos_nao_tcmp2 ? (
+                    <Button variant="outline" onClick={() => startEditing('custos_nao_tcmp2')}>
+                      ✏️ Editar
+                    </Button>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Button variant="outline" onClick={() => cancelEditing('custos_nao_tcmp2')}>Cancelar</Button>
+                      <Button onClick={() => saveAndClose('custos_nao_tcmp2')} disabled={saveMutation.isPending} className="bg-green-600 hover:bg-green-700">
+                        {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                        Salvar
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <div>
-                    <Label>Financiamentos</Label>
-                    <InputMoeda
-                      value={formData.costs_not_tcmp2.financing}
-                      onChange={(v) => updateCostsNotTcmp2('financing', v)}
-                      className="text-right"
-                    />
-                  </div>
-                  <div>
-                    <Label>Consórcios</Label>
-                    <InputMoeda
-                      value={formData.costs_not_tcmp2.consortium}
-                      onChange={(v) => updateCostsNotTcmp2('consortium', v)}
-                      className="text-right"
-                    />
-                  </div>
-                  <div>
-                    <Label>Equipamentos Parcelados</Label>
-                    <InputMoeda
-                      value={formData.costs_not_tcmp2.equipment_installments}
-                      onChange={(v) => updateCostsNotTcmp2('equipment_installments', v)}
-                      className="text-right"
-                    />
-                  </div>
-                  <div>
-                    <Label>Boletos de Peças (Estoque)</Label>
-                    <InputMoeda
-                      value={formData.costs_not_tcmp2.parts_invoices}
-                      onChange={(v) => updateCostsNotTcmp2('parts_invoices', v)}
-                      className="text-right"
-                    />
-                  </div>
-                  <div>
-                    <Label>Processos Judiciais</Label>
-                    <InputMoeda
-                      value={formData.costs_not_tcmp2.legal_processes}
-                      onChange={(v) => updateCostsNotTcmp2('legal_processes', v)}
-                      className="text-right"
-                    />
-                  </div>
-                  <div>
-                    <Label>Compra de Terreno/Imóvel</Label>
-                    <InputMoeda
-                      value={formData.costs_not_tcmp2.land_purchase}
-                      onChange={(v) => updateCostsNotTcmp2('land_purchase', v)}
-                      className="text-right"
-                    />
-                  </div>
-                  <div>
-                    <Label>Investimentos Diversos</Label>
-                    <InputMoeda
-                      value={formData.costs_not_tcmp2.investments}
-                      onChange={(v) => updateCostsNotTcmp2('investments', v)}
-                      className="text-right"
-                    />
-                  </div>
-                </div>
+                {(() => {
+                  const fields = [
+                    { key: 'financing', label: 'Financiamentos' },
+                    { key: 'consortium', label: 'Consórcios' },
+                    { key: 'equipment_installments', label: 'Equipamentos Parcelados' },
+                    { key: 'parts_invoices', label: 'Boletos de Peças (Estoque)' },
+                    { key: 'legal_processes', label: 'Processos Judiciais' },
+                    { key: 'land_purchase', label: 'Compra de Terreno/Imóvel' },
+                    { key: 'investments', label: 'Investimentos Diversos' },
+                  ];
+                  return (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {fields.map(({ key, label }) => (
+                        <div key={key}>
+                          <Label>{label}</Label>
+                          {editingTabs.custos_nao_tcmp2 ? (
+                            <InputMoeda value={formData.costs_not_tcmp2[key]} onChange={(v) => updateCostsNotTcmp2(key, v)} className="text-right" />
+                          ) : (
+                            <div className="flex h-9 w-full items-center rounded-md border border-input bg-gray-50 px-3 py-1 text-sm font-medium">{formatCurrency(formData.costs_not_tcmp2[key])}</div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
 
-                <div className="mt-4 p-4 bg-orange-50 rounded-lg flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-orange-700">Total Custos NÃO TCMP²</p>
-                    <p className="text-3xl font-bold text-orange-900">{formatCurrency(calculated.total_costs_not_tcmp2)}</p>
-                  </div>
-                  <Button onClick={() => saveMutation.mutate(formData)} disabled={saveMutation.isPending} className="bg-green-600 hover:bg-green-700">
-                    {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-                    Salvar DRE
-                  </Button>
+                <div className="mt-4 p-4 bg-orange-50 rounded-lg">
+                  <p className="text-sm text-orange-700">Total Custos NÃO TCMP²</p>
+                  <p className="text-3xl font-bold text-orange-900">{formatCurrency(calculated.total_costs_not_tcmp2)}</p>
                 </div>
               </CardContent>
             </Card>
