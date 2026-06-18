@@ -77,12 +77,8 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
   const saldoInicialEfetivo = modoSimulacao ? saldoInicialSimulado : saldoInicial;
   const isLoadingEfetivo = modoSimulacao ? false : isLoading;
 
-  // ── Sanitização silenciosa na abertura: limpa legados do banco sem interferir na hidratação ──
-  useEffect(() => {
-    if (!aberto || !workshopId || !mes || modoSimulacao) return;
-    // Fire-and-forget — não faz refetch para não sobrescrever estado já hidratado
-    base44.functions.invoke('sanitizarSaldoInicial', { workshop_id: workshopId, mes }).catch(() => {});
-  }, [aberto, workshopId, mes, modoSimulacao]);
+  // ── Sanitização silenciosa na abertura: REMOVIDA — era a causa de race condition ──
+  // A sanitização agora é feita apenas no pós-save com delay, dentro da mutação.
 
   // ── Popular estado local com dados do banco (uma vez por abertura) ──
   useEffect(() => {
@@ -94,7 +90,11 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
       return;
     }
     console.log('[DFC-Modal] 🔄 useEffect aberto=true | isLoadingEfetivo=', isLoadingEfetivo, '| inicializado=', inicializadoRef.current, '| saldoInicialEfetivo=', saldoInicialEfetivo);
-    if (isLoadingEfetivo || inicializadoRef.current) return;
+    // Aguarda o loading terminar antes de inicializar
+    if (isLoadingEfetivo) return;
+    // Só inicializa se ainda não foi inicializado nesta abertura
+    if (inicializadoRef.current) return;
+    // Se a query terminou mas retornou null (sem dados), também inicializa (registro novo)
     inicializadoRef.current = true;
 
     const det = saldoInicialEfetivo?.detalhes || {};
@@ -191,9 +191,10 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
       resultado = { ...resultado, detalhes };
       console.log('[DFC-Modal] 📦 resultado final retornado:', resultado);
 
-      // Sanitização silenciosa pós-save: remove registros legados/duplicados no backend
-      // Não bloqueia o fluxo — erro é ignorado intencionalmente
-      base44.functions.invoke('sanitizarSaldoInicial', { workshop_id: workshopId, mes }).catch(() => {});
+      // Sanitização silenciosa pós-save: delay de 3s para garantir que o registro foi persistido
+      setTimeout(() => {
+        base44.functions.invoke('sanitizarSaldoInicial', { workshop_id: workshopId, mes }).catch(() => {});
+      }, 3000);
 
       // Registrar histórico se houver mudança
       if (detalhes_anteriores && idAtual) {
