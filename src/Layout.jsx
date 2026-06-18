@@ -205,7 +205,7 @@ export default function Layout({ children, currentPageName }) {
         </>
       )}
 
-      <div className={`flex flex-col min-h-screen transition-all duration-300 ${shouldShowMenus ? 'lg:pl-[var(--sidebar-width,16rem)]' : ''}`}>
+      <div className={`flex flex-col min-h-screen transition-all duration-300 min-w-0 overflow-x-hidden ${shouldShowMenus ? 'lg:pl-[var(--sidebar-width,16rem)]' : ''}`}>
               {/* Injeção de CSS Personalizado por Oficina */}
               {workshop?.custom_css_url && (
                 <link rel="stylesheet" href={`${workshop.custom_css_url}?v=${cssVersion}`} />
@@ -404,12 +404,12 @@ export default function Layout({ children, currentPageName }) {
             </main>
 
         <footer className="bg-white border-t border-gray-200 mt-auto print:hidden">
-          <div className="px-4 sm:px-6 lg:px-8 py-6">
-            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="px-4 sm:px-6 lg:px-8 py-4">
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-2">
               <p className="text-sm text-gray-600">
                 © 2025 Oficinas Master. Todos os direitos reservados.
               </p>
-              <div className="flex items-center gap-6">
+              <div className="flex items-center gap-4">
                 <a href="#" className="text-sm text-gray-600 hover:text-primary transition-colors">
                   Termos de Uso
                 </a>
