@@ -303,6 +303,7 @@ export function PermissionsProvider({ children }) {
         if (requiredPermission === 'admin.audit') return false;
         if (requiredPermission === 'admin.profiles') return false;
         if (requiredPermission === 'admin.system_config') return false;
+        if (requiredPermission === 'admin.users') return false;
         return true;
       }
 
