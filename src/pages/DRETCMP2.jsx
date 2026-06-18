@@ -256,9 +256,10 @@ export default function DRETCMP2() {
     const totalHours = (data.productive_technicians || 1) * (data.monthly_hours || 219);
     const tcmp2Value = totalHours > 0 ? totalCostsTcmp2 / totalHours : 0;
 
-    // R70/I30 = (Faturamento Total - Custo Peças Aplicadas - Peças Estoque) / Faturamento Total
+    // R70/I30 = (Receita Total - Receita de Peças Aplicadas) / Receita Total
+    // R70 mede a proporção de receita gerada por serviços/mão de obra (vs produto/peças)
     const partsStockPurchase = data.parts_cost.parts_stock_purchase || 0;
-    const r70Base = totalRevenue - partsAppliedCost - partsStockPurchase;
+    const r70Base = totalRevenue - (data.revenue.parts_applied || 0);
     const r70Percentage = totalRevenue > 0 ? (r70Base / totalRevenue) * 100 : 0;
     const i30Percentage = 100 - r70Percentage;
 
@@ -888,7 +889,10 @@ export default function DRETCMP2() {
                 <div className="mt-6 p-4 bg-purple-50 rounded-lg">
                   <h4 className="font-semibold text-purple-900 mb-2">Cálculo R70/I30</h4>
                   <p className="text-sm text-purple-700 mb-2">
-                    R70/I30 = (Faturamento - Peças Aplicadas - Peças Estoque) / Faturamento
+                    R70 = (Receita Total - Receita de Peças Aplicadas) / Receita Total
+                  </p>
+                  <p className="text-xs text-purple-600 mb-2">
+                    R70 mede quanto da receita vem de serviços/mão de obra. I30 é a parcela de peças/produtos.
                   </p>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="text-center p-3 bg-white rounded-lg">
