@@ -895,7 +895,7 @@ export default function DFCTab({ workshopId, mes }) {
             <div className="flex items-center justify-between gap-4 flex-wrap">
               <div>
                 <p className="text-sm font-semibold text-gray-700">Saldo Atual do Mês</p>
-                <p className="text-xs text-gray-500">Projeção: inicial + fluxos do mês</p>
+                <p className="text-xs text-gray-500">Inicial ± entradas e saídas do mês</p>
               </div>
               <div className="flex items-center gap-2">
                 {saldoFinal >= 0 ?
