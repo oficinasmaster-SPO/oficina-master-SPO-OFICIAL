@@ -355,13 +355,17 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
   };
 
   // ── Caixa: atualiza local sem persistir — persiste no blur ────
-  const setCaixa = (v) => setLocalDetalhes(prev => ({ ...prev, caixa: v }));
+  const setCaixa = (v) => {
+    const num = typeof v === 'object' ? (v?.target?.value ?? 0) : (Number(v) || 0);
+    setLocalDetalhes(prev => ({ ...prev, caixa: num }));
+  };
   // Só salva se o modal já foi inicializado com os dados do banco (evita sobrescrever bancos/máquinas com lista vazia)
   const salvarCaixa = () => {
     console.log('[DFC-Modal] 💵 salvarCaixa | inicializado=', inicializadoRef.current, '| localDetalhes=', localDetalhes);
     if (!inicializadoRef.current) { console.warn('[DFC-Modal] ⚠️ salvarCaixa bloqueado — modal ainda não inicializado'); return; }
     const detalhesAntes = { ...localDetalhes };
-    persistir({ ...localDetalhes, caixa: Number(localDetalhes.caixa) || 0 }, 'edicao', detalhesAntes);
+    const caixaNum = typeof localDetalhes.caixa === 'object' ? 0 : (Number(localDetalhes.caixa) || 0);
+    persistir({ ...localDetalhes, caixa: caixaNum }, 'edicao', detalhesAntes);
   };
 
   // ── Zerar tudo ────────────────────────────────────────────────
