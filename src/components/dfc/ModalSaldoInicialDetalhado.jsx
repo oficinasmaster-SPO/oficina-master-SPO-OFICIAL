@@ -99,11 +99,14 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
 
     const det = saldoInicialEfetivo?.detalhes || {};
     console.log('[DFC-Modal] ✅ Inicializando com detalhes:', det);
+    // Formato novo: bancos/maquinas_cartao como arrays
+    // Formato legado: banco/maquina_cartao como valores únicos (null ou número)
+    // Se legado com valor > 0, converte para array; se null, ignora (array vazio)
     const bancos = Array.isArray(det.bancos) ? det.bancos
-      : det.banco != null ? [{ id: "legado_banco", nome: "Banco", tipo_conta: "corrente", saldo: det.banco, data: "" }]
+      : (det.banco != null && Number(det.banco) > 0) ? [{ id: "legado_banco", nome: "Banco", tipo_conta: "corrente", saldo: Number(det.banco), data: "" }]
       : [];
     const maquinas = Array.isArray(det.maquinas_cartao) ? det.maquinas_cartao
-      : det.maquina_cartao != null ? [{ id: "legado_maq", nome: "Máquina", gateway_pagamento: "", saldo: det.maquina_cartao, data: "" }]
+      : (det.maquina_cartao != null && Number(det.maquina_cartao) > 0) ? [{ id: "legado_maq", nome: "Máquina", gateway_pagamento: "", saldo: Number(det.maquina_cartao), data: "" }]
       : [];
     const caixaValue = typeof det.caixa === 'number' ? det.caixa : (det.caixa != null ? Number(det.caixa) : 0);
     console.log('[DFC-Modal] 🏦 bancos:', bancos, '| 💳 maquinas:', maquinas, '| 💵 caixa:', caixaValue);
@@ -150,28 +153,36 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
     mutationFn: async ({ detalhes, tipo_alteracao = 'edicao', detalhes_anteriores = null, _detalhesParaCache }) => {
       // Em modo simulação, não persiste no banco - apenas atualiza o estado local
       if (modoSimulacao) {
-        console.log('[DFC-Modal] 🧪 MODO SIMULAÇÃO - não persiste no banco');
         return { id: 'simulado', detalhes, valor: calcTotal(detalhes) };
       }
       
       const total = calcTotal(detalhes);
-      // ✅ FIX: Busca o ID mais recente do banco em vez de confiar na ref que pode estar stale
+
+      // Busca TODOS os registros saldo_inicial do mês
       const registrosExistentes = await base44.entities.DFCLancamento.filter(
         { workshop_id: workshopId, mes, grupo: "saldo_inicial" },
-        "-updated_date", 1
+        "-updated_date", 10
       );
-      const idAtual = registrosExistentes?.[0]?.id || registroIdRef.current;
-      console.log('[DFC-Modal] 💾 persistir chamado | inicializado=', inicializadoRef.current, '| idAtual=', idAtual, '| detalhes=', detalhes);
+
+      // Identifica registros no formato novo (com arrays bancos/maquinas_cartao)
+      const isFormatoNovo = (r) => r.detalhes && (Array.isArray(r.detalhes.bancos) || Array.isArray(r.detalhes.maquinas_cartao));
+      const registrosNovos = (registrosExistentes || []).filter(isFormatoNovo);
+      const registrosLegados = (registrosExistentes || []).filter(r => !isFormatoNovo(r));
+
+      // Deleta todos os legados para evitar conflito com sanitizarSaldoInicial
+      for (const r of registrosLegados) {
+        await base44.entities.DFCLancamento.delete(r.id).catch(() => {});
+      }
+
+      const idAtual = registrosNovos[0]?.id || registroIdRef.current;
       
       let resultado;
-      console.log('[DFC-Modal] 💾 persistirMutation | detalhes antes de salvar:', detalhes);
       if (idAtual) {
         resultado = await base44.entities.DFCLancamento.update(idAtual, {
           detalhes,
           valor: total,
           saldo_inicial: total,
         });
-        console.log('[DFC-Modal] ✅ UPDATE realizado | id:', idAtual, '| resultado.detalhes:', resultado.detalhes);
       } else {
         resultado = await base44.entities.DFCLancamento.create({
           workshop_id: workshopId,
@@ -184,10 +195,8 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
           detalhes,
           origem: "manual",
         });
-        console.log('[DFC-Modal] ✅ CREATE realizado | id:', resultado.id, '| resultado.detalhes:', resultado.detalhes);
       }
       // Garante que o objeto retornado SEMPRE tem os detalhes corretos no formato novo
-      // O backend às vezes retorna sem o campo detalhes ou com o formato antigo
       resultado = { ...resultado, detalhes };
       console.log('[DFC-Modal] 📦 resultado final retornado:', resultado);
 
