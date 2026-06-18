@@ -639,11 +639,15 @@ export default function DRETCMP2() {
                     <input
                       inputMode="numeric"
                       pattern="[0-9]*"
+                      placeholder="Número de técnicos em produção"
                       className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                      value={formData.productive_technicians}
+                      value={formData.productive_technicians || ''}
                       onChange={(e) => {
                         const v = e.target.value.replace(/\D/g, '');
-                        setFormData({ ...formData, productive_technicians: parseInt(v) || 1 });
+                        setFormData({ ...formData, productive_technicians: v === '' ? '' : parseInt(v) });
+                      }}
+                      onBlur={(e) => {
+                        if (!e.target.value) setFormData(f => ({ ...f, productive_technicians: 1 }));
                       }}
                     />
                   </div>
@@ -652,11 +656,15 @@ export default function DRETCMP2() {
                     <input
                       inputMode="numeric"
                       pattern="[0-9]*"
+                      placeholder="Total de horas /Mês"
                       className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                      value={formData.monthly_hours}
+                      value={formData.monthly_hours || ''}
                       onChange={(e) => {
                         const v = e.target.value.replace(/\D/g, '');
-                        setFormData({ ...formData, monthly_hours: parseInt(v) || 219 });
+                        setFormData({ ...formData, monthly_hours: v === '' ? '' : parseInt(v) });
+                      }}
+                      onBlur={(e) => {
+                        if (!e.target.value) setFormData(f => ({ ...f, monthly_hours: 219 }));
                       }}
                     />
                   </div>
