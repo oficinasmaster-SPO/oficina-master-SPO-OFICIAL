@@ -861,9 +861,10 @@ export default function DFCTab({ workshopId, mes }) {
             }
       </div>
 
-      {/* Saldo Inicial + seletor de view */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-        <Card className="border-2 border-gray-200 flex-1">
+      {/* Saldo Inicial + Saldo Atual + seletor de view */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {/* Saldo Inicial */}
+        <Card className="border-2 border-gray-200">
           <CardContent className="pt-4 pb-4">
             <div className="flex items-center justify-between gap-4 flex-wrap">
               <div>
@@ -881,7 +882,6 @@ export default function DFCTab({ workshopId, mes }) {
                       onClick={() => setModalSaldoDetalhadoAberto(true)}
                       className="shrink-0"
                       title="Detalhar saldo inicial por banco, máquina e caixa">
-                      
                   <Eye className="w-4 h-4" />
                 </Button>
               </div>
@@ -889,8 +889,29 @@ export default function DFCTab({ workshopId, mes }) {
           </CardContent>
         </Card>
 
-        {/* Tabs de view */}
-        <div className="flex gap-1 bg-gray-100 rounded-lg p-1 shrink-0">
+        {/* Saldo Atual */}
+        <Card className={`border-2 ${saldoFinal >= 0 ? "border-emerald-300 bg-emerald-50" : "border-red-300 bg-red-50"}`}>
+          <CardContent className="pt-4 pb-4">
+            <div className="flex items-center justify-between gap-4 flex-wrap">
+              <div>
+                <p className="text-sm font-semibold text-gray-700">Saldo Atual do Mês</p>
+                <p className="text-xs text-gray-500">Projeção: inicial + fluxos do mês</p>
+              </div>
+              <div className="flex items-center gap-2">
+                {saldoFinal >= 0
+                  ? <TrendingUp className="w-5 h-5 text-emerald-600" />
+                  : <TrendingDown className="w-5 h-5 text-red-600" />}
+                <p className={`text-xl font-bold ${saldoFinal >= 0 ? "text-emerald-700" : "text-red-700"}`}>
+                  {fmt(saldoFinal)}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Tabs de view */}
+      <div className="flex gap-1 bg-gray-100 rounded-lg p-1 w-fit">
           <button
                 onClick={() => setView("grupos")}
                 className={`text-xs px-3 py-2 rounded-md font-medium transition-all ${view === "grupos" ? "bg-white shadow text-gray-900" : "text-gray-500 hover:text-gray-700"}`}>
@@ -904,7 +925,6 @@ export default function DFCTab({ workshopId, mes }) {
             📅 Projeção
           </button>
         </div>
-      </div>
 
       {/* VIEW: PROJEÇÃO */}
       {view === "projecao" &&
@@ -947,30 +967,15 @@ export default function DFCTab({ workshopId, mes }) {
               onMarcarPagamento={setItemPagamento} />
             
 
-      {/* Saldo Final — indicador verde/vermelho em tempo real */}
-      <Card className={`border-2 ${saldoFinal >= 0 ? "border-emerald-400 bg-emerald-50" : "border-red-400 bg-red-50"}`}>
-        <CardContent className="pt-4">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div>
-              <p className="text-sm font-semibold text-gray-700">Saldo Final do Mês</p>
-              <p className="text-xs text-gray-500">
-                {fmt(saldoInicial)} (ini){" "}
-                {fluxoOp >= 0 ? "+" : ""}{fmt(fluxoOp)} (op){" "}
-                {fluxoInv >= 0 ? "+" : ""}{fmt(fluxoInv)} (inv){" "}
-                {fluxoFin >= 0 ? "+" : ""}{fmt(fluxoFin)} (fin)
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              {saldoFinal >= 0 ?
-                    <TrendingUp className="w-6 h-6 text-emerald-600" /> :
-                    <TrendingDown className="w-6 h-6 text-red-600" />}
-              <p className={`text-3xl font-bold ${saldoFinal >= 0 ? "text-emerald-700" : "text-red-700"}`}>
-                {fmt(saldoFinal)}
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Composição do saldo — resumo compacto */}
+      <div className={`rounded-xl border-2 px-4 py-3 flex flex-wrap gap-3 items-center justify-between text-xs ${saldoFinal >= 0 ? "border-emerald-300 bg-emerald-50" : "border-red-300 bg-red-50"}`}>
+        <span className="font-semibold text-gray-700">Composição:</span>
+        <span className="text-gray-600">{fmt(saldoInicial)} <span className="text-gray-400">(inicial)</span></span>
+        <span className={fluxoOp >= 0 ? "text-emerald-700" : "text-red-600"}>{fluxoOp >= 0 ? "+" : ""}{fmt(fluxoOp)} <span className="text-gray-400">(op)</span></span>
+        <span className={fluxoInv >= 0 ? "text-emerald-700" : "text-red-600"}>{fluxoInv >= 0 ? "+" : ""}{fmt(fluxoInv)} <span className="text-gray-400">(inv)</span></span>
+        <span className={fluxoFin >= 0 ? "text-emerald-700" : "text-red-600"}>{fluxoFin >= 0 ? "+" : ""}{fmt(fluxoFin)} <span className="text-gray-400">(fin)</span></span>
+        <span className={`font-bold text-sm ml-auto ${saldoFinal >= 0 ? "text-emerald-700" : "text-red-700"}`}>= {fmt(saldoFinal)}</span>
+      </div>
 
       {/* Gráfico Waterfall */}
       <Card className="border border-gray-200">
