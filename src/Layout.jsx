@@ -216,7 +216,7 @@ export default function Layout({ children, currentPageName }) {
               {isAuthenticated && isAdminMode && workshop && <AdminModeBanner workshop={workshop} />}
               {shouldShowMenus &&
           <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-30 print:hidden">
-          <div className="sm:px-6 pl-4 pr-2 rounded-sm lg:px-5 pt-1">
+          <div className="sm:px-6 rounded-sm lg:px-5 px-4">
             <div className="flex items-center justify-between h-16">
               {isAuthenticated &&
                 <button
