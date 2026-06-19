@@ -196,6 +196,10 @@ export default function DRETCMP2() {
   }, [dreList]);
 
   useEffect(() => {
+    // Não sobrescreve formData se há uma aba em edição ativa (evita race condition pós-save)
+    const isEditing = Object.values(editingTabs).some(Boolean);
+    if (isEditing) return;
+
     let data;
     if (viewMode === 'average' && averageData) {
       data = averageData;
