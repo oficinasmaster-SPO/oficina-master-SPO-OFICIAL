@@ -27,6 +27,7 @@ import { lazy } from 'react';
 import QADashboard from '@/components/monitoring/QADashboard';
 import PoliticaPrivacidade from '@/pages/PoliticaPrivacidade';
 import TermosDeUso from '@/pages/TermosDeUso';
+import Suporte from '@/pages/Suporte';
 import WheelLoader from '@/components/ui/WheelLoader';
 import ErrorBoundary from '@/components/shared/ErrorBoundary';
 import ImpersonationCacheInvalidator from '@/components/shared/ImpersonationCacheInvalidator';
@@ -87,7 +88,7 @@ const AuthenticatedApp = () => {
   const [showLoading, setShowLoading] = useState(false);
   const location = useLocation();
 
-  const publicPaths = ['/PublicNPS', '/PublicDISC', '/PrimeiroAcesso', '/ClientRegistration', '/CadastroSucesso', '/Planos', '/Cadastro', '/BemVindoPlanos', '/PoliticaPrivacidade', '/TermosDeUso'];
+  const publicPaths = ['/PublicNPS', '/PublicDISC', '/PrimeiroAcesso', '/ClientRegistration', '/CadastroSucesso', '/Planos', '/Cadastro', '/BemVindoPlanos', '/PoliticaPrivacidade', '/TermosDeUso', '/Suporte'];
   const isPublicPath = publicPaths.some(path => {
     const loc = location.pathname.toLowerCase();
     const p = path.toLowerCase();
@@ -158,6 +159,7 @@ const AuthenticatedApp = () => {
         <Route path="/BemVindoPlanos" element={<BemVindoPlanos />} />
         <Route path="/PoliticaPrivacidade" element={<PoliticaPrivacidade />} />
         <Route path="/TermosDeUso" element={<TermosDeUso />} />
+        <Route path="/Suporte" element={<Suporte />} />
 
         {/* All other pages require authentication */}
         <Route element={<ProtectedRoute />}>

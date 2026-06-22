@@ -133,7 +133,7 @@ export default function Layout({ children, currentPageName }) {
   };
 
   // Verificar se a página atual é pública (não precisa de autenticação)
-  const publicPages = ['/PrimeiroAcesso', '/ClientRegistration', '/CadastroSucesso', '/Planos', '/Cadastro', '/PoliticaPrivacidade', '/TermosDeUso'];
+  const publicPages = ['/PrimeiroAcesso', '/ClientRegistration', '/CadastroSucesso', '/Planos', '/Cadastro', '/PoliticaPrivacidade', '/TermosDeUso', '/Suporte'];
   const isPublicPage = publicPages.some((page) => {
     const loc = location.pathname.toLowerCase();
     const p = page.toLowerCase();
@@ -417,9 +417,9 @@ export default function Layout({ children, currentPageName }) {
                 <Link to="/PoliticaPrivacidade" className="text-sm text-gray-600 hover:text-primary transition-colors">
                   Privacidade
                 </Link>
-                <a href="#" className="text-sm text-gray-600 hover:text-primary transition-colors">
+                <Link to="/Suporte" className="text-sm text-gray-600 hover:text-primary transition-colors">
                   Suporte
-                </a>
+                </Link>
               </div>
             </div>
           </div>
