@@ -87,7 +87,7 @@ const AuthenticatedApp = () => {
   const [showLoading, setShowLoading] = useState(false);
   const location = useLocation();
 
-  const publicPaths = ['/PublicNPS', '/PublicDISC', '/PrimeiroAcesso', '/ClientRegistration', '/CadastroSucesso', '/Planos', '/Cadastro', '/BemVindoPlanos'];
+  const publicPaths = ['/PublicNPS', '/PublicDISC', '/PrimeiroAcesso', '/ClientRegistration', '/CadastroSucesso', '/Planos', '/Cadastro', '/BemVindoPlanos', '/PoliticaPrivacidade', '/TermosDeUso'];
   const isPublicPath = publicPaths.some(path => {
     const loc = location.pathname.toLowerCase();
     const p = path.toLowerCase();
