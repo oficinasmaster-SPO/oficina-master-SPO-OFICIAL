@@ -411,12 +411,12 @@ export default function Layout({ children, currentPageName }) {
                 © 2025 Oficinas Master. Todos os direitos reservados.
               </p>
               <div className="flex items-center gap-4">
-                <a href="#" className="text-sm text-gray-600 hover:text-primary transition-colors">
+                <Link to="/TermosDeUso" className="text-sm text-gray-600 hover:text-primary transition-colors">
                   Termos de Uso
-                </a>
-                <a href="#" className="text-sm text-gray-600 hover:text-primary transition-colors">
+                </Link>
+                <Link to="/PoliticaPrivacidade" className="text-sm text-gray-600 hover:text-primary transition-colors">
                   Privacidade
-                </a>
+                </Link>
                 <a href="#" className="text-sm text-gray-600 hover:text-primary transition-colors">
                   Suporte
                 </a>

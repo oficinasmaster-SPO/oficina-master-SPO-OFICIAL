@@ -25,6 +25,8 @@ import { pagePermissions } from '@/components/lib/pagePermissions';
 import { PermissionsProvider } from '@/components/contexts/PermissionsContext';
 import { lazy } from 'react';
 import QADashboard from '@/components/monitoring/QADashboard';
+import PoliticaPrivacidade from '@/pages/PoliticaPrivacidade';
+import TermosDeUso from '@/pages/TermosDeUso';
 import WheelLoader from '@/components/ui/WheelLoader';
 import ErrorBoundary from '@/components/shared/ErrorBoundary';
 import ImpersonationCacheInvalidator from '@/components/shared/ImpersonationCacheInvalidator';
@@ -154,6 +156,8 @@ const AuthenticatedApp = () => {
         <Route path="/PublicNPS" element={<PublicNPS />} />
         <Route path="/PublicDISC" element={<PublicDISC />} />
         <Route path="/BemVindoPlanos" element={<BemVindoPlanos />} />
+        <Route path="/PoliticaPrivacidade" element={<PoliticaPrivacidade />} />
+        <Route path="/TermosDeUso" element={<TermosDeUso />} />
 
         {/* All other pages require authentication */}
         <Route element={<ProtectedRoute />}>
