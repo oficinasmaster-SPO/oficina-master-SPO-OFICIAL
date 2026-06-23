@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
@@ -357,6 +357,20 @@ export default function Home() {
           </Button>
         </div>
       </div>
+
+      {/* Footer */}
+      <footer className="bg-white border-t border-gray-200 mt-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-2">
+            <p className="text-sm text-gray-600">© 2025 Oficinas Master. Todos os direitos reservados.</p>
+            <div className="flex items-center gap-4">
+              <Link to="/TermosDeUso" className="text-sm text-gray-600 hover:text-blue-600 transition-colors">Termos de Uso</Link>
+              <Link to="/PoliticaPrivacidade" className="text-sm text-gray-600 hover:text-blue-600 transition-colors">Privacidade</Link>
+              <Link to="/Suporte" className="text-sm text-gray-600 hover:text-blue-600 transition-colors">Suporte</Link>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
