@@ -110,7 +110,9 @@ Deno.serve(async (req) => {
         metadata: {
           role: role || 'user',
           profile_id: profile_id || null,
-          workshop_id: workshop_id
+          workshop_id: workshop_id,
+          company_id: workshop_id,
+          invited_at: new Date().toISOString()
         }
       });
       console.log("✅ EmployeeInvite criado on-the-fly:", invite.id);

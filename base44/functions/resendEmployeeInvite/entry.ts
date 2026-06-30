@@ -61,31 +61,6 @@ Deno.serve(async (req) => {
       
       console.log("✅ Convite atualizado com novo token:", newInviteToken);
 
-      // RESETAR SENHA SE O USUÁRIO EXISTIR
-      if (employee.user_id) {
-        console.log("🔐 Resetando senha para 'Oficina@2026'...");
-        const apiUrl = `https://base44.app/api/apps/${Deno.env.get('BASE44_APP_ID')}/users/${employee.user_id}/password`;
-        
-        try {
-          const passResponse = await fetch(apiUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'x-base44-key': Deno.env.get('BASE44_SERVICE_ROLE_KEY')
-            },
-            body: JSON.stringify({ password: "Oficina@2026" })
-          });
-          
-          if (!passResponse.ok) {
-            console.error("⚠️ Falha ao resetar senha:", await passResponse.text());
-          } else {
-            console.log("✅ Senha resetada com sucesso");
-          }
-        } catch (e) {
-          console.error("⚠️ Erro ao chamar API de senha:", e);
-        }
-      }
-
     } else {
       // Criar novo convite
       const inviteToken = crypto.randomUUID();
@@ -104,7 +79,14 @@ Deno.serve(async (req) => {
         invite_token: inviteToken,
         invite_type: 'workshop',
         expires_at: expiresAt.toISOString(),
-        status: "enviado"
+        status: "enviado",
+        metadata: {
+          role: 'user',
+          profile_id: employee.profile_id || null,
+          workshop_id: employee.workshop_id,
+          company_id: employee.workshop_id,
+          invited_at: new Date().toISOString()
+        }
       });
       
       // Ensure the token is bound correctly for the response
