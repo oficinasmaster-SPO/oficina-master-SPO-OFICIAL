@@ -82,16 +82,38 @@ Deno.serve(async (req) => {
       console.log("✅ Comando de inviteUser enviado. O webhook de EmployeeInviteAcceptance fará o merge dos dados do Employee e User.");
     }
 
-    // Buscar convite criado
-    const invites = await base44.asServiceRole.entities.EmployeeInvite.filter({ 
+    // Buscar convite existente — ou criá-lo agora se não existir (evita race condition)
+    let existingInvites = await base44.asServiceRole.entities.EmployeeInvite.filter({ 
       email: email,
       workshop_id: workshop_id
     }, '-created_date', 1);
 
-    const invite = invites[0];
+    let invite = existingInvites[0];
     
     if (!invite) {
-      return Response.json({ error: 'Convite não encontrado' }, { status: 404 });
+      console.log("⚠️ EmployeeInvite não encontrado — criando agora para:", email);
+      const inviteToken = crypto.randomUUID().replace(/-/g, '');
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 7);
+      invite = await base44.asServiceRole.entities.EmployeeInvite.create({
+        workshop_id: workshop_id,
+        name: name,
+        email: email,
+        position: position || 'Colaborador',
+        job_role: job_role || 'outros',
+        area: area || 'tecnico',
+        profile_id: profile_id || null,
+        invite_token: inviteToken,
+        invite_type: 'workshop',
+        expires_at: expiresAt.toISOString(),
+        status: 'enviado',
+        metadata: {
+          role: role || 'user',
+          profile_id: profile_id || null,
+          workshop_id: workshop_id
+        }
+      });
+      console.log("✅ EmployeeInvite criado on-the-fly:", invite.id);
     }
 
     // Montar link do convite com profile_id em vez de workshop_id
