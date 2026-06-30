@@ -1,11 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChevronRight, TrendingUp, Users, BarChart3, Rocket, Loader2, LogIn, FileText, Target } from "lucide-react";
-import { toast } from "sonner";
+import { TrendingUp, Users, BarChart3, Rocket, LogIn, FileText, Target } from "lucide-react";
 import OnboardingTour from "../components/onboarding/OnboardingTour";
 import OnboardingChecklist from "../components/onboarding/OnboardingChecklist";
 import DashboardHub from "../components/home/DashboardHub";
