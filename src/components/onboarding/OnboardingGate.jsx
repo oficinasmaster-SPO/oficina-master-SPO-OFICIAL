@@ -67,29 +67,10 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
       if (user.cadastro_em_andamento === true && user.role !== 'admin') {
         navigate(createPageUrl("Cadastro")); return;
       }
-      // R11: signup órfão com carência de 10 minutos
-      // Conta nova (< 10 min) não redireciona — evita conflito durante onboarding normal.
-      // Conta antiga (> 10 min) sem workshop → forçar rota de cadastro.
-      const isOrphanSignup = user.signup_type === 'orphan' && user.role !== 'admin' && !hasWorkshop;
-      if (isOrphanSignup) {
-        const createdAt = new Date(user.created_date);
-        const ageMinutes = (Date.now() - createdAt.getTime()) / 60000;
-        if (ageMinutes > 10) {
-          // Telemetria: registrar redirect forçado
-          base44.analytics.track({
-            eventName: 'FORCED_ONBOARDING_REDIRECT',
-            properties: {
-              user_id: user.id,
-              email: user.email,
-              reason: 'orphan_signup',
-              age_minutes: Math.round(ageMinutes)
-            }
-          });
-          navigate(createPageUrl("Cadastro")); return;
-        }
-      }
-      // PERF-FIX-03: verificar convites APENAS se usuário não tem workshop e não é admin
-      // e usar cache para não repetir a query em cada render/navegação
+
+      // PERF-FIX-03: verificar convites ANTES de qualquer redirecionamento para /Cadastro
+      // Isso previne que usuários convidados (sem workshop_id ainda) sejam enviados para o
+      // fluxo de nova oficina ao invés do fluxo de aceite de convite.
       const needsInviteCheck = user.role !== 'admin' && !hasWorkshop;
       if (needsInviteCheck) {
         const cached = inviteCheckCache.get(user.id);
@@ -125,7 +106,20 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
               window.location.href = redirectUrl;
               return;
             } else {
+              // Nenhum convite encontrado — só agora aplicar carência de signup órfão
               inviteCheckCache.set(user.id, { hasPendingInvite: false, redirectUrl: null });
+              const isOrphanSignup = user.signup_type === 'orphan' && user.role !== 'admin';
+              if (isOrphanSignup) {
+                const createdAt = new Date(user.created_date);
+                const ageMinutes = (Date.now() - createdAt.getTime()) / 60000;
+                if (ageMinutes > 10) {
+                  base44.analytics.track({
+                    eventName: 'FORCED_ONBOARDING_REDIRECT',
+                    properties: { user_id: user.id, email: user.email, reason: 'orphan_signup', age_minutes: Math.round(ageMinutes) }
+                  });
+                  navigate(createPageUrl("Cadastro")); return;
+                }
+              }
             }
           } catch (e) {
             console.error("Erro ao checar convites:", e);
@@ -135,6 +129,16 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
         } else if (cached.hasPendingInvite && cached.redirectUrl) {
           window.location.href = cached.redirectUrl;
           return;
+        } else if (!cached.hasPendingInvite) {
+          // Cache confirmou: sem convite pendente — aplicar carência de signup órfão
+          const isOrphanSignup = user.signup_type === 'orphan' && user.role !== 'admin';
+          if (isOrphanSignup) {
+            const createdAt = new Date(user.created_date);
+            const ageMinutes = (Date.now() - createdAt.getTime()) / 60000;
+            if (ageMinutes > 10) {
+              navigate(createPageUrl("Cadastro")); return;
+            }
+          }
         }
       }
 
