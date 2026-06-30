@@ -14,13 +14,24 @@ Deno.serve(async (req) => {
 
     console.log(`[onUserCreated] Processando novo usuário: ${createdUser.email}`);
 
-    // Buscar convite
-    const invites = await base44.asServiceRole.entities.EmployeeInvite.filter({ 
+    // Buscar TODOS os convites do email e selecionar o mais adequado:
+    // Prioridade: status 'enviado' + não expirado + mais recente.
+    // Evita pegar convite de outro workshop por ordem de criação.
+    const allInvites = await base44.asServiceRole.entities.EmployeeInvite.filter({ 
       email: createdUser.email
-    }, '-created_date', 1);
+    }, '-created_date', 50);
 
-    if (invites && invites.length > 0) {
-      const invite = invites[0];
+    const now = new Date();
+    const validInvite = allInvites
+      ?.filter(inv => 
+        inv.status === 'enviado' &&
+        (!inv.expires_at || new Date(inv.expires_at) > now)
+      )
+      .sort((a, b) => new Date(b.created_date).getTime() - new Date(a.created_date).getTime())[0] || null;
+
+    if (validInvite) {
+      const invite = validInvite;
+      console.log(`[onUserCreated] Convite válido selecionado: ${invite.id} (workshop: ${invite.workshop_id})`);
       const workshop_id = invite.workshop_id;
       
       // Buscar oficina
@@ -50,7 +61,7 @@ Deno.serve(async (req) => {
 
       console.log(`[onUserCreated] Dados complementares inseridos com sucesso para ${createdUser.email}`);
     } else {
-      // R7 — Fallback: signup público sem convite
+      // R7 — Fallback: nenhum convite válido (sem convite, ou todos expirados/concluídos)
       // Registra telemetria para facilitar diagnóstico de usuários pendentes de workshop.
       console.log(`[onUserCreated] Nenhum EmployeeInvite encontrado para ${createdUser.email} — signup público`);
 
