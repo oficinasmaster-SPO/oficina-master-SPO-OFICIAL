@@ -24,7 +24,8 @@ Deno.serve(async (req) => {
       const user = matchingUsers[0];
       // Usuário bloqueado/inativo
       if (user.status === 'inativo' || user.status === 'bloqueado' ||
-          user.user_status === 'inativo' || user.user_status === 'bloqueado') {
+          user.user_status === 'inativo' || user.user_status === 'bloqueado' ||
+          user.active === false || user.is_active === false) {
         return Response.json({ success: true, status: 'INACTIVE_OR_BLOCKED' });
       }
       // Usuário ativo existente
