@@ -155,12 +155,12 @@ Deno.serve(async (req) => {
       });
     }
 
-    // INVITE_EXPIRED: existe convite mas expirado/acessado/concluído
-    if (anyInvite && !pendingInvite) {
+    // INVITE_EXPIRED: existe convite expirado/acessado/concluído
+    // MAS só redirecionar se o usuário ainda não tem employee+workshop vinculado.
+    // Convite "concluido" significa que o usuário já aceitou e está vinculado → deixar passar.
+    if (anyInvite && !pendingInvite && !employee?.workshop_id && !workshopId) {
       const isExpiredInvite =
         anyInvite.status === 'expirado' ||
-        anyInvite.status === 'concluido' ||
-        anyInvite.status === 'acessado' ||
         (anyInvite.expires_at && new Date(anyInvite.expires_at) < now());
       if (isExpiredInvite) {
         const expProfileId = anyInvite.profile_id || anyInvite.metadata?.profile_id || '';
@@ -170,7 +170,7 @@ Deno.serve(async (req) => {
         return Response.json({
           success: true,
           state: 'INVITE_EXPIRED',
-          reason: 'Invite found but expired or already used',
+          reason: 'Invite found but expired — no workshop linked yet',
           redirect_url: expRedirectUrl,
           user_id: user.id,
           invite_id: anyInvite.id,

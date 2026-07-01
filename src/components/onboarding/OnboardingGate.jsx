@@ -44,13 +44,18 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
     return () => clearTimeout(t);
   }, [isChecking]);
 
-  // Invalidar cache quando o usuário conclui um fluxo de onboarding
-  // (evita loop: NEW_OWNER → /Cadastro → volta → NEW_OWNER → /Cadastro → ...)
+  // Rastrear a rota anterior para detectar quando o usuário SAI de um fluxo de onboarding
+  const prevPathRef = useRef(location.pathname.toLowerCase());
   useEffect(() => {
+    const prevPath = prevPathRef.current;
     const currentPath = location.pathname.toLowerCase();
-    const isCompletingOnboarding =
-      currentPath.includes('cadastro') || currentPath.includes('completarperfil');
-    if (isCompletingOnboarding && user?.id) {
+    prevPathRef.current = currentPath;
+
+    // Invalidar cache ao SAIR de /Cadastro ou /CompletarPerfil (não ao entrar)
+    // Isso evita o loop: estar em /Cadastro → invalida → check → NEW_OWNER → navega → invalida → ...
+    const wasOnboarding = prevPath.includes('cadastro') || prevPath.includes('completarperfil');
+    const isNowNormalPage = !currentPath.includes('cadastro') && !currentPath.includes('completarperfil');
+    if (wasOnboarding && isNowNormalPage && user?.id) {
       stateCache.delete(user.id);
       checkedRef.current = false;
     }
@@ -60,6 +65,11 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
     if (!isAuthenticated || !user) {
       checkedRef.current = false;
       return;
+    }
+    // Resetar se mudou de usuário (logout → novo login na mesma sessão)
+    if (checkedRef.userId !== user.id) {
+      checkedRef.current = false;
+      checkedRef.userId = user.id;
     }
     if (checkedRef.current) return;
     checkedRef.current = true;
