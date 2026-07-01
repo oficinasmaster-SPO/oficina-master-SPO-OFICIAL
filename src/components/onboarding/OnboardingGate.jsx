@@ -1,16 +1,14 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import WheelLoader from "@/components/ui/WheelLoader";
-import { getUserWorkshopId } from "@/utils/userUtils";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, ShieldOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-// Cache de verificação por sessão: evita chamadas repetidas para o mesmo usuário
-const inviteCheckCache = new Map(); // userId -> { checked, hasPendingInvite, redirectUrl } | 'error'
+// Cache de sessão: userId → resultado do resolveOnboardingState | 'error'
+const stateCache = new Map();
 
-const BYPASS_PAGES = [
+const BYPASS_PATHS = [
   'primeiroacesso',
   'clientregistration',
   'cadastrosucesso',
@@ -18,14 +16,33 @@ const BYPASS_PAGES = [
   'login',
   'signup',
   'register',
+  'publicnps',
+  'publicdisc',
+  'bemvindoplanos',
+  'politicaprivacidade',
+  'termosdeuso',
+  'suporte',
 ];
 
 export default function OnboardingGate({ children, user, isAuthenticated }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [isChecking, setIsChecking] = useState(false);
-  const [inviteCheckError, setInviteCheckError] = useState(false);
+  const [showLoading, setShowLoading] = useState(false);
+  const [gateState, setGateState] = useState(null); // null | 'BLOCKED' | 'ERROR'
+  const [gateReason, setGateReason] = useState('');
   const checkedRef = useRef(false);
+
+  // Delay do spinner para evitar flash em respostas rápidas
+  useEffect(() => {
+    let t;
+    if (isChecking) {
+      t = setTimeout(() => setShowLoading(true), 400);
+    } else {
+      setShowLoading(false);
+    }
+    return () => clearTimeout(t);
+  }, [isChecking]);
 
   useEffect(() => {
     if (!isAuthenticated || !user) {
@@ -38,8 +55,9 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
   }, [user?.id, isAuthenticated]);
 
   const handleRetry = () => {
-    setInviteCheckError(false);
-    inviteCheckCache.delete(user?.id);
+    setGateState(null);
+    setGateReason('');
+    stateCache.delete(user?.id);
     checkedRef.current = false;
     checkOnboarding();
   };
@@ -49,131 +67,123 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
       if (!isAuthenticated || !user) return;
 
       const currentPath = location.pathname.toLowerCase();
-      const shouldBypass = BYPASS_PAGES.some(page => currentPath.includes(page));
-      if (shouldBypass) return;
+      if (BYPASS_PATHS.some(p => currentPath.includes(p))) return;
 
-      // --- Verificações síncronas (sem I/O) ---
-      if (user.profile_completed === false && user.first_access_completed === true) {
-        navigate(createPageUrl("CompletarPerfil")); return;
-      }
-      if (user.cadastro_em_andamento === true && user.role !== 'admin') {
-        navigate(createPageUrl("Cadastro")); return;
-      }
+      // Admins passam sempre
+      if (user.role === 'admin') return;
 
-      const hasWorkshop = !!getUserWorkshopId(user);
-      const needsInviteCheck = user.role !== 'admin' && !hasWorkshop;
+      // Cache hit
+      const cached = stateCache.get(user.id);
+      if (cached === 'error') { setGateState('ERROR'); return; }
+      if (cached) { applyState(cached); return; }
 
-      if (!needsInviteCheck) {
-        // Usuário tem workshop ou é admin — verificações restantes
-        if (currentPath.includes('cadastro') || currentPath.includes('completarperfil')) return;
-        if (!hasWorkshop && user.role !== 'admin') {
-          navigate(createPageUrl("Cadastro")); return;
-        }
-        if (user.first_access_completed === false && user.role !== 'admin') {
-          navigate(createPageUrl("Cadastro")); return;
-        }
-        if (user.profile_completed === false) {
-          navigate(createPageUrl("CompletarPerfil")); return;
-        }
-        return;
-      }
-
-      // --- Precisa checar convite via server function ---
-      const cached = inviteCheckCache.get(user.id);
-
-      if (cached === 'error') {
-        // Erro anterior já registrado — não retentar automaticamente, mostrar tela de erro
-        setInviteCheckError(true);
-        return;
-      }
-
-      if (cached) {
-        // Cache hit
-        if (cached.hasPendingInvite && cached.redirectUrl) {
-          window.location.href = cached.redirectUrl;
-        } else if (!cached.hasPendingInvite) {
-          redirectToCadastroAfterInviteCheck(user);
-          return;
-        }
-        return;
-      }
-
-      // Cache miss — chamar server function
+      // Cache miss — chamar resolveOnboardingState
       setIsChecking(true);
-      let inviteResult;
+      let result;
       try {
-        const response = await base44.functions.invoke("resolvePendingInviteForCurrentUser", {});
-        inviteResult = response?.data ?? response;
+        const response = await base44.functions.invoke("resolveOnboardingState", {});
+        result = response?.data ?? response;
       } catch (fetchErr) {
-        console.error("Erro de rede ao checar convite:", fetchErr);
-        inviteCheckCache.set(user.id, 'error');
-        setInviteCheckError(true);
+        console.error("[OnboardingGate] Erro de rede:", fetchErr);
+        stateCache.set(user.id, 'error');
+        setGateState('ERROR');
         setIsChecking(false);
         return;
       }
 
-      if (!inviteResult?.success) {
-        // Erro retornado pela função (status 500 etc.) — bloquear, NÃO ir para /Cadastro
-        console.error("resolvePendingInviteForCurrentUser retornou erro:", inviteResult?.error);
-        inviteCheckCache.set(user.id, 'error');
-        setInviteCheckError(true);
-        setIsChecking(false);
-        return;
-      }
-
-      if (inviteResult.has_invite && inviteResult.redirect_url) {
-        inviteCheckCache.set(user.id, { hasPendingInvite: true, redirectUrl: inviteResult.redirect_url });
-        window.location.href = inviteResult.redirect_url;
-        return;
-      }
-
-      // Confirmado pelo servidor: sem convite pendente
-      inviteCheckCache.set(user.id, { hasPendingInvite: false, redirectUrl: null });
       setIsChecking(false);
-      redirectToCadastroAfterInviteCheck(user);
-      return;
+
+      if (!result?.success || !result?.state) {
+        console.error("[OnboardingGate] Resposta inválida:", result);
+        stateCache.set(user.id, 'error');
+        setGateState('ERROR');
+        return;
+      }
+
+      stateCache.set(user.id, result);
+      applyState(result);
 
     } catch (error) {
-      console.error("Erro inesperado no OnboardingGate:", error);
-      // Erro inesperado no próprio gate — não enviar para /Cadastro silenciosamente
-      setInviteCheckError(true);
+      console.error("[OnboardingGate] Erro inesperado:", error);
+      setGateState('ERROR');
       setIsChecking(false);
     }
   };
 
-  // Redireciona para /Cadastro após servidor confirmar has_invite:false
-  const redirectToCadastroAfterInviteCheck = (u) => {
-    if (!u || u.role === 'admin') return;
+  const applyState = (result) => {
+    const { state, redirect_url, reason } = result;
 
-    base44.analytics?.track?.({
-      eventName: 'ONBOARDING_CADASTRO_REDIRECT',
-      properties: {
-        user_id: u.id,
-        email: u.email,
-        reason: 'no_workshop_no_invite_confirmed'
-      }
-    });
+    switch (state) {
+      case 'READY':
+        // Libera — não faz nada
+        return;
 
-    navigate(createPageUrl("Cadastro"));
+      case 'INVITED':
+      case 'INVITE_EXPIRED':
+        if (redirect_url) {
+          window.location.href = redirect_url;
+        }
+        return;
+
+      case 'NEW_OWNER':
+        navigate('/Cadastro');
+        return;
+
+      case 'COMPLETE_PROFILE':
+        navigate('/CompletarPerfil');
+        return;
+
+      case 'PENDING_LINK':
+        // Vínculo pendente — mostrar tela informativa (setGateState abaixo)
+        setGateState('PENDING_LINK');
+        setGateReason(reason || '');
+        return;
+
+      case 'BLOCKED':
+        setGateState('BLOCKED');
+        setGateReason(reason || '');
+        return;
+
+      case 'ERROR':
+      default:
+        setGateState('ERROR');
+        setGateReason(reason || '');
+        return;
+    }
   };
 
-  // --- Loading state com delay para evitar flash ---
-  const [showLoading, setShowLoading] = useState(false);
-  useEffect(() => {
-    let t;
-    if (isChecking) {
-      t = setTimeout(() => setShowLoading(true), 400);
-    } else {
-      setShowLoading(false);
-    }
-    return () => clearTimeout(t);
-  }, [isChecking]);
+  // --- Renderização de estados bloqueantes ---
 
-  const isAuthOrOnboardingPage = location.pathname.toLowerCase().includes('cadastro') ||
-    location.pathname.toLowerCase().includes('primeiroacesso');
+  const currentPath = location.pathname.toLowerCase();
+  const isOnboardingPath = BYPASS_PATHS.some(p => currentPath.includes(p)) ||
+    currentPath.includes('cadastro') || currentPath.includes('completarperfil');
 
-  // Tela de erro de checagem de convite — bloqueia navegação
-  if (inviteCheckError && !isAuthOrOnboardingPage) {
+  if ((gateState === 'BLOCKED' || gateState === 'PENDING_LINK') && !isOnboardingPath) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-gray-100 p-6">
+        <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center">
+          <div className="flex justify-center mb-4">
+            <div className="bg-red-100 p-3 rounded-full">
+              <ShieldOff className="w-8 h-8 text-red-600" />
+            </div>
+          </div>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">
+            {gateState === 'PENDING_LINK' ? 'Vínculo em processamento' : 'Acesso bloqueado'}
+          </h2>
+          <p className="text-gray-600 text-sm mb-6">
+            {gateState === 'PENDING_LINK'
+              ? 'Seu cadastro está sendo finalizado. Se o problema persistir, entre em contato com o administrador.'
+              : 'Sua conta ou oficina está inativa. Entre em contato com o administrador do sistema para regularizar o acesso.'}
+          </p>
+          <Button variant="outline" className="w-full" onClick={() => base44.auth.logout('/')}>
+            Sair
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (gateState === 'ERROR' && !isOnboardingPath) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 p-6">
         <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center">
@@ -184,33 +194,28 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
           </div>
           <h2 className="text-xl font-bold text-gray-900 mb-2">Verificação de acesso falhou</h2>
           <p className="text-gray-600 text-sm mb-6">
-            Não foi possível verificar se existe convite pendente para este usuário.
-            Por segurança, o acesso foi bloqueado. Tente novamente ou entre em contato com o administrador.
+            Não foi possível verificar seu perfil de acesso. Por segurança, o acesso foi bloqueado.
+            Tente novamente ou entre em contato com o administrador.
           </p>
           <div className="flex flex-col gap-3">
-            <Button onClick={handleRetry} className="w-full">
-              Tentar novamente
-            </Button>
-            <Button variant="outline" className="w-full" onClick={() => base44.auth.logout('/')}>
-              Sair
-            </Button>
+            <Button onClick={handleRetry} className="w-full">Tentar novamente</Button>
+            <Button variant="outline" className="w-full" onClick={() => base44.auth.logout('/')}>Sair</Button>
           </div>
         </div>
       </div>
     );
   }
 
-  if (isChecking && !isAuthOrOnboardingPage && showLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50">
-        <div className="animate-in fade-in duration-300">
-          <WheelLoader size="xl" text="Verificando acesso..." />
+  if (isChecking && !isOnboardingPath) {
+    if (showLoading) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50">
+          <div className="animate-in fade-in duration-300">
+            <WheelLoader size="xl" text="Verificando acesso..." />
+          </div>
         </div>
-      </div>
-    );
-  }
-
-  if (isChecking && !isAuthOrOnboardingPage && !showLoading) {
+      );
+    }
     return <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50" />;
   }
 
