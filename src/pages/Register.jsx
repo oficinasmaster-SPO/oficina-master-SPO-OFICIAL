@@ -45,6 +45,25 @@ export default function Register() {
       if (result?.access_token) {
         base44.auth.setToken(result.access_token);
       }
+            const pendingToken = sessionStorage.getItem("invite_token_pending");
+
+      if (pendingToken) {
+        window.location.href = `/PrimeiroAcesso?token=${pendingToken}`;
+        return;
+      }
+
+      const inviteResponse = await base44.functions.invoke("validateInviteToken", {});
+      const inviteResult = inviteResponse?.data || inviteResponse;
+
+      if (!inviteResult?.success) {
+        throw new Error(inviteResult?.error || "Não foi possível verificar convite pendente");
+      }
+
+      if (inviteResult.has_invite && inviteResult.redirect_url) {
+        window.location.href = inviteResult.redirect_url;
+        return;
+      }
+
       window.location.href = "/";
     } catch (err) {
       setError(err.message || "Invalid verification code");
