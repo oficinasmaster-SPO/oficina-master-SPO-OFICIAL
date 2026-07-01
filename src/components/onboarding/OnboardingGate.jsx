@@ -91,8 +91,6 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
         return;
       }
 
-      setIsChecking(false);
-
       if (!result?.success || !result?.state) {
         console.error("[OnboardingGate] Resposta inválida:", result);
         stateCache.set(user.id, 'error');
@@ -113,9 +111,11 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
   const applyState = (result) => {
     const { state, redirect_url, reason } = result;
 
+    // Sempre garantir que isChecking é falso antes de qualquer ação
+    setIsChecking(false);
+
     switch (state) {
       case 'READY':
-        // Libera — não faz nada
         return;
 
       case 'INVITED':
@@ -134,7 +134,6 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
         return;
 
       case 'PENDING_LINK':
-        // Vínculo pendente — mostrar tela informativa (setGateState abaixo)
         setGateState('PENDING_LINK');
         setGateReason(reason || '');
         return;
