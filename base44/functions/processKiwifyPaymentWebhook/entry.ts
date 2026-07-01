@@ -69,6 +69,17 @@ Deno.serve(async (req) => {
           } catch (cronErr) {
             console.error(`[Kiwify] Falha ao gerar cronograma:`, cronErr.message);
           }
+
+          // Gerar bucket de atendimentos (ContractAttendance) para o plano ativado
+          console.log(`[Kiwify] Gerando bucket de atendimentos para workshop ${contract.workshop_id}`);
+          try {
+            await base44.asServiceRole.functions.invoke('generateWorkshopAttendances', {
+              workshop_id: contract.workshop_id
+            });
+            console.log(`[Kiwify] Bucket de atendimentos gerado com sucesso`);
+          } catch (bucketErr) {
+            console.error(`[Kiwify] Falha ao gerar bucket:`, bucketErr.message);
+          }
         }
         break;
 
