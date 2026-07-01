@@ -155,27 +155,31 @@ Deno.serve(async (req) => {
       });
     }
 
-    // INVITE_EXPIRED: existe convite expirado/acessado/concluído
-    // MAS só redirecionar se o usuário ainda não tem employee+workshop vinculado.
-    // Convite "concluido" significa que o usuário já aceitou e está vinculado → deixar passar.
+    // INVITE_EXPIRED: existe convite expirado — MAS só redirecionar se o usuário
+    // ainda não tem employee+workshop vinculado.
+    // 'concluido' e 'acessado' = usuário já aceitou → se ainda sem workshop, race condition
+    // pós-aceite (automação processando) → deixar passar para READY.
     if (anyInvite && !pendingInvite && !employee?.workshop_id && !workshopId) {
-      const isExpiredInvite =
-        anyInvite.status === 'expirado' ||
-        (anyInvite.expires_at && new Date(anyInvite.expires_at) < now());
-      if (isExpiredInvite) {
-        const expProfileId = anyInvite.profile_id || anyInvite.metadata?.profile_id || '';
-        const expRedirectUrl = expProfileId
-          ? `/PrimeiroAcesso?token=${anyInvite.invite_token}&profile_id=${expProfileId}`
-          : `/PrimeiroAcesso?token=${anyInvite.invite_token}`;
-        return Response.json({
-          success: true,
-          state: 'INVITE_EXPIRED',
-          reason: 'Invite found but expired — no workshop linked yet',
-          redirect_url: expRedirectUrl,
-          user_id: user.id,
-          invite_id: anyInvite.id,
-          workshop_id: anyInvite.workshop_id,
-        });
+      const isAccepted = anyInvite.status === 'concluido' || anyInvite.status === 'acessado';
+      if (!isAccepted) {
+        const isExpiredInvite =
+          anyInvite.status === 'expirado' ||
+          (anyInvite.expires_at && new Date(anyInvite.expires_at) < now());
+        if (isExpiredInvite) {
+          const expProfileId = anyInvite.profile_id || anyInvite.metadata?.profile_id || '';
+          const expRedirectUrl = expProfileId
+            ? `/PrimeiroAcesso?token=${anyInvite.invite_token}&profile_id=${expProfileId}`
+            : `/PrimeiroAcesso?token=${anyInvite.invite_token}`;
+          return Response.json({
+            success: true,
+            state: 'INVITE_EXPIRED',
+            reason: 'Invite found but expired — no workshop linked yet',
+            redirect_url: expRedirectUrl,
+            user_id: user.id,
+            invite_id: anyInvite.id,
+            workshop_id: anyInvite.workshop_id,
+          });
+        }
       }
     }
 

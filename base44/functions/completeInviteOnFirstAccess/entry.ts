@@ -42,13 +42,13 @@ Deno.serve(async (req) => {
 
     console.log(`✅ Convite validado para ${invite.email}`);
 
-    // Atualizar status do EmployeeInvite para 'acessado'
+    // Atualizar status do EmployeeInvite para 'concluido' — marca aceite formal
     const now = new Date().toISOString();
     await base44.asServiceRole.entities.EmployeeInvite.update(invite.id, {
-      status: 'acessado',
-      last_resent_at: now
+      status: 'concluido',
+      completed_at: now
     });
-    console.log(`📝 EmployeeInvite status atualizado para 'acessado'`);
+    console.log(`📝 EmployeeInvite status atualizado para 'concluido'`);
 
     // EXTRAÇÃO SEGURA DE DADOS (Fonte da verdade: Metadata)
     const secureProfileId = invite.metadata?.profile_id || invite.profile_id;
