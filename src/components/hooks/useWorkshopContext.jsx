@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAdminMode } from './useAdminMode';
 import { useTenant } from '@/components/contexts/TenantContext';
@@ -149,7 +149,28 @@ export function useWorkshopContext() {
     && !!pendingWorkshopId
     && !workshop;
 
-  const isLoading = isTenantLoading || isAvailableLoading || isFetchingMissing || userHasPendingWorkshop;
+  // FALLBACK ANTI-LOOP: se isLoading ficar true por mais de 15s sem resolver, desistir.
+  // Isso previne o loop infinito quando workshop_id aponta para Workshop inexistente
+  // e o resolveOnboardingState não capturou o estado a tempo.
+  const [loadingTimedOut, setLoadingTimedOut] = useState(false);
+  const loadingTimerRef = useRef(null);
+  const rawIsLoading = isTenantLoading || isAvailableLoading || isFetchingMissing || userHasPendingWorkshop;
+
+  useEffect(() => {
+    if (rawIsLoading) {
+      setLoadingTimedOut(false);
+      loadingTimerRef.current = setTimeout(() => {
+        console.warn('[useWorkshopContext] Loading timeout — workshop não resolvido em 15s. Forçando saída do loop.');
+        setLoadingTimedOut(true);
+      }, 15000);
+    } else {
+      setLoadingTimedOut(false);
+      if (loadingTimerRef.current) clearTimeout(loadingTimerRef.current);
+    }
+    return () => { if (loadingTimerRef.current) clearTimeout(loadingTimerRef.current); };
+  }, [rawIsLoading]);
+
+  const isLoading = rawIsLoading && !loadingTimedOut;
 
   // FIX-05: Debug logging para auxiliar diagnóstico
   // QA-FIX-01: Adicionado log de erro quando workshop não existe

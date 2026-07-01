@@ -70,11 +70,36 @@ export default function Cadastro() {
         // Se tem rascunho, usar ele (cadastro incompleto)
         if (workshopRascunho) {
           setWorkshop(workshopRascunho);
+          // Sincronizar workshop_id no perfil caso esteja desatualizado (orphan fix)
+          if (currentUser.workshop_id !== workshopRascunho.id) {
+            await base44.auth.updateMe({ workshop_id: workshopRascunho.id, cadastro_em_andamento: true }).catch(() => {});
+          }
           toast.info("Você tem um cadastro em andamento. Continue de onde parou!");
         } else {
           setWorkshop(workshopAtiva || workshops[0]);
         }
       } else {
+        // ORPHAN FIX: se o usuário tem um workshop_id mas não existe Workshop no banco,
+        // limpar o workshop_id para que o fluxo de cadastro reinicie corretamente.
+        const userWorkshopId = currentUser.workshop_id || currentUser.data?.workshop_id;
+        if (userWorkshopId) {
+          try {
+            await base44.entities.Workshop.filter({ owner_id: currentUser.id }); // já feito acima
+          } catch (_) {}
+          // workshops[] está vazio mas user tem workshop_id → provavelmente orphan
+          // Verificar se o workshop existe via get direto
+          try {
+            await base44.entities.Workshop.get(userWorkshopId);
+          } catch (_) {
+            // Workshop não existe → limpar o workshop_id do usuário
+            console.warn('[Cadastro] workshop_id fantasma detectado, limpando:', userWorkshopId);
+            await base44.auth.updateMe({ workshop_id: null, cadastro_em_andamento: false }).catch(() => {});
+            // Atualizar currentUser local para continuar o fluxo
+            currentUser.workshop_id = null;
+            if (currentUser.data) currentUser.data.workshop_id = null;
+          }
+        }
+
         // Se não é owner e já tem workshop_id (colaborador)
         if (currentUser.workshop_id) {
           // Se perfil incompleto, permitir completar

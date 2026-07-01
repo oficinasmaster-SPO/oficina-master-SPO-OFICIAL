@@ -77,15 +77,30 @@ Deno.serve(async (req) => {
 
     // 8. Buscar workshop do usuário se tivermos ID
     let workshop = null;
+    let workshopIsOrphan = false;
     if (workshopId) {
       try {
         workshop = await base44.asServiceRole.entities.Workshop.get(workshopId);
       } catch (_) {
-        // workshop não encontrado — não bloqueia o fluxo
+        // workshop_id existe no user mas o Workshop não existe no banco — orphan
+        workshopIsOrphan = true;
       }
     }
 
     // --- Máquina de estados ---
+
+    // ORPHAN_WORKSHOP: workshop_id aponta para Workshop inexistente → redirecionar para /Cadastro
+    // Isso evita o loop infinito de loading no Layout. Só se aplica quando o usuário
+    // é dono (não é convidado): se tem employee vinculado a outro workshop, é caso diferente.
+    if (workshopIsOrphan && !employee?.workshop_id) {
+      return Response.json({
+        success: true,
+        state: 'NEW_OWNER',
+        reason: 'workshop_id references a non-existent Workshop (orphan) — redirect to registration',
+        user_id: user.id,
+        orphan_workshop_id: workshopId,
+      });
+    }
 
     // INVITED: convite pendente válido — passa por cima de Employee.user_status=inativo
     // (employee convidado pode nascer inativo até aceitar o convite)
