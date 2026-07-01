@@ -3,57 +3,114 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const { token } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const { token } = body || {};
 
+    // MODO 1: sem token = resolver convite pendente pelo usuário logado
     if (!token) {
-      return Response.json({ error: 'Token obrigatório' }, { status: 400 });
+      const user = await base44.auth.me();
+
+      if (!user) {
+        return Response.json({
+          success: false,
+          error: 'Token obrigatório ou usuário autenticado necessário'
+        }, { status: 401 });
+      }
+
+      const userEmail = String(user.email || '').trim().toLowerCase();
+
+      if (!userEmail) {
+        return Response.json({
+          success: false,
+          error: 'Usuário autenticado sem email'
+        }, { status: 400 });
+      }
+
+      const invitesRaw = await base44.asServiceRole.entities.EmployeeInvite.filter({
+        email: user.email
+      });
+
+      const invites = (invitesRaw || [])
+        .filter(inv => String(inv.email || '').trim().toLowerCase() === userEmail)
+        .sort((a, b) => new Date(b.created_date || 0) - new Date(a.created_date || 0));
+
+      if (invites.length === 0) {
+        return Response.json({
+          success: true,
+          mode: 'email_lookup',
+          has_invite: false,
+          redirect_url: null
+        });
+      }
+
+      const now = new Date();
+
+      const validInvites = invites.filter(inv => {
+        const isPending = inv.status === 'pendente' || inv.status === 'enviado';
+        const isExpired = inv.expires_at && new Date(inv.expires_at) < now;
+        return isPending && !isExpired;
+      });
+
+      const selectedInvite = validInvites[0] || invites[0];
+
+      const profileId =
+        selectedInvite.profile_id ||
+        selectedInvite.metadata?.profile_id ||
+        '';
+
+      const redirectUrl = `/PrimeiroAcesso?token=${selectedInvite.invite_token}&profile_id=${profileId}`;
+
+      return Response.json({
+        success: true,
+        mode: 'email_lookup',
+        has_invite: true,
+        invite_status: validInvites.length > 0 ? selectedInvite.status : 'expired_or_used',
+        invite_id: selectedInvite.id,
+        invite_token: selectedInvite.invite_token,
+        redirect_url: redirectUrl
+      });
     }
 
-    console.log("🔍 Validando token de convite:", token);
+    // MODO 2: com token = comportamento original
+    console.log("Validando token de convite:", token);
 
-    // Buscar convite pelo token
     const invites = await base44.asServiceRole.entities.EmployeeInvite.filter({
       invite_token: token
     });
 
     if (!invites || invites.length === 0) {
-      console.error("❌ Convite não encontrado com token:", token);
-      return Response.json({ 
-        success: false, 
-        error: 'Convite não encontrado ou expirado' 
+      return Response.json({
+        success: false,
+        error: 'Convite não encontrado ou expirado'
       }, { status: 404 });
     }
 
     const invite = invites[0];
 
-    // Verificar se expirou
     if (invite.expires_at) {
       const expiresAt = new Date(invite.expires_at);
+
       if (expiresAt < new Date()) {
-        console.error("❌ Convite expirado");
-        return Response.json({ 
-          success: false, 
-          error: 'Convite expirado. Solicite um novo convite.' 
+        return Response.json({
+          success: false,
+          error: 'Convite expirado. Solicite um novo convite.'
         }, { status: 410 });
       }
     }
 
-    console.log("✅ Convite validado:", invite.id);
-
-    // EXTRAÇÃO SEGURA DE DADOS (Fonte da verdade: Metadata)
-    // Prioriza os dados gravados no metadata para evitar manipulação
     const secureProfileId = invite.metadata?.profile_id || invite.profile_id;
-    const secureWorkshopId = invite.metadata?.workshop_id || invite.metadata?.company_id || invite.workshop_id;
+    const secureWorkshopId =
+      invite.metadata?.workshop_id ||
+      invite.metadata?.company_id ||
+      invite.workshop_id;
 
-    console.log("🔒 Dados Seguros Extraídos:", { secureProfileId, secureWorkshopId });
-
-    // Buscar workshop
     let workshop = null;
+
     if (secureWorkshopId) {
       try {
         workshop = await base44.asServiceRole.entities.Workshop.get(secureWorkshopId);
       } catch (e) {
-        console.warn("⚠️ Workshop não encontrado:", e.message);
+        console.warn("Workshop não encontrado:", e.message);
       }
     }
 
@@ -63,10 +120,10 @@ Deno.serve(async (req) => {
         id: invite.id,
         email: invite.email,
         name: invite.name,
-        workshop_id: secureWorkshopId, // ID Seguro
-        profile_id: secureProfileId,   // ID Seguro
+        workshop_id: secureWorkshopId,
+        profile_id: secureProfileId,
         status: invite.status,
-        metadata: invite.metadata // Retornar metadata completo se necessário
+        metadata: invite.metadata
       },
       workshop: workshop ? {
         id: workshop.id,
@@ -75,10 +132,11 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('❌ Erro ao validar token:', error);
-    return Response.json({ 
+    console.error('Erro ao validar/resolver convite:', error);
+
+    return Response.json({
       success: false,
-      error: error.message 
+      error: error.message
     }, { status: 500 });
   }
 });
