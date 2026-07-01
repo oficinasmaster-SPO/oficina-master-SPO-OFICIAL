@@ -92,7 +92,8 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
         if (cached.hasPendingInvite && cached.redirectUrl) {
           window.location.href = cached.redirectUrl;
         } else if (!cached.hasPendingInvite) {
-          applyOrphanRedirect(user);
+          redirectToCadastroAfterInviteCheck(user);
+          return;
         }
         return;
       }
@@ -129,7 +130,8 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
       // Confirmado pelo servidor: sem convite pendente
       inviteCheckCache.set(user.id, { hasPendingInvite: false, redirectUrl: null });
       setIsChecking(false);
-      applyOrphanRedirect(user);
+      redirectToCadastroAfterInviteCheck(user);
+      return;
 
     } catch (error) {
       console.error("Erro inesperado no OnboardingGate:", error);
@@ -139,19 +141,20 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
     }
   };
 
-  // Só redireciona para /Cadastro quando servidor confirmou que não há convite
-  const applyOrphanRedirect = (u) => {
-    const isOrphanSignup = u.signup_type === 'orphan' && u.role !== 'admin';
-    if (isOrphanSignup) {
-      const ageMinutes = (Date.now() - new Date(u.created_date).getTime()) / 60000;
-      if (ageMinutes > 10) {
-        base44.analytics.track({
-          eventName: 'FORCED_ONBOARDING_REDIRECT',
-          properties: { user_id: u.id, email: u.email, reason: 'orphan_signup', age_minutes: Math.round(ageMinutes) }
-        });
-        navigate(createPageUrl("Cadastro"));
+  // Redireciona para /Cadastro após servidor confirmar has_invite:false
+  const redirectToCadastroAfterInviteCheck = (u) => {
+    if (!u || u.role === 'admin') return;
+
+    base44.analytics?.track?.({
+      eventName: 'ONBOARDING_CADASTRO_REDIRECT',
+      properties: {
+        user_id: u.id,
+        email: u.email,
+        reason: 'no_workshop_no_invite_confirmed'
       }
-    }
+    });
+
+    navigate(createPageUrl("Cadastro"));
   };
 
   // --- Loading state com delay para evitar flash ---
