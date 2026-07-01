@@ -1,54 +1,21 @@
 import React, { useState } from "react";
-import { useLocation } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Plus, Save, Eye, Edit3, Download, FileText, Info, CheckCircle, Target, TrendingUp } from "lucide-react";
+import { Plus, Eye, Edit3, Download, FileText, Info, CheckCircle, Target, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import OrgChartEditor from "@/components/organization/OrgChartEditor";
 import OrgChartViewer from "@/components/organization/OrgChartViewer";
 import TemplateSelector from "@/components/organization/TemplateSelector";
 import { generateOrgChartPDF } from "@/components/organization/OrgChartPDFGenerator.jsx";
+import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 
 export default function Organograma() {
-  const [workshop, setWorkshop] = useState(null);
+  const { workshop } = useWorkshopContext();
   const [isEditing, setIsEditing] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
   const queryClient = useQueryClient();
-  const location = useLocation();
-
-  React.useEffect(() => {
-    const loadWorkshop = async () => {
-      try {
-        const user = await base44.auth.me();
-        const params = new URLSearchParams(location.search);
-        const workshopId = params.get('workshop_id');
-
-        let workshopToLoad = null;
-        if (workshopId && user.role === 'admin') {
-          workshopToLoad = await base44.entities.Workshop.get(workshopId);
-        } else {
-          // Prioridade 2: Employee
-          const employees = await base44.entities.Employee.filter({ user_id: user.id });
-          if (employees.length > 0 && employees[0].workshop_id) {
-            workshopToLoad = await base44.entities.Workshop.get(employees[0].workshop_id);
-          } else {
-            // Prioridade 3: Owner
-            const workshops = await base44.entities.Workshop.filter({ owner_id: user.id });
-            if (workshops && workshops.length > 0) {
-              workshopToLoad = workshops[0];
-            }
-          }
-        }
-        setWorkshop(workshopToLoad);
-      } catch (error) {
-        console.error("Erro ao carregar oficina:", error);
-        toast.error("Não foi possível carregar os dados da oficina.");
-      }
-    };
-    loadWorkshop();
-  }, [location.search]);
 
   const { data: nodes = [], isLoading } = useQuery({
     queryKey: ['orgchart-nodes', workshop?.id],
@@ -112,7 +79,7 @@ export default function Organograma() {
     }
   };
 
-  if (!workshop) {
+  if (!workshop?.id) {
     return (
       <div className="flex items-center justify-center h-96">
         <p className="text-gray-500">Carregando dados da oficina...</p>
