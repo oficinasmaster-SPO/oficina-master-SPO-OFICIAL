@@ -1,10 +1,9 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { UserPlus, Mail, Lock, Loader2 } from "lucide-react";
+import { UserPlus, Mail, Lock, Loader2, AlertTriangle } from "lucide-react";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import AuthLayout from "@/components/AuthLayout";
 import GoogleIcon from "@/components/GoogleIcon";
@@ -45,18 +44,35 @@ export default function Register() {
       if (result?.access_token) {
         base44.auth.setToken(result.access_token);
       }
-            const pendingToken = sessionStorage.getItem("invite_token_pending");
 
+      // 1. Prioridade: token salvo na sessão (clique direto no link de convite antes do cadastro)
+      const pendingToken = sessionStorage.getItem("invite_token_pending");
       if (pendingToken) {
+        sessionStorage.removeItem("invite_token_pending");
         window.location.href = `/PrimeiroAcesso?token=${pendingToken}`;
         return;
       }
 
-      const inviteResponse = await base44.functions.invoke("validateInviteToken", {});
-      const inviteResult = inviteResponse?.data || inviteResponse;
+      // 2. Checar server-side se existe convite pendente para este email
+      let inviteResult;
+      try {
+        const inviteResponse = await base44.functions.invoke("resolvePendingInviteForCurrentUser", {});
+        inviteResult = inviteResponse?.data ?? inviteResponse;
+      } catch (inviteErr) {
+        // Falha na checagem = bloquear, NÃO redirecionar para "/"
+        setError(
+          "Não foi possível verificar se existe convite pendente para este e-mail. " +
+          "Tente novamente ou entre em contato com o administrador."
+        );
+        return;
+      }
 
       if (!inviteResult?.success) {
-        throw new Error(inviteResult?.error || "Não foi possível verificar convite pendente");
+        setError(
+          inviteResult?.error ||
+          "Não foi possível verificar se existe convite pendente para este e-mail."
+        );
+        return;
       }
 
       if (inviteResult.has_invite && inviteResult.redirect_url) {
@@ -64,6 +80,7 @@ export default function Register() {
         return;
       }
 
+      // 3. Confirma: sem convite — ir para home normalmente
       window.location.href = "/";
     } catch (err) {
       setError(err.message || "Invalid verification code");
@@ -86,7 +103,9 @@ export default function Register() {
   };
 
   const handleGoogle = () => {
-    base44.auth.loginWithProvider("google", "/");
+    const pendingToken = sessionStorage.getItem("invite_token_pending");
+    const redirectAfter = pendingToken ? `/PrimeiroAcesso?token=${pendingToken}` : "/";
+    base44.auth.loginWithProvider("google", redirectAfter);
   };
 
   if (showOtp) {
@@ -97,8 +116,9 @@ export default function Register() {
         subtitle={`We sent a code to ${email}`}
       >
         {error && (
-          <div className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
-            {error}
+          <div className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm flex items-start gap-2">
+            <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+            <span>{error}</span>
           </div>
         )}
         <div className="flex justify-center mb-6">
@@ -127,7 +147,7 @@ export default function Register() {
           {loading ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Verifying...
+              Verificando...
             </>
           ) : (
             "Verify"

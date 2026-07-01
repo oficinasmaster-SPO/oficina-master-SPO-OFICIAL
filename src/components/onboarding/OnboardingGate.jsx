@@ -4,63 +4,55 @@ import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import WheelLoader from "@/components/ui/WheelLoader";
 import { getUserWorkshopId } from "@/utils/userUtils";
+import { AlertTriangle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
-/**
- * OnboardingGate: Controla o acesso baseado no status de onboarding do usuário.
- * 
- * Lógica de Roteamento:
- * 1. Autentica usuário
- * 2. Verifica flags de onboarding (first_access_completed, profile_completed)
- * 3. Se incompleto -> redireciona para /cadastro e bloqueia outras rotas
- * 4. Se completo -> libera acesso ao Dashboard
- */
-// Cache de verificação de convites para evitar chamadas repetidas na mesma sessão
-const inviteCheckCache = new Map(); // userId -> { checked: bool, hasPendingInvite: bool, redirectUrl: string|null }
+// Cache de verificação por sessão: evita chamadas repetidas para o mesmo usuário
+const inviteCheckCache = new Map(); // userId -> { checked, hasPendingInvite, redirectUrl } | 'error'
+
+const BYPASS_PAGES = [
+  'primeiroacesso',
+  'clientregistration',
+  'cadastrosucesso',
+  'planos',
+  'login',
+  'signup',
+  'register',
+];
 
 export default function OnboardingGate({ children, user, isAuthenticated }) {
   const navigate = useNavigate();
   const location = useLocation();
-  // PERF-FIX-01: isChecking começa false — evita bloquear render inicial desnecessariamente
   const [isChecking, setIsChecking] = useState(false);
-  // Controla se já rodou a verificação para este usuário nesta sessão
+  const [inviteCheckError, setInviteCheckError] = useState(false);
   const checkedRef = useRef(false);
 
   useEffect(() => {
-    // PERF-FIX-02: Só re-verificar quando o USUÁRIO muda (não a rota)
-    // A verificação de rota é feita de forma síncrona abaixo
     if (!isAuthenticated || !user) {
       checkedRef.current = false;
       return;
     }
-    if (checkedRef.current) return; // Já verificou nesta sessão
+    if (checkedRef.current) return;
     checkedRef.current = true;
     checkOnboarding();
-  }, [user?.id, isAuthenticated]); // Removido location.pathname do dep array
+  }, [user?.id, isAuthenticated]);
+
+  const handleRetry = () => {
+    setInviteCheckError(false);
+    inviteCheckCache.delete(user?.id);
+    checkedRef.current = false;
+    checkOnboarding();
+  };
 
   const checkOnboarding = async () => {
     try {
-      if (!isAuthenticated || !user) {
-        return;
-      }
+      if (!isAuthenticated || !user) return;
 
       const currentPath = location.pathname.toLowerCase();
-
-      // Páginas que devem pular essa verificação completamente (públicas ou de auth)
-      const bypassPages = [
-        'primeiroacesso',
-        'clientregistration',
-        'cadastrosucesso',
-        'planos',
-        'login',
-        'signup'
-      ];
-
-      const shouldBypass = bypassPages.some(page => currentPath.includes(page));
+      const shouldBypass = BYPASS_PAGES.some(page => currentPath.includes(page));
       if (shouldBypass) return;
 
-      // Verificações síncronas primeiro (sem I/O) — resolve 95% dos casos instantaneamente
-      const hasWorkshop = !!getUserWorkshopId(user);
-
+      // --- Verificações síncronas (sem I/O) ---
       if (user.profile_completed === false && user.first_access_completed === true) {
         navigate(createPageUrl("CompletarPerfil")); return;
       }
@@ -68,120 +60,143 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
         navigate(createPageUrl("Cadastro")); return;
       }
 
-      // PERF-FIX-03: verificar convites ANTES de qualquer redirecionamento para /Cadastro
-      // Isso previne que usuários convidados (sem workshop_id ainda) sejam enviados para o
-      // fluxo de nova oficina ao invés do fluxo de aceite de convite.
+      const hasWorkshop = !!getUserWorkshopId(user);
       const needsInviteCheck = user.role !== 'admin' && !hasWorkshop;
-      if (needsInviteCheck) {
-        const cached = inviteCheckCache.get(user.id);
-        if (!cached) {
-          // Marcar como verificando apenas se vai fazer I/O
-          setIsChecking(true);
-          try {
-            const invites = await base44.entities.EmployeeInvite.filter({ email: user.email });
-            const pendingInvites = invites.filter(inv => {
-              const isPending = inv.status === 'pendente' || inv.status === 'enviado';
-              if (!isPending) return false;
-              if (inv.expires_at && new Date(inv.expires_at) < new Date()) return false;
-              return true;
-            });
-            
-            if (pendingInvites.length > 0) {
-              pendingInvites.sort((a, b) => new Date(b.created_date || 0) - new Date(a.created_date || 0));
-              const pendingInvite = pendingInvites[0];
-              const redirectUrl = `/PrimeiroAcesso?token=${pendingInvite.invite_token}&profile_id=${pendingInvite.profile_id || pendingInvite.metadata?.profile_id || ''}`;
-              inviteCheckCache.set(user.id, { hasPendingInvite: true, redirectUrl });
-              console.log("🚨 Detectado convite pendente. Redirecionando para PrimeiroAcesso", pendingInvite);
-              window.location.href = redirectUrl;
-              return;
-            } else if (invites.length > 0) {
-              // Cenário 3: Se tiver convite mas todos estão expirados ou já acessados (e o user não tem workshop)
-              // Em vez de ir pro fluxo de "Criar Oficina", direcionamos para o PrimeiroAcesso do convite mais recente
-              // Onde o validateInviteToken vai barrar e mostrar a mensagem explícita "Convite expirado"
-              invites.sort((a, b) => new Date(b.created_date || 0) - new Date(a.created_date || 0));
-              const latestInvite = invites[0];
-              const redirectUrl = `/PrimeiroAcesso?token=${latestInvite.invite_token}&profile_id=${latestInvite.profile_id || latestInvite.metadata?.profile_id || ''}`;
-              inviteCheckCache.set(user.id, { hasPendingInvite: true, redirectUrl });
-              console.log("🚨 Detectado convite expirado. Redirecionando para PrimeiroAcesso para exibir erro correto.", latestInvite);
-              window.location.href = redirectUrl;
-              return;
-            } else {
-              // Nenhum convite encontrado — só agora aplicar carência de signup órfão
-              inviteCheckCache.set(user.id, { hasPendingInvite: false, redirectUrl: null });
-              const isOrphanSignup = user.signup_type === 'orphan' && user.role !== 'admin';
-              if (isOrphanSignup) {
-                const createdAt = new Date(user.created_date);
-                const ageMinutes = (Date.now() - createdAt.getTime()) / 60000;
-                if (ageMinutes > 10) {
-                  base44.analytics.track({
-                    eventName: 'FORCED_ONBOARDING_REDIRECT',
-                    properties: { user_id: user.id, email: user.email, reason: 'orphan_signup', age_minutes: Math.round(ageMinutes) }
-                  });
-                  navigate(createPageUrl("Cadastro")); return;
-                }
-              }
-            }
-          } catch (e) {
-            console.error("Erro ao checar convites:", e);
-            inviteCheckCache.set(user.id, { hasPendingInvite: false, redirectUrl: null });
-          }
-          setIsChecking(false);
-        } else if (cached.hasPendingInvite && cached.redirectUrl) {
-          window.location.href = cached.redirectUrl;
-          return;
-        } else if (!cached.hasPendingInvite) {
-          // Cache confirmou: sem convite pendente — aplicar carência de signup órfão
-          const isOrphanSignup = user.signup_type === 'orphan' && user.role !== 'admin';
-          if (isOrphanSignup) {
-            const createdAt = new Date(user.created_date);
-            const ageMinutes = (Date.now() - createdAt.getTime()) / 60000;
-            if (ageMinutes > 10) {
-              navigate(createPageUrl("Cadastro")); return;
-            }
-          }
-        }
-      }
 
-      // ✅ Se já está em /cadastro ou /completarperfil, permitir (é a página de onboarding)
-      if (currentPath.includes('cadastro') || currentPath.includes('completarperfil')) {
+      if (!needsInviteCheck) {
+        // Usuário tem workshop ou é admin — verificações restantes
+        if (currentPath.includes('cadastro') || currentPath.includes('completarperfil')) return;
+        if (!hasWorkshop && user.role !== 'admin') {
+          navigate(createPageUrl("Cadastro")); return;
+        }
+        if (user.first_access_completed === false && user.role !== 'admin') {
+          navigate(createPageUrl("Cadastro")); return;
+        }
+        if (user.profile_completed === false) {
+          navigate(createPageUrl("CompletarPerfil")); return;
+        }
         return;
       }
 
-      // LÓGICA DE ROTEAMENTO síncronas — sem I/O adicional
-      if (!hasWorkshop && user.role !== 'admin') {
-        navigate(createPageUrl("Cadastro")); return;
-      }
-      if (user.first_access_completed === false && user.role !== 'admin') {
-        navigate(createPageUrl("Cadastro")); return;
-      }
-      if (user.profile_completed === false) {
-        navigate(createPageUrl("CompletarPerfil")); return;
+      // --- Precisa checar convite via server function ---
+      const cached = inviteCheckCache.get(user.id);
+
+      if (cached === 'error') {
+        // Erro anterior já registrado — não retentar automaticamente, mostrar tela de erro
+        setInviteCheckError(true);
+        return;
       }
 
-      // Passou todas verificações — nada a fazer
+      if (cached) {
+        // Cache hit
+        if (cached.hasPendingInvite && cached.redirectUrl) {
+          window.location.href = cached.redirectUrl;
+        } else if (!cached.hasPendingInvite) {
+          applyOrphanRedirect(user);
+        }
+        return;
+      }
+
+      // Cache miss — chamar server function
+      setIsChecking(true);
+      let inviteResult;
+      try {
+        const response = await base44.functions.invoke("resolvePendingInviteForCurrentUser", {});
+        inviteResult = response?.data ?? response;
+      } catch (fetchErr) {
+        console.error("Erro de rede ao checar convite:", fetchErr);
+        inviteCheckCache.set(user.id, 'error');
+        setInviteCheckError(true);
+        setIsChecking(false);
+        return;
+      }
+
+      if (!inviteResult?.success) {
+        // Erro retornado pela função (status 500 etc.) — bloquear, NÃO ir para /Cadastro
+        console.error("resolvePendingInviteForCurrentUser retornou erro:", inviteResult?.error);
+        inviteCheckCache.set(user.id, 'error');
+        setInviteCheckError(true);
+        setIsChecking(false);
+        return;
+      }
+
+      if (inviteResult.has_invite && inviteResult.redirect_url) {
+        inviteCheckCache.set(user.id, { hasPendingInvite: true, redirectUrl: inviteResult.redirect_url });
+        window.location.href = inviteResult.redirect_url;
+        return;
+      }
+
+      // Confirmado pelo servidor: sem convite pendente
+      inviteCheckCache.set(user.id, { hasPendingInvite: false, redirectUrl: null });
+      setIsChecking(false);
+      applyOrphanRedirect(user);
 
     } catch (error) {
-      console.error("❌ Erro ao verificar onboarding:", error);
+      console.error("Erro inesperado no OnboardingGate:", error);
+      // Erro inesperado no próprio gate — não enviar para /Cadastro silenciosamente
+      setInviteCheckError(true);
       setIsChecking(false);
     }
   };
 
-  // Delaying loading screen to avoid flashes on quick verifications
+  // Só redireciona para /Cadastro quando servidor confirmou que não há convite
+  const applyOrphanRedirect = (u) => {
+    const isOrphanSignup = u.signup_type === 'orphan' && u.role !== 'admin';
+    if (isOrphanSignup) {
+      const ageMinutes = (Date.now() - new Date(u.created_date).getTime()) / 60000;
+      if (ageMinutes > 10) {
+        base44.analytics.track({
+          eventName: 'FORCED_ONBOARDING_REDIRECT',
+          properties: { user_id: u.id, email: u.email, reason: 'orphan_signup', age_minutes: Math.round(ageMinutes) }
+        });
+        navigate(createPageUrl("Cadastro"));
+      }
+    }
+  };
+
+  // --- Loading state com delay para evitar flash ---
   const [showLoading, setShowLoading] = useState(false);
   useEffect(() => {
-    let timeout;
+    let t;
     if (isChecking) {
-      timeout = setTimeout(() => setShowLoading(true), 400); // 400ms delay before showing loader
+      t = setTimeout(() => setShowLoading(true), 400);
     } else {
       setShowLoading(false);
     }
-    return () => clearTimeout(timeout);
+    return () => clearTimeout(t);
   }, [isChecking]);
 
-  // Mostrar loading apenas enquanto verifica (não em /cadastro ou em páginas base para evitar flash)
-  const isAuthOrOnboardingPage = location.pathname.toLowerCase().includes('cadastro') || 
-                               location.pathname.toLowerCase().includes('primeiroacesso');
-                               
+  const isAuthOrOnboardingPage = location.pathname.toLowerCase().includes('cadastro') ||
+    location.pathname.toLowerCase().includes('primeiroacesso');
+
+  // Tela de erro de checagem de convite — bloqueia navegação
+  if (inviteCheckError && !isAuthOrOnboardingPage) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 p-6">
+        <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center">
+          <div className="flex justify-center mb-4">
+            <div className="bg-amber-100 p-3 rounded-full">
+              <AlertTriangle className="w-8 h-8 text-amber-600" />
+            </div>
+          </div>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Verificação de acesso falhou</h2>
+          <p className="text-gray-600 text-sm mb-6">
+            Não foi possível verificar se existe convite pendente para este usuário.
+            Por segurança, o acesso foi bloqueado. Tente novamente ou entre em contato com o administrador.
+          </p>
+          <div className="flex flex-col gap-3">
+            <Button onClick={handleRetry} className="w-full">
+              Tentar novamente
+            </Button>
+            <Button variant="outline" className="w-full" onClick={() => base44.auth.logout('/')}>
+              Sair
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (isChecking && !isAuthOrOnboardingPage && showLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50">
@@ -190,11 +205,11 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
         </div>
       </div>
     );
-  } else if (isChecking && !isAuthOrOnboardingPage && !showLoading) {
-    // Return empty state while waiting for the 300ms timeout
+  }
+
+  if (isChecking && !isAuthOrOnboardingPage && !showLoading) {
     return <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50" />;
   }
 
-  // Render normal
   return children;
 }
