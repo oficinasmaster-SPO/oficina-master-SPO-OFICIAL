@@ -37,7 +37,17 @@ Deno.serve(async (req) => {
     // 3. Normalizar email
     const email = String(user.email || '').trim().toLowerCase();
 
-    // 4. Buscar Employee (por user_id E por email) + EmployeeInvite (por email) em paralelo
+    // 4. BLOCKED: usuário inativo — verificado antes de tudo (nem convite pendente passa por cima)
+    if (isInactive(user)) {
+      return Response.json({
+        success: true,
+        state: 'BLOCKED',
+        reason: 'User account is inactive or blocked',
+        user_id: user.id,
+      });
+    }
+
+    // 5. Buscar Employee (por user_id E por email) + EmployeeInvite (por email) em paralelo
     const [employeesByUserId, employeesByEmail, invites] = await Promise.all([
       base44.asServiceRole.entities.Employee.filter({ user_id: user.id }),
       email ? base44.asServiceRole.entities.Employee.filter({ email }) : Promise.resolve([]),
@@ -47,7 +57,7 @@ Deno.serve(async (req) => {
     // Merge employees — prioridade para o vinculado por user_id
     const employee = employeesByUserId[0] || employeesByEmail.find(e => !e.user_id) || employeesByEmail[0] || null;
 
-    // 5. Resolver convite — mais recente primeiro
+    // 6. Resolver convite — mais recente primeiro
     const sortedInvites = [...invites].sort(
       (a, b) => new Date(b.created_date || 0).getTime() - new Date(a.created_date || 0).getTime()
     );
@@ -58,14 +68,14 @@ Deno.serve(async (req) => {
     });
     const anyInvite = sortedInvites[0] || null;
 
-    // 6. Resolver workshop_id
+    // 7. Resolver workshop_id do usuário (employee/perfil)
     const workshopId =
       employee?.workshop_id ||
       user.workshop_id ||
       user.data?.workshop_id ||
       null;
 
-    // 7. Buscar workshop se tivermos ID
+    // 8. Buscar workshop do usuário se tivermos ID
     let workshop = null;
     if (workshopId) {
       try {
@@ -78,30 +88,52 @@ Deno.serve(async (req) => {
 
     // --- Máquina de estados ---
 
-    // INVITED: convite pendente válido — prioridade máxima (sobrepõe estado do employee/workshop)
+    // INVITED: convite pendente válido — passa por cima de Employee.user_status=inativo
+    // (employee convidado pode nascer inativo até aceitar o convite)
+    // Mas antes validar se o workshop do convite está ativo
     if (pendingInvite) {
+      const inviteWorkshopId =
+        pendingInvite.metadata?.workshop_id ||
+        pendingInvite.metadata?.company_id ||
+        pendingInvite.workshop_id ||
+        null;
+
+      if (inviteWorkshopId) {
+        try {
+          const ws = await base44.asServiceRole.entities.Workshop.filter({ id: inviteWorkshopId });
+          const inviteWorkshop = ws[0] || null;
+          if (inviteWorkshop && isInactive(inviteWorkshop)) {
+            return Response.json({
+              success: true,
+              state: 'BLOCKED',
+              reason: 'Workshop linked to invite is inactive or blocked',
+              user_id: user.id,
+              invite_id: pendingInvite.id,
+              workshop_id: inviteWorkshopId,
+            });
+          }
+        } catch (_) {
+          // workshop não encontrado — não bloqueia
+        }
+      }
+
+      const profileId = pendingInvite.profile_id || pendingInvite.metadata?.profile_id || '';
+      const redirectUrl = profileId
+        ? `/PrimeiroAcesso?token=${pendingInvite.invite_token}&profile_id=${profileId}`
+        : `/PrimeiroAcesso?token=${pendingInvite.invite_token}`;
+
       return Response.json({
         success: true,
         state: 'INVITED',
         reason: 'Pending invite found',
-        redirect_url: `/PrimeiroAcesso?token=${pendingInvite.invite_token}`,
+        redirect_url: redirectUrl,
         user_id: user.id,
         invite_id: pendingInvite.id,
-        workshop_id: pendingInvite.workshop_id,
+        workshop_id: inviteWorkshopId || pendingInvite.workshop_id,
       });
     }
 
-    // BLOCKED: usuário inativo (verificado após INVITED para não bloquear reativação via convite)
-    if (isInactive(user)) {
-      return Response.json({
-        success: true,
-        state: 'BLOCKED',
-        reason: 'User account is inactive or blocked',
-        user_id: user.id,
-      });
-    }
-
-    // BLOCKED: employee inativo (verificado após INVITED pela mesma razão)
+    // BLOCKED: employee inativo sem convite pendente que o reative
     if (employee && isInactive(employee)) {
       return Response.json({
         success: true,
@@ -127,17 +159,21 @@ Deno.serve(async (req) => {
 
     // INVITE_EXPIRED: existe convite mas expirado/acessado/concluído
     if (anyInvite && !pendingInvite) {
-      const isExpired =
+      const isExpiredInvite =
         anyInvite.status === 'expirado' ||
         anyInvite.status === 'concluido' ||
         anyInvite.status === 'acessado' ||
         (anyInvite.expires_at && new Date(anyInvite.expires_at) < now());
-      if (isExpired) {
+      if (isExpiredInvite) {
+        const expProfileId = anyInvite.profile_id || anyInvite.metadata?.profile_id || '';
+        const expRedirectUrl = expProfileId
+          ? `/PrimeiroAcesso?token=${anyInvite.invite_token}&profile_id=${expProfileId}`
+          : `/PrimeiroAcesso?token=${anyInvite.invite_token}`;
         return Response.json({
           success: true,
           state: 'INVITE_EXPIRED',
           reason: 'Invite found but expired or already used',
-          redirect_url: `/PrimeiroAcesso?token=${anyInvite.invite_token}`,
+          redirect_url: expRedirectUrl,
           user_id: user.id,
           invite_id: anyInvite.id,
           workshop_id: anyInvite.workshop_id,
