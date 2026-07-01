@@ -179,9 +179,11 @@ Deno.serve(async (req) => {
       }
     }
 
-    // PENDING_LINK: employee existe por email mas sem user_id
+    // PENDING_LINK: existe employee por email sem user_id E o employee principal
+    // não está vinculado a este usuário (evita falso positivo quando employee já tem user_id de outro user)
     const unlinkedEmployee = employeesByEmail.find(e => !e.user_id);
-    if (unlinkedEmployee && !employee?.user_id) {
+    const employeeLinkedToThisUser = employeesByUserId[0] || null;
+    if (unlinkedEmployee && !employeeLinkedToThisUser) {
       return Response.json({
         success: true,
         state: 'PENDING_LINK',

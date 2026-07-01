@@ -88,8 +88,10 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
     try {
       if (!isAuthenticated || !user) return;
 
+      // Capturar o path AGORA (antes da promise) para evitar closure stale
       const currentPath = location.pathname.toLowerCase();
       if (BYPASS_PATHS.some(p => currentPath.includes(p))) return;
+      if (currentPath.includes('cadastro') || currentPath.includes('completarperfil')) return;
 
       // Admins passam sempre
       if (user.role === 'admin') return;
@@ -143,6 +145,8 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
       case 'INVITED':
       case 'INVITE_EXPIRED':
         if (redirect_url) {
+          // Limpar cache antes do redirect para evitar loop se o usuário voltar pelo browser
+          stateCache.delete(user?.id);
           window.location.href = redirect_url;
         }
         return;
