@@ -27,6 +27,45 @@ export default function Register() {
     }
     setLoading(true);
     try {
+      // Validar email antes de criar conta
+      let validationResult;
+      try {
+        const validationResponse = await base44.functions.invoke("validateRegistrationEmail", { email });
+        validationResult = validationResponse?.data ?? validationResponse;
+      } catch (valErr) {
+        setError("Não foi possível validar o email. Tente novamente.");
+        return;
+      }
+
+      if (!validationResult?.success) {
+        setError(validationResult?.error || "Não foi possível validar o email. Tente novamente.");
+        return;
+      }
+
+      const status = validationResult.status;
+
+      if (status === "ALREADY_REGISTERED") {
+        setError("Este email já possui cadastro. Faça login ou recupere sua senha.");
+        return;
+      }
+      if (status === "INACTIVE_OR_BLOCKED") {
+        setError("Este email está vinculado a um cadastro inativo. Entre em contato com o suporte.");
+        return;
+      }
+      if (status === "EMPLOYEE_EXISTS_NO_USER") {
+        setError("Existe um vínculo pendente para este email. Solicite um novo convite ao administrador.");
+        return;
+      }
+      if (status === "INVITED" && validationResult.redirect_url) {
+        window.location.href = validationResult.redirect_url;
+        return;
+      }
+      if (status === "INVITED") {
+        setError("Este email possui um convite pendente. Verifique sua caixa de entrada.");
+        return;
+      }
+
+      // status === "AVAILABLE" — seguir cadastro normal
       await base44.auth.register({ email, password });
       setShowOtp(true);
     } catch (err) {
