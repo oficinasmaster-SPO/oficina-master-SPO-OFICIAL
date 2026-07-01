@@ -79,8 +79,7 @@ Deno.serve(async (req) => {
     let workshop = null;
     if (workshopId) {
       try {
-        const ws = await base44.asServiceRole.entities.Workshop.filter({ id: workshopId });
-        workshop = ws[0] || null;
+        workshop = await base44.asServiceRole.entities.Workshop.get(workshopId);
       } catch (_) {
         // workshop não encontrado — não bloqueia o fluxo
       }
@@ -100,8 +99,7 @@ Deno.serve(async (req) => {
 
       if (inviteWorkshopId) {
         try {
-          const ws = await base44.asServiceRole.entities.Workshop.filter({ id: inviteWorkshopId });
-          const inviteWorkshop = ws[0] || null;
+          const inviteWorkshop = await base44.asServiceRole.entities.Workshop.get(inviteWorkshopId).catch(() => null);
           if (inviteWorkshop && isInactive(inviteWorkshop)) {
             return Response.json({
               success: true,

@@ -44,6 +44,18 @@ export default function OnboardingGate({ children, user, isAuthenticated }) {
     return () => clearTimeout(t);
   }, [isChecking]);
 
+  // Invalidar cache quando o usuário conclui um fluxo de onboarding
+  // (evita loop: NEW_OWNER → /Cadastro → volta → NEW_OWNER → /Cadastro → ...)
+  useEffect(() => {
+    const currentPath = location.pathname.toLowerCase();
+    const isCompletingOnboarding =
+      currentPath.includes('cadastro') || currentPath.includes('completarperfil');
+    if (isCompletingOnboarding && user?.id) {
+      stateCache.delete(user.id);
+      checkedRef.current = false;
+    }
+  }, [location.pathname, user?.id]);
+
   useEffect(() => {
     if (!isAuthenticated || !user) {
       checkedRef.current = false;
