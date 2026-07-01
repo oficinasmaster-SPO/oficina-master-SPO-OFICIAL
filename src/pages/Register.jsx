@@ -92,34 +92,56 @@ export default function Register() {
         return;
       }
 
-      // 2. Checar server-side se existe convite pendente para este email
-      let inviteResult;
+      // 2. Checar estado de onboarding server-side
+      let onboardingResult;
       try {
-        const inviteResponse = await base44.functions.invoke("resolvePendingInviteForCurrentUser", {});
-        inviteResult = inviteResponse?.data ?? inviteResponse;
-      } catch (inviteErr) {
-        // Falha na checagem = bloquear, NÃO redirecionar para "/"
+        const onboardingResponse = await base44.functions.invoke("resolveOnboardingState", {});
+        onboardingResult = onboardingResponse?.data ?? onboardingResponse;
+      } catch (onboardingErr) {
         setError(
-          "Não foi possível verificar se existe convite pendente para este e-mail. " +
+          "Não foi possível verificar seu perfil de acesso. " +
           "Tente novamente ou entre em contato com o administrador."
         );
         return;
       }
 
-      if (!inviteResult?.success) {
+      if (!onboardingResult?.success || !onboardingResult?.state) {
         setError(
-          inviteResult?.error ||
-          "Não foi possível verificar se existe convite pendente para este e-mail."
+          onboardingResult?.error ||
+          "Não foi possível verificar seu perfil de acesso."
         );
         return;
       }
 
-      if (inviteResult.has_invite && inviteResult.redirect_url) {
-        window.location.href = inviteResult.redirect_url;
+      // 3. Rotear conforme estado retornado
+      const { state, redirect_url } = onboardingResult;
+
+      if ((state === 'INVITED' || state === 'INVITE_EXPIRED') && redirect_url) {
+        window.location.href = redirect_url;
+        return;
+      }
+      if (state === 'COMPLETE_PROFILE') {
+        window.location.href = '/CompletarPerfil';
+        return;
+      }
+      if (state === 'NEW_OWNER') {
+        window.location.href = '/Cadastro';
+        return;
+      }
+      if (state === 'PENDING_LINK') {
+        setError("Seu vínculo está em processamento. Tente novamente em alguns instantes ou fale com o administrador.");
+        return;
+      }
+      if (state === 'BLOCKED') {
+        setError("Acesso bloqueado. Entre em contato com o administrador.");
+        return;
+      }
+      if (state === 'ERROR') {
+        setError("Erro ao verificar acesso. Tente novamente.");
         return;
       }
 
-      // 3. Confirma: sem convite — ir para home normalmente
+      // READY — ir para home
       window.location.href = "/";
     } catch (err) {
       setError(err.message || "Invalid verification code");
