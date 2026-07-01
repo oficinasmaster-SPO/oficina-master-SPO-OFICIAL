@@ -1,0 +1,199 @@
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+
+const now = () => new Date();
+
+function isInactive(record) {
+  if (!record) return false;
+  return (
+    record.status === 'inativo' ||
+    record.status === 'bloqueado' ||
+    record.user_status === 'inativo' ||
+    record.user_status === 'bloqueado' ||
+    record.active === false ||
+    record.is_active === false
+  );
+}
+
+Deno.serve(async (req) => {
+  try {
+    const base44 = createClientFromRequest(req);
+
+    // 1. Autenticar
+    const user = await base44.auth.me();
+    if (!user) {
+      return Response.json({ success: false, state: 'ERROR', reason: 'Unauthenticated' }, { status: 401 });
+    }
+
+    // 2. Admins sempre prontos
+    if (user.role === 'admin' || user.role === 'super_admin') {
+      return Response.json({
+        success: true,
+        state: 'READY',
+        reason: 'Admin user — unrestricted access',
+        user_id: user.id,
+      });
+    }
+
+    // 3. Normalizar email
+    const email = String(user.email || '').trim().toLowerCase();
+
+    // 4. Buscar Employee (por user_id E por email) + EmployeeInvite (por email) em paralelo
+    const [employeesByUserId, employeesByEmail, invites] = await Promise.all([
+      base44.asServiceRole.entities.Employee.filter({ user_id: user.id }),
+      email ? base44.asServiceRole.entities.Employee.filter({ email }) : Promise.resolve([]),
+      email ? base44.asServiceRole.entities.EmployeeInvite.filter({ email }) : Promise.resolve([]),
+    ]);
+
+    // Merge employees — prioridade para o vinculado por user_id
+    const employee = employeesByUserId[0] || employeesByEmail.find(e => !e.user_id) || employeesByEmail[0] || null;
+
+    // 5. Resolver convite — mais recente primeiro
+    const sortedInvites = [...invites].sort(
+      (a, b) => new Date(b.created_date || 0).getTime() - new Date(a.created_date || 0).getTime()
+    );
+    const pendingInvite = sortedInvites.find(inv => {
+      const isPending = inv.status === 'pendente' || inv.status === 'enviado';
+      const isExpired = inv.expires_at && new Date(inv.expires_at) < now();
+      return isPending && !isExpired;
+    });
+    const anyInvite = sortedInvites[0] || null;
+
+    // 6. Resolver workshop_id
+    const workshopId =
+      employee?.workshop_id ||
+      user.workshop_id ||
+      user.data?.workshop_id ||
+      null;
+
+    // 7. Buscar workshop se tivermos ID
+    let workshop = null;
+    if (workshopId) {
+      try {
+        const ws = await base44.asServiceRole.entities.Workshop.filter({ id: workshopId });
+        workshop = ws[0] || null;
+      } catch (_) {
+        // workshop não encontrado — não bloqueia o fluxo
+      }
+    }
+
+    // --- Máquina de estados ---
+
+    // INVITED: convite pendente válido — prioridade máxima (sobrepõe estado do employee/workshop)
+    if (pendingInvite) {
+      return Response.json({
+        success: true,
+        state: 'INVITED',
+        reason: 'Pending invite found',
+        redirect_url: `/PrimeiroAcesso?token=${pendingInvite.invite_token}`,
+        user_id: user.id,
+        invite_id: pendingInvite.id,
+        workshop_id: pendingInvite.workshop_id,
+      });
+    }
+
+    // BLOCKED: usuário inativo (verificado após INVITED para não bloquear reativação via convite)
+    if (isInactive(user)) {
+      return Response.json({
+        success: true,
+        state: 'BLOCKED',
+        reason: 'User account is inactive or blocked',
+        user_id: user.id,
+      });
+    }
+
+    // BLOCKED: employee inativo (verificado após INVITED pela mesma razão)
+    if (employee && isInactive(employee)) {
+      return Response.json({
+        success: true,
+        state: 'BLOCKED',
+        reason: 'Employee record is inactive or blocked',
+        user_id: user.id,
+        employee_id: employee.id,
+        workshop_id: workshopId,
+      });
+    }
+
+    // BLOCKED: workshop inativo
+    if (workshop && isInactive(workshop)) {
+      return Response.json({
+        success: true,
+        state: 'BLOCKED',
+        reason: 'Workshop is inactive',
+        user_id: user.id,
+        employee_id: employee?.id,
+        workshop_id: workshopId,
+      });
+    }
+
+    // INVITE_EXPIRED: existe convite mas expirado/acessado/concluído
+    if (anyInvite && !pendingInvite) {
+      const isExpired =
+        anyInvite.status === 'expirado' ||
+        anyInvite.status === 'concluido' ||
+        anyInvite.status === 'acessado' ||
+        (anyInvite.expires_at && new Date(anyInvite.expires_at) < now());
+      if (isExpired) {
+        return Response.json({
+          success: true,
+          state: 'INVITE_EXPIRED',
+          reason: 'Invite found but expired or already used',
+          redirect_url: `/PrimeiroAcesso?token=${anyInvite.invite_token}`,
+          user_id: user.id,
+          invite_id: anyInvite.id,
+          workshop_id: anyInvite.workshop_id,
+        });
+      }
+    }
+
+    // PENDING_LINK: employee existe por email mas sem user_id
+    const unlinkedEmployee = employeesByEmail.find(e => !e.user_id);
+    if (unlinkedEmployee && !employee?.user_id) {
+      return Response.json({
+        success: true,
+        state: 'PENDING_LINK',
+        reason: 'Employee record exists with this email but has no linked user_id',
+        user_id: user.id,
+        employee_id: unlinkedEmployee.id,
+        workshop_id: unlinkedEmployee.workshop_id,
+      });
+    }
+
+    // NEW_OWNER: sem employee, sem workshop, sem convite
+    if (!employee && !workshopId) {
+      return Response.json({
+        success: true,
+        state: 'NEW_OWNER',
+        reason: 'No employee, no workshop and no invite — new owner registration',
+        user_id: user.id,
+      });
+    }
+
+    // COMPLETE_PROFILE: acesso completo mas perfil incompleto
+    if (user.profile_completed === false && user.first_access_completed === true) {
+      return Response.json({
+        success: true,
+        state: 'COMPLETE_PROFILE',
+        reason: 'First access completed but profile not yet filled',
+        user_id: user.id,
+        employee_id: employee?.id,
+        workshop_id: workshopId,
+      });
+    }
+
+    // READY: tudo resolvido
+    return Response.json({
+      success: true,
+      state: 'READY',
+      reason: 'User, employee and workshop resolved',
+      user_id: user.id,
+      employee_id: employee?.id,
+      workshop_id: workshopId,
+    });
+
+  } catch (error) {
+    return Response.json(
+      { success: false, state: 'ERROR', reason: error.message },
+      { status: 500 }
+    );
+  }
+});
