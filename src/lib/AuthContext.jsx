@@ -132,8 +132,10 @@ export const AuthProvider = ({ children }) => {
       if (effectiveUser.role !== 'admin' && !effectiveUser._isImpersonated) {
         try {
           const employees = await base44.entities.Employee.filter({ user_id: effectiveUser.id });
+          // Só bloqueia se encontrou employees E todos estão inativos.
+          // Se não encontrou nenhum (RLS ou novo usuário), deixa passar normalmente.
           if (employees && employees.length > 0) {
-            const hasActiveEmployee = employees.some(emp => emp.status !== 'inativo');
+            const hasActiveEmployee = employees.some(emp => emp.status !== 'inativo' && emp.user_status !== 'bloqueado');
             if (!hasActiveEmployee) {
               setAuthError({
                 type: 'account_inactive',
@@ -145,6 +147,7 @@ export const AuthProvider = ({ children }) => {
             }
           }
         } catch (err) {
+          // Em caso de erro (ex: RLS bloqueou a query), não bloquear o acesso
           console.error('Error checking employee status:', err);
         }
       }
