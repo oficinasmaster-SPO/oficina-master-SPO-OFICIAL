@@ -45,6 +45,14 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Workshop not found' }, { status: 404 });
     }
 
+    // Guard: não criar follow-ups para oficinas inativas
+    if (workshop.status === 'inativo') {
+      return Response.json({ 
+        message: `Oficina ${workshop.name} está inativa. Follow-up não criado.`,
+        created: false
+      });
+    }
+
     const planosElegiveis = ['BRONZE', 'PRATA', 'GOLD', 'IOM', 'MILLIONS'];
     if (!planosElegiveis.includes(workshop.planoAtual)) {
       return Response.json({ 

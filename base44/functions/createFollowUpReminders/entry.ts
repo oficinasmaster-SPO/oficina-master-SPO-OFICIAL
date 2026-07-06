@@ -90,11 +90,15 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Fetch workshop name
+    // Fetch workshop — verificar se está ativa antes de criar follow-ups
     let workshopName = '';
     try {
       const workshop = await base44.asServiceRole.entities.Workshop.get(workshopId);
       workshopName = workshop?.name || '';
+      if (workshop?.status === 'inativo') {
+        console.log(`[createFollowUpReminders] Oficina ${workshopName} está inativa. Follow-ups não criados.`);
+        return Response.json({ skipped: true, reason: 'Workshop inativo' });
+      }
     } catch (e) {
       console.warn('Could not fetch workshop:', e.message);
     }
