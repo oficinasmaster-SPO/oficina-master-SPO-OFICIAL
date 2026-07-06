@@ -298,16 +298,21 @@ Deno.serve(async (req) => {
 
     // Se o User já existe, atualizar com workshop_id/user_type imediatamente
     if (existingUserId) {
-      try {
-        await base44.asServiceRole.entities.User.update(existingUserId, {
-          workshop_id: isInternalUser ? null : workshop_id,
-          consulting_firm_id: isInternalUser ? consulting_firm_id : null,
-          user_type: isInternalUser ? 'internal' : 'external'
-        });
-        console.log("✅ User existente atualizado com workshop_id e user_type");
-      } catch (e) {
-        console.warn("⚠️ Falha ao atualizar User existente (não bloqueante):", e.message);
-      }
+    try {
+      const existingUserData = await base44.asServiceRole.entities.User.filter({ email }).catch(() => []);
+      const existingUserRecord = existingUserData[0];
+      // Garantir que usuário de oficina nunca tenha role=admin (somente internos podem ser admin)
+      const correctedRole = isInternalUser ? (existingUserRecord?.role || 'user') : 'user';
+      await base44.asServiceRole.entities.User.update(existingUserId, {
+        workshop_id: isInternalUser ? null : workshop_id,
+        consulting_firm_id: isInternalUser ? consulting_firm_id : null,
+        user_type: isInternalUser ? 'internal' : 'external',
+        role: correctedRole
+      });
+      console.log("✅ User existente atualizado com workshop_id, user_type e role:", correctedRole);
+    } catch (e) {
+      console.warn("⚠️ Falha ao atualizar User existente (não bloqueante):", e.message);
+    }
     }
 
     // Gerar link de convite com profile_id e token (sem depender de workshop_id na URL)
