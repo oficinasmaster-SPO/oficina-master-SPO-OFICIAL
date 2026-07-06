@@ -215,6 +215,17 @@ Deno.serve(withAuth(async (req, { base44, user }) => {
         }
 
         availableWorkshops.sort((a, b) => {
+            // ONBOARDING-FIX: priorizar o workshop vinculado ao perfil do usuário.
+            // Evita que uma oficina alheia (ex: outra da mesma consultoria, possivelmente
+            // inativa) seja resolvida como principal e dispare a tela "oficina inativa".
+            if (userProfileWorkshopId) {
+                if (a.id === userProfileWorkshopId && b.id !== userProfileWorkshopId) return -1;
+                if (b.id === userProfileWorkshopId && a.id !== userProfileWorkshopId) return 1;
+            }
+            // Oficinas ativas antes de inativas
+            const aInativo = a.status === 'inativo';
+            const bInativo = b.status === 'inativo';
+            if (aInativo !== bInativo) return aInativo ? 1 : -1;
             if (!a.company_id && b.company_id) return -1;
             if (a.company_id && !b.company_id) return 1;
             return (a.name || '').localeCompare(b.name || '');
@@ -225,8 +236,13 @@ Deno.serve(withAuth(async (req, { base44, user }) => {
             console.warn(`FIX-06: getUserWorkshops retornou vazio para user ${user.id} (${user.email})`);
         }
 
-        // Salvar no cache
-        setCachedData(user.id, availableWorkshops);
+        // Salvar no cache — só cacheia se encontrou pelo menos uma oficina.
+        // ONBOARDING-FIX: durante o aceite de convite, o vínculo Employee.user_id
+        // é assíncrono; se cachearmos um resultado transitório vazio, o usuário
+        // fica preso por 2min sem oficina logo após o primeiro login.
+        if (availableWorkshops.length > 0) {
+            setCachedData(user.id, availableWorkshops);
+        }
 
         const headers = new Headers({
             'Content-Type': 'application/json',
