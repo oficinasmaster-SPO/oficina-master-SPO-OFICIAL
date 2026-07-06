@@ -41,19 +41,16 @@ export default function PedidoInternoForm({ pedido, user, usuarios: usuariosProp
     midias_anexas: pedido?.midias_anexas || []
   });
 
-  // Busca usuários internamente para garantir que o select de responsável sempre funcione
+  // Busca sempre os employees internos para popular o select de responsável
   const { data: usuariosInternos = [] } = useQuery({
-    queryKey: ['usuarios-pedido-interno'],
+    queryKey: ['employees-internos-pedido'],
     queryFn: async () => {
-      const users = await base44.entities.User.list();
-      return users || [];
+      const employees = await base44.entities.Employee.filter({ user_type: 'internal' });
+      return (employees || []).filter(e => e.full_name);
     },
-    // Só busca se o prop externo estiver vazio
-    enabled: usuariosProp.length === 0,
   });
 
-  // Usa o prop se tiver dados, senão usa o fetch interno
-  const usuarios = usuariosProp.length > 0 ? usuariosProp : usuariosInternos;
+  const usuarios = usuariosInternos;
 
   // Busca workshops internamente se não recebeu como prop
   const { data: workshopsInternal = [] } = useQuery({
@@ -95,12 +92,12 @@ export default function PedidoInternoForm({ pedido, user, usuarios: usuariosProp
     saveMutation.mutate(formData);
   };
 
-  const handleResponsavelChange = (userId) => {
-    const usuario = usuarios.find(u => u.id === userId);
+  const handleResponsavelChange = (empId) => {
+    const emp = usuarios.find(u => u.id === empId);
     setFormData({
       ...formData,
-      responsavel_id: userId,
-      responsavel_nome: usuario?.full_name || ''
+      responsavel_id: empId,
+      responsavel_nome: emp?.full_name || ''
     });
   };
 
