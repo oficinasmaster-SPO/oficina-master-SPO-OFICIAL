@@ -220,7 +220,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       // escondendo menus de admins legítimos como a equipe de CS interna.
       // Não se aplica durante impersonação (_isImpersonated), que deve refletir o usuário alvo.
       const isImpersonated = user._isImpersonated === true;
-      if (!isImpersonated && (user.role === 'admin' || user.user_type === 'internal')) {
+      if (!isImpersonated && (user.role === 'admin' || user.user_type === 'internal' || user.is_internal === true || user.data?.is_internal === true)) {
         setIsGlobalContext(true);
         return;
       }
