@@ -307,11 +307,19 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
     queryClient.invalidateQueries({ queryKey: ["follow-up-reminders"] });
   };
 
+  // Evita contar 2x: um FollowUpConcluido cujo followup_id já está em remindersConcluidos
+  // representa o MESMO follow-up, não um adicional.
+  const concluidosCount = useMemo(() => {
+    const includedReminderIds = new Set(remindersConcluidos.map(r => r.id));
+    const extra = concludedAttendances.filter(a => !(a.followup_id && includedReminderIds.has(a.followup_id))).length;
+    return remindersConcluidos.length + extra;
+  }, [remindersConcluidos, concludedAttendances]);
+
   const counts = useMemo(() => ({
     pendentes: reminders.filter(r => !r.is_completed).length,
     atrasados: reminders.filter(r => !r.is_completed && r.reminder_date < today).length,
-    concluidos: remindersConcluidos.length + concludedAttendances.length,
-  }), [reminders, remindersConcluidos, concludedAttendances, today]);
+    concluidos: concluidosCount,
+  }), [reminders, concluidosCount, today]);
 
   const applySearch = useCallback((list) => {
     if (!searchTerm.trim()) return list;
