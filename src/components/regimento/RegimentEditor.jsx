@@ -246,33 +246,93 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
     setFormData({ ...formData, sections: newSections });
   };
 
-  const renderSectionEditor = (sectionIds) => {
-    const sections = formData.sections?.filter(s => sectionIds.includes(s.id)) || [];
-    if (sections.length === 0) {
-      return (
-        <div className="text-center py-12 text-gray-400">
-          <FileText className="w-12 h-12 mx-auto mb-3 opacity-30" />
-          <p>Seção não encontrada no regimento</p>
-          <p className="text-xs mt-1">IDs esperados: {sectionIds.join(", ")}</p>
-        </div>
-      );
-    }
+  // Cria uma nova seção (ex: 29. NOVA SEÇÃO), vinculada ao item de menu atual
+  const addSection = (item) => {
+    const allSections = formData.sections || [];
+    const maxNum = allSections.reduce((max, s) => {
+      const n = parseInt(s.number, 10);
+      return isNaN(n) ? max : Math.max(max, n);
+    }, 0);
+    const newSection = {
+      id: `custom-${Date.now()}`,
+      number: String(maxNum + 1),
+      title: "NOVA SEÇÃO",
+      content: "",
+      subsections: [],
+      group_item_id: item.id
+    };
+    setFormData({ ...formData, sections: [...allSections, newSection] });
+  };
+
+  const removeSection = (sectionId) => {
+    setFormData({ ...formData, sections: (formData.sections || []).filter(s => s.id !== sectionId) });
+  };
+
+  const updateSectionField = (sectionId, field, value) => {
+    const newSections = [...(formData.sections || [])];
+    const si = newSections.findIndex(s => s.id === sectionId);
+    if (si === -1) return;
+    newSections[si] = { ...newSections[si], [field]: value };
+    setFormData({ ...formData, sections: newSections });
+  };
+
+  const renderSectionEditor = (item) => {
+    const sectionIds = item.sectionIds || [];
+    const sections = (formData.sections || []).filter(s => sectionIds.includes(s.id) || s.group_item_id === item.id);
 
     return (
       <div className="space-y-5">
-        {sections.map(section => (
+        <div className="flex justify-end">
+          <Button size="sm" variant="outline" onClick={() => addSection(item)} className="gap-1.5">
+            <Plus className="w-3.5 h-3.5" /> Adicionar Seção
+          </Button>
+        </div>
+        {sections.length === 0 && (
+          <div className="text-center py-12 text-gray-400">
+            <FileText className="w-12 h-12 mx-auto mb-3 opacity-30" />
+            <p>Nenhuma seção cadastrada ainda</p>
+          </div>
+        )}
+        {sections.map(section => {
+          const isCustom = !!section.group_item_id;
+          return (
           <div key={section.id} className="border rounded-xl p-6 bg-white shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h4 className="font-semibold text-base text-gray-900">{section.number} {section.title}</h4>
-                {section.content && (
-                  <p className="text-sm text-gray-500 mt-1">{section.content}</p>
+            <div className="flex items-center justify-between mb-4 gap-3">
+              <div className="flex-1 min-w-0 flex items-start gap-2">
+                <span className="font-semibold text-base text-gray-900 shrink-0 mt-1.5">{section.number}.</span>
+                {isCustom ? (
+                  <Input
+                    value={section.title || ""}
+                    onChange={(e) => updateSectionField(section.id, 'title', e.target.value.toUpperCase())}
+                    className="font-semibold text-base"
+                    placeholder="TÍTULO DA SEÇÃO"
+                  />
+                ) : (
+                  <h4 className="font-semibold text-base text-gray-900 mt-1.5">{section.title}</h4>
                 )}
               </div>
-              <Button size="sm" variant="outline" onClick={() => addSubsection(section.id)} className="gap-1.5">
-                <Plus className="w-3.5 h-3.5" /> Adicionar Item
-              </Button>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <Button size="sm" variant="outline" onClick={() => addSubsection(section.id)} className="gap-1.5">
+                  <Plus className="w-3.5 h-3.5" /> Adicionar Item
+                </Button>
+                {isCustom && (
+                  <Button size="icon" variant="ghost" onClick={() => removeSection(section.id)} className="text-red-500 hover:text-red-700 hover:bg-red-50">
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
             </div>
+            {isCustom ? (
+              <Textarea
+                rows={2}
+                value={section.content || ""}
+                onChange={(e) => updateSectionField(section.id, 'content', e.target.value)}
+                placeholder="Descrição breve da seção (opcional)..."
+                className="text-sm mb-4"
+              />
+            ) : section.content ? (
+              <p className="text-sm text-gray-500 mb-4">{section.content}</p>
+            ) : null}
             <div className="space-y-3">
               {section.subsections?.map((sub, index) => (
                 <div key={sub.id} className="flex gap-2 items-start">
@@ -303,7 +363,8 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
               ))}
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
     );
   };
@@ -358,7 +419,7 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
       <div className="bg-gray-50 border rounded-lg p-4 text-sm text-gray-600">
         <strong className="text-gray-800">Fundamentação:</strong> CLT art. 2º, 158, 482 | CF art. 7º | NRs
       </div>
-      {renderSectionEditor(["0"])}
+      {renderSectionEditor({ id: 'legal', sectionIds: ["0"] })}
     </div>
   );
 
@@ -373,7 +434,7 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
           <li>Registro documental (tudo escrito)</li>
         </ul>
       </div>
-      {renderSectionEditor(["5", "6", "7", "8"])}
+      {renderSectionEditor({ id: 'penalties', sectionIds: ["5", "6", "7", "8"] })}
     </div>
   );
 
@@ -391,7 +452,7 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
         <Label className="text-xs text-gray-500">Disposições Finais</Label>
         <Textarea rows={5} value={formData.final_provisions || ""} onChange={(e) => setFormData({ ...formData, final_provisions: e.target.value })} className="mt-1 text-sm leading-6 min-h-[160px] resize-y" />
       </div>
-      {renderSectionEditor(["28"])}
+      {renderSectionEditor({ id: 'final', sectionIds: ["28"] })}
       <div className="bg-green-50 border border-green-200 rounded-lg p-4">
         <h4 className="font-bold text-green-900 text-sm mb-2">Blindagem Jurídica Completa:</h4>
         <ul className="text-sm text-green-800 space-y-0.5">
@@ -432,7 +493,7 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
             <h3 className="font-semibold text-blue-900">{item.label}</h3>
             <p className="text-sm text-blue-700 mt-1">{getSectionDescription(item.id)}</p>
           </div>
-          {renderSectionEditor(item.sectionIds)}
+          {renderSectionEditor(item)}
         </div>
       );
     }
