@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, Clock, CheckCircle2, StickyNote, CalendarCheck, MessageCircle, Phone, Mail, MapPin, Video, FileText, Target, Search, X } from "lucide-react";
+import { AlertCircle, Clock, CheckCircle2, StickyNote, CalendarCheck, MessageCircle, Phone, Mail, MapPin, Video, FileText, Target, Search, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import FollowUpCompletedDetailDrawer from "@/components/aceleracao/FollowUpCompletedDetailDrawer";
 import FollowUpConcluidoRow from "@/components/aceleracao/FollowUpConcluidoRow.jsx";
@@ -293,6 +293,8 @@ const CANAL_ICON_MAP = {
 export default function FollowUpList({ reminders, remindersConcluidos = [], today, isLoading, onSelect, filterPill, onFilterPill, seqByReminderId = {}, statsByWorkshopId = {}, onSuporteRapido }) {
   const [selectedCompleted, setSelectedCompleted] = useState(null);
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 30;
   const { byWorkshop: concluidosIndex, byFollowupId: concluidosByFuid, sequenceByFollowupId } = useConcluidosIndex();
   // Extrai todos os ata_ids dos reminders para buscar apenas as ATAs necessárias
   const ataIds = reminders.map(r => r.ata_id).filter(Boolean);
@@ -388,6 +390,13 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
 
     return base;
   })();
+
+  // Reseta para a primeira página ao trocar filtro/busca/lista
+  React.useEffect(() => { setPage(1); }, [searchTerm, filterPill, sourceList.length]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   const countAtrasados = reminders.filter(r => !r.is_completed && r.reminder_date < today).length;
   const countHoje      = reminders.filter(r => !r.is_completed && r.reminder_date === today).length;
@@ -524,7 +533,7 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
             <div className="w-24 flex-shrink-0">Próx. Contato</div>
             <div className="flex-shrink-0 ml-auto">Status</div>
           </div>
-          {filtered.map(r => {
+          {paginated.map(r => {
             const concluido = concluidosByFuid?.[r.id] || null;
             const ata = r.ata_id ? atasIndex[r.ata_id] : null;
             const seqFU = seqByReminderId[r.id] ?? null;
@@ -549,7 +558,7 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
         </div>
       ) : (
         <div className="space-y-2">
-          {filtered.map(r => {
+          {paginated.map(r => {
             const daysOver = getDaysOverdue(r.reminder_date, today);
             const isOverdue = !r.is_completed && r.reminder_date < today;
             const isTodayItem = isToday(r.reminder_date, today);
@@ -750,6 +759,32 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
               </button>
             );
           })}
+        </div>
+      )}
+
+      {/* Paginação */}
+      {filtered.length > PAGE_SIZE && (
+        <div className="flex items-center justify-between pt-2">
+          <span className="text-xs text-gray-400">
+            {(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filtered.length)} de {filtered.length}
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <ChevronLeft className="w-3.5 h-3.5" /> Anterior
+            </button>
+            <span className="text-xs text-gray-500">Página {currentPage} de {totalPages}</span>
+            <button
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Próxima <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
       )}
 
