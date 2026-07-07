@@ -119,12 +119,39 @@ export default function useControleAceleracaoState() {
     retryDelay: 2000,
   });
 
-  // Merge base + missing into final workshopMap
+  // PERF (2026-07-07): cache local de nomes de oficinas — nomes aparecem
+  // instantaneamente enquanto os dados frescos carregam em background.
+  const cachedNames = useMemo(() => {
+    try { return JSON.parse(localStorage.getItem('workshop-name-cache') || '{}'); }
+    catch { return {}; }
+  }, []);
+
+  // Merge base + missing into final workshopMap (cache local como fallback imediato)
   const workshopMap = useMemo(() => {
-    const map = { ...baseWorkshopMap };
+    const map = {};
+    // 1. Fallback: nomes do cache local (placeholder até dados frescos chegarem)
+    Object.entries(cachedNames).forEach(([id, name]) => {
+      map[id] = { id, name, _cached: true };
+    });
+    // 2. Dados frescos sobrescrevem o cache
+    Object.assign(map, baseWorkshopMap);
     missingWorkshops.forEach(w => { if (w?.id) map[w.id] = w; });
     return map;
-  }, [baseWorkshopMap, missingWorkshops]);
+  }, [baseWorkshopMap, missingWorkshops, cachedNames]);
+
+  // Persistir nomes resolvidos no cache local
+  useEffect(() => {
+    const fresh = [...(workshops || []), ...missingWorkshops];
+    if (!fresh.length) return;
+    try {
+      const cache = JSON.parse(localStorage.getItem('workshop-name-cache') || '{}');
+      let changed = false;
+      fresh.forEach(w => {
+        if (w?.id && w?.name && cache[w.id] !== w.name) { cache[w.id] = w.name; changed = true; }
+      });
+      if (changed) localStorage.setItem('workshop-name-cache', JSON.stringify(cache));
+    } catch { /* storage indisponível — ignora */ }
+  }, [workshops, missingWorkshops]);
 
   const atasMap = useMemo(() => {
     const map = {};
