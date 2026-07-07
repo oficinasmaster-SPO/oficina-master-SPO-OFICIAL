@@ -154,7 +154,10 @@ export default function PainelAtendimentosTab({ state }) {
     // Strings de data "YYYY-MM-DD" — comparação direta em BRT
     const startLimit = filtros.dataInicio || null;
     const endLimit = filtros.dataFim || null;
-    
+
+    // PERF: formatter único (Intl.DateTimeFormat é caro se criado por item)
+    const brtFmt = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" });
+
     // Transforma a busca uma vez só
     const searchLower = debouncedSearch ? debouncedSearch.toLowerCase() : "";
 
@@ -167,7 +170,7 @@ export default function PainelAtendimentosTab({ state }) {
         
         // Verifica as datas usando a data local em BRT (exceto atrasados)
         if (!isAtrasado && (startLimit || endLimit)) {
-          const itemDate = new Date(a.data_agendada).toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+          const itemDate = brtFmt.format(new Date(a.data_agendada));
           if (startLimit && itemDate < startLimit) return false;
           if (endLimit && itemDate > endLimit) return false;
         }
@@ -185,38 +188,8 @@ export default function PainelAtendimentosTab({ state }) {
         }
         return true;
       })
-      .sort((a, b) => {
-        const hoje = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
-
-        const getGrupo = (item) => {
-          const itemDate = (item.data_agendada || "").substring(0, 10);
-          // 1º — Realizados sem ATA (pendentes de conclusão) — sempre no topo
-          if (item.status === 'realizado' && !item.ata_id) return 1;
-          // 2º — De hoje (não finalizados)
-          if (itemDate === hoje && item.status !== 'concluido' && item.status !== 'cancelado') return 2;
-          // 3º — Atrasados
-          if (item.status === 'atrasado') return 3;
-          // 4º — Futuros (data > hoje, não finalizados)
-          if (itemDate > hoje && item.status !== 'concluido' && item.status !== 'cancelado') return 4;
-          // 5º — Concluídos e cancelados
-          return 5;
-        };
-
-        const grupoA = getGrupo(a);
-        const grupoB = getGrupo(b);
-
-        if (grupoA !== grupoB) return grupoA - grupoB;
-
-        const dateA = a.data_agendada || "";
-        const dateB = b.data_agendada || "";
-
-        // Ordem interna por grupo:
-        if (grupoA === 1) return dateA.localeCompare(dateB); // mais antigo primeiro
-        if (grupoA === 2) return dateA.localeCompare(dateB); // mais cedo no dia primeiro
-        if (grupoA === 3) return dateB.localeCompare(dateA); // mais recente primeiro
-        if (grupoA === 4) return dateA.localeCompare(dateB); // mais próximo primeiro
-        return dateB.localeCompare(dateA);                   // concluídos: mais recente primeiro
-      });
+      // Sempre inicia pela atividade mais recente (data_agendada desc)
+      .sort((a, b) => (b.data_agendada || "").localeCompare(a.data_agendada || ""));
   }, [atendimentos, activeTab, filtros.dataInicio, filtros.dataFim, debouncedSearch, workshopMap]);
 
   // Grupos por empresa (apenas quando toggle ativo) — ordenados por nome da empresa, itens por data_agendada asc
@@ -239,7 +212,7 @@ export default function PainelAtendimentosTab({ state }) {
       .map(grupo => ({
         ...grupo,
         itens: [...grupo.itens].sort((a, b) =>
-          (a.data_agendada || "").localeCompare(b.data_agendada || "")
+          (b.data_agendada || "").localeCompare(a.data_agendada || "")
         )
       }));
   }, [agruparPorEmpresa, atendimentosFiltrados, workshopMap]);

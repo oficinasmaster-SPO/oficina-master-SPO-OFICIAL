@@ -20,9 +20,11 @@ export function filterAtendimentosPeriodo(atendimentos, filtros) {
   if (!atendimentos?.length) return [];
   const { dataInicio, dataFim } = filtros;
   if (!dataInicio || !dataFim) return atendimentos;
+  // PERF: formatter único em vez de toLocaleDateString por item
+  const brtFmt = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" });
   return atendimentos.filter(a => {
     if (a.status === 'atrasado') return true;
-    const d = new Date(a.data_agendada).toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+    const d = brtFmt.format(new Date(a.data_agendada));
     return d >= dataInicio && d <= dataFim;
   });
 }

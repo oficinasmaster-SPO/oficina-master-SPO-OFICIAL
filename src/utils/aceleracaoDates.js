@@ -21,6 +21,8 @@ export function computeDatesForPreset(preset) {
       return { dataInicio: format(subDays(hoje, 15), "yyyy-MM-dd"), dataFim: format(hoje, "yyyy-MM-dd") };
     case "30d":
       return { dataInicio: format(subDays(hoje, 30), "yyyy-MM-dd"), dataFim: format(hoje, "yyyy-MM-dd") };
+    case "all":
+      return { dataInicio: null, dataFim: null };
     case "mes_atual":
     default:
       return { dataInicio: format(startOfMonth(hoje), "yyyy-MM-dd"), dataFim: format(endOfMonth(hoje), "yyyy-MM-dd") };

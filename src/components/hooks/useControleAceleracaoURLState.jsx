@@ -8,7 +8,7 @@ const VALID_TABS = [
   "consultoria", "proximos-passos"
 ];
 
-const VALID_PRESETS = ["7d", "15d", "30d", "mes_atual", "custom"];
+const VALID_PRESETS = ["7d", "15d", "30d", "mes_atual", "custom", "all"];
 
 const DEFAULT_TAB = "visao-geral";
 
