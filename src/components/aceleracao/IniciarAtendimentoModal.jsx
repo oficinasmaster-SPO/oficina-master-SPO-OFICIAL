@@ -40,6 +40,8 @@ import SuporteFormBanner from "@/components/aceleracao/suporte/SuporteFormBanner
 import OrigemDerivadaBanner from "@/components/aceleracao/followups/OrigemDerivadaBanner";
 import ClientHistoryFloatingPanel from "@/components/aceleracao/ClientHistoryFloatingPanel";
 import { isSuporteFlow, gerarSuporteId } from "@/utils/suporteHelper";
+import ClientIndicatorsSection from "@/components/atendimento/ClientIndicatorsSection";
+import ClientIndicatorsChart from "@/components/clientIndicators/ClientIndicatorsChart";
 
 
 const RESULTADO_COLORS = {
@@ -1237,6 +1239,14 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
                 />
               </div>
 
+              {/* Indicadores do Cliente */}
+              {followUp?.workshop_id && (
+                <ClientIndicatorsSection
+                  workshopId={followUp.workshop_id}
+                  followUpId={followUp.id}
+                />
+              )}
+
               {/* Próximo passo — oculto para nao_atendeu e aguardando (auto-reagendamento) */}
               {!isAutoReagendar && (
               <div>
@@ -1747,6 +1757,11 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
                                 {workshop.employees_count && <div><p className="text-xs text-gray-500 font-semibold mb-1">Colaboradores</p><p className="text-gray-900">{workshop.employees_count}</p></div>}
                                 {workshop.planoAtual && <div><p className="text-xs text-gray-500 font-semibold mb-1">Plano</p><p className="text-gray-900 font-medium">{workshop.planoAtual}</p></div>}
                               </div>
+                            </div>
+                          )}
+                          {followUp?.workshop_id && (
+                            <div className="border-b pb-4">
+                              <ClientIndicatorsChart workshopId={followUp.workshop_id} />
                             </div>
                           )}
                           <div className="pt-3">

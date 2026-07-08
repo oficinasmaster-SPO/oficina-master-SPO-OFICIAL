@@ -5,6 +5,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { base44 } from "@/api/base44Client";
+import ClientIndicatorsChart from "@/components/clientIndicators/ClientIndicatorsChart";
 
 const CANAL_LABELS = {
   ligacao: "Ligação",
@@ -127,6 +128,12 @@ export default function FollowUpCompletedDetailDrawer({ followUp, open, onClose,
               </div>
             )}
           </SheetHeader>
+
+          {followUp?.workshop_id && (
+            <div className="mb-6 pb-6 border-b">
+              <ClientIndicatorsChart workshopId={followUp.workshop_id} />
+            </div>
+          )}
 
           {!attendanceData && (
             <div className="flex flex-col items-center justify-center h-full py-12 text-center">

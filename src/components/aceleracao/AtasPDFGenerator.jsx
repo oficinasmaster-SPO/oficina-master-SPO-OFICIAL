@@ -816,6 +816,40 @@ export const generateAtaPDF = async (rawAta, workshop) => {
     y += 5;
   }
 
+  // 14. INDICADORES DO CLIENTE (EVOLUÇÃO)
+  if (ata.client_indicators && ata.client_indicators.length > 0) {
+    checkPageBreak(30);
+    doc.setFontSize(13);
+    doc.setFont(undefined, 'bold');
+    doc.text('14. INDICADORES DO CLIENTE (EVOLUCAO)', margin, y);
+    y += 2;
+    doc.setLineWidth(0.5);
+    doc.line(margin, y, pageWidth - margin, y);
+    y += 8;
+
+    const rows = ata.client_indicators.map((ind) => [
+      ind.data_registro ? format(new Date(ind.data_registro + 'T00:00:00'), 'dd/MM/yyyy') : '-',
+      `R$ ${Number(ind.faturamento_mes || 0).toLocaleString('pt-BR')}`,
+      `R$ ${Number(ind.ticket_medio || 0).toLocaleString('pt-BR')}`,
+      String(ind.clientes_atendidos || 0),
+      `R$ ${Number(ind.faturado_kit_master || 0).toLocaleString('pt-BR')}`,
+      `R$ ${Number(ind.faturado_trafego_pago || 0).toLocaleString('pt-BR')}`,
+      `R$ ${Number(ind.lucro_operacional || 0).toLocaleString('pt-BR')}`,
+    ]);
+
+    doc.autoTable({
+      startY: y,
+      head: [['Data', 'Faturamento', 'Ticket Médio', 'Clientes', 'Kit Master', 'Tráfego Pago', 'Lucro']],
+      body: rows,
+      theme: 'grid',
+      styles: { fontSize: 8, cellPadding: 3, textColor: [0, 0, 0], lineColor: [0, 0, 0], lineWidth: 0.3 },
+      headStyles: { fillColor: [22, 163, 74], textColor: [255, 255, 255], fontStyle: 'bold' },
+      margin: { left: margin, right: margin }
+    });
+
+    y = doc.lastAutoTable.finalY + 10;
+  }
+
   // Rodapé
   const finalY = pageHeight - 15;
   doc.setFontSize(9);

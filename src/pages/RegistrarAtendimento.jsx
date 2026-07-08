@@ -38,6 +38,7 @@ import { INTELLIGENCE_AREAS, INTELLIGENCE_TYPES } from "@/components/lib/clientI
 import { useRegistroMeta } from "@/components/hooks/useRegistroMeta";
 import RegistroMetaBadge from "@/components/aceleracao/RegistroMetaBadge";
 import ClientHistoryFloatingPanel from "@/components/aceleracao/ClientHistoryFloatingPanel";
+import ClientIndicatorsSection from "@/components/atendimento/ClientIndicatorsSection";
 
 export default function RegistrarAtendimento({ isModal = false, onClose, onSaved, atendimentoId: atendimentoIdProp, consultoresExternos, isReadOnly = false, origemTela = "RegistrarAtendimento", initialData = null }) {
   const navigate = useNavigate();
@@ -1082,6 +1083,13 @@ export default function RegistrarAtendimento({ isModal = false, onClose, onSaved
         </CardContent>
       </Card>
 
+      {formData.workshop_id && (
+        <ClientIndicatorsSection
+          workshopId={formData.workshop_id}
+          atendimentoId={formData.id}
+        />
+      )}
+
       <AgendaSection formData={formData} setFormData={setFormData} pautaRef={pautaRef} />
 
       <ContentSection
@@ -1233,7 +1241,8 @@ export default function RegistrarAtendimento({ isModal = false, onClose, onSaved
                       const ata = await base44.entities.MeetingMinutes.get(formData.ata_id);
                       if (ata) {
                         const intelligence = await base44.entities.ClientIntelligence.filter({ attendance_id: formData.id });
-                        const ataComInteligencia = { ...ata, client_intelligence: intelligence || [], checklist_respostas: ata.checklist_respostas || formData.checklist_respostas || [] };
+                        const clientIndicators = await base44.entities.ClientIndicator.filter({ workshop_id: formData.workshop_id }, 'data_registro', 200);
+                        const ataComInteligencia = { ...ata, client_intelligence: intelligence || [], client_indicators: clientIndicators || [], checklist_respostas: ata.checklist_respostas || formData.checklist_respostas || [] };
                         const { downloadAtaPDF } = await import("@/components/aceleracao/AtasPDFGenerator");
                         const workshop = workshops?.find(w => w.id === formData.workshop_id);
                         await downloadAtaPDF(ataComInteligencia, workshop);
@@ -1388,7 +1397,8 @@ export default function RegistrarAtendimento({ isModal = false, onClose, onSaved
                       const ata = await base44.entities.MeetingMinutes.get(formData.ata_id);
                       if (ata) {
                         const intelligence = await base44.entities.ClientIntelligence.filter({ attendance_id: formData.id });
-                        const ataComInteligencia = { ...ata, client_intelligence: intelligence || [], checklist_respostas: ata.checklist_respostas || formData.checklist_respostas || [] };
+                        const clientIndicators = await base44.entities.ClientIndicator.filter({ workshop_id: formData.workshop_id }, 'data_registro', 200);
+                        const ataComInteligencia = { ...ata, client_intelligence: intelligence || [], client_indicators: clientIndicators || [], checklist_respostas: ata.checklist_respostas || formData.checklist_respostas || [] };
                         const { downloadAtaPDF } = await import("@/components/aceleracao/AtasPDFGenerator");
                         const workshop = workshops?.find(w => w.id === formData.workshop_id);
                         await downloadAtaPDF(ataComInteligencia, workshop);
