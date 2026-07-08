@@ -53,9 +53,20 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Buscar indicadores do cliente (evolução) para a oficina
+    let clientIndicators = [];
+    if (ata.workshop_id) {
+      try {
+        clientIndicators = await base44.entities.ClientIndicator.filter({ workshop_id: ata.workshop_id }, 'data_registro', 200);
+        console.log(`[PDF-External] Indicadores do cliente carregados: ${clientIndicators?.length || 0}`);
+      } catch (e) {
+        console.warn(`[PDF-External] Falha ao carregar indicadores do cliente: ${e.message}`);
+      }
+    }
+
     // Gerar HTML da ATA
     console.log(`[PDF-External] Gerando HTML para envio ao serviço externo`);
-    const htmlContent = generateAtaHTML(ata, workshop);
+    const htmlContent = generateAtaHTML(ata, workshop, clientIndicators);
     console.log(`[PDF-External] HTML gerado: ${htmlContent.length} caracteres`);
 
     // Chamar serviço externo de PDF com retry
@@ -210,7 +221,7 @@ Deno.serve(async (req) => {
  * Gera HTML completo da ATA
  * SEM dependência de browser
  */
-function generateAtaHTML(ata, workshop) {
+function generateAtaHTML(ata, workshop, clientIndicators = []) {
   const sanitize = (text) => {
     if (!text) return '';
     return String(text)
@@ -292,6 +303,22 @@ function generateAtaHTML(ata, workshop) {
             <td>${sanitize(dec.prazo || '-')}</td>
           </tr>
         `).join('')
+    : '';
+
+  const formatBRL = (v) => `R$ ${Number(v || 0).toLocaleString('pt-BR')}`;
+
+  const indicadoresRows = Array.isArray(clientIndicators) && clientIndicators.length > 0
+    ? clientIndicators.map(ind => `
+        <tr>
+          <td>${ind.data_registro ? new Date(ind.data_registro + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}</td>
+          <td>${formatBRL(ind.faturamento_mes)}</td>
+          <td>${formatBRL(ind.ticket_medio)}</td>
+          <td>${ind.clientes_atendidos || 0}</td>
+          <td>${formatBRL(ind.faturado_kit_master)}</td>
+          <td>${formatBRL(ind.faturado_trafego_pago)}</td>
+          <td>${formatBRL(ind.lucro_operacional)}</td>
+        </tr>
+      `).join('')
     : '';
 
   return `<!DOCTYPE html>
@@ -654,6 +681,29 @@ function generateAtaHTML(ata, workshop) {
            </thead>
            <tbody>
              ${acoes}
+           </tbody>
+         </table>
+       </div>
+     ` : ''}
+
+    <!-- SEÇÃO 14: INDICADORES DO CLIENTE (EVOLUÇÃO) -->
+     ${indicadoresRows ? `
+       <div class="section">
+         <h2 class="section-title">14. INDICADORES DO CLIENTE (EVOLUÇÃO)</h2>
+         <table class="info-table">
+           <thead>
+             <tr>
+               <th>Data</th>
+               <th>Faturamento</th>
+               <th>Ticket Médio</th>
+               <th>Clientes</th>
+               <th>Kit Master</th>
+               <th>Tráfego Pago</th>
+               <th>Lucro</th>
+             </tr>
+           </thead>
+           <tbody>
+             ${indicadoresRows}
            </tbody>
          </table>
        </div>
