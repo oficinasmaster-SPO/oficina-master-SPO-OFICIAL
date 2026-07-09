@@ -153,7 +153,7 @@ export default function ControleAceleracaoView({ state }) {
   }, [setFiltros]);
 
   return (
-    <div className="w-full space-y-5">
+    <div className={`w-full ${activeTab === "pedidos" ? "flex h-[calc(100dvh-14rem)] min-h-0 flex-col gap-5 overflow-hidden" : "space-y-5"}`}>
       {/* Modal */}
       {isModalOpen && (
         <RegistrarAtendimento
@@ -360,7 +360,7 @@ export default function ControleAceleracaoView({ state }) {
       )}
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-5">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className={activeTab === "pedidos" ? "flex min-h-0 flex-1 flex-col gap-5" : "space-y-5"}>
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-1.5">
           <TabsList className="flex w-full justify-start overflow-x-auto bg-transparent h-auto gap-1 scrollbar-hide">
             <TabsTrigger value="visao-geral" className={TAB_CLASS}>
@@ -409,7 +409,7 @@ export default function ControleAceleracaoView({ state }) {
         </div>
 
         {/* Tab Content — forceMount + hidden on all tabs; lazy-mount on first visit */}
-        <>
+        <div className={activeTab === "pedidos" ? "min-h-0 flex-1" : ""}>
           <TabsContent value="visao-geral" forceMount className={`mt-0 ${activeTab !== "visao-geral" ? "hidden" : ""}`}>
             {visitedTabs.has("visao-geral") && (
               <TabErrorBoundary tabName="Visão Geral">
@@ -442,7 +442,7 @@ export default function ControleAceleracaoView({ state }) {
             )}
           </TabsContent>
 
-          <TabsContent value="pedidos" forceMount className={`mt-0 ${activeTab !== "pedidos" ? "hidden" : ""}`}>
+          <TabsContent value="pedidos" forceMount className={`mt-0 h-full min-h-0 ${activeTab !== "pedidos" ? "hidden" : ""}`}>
             {visitedTabs.has("pedidos") && (
               <TabErrorBoundary tabName="Pedidos & Backlog">
                 <Suspense fallback={<TabSkeleton />}>
@@ -491,7 +491,7 @@ export default function ControleAceleracaoView({ state }) {
               </TabErrorBoundary>
             )}
           </TabsContent>
-        </>
+        </div>
       </Tabs>
     </div>
   );

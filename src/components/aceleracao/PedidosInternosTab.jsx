@@ -18,6 +18,7 @@ import { ptBR } from "date-fns/locale";
 
 export default function PedidosInternosTab({ workshopId, user }) {
   const [showForm, setShowForm] = useState(false);
+  const [activeList, setActiveList] = useState("pedidos");
   const [editingPedido, setEditingPedido] = useState(null);
   const [filters, setFilters] = useState({
     search: '',
@@ -141,7 +142,7 @@ export default function PedidosInternosTab({ workshopId, user }) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden">
       <PedidoInternoModal open={showForm} onClose={() => { setShowForm(false); setEditingPedido(null); }}>
         {showForm && editingPedido && editingPedido.responsavel_id === user?.id && editingPedido.solicitante_id !== user?.id ? (
           <PedidoInternoResponder pedido={editingPedido} user={user} onCancel={() => { setShowForm(false); setEditingPedido(null); }} onSuccess={onFormClose} />
@@ -150,8 +151,8 @@ export default function PedidosInternosTab({ workshopId, user }) {
         ) : null}
       </PedidoInternoModal>
 
-      <Tabs defaultValue="pedidos" className="w-full">
-        <TabsList className="mb-4 bg-gray-100 rounded-lg p-1">
+      <Tabs value={activeList} onValueChange={setActiveList} className="flex min-h-0 flex-1 flex-col">
+        <TabsList className="mb-4 shrink-0 bg-gray-100 rounded-lg p-1">
           <TabsTrigger value="pedidos" className="text-sm rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm">
             Pedidos Internos
           </TabsTrigger>
@@ -160,11 +161,11 @@ export default function PedidosInternosTab({ workshopId, user }) {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="backlog">
+        <TabsContent value="backlog" forceMount className={`mt-0 min-h-0 flex-1 ${activeList !== "backlog" ? "hidden" : "animate-in fade-in duration-200"}`}>
           <BacklogDashboard workshopId={workshopId} user={user} />
         </TabsContent>
 
-        <TabsContent value="pedidos" className="space-y-6">
+        <TabsContent value="pedidos" forceMount className={`mt-0 min-h-0 flex-1 flex-col gap-4 ${activeList !== "pedidos" ? "hidden" : "flex animate-in fade-in duration-200"}`}>
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             <AccelerationKpi icon={Clock} value={pedidosPorStatus.pendente.length} label="Pendentes" />
             <AccelerationKpi icon={FileText} value={pedidosPorStatus.em_analise.length} label="Em análise" tone="text-blue-700" iconTone="text-blue-500" />
@@ -176,11 +177,13 @@ export default function PedidosInternosTab({ workshopId, user }) {
             <Button onClick={() => setShowForm(true)} className="gap-2 bg-blue-600 shadow-sm hover:bg-blue-700"><Plus className="h-4 w-4" />Novo pedido</Button>
           </div>
 
-          <Card className="rounded-2xl">
-            <CardHeader>
+          <Card className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl">
+            <CardHeader className="shrink-0 border-b border-gray-100 py-4">
               <CardTitle>Lista de Pedidos</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="relative min-h-0 flex-1 p-0">
+              <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-5 bg-gradient-to-b from-white to-transparent" />
+              <div className="scrollbar-stable scrollbar-thin h-full overflow-y-auto overflow-x-hidden scroll-smooth p-6">
               {isLoading ? (
                 <p className="text-center text-gray-500 py-8">Carregando...</p>
               ) : filteredPedidos.length === 0 ? (
@@ -208,6 +211,8 @@ export default function PedidosInternosTab({ workshopId, user }) {
                   ))}
                 </div>
               )}
+              </div>
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-5 bg-gradient-to-t from-white to-transparent" />
             </CardContent>
           </Card>
         </TabsContent>

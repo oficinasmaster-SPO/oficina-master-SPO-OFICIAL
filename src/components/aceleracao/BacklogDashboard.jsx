@@ -148,7 +148,7 @@ export default function BacklogDashboard({ workshopId, user }) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="flex h-full min-h-0 flex-col gap-4 overflow-hidden animate-in fade-in duration-200">
       <TarefaBacklogModal
         open={showForm || !!viewingTarefa}
         onClose={() => {
@@ -195,11 +195,13 @@ export default function BacklogDashboard({ workshopId, user }) {
         <Button onClick={() => setShowForm(true)} className="gap-2 bg-blue-600 shadow-sm hover:bg-blue-700"><Plus className="h-4 w-4" />Nova tarefa</Button>
       </div>
 
-      <Card className="rounded-2xl">
-        <CardHeader>
+      <Card className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl">
+        <CardHeader className="shrink-0 border-b border-gray-100 py-4">
           <CardTitle>Lista de Tarefas ({filteredTarefas.length})</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="relative min-h-0 flex-1 p-0">
+          <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-5 bg-gradient-to-b from-white to-transparent" />
+          <div className="scrollbar-stable scrollbar-thin h-full overflow-y-auto overflow-x-hidden scroll-smooth p-6">
           {isLoading ? (
             <p className="text-center text-gray-500 py-8">Carregando...</p>
           ) : filteredTarefas.length === 0 ? (
@@ -223,6 +225,8 @@ export default function BacklogDashboard({ workshopId, user }) {
               ))}
             </div>
           )}
+          </div>
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-5 bg-gradient-to-t from-white to-transparent" />
         </CardContent>
       </Card>
     </div>

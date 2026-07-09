@@ -196,6 +196,11 @@ button:focus-visible {
   background-clip: content-box;
 }
 
+.scrollbar-stable {
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
+}
+
 /* Garante que portais do Radix UI (Select, Popover, etc) ficam acima de modais customizados */
 [data-radix-popper-content-wrapper] {
   z-index: 99999 !important;
