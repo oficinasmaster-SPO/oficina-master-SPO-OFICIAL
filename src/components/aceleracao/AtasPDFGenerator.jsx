@@ -827,19 +827,27 @@ export const generateAtaPDF = async (rawAta, workshop) => {
     doc.line(margin, y, pageWidth - margin, y);
     y += 8;
 
+    const allColumns = [
+      { key: 'faturamento_mes', label: 'Faturamento', format: (ind) => `R$ ${Number(ind.faturamento_mes || 0).toLocaleString('pt-BR')}` },
+      { key: 'ticket_medio', label: 'Ticket Médio', format: (ind) => `R$ ${Number(ind.ticket_medio || 0).toLocaleString('pt-BR')}` },
+      { key: 'clientes_atendidos', label: 'Clientes', format: (ind) => String(ind.clientes_atendidos || 0) },
+      { key: 'faturado_kit_master', label: 'Kit Master', format: (ind) => `R$ ${Number(ind.faturado_kit_master || 0).toLocaleString('pt-BR')}` },
+      { key: 'faturado_trafego_pago', label: 'Tráfego Pago', format: (ind) => `R$ ${Number(ind.faturado_trafego_pago || 0).toLocaleString('pt-BR')}` },
+      { key: 'lucro_operacional', label: 'Lucro', format: (ind) => `R$ ${Number(ind.lucro_operacional || 0).toLocaleString('pt-BR')}` },
+    ];
+    const selectedKeys = ata.indicadores_selecionados;
+    const columns = (Array.isArray(selectedKeys) && selectedKeys.length > 0)
+      ? allColumns.filter((c) => selectedKeys.includes(c.key))
+      : allColumns;
+
     const rows = ata.client_indicators.map((ind) => [
       ind.data_registro ? format(new Date(ind.data_registro + 'T00:00:00'), 'dd/MM/yyyy') : '-',
-      `R$ ${Number(ind.faturamento_mes || 0).toLocaleString('pt-BR')}`,
-      `R$ ${Number(ind.ticket_medio || 0).toLocaleString('pt-BR')}`,
-      String(ind.clientes_atendidos || 0),
-      `R$ ${Number(ind.faturado_kit_master || 0).toLocaleString('pt-BR')}`,
-      `R$ ${Number(ind.faturado_trafego_pago || 0).toLocaleString('pt-BR')}`,
-      `R$ ${Number(ind.lucro_operacional || 0).toLocaleString('pt-BR')}`,
+      ...columns.map((c) => c.format(ind)),
     ]);
 
     doc.autoTable({
       startY: y,
-      head: [['Data', 'Faturamento', 'Ticket Médio', 'Clientes', 'Kit Master', 'Tráfego Pago', 'Lucro']],
+      head: [['Data', ...columns.map((c) => c.label)]],
       body: rows,
       theme: 'grid',
       styles: { fontSize: 8, cellPadding: 3, textColor: [0, 0, 0], lineColor: [0, 0, 0], lineWidth: 0.3 },
