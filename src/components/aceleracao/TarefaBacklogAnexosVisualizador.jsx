@@ -38,11 +38,11 @@ export default function TarefaBacklogAnexosVisualizador({ tarefa }) {
   };
 
   return (
-    <Card className="mt-6">
-      <CardHeader>
+    <Card className="rounded-xl">
+      <CardHeader className="p-4 pb-2">
         <CardTitle className="text-base">Anexos ({anexos.length})</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-4 p-4 pt-2">
         {imagens.length > 0 && (
           <div>
             <h3 className="text-sm font-semibold text-gray-700 mb-3">Imagens</h3>

@@ -41,35 +41,24 @@ function TimelineItem({ evento }) {
   const dataHora = evento.data_hora ? new Date(evento.data_hora) : null;
 
   return (
-    <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-100">
-      {/* Dot */}
-      <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${config.cor}`} />
-
-      {/* Label + autor */}
-      <div className="flex-1 min-w-0">
-        <span className="text-sm font-medium text-gray-800">{config.label}</span>
-        {evento.usuario_nome && (
-          <span className="text-xs text-gray-500 ml-1">por {evento.usuario_nome.split(' ')[0]}</span>
-        )}
-        {(evento.valor_anterior || evento.valor_novo) && (
-          <div className="flex items-center gap-1 mt-0.5">
-            {evento.valor_anterior && (
-              <span className="text-xs line-through text-red-400 truncate max-w-[80px]">{evento.valor_anterior}</span>
-            )}
-            {evento.valor_anterior && evento.valor_novo && <span className="text-gray-400 text-xs">→</span>}
-            {evento.valor_novo && (
-              <span className="text-xs text-green-600 font-medium truncate max-w-[80px]">{evento.valor_novo}</span>
-            )}
-          </div>
-        )}
+    <div className="relative border-l border-gray-200 pb-4 pl-5 last:border-l-transparent last:pb-0">
+      <div className={`absolute -left-[5px] top-1 h-2.5 w-2.5 rounded-full ring-4 ring-white ${config.cor}`} />
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-gray-800">
+            {config.label}
+            {evento.usuario_nome && <span className="ml-1 font-normal text-gray-500">por {evento.usuario_nome.split(' ')[0]}</span>}
+          </p>
+          {(evento.valor_anterior || evento.valor_novo) && (
+            <p className="mt-0.5 truncate text-xs text-gray-500">
+              {evento.valor_anterior && <span className="line-through text-red-400">{evento.valor_anterior}</span>}
+              {evento.valor_anterior && evento.valor_novo && " → "}
+              {evento.valor_novo && <span className="font-medium text-green-600">{evento.valor_novo}</span>}
+            </p>
+          )}
+        </div>
+        {dataHora && <time className="shrink-0 text-xs text-gray-400">{format(dataHora, "dd/MM/yyyy HH:mm", { locale: ptBR })}</time>}
       </div>
-
-      {/* Data */}
-      {dataHora && (
-        <span className="text-xs text-gray-400 whitespace-nowrap flex-shrink-0 bg-gray-100 px-2 py-0.5 rounded-full">
-          {format(dataHora, "dd/MM HH:mm", { locale: ptBR })}
-        </span>
-      )}
     </div>
   );
 }
@@ -196,35 +185,37 @@ export default function TarefaBacklogDetalhe({ tarefa, user, onVoltar, onEditar,
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" onClick={onVoltar}>
-          <ArrowLeft className="w-4 h-4" />
-        </Button>
-        <div className="flex-1">
-          <h2 className="text-xl font-bold">{tarefa.titulo}</h2>
-          <p className="text-sm text-gray-500">ID: {tarefa.id}</p>
+      {/* Cabeçalho */}
+      <section className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-6">
+        <div className="flex items-start gap-3">
+          <Button variant="ghost" size="sm" onClick={onVoltar} aria-label="Voltar para a lista">
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div className="min-w-0 flex-1">
+            <h2 className="text-xl font-bold leading-tight text-gray-950 sm:text-2xl">{tarefa.titulo}</h2>
+            <p className="mt-1 truncate text-xs text-gray-400">ID: {tarefa.id}</p>
+          </div>
         </div>
-        <div className="flex gap-2">
+
+        <div className="my-4 border-t border-gray-100" />
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+          <div><p className="text-xs text-gray-500">Status</p><Badge className={`mt-1 ${statusCfg.className}`}>{statusCfg.label}</Badge></div>
+          <div><p className="text-xs text-gray-500">Prioridade</p><Badge className={`mt-1 ${prioridadeCfg.className}`}>{prioridadeCfg.label}</Badge></div>
+          <div><p className="text-xs text-gray-500">Prazo</p><p className="mt-1 text-sm font-medium">{tarefa.prazo ? format(new Date(tarefa.prazo), "dd/MM/yyyy", { locale: ptBR }) : "—"}</p></div>
+          <div><p className="text-xs text-gray-500">Estimativa</p><p className="mt-1 text-sm font-medium">{tarefa.tempo_estimado_horas || 0}h</p></div>
+          <div><p className="text-xs text-gray-500">Criado em</p><p className="mt-1 text-sm font-medium">{tarefa.data_criacao ? format(new Date(tarefa.data_criacao), "dd/MM/yyyy", { locale: ptBR }) : tarefa.created_date ? format(new Date(tarefa.created_date), "dd/MM/yyyy", { locale: ptBR }) : "—"}</p></div>
+        </div>
+
+        <div className="mt-4 flex flex-wrap justify-end gap-2 border-t border-gray-100 pt-4">
+          {onEditar && podeEditar && <Button variant="outline" size="sm" onClick={() => onEditar(tarefa)}>Editar</Button>}
           {tarefa.status !== 'concluida' && (
-            <Button 
-              variant="default" 
-              size="sm"
-              onClick={() => concludirMutation.mutate()}
-              disabled={concludirMutation.isPending}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              <CheckCircle className="w-4 h-4 mr-1" />
+            <Button size="sm" onClick={() => concludirMutation.mutate()} disabled={concludirMutation.isPending} className="bg-green-600 hover:bg-green-700">
+              <CheckCircle className="mr-1 h-4 w-4" />
               {concludirMutation.isPending ? 'Concluindo...' : 'Concluir Tarefa'}
             </Button>
           )}
-          {onEditar && podeEditar && (
-            <Button variant="outline" size="sm" onClick={() => onEditar(tarefa)}>
-              Editar
-            </Button>
-          )}
         </div>
-      </div>
+      </section>
 
       {/* Banner de rastreabilidade — exibido quando a tarefa tem origem em uma ATA */}
       {tarefa.origem === 'reuniao' && tarefa.origem_id && (
@@ -254,55 +245,16 @@ export default function TarefaBacklogDetalhe({ tarefa, user, onVoltar, onEditar,
         </div>
       )}
 
-      {/* ── Barra de Status horizontal ── */}
-      <Card className="border-0 bg-gray-50">
-        <CardContent className="py-3 px-5">
-          <div className="flex flex-wrap items-center gap-6">
-            <div className="flex items-center gap-2">
-              <Tag className="w-3.5 h-3.5 text-gray-400" />
-              <span className="text-xs text-gray-500">Status:</span>
-              <Badge className={statusCfg.className}>{statusCfg.label}</Badge>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-500">Prioridade:</span>
-              <Badge className={prioridadeCfg.className}>{prioridadeCfg.label}</Badge>
-            </div>
-            <div className="flex items-center gap-2">
-              <Calendar className="w-3.5 h-3.5 text-gray-400" />
-              <span className="text-xs text-gray-500">Prazo:</span>
-              <span className="text-sm font-medium">
-                {tarefa.prazo ? format(new Date(tarefa.prazo), "dd/MM/yyyy", { locale: ptBR }) : "—"}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Clock className="w-3.5 h-3.5 text-gray-400" />
-              <span className="text-xs text-gray-500">Estimado:</span>
-              <span className="text-sm font-medium">{tarefa.tempo_estimado_horas}h</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-500">Criado em:</span>
-              <span className="text-xs text-gray-600">
-                {tarefa.data_criacao
-                  ? format(new Date(tarefa.data_criacao), "dd/MM/yyyy HH:mm", { locale: ptBR })
-                  : tarefa.created_date
-                  ? format(new Date(tarefa.created_date), "dd/MM/yyyy HH:mm", { locale: ptBR })
-                  : "—"}
-              </span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* ── Grid principal: Dados + Responsáveis ── */}
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="grid items-start gap-6 lg:grid-cols-[3fr_2fr]">
         {/* Dados Gerais */}
-        <Card>
-          <CardHeader className="pb-3">
+        <Card className="h-full rounded-xl">
+          <CardHeader className="p-4 pb-2">
             <CardTitle className="text-base flex items-center gap-2">
               <FileText className="w-4 h-4" /> Dados Gerais
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3 p-4 pt-2">
             {tarefa.descricao && (
               <div>
                 <p className="text-xs text-gray-500 mb-1">Descrição</p>
@@ -329,32 +281,19 @@ export default function TarefaBacklogDetalhe({ tarefa, user, onVoltar, onEditar,
                 </div>
               )}
             </div>
-            {tarefa.motivo_bloqueio && (
-              <div className="rounded-lg bg-red-50 border border-red-100 px-3 py-2">
-                <p className="text-xs text-red-500 mb-1 flex items-center gap-1">
-                  <AlertCircle className="w-3 h-3" /> Motivo do Bloqueio
-                </p>
-                <p className="text-sm text-red-700">{tarefa.motivo_bloqueio}</p>
-              </div>
-            )}
-            {tarefa.notas && (
-              <div className="rounded-lg bg-yellow-50 border border-yellow-100 px-3 py-2">
-                <p className="text-xs text-gray-500 mb-1">Notas</p>
-                <p className="text-sm text-gray-700">{tarefa.notas}</p>
-              </div>
-            )}
+
           </CardContent>
         </Card>
 
         {/* Responsáveis */}
-        <Card>
-          <CardHeader className="pb-3">
+        <Card className="h-full rounded-xl">
+          <CardHeader className="p-4 pb-2">
             <CardTitle className="text-base flex items-center gap-2">
               <User className="w-4 h-4" /> Responsáveis
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4">
+          <CardContent className="p-4 pt-2">
+            <div className="grid grid-cols-2 gap-x-4 gap-y-3">
               <div>
                 <p className="text-xs text-gray-500 mb-1">Consultor</p>
                 <p className="text-sm font-medium">{tarefa.consultor_nome || "—"}</p>
@@ -393,9 +332,16 @@ export default function TarefaBacklogDetalhe({ tarefa, user, onVoltar, onEditar,
         </Card>
       </div>
 
-      {/* ── Histórico em largura total com itens horizontais ── */}
-      <Card>
-        <CardHeader className="pb-2">
+      {tarefa.motivo_bloqueio && (
+        <section className="rounded-xl border border-red-200 bg-red-50 p-4">
+          <h3 className="flex items-center gap-2 text-sm font-semibold text-red-700"><AlertCircle className="h-4 w-4" /> Motivo do bloqueio</h3>
+          <p className="mt-2 text-sm text-red-800">{tarefa.motivo_bloqueio}</p>
+        </section>
+      )}
+
+      {/* ── Histórico em timeline ── */}
+      <Card className="rounded-xl">
+        <CardHeader className="p-4 pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
               📋 Histórico de Alterações
@@ -405,13 +351,13 @@ export default function TarefaBacklogDetalhe({ tarefa, user, onVoltar, onEditar,
             )}
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 pt-2">
           {loadingHistorico ? (
             <p className="text-sm text-gray-400 text-center py-6">Carregando histórico...</p>
           ) : historico.length === 0 ? (
             <p className="text-sm text-gray-400 text-center py-6">Nenhum evento registrado ainda.</p>
           ) : (
-            <div className="space-y-1 max-h-64 overflow-y-auto">
+            <div className="pt-2">
               {historico.map((evento) => (
                 <TimelineItem key={evento.id} evento={evento} />
               ))}
@@ -419,6 +365,13 @@ export default function TarefaBacklogDetalhe({ tarefa, user, onVoltar, onEditar,
           )}
         </CardContent>
       </Card>
+
+      {tarefa.notas && (
+        <Card className="rounded-xl">
+          <CardHeader className="p-4 pb-2"><CardTitle className="text-base">Comentários</CardTitle></CardHeader>
+          <CardContent className="p-4 pt-2"><p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700">{tarefa.notas}</p></CardContent>
+        </Card>
+      )}
 
       <TarefaBacklogAnexosVisualizador tarefa={tarefa} />
 

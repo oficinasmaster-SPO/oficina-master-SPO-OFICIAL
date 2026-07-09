@@ -8,6 +8,7 @@ import { Plus, AlertCircle, TrendingUp, Clock, Play, CheckCircle } from "lucide-
 import TarefaBacklogForm from "./TarefaBacklogForm";
 import TarefaBacklogDetalhe from "./TarefaBacklogDetalhe";
 import BacklogFilters from "./BacklogFilters";
+import TarefaBacklogModal from "./TarefaBacklogModal";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -146,38 +147,40 @@ export default function BacklogDashboard({ workshopId, user }) {
 
   return (
     <div className="space-y-6">
-      {/* Modal de Tarefa — overlay com z-index alto para sobrepor qualquer modal */}
-      {(showForm || viewingTarefa) && (
-        <div className="fixed inset-0 z-[20000] flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}>
-          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            {viewingTarefa ? (
-              <TarefaBacklogDetalhe
-                tarefa={viewingTarefa}
-                user={user}
-                onVoltar={() => setViewingTarefa(null)}
-                onEditar={(t) => {
-                  setViewingTarefa(null);
-                  setEditingTarefa(t);
-                  setShowForm(true);
-                }}
-              />
-            ) : (
-              <TarefaBacklogForm
-                tarefa={editingTarefa}
-                user={user}
-                workshops={workshops}
-                workshopId={workshopId}
-                onCancel={() => { setShowForm(false); setEditingTarefa(null); }}
-                onSuccess={() => {
-                  setShowForm(false);
-                  setEditingTarefa(null);
-                  queryClient.invalidateQueries(['tarefas-backlog']);
-                }}
-              />
-            )}
-          </div>
-        </div>
-      )}
+      <TarefaBacklogModal
+        open={showForm || !!viewingTarefa}
+        onClose={() => {
+          setShowForm(false);
+          setEditingTarefa(null);
+          setViewingTarefa(null);
+        }}
+      >
+        {viewingTarefa ? (
+          <TarefaBacklogDetalhe
+            tarefa={viewingTarefa}
+            user={user}
+            onVoltar={() => setViewingTarefa(null)}
+            onEditar={(t) => {
+              setViewingTarefa(null);
+              setEditingTarefa(t);
+              setShowForm(true);
+            }}
+          />
+        ) : showForm ? (
+          <TarefaBacklogForm
+            tarefa={editingTarefa}
+            user={user}
+            workshops={workshops}
+            workshopId={workshopId}
+            onCancel={() => { setShowForm(false); setEditingTarefa(null); }}
+            onSuccess={() => {
+              setShowForm(false);
+              setEditingTarefa(null);
+              queryClient.invalidateQueries(['tarefas-backlog']);
+            }}
+          />
+        ) : null}
+      </TarefaBacklogModal>
 
       <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5">
         <div className="flex items-center gap-1.5 pr-4 border-r border-gray-200">
