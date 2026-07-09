@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Checkbox } from "@/components/ui/checkbox";
-import { format } from "date-fns";
 
 const METRICS = [
   { key: "faturamento_mes", label: "Faturamento", color: "#2563eb" },
@@ -11,6 +10,26 @@ const METRICS = [
   { key: "faturado_trafego_pago", label: "Tráfego Pago", color: "#a855f7" },
   { key: "lucro_operacional", label: "Lucro", color: "#16a34a" },
 ];
+
+// Agrupa os registros por mês de referência, mantendo sempre o registro
+// com o MAIOR faturamento_mes de cada mês (evita distorção por captura duplicada/errada)
+function groupByMonthKeepHighestRevenue(indicators) {
+  const byMonth = new Map();
+  for (const ind of indicators) {
+    const monthKey = ind.mes_referencia || (ind.data_registro ? ind.data_registro.slice(0, 7) : null);
+    if (!monthKey) continue;
+    const current = byMonth.get(monthKey);
+    if (!current || Number(ind.faturamento_mes || 0) > Number(current.faturamento_mes || 0)) {
+      byMonth.set(monthKey, { ...ind, monthKey });
+    }
+  }
+  return Array.from(byMonth.values()).sort((a, b) => a.monthKey.localeCompare(b.monthKey));
+}
+
+function formatMonthLabel(monthKey) {
+  const [year, month] = monthKey.split("-");
+  return `${month}/${year}`;
+}
 
 export default function ClientIndicatorsChart({ workshopId }) {
   const [active, setActive] = useState(["faturamento_mes"]);
@@ -27,14 +46,14 @@ export default function ClientIndicatorsChart({ workshopId }) {
     return <p className="text-xs text-gray-400 italic">Nenhum indicador registrado ainda para este cliente.</p>;
   }
 
-  const chartData = indicators.map((i) => ({
+  const chartData = groupByMonthKeepHighestRevenue(indicators).map((i) => ({
     ...i,
-    data: i.data_registro ? format(new Date(i.data_registro + "T00:00:00"), "dd/MM") : "",
+    data: formatMonthLabel(i.monthKey),
   }));
 
   return (
     <div className="space-y-3">
-      <p className="text-xs font-bold text-gray-600 uppercase tracking-wide">Evolução do Cliente</p>
+      <p className="text-xs font-bold text-gray-600 uppercase tracking-wide">Evolução do Cliente (mês a mês)</p>
       <div style={{ width: "100%", height: 220 }}>
         <ResponsiveContainer>
           <LineChart data={chartData}>

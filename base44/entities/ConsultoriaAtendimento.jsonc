@@ -511,6 +511,13 @@
       "type": "boolean",
       "default": false
     },
+    "indicadores_selecionados": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Chaves dos indicadores do cliente que devem aparecer na tabela de evolu\u00e7\u00e3o da ATA gerada (vazio = todos)"
+    },
     "registro_meta": {
       "type": "object",
       "description": "Metadados de rastreabilidade: quem criou, para quem, de onde e quando",

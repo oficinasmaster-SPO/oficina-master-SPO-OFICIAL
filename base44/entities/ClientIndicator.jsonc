@@ -19,6 +19,10 @@
       "format": "date",
       "description": "Data da captura do indicador"
     },
+    "mes_referencia": {
+      "type": "string",
+      "description": "M\u00eas/ano de refer\u00eancia do indicador, formato YYYY-MM (permite registro retroativo)"
+    },
     "faturamento_mes": {
       "type": "number",
       "default": 0,

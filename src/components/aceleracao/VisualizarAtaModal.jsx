@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { base44 } from "@/api/base44Client";
 import ClientIntelligenceCapturePanel from "@/components/inteligencia/ClientIntelligenceCapturePanel";
+import AtaIndicatorSelector, { INDICATOR_OPTIONS } from "@/components/aceleracao/AtaIndicatorSelector";
 import { sanitizeAtaData, formatPrazoSafe } from "@/utils/ataSanitizer";
 
 export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose }) {
@@ -17,6 +18,10 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
   const [isLoading, setIsLoading] = React.useState(true);
 
   const [clientIntelligence, setClientIntelligence] = React.useState([]);
+  const [atendimentoIdRef, setAtendimentoIdRef] = React.useState(atendimento?.id || null);
+  const [indicadoresSelecionados, setIndicadoresSelecionados] = React.useState(
+    INDICATOR_OPTIONS.map((o) => o.key)
+  );
   const d = ataAtualizada;
 
   React.useEffect(() => {
@@ -95,6 +100,10 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
 
         // Buscar inteligência do cliente
         const atendimentoId = atendimentoRef?.id || dados.atendimento_id;
+        setAtendimentoIdRef(atendimentoId || null);
+        if (atendimentoRef?.indicadores_selecionados?.length > 0) {
+          setIndicadoresSelecionados(atendimentoRef.indicadores_selecionados);
+        }
         if (atendimentoId) {
           try {
             const intel = await base44.entities.ClientIntelligence.filter({ attendance_id: atendimentoId });
@@ -258,6 +267,12 @@ export default function VisualizarAtaModal({ ata, workshop, atendimento, onClose
                 </div>
                 <div className="p-3"><p className="text-sm">{d.plano_nome}</p></div>
               </div>
+
+              <AtaIndicatorSelector
+                atendimentoId={atendimentoIdRef}
+                selected={indicadoresSelecionados}
+                onChange={setIndicadoresSelecionados}
+              />
 
               {/* 1. PAUTAS */}
               <SectionCard num="1" title="PAUTAS" subtitle="Anotações do Consultor" content={d.pautas} items={d.pauta} renderItems={(items) => items.filter(p => p.titulo).map((p, i) => (

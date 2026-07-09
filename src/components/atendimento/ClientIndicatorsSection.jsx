@@ -22,12 +22,14 @@ const FIELDS = [
 export default function ClientIndicatorsSection({ workshopId, atendimentoId, followUpId }) {
   const queryClient = useQueryClient();
   const [values, setValues] = useState({});
+  const [mesReferencia, setMesReferencia] = useState(new Date().toISOString().slice(0, 7));
 
   const mutation = useMutation({
     mutationFn: async () => {
       const payload = {
         workshop_id: workshopId,
-        data_registro: new Date().toISOString().split("T")[0],
+        mes_referencia: mesReferencia,
+        data_registro: mesReferencia + "-01",
       };
       if (atendimentoId) payload.atendimento_id = atendimentoId;
       if (followUpId) payload.followup_id = followUpId;
@@ -56,6 +58,15 @@ export default function ClientIndicatorsSection({ workshopId, atendimentoId, fol
         <p className="text-sm text-gray-600">Captura rápida para alimentar a evolução do cliente</p>
       </CardHeader>
       <CardContent className="space-y-4">
+        <div>
+          <Label className="text-xs">Mês de referência</Label>
+          <Input
+            type="month"
+            value={mesReferencia}
+            onChange={(e) => setMesReferencia(e.target.value)}
+            className="max-w-[180px]"
+          />
+        </div>
         <div className="grid grid-cols-2 gap-4">
           {FIELDS.map((f) => (
             <div key={f.key}>

@@ -64,9 +64,20 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Buscar atendimento vinculado para saber quais indicadores devem sair na ATA
+    let indicadoresSelecionados: string[] = [];
+    if (ata.atendimento_id) {
+      try {
+        const atendimentoRef = await base44.entities.ConsultoriaAtendimento.get(ata.atendimento_id);
+        indicadoresSelecionados = atendimentoRef?.indicadores_selecionados || [];
+      } catch (e) {
+        console.warn(`[PDF-External] Falha ao carregar atendimento vinculado: ${e.message}`);
+      }
+    }
+
     // Gerar HTML da ATA
     console.log(`[PDF-External] Gerando HTML para envio ao serviço externo`);
-    const htmlContent = generateAtaHTML(ata, workshop, clientIndicators);
+    const htmlContent = generateAtaHTML(ata, workshop, clientIndicators, indicadoresSelecionados);
     console.log(`[PDF-External] HTML gerado: ${htmlContent.length} caracteres`);
 
     // Chamar serviço externo de PDF com retry
@@ -221,7 +232,7 @@ Deno.serve(async (req) => {
  * Gera HTML completo da ATA
  * SEM dependência de browser
  */
-function generateAtaHTML(ata, workshop, clientIndicators = []) {
+function generateAtaHTML(ata, workshop, clientIndicators = [], indicadoresSelecionados = []) {
   const sanitize = (text) => {
     if (!text) return '';
     return String(text)
@@ -307,16 +318,42 @@ function generateAtaHTML(ata, workshop, clientIndicators = []) {
 
   const formatBRL = (v) => `R$ ${Number(v || 0).toLocaleString('pt-BR')}`;
 
-  const indicadoresRows = Array.isArray(clientIndicators) && clientIndicators.length > 0
-    ? clientIndicators.map(ind => `
+  // Agrupa por mês de referência, mantendo sempre o registro com maior faturamento_mes de cada mês
+  const groupIndicatorsByMonth = (indicators) => {
+    const byMonth = new Map();
+    for (const ind of indicators) {
+      const monthKey = ind.mes_referencia || (ind.data_registro ? ind.data_registro.slice(0, 7) : null);
+      if (!monthKey) continue;
+      const current = byMonth.get(monthKey);
+      if (!current || Number(ind.faturamento_mes || 0) > Number(current.faturamento_mes || 0)) {
+        byMonth.set(monthKey, { ...ind, monthKey });
+      }
+    }
+    return Array.from(byMonth.values()).sort((a, b) => a.monthKey.localeCompare(b.monthKey));
+  };
+
+  const INDICATOR_COLUMNS = [
+    { key: 'faturamento_mes', label: 'Faturamento', render: (ind) => formatBRL(ind.faturamento_mes) },
+    { key: 'ticket_medio', label: 'Ticket Médio', render: (ind) => formatBRL(ind.ticket_medio) },
+    { key: 'clientes_atendidos', label: 'Clientes', render: (ind) => ind.clientes_atendidos || 0 },
+    { key: 'faturado_kit_master', label: 'Kit Master', render: (ind) => formatBRL(ind.faturado_kit_master) },
+    { key: 'faturado_trafego_pago', label: 'Tráfego Pago', render: (ind) => formatBRL(ind.faturado_trafego_pago) },
+    { key: 'lucro_operacional', label: 'Lucro', render: (ind) => formatBRL(ind.lucro_operacional) },
+  ];
+
+  const activeColumns = Array.isArray(indicadoresSelecionados) && indicadoresSelecionados.length > 0
+    ? INDICATOR_COLUMNS.filter((c) => indicadoresSelecionados.includes(c.key))
+    : INDICATOR_COLUMNS;
+
+  const groupedIndicators = groupIndicatorsByMonth(Array.isArray(clientIndicators) ? clientIndicators : []);
+
+  const indicadoresHeaderCols = activeColumns.map(c => `<th>${c.label}</th>`).join('');
+
+  const indicadoresRows = groupedIndicators.length > 0
+    ? groupedIndicators.map(ind => `
         <tr>
-          <td>${ind.data_registro ? new Date(ind.data_registro + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}</td>
-          <td>${formatBRL(ind.faturamento_mes)}</td>
-          <td>${formatBRL(ind.ticket_medio)}</td>
-          <td>${ind.clientes_atendidos || 0}</td>
-          <td>${formatBRL(ind.faturado_kit_master)}</td>
-          <td>${formatBRL(ind.faturado_trafego_pago)}</td>
-          <td>${formatBRL(ind.lucro_operacional)}</td>
+          <td>${ind.monthKey.split('-').reverse().join('/')}</td>
+          ${activeColumns.map(c => `<td>${c.render(ind)}</td>`).join('')}
         </tr>
       `).join('')
     : '';
@@ -693,13 +730,8 @@ function generateAtaHTML(ata, workshop, clientIndicators = []) {
          <table class="info-table">
            <thead>
              <tr>
-               <th>Data</th>
-               <th>Faturamento</th>
-               <th>Ticket Médio</th>
-               <th>Clientes</th>
-               <th>Kit Master</th>
-               <th>Tráfego Pago</th>
-               <th>Lucro</th>
+               <th>Mês</th>
+               ${indicadoresHeaderCols}
              </tr>
            </thead>
            <tbody>
