@@ -177,7 +177,7 @@ export default function PedidosInternosTab({ workshopId, user }) {
             <Button onClick={() => setShowForm(true)} className="gap-2 bg-blue-600 shadow-sm hover:bg-blue-700"><Plus className="h-4 w-4" />Novo pedido</Button>
           </div>
 
-          <Card className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl">
+          <Card className="flex h-[760px] min-h-[760px] flex-none flex-col overflow-hidden rounded-2xl">
             <CardHeader className="shrink-0 border-b border-gray-100 py-4">
               <CardTitle>Lista de Pedidos</CardTitle>
             </CardHeader>

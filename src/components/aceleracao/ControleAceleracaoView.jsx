@@ -153,7 +153,7 @@ export default function ControleAceleracaoView({ state }) {
   }, [setFiltros]);
 
   return (
-    <div className={`w-full ${activeTab === "pedidos" ? "flex h-[calc(100dvh-14rem)] min-h-0 flex-col gap-5 overflow-hidden" : "space-y-5"}`}>
+    <div className={`w-full ${activeTab === "pedidos" ? "flex flex-col gap-5" : "space-y-5"}`}>
       {/* Modal */}
       {isModalOpen && (
         <RegistrarAtendimento
