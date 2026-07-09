@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import PedidoInternoMediaUpload from "./PedidoInternoMediaUpload";
+import Combobox from "@/components/ui/combobox";
 
 export default function PedidoInternoForm({ pedido, user, usuarios: usuariosProp = [], workshops: workshopsProp = [], clienteId = '', onCancel, onSuccess }) {
   // Pré-seleciona cliente se clienteId foi passado
@@ -194,18 +195,14 @@ export default function PedidoInternoForm({ pedido, user, usuarios: usuariosProp
 
             <div>
               <Label>Cliente Relacionado</Label>
-              <Select value={formData.cliente_id} onValueChange={handleClienteChange}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o cliente" />
-                </SelectTrigger>
-                <SelectContent>
-                  {workshops.map(w => (
-                    <SelectItem key={w.id} value={w.id}>
-                      {w.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Combobox
+                value={formData.cliente_id}
+                onChange={handleClienteChange}
+                options={workshops.map(w => ({ value: w.id, label: w.name }))}
+                placeholder="Selecione o cliente"
+                searchPlaceholder="Pesquisar cliente..."
+                emptyText="Nenhum cliente encontrado."
+              />
             </div>
           </div>
 
