@@ -9,6 +9,8 @@ import TarefaBacklogForm from "./TarefaBacklogForm";
 import TarefaBacklogDetalhe from "./TarefaBacklogDetalhe";
 import BacklogFilters from "./BacklogFilters";
 import TarefaBacklogModal from "./TarefaBacklogModal";
+import BacklogTaskCard from "./BacklogTaskCard";
+import AccelerationKpi from "./AccelerationKpi";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -182,37 +184,18 @@ export default function BacklogDashboard({ workshopId, user }) {
         ) : null}
       </TarefaBacklogModal>
 
-      <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5">
-        <div className="flex items-center gap-1.5 pr-4 border-r border-gray-200">
-          <Clock className="w-3.5 h-3.5 text-blue-400" />
-          <span className="text-xs text-gray-500">Total</span>
-          <span className="text-sm font-bold text-blue-600">{backlogTotal.length}</span>
-        </div>
-        <div className="flex items-center gap-1.5 px-4 border-r border-gray-200">
-          <AlertCircle className="w-3.5 h-3.5 text-red-400" />
-          <span className="text-xs text-gray-500">Crítico</span>
-          <span className="text-sm font-bold text-red-600">{backlogCritico.length}</span>
-        </div>
-        <div className="flex items-center gap-1.5 px-4 border-r border-gray-200">
-          <TrendingUp className="w-3.5 h-3.5 text-orange-400" />
-          <span className="text-xs text-gray-500">% Crítico</span>
-          <span className="text-sm font-bold text-orange-600">
-            {backlogTotal.length > 0 ? ((backlogCritico.length / backlogTotal.length) * 100).toFixed(0) : 0}%
-          </span>
-        </div>
-        <div className="flex items-center gap-1.5 px-4">
-          <span className="text-xs text-gray-500">Bloqueadas</span>
-          <span className="text-sm font-bold text-gray-800">{tarefas.filter(t => t.status === 'bloqueada').length}</span>
-        </div>
-        <div className="ml-auto">
-          <Button onClick={() => setShowForm(true)} variant="outline" size="sm" className="gap-1.5 h-7 text-xs">
-            <Plus className="w-3.5 h-3.5" />
-            Nova Tarefa
-          </Button>
-        </div>
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <AccelerationKpi icon={Clock} value={backlogTotal.length} label="Total" tone="text-blue-700" iconTone="text-blue-500" />
+        <AccelerationKpi icon={AlertCircle} value={backlogCritico.length} label="Críticas" tone="text-red-700" iconTone="text-red-500" />
+        <AccelerationKpi icon={TrendingUp} value={`${backlogTotal.length > 0 ? ((backlogCritico.length / backlogTotal.length) * 100).toFixed(0) : 0}%`} label="Críticas" tone="text-amber-700" iconTone="text-amber-500" />
+        <AccelerationKpi value={tarefas.filter(t => t.status === 'bloqueada').length} label="Bloqueadas" />
       </div>
 
-      <Card>
+      <div className="flex justify-end">
+        <Button onClick={() => setShowForm(true)} className="gap-2 bg-blue-600 shadow-sm hover:bg-blue-700"><Plus className="h-4 w-4" />Nova tarefa</Button>
+      </div>
+
+      <Card className="rounded-2xl">
         <CardHeader>
           <CardTitle>Lista de Tarefas ({filteredTarefas.length})</CardTitle>
         </CardHeader>
@@ -229,85 +212,15 @@ export default function BacklogDashboard({ workshopId, user }) {
                 if (isVencidaA !== isVencidaB) return isVencidaA ? -1 : 1;
                 if (a.prazo && b.prazo) return new Date(a.prazo) - new Date(b.prazo);
                 return 0;
-              }).map((tarefa) => {
-                const prioridadeBadge = getPrioridadeBadge(tarefa.prioridade);
-                const statusBadge = getStatusBadge(tarefa.status);
-                const isVencida = tarefa.prazo && new Date(tarefa.prazo) < hoje;
-
-                // Determina se o usuário pode executar ações rápidas nesta tarefa
-                const podeAgir = !user || (
-                  user.id === tarefa.criado_por_id ||
-                  user.id === tarefa.consultor_id ||
-                  user.id === tarefa.atribuido_para_id
-                );
-
-                return (
-                  <button
-                    key={tarefa.id}
-                    onClick={() => setViewingTarefa(tarefa)}
-                    className={`w-full text-left rounded-xl border px-4 py-3 transition-all hover:shadow-md group ${
-                      isVencida
-                        ? "bg-red-50 border-red-200 hover:bg-red-100"
-                        : "bg-white border-gray-200 hover:bg-gray-50"
-                    }`}
-                  >
-                    {/* Linha 1 */}
-                    <div className="flex items-center gap-3 min-w-0">
-                      <p className="flex-1 text-sm font-semibold text-gray-900 truncate" title={tarefa.titulo}>
-                        {tarefa.titulo}
-                      </p>
-                      {tarefa.cliente_nome && (
-                        <span className="text-xs text-gray-500 flex-shrink-0">{tarefa.cliente_nome}</span>
-                      )}
-                      {tarefa.prazo && (
-                        <span className={`flex items-center gap-1 text-xs flex-shrink-0 ${isVencida ? "text-red-600 font-semibold" : "text-gray-500"}`}>
-                          <Clock className="w-3 h-3" />
-                          {format(new Date(tarefa.prazo), "dd/MM/yyyy", { locale: ptBR })}
-                        </span>
-                      )}
-                      {/* Ações rápidas inline — stopPropagation para não abrir o detalhe */}
-                      {podeAgir && tarefa.status === 'aberta' && (
-                        <span
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            updateTarefaMutation.mutate({ id: tarefa.id, data: { status: 'em_execucao' } });
-                          }}
-                          className="flex items-center gap-1 text-[11px] font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-md px-2 py-0.5 hover:bg-blue-100 flex-shrink-0 cursor-pointer"
-                        >
-                          <Play className="w-3 h-3" /> Iniciar
-                        </span>
-                      )}
-                      {podeAgir && tarefa.status === 'em_execucao' && (
-                        <span
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            updateTarefaMutation.mutate({ id: tarefa.id, data: { status: 'concluida', data_conclusao: new Date().toISOString() } });
-                          }}
-                          className="flex items-center gap-1 text-[11px] font-medium text-green-600 bg-green-50 border border-green-200 rounded-md px-2 py-0.5 hover:bg-green-100 flex-shrink-0 cursor-pointer"
-                        >
-                          <CheckCircle className="w-3 h-3" /> Concluir
-                        </span>
-                      )}
-                      <span className="text-gray-300 group-hover:text-gray-500 text-xs flex-shrink-0">›</span>
-                    </div>
-                    {/* Linha 2 */}
-                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                      {tarefa.consultor_nome && (
-                        <span className="text-[11px] text-gray-500">{tarefa.consultor_nome}</span>
-                      )}
-                      {tarefa.impacto && (
-                        <span className="text-[11px] text-gray-400">· {tarefa.impacto}</span>
-                      )}
-                      <span className="flex-1" />
-                      {tarefa.origem && (
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0.5">{tarefa.origem}</Badge>
-                      )}
-                      <Badge className={`text-[10px] px-1.5 py-0.5 ${prioridadeBadge.className}`}>{prioridadeBadge.label}</Badge>
-                      <Badge className={`text-[10px] px-1.5 py-0.5 ${statusBadge.className}`}>{statusBadge.label}</Badge>
-                    </div>
-                  </button>
-                );
-              })}
+              }).map((tarefa) => (
+                <BacklogTaskCard
+                  key={tarefa.id}
+                  tarefa={tarefa}
+                  user={user}
+                  onView={setViewingTarefa}
+                  onAction={(id, data) => updateTarefaMutation.mutate({ id, data })}
+                />
+              ))}
             </div>
           )}
         </CardContent>

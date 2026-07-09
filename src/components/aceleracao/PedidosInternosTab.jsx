@@ -9,6 +9,9 @@ import PedidoInternoForm from "./PedidoInternoForm";
 import PedidoInternoResponder from "./PedidoInternoResponder";
 import BacklogDashboard from "./BacklogDashboard";
 import PedidosFilters from "./PedidosFilters";
+import PedidoInternoCard from "./PedidoInternoCard";
+import AccelerationKpi from "./AccelerationKpi";
+import PedidoInternoModal from "./PedidoInternoModal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -139,29 +142,13 @@ export default function PedidosInternosTab({ workshopId, user }) {
 
   return (
     <div className="space-y-6">
-      {/* Modal de Novo/Editar Pedido — overlay com z-index alto para sobrepor qualquer modal */}
-      {showForm && (
-        <div className="fixed inset-0 z-[20000] flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}>
-          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            {showForm && editingPedido && editingPedido.responsavel_id === user?.id && editingPedido.solicitante_id !== user?.id ? (
-              <PedidoInternoResponder
-                pedido={editingPedido}
-                user={user}
-                onCancel={() => { setShowForm(false); setEditingPedido(null); }}
-                onSuccess={onFormClose}
-              />
-            ) : (
-              <PedidoInternoForm
-                pedido={editingPedido}
-                user={user}
-                usuarios={usuarios}
-                onCancel={() => { setShowForm(false); setEditingPedido(null); }}
-                onSuccess={onFormClose}
-              />
-            )}
-          </div>
-        </div>
-      )}
+      <PedidoInternoModal open={showForm} onClose={() => { setShowForm(false); setEditingPedido(null); }}>
+        {showForm && editingPedido && editingPedido.responsavel_id === user?.id && editingPedido.solicitante_id !== user?.id ? (
+          <PedidoInternoResponder pedido={editingPedido} user={user} onCancel={() => { setShowForm(false); setEditingPedido(null); }} onSuccess={onFormClose} />
+        ) : showForm ? (
+          <PedidoInternoForm pedido={editingPedido} user={user} usuarios={usuarios} onCancel={() => { setShowForm(false); setEditingPedido(null); }} onSuccess={onFormClose} />
+        ) : null}
+      </PedidoInternoModal>
 
       <Tabs defaultValue="pedidos" className="w-full">
         <TabsList className="mb-4 bg-gray-100 rounded-lg p-1">
@@ -178,38 +165,18 @@ export default function PedidosInternosTab({ workshopId, user }) {
         </TabsContent>
 
         <TabsContent value="pedidos" className="space-y-6">
-          <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5">
-            <div className="flex items-center gap-1.5 pr-4 border-r border-gray-200">
-              <Clock className="w-3.5 h-3.5 text-gray-400" />
-              <span className="text-xs text-gray-500">Pendentes</span>
-              <span className="text-sm font-bold text-gray-800">{pedidosPorStatus.pendente.length}</span>
-            </div>
-            <div className="flex items-center gap-1.5 px-4 border-r border-gray-200">
-              <FileText className="w-3.5 h-3.5 text-blue-400" />
-              <span className="text-xs text-gray-500">Em Análise</span>
-              <span className="text-sm font-bold text-blue-600">{pedidosPorStatus.em_analise.length}</span>
-            </div>
-            <div className="flex items-center gap-1.5 px-4 border-r border-gray-200">
-              <CheckCircle className="w-3.5 h-3.5 text-green-400" />
-              <span className="text-xs text-gray-500">Aprovados</span>
-              <span className="text-sm font-bold text-green-600">{pedidosPorStatus.aprovado.length}</span>
-            </div>
-            <div className="flex items-center gap-1.5 px-4">
-              <AlertTriangle className="w-3.5 h-3.5 text-orange-400" />
-              <span className="text-xs text-gray-500">Vencidos</span>
-              <span className="text-sm font-bold text-orange-600">
-                {filteredPedidos.filter(p => p.status !== 'concluido' && p.prazo && new Date(p.prazo) < new Date()).length}
-              </span>
-            </div>
-            <div className="ml-auto">
-              <Button onClick={() => setShowForm(true)} variant="outline" size="sm" className="gap-1.5 h-7 text-xs">
-                <Plus className="w-3.5 h-3.5" />
-                Novo Pedido
-              </Button>
-            </div>
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <AccelerationKpi icon={Clock} value={pedidosPorStatus.pendente.length} label="Pendentes" />
+            <AccelerationKpi icon={FileText} value={pedidosPorStatus.em_analise.length} label="Em análise" tone="text-blue-700" iconTone="text-blue-500" />
+            <AccelerationKpi icon={CheckCircle} value={pedidosPorStatus.aprovado.length} label="Aprovados" tone="text-green-700" iconTone="text-green-500" />
+            <AccelerationKpi icon={AlertTriangle} value={filteredPedidos.filter(p => p.status !== 'concluido' && p.prazo && new Date(p.prazo) < new Date()).length} label="Vencidos" tone="text-amber-700" iconTone="text-amber-500" />
           </div>
 
-          <Card>
+          <div className="flex justify-end">
+            <Button onClick={() => setShowForm(true)} className="gap-2 bg-blue-600 shadow-sm hover:bg-blue-700"><Plus className="h-4 w-4" />Novo pedido</Button>
+          </div>
+
+          <Card className="rounded-2xl">
             <CardHeader>
               <CardTitle>Lista de Pedidos</CardTitle>
             </CardHeader>
@@ -230,76 +197,15 @@ export default function PedidosInternosTab({ workshopId, user }) {
                     if (isVencidoA !== isVencidoB) return isVencidoA ? -1 : 1;
                     if (a.prazo && b.prazo) return new Date(a.prazo) - new Date(b.prazo);
                     return 0;
-                  }).map((pedido) => {
-                    const statusBadge = getStatusBadge(pedido.status);
-                    const prioridadeBadge = getPrioridadeBadge(pedido.prioridade);
-                    const impactoBadge = getImpactoBadge(pedido.impacto_cliente);
-                    const hoje = new Date();
-                    const isConcluido = ['concluido', 'recusado'].includes(pedido.status);
-                    const isVencido = pedido.prazo && new Date(pedido.prazo) < hoje && !isConcluido;
-
-                    // Responsável pode concluir diretamente do card
-                    const isResponsavelDoPedido = pedido.responsavel_id === user?.id;
-
-                    return (
-                      <button
-                        key={pedido.id}
-                        onClick={() => handleEdit(pedido)}
-                        className={`w-full text-left rounded-xl border px-4 py-3 transition-all hover:shadow-md group ${
-                          isVencido
-                            ? "bg-red-50 border-red-200 hover:bg-red-100"
-                            : isConcluido
-                            ? "bg-gray-50 border-gray-200 hover:bg-gray-100"
-                            : "bg-white border-gray-200 hover:bg-gray-50"
-                        }`}
-                      >
-                        {/* Linha 1 */}
-                        <div className="flex items-center gap-3 min-w-0">
-                          <Badge className="text-[10px] px-1.5 py-0.5 flex-shrink-0 bg-gray-100 text-gray-700">
-                            {getTipoLabel(pedido.tipo)}
-                          </Badge>
-                          <p className="flex-1 text-sm font-semibold text-gray-900 truncate" title={pedido.titulo}>
-                            {pedido.titulo}
-                          </p>
-                          {pedido.solicitante_nome && (
-                            <span className="text-xs text-gray-500 flex-shrink-0">{pedido.solicitante_nome}</span>
-                          )}
-                          {pedido.prazo && (
-                            <span className={`flex items-center gap-1 text-xs flex-shrink-0 ${isVencido ? "text-red-600 font-semibold" : "text-gray-500"}`}>
-                              <Clock className="w-3 h-3" />
-                              {format(new Date(pedido.prazo), "dd/MM/yyyy", { locale: ptBR })}
-                            </span>
-                          )}
-                          {/* Ação rápida: responsável pode concluir sem abrir modal */}
-                          {isResponsavelDoPedido && !isConcluido && (
-                            <span
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleChangeStatus(pedido.id, 'concluido');
-                              }}
-                              className="flex items-center gap-1 text-[11px] font-medium text-green-600 bg-green-50 border border-green-200 rounded-md px-2 py-0.5 hover:bg-green-100 flex-shrink-0 cursor-pointer"
-                            >
-                              <CheckCheck className="w-3 h-3" /> Concluir
-                            </span>
-                          )}
-                          <span className="text-gray-300 group-hover:text-gray-500 text-xs flex-shrink-0">›</span>
-                        </div>
-                        {/* Linha 2 */}
-                        <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                          {pedido.cliente_nome && (
-                            <span className="text-[11px] text-gray-500">Cliente: {pedido.cliente_nome}</span>
-                          )}
-                          {pedido.responsavel_nome && (
-                            <span className="text-[11px] text-gray-500">· {pedido.responsavel_nome}</span>
-                          )}
-                          <span className="flex-1" />
-                          <Badge className={`text-[10px] px-1.5 py-0.5 ${prioridadeBadge.className}`}>{prioridadeBadge.label}</Badge>
-                          <Badge className={`text-[10px] px-1.5 py-0.5 ${impactoBadge.className}`}>{impactoBadge.label}</Badge>
-                          <Badge className={`text-[10px] px-1.5 py-0.5 ${statusBadge.className}`}>{statusBadge.label}</Badge>
-                        </div>
-                      </button>
-                    );
-                  })}
+                  }).map((pedido) => (
+                    <PedidoInternoCard
+                      key={pedido.id}
+                      pedido={pedido}
+                      user={user}
+                      onView={handleEdit}
+                      onConclude={(id) => handleChangeStatus(id, 'concluido')}
+                    />
+                  ))}
                 </div>
               )}
             </CardContent>
