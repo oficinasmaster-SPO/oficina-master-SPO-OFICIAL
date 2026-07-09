@@ -40,6 +40,7 @@ import RegistroMetaBadge from "@/components/aceleracao/RegistroMetaBadge";
 import ClientHistoryFloatingPanel from "@/components/aceleracao/ClientHistoryFloatingPanel";
 import ClientIndicatorsSection from "@/components/atendimento/ClientIndicatorsSection";
 import AtaIndicatorSelector, { INDICATOR_OPTIONS } from "@/components/aceleracao/AtaIndicatorSelector";
+import ClientIndicatorsChart from "@/components/clientIndicators/ClientIndicatorsChart";
 
 export default function RegistrarAtendimento({ isModal = false, onClose, onSaved, atendimentoId: atendimentoIdProp, consultoresExternos, isReadOnly = false, origemTela = "RegistrarAtendimento", initialData = null }) {
   const navigate = useNavigate();
@@ -642,12 +643,17 @@ export default function RegistrarAtendimento({ isModal = false, onClose, onSaved
         )}
 
         {formData.id && (
-          <div className="mt-4">
+          <div className="mt-4 space-y-4">
             <AtaIndicatorSelector
               atendimentoId={formData.id}
               selected={formData.indicadores_selecionados?.length > 0 ? formData.indicadores_selecionados : INDICATOR_OPTIONS.map(o => o.key)}
               onChange={(next) => setFormData(prev => ({ ...prev, indicadores_selecionados: next }))}
             />
+            {formData.workshop_id && (
+              <div className="print:hidden">
+                <ClientIndicatorsChart workshopId={formData.workshop_id} />
+              </div>
+            )}
           </div>
         )}
       </div>
