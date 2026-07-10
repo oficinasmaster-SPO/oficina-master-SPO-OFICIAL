@@ -261,10 +261,10 @@
           }
         },
         {
-          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+          "data.consulting_firm_id": "{{user.data.consulting_firm_id}}"
         },
         {
-          "consultor_id": "{{user.id}}"
+          "data.consultor_id": "{{user.id}}"
         },
         {
           "created_by": "{{user.email}}"
@@ -279,13 +279,16 @@
           }
         },
         {
-          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+          "data.consulting_firm_id": "{{user.data.consulting_firm_id}}"
         },
         {
-          "workshop_id": "{{user.data.workshop_id}}"
+          "data.workshop_id": "{{user.workshop_id}}"
         },
         {
-          "consultor_id": "{{user.id}}"
+          "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "data.consultor_id": "{{user.id}}"
         },
         {
           "created_by": "{{user.email}}"
@@ -300,13 +303,16 @@
           }
         },
         {
-          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+          "data.consulting_firm_id": "{{user.data.consulting_firm_id}}"
         },
         {
-          "workshop_id": "{{user.data.workshop_id}}"
+          "data.workshop_id": "{{user.workshop_id}}"
         },
         {
-          "consultor_id": "{{user.id}}"
+          "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "data.consultor_id": "{{user.id}}"
         },
         {
           "created_by": "{{user.email}}"
@@ -321,7 +327,7 @@
           }
         },
         {
-          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+          "data.consulting_firm_id": "{{user.data.consulting_firm_id}}"
         },
         {
           "created_by": "{{user.email}}"
