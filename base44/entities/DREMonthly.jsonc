@@ -196,7 +196,15 @@
           "created_by": "{{user.email}}"
         },
         {
-          "workshop_id": "{{user.data.workshop_id}}"
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "data.workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
         }
       ]
     },
@@ -211,7 +219,10 @@
           }
         },
         {
-          "workshop_id": "{{user.data.workshop_id}}"
+          "data.workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
         }
       ]
     },
@@ -226,7 +237,10 @@
           }
         },
         {
-          "workshop_id": "{{user.data.workshop_id}}"
+          "data.workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
         }
       ]
     },
@@ -241,7 +255,10 @@
           }
         },
         {
-          "workshop_id": "{{user.data.workshop_id}}"
+          "data.workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
         }
       ]
     }
