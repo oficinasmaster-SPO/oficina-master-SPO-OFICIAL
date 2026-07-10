@@ -181,7 +181,31 @@
     "tempo_estimado_horas"
   ],
   "rls": {
-    "create": true,
+    "create": {
+      "$or": [
+        {
+          "data.cliente_id": "{{user.workshop_id}}"
+        },
+        {
+          "data.cliente_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data.user_type": "internal"
+          }
+        }
+      ]
+    },
     "read": {
       "$or": [
         {
