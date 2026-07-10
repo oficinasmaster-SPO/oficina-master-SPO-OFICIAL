@@ -10,6 +10,7 @@ import { ArrowLeft, Zap } from "lucide-react";
 import { toast } from "sonner";
 import TemplateBacklogSelector from "./TemplateBacklogSelector";
 import TarefaBacklogMediaUpload from "./TarefaBacklogMediaUpload";
+import Combobox from "@/components/ui/combobox";
 import {
   Select,
   SelectContent,
@@ -68,10 +69,10 @@ export default function TarefaBacklogForm({ tarefa, user, workshops: workshopsPr
   }, [workshops, workshopId]);
 
   const { data: usuarios = [] } = useQuery({
-    queryKey: ['usuarios-consultores'],
+    queryKey: ['employees-internal-consultores-tarefa'],
     queryFn: async () => {
-      const users = await base44.entities.User.list();
-      return users || [];
+      const employees = await base44.entities.Employee.filter({ is_internal: true }, 'full_name', 1000);
+      return (employees || []).filter(employee => employee.user_id && employee.full_name);
     }
   });
 
@@ -116,7 +117,7 @@ export default function TarefaBacklogForm({ tarefa, user, workshops: workshopsPr
   };
 
   const handleConsultorChange = (userId) => {
-    const usuario = usuarios.find(u => u.id === userId);
+    const usuario = usuarios.find(u => u.user_id === userId);
     setFormData({
       ...formData,
       consultor_id: userId,
@@ -199,18 +200,17 @@ export default function TarefaBacklogForm({ tarefa, user, workshops: workshopsPr
 
             <div>
               <Label>Consultor Responsável *</Label>
-              <Select value={formData.consultor_id} onValueChange={handleConsultorChange}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o consultor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {usuarios.map(u => (
-                    <SelectItem key={u.id} value={u.id}>
-                      {u.full_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Combobox
+                value={formData.consultor_id}
+                onChange={handleConsultorChange}
+                options={usuarios.map(usuario => ({
+                  value: usuario.user_id,
+                  label: usuario.full_name
+                }))}
+                placeholder="Selecione o consultor"
+                searchPlaceholder="Pesquisar consultor..."
+                emptyText="Nenhum consultor interno encontrado."
+              />
             </div>
           </div>
 
