@@ -26,6 +26,39 @@ Deno.serve(async (req) => {
     }
 
     const workshop = await base44.asServiceRole.entities.Workshop.get(workshop_id);
+
+    // Validar vínculo do usuário com o workshop antes de qualquer criação com asServiceRole.
+    if (user.role !== 'admin') {
+      const directWorkshopIds = new Set([
+        user.workshop_id,
+        user.data?.workshop_id
+      ].filter(Boolean));
+
+      const [employeesByUser, employeesByEmail] = await Promise.all([
+        base44.asServiceRole.entities.Employee.filter({ user_id: user.id }),
+        user.email
+          ? base44.asServiceRole.entities.Employee.filter({ email: user.email })
+          : Promise.resolve([])
+      ]);
+
+      const employeeWorkshopIds = new Set(
+        [...(employeesByUser || []), ...(employeesByEmail || [])]
+          .map((employee) => employee.workshop_id)
+          .filter(Boolean)
+      );
+
+      const consultingFirmId = user.consulting_firm_id || user.data?.consulting_firm_id;
+      const isOwner = workshop.owner_id === user.id;
+      const isPartner = Array.isArray(workshop.partner_ids) && workshop.partner_ids.includes(user.id);
+      const isDirectMember = directWorkshopIds.has(workshop_id);
+      const isEmployeeMember = employeeWorkshopIds.has(workshop_id);
+      const isConsultingFirmMember = !!consultingFirmId && workshop.consulting_firm_id === consultingFirmId;
+
+      if (!isOwner && !isPartner && !isDirectMember && !isEmployeeMember && !isConsultingFirmMember) {
+        return Response.json({ error: 'Acesso negado: o usuário não possui vínculo com a oficina informada.' }, { status: 403 });
+      }
+    }
+
     const planId = (planIdParam || workshop.planoAtual || 'FREE').toUpperCase().trim();
 
     const dataInicio = new Date();
