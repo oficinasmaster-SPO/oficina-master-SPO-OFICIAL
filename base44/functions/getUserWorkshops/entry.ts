@@ -38,225 +38,149 @@ function setCachedData(userId, data) {
   workshopCache.set(userId, { data, timestamp: Date.now() });
 }
 
-const withAuth = (handler) => async (req) => {
+Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
-        const user = await base44.auth.me();
-        
-        if (!user) {
+        const authenticatedUser = await base44.auth.me();
+
+        if (!authenticatedUser) {
             return Response.json({ error: 'Unauthorized: Autenticação obrigatória.' }, { status: 401 });
         }
 
-        // ✅ USAR USUÁRIO EFETIVO (com impersonação se ativa)
-        const effectiveUser = getEffectiveUser(user);
-
-        // ✅ DEBUG: Log para diagnóstico
-        console.log('[getUserWorkshops] User:', {
-          original: user.email,
-          effective: effectiveUser.email,
-          originalWorkshopId: user.data?.workshop_id || user.workshop_id,
-          effectiveWorkshopId: effectiveUser.data?.workshop_id || effectiveUser.workshop_id
-        });
-
-        return await handler(req, { base44, user: effectiveUser });
-    } catch (error) {
-        return Response.json({ error: error.message }, { status: 500 });
-    }
-};
-
-Deno.serve(withAuth(async (req, { base44, user }) => {
-    try {
-        // GAP-01: Se workshopId específico foi solicitado, buscar diretamente com asServiceRole
+        const user = getEffectiveUser(authenticatedUser);
+        const svc = base44.asServiceRole;
         let body = {};
         try {
             body = await req.json();
         } catch {
-            // Request sem body — continuar com lista completa
+            // Request sem body — retornar a lista completa autorizada.
         }
 
-        // Declarar userProfileWorkshopId no topo para evitar hoisting error em qualquer branch
-        const userProfileWorkshopId = user.data?.workshop_id || user.workshop_id;
+        const requestedIds = Array.isArray(body?.workshopIds)
+            ? [...new Set(body.workshopIds.filter(Boolean))]
+            : body?.workshopId
+                ? [body.workshopId]
+                : [];
+        const isAdmin = authenticatedUser.role === 'admin';
 
-        // ATEND-01 FIX-COMPLEMENTAR: Batch — aceita array de workshopIds para buscar múltiplos de uma vez
-        if (body?.workshopIds && Array.isArray(body.workshopIds)) {
-            const results = await Promise.all(
-                body.workshopIds.map(id =>
-                    base44.asServiceRole.entities.Workshop.get(id).catch(() => null)
-                )
-            );
-            return new Response(JSON.stringify({
-                workshops: results.filter(Boolean),
-                user: user
-            }), { status: 200, headers: new Headers({ 'Content-Type': 'application/json' }) });
-        }
-
-        // Singular: retrocompatibilidade
-        if (body?.workshopId) {
-            const ws = await base44.asServiceRole.entities.Workshop.get(body.workshopId).catch((err) => {
-                console.error(`[getUserWorkshops] Erro ao buscar workshop ${body.workshopId}:`, err?.message);
-                return null;
-            });
-            
-            if (!ws) {
-                console.warn(`[getUserWorkshops] Workshop ${body.workshopId} não encontrado para usuário ${user.email}`);
+        // Admin mantém acesso total, inclusive para buscas explícitas.
+        if (isAdmin) {
+            let workshops;
+            if (requestedIds.length > 0) {
+                workshops = (await Promise.all(
+                    requestedIds.map(id => svc.entities.Workshop.get(id).catch(() => null))
+                )).filter(Boolean);
+            } else {
+                workshops = await svc.entities.Workshop.list('name', 500);
             }
-            
-            return new Response(JSON.stringify({ 
-                workshops: ws ? [ws] : [],
-                user: user 
-            }), { status: 200, headers: new Headers({ 'Content-Type': 'application/json' }) });
+
+            return Response.json({ workshops: workshops || [], user });
         }
 
-        // Verificar cache primeiro
-        const cached = getCachedData(user.id);
+        const cached = requestedIds.length === 0 ? getCachedData(user.id) : null;
         if (cached) {
-            const headers = new Headers({
-                'Content-Type': 'application/json',
-                'Cache-Control': 'max-age=300',
-                'X-Cache': 'HIT'
+            return new Response(JSON.stringify({ workshops: cached, user }), {
+                status: 200,
+                headers: new Headers({
+                    'Content-Type': 'application/json',
+                    'Cache-Control': 'max-age=300',
+                    'X-Cache': 'HIT'
+                })
             });
-            return new Response(JSON.stringify({ 
-                workshops: cached,
-                user: user 
-            }), { status: 200, headers });
         }
 
-        // --- SERVICE: UserWorkshopsService ---
-        let availableWorkshops = [];
-        const seenIds = new Set();
-
-        // GAP-01: usar asServiceRole em todas as queries — base44.entities usa RLS que pode bloquear
-        // consultores sem consulting_firm_id no perfil ou sem owner_id/partner_ids nos workshops
-        const [owned, partnered] = await Promise.all([
-            base44.asServiceRole.entities.Workshop.filter({ owner_id: user.id }),
-            base44.asServiceRole.entities.Workshop.filter({ partner_ids: user.id })
+        // Monta a autorização antes de atender qualquer ID solicitado.
+        const [employeesByUser, employeesByEmail, owned, partnered] = await Promise.all([
+            svc.entities.Employee.filter({ user_id: user.id }),
+            user.email ? svc.entities.Employee.filter({ email: user.email }) : Promise.resolve([]),
+            svc.entities.Workshop.filter({ owner_id: user.id }),
+            svc.entities.Workshop.filter({ partner_ids: user.id })
         ]);
 
-        if (owned?.length > 0) {
-            for (const ws of owned) {
-                if (!seenIds.has(ws.id)) {
-                    availableWorkshops.push(ws);
-                    seenIds.add(ws.id);
-                }
+        const employeeMap = new Map();
+        for (const employee of [...(employeesByUser || []), ...(employeesByEmail || [])]) {
+            employeeMap.set(employee.id, employee);
+        }
+
+        const directWorkshopIds = new Set([
+            user.workshop_id,
+            user.data?.workshop_id,
+            ...[...employeeMap.values()].map(employee => employee.workshop_id)
+        ].filter(Boolean));
+
+        const authorizedMap = new Map();
+        for (const workshop of [...(owned || []), ...(partnered || [])]) {
+            authorizedMap.set(workshop.id, workshop);
+        }
+
+        if (directWorkshopIds.size > 0) {
+            const directWorkshops = await Promise.all(
+                [...directWorkshopIds].map(id => svc.entities.Workshop.get(id).catch(() => null))
+            );
+            for (const workshop of directWorkshops.filter(Boolean)) {
+                authorizedMap.set(workshop.id, workshop);
             }
         }
 
-        if (partnered?.length > 0) {
-            for (const ws of partnered) {
-                if (!seenIds.has(ws.id)) {
-                    availableWorkshops.push(ws);
-                    seenIds.add(ws.id);
-                }
+        const userType = user.user_type || user.data?.user_type;
+        const jobRole = user.job_role || user.data?.job_role;
+        const isInternal = userType === 'internal' || jobRole === 'consultor';
+        const consultingFirmId = user.consulting_firm_id || user.data?.consulting_firm_id;
+
+        if (isInternal && consultingFirmId) {
+            const firmWorkshops = await svc.entities.Workshop.filter(
+                { consulting_firm_id: consultingFirmId },
+                'name',
+                500
+            );
+            for (const workshop of (firmWorkshops || [])) {
+                authorizedMap.set(workshop.id, workshop);
             }
         }
 
-        // GAP-01: Employee.filter também com asServiceRole — evita bloqueio por RLS
-        let employees = await base44.asServiceRole.entities.Employee.filter({ user_id: user.id });
-        
-        if (!employees || employees.length === 0) {
-            employees = await base44.asServiceRole.entities.Employee.filter({ email: user.email });
-        }
-
-        if (employees?.length > 0) {
-            const workshopIds = employees
-                .map(e => e.workshop_id)
-                .filter(id => id && !seenIds.has(id));
-            
-            const uniqueWorkshopIds = [...new Set(workshopIds)];
-
-            if (uniqueWorkshopIds.length > 0) {
-                const employeeWorkshops = await Promise.all(
-                    uniqueWorkshopIds.map(id => base44.asServiceRole.entities.Workshop.get(id).catch(() => null))
-                );
-
-                for (const ws of employeeWorkshops) {
-                    if (ws && !seenIds.has(ws.id)) {
-                        availableWorkshops.push(ws);
-                        seenIds.add(ws.id);
-                    }
-                }
+        if (requestedIds.length > 0) {
+            const unauthorizedIds = requestedIds.filter(id => !authorizedMap.has(id));
+            if (unauthorizedIds.length > 0) {
+                return Response.json({
+                    error: 'Acesso negado: uma ou mais oficinas solicitadas não pertencem ao usuário autenticado.'
+                }, { status: 403 });
             }
+
+            return Response.json({
+                workshops: requestedIds.map(id => authorizedMap.get(id)),
+                user
+            });
         }
 
-        // DS-SINGLE-01: SEMPRE buscar workshops via consulting_firm_id quando disponível
-        // PERF-FIX-04: Limitado a 200 (era 500) — reduz payload e tempo de resposta
-        const userConsultingFirmId = user.data?.consulting_firm_id;
-        if (userConsultingFirmId) {
-            try {
-                const firmWorkshops = await base44.asServiceRole.entities.Workshop.filter(
-                    { consulting_firm_id: userConsultingFirmId },
-                    'name',
-                    200
-                );
-                for (const ws of (firmWorkshops || [])) {
-                    if (!seenIds.has(ws.id)) {
-                        availableWorkshops.push(ws);
-                        seenIds.add(ws.id);
-                    }
-                }
-                console.log(`[getUserWorkshops] ${firmWorkshops?.length || 0} workshops via consulting_firm_id para ${user.email}`);
-            } catch (e) {
-                console.warn('[getUserWorkshops] Falha ao buscar workshops via consulting_firm_id:', e.message);
-            }
-        }
-
-        // FIX-01: Fallback final — se nenhum workshop foi encontrado mas o usuário tem um no perfil, buscar diretamente
-        if (availableWorkshops.length === 0 && userProfileWorkshopId && !seenIds.has(userProfileWorkshopId)) {
-            try {
-                const profileWorkshop = await base44.asServiceRole.entities.Workshop.get(userProfileWorkshopId).catch(() => null);
-                if (profileWorkshop) {
-                    availableWorkshops.push(profileWorkshop);
-                    seenIds.add(profileWorkshop.id);
-                    console.warn(`FIX-01: Adicionado workshop do perfil ${userProfileWorkshopId} como fallback`);
-                }
-            } catch (e) {
-                console.warn(`FIX-01: Falha ao buscar workshop do perfil:`, e.message);
-            }
-        }
-
+        const availableWorkshops = [...authorizedMap.values()];
+        const preferredWorkshopId = user.workshop_id || user.data?.workshop_id;
         availableWorkshops.sort((a, b) => {
-            // ONBOARDING-FIX: priorizar o workshop vinculado ao perfil do usuário.
-            // Evita que uma oficina alheia (ex: outra da mesma consultoria, possivelmente
-            // inativa) seja resolvida como principal e dispare a tela "oficina inativa".
-            if (userProfileWorkshopId) {
-                if (a.id === userProfileWorkshopId && b.id !== userProfileWorkshopId) return -1;
-                if (b.id === userProfileWorkshopId && a.id !== userProfileWorkshopId) return 1;
+            if (preferredWorkshopId) {
+                if (a.id === preferredWorkshopId && b.id !== preferredWorkshopId) return -1;
+                if (b.id === preferredWorkshopId && a.id !== preferredWorkshopId) return 1;
             }
-            // Oficinas ativas antes de inativas
-            const aInativo = a.status === 'inativo';
-            const bInativo = b.status === 'inativo';
-            if (aInativo !== bInativo) return aInativo ? 1 : -1;
+            const aInactive = a.status === 'inativo';
+            const bInactive = b.status === 'inativo';
+            if (aInactive !== bInactive) return aInactive ? 1 : -1;
             if (!a.company_id && b.company_id) return -1;
             if (a.company_id && !b.company_id) return 1;
             return (a.name || '').localeCompare(b.name || '');
         });
 
-        // FIX-06: Debug logging
-        if (availableWorkshops.length === 0) {
-            console.warn(`FIX-06: getUserWorkshops retornou vazio para user ${user.id} (${user.email})`);
-        }
-
-        // Salvar no cache — só cacheia se encontrou pelo menos uma oficina.
-        // ONBOARDING-FIX: durante o aceite de convite, o vínculo Employee.user_id
-        // é assíncrono; se cachearmos um resultado transitório vazio, o usuário
-        // fica preso por 2min sem oficina logo após o primeiro login.
         if (availableWorkshops.length > 0) {
             setCachedData(user.id, availableWorkshops);
         }
 
-        const headers = new Headers({
-            'Content-Type': 'application/json',
-            'Cache-Control': 'max-age=300',
-            'X-Cache': 'MISS'
+        return new Response(JSON.stringify({ workshops: availableWorkshops, user }), {
+            status: 200,
+            headers: new Headers({
+                'Content-Type': 'application/json',
+                'Cache-Control': 'max-age=300',
+                'X-Cache': 'MISS'
+            })
         });
-
-        return new Response(JSON.stringify({ 
-            workshops: availableWorkshops,
-            user: user 
-        }), { status: 200, headers });
-
     } catch (error) {
-        console.error("BFF Error:", error);
+        console.error('[getUserWorkshops] Error:', error);
         return Response.json({ error: error.message }, { status: 500 });
     }
-}));
+});
