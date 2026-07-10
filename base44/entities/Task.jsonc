@@ -405,7 +405,10 @@
           "created_by": "{{user.email}}"
         },
         {
-          "workshop_id": "{{user.data.workshop_id}}"
+          "data.workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
         }
       ]
     },
@@ -415,7 +418,7 @@
           "created_by": "{{user.email}}"
         },
         {
-          "assigned_to": {
+          "data.assigned_to": {
             "$in": [
               "{{user.id}}"
             ]
@@ -427,13 +430,16 @@
           }
         },
         {
-          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+          "data.consulting_firm_id": "{{user.data.consulting_firm_id}}"
         },
         {
-          "company_id": "{{user.data.company_id}}"
+          "data.company_id": "{{user.data.company_id}}"
         },
         {
-          "workshop_id": "{{user.data.workshop_id}}"
+          "data.workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
         }
       ]
     },
@@ -443,7 +449,7 @@
           "created_by": "{{user.email}}"
         },
         {
-          "assigned_to": {
+          "data.assigned_to": {
             "$in": [
               "{{user.id}}"
             ]
@@ -455,13 +461,16 @@
           }
         },
         {
-          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+          "data.consulting_firm_id": "{{user.data.consulting_firm_id}}"
         },
         {
-          "company_id": "{{user.data.company_id}}"
+          "data.company_id": "{{user.data.company_id}}"
         },
         {
-          "workshop_id": "{{user.data.workshop_id}}"
+          "data.workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
         }
       ]
     },
@@ -476,13 +485,16 @@
           }
         },
         {
-          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+          "data.consulting_firm_id": "{{user.data.consulting_firm_id}}"
         },
         {
-          "company_id": "{{user.data.company_id}}"
+          "data.company_id": "{{user.data.company_id}}"
         },
         {
-          "workshop_id": "{{user.data.workshop_id}}"
+          "data.workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
         }
       ]
     }
