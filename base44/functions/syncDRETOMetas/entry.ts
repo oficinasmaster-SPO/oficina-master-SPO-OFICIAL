@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 /**
  * Sincroniza dados do DRE para Metas Mensais
@@ -22,22 +22,31 @@ Deno.serve(async (req) => {
       );
     }
 
-    // 1. Buscar DRE
-    const dre = await base44.entities.DREMonthly.get(dre_id);
+    const userWorkshopId = user.workshop_id || user.data?.workshop_id;
+    if (user.role !== 'admin' && userWorkshopId !== workshop_id) {
+      return Response.json({ error: 'Acesso negado para esta oficina' }, { status: 403 });
+    }
+
+    // 1. Buscar DRE após validar o vínculo do usuário com a oficina
+    const dre = await base44.asServiceRole.entities.DREMonthly.get(dre_id);
     
     if (!dre) {
       return Response.json({ error: 'DRE não encontrado' }, { status: 404 });
     }
 
-    // 2. Buscar Workshop
-    const workshop = await base44.entities.Workshop.get(workshop_id);
+    if (dre.workshop_id !== workshop_id) {
+      return Response.json({ error: 'O DRE não pertence à oficina informada' }, { status: 400 });
+    }
+
+    // 2. Buscar Workshop com acesso de serviço já autorizado acima
+    const workshop = await base44.asServiceRole.entities.Workshop.get(workshop_id);
     
     if (!workshop) {
       return Response.json({ error: 'Workshop não encontrado' }, { status: 404 });
     }
 
     // 3. Buscar registros diários do mês para comparação
-    const monthlyGoalHistory = await base44.entities.MonthlyGoalHistory.filter({
+    const monthlyGoalHistory = await base44.asServiceRole.entities.MonthlyGoalHistory.filter({
       workshop_id,
       month
     });
@@ -102,7 +111,7 @@ Deno.serve(async (req) => {
       revenue_services: dreServicesRevenue
     };
 
-    await base44.entities.Workshop.update(workshop_id, {
+    await base44.asServiceRole.entities.Workshop.update(workshop_id, {
       monthly_goals: updatedMonthlyGoals
     });
 
