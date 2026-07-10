@@ -71,7 +71,10 @@ export default function TarefaBacklogForm({ tarefa, user, workshops: workshopsPr
   const { data: usuarios = [] } = useQuery({
     queryKey: ['employees-internal-consultores-tarefa'],
     queryFn: async () => {
-      const employees = await base44.entities.Employee.filter({ is_internal: true }, 'full_name', 1000);
+      const employees = await base44.entities.Employee.filter({
+        is_internal: true,
+        workshop_id: '695408b3ed74bfeb60d708c0'
+      }, 'full_name', 1000);
       return (employees || []).filter(employee => employee.user_id && employee.full_name);
     }
   });
