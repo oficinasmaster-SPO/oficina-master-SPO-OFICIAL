@@ -10,6 +10,17 @@ const LOTES = {
     ['ContaReceber', 'workshop_id'],
     ['LiquidacaoFinanceira', 'workshop_id']
   ],
+  crm_agenda: [
+    ['Client', 'workshop_id'],
+    ['CustomerFeedback', 'workshop_id'],
+    ['FollowUpReminder', 'workshop_id'],
+    ['FollowUpConcluido', 'workshop_id'],
+    ['FollowUpContador', 'workshop_id'],
+    ['AgendamentoSolicitacao', 'workshop_id'],
+    ['SugestaoAgendamento', 'workshop_id'],
+    ['TipoAtendimentoConsultoria', 'workshop_id'],
+    ['ConsultoriaAtendimento', 'workshop_id']
+  ],
   completo: [
     ['DRELancamento', 'workshop_id'],
     ['DREMonthly', 'workshop_id'],
@@ -36,7 +47,9 @@ Deno.serve(async (req) => {
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
     const body = await req.json().catch(() => ({}));
-    const lote = body.lote === 'completo' ? 'completo' : 'financeiro';
+    const lote = ['financeiro', 'crm_agenda', 'completo'].includes(body.lote)
+      ? body.lote
+      : 'financeiro';
     const targetWorkshopId = body.workshop_id || user.tenant_workshop_id || null;
 
     // Fonte primária: memberships ativas visíveis ao próprio usuário.
