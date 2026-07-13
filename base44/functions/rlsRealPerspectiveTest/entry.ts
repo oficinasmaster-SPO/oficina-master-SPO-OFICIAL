@@ -1,93 +1,157 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.38';
 
-// Regressão RLS HONESTA: consulta na perspectiva do usuário autenticado.
-// NUNCA usa asServiceRole nas asserções — o que este teste vê é exatamente
-// o que o usuário logado vê no app.
+const LOTES = {
+  financeiro: [
+    ['DRELancamento', 'workshop_id'],
+    ['DREMonthly', 'workshop_id'],
+    ['DFCLancamento', 'workshop_id'],
+    ['BudgetMeta', 'workshop_id'],
+    ['ContaPagar', 'workshop_id'],
+    ['ContaReceber', 'workshop_id'],
+    ['LiquidacaoFinanceira', 'workshop_id']
+  ],
+  completo: [
+    ['DRELancamento', 'workshop_id'],
+    ['DREMonthly', 'workshop_id'],
+    ['DFCLancamento', 'workshop_id'],
+    ['BudgetMeta', 'workshop_id'],
+    ['ContaPagar', 'workshop_id'],
+    ['ContaReceber', 'workshop_id'],
+    ['LiquidacaoFinanceira', 'workshop_id'],
+    ['CronogramaImplementacao', 'workshop_id'],
+    ['ConsultoriaSprint', 'workshop_id'],
+    ['ConsultoriaAtendimento', 'workshop_id'],
+    ['Goal', 'workshop_id'],
+    ['Task', 'workshop_id'],
+    ['PedidoInterno', 'cliente_id']
+  ]
+};
+
+// Regressão RLS real: todas as consultas de negócio usam o token do usuário
+// autenticado. asServiceRole não é usado nas asserções.
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const body = await req.json().catch(() => ({}));
+    const lote = body.lote === 'completo' ? 'completo' : 'financeiro';
+    const targetWorkshopId = body.workshop_id || user.tenant_workshop_id || null;
+
+    // Fonte primária: memberships ativas visíveis ao próprio usuário.
+    const memberships = await base44.entities.TenantMembership.filter(
+      { user_id: user.id, status: 'active' }, 'created_date', 500
+    );
+    const membershipWorkshopIds = [...new Set((memberships || []).map((m) => m.workshop_id).filter(Boolean))];
+
+    // Dual-read somente quando não há membership ativa.
+    const legacyWorkshopIds = [user.workshop_id, user.data?.workshop_id].filter(Boolean);
+    const fallbackUsed = membershipWorkshopIds.length === 0;
+    const authorizedWorkshopIds = fallbackUsed
+      ? [...new Set(legacyWorkshopIds)]
+      : membershipWorkshopIds;
+
+    if (targetWorkshopId && !authorizedWorkshopIds.includes(targetWorkshopId) && user.role !== 'admin') {
+      return Response.json({
+        error: 'Sem membership ativa para a filial selecionada',
+        workshop_id: targetWorkshopId,
+        memberships_ativas: membershipWorkshopIds
+      }, { status: 403 });
     }
 
-    const userWorkshopIds = [user.workshop_id, user.data?.workshop_id].filter(Boolean);
-
-    // [entidade, campo que aponta para a oficina]
-    const entities = [
-      ['DRELancamento', 'workshop_id'],
-      ['DREMonthly', 'workshop_id'],
-      ['DFCLancamento', 'workshop_id'],
-      ['BudgetMeta', 'workshop_id'],
-      ['ContaPagar', 'workshop_id'],
-      ['ContaReceber', 'workshop_id'],
-      ['LiquidacaoFinanceira', 'workshop_id'],
-      ['CronogramaImplementacao', 'workshop_id'],
-      ['ConsultoriaSprint', 'workshop_id'],
-      ['ConsultoriaAtendimento', 'workshop_id'],
-      ['Goal', 'workshop_id'],
-      ['Task', 'workshop_id'],
-      ['PedidoInterno', 'cliente_id']
-    ];
-
+    const entities = LOTES[lote];
     const resultados = {};
     let entidadesComVazamento = 0;
+    let entidadesComErro = 0;
 
     for (const [name, field] of entities) {
       try {
         const records = await base44.entities[name].list('-created_date', 1000);
         const arr = Array.isArray(records) ? records : [];
-        let own = 0;
-        let other = 0;
+        let filialSelecionada = 0;
+        let outraFilialAutorizada = 0;
+        let naoAutorizada = 0;
         let semOficina = 0;
-        const oficinasVazadas = new Set();
+        const oficinasNaoAutorizadas = new Set();
 
-        for (const r of arr) {
-          const wid = r[field];
-          if (!wid) {
+        for (const record of arr) {
+          const workshopId = record[field];
+          if (!workshopId) {
             semOficina++;
-          } else if (userWorkshopIds.includes(wid)) {
-            own++;
+          } else if (targetWorkshopId && workshopId === targetWorkshopId) {
+            filialSelecionada++;
+          } else if (authorizedWorkshopIds.includes(workshopId)) {
+            outraFilialAutorizada++;
           } else {
-            other++;
-            oficinasVazadas.add(wid);
+            naoAutorizada++;
+            oficinasNaoAutorizadas.add(workshopId);
           }
         }
 
-        const vazamento = other > 0;
+        // Admin possui visibilidade global por desenho; para demais perfis,
+        // qualquer oficina sem membership/fallback é vazamento real.
+        const vazamento = user.role !== 'admin' && naoAutorizada > 0;
         if (vazamento) entidadesComVazamento++;
 
         resultados[name] = {
           campo_oficina: field,
           total_visiveis: arr.length,
-          da_minha_oficina: own,
-          de_outras_oficinas: other,
+          filial_selecionada: filialSelecionada,
+          outras_filiais_com_membership: outraFilialAutorizada,
+          oficinas_sem_membership: naoAutorizada,
           sem_oficina: semOficina,
           vazamento,
-          oficinas_vazadas: Array.from(oficinasVazadas).slice(0, 20)
+          oficinas_nao_autorizadas: Array.from(oficinasNaoAutorizadas).slice(0, 20)
         };
       } catch (error) {
+        entidadesComErro++;
         resultados[name] = { erro: error.message };
       }
     }
 
+    const branchesToTest = membershipWorkshopIds.map((workshopId) => ({
+      workshop_id: workshopId,
+      tested_now: workshopId === targetWorkshopId
+    }));
+
     return Response.json({
       executado_em: new Date().toISOString(),
-      perspectiva: 'usuario_autenticado (sem asServiceRole)',
+      lote,
+      perspectiva: 'usuario_autenticado (asserções sem asServiceRole)',
       usuario: {
         id: user.id,
-        email: user.email,
         role: user.role,
+        profile_id: memberships?.[0]?.profile_id || null,
+        membership_types: [...new Set((memberships || []).map((m) => m.membership_type).filter(Boolean))],
+        tenant_workshop_id: user.tenant_workshop_id || null,
         workshop_id_raiz: user.workshop_id || null,
         workshop_id_legado: user.data?.workshop_id || null
       },
-      oficinas_do_usuario: userWorkshopIds,
-      nota: user.role === 'admin'
-        ? 'Usuário é admin — visibilidade global é esperada e não conta como vazamento real.'
-        : 'Usuário não-admin — qualquer registro de outra oficina é vazamento real.',
+      tenant: {
+        fonte_primaria: fallbackUsed ? 'legacy_fallback' : 'TenantMembership',
+        fallback_usado: fallbackUsed,
+        filial_selecionada: targetWorkshopId,
+        memberships_ativas: membershipWorkshopIds,
+        filiais_da_matriz: branchesToTest,
+        alternancia_multifilial_completa: branchesToTest.length <= 1 || branchesToTest.every((item) => item.tested_now)
+      },
+      matriz: {
+        caso_atual: {
+          role: user.role,
+          profile_id: memberships?.[0]?.profile_id || null,
+          membership_types: [...new Set((memberships || []).map((m) => m.membership_type).filter(Boolean))],
+          workshop_id: targetWorkshopId
+        },
+        instrucao: membershipWorkshopIds.length > 1
+          ? 'Executar novamente com cada workshop_id listado em filiais_da_matriz após alternar a filial no app.'
+          : 'Caso de tenant único executado.'
+      },
       resumo: {
         entidades_testadas: entities.length,
-        entidades_com_registros_de_outras_oficinas: entidadesComVazamento
+        entidades_com_vazamento: entidadesComVazamento,
+        entidades_com_erro: entidadesComErro,
+        aprovado: entidadesComVazamento === 0 && entidadesComErro === 0
       },
       resultados
     });
