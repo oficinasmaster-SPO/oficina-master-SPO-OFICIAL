@@ -85,6 +85,53 @@ Deno.serve(async (req) => {
     await base44.asServiceRole.entities.User.update(user.id, updateData);
     console.log(`✅ User atualizado com workshop e onboarding flags:`, updateData);
 
+    // ═══════════════════════════════════════════════════════════════════
+    // TenantMembership (Etapa 7.5) — associação canônica usuário–oficina.
+    // Todo aceite de convite DEVE criar a membership; sem ela o usuário
+    // dependeria para sempre do fallback legado do resolveTenant.
+    // ═══════════════════════════════════════════════════════════════════
+    if (secureWorkshopId) {
+      try {
+        const existingMemberships = await base44.asServiceRole.entities.TenantMembership.filter({
+          user_id: user.id,
+          workshop_id: secureWorkshopId,
+          membership_type: 'employee'
+        });
+        if (!existingMemberships || existingMemberships.length === 0) {
+          let membershipCompanyId = null;
+          let membershipFirmId = invite.consulting_firm_id || null;
+          try {
+            const ws = await base44.asServiceRole.entities.Workshop.get(secureWorkshopId);
+            membershipCompanyId = ws?.company_id || null;
+            membershipFirmId = ws?.consulting_firm_id || membershipFirmId;
+          } catch (_) { /* workshop pode não existir em dados legados */ }
+
+          const defaults = await base44.asServiceRole.entities.TenantMembership.filter({
+            user_id: user.id,
+            is_default: true
+          });
+
+          await base44.asServiceRole.entities.TenantMembership.create({
+            user_id: user.id,
+            workshop_id: secureWorkshopId,
+            company_id: membershipCompanyId,
+            consulting_firm_id: membershipFirmId,
+            employee_id: invite.employee_id || null,
+            profile_id: secureProfileId || null,
+            membership_type: 'employee',
+            status: 'active',
+            is_default: !defaults || defaults.length === 0,
+            notes: 'invite-acceptance'
+          });
+          console.log(`✅ TenantMembership criada no aceite do convite (workshop ${secureWorkshopId})`);
+        } else {
+          console.log(`ℹ️ TenantMembership já existia para este usuário/oficina — não duplicada`);
+        }
+      } catch (e) {
+        console.error('⚠️ Falha ao criar TenantMembership (não bloqueante):', e.message);
+      }
+    }
+
     return Response.json({
       success: true,
       message: 'Convite aceito com sucesso',
