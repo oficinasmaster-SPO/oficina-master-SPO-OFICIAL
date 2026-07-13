@@ -65,7 +65,13 @@
     "read": {
       "$or": [
         {
-          "workshop_id": "{{user.data.workshop_id}}"
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
         },
         {
           "user_condition": {
