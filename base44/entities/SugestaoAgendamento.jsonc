@@ -147,24 +147,42 @@
     "read": {
       "$or": [
         {
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
           "user_condition": {
             "role": "admin"
           }
         },
         {
-          "consultor_id": "{{user.id}}"
+          "data.consultor_id": "{{user.id}}"
         }
       ]
     },
     "update": {
       "$or": [
         {
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
           "user_condition": {
             "role": "admin"
           }
         },
         {
-          "consultor_id": "{{user.id}}"
+          "data.consultor_id": "{{user.id}}"
         }
       ]
     },
