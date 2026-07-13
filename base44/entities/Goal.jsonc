@@ -165,72 +165,84 @@
     "create": {
       "$or": [
         {
-          "created_by": "{{user.email}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
         },
         {
           "data.workshop_id": "{{user.workshop_id}}"
         },
         {
           "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
         }
       ]
     },
     "read": {
       "$or": [
         {
-          "created_by": "{{user.email}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
         },
         {
           "data.workshop_id": "{{user.workshop_id}}"
         },
         {
           "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
         }
       ]
     },
     "update": {
       "$or": [
         {
-          "created_by": "{{user.email}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
         },
         {
           "data.workshop_id": "{{user.workshop_id}}"
         },
         {
           "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
         }
       ]
     },
     "delete": {
       "$or": [
         {
-          "created_by": "{{user.email}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
         },
         {
           "data.workshop_id": "{{user.workshop_id}}"
         },
         {
           "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
         }
       ]
     }
