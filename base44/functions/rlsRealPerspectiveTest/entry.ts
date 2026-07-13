@@ -21,6 +21,12 @@ const LOTES = {
     ['TipoAtendimentoConsultoria', 'workshop_id'],
     ['ConsultoriaAtendimento', 'workshop_id']
   ],
+  operacional: [
+    ['PedidoInterno', 'cliente_id'],
+    ['TarefaBacklog', 'cliente_id'],
+    ['CronogramaImplementacao', 'workshop_id'],
+    ['ConsultoriaSprint', 'workshop_id']
+  ],
   completo: [
     ['DRELancamento', 'workshop_id'],
     ['DREMonthly', 'workshop_id'],
@@ -47,7 +53,7 @@ Deno.serve(async (req) => {
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
     const body = await req.json().catch(() => ({}));
-    const lote = ['financeiro', 'crm_agenda', 'completo'].includes(body.lote)
+    const lote = ['financeiro', 'crm_agenda', 'operacional', 'completo'].includes(body.lote)
       ? body.lote
       : 'financeiro';
     const targetWorkshopId = body.workshop_id || user.tenant_workshop_id || null;

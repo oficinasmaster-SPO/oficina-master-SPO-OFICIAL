@@ -8,8 +8,9 @@
 
 ## Regra 1 — Proibido novo código lendo `user.data.workshop_id` ou `user.data.company_id`
 
-O objeto `user` não é fonte de verdade de tenant. O vínculo usuário→oficina vive no
-`Employee` e é resolvido pelo backend (`getUserWorkshops`) e exposto pelo hook central.
+O objeto `user` não é fonte de verdade de tenant. O vínculo usuário→oficina vive em
+`TenantMembership`; `Employee` e os campos do usuário são apenas fallbacks temporários.
+O backend (`resolveTenant`/`getUserWorkshops`) resolve o vínculo e o hook central o expõe.
 
 **❌ Errado:**
 ```jsx
@@ -152,9 +153,10 @@ Cada campo de vínculo tem semântica própria e não são intercambiáveis:
 | `cliente_id` | depende da entidade — verifique a descrição no schema | TarefaBacklog (`cliente_id` = workshop), Client (`cliente_id` = pessoa) |
 
 > Nota de legado: em `TarefaBacklog` e `PedidoInterno` o campo `cliente_id` armazena
-> historicamente um `Workshop.id`. Isso está documentado e coberto por RLS, mas **não
-> crie novos campos com esse padrão ambíguo** — entidade nova de dados de oficina usa
-> `workshop_id`, sempre.
+> semanticamente um `Workshop.id`. As policies e functions devem tratá-lo como chave de
+> tenant, usando `TenantMembership` como autoridade e `tenant_workshop_id` como projeção
+> para RLS. O renomeio físico para `workshop_id` fica para uma migração posterior; até lá,
+> não crie novos campos com esse padrão ambíguo.
 
 **❌ Errado:**
 ```js
