@@ -102,9 +102,16 @@ Deno.serve(async (req) => {
     }
 
     // 4. Users internos com consulting_firm_id → type=consultant por workshop da consultoria
+    // CORRIGIDO (auditoria): exigir user_type internal — um User externo com
+    // consulting_firm_id residual não pode ganhar membership multi-oficina.
     for (const u of users) {
       const firmId = u.consulting_firm_id || u.data?.consulting_firm_id;
       if (!firmId) continue;
+      const isInternal = u.user_type === 'internal' || u.data?.user_type === 'internal';
+      if (!isInternal) {
+        conflitos.push({ user_id: u.id, email: u.email, motivo: 'consulting_firm_id presente mas user_type nao-internal — membership consultant NAO criada; revisar manualmente' });
+        continue;
+      }
       for (const w of workshops) {
         if (w.consulting_firm_id !== firmId) continue;
         propor({
