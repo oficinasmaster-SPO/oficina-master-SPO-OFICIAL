@@ -128,6 +128,7 @@ Deno.serve(async (req) => {
     // Determinar consulting_firm_id e nome da organização
     let consulting_firm_id = bodyConsultingFirmId || null;
     let workshop_name = 'Oficinas Master Acelerador';
+    let workshop_company_id = null; // company_id REAL da oficina (7.5 — nunca gravar workshop_id aqui)
 
     if (!isInternalUser && workshop_id) {
       try {
@@ -135,6 +136,7 @@ Deno.serve(async (req) => {
         if (ws) {
           consulting_firm_id = ws.consulting_firm_id || consulting_firm_id;
           if (ws.name) workshop_name = ws.name;
+          workshop_company_id = ws.company_id || null;
         }
       } catch (e) {
         console.error("⚠️ Aviso: Falha ao buscar dados da oficina:", e.message);
@@ -214,7 +216,7 @@ Deno.serve(async (req) => {
         role: safeRole,
         profile_id: finalProfileId,
         workshop_id: workshop_id,
-        company_id: workshop_id,
+        company_id: workshop_company_id, // CORRIGIDO (7.5): antes recebia workshop_id
         consulting_firm_id: consulting_firm_id,
         invited_at: new Date().toISOString()
       }
@@ -312,6 +314,39 @@ Deno.serve(async (req) => {
       console.log("✅ User existente atualizado com workshop_id, user_type e role:", correctedRole);
     } catch (e) {
       console.warn("⚠️ Falha ao atualizar User existente (não bloqueante):", e.message);
+    }
+
+    // TenantMembership (7.5): vínculo imediato — sem aceite de convite não há
+    // completeInviteOnFirstAccess, então a membership é criada aqui.
+    if (!isInternalUser && workshop_id) {
+      try {
+        const existingMemberships = await base44.asServiceRole.entities.TenantMembership.filter({
+          user_id: existingUserId,
+          workshop_id: workshop_id,
+          membership_type: 'employee'
+        });
+        if (!existingMemberships || existingMemberships.length === 0) {
+          const defaults = await base44.asServiceRole.entities.TenantMembership.filter({
+            user_id: existingUserId,
+            is_default: true
+          });
+          await base44.asServiceRole.entities.TenantMembership.create({
+            user_id: existingUserId,
+            workshop_id: workshop_id,
+            company_id: workshop_company_id,
+            consulting_firm_id: consulting_firm_id,
+            employee_id: employee.id,
+            profile_id: finalProfileId || null,
+            membership_type: 'employee',
+            status: 'active',
+            is_default: !defaults || defaults.length === 0,
+            notes: 'direct-link-existing-user'
+          });
+          console.log('✅ TenantMembership criada para User pré-existente');
+        }
+      } catch (e) {
+        console.warn('⚠️ Falha ao criar TenantMembership (não bloqueante):', e.message);
+      }
     }
     }
 
