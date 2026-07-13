@@ -101,6 +101,9 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Conflitos — declarado antes do uso nas etapas 4+ (relatório final)
+    const conflitos = [];
+
     // 4. Users internos com consulting_firm_id → type=consultant por workshop da consultoria
     // CORRIGIDO (auditoria): exigir user_type internal — um User externo com
     // consulting_firm_id residual não pode ganhar membership multi-oficina.
@@ -168,7 +171,7 @@ Deno.serve(async (req) => {
     }
 
     // Conflitos: usuário com mais de um membership_type (todas são criadas mesmo assim)
-    const conflitos = [];
+    // (array declarado antes da etapa 4)
     for (const [uid, lista] of propostasPorUser.entries()) {
       const existentesDoUser = existentes.filter((m) => m.user_id === uid);
       const tipos = new Set([...lista.map((m) => m.membership_type), ...existentesDoUser.map((m) => m.membership_type)]);
