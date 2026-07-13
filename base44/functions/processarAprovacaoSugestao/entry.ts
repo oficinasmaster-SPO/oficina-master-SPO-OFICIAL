@@ -20,6 +20,26 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Sugestão já foi processada' }, { status: 400 });
     }
 
+    // Validação de tenant (auditoria): aprovar/reprovar exige vínculo com a oficina
+    // da sugestão — admin, internal/consultor ou membership ativa no workshop.
+    {
+      const isAdmin = user.role === 'admin';
+      const isInternal = user.user_type === 'internal' || user.data?.user_type === 'internal';
+      let autorizado = isAdmin || isInternal ||
+        user.workshop_id === sugestao.workshop_id || user.data?.workshop_id === sugestao.workshop_id;
+      if (!autorizado) {
+        try {
+          const ms = await base44.asServiceRole.entities.TenantMembership.filter({
+            user_id: user.id, workshop_id: sugestao.workshop_id, status: 'active'
+          });
+          autorizado = ms && ms.length > 0;
+        } catch (_) { /* mantém não autorizado */ }
+      }
+      if (!autorizado) {
+        return Response.json({ error: 'Acesso negado: sem vínculo com a oficina da sugestão.' }, { status: 403 });
+      }
+    }
+
     // === REPROVAR ===
     if (acao === 'reprovar') {
       await base44.asServiceRole.entities.SugestaoAgendamento.update(sugestao_id, {
