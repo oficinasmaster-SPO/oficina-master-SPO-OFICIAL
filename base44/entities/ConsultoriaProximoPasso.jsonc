@@ -186,6 +186,15 @@
     "create": {
       "$or": [
         {
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
           "user_condition": {
             "role": "admin"
           }
@@ -198,36 +207,42 @@
     "read": {
       "$or": [
         {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "data.consulting_firm_id": "{{user.data.consulting_firm_id}}"
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
         },
         {
           "data.workshop_id": "{{user.workshop_id}}"
         },
         {
           "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "data.consulting_firm_id": "{{user.data.consulting_firm_id}}"
         }
       ]
     },
     "update": {
       "$or": [
         {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "data.consulting_firm_id": "{{user.data.consulting_firm_id}}"
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
         },
         {
           "data.workshop_id": "{{user.workshop_id}}"
         },
         {
           "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "data.consulting_firm_id": "{{user.data.consulting_firm_id}}"
         }
       ]
     },
