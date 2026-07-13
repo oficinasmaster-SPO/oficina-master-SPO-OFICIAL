@@ -2,7 +2,7 @@ import React, { createContext, useContext, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { systemRoles } from "@/components/lib/systemRoles";
 import { pagePermissions } from "@/components/lib/pagePermissions";
-import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
+import { useTenant } from "@/components/contexts/TenantSessionContext";
 import { useAuth } from "@/lib/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { useImpersonation } from "@/components/hooks/useImpersonation";
@@ -22,172 +22,75 @@ const resolvePagePermission = (pageName) => {
 };
 
 export function PermissionsProvider({ children }) {
-  const { workshopId: realWorkshopId, workshop: realWorkshop, isAdminMode } = useWorkshopContext();
   const { user: realUser } = useAuth();
-  const { isImpersonating, effectiveUser } = useImpersonation();
-  
-  // Usar usuário efetivo (impersonado) ou usuário real
-  const user = effectiveUser || realUser;
-  
-  // Em impersonação, usar workshop_id do usuário alvo
-  const workshopId = isImpersonating && effectiveUser?.workshop_id ? effectiveUser.workshop_id : realWorkshopId;
-  const workshop = realWorkshop; // Manter workshop do contexto
+  const { effectiveUser } = useImpersonation();
+  const {
+    membership,
+    membershipType,
+    profileId,
+    workshopId,
+    isAdminMode,
+    isImpersonating,
+    isLoading: tenantLoading,
+  } = useTenant();
 
-  const { data: permissionsData, isLoading: loading } = useQuery({
-    queryKey: ['permissions', user?.id, workshopId, isAdminMode, isImpersonating],
+  const user = effectiveUser || realUser;
+
+  const { data: permissionsData, isLoading: permissionsLoading } = useQuery({
+    queryKey: ['permissions', user?.id, workshopId, membership?.id, profileId, isAdminMode, isImpersonating],
     gcTime: 5 * 60 * 1000,
     retry: 2,
     queryFn: async () => {
-      if (!user) return { permissions: [], profile: null, customRole: null, currentRole: null, isOwnerOrPartner: false, granularConfig: {} };
-      
-      // Em impersonação, NÃO aplicar lógica de admin/internal — usar permissões do usuário alvo
-      const isImpersonated = user._isImpersonated === true;
+      if (!user || !membership) {
+        return { permissions: [], profile: null, customRole: null, currentRole: null, isOwnerOrPartner: false, granularConfig: {} };
+      }
 
-      let aggregatedPermissions = [];
-      let activeRole = user.role === 'admin' ? 'admin' : 'outros';
-      let activeProfileId = null; // Fonte canônica: Employee.profile_id exclusivamente
-      let isOwnerOrPartner = false;
+      const isImpersonated = isImpersonating || user._isImpersonated === true;
+      const activeProfileId = membership.profile_id || profileId || null;
+      const activeRole = membership.membership_type || membershipType || (user.role === 'admin' ? 'admin' : 'outros');
+      const isOwnerOrPartner = ['owner', 'partner'].includes(membership.membership_type || membershipType);
       let granularConfig = {};
 
-      const queries = [];
+      const settings = await base44.entities.SystemSetting.filter({ key: 'granular_permissions' }).catch(() => []);
+      if (settings?.length > 0) {
+        try { granularConfig = JSON.parse(settings[0].value || '{}'); } catch (_) {}
+      }
 
-      // Carregar configuração granular
-      queries.push(
-        base44.entities.SystemSetting.filter({ key: 'granular_permissions' })
-          .then(settings => {
-            if (settings && settings.length > 0) {
-              granularConfig = JSON.parse(settings[0].value || '{}');
-            }
-          })
-          .catch(() => {})
-      );
-
-      // Admin ou usuário interno têm acesso total — MAS NÃO em impersonação!
-      // Resiliente a user_type=null: verificar também consulting_firm_id como fallback
       const isInternalUser = user.user_type === 'internal' ||
-        (user.user_type == null && (
-          user.consulting_firm_id === '69bab264d7c3fe5d367c3959' ||
-          user.role === 'admin'
-        ));
+        (user.user_type == null && (user.consulting_firm_id === '69bab264d7c3fe5d367c3959' || user.role === 'admin'));
       if ((user.role === 'admin' || isInternalUser) && !isImpersonated) {
-        await Promise.all(queries); // Espera a granularConfig
-        aggregatedPermissions = systemRoles.flatMap(m => m.roles.map(r => r.id));
         return {
-          permissions: [...new Set(aggregatedPermissions)],
+          permissions: [...new Set(systemRoles.flatMap(module => module.roles.map(role => role.id)))],
           profile: null,
           customRole: null,
           currentRole: activeRole,
-          isOwnerOrPartner: false,
+          isOwnerOrPartner,
           granularConfig
         };
       }
 
-      // Busca dados do colaborador e do workshop em paralelo
-      // CORREÇÃO: buscar Employee sempre por user_id (sem filtro workshop_id para evitar race condition)
-      // e buscar workshop pelo workshopId do user.data se ainda não disponível no contexto
-      const effectiveWorkshopId = workshopId || user?.data?.workshop_id || user?.workshop_id;
-      
-      console.log('[RBAC_WORKSHOP_RESOLVE]', {
-        userId: user?.id,
-        workshopId,
-        userDataWorkshopId: user?.data?.workshop_id,
-        userWorkshopId: user?.workshop_id,
-        effectiveWorkshopId,
-        workshopAlreadyLoaded: !!(workshop && workshop.id === effectiveWorkshopId),
-      });
-      
-      const wsPromise = effectiveWorkshopId
-        ? ((workshop && workshop.id === effectiveWorkshopId)
-          ? Promise.resolve(workshop)
-          : base44.entities.Workshop.get(effectiveWorkshopId).catch(() => null))
-        : Promise.resolve(null);
-      
-      // CORREÇÃO BUG #1: filtrar Employee apenas por user_id — sem workshop_id para evitar race condition
-      const empPromise = base44.entities.Employee.filter({ user_id: user.id }).catch(() => null);
-      
-      const [ws, employees] = await Promise.all([wsPromise, empPromise]);
-
-      console.log('[RBAC_FETCH_RESULT]', {
-        userId: user?.id,
-        wsFound: !!ws,
-        wsOwnerId: ws?.owner_id,
-        userIsOwner: ws?.owner_id === user?.id,
-        employeesCount: employees?.length,
-        employeeProfileIds: employees?.map(e => ({ id: e.id, profile_id: e.profile_id, status: e.status, user_status: e.user_status, workshop_id: e.workshop_id })),
-      });
-
-      if (employees && employees.length > 0) {
-        // Filtrar apenas employees ativos para evitar que registro inativo seja retornado (P3.A 2026-06-10)
-        const activeEmployees = employees.filter(e => e.status === 'ativo' || e.user_status === 'ativo');
-        const pool = activeEmployees.length > 0 ? activeEmployees : employees;
-        // Pegar o Employee vinculado ao workshop correto, se houver múltiplos
-        const matchingEmployee = effectiveWorkshopId
-          ? (pool.find(e => e.workshop_id === effectiveWorkshopId) || pool[0])
-          : pool[0];
-        activeProfileId = matchingEmployee.profile_id || null; // Canônico: apenas Employee.profile_id
-        if (matchingEmployee.job_role) activeRole = matchingEmployee.job_role;
-      }
-      
-      // CORREÇÃO BUG #4: verificar owner_id independente de ter encontrado Employee
-      if (ws && (ws.owner_id === user.id || (ws.partner_ids && ws.partner_ids.includes(user.id)))) {
-        isOwnerOrPartner = true;
-        // owner/sócio sempre tem acesso total — mas ainda carrega o profile para granularidade
-        aggregatedPermissions = systemRoles.flatMap(m => m.roles.map(r => r.id));
-        if (!employees || employees.length === 0) activeRole = 'socio';
-      }
-
       let userProfile = null;
+      let aggregatedPermissions = isOwnerOrPartner
+        ? systemRoles.flatMap(module => module.roles.map(role => role.id))
+        : [];
 
-      // Carregar UserProfile via Employee.profile_id (única fonte canônica)
       if (activeProfileId) {
-        queries.push(
-          base44.entities.UserProfile.get(activeProfileId)
-            .then(p => { userProfile = p; })
-            .catch(e => console.warn("Erro ao carregar UserProfile", e))
-        );
+        userProfile = await base44.entities.UserProfile.get(activeProfileId).catch(() => null);
       }
 
-      // NOTA: User.profile_id, user.data.profile_id e user.custom_role_id foram removidos (2026-06-10).
-      // Fonte canônica única: Employee.profile_id → UserProfile.roles (+ UserProfile.custom_role_ids)
-
-      if (queries.length > 0) {
-        await Promise.all(queries);
-      }
-
-      // Consolidar permissões do Profile
-      if (userProfile && userProfile.id) {
-        const profileRoles = userProfile.data?.roles || userProfile.roles || [];
-        aggregatedPermissions = [...aggregatedPermissions, ...profileRoles];
-
+      if (userProfile) {
+        aggregatedPermissions.push(...(userProfile.data?.roles || userProfile.roles || []));
         const customRoleIds = userProfile.data?.custom_role_ids || userProfile.custom_role_ids || [];
-        if (customRoleIds && customRoleIds.length > 0) {
-          const customRolesPromises = customRoleIds.map(roleId => 
-            base44.entities.CustomRole.get(roleId).catch(() => null)
-          );
-          const roles = await Promise.all(customRolesPromises);
-          for (const role of roles) {
-            if (role) {
-              const roleSysRoles = role.data?.system_roles || role.system_roles || [];
-              aggregatedPermissions = [...aggregatedPermissions, ...roleSysRoles];
-            }
-          }
+        const customRoles = await Promise.all(
+          customRoleIds.map(roleId => base44.entities.CustomRole.get(roleId).catch(() => null))
+        );
+        for (const role of customRoles) {
+          if (role) aggregatedPermissions.push(...(role.data?.system_roles || role.system_roles || []));
         }
       }
 
-      const finalPermissions = [...new Set(aggregatedPermissions)];
-      console.log('[RBAC_FINAL]', {
-        userId: user?.id,
-        workshopId,
-        effectiveWorkshopId,
-        activeProfileId,
-        userProfileId: userProfile?.id,
-        profileRolesCount: (userProfile?.data?.roles || userProfile?.roles || []).length,
-        permissionsCount: finalPermissions.length,
-        isOwnerOrPartner,
-        permissions: finalPermissions
-      });
       return {
-        permissions: finalPermissions,
+        permissions: [...new Set(aggregatedPermissions)],
         profile: userProfile,
         customRole: null,
         currentRole: activeRole,
@@ -195,9 +98,9 @@ export function PermissionsProvider({ children }) {
         granularConfig
       };
     },
-    staleTime: 0, // sem cache — sempre refetch para garantir permissões frescas
+    staleTime: 0,
     refetchOnWindowFocus: false,
-    enabled: !!user
+    enabled: !!user && !!membership && !tenantLoading
   });
 
   const { 
@@ -208,16 +111,9 @@ export function PermissionsProvider({ children }) {
     isOwnerOrPartner = false, 
     granularConfig = {} 
   } = permissionsData || {};
+  const loading = tenantLoading || permissionsLoading;
 
-  console.log('[RBAC_QUERY_RESULT]', {
-    loading,
-    permissionsCount: permissions?.length,
-    hasData: !!permissionsData,
-    userId: user?.id,
-    workshopId,
-  });
-
-  // Sem fallback: usuário sem Employee.profile_id tem permissions = []
+  // Sem fallback local: profile_id e vínculo de tenant vêm exclusivamente da membership efetiva.
   // Admin tem bypass completo via queryFn acima.
 
   const hasPermission = (permissionId) => {
