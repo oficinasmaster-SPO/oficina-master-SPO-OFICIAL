@@ -30,7 +30,11 @@
     },
     "workshop_id": {
       "type": "string",
-      "description": "ID da oficina principal do usu\u00e1rio. Preenchido apenas para user_type=external."
+      "description": "ID da oficina principal do usu\u00e1rio. Preenchido apenas para user_type=external. [LEGADO \u2014 fonte prim\u00e1ria \u00e9 TenantMembership]"
+    },
+    "tenant_workshop_id": {
+      "type": "string",
+      "description": "Workshop da TenantMembership ATIVA na sess\u00e3o. Denormalizado \u2014 mantido EXCLUSIVAMENTE pela function resolveTenant a partir de membership validada (nunca setado pelo frontend). Usado pelas policies RLS como fonte prim\u00e1ria de tenant."
     },
     "job_role": {
       "type": "string",

@@ -36,7 +36,7 @@ export const TENANT_FALLBACK_EVENT = 'TENANT_RESOLVE_FALLBACK';
  *    pendências de backfill.
  */
 export async function resolveTenantCore(sr, authUser, params = {}) {
-  const { workshop_id, admin_workshop_id, impersonated_user_id } = params;
+  const { workshop_id, admin_workshop_id, impersonated_user_id, sync_user_field } = params;
   const isAdmin = authUser.role === 'admin';
 
   // 1. Usuário efetivo (impersonação — só admin)
@@ -106,6 +106,14 @@ export async function resolveTenantCore(sr, authUser, params = {}) {
   // Dados básicos do workshop
   const workshop = await sr.entities.Workshop.get(effectiveMembership.workshop_id).catch(() => null);
   if (!workshop) return { status: 404, error: 'Workshop do tenant não encontrado' };
+
+  // Denormalização p/ RLS: user.tenant_workshop_id espelha a membership ativa.
+  // Só quando sync_user_field=true (endpoint resolveTenant); nunca em impersonação
+  // nem em override sintético de admin.
+  if (sync_user_field && !isImpersonating && effectiveMembership.notes !== 'admin-override' &&
+      (effectiveUser.tenant_workshop_id || null) !== effectiveMembership.workshop_id) {
+    try { await sr.entities.User.update(effectiveUser.id, { tenant_workshop_id: effectiveMembership.workshop_id }); } catch (_) {}
+  }
 
   return {
     status: 200,
