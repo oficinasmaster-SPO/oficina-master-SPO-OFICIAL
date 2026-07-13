@@ -72,6 +72,9 @@
     "create": {
       "$or": [
         {
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
+        },
+        {
           "data.workshop_id": "{{user.workshop_id}}"
         },
         {
@@ -87,6 +90,9 @@
     "read": {
       "$or": [
         {
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
+        },
+        {
           "data.workshop_id": "{{user.workshop_id}}"
         },
         {
@@ -101,6 +107,9 @@
     },
     "update": {
       "$or": [
+        {
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
+        },
         {
           "data.workshop_id": "{{user.workshop_id}}"
         },
