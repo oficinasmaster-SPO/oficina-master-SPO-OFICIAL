@@ -30,11 +30,11 @@
     },
     "item_categoria": {
       "type": "string",
-      "description": "Categoria do item (ex: vendas, processos, etc)"
+      "description": "Categoria do item"
     },
     "template_item_id": {
       "type": "string",
-      "description": "ID do CronogramaTemplateItem origem (se gerado via engine v2)"
+      "description": "ID do CronogramaTemplateItem origem"
     },
     "engine_version": {
       "type": "string",
@@ -45,7 +45,7 @@
         "tracking_v1"
       ],
       "default": "legacy_v1",
-      "description": "Vers\u00e3o da engine que gerou este item. legacy_v0=gerarCronogramaAutomatico, legacy_v1=generateFullCronograma arrays PlanFeature, template_v2=CronogramaTemplateItem, tracking_v1=trackImplementacao"
+      "description": "Vers\u00e3o da engine que gerou este item"
     },
     "engine_source": {
       "type": "string",
@@ -58,7 +58,7 @@
         "unknown"
       ],
       "default": "unknown",
-      "description": "Fun\u00e7\u00e3o/processo que criou este item. Usado para auditoria e migra\u00e7\u00e3o."
+      "description": "Fun\u00e7\u00e3o/processo que criou este item"
     },
     "created_by_flow": {
       "type": "string",
@@ -70,12 +70,12 @@
         "unknown"
       ],
       "default": "unknown",
-      "description": "Fluxo de neg\u00f3cio que originou a cria\u00e7\u00e3o. auto_plan_activation=webhook/admin plan update, ui_tracking=navega\u00e7\u00e3o UI, attendance_sync=sincroniza\u00e7\u00e3o atendimento, manual_admin=a\u00e7\u00e3o direta admin"
+      "description": "Fluxo de neg\u00f3cio que originou a cria\u00e7\u00e3o"
     },
     "data_ultimo_acesso": {
       "type": "string",
       "format": "date-time",
-      "description": "\u00daltima vez que o usu\u00e1rio acessou este item (atualizado pelo trackImplementacao)"
+      "description": "\u00daltima vez que o usu\u00e1rio acessou este item"
     },
     "ordem": {
       "type": "integer",
@@ -84,7 +84,7 @@
     },
     "fase": {
       "type": "string",
-      "description": "Fase da jornada (ex: estrutura, crescimento, escala)"
+      "description": "Fase da jornada"
     },
     "obrigatorio": {
       "type": "boolean",
@@ -94,17 +94,17 @@
     "sessoes_realizadas": {
       "type": "integer",
       "default": 0,
-      "description": "Para item_tipo=atendimento: quantas sess\u00f5es j\u00e1 foram realizadas (vinculado ao ContractAttendance)"
+      "description": "Sess\u00f5es j\u00e1 realizadas"
     },
     "sessoes_total": {
       "type": "integer",
       "default": 0,
-      "description": "Para item_tipo=atendimento: total de sess\u00f5es previstas (cache do PlanAttendanceRule.total_allowed)"
+      "description": "Total de sess\u00f5es previstas"
     },
     "data_inicio_real": {
       "type": "string",
       "format": "date-time",
-      "description": "Data que o cliente iniciou/visualizou pela primeira vez (autom\u00e1tico)"
+      "description": "Data de in\u00edcio real"
     },
     "data_termino_previsto": {
       "type": "string",
@@ -114,7 +114,7 @@
     "data_termino_real": {
       "type": "string",
       "format": "date-time",
-      "description": "Data real de conclus\u00e3o (edit\u00e1vel pelo cliente)"
+      "description": "Data real de conclus\u00e3o"
     },
     "status": {
       "type": "string",
@@ -136,7 +136,7 @@
       "items": {
         "type": "string"
       },
-      "description": "IDs dos CronogramaImplementacao que devem ser conclu\u00eddos antes deste iniciar"
+      "description": "IDs dos itens dependentes"
     },
     "historico_alteracoes": {
       "type": "array",
@@ -186,6 +186,9 @@
     "create": {
       "$or": [
         {
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
+        },
+        {
           "data.workshop_id": "{{user.workshop_id}}"
         },
         {
@@ -195,29 +198,22 @@
           "user_condition": {
             "role": "admin"
           }
-        },
-        {
-          "user_condition": {
-            "user_type": "internal"
-          }
-        },
-        {
-          "user_condition": {
-            "data.user_type": "internal"
-          }
         }
       ]
     },
     "read": {
       "$or": [
         {
-          "created_by": "{{user.email}}"
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
         },
         {
           "data.workshop_id": "{{user.workshop_id}}"
         },
         {
           "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "created_by": "{{user.email}}"
         },
         {
           "user_condition": {
@@ -229,13 +225,16 @@
     "update": {
       "$or": [
         {
-          "created_by": "{{user.email}}"
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
         },
         {
           "data.workshop_id": "{{user.workshop_id}}"
         },
         {
           "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "created_by": "{{user.email}}"
         },
         {
           "user_condition": {
