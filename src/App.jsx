@@ -17,6 +17,7 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { TenantProvider } from '@/components/contexts/TenantContext';
+import { TenantSessionProvider } from '@/components/contexts/TenantSessionContext';
 import { AttendanceTypeProvider } from '@/components/contexts/AttendanceTypeContext';
 import { TemplateLibraryProvider } from '@/components/aceleracao/contexts/TemplateLibraryContext';
 import { DraftPersistenceProvider } from '@/components/contexts/DraftPersistenceContext';
@@ -221,10 +222,12 @@ function App() {
                   <ToastProvider>
                     <Router>
                       <ImpersonationCacheInvalidator />
-                      <PermissionsProvider>
-                        <NavigationTracker />
-                        <AuthenticatedApp />
-                      </PermissionsProvider>
+                      <TenantSessionProvider>
+                        <PermissionsProvider>
+                          <NavigationTracker />
+                          <AuthenticatedApp />
+                        </PermissionsProvider>
+                      </TenantSessionProvider>
                     </Router>
                   </ToastProvider>
                 </DraftPersistenceProvider>
