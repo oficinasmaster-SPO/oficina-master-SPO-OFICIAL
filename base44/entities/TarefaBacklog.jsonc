@@ -4,11 +4,11 @@
   "properties": {
     "cliente_id": {
       "type": "string",
-      "description": "ID do cliente/workshop"
+      "description": "LEGADO: armazena semanticamente um Workshop.id; renomeio f\u00edsico para workshop_id ser\u00e1 feito em migra\u00e7\u00e3o posterior"
     },
     "cliente_nome": {
       "type": "string",
-      "description": "Nome do cliente"
+      "description": "Nome do cliente/oficina"
     },
     "consultor_id": {
       "type": "string",
@@ -184,6 +184,9 @@
     "create": {
       "$or": [
         {
+          "data.cliente_id": "{{user.tenant_workshop_id}}"
+        },
+        {
           "data.cliente_id": "{{user.workshop_id}}"
         },
         {
@@ -193,32 +196,31 @@
           "user_condition": {
             "role": "admin"
           }
-        },
-        {
-          "user_condition": {
-            "user_type": "internal"
-          }
-        },
-        {
-          "user_condition": {
-            "data.user_type": "internal"
-          }
         }
       ]
     },
     "read": {
       "$or": [
         {
-          "consultor_id": "{{user.id}}"
+          "data.cliente_id": "{{user.tenant_workshop_id}}"
         },
         {
-          "criado_por_id": "{{user.id}}"
+          "data.cliente_id": "{{user.workshop_id}}"
         },
         {
-          "solicitante_id": "{{user.id}}"
+          "data.cliente_id": "{{user.data.workshop_id}}"
         },
         {
-          "atribuido_para_id": "{{user.id}}"
+          "data.consultor_id": "{{user.id}}"
+        },
+        {
+          "data.criado_por_id": "{{user.id}}"
+        },
+        {
+          "data.solicitante_id": "{{user.id}}"
+        },
+        {
+          "data.atribuido_para_id": "{{user.id}}"
         },
         {
           "user_condition": {
@@ -230,13 +232,22 @@
     "update": {
       "$or": [
         {
-          "consultor_id": "{{user.id}}"
+          "data.cliente_id": "{{user.tenant_workshop_id}}"
         },
         {
-          "criado_por_id": "{{user.id}}"
+          "data.cliente_id": "{{user.workshop_id}}"
         },
         {
-          "atribuido_para_id": "{{user.id}}"
+          "data.cliente_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "data.consultor_id": "{{user.id}}"
+        },
+        {
+          "data.criado_por_id": "{{user.id}}"
+        },
+        {
+          "data.atribuido_para_id": "{{user.id}}"
         },
         {
           "user_condition": {
