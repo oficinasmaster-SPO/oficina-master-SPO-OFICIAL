@@ -67,6 +67,8 @@ const RepairOrphanEmployees = lazy(() => import('@/pages/RepairOrphanEmployees')
 const DashboardTelemetriaPerfis = lazy(() => import('@/pages/DashboardTelemetriaPerfis'));
 const AdminSaudeSistema = lazy(() => import('@/pages/AdminSaudeSistema'));
 const DashboardAuditoriaRBAC = lazy(() => import('@/pages/DashboardAuditoriaRBAC'));
+// TEMPORARIO - remover após validação da migração de tenant.
+const TesteRLS = lazy(() => import('@/pages/TesteRLS'));
 
 
 const { Pages, Layout, mainPage } = pagesConfig;
@@ -164,6 +166,8 @@ const AuthenticatedApp = () => {
 
         {/* All other pages require authentication */}
         <Route element={<ProtectedRoute />}>
+          {/* TEMPORARIO - remover após validação da migração de tenant. */}
+          <Route path="/TesteRLS" element={<TesteRLS />} />
           <Route path="/CompletarPerfil" element={<LayoutWrapper currentPageName="CompletarPerfil"><CompletarPerfil /></LayoutWrapper>} />
           <Route path="/DescricaoCargos" element={<LayoutWrapper currentPageName="DescricaoCargos"><DescricaoCargos /></LayoutWrapper>} />
           <Route path="/CentralAvaliacoes" element={<LayoutWrapper currentPageName="CentralAvaliacoes"><CentralAvaliacoes /></LayoutWrapper>} />
