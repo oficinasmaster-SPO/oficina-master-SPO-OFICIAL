@@ -7,6 +7,7 @@ const MENSAGEM_POLITICA = `Ficou alinhado que, após a reunião ser confirmada e
 const TENANT_FALLBACK_EVENT = 'TENANT_RESOLVE_FALLBACK';
 
 // ── CÓPIA FIEL de shared/tenantResolver.resolveTenantCore — manter sincronizada ──
+const TENANT_RESOLVER_COPY_VERSION = '1.1.0';
 async function resolveTenantCore(sr, authUser, params = {}) {
   const { workshop_id, admin_workshop_id, impersonated_user_id, sync_user_field } = params;
   const isAdmin = authUser.role === 'admin';
