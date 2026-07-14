@@ -282,6 +282,9 @@
           "data.consulting_firm_id": "{{user.data.consulting_firm_id}}"
         },
         {
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
+        },
+        {
           "data.workshop_id": "{{user.workshop_id}}"
         },
         {
@@ -304,6 +307,9 @@
         },
         {
           "data.consulting_firm_id": "{{user.data.consulting_firm_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
         },
         {
           "data.workshop_id": "{{user.workshop_id}}"
