@@ -574,6 +574,9 @@
     "read": {
       "$or": [
         {
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
+        },
+        {
           "created_by": "{{user.email}}"
         },
         {
@@ -591,6 +594,15 @@
     },
     "update": {
       "$or": [
+        {
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
+        },
         {
           "created_by": "{{user.email}}"
         },
