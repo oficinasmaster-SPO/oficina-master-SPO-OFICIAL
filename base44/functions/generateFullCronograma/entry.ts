@@ -2,7 +2,8 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.38';
 
 const TENANT_FALLBACK_EVENT = 'TENANT_RESOLVE_FALLBACK';
 
-// CÓPIA FIEL de shared/tenantResolver.resolveTenantCore — manter sincronizada.
+// CÓPIA ADAPTADA de shared/tenantResolver.resolveTenantCore (retorno reduzido — só validação).
+const TENANT_RESOLVER_COPY_VERSION = '1.1.0-adapted';
 async function resolveTenantCore(sr, authUser, params = {}) {
   const { workshop_id, admin_workshop_id, impersonated_user_id, sync_user_field } = params;
   const isAdmin = authUser.role === 'admin';
