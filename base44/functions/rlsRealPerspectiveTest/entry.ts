@@ -134,10 +134,49 @@ Deno.serve(async (req) => {
       tested_now: workshopId === targetWorkshopId
     }));
 
+    const executadoEm = new Date().toISOString();
+    const userType = user.user_type || user.data?.user_type || null;
+    const perspectivaPrivilegiada = user.role === 'admin' || userType === 'internal';
+
+    const resumo = {
+      entidades_testadas: entities.length,
+      entidades_com_vazamento: entidadesComVazamento,
+      entidades_com_erro: entidadesComErro,
+      aprovado: entidadesComVazamento === 0 && entidadesComErro === 0
+    };
+
+    // Persiste a execução como evidência auditável. Falha ao gravar não deve
+    // derrubar o teste — apenas registramos o erro na resposta.
+    let persistencia = { salvo: false };
+    try {
+      const run = await base44.asServiceRole.entities.RLSTestRun.create({
+        executor_id: user.id,
+        executor_email: user.email || null,
+        role: user.role || null,
+        user_type: userType,
+        lote,
+        workshop_id: targetWorkshopId,
+        perspectiva_privilegiada: perspectivaPrivilegiada,
+        resumo,
+        resultados,
+        executado_em: executadoEm
+      });
+      persistencia = { salvo: true, run_id: run?.id || null };
+    } catch (persistError) {
+      persistencia = { salvo: false, erro: persistError.message };
+    }
+
     return Response.json({
-      executado_em: new Date().toISOString(),
+      executado_em: executadoEm,
       lote,
+      run_persistido: persistencia,
       perspectiva: 'usuario_autenticado (asserções sem asServiceRole)',
+      ...(perspectivaPrivilegiada
+        ? {
+            aviso_perspectiva_privilegiada: true,
+            aviso_texto: 'Executor é admin ou usuário interno (user_type=internal), com visibilidade global por desenho. Este resultado NÃO comprova isolamento de tenant (RLS). Para evidência de isolamento, execute com um usuário comum (role=user, user_type=external) vinculado a uma única oficina.'
+          }
+        : {}),
       usuario: {
         id: user.id,
         role: user.role,
@@ -166,12 +205,7 @@ Deno.serve(async (req) => {
           ? 'Executar novamente com cada workshop_id listado em filiais_da_matriz após alternar a filial no app.'
           : 'Caso de tenant único executado.'
       },
-      resumo: {
-        entidades_testadas: entities.length,
-        entidades_com_vazamento: entidadesComVazamento,
-        entidades_com_erro: entidadesComErro,
-        aprovado: entidadesComVazamento === 0 && entidadesComErro === 0
-      },
+      resumo,
       resultados
     });
   } catch (error) {

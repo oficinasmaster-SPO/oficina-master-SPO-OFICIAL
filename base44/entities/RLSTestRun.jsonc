@@ -1,0 +1,75 @@
+{
+  "name": "RLSTestRun",
+  "type": "object",
+  "properties": {
+    "executor_id": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio que executou o teste"
+    },
+    "executor_email": {
+      "type": "string",
+      "description": "E-mail do executor"
+    },
+    "role": {
+      "type": "string",
+      "description": "Role do executor no momento do teste (admin/user)"
+    },
+    "user_type": {
+      "type": "string",
+      "description": "user_type do executor no momento do teste (internal/external)"
+    },
+    "lote": {
+      "type": "string",
+      "description": "Lote de entidades testado (financeiro, crm_agenda, operacional, completo)"
+    },
+    "workshop_id": {
+      "type": "string",
+      "description": "Filial (workshop) selecionada no teste"
+    },
+    "perspectiva_privilegiada": {
+      "type": "boolean",
+      "default": false,
+      "description": "true quando o executor \u00e9 admin ou internal \u2014 resultado n\u00e3o comprova isolamento"
+    },
+    "resumo": {
+      "type": "object",
+      "description": "Resumo agregado da execu\u00e7\u00e3o (entidades testadas, vazamentos, erros, aprovado)"
+    },
+    "resultados": {
+      "type": "object",
+      "description": "Resultados detalhados por entidade"
+    },
+    "executado_em": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp da execu\u00e7\u00e3o"
+    }
+  },
+  "required": [
+    "executor_id",
+    "lote",
+    "executado_em"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
