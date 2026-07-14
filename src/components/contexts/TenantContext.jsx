@@ -194,10 +194,15 @@ export function TenantProvider({ children }) {
   );
 }
 
-export function useTenant() {
+/**
+ * RENOMEADO (auditoria): este hook legado resolve consultoria/empresa selecionada,
+ * NÃO o tenant de dados. Para tenant use useTenant de TenantSessionContext.
+ * O nome useTenant foi removido daqui para eliminar a colisão de imports.
+ */
+export function useConsultingTenant() {
   const context = useContext(TenantContext);
   if (!context) {
-    throw new Error('useTenant must be used within a TenantProvider');
+    throw new Error('useConsultingTenant must be used within a TenantProvider');
   }
   return context;
 }
