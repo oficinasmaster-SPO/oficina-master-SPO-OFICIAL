@@ -14,18 +14,26 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const dryRun = body?.dry_run !== false; // default true
 
+    // CORRIGIDO: $gte + dedupe por id — com $gt, registros com o MESMO created_date
+    // do último item do lote eram pulados (ex.: as próprias memberships criadas em
+    // massa pelo backfill). Guard de cursor estagnado evita loop infinito.
     const listAll = async (entityName) => {
-      const all = [];
+      const byId = new Map();
       let cursor = null;
       while (true) {
-        const query = cursor ? { created_date: { $gt: cursor } } : {};
+        const query = cursor ? { created_date: { $gte: cursor } } : {};
         const batch = await sr.entities[entityName].filter(query, 'created_date', 500);
         if (!batch || batch.length === 0) break;
-        all.push(...batch);
-        cursor = batch[batch.length - 1].created_date;
+        let novos = 0;
+        for (const rec of batch) {
+          if (!byId.has(rec.id)) { byId.set(rec.id, rec); novos++; }
+        }
+        const nextCursor = batch[batch.length - 1].created_date;
         if (batch.length < 500) break;
+        if (novos === 0 && nextCursor === cursor) break;
+        cursor = nextCursor;
       }
-      return all;
+      return [...byId.values()];
     };
 
     const [users, workshops, employees, existentes] = await Promise.all([
