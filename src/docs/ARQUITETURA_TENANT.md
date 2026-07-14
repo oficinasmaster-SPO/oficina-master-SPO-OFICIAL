@@ -178,6 +178,30 @@ await base44.entities.Employee.create({
 
 ---
 
+## Exceções aprovadas ao `create` público
+
+Estas entidades mantêm `create` aberto (ou parcialmente aberto) por serem
+**formulários públicos intencionais** — coletados via links compartilhados por
+respondentes não autenticados. É exceção **aprovada**, não violação da Regra 3.
+Read/update/delete permanecem restritos por `workshop_id`/`created_by`/admin, então
+o `create` aberto não expõe dados de tenant; ele apenas permite a submissão.
+
+| Entidade | Motivo | Restrição de leitura |
+|---|---|---|
+| `NPSResponse` | Pesquisa NPS pública respondida pelo cliente final via link | workshop_id / admin |
+| `ConsultoriaAvaliacao` | Avaliação de atendimento respondida publicamente pelo cliente | workshop_id / admin |
+| `DISCDiagnostic` | Diagnóstico DISC público (sessão via link, sem login) | workshop_id / created_by / admin |
+| `EntrepreneurDiagnostic` | Diagnóstico do empresário respondido via link público | workshop_id / created_by / admin |
+| `CustomerFeedback` | Feedback/NPS do cliente final coletado publicamente | workshop_id / created_by / admin |
+| `AgendamentoSolicitacao` | Solicitação de agendamento aberta pelo cliente/oficina | workshop_id / admin |
+
+> Qualquer NOVA entidade com `create` aberto que não seja um formulário público
+> desta lista é violação da Regra 3 e deve ser bloqueada em code review.
+> `SystemEventLog` NÃO está nesta lista: seu `create` foi fechado (só admin/backend
+> via service role), pois é log de sistema e não formulário público.
+
+---
+
 ## Checklist rápido para PRs
 
 - [ ] Nenhuma leitura nova de `user.data.workshop_id` / `user.data.company_id`
