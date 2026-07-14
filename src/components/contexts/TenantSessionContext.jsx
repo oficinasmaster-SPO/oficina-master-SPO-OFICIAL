@@ -22,14 +22,17 @@ const TenantSessionContext = createContext(null);
 const prefKeyFor = (email) => (email ? `om_tenant_workshop_${email.toLowerCase()}` : null);
 
 export function TenantSessionProvider({ children }) {
-  const { user, isAuthenticated, isLoadingAuth } = useAuth();
+  const { user, authUser, isAuthenticated, isLoadingAuth } = useAuth();
   const { isAdminMode, adminWorkshopId } = useAdminMode();
   const queryClient = useQueryClient();
 
-  const impersonationData = useMemo(() => getImpersonationData(user?.email), [user?.email]);
+  // CORRIGIDO: impersonação é gravada sob o email do ADMIN (usuário real).
+  // Usar `user` aqui falhava quando o AuthContext já tinha substituído pelo alvo.
+  const realUser = authUser || user;
+  const impersonationData = useMemo(() => getImpersonationData(realUser?.email), [realUser?.email]);
   const impersonatedUserId = impersonationData?.target_user?.id || null;
 
-  const prefKey = prefKeyFor(user?.email);
+  const prefKey = prefKeyFor(realUser?.email);
   const [selectedWorkshopId, setSelectedWorkshopId] = useState(null);
 
   // Carrega a preferência persistida quando o usuário estiver disponível
@@ -44,7 +47,7 @@ export function TenantSessionProvider({ children }) {
 
   // Resolução de tenant — SEMPRE via resolveTenant (backend valida membership)
   const { data: session, isLoading: isSessionLoading } = useQuery({
-    queryKey: ['tenant-session', user?.id, impersonatedUserId, isAdminMode ? adminWorkshopId : null, selectedWorkshopId],
+    queryKey: ['tenant-session', realUser?.id, impersonatedUserId, isAdminMode ? adminWorkshopId : null, selectedWorkshopId],
     queryFn: async () => {
       const params = {};
       if (impersonatedUserId) params.impersonated_user_id = impersonatedUserId;
@@ -69,7 +72,7 @@ export function TenantSessionProvider({ children }) {
         throw err;
       }
     },
-    enabled: isAuthenticated && !isLoadingAuth && !!user?.id,
+    enabled: isAuthenticated && !isLoadingAuth && !!realUser?.id,
     staleTime: 2 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     retry: 1,
