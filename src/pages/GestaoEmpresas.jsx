@@ -9,12 +9,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
 import { Building2, Plus, Pencil, Trash2, Loader2, ShieldAlert } from 'lucide-react';
-import { useTenant } from '@/components/contexts/TenantContext';
+import { useConsultingTenant } from '@/components/contexts/TenantContext';
 
 export default function GestaoEmpresas() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const { consultingFirm, selectedFirmId } = useTenant();
+  const { consultingFirm, selectedFirmId } = useConsultingTenant();
   
   const [isCompanyModalOpen, setIsCompanyModalOpen] = useState(false);
   const [editingCompany, setEditingCompany] = useState(null);
