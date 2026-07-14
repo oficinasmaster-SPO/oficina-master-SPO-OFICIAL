@@ -13,6 +13,12 @@
  *   const tenant = result.data; // tenant.workshop.id é o workshop_id efetivo
  */
 
+// Versão do resolver. REGRA: toda cópia deve declarar TENANT_RESOLVER_COPY_VERSION
+// com o MESMO valor. Ao alterar a lógica aqui, incremente e atualize todas as cópias.
+// Auditoria de drift: grep por TENANT_RESOLVER_COPY_VERSION e comparar valores.
+// Cópias ADAPTADAS (subconjunto intencional do contrato) devem usar o sufixo '-adapted'.
+export const TENANT_RESOLVER_VERSION = '1.1.0';
+
 export const TENANT_FALLBACK_EVENT = 'TENANT_RESOLVE_FALLBACK';
 
 /**
