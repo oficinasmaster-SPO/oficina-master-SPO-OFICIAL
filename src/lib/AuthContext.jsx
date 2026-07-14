@@ -27,6 +27,9 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  // Usuário REAL autenticado (nunca substituído pela impersonação).
+  // Autorização e resolução de tenant devem usar authUser; `user` é só exibição.
+  const [authUser, setAuthUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
   const [isLoadingPublicSettings, setIsLoadingPublicSettings] = useState(true);
@@ -126,7 +129,9 @@ export const AuthProvider = ({ children }) => {
         return;
       }
 
-      // Aplicar impersonação se ativo
+      // Impersonação: `user` (exibição) pode ser o alvo, mas `authUser` é SEMPRE o
+      // usuário real — o TenantSessionContext envia impersonated_user_id ao
+      // resolveTenant e o backend valida; o frontend nunca concede acesso.
       const effectiveUser = getEffectiveUser(currentUser);
       
       if (effectiveUser.role !== 'admin' && !effectiveUser._isImpersonated) {
@@ -153,6 +158,7 @@ export const AuthProvider = ({ children }) => {
       }
 
       setUser(effectiveUser);
+      setAuthUser(currentUser);
       setIsAuthenticated(true);
       setIsLoadingAuth(false);
     } catch (error) {
@@ -168,6 +174,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = (shouldRedirect = true) => {
     setUser(null);
+    setAuthUser(null);
     setIsAuthenticated(false);
     
     if (shouldRedirect) {
@@ -187,6 +194,7 @@ export const AuthProvider = ({ children }) => {
   return (
     <AuthContext.Provider value={{ 
       user, 
+      authUser,
       isAuthenticated, 
       isLoadingAuth,
       isLoadingPublicSettings,
