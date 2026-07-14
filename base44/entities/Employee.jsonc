@@ -450,6 +450,9 @@
     "read": {
       "$or": [
         {
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
+        },
+        {
           "created_by": "{{user.email}}"
         },
         {
@@ -458,25 +461,28 @@
           }
         },
         {
-          "user_id": "{{user.id}}"
+          "data.user_id": "{{user.id}}"
         },
         {
-          "email": "{{user.email}}"
+          "data.email": "{{user.email}}"
         },
         {
-          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+          "data.consulting_firm_id": "{{user.data.consulting_firm_id}}"
         },
         {
-          "workshop_id": "{{user.data.workshop_id}}"
+          "data.workshop_id": "{{user.data.workshop_id}}"
         },
         {
-          "workshop_id": "{{user.workshop_id}}"
+          "data.workshop_id": "{{user.workshop_id}}"
         }
       ]
     },
     "create": {
       "$or": [
         {
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
+        },
+        {
           "created_by": "{{user.email}}"
         },
         {
@@ -485,19 +491,22 @@
           }
         },
         {
-          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+          "data.consulting_firm_id": "{{user.data.consulting_firm_id}}"
         },
         {
-          "workshop_id": "{{user.data.workshop_id}}"
+          "data.workshop_id": "{{user.data.workshop_id}}"
         },
         {
-          "workshop_id": "{{user.workshop_id}}"
+          "data.workshop_id": "{{user.workshop_id}}"
         }
       ]
     },
     "update": {
       "$or": [
         {
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
+        },
+        {
           "created_by": "{{user.email}}"
         },
         {
@@ -506,28 +515,31 @@
           }
         },
         {
-          "user_id": "{{user.id}}"
+          "data.user_id": "{{user.id}}"
         },
         {
-          "owner_id": "{{user.id}}"
+          "data.owner_id": "{{user.id}}"
         },
         {
-          "admin_responsavel_id": "{{user.id}}"
+          "data.admin_responsavel_id": "{{user.id}}"
         },
         {
-          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+          "data.consulting_firm_id": "{{user.data.consulting_firm_id}}"
         },
         {
-          "workshop_id": "{{user.data.workshop_id}}"
+          "data.workshop_id": "{{user.data.workshop_id}}"
         },
         {
-          "workshop_id": "{{user.workshop_id}}"
+          "data.workshop_id": "{{user.workshop_id}}"
         }
       ]
     },
     "delete": {
       "$or": [
         {
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
+        },
+        {
           "created_by": "{{user.email}}"
         },
         {
@@ -536,16 +548,16 @@
           }
         },
         {
-          "owner_id": "{{user.id}}"
+          "data.owner_id": "{{user.id}}"
         },
         {
-          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+          "data.consulting_firm_id": "{{user.data.consulting_firm_id}}"
         },
         {
-          "workshop_id": "{{user.data.workshop_id}}"
+          "data.workshop_id": "{{user.data.workshop_id}}"
         },
         {
-          "workshop_id": "{{user.workshop_id}}"
+          "data.workshop_id": "{{user.workshop_id}}"
         }
       ]
     }
