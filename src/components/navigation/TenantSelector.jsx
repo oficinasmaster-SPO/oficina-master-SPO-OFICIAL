@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useTenant } from '@/components/contexts/TenantContext';
+import { useConsultingTenant } from '@/components/contexts/TenantContext';
 import { useWorkshopContext } from '@/components/hooks/useWorkshopContext';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 import { Building2, Briefcase, Search, Check, ChevronsUpDown } from 'lucide-react';
 
 export default function TenantSelector({ isMobileSidebar = false }) {
-  const { user, selectedFirmId, changeConsultingFirm, selectedCompanyId, changeCompany, isLoading: isTenantLoading } = useTenant();
+  const { user, selectedFirmId, changeConsultingFirm, selectedCompanyId, changeCompany, isLoading: isTenantLoading } = useConsultingTenant();
   const { workshop, workshopsDisponiveis, isLoading: isWorkshopLoading } = useWorkshopContext();
   const [openFirmPopover, setOpenFirmPopover] = useState(false);
   const [openCompanyPopover, setOpenCompanyPopover] = useState(false);
