@@ -13,25 +13,21 @@ Deno.serve(async (req) => {
     const sr = base44.asServiceRole;
     const body = await req.json().catch(() => ({}));
     const dryRun = body?.dry_run !== false; // default true
+    const paginationVersion = 'offset-dedupe-v2';
 
-    // CORRIGIDO: $gte + dedupe por id — com $gt, registros com o MESMO created_date
-    // do último item do lote eram pulados (ex.: as próprias memberships criadas em
-    // massa pelo backfill). Guard de cursor estagnado evita loop infinito.
+    // Paginação por deslocamento evita perder registros com o mesmo created_date.
     const listAll = async (entityName) => {
       const byId = new Map();
-      let cursor = null;
+      let skip = 0;
       while (true) {
-        const query = cursor ? { created_date: { $gte: cursor } } : {};
-        const batch = await sr.entities[entityName].filter(query, 'created_date', 500);
+        const batch = await sr.entities[entityName].filter({}, 'created_date', 500, skip);
         if (!batch || batch.length === 0) break;
         let novos = 0;
         for (const rec of batch) {
           if (!byId.has(rec.id)) { byId.set(rec.id, rec); novos++; }
         }
-        const nextCursor = batch[batch.length - 1].created_date;
-        if (batch.length < 500) break;
-        if (novos === 0 && nextCursor === cursor) break;
-        cursor = nextCursor;
+        if (batch.length < 500 || novos === 0) break;
+        skip += batch.length;
       }
       return [...byId.values()];
     };
@@ -195,6 +191,7 @@ Deno.serve(async (req) => {
     }
 
     const aCriar = Array.from(propostas.values());
+    ignorados.ja_existente = jaExiste.size;
 
     let criadas = 0;
     if (!dryRun && aCriar.length > 0) {
@@ -212,6 +209,7 @@ Deno.serve(async (req) => {
       executado_em: new Date().toISOString(),
       executado_por: user.email,
       dry_run: dryRun,
+      pagination_version: paginationVersion,
       totais_base: { users: users.length, workshops: workshops.length, employees: employees.length, memberships_existentes: existentes.length },
       resumo: {
         propostas: aCriar.length,
