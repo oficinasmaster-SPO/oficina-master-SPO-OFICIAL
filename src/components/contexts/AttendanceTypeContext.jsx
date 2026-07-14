@@ -1,12 +1,12 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useTenant } from './TenantContext';
+import { useConsultingTenant } from './TenantContext';
 import { useAuth } from '@/lib/AuthContext';
 
 const AttendanceTypeContext = createContext();
 
 export function AttendanceTypeProvider({ children }) {
-  const { selectedCompanyId, selectedFirmId } = useTenant();
+  const { selectedCompanyId, selectedFirmId } = useConsultingTenant();
   const { isAuthenticated, isLoadingAuth } = useAuth();
   const [attendanceTypes, setAttendanceTypes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
