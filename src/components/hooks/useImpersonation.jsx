@@ -7,7 +7,10 @@ import { useAuth } from '@/lib/AuthContext';
  * Quando em impersonação, retorna o usuário alvo COMPLETO (igual ao backend retorna).
  */
 export function useImpersonation() {
-  const { user: realUser } = useAuth();
+  // CORRIGIDO: usar o usuário REAL (authUser) — a impersonação é gravada sob o
+  // email do admin; `user` pode já estar substituído pelo alvo.
+  const { user, authUser } = useAuth();
+  const realUser = authUser || user;
   const impersonationData = useMemo(() => getImpersonationData(realUser?.email), [realUser?.email]);
 
   if (!impersonationData || !realUser) {
