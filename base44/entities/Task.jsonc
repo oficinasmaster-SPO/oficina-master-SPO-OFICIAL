@@ -405,6 +405,9 @@
           "created_by": "{{user.email}}"
         },
         {
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
+        },
+        {
           "data.workshop_id": "{{user.workshop_id}}"
         },
         {
@@ -434,6 +437,9 @@
         },
         {
           "data.company_id": "{{user.data.company_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
         },
         {
           "data.workshop_id": "{{user.workshop_id}}"
@@ -467,6 +473,9 @@
           "data.company_id": "{{user.data.company_id}}"
         },
         {
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
+        },
+        {
           "data.workshop_id": "{{user.workshop_id}}"
         },
         {
@@ -489,6 +498,9 @@
         },
         {
           "data.company_id": "{{user.data.company_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
         },
         {
           "data.workshop_id": "{{user.workshop_id}}"
