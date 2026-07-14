@@ -1,5 +1,8 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.38';
 
+// CÓPIA ADAPTADA de shared/tenantResolver.resolveTenantCore: sem impersonação e
+// sem sync_user_field (não necessários neste endpoint). Validação membership/403 fiel.
+const TENANT_RESOLVER_COPY_VERSION = '1.1.0-adapted';
 const TENANT_FALLBACK_EVENT = 'TENANT_RESOLVE_FALLBACK';
 
 async function resolveTenantCore(sr, authUser, params = {}) {
