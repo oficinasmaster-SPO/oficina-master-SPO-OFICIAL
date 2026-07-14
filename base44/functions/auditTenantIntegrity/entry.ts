@@ -11,19 +11,31 @@ Deno.serve(async (req) => {
 
     const sr = base44.asServiceRole;
 
-    // Pagina TUDO por cursor de created_date (sem limite de 500)
+    // Pagina TUDO por cursor de created_date (sem limite de 500).
+    // CORRIGIDO (auditoria): usa $gte + dedupe por id — com $gt, registros com o
+    // MESMO created_date do último item do lote eram pulados (ex.: criados em massa
+    // por backfill/migração). Guard de cursor estagnado evita loop infinito quando
+    // >500 registros compartilham o mesmo timestamp.
     const listAll = async (entityName) => {
-      const all = [];
+      const byId = new Map();
       let cursor = null;
       while (true) {
-        const query = cursor ? { created_date: { $gt: cursor } } : {};
+        const query = cursor ? { created_date: { $gte: cursor } } : {};
         const batch = await sr.entities[entityName].filter(query, 'created_date', 500);
         if (!batch || batch.length === 0) break;
-        all.push(...batch);
-        cursor = batch[batch.length - 1].created_date;
+        let novos = 0;
+        for (const rec of batch) {
+          if (!byId.has(rec.id)) { byId.set(rec.id, rec); novos++; }
+        }
+        const nextCursor = batch[batch.length - 1].created_date;
         if (batch.length < 500) break;
+        if (novos === 0 && nextCursor === cursor) {
+          console.warn(`[auditTenantIntegrity] ${entityName}: >500 registros com created_date=${cursor} — paginação interrompida; possivel subcontagem`);
+          break;
+        }
+        cursor = nextCursor;
       }
-      return all;
+      return [...byId.values()];
     };
 
     const [users, workshops, employees, invites, profiles] = await Promise.all([
