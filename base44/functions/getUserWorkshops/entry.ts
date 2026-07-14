@@ -4,7 +4,8 @@ const TENANT_FALLBACK_EVENT = 'TENANT_RESOLVE_FALLBACK';
 const cache = new Map();
 const CACHE_TTL_MS = 2 * 60 * 1000;
 
-// CÓPIA FIEL do fluxo membership-first de shared/tenantResolver.
+// CÓPIA ADAPTADA do fluxo membership-first de shared/tenantResolver (sem impersonação/sync).
+const TENANT_RESOLVER_COPY_VERSION = '1.1.0-adapted';
 async function resolveTenantCore(sr, authUser, params = {}) {
   const isAdmin = authUser.role === 'admin';
   let effectiveUser = authUser;
