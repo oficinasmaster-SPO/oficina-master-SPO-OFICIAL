@@ -46,11 +46,11 @@
     },
     "contract_number": {
       "type": "string",
-      "description": "N\u00famero do contrato (CT001, CT002...)"
+      "description": "Número do contrato (CT001, CT002...)"
     },
     "consultor_id": {
       "type": "string",
-      "description": "ID do consultor/acelerador respons\u00e1vel"
+      "description": "ID do consultor/acelerador responsável"
     },
     "consultor_nome": {
       "type": "string",
@@ -101,7 +101,7 @@
     "contract_duration_months": {
       "type": "integer",
       "default": 12,
-      "description": "Dura\u00e7\u00e3o do contrato em meses"
+      "description": "Duração do contrato em meses"
     },
     "payment_method": {
       "type": "string",
@@ -113,7 +113,7 @@
         "cartao",
         "kiwify"
       ],
-      "description": "M\u00e9todo de pagamento"
+      "description": "Método de pagamento"
     },
     "status": {
       "type": "string",
@@ -135,11 +135,11 @@
     "completion_percentage": {
       "type": "number",
       "default": 0,
-      "description": "Percentual de conclus\u00e3o do contrato"
+      "description": "Percentual de conclusão do contrato"
     },
     "contract_link": {
       "type": "string",
-      "description": "Link \u00fanico para o cliente acessar e assinar"
+      "description": "Link único para o cliente acessar e assinar"
     },
     "clicksign_contract_id": {
       "type": "string",
@@ -164,7 +164,7 @@
     },
     "boleto_code": {
       "type": "string",
-      "description": "C\u00f3digo de barras do boleto"
+      "description": "Código de barras do boleto"
     },
     "client_data_filled": {
       "type": "boolean",
@@ -190,7 +190,7 @@
       "items": {
         "type": "string"
       },
-      "description": "Cl\u00e1usulas personalizadas adicionadas"
+      "description": "Cláusulas personalizadas adicionadas"
     },
     "sent_at": {
       "type": "string",
@@ -205,30 +205,30 @@
     "payment_at": {
       "type": "string",
       "format": "date-time",
-      "description": "Data de confirma\u00e7\u00e3o do pagamento"
+      "description": "Data de confirmação do pagamento"
     },
     "activated_at": {
       "type": "string",
       "format": "date-time",
-      "description": "Data de efetiva\u00e7\u00e3o"
+      "description": "Data de efetivação"
     },
     "start_date": {
       "type": "string",
       "format": "date",
-      "description": "Data de in\u00edcio do contrato"
+      "description": "Data de início do contrato"
     },
     "end_date": {
       "type": "string",
       "format": "date",
-      "description": "Data de t\u00e9rmino do contrato"
+      "description": "Data de término do contrato"
     },
     "client_notes": {
       "type": "string",
-      "description": "Observa\u00e7\u00f5es do cliente"
+      "description": "Observações do cliente"
     },
     "internal_notes": {
       "type": "string",
-      "description": "Observa\u00e7\u00f5es internas"
+      "description": "Observações internas"
     },
     "timeline": {
       "type": "array",
@@ -259,20 +259,107 @@
   ],
   "rls": {
     "create": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data.user_type": "internal"
+          }
+        }
+      ]
     },
-    "read": true,
+    "read": {
+      "$or": [
+        {
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data.user_type": "internal"
+          }
+        }
+      ]
+    },
     "update": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data.user_type": "internal"
+          }
+        }
+      ]
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data.user_type": "internal"
+          }
+        }
+      ]
     }
   }
 }

@@ -4,7 +4,7 @@
   "properties": {
     "code": {
       "type": "string",
-      "description": "C\u00f3digo da ATA (IT.XXXX)"
+      "description": "Código da ATA (IT.XXXX)"
     },
     "workshop_id": {
       "type": "string",
@@ -16,20 +16,20 @@
     },
     "plano_aceleracao_id": {
       "type": "string",
-      "description": "ID do plano de acelera\u00e7\u00e3o vinculado"
+      "description": "ID do plano de aceleração vinculado"
     },
     "meeting_date": {
       "type": "string",
       "format": "date",
-      "description": "Data da reuni\u00e3o"
+      "description": "Data da reunião"
     },
     "meeting_time": {
       "type": "string",
-      "description": "Hora da reuni\u00e3o (HH:MM)"
+      "description": "Hora da reunião (HH:MM)"
     },
     "tipo_aceleracao": {
       "type": "string",
-      "description": "Tipo de acelera\u00e7\u00e3o/atendimento (aceita valores customizados)"
+      "description": "Tipo de aceleração/atendimento (aceita valores customizados)"
     },
     "consultor_name": {
       "type": "string",
@@ -52,7 +52,7 @@
           }
         }
       },
-      "description": "Lista de participantes da reuni\u00e3o"
+      "description": "Lista de participantes da reunião"
     },
     "responsavel": {
       "type": "object",
@@ -64,11 +64,11 @@
           "type": "string"
         }
       },
-      "description": "Respons\u00e1vel principal do cliente"
+      "description": "Responsável principal do cliente"
     },
     "plano_nome": {
       "type": "string",
-      "description": "Nome do plano de acelera\u00e7\u00e3o"
+      "description": "Nome do plano de aceleração"
     },
     "pautas": {
       "type": "string",
@@ -105,11 +105,11 @@
     },
     "objetivos_consultor": {
       "type": "string",
-      "description": "Direcionamento estrat\u00e9gico do acelerador"
+      "description": "Direcionamento estratégico do acelerador"
     },
     "proximos_passos": {
       "type": "string",
-      "description": "Texto descritivo dos pr\u00f3ximos passos"
+      "description": "Texto descritivo dos próximos passos"
     },
     "proximos_passos_list": {
       "type": "array",
@@ -128,11 +128,11 @@
           }
         }
       },
-      "description": "Lista estruturada de pr\u00f3ximos passos"
+      "description": "Lista estruturada de próximos passos"
     },
     "visao_geral_projeto": {
       "type": "string",
-      "description": "Vis\u00e3o geral do projeto de acelera\u00e7\u00e3o"
+      "description": "Visão geral do projeto de aceleração"
     },
     "processos_vinculados": {
       "type": "array",
@@ -150,7 +150,7 @@
           }
         }
       },
-      "description": "Processos (MAPs) discutidos na reuni\u00e3o"
+      "description": "Processos (MAPs) discutidos na reunião"
     },
     "videoaulas_vinculadas": {
       "type": "array",
@@ -198,7 +198,7 @@
           }
         }
       },
-      "description": "M\u00eddias e documentos anexados"
+      "description": "Mídias e documentos anexados"
     },
     "decisoes_tomadas": {
       "type": "array",
@@ -217,7 +217,7 @@
           }
         }
       },
-      "description": "Decis\u00f5es e encaminhamentos tomados na reuni\u00e3o"
+      "description": "Decisões e encaminhamentos tomados na reunião"
     },
     "acoes_geradas": {
       "type": "array",
@@ -239,7 +239,7 @@
           }
         }
       },
-      "description": "A\u00e7\u00f5es geradas para acompanhamento"
+      "description": "Ações geradas para acompanhamento"
     },
     "client_intelligence": {
       "type": "array",
@@ -266,7 +266,7 @@
           }
         }
       },
-      "description": "Intelig\u00eancia do cliente capturada (Dores/Oportunidades)"
+      "description": "Inteligência do cliente capturada (Dores/Oportunidades)"
     },
     "checklist_respostas": {
       "type": "array",
@@ -314,7 +314,7 @@
           }
         }
       },
-      "description": "Respostas dos checklists de diagn\u00f3stico vinculados ao atendimento"
+      "description": "Respostas dos checklists de diagnóstico vinculados ao atendimento"
     },
     "ai_summary": {
       "type": "object",
@@ -344,7 +344,7 @@
           }
         }
       },
-      "description": "Resumo e an\u00e1lise gerados por IA com contexto hist\u00f3rico"
+      "description": "Resumo e análise gerados por IA com contexto histórico"
     },
     "ata_ia": {
       "type": "string",
@@ -352,7 +352,7 @@
     },
     "observacoes_consultor": {
       "type": "string",
-      "description": "Observa\u00e7\u00f5es manuais do consultor"
+      "description": "Observações manuais do consultor"
     },
     "status": {
       "type": "string",
@@ -370,15 +370,108 @@
     "meeting_time"
   ],
   "rls": {
-    "create": true,
-    "read": true,
+    "create": {
+      "$or": [
+        {
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data.user_type": "internal"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data.user_type": "internal"
+          }
+        }
+      ]
+    },
     "update": {
-      "created_by": "{{user.email}}"
+      "$or": [
+        {
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data.user_type": "internal"
+          }
+        }
+      ]
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data.user_type": "internal"
+          }
+        }
+      ]
     }
   }
 }

@@ -45,15 +45,15 @@
           }
         }
       },
-      "description": "Lista de formul\u00e1rios utilizados na entrevista"
+      "description": "Lista de formulários utilizados na entrevista"
     },
     "form_used_id": {
       "type": "string",
-      "description": "ID do formul\u00e1rio PPE utilizado (deprecated - usar forms_used)"
+      "description": "ID do formulário PPE utilizado (deprecated - usar forms_used)"
     },
     "form_used_name": {
       "type": "string",
-      "description": "Nome do formul\u00e1rio PPE utilizado (deprecated)"
+      "description": "Nome do formulário PPE utilizado (deprecated)"
     },
     "script_used_id": {
       "type": "string",
@@ -61,7 +61,7 @@
     },
     "script_content": {
       "type": "string",
-      "description": "Conte\u00fado do script apresentado"
+      "description": "Conteúdo do script apresentado"
     },
     "answers": {
       "type": "array",
@@ -79,22 +79,22 @@
           },
           "score": {
             "type": "number",
-            "description": "Pontua\u00e7\u00e3o 0-10"
+            "description": "Pontuação 0-10"
           }
         }
       }
     },
     "technical_score": {
       "type": "number",
-      "description": "M\u00e9dia das perguntas t\u00e9cnicas"
+      "description": "Média das perguntas técnicas"
     },
     "behavioral_score": {
       "type": "number",
-      "description": "M\u00e9dia das perguntas comportamentais"
+      "description": "Média das perguntas comportamentais"
     },
     "cultural_score": {
       "type": "number",
-      "description": "M\u00e9dia das perguntas culturais"
+      "description": "Média das perguntas culturais"
     },
     "final_score": {
       "type": "number",
@@ -108,7 +108,7 @@
         "senior",
         "master"
       ],
-      "description": "N\u00edvel de senioridade calculado automaticamente"
+      "description": "Nível de senioridade calculado automaticamente"
     },
     "recommendation": {
       "type": "string",
@@ -118,7 +118,7 @@
         "C",
         "D"
       ],
-      "description": "A = Contratar / B = Avaliar mais / C = Risco / D = N\u00e3o contratar"
+      "description": "A = Contratar / B = Avaliar mais / C = Risco / D = Não contratar"
     },
     "interviewer_notes": {
       "type": "string"
@@ -132,5 +132,119 @@
     "candidate_id",
     "workshop_id",
     "interviewer_id"
-  ]
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data.user_type": "internal"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data.user_type": "internal"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data.user_type": "internal"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data.user_type": "internal"
+          }
+        }
+      ]
+    }
+  }
 }

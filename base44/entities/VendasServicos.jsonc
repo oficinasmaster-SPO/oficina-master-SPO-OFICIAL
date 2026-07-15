@@ -9,25 +9,25 @@
     "data": {
       "type": "string",
       "format": "date",
-      "description": "Data da venda/servi\u00e7o"
+      "description": "Data da venda/serviço"
     },
     "month": {
       "type": "string",
-      "description": "M\u00eas de refer\u00eancia (YYYY-MM)"
+      "description": "Mês de referência (YYYY-MM)"
     },
     "valor_total": {
       "type": "number",
-      "description": "Valor REAL faturado (n\u00e3o duplicado)"
+      "description": "Valor REAL faturado (não duplicado)"
     },
     "valor_pecas": {
       "type": "number",
       "default": 0,
-      "description": "Valor de pe\u00e7as"
+      "description": "Valor de peças"
     },
     "valor_servicos": {
       "type": "number",
       "default": 0,
-      "description": "Valor de servi\u00e7os"
+      "description": "Valor de serviços"
     },
     "categoria": {
       "type": "string",
@@ -58,16 +58,121 @@
     },
     "os_number": {
       "type": "string",
-      "description": "N\u00famero da OS (opcional)"
+      "description": "Número da OS (opcional)"
     },
     "observacao": {
       "type": "string",
-      "description": "Observa\u00e7\u00f5es sobre a venda"
+      "description": "Observações sobre a venda"
     }
   },
   "required": [
     "workshop_id",
     "data",
     "valor_total"
-  ]
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data.user_type": "internal"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data.user_type": "internal"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data.user_type": "internal"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data.user_type": "internal"
+          }
+        }
+      ]
+    }
+  }
 }

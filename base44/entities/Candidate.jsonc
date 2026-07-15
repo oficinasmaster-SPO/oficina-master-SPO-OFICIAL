@@ -43,7 +43,7 @@
     },
     "campaign_name": {
       "type": "string",
-      "description": "Nome da campanha/an\u00fancio"
+      "description": "Nome da campanha/anúncio"
     },
     "campaign_id": {
       "type": "string",
@@ -51,11 +51,11 @@
     },
     "assigned_interviewer_id": {
       "type": "string",
-      "description": "ID do gestor/entrevistador respons\u00e1vel"
+      "description": "ID do gestor/entrevistador responsável"
     },
     "assigned_interviewer_name": {
       "type": "string",
-      "description": "Nome do gestor/entrevistador respons\u00e1vel"
+      "description": "Nome do gestor/entrevistador responsável"
     },
     "disqualification_reason": {
       "type": "string",
@@ -65,12 +65,12 @@
         "nao_responde",
         "entrevista_sem_resposta"
       ],
-      "description": "Motivo de desqualifica\u00e7\u00e3o"
+      "description": "Motivo de desqualificação"
     },
     "disqualification_date": {
       "type": "string",
       "format": "date-time",
-      "description": "Data da desqualifica\u00e7\u00e3o"
+      "description": "Data da desqualificação"
     },
     "status": {
       "type": "string",
@@ -86,19 +86,19 @@
     },
     "lead_score": {
       "type": "number",
-      "description": "Pontua\u00e7\u00e3o final do candidato (0-100)"
+      "description": "Pontuação final do candidato (0-100)"
     },
     "technical_score": {
       "type": "number",
-      "description": "Avalia\u00e7\u00e3o t\u00e9cnica (0-100)"
+      "description": "Avaliação técnica (0-100)"
     },
     "behavioral_score": {
       "type": "number",
-      "description": "Avalia\u00e7\u00e3o comportamental (0-100)"
+      "description": "Avaliação comportamental (0-100)"
     },
     "cultural_score": {
       "type": "number",
-      "description": "Avalia\u00e7\u00e3o cultural (0-100)"
+      "description": "Avaliação cultural (0-100)"
     },
     "interviewer_recommendation": {
       "type": "string",
@@ -107,11 +107,11 @@
         "B",
         "C"
       ],
-      "description": "Recomenda\u00e7\u00e3o do entrevistador"
+      "description": "Recomendação do entrevistador"
     },
     "interviewer_notes": {
       "type": "string",
-      "description": "Observa\u00e7\u00f5es do entrevistador"
+      "description": "Observações do entrevistador"
     },
     "work_history": {
       "type": "array",
@@ -135,11 +135,11 @@
           }
         }
       },
-      "description": "Hist\u00f3rico profissional (\u00faltimas 2-3 empresas)"
+      "description": "Histórico profissional (últimas 2-3 empresas)"
     },
     "years_of_experience": {
       "type": "number",
-      "description": "Anos de experi\u00eancia na fun\u00e7\u00e3o"
+      "description": "Anos de experiência na função"
     },
     "autonomous_activities": {
       "type": "array",
@@ -177,15 +177,15 @@
           }
         }
       },
-      "description": "Cursos e capacita\u00e7\u00f5es"
+      "description": "Cursos e capacitações"
     },
     "self_technical_rating": {
       "type": "number",
-      "description": "Autoavalia\u00e7\u00e3o t\u00e9cnica (0-10)"
+      "description": "Autoavaliação técnica (0-10)"
     },
     "main_strength": {
       "type": "string",
-      "description": "Maior ponto forte na fun\u00e7\u00e3o"
+      "description": "Maior ponto forte na função"
     },
     "improvement_point": {
       "type": "string",
@@ -201,23 +201,23 @@
     },
     "best_leader": {
       "type": "string",
-      "description": "Melhor l\u00edder que teve e por qu\u00ea"
+      "description": "Melhor líder que teve e por quê"
     },
     "availability": {
       "type": "string",
-      "description": "Disponibilidade de in\u00edcio"
+      "description": "Disponibilidade de início"
     },
     "salary_expectation": {
       "type": "number",
-      "description": "Pretens\u00e3o salarial"
+      "description": "Pretensão salarial"
     },
     "previous_salary": {
       "type": "number",
-      "description": "Sal\u00e1rio na empresa anterior"
+      "description": "Salário na empresa anterior"
     },
     "bad_month_salary_claim": {
       "type": "string",
-      "description": "Resposta do candidato sobre sal\u00e1rio no m\u00eas ruim"
+      "description": "Resposta do candidato sobre salário no mês ruim"
     },
     "salary_credibility_percentage": {
       "type": "number",
@@ -260,7 +260,7 @@
         "neutro",
         "desalinhado"
       ],
-      "description": "Rea\u00e7\u00e3o ao script de cultura"
+      "description": "Reação ao script de cultura"
     },
     "proposal_status": {
       "type": "string",
@@ -274,7 +274,7 @@
     },
     "employee_id": {
       "type": "string",
-      "description": "ID do Employee ap\u00f3s contrata\u00e7\u00e3o"
+      "description": "ID do Employee após contratação"
     },
     "timeline": {
       "type": "array",
@@ -296,7 +296,7 @@
           }
         }
       },
-      "description": "Hist\u00f3rico de intera\u00e7\u00f5es"
+      "description": "Histórico de interações"
     },
     "disc_status": {
       "type": "string",
@@ -310,7 +310,7 @@
     },
     "disc_result_id": {
       "type": "string",
-      "description": "ID do diagn\u00f3stico DISC conclu\u00eddo"
+      "description": "ID do diagnóstico DISC concluído"
     },
     "disc_profile": {
       "type": "string",
@@ -327,5 +327,110 @@
     "phone",
     "desired_position",
     "origin_channel"
-  ]
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data.user_type": "internal"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data.user_type": "internal"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data.user_type": "internal"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data.user_type": "internal"
+          }
+        }
+      ]
+    }
+  }
 }

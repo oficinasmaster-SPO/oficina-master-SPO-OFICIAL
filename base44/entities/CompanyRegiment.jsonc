@@ -8,21 +8,21 @@
     },
     "document_code": {
       "type": "string",
-      "description": "C\u00f3digo \u00fanico do documento (ex: RI-2024-001)"
+      "description": "Código único do documento (ex: RI-2024-001)"
     },
     "version": {
       "type": "string",
-      "description": "Vers\u00e3o do documento (ex: 1.0, 2.0)"
+      "description": "Versão do documento (ex: 1.0, 2.0)"
     },
     "effective_date": {
       "type": "string",
       "format": "date",
-      "description": "Data de vig\u00eancia"
+      "description": "Data de vigência"
     },
     "replaces_previous": {
       "type": "boolean",
       "default": true,
-      "description": "Se substitui vers\u00f5es anteriores"
+      "description": "Se substitui versões anteriores"
     },
     "identification": {
       "type": "object",
@@ -37,7 +37,7 @@
           "type": "string"
         }
       },
-      "description": "Dados de identifica\u00e7\u00e3o da empresa"
+      "description": "Dados de identificação da empresa"
     },
     "objective": {
       "type": "string",
@@ -79,7 +79,7 @@
           }
         }
       },
-      "description": "Se\u00e7\u00f5es hier\u00e1rquicas do regimento"
+      "description": "Seções hierárquicas do regimento"
     },
     "status": {
       "type": "string",
@@ -93,24 +93,24 @@
     },
     "published_by": {
       "type": "string",
-      "description": "ID do usu\u00e1rio que publicou"
+      "description": "ID do usuário que publicou"
     },
     "published_at": {
       "type": "string",
       "format": "date-time",
-      "description": "Data de publica\u00e7\u00e3o"
+      "description": "Data de publicação"
     },
     "warning_legal_text": {
       "type": "string",
-      "description": "Texto legal padr\u00e3o para advert\u00eancias"
+      "description": "Texto legal padrão para advertências"
     },
     "acknowledgment_text": {
       "type": "string",
-      "description": "Texto de ci\u00eancia e compromisso"
+      "description": "Texto de ciência e compromisso"
     },
     "final_provisions": {
       "type": "string",
-      "description": "Disposi\u00e7\u00f5es finais do regimento"
+      "description": "Disposições finais do regimento"
     },
     "acknowledgments": {
       "type": "array",
@@ -135,7 +135,7 @@
           }
         }
       },
-      "description": "Registro de ci\u00eancia dos colaboradores"
+      "description": "Registro de ciência dos colaboradores"
     }
   },
   "required": [
@@ -146,26 +146,41 @@
     "create": {
       "$or": [
         {
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
           "user_condition": {
             "role": "admin"
           }
         },
         {
-          "created_by": "{{user.email}}"
+          "user_condition": {
+            "user_type": "internal"
+          }
         },
         {
-          "workshop_id": "{{user.data.workshop_id}}"
-        },
-        {
-          "workshop_id": "{{user.workshop_id}}"
+          "user_condition": {
+            "data.user_type": "internal"
+          }
         }
       ]
     },
-    "read": true,
-    "update": {
+    "read": {
       "$or": [
         {
-          "created_by": "{{user.email}}"
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
         },
         {
           "user_condition": {
@@ -173,17 +188,55 @@
           }
         },
         {
-          "workshop_id": "{{user.data.workshop_id}}"
+          "user_condition": {
+            "user_type": "internal"
+          }
         },
         {
-          "workshop_id": "{{user.workshop_id}}"
+          "user_condition": {
+            "data.user_type": "internal"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data.user_type": "internal"
+          }
         }
       ]
     },
     "delete": {
       "$or": [
         {
-          "created_by": "{{user.email}}"
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
         },
         {
           "user_condition": {
@@ -191,10 +244,14 @@
           }
         },
         {
-          "workshop_id": "{{user.data.workshop_id}}"
+          "user_condition": {
+            "user_type": "internal"
+          }
         },
         {
-          "workshop_id": "{{user.workshop_id}}"
+          "user_condition": {
+            "data.user_type": "internal"
+          }
         }
       ]
     }

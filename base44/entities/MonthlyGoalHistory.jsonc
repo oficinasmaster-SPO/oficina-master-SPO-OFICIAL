@@ -24,16 +24,16 @@
     },
     "employee_role": {
       "type": "string",
-      "description": "Fun\u00e7\u00e3o do colaborador"
+      "description": "Função do colaborador"
     },
     "reference_date": {
       "type": "string",
       "format": "date",
-      "description": "Data espec\u00edfica do registro"
+      "description": "Data específica do registro"
     },
     "month": {
       "type": "string",
-      "description": "M\u00eas de refer\u00eancia (YYYY-MM)"
+      "description": "Mês de referência (YYYY-MM)"
     },
     "projected_total": {
       "type": "number",
@@ -48,22 +48,22 @@
     "revenue_total": {
       "type": "number",
       "default": 0,
-      "description": "Faturamento total (pe\u00e7as + servi\u00e7os)"
+      "description": "Faturamento total (peças + serviços)"
     },
     "revenue_parts": {
       "type": "number",
       "default": 0,
-      "description": "Faturamento de pe\u00e7as"
+      "description": "Faturamento de peças"
     },
     "revenue_services": {
       "type": "number",
       "default": 0,
-      "description": "Faturamento de servi\u00e7os"
+      "description": "Faturamento de serviços"
     },
     "average_ticket": {
       "type": "number",
       "default": 0,
-      "description": "Ticket m\u00e9dio"
+      "description": "Ticket médio"
     },
     "customer_volume": {
       "type": "integer",
@@ -73,17 +73,17 @@
     "target_revenue_parts": {
       "type": "number",
       "default": 0,
-      "description": "Meta de faturamento de pe\u00e7as"
+      "description": "Meta de faturamento de peças"
     },
     "target_revenue_services": {
       "type": "number",
       "default": 0,
-      "description": "Meta de faturamento de servi\u00e7os"
+      "description": "Meta de faturamento de serviços"
     },
     "target_average_ticket": {
       "type": "number",
       "default": 0,
-      "description": "Meta de ticket m\u00e9dio"
+      "description": "Meta de ticket médio"
     },
     "target_customer_volume": {
       "type": "integer",
@@ -138,7 +138,7 @@
     "tcmp2": {
       "type": "number",
       "default": 0,
-      "description": "TCMP\u00b2 do per\u00edodo"
+      "description": "TCMP² do período"
     },
     "pave_commercial": {
       "type": "number",
@@ -223,7 +223,7 @@
     },
     "revenue_distribution": {
       "type": "object",
-      "description": "Distribui\u00e7\u00e3o de faturamento por colaborador"
+      "description": "Distribuição de faturamento por colaborador"
     },
     "rework_count": {
       "type": "integer",
@@ -232,7 +232,7 @@
     },
     "notes": {
       "type": "string",
-      "description": "Observa\u00e7\u00f5es"
+      "description": "Observações"
     }
   },
   "required": [
@@ -240,5 +240,110 @@
     "entity_type",
     "reference_date",
     "month"
-  ]
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data.user_type": "internal"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data.user_type": "internal"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data.user_type": "internal"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data.user_type": "internal"
+          }
+        }
+      ]
+    }
+  }
 }
