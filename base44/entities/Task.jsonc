@@ -433,10 +433,40 @@
           }
         },
         {
-          "data.consulting_firm_id": "{{user.data.consulting_firm_id}}"
+          "$and": [
+            {
+              "data.consulting_firm_id": "{{user.data.consulting_firm_id}}"
+            },
+            {
+              "user_condition": {
+                "data.user_type": "internal"
+              }
+            }
+          ]
         },
         {
-          "data.company_id": "{{user.data.company_id}}"
+          "$and": [
+            {
+              "data.consulting_firm_id": "{{user.consulting_firm_id}}"
+            },
+            {
+              "user_condition": {
+                "user_type": "internal"
+              }
+            }
+          ]
+        },
+        {
+          "$and": [
+            {
+              "data.company_id": "{{user.data.company_id}}"
+            },
+            {
+              "user_condition": {
+                "data.user_type": "internal"
+              }
+            }
+          ]
         },
         {
           "data.workshop_id": "{{user.tenant_workshop_id}}"
@@ -467,10 +497,40 @@
           }
         },
         {
-          "data.consulting_firm_id": "{{user.data.consulting_firm_id}}"
+          "$and": [
+            {
+              "data.consulting_firm_id": "{{user.data.consulting_firm_id}}"
+            },
+            {
+              "user_condition": {
+                "data.user_type": "internal"
+              }
+            }
+          ]
         },
         {
-          "data.company_id": "{{user.data.company_id}}"
+          "$and": [
+            {
+              "data.consulting_firm_id": "{{user.consulting_firm_id}}"
+            },
+            {
+              "user_condition": {
+                "user_type": "internal"
+              }
+            }
+          ]
+        },
+        {
+          "$and": [
+            {
+              "data.company_id": "{{user.data.company_id}}"
+            },
+            {
+              "user_condition": {
+                "data.user_type": "internal"
+              }
+            }
+          ]
         },
         {
           "data.workshop_id": "{{user.tenant_workshop_id}}"
@@ -494,10 +554,40 @@
           }
         },
         {
-          "data.consulting_firm_id": "{{user.data.consulting_firm_id}}"
+          "$and": [
+            {
+              "data.consulting_firm_id": "{{user.data.consulting_firm_id}}"
+            },
+            {
+              "user_condition": {
+                "data.user_type": "internal"
+              }
+            }
+          ]
         },
         {
-          "data.company_id": "{{user.data.company_id}}"
+          "$and": [
+            {
+              "data.consulting_firm_id": "{{user.consulting_firm_id}}"
+            },
+            {
+              "user_condition": {
+                "user_type": "internal"
+              }
+            }
+          ]
+        },
+        {
+          "$and": [
+            {
+              "data.company_id": "{{user.data.company_id}}"
+            },
+            {
+              "user_condition": {
+                "data.user_type": "internal"
+              }
+            }
+          ]
         },
         {
           "data.workshop_id": "{{user.tenant_workshop_id}}"
