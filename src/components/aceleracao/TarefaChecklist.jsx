@@ -67,17 +67,14 @@ export default function TarefaChecklist({ tarefaId, workshopId, user }) {
     onSuccess: async (_, { item, novoConcluido }) => {
       if (novoConcluido) {
         try {
-          await base44.entities.ActivityLog.create({
+          await base44.functions.invoke("registrarActivityLog", {
             entity_type: "tarefa_backlog",
             entity_id: tarefaId,
             workshop_id: workshopId,
             event_type: "field_changed",
             summary: `Checklist: item "${item.titulo}" concluído`,
-            actor_id: user?.id,
-            actor_name: user?.full_name,
             field_changed: "checklist_item",
             new_value: "concluido",
-            timestamp: new Date().toISOString(),
           });
         } catch {}
       }
