@@ -269,38 +269,55 @@ export default function DocumentFormDialog({ open, onClose, document, workshopId
         });
         toast.success("Documento atualizado!");
       } else {
-        // Modo followup: fazer upload do arquivo pré-selecionado no submit
-        let file_url = formData.file_url;
-        let file_type = formData.file_type;
-        let file_size = formData.file_size;
+        // Modo followup: fazer upload de TODOS os arquivos anexados e criar um CompanyDocument por arquivo
         if (isFollowup && attachedFiles.length > 0) {
-          const uploadRes = await base44.integrations.Core.UploadFile({ file: attachedFiles[0] });
-          file_url = uploadRes.file_url;
-          file_type = attachedFiles[0].type;
-          file_size = attachedFiles[0].size;
+          const uploadResults = await Promise.all(
+            attachedFiles.map(async (file) => {
+              const { file_url } = await base44.integrations.Core.UploadFile({ file });
+              return { file_url, file_type: file.type, file_size: file.size, file_name: file.name };
+            })
+          );
+
+          const extraFields = {
+            origin: "followup",
+            uploaded_by: user?.id || '',
+            uploaded_by_name: user?.full_name || '',
+            followup_id: followUp?.id || '',
+            tags: ["followup", "anexo"],
+          };
+
+          // bulkCreate: um documento por arquivo
+          const createdDocs = await base44.entities.CompanyDocument.bulkCreate(
+            uploadResults.map((r) => ({
+              ...formData,
+              file_url: r.file_url,
+              file_type: r.file_type,
+              file_size: r.file_size,
+              workshop_id: workshopId,
+              ...extraFields,
+            }))
+          );
+
+          // Notificar usuários interessados
+          const { notifyNewDocument } = await import("./DocumentNotificationManager");
+          await Promise.all((createdDocs || []).map(doc => notifyNewDocument(doc, workshopId).catch(() => {})));
+
+          toast.success(`${(createdDocs || []).length} documento(s) criado(s) no repositório!`);
+          onSuccess(createdDocs);
+          return;
         }
 
-        const extraFields = isFollowup ? {
-          origin: "followup",
-          uploaded_by: user?.id || '',
-          uploaded_by_name: user?.full_name || '',
-          followup_id: followUp?.id || '',
-          tags: ["followup", "anexo"],
-        } : {};
-
+        // Modo repositório: upload de um único arquivo
         const created = await base44.entities.CompanyDocument.create({
           ...formData,
-          ...(file_type ? { file_type, file_size } : {}),
-          file_url,
           workshop_id: workshopId,
-          ...extraFields,
         });
         
         // Notificar usuários interessados
         const { notifyNewDocument } = await import("./DocumentNotificationManager");
         await notifyNewDocument(created, workshopId);
         
-        toast.success(isFollowup ? "Documento criado no repositório!" : "Documento criado!");
+        toast.success("Documento criado!");
         onSuccess(created);
         return;
       }
@@ -622,7 +639,7 @@ export default function DocumentFormDialog({ open, onClose, document, workshopId
                               <span className="text-xs text-gray-500">{formatFileSize(file.size)}</span>
                             </div>
                           </div>
-                          <button type="button" onClick={() => setAttachedFiles([])} className="text-red-500 hover:bg-red-50 rounded p-1 text-lg leading-none" title="Remover arquivo">
+                          <button type="button" onClick={() => setAttachedFiles(prev => prev.filter((_, i) => i !== idx))} className="text-red-500 hover:bg-red-50 rounded p-1 text-lg leading-none flex-shrink-0" title="Remover arquivo">
                             ×
                           </button>
                         </div>
@@ -633,8 +650,8 @@ export default function DocumentFormDialog({ open, onClose, document, workshopId
                   )}
                   <div className="flex gap-2 mt-2">
                     <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-input bg-white text-xs font-medium cursor-pointer hover:bg-gray-50">
-                      🔄 {attachedFiles.length > 0 ? 'Alterar arquivo' : 'Selecionar arquivo'}
-                      <input type="file" className="hidden" accept=".pdf,.xlsx,.docx,.png,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/png" onChange={(e) => { const f = e.target.files[0]; if (f) setAttachedFiles([f]); e.target.value=''; }} />
+                      + Anexar arquivo
+                      <input type="file" className="hidden" accept=".pdf,.xlsx,.docx,.png,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/png" onChange={(e) => { const f = e.target.files[0]; if (f) setAttachedFiles(prev => [...prev, f]); e.target.value=''; }} />
                     </label>
                   </div>
                 </div>

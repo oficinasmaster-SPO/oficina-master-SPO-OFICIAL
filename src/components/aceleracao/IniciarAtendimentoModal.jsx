@@ -2076,14 +2076,14 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
         user={user}
         workshopId={followUp?.workshop_id}
         onClose={() => { setShowDocModal(false); setPendingFile(null); }}
-        onSuccess={(created) => {
+        onSuccess={(createdDocs) => {
           setShowDocModal(false);
-          if (pendingFile) {
-            setUploadedDocs(prev => [...prev, { name: pendingFile.name, size: pendingFile.size, type: pendingFile.type, url: created?.file_url || '' }]);
+          const docs = Array.isArray(createdDocs) ? createdDocs : (createdDocs ? [createdDocs] : []);
+          if (docs.length > 0 && pendingFile) {
+            setUploadedDocs(prev => [...prev, { name: pendingFile.name, size: pendingFile.size, type: pendingFile.type, url: docs[0]?.file_url || '' }]);
           }
           setPendingFile(null);
           queryClient.invalidateQueries({ queryKey: ['company-documents'] });
-          toast.success('Documento criado no repositório.');
         }}
       />
 
