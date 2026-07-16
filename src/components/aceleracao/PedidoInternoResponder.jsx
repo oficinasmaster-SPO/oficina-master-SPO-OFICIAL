@@ -45,7 +45,7 @@ export default function PedidoInternoResponder({ pedido, user, onCancel, onSucce
   const prioridadeBadge = PRIORIDADE_LABELS[pedido.prioridade] || PRIORIDADE_LABELS.media;
 
   const saveMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (novoStatus) => {
       const now = new Date().toISOString();
       const historicoAtual = pedido.historico || [];
       const novasEntradas = [];
@@ -54,31 +54,35 @@ export default function PedidoInternoResponder({ pedido, user, onCancel, onSucce
         acao: 'STATUS_CHANGE',
         campo: 'status',
         valor_anterior: pedido.status,
-        valor_novo: 'concluido',
+        valor_novo: novoStatus,
         usuario_id: user?.id,
         usuario_nome: user?.full_name,
         timestamp: now
       });
 
-      novasEntradas.push({
-        acao: 'RESPONSE',
-        campo: 'resposta',
-        valor_anterior: pedido.resposta || '',
-        valor_novo: resposta,
-        usuario_id: user?.id,
-        usuario_nome: user?.full_name,
-        timestamp: now
-      });
+      if (resposta && resposta !== pedido.resposta) {
+        novasEntradas.push({
+          acao: 'RESPONSE',
+          campo: 'resposta',
+          valor_anterior: pedido.resposta || '',
+          valor_novo: resposta,
+          usuario_id: user?.id,
+          usuario_nome: user?.full_name,
+          timestamp: now
+        });
+      }
 
-      // Mescla as mídias existentes do pedido com as novas anexadas pelo responsável
       const midiasExistentes = pedido.midias_anexas || [];
       const updateData = {
         resposta,
-        status: 'concluido',
+        status: novoStatus,
         historico: [...historicoAtual, ...novasEntradas],
-        data_conclusao: now,
         midias_anexas: [...midiasExistentes, ...midiasAnexas],
       };
+
+      if (novoStatus === 'concluido') {
+        updateData.data_conclusao = now;
+      }
 
       if (!pedido.data_primeira_resposta) {
         updateData.data_primeira_resposta = now;
@@ -87,10 +91,10 @@ export default function PedidoInternoResponder({ pedido, user, onCancel, onSucce
       await base44.entities.PedidoInterno.update(pedido.id, updateData);
 
       // Notificar solicitante
-      if (pedido.requester_id && novasEntradas.length > 0) {
-        const msg = resposta && resposta !== pedido.resposta
-          ? `Seu pedido "${pedido.titulo}" recebeu uma resposta.`
-          : `Seu pedido "${pedido.titulo}" teve o status alterado para: ${status}.`;
+      if (pedido.requester_id) {
+        const msg = novoStatus === 'aprovado'
+          ? `Seu pedido "${pedido.titulo}" foi aprovado. Uma tarefa foi criada para acompanhamento.`
+          : `Seu pedido "${pedido.titulo}" teve o status alterado para: ${novoStatus}.`;
         await base44.functions.invoke('notificarPedidoInterno', {
           pedido_id: pedido.id,
           tipo_notificacao: 'response',
@@ -99,8 +103,8 @@ export default function PedidoInternoResponder({ pedido, user, onCancel, onSucce
         });
       }
     },
-    onSuccess: () => {
-      toast.success('Resposta salva!');
+    onSuccess: (_data, novoStatus) => {
+      toast.success(novoStatus === 'aprovado' ? 'Pedido aprovado! Tarefa criada no backlog.' : 'Resposta salva!');
       onSuccess();
     },
     onError: () => toast.error('Erro ao salvar resposta')
@@ -179,14 +183,27 @@ export default function PedidoInternoResponder({ pedido, user, onCancel, onSucce
 
               <div className="flex gap-3 justify-end pt-2 border-t">
                 <Button variant="outline" onClick={onCancel}>Cancelar</Button>
-                <Button
-                  onClick={() => saveMutation.mutate()}
-                  disabled={saveMutation.isPending || !resposta.trim()}
-                  className="gap-2"
-                >
-                  <CheckCircle className="w-4 h-4" />
-                  {saveMutation.isPending ? 'Salvando...' : 'Salvar Resposta'}
-                </Button>
+                {pedido.status !== 'concluido' && (
+                  <>
+                    <Button
+                      variant="outline"
+                      onClick={() => saveMutation.mutate('aprovado')}
+                      disabled={saveMutation.isPending || !resposta.trim()}
+                      className="gap-2 border-green-300 text-green-700 hover:bg-green-50"
+                    >
+                      <CheckCircle className="w-4 h-4" />
+                      Aprovar e Gerar Tarefa
+                    </Button>
+                    <Button
+                      onClick={() => saveMutation.mutate('concluido')}
+                      disabled={saveMutation.isPending || !resposta.trim()}
+                      className="gap-2"
+                    >
+                      <CheckCircle className="w-4 h-4" />
+                      {saveMutation.isPending ? 'Salvando...' : 'Concluir'}
+                    </Button>
+                  </>
+                )}
               </div>
             </>
           )}
