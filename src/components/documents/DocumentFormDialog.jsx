@@ -301,6 +301,8 @@ export default function DocumentFormDialog({ open, onClose, document, workshopId
         await notifyNewDocument(created, workshopId);
         
         toast.success(isFollowup ? "Documento criado no repositório!" : "Documento criado!");
+        onSuccess(created);
+        return;
       }
       onSuccess();
     } catch (error) {
@@ -620,11 +622,9 @@ export default function DocumentFormDialog({ open, onClose, document, workshopId
                               <span className="text-xs text-gray-500">{formatFileSize(file.size)}</span>
                             </div>
                           </div>
-                          {attachedFiles.length > 1 && (
-                            <button type="button" onClick={() => setAttachedFiles(prev => prev.filter((_, i) => i !== idx))} className="text-red-500 hover:bg-red-50 rounded p-1 text-lg leading-none">
-                              ×
-                            </button>
-                          )}
+                          <button type="button" onClick={() => setAttachedFiles([])} className="text-red-500 hover:bg-red-50 rounded p-1 text-lg leading-none" title="Remover arquivo">
+                            ×
+                          </button>
                         </div>
                       ))}
                     </div>
@@ -633,12 +633,8 @@ export default function DocumentFormDialog({ open, onClose, document, workshopId
                   )}
                   <div className="flex gap-2 mt-2">
                     <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-input bg-white text-xs font-medium cursor-pointer hover:bg-gray-50">
-                      🔄 Alterar arquivo
+                      🔄 {attachedFiles.length > 0 ? 'Alterar arquivo' : 'Selecionar arquivo'}
                       <input type="file" className="hidden" accept=".pdf,.xlsx,.docx,.png,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/png" onChange={(e) => { const f = e.target.files[0]; if (f) setAttachedFiles([f]); e.target.value=''; }} />
-                    </label>
-                    <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-blue-600 cursor-pointer hover:bg-blue-50">
-                      ➕ Adicionar
-                      <input type="file" className="hidden" accept=".pdf,.xlsx,.docx,.png,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/png" onChange={(e) => { const f = e.target.files[0]; if (f) setAttachedFiles(prev => [...prev, f]); e.target.value=''; }} />
                     </label>
                   </div>
                 </div>
