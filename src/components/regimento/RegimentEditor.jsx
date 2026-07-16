@@ -161,9 +161,11 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
     if (!scrollTarget) return;
     const el = document.getElementById(scrollTarget);
     if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
       el.classList.add('ring-2', 'ring-blue-300', 'transition-all');
-      setTimeout(() => el.classList.remove('ring-2', 'ring-blue-300', 'transition-all'), 1800);
+      const focusable = el.querySelector('input, textarea');
+      if (focusable) setTimeout(() => focusable.focus(), 400);
+      setTimeout(() => el.classList.remove('ring-2', 'ring-blue-300', 'transition-all'), 1200);
     }
     setScrollTarget(null);
   }, [scrollTarget]);
@@ -313,7 +315,7 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
         {sections.map(section => {
           const isCustom = !!section.group_item_id;
           return (
-          <div key={section.id} id={`section-${section.id}`} className="border rounded-xl p-6 bg-white shadow-sm scroll-mt-6">
+          <div key={section.id} id={`section-${section.id}`} className="border rounded-xl p-6 bg-white shadow-sm scroll-mt-4">
             <div className="flex items-center justify-between mb-4 gap-3">
               <div className="flex-1 min-w-0 flex items-start gap-2">
                 <span className="font-semibold text-base text-gray-900 shrink-0 mt-1.5">{section.number}.</span>
@@ -352,7 +354,7 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
             ) : null}
             <div className="space-y-3">
               {section.subsections?.map((sub, index) => (
-                <div key={sub.id} id={`subsection-${section.id}-${sub.id}`} className="flex gap-2 items-start scroll-mt-6">
+                <div key={sub.id} id={`subsection-${section.id}-${sub.id}`} className="flex gap-2 items-start scroll-mt-4">
                   <div className="flex-1">
                     <Label className="text-xs text-gray-500 font-medium mb-1 block">{sub.number}</Label>
                     <Textarea
