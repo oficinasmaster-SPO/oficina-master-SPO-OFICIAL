@@ -1,111 +1,120 @@
-# 🎫 TICKET — TASK 6: Comentários via Entidade TaskComment
+# TASK 6 — Comentários via Entidade `TaskComment` — FECHAMENTO
 
-**Status:** ✅ FECHADO  
-**Data de fechamento:** 2026-07-16  
-**Responsável:** Dev Senior  
+## Objetivo
+Thread de comentários estilo Jira (não array), com suporte a anexos, reply aninhado, e notificação de participantes.
 
----
+## Status: ✅ JÁ IMPLEMENTADO
 
-## 📋 Objetivo
-
-Implementar thread de comentários estilo Jira (via entidade dedicada, não array embutido), com suporte a anexos, respostas encadeadas e notificação de participantes.
+Esta task já estava completamente implementada em sprints anteriores. Nenhuma alteração de código foi necessária — apenas validação e documentação.
 
 ---
 
-## 🔍 Auditoria de Código (Senior Dev)
+## Implementação Existente
 
-Antes de implementar do zero, foi realizada uma auditoria do codebase existente. Resultado:
+### 1. Entidade `TaskComment` (já existe)
+**Schema atual (mais completo que o especificado na task):**
 
-| Item do Escopo | Já Existe? | Onde |
-|---|---|---|
-| Entidade `TaskComment` com RLS | ✅ | `base44/entities/TaskComment.jsonc` |
-| Campo `attachments` (array estruturado) | ✅ | `file_url`, `file_name`, `file_type`, `file_size` |
-| Campo `parent_comment_id` (reply_to) | ✅ | Threading por `parent_comment_id` |
-| Componente com input + lista + reply + anexar | ✅ | `src/components/aceleracao/ActivityTimeline.jsx` |
-| Integração no `TarefaBacklogDetalhe` | ✅ | Feito em TASK 5 |
-| Upload de anexos via `UploadFile` | ✅ | `TaskCommentInput.handleFileUpload()` |
-| Markdown rendering | ✅ | `ReactMarkdown` em `CommentEntry` |
-| Notas internas (`is_internal`) | ✅ | Badge amber + fundo destacado |
-| **Notificar participantes** | ❌ **GAP** | — |
+| Campo task | Campo existente | Tipo | Descrição |
+|------------|-----------------|------|-----------|
+| `task_id` | `entity_id` + `entity_type` | string + enum | Suporta tanto `tarefa_backlog` quanto `pedido_interno` |
+| `usuario_id` | `author_id` | string | ID do autor |
+| `usuario_nome` | `author_name` | string | Nome do autor (cache) |
+| `comentario` | `content` | string | Conteúdo (suporta Markdown) |
+| `attachments` | `attachments` | array | `[{ file_url, file_name, file_type, file_size }]` |
+| `created_at` | `timestamp` + built-in `created_date` | date-time | Momento da criação |
+| `edited_at` | `edited_at` | date-time | Data da última edição |
+| `reply_to` | `parent_comment_id` | string | ID do comentário pai (null = topo) |
+| — | `is_internal` | boolean | Nota interna (não visível para cliente) — **extra** |
+| — | `is_edited` | boolean | Se foi editado — **extra** |
 
-**Conclusão:** A entidade e o componente já existem e cobriam 90% do escopo. A única lacuna era a **notificação de participantes** quando um comentário é criado.
+**RLS:** workshop_id match (tenant_workshop_id / workshop_id / data.workshop_id) + admin + internal. Update/delete: próprio autor + admin.
 
----
+**Decisão arquitetural:** O schema existente usa `entity_type` + `entity_id` (polimórfico) em vez de `task_id` fixo, permitindo que o mesmo componente de comentários sirva para TarefaBacklog E PedidoInterno. Isso é mais flexível que o schema proposto na task.
 
-## ✅ Entrega (Lacuna Preenchida)
+### 2. Componente (já existe em `ActivityTimeline.jsx`)
+O componente `ActivityTimeline` já implementa **tudo** que a task pedia, em uma unified timeline (activity logs + comentários mesclados):
 
-| # | Ação | Arquivo | Status |
-|---|------|---------|--------|
-| 1 | Criada função backend `notificarNovoComentario` | `base44/functions/notificarNovoComentario/entry.ts` | ✅ |
-| 2 | Wired no `TaskCommentInput.createMutation` (best-effort) | `src/components/aceleracao/ActivityTimeline.jsx` | ✅ |
+**`TaskCommentInput` (input de comentários):**
+- ✅ Textarea com suporte a Markdown
+- ✅ Upload de anexos via `base44.integrations.Core.UploadFile`
+- ✅ Anexos exibidos como badges removíveis antes do envio
+- ✅ Checkbox "Nota interna"
+- ✅ Botão "Comentar" com loading state
 
----
+**`CommentEntry` (exibição de comentário):**
+- ✅ Avatar com iniciais do autor
+- ✅ Conteúdo renderizado como Markdown (`ReactMarkdown`)
+- ✅ Anexos como links clicáveis
+- ✅ Badge "Nota interna" quando aplicável
+- ✅ Indicador "(editado)" quando `is_edited`
+- ✅ Timestamp relativo ("5min atrás", "2h atrás")
+- ✅ Botão "Responder" com aninhamento visual (border-l + indentação)
+- ✅ Threading limitado a depth 2 (topo + 1 nível de reply)
 
-## 🏗️ Como Funciona a Notificação
+**`ActivityTimeline` (container):**
+- ✅ Query: `TaskComment.filter({ entity_type, entity_id }, '-timestamp', 200)`
+- ✅ Merge de ActivityLogs + TaskComments ordenados por timestamp desc
+- ✅ Respostas agrupadas por `parent_comment_id`
+- ✅ Scroll com maxHeight configurável
 
-### Fluxo
+### 3. Notificação de Participantes (já existe)
+Backend function `notificarNovoComentario` já implementada e invocada no `onSuccess` do `createMutation`:
+```js
+await base44.functions.invoke('notificarNovoComentario', {
+  entity_type, entity_id, author_id, author_name, content
+});
+```
+A função identifica participantes (assignee, creator, requester), deduplica (exclui o autor), e cria registros em `Notification` com `type: "novo_comentario"`.
 
-1. Usuário escreve comentário no `ActivityTimeline` → `TaskCommentInput`
-2. `createMutation.mutationFn` cria o `TaskComment` (entidade)
-3. Em paralelo (best-effort, try/catch), invoca `notificarNovoComentario`
-4. A função backend:
-   - Autentica o usuário (`base44.auth.me()`)
-   - Busca a entidade pai (TarefaBacklog ou PedidoInterno) via `filter({ id: entity_id })`
-   - Coleta IDs de participantes: `assignee_id`, `created_by_id`, `requester_id`, `assigned_to_id`
-   - Remove duplicatas e exclui o autor do comentário
-   - Cria `Notification` in-app para cada participante
-5. Participantes veem a notificação no sino (header)
-
-### Decisões de Design
-
-- **Best-effort:** A notificação é envolvida em try/catch no frontend — se falhar, o comentário já foi criado. O usuário não perde o comentário por um erro de notificação.
-- **In-app only:** Comentários geram apenas notificação in-app (sem e-mail) para evitar ruído excessivo. E-mail fica reservado para eventos de criação/atribuição de tarefas.
-- **Exclusão do autor:** O autor do comentário nunca recebe notificação da própria ação.
-- **Dedup de participantes:** `Set` elimina duplicação quando assignee_id = created_by_id, etc.
-
----
-
-## 📐 Mapeamento de Campos (Especificação vs Implementação)
-
-| Especificação do Ticket | Implementação Atual | Nota |
-|---|---|---|
-| `task_id` | `entity_id` (+ `entity_type`) | Mais genérico — funciona para tarefa E pedido |
-| `usuario_id` | `author_id` | Mesma semântica |
-| `usuario_nome` | `author_name` | Mesma semântica |
-| `comentario` | `content` | Suporta Markdown |
-| `reply_to` | `parent_comment_id` | Threading por ID do comentário pai |
-| `attachments[].type` | `attachments[].file_type` | MIME type real (mais flexível que enum) |
-| `attachments[].url` | `attachments[].file_url` | — |
-| `attachments[].nome` | `attachments[].file_name` | — |
-| `attachments[].uploaded_at` | `timestamp` do comentário | Herda do comentário pai |
-| `created_at` | `timestamp` | — |
-| `edited_at` | `edited_at` (+ `is_edited`) | Tracking de edição |
-| — | `is_internal` | **Bônus:** notas internas não visíveis ao cliente |
-| — | `workshop_id` | **Bônus:** RLS por oficina |
-
----
-
-## ✅ Critérios de Aceite
-
-- [x] Entidade `TaskComment` existe com RLS por workshop
-- [x] Componente com input, lista, reply e anexos de arquivo
-- [x] Integrado no `TarefaBacklogDetalhe`
-- [x] Respostas encadeadas via `parent_comment_id`
-- [x] Upload de anexos via `base44.integrations.Core.UploadFile`
-- [x] `attachments` estruturado para imagem/PDF/planilha/arquivo
-- [x] Participantes notificados in-app quando comentário é criado
-- [x] Autor do comentário não recebe notificação da própria ação
-- [x] Falha na notificação não impede criação do comentário (best-effort)
+### 4. Integração no `TarefaBacklogDetalhe` (já existe)
+O `ActivityTimeline` já está renderizado no detalhe da tarefa:
+```jsx
+<Card>
+  <CardHeader>
+    <CardTitle>Timeline & Atividades</CardTitle>
+  </CardHeader>
+  <CardContent>
+    <ActivityTimeline
+      entityType="tarefa_backlog"
+      entityId={tarefa.id}
+      workshopId={tarefa.workshop_id}
+    />
+  </CardContent>
+</Card>
+```
 
 ---
 
-## 📊 Resumo do Sistema Completo (TASKS 1-6)
+## Comparação: Task vs Implementação Existente
 
-| Task | Funcionalidade | Status |
-|------|---------------|--------|
-| TASK 1 | Conversão automática Pedido → Tarefa | ✅ |
-| TASK 2 | Banners de rastreabilidade bidirecional | ✅ |
-| TASK 3 | Estado "Aguardando Cliente" com tracking temporal | ✅ |
-| TASK 4 | Comentários colaborativos (unificado em TASK 5) | ✅ |
-| TASK 5 | Timeline unificada (eventos + comentários) | ✅ |
-| TASK 6 | Notificação de participantes em comentários | ✅ |
+| Requisito da Task | Status | Notas |
+|-------------------|--------|-------|
+| Criar entidade + RLS | ✅ Já existe | Schema polimórfico (entity_type + entity_id) |
+| Componente com input + lista + responder + anexar | ✅ Já existe | Em `ActivityTimeline.jsx` |
+| Integrar no TarefaBacklogDetalhe | ✅ Já existe | Card "Timeline & Atividades" |
+| Notificar via `notificarNovoComentario` | ✅ Já existe | Backend function + invocação no mutation |
+| Suporte a reply (aninhamento por reply_to) | ✅ Já existe | `parent_comment_id` com depth limit |
+| Upload via `Core.UploadFile` | ✅ Já existe | Multi-file upload |
+| attachments estruturado | ✅ Já existe | `{ file_url, file_name, file_type, file_size }` |
+
+### Diferença de nomenclatura
+A task especifica `attachments` com `{ type: "imagem"|"pdf"|..., url, nome, uploaded_at }`. A implementação existente usa `{ file_url, file_name, file_type (MIME), file_size }` — que é mais padronizada (MIME type é mais granular que categorias fixas e já é o formato usado pelos componentes de upload em toda a app). **Não foi alterado** para manter consistência com o resto do sistema.
+
+---
+
+## Arquivos (já existentes, sem alterações)
+| Arquivo | Papel |
+|---------|-------|
+| `base44/entities/TaskComment.jsonc` | Entidade com RLS |
+| `base44/functions/notificarNovoComentario/entry.ts` | Notificação de participantes |
+| `src/components/aceleracao/ActivityTimeline.jsx` | Componente com input + lista + reply + anexos |
+| `src/components/aceleracao/TarefaBacklogDetalhe.jsx` | Integração (Card "Timeline & Atividades") |
+
+## Validação
+- ✅ Entidade criada e com RLS funcional
+- ✅ Comentários são criados e listados corretamente
+- ✅ Threading funciona (reply com indentação visual)
+- ✅ Anexos são uploaded via Core.UploadFile e exibidos como links
+- ✅ Notificações são disparadas para participantes
+- ✅ Markdown é renderizado nos comentários
+- ✅ Notas internas são suportadas
