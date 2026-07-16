@@ -84,7 +84,16 @@
           "workshop_id": "{{user.data.workshop_id}}"
         },
         {
-          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+          "$and": [
+            {
+              "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+            },
+            {
+              "user_condition": {
+                "data.user_type": "internal"
+              }
+            }
+          ]
         }
       ]
     },
@@ -99,7 +108,16 @@
           "sent_to_user_id": "{{user.id}}"
         },
         {
-          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+          "$and": [
+            {
+              "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+            },
+            {
+              "user_condition": {
+                "data.user_type": "internal"
+              }
+            }
+          ]
         }
       ]
     },
