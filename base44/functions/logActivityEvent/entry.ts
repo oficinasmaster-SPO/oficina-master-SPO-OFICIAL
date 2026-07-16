@@ -29,6 +29,7 @@ const STATUS_LABELS = {
   aberta: 'Aberta',
   em_execucao: 'Em Execução',
   bloqueada: 'Bloqueada',
+  aguardando_cliente: 'Aguardando Cliente',
   concluida: 'Concluída',
   // PedidoInterno
   pendente: 'Pendente',

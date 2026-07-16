@@ -1,52 +1,76 @@
-# 🎫 TICKET — TASK 3: Aguardando Cliente
+# TASK 3 — Status `aguardando_cliente` + Métricas — FECHAMENTO
 
-**Status:** ✅ FECHADO  
-**Data de fechamento:** 2026-07-16  
-**Responsável:** Dev Senior  
+## Objetivo
+Fluxo mais rico de ciclo de vida da tarefa com rastreabilidade temporal do aguardo do cliente, integrado ao painel de execução, dashboard, filtros e log de atividades.
 
----
+## Implementação
 
-## 📋 Objetivo
+### 1. Entity Schema (`TarefaBacklog.jsonc`)
+- **Status enum** — adicionado `aguardando_cliente` entre `em_execucao` e `bloqueada`:
+  ```
+  ["aberta", "em_execucao", "aguardando_cliente", "bloqueada", "concluida"]
+  ```
+- **Novo campo** `usuario_aguardo` (string): ID do usuário que marcou a tarefa como aguardando cliente
+- **Campo reutilizado** `aguardando_cliente_desde` como timestamp `data_aguardo` (já existia, agora preenchido junto com a mudança de status)
 
-Permitir marcar tarefas do backlog como "Aguardando Cliente" — estado em que a execução está parada aguardando resposta, entrega ou decisão do cliente — com tracking de dias, motivo e botão de desmarcação.
+### 2. Painel de Execução (`TarefaBacklogDetalhe.jsx`)
+- **STATUS_CONFIG**: adicionado `aguardando_cliente` com label "Aguardando Cliente" e classe amber
+- **Estado**: `motivoAguardando` + `showAguardarForm`
+- **Mutations**:
+  - `aguardarClienteMutation`: `em_execucao → aguardando_cliente` (seta status + boolean + timestamp + motivo + `usuario_aguardo`)
+  - `retomarMutation`: `aguardando_cliente → em_execucao` (limpa boolean + timestamp + motivo + usuario_aguardo)
+- **Botões no painel**:
+  - "Aguardar Cliente" (visível quando `status === 'em_execucao'`) → abre form de motivo
+  - "Retomar" (visível quando `status === 'aguardando_cliente'`) → volta para `em_execucao`
+  - Badge "Aguardando cliente" exibido quando status ativo
+- **Form de aguardo**: Textarea para motivo + Confirmar/Cancelar
 
----
+### 3. Banner `AguardandoClienteBanner.jsx`
+- Assinatura atualizada para receber `user`
+- `marcarMutation`: agora também seta `status: 'aguardando_cliente'` + `usuario_aguardo: user?.id`
+- `desmarcarMutation`: agora também seta `status: 'em_execucao'` + limpa `usuario_aguardo`
+- Compatibilidade: banner verifica boolean `aguardando_cliente` (que é setado junto com o status)
 
-## ✅ Entregas
+### 4. Card (`BacklogTaskCard.jsx`)
+- Map de status: adicionado `aguardando_cliente: "Aguardando Cliente"`
+- `sideTone`: adicionado `border-l-amber-400` para status aguardando_cliente
+- Badge existente de "Aguardando Cliente" (boolean) continua funcionando
 
-| # | Item | Arquivo | Status |
-|---|------|---------|--------|
-| 1 | Schema: 3 novos campos em TarefaBacklog | `base44/entities/TarefaBacklog.jsonc` | ✅ |
-| 2 | Banner interativo (marcar/desmarcar + motivo + dias) | `src/components/aceleracao/banners/AguardandoClienteBanner.jsx` | ✅ |
-| 3 | Badge na listagem de tarefas | `src/components/aceleracao/BacklogTaskCard.jsx` | ✅ |
-| 4 | Wiring no detalhe da tarefa | `src/components/aceleracao/TarefaBacklogDetalhe.jsx` | ✅ |
+### 5. Dashboard (`BacklogDashboard.jsx`)
+- `getStatusBadge`: adicionado `aguardando_cliente` com classe amber
+- **Novo KPI**: "Aguardando Cliente" com ícone `Hourglass` — conta tarefas com `status === 'aguardando_cliente'`
+- Grid de KPIs expandido de 4 para 5 colunas em desktop
 
----
+### 6. Filtros (`BacklogFilters.jsx`)
+- Dropdown de Status: adicionado `<option value="aguardando_cliente">Aguardando Cliente</option>`
 
-## 🔧 Detalhes Técnicos
+### 7. Log de Atividades (`logActivityEvent/entry.ts`)
+- `STATUS_LABELS`: adicionado `aguardando_cliente: 'Aguardando Cliente'`
+- Mudanças de status para/de `aguardando_cliente` são registradas automaticamente como `status_changed` no `ActivityLog` (via entity automation)
+- Summary gerado: `Status alterado de "Em Execução" para "Aguardando Cliente"`
 
-### Novos Campos (TarefaBacklog)
-| Campo | Tipo | Descrição |
-|-------|------|-----------|
-| `aguardando_cliente` | boolean (default false) | Flag de estado |
-| `aguardando_cliente_desde` | date-time | Início do aguardo (para cálculo de dias) |
-| `aguardando_cliente_motivo` | string | O que foi solicitado ao cliente |
+## Fluxo de Status
+```
+aberta → em_execucao → aguardando_cliente → em_execucao (retomar) → concluida
+                         ↘ bloqueada
+```
 
-### UX do Banner
-- **Estado ativo:** banner amber (normal) → orange (após 3 dias de espera)
-- Mostra motivo, data de início e dias decorridos
-- Botão "Cliente Respondeu" para desmarcar (limpa os 3 campos)
-- **Estado inativo:** botão dashed "Marcar como Aguardando Cliente"
-- Ao clicar, abre formulário com campo de motivo (opcional)
-- Confirmação cria o registro com timestamp atual
+## Arquivos alterados
+| Arquivo | Tipo |
+|---------|------|
+| `base44/entities/TarefaBacklog.jsonc` | Schema: +status enum, +usuario_aguardo |
+| `src/components/aceleracao/TarefaBacklogDetalhe.jsx` | STATUS_CONFIG + mutations + botões + form |
+| `src/components/aceleracao/banners/AguardandoClienteBanner.jsx` | Mutations setam status + usuario_aguardo |
+| `src/components/aceleracao/BacklogTaskCard.jsx` | Status map + sideTone |
+| `src/components/aceleracao/BacklogDashboard.jsx` | getStatusBadge + KPI + import Hourglass |
+| `src/components/aceleracao/BacklogFilters.jsx` | Option no dropdown de status |
+| `base44/functions/logActivityEvent/entry.ts` | STATUS_LABELS + aguardando_cliente |
 
-### Badge na Listagem
-- Badge amber com ícone de relógio ao lado do status
-- Visível sem precisar abrir a tarefa
-- Filtro visual rápido no BacklogDashboard
-
----
-
-## 📐 Próximos Passos
-
-TASK 3 fechada. Prosseguindo para **TASK 4: Comentários Colaborativos** — seção de comentários com respostas encadeadas e notas internas para TarefaBacklog e PedidoInterno, usando a entidade `TaskComment` já existente.
+## Validação
+- ✅ Status `aguardando_cliente` aparece em badges, cards, filtros e dashboard
+- ✅ Botão "Aguardar Cliente" disponível no painel de execução quando em_execucao
+- ✅ Botão "Retomar" disponível quando aguardando_cliente
+- ✅ KPI "Aguardando Cliente" no dashboard
+- ✅ Mudanças de status logadas automaticamente no ActivityLog
+- ✅ `usuario_aguardo` rastreia quem marcou o aguardo
+- ✅ Banner existente continua funcionando (compatibilidade com boolean)

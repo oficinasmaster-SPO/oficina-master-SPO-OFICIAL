@@ -84,6 +84,7 @@ export default function BacklogFilters({
             <option value="all">Todas</option>
             <option value="aberta">Aberta</option>
             <option value="em_execucao">Em Execução</option>
+            <option value="aguardando_cliente">Aguardando Cliente</option>
             <option value="bloqueada">Bloqueada</option>
           </select>
         </div>

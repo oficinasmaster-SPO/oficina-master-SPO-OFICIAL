@@ -22,7 +22,7 @@ function calcularDiasAguardando(desde) {
   return Math.floor(diff / (1000 * 60 * 60 * 24));
 }
 
-export default function AguardandoClienteBanner({ tarefa, podeEditar }) {
+export default function AguardandoClienteBanner({ tarefa, podeEditar, user }) {
   const [showForm, setShowForm] = useState(false);
   const [motivo, setMotivo] = useState("");
   const queryClient = useQueryClient();
@@ -30,9 +30,11 @@ export default function AguardandoClienteBanner({ tarefa, podeEditar }) {
   const marcarMutation = useMutation({
     mutationFn: async () => {
       return await base44.entities.TarefaBacklog.update(tarefa.id, {
+        status: 'aguardando_cliente',
         aguardando_cliente: true,
         aguardando_cliente_desde: new Date().toISOString(),
         aguardando_cliente_motivo: motivo || undefined,
+        usuario_aguardo: user?.id,
       });
     },
     onSuccess: () => {
@@ -48,9 +50,11 @@ export default function AguardandoClienteBanner({ tarefa, podeEditar }) {
   const desmarcarMutation = useMutation({
     mutationFn: async () => {
       return await base44.entities.TarefaBacklog.update(tarefa.id, {
+        status: 'em_execucao',
         aguardando_cliente: false,
         aguardando_cliente_desde: null,
         aguardando_cliente_motivo: null,
+        usuario_aguardo: null,
       });
     },
     onSuccess: () => {

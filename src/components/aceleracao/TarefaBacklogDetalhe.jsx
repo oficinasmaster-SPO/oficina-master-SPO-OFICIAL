@@ -17,10 +17,11 @@ import AguardandoClienteBanner from "./banners/AguardandoClienteBanner";
 import ActivityTimeline from "./ActivityTimeline";
 
 const STATUS_CONFIG = {
-  aberta:      { label: "Aberta",       className: "bg-gray-100 text-gray-800" },
-  em_execucao: { label: "Em Execução",  className: "bg-blue-100 text-blue-800" },
-  bloqueada:   { label: "Bloqueada",    className: "bg-red-100 text-red-800" },
-  concluida:   { label: "Concluída",    className: "bg-green-100 text-green-800" },
+  aberta:             { label: "Aberta",              className: "bg-gray-100 text-gray-800" },
+  em_execucao:        { label: "Em Execução",         className: "bg-blue-100 text-blue-800" },
+  aguardando_cliente: { label: "Aguardando Cliente",  className: "bg-amber-100 text-amber-800" },
+  bloqueada:          { label: "Bloqueada",           className: "bg-red-100 text-red-800" },
+  concluida:          { label: "Concluída",           className: "bg-green-100 text-green-800" },
 };
 
 const PRIORIDADE_CONFIG = {
@@ -76,6 +77,8 @@ export default function TarefaBacklogDetalhe({ tarefa, user, onVoltar, onEditar,
   const [anexosExecucao, setAnexosExecucao] = useState(tarefa?.anexos || []);
   const [motivoBloqueio, setMotivoBloqueio] = useState(tarefa?.motivo_bloqueio || '');
   const [showBloquearForm, setShowBloquearForm] = useState(false);
+  const [motivoAguardando, setMotivoAguardando] = useState(tarefa?.aguardando_cliente_motivo || '');
+  const [showAguardarForm, setShowAguardarForm] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -158,6 +161,37 @@ export default function TarefaBacklogDetalhe({ tarefa, user, onVoltar, onEditar,
     onSuccess: () => {
       toast.warning('Tarefa marcada como bloqueada.');
       setShowBloquearForm(false);
+      if (onConcluir) onConcluir();
+    }
+  });
+
+  // Aguardar cliente (em_execucao → aguardando_cliente)
+  const aguardarClienteMutation = useMutation({
+    mutationFn: async () => base44.entities.TarefaBacklog.update(tarefa.id, {
+      status: 'aguardando_cliente',
+      aguardando_cliente: true,
+      aguardando_cliente_desde: new Date().toISOString(),
+      aguardando_cliente_motivo: motivoAguardando || undefined,
+      usuario_aguardo: user?.id,
+    }),
+    onSuccess: () => {
+      toast.success('Tarefa marcada como aguardando cliente.');
+      setShowAguardarForm(false);
+      if (onConcluir) onConcluir();
+    }
+  });
+
+  // Retomar tarefa (aguardando_cliente → em_execucao)
+  const retomarMutation = useMutation({
+    mutationFn: async () => base44.entities.TarefaBacklog.update(tarefa.id, {
+      status: 'em_execucao',
+      aguardando_cliente: false,
+      aguardando_cliente_desde: null,
+      aguardando_cliente_motivo: null,
+      usuario_aguardo: null,
+    }),
+    onSuccess: () => {
+      toast.success('Tarefa retomada.');
       if (onConcluir) onConcluir();
     }
   });
@@ -252,7 +286,7 @@ export default function TarefaBacklogDetalhe({ tarefa, user, onVoltar, onEditar,
       <OrigemPedidoBanner tarefa={tarefa} />
 
       {/* Banner de estado — aguardando resposta/entrega do cliente */}
-      <AguardandoClienteBanner tarefa={tarefa} podeEditar={podeEditar} />
+      <AguardandoClienteBanner tarefa={tarefa} podeEditar={podeEditar} user={user} />
 
       {/* ── Grid principal: Dados + Responsáveis ── */}
       <div className="grid items-start gap-6 lg:grid-cols-[3fr_2fr]">
@@ -411,6 +445,30 @@ export default function TarefaBacklogDetalhe({ tarefa, user, onVoltar, onEditar,
               {tarefa.status === 'em_execucao' && (
                 <Badge className="bg-blue-100 text-blue-800 text-xs px-3 py-1">Em execução</Badge>
               )}
+              {tarefa.status === 'aguardando_cliente' && (
+                <Badge className="bg-amber-100 text-amber-800 text-xs px-3 py-1">Aguardando cliente</Badge>
+              )}
+              {tarefa.status === 'em_execucao' && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-amber-300 text-amber-700 hover:bg-amber-50 gap-2"
+                  onClick={() => setShowAguardarForm(!showAguardarForm)}
+                >
+                  <Clock className="w-4 h-4" /> Aguardar Cliente
+                </Button>
+              )}
+              {tarefa.status === 'aguardando_cliente' && (
+                <Button
+                  size="sm"
+                  className="bg-blue-600 hover:bg-blue-700 text-white gap-2"
+                  onClick={() => retomarMutation.mutate()}
+                  disabled={retomarMutation.isPending}
+                >
+                  <Play className="w-4 h-4" />
+                  {retomarMutation.isPending ? 'Retomando...' : 'Retomar'}
+                </Button>
+              )}
               <Button
                 size="sm"
                 variant="outline"
@@ -441,6 +499,30 @@ export default function TarefaBacklogDetalhe({ tarefa, user, onVoltar, onEditar,
                     Confirmar Bloqueio
                   </Button>
                   <Button size="sm" variant="ghost" onClick={() => setShowBloquearForm(false)}>Cancelar</Button>
+                </div>
+              </div>
+            )}
+
+            {/* Form de aguardar cliente */}
+            {showAguardarForm && (
+              <div className="space-y-2">
+                <Label className="text-sm text-amber-700">Motivo do aguardo *</Label>
+                <Textarea
+                  value={motivoAguardando}
+                  onChange={(e) => setMotivoAguardando(e.target.value)}
+                  placeholder="O que foi solicitado ao cliente? (ex: 'Aguardando envio do layout do pátio')"
+                  rows={2}
+                />
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    className="bg-amber-600 hover:bg-amber-700 text-white"
+                    onClick={() => aguardarClienteMutation.mutate()}
+                    disabled={aguardarClienteMutation.isPending}
+                  >
+                    Confirmar
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setShowAguardarForm(false)}>Cancelar</Button>
                 </div>
               </div>
             )}

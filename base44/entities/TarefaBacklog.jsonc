@@ -93,6 +93,7 @@
       "enum": [
         "aberta",
         "em_execucao",
+        "aguardando_cliente",
         "bloqueada",
         "concluida"
       ],
@@ -121,11 +122,15 @@
     "aguardando_cliente_desde": {
       "type": "string",
       "format": "date-time",
-      "description": "Data/hora em que a tarefa passou a aguardar o cliente"
+      "description": "Data/hora em que a tarefa passou a aguardar o cliente (data_aguardo)"
     },
     "aguardando_cliente_motivo": {
       "type": "string",
-      "description": "Motivo/Motivo do aguardo do cliente (o que foi solicitado)"
+      "description": "Motivo do aguardo do cliente (o que foi solicitado)"
+    },
+    "usuario_aguardo": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio que marcou a tarefa como aguardando cliente"
     },
     "data_conclusao": {
       "type": "string",

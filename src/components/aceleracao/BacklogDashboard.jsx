@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, AlertCircle, TrendingUp, Clock, Play, CheckCircle } from "lucide-react";
+import { Plus, AlertCircle, TrendingUp, Clock, Play, CheckCircle, Hourglass } from "lucide-react";
 import TarefaBacklogForm from "./TarefaBacklogForm";
 import TarefaBacklogDetalhe from "./TarefaBacklogDetalhe";
 import BacklogFilters from "./BacklogFilters";
@@ -141,6 +141,7 @@ export default function BacklogDashboard({ workshopId, user }) {
     const badges = {
       aberta: { label: "Aberta", className: "bg-gray-100 text-gray-800" },
       em_execucao: { label: "Em Execução", className: "bg-blue-100 text-blue-800" },
+      aguardando_cliente: { label: "Aguardando Cliente", className: "bg-amber-100 text-amber-800" },
       bloqueada: { label: "Bloqueada", className: "bg-red-100 text-red-800" },
       concluida: { label: "Concluída", className: "bg-green-100 text-green-800" }
     };
@@ -184,11 +185,12 @@ export default function BacklogDashboard({ workshopId, user }) {
         ) : null}
       </TarefaBacklogModal>
 
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
         <AccelerationKpi icon={Clock} value={backlogTotal.length} label="Total" tone="text-blue-700" iconTone="text-blue-500" />
         <AccelerationKpi icon={AlertCircle} value={backlogCritico.length} label="Críticas" tone="text-red-700" iconTone="text-red-500" />
         <AccelerationKpi icon={TrendingUp} value={`${backlogTotal.length > 0 ? ((backlogCritico.length / backlogTotal.length) * 100).toFixed(0) : 0}%`} label="Críticas" tone="text-amber-700" iconTone="text-amber-500" />
-        <AccelerationKpi value={tarefas.filter(t => t.status === 'bloqueada').length} label="Bloqueadas" />
+        <AccelerationKpi icon={Hourglass} value={backlogTotal.filter(t => t.status === 'aguardando_cliente').length} label="Aguardando Cliente" tone="text-amber-700" iconTone="text-amber-500" />
+        <AccelerationKpi value={backlogTotal.filter(t => t.status === 'bloqueada').length} label="Bloqueadas" />
       </div>
 
       <div className="flex justify-end">

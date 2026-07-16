@@ -1,45 +1,44 @@
-# 🎫 TICKET — TASK 2: Banners de Rastreabilidade Bidirecional
+# TASK 2 — Banner de Origem "Pedido" na Tarefa — FECHAMENTO
 
-**Status:** ✅ FECHADO  
-**Data de fechamento:** 2026-07-16  
-**Responsável:** Dev Senior  
+## Objetivo
+Rastreabilidade bidirecional tarefa → pedido: exibir no detalhe da tarefa de backlog a origem em um Pedido Interno, com ID, status colorido e modal de visualização rápida.
 
----
+## Implementação
 
-## 📋 Objetivo
+### Componente: `OrigemPedidoBanner.jsx` (refatorado)
+- **Busca do pedido**: `useQuery` busca `PedidoInterno` por `tarefa.origin_id` quando `origin_type === 'pedido'`
+- **Exibição no banner**:
+  - Ícone + label "Originada de um Pedido Interno"
+  - `#ID` (últimos 6 caracteres do origin_id para legibilidade)
+  - Título do pedido (fallback para `origin_title` ou `tarefa.titulo`)
+  - Badge de status colorido conforme enum do `PedidoInterno.status`:
+    - `pendente` → cinza
+    - `em_analise` → azul
+    - `aprovado` → verde
+    - `recusado` → vermelho
+    - `concluido` → teal
+- **Botão "Ver Pedido Original"**: abre `Dialog` (modal) com detalhes completos:
+  - Status badge, título, descrição, solicitante, responsável, tipo, prazo
+  - Link "Abrir página do pedido" → `/ControleAceleracao?tab=pedidos&pedido_id=...`
 
-Exibir banners visuais linkando PedidoInterno ↔ TarefaBacklog nas telas de detalhe de ambos, tornando a rastreabilidade da auto-conversão (TASK 1) visível para o usuário.
+### Condição de exibição
+```
+tarefa.origin_type === 'pedido' && tarefa.origin_id
+```
 
----
+## Arquivos alterados
+| Arquivo | Tipo |
+|---------|------|
+| `src/components/aceleracao/banners/OrigemPedidoBanner.jsx` | Refatorado (full rewrite) |
 
-## ✅ Entregas
+## Dependências
+- `PedidoInterno` entity (leitura via `base44.entities.PedidoInterno.filter`)
+- `Dialog` component (`@/components/ui/dialog`)
+- `useQuery` (`@tanstack/react-query`)
 
-| # | Item | Arquivo | Status |
-|---|------|---------|--------|
-| 1 | Banner na TarefaBacklogDetalhe (origem=pedido) | `src/components/aceleracao/banners/OrigemPedidoBanner.jsx` | ✅ |
-| 2 | Banner no PedidoInternoResponder (tarefa convertida) | `src/components/aceleracao/banners/TarefaConvertidaBanner.jsx` | ✅ |
-| 3 | Wiring no TarefaBacklogDetalhe | `src/components/aceleracao/TarefaBacklogDetalhe.jsx` | ✅ |
-| 4 | Wiring no PedidoInternoResponder | `src/components/aceleracao/PedidoInternoResponder.jsx` | ✅ |
-
----
-
-## 🔧 Detalhes Técnicos
-
-### OrigemPedidoBanner
-- Renderiza quando `tarefa.origin_type === 'pedido'` e `tarefa.origin_id` existe
-- Usa campos em cache (`origin_title`) — sem query adicional
-- Link para `/ControleAceleracao?tab=pedidos&pedido_id=...`
-- Paleta teal (distinta do banner azul de ATA)
-
-### TarefaConvertidaBanner
-- Query lazy em `TarefaBacklog` por `{ origin_type: 'pedido', origin_id: pedido.id }`
-- Loading state graceful (spinner)
-- Só renderiza se a tarefa existe (pedido já foi convertido)
-- Mostra status da tarefa com badge colorido
-- Link para `/ControleAceleracao?tab=backlog&tarefa_id=...`
-
----
-
-## 📐 Próximos Passos
-
-TASK 2 fechada. Prosseguindo para **TASK 3: Aguardando Cliente** — estado de tarefa bloqueada aguardando resposta/entrega do cliente, com banner visual, tracking de dias e toggle.
+## Validação
+- ✅ Banner renderiza quando `origin_type === 'pedido'`
+- ✅ Badge de status reflete o status real do pedido (buscado dinamicamente)
+- ✅ Modal abre com detalhes do pedido
+- ✅ Link externo para página de pedidos funciona
+- ✅ `e.stopPropagation()` previne conflito com cliques do card pai
