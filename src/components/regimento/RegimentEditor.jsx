@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -155,6 +155,19 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
     };
   });
 
+  const [scrollTarget, setScrollTarget] = useState(null);
+
+  useEffect(() => {
+    if (!scrollTarget) return;
+    const el = document.getElementById(scrollTarget);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.classList.add('ring-2', 'ring-blue-300', 'transition-all');
+      setTimeout(() => el.classList.remove('ring-2', 'ring-blue-300', 'transition-all'), 1800);
+    }
+    setScrollTarget(null);
+  }, [scrollTarget]);
+
   const saveMutation = useMutation({
     mutationFn: async (data) => {
       if (regiment?.id) {
@@ -230,12 +243,14 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
       ? parseFloat(subsections[subsections.length - 1].number) 
       : parseFloat(section.number);
     const newSubNumber = (Math.floor(lastSubNumber) + (subsections.length + 1) * 0.1).toFixed(1);
+    const newSubId = `${sectionId}.${subsections.length + 1}`;
     newSections[sectionIndex].subsections = [...subsections, {
-      id: `${sectionId}.${subsections.length + 1}`,
+      id: newSubId,
       number: newSubNumber,
       content: ""
     }];
     setFormData({ ...formData, sections: newSections });
+    setScrollTarget(`subsection-${sectionId}-${newSubId}`);
   };
 
   const removeSubsection = (sectionId, subIndex) => {
@@ -253,8 +268,9 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
       const n = parseInt(s.number, 10);
       return isNaN(n) ? max : Math.max(max, n);
     }, 0);
+    const newId = `custom-${Date.now()}`;
     const newSection = {
-      id: `custom-${Date.now()}`,
+      id: newId,
       number: String(maxNum + 1),
       title: "NOVA SEÇÃO",
       content: "",
@@ -262,6 +278,7 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
       group_item_id: item.id
     };
     setFormData({ ...formData, sections: [...allSections, newSection] });
+    setScrollTarget(`section-${newId}`);
   };
 
   const removeSection = (sectionId) => {
@@ -296,7 +313,7 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
         {sections.map(section => {
           const isCustom = !!section.group_item_id;
           return (
-          <div key={section.id} className="border rounded-xl p-6 bg-white shadow-sm">
+          <div key={section.id} id={`section-${section.id}`} className="border rounded-xl p-6 bg-white shadow-sm scroll-mt-6">
             <div className="flex items-center justify-between mb-4 gap-3">
               <div className="flex-1 min-w-0 flex items-start gap-2">
                 <span className="font-semibold text-base text-gray-900 shrink-0 mt-1.5">{section.number}.</span>
@@ -335,7 +352,7 @@ export default function RegimentEditor({ regiment, workshop, onSave, onCancel })
             ) : null}
             <div className="space-y-3">
               {section.subsections?.map((sub, index) => (
-                <div key={sub.id} className="flex gap-2 items-start">
+                <div key={sub.id} id={`subsection-${section.id}-${sub.id}`} className="flex gap-2 items-start scroll-mt-6">
                   <div className="flex-1">
                     <Label className="text-xs text-gray-500 font-medium mb-1 block">{sub.number}</Label>
                     <Textarea
