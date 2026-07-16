@@ -6,14 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, History, CheckCircle, Clock } from "lucide-react";
+import { ArrowLeft, History, CheckCircle, Clock, Activity } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import PedidoInternoVisualizador from "./PedidoInternoVisualizador";
 import PedidoInternoMediaUpload from "./PedidoInternoMediaUpload";
 import TarefaConvertidaBanner from "./banners/TarefaConvertidaBanner";
-import CommentsSection from "./CommentsSection";
+import ActivityTimeline from "./ActivityTimeline";
 
 const STATUS_LABELS = {
   pendente: { label: "Pendente", className: "bg-gray-100 text-gray-800" },
@@ -253,13 +253,22 @@ export default function PedidoInternoResponder({ pedido, user, onCancel, onSucce
         </Card>
       )}
 
-      {/* Seção de Comentários Colaborativos */}
-      <CommentsSection
-        entityType="pedido_interno"
-        entityId={pedido.id}
-        workshopId={pedido.workshop_id}
-        currentUser={user}
-      />
+      {/* Timeline Unificada: ActivityLog (eventos automáticos) + Comentários */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Activity className="w-4 h-4" />
+            Timeline & Atividades
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ActivityTimeline
+            entityType="pedido_interno"
+            entityId={pedido.id}
+            workshopId={pedido.workshop_id}
+          />
+        </CardContent>
+      </Card>
     </div>
   );
 }

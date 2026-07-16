@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, User, Calendar, Clock, Tag, AlertCircle, FileText, CheckCircle, ExternalLink, Play, Lock, Paperclip } from "lucide-react";
+import { ArrowLeft, User, Calendar, Clock, Tag, AlertCircle, FileText, CheckCircle, ExternalLink, Play, Lock, Paperclip, Activity } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -14,7 +14,7 @@ import TarefaBacklogAnexosVisualizador from "./TarefaBacklogAnexosVisualizador";
 import TarefaBacklogMediaUpload from "./TarefaBacklogMediaUpload";
 import OrigemPedidoBanner from "./banners/OrigemPedidoBanner";
 import AguardandoClienteBanner from "./banners/AguardandoClienteBanner";
-import CommentsSection from "./CommentsSection";
+import ActivityTimeline from "./ActivityTimeline";
 
 const STATUS_CONFIG = {
   aberta:      { label: "Aberta",       className: "bg-gray-100 text-gray-800" },
@@ -495,13 +495,22 @@ export default function TarefaBacklogDetalhe({ tarefa, user, onVoltar, onEditar,
         </Card>
       )}
 
-      {/* Seção de Comentários Colaborativos */}
-      <CommentsSection
-        entityType="tarefa_backlog"
-        entityId={tarefa.id}
-        workshopId={tarefa.workshop_id}
-        currentUser={user}
-      />
+      {/* Timeline Unificada: ActivityLog (eventos automáticos) + Comentários */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Activity className="w-4 h-4" />
+            Timeline & Atividades
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ActivityTimeline
+            entityType="tarefa_backlog"
+            entityId={tarefa.id}
+            workshopId={tarefa.workshop_id}
+          />
+        </CardContent>
+      </Card>
     </div>
   );
 }
