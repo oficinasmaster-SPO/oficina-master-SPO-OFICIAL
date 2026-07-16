@@ -1,0 +1,149 @@
+{
+  "name": "BacklogChecklistItem",
+  "type": "object",
+  "properties": {
+    "task_id": {
+      "type": "string",
+      "description": "ID da TarefaBacklog pai"
+    },
+    "workshop_id": {
+      "type": "string",
+      "description": "ID da oficina (para RLS \u2014 mesmo workshop_id da tarefa pai)"
+    },
+    "titulo": {
+      "type": "string",
+      "description": "T\u00edtulo do item de checklist"
+    },
+    "descricao": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o detalhada do item"
+    },
+    "ordem": {
+      "type": "integer",
+      "default": 0,
+      "description": "Ordem de exibi\u00e7\u00e3o dentro do checklist"
+    },
+    "concluido": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se o item foi conclu\u00eddo"
+    },
+    "completed_by": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio que concluiu o item"
+    },
+    "completed_by_name": {
+      "type": "string",
+      "description": "Nome do usu\u00e1rio que concluiu (cache para exibi\u00e7\u00e3o)"
+    }
+  },
+  "required": [
+    "task_id",
+    "workshop_id",
+    "titulo"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data.user_type": "internal"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data.user_type": "internal"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data.user_type": "internal"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

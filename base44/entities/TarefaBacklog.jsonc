@@ -150,6 +150,16 @@
       "type": "number",
       "description": "Tempo real gasto em horas"
     },
+    "checklist_total": {
+      "type": "integer",
+      "default": 0,
+      "description": "Total de itens no checklist (cache denormalizado para exibi\u00e7\u00e3o no card)"
+    },
+    "checklist_concluidos": {
+      "type": "integer",
+      "default": 0,
+      "description": "Itens conclu\u00eddos do checklist (cache denormalizado para exibi\u00e7\u00e3o no card)"
+    },
     "notas": {
       "type": "string",
       "description": "Notas adicionais"

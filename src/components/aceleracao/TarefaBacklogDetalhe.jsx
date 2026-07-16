@@ -15,6 +15,7 @@ import TarefaBacklogMediaUpload from "./TarefaBacklogMediaUpload";
 import OrigemPedidoBanner from "./banners/OrigemPedidoBanner";
 import AguardandoClienteBanner from "./banners/AguardandoClienteBanner";
 import ActivityTimeline from "./ActivityTimeline";
+import TarefaChecklist from "./TarefaChecklist";
 
 const STATUS_CONFIG = {
   aberta:             { label: "Aberta",              className: "bg-gray-100 text-gray-800" },
@@ -589,6 +590,20 @@ export default function TarefaBacklogDetalhe({ tarefa, user, onVoltar, onEditar,
           </CardContent>
         </Card>
       )}
+
+      {/* Checklist estruturado */}
+      <Card className="rounded-xl">
+        <CardHeader className="p-4 pb-2">
+          <CardTitle className="text-base">Checklist</CardTitle>
+        </CardHeader>
+        <CardContent className="p-4 pt-2">
+          <TarefaChecklist
+            tarefaId={tarefa.id}
+            workshopId={tarefa.workshop_id}
+            user={user}
+          />
+        </CardContent>
+      </Card>
 
       {/* Timeline Unificada: ActivityLog (eventos automáticos) + Comentários */}
       <Card>
