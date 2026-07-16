@@ -22,9 +22,9 @@ Deno.serve(async (req) => {
     const message = `A tarefa '${titulo}' mudou para: ${novoStatus}`;
 
     // Notificar quem criou a tarefa
-    if (data.criado_por_id) {
+    if (data.created_by_id) {
       await base44.asServiceRole.entities.Notification.create({
-        user_id: data.criado_por_id,
+        user_id: data.created_by_id,
         type: 'tarefa_mudanca_status',
         title: 'Tarefa com Status Alterado',
         message: message,

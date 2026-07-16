@@ -24,7 +24,7 @@ export default function BacklogDashboard({ workshopId, user }) {
     cliente: 'all',
     status: 'all',
     prioridade: 'all',
-    origem: 'all'
+    origin_type: 'all'
   });
   const queryClient = useQueryClient();
 
@@ -32,7 +32,7 @@ export default function BacklogDashboard({ workshopId, user }) {
     queryKey: ['tarefas-backlog', workshopId],
     queryFn: async () => {
       const all = workshopId
-        ? await base44.entities.TarefaBacklog.filter({ cliente_id: workshopId }, '-prazo')
+        ? await base44.entities.TarefaBacklog.filter({ workshop_id: workshopId }, '-prazo')
         : await base44.entities.TarefaBacklog.list('-prazo');
       return all || [];
     },
@@ -69,7 +69,7 @@ export default function BacklogDashboard({ workshopId, user }) {
   // Backlog por consultor
   const backlogPorConsultor = {};
   backlogTotal.forEach(tarefa => {
-    const consultor = tarefa.consultor_nome || 'Sem consultor';
+    const consultor = tarefa.assignee_name || 'Sem consultor';
     if (!backlogPorConsultor[consultor]) {
       backlogPorConsultor[consultor] = {
         total: 0,
@@ -89,7 +89,7 @@ export default function BacklogDashboard({ workshopId, user }) {
   // Backlog por cliente
   const backlogPorCliente = {};
   backlogTotal.forEach(tarefa => {
-    const cliente = tarefa.cliente_nome || 'Sem cliente';
+    const cliente = tarefa.workshop_nome || 'Sem cliente';
     if (!backlogPorCliente[cliente]) {
       backlogPorCliente[cliente] = {
         total: 0,
@@ -107,22 +107,22 @@ export default function BacklogDashboard({ workshopId, user }) {
   });
 
   const consultoresUnicos = useMemo(() => {
-    return [...new Set(tarefas.map(t => t.consultor_nome).filter(Boolean))].sort();
+    return [...new Set(tarefas.map(t => t.assignee_name).filter(Boolean))].sort();
   }, [tarefas]);
 
   const clientesUnicos = useMemo(() => {
-    return [...new Set(tarefas.map(t => t.cliente_nome).filter(Boolean))].sort();
+    return [...new Set(tarefas.map(t => t.workshop_nome).filter(Boolean))].sort();
   }, [tarefas]);
 
   const filteredTarefas = backlogTotal.filter(t => {
     const matchSearch = filters.search === '' || 
       t.titulo?.toLowerCase().includes(filters.search.toLowerCase()) ||
-      t.cliente_nome?.toLowerCase().includes(filters.search.toLowerCase());
-    const matchConsultor = filters.consultor === 'all' || t.consultor_nome === filters.consultor;
-    const matchCliente = filters.cliente === 'all' || t.cliente_nome === filters.cliente;
+      t.workshop_nome?.toLowerCase().includes(filters.search.toLowerCase());
+    const matchConsultor = filters.consultor === 'all' || t.assignee_name === filters.consultor;
+    const matchCliente = filters.cliente === 'all' || t.workshop_nome === filters.cliente;
     const matchStatus = filters.status === 'all' || t.status === filters.status;
     const matchPrioridade = filters.prioridade === 'all' || t.prioridade === filters.prioridade;
-    const matchOrigem = filters.origem === 'all' || t.origem === filters.origem;
+    const matchOrigem = filters.origin_type === 'all' || t.origin_type === filters.origin_type;
     
     return matchSearch && matchConsultor && matchCliente && matchStatus && matchPrioridade && matchOrigem;
   });

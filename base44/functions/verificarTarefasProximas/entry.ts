@@ -16,7 +16,7 @@ Deno.serve(async (req) => {
     let notificacoes = 0;
 
     for (const tarefa of tarefas) {
-      if (!tarefa.prazo || !tarefa.atribuido_para_id) continue;
+      if (!tarefa.prazo || !tarefa.assigned_to_id) continue;
 
       const prazoData = new Date(tarefa.prazo);
 
@@ -26,7 +26,7 @@ Deno.serve(async (req) => {
         const message = `⚠️ Prazo próximo: ${tarefa.titulo} vence em ${horasRestantes} hora(s)`;
 
         await base44.asServiceRole.entities.Notification.create({
-          user_id: tarefa.atribuido_para_id,
+          user_id: tarefa.assigned_to_id,
           type: 'tarefa_prazo_proximo',
           title: 'Prazo Próximo',
           message: message,

@@ -33,7 +33,7 @@ export default function PedidosInternosTab({ workshopId, user }) {
     queryKey: ['pedidos-internos', workshopId],
     queryFn: async () => {
       const all = workshopId
-        ? await base44.entities.PedidoInterno.filter({ cliente_id: workshopId }, '-created_date')
+        ? await base44.entities.PedidoInterno.filter({ workshop_id: workshopId }, '-created_date')
         : await base44.entities.PedidoInterno.list('-created_date');
       return all || [];
     },
@@ -106,7 +106,7 @@ export default function PedidosInternosTab({ workshopId, user }) {
 
   // Responsável vê tela de resposta; solicitante/admin vê tela de edição
   const isResponsavel = (pedido) =>
-    pedido.responsavel_id === user?.id && pedido.solicitante_id !== user?.id;
+    pedido.assignee_id === user?.id && pedido.requester_id !== user?.id;
 
   const handleChangeStatus = async (pedidoId, newStatus) => {
     const updateData = { status: newStatus };
@@ -119,8 +119,8 @@ export default function PedidosInternosTab({ workshopId, user }) {
   const filteredPedidos = pedidos.filter(p => {
     const matchSearch = filters.search === '' || 
       p.titulo?.toLowerCase().includes(filters.search.toLowerCase()) ||
-      p.cliente_nome?.toLowerCase().includes(filters.search.toLowerCase());
-    const matchResponsavel = filters.responsavel === 'all' || p.responsavel_nome === filters.responsavel;
+      p.workshop_nome?.toLowerCase().includes(filters.search.toLowerCase());
+    const matchResponsavel = filters.responsavel === 'all' || p.assignee_name === filters.responsavel;
     const matchStatus = filters.status === 'all' || p.status === filters.status;
     const matchPrioridade = filters.prioridade === 'all' || p.prioridade === filters.prioridade;
     const matchTipo = filters.tipo === 'all' || p.tipo === filters.tipo;
@@ -144,7 +144,7 @@ export default function PedidosInternosTab({ workshopId, user }) {
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden">
       <PedidoInternoModal open={showForm} onClose={() => { setShowForm(false); setEditingPedido(null); }}>
-        {showForm && editingPedido && editingPedido.responsavel_id === user?.id && editingPedido.solicitante_id !== user?.id ? (
+        {showForm && editingPedido && editingPedido.assignee_id === user?.id && editingPedido.requester_id !== user?.id ? (
           <PedidoInternoResponder pedido={editingPedido} user={user} onCancel={() => { setShowForm(false); setEditingPedido(null); }} onSuccess={onFormClose} />
         ) : showForm ? (
           <PedidoInternoForm pedido={editingPedido} user={user} usuarios={usuarios} onCancel={() => { setShowForm(false); setEditingPedido(null); }} onSuccess={onFormClose} />

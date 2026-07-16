@@ -19,8 +19,8 @@ Deno.serve(async (req) => {
     }
 
     const pedido = data;
-    if (!pedido?.id || !pedido?.cliente_id) {
-      return Response.json({ skipped: true, reason: 'Pedido sem id ou cliente_id' });
+    if (!pedido?.id || !pedido?.workshop_id) {
+      return Response.json({ skipped: true, reason: 'Pedido sem id ou workshop_id' });
     }
 
     // Idempotência
@@ -45,18 +45,18 @@ Deno.serve(async (req) => {
 
     // Tentar obter consulting_firm_id do responsável para respeitar RLS
     let consultingFirmId = null;
-    if (pedido.responsavel_id) {
+    if (pedido.assignee_id) {
       try {
-        const users = await base44.asServiceRole.entities.User.filter({ id: pedido.responsavel_id });
+        const users = await base44.asServiceRole.entities.User.filter({ id: pedido.assignee_id });
         consultingFirmId = users?.[0]?.data?.consulting_firm_id || null;
       } catch { /* não crítico */ }
     }
 
     const fuData = {
-      workshop_id: pedido.cliente_id,
-      workshop_name: pedido.cliente_nome || null,
-      consultor_id: pedido.responsavel_id,
-      consultor_nome: pedido.responsavel_nome || null,
+      workshop_id: pedido.workshop_id,
+      workshop_name: pedido.workshop_nome || null,
+      consultor_id: pedido.assignee_id,
+      consultor_nome: pedido.assignee_name || null,
       reminder_date: prazoStr,
       sequence_number: 1,
       origin_type: 'pedido_interno',
@@ -65,9 +65,9 @@ Deno.serve(async (req) => {
       origem_ata_titulo: null,
       origem_descricao: pedido.titulo || null,
       origem_status: pedido.status || 'pendente',
-      origem_responsavel_id: pedido.responsavel_id || null,
-      origem_responsavel_nome: pedido.responsavel_nome || null,
-      origem_solicitante_nome: pedido.solicitante_nome || null,
+      origem_responsavel_id: pedido.assignee_id || null,
+      origem_responsavel_nome: pedido.assignee_name || null,
+      origem_solicitante_nome: pedido.requester_name || null,
       is_completed: false,
       notes: `Follow-up de pedido interno: ${pedido.titulo || ''}`,
       consulting_firm_id: consultingFirmId,

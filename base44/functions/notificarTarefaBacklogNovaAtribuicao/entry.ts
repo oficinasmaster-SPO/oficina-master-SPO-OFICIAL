@@ -6,7 +6,7 @@ Deno.serve(async (req) => {
     const payload = await req.json();
     const { data } = payload;
 
-    if (!data?.id || !data?.atribuido_para_id) {
+    if (!data?.id || !data?.assigned_to_id) {
       return Response.json({ ok: true, skipped: 'missing_data' });
     }
 
@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
 
     // Criar notificação in-app
     await base44.asServiceRole.entities.Notification.create({
-      user_id: data.atribuido_para_id,
+      user_id: data.assigned_to_id,
       type: 'nova_tarefa_atribuida',
       title: 'Nova Tarefa Atribuída',
       message: message,
@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
 
     // Enviar email se possível (usando integração)
     try {
-      const user = await base44.asServiceRole.entities.User.filter({ id: data.atribuido_para_id }, '', 1);
+      const user = await base44.asServiceRole.entities.User.filter({ id: data.assigned_to_id }, '', 1);
       if (user && user[0]?.email) {
         await base44.integrations.Core.SendEmail({
           to: user[0].email,

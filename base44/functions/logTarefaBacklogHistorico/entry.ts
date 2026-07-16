@@ -46,29 +46,29 @@ Deno.serve(async (req) => {
       }
 
       // Mudança de atribuição
-      if (old_data.atribuido_para_id !== data?.atribuido_para_id) {
+      if (old_data.assigned_to_id !== data?.assigned_to_id) {
         historicos.push({
           tarefa_id: tarefaId,
           usuario_id: usuarioId,
           usuario_nome: usuarioNome,
           acao: 'ATRIBUICAO',
           campo: 'responsavel',
-          valor_anterior: old_data.atribuido_para_id || null,
-          valor_novo: data?.atribuido_para_id || null,
+          valor_anterior: old_data.assigned_to_id || null,
+          valor_novo: data?.assigned_to_id || null,
           data_hora: now
         });
       }
 
       // Mudança de consultor
-      if (old_data.consultor_id !== data?.consultor_id) {
+      if (old_data.assignee_id !== data?.assignee_id) {
         historicos.push({
           tarefa_id: tarefaId,
           usuario_id: usuarioId,
           usuario_nome: usuarioNome,
           acao: 'ATRIBUICAO',
           campo: 'consultor',
-          valor_anterior: old_data.consultor_nome || old_data.consultor_id || null,
-          valor_novo: data?.consultor_nome || data?.consultor_id || null,
+          valor_anterior: old_data.assignee_name || old_data.assignee_id || null,
+          valor_novo: data?.assignee_name || data?.assignee_id || null,
           data_hora: now
         });
       }

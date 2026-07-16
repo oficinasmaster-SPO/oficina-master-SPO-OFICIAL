@@ -15,9 +15,9 @@ Deno.serve(async (req) => {
     const message = `✅ Tarefa concluída: ${titulo}`;
 
     // Notificar quem criou a tarefa
-    if (data.criado_por_id) {
+    if (data.created_by_id) {
       await base44.asServiceRole.entities.Notification.create({
-        user_id: data.criado_por_id,
+        user_id: data.created_by_id,
         type: 'tarefa_concluida',
         title: 'Tarefa Concluída',
         message: message,
@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
 
       // Enviar email
       try {
-        const user = await base44.asServiceRole.entities.User.filter({ id: data.criado_por_id }, '', 1);
+        const user = await base44.asServiceRole.entities.User.filter({ id: data.created_by_id }, '', 1);
         if (user && user[0]?.email) {
           await base44.integrations.Core.SendEmail({
             to: user[0].email,

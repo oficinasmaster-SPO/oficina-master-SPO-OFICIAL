@@ -16,12 +16,12 @@ Deno.serve(async (req) => {
 
     // ✅ CRIAÇÃO: Notifica o responsável
     if (eventType === 'create') {
-      if (!data.notificacao_criacao_enviada && data.consultor_id) {
+      if (!data.notificacao_criacao_enviada && data.assignee_id) {
         notificacoes.push({
-          user_id: data.consultor_id,
+          user_id: data.assignee_id,
           tipo: 'tarefa_criada',
           titulo: `Nova tarefa: ${data.titulo}`,
-          mensagem: `${data.cliente_nome ? `[${data.cliente_nome}] ` : ''}${data.titulo}. Prazo: ${data.prazo}`,
+          mensagem: `${data.workshop_nome ? `[${data.workshop_nome}] ` : ''}${data.titulo}. Prazo: ${data.prazo}`,
           tarefa_id: tarefaId,
           link: `/backlog/${tarefaId}`
         });
@@ -34,13 +34,13 @@ Deno.serve(async (req) => {
     }
 
     // ✅ ATRIBUIÇÃO: Notifica o novo responsável
-    if (eventType === 'update' && old_data && old_data.consultor_id !== data?.consultor_id) {
-      if (data.consultor_id && !data.notificacao_atribuicao_enviada) {
+    if (eventType === 'update' && old_data && old_data.assignee_id !== data?.assignee_id) {
+      if (data.assignee_id && !data.notificacao_atribuicao_enviada) {
         notificacoes.push({
-          user_id: data.consultor_id,
+          user_id: data.assignee_id,
           tipo: 'tarefa_atribuida',
           titulo: `Tarefa atribuída a você: ${data.titulo}`,
-          mensagem: `${data.cliente_nome ? `[${data.cliente_nome}] ` : ''}${data.titulo}. Prazo: ${data.prazo}`,
+          mensagem: `${data.workshop_nome ? `[${data.workshop_nome}] ` : ''}${data.titulo}. Prazo: ${data.prazo}`,
           tarefa_id: tarefaId,
           link: `/backlog/${tarefaId}`
         });
@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
 
     // ✅ MUDANÇA DE STATUS: Notifica o criador (com debounce)
     if (eventType === 'update' && old_data && old_data.status !== data?.status) {
-      if (data.criado_por_id && data.criado_por_id !== data.consultor_id) {
+      if (data.created_by_id && data.created_by_id !== data.assignee_id) {
         const ultimaNotificacao = data.ultima_notificacao_status_em
           ? new Date(data.ultima_notificacao_status_em)
           : null;
@@ -64,10 +64,10 @@ Deno.serve(async (req) => {
         // Debounce: só notifica se passou 30 minutos desde última
         if (minutosDesdeLasta >= 30 || !ultimaNotificacao) {
           notificacoes.push({
-            user_id: data.criado_por_id,
+            user_id: data.created_by_id,
             tipo: 'status_alterado',
             titulo: `Status alterado: ${data.titulo}`,
-            mensagem: `${data.cliente_nome ? `[${data.cliente_nome}] ` : ''}${data.titulo}. Novo status: ${data.status}`,
+            mensagem: `${data.workshop_nome ? `[${data.workshop_nome}] ` : ''}${data.titulo}. Novo status: ${data.status}`,
             tarefa_id: tarefaId,
             link: `/backlog/${tarefaId}`
           });
@@ -81,12 +81,12 @@ Deno.serve(async (req) => {
 
     // ✅ BLOQUEIO: Alerta forte ao criador
     if (eventType === 'update' && old_data && old_data.status !== 'bloqueada' && data?.status === 'bloqueada') {
-      if (data.criado_por_id) {
+      if (data.created_by_id) {
         notificacoes.push({
-          user_id: data.criado_por_id,
+          user_id: data.created_by_id,
           tipo: 'tarefa_bloqueada',
           titulo: `⚠️ Tarefa bloqueada: ${data.titulo}`,
-          mensagem: `${data.cliente_nome ? `[${data.cliente_nome}] ` : ''}${data.titulo} foi bloqueada. Motivo: ${data.motivo_bloqueio || 'Não especificado'}`,
+          mensagem: `${data.workshop_nome ? `[${data.workshop_nome}] ` : ''}${data.titulo} foi bloqueada. Motivo: ${data.motivo_bloqueio || 'Não especificado'}`,
           tarefa_id: tarefaId,
           link: `/backlog/${tarefaId}`
         });
@@ -99,12 +99,12 @@ Deno.serve(async (req) => {
 
     // ✅ CONCLUSÃO: Notifica o criador
     if (eventType === 'update' && old_data && old_data.status !== 'concluida' && data?.status === 'concluida') {
-      if (data.criado_por_id) {
+      if (data.created_by_id) {
         notificacoes.push({
-          user_id: data.criado_por_id,
+          user_id: data.created_by_id,
           tipo: 'tarefa_concluida',
           titulo: `✅ Tarefa concluída: ${data.titulo}`,
-          mensagem: `${data.cliente_nome ? `[${data.cliente_nome}] ` : ''}${data.titulo} foi concluída`,
+          mensagem: `${data.workshop_nome ? `[${data.workshop_nome}] ` : ''}${data.titulo} foi concluída`,
           tarefa_id: tarefaId,
           link: `/backlog/${tarefaId}`
         });
@@ -143,7 +143,7 @@ Deno.serve(async (req) => {
           if (responsavel?.email) {
             const prioridade = data?.prioridade || 'media';
             const prazo = data?.prazo || '';
-            const clienteNome = data?.cliente_nome || '';
+            const clienteNome = data?.workshop_nome || '';
             const descricao = data?.descricao || '';
 
             const prioridadeLabel = { baixa: 'Baixa', media: 'Média', alta: 'Alta', critica: '🔴 Crítica' }[prioridade] || prioridade;
@@ -176,7 +176,7 @@ Deno.serve(async (req) => {
         </tr>` : ''}
         <tr>
           <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Criado por</td>
-          <td style="padding: 8px 0; color: #111; font-size: 14px;">${data?.consultor_nome || 'Sistema'}</td>
+          <td style="padding: 8px 0; color: #111; font-size: 14px;">${data?.assignee_name || 'Sistema'}</td>
         </tr>
       </table>
       <p style="color: #6b7280; font-size: 13px; margin: 0;">Acesse a plataforma Oficinas Master para ver todos os detalhes e gerenciar esta tarefa.</p>

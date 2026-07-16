@@ -36,16 +36,16 @@ Deno.serve(async (req) => {
     for (const passo of atendimento.proximos_passos) {
       try {
         const novaTarefa = await base44.entities.TarefaBacklog.create({
-        cliente_id: atendimento.workshop_id,
-        cliente_nome: atendimento.workshop_id, // Será preenchido com nome real
-        consultor_id: atendimento.consultor_id,
-        consultor_nome: atendimento.consultor_nome,
+        workshop_id: atendimento.workshop_id,
+        workshop_nome: atendimento.workshop_id, // Será preenchido com nome real
+        assignee_id: atendimento.consultor_id,
+        assignee_name: atendimento.consultor_nome,
         titulo: passo.decisao || 'Tarefa gerada automaticamente',
         descricao: `Gerada automaticamente a partir do atendimento: ${atendimento.tipo_atendimento}`,
-        origem: 'reuniao',
-        origem_id: atendimento_id,
-        origem_data: atendimento.data_realizada || atendimento.data_agendada,
-        origem_titulo: atendimento.tipo_atendimento || 'Atendimento de Consultoria',
+        origin_type: 'reuniao',
+        origin_id: atendimento_id,
+        origin_date: atendimento.data_realizada || atendimento.data_agendada,
+        origin_title: atendimento.tipo_atendimento || 'Atendimento de Consultoria',
         prazo: passo.prazo || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         prioridade: 'media',
         status: 'aberta',

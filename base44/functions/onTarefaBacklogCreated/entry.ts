@@ -19,8 +19,8 @@ Deno.serve(async (req) => {
     }
 
     const tarefa = data;
-    if (!tarefa?.id || !tarefa?.cliente_id) {
-      return Response.json({ skipped: true, reason: 'Tarefa sem id ou cliente_id' });
+    if (!tarefa?.id || !tarefa?.workshop_id) {
+      return Response.json({ skipped: true, reason: 'Tarefa sem id ou workshop_id' });
     }
 
     // Idempotência: verificar se já existe FU aberto para esta tarefa
@@ -45,27 +45,27 @@ Deno.serve(async (req) => {
 
     // Tentar obter consulting_firm_id do consultor para respeitar RLS
     let consultingFirmId = null;
-    if (tarefa.consultor_id) {
+    if (tarefa.assignee_id) {
       try {
-        const users = await base44.asServiceRole.entities.User.filter({ id: tarefa.consultor_id });
+        const users = await base44.asServiceRole.entities.User.filter({ id: tarefa.assignee_id });
         consultingFirmId = users?.[0]?.data?.consulting_firm_id || null;
       } catch { /* não crítico */ }
     }
 
     const fuData = {
-      workshop_id: tarefa.cliente_id,
-      workshop_name: tarefa.cliente_nome || null,
-      consultor_id: tarefa.consultor_id,
-      consultor_nome: tarefa.consultor_nome || null,
+      workshop_id: tarefa.workshop_id,
+      workshop_name: tarefa.workshop_nome || null,
+      consultor_id: tarefa.assignee_id,
+      consultor_nome: tarefa.assignee_name || null,
       reminder_date: prazoStr,
       sequence_number: 1,
       origin_type: 'tarefa_backlog',
       origem_tarefa_id: tarefa.id,
-      origem_ata_id: tarefa.origem_id || null,
-      origem_ata_titulo: tarefa.origem_titulo || null,
+      origem_ata_id: tarefa.origin_id || null,
+      origem_ata_titulo: tarefa.origin_title || null,
       origem_descricao: tarefa.titulo || null,
       origem_status: tarefa.status || 'aberta',
-      origem_responsavel_id: tarefa.atribuido_para_id || tarefa.consultor_id || null,
+      origem_responsavel_id: tarefa.assigned_to_id || tarefa.assignee_id || null,
       origem_responsavel_nome: null,
       origem_solicitante_nome: null,
       is_completed: false,

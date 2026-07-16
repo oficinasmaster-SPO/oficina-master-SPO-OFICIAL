@@ -59,10 +59,10 @@ Deno.serve(async (req) => {
       const diasAtraso = Math.round((hoje - prazo) / (1000 * 60 * 60 * 24));
       const diasParaPrazo = Math.round((prazo - hoje) / (1000 * 60 * 60 * 24));
 
-      const responsavelEmail = tarefa.consultor_id ? await getEmailById(base44, tarefa.consultor_id) : null;
-      const criadorEmail = tarefa.criado_por_id ? await getEmailById(base44, tarefa.criado_por_id) : null;
+      const responsavelEmail = tarefa.assignee_id ? await getEmailById(base44, tarefa.assignee_id) : null;
+      const criadorEmail = tarefa.created_by_id ? await getEmailById(base44, tarefa.created_by_id) : null;
 
-      const ctx = tarefa.cliente_nome ? `[${tarefa.cliente_nome}] ` : '';
+      const ctx = tarefa.workshop_nome ? `[${tarefa.workshop_nome}] ` : '';
       const link = `${Deno.env.get('APP_URL') || 'https://app.oficinasmaster.com.br'}/ControleAceleracao`;
 
       // ── D-1: lembrete pro responsável ───────────────────────────────────────
@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
 <p><a href="${link}">→ Ver tarefa no sistema</a></p>`;
 
         await sendEmail(base44, responsavelEmail, subject, html);
-        await createNotification(base44, tarefa.consultor_id, subject, `${ctx}${tarefa.titulo} vence amanhã`, tarefa.id);
+        await createNotification(base44, tarefa.assignee_id, subject, `${ctx}${tarefa.titulo} vence amanhã`, tarefa.id);
         await base44.asServiceRole.entities.TarefaBacklog.update(tarefa.id, { notificacao_prazo_proximo_enviada: true });
         emailsEnviados++;
         notificacoesInApp++;
@@ -87,7 +87,7 @@ Deno.serve(async (req) => {
 <p><a href="${link}">→ Ver tarefa no sistema</a></p>`;
 
         await sendEmail(base44, responsavelEmail, subject, html);
-        await createNotification(base44, tarefa.consultor_id, `🔴 Vence hoje: ${tarefa.titulo}`, `${ctx}${tarefa.titulo} vence hoje`, tarefa.id);
+        await createNotification(base44, tarefa.assignee_id, `🔴 Vence hoje: ${tarefa.titulo}`, `${ctx}${tarefa.titulo} vence hoje`, tarefa.id);
         await base44.asServiceRole.entities.TarefaBacklog.update(tarefa.id, { notificacao_vencimento_enviada: true });
         emailsEnviados++;
         notificacoesInApp++;
@@ -98,7 +98,7 @@ Deno.serve(async (req) => {
         const subject = `🚨 Tarefa atrasada 1 dia: ${tarefa.titulo}`;
         const html = `<p>Atenção,</p>
 <p>A tarefa <strong>${ctx}${tarefa.titulo}</strong> está <strong>1 dia atrasada</strong> (prazo era ${tarefa.prazo}).</p>
-<p>Responsável: ${tarefa.consultor_nome || 'não informado'}</p>
+<p>Responsável: ${tarefa.assignee_name || 'não informado'}</p>
 <p><a href="${link}">→ Ver tarefa no sistema</a></p>`;
 
         // Vai para responsável E criador
@@ -107,8 +107,8 @@ Deno.serve(async (req) => {
           await sendEmail(base44, criadorEmail, `[Escalonamento] ${subject}`, html);
           emailsEnviados++;
         }
-        if (tarefa.criado_por_id && tarefa.criado_por_id !== tarefa.consultor_id) {
-          await createNotification(base44, tarefa.criado_por_id, subject, `${ctx}${tarefa.titulo} está 1 dia atrasada`, tarefa.id);
+        if (tarefa.created_by_id && tarefa.created_by_id !== tarefa.assignee_id) {
+          await createNotification(base44, tarefa.created_by_id, subject, `${ctx}${tarefa.titulo} está 1 dia atrasada`, tarefa.id);
           notificacoesInApp++;
         }
         await base44.asServiceRole.entities.TarefaBacklog.update(tarefa.id, { notificacao_escalamento_d1_enviada: true });
@@ -121,7 +121,7 @@ Deno.serve(async (req) => {
         const subject = `🚨🚨 Tarefa atrasada 3 dias: ${tarefa.titulo}`;
         const html = `<p><strong>ATENÇÃO — ESCALONAMENTO CRÍTICO</strong></p>
 <p>A tarefa <strong>${ctx}${tarefa.titulo}</strong> está <strong>3 dias atrasada</strong> (prazo era ${tarefa.prazo}).</p>
-<p>Responsável: ${tarefa.consultor_nome || 'não informado'}</p>
+<p>Responsável: ${tarefa.assignee_name || 'não informado'}</p>
 <p>Prioridade: ${tarefa.prioridade}</p>
 <p><a href="${link}">→ Ver tarefa no sistema</a></p>`;
 
@@ -130,8 +130,8 @@ Deno.serve(async (req) => {
           await sendEmail(base44, criadorEmail, subject, html);
           emailsEnviados++;
         }
-        if (tarefa.criado_por_id && tarefa.criado_por_id !== tarefa.consultor_id) {
-          await createNotification(base44, tarefa.criado_por_id, subject, `${ctx}${tarefa.titulo} está 3 dias atrasada`, tarefa.id);
+        if (tarefa.created_by_id && tarefa.created_by_id !== tarefa.assignee_id) {
+          await createNotification(base44, tarefa.created_by_id, subject, `${ctx}${tarefa.titulo} está 3 dias atrasada`, tarefa.id);
           notificacoesInApp++;
         }
         await base44.asServiceRole.entities.TarefaBacklog.update(tarefa.id, { notificacao_escalamento_d3_enviada: true });

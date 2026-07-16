@@ -80,9 +80,9 @@ export default function TarefaBacklogDetalhe({ tarefa, user, onVoltar, onEditar,
   useEffect(() => {
     const buscarNomes = async () => {
       const ids = [
-        { id: tarefa.criado_por_id, setter: setCriadoPorNome },
-        { id: tarefa.atribuido_para_id, setter: setAtribuidoParaNome },
-        { id: tarefa.solicitante_id, setter: setSolicitanteNome },
+        { id: tarefa.created_by_id, setter: setCriadoPorNome },
+        { id: tarefa.assigned_to_id, setter: setAtribuidoParaNome },
+        { id: tarefa.requester_id, setter: setSolicitanteNome },
       ].filter(({ id }) => !!id);
 
       await Promise.all(ids.map(async ({ id, setter }) => {
@@ -97,13 +97,13 @@ export default function TarefaBacklogDetalhe({ tarefa, user, onVoltar, onEditar,
       }));
     };
     buscarNomes();
-  }, [tarefa.criado_por_id, tarefa.atribuido_para_id, tarefa.solicitante_id]);
+  }, [tarefa.created_by_id, tarefa.assigned_to_id, tarefa.requester_id]);
 
   // Criador/admin = acesso total ao formulário de edição
-  const ehCriador = !user || user.id === tarefa.criado_por_id || user.role === 'admin';
+  const ehCriador = !user || user.id === tarefa.created_by_id || user.role === 'admin';
   // Executor = consultor responsável ou atribuído, mas NÃO é o criador
   const ehExecutor = !ehCriador && (
-    user?.id === tarefa.consultor_id || user?.id === tarefa.atribuido_para_id
+    user?.id === tarefa.consultor_id || user?.id === tarefa.assigned_to_id
   );
   // Botão "Editar" só para criador/admin
   const podeEditar = ehCriador;
@@ -218,23 +218,23 @@ export default function TarefaBacklogDetalhe({ tarefa, user, onVoltar, onEditar,
       </section>
 
       {/* Banner de rastreabilidade — exibido quando a tarefa tem origem em uma ATA */}
-      {tarefa.origem === 'reuniao' && tarefa.origem_id && (
+      {tarefa.origin_type === 'reuniao' && tarefa.origin_id && (
         <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 flex items-start gap-3">
           <FileText className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-blue-900">
-              📋 Criado na ATA de Reunião{tarefa.cliente_nome ? ` com ${tarefa.cliente_nome}` : ""}
+              📋 Criado na ATA de Reunião{tarefa.workshop_nome ? ` com ${tarefa.workshop_nome}` : ""}
             </p>
             <p className="text-xs text-blue-700 mt-0.5">
-              {tarefa.origem_data
-                ? format(new Date(tarefa.origem_data), "dd/MM/yyyy 'às' HH'h'mm", { locale: ptBR })
+              {tarefa.origin_date
+                ? format(new Date(tarefa.origin_date), "dd/MM/yyyy 'às' HH'h'mm", { locale: ptBR })
                 : "Data não disponível"}
-              {tarefa.consultor_nome ? ` · ${tarefa.consultor_nome}` : ""}
-              {tarefa.origem_titulo ? ` · ${tarefa.origem_titulo}` : ""}
+              {tarefa.assignee_name ? ` · ${tarefa.assignee_name}` : ""}
+              {tarefa.origin_title ? ` · ${tarefa.origin_title}` : ""}
             </p>
           </div>
           <a
-            href={`/RegistrarAtendimento?atendimento_id=${tarefa.origem_id}`}
+            href={`/RegistrarAtendimento?atendimento_id=${tarefa.origin_id}`}
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
@@ -264,11 +264,11 @@ export default function TarefaBacklogDetalhe({ tarefa, user, onVoltar, onEditar,
             <div className="grid grid-cols-2 gap-3 pt-2 border-t">
               <div>
                 <p className="text-xs text-gray-500 mb-1">Cliente</p>
-                <p className="text-sm font-medium">{tarefa.cliente_nome || "—"}</p>
+                <p className="text-sm font-medium">{tarefa.workshop_nome || "—"}</p>
               </div>
               <div>
                 <p className="text-xs text-gray-500 mb-1">Origem</p>
-                <Badge variant="outline" className="text-xs capitalize">{tarefa.origem}</Badge>
+                <Badge variant="outline" className="text-xs capitalize">{tarefa.origin_type}</Badge>
               </div>
               <div>
                 <p className="text-xs text-gray-500 mb-1">Impacto</p>
@@ -296,7 +296,7 @@ export default function TarefaBacklogDetalhe({ tarefa, user, onVoltar, onEditar,
             <div className="grid grid-cols-2 gap-x-4 gap-y-3">
               <div>
                 <p className="text-xs text-gray-500 mb-1">Consultor</p>
-                <p className="text-sm font-medium">{tarefa.consultor_nome || "—"}</p>
+                <p className="text-sm font-medium">{tarefa.assignee_name || "—"}</p>
               </div>
               <div>
                 <p className="text-xs text-gray-500 mb-1">Atribuído para</p>

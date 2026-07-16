@@ -28,12 +28,12 @@ export default function PedidoInternoForm({ pedido, user, usuarios: usuariosProp
     tipo: pedido?.tipo || 'apoio_tecnico',
     titulo: pedido?.titulo || '',
     descricao: pedido?.descricao || '',
-    solicitante_id: pedido?.solicitante_id || user?.id,
-    solicitante_nome: pedido?.solicitante_nome || user?.full_name,
-    responsavel_id: pedido?.responsavel_id || '',
-    responsavel_nome: pedido?.responsavel_nome || '',
-    cliente_id: pedido?.cliente_id || clienteId || '',
-    cliente_nome: pedido?.cliente_nome || clientePreSelecionado?.name || '',
+    requester_id: pedido?.requester_id || user?.id,
+    requester_name: pedido?.requester_name || user?.full_name,
+    assignee_id: pedido?.assignee_id || '',
+    assignee_name: pedido?.assignee_name || '',
+    workshop_id: pedido?.workshop_id || clienteId || '',
+    workshop_nome: pedido?.workshop_nome || clientePreSelecionado?.name || '',
     prazo: pedido?.prazo || '',
     status: pedido?.status || 'pendente',
     prioridade: pedido?.prioridade || 'media',
@@ -85,7 +85,7 @@ export default function PedidoInternoForm({ pedido, user, usuarios: usuariosProp
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    if (!formData.titulo || !formData.responsavel_id || !formData.prazo) {
+    if (!formData.titulo || !formData.assignee_id || !formData.prazo) {
       toast.error('Preencha os campos obrigatórios');
       return;
     }
@@ -97,8 +97,8 @@ export default function PedidoInternoForm({ pedido, user, usuarios: usuariosProp
     const emp = usuarios.find(u => u.id === empId);
     setFormData({
       ...formData,
-      responsavel_id: empId,
-      responsavel_nome: emp?.full_name || ''
+      assignee_id: empId,
+      assignee_name: emp?.full_name || ''
     });
   };
 
@@ -106,8 +106,8 @@ export default function PedidoInternoForm({ pedido, user, usuarios: usuariosProp
     const workshop = workshops.find(w => w.id === workshopId);
     setFormData({
       ...formData,
-      cliente_id: workshopId,
-      cliente_nome: workshop?.name || ''
+      workshop_id: workshopId,
+      workshop_nome: workshop?.name || ''
     });
   };
 
@@ -179,7 +179,7 @@ export default function PedidoInternoForm({ pedido, user, usuarios: usuariosProp
           <div className="grid md:grid-cols-2 gap-6">
             <div>
               <Label>Responsável *</Label>
-              <Select value={formData.responsavel_id} onValueChange={handleResponsavelChange}>
+              <Select value={formData.assignee_id} onValueChange={handleResponsavelChange}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o responsável" />
                 </SelectTrigger>
@@ -196,7 +196,7 @@ export default function PedidoInternoForm({ pedido, user, usuarios: usuariosProp
             <div>
               <Label>Cliente Relacionado</Label>
               <Combobox
-                value={formData.cliente_id}
+                value={formData.workshop_id}
                 onChange={handleClienteChange}
                 options={workshops.map(w => ({ value: w.id, label: w.name }))}
                 placeholder="Selecione o cliente"

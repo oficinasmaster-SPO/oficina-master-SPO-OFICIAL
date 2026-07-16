@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
     const link = `${Deno.env.get('APP_URL') || 'https://app.oficinasmaster.com.br'}/ControleAceleracao`;
 
     for (const pedido of pedidosAtivos) {
-      if (!pedido.prazo || !pedido.responsavel_id) continue;
+      if (!pedido.prazo || !pedido.assignee_id) continue;
 
       const prazo = new Date(pedido.prazo);
       prazo.setHours(0, 0, 0, 0);
@@ -56,21 +56,21 @@ Deno.serve(async (req) => {
       const diasAtraso = Math.round((hoje - prazo) / (1000 * 60 * 60 * 24));
       const diasParaPrazo = Math.round((prazo - hoje) / (1000 * 60 * 60 * 24));
 
-      const responsavelEmail = await getEmailById(base44, pedido.responsavel_id);
-      const solicitanteEmail = pedido.solicitante_id ? await getEmailById(base44, pedido.solicitante_id) : null;
+      const responsavelEmail = await getEmailById(base44, pedido.assignee_id);
+      const solicitanteEmail = pedido.requester_id ? await getEmailById(base44, pedido.requester_id) : null;
 
-      const ctx = pedido.cliente_nome ? `[${pedido.cliente_nome}] ` : '';
+      const ctx = pedido.workshop_nome ? `[${pedido.workshop_nome}] ` : '';
 
       // ── D-1: lembrete ao responsável ─────────────────────────────────────────
       if (diasParaPrazo === 1 && !pedido.notificacao_lembrete_enviada) {
         const subject = `⏰ Pedido Interno vence amanhã: ${pedido.titulo}`;
-        const html = `<p>Olá ${pedido.responsavel_nome || ''},</p>
+        const html = `<p>Olá ${pedido.assignee_name || ''},</p>
 <p>O pedido interno <strong>${ctx}${pedido.titulo}</strong> vence <strong>amanhã (${pedido.prazo})</strong>.</p>
-<p>Solicitante: ${pedido.solicitante_nome || 'não informado'}</p>
+<p>Solicitante: ${pedido.requester_name || 'não informado'}</p>
 <p><a href="${link}">→ Ver pedido no sistema</a></p>`;
 
         await sendEmail(base44, responsavelEmail, subject, html);
-        await createNotification(base44, pedido.responsavel_id, subject, `${ctx}${pedido.titulo} vence amanhã`, pedido.id);
+        await createNotification(base44, pedido.assignee_id, subject, `${ctx}${pedido.titulo} vence amanhã`, pedido.id);
         await base44.asServiceRole.entities.PedidoInterno.update(pedido.id, { notificacao_lembrete_enviada: true });
         emailsEnviados++;
         notificacoesInApp++;
@@ -79,12 +79,12 @@ Deno.serve(async (req) => {
       // ── D0: vencimento ───────────────────────────────────────────────────────
       if (diasAtraso === 0 && !pedido.notificacao_vencimento_enviada) {
         const subject = `🔴 Pedido Interno vence hoje: ${pedido.titulo}`;
-        const html = `<p>Atenção ${pedido.responsavel_nome || ''},</p>
+        const html = `<p>Atenção ${pedido.assignee_name || ''},</p>
 <p>O pedido interno <strong>${ctx}${pedido.titulo}</strong> vence <strong>hoje (${pedido.prazo})</strong>.</p>
 <p><a href="${link}">→ Responder agora</a></p>`;
 
         await sendEmail(base44, responsavelEmail, subject, html);
-        await createNotification(base44, pedido.responsavel_id, `🔴 Vence hoje: ${pedido.titulo}`, `${ctx}${pedido.titulo} vence hoje`, pedido.id);
+        await createNotification(base44, pedido.assignee_id, `🔴 Vence hoje: ${pedido.titulo}`, `${ctx}${pedido.titulo} vence hoje`, pedido.id);
         await base44.asServiceRole.entities.PedidoInterno.update(pedido.id, { notificacao_vencimento_enviada: true, vencido: true });
         emailsEnviados++;
         notificacoesInApp++;
@@ -94,14 +94,14 @@ Deno.serve(async (req) => {
       if (diasAtraso === 1 && !pedido.notificacao_escalamento_d1_enviada) {
         const subject = `🚨 Pedido Interno atrasado 1 dia: ${pedido.titulo}`;
         const html = `<p>O pedido interno <strong>${ctx}${pedido.titulo}</strong> está <strong>1 dia atrasado</strong> (prazo era ${pedido.prazo}).</p>
-<p>Responsável: ${pedido.responsavel_nome || 'não informado'}</p>
+<p>Responsável: ${pedido.assignee_name || 'não informado'}</p>
 <p><a href="${link}">→ Ver pedido no sistema</a></p>`;
 
         await sendEmail(base44, responsavelEmail, subject, html);
         if (solicitanteEmail && solicitanteEmail !== responsavelEmail) {
           await sendEmail(base44, solicitanteEmail, `[Escalonamento] ${subject}`, html);
           emailsEnviados++;
-          await createNotification(base44, pedido.solicitante_id, subject, `${ctx}${pedido.titulo} está 1 dia atrasado`, pedido.id);
+          await createNotification(base44, pedido.requester_id, subject, `${ctx}${pedido.titulo} está 1 dia atrasado`, pedido.id);
           notificacoesInApp++;
         }
         await base44.asServiceRole.entities.PedidoInterno.update(pedido.id, { notificacao_escalamento_d1_enviada: true });
@@ -114,14 +114,14 @@ Deno.serve(async (req) => {
         const subject = `🚨🚨 Pedido Interno atrasado 3 dias: ${pedido.titulo}`;
         const html = `<p><strong>ESCALONAMENTO CRÍTICO</strong></p>
 <p>O pedido interno <strong>${ctx}${pedido.titulo}</strong> está <strong>3 dias atrasado</strong> (prazo era ${pedido.prazo}).</p>
-<p>Responsável: ${pedido.responsavel_nome || 'não informado'} | Prioridade: ${pedido.prioridade}</p>
+<p>Responsável: ${pedido.assignee_name || 'não informado'} | Prioridade: ${pedido.prioridade}</p>
 <p><a href="${link}">→ Ver pedido no sistema</a></p>`;
 
         await sendEmail(base44, responsavelEmail, subject, html);
         if (solicitanteEmail && solicitanteEmail !== responsavelEmail) {
           await sendEmail(base44, solicitanteEmail, subject, html);
           emailsEnviados++;
-          await createNotification(base44, pedido.solicitante_id, subject, `${ctx}${pedido.titulo} está 3 dias atrasado`, pedido.id);
+          await createNotification(base44, pedido.requester_id, subject, `${ctx}${pedido.titulo} está 3 dias atrasado`, pedido.id);
           notificacoesInApp++;
         }
         await base44.asServiceRole.entities.PedidoInterno.update(pedido.id, { notificacao_escalamento_d3_enviada: true });

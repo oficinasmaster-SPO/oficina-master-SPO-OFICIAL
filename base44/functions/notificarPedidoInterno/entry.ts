@@ -14,15 +14,15 @@ Deno.serve(async (req) => {
     const eventType = event?.type;
 
     // Só age na criação com responsável definido
-    if (eventType !== 'create' || !data?.responsavel_id) {
+    if (eventType !== 'create' || !data?.assignee_id) {
       return Response.json({ ok: true, skip: true });
     }
 
     const pedidoId = data?.id || event?.entity_id;
     const titulo = data.titulo || 'Sem título';
     const descricao = data.descricao || '';
-    const clienteNome = data.cliente_nome || '';
-    const solicitanteNome = data.solicitante_nome || 'Sistema';
+    const clienteNome = data.workshop_nome || '';
+    const solicitanteNome = data.requester_name || 'Sistema';
     const prioridade = data.prioridade || 'media';
     const prazo = data.prazo || '';
     const tipo = data.tipo || '';
@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
     // Notificação in-app
     try {
       await base44.asServiceRole.entities.Notification.create({
-        user_id: data.responsavel_id,
+        user_id: data.assignee_id,
         tipo: 'pedido_interno_criado',
         title: `Novo pedido interno: ${titulo}`,
         message: `${clienteNome ? `[${clienteNome}] ` : ''}${titulo}. Solicitado por: ${solicitanteNome}`,
@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
     }
 
     // Busca e-mail do responsável
-    const users = await base44.asServiceRole.entities.User.filter({ id: data.responsavel_id });
+    const users = await base44.asServiceRole.entities.User.filter({ id: data.assignee_id });
     const responsavel = users?.[0];
 
     if (!responsavel?.email) {

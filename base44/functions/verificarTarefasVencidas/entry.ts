@@ -15,7 +15,7 @@ Deno.serve(async (req) => {
     let notificacoes = 0;
 
     for (const tarefa of tarefas) {
-      if (!tarefa.prazo || !tarefa.atribuido_para_id) continue;
+      if (!tarefa.prazo || !tarefa.assigned_to_id) continue;
 
       const prazoData = new Date(tarefa.prazo);
 
@@ -33,14 +33,14 @@ Deno.serve(async (req) => {
             const workshop = await base44.asServiceRole.entities.Workshop.get(tarefa.workshop_id);
             if (workshop) workshopName = workshop.name;
           }
-          const consultorList = await base44.asServiceRole.entities.User.filter({ id: tarefa.atribuido_para_id }, '', 1);
+          const consultorList = await base44.asServiceRole.entities.User.filter({ id: tarefa.assigned_to_id }, '', 1);
           if (consultorList?.[0]) consultorName = consultorList[0].full_name;
         } catch (err) {
           console.log('Erro ao buscar Workshop/Consultor:', err.message);
         }
 
         await base44.asServiceRole.entities.Notification.create({
-          user_id: tarefa.atribuido_para_id,
+          user_id: tarefa.assigned_to_id,
           type: 'tarefa_vencida',
           title: 'Tarefa Vencida',
           message: message,
@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
             dias_vencidos: diasVencidos,
             workshop_id: tarefa.workshop_id,
             workshop_name: workshopName,
-            consultant_id: tarefa.atribuido_para_id,
+            consultant_id: tarefa.assigned_to_id,
             consultant_name: consultorName,
             attendance_type: 'TarefaBacklog',
             link: `/ControleAceleracao?client=${tarefa.workshop_id}&tab=backlog`
@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
 
         // Verificar se já existe notificação da mesma tarefa (lida ou não)
         const existing = await base44.asServiceRole.entities.Notification.filter({
-          user_id: tarefa.atribuido_para_id,
+          user_id: tarefa.assigned_to_id,
           type: 'tarefa_vencida',
           "metadata.tarefa_id": tarefa.id
         }, null, 1);
@@ -72,7 +72,7 @@ Deno.serve(async (req) => {
         // Enviar email
         try {
           const user = await base44.asServiceRole.entities.User.filter(
-            { id: tarefa.atribuido_para_id },
+            { id: tarefa.assigned_to_id },
             '',
             1
           );

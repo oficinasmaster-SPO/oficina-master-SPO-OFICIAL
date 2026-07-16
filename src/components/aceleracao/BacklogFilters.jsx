@@ -20,7 +20,7 @@ export default function BacklogFilters({
       cliente: 'all',
       status: 'all',
       prioridade: 'all',
-      origem: 'all'
+      origin_type: 'all'
     });
   };
 
@@ -106,8 +106,8 @@ export default function BacklogFilters({
         <div>
           <label className="text-xs font-medium text-gray-700 block mb-1">Origem</label>
           <select
-            value={filters.origem}
-            onChange={(e) => handleInputChange('origem', e.target.value)}
+            value={filters.origin_type}
+            onChange={(e) => handleInputChange('origin_type', e.target.value)}
             className="w-full h-8 text-sm border border-gray-300 rounded px-2"
           >
             <option value="all">Todas</option>

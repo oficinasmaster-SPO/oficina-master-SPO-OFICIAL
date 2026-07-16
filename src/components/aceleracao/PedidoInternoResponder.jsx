@@ -87,14 +87,14 @@ export default function PedidoInternoResponder({ pedido, user, onCancel, onSucce
       await base44.entities.PedidoInterno.update(pedido.id, updateData);
 
       // Notificar solicitante
-      if (pedido.solicitante_id && novasEntradas.length > 0) {
+      if (pedido.requester_id && novasEntradas.length > 0) {
         const msg = resposta && resposta !== pedido.resposta
           ? `Seu pedido "${pedido.titulo}" recebeu uma resposta.`
           : `Seu pedido "${pedido.titulo}" teve o status alterado para: ${status}.`;
         await base44.functions.invoke('notificarPedidoInterno', {
           pedido_id: pedido.id,
           tipo_notificacao: 'response',
-          usuario_destino_id: pedido.solicitante_id,
+          usuario_destino_id: pedido.requester_id,
           mensagem: msg
         });
       }
@@ -118,8 +118,8 @@ export default function PedidoInternoResponder({ pedido, user, onCancel, onSucce
             <div className="flex-1">
               <CardTitle className="text-lg">{pedido.titulo}</CardTitle>
               <p className="text-sm text-gray-500 mt-1">
-                Solicitado por <strong>{pedido.solicitante_nome}</strong>
-                {pedido.cliente_nome && <> · Cliente: <strong>{pedido.cliente_nome}</strong></>}
+                Solicitado por <strong>{pedido.requester_name}</strong>
+                {pedido.workshop_nome && <> · Cliente: <strong>{pedido.workshop_nome}</strong></>}
               </p>
             </div>
           </div>

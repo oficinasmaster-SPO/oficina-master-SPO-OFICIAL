@@ -20,8 +20,8 @@ Deno.serve(async (req) => {
       // Log de criação
       registros.push({
         tarefa_id: entityId,
-        usuario_id: data.criado_por_id || null,
-        usuario_nome: data.consultor_nome || null,
+        usuario_id: data.created_by_id || null,
+        usuario_nome: data.assignee_name || null,
         acao: 'CRIACAO',
         campo: 'tarefa',
         valor_anterior: null,
@@ -30,15 +30,15 @@ Deno.serve(async (req) => {
       });
 
       // Log de atribuição (se já veio com consultor)
-      if (data.consultor_id) {
+      if (data.assignee_id) {
         registros.push({
           tarefa_id: entityId,
-          usuario_id: data.criado_por_id || null,
-          usuario_nome: data.consultor_nome || null,
+          usuario_id: data.created_by_id || null,
+          usuario_nome: data.assignee_name || null,
           acao: 'ATRIBUICAO',
-          campo: 'consultor_id',
+          campo: 'assignee_id',
           valor_anterior: null,
-          valor_novo: data.consultor_nome || data.consultor_id,
+          valor_novo: data.assignee_name || data.assignee_id,
           data_hora: now
         });
       }
@@ -61,16 +61,16 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Detectar mudança de atribuição (consultor_id)
-      if (old_data.consultor_id !== data.consultor_id) {
+      // Detectar mudança de atribuição (assignee_id)
+      if (old_data.assignee_id !== data.assignee_id) {
         registros.push({
           tarefa_id: entityId,
           usuario_id: null,
           usuario_nome: null,
           acao: 'ATRIBUICAO',
-          campo: 'consultor_id',
-          valor_anterior: old_data.consultor_nome || old_data.consultor_id,
-          valor_novo: data.consultor_nome || data.consultor_id,
+          campo: 'assignee_id',
+          valor_anterior: old_data.assignee_name || old_data.assignee_id,
+          valor_novo: data.assignee_name || data.assignee_id,
           data_hora: now
         });
       }

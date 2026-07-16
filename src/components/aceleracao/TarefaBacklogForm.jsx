@@ -38,18 +38,18 @@ export default function TarefaBacklogForm({ tarefa, user, workshops: workshopsPr
   const workshopPreSelecionado = workshopId ? workshops.find(w => w.id === workshopId) : null;
 
   const [formData, setFormData] = useState({
-    cliente_id: tarefa?.cliente_id || workshopId || '',
-    cliente_nome: tarefa?.cliente_nome || workshopPreSelecionado?.name || '',
-    consultor_id: tarefa?.consultor_id || user?.id,
-    consultor_nome: tarefa?.consultor_nome || user?.full_name,
-    criado_por_id: tarefa?.criado_por_id || user?.id,
-    atribuido_para_id: tarefa?.atribuido_para_id || user?.id,
+    workshop_id: tarefa?.workshop_id || workshopId || '',
+    workshop_nome: tarefa?.workshop_nome || workshopPreSelecionado?.name || '',
+    assignee_id: tarefa?.assignee_id || user?.id,
+    assignee_name: tarefa?.assignee_name || user?.full_name,
+    created_by_id: tarefa?.created_by_id || user?.id,
+    assigned_to_id: tarefa?.assigned_to_id || user?.id,
     titulo: tarefa?.titulo || '',
     descricao: tarefa?.descricao || '',
-    origem: tarefa?.origem || (origemId ? 'reuniao' : isFromAttendance ? 'reuniao' : 'manual'),
-    origem_id: tarefa?.origem_id || origemId || '',
-    origem_data: tarefa?.origem_data || origemData || '',
-    origem_titulo: tarefa?.origem_titulo || origemTitulo || '',
+    origin_type: tarefa?.origin_type || (origemId ? 'reuniao' : isFromAttendance ? 'reuniao' : 'manual'),
+    origin_id: tarefa?.origin_id || origemId || '',
+    origin_date: tarefa?.origin_date || origemData || '',
+    origin_title: tarefa?.origin_title || origemTitulo || '',
     prazo: tarefa?.prazo || '',
     prioridade: tarefa?.prioridade || 'media',
     status: tarefa?.status || 'aberta',
@@ -60,11 +60,11 @@ export default function TarefaBacklogForm({ tarefa, user, workshops: workshopsPr
     anexos: tarefa?.anexos || []
   });
 
-  // Atualiza cliente_nome quando os workshops carregam (caso workshopId foi passado mas workshops ainda não tinham carregado)
+  // Atualiza workshop_nome quando os workshops carregam (caso workshopId foi passado mas workshops ainda não tinham carregado)
   useEffect(() => {
-    if (workshopId && !tarefa && formData.cliente_id === workshopId && !formData.cliente_nome) {
+    if (workshopId && !tarefa && formData.workshop_id === workshopId && !formData.workshop_nome) {
       const ws = workshops.find(w => w.id === workshopId);
-      if (ws) setFormData(prev => ({ ...prev, cliente_nome: ws.name }));
+      if (ws) setFormData(prev => ({ ...prev, workshop_nome: ws.name }));
     }
   }, [workshops, workshopId]);
 
@@ -102,7 +102,7 @@ export default function TarefaBacklogForm({ tarefa, user, workshops: workshopsPr
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    if (!formData.titulo || !formData.cliente_id || !formData.consultor_id || !formData.prazo) {
+    if (!formData.titulo || !formData.workshop_id || !formData.assignee_id || !formData.prazo) {
       toast.error('Preencha os campos obrigatórios');
       return;
     }
@@ -114,8 +114,8 @@ export default function TarefaBacklogForm({ tarefa, user, workshops: workshopsPr
     const workshop = workshops.find(w => w.id === workshopId);
     setFormData({
       ...formData,
-      cliente_id: workshopId,
-      cliente_nome: workshop?.name || ''
+      workshop_id: workshopId,
+      workshop_nome: workshop?.name || ''
     });
   };
 
@@ -123,8 +123,8 @@ export default function TarefaBacklogForm({ tarefa, user, workshops: workshopsPr
     const usuario = usuarios.find(u => u.user_id === userId);
     setFormData({
       ...formData,
-      consultor_id: userId,
-      consultor_nome: usuario?.full_name || ''
+      assignee_id: userId,
+      assignee_name: usuario?.full_name || ''
     });
   };
 
@@ -187,7 +187,7 @@ export default function TarefaBacklogForm({ tarefa, user, workshops: workshopsPr
           <div className="grid md:grid-cols-2 gap-6">
             <div>
               <Label>Cliente *</Label>
-              <Select value={formData.cliente_id} onValueChange={handleClienteChange}>
+              <Select value={formData.workshop_id} onValueChange={handleClienteChange}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o cliente" />
                 </SelectTrigger>
@@ -204,7 +204,7 @@ export default function TarefaBacklogForm({ tarefa, user, workshops: workshopsPr
             <div>
               <Label>Consultor Responsável *</Label>
               <Combobox
-                value={formData.consultor_id}
+                value={formData.assignee_id}
                 onChange={handleConsultorChange}
                 options={usuarios.map(usuario => ({
                   value: usuario.user_id,
@@ -220,7 +220,7 @@ export default function TarefaBacklogForm({ tarefa, user, workshops: workshopsPr
           <div className="grid md:grid-cols-4 gap-6">
             <div>
               <Label>Origem *</Label>
-              <Select value={formData.origem} onValueChange={(value) => setFormData({...formData, origem: value})}>
+              <Select value={formData.origin_type} onValueChange={(value) => setFormData({...formData, origin_type: value})}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -347,7 +347,7 @@ export default function TarefaBacklogForm({ tarefa, user, workshops: workshopsPr
         isOpen={showTemplateSelector}
         onClose={() => setShowTemplateSelector(false)}
         onSelect={handleTemplateSelect}
-        workshopId={formData.cliente_id}
+        workshopId={formData.workshop_id}
       />
     </Card>
   );
