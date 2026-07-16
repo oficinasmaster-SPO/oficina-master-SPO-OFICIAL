@@ -13,6 +13,7 @@ import { ptBR } from "date-fns/locale";
 import PedidoInternoVisualizador from "./PedidoInternoVisualizador";
 import PedidoInternoMediaUpload from "./PedidoInternoMediaUpload";
 import TarefaConvertidaBanner from "./banners/TarefaConvertidaBanner";
+import CommentsSection from "./CommentsSection";
 
 const STATUS_LABELS = {
   pendente: { label: "Pendente", className: "bg-gray-100 text-gray-800" },
@@ -251,6 +252,14 @@ export default function PedidoInternoResponder({ pedido, user, onCancel, onSucce
           </CardContent>
         </Card>
       )}
+
+      {/* Seção de Comentários Colaborativos */}
+      <CommentsSection
+        entityType="pedido_interno"
+        entityId={pedido.id}
+        workshopId={pedido.workshop_id}
+        currentUser={user}
+      />
     </div>
   );
 }

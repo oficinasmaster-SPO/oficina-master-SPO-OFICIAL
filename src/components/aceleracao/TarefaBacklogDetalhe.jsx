@@ -14,6 +14,7 @@ import TarefaBacklogAnexosVisualizador from "./TarefaBacklogAnexosVisualizador";
 import TarefaBacklogMediaUpload from "./TarefaBacklogMediaUpload";
 import OrigemPedidoBanner from "./banners/OrigemPedidoBanner";
 import AguardandoClienteBanner from "./banners/AguardandoClienteBanner";
+import CommentsSection from "./CommentsSection";
 
 const STATUS_CONFIG = {
   aberta:      { label: "Aberta",       className: "bg-gray-100 text-gray-800" },
@@ -493,6 +494,14 @@ export default function TarefaBacklogDetalhe({ tarefa, user, onVoltar, onEditar,
           </CardContent>
         </Card>
       )}
+
+      {/* Seção de Comentários Colaborativos */}
+      <CommentsSection
+        entityType="tarefa_backlog"
+        entityId={tarefa.id}
+        workshopId={tarefa.workshop_id}
+        currentUser={user}
+      />
     </div>
   );
 }
