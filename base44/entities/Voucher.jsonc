@@ -123,7 +123,16 @@
           "workshop_id": "{{user.data.workshop_id}}"
         },
         {
-          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+          "$and": [
+            {
+              "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+            },
+            {
+              "user_condition": {
+                "data.user_type": "internal"
+              }
+            }
+          ]
         }
       ]
     },
@@ -138,10 +147,28 @@
           "workshop_id": "{{user.data.workshop_id}}"
         },
         {
-          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+          "$and": [
+            {
+              "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+            },
+            {
+              "user_condition": {
+                "data.user_type": "internal"
+              }
+            }
+          ]
         },
         {
-          "company_id": "{{user.data.company_id}}"
+          "$and": [
+            {
+              "company_id": "{{user.data.company_id}}"
+            },
+            {
+              "user_condition": {
+                "data.user_type": "internal"
+              }
+            }
+          ]
         },
         {
           "seller_id": "{{user.id}}"
@@ -156,7 +183,16 @@
           }
         },
         {
-          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+          "$and": [
+            {
+              "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+            },
+            {
+              "user_condition": {
+                "data.user_type": "internal"
+              }
+            }
+          ]
         }
       ]
     },
@@ -168,7 +204,16 @@
           }
         },
         {
-          "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+          "$and": [
+            {
+              "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+            },
+            {
+              "user_condition": {
+                "data.user_type": "internal"
+              }
+            }
+          ]
         }
       ]
     }
