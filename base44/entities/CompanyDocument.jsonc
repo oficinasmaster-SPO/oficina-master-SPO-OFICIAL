@@ -70,15 +70,40 @@
     },
     "file_url": {
       "type": "string",
-      "description": "URL do arquivo"
+      "description": "URL do arquivo principal (legado \u2014 preferir attachments)"
     },
     "file_type": {
       "type": "string",
-      "description": "Tipo MIME do arquivo"
+      "description": "Tipo MIME do arquivo principal (legado)"
     },
     "file_size": {
       "type": "number",
-      "description": "Tamanho em bytes"
+      "description": "Tamanho em bytes do arquivo principal (legado)"
+    },
+    "attachments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "file_url": {
+            "type": "string",
+            "description": "URL do arquivo"
+          },
+          "file_type": {
+            "type": "string",
+            "description": "Tipo MIME do arquivo"
+          },
+          "file_size": {
+            "type": "number",
+            "description": "Tamanho em bytes"
+          },
+          "file_name": {
+            "type": "string",
+            "description": "Nome original do arquivo"
+          }
+        }
+      },
+      "description": "Cole\u00e7\u00e3o de anexos do documento (m\u00faltiplos arquivos)"
     },
     "version": {
       "type": "string",

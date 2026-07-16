@@ -269,41 +269,34 @@ export default function DocumentFormDialog({ open, onClose, document, workshopId
         });
         toast.success("Documento atualizado!");
       } else {
-        // Modo followup: fazer upload de TODOS os arquivos anexados e criar um CompanyDocument por arquivo
+        // Modo followup: upload de TODOS os arquivos e cria UM CompanyDocument com attachments[]
         if (isFollowup && attachedFiles.length > 0) {
-          const uploadResults = await Promise.all(
+          const attachments = await Promise.all(
             attachedFiles.map(async (file) => {
               const { file_url } = await base44.integrations.Core.UploadFile({ file });
               return { file_url, file_type: file.type, file_size: file.size, file_name: file.name };
             })
           );
 
-          const extraFields = {
+          const created = await base44.entities.CompanyDocument.create({
+            ...formData,
+            file_url: attachments[0].file_url,
+            file_type: attachments[0].file_type,
+            file_size: attachments[0].file_size,
+            attachments,
+            workshop_id: workshopId,
             origin: "followup",
             uploaded_by: user?.id || '',
             uploaded_by_name: user?.full_name || '',
             followup_id: followUp?.id || '',
             tags: ["followup", "anexo"],
-          };
+          });
 
-          // bulkCreate: um documento por arquivo
-          const createdDocs = await base44.entities.CompanyDocument.bulkCreate(
-            uploadResults.map((r) => ({
-              ...formData,
-              file_url: r.file_url,
-              file_type: r.file_type,
-              file_size: r.file_size,
-              workshop_id: workshopId,
-              ...extraFields,
-            }))
-          );
-
-          // Notificar usuários interessados
           const { notifyNewDocument } = await import("./DocumentNotificationManager");
-          await Promise.all((createdDocs || []).map(doc => notifyNewDocument(doc, workshopId).catch(() => {})));
+          await notifyNewDocument(created, workshopId).catch(() => {});
 
-          toast.success(`${(createdDocs || []).length} documento(s) criado(s) no repositório!`);
-          onSuccess(createdDocs);
+          toast.success(`${attachments.length} anexo(s) vinculado(s) ao documento!`);
+          onSuccess(created);
           return;
         }
 
@@ -313,7 +306,6 @@ export default function DocumentFormDialog({ open, onClose, document, workshopId
           workshop_id: workshopId,
         });
         
-        // Notificar usuários interessados
         const { notifyNewDocument } = await import("./DocumentNotificationManager");
         await notifyNewDocument(created, workshopId);
         

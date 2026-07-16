@@ -2076,11 +2076,12 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
         user={user}
         workshopId={followUp?.workshop_id}
         onClose={() => { setShowDocModal(false); setPendingFile(null); }}
-        onSuccess={(createdDocs) => {
+        onSuccess={(created) => {
           setShowDocModal(false);
-          const docs = Array.isArray(createdDocs) ? createdDocs : (createdDocs ? [createdDocs] : []);
-          if (docs.length > 0 && pendingFile) {
-            setUploadedDocs(prev => [...prev, { name: pendingFile.name, size: pendingFile.size, type: pendingFile.type, url: docs[0]?.file_url || '' }]);
+          if (created?.attachments?.length > 0) {
+            setUploadedDocs(prev => [...prev, ...created.attachments.map(a => ({ name: a.file_name, size: a.file_size, type: a.file_type, url: a.file_url }))]);
+          } else if (created?.file_url) {
+            setUploadedDocs(prev => [...prev, { name: created.title || 'documento', url: created.file_url, type: created.file_type, size: created.file_size }]);
           }
           setPendingFile(null);
           queryClient.invalidateQueries({ queryKey: ['company-documents'] });
