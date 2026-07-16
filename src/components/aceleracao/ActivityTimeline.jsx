@@ -171,7 +171,20 @@ function TaskCommentInput({ entityType, entityId, workshopId, parentCommentId = 
 
   const createMutation = useMutation({
     mutationFn: async (data) => {
-      return await base44.entities.TaskComment.create(data);
+      const comment = await base44.entities.TaskComment.create(data);
+      // Notifica participantes da tarefa/pedido (best-effort, não bloqueia se falhar)
+      try {
+        await base44.functions.invoke('notificarNovoComentario', {
+          entity_type: data.entity_type,
+          entity_id: data.entity_id,
+          author_id: data.author_id,
+          author_name: data.author_name,
+          content: data.content
+        });
+      } catch (e) {
+        console.error('Erro ao notificar participantes:', e);
+      }
+      return comment;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["taskComments", entityType, entityId] });
