@@ -12,11 +12,11 @@
     },
     "title": {
       "type": "string",
-      "description": "Título do documento"
+      "description": "T\u00edtulo do documento"
     },
     "description": {
       "type": "string",
-      "description": "Descrição do documento"
+      "description": "Descri\u00e7\u00e3o do documento"
     },
     "category": {
       "type": "string",
@@ -37,11 +37,11 @@
         "outros"
       ],
       "default": "outros",
-      "description": "Área/Categoria do documento"
+      "description": "\u00c1rea/Categoria do documento"
     },
     "subprocess_area": {
       "type": "string",
-      "description": "Processo ou Subárea"
+      "description": "Processo ou Sub\u00e1rea"
     },
     "document_type": {
       "type": "string",
@@ -49,7 +49,7 @@
     },
     "responsible_role": {
       "type": "string",
-      "description": "Cargo responsável"
+      "description": "Cargo respons\u00e1vel"
     },
     "process_owner": {
       "type": "string",
@@ -82,22 +82,22 @@
     },
     "version": {
       "type": "string",
-      "description": "Versão do documento"
+      "description": "Vers\u00e3o do documento"
     },
     "creation_date": {
       "type": "string",
       "format": "date",
-      "description": "Data de criação do documento"
+      "description": "Data de cria\u00e7\u00e3o do documento"
     },
     "last_revision_date": {
       "type": "string",
       "format": "date",
-      "description": "Data da última revisão"
+      "description": "Data da \u00faltima revis\u00e3o"
     },
     "next_review_date": {
       "type": "string",
       "format": "date",
-      "description": "Data da próxima revisão/validade"
+      "description": "Data da pr\u00f3xima revis\u00e3o/validade"
     },
     "expiration_date": {
       "type": "string",
@@ -111,24 +111,24 @@
         "medio",
         "baixo"
       ],
-      "description": "Impacto jurídico"
+      "description": "Impacto jur\u00eddico"
     },
     "risk_if_not_comply": {
       "type": "string",
-      "description": "Risco de não conformidade"
+      "description": "Risco de n\u00e3o conformidade"
     },
     "mandatory_by_law": {
       "type": "boolean",
       "default": false,
-      "description": "Se é obrigatório por lei"
+      "description": "Se \u00e9 obrigat\u00f3rio por lei"
     },
     "legal_reference": {
       "type": "string",
-      "description": "Referência legal (Lei, NR, Artigo)"
+      "description": "Refer\u00eancia legal (Lei, NR, Artigo)"
     },
     "target_audience": {
       "type": "string",
-      "description": "Público-alvo"
+      "description": "P\u00fablico-alvo"
     },
     "has_training": {
       "type": "boolean",
@@ -141,7 +141,7 @@
     },
     "observations": {
       "type": "string",
-      "description": "Observações gerais"
+      "description": "Observa\u00e7\u00f5es gerais"
     },
     "is_external_use": {
       "type": "boolean",
@@ -153,14 +153,30 @@
       "items": {
         "type": "string"
       },
-      "description": "Tags para organização"
+      "description": "Tags para organiza\u00e7\u00e3o"
     },
     "shared_with": {
       "type": "array",
       "items": {
         "type": "string"
       },
-      "description": "IDs dos usuários com acesso"
+      "description": "IDs dos usu\u00e1rios com acesso"
+    },
+    "origin": {
+      "type": "string",
+      "description": "Origem do documento: repositorio | followup | processo | rh | treinamento..."
+    },
+    "uploaded_by": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio que fez o upload"
+    },
+    "uploaded_by_name": {
+      "type": "string",
+      "description": "Nome do usu\u00e1rio que fez o upload"
+    },
+    "followup_id": {
+      "type": "string",
+      "description": "ID do follow-up de origem (quando origin=followup)"
     }
   },
   "required": [

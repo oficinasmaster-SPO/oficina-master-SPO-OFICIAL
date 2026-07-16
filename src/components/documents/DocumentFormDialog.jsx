@@ -10,9 +10,23 @@ import { Loader2, Upload, Save, Plus } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 
-export default function DocumentFormDialog({ open, onClose, document, workshopId, onSuccess }) {
+export default function DocumentFormDialog({ open, onClose, document, workshopId, onSuccess, mode = "repositorio", preSelectedFile = null, followUp = null, user = null }) {
   const [uploading, setUploading] = useState(false);
-  const [autoGenerateId, setAutoGenerateId] = useState(!document);
+  const [autoGenerateId, setAutoGenerateId] = useState(mode === "followup" ? true : !document);
+  const [attachedFiles, setAttachedFiles] = useState(preSelectedFile ? [preSelectedFile] : []);
+  const isFollowup = mode === "followup";
+
+  const formatFileSize = (bytes) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1).replace('.', ',')} MB`;
+  };
+  const fileExtLabel = (type) => ({
+    'application/pdf': 'PDF',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'XLSX',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'DOCX',
+    'image/png': 'PNG',
+  }[type] || 'ARQ');
   const [showAddTypeModal, setShowAddTypeModal] = useState(false);
   const [newTypeName, setNewTypeName] = useState('');
   const [customTypes, setCustomTypes] = useState([]);
@@ -184,15 +198,21 @@ export default function DocumentFormDialog({ open, onClose, document, workshopId
     } else {
       // Resetar formulário para novo documento
       setAutoGenerateId(true);
+      const today = new Date();
+      const dateStr = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
+      const followupTitle = isFollowup && followUp
+        ? `Documento anexado no Follow Up - ${dateStr} - ${followUp.consultor_nome || user?.full_name || 'Consultor'}`
+        : '';
+      setAttachedFiles(preSelectedFile ? [preSelectedFile] : []);
       setFormData({
         document_id: '',
-        title: '',
+        title: followupTitle,
         category: '',
         subprocess_area: '',
         document_type: '',
         responsible_role: '',
         process_owner: '',
-        status: 'em_construcao',
+        status: isFollowup ? 'em_uso' : 'em_construcao',
         file_url: '',
         version: 'v1.0',
         creation_date: new Date().toISOString().split('T')[0],
@@ -208,7 +228,7 @@ export default function DocumentFormDialog({ open, onClose, document, workshopId
         observations: ''
       });
     }
-  }, [document]);
+  }, [document, preSelectedFile, mode]);
 
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
@@ -234,11 +254,12 @@ export default function DocumentFormDialog({ open, onClose, document, workshopId
       return;
     }
 
-    if (!document && !formData.file_url) {
+    if (!document && !formData.file_url && attachedFiles.length === 0) {
       toast.error("É necessário enviar um arquivo");
       return;
     }
 
+    setUploading(true);
     try {
       if (document?.id) {
         await base44.entities.CompanyDocument.update(document.id, {
@@ -248,21 +269,45 @@ export default function DocumentFormDialog({ open, onClose, document, workshopId
         });
         toast.success("Documento atualizado!");
       } else {
+        // Modo followup: fazer upload do arquivo pré-selecionado no submit
+        let file_url = formData.file_url;
+        let file_type = formData.file_type;
+        let file_size = formData.file_size;
+        if (isFollowup && attachedFiles.length > 0) {
+          const uploadRes = await base44.integrations.Core.UploadFile({ file: attachedFiles[0] });
+          file_url = uploadRes.file_url;
+          file_type = attachedFiles[0].type;
+          file_size = attachedFiles[0].size;
+        }
+
+        const extraFields = isFollowup ? {
+          origin: "followup",
+          uploaded_by: user?.id || '',
+          uploaded_by_name: user?.full_name || '',
+          followup_id: followUp?.id || '',
+          tags: ["followup", "anexo"],
+        } : {};
+
         const created = await base44.entities.CompanyDocument.create({
           ...formData,
-          workshop_id: workshopId
+          ...(file_type ? { file_type, file_size } : {}),
+          file_url,
+          workshop_id: workshopId,
+          ...extraFields,
         });
         
         // Notificar usuários interessados
         const { notifyNewDocument } = await import("./DocumentNotificationManager");
         await notifyNewDocument(created, workshopId);
         
-        toast.success("Documento criado!");
+        toast.success(isFollowup ? "Documento criado no repositório!" : "Documento criado!");
       }
       onSuccess();
     } catch (error) {
       console.error("Erro ao salvar:", error);
       toast.error(`Erro ao salvar: ${error?.message || 'Erro desconhecido'}`);
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -275,7 +320,8 @@ export default function DocumentFormDialog({ open, onClose, document, workshopId
 
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
-            {/* ID do Documento */}
+            {/* ID do Documento — oculto no modo followup (sempre gerado automaticamente) */}
+            {!isFollowup && (
             <div>
               <Label className="flex items-center justify-between">
                 <span>ID do Documento *</span>
@@ -308,6 +354,7 @@ export default function DocumentFormDialog({ open, onClose, document, workshopId
                 </p>
               )}
             </div>
+            )}
 
             {/* Nome Oficial */}
             <div>
@@ -420,22 +467,29 @@ export default function DocumentFormDialog({ open, onClose, document, workshopId
               />
             </div>
 
-            {/* Status */}
+            {/* Status — read-only fixo em Em Uso no modo followup */}
             <div>
               <Label>Status *</Label>
-              <Select value={formData.status} onValueChange={(val) => setFormData({...formData, status: val})}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="em_construcao">Em Construção</SelectItem>
-                  <SelectItem value="em_revisao">Em Revisão</SelectItem>
-                  <SelectItem value="aprovado">Aprovado</SelectItem>
-                  <SelectItem value="em_uso">Em Uso</SelectItem>
-                  <SelectItem value="obsoleto">Obsoleto</SelectItem>
-                  <SelectItem value="arquivado">Arquivado</SelectItem>
-                </SelectContent>
-              </Select>
+              {isFollowup ? (
+                <div className="flex items-center gap-2 h-9 px-3 rounded-md border border-input bg-gray-50 text-sm">
+                  <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                  <span className="font-medium text-gray-700">🟢 Em Uso</span>
+                </div>
+              ) : (
+                <Select value={formData.status} onValueChange={(val) => setFormData({...formData, status: val})}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="em_construcao">Em Construção</SelectItem>
+                    <SelectItem value="em_revisao">Em Revisão</SelectItem>
+                    <SelectItem value="aprovado">Aprovado</SelectItem>
+                    <SelectItem value="em_uso">Em Uso</SelectItem>
+                    <SelectItem value="obsoleto">Obsoleto</SelectItem>
+                    <SelectItem value="arquivado">Arquivado</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
             </div>
 
             {/* Versão */}
@@ -549,19 +603,57 @@ export default function DocumentFormDialog({ open, onClose, document, workshopId
               </div>
             )}
 
-            {/* Upload do Arquivo */}
+            {/* Upload do Arquivo — card de preview no modo followup, input normal no repositório */}
             <div className="md:col-span-2">
               <Label>Arquivo do Documento {!document && '*'}</Label>
-              <div className="flex gap-2">
-                <Input 
-                  type="file"
-                  onChange={handleFileUpload}
-                  disabled={uploading}
-                  className="flex-1"
-                />
-                {uploading && <Loader2 className="w-5 h-5 animate-spin text-blue-600" />}
-              </div>
-              {formData.file_url && (
+              {isFollowup ? (
+                <div className="rounded-lg border-2 border-dashed border-gray-300 p-4 bg-gray-50">
+                  {attachedFiles.length > 0 ? (
+                    <div className="space-y-2">
+                      {attachedFiles.map((file, idx) => (
+                        <div key={idx} className="flex items-center gap-3 bg-white rounded-lg px-3 py-2 border border-gray-200">
+                          <span className="text-2xl">📄</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">{file.name}</p>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">{fileExtLabel(file.type)}</span>
+                              <span className="text-xs text-gray-500">{formatFileSize(file.size)}</span>
+                            </div>
+                          </div>
+                          {attachedFiles.length > 1 && (
+                            <button type="button" onClick={() => setAttachedFiles(prev => prev.filter((_, i) => i !== idx))} className="text-red-500 hover:bg-red-50 rounded p-1 text-lg leading-none">
+                              ×
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-gray-400 text-center py-2">Nenhum arquivo selecionado</p>
+                  )}
+                  <div className="flex gap-2 mt-2">
+                    <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-input bg-white text-xs font-medium cursor-pointer hover:bg-gray-50">
+                      🔄 Alterar arquivo
+                      <input type="file" className="hidden" accept=".pdf,.xlsx,.docx,.png,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/png" onChange={(e) => { const f = e.target.files[0]; if (f) setAttachedFiles([f]); e.target.value=''; }} />
+                    </label>
+                    <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-blue-600 cursor-pointer hover:bg-blue-50">
+                      ➕ Adicionar
+                      <input type="file" className="hidden" accept=".pdf,.xlsx,.docx,.png,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/png" onChange={(e) => { const f = e.target.files[0]; if (f) setAttachedFiles(prev => [...prev, f]); e.target.value=''; }} />
+                    </label>
+                  </div>
+                </div>
+              ) : (
+                <div className="!flex gap-2">
+                  <Input 
+                    type="file"
+                    onChange={handleFileUpload}
+                    disabled={uploading}
+                    className="flex-1"
+                  />
+                  {uploading && <Loader2 className="w-5 h-5 animate-spin text-blue-600" />}
+                </div>
+              )}
+              {formData.file_url && !isFollowup && (
                 <p className="text-xs text-green-600 mt-1">✓ Arquivo carregado</p>
               )}
             </div>
@@ -582,9 +674,9 @@ export default function DocumentFormDialog({ open, onClose, document, workshopId
             <Button type="button" variant="outline" onClick={onClose}>
               Cancelar
             </Button>
-            <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
-              <Save className="w-4 h-4 mr-2" />
-              {document ? 'Atualizar' : 'Criar'} Documento
+            <Button type="submit" className="bg-blue-600 hover:bg-blue-700" disabled={uploading}>
+              {uploading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+              {uploading ? 'Enviando...' : (document ? 'Atualizar' : 'Criar')} Documento
             </Button>
           </DialogFooter>
         </form>

@@ -32,6 +32,7 @@ import HistoricoContatosPanel, { buildHistoricoResumoIA } from "@/components/ace
 import BucketPanel from "@/components/aceleracao/BucketPanel";
 import ParallelDemandsPanel from "@/components/aceleracao/ParallelDemandsPanel";
 import CheckpointModal from "@/components/aceleracao/CheckpointModal";
+import DocumentFormDialog from "@/components/documents/DocumentFormDialog";
 import RegistrarAtendimento from "@/pages/RegistrarAtendimento";
 import { criarProximoSuporteFU } from "@/components/aceleracao/suporte/SuporteFollowUpHelper";
 import { useToasts } from "@/components/aceleracao/ToastContainer";
@@ -168,6 +169,8 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
   const [pastedImages, setPastedImages] = useState([]);
   const [uploadedDocs, setUploadedDocs] = useState([]);
   const [uploadingDoc, setUploadingDoc] = useState(false);
+  const [pendingFile, setPendingFile] = useState(null);
+  const [showDocModal, setShowDocModal] = useState(false);
   const fileInputRef = useRef(null);
   const [duracao, setDuracao] = useState(30);
   const [inicioContagem, setInicioContagem] = useState(null);
@@ -636,7 +639,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
   ];
   const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
-  const handleFileUpload = async (file) => {
+  const handleFileSelect = (file) => {
     if (!file) return;
     if (!ACCEPTED_TYPES.includes(file.type)) {
       toast.error('Tipo de arquivo não permitido. Use PDF, XLSX, DOCX ou PNG.');
@@ -646,46 +649,20 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
       toast.error('Arquivo excede o limite de 10MB.');
       return;
     }
-    setUploadingDoc(true);
-    try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      const hoje = new Date();
-      const dataStr = format(hoje, "dd/MM/yyyy");
-      const consultorNome = followUp?.consultor_nome || user?.full_name || 'Consultor';
-      const titulo = `documento anexado no follow up data ${dataStr} por ${consultorNome}`;
-      await base44.entities.CompanyDocument.create({
-        workshop_id: followUp?.workshop_id || null,
-        title: titulo,
-        description: `Anexado via follow-up #${followUp?.sequence_number || 1} - ${followUp?.workshop_name || ''}`,
-        file_url,
-        file_type: file.type,
-        file_size: file.size,
-        category: 'outros',
-        creation_date: hoje.toISOString().split('T')[0],
-        status: 'em_construcao',
-        tags: ['followup', 'anexo'],
-      });
-      setUploadedDocs(prev => [...prev, { name: file.name, url: file_url, size: file.size, type: file.type }]);
-      toast.success('Documento enviado e salvo no repositório.');
-      queryClient.invalidateQueries({ queryKey: ['company-documents'] });
-    } catch (err) {
-      console.error('Erro ao enviar documento:', err);
-      toast.error('Erro ao enviar documento: ' + (err.message || ''));
-    } finally {
-      setUploadingDoc(false);
-    }
+    setPendingFile(file);
+    setShowDocModal(true);
   };
 
   const handleFileInput = (e) => {
     const file = e.target.files?.[0];
-    if (file) handleFileUpload(file);
+    if (file) handleFileSelect(file);
     e.target.value = '';
   };
 
   const handleDrop = (e) => {
     e.preventDefault();
     const file = e.dataTransfer.files?.[0];
-    if (file) handleFileUpload(file);
+    if (file) handleFileSelect(file);
   };
 
   const handleSaveDraft = async () => {
@@ -2089,6 +2066,26 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Modal de Cadastro de Documento (reutilizado do Repositório) */}
+      <DocumentFormDialog
+        open={showDocModal}
+        mode="followup"
+        preSelectedFile={pendingFile}
+        followUp={followUp}
+        user={user}
+        workshopId={followUp?.workshop_id}
+        onClose={() => { setShowDocModal(false); setPendingFile(null); }}
+        onSuccess={() => {
+          setShowDocModal(false);
+          if (pendingFile) {
+            setUploadedDocs(prev => [...prev, { name: pendingFile.name, size: pendingFile.size, type: pendingFile.type }]);
+          }
+          setPendingFile(null);
+          queryClient.invalidateQueries({ queryKey: ['company-documents'] });
+          toast.success('Documento criado no repositório.');
+        }}
+      />
 
       {/* Registrar Atendimento Modal */}
       {showRegistrarAtendimento && ReactDOM.createPortal(
