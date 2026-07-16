@@ -12,6 +12,7 @@ import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import TarefaBacklogAnexosVisualizador from "./TarefaBacklogAnexosVisualizador";
 import TarefaBacklogMediaUpload from "./TarefaBacklogMediaUpload";
+import OrigemPedidoBanner from "./banners/OrigemPedidoBanner";
 
 const STATUS_CONFIG = {
   aberta:      { label: "Aberta",       className: "bg-gray-100 text-gray-800" },
@@ -244,6 +245,9 @@ export default function TarefaBacklogDetalhe({ tarefa, user, onVoltar, onEditar,
           </a>
         </div>
       )}
+
+      {/* Banner de rastreabilidade — tarefa originada de pedido interno aprovado */}
+      <OrigemPedidoBanner tarefa={tarefa} />
 
       {/* ── Grid principal: Dados + Responsáveis ── */}
       <div className="grid items-start gap-6 lg:grid-cols-[3fr_2fr]">

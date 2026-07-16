@@ -12,6 +12,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import PedidoInternoVisualizador from "./PedidoInternoVisualizador";
 import PedidoInternoMediaUpload from "./PedidoInternoMediaUpload";
+import TarefaConvertidaBanner from "./banners/TarefaConvertidaBanner";
 
 const STATUS_LABELS = {
   pendente: { label: "Pendente", className: "bg-gray-100 text-gray-800" },
@@ -149,6 +150,9 @@ export default function PedidoInternoResponder({ pedido, user, onCancel, onSucce
           )}
         </CardContent>
       </Card>
+
+      {/* Banner de rastreabilidade — pedido convertido em tarefa do backlog */}
+      <TarefaConvertidaBanner pedido={pedido} />
 
       {/* Área de resposta */}
       <Card>
