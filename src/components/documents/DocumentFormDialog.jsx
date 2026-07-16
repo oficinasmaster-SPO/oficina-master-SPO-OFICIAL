@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Upload, Save, Plus } from "lucide-react";
+import { Loader2, Upload, Save, Plus, FileText, FileSpreadsheet, Image as ImageIcon, FileType } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 
@@ -14,6 +14,7 @@ export default function DocumentFormDialog({ open, onClose, document, workshopId
   const [uploading, setUploading] = useState(false);
   const [autoGenerateId, setAutoGenerateId] = useState(mode === "followup" ? true : !document);
   const [attachedFiles, setAttachedFiles] = useState(preSelectedFile ? [preSelectedFile] : []);
+  const [existingAttachments, setExistingAttachments] = useState([]);
   const isFollowup = mode === "followup";
 
   const formatFileSize = (bytes) => {
@@ -27,6 +28,40 @@ export default function DocumentFormDialog({ open, onClose, document, workshopId
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'DOCX',
     'image/png': 'PNG',
   }[type] || 'ARQ');
+
+  const FileIcon = ({ type, name }) => {
+    const ext = (name?.split('.').pop() || '').toLowerCase();
+    const iconClass = "w-5 h-5 flex-shrink-0";
+    if (type === 'application/pdf' || ext === 'pdf') return <FileText className={`${iconClass} text-red-500`} />;
+    if (type === 'image/png' || ext === 'png') return <ImageIcon className={`${iconClass} text-green-500`} />;
+    if (ext === 'xlsx') return <FileSpreadsheet className={`${iconClass} text-emerald-600`} />;
+    if (ext === 'docx') return <FileType className={`${iconClass} text-blue-500`} />;
+    return <FileText className={`${iconClass} text-gray-400`} />;
+  };
+
+  const ALLOWED_TYPES = ['application/pdf', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/png'];
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+
+  const validateFile = (file) => {
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      const ext = file.name?.split('.').pop()?.toLowerCase();
+      if (!['pdf', 'xlsx', 'docx', 'png'].includes(ext)) {
+        toast.error(`"${file.name}" — tipo não permitido. Use PDF, DOCX, XLSX ou PNG.`);
+        return false;
+      }
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error(`"${file.name}" excede 10 MB.`);
+      return false;
+    }
+    return true;
+  };
+
+  const handleAddFiles = (fileList) => {
+    const files = Array.from(fileList || []);
+    const valid = files.filter(validateFile);
+    if (valid.length > 0) setAttachedFiles(prev => [...prev, ...valid]);
+  };
   const [showAddTypeModal, setShowAddTypeModal] = useState(false);
   const [newTypeName, setNewTypeName] = useState('');
   const [customTypes, setCustomTypes] = useState([]);
@@ -172,6 +207,8 @@ export default function DocumentFormDialog({ open, onClose, document, workshopId
   useEffect(() => {
     if (document) {
       setAutoGenerateId(false);
+      setExistingAttachments(document.attachments || (document.file_url ? [{ file_url: document.file_url, file_type: document.file_type, file_size: document.file_size, file_name: document.title || 'arquivo' }] : []));
+      setAttachedFiles([]);
       setFormData({
         document_id: document.document_id || '',
         title: document.title || '',
@@ -230,20 +267,8 @@ export default function DocumentFormDialog({ open, onClose, document, workshopId
     }
   }, [document, preSelectedFile, mode]);
 
-  const handleFileUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    setUploading(true);
-    try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      setFormData({ ...formData, file_url });
-      toast.success("Arquivo enviado!");
-    } catch (error) {
-      toast.error("Erro ao enviar arquivo");
-    } finally {
-      setUploading(false);
-    }
+  const removeExistingAttachment = (idx) => {
+    setExistingAttachments(prev => prev.filter((_, i) => i !== idx));
   };
 
   const handleSubmit = async (e) => {
@@ -254,62 +279,64 @@ export default function DocumentFormDialog({ open, onClose, document, workshopId
       return;
     }
 
-    if (!document && !formData.file_url && attachedFiles.length === 0) {
-      toast.error("É necessário enviar um arquivo");
+    if (!document && attachedFiles.length === 0 && !isFollowup) {
+      toast.error("É necessário anexar pelo menos um arquivo");
       return;
     }
 
     setUploading(true);
     try {
+      // Upload de novos arquivos
+      const newUploads = attachedFiles.length > 0
+        ? await Promise.all(
+            attachedFiles.map(async (file) => {
+              const { file_url } = await base44.integrations.Core.UploadFile({ file });
+              return { file_url, file_type: file.type, file_size: file.size, file_name: file.name };
+            })
+          )
+        : [];
+
+      const allAttachments = [...existingAttachments, ...newUploads];
+      const primary = allAttachments[0] || {};
+
       if (document?.id) {
+        // Editar documento existente
         await base44.entities.CompanyDocument.update(document.id, {
           ...formData,
+          file_url: primary.file_url || formData.file_url || '',
+          file_type: primary.file_type || formData.file_type || '',
+          file_size: primary.file_size ?? formData.file_size ?? 0,
+          attachments: allAttachments,
           workshop_id: workshopId,
           last_revision_date: new Date().toISOString().split('T')[0]
         });
         toast.success("Documento atualizado!");
       } else {
-        // Modo followup: upload de TODOS os arquivos e cria UM CompanyDocument com attachments[]
-        if (isFollowup && attachedFiles.length > 0) {
-          const attachments = await Promise.all(
-            attachedFiles.map(async (file) => {
-              const { file_url } = await base44.integrations.Core.UploadFile({ file });
-              return { file_url, file_type: file.type, file_size: file.size, file_name: file.name };
-            })
-          );
+        // Criar novo documento (repositório ou followup)
+        const extraFields = isFollowup
+          ? {
+              origin: "followup",
+              uploaded_by: user?.id || '',
+              uploaded_by_name: user?.full_name || '',
+              followup_id: followUp?.id || '',
+              tags: ["followup", "anexo"],
+            }
+          : { origin: "repositorio" };
 
-          const created = await base44.entities.CompanyDocument.create({
-            ...formData,
-            file_url: attachments[0].file_url,
-            file_type: attachments[0].file_type,
-            file_size: attachments[0].file_size,
-            attachments,
-            workshop_id: workshopId,
-            origin: "followup",
-            uploaded_by: user?.id || '',
-            uploaded_by_name: user?.full_name || '',
-            followup_id: followUp?.id || '',
-            tags: ["followup", "anexo"],
-          });
-
-          const { notifyNewDocument } = await import("./DocumentNotificationManager");
-          await notifyNewDocument(created, workshopId).catch(() => {});
-
-          toast.success(`${attachments.length} anexo(s) vinculado(s) ao documento!`);
-          onSuccess(created);
-          return;
-        }
-
-        // Modo repositório: upload de um único arquivo
         const created = await base44.entities.CompanyDocument.create({
           ...formData,
+          file_url: primary.file_url || '',
+          file_type: primary.file_type || '',
+          file_size: primary.file_size ?? 0,
+          attachments: allAttachments,
           workshop_id: workshopId,
+          ...extraFields,
         });
-        
+
         const { notifyNewDocument } = await import("./DocumentNotificationManager");
-        await notifyNewDocument(created, workshopId);
-        
-        toast.success("Documento criado!");
+        await notifyNewDocument(created, workshopId).catch(() => {});
+
+        toast.success(`${allAttachments.length} anexo(s) vinculado(s) ao documento!`);
         onSuccess(created);
         return;
       }
@@ -614,53 +641,66 @@ export default function DocumentFormDialog({ open, onClose, document, workshopId
               </div>
             )}
 
-            {/* Upload do Arquivo — card de preview no modo followup, input normal no repositório */}
+            {/* Upload de Arquivos — múltiplos anexos em ambos os modos */}
             <div className="md:col-span-2">
-              <Label>Arquivo do Documento {!document && '*'}</Label>
-              {isFollowup ? (
-                <div className="rounded-lg border-2 border-dashed border-gray-300 p-4 bg-gray-50">
-                  {attachedFiles.length > 0 ? (
-                    <div className="space-y-2">
-                      {attachedFiles.map((file, idx) => (
-                        <div key={idx} className="flex items-center gap-3 bg-white rounded-lg px-3 py-2 border border-gray-200">
-                          <span className="text-2xl">📄</span>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">{file.name}</p>
-                            <div className="flex items-center gap-2 mt-0.5">
-                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">{fileExtLabel(file.type)}</span>
-                              <span className="text-xs text-gray-500">{formatFileSize(file.size)}</span>
-                            </div>
+              <Label>Arquivos do Documento {!document && '*'}</Label>
+              <div className="rounded-lg border-2 border-dashed border-gray-300 p-4 bg-gray-50">
+                {/* Anexos já existentes (modo edição) */}
+                {existingAttachments.length > 0 && (
+                  <div className="space-y-2 mb-2">
+                    {existingAttachments.map((att, idx) => (
+                      <div key={`ext-${idx}`} className="flex items-center gap-3 bg-white rounded-lg px-3 py-2 border border-gray-200">
+                        <FileIcon type={att.file_type} name={att.file_name} />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">{att.file_name}</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">{fileExtLabel(att.file_type)}</span>
+                            {att.file_size ? <span className="text-xs text-gray-500">{formatFileSize(att.file_size)}</span> : null}
+                            <a href={att.file_url} target="_blank" rel="noreferrer" className="text-[10px] text-blue-600 hover:underline">abrir</a>
                           </div>
-                          <button type="button" onClick={() => setAttachedFiles(prev => prev.filter((_, i) => i !== idx))} className="text-red-500 hover:bg-red-50 rounded p-1 text-lg leading-none flex-shrink-0" title="Remover arquivo">
-                            ×
-                          </button>
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-gray-400 text-center py-2">Nenhum arquivo selecionado</p>
-                  )}
-                  <div className="flex gap-2 mt-2">
-                    <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-input bg-white text-xs font-medium cursor-pointer hover:bg-gray-50">
-                      + Anexar arquivo
-                      <input type="file" className="hidden" accept=".pdf,.xlsx,.docx,.png,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/png" onChange={(e) => { const f = e.target.files[0]; if (f) setAttachedFiles(prev => [...prev, f]); e.target.value=''; }} />
-                    </label>
+                        <button type="button" onClick={() => removeExistingAttachment(idx)} className="text-red-500 hover:bg-red-50 rounded p-1 text-lg leading-none flex-shrink-0" title="Remover anexo">
+                          ×
+                        </button>
+                      </div>
+                    ))}
                   </div>
+                )}
+
+                {/* Novos arquivos selecionados */}
+                {attachedFiles.length > 0 && (
+                  <div className="space-y-2">
+                    {attachedFiles.map((file, idx) => (
+                      <div key={`new-${idx}`} className="flex items-center gap-3 bg-white rounded-lg px-3 py-2 border border-gray-200">
+                        <FileIcon type={file.type} name={file.name} />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">{file.name}</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">{fileExtLabel(file.type)}</span>
+                            <span className="text-xs text-gray-500">{formatFileSize(file.size)}</span>
+                          </div>
+                        </div>
+                        <button type="button" onClick={() => setAttachedFiles(prev => prev.filter((_, i) => i !== idx))} className="text-red-500 hover:bg-red-50 rounded p-1 text-lg leading-none flex-shrink-0" title="Remover arquivo">
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {existingAttachments.length === 0 && attachedFiles.length === 0 && (
+                  <p className="text-xs text-gray-400 text-center py-2">Nenhum arquivo selecionado</p>
+                )}
+
+                <div className="flex gap-2 mt-2">
+                  <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-input bg-white text-xs font-medium cursor-pointer hover:bg-gray-50">
+                    <Plus className="w-3.5 h-3.5" />
+                    Anexar Arquivo
+                    <input type="file" multiple className="hidden" accept=".pdf,.xlsx,.docx,.png,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/png" onChange={(e) => { handleAddFiles(e.target.files); e.target.value=''; }} />
+                  </label>
+                  <span className="text-[10px] text-gray-400 self-center">PDF, DOCX, XLSX, PNG — máx. 10 MB cada</span>
                 </div>
-              ) : (
-                <div className="!flex gap-2">
-                  <Input 
-                    type="file"
-                    onChange={handleFileUpload}
-                    disabled={uploading}
-                    className="flex-1"
-                  />
-                  {uploading && <Loader2 className="w-5 h-5 animate-spin text-blue-600" />}
-                </div>
-              )}
-              {formData.file_url && !isFollowup && (
-                <p className="text-xs text-green-600 mt-1">✓ Arquivo carregado</p>
-              )}
+              </div>
             </div>
 
             {/* Observações */}
