@@ -32,8 +32,8 @@ export default function BacklogDashboard({ workshopId, user }) {
     queryKey: ['tarefas-backlog', workshopId],
     queryFn: async () => {
       const all = workshopId
-        ? await base44.entities.TarefaBacklog.filter({ workshop_id: workshopId }, '-prazo')
-        : await base44.entities.TarefaBacklog.list('-prazo');
+        ? await base44.entities.TarefaBacklog.filter({ workshop_id: workshopId }, '-prazo', 200)
+        : await base44.entities.TarefaBacklog.list('-prazo', 200);
       return all || [];
     },
   });
@@ -41,7 +41,7 @@ export default function BacklogDashboard({ workshopId, user }) {
   const { data: workshops = [] } = useQuery({
     queryKey: ['workshops-backlog'],
     queryFn: async () => {
-      const all = await base44.entities.Workshop.list();
+      const all = await base44.entities.Workshop.list('name', 200);
       return all || [];
     }
   });
@@ -114,7 +114,7 @@ export default function BacklogDashboard({ workshopId, user }) {
     return [...new Set(tarefas.map(t => t.workshop_nome).filter(Boolean))].sort();
   }, [tarefas]);
 
-  const filteredTarefas = backlogTotal.filter(t => {
+  const filteredTarefas = useMemo(() => backlogTotal.filter(t => {
     const matchSearch = filters.search === '' || 
       t.titulo?.toLowerCase().includes(filters.search.toLowerCase()) ||
       t.workshop_nome?.toLowerCase().includes(filters.search.toLowerCase());
@@ -125,28 +125,7 @@ export default function BacklogDashboard({ workshopId, user }) {
     const matchOrigem = filters.origin_type === 'all' || t.origin_type === filters.origin_type;
     
     return matchSearch && matchConsultor && matchCliente && matchStatus && matchPrioridade && matchOrigem;
-  });
-
-  const getPrioridadeBadge = (prioridade) => {
-    const badges = {
-      baixa: { label: "Baixa", className: "bg-blue-100 text-blue-800" },
-      media: { label: "Média", className: "bg-yellow-100 text-yellow-800" },
-      alta: { label: "Alta", className: "bg-orange-100 text-orange-800" },
-      critica: { label: "Crítica", className: "bg-red-100 text-red-800" }
-    };
-    return badges[prioridade] || badges.media;
-  };
-
-  const getStatusBadge = (status) => {
-    const badges = {
-      aberta: { label: "Aberta", className: "bg-gray-100 text-gray-800" },
-      em_execucao: { label: "Em Execução", className: "bg-blue-100 text-blue-800" },
-      aguardando_cliente: { label: "Aguardando Cliente", className: "bg-amber-100 text-amber-800" },
-      bloqueada: { label: "Bloqueada", className: "bg-red-100 text-red-800" },
-      concluida: { label: "Concluída", className: "bg-green-100 text-green-800" }
-    };
-    return badges[status] || badges.aberta;
-  };
+  }), [backlogTotal, filters]);
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4 overflow-hidden animate-in fade-in duration-200">

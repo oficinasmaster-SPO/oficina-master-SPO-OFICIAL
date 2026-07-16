@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import PedidoInternoMediaUpload from "./PedidoInternoMediaUpload";
 import Combobox from "@/components/ui/combobox";
+import { TIPO_PEDIDO_OPTIONS, PRIORIDADE_OPTIONS, PEDIDO_STATUS_OPTIONS, IMPACTO_CLIENTE_OPTIONS } from "@/components/shared/backlogConstants";
 
 export default function PedidoInternoForm({ pedido, user, usuarios: usuariosProp = [], workshops: workshopsProp = [], clienteId = '', onCancel, onSuccess }) {
   // Pré-seleciona cliente se clienteId foi passado
@@ -42,12 +43,13 @@ export default function PedidoInternoForm({ pedido, user, usuarios: usuariosProp
     midias_anexas: pedido?.midias_anexas || []
   });
 
-  // Busca sempre os employees internos para popular o select de responsável
+  // Busca sempre os employees internos para popular o select de responsável.
+  // H2: Filtra apenas employees com user_id vinculado — assignee_id deve armazenar User.id.
   const { data: usuariosInternos = [] } = useQuery({
     queryKey: ['employees-internos-pedido'],
     queryFn: async () => {
-      const employees = await base44.entities.Employee.filter({ user_type: 'internal' });
-      return (employees || []).filter(e => e.full_name);
+      const employees = await base44.entities.Employee.filter({ user_type: 'internal' }, 'full_name', 200);
+      return (employees || []).filter(e => e.full_name && e.user_id);
     },
   });
 
@@ -93,11 +95,12 @@ export default function PedidoInternoForm({ pedido, user, usuarios: usuariosProp
     saveMutation.mutate(formData);
   };
 
-  const handleResponsavelChange = (empId) => {
-    const emp = usuarios.find(u => u.id === empId);
+  // H2: assignee_id deve armazenar User.id (não Employee.id)
+  const handleResponsavelChange = (userId) => {
+    const emp = usuarios.find(u => u.user_id === userId);
     setFormData({
       ...formData,
-      assignee_id: empId,
+      assignee_id: userId,
       assignee_name: emp?.full_name || ''
     });
   };
@@ -131,11 +134,7 @@ export default function PedidoInternoForm({ pedido, user, usuarios: usuariosProp
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="apoio_tecnico">Apoio Técnico</SelectItem>
-                  <SelectItem value="decisao_estrategica">Decisão Estratégica</SelectItem>
-                  <SelectItem value="liberacao_material">Liberação de Material</SelectItem>
-                  <SelectItem value="excecao_escopo">Exceção de Escopo</SelectItem>
-                  <SelectItem value="outros">Outros</SelectItem>
+                  {TIPO_PEDIDO_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -147,10 +146,7 @@ export default function PedidoInternoForm({ pedido, user, usuarios: usuariosProp
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="baixa">Baixa</SelectItem>
-                  <SelectItem value="media">Média</SelectItem>
-                  <SelectItem value="alta">Alta</SelectItem>
-                  <SelectItem value="critica">Crítica</SelectItem>
+                  {PRIORIDADE_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -185,7 +181,7 @@ export default function PedidoInternoForm({ pedido, user, usuarios: usuariosProp
                 </SelectTrigger>
                 <SelectContent>
                   {usuarios.map(u => (
-                    <SelectItem key={u.id} value={u.id}>
+                    <SelectItem key={u.user_id} value={u.user_id}>
                       {u.full_name}
                     </SelectItem>
                   ))}
@@ -224,11 +220,7 @@ export default function PedidoInternoForm({ pedido, user, usuarios: usuariosProp
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="nenhum">Nenhum</SelectItem>
-                  <SelectItem value="baixo">Baixo</SelectItem>
-                  <SelectItem value="medio">Médio</SelectItem>
-                  <SelectItem value="alto">Alto</SelectItem>
-                  <SelectItem value="critico">Crítico</SelectItem>
+                  {IMPACTO_CLIENTE_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -241,11 +233,7 @@ export default function PedidoInternoForm({ pedido, user, usuarios: usuariosProp
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="pendente">Pendente</SelectItem>
-                    <SelectItem value="em_analise">Em Análise</SelectItem>
-                    <SelectItem value="aprovado">Aprovado</SelectItem>
-                    <SelectItem value="recusado">Recusado</SelectItem>
-                    <SelectItem value="concluido">Concluído</SelectItem>
+                    {PEDIDO_STATUS_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>

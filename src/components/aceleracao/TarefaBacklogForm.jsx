@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft, Zap } from "lucide-react";
 import { toast } from "sonner";
 import TemplateBacklogSelector from "./TemplateBacklogSelector";
-import TarefaBacklogMediaUpload from "./TarefaBacklogMediaUpload";
+import { ORIGIN_OPTIONS, PRIORIDADE_OPTIONS, TAREFA_STATUS_OPTIONS, IMPACTO_OPTIONS } from "@/components/shared/backlogConstants";
 import Combobox from "@/components/ui/combobox";
 import {
   Select,
@@ -56,8 +56,7 @@ export default function TarefaBacklogForm({ tarefa, user, workshops: workshopsPr
     impacto: tarefa?.impacto || 'entrega',
     tempo_estimado_horas: tarefa?.tempo_estimado_horas || 0,
     motivo_bloqueio: tarefa?.motivo_bloqueio || '',
-    notas: tarefa?.notas || '',
-    anexos: tarefa?.anexos || []
+    notas: tarefa?.notas || ''
   });
 
   // Atualiza workshop_nome quando os workshops carregam (caso workshopId foi passado mas workshops ainda não tinham carregado)
@@ -72,9 +71,8 @@ export default function TarefaBacklogForm({ tarefa, user, workshops: workshopsPr
     queryKey: ['employees-internal-consultores-tarefa'],
     queryFn: async () => {
       const employees = await base44.entities.Employee.filter({
-        is_internal: true,
-        workshop_id: '695408b3ed74bfeb60d708c0'
-      }, 'full_name', 1000);
+        user_type: 'internal'
+      }, 'full_name', 200);
       return (employees || []).filter(employee => employee.user_id && employee.full_name);
     }
   });
@@ -225,16 +223,7 @@ export default function TarefaBacklogForm({ tarefa, user, workshops: workshopsPr
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="reuniao">Reunião</SelectItem>
-                  <SelectItem value="contrato">Contrato</SelectItem>
-                  <SelectItem value="pedido">Pedido</SelectItem>
-                  <SelectItem value="diagnostico">Diagnóstico</SelectItem>
-                  <SelectItem value="manual">Manual</SelectItem>
-                  <SelectItem value="followup">Follow-up</SelectItem>
-                  <SelectItem value="cronograma">Cronograma</SelectItem>
-                  <SelectItem value="consultoria">Consultoria</SelectItem>
-                  <SelectItem value="automacao">Automação</SelectItem>
-                  <SelectItem value="projeto">Projeto</SelectItem>
+                  {ORIGIN_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -246,10 +235,7 @@ export default function TarefaBacklogForm({ tarefa, user, workshops: workshopsPr
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="baixa">Baixa</SelectItem>
-                  <SelectItem value="media">Média</SelectItem>
-                  <SelectItem value="alta">Alta</SelectItem>
-                  <SelectItem value="critica">Crítica</SelectItem>
+                  {PRIORIDADE_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -261,11 +247,7 @@ export default function TarefaBacklogForm({ tarefa, user, workshops: workshopsPr
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="aberta">Aberta</SelectItem>
-                  <SelectItem value="em_execucao">Em Execução</SelectItem>
-                  <SelectItem value="aguardando_cliente">Aguardando Cliente</SelectItem>
-                  <SelectItem value="bloqueada">Bloqueada</SelectItem>
-                  <SelectItem value="concluida">Concluída</SelectItem>
+                  {TAREFA_STATUS_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -277,10 +259,7 @@ export default function TarefaBacklogForm({ tarefa, user, workshops: workshopsPr
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="financeiro">Financeiro</SelectItem>
-                  <SelectItem value="entrega">Entrega</SelectItem>
-                  <SelectItem value="satisfacao">Satisfação</SelectItem>
-                  <SelectItem value="multiplo">Múltiplo</SelectItem>
+                  {IMPACTO_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -332,11 +311,6 @@ export default function TarefaBacklogForm({ tarefa, user, workshops: workshopsPr
               rows={2}
             />
           </div>
-
-          <TarefaBacklogMediaUpload
-            anexos={formData.anexos}
-            onAnexosChange={(anexos) => setFormData({...formData, anexos})}
-          />
 
           <div className="flex gap-3 justify-end pt-4 border-t">
             <Button type="button" variant="outline" onClick={onCancel}>

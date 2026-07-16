@@ -2,13 +2,13 @@ import React from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
+import {
+  TAREFA_STATUS_OPTIONS,
+  PRIORIDADE_OPTIONS,
+  ORIGIN_OPTIONS,
+} from "@/components/shared/backlogConstants";
 
-export default function BacklogFilters({ 
-  filters, 
-  onFilterChange, 
-  consultores, 
-  clientes 
-}) {
+export default function BacklogFilters({ filters, onFilterChange, consultores, clientes }) {
   const handleInputChange = (field, value) => {
     onFilterChange({ ...filters, [field]: value });
   };
@@ -54,9 +54,7 @@ export default function BacklogFilters({
             className="w-full h-8 text-sm border border-gray-300 rounded px-2"
           >
             <option value="all">Todos</option>
-            {consultores.map(c => (
-              <option key={c} value={c}>{c}</option>
-            ))}
+            {consultores.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
         </div>
 
@@ -68,9 +66,7 @@ export default function BacklogFilters({
             className="w-full h-8 text-sm border border-gray-300 rounded px-2"
           >
             <option value="all">Todos</option>
-            {clientes.map(c => (
-              <option key={c} value={c}>{c}</option>
-            ))}
+            {clientes.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
         </div>
 
@@ -82,10 +78,7 @@ export default function BacklogFilters({
             className="w-full h-8 text-sm border border-gray-300 rounded px-2"
           >
             <option value="all">Todas</option>
-            <option value="aberta">Aberta</option>
-            <option value="em_execucao">Em Execução</option>
-            <option value="aguardando_cliente">Aguardando Cliente</option>
-            <option value="bloqueada">Bloqueada</option>
+            {TAREFA_STATUS_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
           </select>
         </div>
 
@@ -97,10 +90,7 @@ export default function BacklogFilters({
             className="w-full h-8 text-sm border border-gray-300 rounded px-2"
           >
             <option value="all">Todas</option>
-            <option value="baixa">Baixa</option>
-            <option value="media">Média</option>
-            <option value="alta">Alta</option>
-            <option value="critica">Crítica</option>
+            {PRIORIDADE_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
           </select>
         </div>
 
@@ -112,16 +102,7 @@ export default function BacklogFilters({
             className="w-full h-8 text-sm border border-gray-300 rounded px-2"
           >
             <option value="all">Todas</option>
-            <option value="reuniao">Reunião</option>
-            <option value="contrato">Contrato</option>
-            <option value="diagnostico">Diagnóstico</option>
-            <option value="pedido">Pedido</option>
-            <option value="manual">Manual</option>
-            <option value="followup">Follow-up</option>
-            <option value="cronograma">Cronograma</option>
-            <option value="consultoria">Consultoria</option>
-            <option value="automacao">Automação</option>
-            <option value="projeto">Projeto</option>
+            {ORIGIN_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
           </select>
         </div>
       </div>
