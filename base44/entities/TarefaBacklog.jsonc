@@ -113,6 +113,20 @@
       "type": "string",
       "description": "Motivo do bloqueio se status = bloqueada"
     },
+    "aguardando_cliente": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se a tarefa est\u00e1 aguardando resposta/entrega do cliente"
+    },
+    "aguardando_cliente_desde": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora em que a tarefa passou a aguardar o cliente"
+    },
+    "aguardando_cliente_motivo": {
+      "type": "string",
+      "description": "Motivo/Motivo do aguardo do cliente (o que foi solicitado)"
+    },
     "data_conclusao": {
       "type": "string",
       "format": "date-time",

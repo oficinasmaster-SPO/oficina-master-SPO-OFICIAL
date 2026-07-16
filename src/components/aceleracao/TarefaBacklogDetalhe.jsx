@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import TarefaBacklogAnexosVisualizador from "./TarefaBacklogAnexosVisualizador";
 import TarefaBacklogMediaUpload from "./TarefaBacklogMediaUpload";
 import OrigemPedidoBanner from "./banners/OrigemPedidoBanner";
+import AguardandoClienteBanner from "./banners/AguardandoClienteBanner";
 
 const STATUS_CONFIG = {
   aberta:      { label: "Aberta",       className: "bg-gray-100 text-gray-800" },
@@ -248,6 +249,9 @@ export default function TarefaBacklogDetalhe({ tarefa, user, onVoltar, onEditar,
 
       {/* Banner de rastreabilidade — tarefa originada de pedido interno aprovado */}
       <OrigemPedidoBanner tarefa={tarefa} />
+
+      {/* Banner de estado — aguardando resposta/entrega do cliente */}
+      <AguardandoClienteBanner tarefa={tarefa} podeEditar={podeEditar} />
 
       {/* ── Grid principal: Dados + Responsáveis ── */}
       <div className="grid items-start gap-6 lg:grid-cols-[3fr_2fr]">
