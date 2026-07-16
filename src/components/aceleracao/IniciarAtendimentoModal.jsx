@@ -11,7 +11,7 @@ import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, A
 import {
   Phone, MessageCircle, Mail, Video, MapPin, CheckCircle2, X, Clock, AlertCircle,
   ChevronRight, ChevronLeft, Upload, Check, Calendar, User, Bell,
-  MessageSquare, Send, Loader2
+  MessageSquare, Send, Loader2, FileText
 } from "lucide-react";
 import { format, isToday, parseISO } from "date-fns";
 import { toast } from "sonner";
@@ -166,6 +166,9 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
   const [errors, setErrors] = useState({});
   const [selectedAta, setSelectedAta] = useState(null);
   const [pastedImages, setPastedImages] = useState([]);
+  const [uploadedDocs, setUploadedDocs] = useState([]);
+  const [uploadingDoc, setUploadingDoc] = useState(false);
+  const fileInputRef = useRef(null);
   const [duracao, setDuracao] = useState(30);
   const [inicioContagem, setInicioContagem] = useState(null);
 
@@ -623,6 +626,66 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
     if (!isAutoReagendar && !proximoPasso) newErrors.proximoPasso = "Obrigatório";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  const ACCEPTED_TYPES = [
+    'application/pdf',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'image/png',
+  ];
+  const MAX_FILE_SIZE = 10 * 1024 * 1024;
+
+  const handleFileUpload = async (file) => {
+    if (!file) return;
+    if (!ACCEPTED_TYPES.includes(file.type)) {
+      toast.error('Tipo de arquivo não permitido. Use PDF, XLSX, DOCX ou PNG.');
+      return;
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error('Arquivo excede o limite de 10MB.');
+      return;
+    }
+    setUploadingDoc(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const hoje = new Date();
+      const dataStr = format(hoje, "dd/MM/yyyy");
+      const consultorNome = followUp?.consultor_nome || user?.full_name || 'Consultor';
+      const titulo = `documento anexado no follow up data ${dataStr} por ${consultorNome}`;
+      await base44.entities.CompanyDocument.create({
+        workshop_id: followUp?.workshop_id || null,
+        title: titulo,
+        description: `Anexado via follow-up #${followUp?.sequence_number || 1} - ${followUp?.workshop_name || ''}`,
+        file_url,
+        file_type: file.type,
+        file_size: file.size,
+        category: 'outros',
+        creation_date: hoje.toISOString().split('T')[0],
+        status: 'em_construcao',
+        tags: ['followup', 'anexo'],
+      });
+      setUploadedDocs(prev => [...prev, { name: file.name, url: file_url, size: file.size, type: file.type }]);
+      toast.success('Documento enviado e salvo no repositório.');
+      queryClient.invalidateQueries({ queryKey: ['company-documents'] });
+    } catch (err) {
+      console.error('Erro ao enviar documento:', err);
+      toast.error('Erro ao enviar documento: ' + (err.message || ''));
+    } finally {
+      setUploadingDoc(false);
+    }
+  };
+
+  const handleFileInput = (e) => {
+    const file = e.target.files?.[0];
+    if (file) handleFileUpload(file);
+    e.target.value = '';
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleFileUpload(file);
   };
 
   const handleSaveDraft = async () => {
@@ -1306,11 +1369,47 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
                 <label className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2 block">Documentos e anexos</label>
                 
                 {/* Upload Area */}
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition cursor-pointer mb-3">
-                  <Upload className="w-6 h-6 text-gray-400 mx-auto mb-2" />
-                  <p className="text-xs text-gray-600">Arraste arquivos ou clique para selecionar</p>
-                  <p className="text-xs text-gray-400 mt-1">PDF, XLSX, DOCX, PNG (máx 10MB)</p>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  className="hidden"
+                  accept=".pdf,.xlsx,.docx,.png,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/png"
+                  onChange={handleFileInput}
+                />
+                <div
+                  onClick={() => !uploadingDoc && fileInputRef.current?.click()}
+                  onDrop={handleDrop}
+                  onDragOver={(e) => e.preventDefault()}
+                  className={`border-2 border-dashed rounded-lg p-6 text-center transition cursor-pointer mb-3 ${
+                    uploadingDoc ? 'border-blue-400 bg-blue-50' : 'border-gray-300 hover:border-gray-400'
+                  }`}
+                >
+                  {uploadingDoc ? (
+                    <>
+                      <Loader2 className="w-6 h-6 text-blue-500 mx-auto mb-2 animate-spin" />
+                      <p className="text-xs text-blue-600">Enviando documento...</p>
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-6 h-6 text-gray-400 mx-auto mb-2" />
+                      <p className="text-xs text-gray-600">Arraste arquivos ou clique para selecionar</p>
+                      <p className="text-xs text-gray-400 mt-1">PDF, XLSX, DOCX, PNG (máx 10MB)</p>
+                    </>
+                  )}
                 </div>
+
+                {uploadedDocs.length > 0 && (
+                  <div className="space-y-2 mb-3">
+                    <p className="text-xs font-semibold text-gray-600">Documentos enviados ({uploadedDocs.length})</p>
+                    {uploadedDocs.map((doc, idx) => (
+                      <div key={idx} className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                        <FileText className="w-4 h-4 text-green-600 flex-shrink-0" />
+                        <span className="text-xs text-gray-700 truncate flex-1">{doc.name}</span>
+                        <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline">Ver</a>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
                 {/* Paste Screenshot Area */}
                 <div 
