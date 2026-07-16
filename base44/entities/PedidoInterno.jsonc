@@ -21,27 +21,27 @@
       "type": "string",
       "description": "Descri\u00e7\u00e3o detalhada do pedido"
     },
-    "solicitante_id": {
+    "requester_id": {
       "type": "string",
       "description": "ID do usu\u00e1rio solicitante"
     },
-    "solicitante_nome": {
+    "requester_name": {
       "type": "string",
       "description": "Nome do solicitante"
     },
-    "responsavel_id": {
+    "assignee_id": {
       "type": "string",
       "description": "ID do usu\u00e1rio respons\u00e1vel"
     },
-    "responsavel_nome": {
+    "assignee_name": {
       "type": "string",
       "description": "Nome do respons\u00e1vel"
     },
-    "cliente_id": {
+    "workshop_id": {
       "type": "string",
-      "description": "LEGADO: armazena semanticamente um Workshop.id; renomeio f\u00edsico para workshop_id ser\u00e1 feito em migra\u00e7\u00e3o posterior"
+      "description": "ID da oficina/cliente relacionado ao pedido"
     },
-    "cliente_nome": {
+    "workshop_nome": {
       "type": "string",
       "description": "Nome do cliente/oficina"
     },
@@ -203,21 +203,21 @@
   "required": [
     "tipo",
     "titulo",
-    "solicitante_id",
-    "responsavel_id",
+    "requester_id",
+    "assignee_id",
     "prazo"
   ],
   "rls": {
     "create": {
       "$or": [
         {
-          "data.cliente_id": "{{user.tenant_workshop_id}}"
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
         },
         {
-          "data.cliente_id": "{{user.workshop_id}}"
+          "data.workshop_id": "{{user.workshop_id}}"
         },
         {
-          "data.cliente_id": "{{user.data.workshop_id}}"
+          "data.workshop_id": "{{user.data.workshop_id}}"
         },
         {
           "user_condition": {
@@ -229,19 +229,19 @@
     "read": {
       "$or": [
         {
-          "data.cliente_id": "{{user.tenant_workshop_id}}"
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
         },
         {
-          "data.cliente_id": "{{user.workshop_id}}"
+          "data.workshop_id": "{{user.workshop_id}}"
         },
         {
-          "data.cliente_id": "{{user.data.workshop_id}}"
+          "data.workshop_id": "{{user.data.workshop_id}}"
         },
         {
-          "data.solicitante_id": "{{user.id}}"
+          "data.requester_id": "{{user.id}}"
         },
         {
-          "data.responsavel_id": "{{user.id}}"
+          "data.assignee_id": "{{user.id}}"
         },
         {
           "user_condition": {
@@ -253,19 +253,19 @@
     "update": {
       "$or": [
         {
-          "data.cliente_id": "{{user.tenant_workshop_id}}"
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
         },
         {
-          "data.cliente_id": "{{user.workshop_id}}"
+          "data.workshop_id": "{{user.workshop_id}}"
         },
         {
-          "data.cliente_id": "{{user.data.workshop_id}}"
+          "data.workshop_id": "{{user.data.workshop_id}}"
         },
         {
-          "data.solicitante_id": "{{user.id}}"
+          "data.requester_id": "{{user.id}}"
         },
         {
-          "data.responsavel_id": "{{user.id}}"
+          "data.assignee_id": "{{user.id}}"
         },
         {
           "user_condition": {
