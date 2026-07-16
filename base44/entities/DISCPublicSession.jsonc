@@ -60,9 +60,72 @@
     "token"
   ],
   "rls": {
-    "create": true,
-    "read": true,
-    "update": true,
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data.user_type": "internal"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data.user_type": "internal"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data.user_type": "internal"
+          }
+        }
+      ]
+    },
     "delete": {
       "$or": [
         {
