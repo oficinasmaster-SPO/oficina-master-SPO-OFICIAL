@@ -55,7 +55,12 @@
         "contrato",
         "pedido",
         "diagnostico",
-        "manual"
+        "manual",
+        "followup",
+        "cronograma",
+        "consultoria",
+        "automacao",
+        "projeto"
       ],
       "description": "Origem da tarefa"
     },

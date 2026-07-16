@@ -6,7 +6,7 @@ import SmartDueDate from "./SmartDueDate";
 
 const priority = { baixa: ["Baixa", "bg-sky-50 text-sky-700 border-sky-200"], media: ["Média", "bg-amber-50 text-amber-700 border-amber-200"], alta: ["Alta", "bg-orange-50 text-orange-700 border-orange-200"], critica: ["Crítica", "bg-red-50 text-red-700 border-red-200"] };
 const status = { aberta: "Aberta", em_execucao: "Em execução", aguardando_cliente: "Aguardando Cliente", bloqueada: "Bloqueada", concluida: "Concluída" };
-const origin = { manual: "Manual", pedido: "Pedido", reuniao: "Reunião", entrega: "Entrega", material: "Material" };
+const origin = { reuniao: "Reunião", contrato: "Contrato", pedido: "Pedido", diagnostico: "Diagnóstico", manual: "Manual", followup: "Follow-up", cronograma: "Cronograma", consultoria: "Consultoria", automacao: "Automação", projeto: "Projeto" };
 const sideTone = (t) => t.status === "concluida" ? "border-l-green-500" : t.prioridade === "critica" ? "border-l-red-500" : t.prazo && new Date(t.prazo) < new Date() ? "border-l-amber-500" : t.status === "em_execucao" ? "border-l-blue-500" : t.status === "aguardando_cliente" ? "border-l-amber-400" : "border-l-gray-300";
 
 function BacklogTaskCard({ tarefa, user, onView, onAction }) {

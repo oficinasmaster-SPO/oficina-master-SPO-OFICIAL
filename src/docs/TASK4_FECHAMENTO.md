@@ -1,35 +1,53 @@
-# 🎫 TICKET — TASK 4: Comentários Colaborativos
+# TASK 4 — Expandir `origin_type` — FECHAMENTO
 
-**Status:** ✅ FECHADO  
-**Data de fechamento:** 2026-07-16  
-**Responsável:** Dev Senior  
+## Objetivo
+Cobrir todas as origens da arquitetura no enum `origin_type` da entidade `TarefaBacklog`, com labels e filtros atualizados em todos os componentes.
 
----
+## Implementação
 
-## 📋 Objetivo
+### 1. Entity Schema (`TarefaBacklog.jsonc`)
+Enum `origin_type` expandido de 5 para 10 valores:
+```
+["reuniao", "contrato", "pedido", "diagnostico", "manual",
+ "followup", "cronograma", "consultoria", "automacao", "projeto"]
+```
 
-Adicionar seção de comentários colaborativos (com respostas encadeadas e notas internas) nos detalhes de TarefaBacklog e PedidoInterno.
+### 2. Tabela de Labels
+| Valor | Label |
+|-------|-------|
+| `reuniao` | Reunião |
+| `contrato` | Contrato |
+| `pedido` | Pedido |
+| `diagnostico` | Diagnóstico |
+| `manual` | Manual |
+| `followup` | Follow-up |
+| `cronograma` | Cronograma |
+| `consultoria` | Consultoria |
+| `automacao` | Automação |
+| `projeto` | Projeto |
 
----
+### 3. Componentes Atualizados
 
-## ✅ Entregas
+| Componente | Alteração |
+|------------|-----------|
+| `TarefaBacklogForm.jsx` | Select de Origem: +5 SelectItems (followup, cronograma, consultoria, automacao, projeto). Select de Status: +aguardando_cliente (consistência com TASK 3). |
+| `BacklogTaskCard.jsx` | Map `origin` atualizado com todos os 10 valores (removidos valores inexistentes `entrega`/`material`). |
+| `BacklogFilters.jsx` | Dropdown de Origem: +5 `<option>` para novos valores. |
+| `TarefaBacklogDetalhe.jsx` | Constante `ORIGIN_LABELS` adicionada. Badge de origem usa label legível em vez de `capitalize` (que não aplicava acentos nem hifens). |
 
-| # | Item | Arquivo | Status |
-|---|------|---------|--------|
-| 1 | Componente CommentsSection (threaded + notas internas + realtime) | `src/components/aceleracao/CommentsSection.jsx` | ✅ |
-| 2 | Wiring no TarefaBacklogDetalhe | `src/components/aceleracao/TarefaBacklogDetalhe.jsx` | ✅ |
-| 3 | Wiring no PedidoInternoResponder | `src/components/aceleracao/PedidoInternoResponder.jsx` | ✅ |
+## Arquivos alterados
+| Arquivo | Tipo |
+|---------|------|
+| `base44/entities/TarefaBacklog.jsonc` | Schema: +5 enum values em origin_type |
+| `src/components/aceleracao/TarefaBacklogForm.jsx` | +5 SelectItems origem + 1 SelectItem status |
+| `src/components/aceleracao/BacklogTaskCard.jsx` | Map origin atualizado |
+| `src/components/aceleracao/BacklogFilters.jsx` | +5 options origem |
+| `src/components/aceleracao/TarefaBacklogDetalhe.jsx` | +ORIGIN_LABELS, badge usa label |
 
----
-
-## 🔄 Evolução (TASK 5)
-
-Durante a implementação, identificamos que o componente `ActivityTimeline.jsx` já existia no codebase e era **mais completo** que o CommentsSection: unifica ActivityLog (eventos automáticos) + TaskComment (comentários com anexos, avatares, Markdown) em uma única timeline.
-
-**Decisão de arquitetura:** Em TASK 5, o CommentsSection foi substituído pelo ActivityTimeline nos dois detalhes, e o arquivo CommentsSection.jsx foi removido para eliminar duplicação de código.
-
----
-
-## 📐 Próximos Passos
-
-TASK 4 fechada. Prosseguindo para **TASK 5: Timeline Unificada** — substituir CommentsSection pelo ActivityTimeline existente, dando ao usuário uma visão completa de eventos automáticos + comentários em um único feed.
+## Validação
+- ✅ Novos valores aceitos pelo schema (create/update)
+- ✅ Labels com acentuação correta (Automação, Diagnóstico, Follow-up)
+- ✅ Filtros cobrem todas as origens
+- ✅ Form permite selecionar todas as origens
+- ✅ Detalhe exibe label legível em vez de string cru/capitalizada
+- ✅ Status `aguardando_cliente` (TASK 3) adicionado ao form para consistência

@@ -117,6 +117,11 @@ export default function BacklogFilters({
             <option value="diagnostico">Diagnóstico</option>
             <option value="pedido">Pedido</option>
             <option value="manual">Manual</option>
+            <option value="followup">Follow-up</option>
+            <option value="cronograma">Cronograma</option>
+            <option value="consultoria">Consultoria</option>
+            <option value="automacao">Automação</option>
+            <option value="projeto">Projeto</option>
           </select>
         </div>
       </div>

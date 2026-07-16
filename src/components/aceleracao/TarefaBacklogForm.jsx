@@ -230,6 +230,11 @@ export default function TarefaBacklogForm({ tarefa, user, workshops: workshopsPr
                   <SelectItem value="pedido">Pedido</SelectItem>
                   <SelectItem value="diagnostico">Diagnóstico</SelectItem>
                   <SelectItem value="manual">Manual</SelectItem>
+                  <SelectItem value="followup">Follow-up</SelectItem>
+                  <SelectItem value="cronograma">Cronograma</SelectItem>
+                  <SelectItem value="consultoria">Consultoria</SelectItem>
+                  <SelectItem value="automacao">Automação</SelectItem>
+                  <SelectItem value="projeto">Projeto</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -258,6 +263,7 @@ export default function TarefaBacklogForm({ tarefa, user, workshops: workshopsPr
                 <SelectContent>
                   <SelectItem value="aberta">Aberta</SelectItem>
                   <SelectItem value="em_execucao">Em Execução</SelectItem>
+                  <SelectItem value="aguardando_cliente">Aguardando Cliente</SelectItem>
                   <SelectItem value="bloqueada">Bloqueada</SelectItem>
                   <SelectItem value="concluida">Concluída</SelectItem>
                 </SelectContent>

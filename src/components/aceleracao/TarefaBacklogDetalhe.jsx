@@ -31,6 +31,19 @@ const PRIORIDADE_CONFIG = {
   critica: { label: "Crítica", className: "bg-red-100 text-red-800" },
 };
 
+const ORIGIN_LABELS = {
+  reuniao:     'Reunião',
+  contrato:    'Contrato',
+  pedido:      'Pedido',
+  diagnostico: 'Diagnóstico',
+  manual:      'Manual',
+  followup:    'Follow-up',
+  cronograma:  'Cronograma',
+  consultoria: 'Consultoria',
+  automacao:   'Automação',
+  projeto:     'Projeto',
+};
+
 const ACAO_CONFIG = {
   CRIACAO:        { cor: "bg-green-500",  icone: "🟢", label: "Criado" },
   ATRIBUICAO:     { cor: "bg-yellow-500", icone: "🟡", label: "Atribuído" },
@@ -311,7 +324,7 @@ export default function TarefaBacklogDetalhe({ tarefa, user, onVoltar, onEditar,
               </div>
               <div>
                 <p className="text-xs text-gray-500 mb-1">Origem</p>
-                <Badge variant="outline" className="text-xs capitalize">{tarefa.origin_type}</Badge>
+                <Badge variant="outline" className="text-xs">{ORIGIN_LABELS[tarefa.origin_type] || tarefa.origin_type}</Badge>
               </div>
               <div>
                 <p className="text-xs text-gray-500 mb-1">Impacto</p>
