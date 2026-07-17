@@ -252,7 +252,10 @@ export default function CadastroPlanos() {
       } else {
         // Cria nova oficina
         const newWorkshop = await base44.entities.Workshop.create(workshopData);
-        
+
+        // Provisionamento canônico do tenant (firm_id + memberships dono/internos)
+        base44.functions.invoke('provisionWorkshopTenant', { workshop_id: newWorkshop.id }).catch(() => {});
+
         // Atualizar dados do usuário como proprietário
         await base44.auth.updateMe({
           workshop_id: newWorkshop.id,
