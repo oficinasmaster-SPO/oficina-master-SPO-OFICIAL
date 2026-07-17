@@ -122,8 +122,8 @@ export default function PedidosInternosTab({ workshopId, user }) {
       </PedidoInternoModal>
 
       <Tabs value={activeList} onValueChange={setActiveList} className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        {/* Header: tabs + ação principal — dentro de um container fixo */}
-        <div className="flex shrink-0 items-center justify-between border-b border-gray-200 bg-white px-4 py-2">
+        {/* Header: tabs + ações contextuais */}
+        <div className="flex shrink-0 items-center gap-3 border-b border-gray-200 bg-white px-4 py-2">
           <TabsList className="h-8 gap-0.5 rounded-lg bg-gray-100 p-1">
             <TabsTrigger value="pedidos" className="h-6 rounded px-3 text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm">
               Pedidos Internos
@@ -132,6 +132,40 @@ export default function PedidosInternosTab({ workshopId, user }) {
               Backlog de Tarefas
             </TabsTrigger>
           </TabsList>
+
+          {/* Toolbar de Pedidos — só visível na aba de pedidos */}
+          {activeList === "pedidos" && (
+            <div className="flex flex-1 items-center gap-2">
+              <div className="relative flex-1 max-w-xs">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Buscar pedidos..."
+                  className="h-8 w-full rounded-md border border-gray-200 bg-gray-50 pl-8 pr-3 text-xs text-gray-800 placeholder:text-gray-400 focus:border-blue-300 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-100"
+                />
+              </div>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="h-8 w-[140px] shrink-0 text-xs">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all" className="text-xs">Todos os status</SelectItem>
+                  {PEDIDO_STATUS_OPTIONS.map(opt => (
+                    <SelectItem key={opt.value} value={opt.value} className="text-xs">{opt.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <span className="text-xs text-gray-400">
+                {filteredPedidos.length} {filteredPedidos.length === 1 ? "pedido" : "pedidos"}
+              </span>
+              <Button onClick={() => setShowNewForm(true)} size="sm" className="ml-auto h-8 gap-1.5 bg-blue-600 text-xs shadow-sm hover:bg-blue-700">
+                <Plus className="h-3.5 w-3.5" />
+                Novo Pedido
+              </Button>
+            </div>
+          )}
         </div>
 
         <TabsContent value="backlog" forceMount className={`mt-0 min-h-0 flex-1 overflow-hidden flex flex-col ${activeList !== "backlog" ? "hidden" : "animate-in fade-in duration-200"}`}>
@@ -139,42 +173,7 @@ export default function PedidosInternosTab({ workshopId, user }) {
         </TabsContent>
 
         <TabsContent value="pedidos" forceMount className={`mt-0 flex min-h-0 flex-1 flex-col overflow-hidden ${activeList !== "pedidos" ? "hidden" : "flex animate-in fade-in duration-200"}`}>
-          {/* Toolbar */}
-          <div className="flex items-center gap-3 border-b border-gray-200 px-4 py-3">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Buscar pedidos..."
-                className="w-full rounded-lg border border-gray-200 bg-gray-50 py-2 pl-9 pr-3 text-sm text-gray-800 placeholder:text-gray-400 focus:border-blue-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100"
-              />
-            </div>
-
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[160px] shrink-0 rounded-lg border-gray-200 bg-gray-50 text-sm">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os status</SelectItem>
-                {PEDIDO_STATUS_OPTIONS.map(opt => (
-                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <div className="ml-auto text-xs text-gray-400">
-              {filteredPedidos.length} {filteredPedidos.length === 1 ? "pedido" : "pedidos"}
-            </div>
-
-            <Button onClick={() => setShowNewForm(true)} size="sm" className="gap-2 bg-blue-600 shadow-sm hover:bg-blue-700">
-              <Plus className="h-4 w-4" />
-              Novo Pedido
-            </Button>
-          </div>
-
-          {/* List */}
+          {/* List — ocupa todo o espaço restante com scroll interno */}
           <div className="scrollbar-thin scrollbar-stable min-h-0 flex-1 overflow-y-auto bg-white">
             <PedidoInternoList
               pedidos={filteredPedidos}
