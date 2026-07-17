@@ -1,50 +1,101 @@
+/**
+ * PedidosInternosTab — Shell fixo com toolbar + lista rolável
+ *
+ * Layout (REFACTOR_BRIEF.md):
+ * ┌─ Header fixo (shrink-0) ──────────────────────────────────────────────┐
+ * │  Tabs (Pedidos | Backlog) + Métricas rápidas + CTA                   │
+ * │  Toolbar: Escopo (dropdown) + Search + Filtro Status                 │
+ * │  Column Headers (Solicitante | Título | Cliente | P | Status | SLA)  │
+ * ├───────────────────────────────────────────────────────────────────────┤
+ * │  Lista agrupada (flex-1 overflow-y-auto)                             │
+ * └───────────────────────────────────────────────────────────────────────┘
+ */
 import React, { useState, useMemo, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Plus, Search, X, Inbox, Send as SendIcon } from "lucide-react";
+import {
+  Plus, Search, X, User, ChevronDown, Inbox, Send as SendIcon, Users,
+} from "lucide-react";
 import PedidoInternoForm from "./PedidoInternoForm";
 import BacklogBoard from "./BacklogBoard";
 import PedidoInternoModal from "./PedidoInternoModal";
-import PedidoInternoList from "./PedidoInternoList";
+import PedidoInternoList, { ColumnHeaders } from "./PedidoInternoList";
 import PedidoInternoDetail from "./PedidoInternoDetail";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import {
+  Popover, PopoverContent, PopoverTrigger,
+} from "@/components/ui/popover";
 import { PEDIDO_STATUS_OPTIONS } from "@/components/shared/backlogConstants";
 
-// ── Toggle "Para mim / Meus pedidos / Todos" ────────────────────────────────
-function ViewToggle({ value, onChange }) {
-  const opts = [
-    { key: "para_mim",      label: "Para mim",       icon: Inbox },
-    { key: "meus_pedidos",   label: "Meus pedidos",   icon: SendIcon },
-    { key: "todos",          label: "Todos",           icon: null },
-  ];
+/* ═══════════════════════════════════════════════════════════════════════════
+   SCOPE SELECTOR — combobox/dropdown (spec: NÃO botões inline)
+   ═══════════════════════════════════════════════════════════════════════════ */
+const SCOPE_OPTIONS = [
+  { key: "todos",        label: "Todos os pedidos", icon: Users,    description: "Ver tudo" },
+  { key: "para_mim",     label: "Para mim",         icon: Inbox,    description: "Pedidos atribuídos a mim" },
+  { key: "meus_pedidos", label: "Meus pedidos",     icon: SendIcon, description: "Pedidos que eu criei" },
+];
+
+function ScopeSelector({ value, onChange }) {
+  const [open, setOpen] = useState(false);
+  const current = SCOPE_OPTIONS.find(o => o.key === value) || SCOPE_OPTIONS[0];
+  const Icon = current.icon;
+
   return (
-    <div className="flex items-center rounded-md border border-gray-200 bg-gray-50 p-0.5">
-      {opts.map((opt) => {
-        const active = value === opt.key;
-        const Icon = opt.icon;
-        return (
-          <button
-            key={opt.key}
-            onClick={() => onChange(opt.key)}
-            className={`flex items-center gap-1 rounded px-2.5 py-1 text-[11px] font-medium transition-all
-              ${active
-                ? "bg-white text-gray-900 shadow-sm"
-                : "text-gray-500 hover:text-gray-700"}`}
-          >
-            {Icon && <Icon className="h-3 w-3" />}
-            {opt.label}
-          </button>
-        );
-      })}
-    </div>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button className="flex h-8 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition-colors min-w-[160px]">
+          <Icon className="h-3.5 w-3.5 text-gray-400" />
+          {current.label}
+          <ChevronDown className="ml-auto h-3 w-3 text-gray-400" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-[220px] p-1" sideOffset={4}>
+        {SCOPE_OPTIONS.map(opt => {
+          const OptIcon = opt.icon;
+          const active = opt.key === value;
+          return (
+            <button
+              key={opt.key}
+              onClick={() => { onChange(opt.key); setOpen(false); }}
+              className={`flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-xs transition-colors
+                ${active ? "bg-blue-50 text-blue-700" : "text-gray-700 hover:bg-gray-50"}`}
+            >
+              <OptIcon className={`h-3.5 w-3.5 ${active ? "text-blue-500" : "text-gray-400"}`} />
+              <div className="flex-1">
+                <p className="font-medium">{opt.label}</p>
+                <p className="text-[10px] text-gray-400">{opt.description}</p>
+              </div>
+              {active && <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />}
+            </button>
+          );
+        })}
+      </PopoverContent>
+    </Popover>
   );
 }
 
-// ── Componente principal ────────────────────────────────────────────────────
+/* ═══════════════════════════════════════════════════════════════════════════
+   METRIC DOTS — indicadores rápidos
+   ═══════════════════════════════════════════════════════════════════════════ */
+function MetricDot({ color, count, label }) {
+  if (count === 0) return null;
+  return (
+    <span className="flex items-center gap-1.5 text-xs text-gray-600">
+      <span className={`h-2 w-2 rounded-full ${color}`} />
+      <span className="font-bold tabular-nums">{count}</span>
+      <span className="text-gray-400 hidden sm:inline">{label}</span>
+    </span>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MAIN COMPONENT
+   ═══════════════════════════════════════════════════════════════════════════ */
 export default function PedidosInternosTab({ workshopId, user }) {
   const [selectedPedido, setSelectedPedido] = useState(null);
   const [editingPedido, setEditingPedido]   = useState(null);
@@ -52,10 +103,10 @@ export default function PedidosInternosTab({ workshopId, user }) {
   const [activeList, setActiveList]         = useState("pedidos");
   const [search, setSearch]                 = useState("");
   const [statusFilter, setStatusFilter]     = useState("all");
-  const [viewMode, setViewMode]             = useState("para_mim"); // para_mim | meus_pedidos | todos
+  const [scope, setScope]                   = useState("todos");
   const queryClient = useQueryClient();
 
-  // ── Data ──────────────────────────────────────────────────────────────────
+  /* ── Data ─────────────────────────────────────────────────────────────── */
   const { data: pedidos = [], isLoading } = useQuery({
     queryKey: ["pedidos-internos", workshopId],
     queryFn: async () => {
@@ -71,42 +122,62 @@ export default function PedidosInternosTab({ workshopId, user }) {
     queryFn: async () => (await base44.entities.User.list()) || [],
   });
 
-  // ── Filtro por visão + busca + status ──────────────────────────────────────
+  /* ── Métricas rápidas ──────────────────────────────────────────────────── */
+  const metrics = useMemo(() => {
+    const active = pedidos.filter(p => !["concluido", "recusado"].includes(p.status));
+    return {
+      em_analise: active.filter(p => p.status === "em_analise").length,
+      pendentes:  active.filter(p => p.status === "pendente").length,
+      aprovados:  active.filter(p => p.status === "aprovado").length,
+    };
+  }, [pedidos]);
+
+  /* ── Filtro + ordenação ────────────────────────────────────────────────── */
   const filteredPedidos = useMemo(() => {
     const userId = user?.id;
+    const userEmail = user?.email;
 
     return pedidos
       .filter((p) => {
-        // Filtro de visão
-        if (viewMode === "para_mim" && p.assignee_id !== userId) return false;
-        if (viewMode === "meus_pedidos" && p.requester_id !== userId) return false;
+        // Scope
+        if (scope === "para_mim") {
+          const isAssignee = p.assignee_id === userId
+            || (userEmail && p.assignee_id === userEmail);
+          if (!isAssignee) return false;
+        }
+        if (scope === "meus_pedidos") {
+          const isRequester = p.requester_id === userId
+            || (userEmail && p.requester_id === userEmail)
+            || (userEmail && p.created_by === userEmail);
+          if (!isRequester) return false;
+        }
 
-        // Busca
+        // Search
         const q = search.toLowerCase();
-        const matchSearch =
-          !q ||
-          p.titulo?.toLowerCase().includes(q) ||
-          p.workshop_nome?.toLowerCase().includes(q) ||
-          p.requester_name?.toLowerCase().includes(q) ||
-          p.assignee_name?.toLowerCase().includes(q);
+        if (q) {
+          const haystack = [
+            p.titulo, p.workshop_nome, p.requester_name,
+            p.assignee_name, p.id?.slice(-6),
+          ].filter(Boolean).join(" ").toLowerCase();
+          if (!haystack.includes(q)) return false;
+        }
 
         // Status
-        const matchStatus = statusFilter === "all" || p.status === statusFilter;
+        if (statusFilter !== "all" && p.status !== statusFilter) return false;
 
-        return matchSearch && matchStatus;
+        return true;
       })
       .sort((a, b) => {
         const hoje = new Date();
         const isFimA = ["concluido", "recusado"].includes(a.status);
         const isFimB = ["concluido", "recusado"].includes(b.status);
-        const isVencidoA = a.prazo && new Date(a.prazo) < hoje && !isFimA;
-        const isVencidoB = b.prazo && new Date(b.prazo) < hoje && !isFimB;
         if (isFimA !== isFimB) return isFimA ? 1 : -1;
-        if (isVencidoA !== isVencidoB) return isVencidoA ? -1 : 1;
-        if (a.prazo && b.prazo) return new Date(a.prazo) - new Date(b.prazo);
-        return 0;
+        const isVencA = a.prazo && new Date(a.prazo) < hoje && !isFimA;
+        const isVencB = b.prazo && new Date(b.prazo) < hoje && !isFimB;
+        if (isVencA !== isVencB) return isVencA ? -1 : 1;
+        return new Date(b.created_date || 0) - new Date(a.created_date || 0);
       });
-  }, [pedidos, search, statusFilter, viewMode, user?.id]);
+  }, [pedidos, search, statusFilter, scope, user?.id, user?.email]);
 
   // Dados frescos do selecionado
   const freshSelected = useMemo(() => {
@@ -114,30 +185,12 @@ export default function PedidosInternosTab({ workshopId, user }) {
     return pedidos.find((p) => p.id === selectedPedido.id) || selectedPedido;
   }, [selectedPedido, pedidos]);
 
-  // Contadores por visão
-  const countParaMim = useMemo(
-    () => pedidos.filter(p => p.assignee_id === user?.id && !["concluido","recusado"].includes(p.status)).length,
-    [pedidos, user?.id]
-  );
-  const countMeusPedidos = useMemo(
-    () => pedidos.filter(p => p.requester_id === user?.id && !["concluido","recusado"].includes(p.status)).length,
-    [pedidos, user?.id]
-  );
-
-  // ── Handlers ──────────────────────────────────────────────────────────────
-  const handleSelect = useCallback((pedido) => setSelectedPedido(pedido), []);
-
+  /* ── Handlers ──────────────────────────────────────────────────────────── */
+  const handleSelect = useCallback((p) => setSelectedPedido(p), []);
   const handleDetailClose = useCallback(() => {
     setSelectedPedido(null);
     queryClient.invalidateQueries({ queryKey: ["pedidos-internos"] });
   }, [queryClient]);
-
-  const handleEdit = useCallback((pedido) => {
-    setSelectedPedido(null);
-    setEditingPedido(pedido);
-    setShowNewForm(true);
-  }, []);
-
   const handleFormClose = useCallback(() => {
     setShowNewForm(false);
     setEditingPedido(null);
@@ -150,12 +203,8 @@ export default function PedidosInternosTab({ workshopId, user }) {
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden">
 
-      {/* ── Modal de detalhe (grande, tela toda) ── */}
-      <PedidoInternoModal
-        open={!!selectedPedido}
-        onClose={() => setSelectedPedido(null)}
-        size="wide"
-      >
+      {/* ── Modal detalhe (wide) ── */}
+      <PedidoInternoModal open={!!selectedPedido} onClose={() => setSelectedPedido(null)} size="wide">
         {freshSelected && (
           <PedidoInternoDetail
             pedido={freshSelected}
@@ -167,12 +216,8 @@ export default function PedidosInternosTab({ workshopId, user }) {
         )}
       </PedidoInternoModal>
 
-      {/* ── Modal de criar/editar ── */}
-      <PedidoInternoModal
-        open={showNewForm}
-        onClose={() => { setShowNewForm(false); setEditingPedido(null); }}
-        size="default"
-      >
+      {/* ── Modal novo/editar ── */}
+      <PedidoInternoModal open={showNewForm} onClose={() => { setShowNewForm(false); setEditingPedido(null); }} size="default">
         {showNewForm && (
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6">
             <PedidoInternoForm
@@ -186,80 +231,109 @@ export default function PedidosInternosTab({ workshopId, user }) {
         )}
       </PedidoInternoModal>
 
-      {/* ── Tabs Pedidos / Backlog ── */}
+      {/* ═══════════════════════════════════════════════════════════════════
+          FIXED HEADER BLOCK (shrink-0)
+          ═══════════════════════════════════════════════════════════════════ */}
       <Tabs
         value={activeList}
         onValueChange={setActiveList}
         className="flex min-h-0 flex-1 flex-col overflow-hidden"
       >
-        {/* Header unificado */}
-        <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-gray-200 bg-white px-4 py-2">
-          <TabsList className="h-8 gap-0.5 rounded-lg bg-gray-100 p-1">
-            <TabsTrigger
-              value="pedidos"
-              className="h-6 rounded px-3 text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm"
-            >
-              Pedidos Internos
-              {countParaMim > 0 && (
-                <span className="ml-1.5 rounded-full bg-blue-500 px-1.5 text-[9px] font-bold text-white">{countParaMim}</span>
-              )}
-            </TabsTrigger>
-            <TabsTrigger
-              value="backlog"
-              className="h-6 rounded px-3 text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm"
-            >
-              Backlog de Tarefas
-            </TabsTrigger>
-          </TabsList>
+        <div className="shrink-0 border-b border-gray-200 bg-white shadow-sm">
 
-          {/* Toolbar pedidos */}
+          {/* ── Linha 1: Tabs + métricas + CTA ── */}
+          <div className="flex items-center gap-4 px-4 py-2">
+            <TabsList className="h-9 gap-0.5 rounded-lg bg-gray-100 p-1">
+              <TabsTrigger
+                value="pedidos"
+                className="h-7 rounded-md px-3.5 text-xs font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm"
+              >
+                Pedidos Internos
+              </TabsTrigger>
+              <TabsTrigger
+                value="backlog"
+                className="h-7 rounded-md px-3.5 text-xs font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm"
+              >
+                Backlog de Tarefas
+              </TabsTrigger>
+            </TabsList>
+
+            {activeList === "pedidos" && (
+              <>
+                {/* Métricas rápidas */}
+                <div className="hidden md:flex items-center gap-3 border-l border-gray-200 pl-4">
+                  <MetricDot color="bg-blue-500"    count={metrics.em_analise} label="em análise" />
+                  <MetricDot color="bg-amber-500"   count={metrics.pendentes}  label="pendentes" />
+                  <MetricDot color="bg-emerald-500" count={metrics.aprovados}  label="aprovados" />
+                </div>
+
+                <Button
+                  onClick={() => { setEditingPedido(null); setShowNewForm(true); }}
+                  size="sm"
+                  className="ml-auto h-8 gap-1.5 bg-blue-600 text-xs font-semibold shadow-sm hover:bg-blue-700"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Novo Pedido
+                </Button>
+              </>
+            )}
+          </div>
+
+          {/* ── Linha 2: Toolbar (só na aba pedidos) ── */}
           {activeList === "pedidos" && (
-            <>
-              <ViewToggle value={viewMode} onChange={setViewMode} />
+            <div className="flex items-center gap-2 border-t border-gray-100 px-4 py-2">
+              {/* Escopo (dropdown) */}
+              <ScopeSelector value={scope} onChange={setScope} />
 
-              <div className="relative max-w-[200px] flex-1">
-                <Search className="absolute left-2 top-1/2 h-3 w-3 -translate-y-1/2 text-gray-400" />
+              {/* Spacer */}
+              <div className="flex-1" />
+
+              {/* Search */}
+              <div className="relative w-[280px]">
+                <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Buscar..."
-                  className="h-7 w-full rounded-md border border-gray-200 bg-gray-50 pl-7 pr-2 text-[11px] text-gray-800 placeholder:text-gray-400 focus:border-blue-300 focus:bg-white focus:outline-none"
+                  placeholder="Buscar por título, ID, cliente ou solicitante…"
+                  className="h-8 w-full rounded-lg border border-gray-200 bg-gray-50/60 pl-8 pr-3 text-xs text-gray-800 placeholder:text-gray-400 focus:border-blue-300 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-200 transition-colors"
                 />
               </div>
 
+              {/* Filtro status */}
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="h-7 w-[120px] shrink-0 text-[11px]">
-                  <SelectValue placeholder="Status" />
+                <SelectTrigger className="h-8 w-[140px] shrink-0 rounded-lg text-xs">
+                  <SelectValue placeholder="Todos status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all" className="text-xs">Todos</SelectItem>
+                  <SelectItem value="all" className="text-xs">Todos status</SelectItem>
                   {PEDIDO_STATUS_OPTIONS.map((opt) => (
                     <SelectItem key={opt.value} value={opt.value} className="text-xs">{opt.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
 
+              {/* Limpar filtros */}
               {hasFilters && (
-                <button onClick={clearFilters} className="flex h-7 items-center gap-1 rounded px-1.5 text-[11px] text-gray-400 hover:bg-gray-100">
+                <button onClick={clearFilters} className="flex h-8 items-center gap-1 rounded-md px-2 text-xs text-gray-400 hover:bg-gray-100 hover:text-gray-600">
                   <X className="h-3 w-3" /> Limpar
                 </button>
               )}
 
-              <span className="text-[11px] text-gray-400">{filteredPedidos.length}</span>
-
-              <Button
-                onClick={() => { setEditingPedido(null); setShowNewForm(true); }}
-                size="sm"
-                className="ml-auto h-7 gap-1 bg-blue-600 text-[11px] hover:bg-blue-700"
-              >
-                <Plus className="h-3 w-3" /> Novo Pedido
-              </Button>
-            </>
+              {/* Contador */}
+              <span className="text-xs tabular-nums text-gray-400">
+                {filteredPedidos.length} {filteredPedidos.length === 1 ? "pedido" : "pedidos"}
+              </span>
+            </div>
           )}
+
+          {/* ── Linha 3: Column headers (só na aba pedidos) ── */}
+          {activeList === "pedidos" && <ColumnHeaders />}
         </div>
 
-        {/* Backlog */}
+        {/* ═══════════════════════════════════════════════════════════════════
+            SCROLLABLE CONTENT (flex-1 overflow-y-auto)
+            ═══════════════════════════════════════════════════════════════════ */}
         <TabsContent
           value="backlog"
           forceMount
@@ -268,13 +342,12 @@ export default function PedidosInternosTab({ workshopId, user }) {
           <BacklogBoard workshopId={workshopId} user={user} />
         </TabsContent>
 
-        {/* Lista de Pedidos */}
         <TabsContent
           value="pedidos"
           forceMount
           className={`mt-0 flex min-h-0 flex-1 flex-col overflow-hidden ${activeList !== "pedidos" ? "hidden" : ""}`}
         >
-          <div className="scrollbar-thin scrollbar-stable min-h-0 flex-1 overflow-y-auto bg-white">
+          <div className="min-h-0 flex-1 overflow-y-auto bg-white">
             <PedidoInternoList
               pedidos={filteredPedidos}
               onSelect={handleSelect}
