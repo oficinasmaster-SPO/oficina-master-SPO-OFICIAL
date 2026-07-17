@@ -19,6 +19,7 @@ export function useWorkshopContext() {
     workshopId: tenant.workshopId,
     workshopsDisponiveis: tenant.availableWorkshops,
     setCurrentWorkshop: tenant.switchWorkshop,
+    clearWorkshop: tenant.clearWorkshop,
     isLoading: tenant.isLoading,
     isAdminMode: tenant.isAdminMode,
   };
