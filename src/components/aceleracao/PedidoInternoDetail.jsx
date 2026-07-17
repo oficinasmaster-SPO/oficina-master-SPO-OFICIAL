@@ -249,7 +249,7 @@ export default function PedidoInternoDetail({ pedido, user, onCancel, onSuccess,
 
         {/* Linha 3: Stepper de etapas */}
         <div className="border-t border-gray-100 px-5 py-3">
-          <PedidoInternoStepper status={pedido.status} />
+          <PedidoInternoStepper pedido={pedido} canEdit={canRespond && !isReadOnly} />
         </div>
       </div>
 
