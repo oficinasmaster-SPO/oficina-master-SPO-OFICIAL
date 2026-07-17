@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useConsultingTenant } from '@/components/contexts/TenantContext';
 import { useWorkshopContext } from '@/components/hooks/useWorkshopContext';
 import { base44 } from '@/api/base44Client';
@@ -23,21 +23,18 @@ export default function TenantSelector({ isMobileSidebar = false }) {
     queryFn: () => base44.entities.ConsultingFirm.list()
   });
 
-  const { data: companies = [], isLoading: isLoadingCompanies } = useQuery({
-    queryKey: ['workshops', selectedFirmId],
-    queryFn: async () => {
-      if (selectedFirmId && selectedFirmId !== 'none') {
-        return base44.entities.Workshop.filter({ consulting_firm_id: selectedFirmId });
-      }
-      return base44.entities.Workshop.list('-created_date', 100);
-    },
-    enabled: !!user && user.role === 'admin',
-    staleTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false
-  });
-
-  const companiesToDisplay = user?.role === 'admin' ? companies : workshopsDisponiveis;
+  // SEMPRE usar workshopsDisponiveis (da session/memberships) — nunca listar
+  // oficinas que o usuário não tem membership. Antes, admins viam TODAS as
+  // oficinas via Workshop.list(), e clicar numa sem membership causava 403
+  // no resolveTenant → fallback silencioso para a matriz (default).
+  const companiesToDisplay = useMemo(() => {
+    const list = workshopsDisponiveis || [];
+    // Admin pode filtrar por consultoria, mas só entre oficinas com membership
+    if (user?.role === 'admin' && selectedFirmId && selectedFirmId !== 'none') {
+      return list.filter(w => w.consulting_firm_id === selectedFirmId);
+    }
+    return list;
+  }, [workshopsDisponiveis, user?.role, selectedFirmId]);
 
   const selectedFirm = firms?.find(f => f.id === selectedFirmId);
   const selectedCompany = companiesToDisplay?.find(c => c.id === selectedCompanyId) || workshop;
