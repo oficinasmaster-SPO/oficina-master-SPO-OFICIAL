@@ -131,7 +131,7 @@ export default function PedidosInternosTab({ workshopId, user }) {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="backlog" forceMount className={`mt-0 min-h-0 flex-1 overflow-hidden ${activeList !== "backlog" ? "hidden" : "animate-in fade-in duration-200"}`}>
+        <TabsContent value="backlog" forceMount className={`mt-0 min-h-0 flex-1 overflow-hidden flex flex-col ${activeList !== "backlog" ? "hidden" : "animate-in fade-in duration-200"}`}>
           <BacklogBoard workshopId={workshopId} user={user} />
         </TabsContent>
 
