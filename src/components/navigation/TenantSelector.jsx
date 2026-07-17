@@ -10,7 +10,7 @@ import { Building2, Briefcase, Search, Check, ChevronsUpDown } from 'lucide-reac
 
 export default function TenantSelector({ isMobileSidebar = false }) {
   const { user, selectedFirmId, changeConsultingFirm, selectedCompanyId, changeCompany, isLoading: isTenantLoading } = useConsultingTenant();
-  const { workshop, workshopsDisponiveis, isLoading: isWorkshopLoading } = useWorkshopContext();
+  const { workshop, workshopsDisponiveis, isLoading: isWorkshopLoading, setCurrentWorkshop, clearWorkshop } = useWorkshopContext();
   const [openFirmPopover, setOpenFirmPopover] = useState(false);
   const [openCompanyPopover, setOpenCompanyPopover] = useState(false);
   const [firmSearchTerm, setFirmSearchTerm] = useState('');
@@ -188,6 +188,8 @@ export default function TenantSelector({ isMobileSidebar = false }) {
             <div 
               onClick={() => {
                 changeCompany(null);
+                // Tenant de dados: volta à membership default (matriz para internos)
+                clearWorkshop();
                 setOpenCompanyPopover(false);
                 setCompanySearchTerm('');
               }}
@@ -209,6 +211,8 @@ export default function TenantSelector({ isMobileSidebar = false }) {
                     key={company.id}
                     onClick={() => {
                       changeCompany(company.id);
+                      // Tenant de dados: troca validada pelo resolveTenant (membership consultant)
+                      setCurrentWorkshop(company.id);
                       setOpenCompanyPopover(false);
                       setCompanySearchTerm('');
                     }}
