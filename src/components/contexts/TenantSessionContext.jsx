@@ -133,6 +133,16 @@ export function TenantSessionProvider({ children }) {
     setSelectedWorkshopId(id);
   }, [prefKey, queryClient]);
 
+  // Limpa a preferência — o resolveTenant volta a entregar a membership default
+  // (usado pelo seletor "Todas Oficinas" dos usuários internos)
+  const clearWorkshop = useCallback(() => {
+    try { if (prefKey) localStorage.removeItem(prefKey); } catch (_) {}
+    queryClient.removeQueries({
+      predicate: (q) => q.queryKey?.[0] !== 'tenant-session' && q.queryKey?.[0] !== 'tenant-session-workshops',
+    });
+    setSelectedWorkshopId(null);
+  }, [prefKey, queryClient]);
+
   const value = useMemo(() => ({
     workshop,
     workshopId: workshop?.id || null,
@@ -149,10 +159,11 @@ export function TenantSessionProvider({ children }) {
     isAdminMode,
     availableWorkshops,
     switchWorkshop,
+    clearWorkshop,
     effectiveUserId: session?.effective_user_id || user?.id || null,
     fallbackUsed: session?.fallback_used || false,
     isLoading: isLoadingAuth || (isAuthenticated && !!user?.id && isSessionLoading),
-  }), [workshop, session, user, impersonatedUserId, isAdminMode, availableWorkshops, switchWorkshop, isLoadingAuth, isAuthenticated, isSessionLoading]);
+  }), [workshop, session, user, impersonatedUserId, isAdminMode, availableWorkshops, switchWorkshop, clearWorkshop, isLoadingAuth, isAuthenticated, isSessionLoading]);
 
   return (
     <TenantSessionContext.Provider value={value}>
