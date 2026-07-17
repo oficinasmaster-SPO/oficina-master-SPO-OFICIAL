@@ -2,8 +2,6 @@ import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import {
   ArrowLeft, CheckCircle, XCircle, Printer, Trash2,
   MessageSquare, FileText, ListChecks, Send,
@@ -16,12 +14,13 @@ import { ptBR } from "date-fns/locale";
 import ActivityTimeline from "./ActivityTimeline";
 import PedidoInternoStepper from "./PedidoInternoStepper";
 import StatusBadge from "@/components/shared/StatusBadge";
+import useEmployeeResolver from "@/hooks/useEmployeeResolver";
 import {
   PEDIDO_STATUS_CONFIG, PRIORIDADE_CONFIG,
   TIPO_PEDIDO_LABELS, IMPACTO_CLIENTE_LABELS,
 } from "@/components/shared/backlogConstants";
 
-// ── Helpers ───────────────────────────────────────────────────────────────
+// ── Helpers visuais ────────────────────────────────────────────────────────
 const STATUS_PILL_CLS = {
   pendente:   "bg-gray-100 text-gray-700 border-gray-200",
   em_analise: "bg-blue-100 text-blue-700 border-blue-200",
@@ -33,64 +32,37 @@ const STATUS_PILL_CLS = {
 function StatusPill({ status }) {
   const label = PEDIDO_STATUS_CONFIG[status]?.label || status;
   const cls   = STATUS_PILL_CLS[status] || "bg-gray-100 text-gray-600 border-gray-200";
-  return (
-    <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${cls}`}>
-      {label}
-    </span>
-  );
+  return <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${cls}`}>{label}</span>;
 }
 
-function Avatar({ name, size = "md" }) {
-  const initials = name
-    ? name.trim().split(/\s+/).map(p => p[0]).slice(0, 2).join("").toUpperCase()
-    : "?";
-  const COLORS = [
-    "bg-blue-500","bg-violet-500","bg-teal-500","bg-orange-500",
-    "bg-pink-500","bg-cyan-500","bg-indigo-500","bg-amber-500",
-  ];
+function PriorityIcon({ prioridade, className = "h-3.5 w-3.5" }) {
+  if (prioridade === "critica") return <AlertTriangle className={`text-red-500 ${className}`} />;
+  if (prioridade === "alta")    return <ArrowUp       className={`text-orange-500 ${className}`} />;
+  if (prioridade === "media")   return <Minus         className={`text-yellow-500 ${className}`} />;
+  return                               <ArrowDown     className={`text-blue-400 ${className}`} />;
+}
+
+function AvatarWithPhoto({ name, photoUrl, size = "sm" }) {
+  const initials = name ? name.trim().split(/\s+/).map(w => w[0]).slice(0, 2).join("").toUpperCase() : "?";
+  const COLORS = ["bg-blue-500","bg-violet-500","bg-teal-500","bg-orange-500","bg-pink-500","bg-cyan-500","bg-indigo-500","bg-amber-500"];
   const ci = name ? name.charCodeAt(0) % COLORS.length : 0;
-  const dim = size === "sm" ? "h-5 w-5 text-[9px]" : "h-6 w-6 text-[10px]";
-  return (
-    <span className={`inline-flex shrink-0 items-center justify-center rounded-full font-bold text-white ${dim} ${COLORS[ci]}`}>
-      {initials}
-    </span>
-  );
+  const dim = size === "md" ? "h-7 w-7 text-[11px]" : "h-5 w-5 text-[9px]";
+
+  if (photoUrl) {
+    return (
+      <span className={`relative ${dim} shrink-0`}>
+        <img src={photoUrl} alt={name || ""} className={`${dim} rounded-full object-cover ring-1 ring-gray-200`} onError={(e) => { e.target.style.display = "none"; }} />
+        <span className={`absolute inset-0 inline-flex items-center justify-center rounded-full font-bold text-white ${COLORS[ci]} -z-10`}>{initials}</span>
+      </span>
+    );
+  }
+  return <span className={`inline-flex ${dim} shrink-0 items-center justify-center rounded-full font-bold text-white ${COLORS[ci]}`}>{initials}</span>;
 }
 
-function PriorityIcon({ prioridade }) {
-  if (prioridade === "critica") return <AlertTriangle className="h-3.5 w-3.5 text-red-500" />;
-  if (prioridade === "alta")    return <ArrowUp       className="h-3.5 w-3.5 text-orange-500" />;
-  if (prioridade === "media")   return <Minus         className="h-3.5 w-3.5 text-yellow-500" />;
-  return                               <ArrowDown     className="h-3.5 w-3.5 text-blue-400" />;
-}
-
-// ── Tab pill ─────────────────────────────────────────────────────────────
-function Tab({ label, icon: Icon, active, badge, onClick }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`relative flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium whitespace-nowrap transition-colors
-        ${active
-          ? "text-blue-600 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:rounded-t after:bg-blue-600"
-          : "text-gray-500 hover:text-gray-700"}`}
-    >
-      {Icon && <Icon className="h-3.5 w-3.5" />}
-      {label}
-      {badge > 0 && (
-        <span className={`ml-0.5 rounded-full px-1.5 py-0.5 text-[9px] font-bold
-          ${active ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-500"}`}>
-          {badge}
-        </span>
-      )}
-    </button>
-  );
-}
-
-// ── Campo de detalhe ───────────────────────────────────────────────────────
-function Field({ label, icon: Icon, children }) {
+function InfoField({ label, icon: Icon, children, className = "" }) {
   if (!children) return null;
   return (
-    <div className="flex items-start gap-2.5">
+    <div className={`flex items-start gap-2 ${className}`}>
       {Icon && <Icon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gray-400" />}
       <div className="min-w-0 flex-1">
         <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">{label}</p>
@@ -100,7 +72,7 @@ function Field({ label, icon: Icon, children }) {
   );
 }
 
-// ── Composer inline ────────────────────────────────────────────────────────
+// ── Composer ────────────────────────────────────────────────────────────────
 function ResponseComposer({ pedido, user, queryClient }) {
   const [text, setText] = useState("");
   const [mode, setMode] = useState("comentario");
@@ -113,13 +85,12 @@ function ResponseComposer({ pedido, user, queryClient }) {
           data_primeira_resposta: pedido.data_primeira_resposta || new Date().toISOString(),
         });
       } else {
-        const u = user || {};
         await base44.entities.TaskComment.create({
           entity_type: "pedido_interno",
           entity_id:   pedido.id,
           workshop_id: pedido.workshop_id,
-          usuario_id:  u.id,
-          usuario_nome: u.full_name || u.email || "Usuário",
+          usuario_id:  user?.id,
+          usuario_nome: user?.full_name || user?.email || "Usuário",
           comentario:  text,
           is_internal: false,
           attachments: [],
@@ -137,44 +108,33 @@ function ResponseComposer({ pedido, user, queryClient }) {
   });
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+    <div className="rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden">
       <div className="flex border-b border-gray-100">
-        <button
-          onClick={() => setMode("comentario")}
-          className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-colors
-            ${mode === "comentario" ? "border-b-2 border-blue-500 text-blue-600" : "text-gray-500 hover:text-gray-700"}`}
-        >
+        <button onClick={() => setMode("comentario")}
+          className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium ${mode === "comentario" ? "border-b-2 border-blue-500 text-blue-600" : "text-gray-500"}`}>
           <MessageSquare className="h-3 w-3" /> Comentário
         </button>
         {(user?.role === "admin" || user?.id === pedido.assignee_id) && (
-          <button
-            onClick={() => setMode("resposta")}
-            className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-colors
-              ${mode === "resposta" ? "border-b-2 border-green-500 text-green-600" : "text-gray-500 hover:text-gray-700"}`}
-          >
+          <button onClick={() => setMode("resposta")}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium ${mode === "resposta" ? "border-b-2 border-green-500 text-green-600" : "text-gray-500"}`}>
             <CheckCircle className="h-3 w-3" /> Resposta Oficial
           </button>
         )}
       </div>
       <div className="p-2">
         <textarea
-          value={text}
-          onChange={(e) => setText(e.target.value)}
+          value={text} onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && text.trim()) postMutation.mutate(); }}
-          placeholder={mode === "resposta" ? "Registre a decisão ou encaminhamento oficial..." : "Adicione um comentário... (Ctrl+Enter)"}
-          rows={3}
-          className="w-full resize-none rounded-lg border-0 bg-transparent p-1 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none"
+          placeholder={mode === "resposta" ? "Registre a decisão oficial..." : "Comentário... (Ctrl+Enter)"}
+          rows={2}
+          className="w-full resize-none border-0 bg-transparent p-1 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none"
         />
         <div className="flex items-center justify-end gap-2 border-t border-gray-100 pt-1">
           <span className="text-[10px] text-gray-400">Ctrl+Enter</span>
-          <Button
-            size="sm"
-            onClick={() => postMutation.mutate()}
-            disabled={!text.trim() || postMutation.isPending}
-            className={`h-7 gap-1.5 text-xs ${mode === "resposta" ? "bg-green-600 hover:bg-green-700" : "bg-blue-600 hover:bg-blue-700"}`}
-          >
-            <Send className="h-3 w-3" />
-            {postMutation.isPending ? "Enviando..." : mode === "resposta" ? "Salvar Resposta" : "Comentar"}
+          <Button size="sm" onClick={() => postMutation.mutate()} disabled={!text.trim() || postMutation.isPending}
+            className={`h-6 gap-1 text-[11px] ${mode === "resposta" ? "bg-green-600 hover:bg-green-700" : "bg-blue-600 hover:bg-blue-700"}`}>
+            <Send className="h-2.5 w-2.5" />
+            {postMutation.isPending ? "..." : mode === "resposta" ? "Salvar" : "Comentar"}
           </Button>
         </div>
       </div>
@@ -182,72 +142,10 @@ function ResponseComposer({ pedido, user, queryClient }) {
   );
 }
 
-// ── Aba Tarefas ────────────────────────────────────────────────────────────
-function TabTarefas({ pedido }) {
-  const { data: tarefas = [], isLoading } = useQuery({
-    queryKey: ["tarefas-pedido", pedido.id],
-    queryFn: async () => {
-      const r = await base44.entities.TarefaBacklog.filter(
-        { origin_type: "pedido", origin_id: pedido.id }, "-created_date", 50
-      );
-      return Array.isArray(r) ? r : [];
-    },
-    enabled: !!pedido.id,
-  });
-
-  const done = tarefas.filter(t => t.status === "concluida").length;
-  const total = tarefas.length;
-
-  return (
-    <div className="px-5 py-4">
-      {total > 0 && (
-        <div className="mb-4 flex items-center gap-3">
-          <div className="flex-1 h-1.5 rounded-full bg-gray-200 overflow-hidden">
-            <div className="h-full rounded-full bg-green-500 transition-all"
-              style={{ width: `${Math.round(done / total * 100)}%` }} />
-          </div>
-          <span className="text-xs text-gray-500 shrink-0">{done}/{total} concluídas</span>
-        </div>
-      )}
-      {isLoading ? (
-        <div className="space-y-2">
-          {[...Array(3)].map((_, i) => <div key={i} className="h-10 animate-pulse rounded-lg bg-gray-100" />)}
-        </div>
-      ) : total === 0 ? (
-        <div className="flex flex-col items-center py-10 text-center text-gray-400">
-          <ListChecks className="mb-2 h-8 w-8 text-gray-200" />
-          <p className="text-sm">Nenhuma tarefa gerada</p>
-          {pedido.status === "aprovado" && (
-            <p className="mt-1 text-xs text-blue-500">Pedido aprovado — gere tarefas no Backlog</p>
-          )}
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {tarefas.map(t => (
-            <div key={t.id} className={`flex items-center gap-3 rounded-lg border p-2.5
-              ${t.status === "concluida" ? "border-green-200 bg-green-50" : "border-gray-200 bg-white"}`}>
-              <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full
-                ${t.status === "concluida" ? "bg-green-500" : "bg-gray-200"}`}>
-                {t.status === "concluida"
-                  ? <CheckCircle className="h-3 w-3 text-white" />
-                  : <span className="h-2 w-2 rounded-full bg-gray-400" />}
-              </span>
-              <span className={`flex-1 truncate text-sm ${t.status === "concluida" ? "text-gray-400 line-through" : "text-gray-800"}`}>
-                {t.titulo}
-              </span>
-              <StatusBadge entity="tarefa" status={t.status} className="text-[9px] shrink-0" />
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 // ── Componente principal ───────────────────────────────────────────────────
 export default function PedidoInternoDetail({ pedido, user, onCancel, onSuccess, onDelete }) {
-  const [activeTab, setActiveTab] = useState("atividade");
   const queryClient = useQueryClient();
+  const { getName, getPhoto } = useEmployeeResolver();
 
   const { data: tarefas = [] } = useQuery({
     queryKey: ["tarefas-pedido", pedido.id],
@@ -270,26 +168,26 @@ export default function PedidoInternoDetail({ pedido, user, onCancel, onSuccess,
   const prazoFmt  = pedido.prazo ? format(new Date(pedido.prazo), "dd/MM/yyyy", { locale: ptBR }) : null;
   const isVencido = pedido.prazo && !isReadOnly && new Date(pedido.prazo) < new Date();
 
+  // Nomes resolvidos
+  const requesterName = getName(pedido.requester_id, pedido.requester_name);
+  const requesterPhoto = getPhoto(pedido.requester_id);
+  const assigneeName = getName(pedido.assignee_id, pedido.assignee_name);
+  const assigneePhoto = getPhoto(pedido.assignee_id);
+
+  const done = tarefas.filter(t => t.status === "concluida").length;
+
   const recusarMutation = useMutation({
     mutationFn: async () => base44.entities.PedidoInterno.update(pedido.id, {
       status: "recusado",
       data_primeira_resposta: pedido.data_primeira_resposta || new Date().toISOString(),
     }),
-    onSuccess: () => {
-      toast.success("Pedido recusado.");
-      queryClient.invalidateQueries({ queryKey: ["pedidos-internos"] });
-      onSuccess?.();
-    },
+    onSuccess: () => { toast.success("Pedido recusado."); queryClient.invalidateQueries({ queryKey: ["pedidos-internos"] }); onSuccess?.(); },
     onError: () => toast.error("Erro ao recusar"),
   });
 
   const deleteMutation = useMutation({
     mutationFn: async () => base44.entities.PedidoInterno.delete(pedido.id),
-    onSuccess: () => {
-      toast.success("Pedido excluído.");
-      queryClient.invalidateQueries({ queryKey: ["pedidos-internos"] });
-      onDelete?.();
-    },
+    onSuccess: () => { toast.success("Pedido excluído."); queryClient.invalidateQueries({ queryKey: ["pedidos-internos"] }); onDelete?.(); },
     onError: () => toast.error("Erro ao excluir"),
   });
 
@@ -298,7 +196,6 @@ export default function PedidoInternoDetail({ pedido, user, onCancel, onSuccess,
 
       {/* ── HEADER ────────────────────────────────────────────────────── */}
       <div className="shrink-0 border-b border-gray-200">
-
         {/* Linha 1: voltar + código + título + status */}
         <div className="flex items-start gap-3 px-5 pt-4 pb-2">
           <Button variant="ghost" size="sm" onClick={onCancel} className="mt-0.5 h-7 w-7 shrink-0 p-0">
@@ -307,35 +204,29 @@ export default function PedidoInternoDetail({ pedido, user, onCancel, onSuccess,
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 mb-0.5">
               <span className="flex items-center gap-1 font-mono text-[11px] font-semibold text-gray-400">
-                <Hash className="h-3 w-3" />
-                {pedido.id?.slice(-8).toUpperCase()}
+                <Hash className="h-3 w-3" />{pedido.id?.slice(-8).toUpperCase()}
               </span>
               {pedido.tipo && (
-                <>
-                  <span className="text-gray-300">·</span>
-                  <span className="text-[11px] text-gray-400 capitalize">{pedido.tipo?.replace(/_/g, " ")}</span>
-                </>
+                <><span className="text-gray-300">·</span><span className="text-[11px] text-gray-400 capitalize">{pedido.tipo?.replace(/_/g, " ")}</span></>
               )}
             </div>
-            <h2 className={`text-base font-bold leading-snug ${isReadOnly ? "text-gray-400" : "text-gray-950"}`}>
-              {pedido.titulo}
-            </h2>
+            <h2 className={`text-base font-bold leading-snug ${isReadOnly ? "text-gray-400" : "text-gray-950"}`}>{pedido.titulo}</h2>
           </div>
           <StatusPill status={pedido.status} />
         </div>
 
-        {/* Linha 2: meta-row */}
+        {/* Linha 2: meta-row com fotos */}
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-5 pb-3 text-xs">
           <div className="flex items-center gap-1.5">
             <span className="text-[10px] uppercase tracking-wide text-gray-400">De</span>
-            <Avatar name={pedido.requester_name} size="sm" />
-            <span className="font-medium text-gray-700">{pedido.requester_name || "—"}</span>
+            <AvatarWithPhoto name={requesterName} photoUrl={requesterPhoto} />
+            <span className="font-medium text-gray-700">{requesterName}</span>
           </div>
           <span className="h-3 w-px bg-gray-200" />
           <div className="flex items-center gap-1.5">
             <span className="text-[10px] uppercase tracking-wide text-gray-400">Para</span>
-            <Avatar name={pedido.assignee_name} size="sm" />
-            <span className="font-medium text-gray-700">{pedido.assignee_name || "—"}</span>
+            <AvatarWithPhoto name={assigneeName} photoUrl={assigneePhoto} />
+            <span className="font-medium text-gray-700">{assigneeName}</span>
           </div>
           <span className="h-3 w-px bg-gray-200" />
           <div className="flex items-center gap-1">
@@ -345,49 +236,35 @@ export default function PedidoInternoDetail({ pedido, user, onCancel, onSuccess,
           {slaLabel && (
             <>
               <span className="h-3 w-px bg-gray-200" />
-              <div className="flex items-center gap-1">
-                <Clock className="h-3 w-3 text-gray-400" />
-                <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold
-                  ${isVencido ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-600"}`}>
-                  {slaLabel}
-                </span>
-              </div>
+              <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${isVencido ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-600"}`}>{slaLabel}</span>
             </>
           )}
           <div className="ml-auto flex items-center gap-1 text-gray-400">
             <CalendarClock className="h-3 w-3" />
             <span className="text-[10px]">{criadoFmt}</span>
           </div>
-          {prazoFmt && (
-            <div className={`flex items-center gap-1 rounded border px-2 py-0.5 text-[10px] font-medium
-              ${isVencido ? "border-red-300 bg-red-50 text-red-700" : "border-gray-200 bg-gray-50 text-gray-600"}`}>
-              {isVencido ? "⚠ Vencido" : "Prazo"} {prazoFmt}
-            </div>
-          )}
         </div>
 
         {/* Linha 3: Stepper clicável */}
         <div className="border-t border-gray-100 px-5 py-2.5">
           <PedidoInternoStepper pedido={pedido} canEdit={canRespond && !isReadOnly} />
         </div>
-
-        {/* Linha 4: Abas */}
-        <div className="flex border-t border-gray-100 px-2">
-          <Tab label="Atividade"  icon={MessageSquare} active={activeTab === "atividade"}  onClick={() => setActiveTab("atividade")} />
-          <Tab label="Detalhes"   icon={FileText}      active={activeTab === "detalhes"}   onClick={() => setActiveTab("detalhes")} />
-          <Tab label="Tarefas"    icon={ListChecks}    active={activeTab === "tarefas"}     onClick={() => setActiveTab("tarefas")} badge={tarefas.length} />
-        </div>
       </div>
 
-      {/* ── CONTEÚDO DAS ABAS ─────────────────────────────────────────── */}
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      {/* ── SPLIT PRINCIPAL: Atividade (60%) | Detalhes+Tarefas (40%) ── */}
+      <div className="flex min-h-0 flex-1 overflow-hidden">
 
-        {/* ATIVIDADE */}
-        {activeTab === "atividade" && (
-          <div className="flex flex-col gap-4 px-5 py-4">
-            {!isReadOnly && (
-              <ResponseComposer pedido={pedido} user={user} queryClient={queryClient} />
-            )}
+        {/* ESQUERDA: Atividade */}
+        <div className="flex min-h-0 flex-1 flex-col border-r border-gray-200">
+          <div className="shrink-0 border-b border-gray-100 px-5 py-2">
+            <p className="text-[11px] font-bold uppercase tracking-wide text-gray-400 flex items-center gap-1.5">
+              <MessageSquare className="h-3 w-3" /> Atividade
+            </p>
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-3 space-y-3">
+            {/* Composer */}
+            {!isReadOnly && <ResponseComposer pedido={pedido} user={user} queryClient={queryClient} />}
+            {/* Timeline */}
             <ActivityTimeline
               entityType="pedido_interno"
               entityId={pedido.id}
@@ -395,89 +272,112 @@ export default function PedidoInternoDetail({ pedido, user, onCancel, onSuccess,
               maxHeight="100%"
             />
           </div>
-        )}
+        </div>
 
-        {/* DETALHES */}
-        {activeTab === "detalhes" && (
-          <div className="space-y-5 px-5 py-4">
-            {pedido.descricao && (
-              <div>
-                <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-gray-400">Descrição</p>
-                <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700">{pedido.descricao}</p>
-              </div>
-            )}
-            {pedido.resposta && (
-              <div className={`rounded-xl border p-4 ${pedido.status === "recusado" ? "border-red-200 bg-red-50" : "border-green-200 bg-green-50"}`}>
-                <p className={`mb-1 text-[10px] font-bold uppercase tracking-wide ${pedido.status === "recusado" ? "text-red-500" : "text-green-600"}`}>
-                  {pedido.status === "recusado" ? "Motivo da Recusa" : "Resposta Oficial"}
-                </p>
-                <p className="whitespace-pre-wrap text-sm text-gray-800">{pedido.resposta}</p>
-              </div>
-            )}
-            <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-              <Field label="Cliente"   icon={Building2}>{pedido.workshop_nome || "—"}</Field>
-              <Field label="Categoria" icon={FileText}>{TIPO_PEDIDO_LABELS[pedido.tipo] || pedido.tipo || "—"}</Field>
-              <Field label="Prioridade" icon={Flag}>
-                <span className="flex items-center gap-1.5">
-                  <PriorityIcon prioridade={pedido.prioridade} />
-                  {PRIORIDADE_CONFIG[pedido.prioridade]?.label || "—"}
-                </span>
-              </Field>
-              <Field label="Prazo" icon={Clock}>
-                {prazoFmt
-                  ? <span className={isVencido ? "font-semibold text-red-600" : ""}>{prazoFmt}</span>
-                  : "—"}
-              </Field>
-              {pedido.impacto_cliente && (
-                <Field label="Impacto" icon={AlertTriangle}>
-                  {IMPACTO_CLIENTE_LABELS[pedido.impacto_cliente] || pedido.impacto_cliente}
-                </Field>
-              )}
-              {pedido.data_conclusao && (
-                <Field label="Concluído em" icon={CheckCircle}>
-                  <span className="font-medium text-green-700">
-                    {format(new Date(pedido.data_conclusao), "dd/MM/yyyy HH:mm", { locale: ptBR })}
-                  </span>
-                </Field>
-              )}
+        {/* DIREITA: Detalhes + Tarefas */}
+        <div className="w-[320px] shrink-0 overflow-y-auto bg-gray-50/50">
+
+          {/* Descrição */}
+          {pedido.descricao && (
+            <div className="border-b border-gray-100 px-4 py-3">
+              <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wide text-gray-400">Descrição</p>
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700">{pedido.descricao}</p>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* TAREFAS */}
-        {activeTab === "tarefas" && <TabTarefas pedido={pedido} />}
+          {/* Resposta oficial */}
+          {pedido.resposta && (
+            <div className={`mx-3 my-3 rounded-lg border p-3 ${pedido.status === "recusado" ? "border-red-200 bg-red-50" : "border-green-200 bg-green-50"}`}>
+              <p className={`mb-1 text-[10px] font-bold uppercase tracking-wide ${pedido.status === "recusado" ? "text-red-500" : "text-green-600"}`}>
+                {pedido.status === "recusado" ? "Motivo da Recusa" : "Resposta Oficial"}
+              </p>
+              <p className="whitespace-pre-wrap text-sm text-gray-800">{pedido.resposta}</p>
+            </div>
+          )}
+
+          {/* Informações */}
+          <div className="border-b border-gray-100 px-4 py-3 space-y-3">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-gray-400">Informações</p>
+            <InfoField label="Cliente"    icon={Building2}>{pedido.workshop_nome || "—"}</InfoField>
+            <InfoField label="Categoria"  icon={FileText}>{TIPO_PEDIDO_LABELS[pedido.tipo] || pedido.tipo || "—"}</InfoField>
+            <InfoField label="Prioridade" icon={Flag}>
+              <span className="flex items-center gap-1.5">
+                <PriorityIcon prioridade={pedido.prioridade} />
+                {PRIORIDADE_CONFIG[pedido.prioridade]?.label || "—"}
+              </span>
+            </InfoField>
+            <InfoField label="Prazo" icon={Clock}>
+              {prazoFmt ? <span className={isVencido ? "font-semibold text-red-600" : ""}>{prazoFmt}</span> : "—"}
+            </InfoField>
+            {pedido.impacto_cliente && (
+              <InfoField label="Impacto" icon={AlertTriangle}>{IMPACTO_CLIENTE_LABELS[pedido.impacto_cliente] || pedido.impacto_cliente}</InfoField>
+            )}
+            {pedido.data_conclusao && (
+              <InfoField label="Concluído em" icon={CheckCircle}>
+                <span className="font-medium text-green-700">{format(new Date(pedido.data_conclusao), "dd/MM/yyyy HH:mm", { locale: ptBR })}</span>
+              </InfoField>
+            )}
+          </div>
+
+          {/* Tarefas geradas */}
+          <div className="px-4 py-3">
+            <p className="mb-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-gray-400">
+              <ListChecks className="h-3 w-3" />
+              Tarefas Geradas ({tarefas.length})
+            </p>
+            {tarefas.length > 0 && (
+              <div className="mb-3 flex items-center gap-2">
+                <div className="flex-1 h-1 rounded-full bg-gray-200 overflow-hidden">
+                  <div className="h-full rounded-full bg-green-500 transition-all" style={{ width: `${tarefas.length > 0 ? Math.round(done / tarefas.length * 100) : 0}%` }} />
+                </div>
+                <span className="text-[10px] text-gray-500">{done}/{tarefas.length}</span>
+              </div>
+            )}
+            {tarefas.length === 0 ? (
+              <p className="text-xs text-gray-400 italic">Nenhuma tarefa gerada</p>
+            ) : (
+              <div className="space-y-1.5">
+                {tarefas.map(t => (
+                  <div key={t.id} className={`flex items-center gap-2 rounded-lg border px-2.5 py-1.5
+                    ${t.status === "concluida" ? "border-green-200 bg-green-50" : "border-gray-200 bg-white"}`}>
+                    <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full
+                      ${t.status === "concluida" ? "bg-green-500" : "bg-gray-200"}`}>
+                      {t.status === "concluida" ? <CheckCircle className="h-2.5 w-2.5 text-white" /> : <span className="h-1.5 w-1.5 rounded-full bg-gray-400" />}
+                    </span>
+                    <span className={`flex-1 truncate text-xs ${t.status === "concluida" ? "text-gray-400 line-through" : "text-gray-700"}`}>{t.titulo}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* ── FOOTER ────────────────────────────────────────────────────── */}
-      <div className="flex shrink-0 items-center justify-between gap-2 border-t border-gray-200 bg-gray-50 px-5 py-2.5">
+      <div className="flex shrink-0 items-center justify-between gap-2 border-t border-gray-200 bg-gray-50 px-5 py-2">
         <div className="flex items-center gap-1.5">
-          <Button variant="ghost" size="sm" onClick={() => window.print()}
-            className="h-7 gap-1 px-2 text-xs text-gray-400">
+          <Button variant="ghost" size="sm" onClick={() => window.print()} className="h-7 gap-1 px-2 text-xs text-gray-400">
             <Printer className="h-3 w-3" /> Imprimir
           </Button>
           {canDelete && (
-            <Button variant="ghost" size="sm" onClick={() => deleteMutation.mutate()}
-              disabled={deleteMutation.isPending}
+            <Button variant="ghost" size="sm" onClick={() => deleteMutation.mutate()} disabled={deleteMutation.isPending}
               className="h-7 gap-1 px-2 text-xs text-red-500 hover:bg-red-50">
               <Trash2 className="h-3 w-3" /> Excluir
             </Button>
           )}
         </div>
         <div className="flex items-center gap-2">
-          {canRespond && !isReadOnly ? (
-            <Button
-              variant="ghost" size="sm"
+          {canRespond && !isReadOnly && (
+            <Button variant="ghost" size="sm"
               onClick={() => { if (window.confirm("Recusar este pedido?")) recusarMutation.mutate(); }}
               disabled={recusarMutation.isPending}
-              className="h-7 gap-1.5 text-xs text-red-500 hover:bg-red-50">
+              className="h-7 gap-1 text-xs text-red-500 hover:bg-red-50">
               <XCircle className="h-3.5 w-3.5" /> Recusar
             </Button>
-          ) : (
-            <Button variant="outline" size="sm" className="h-7 text-xs" onClick={onCancel}>
-              Fechar
-            </Button>
           )}
-          {canRespond && !isReadOnly && (
+          {!canRespond || isReadOnly ? (
+            <Button variant="outline" size="sm" className="h-7 text-xs" onClick={onCancel}>Fechar</Button>
+          ) : (
             <p className="text-[10px] text-gray-400">Use o stepper para avançar o status</p>
           )}
         </div>
