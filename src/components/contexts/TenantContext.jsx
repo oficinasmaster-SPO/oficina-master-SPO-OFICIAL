@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
-import { queryClientInstance } from '@/lib/query-client';
 import { useAuth } from '@/lib/AuthContext';
 import WheelLoader from '@/components/ui/WheelLoader';
 
@@ -159,14 +158,14 @@ export function TenantProvider({ children }) {
       localStorage.removeItem(companyKey(email));
       localStorage.removeItem('selected_company_id'); // limpar legado
     }
-    
-    // Limpa o cache global ao trocar de tenant para evitar vazamento visual
-    if (queryClientInstance) {
-      queryClientInstance.clear();
-    } else if (window.__REACT_QUERY_CLIENT__) {
-      window.__REACT_QUERY_CLIENT__.clear();
-    }
-    
+
+    // NÃO chamar queryClientInstance.clear() aqui!
+    // O clear() destrói a query 'tenant-session' (TenantSessionContext),
+    // fazendo workshopId virar null → SharedDataProvider desmonta →
+    // páginas consumidoras perdem o contexto de dados.
+    // A limpeza de cache de consumidores já é feita por switchWorkshop
+    // via removeQueries com predicado que preserva 'tenant-session'.
+
     setSelectedCompanyId(compId);
     switchingToIdRef.current = null;
     setCompanySwitch(prev => prev + 1);
