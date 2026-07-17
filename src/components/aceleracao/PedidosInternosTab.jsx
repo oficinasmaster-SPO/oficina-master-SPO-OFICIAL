@@ -122,14 +122,17 @@ export default function PedidosInternosTab({ workshopId, user }) {
       </PedidoInternoModal>
 
       <Tabs value={activeList} onValueChange={setActiveList} className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        <TabsList className="mb-3 shrink-0 bg-gray-100 rounded-lg p-1">
-          <TabsTrigger value="pedidos" className="text-sm rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm">
-            Pedidos Internos
-          </TabsTrigger>
-          <TabsTrigger value="backlog" className="text-sm rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm">
-            Backlog de Tarefas
-          </TabsTrigger>
-        </TabsList>
+        {/* Header: tabs + ação principal — dentro de um container fixo */}
+        <div className="flex shrink-0 items-center justify-between border-b border-gray-200 bg-white px-4 py-2">
+          <TabsList className="h-8 gap-0.5 rounded-lg bg-gray-100 p-1">
+            <TabsTrigger value="pedidos" className="h-6 rounded px-3 text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm">
+              Pedidos Internos
+            </TabsTrigger>
+            <TabsTrigger value="backlog" className="h-6 rounded px-3 text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm">
+              Backlog de Tarefas
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="backlog" forceMount className={`mt-0 min-h-0 flex-1 overflow-hidden flex flex-col ${activeList !== "backlog" ? "hidden" : "animate-in fade-in duration-200"}`}>
           <BacklogBoard workshopId={workshopId} user={user} />
