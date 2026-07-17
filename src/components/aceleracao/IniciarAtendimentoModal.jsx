@@ -24,7 +24,7 @@ import CronogramaTab from "@/components/aceleracao/CronogramaTab";
 import TrilhaClientePanel from "@/components/aceleracao/TrilhaClientePanel";
 import SprintClientSection from "@/components/aceleracao/sprint-client/SprintClientSection";
 import PedidosInternosTab from "@/components/aceleracao/PedidosInternosTab";
-import BacklogDashboard from "@/components/aceleracao/BacklogDashboard";
+import BacklogBoard from "@/components/aceleracao/BacklogBoard";
 import ProximosPassosAbaTab from "@/components/aceleracao/ProximosPassosAbaTab";
 import SprintClientModal from "@/components/aceleracao/sprint-client/SprintClientModal";
 import ClientSelectorGrid from "@/components/aceleracao/ClientSelectorGrid";
@@ -1887,7 +1887,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
                       {/* BACKLOG */}
                       {activePanel === 'backlog' && (
                         <div className="px-3 py-4">
-                          {followUp?.workshop_id ? <BacklogDashboard workshopId={followUp.workshop_id} consultorId={followUp.consultor_id} /> : <p className="text-xs text-gray-500 italic">Sem backlog disponível</p>}
+                          {followUp?.workshop_id ? <BacklogBoard workshopId={followUp.workshop_id} user={user} /> : <p className="text-xs text-gray-500 italic">Sem backlog disponível</p>}
                         </div>
                       )}
 
