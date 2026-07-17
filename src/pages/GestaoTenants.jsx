@@ -149,7 +149,10 @@ export default function GestaoTenants() {
       if (editingCompany) {
         return await base44.entities.Workshop.update(editingCompany.id, data);
       } else {
-        return await base44.entities.Workshop.create(data);
+        const wsNovo = await base44.entities.Workshop.create(data);
+        // Provisionamento canônico do tenant (firm_id + memberships dono/internos)
+        base44.functions.invoke('provisionWorkshopTenant', { workshop_id: wsNovo.id }).catch(() => {});
+        return wsNovo;
       }
     },
     onSuccess: () => {
