@@ -409,7 +409,7 @@ export default function ControleAceleracaoView({ state }) {
         </div>
 
         {/* Tab Content — forceMount + hidden on all tabs; lazy-mount on first visit */}
-        <div className={activeTab === "pedidos" ? "min-h-0 flex-1" : ""}>
+        <div className={activeTab === "pedidos" ? "flex min-h-0 flex-1 flex-col" : ""}>
           <TabsContent value="visao-geral" forceMount className={`mt-0 ${activeTab !== "visao-geral" ? "hidden" : ""}`}>
             {visitedTabs.has("visao-geral") && (
               <TabErrorBoundary tabName="Visão Geral">
@@ -442,7 +442,7 @@ export default function ControleAceleracaoView({ state }) {
             )}
           </TabsContent>
 
-          <TabsContent value="pedidos" forceMount className={`mt-0 h-full min-h-0 ${activeTab !== "pedidos" ? "hidden" : ""}`}>
+          <TabsContent value="pedidos" forceMount className={`mt-0 flex min-h-0 flex-1 flex-col ${activeTab !== "pedidos" ? "hidden" : ""}`}>
             {visitedTabs.has("pedidos") && (
               <TabErrorBoundary tabName="Pedidos & Backlog">
                 <Suspense fallback={<TabSkeleton />}>
