@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Plus, Search } from "lucide-react";
 import PedidoInternoForm from "./PedidoInternoForm";
-import BacklogDashboard from "./BacklogDashboard";
+import BacklogBoard from "./BacklogBoard";
 import PedidoInternoModal from "./PedidoInternoModal";
 import PedidoInternoList from "./PedidoInternoList";
 import PedidoInternoDetail from "./PedidoInternoDetail";
@@ -132,7 +132,7 @@ export default function PedidosInternosTab({ workshopId, user }) {
         </TabsList>
 
         <TabsContent value="backlog" forceMount className={`mt-0 min-h-0 flex-1 ${activeList !== "backlog" ? "hidden" : "animate-in fade-in duration-200"}`}>
-          <BacklogDashboard workshopId={workshopId} user={user} />
+          <BacklogBoard workshopId={workshopId} user={user} />
         </TabsContent>
 
         <TabsContent value="pedidos" forceMount className={`mt-0 min-h-0 flex-1 flex-col ${activeList !== "pedidos" ? "hidden" : "flex animate-in fade-in duration-200"}`}>
