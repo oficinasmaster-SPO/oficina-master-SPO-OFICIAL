@@ -22,7 +22,7 @@ function calcularDiasAguardando(desde) {
   return Math.floor(diff / (1000 * 60 * 60 * 24));
 }
 
-export default function AguardandoClienteBanner({ tarefa, podeEditar, user }) {
+export default function AguardandoClienteBanner({ tarefa, podeEditar, user, compact = false }) {
   const [showForm, setShowForm] = useState(false);
   const [motivo, setMotivo] = useState("");
   const queryClient = useQueryClient();
@@ -70,6 +70,17 @@ export default function AguardandoClienteBanner({ tarefa, podeEditar, user }) {
     const dias = calcularDiasAguardando(tarefa.aguardando_cliente_desde);
     const diasLabel = dias === 0 ? "hoje" : dias === 1 ? "há 1 dia" : `há ${dias} dias`;
     const isLongWait = dias >= 3;
+
+    if (compact) {
+      return (
+        <div className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1 ${isLongWait ? 'border-orange-200 bg-orange-50' : 'border-amber-200 bg-amber-50'}`}>
+          <Clock className={`h-3 w-3 shrink-0 ${isLongWait ? 'text-orange-500' : 'text-amber-500'}`} />
+          <span className={`text-[11px] font-medium ${isLongWait ? 'text-orange-800' : 'text-amber-800'}`}>
+            Aguardando cliente · {diasLabel}
+          </span>
+        </div>
+      );
+    }
 
     return (
       <div className={`rounded-xl border px-4 py-3 flex items-start gap-3 ${isLongWait ? 'border-orange-300 bg-orange-50' : 'border-amber-200 bg-amber-50'}`}>
