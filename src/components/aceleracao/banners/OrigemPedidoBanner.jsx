@@ -34,7 +34,7 @@ const PEDIDO_TIPO_LABELS = {
   outros: 'Outros',
 };
 
-export default function OrigemPedidoBanner({ tarefa }) {
+export default function OrigemPedidoBanner({ tarefa, compact = false }) {
   const [open, setOpen] = useState(false);
 
   const { data: pedido } = useQuery({
@@ -52,6 +52,20 @@ export default function OrigemPedidoBanner({ tarefa }) {
 
   const statusCfg = pedido?.status ? PEDIDO_STATUS_CONFIG[pedido.status] : null;
   const pedidoIdShort = tarefa.origin_id?.slice(-6) || '';
+
+  if (compact) {
+    return (
+      <div className="flex items-center gap-1.5 rounded-lg border border-teal-200 bg-teal-50 px-2.5 py-1">
+        <FileText className="h-3 w-3 text-teal-600 shrink-0" />
+        <span className="text-[11px] font-medium text-teal-800 truncate">
+          Pedido #{pedidoIdShort}{pedido?.titulo ? ` · ${pedido.titulo}` : ''}
+        </span>
+        {statusCfg && (
+          <Badge variant="outline" className={`text-[9px] px-1 py-0 ${statusCfg.className}`}>{statusCfg.label}</Badge>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-xl border border-teal-200 bg-teal-50 px-4 py-3 flex items-start gap-3">
