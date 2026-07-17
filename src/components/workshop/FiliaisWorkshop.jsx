@@ -66,6 +66,10 @@ export default function FiliaisWorkshop({ workshop }) {
         is_autocenter: workshop.is_autocenter || false
       });
 
+      // Provisionamento canônico do tenant: memberships da filial (dono multi-filial
+      // ganha owner/employee na nova filial; equipe interna ganha consultant)
+      base44.functions.invoke('provisionWorkshopTenant', { workshop_id: filial.id }).catch(() => {});
+
       // Criar vínculo de Colaborador (Sócio) para o dono na nova filial
       // Isso garante permissão de acesso imediato aos painéis baseados em perfis/roles
       try {
