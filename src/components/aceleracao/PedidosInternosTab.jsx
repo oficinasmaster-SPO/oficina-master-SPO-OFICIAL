@@ -121,7 +121,7 @@ export default function PedidosInternosTab({ workshopId, user }) {
         )}
       </PedidoInternoModal>
 
-      <Tabs value={activeList} onValueChange={setActiveList} className="flex min-h-0 flex-1 flex-col">
+      <Tabs value={activeList} onValueChange={setActiveList} className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <TabsList className="mb-3 shrink-0 bg-gray-100 rounded-lg p-1">
           <TabsTrigger value="pedidos" className="text-sm rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm">
             Pedidos Internos
@@ -131,11 +131,11 @@ export default function PedidosInternosTab({ workshopId, user }) {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="backlog" forceMount className={`mt-0 min-h-0 flex-1 ${activeList !== "backlog" ? "hidden" : "animate-in fade-in duration-200"}`}>
+        <TabsContent value="backlog" forceMount className={`mt-0 min-h-0 flex-1 overflow-hidden ${activeList !== "backlog" ? "hidden" : "animate-in fade-in duration-200"}`}>
           <BacklogBoard workshopId={workshopId} user={user} />
         </TabsContent>
 
-        <TabsContent value="pedidos" forceMount className={`mt-0 min-h-0 flex-1 flex-col ${activeList !== "pedidos" ? "hidden" : "flex animate-in fade-in duration-200"}`}>
+        <TabsContent value="pedidos" forceMount className={`mt-0 flex min-h-0 flex-1 flex-col overflow-hidden ${activeList !== "pedidos" ? "hidden" : "flex animate-in fade-in duration-200"}`}>
           {/* Toolbar */}
           <div className="flex items-center gap-3 border-b border-gray-200 px-4 py-3">
             <div className="relative flex-1 max-w-md">
