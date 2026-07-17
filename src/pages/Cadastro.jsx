@@ -200,6 +200,10 @@ export default function Cadastro() {
         tempo_medio_servico: 0
       });
       
+      // Provisionamento canônico do tenant: garante consulting_firm_id e cria
+      // TenantMemberships (dono owner/employee + consultant para equipe interna)
+      base44.functions.invoke('provisionWorkshopTenant', { workshop_id: newWorkshop.id }).catch(() => {});
+
       // Update User with the new workshop_id and mark as onboarding in progress
       await base44.auth.updateMe({
         workshop_id: newWorkshop.id,
