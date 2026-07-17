@@ -177,6 +177,7 @@ export default function PedidosInternosTab({ workshopId, user }) {
               pedidos={filteredPedidos}
               onSelect={handleEdit}
               isLoading={isLoading}
+              selectedId={selectedPedido?.id}
             />
           </div>
         </TabsContent>
