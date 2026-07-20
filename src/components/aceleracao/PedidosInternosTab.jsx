@@ -1,13 +1,13 @@
 /**
  * PedidosInternosTab — Shell fixo com toolbar + lista rolável
  *
- * Layout (REFACTOR_BRIEF.md):
- * ┌─ Header fixo (shrink-0) ──────────────────────────────────────────────┐
- * │  Tabs (Pedidos | Backlog) + Métricas rápidas + CTA                   │
- * │  Toolbar: Escopo (dropdown) + Search + Filtro Status                 │
- * │  Column Headers (Solicitante | Título | Cliente | P | Status | SLA)  │
- * ├───────────────────────────────────────────────────────────────────────┤
- * │  Lista agrupada (flex-1 overflow-y-auto)                             │
+ * Layout:
+ * ┌─ Header fixo (shrink-0, shadow projetada sobre conteúdo) ─────────────┐
+ * │  Tabs (Pedidos | Backlog) + Métricas rápidas + CTA                    │
+ * │  Toolbar: Escopo (dropdown) + Search + Filtro Status                  │
+ * │  Column Headers (fixos, alinhados com rows)                           │
+ * ├─ shadow ──────────────────────────────────────────────────────────────┤
+ * │  Lista agrupada (flex-1 overflow-y-auto, scrollbar contida)           │
  * └───────────────────────────────────────────────────────────────────────┘
  */
 import React, { useState, useMemo, useCallback } from "react";
@@ -31,21 +31,21 @@ import {
   Popover, PopoverContent, PopoverTrigger,
 } from "@/components/ui/popover";
 import { PEDIDO_STATUS_OPTIONS } from "@/components/shared/backlogConstants";
-
+ 
 /* ═══════════════════════════════════════════════════════════════════════════
-   SCOPE SELECTOR — combobox/dropdown (spec: NÃO botões inline)
+   SCOPE SELECTOR — combobox/dropdown
    ═══════════════════════════════════════════════════════════════════════════ */
 const SCOPE_OPTIONS = [
   { key: "todos",        label: "Todos os pedidos", icon: Users,    description: "Ver tudo" },
   { key: "para_mim",     label: "Para mim",         icon: Inbox,    description: "Pedidos atribuídos a mim" },
   { key: "meus_pedidos", label: "Meus pedidos",     icon: SendIcon, description: "Pedidos que eu criei" },
 ];
-
+ 
 function ScopeSelector({ value, onChange }) {
   const [open, setOpen] = useState(false);
   const current = SCOPE_OPTIONS.find(o => o.key === value) || SCOPE_OPTIONS[0];
   const Icon = current.icon;
-
+ 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -79,9 +79,9 @@ function ScopeSelector({ value, onChange }) {
     </Popover>
   );
 }
-
+ 
 /* ═══════════════════════════════════════════════════════════════════════════
-   METRIC DOTS — indicadores rápidos
+   METRIC DOTS
    ═══════════════════════════════════════════════════════════════════════════ */
 function MetricDot({ color, count, label }) {
   if (count === 0) return null;
@@ -93,7 +93,7 @@ function MetricDot({ color, count, label }) {
     </span>
   );
 }
-
+ 
 /* ═══════════════════════════════════════════════════════════════════════════
    MAIN COMPONENT
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -106,7 +106,7 @@ export default function PedidosInternosTab({ workshopId, user }) {
   const [statusFilter, setStatusFilter]     = useState("all");
   const [scope, setScope]                   = useState("todos");
   const queryClient = useQueryClient();
-
+ 
   /* ── Data ─────────────────────────────────────────────────────────────── */
   const { data: pedidos = [], isLoading } = useQuery({
     queryKey: ["pedidos-internos", workshopId],
@@ -117,13 +117,13 @@ export default function PedidosInternosTab({ workshopId, user }) {
       return all || [];
     },
   });
-
+ 
   const { data: usuarios = [] } = useQuery({
     queryKey: ["usuarios-sistema"],
     queryFn: async () => (await base44.entities.User.list()) || [],
   });
-
-  /* ── Métricas rápidas ──────────────────────────────────────────────────── */
+ 
+  /* ── Métricas ──────────────────────────────────────────────────────────── */
   const metrics = useMemo(() => {
     const active = pedidos.filter(p => !["concluido", "recusado"].includes(p.status));
     return {
@@ -132,12 +132,12 @@ export default function PedidosInternosTab({ workshopId, user }) {
       aprovados:  active.filter(p => p.status === "aprovado").length,
     };
   }, [pedidos]);
-
+ 
   /* ── Filtro + ordenação ────────────────────────────────────────────────── */
   const filteredPedidos = useMemo(() => {
     const userId = user?.id;
     const userEmail = user?.email;
-
+ 
     return pedidos
       .filter((p) => {
         // Scope
@@ -152,7 +152,7 @@ export default function PedidosInternosTab({ workshopId, user }) {
             || (userEmail && p.created_by === userEmail);
           if (!isRequester) return false;
         }
-
+ 
         // Search
         const q = search.toLowerCase();
         if (q) {
@@ -162,10 +162,10 @@ export default function PedidosInternosTab({ workshopId, user }) {
           ].filter(Boolean).join(" ").toLowerCase();
           if (!haystack.includes(q)) return false;
         }
-
+ 
         // Status
         if (statusFilter !== "all" && p.status !== statusFilter) return false;
-
+ 
         return true;
       })
       .sort((a, b) => {
@@ -179,13 +179,13 @@ export default function PedidosInternosTab({ workshopId, user }) {
         return new Date(b.created_date || 0) - new Date(a.created_date || 0);
       });
   }, [pedidos, search, statusFilter, scope, user?.id, user?.email]);
-
+ 
   // Dados frescos do selecionado
   const freshSelected = useMemo(() => {
     if (!selectedPedido) return null;
     return pedidos.find((p) => p.id === selectedPedido.id) || selectedPedido;
   }, [selectedPedido, pedidos]);
-
+ 
   /* ── Handlers ──────────────────────────────────────────────────────────── */
   const handleSelect = useCallback((p) => setSelectedPedido(p), []);
   const handleDetailClose = useCallback(() => {
@@ -197,13 +197,13 @@ export default function PedidosInternosTab({ workshopId, user }) {
     setEditingPedido(null);
     queryClient.invalidateQueries({ queryKey: ["pedidos-internos"] });
   }, [queryClient]);
-
+ 
   const hasFilters = search || statusFilter !== "all";
   const clearFilters = () => { setSearch(""); setStatusFilter("all"); };
-
+ 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden">
-
+ 
       {/* ── Modal detalhe (wide) ── */}
       <PedidoInternoModal open={!!selectedPedido} onClose={() => setSelectedPedido(null)} size="wide">
         {freshSelected && (
@@ -216,12 +216,12 @@ export default function PedidosInternosTab({ workshopId, user }) {
           />
         )}
       </PedidoInternoModal>
-
+ 
       {/* ── Modal NOVO pedido (estética custom) ── */}
       {showNewForm && !editingPedido && (
         <NovoPedidoModal user={user} onClose={handleFormClose} />
       )}
-
+ 
       {/* ── Modal EDITAR pedido (form original) ── */}
       <PedidoInternoModal open={showNewForm && !!editingPedido} onClose={() => { setShowNewForm(false); setEditingPedido(null); }} size="default">
         {showNewForm && editingPedido && (
@@ -236,18 +236,19 @@ export default function PedidosInternosTab({ workshopId, user }) {
           </div>
         )}
       </PedidoInternoModal>
-
+ 
       {/* ═══════════════════════════════════════════════════════════════════
-          FIXED HEADER BLOCK (shrink-0)
+          TABS — sem overflow-hidden no wrapper (permite shadow projetar)
           ═══════════════════════════════════════════════════════════════════ */}
       <Tabs
         value={activeList}
         onValueChange={setActiveList}
         className="flex min-h-0 flex-1 flex-col"
       >
+        {/* ── HEADER FIXO (shrink-0) com shadow que projeta sobre a lista ── */}
         <div className="shrink-0 border-b border-gray-200 bg-white shadow-[0_2px_8px_rgba(0,0,0,0.06)] z-10 relative">
-
-          {/* ── Linha 1: Tabs + métricas + CTA ── */}
+ 
+          {/* Linha 1: Tabs + métricas + CTA */}
           <div className="flex items-center gap-4 px-4 py-2">
             <TabsList className="h-9 gap-0.5 rounded-lg bg-gray-100 p-1">
               <TabsTrigger
@@ -263,7 +264,7 @@ export default function PedidosInternosTab({ workshopId, user }) {
                 Backlog de Tarefas
               </TabsTrigger>
             </TabsList>
-
+ 
             {activeList === "pedidos" && (
               <>
                 {/* Métricas rápidas */}
@@ -272,7 +273,7 @@ export default function PedidosInternosTab({ workshopId, user }) {
                   <MetricDot color="bg-amber-500"   count={metrics.pendentes}  label="pendentes" />
                   <MetricDot color="bg-emerald-500" count={metrics.aprovados}  label="aprovados" />
                 </div>
-
+ 
                 <Button
                   onClick={() => { setEditingPedido(null); setShowNewForm(true); }}
                   size="sm"
@@ -284,17 +285,12 @@ export default function PedidosInternosTab({ workshopId, user }) {
               </>
             )}
           </div>
-
-          {/* ── Linha 2: Toolbar (só na aba pedidos) ── */}
+ 
+          {/* Linha 2: Toolbar (só na aba pedidos) */}
           {activeList === "pedidos" && (
             <div className="flex items-center gap-2 border-t border-gray-100 px-4 py-2">
-              {/* Escopo (dropdown) */}
               <ScopeSelector value={scope} onChange={setScope} />
-
-              {/* Spacer */}
               <div className="flex-1" />
-
-              {/* Search */}
               <div className="relative w-[280px]">
                 <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
                 <input
@@ -305,8 +301,6 @@ export default function PedidosInternosTab({ workshopId, user }) {
                   className="h-8 w-full rounded-lg border border-gray-200 bg-gray-50/60 pl-8 pr-3 text-xs text-gray-800 placeholder:text-gray-400 focus:border-blue-300 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-200 transition-colors"
                 />
               </div>
-
-              {/* Filtro status */}
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="h-8 w-[140px] shrink-0 rounded-lg text-xs">
                   <SelectValue placeholder="Todos status" />
@@ -318,27 +312,23 @@ export default function PedidosInternosTab({ workshopId, user }) {
                   ))}
                 </SelectContent>
               </Select>
-
-              {/* Limpar filtros */}
               {hasFilters && (
                 <button onClick={clearFilters} className="flex h-8 items-center gap-1 rounded-md px-2 text-xs text-gray-400 hover:bg-gray-100 hover:text-gray-600">
                   <X className="h-3 w-3" /> Limpar
                 </button>
               )}
-
-              {/* Contador */}
               <span className="text-xs tabular-nums text-gray-400">
                 {filteredPedidos.length} {filteredPedidos.length === 1 ? "pedido" : "pedidos"}
               </span>
             </div>
           )}
-
-          {/* ── Linha 3: Column headers (só na aba pedidos) ── */}
+ 
+          {/* Linha 3: Column headers (fixos, alinhados com rows) */}
           {activeList === "pedidos" && <ColumnHeaders />}
         </div>
-
+ 
         {/* ═══════════════════════════════════════════════════════════════════
-            SCROLLABLE CONTENT (flex-1 overflow-y-auto)
+            SCROLLABLE CONTENT — scroll contido aqui, não na página
             ═══════════════════════════════════════════════════════════════════ */}
         <TabsContent
           value="backlog"
@@ -347,12 +337,13 @@ export default function PedidosInternosTab({ workshopId, user }) {
         >
           <BacklogBoard workshopId={workshopId} user={user} />
         </TabsContent>
-
+ 
         <TabsContent
           value="pedidos"
           forceMount
           className={`mt-0 flex min-h-0 flex-1 flex-col overflow-hidden ${activeList !== "pedidos" ? "hidden" : ""}`}
         >
+          {/* Este div é o scroll container — scrollbar fica aqui dentro */}
           <div className="min-h-0 flex-1 overflow-y-auto bg-white" style={{ scrollbarGutter: 'stable' }}>
             <PedidoInternoList
               pedidos={filteredPedidos}
@@ -366,3 +357,4 @@ export default function PedidosInternosTab({ workshopId, user }) {
     </div>
   );
 }
+ 
