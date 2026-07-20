@@ -18,6 +18,7 @@ import {
   Plus, Search, X, User, ChevronDown, Inbox, Send as SendIcon, Users,
 } from "lucide-react";
 import PedidoInternoForm from "./PedidoInternoForm";
+import NovoPedidoModal from "./NovoPedidoModal";
 import BacklogBoard from "./BacklogBoard";
 import PedidoInternoModal from "./PedidoInternoModal";
 import PedidoInternoList, { ColumnHeaders } from "./PedidoInternoList";
@@ -216,9 +217,14 @@ export default function PedidosInternosTab({ workshopId, user }) {
         )}
       </PedidoInternoModal>
 
-      {/* ── Modal novo/editar ── */}
-      <PedidoInternoModal open={showNewForm} onClose={() => { setShowNewForm(false); setEditingPedido(null); }} size="default">
-        {showNewForm && (
+      {/* ── Modal NOVO pedido (estética custom) ── */}
+      {showNewForm && !editingPedido && (
+        <NovoPedidoModal user={user} onClose={handleFormClose} />
+      )}
+
+      {/* ── Modal EDITAR pedido (form original) ── */}
+      <PedidoInternoModal open={showNewForm && !!editingPedido} onClose={() => { setShowNewForm(false); setEditingPedido(null); }} size="default">
+        {showNewForm && editingPedido && (
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6">
             <PedidoInternoForm
               pedido={editingPedido}
