@@ -239,7 +239,7 @@ export default function PedidosInternosTab({ workshopId, user }) {
         onValueChange={setActiveList}
         className="flex min-h-0 flex-1 flex-col overflow-hidden"
       >
-        <div className="shrink-0 border-b border-gray-200 bg-white shadow-sm">
+        <div className="shrink-0 border-b border-gray-200 bg-white shadow-[0_2px_8px_rgba(0,0,0,0.06)] z-10 relative">
 
           {/* ── Linha 1: Tabs + métricas + CTA ── */}
           <div className="flex items-center gap-4 px-4 py-2">
@@ -347,7 +347,7 @@ export default function PedidosInternosTab({ workshopId, user }) {
           forceMount
           className={`mt-0 flex min-h-0 flex-1 flex-col overflow-hidden ${activeList !== "pedidos" ? "hidden" : ""}`}
         >
-          <div className="min-h-0 flex-1 overflow-y-auto bg-white">
+          <div className="min-h-0 flex-1 overflow-y-auto bg-white" style={{ scrollbarGutter: 'stable' }}>
             <PedidoInternoList
               pedidos={filteredPedidos}
               onSelect={handleSelect}
