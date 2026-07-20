@@ -243,7 +243,7 @@ export default function PedidosInternosTab({ workshopId, user }) {
       <Tabs
         value={activeList}
         onValueChange={setActiveList}
-        className="flex min-h-0 flex-1 flex-col overflow-hidden"
+        className="flex min-h-0 flex-1 flex-col"
       >
         <div className="shrink-0 border-b border-gray-200 bg-white shadow-[0_2px_8px_rgba(0,0,0,0.06)] z-10 relative">
 
