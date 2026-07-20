@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { PEDIDO_STATUS_CONFIG } from "@/components/shared/backlogConstants";
 import useEmployeeResolver from "@/hooks/useEmployeeResolver";
-
+ 
 /* ── Shared grid constants (mesmas widths em ColumnHeaders + TicketRow) ──── */
 export const COL = {
   avatar: "w-10 shrink-0",
@@ -24,7 +24,7 @@ export const COL = {
   gap: "gap-4",
   px: "px-5",
 };
-
+ 
 /* ── Status groups ──────────────────────────────────────────────────────── */
 const STATUS_GROUPS = [
   { key: "em_analise", label: "Em Análise",  dot: "bg-blue-500",    defaultCollapsed: false },
@@ -33,7 +33,7 @@ const STATUS_GROUPS = [
   { key: "recusado",   label: "Recusado",    dot: "bg-red-500",     defaultCollapsed: true },
   { key: "concluido",  label: "Concluído",   dot: "bg-gray-400",    defaultCollapsed: true },
 ];
-
+ 
 /* ── Helpers ────────────────────────────────────────────────────────────── */
 function timeSince(d) {
   if (!d) return null;
@@ -46,7 +46,7 @@ function isOverdue(p) {
   if (!p.prazo || ["concluido","recusado"].includes(p.status)) return false;
   return new Date(p.prazo) < new Date();
 }
-
+ 
 /* ── Avatar ─────────────────────────────────────────────────────────────── */
 const AV = [
   "bg-blue-600","bg-violet-600","bg-teal-600","bg-orange-500",
@@ -55,7 +55,7 @@ const AV = [
 ];
 function pick(n) { return AV[n ? n.charCodeAt(0) % AV.length : 0]; }
 function ini(n) { return n ? n.trim().split(/\s+/).map(w=>w[0]).slice(0,2).join("").toUpperCase() : "?"; }
-
+ 
 function Avatar({ name, photoUrl }) {
   const i = ini(name), c = pick(name);
   if (photoUrl) {
@@ -68,7 +68,7 @@ function Avatar({ name, photoUrl }) {
   }
   return <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white shadow-sm ${c}`}>{i}</span>;
 }
-
+ 
 function MiniAvatar({ name, photoUrl }) {
   const i = ini(name), c = pick(name);
   if (photoUrl) {
@@ -81,7 +81,7 @@ function MiniAvatar({ name, photoUrl }) {
   }
   return <span className={`flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full text-[8px] font-bold text-white ${c}`}>{i}</span>;
 }
-
+ 
 /* ── Priority / Status / Age / Client ──────────────────────────────────── */
 function PriorityIcon({ p }) {
   if (p === "critica") return <AlertTriangle className="h-4 w-4 text-red-500" />;
@@ -89,7 +89,7 @@ function PriorityIcon({ p }) {
   if (p === "media")   return <Minus         className="h-4 w-4 text-gray-400" />;
   return                      <ArrowDown     className="h-4 w-4 text-blue-400" />;
 }
-
+ 
 const ST = {
   pendente:   { bg:"bg-amber-100 text-amber-800",    icon: Clock },
   em_analise: { bg:"bg-blue-100 text-blue-800",      icon: SearchIcon },
@@ -105,7 +105,7 @@ function StatusPill({ status }) {
     </span>
   );
 }
-
+ 
 function AgePill({ date, overdue }) {
   const l = timeSince(date); if (!l) return null;
   return (
@@ -114,7 +114,7 @@ function AgePill({ date, overdue }) {
     </span>
   );
 }
-
+ 
 const CC = [
   "bg-fuchsia-100 text-fuchsia-700","bg-sky-100 text-sky-700",
   "bg-lime-100 text-lime-700","bg-orange-100 text-orange-700",
@@ -126,7 +126,7 @@ function ClientBadge({ name }) {
   const i = name.split("").reduce((a,c)=>a+c.charCodeAt(0),0) % CC.length;
   return <span className={`inline-flex items-center rounded-md px-2.5 py-1 text-[11px] font-medium truncate max-w-[170px] ${CC[i]}`}>{name}</span>;
 }
-
+ 
 /* ═══════════════════════════════════════════════════════════════════════════
    COLUMN HEADERS — flush, mesmas widths que TicketRow
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -143,7 +143,7 @@ export function ColumnHeaders() {
     </div>
   );
 }
-
+ 
 /* ═══════════════════════════════════════════════════════════════════════════
    GROUP HEADER — sticky top dentro do scroll container
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -164,7 +164,7 @@ function GroupHeader({ group, count, collapsed, onToggle }) {
     </button>
   );
 }
-
+ 
 /* ═══════════════════════════════════════════════════════════════════════════
    TICKET ROW — mesmas widths que ColumnHeaders (via COL)
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -172,16 +172,16 @@ function TicketRow({ pedido, onSelect, isSelected, getName, getPhoto }) {
   const overdue = isOverdue(pedido);
   const done    = ["concluido","recusado"].includes(pedido.status);
   const criado  = pedido.created_date || pedido.data_criacao;
-
+ 
   const rName  = getName(pedido.requester_id, pedido.requester_name);
   const rPhoto = getPhoto(pedido.requester_id);
   const aName  = getName(pedido.assignee_id, pedido.assignee_name);
   const aPhoto = getPhoto(pedido.assignee_id);
-
+ 
   const bar =
     pedido.prioridade === "critica" ? "before:bg-red-500" :
     pedido.prioridade === "alta"    ? "before:bg-orange-400" : "";
-
+ 
   return (
     <button
       onClick={() => onSelect(pedido)}
@@ -196,7 +196,7 @@ function TicketRow({ pedido, onSelect, isSelected, getName, getPhoto }) {
     >
       {/* Avatar */}
       <Avatar name={rName} photoUrl={rPhoto} />
-
+ 
       {/* Solicitante */}
       <div className={`${COL.solicitante} border-r border-gray-100 pr-3`}>
         <p className="font-mono text-[10px] text-gray-400 leading-none mb-0.5">#{pedido.id?.slice(-6).toUpperCase()}</p>
@@ -204,7 +204,7 @@ function TicketRow({ pedido, onSelect, isSelected, getName, getPhoto }) {
           {rName}
         </p>
       </div>
-
+ 
       {/* Título */}
       <div className={COL.titulo}>
         <p className="text-[10px] font-medium uppercase tracking-widest text-gray-400 leading-none mb-1">Chamado</p>
@@ -212,23 +212,23 @@ function TicketRow({ pedido, onSelect, isSelected, getName, getPhoto }) {
           {pedido.titulo}
         </p>
       </div>
-
+ 
       {/* Cliente */}
       <div className={`${COL.cliente} border-l border-gray-100 pl-4`}>
         <p className="text-[10px] font-medium uppercase tracking-widest text-gray-400 leading-none mb-1">Cliente</p>
         <ClientBadge name={pedido.workshop_nome} />
       </div>
-
+ 
       {/* Prioridade */}
       <div className={`${COL.prioridade} flex justify-center`}>
         <PriorityIcon p={pedido.prioridade} />
       </div>
-
+ 
       {/* Status */}
       <div className={`${COL.status} flex justify-center`}>
         <StatusPill status={pedido.status} />
       </div>
-
+ 
       {/* SLA + Responsável */}
       <div className={`${COL.sla} flex flex-col items-end gap-1`}>
         <AgePill date={criado} overdue={overdue} />
@@ -243,7 +243,7 @@ function TicketRow({ pedido, onSelect, isSelected, getName, getPhoto }) {
     </button>
   );
 }
-
+ 
 /* ═══════════════════════════════════════════════════════════════════════════
    SKELETON — flush, sem cards
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -279,22 +279,22 @@ function SkeletonRows() {
     </div>
   );
 }
-
+ 
 /* ═══════════════════════════════════════════════════════════════════════════
    MAIN — sem padding externo, sem cards, flush direto
    ═══════════════════════════════════════════════════════════════════════════ */
 export default function PedidoInternoList({ pedidos, onSelect, isLoading, selectedId }) {
   const { getName, getPhoto } = useEmployeeResolver();
-
+ 
   const [collapsed, setCollapsed] = useState(() => {
     const init = {};
     STATUS_GROUPS.forEach(g => { if (g.defaultCollapsed) init[g.key] = true; });
     return init;
   });
   const toggle = useCallback((k) => setCollapsed(p => ({ ...p, [k]: !p[k] })), []);
-
+ 
   if (isLoading) return <SkeletonRows />;
-
+ 
   if (!pedidos || pedidos.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-center">
@@ -304,7 +304,7 @@ export default function PedidoInternoList({ pedidos, onSelect, isLoading, select
       </div>
     );
   }
-
+ 
   const grouped = {};
   STATUS_GROUPS.forEach(g => { grouped[g.key] = []; });
   pedidos.forEach(p => { if (grouped[p.status]) grouped[p.status].push(p); });
@@ -315,13 +315,13 @@ export default function PedidoInternoList({ pedidos, onSelect, isLoading, select
       return new Date(b.created_date||0) - new Date(a.created_date||0);
     });
   });
-
+ 
   return (
     <div>
       {STATUS_GROUPS.map(group => {
         const items = grouped[group.key] || [];
         if (items.length === 0 && !["pendente","em_analise"].includes(group.key)) return null;
-
+ 
         return (
           <div key={group.key}>
             <GroupHeader
@@ -352,3 +352,4 @@ export default function PedidoInternoList({ pedidos, onSelect, isLoading, select
     </div>
   );
 }
+ 
