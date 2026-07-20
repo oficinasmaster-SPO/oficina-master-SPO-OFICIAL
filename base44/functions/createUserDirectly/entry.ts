@@ -348,6 +348,47 @@ Deno.serve(async (req) => {
         console.warn('⚠️ Falha ao criar TenantMembership (não bloqueante):', e.message);
       }
     }
+
+    // Fase B — espelho de provisionWorkshopTenant: interno criado diretamente
+    // (User já existia, sem passar por completeInviteOnFirstAccess) precisa
+    // nascer com consultant membership para todos os workshops ativos.
+    if (isInternalUser) {
+      try {
+        const existentes = await base44.asServiceRole.entities.TenantMembership.filter({
+          user_id: existingUserId,
+          membership_type: 'consultant',
+          status: 'active'
+        }, 'created_date', 500);
+        const jaTem = new Set(existentes.map((m) => m.workshop_id));
+
+        let skip = 0;
+        let criadas = 0;
+        while (true) {
+          const batch = await base44.asServiceRole.entities.Workshop.filter({}, 'created_date', 200, skip);
+          if (!batch || batch.length === 0) break;
+          for (const ws of batch) {
+            if (jaTem.has(ws.id)) continue;
+            await base44.asServiceRole.entities.TenantMembership.create({
+              user_id: existingUserId,
+              workshop_id: ws.id,
+              company_id: ws.company_id || null,
+              consulting_firm_id: ws.consulting_firm_id || null,
+              membership_type: 'consultant',
+              status: 'active',
+              is_default: false,
+              notes: 'provision-internal-consultant'
+            });
+            jaTem.add(ws.id);
+            criadas++;
+          }
+          if (batch.length < 200) break;
+          skip += 200;
+        }
+        console.log(`✅ Provisionamento internal→consultant (createUserDirectly): ${criadas} memberships criadas`);
+      } catch (e) {
+        console.warn('⚠️ Falha ao provisionar consultant memberships para internal (não bloqueante):', e.message);
+      }
+    }
     }
 
     // Gerar link de convite com profile_id e token (sem depender de workshop_id na URL)
