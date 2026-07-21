@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { UserPlus, Copy, Check, Send, Users, Building2, Search, ChevronDown, X } from "lucide-react";
+import { OM_CONSULTING_FIRM_ID } from "@/components/hooks/useUserType";
 
 function WorkshopSearchSelect({ workshops, value, onChange }) {
   const [open, setOpen] = useState(false);
@@ -107,8 +108,6 @@ function WorkshopSearchSelect({ workshops, value, onChange }) {
   );
 }
 
-// ID da ConsultingFirm "Oficinas Master" — fonte canônica para todos os internos
-const OM_CONSULTING_FIRM_ID = "69bab264d7c3fe5d367c3959";
 
 const EMPTY_INTERNO = {
   name: "",
