@@ -138,6 +138,17 @@ Deno.serve(async (req) => {
     let workshop_name = 'Oficinas Master Acelerador';
     let workshop_company_id = null; // company_id REAL da oficina (7.5 — nunca gravar workshop_id aqui)
 
+    // Fallback: interno detectado via targetsOficinasMaster sem consulting_firm_id
+    // explicito — resolve a partir do próprio workshop placeholder.
+    if (isInternalUser && !consulting_firm_id && targetsOficinasMaster) {
+      try {
+        const omWorkshop = await base44.asServiceRole.entities.Workshop.get(OFICINAS_MASTER_WORKSHOP_ID);
+        consulting_firm_id = omWorkshop?.consulting_firm_id || null;
+      } catch (e) {
+        console.warn("⚠️ Falha ao resolver consulting_firm_id do workshop Oficinas Master:", e.message);
+      }
+    }
+
     if (!isInternalUser && workshop_id) {
       try {
         const ws = await base44.asServiceRole.entities.Workshop.get(workshop_id);
