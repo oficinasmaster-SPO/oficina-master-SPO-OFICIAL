@@ -50,8 +50,8 @@ export function useUserType() {
   }
 
   // ─── Derivações do campo canônico user_type ─────────────────────────────
-  const isInternal   = user.user_type === 'internal';
-  const isExternal   = user.user_type === 'external';
+  const isInternal   = isInternalUser(user);
+  const isExternal   = !isInternal && user.user_type === 'external';
   const isAdmin      = user.role === 'admin';
   const isSuperAdmin = user.role === 'super_admin';
 
@@ -115,8 +115,8 @@ export function useUserType() {
 export function resolveUserType(user) {
   if (!user) return { isInternal: false, isExternal: false };
 
-  const isInternal = user.user_type === 'internal';
-  const isExternal = user.user_type === 'external';
+  const isInternal = isInternalUser(user);
+  const isExternal = !isInternal && user.user_type === 'external';
 
   return {
     isInternal,
