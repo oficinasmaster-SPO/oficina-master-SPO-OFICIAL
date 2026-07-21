@@ -2,6 +2,9 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
 const idempotencyCache = new Map();
 
+// Ver nota em sendEmployeeInvite/entry.ts — mesmo workshop placeholder da equipe interna.
+const OFICINAS_MASTER_WORKSHOP_ID = '695408b3ed74bfeb60d708c0';
+
 Deno.serve(async (req) => {
   let employeeIdForRollback = null;
   let inviteIdForRollback = null;
@@ -71,7 +74,10 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, error: { code: 'MISSING_FIELDS', message: 'Campos obrigatórios ausentes ou inválidos (name, email)' } }, { status: 400 });
     }
 
-    const isInternalUser = !workshop_id && !!bodyConsultingFirmId;
+    // Fase D: workshop_id apontando para a "oficina" placeholder da equipe
+    // interna (Oficinas Master Acelerador) também conta como criação interna,
+    // mesmo que o chamador tenha passado um workshop_id explicitamente.
+    const isInternalUser = (!workshop_id || workshop_id === OFICINAS_MASTER_WORKSHOP_ID) && !!bodyConsultingFirmId;
     if (!workshop_id && !bodyConsultingFirmId) {
       return Response.json({ success: false, error: { code: 'MISSING_FIELDS', message: 'Informe workshop_id (externo) ou consulting_firm_id (interno)' } }, { status: 400 });
     }
