@@ -22,6 +22,24 @@
 
 import { useAuth } from '@/lib/AuthContext';
 
+// ID da ConsultingFirm "Oficinas Master" — usado como fallback de detecção de
+// interno para contas legadas cujo user_type ainda não foi populado.
+export const OM_CONSULTING_FIRM_ID = '69bab264d7c3fe5d367c3959';
+
+// FONTE Única de "isInternal" no app (consolidado 2026-07-21).
+// Antes existiam 3 implementações divergentes: PermissionsContext tinha um
+// fallback (user_type == null && consulting_firm_id === OM_ID) replicado em
+// 4 lugares, mas seu próprio isInternal() exportado NÃO tinha o fallback;
+// useUserType() também não tinha. Um usuário interno legado (sem user_type
+// setado) podia passar em hasPermission/canAccessPage mas falhar em
+// isInternal() ou no useUserType() — mesma classe do bug do workshop_id.
+// Toda checagem de "isInternal" no frontend deve usar esta função.
+export function isInternalUser(user) {
+  if (!user) return false;
+  return user.user_type === 'internal' ||
+    (user.user_type == null && user.consulting_firm_id === OM_CONSULTING_FIRM_ID);
+}
+
 // Job roles que pertencem à equipe interna da Oficinas Master
 const INTERNAL_JOB_ROLES = ['acelerador', 'consultor', 'mentor', 'socio_interno'];
 
