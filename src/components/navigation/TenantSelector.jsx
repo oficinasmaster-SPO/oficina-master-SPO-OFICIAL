@@ -28,7 +28,9 @@ export default function TenantSelector({ isMobileSidebar = false }) {
   // oficinas via Workshop.list(), e clicar numa sem membership causava 403
   // no resolveTenant → fallback silencioso para a matriz (default).
   const companiesToDisplay = useMemo(() => {
-    const list = workshopsDisponiveis || [];
+    // Fase C: esconder oficinas inativas/encerradas do seletor — evita
+    // trocar para um tenant que não deveria mais aparecer no dia a dia.
+    const list = (workshopsDisponiveis || []).filter(w => !w.status || w.status === 'ativo');
     // Admin pode filtrar por consultoria, mas só entre oficinas com membership
     if (user?.role === 'admin' && selectedFirmId && selectedFirmId !== 'none') {
       return list.filter(w => w.consulting_firm_id === selectedFirmId);
@@ -164,7 +166,7 @@ export default function TenantSelector({ isMobileSidebar = false }) {
             <span className="flex items-center gap-2 truncate">
               <Briefcase className="w-4 h-4 shrink-0 text-gray-500" />
               <span className="truncate">
-                {selectedCompany ? selectedCompany.name : "Todas Oficinas"}
+                {selectedCompany ? selectedCompany.name : "Minha oficina (matriz)"}
               </span>
             </span>
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -192,7 +194,7 @@ export default function TenantSelector({ isMobileSidebar = false }) {
               }}
               className="flex w-full items-center justify-center rounded-sm bg-slate-100/80 px-2 py-1.5 text-sm font-medium text-slate-700 cursor-pointer hover:bg-slate-200 transition-colors"
             >
-              Todas Oficinas
+              Minha oficina (matriz)
             </div>
           </div>
 
