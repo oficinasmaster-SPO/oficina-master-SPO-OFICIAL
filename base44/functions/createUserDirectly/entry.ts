@@ -76,8 +76,10 @@ Deno.serve(async (req) => {
 
     // Fase D: workshop_id apontando para a "oficina" placeholder da equipe
     // interna (Oficinas Master Acelerador) também conta como criação interna,
-    // mesmo que o chamador tenha passado um workshop_id explicitamente.
-    const isInternalUser = (!workshop_id || workshop_id === OFICINAS_MASTER_WORKSHOP_ID) && !!bodyConsultingFirmId;
+    // mesmo que o chamador não tenha enviado consulting_firm_id explicitamente
+    // (ex.: formulário "Colaborador de Oficina" usado por engano dentro dela).
+    const targetsOficinasMaster = workshop_id === OFICINAS_MASTER_WORKSHOP_ID;
+    const isInternalUser = (!workshop_id && !!bodyConsultingFirmId) || targetsOficinasMaster;
     if (!workshop_id && !bodyConsultingFirmId) {
       return Response.json({ success: false, error: { code: 'MISSING_FIELDS', message: 'Informe workshop_id (externo) ou consulting_firm_id (interno)' } }, { status: 400 });
     }
