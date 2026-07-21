@@ -27,7 +27,30 @@ export default function PrimeiroAcesso() {
         token = sessionStorage.getItem('invite_token_pending');
       }
 
+      // ✅ FALLBACK: Sem token na URL nem no sessionStorage — tentar resolver
+      // o convite pendente pelo usuário autenticado. Isso recupera o fluxo
+      // quando o usuário chega em /PrimeiroAcesso sem o token (ex: signup
+      // direto sem clicar no link, redirect do OnboardingGate que perdeu o
+      // query param, ou sessão em aba diferente do sessionStorage).
       if (!token) {
+        const isAuthenticated = await base44.auth.isAuthenticated();
+        if (isAuthenticated) {
+          try {
+            const resolveResponse = await base44.functions.invoke('resolvePendingInviteForCurrentUser', {});
+            const result = resolveResponse.data || resolveResponse;
+            if (result.success && result.has_invite && result.invite_token) {
+              // Redirecionar para a mesma página COM o token para reiniciar o fluxo
+              const profileId = result.invite_token ? (urlParams.get('profile_id') || '') : '';
+              const redirectUrl = `/PrimeiroAcesso?token=${result.invite_token}${profileId ? `&profile_id=${profileId}` : ''}`;
+              sessionStorage.setItem('invite_token_pending', result.invite_token);
+              window.location.href = redirectUrl;
+              return;
+            }
+          } catch (resolveErr) {
+            console.warn("⚠️ Não foi possível resolver convite pendente:", resolveErr);
+          }
+        }
+
         setError("Link de convite inválido. Token não encontrado.");
         setStep("error");
         return;

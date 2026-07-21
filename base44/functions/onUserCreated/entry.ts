@@ -56,7 +56,9 @@ Deno.serve(async (req) => {
         user_status: 'pending',
         is_internal: false,
         admin_responsavel_id: invite.admin_responsavel_id,
-        profile_picture_url: null
+        profile_picture_url: null,
+        // Marcar que o usuário tem convite pendente — facilita diagnóstico
+        signup_type: 'invite_pending'
       });
 
       console.log(`[onUserCreated] Dados complementares inseridos com sucesso para ${createdUser.email}`);
