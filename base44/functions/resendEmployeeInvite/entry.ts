@@ -1,5 +1,8 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
+// Ver nota em sendEmployeeInvite/entry.ts — mesmo workshop placeholder da equipe interna.
+const OFICINAS_MASTER_WORKSHOP_ID = '695408b3ed74bfeb60d708c0';
+
 Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
   
@@ -77,7 +80,7 @@ Deno.serve(async (req) => {
         job_role: employee.job_role,
         profile_id: employee.profile_id,
         invite_token: inviteToken,
-        invite_type: 'workshop',
+        invite_type: employee.workshop_id === OFICINAS_MASTER_WORKSHOP_ID ? 'internal' : 'workshop',
         expires_at: expiresAt.toISOString(),
         status: "enviado",
         metadata: {
