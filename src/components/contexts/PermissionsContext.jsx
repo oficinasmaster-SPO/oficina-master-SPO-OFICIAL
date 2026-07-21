@@ -6,6 +6,7 @@ import { useTenant } from "@/components/contexts/TenantSessionContext";
 import { useAuth } from "@/lib/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { useImpersonation } from "@/components/hooks/useImpersonation";
+import { isInternalUser } from "@/components/hooks/useUserType";
 
 const PermissionsContext = createContext(null);
 
@@ -56,9 +57,7 @@ export function PermissionsProvider({ children }) {
         try { granularConfig = JSON.parse(settings[0].value || '{}'); } catch (_) {}
       }
 
-      const isInternalUser = user.user_type === 'internal' ||
-        (user.user_type == null && (user.consulting_firm_id === '69bab264d7c3fe5d367c3959' || user.role === 'admin'));
-      if ((user.role === 'admin' || isInternalUser) && !isImpersonated) {
+      if ((user.role === 'admin' || isInternalUser(user)) && !isImpersonated) {
         return {
           permissions: [...new Set(systemRoles.flatMap(module => module.roles.map(role => role.id)))],
           profile: null,
@@ -120,9 +119,7 @@ export function PermissionsProvider({ children }) {
     if (!user) return false;
     // Em impersonação, NÃO usar permissões de admin — usar permissões do usuário alvo
     const isImpersonated = user._isImpersonated === true;
-    const isInternalCheck = user.user_type === 'internal' ||
-      (user.user_type == null && user.consulting_firm_id === '69bab264d7c3fe5d367c3959');
-    if ((user.role === 'admin' || isInternalCheck) && !isImpersonated) return true;
+    if ((user.role === 'admin' || isInternalUser(user)) && !isImpersonated) return true;
     return permissions.includes(permissionId);
   };
 
@@ -185,9 +182,7 @@ export function PermissionsProvider({ children }) {
     try {
       if (!user) return false;
       const isImpersonated = user._isImpersonated === true;
-      const isInternalCheck = user.user_type === 'internal' ||
-        (user.user_type == null && user.consulting_firm_id === '69bab264d7c3fe5d367c3959');
-      if ((user.role === 'admin' || isInternalCheck) && !isImpersonated) return true;
+      if ((user.role === 'admin' || isInternalUser(user)) && !isImpersonated) return true;
 
       // Sócio/proprietário tem acesso total a todas as páginas não-admin
       if (isOwnerOrPartner && !isImpersonated) {
@@ -219,9 +214,7 @@ export function PermissionsProvider({ children }) {
   const canPerform = (action) => {
     if (!user) return false;
     const isImpersonated = user._isImpersonated === true;
-    const isInternalCheck = user.user_type === 'internal' ||
-      (user.user_type == null && user.consulting_firm_id === '69bab264d7c3fe5d367c3959');
-    if ((user.role === 'admin' || isInternalCheck) && !isImpersonated) return true;
+    if ((user.role === 'admin' || isInternalUser(user)) && !isImpersonated) return true;
 
     // IDs mapeados para as roles reais de systemRoles.jsx
     // WARN-01 corrigido: mapeamento anterior usava strings inexistentes
@@ -241,12 +234,14 @@ export function PermissionsProvider({ children }) {
     return requiredPerms.some(perm => permissions.includes(perm));
   };
 
-  // Fonte canônica: user_type. Campos legados (is_internal, tipo_vinculo) mantidos
-  // apenas para retrocompatibilidade — não usar em lógica nova.
+  // Fonte canônica: isInternalUser() (@/components/hooks/useUserType), com
+  // fallback para contas legadas sem user_type. Consolidado 2026-07-21 —
+  // antes esta função não tinha o fallback usado em hasPermission/canAccessPage,
+  // divergindo do resultado real de acesso.
   const isInternal = () => {
-    const isImpersonated = user._isImpersonated === true;
+    const isImpersonated = user?._isImpersonated === true;
     // Em impersonação, usar user_type do usuário alvo
-    return user?.user_type === 'internal' && !isImpersonated;
+    return isInternalUser(user) && !isImpersonated;
   };
 
   const value = useMemo(() => ({
