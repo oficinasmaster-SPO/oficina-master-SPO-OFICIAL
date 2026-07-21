@@ -2,10 +2,9 @@ import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
-import { Bell, LogOut, Menu, X, LogIn, AlertCircle, LogOutIcon, ChevronDown, Check } from "lucide-react";
+import { Bell, LogOut, Menu, X, LogIn, AlertCircle, LogOutIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useQuery } from "@tanstack/react-query";
 import Sidebar from "@/components/navigation/Sidebar";
 import Breadcrumbs from "@/components/navigation/Breadcrumbs";
@@ -36,7 +35,7 @@ export default function Layout({ children, currentPageName }) {
   const { user, isAuthenticated, isLoadingAuth: isCheckingAuth } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { isAdminMode, getAdminUrl } = useAdminMode();
-  const { workshop, workshopId, workshopsDisponiveis, setCurrentWorkshop, isLoading: isLoadingWorkshop } = useWorkshopContext();
+  const { workshop, workshopId, isLoading: isLoadingWorkshop } = useWorkshopContext();
   const impersonationData = getImpersonationData(user?.email);
   const [cssVersion] = useState(Date.now()); // Timestamp fixo por sessão para evitar re-requests
 
