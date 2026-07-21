@@ -139,22 +139,17 @@ export default function Layout({ children, currentPageName }) {
     return loc === p || loc.startsWith(p + '/');
   });
 
-  // Verificar se onboarding pendente considerando o workshop REAL (não só o ID do perfil)
+  // resolveTenant (via useWorkshopContext) é a ÚNICA fonte de verdade para
+  // resolução de workshop. O campo legado `workshop_id` no User NÃO é mais
+  // inspecionado — usuários cujo vínculo vem de TenantMembership mas que
+  // nunca tiveram o campo legado populado não devem ser bloqueados.
   const hasValidWorkshop = !!workshop && !workshop._partial;
-  const userHasWorkshopId = !!(displayUser?.workshop_id || displayUser?.data?.workshop_id);
 
-  // FIX (reclamação de cliente — motomaiscasadepecas@gmail.com): esta checagem
-  // usava apenas o campo legado `workshop_id` do User para decidir se o
-  // onboarding está pendente. Usuários cujo vínculo é resolvido via
-  // TenantMembership (tenant_workshop_id/resolveTenant) mas que nunca tiveram
-  // o campo legado populado ficavam com sidebar/header escondidos mesmo com
-  // workshop válido e ativo. Usa-se agora `hasValidWorkshop` (fonte canônica,
-  // resolvida via resolveTenant) OR o campo legado, para cobrir os dois casos.
   const isPendingOnboarding = displayUser?.role !== 'admin' && (
   displayUser?.cadastro_em_andamento === true ||
   displayUser?.first_access_completed === false ||
   displayUser?.profile_completed === false ||
-  !hasValidWorkshop && !userHasWorkshopId && !isLoadingWorkshop);
+  !hasValidWorkshop && !isLoadingWorkshop);
 
 
   const shouldShowMenus = isAuthenticated && !isPublicPage && !isPendingOnboarding && (hasValidWorkshop || isAdminMode || displayUser?.role === 'admin');
@@ -337,8 +332,8 @@ export default function Layout({ children, currentPageName }) {
                     {showLoading ? <WheelLoader size="lg" text="Carregando dados..." /> : null}
                   </div> :
 
-              // FIX-02: Mostrar "Nenhuma oficina" apenas se: (a) não carregando, (b) sem workshop, E (c) sem ID no perfil
-              isAuthenticated && !isPublicPage && !isPendingOnboarding && !workshopId && !userHasWorkshopId && !isGlobalAdminPage && !isPageWithoutWorkshopRequired ?
+              // resolveTenant é a fonte canônica: se !workshopId após loading, não há workshop.
+              isAuthenticated && !isPublicPage && !isPendingOnboarding && !workshopId && !isGlobalAdminPage && !isPageWithoutWorkshopRequired ?
               <div className="min-h-[60vh] flex flex-col items-center justify-center text-center p-6">
                       <AlertCircle className="w-12 h-12 text-amber-500 mb-4" />
                       <h2 className="text-xl font-bold text-gray-900">Nenhuma oficina vinculada</h2>
