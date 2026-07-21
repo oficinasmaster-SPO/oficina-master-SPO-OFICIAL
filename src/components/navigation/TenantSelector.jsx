@@ -49,8 +49,9 @@ export default function TenantSelector({ isMobileSidebar = false }) {
     `${c.name} ${c.city || ''} ${c.state || ''}`.toLowerCase().includes(companySearchTerm.toLowerCase())
   ) || [];
 
-  // Não mostrar para usuários não-admin com 0 ou 1 workshop
-  if (user?.role !== 'admin' && (!workshopsDisponiveis || workshopsDisponiveis.length <= 1)) {
+  // Não mostrar para usuários não-admin e não-internal com 0 ou 1 workshop
+  const isInternal = user?.is_internal === true || user?.user_type === "internal" || user?.data?.user_type === "internal";
+  if (user?.role !== 'admin' && !isInternal && (!workshopsDisponiveis || workshopsDisponiveis.length <= 1)) {
     return null;
   }
   

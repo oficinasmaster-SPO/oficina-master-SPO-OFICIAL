@@ -9,7 +9,8 @@
  */
 export function getConsultorEfetivo(filtros, user) {
   if (filtros.consultorId && filtros.consultorId !== "todos") return filtros.consultorId;
-  if (user?.role !== "admin") return user?.id || null;
+  const isInternal = user?.is_internal === true || user?.user_type === "internal" || user?.data?.user_type === "internal";
+  if (user?.role !== "admin" && !isInternal) return user?.id || null;
   return null;
 }
 
