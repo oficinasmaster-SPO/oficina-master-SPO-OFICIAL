@@ -143,11 +143,18 @@ export default function Layout({ children, currentPageName }) {
   const hasValidWorkshop = !!workshop && !workshop._partial;
   const userHasWorkshopId = !!(displayUser?.workshop_id || displayUser?.data?.workshop_id);
 
+  // FIX (reclamação de cliente — motomaiscasadepecas@gmail.com): esta checagem
+  // usava apenas o campo legado `workshop_id` do User para decidir se o
+  // onboarding está pendente. Usuários cujo vínculo é resolvido via
+  // TenantMembership (tenant_workshop_id/resolveTenant) mas que nunca tiveram
+  // o campo legado populado ficavam com sidebar/header escondidos mesmo com
+  // workshop válido e ativo. Usa-se agora `hasValidWorkshop` (fonte canônica,
+  // resolvida via resolveTenant) OR o campo legado, para cobrir os dois casos.
   const isPendingOnboarding = displayUser?.role !== 'admin' && (
   displayUser?.cadastro_em_andamento === true ||
   displayUser?.first_access_completed === false ||
   displayUser?.profile_completed === false ||
-  !userHasWorkshopId && !isLoadingWorkshop);
+  !hasValidWorkshop && !userHasWorkshopId && !isLoadingWorkshop);
 
 
   const shouldShowMenus = isAuthenticated && !isPublicPage && !isPendingOnboarding && (hasValidWorkshop || isAdminMode || displayUser?.role === 'admin');
