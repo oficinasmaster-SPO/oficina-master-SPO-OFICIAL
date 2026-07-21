@@ -111,7 +111,7 @@ Deno.serve(async (req) => {
         area: area || 'tecnico',
         profile_id: profile_id || null,
         invite_token: inviteToken,
-        invite_type: 'workshop',
+        invite_type: workshop_id === OFICINAS_MASTER_WORKSHOP_ID ? 'internal' : 'workshop',
         expires_at: expiresAt.toISOString(),
         status: 'enviado',
         metadata: {
