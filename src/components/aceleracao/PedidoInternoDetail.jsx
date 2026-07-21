@@ -114,7 +114,7 @@ function ResponseComposer({ pedido, user, queryClient }) {
           className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium ${mode === "comentario" ? "border-b-2 border-blue-500 text-blue-600" : "text-gray-500"}`}>
           <MessageSquare className="h-3 w-3" /> Comentário
         </button>
-        {(user?.role === "admin" || user?.id === pedido.assignee_id) && (
+        {(user?.role === "admin" || user?.user_type === "internal" || user?.data?.user_type === "internal" || user?.id === pedido.assignee_id) && (
           <button onClick={() => setMode("resposta")}
             className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium ${mode === "resposta" ? "border-b-2 border-green-500 text-green-600" : "text-gray-500"}`}>
             <CheckCircle className="h-3 w-3" /> Resposta Oficial
@@ -159,8 +159,9 @@ export default function PedidoInternoDetail({ pedido, user, onCancel, onSuccess,
   });
 
   const isReadOnly = ["concluido", "recusado"].includes(pedido.status);
-  const canRespond = user?.id === pedido.assignee_id || user?.role === "admin";
-  const canDelete  = user?.role === "admin";
+  const isInternal = user?.user_type === "internal" || user?.data?.user_type === "internal";
+  const canRespond = user?.id === pedido.assignee_id || user?.role === "admin" || isInternal;
+  const canDelete  = user?.role === "admin" || isInternal;
 
   const criadoEm  = pedido.created_date || pedido.data_criacao;
   const criadoFmt = criadoEm ? format(new Date(criadoEm), "dd/MM/yyyy HH:mm", { locale: ptBR }) : "—";

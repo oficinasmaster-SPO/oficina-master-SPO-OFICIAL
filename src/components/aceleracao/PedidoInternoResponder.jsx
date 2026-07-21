@@ -25,7 +25,8 @@ export default function PedidoInternoResponder({ pedido, user, onCancel, onSucce
   const isReadOnly = pedido.status === 'concluido' || pedido.status === 'recusado';
 
   // H7: Apenas o responsável atribuído ou admin podem responder/aprovar/recusar
-  const canRespond = user?.id === pedido.assignee_id || user?.role === 'admin';
+  const isInternal = user?.user_type === 'internal' || user?.data?.user_type === 'internal';
+  const canRespond = user?.id === pedido.assignee_id || user?.role === 'admin' || isInternal;
 
   const saveMutation = useMutation({
     mutationFn: async (novoStatus) => {

@@ -166,7 +166,7 @@ function ResponseComposer({ pedido, user, onSaved }) {
         >
           <MessageSquare className="h-3 w-3" /> Comentário
         </button>
-        {(user?.role === "admin" || user?.id === pedido.assignee_id) && (
+        {(user?.role === "admin" || user?.user_type === "internal" || user?.data?.user_type === "internal" || user?.id === pedido.assignee_id) && (
           <button
             onClick={() => setMode("resposta")}
             className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-colors
@@ -392,8 +392,9 @@ export default function PedidoInternoDrawer({
   }, [onClose, onNavigate]);
 
   const isReadOnly  = ["concluido", "recusado"].includes(pedido.status);
-  const canRespond  = user?.id === pedido.assignee_id || user?.role === "admin";
-  const canDelete   = user?.role === "admin";
+  const isInternal  = user?.user_type === "internal" || user?.data?.user_type === "internal";
+  const canRespond  = user?.id === pedido.assignee_id || user?.role === "admin" || isInternal;
+  const canDelete   = user?.role === "admin" || isInternal;
   const canEdit     = canRespond;
 
   const criadoEm   = pedido.created_date || pedido.data_criacao;
