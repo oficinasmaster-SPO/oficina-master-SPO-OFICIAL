@@ -4,24 +4,24 @@
   "properties": {
     "mission_id": {
       "type": "string",
-      "description": "ID da miss\u00e3o"
+      "description": "ID da missão"
     },
     "mission_icon": {
       "type": "string",
-      "description": "Emoji da miss\u00e3o (c\u00f3pia para performance)"
+      "description": "Emoji da missão (cópia para performance)"
     },
     "mission_name": {
       "type": "string",
-      "description": "Nome da miss\u00e3o (c\u00f3pia para performance)"
+      "description": "Nome da missão (cópia para performance)"
     },
     "sprint_number": {
       "type": "integer",
       "default": 1,
-      "description": "N\u00famero do sprint"
+      "description": "Número do sprint"
     },
     "title": {
       "type": "string",
-      "description": "T\u00edtulo do sprint"
+      "description": "Título do sprint"
     },
     "objective": {
       "type": "string",
@@ -64,7 +64,7 @@
           }
         }
       },
-      "description": "Fases padr\u00e3o com tarefas"
+      "description": "Fases padrão com tarefas"
     },
     "is_template": {
       "type": "boolean",
@@ -78,20 +78,68 @@
   ],
   "rls": {
     "create": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     },
     "read": true,
     "update": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     }
   }
 }

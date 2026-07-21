@@ -8,7 +8,7 @@
     },
     "workshop_id": {
       "type": "string",
-      "description": "ID da oficina destinat\u00e1ria"
+      "description": "ID da oficina destinatária"
     },
     "workshop_name": {
       "type": "string",
@@ -36,7 +36,7 @@
     },
     "recipient": {
       "type": "string",
-      "description": "E-mail ou n\u00famero de telefone do destinat\u00e1rio"
+      "description": "E-mail ou número de telefone do destinatário"
     },
     "sent_at": {
       "type": "string",
@@ -125,9 +125,25 @@
       ]
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     }
   }
 }

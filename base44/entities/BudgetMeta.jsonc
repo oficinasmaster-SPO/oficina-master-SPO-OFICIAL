@@ -8,15 +8,15 @@
     },
     "mes": {
       "type": "string",
-      "description": "M\u00eas de refer\u00eancia (YYYY-MM)"
+      "description": "Mês de referência (YYYY-MM)"
     },
     "faturamento_meta_rs": {
       "type": "number",
-      "description": "Meta total / base de c\u00e1lculo em R$ (usado para calcular meta percentual)"
+      "description": "Meta total / base de cálculo em R$ (usado para calcular meta percentual)"
     },
     "item": {
       "type": "string",
-      "description": "Nome do item da meta (deve corresponder \u00e0 descricao do DRELancamento)"
+      "description": "Nome do item da meta (deve corresponder à descricao do DRELancamento)"
     },
     "categoria": {
       "type": "string",
@@ -27,7 +27,7 @@
         "string",
         "null"
       ],
-      "description": "ID do grupo hier\u00e1rquico (BudgetGroup) ao qual este item pertence"
+      "description": "ID do grupo hierárquico (BudgetGroup) ao qual este item pertence"
     },
     "tipo": {
       "type": "string",
@@ -35,7 +35,7 @@
         "receita",
         "despesa"
       ],
-      "description": "Se \u00e9 meta de receita ou despesa"
+      "description": "Se é meta de receita ou despesa"
     },
     "periodicidade": {
       "type": "string",
@@ -44,7 +44,7 @@
         "anual"
       ],
       "default": "mensal",
-      "description": "Se a meta \u00e9 mensal ou anual"
+      "description": "Se a meta é mensal ou anual"
     },
     "meta_anual_rs": {
       "type": "number",
@@ -52,7 +52,7 @@
     },
     "meta_acumulada_mes": {
       "type": "number",
-      "description": "Meta acumulada at\u00e9 este m\u00eas (calculado: meta_anual / 12 * n\u00famero do m\u00eas)"
+      "description": "Meta acumulada até este mês (calculado: meta_anual / 12 * número do mês)"
     },
     "meta_percentual": {
       "type": "number",
@@ -64,12 +64,21 @@
     },
     "peso_sazonal": {
       "type": "number",
-      "description": "Peso sazonal do m\u00eas (0.00-1.00). Ex: 0.08 = 8% do anual. Soma dos 12 meses deve ser 1.00"
+      "description": "Peso sazonal do mês (0.00-1.00). Ex: 0.08 = 8% do anual. Soma dos 12 meses deve ser 1.00"
     },
     "sazonalidade_config": {
       "type": "object",
-      "description": "Configura\u00e7\u00e3o completa de sazonalidade anual (todos os 12 meses)",
+      "description": "Configuração completa de sazonalidade anual (todos os 12 meses)",
       "properties": {
+        "10": {
+          "type": "number"
+        },
+        "11": {
+          "type": "number"
+        },
+        "12": {
+          "type": "number"
+        },
         "01": {
           "type": "number"
         },
@@ -96,30 +105,21 @@
         },
         "09": {
           "type": "number"
-        },
-        "10": {
-          "type": "number"
-        },
-        "11": {
-          "type": "number"
-        },
-        "12": {
-          "type": "number"
         }
       }
     },
     "responsavel_nome": {
       "type": "string",
-      "description": "Nome do respons\u00e1vel"
+      "description": "Nome do responsável"
     },
     "notas": {
       "type": "string",
-      "description": "Anota\u00e7\u00f5es sobre a meta"
+      "description": "Anotações sobre a meta"
     },
     "controlar_orcamento": {
       "type": "boolean",
       "default": true,
-      "description": "Se false, a linha existe no DRE mas N\u00c3O entra no or\u00e7amento controlado (totais, an\u00e1lises e alertas)"
+      "description": "Se false, a linha existe no DRE mas NÃO entra no orçamento controlado (totais, análises e alertas)"
     }
   },
   "required": [
@@ -172,6 +172,18 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -190,6 +202,18 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -207,6 +231,18 @@
         {
           "user_condition": {
             "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
           }
         }
       ]

@@ -125,6 +125,18 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -137,6 +149,18 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -148,6 +172,18 @@
         {
           "user_condition": {
             "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
           }
         }
       ]

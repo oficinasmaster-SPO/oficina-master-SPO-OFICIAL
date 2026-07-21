@@ -16,7 +16,7 @@
     },
     "description": {
       "type": "string",
-      "description": "Descri\u00e7\u00e3o detalhada do ritual"
+      "description": "Descrição detalhada do ritual"
     },
     "pillar": {
       "type": "string",
@@ -49,42 +49,42 @@
         "trimestral",
         "eventual"
       ],
-      "description": "Frequ\u00eancia de execu\u00e7\u00e3o do ritual"
+      "description": "Frequência de execução do ritual"
     },
     "responsible_role": {
       "type": "string",
-      "description": "Papel ou \u00e1rea respons\u00e1vel pelo ritual"
+      "description": "Papel ou área responsável pelo ritual"
     },
     "responsible_user_id": {
       "type": "string",
-      "description": "ID do usu\u00e1rio respons\u00e1vel principal pelo ritual"
+      "description": "ID do usuário responsável principal pelo ritual"
     },
     "implementation_steps": {
       "type": "array",
       "items": {
         "type": "string"
       },
-      "description": "Passos pr\u00e1ticos para execu\u00e7\u00e3o"
+      "description": "Passos práticos para execução"
     },
     "active": {
       "type": "boolean",
       "default": true,
-      "description": "Se o ritual est\u00e1 ativo"
+      "description": "Se o ritual está ativo"
     },
     "order": {
       "type": "integer",
       "default": 0,
-      "description": "Ordem de exibi\u00e7\u00e3o"
+      "description": "Ordem de exibição"
     },
     "auto_schedule_enabled": {
       "type": "boolean",
       "default": false,
-      "description": "Se agendamento autom\u00e1tico est\u00e1 ativo"
+      "description": "Se agendamento automático está ativo"
     },
     "auto_schedule_time": {
       "type": "string",
       "default": "09:00",
-      "description": "Hor\u00e1rio padr\u00e3o para agendamentos autom\u00e1ticos"
+      "description": "Horário padrão para agendamentos automáticos"
     },
     "auto_schedule_day": {
       "type": "string",
@@ -124,6 +124,18 @@
           "user_condition": {
             "role": "user"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -136,6 +148,18 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -147,6 +171,18 @@
         {
           "user_condition": {
             "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
           }
         }
       ]

@@ -29,7 +29,7 @@
     "total_challenges_completed": {
       "type": "integer",
       "default": 0,
-      "description": "Total de desafios conclu\u00eddos pela equipe"
+      "description": "Total de desafios concluídos pela equipe"
     },
     "current_streak_weeks": {
       "type": "integer",
@@ -105,6 +105,18 @@
           "user_condition": {
             "role": "user"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -116,6 +128,18 @@
         {
           "user_condition": {
             "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
           }
         }
       ]

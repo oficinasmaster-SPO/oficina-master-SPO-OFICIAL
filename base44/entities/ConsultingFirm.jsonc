@@ -8,7 +8,7 @@
     },
     "razao_social": {
       "type": "string",
-      "description": "Raz\u00e3o social"
+      "description": "Razão social"
     },
     "cnpj": {
       "type": "string",
@@ -29,7 +29,7 @@
     },
     "owner_id": {
       "type": "string",
-      "description": "ID do usu\u00e1rio propriet\u00e1rio/admin principal da consultoria"
+      "description": "ID do usuário proprietário/admin principal da consultoria"
     },
     "consultant_ids": {
       "type": "array",
@@ -50,7 +50,7 @@
     },
     "max_workshops": {
       "type": "integer",
-      "description": "M\u00e1ximo de workshops gerenciados"
+      "description": "Máximo de workshops gerenciados"
     },
     "status": {
       "type": "string",
@@ -67,7 +67,7 @@
       "items": {
         "type": "string"
       },
-      "description": "Dom\u00ednios de email permitidos para cadastro interno (ex: oficinasmaster.com.br)"
+      "description": "Domínios de email permitidos para cadastro interno (ex: oficinasmaster.com.br)"
     },
     "brand_colors": {
       "type": "object",
@@ -79,11 +79,11 @@
           "type": "string"
         }
       },
-      "description": "Cores da marca para personaliza\u00e7\u00e3o"
+      "description": "Cores da marca para personalização"
     },
     "settings": {
       "type": "object",
-      "description": "Configura\u00e7\u00f5es gerais da consultoria (JSON livre)"
+      "description": "Configurações gerais da consultoria (JSON livre)"
     }
   },
   "required": [
@@ -110,9 +110,25 @@
       ]
     },
     "create": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     },
     "update": {
       "$or": [
@@ -123,13 +139,41 @@
         },
         {
           "owner_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     }
   }
 }

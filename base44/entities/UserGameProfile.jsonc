@@ -4,7 +4,7 @@
   "properties": {
     "user_id": {
       "type": "string",
-      "description": "ID do usu\u00e1rio"
+      "description": "ID do usuário"
     },
     "workshop_id": {
       "type": "string",
@@ -13,12 +13,12 @@
     "xp": {
       "type": "integer",
       "default": 0,
-      "description": "Pontos de experi\u00eancia"
+      "description": "Pontos de experiência"
     },
     "level": {
       "type": "integer",
       "default": 1,
-      "description": "N\u00edvel atual (1-6)"
+      "description": "Nível atual (1-6)"
     },
     "level_name": {
       "type": "string",
@@ -57,7 +57,7 @@
     "total_actions": {
       "type": "integer",
       "default": 0,
-      "description": "Total de a\u00e7\u00f5es realizadas"
+      "description": "Total de ações realizadas"
     },
     "platform_usage_hours": {
       "type": "number",
@@ -98,6 +98,18 @@
           "user_condition": {
             "role": "user"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -109,6 +121,18 @@
         {
           "user_condition": {
             "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
           }
         }
       ]

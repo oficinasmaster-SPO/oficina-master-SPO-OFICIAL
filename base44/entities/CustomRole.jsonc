@@ -4,7 +4,7 @@
   "properties": {
     "workshop_id": {
       "type": "string",
-      "description": "ID da oficina (Rela\u00e7\u00e3o 1-N: Workshop \u2192 CustomRole)"
+      "description": "ID da oficina (Relação 1-N: Workshop → CustomRole)"
     },
     "name": {
       "type": "string",
@@ -12,18 +12,18 @@
     },
     "description": {
       "type": "string",
-      "description": "Descri\u00e7\u00e3o da role e suas responsabilidades"
+      "description": "Descrição da role e suas responsabilidades"
     },
     "system_roles": {
       "type": "array",
       "items": {
         "type": "string"
       },
-      "description": "IDs das system roles atribu\u00eddas (ex: dashboard.view, employees.edit) (Rela\u00e7\u00e3o 1-N: CustomRole \u2192 SystemRole)"
+      "description": "IDs das system roles atribuídas (ex: dashboard.view, employees.edit) (Relação 1-N: CustomRole → SystemRole)"
     },
     "entity_permissions": {
       "type": "object",
-      "description": "Permiss\u00f5es granulares CRUD por entidade (ex: {employees: [create, read, update], clients: [read]})",
+      "description": "Permissões granulares CRUD por entidade (ex: {employees: [create, read, update], clients: [read]})",
       "additionalProperties": {
         "type": "array",
         "items": {
@@ -40,7 +40,7 @@
     "users_count": {
       "type": "integer",
       "default": 0,
-      "description": "Quantidade de usu\u00e1rios/perfis que usam esta role (Rela\u00e7\u00e3o 1-N: CustomRole \u2192 UserProfile)"
+      "description": "Quantidade de usuários/perfis que usam esta role (Relação 1-N: CustomRole → UserProfile)"
     },
     "status": {
       "type": "string",
@@ -53,12 +53,12 @@
     },
     "created_by": {
       "type": "string",
-      "description": "Email do administrador que criou (Rela\u00e7\u00e3o 1-N: User \u2192 CustomRole)"
+      "description": "Email do administrador que criou (Relação 1-N: User → CustomRole)"
     },
     "created_at": {
       "type": "string",
       "format": "date-time",
-      "description": "Data de cria\u00e7\u00e3o"
+      "description": "Data de criação"
     },
     "audit_log": {
       "type": "array",
@@ -67,11 +67,11 @@
         "properties": {
           "changed_by": {
             "type": "string",
-            "description": "ID do usu\u00e1rio que fez a altera\u00e7\u00e3o"
+            "description": "ID do usuário que fez a alteração"
           },
           "changed_by_email": {
             "type": "string",
-            "description": "Email do usu\u00e1rio que fez a altera\u00e7\u00e3o"
+            "description": "Email do usuário que fez a alteração"
           },
           "changed_at": {
             "type": "string",
@@ -79,7 +79,7 @@
           },
           "action": {
             "type": "string",
-            "description": "Tipo de a\u00e7\u00e3o"
+            "description": "Tipo de ação"
           },
           "field_changed": {
             "type": "string"
@@ -92,11 +92,11 @@
           },
           "affected_users_count": {
             "type": "integer",
-            "description": "Quantidade de usu\u00e1rios afetados pela altera\u00e7\u00e3o"
+            "description": "Quantidade de usuários afetados pela alteração"
           }
         }
       },
-      "description": "Log de auditoria (Rela\u00e7\u00e3o 1-N: CustomRole \u2192 AuditLog)"
+      "description": "Log de auditoria (Relação 1-N: CustomRole → AuditLog)"
     }
   },
   "required": [
@@ -105,9 +105,25 @@
   ],
   "rls": {
     "create": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     },
     "read": {
       "$or": [
@@ -138,14 +154,46 @@
       ]
     },
     "update": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     }
   }
 }

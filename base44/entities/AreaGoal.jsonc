@@ -15,11 +15,11 @@
         "marketing",
         "pessoas"
       ],
-      "description": "\u00c1rea da meta"
+      "description": "Área da meta"
     },
     "period": {
       "type": "string",
-      "description": "Per\u00edodo (YYYY-MM)"
+      "description": "Período (YYYY-MM)"
     },
     "goal_value": {
       "type": "number",
@@ -46,7 +46,7 @@
     },
     "metric_type": {
       "type": "string",
-      "description": "Tipo da m\u00e9trica (faturamento, conversao, etc)"
+      "description": "Tipo da métrica (faturamento, conversao, etc)"
     }
   },
   "required": [
@@ -72,6 +72,18 @@
           "user_condition": {
             "role": "user"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -83,6 +95,18 @@
         {
           "user_condition": {
             "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
           }
         }
       ]

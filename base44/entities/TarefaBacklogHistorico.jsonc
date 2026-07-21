@@ -8,11 +8,11 @@
     },
     "usuario_id": {
       "type": "string",
-      "description": "ID do usu\u00e1rio que realizou a a\u00e7\u00e3o"
+      "description": "ID do usuário que realizou a ação"
     },
     "usuario_nome": {
       "type": "string",
-      "description": "Nome do usu\u00e1rio (cache)"
+      "description": "Nome do usuário (cache)"
     },
     "acao": {
       "type": "string",
@@ -24,7 +24,7 @@
         "CONCLUSAO",
         "BLOQUEIO"
       ],
-      "description": "Tipo de a\u00e7\u00e3o registrada"
+      "description": "Tipo de ação registrada"
     },
     "campo": {
       "type": "string",
@@ -32,11 +32,11 @@
     },
     "valor_anterior": {
       "type": "string",
-      "description": "Valor antes da altera\u00e7\u00e3o"
+      "description": "Valor antes da alteração"
     },
     "valor_novo": {
       "type": "string",
-      "description": "Valor ap\u00f3s a altera\u00e7\u00e3o"
+      "description": "Valor após a alteração"
     },
     "data_hora": {
       "type": "string",
@@ -54,9 +54,25 @@
     "read": true,
     "update": false,
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     }
   }
 }

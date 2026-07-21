@@ -4,7 +4,7 @@
   "properties": {
     "module_id": {
       "type": "string",
-      "description": "ID do m\u00f3dulo pai"
+      "description": "ID do módulo pai"
     },
     "title": {
       "type": "string"
@@ -24,7 +24,7 @@
     },
     "content_url": {
       "type": "string",
-      "description": "URL do conte\u00fado"
+      "description": "URL do conteúdo"
     },
     "duration_minutes": {
       "type": "integer",
@@ -36,7 +36,7 @@
     },
     "transcript": {
       "type": "string",
-      "description": "Transcri\u00e7\u00e3o para IA"
+      "description": "Transcrição para IA"
     },
     "progression_rules": {
       "type": "object",
@@ -44,17 +44,17 @@
         "can_advance_if_failed": {
           "type": "boolean",
           "default": true,
-          "description": "Permite avan\u00e7ar mesmo reprovado na avalia\u00e7\u00e3o"
+          "description": "Permite avançar mesmo reprovado na avaliação"
         },
         "can_retake_assessment": {
           "type": "boolean",
           "default": true,
-          "description": "Permite refazer avalia\u00e7\u00e3o"
+          "description": "Permite refazer avaliação"
         },
         "can_skip_to_assessment": {
           "type": "boolean",
           "default": true,
-          "description": "Permite pular direto para avalia\u00e7\u00e3o"
+          "description": "Permite pular direto para avaliação"
         },
         "next_lesson_unlock": {
           "type": "string",
@@ -64,12 +64,12 @@
             "after_assessment_attempt"
           ],
           "default": "always",
-          "description": "Condi\u00e7\u00e3o para liberar pr\u00f3xima aula"
+          "description": "Condição para liberar próxima aula"
         },
         "require_assessment_pass": {
           "type": "boolean",
           "default": false,
-          "description": "Exige aprova\u00e7\u00e3o na avalia\u00e7\u00e3o para considerar completa"
+          "description": "Exige aprovação na avaliação para considerar completa"
         }
       },
       "default": {
@@ -96,6 +96,18 @@
         },
         {
           "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -109,6 +121,18 @@
         },
         {
           "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -121,6 +145,18 @@
         },
         {
           "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     }

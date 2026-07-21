@@ -23,13 +23,13 @@
         },
         "big_dream": {
           "type": "string",
-          "description": "Sonho grande pensando em voc\u00ea, colaboradores e clientes"
+          "description": "Sonho grande pensando em você, colaboradores e clientes"
         }
       }
     },
     "mission_statement": {
       "type": "string",
-      "description": "Declara\u00e7\u00e3o de miss\u00e3o gerada"
+      "description": "Declaração de missão gerada"
     },
     "vision_answers": {
       "type": "object",
@@ -53,7 +53,7 @@
     },
     "vision_statement": {
       "type": "string",
-      "description": "Declara\u00e7\u00e3o de vis\u00e3o gerada"
+      "description": "Declaração de visão gerada"
     },
     "values_answers": {
       "type": "object",
@@ -119,6 +119,18 @@
           "user_condition": {
             "role": "user"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -131,6 +143,18 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -142,6 +166,18 @@
         {
           "user_condition": {
             "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
           }
         }
       ]

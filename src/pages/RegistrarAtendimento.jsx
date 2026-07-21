@@ -602,7 +602,8 @@ export default function RegistrarAtendimento({ isModal = false, onClose, onSaved
     );
   }
 
-  if (user.role !== 'admin') {
+  const isInternal = user?.user_type === 'internal' || user?.data?.user_type === 'internal' || user?.is_internal === true;
+  if (user.role !== 'admin' && !isInternal) {
     return <div className="text-center py-12"><p className="text-gray-600">Acesso restrito a consultores</p></div>;
   }
 

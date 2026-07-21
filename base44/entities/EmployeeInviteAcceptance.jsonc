@@ -4,7 +4,7 @@
   "properties": {
     "user_id": {
       "type": "string",
-      "description": "ID do usu\u00e1rio criado"
+      "description": "ID do usuário criado"
     },
     "invite_id": {
       "type": "string",
@@ -21,11 +21,11 @@
     "email": {
       "type": "string",
       "format": "email",
-      "description": "Email do usu\u00e1rio"
+      "description": "Email do usuário"
     },
     "full_name": {
       "type": "string",
-      "description": "Nome completo do usu\u00e1rio"
+      "description": "Nome completo do usuário"
     },
     "processed": {
       "type": "boolean",
@@ -100,9 +100,25 @@
       ]
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     }
   }
 }

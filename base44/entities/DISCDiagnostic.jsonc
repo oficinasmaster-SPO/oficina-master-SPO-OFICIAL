@@ -16,7 +16,7 @@
     },
     "evaluator_id": {
       "type": "string",
-      "description": "ID do avaliador (opcional se autoavalia\u00e7\u00e3o)"
+      "description": "ID do avaliador (opcional se autoavaliação)"
     },
     "workshop_id": {
       "type": "string",
@@ -37,16 +37,16 @@
         "self"
       ],
       "default": "manager",
-      "description": "Tipo de avalia\u00e7\u00e3o: Gestor ou Autoavalia\u00e7\u00e3o"
+      "description": "Tipo de avaliação: Gestor ou Autoavaliação"
     },
     "is_leader": {
       "type": "boolean",
       "default": false,
-      "description": "Se \u00e9 um l\u00edder de equipe"
+      "description": "Se é um líder de equipe"
     },
     "team_name": {
       "type": "string",
-      "description": "Nome da equipe (para compara\u00e7\u00e3o)"
+      "description": "Nome da equipe (para comparação)"
     },
     "answers": {
       "type": "array",
@@ -105,7 +105,7 @@
       "items": {
         "type": "string"
       },
-      "description": "Fun\u00e7\u00f5es recomendadas"
+      "description": "Funções recomendadas"
     },
     "invite_id": {
       "type": "string",
@@ -158,6 +158,18 @@
         },
         {
           "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -197,6 +209,18 @@
         },
         {
           "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -236,6 +260,18 @@
         },
         {
           "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     }

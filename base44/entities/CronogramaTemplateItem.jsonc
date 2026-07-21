@@ -24,11 +24,11 @@
     },
     "titulo": {
       "type": "string",
-      "description": "T\u00edtulo exib\u00edvel do item na jornada"
+      "description": "Título exibível do item na jornada"
     },
     "descricao": {
       "type": "string",
-      "description": "Descri\u00e7\u00e3o do que o cliente deve fazer/alcan\u00e7ar"
+      "description": "Descrição do que o cliente deve fazer/alcançar"
     },
     "fase": {
       "type": "string",
@@ -46,7 +46,7 @@
     "obrigatorio": {
       "type": "boolean",
       "default": false,
-      "description": "Se o item \u00e9 obrigat\u00f3rio para avan\u00e7ar de fase"
+      "description": "Se o item é obrigatório para avançar de fase"
     },
     "auto_start": {
       "type": "boolean",
@@ -56,23 +56,23 @@
     "dias_para_inicio": {
       "type": "integer",
       "default": 0,
-      "description": "Dias ap\u00f3s ativa\u00e7\u00e3o do contrato para iniciar este item"
+      "description": "Dias após ativação do contrato para iniciar este item"
     },
     "prazo_conclusao_dias": {
       "type": "integer",
       "default": 30,
-      "description": "Prazo em dias para concluir ap\u00f3s o in\u00edcio"
+      "description": "Prazo em dias para concluir após o início"
     },
     "depends_on_item_ids": {
       "type": "array",
       "items": {
         "type": "string"
       },
-      "description": "IDs de outros CronogramaTemplateItem que devem estar conclu\u00eddos antes"
+      "description": "IDs de outros CronogramaTemplateItem que devem estar concluídos antes"
     },
     "metadata": {
       "type": "object",
-      "description": "Configura\u00e7\u00f5es espec\u00edficas por tipo. Para atendimento: {scheduling_type, frequency_days, total_allowed, start_from_contract_date, allow_anticipation, event_based}",
+      "description": "Configurações específicas por tipo. Para atendimento: {scheduling_type, frequency_days, total_allowed, start_from_contract_date, allow_anticipation, event_based}",
       "properties": {
         "scheduling_type": {
           "type": "string",
@@ -84,11 +84,11 @@
         },
         "frequency_days": {
           "type": "integer",
-          "description": "Intervalo em dias entre sess\u00f5es (apenas frequency)"
+          "description": "Intervalo em dias entre sessões (apenas frequency)"
         },
         "total_allowed": {
           "type": "integer",
-          "description": "Total de sess\u00f5es/inst\u00e2ncias permitidas"
+          "description": "Total de sessões/instâncias permitidas"
         },
         "start_from_contract_date": {
           "type": "boolean",
@@ -103,7 +103,7 @@
     "ativo": {
       "type": "boolean",
       "default": true,
-      "description": "Se o item est\u00e1 ativo no template do plano"
+      "description": "Se o item está ativo no template do plano"
     }
   },
   "required": [
@@ -113,20 +113,68 @@
   ],
   "rls": {
     "create": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     },
     "read": true,
     "update": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     }
   }
 }

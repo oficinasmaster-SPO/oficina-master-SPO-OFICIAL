@@ -16,7 +16,7 @@
     },
     "score": {
       "type": "number",
-      "description": "Score de cr\u00e9dito retornado"
+      "description": "Score de crédito retornado"
     },
     "risco": {
       "type": "string",
@@ -26,7 +26,7 @@
         "alto",
         "desconhecido"
       ],
-      "description": "N\u00edvel de risco calculado"
+      "description": "Nível de risco calculado"
     },
     "resultado": {
       "type": "object",
@@ -34,11 +34,11 @@
     },
     "contract_id": {
       "type": "string",
-      "description": "ID do contrato relacionado (se aplic\u00e1vel)"
+      "description": "ID do contrato relacionado (se aplicável)"
     },
     "consulted_by": {
       "type": "string",
-      "description": "Email do usu\u00e1rio que realizou a consulta"
+      "description": "Email do usuário que realizou a consulta"
     },
     "data": {
       "type": "string",
@@ -52,20 +52,68 @@
   ],
   "rls": {
     "create": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     },
     "read": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     },
     "update": false,
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     }
   }
 }

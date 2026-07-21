@@ -12,11 +12,11 @@
     },
     "mes": {
       "type": "string",
-      "description": "M\u00eas de refer\u00eancia (YYYY-MM)"
+      "description": "Mês de referência (YYYY-MM)"
     },
     "versao": {
       "type": "integer",
-      "description": "N\u00famero da vers\u00e3o (incremental: 1, 2, 3...)"
+      "description": "Número da versão (incremental: 1, 2, 3...)"
     },
     "tipo_alteracao": {
       "type": "string",
@@ -26,19 +26,19 @@
         "liquidacao",
         "exclusao"
       ],
-      "description": "Tipo de altera\u00e7\u00e3o"
+      "description": "Tipo de alteração"
     },
     "valor_anterior": {
       "type": "number",
-      "description": "Valor total do saldo inicial antes da altera\u00e7\u00e3o"
+      "description": "Valor total do saldo inicial antes da alteração"
     },
     "valor_novo": {
       "type": "number",
-      "description": "Valor total do saldo inicial ap\u00f3s a altera\u00e7\u00e3o"
+      "description": "Valor total do saldo inicial após a alteração"
     },
     "detalhes_anteriores": {
       "type": "object",
-      "description": "Snapshot completo dos detalhes antes da altera\u00e7\u00e3o",
+      "description": "Snapshot completo dos detalhes antes da alteração",
       "properties": {
         "bancos": {
           "type": "array",
@@ -81,7 +81,7 @@
     },
     "detalhes_novos": {
       "type": "object",
-      "description": "Snapshot completo dos detalhes ap\u00f3s a altera\u00e7\u00e3o",
+      "description": "Snapshot completo dos detalhes após a alteração",
       "properties": {
         "bancos": {
           "type": "array",
@@ -128,7 +128,7 @@
     },
     "valor_delta": {
       "type": "number",
-      "description": "Valor da mudan\u00e7a (positivo para soma, negativo para subtra\u00e7\u00e3o)"
+      "description": "Valor da mudança (positivo para soma, negativo para subtração)"
     },
     "origem_alteracao": {
       "type": "string",
@@ -138,44 +138,44 @@
         "liquidacao_recebimento",
         "backfill"
       ],
-      "description": "Origem da altera\u00e7\u00e3o"
+      "description": "Origem da alteração"
     },
     "liquidacao_id": {
       "type": "string",
-      "description": "ID da Liquida\u00e7\u00e3oFinanceira vinculada (se aplic\u00e1vel)"
+      "description": "ID da LiquidaçãoFinanceira vinculada (se aplicável)"
     },
     "conta_pagar_id": {
       "type": "string",
-      "description": "ID da ContaPagar vinculada (se aplic\u00e1vel)"
+      "description": "ID da ContaPagar vinculada (se aplicável)"
     },
     "conta_receber_id": {
       "type": "string",
-      "description": "ID da ContaReceber vinculada (se aplic\u00e1vel)"
+      "description": "ID da ContaReceber vinculada (se aplicável)"
     },
     "criado_por": {
       "type": "string",
-      "description": "ID do usu\u00e1rio que fez a altera\u00e7\u00e3o"
+      "description": "ID do usuário que fez a alteração"
     },
     "criado_por_nome": {
       "type": "string",
-      "description": "Nome do usu\u00e1rio (cache)"
+      "description": "Nome do usuário (cache)"
     },
     "criado_por_email": {
       "type": "string",
-      "description": "Email do usu\u00e1rio (cache)"
+      "description": "Email do usuário (cache)"
     },
     "criado_em": {
       "type": "string",
       "format": "date-time",
-      "description": "Timestamp exato da altera\u00e7\u00e3o"
+      "description": "Timestamp exato da alteração"
     },
     "ip_address": {
       "type": "string",
-      "description": "IP do usu\u00e1rio (auditoria)"
+      "description": "IP do usuário (auditoria)"
     },
     "observacoes": {
       "type": "string",
-      "description": "Observa\u00e7\u00f5es opcionais sobre a altera\u00e7\u00e3o"
+      "description": "Observações opcionais sobre a alteração"
     }
   },
   "required": [
@@ -202,6 +202,18 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -217,18 +229,62 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
     "update": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     }
   }
 }

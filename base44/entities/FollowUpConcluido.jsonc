@@ -48,7 +48,7 @@
     },
     "duracao": {
       "type": "integer",
-      "description": "Dura\u00e7\u00e3o do atendimento em minutos"
+      "description": "Duração do atendimento em minutos"
     },
     "humor": {
       "type": "string",
@@ -58,14 +58,14 @@
       "type": "string",
       "enum": [
         "Alto",
-        "M\u00e9dio",
+        "Médio",
         "Baixo"
       ],
-      "description": "N\u00edvel de engajamento"
+      "description": "Nível de engajamento"
     },
     "observacoes": {
       "type": "string",
-      "description": "Observa\u00e7\u00f5es do atendimento"
+      "description": "Observações do atendimento"
     },
     "compromissos": {
       "type": "string",
@@ -81,16 +81,16 @@
         "concluir",
         "cancelar"
       ],
-      "description": "Pr\u00f3ximo passo"
+      "description": "Próximo passo"
     },
     "proxData": {
       "type": "string",
       "format": "date",
-      "description": "Data do pr\u00f3ximo contato"
+      "description": "Data do próximo contato"
     },
     "proxHora": {
       "type": "string",
-      "description": "Hora do pr\u00f3ximo contato (HH:MM)"
+      "description": "Hora do próximo contato (HH:MM)"
     },
     "pastedImages": {
       "type": "array",
@@ -114,7 +114,7 @@
     "completedAt": {
       "type": "string",
       "format": "date-time",
-      "description": "Data e hora de conclus\u00e3o"
+      "description": "Data e hora de conclusão"
     }
   },
   "required": [
@@ -135,6 +135,18 @@
         },
         {
           "data.consultor_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -156,6 +168,18 @@
         },
         {
           "data.consultor_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -168,6 +192,18 @@
         },
         {
           "data.consultor_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -176,6 +212,18 @@
         {
           "user_condition": {
             "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
           }
         }
       ]

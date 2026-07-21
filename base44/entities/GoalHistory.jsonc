@@ -16,7 +16,7 @@
     },
     "month_year": {
       "type": "string",
-      "description": "M\u00eas/Ano de refer\u00eancia (YYYY-MM)"
+      "description": "Mês/Ano de referência (YYYY-MM)"
     },
     "goal_established": {
       "type": "number",
@@ -24,7 +24,7 @@
     },
     "result_achieved": {
       "type": "number",
-      "description": "Valor do resultado alcan\u00e7ado"
+      "description": "Valor do resultado alcançado"
     },
     "status": {
       "type": "string",
@@ -98,6 +98,18 @@
         },
         {
           "entity_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -110,6 +122,18 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -121,6 +145,18 @@
         {
           "user_condition": {
             "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
           }
         }
       ]

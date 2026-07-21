@@ -4,7 +4,7 @@
   "properties": {
     "employee_id": {
       "type": "string",
-      "description": "ID do colaborador que ter\u00e1 as permiss\u00f5es alteradas"
+      "description": "ID do colaborador que terá as permissões alteradas"
     },
     "employee_name": {
       "type": "string",
@@ -26,7 +26,7 @@
         "custom_roles_remove",
         "status_change"
       ],
-      "description": "Tipo de mudan\u00e7a solicitada"
+      "description": "Tipo de mudança solicitada"
     },
     "current_profile_id": {
       "type": "string",
@@ -60,7 +60,7 @@
     },
     "current_status": {
       "type": "string",
-      "description": "Status atual do usu\u00e1rio"
+      "description": "Status atual do usuário"
     },
     "requested_status": {
       "type": "string",
@@ -68,7 +68,7 @@
     },
     "justification": {
       "type": "string",
-      "description": "Justificativa da mudan\u00e7a"
+      "description": "Justificativa da mudança"
     },
     "status": {
       "type": "string",
@@ -78,7 +78,7 @@
         "rejeitado"
       ],
       "default": "pendente",
-      "description": "Status da solicita\u00e7\u00e3o"
+      "description": "Status da solicitação"
     },
     "approved_by": {
       "type": "string",
@@ -91,11 +91,11 @@
     "approved_at": {
       "type": "string",
       "format": "date-time",
-      "description": "Data de aprova\u00e7\u00e3o/rejei\u00e7\u00e3o"
+      "description": "Data de aprovação/rejeição"
     },
     "rejection_reason": {
       "type": "string",
-      "description": "Motivo da rejei\u00e7\u00e3o"
+      "description": "Motivo da rejeição"
     }
   },
   "required": [
@@ -105,24 +105,88 @@
   ],
   "rls": {
     "create": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     },
     "read": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     },
     "update": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     }
   }
 }

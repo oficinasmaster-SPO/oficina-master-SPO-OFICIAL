@@ -9,7 +9,7 @@
         "suggestion_accepted",
         "suggestion_rejected"
       ],
-      "description": "Tipo de evento: sugest\u00e3o exibida, aceita ou rejeitada"
+      "description": "Tipo de evento: sugestão exibida, aceita ou rejeitada"
     },
     "workshop_id": {
       "type": "string",
@@ -29,19 +29,19 @@
     },
     "selected_profile_id": {
       "type": "string",
-      "description": "ID do perfil selecionado pelo usu\u00e1rio (pode ser igual ao sugerido)"
+      "description": "ID do perfil selecionado pelo usuário (pode ser igual ao sugerido)"
     },
     "user_id": {
       "type": "string",
-      "description": "ID do usu\u00e1rio que fez a sele\u00e7\u00e3o"
+      "description": "ID do usuário que fez a seleção"
     },
     "user_email": {
       "type": "string",
-      "description": "Email do usu\u00e1rio (cache)"
+      "description": "Email do usuário (cache)"
     },
     "accepted": {
       "type": "boolean",
-      "description": "Se o usu\u00e1rio aceitou a sugest\u00e3o"
+      "description": "Se o usuário aceitou a sugestão"
     },
     "timestamp": {
       "type": "string",
@@ -65,18 +65,62 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
     "update": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     }
   }
 }

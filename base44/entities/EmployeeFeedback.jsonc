@@ -12,7 +12,7 @@
     },
     "evaluator_id": {
       "type": "string",
-      "description": "ID do usu\u00e1rio que deu o feedback"
+      "description": "ID do usuário que deu o feedback"
     },
     "workshop_id": {
       "type": "string",
@@ -34,11 +34,11 @@
     },
     "content": {
       "type": "string",
-      "description": "Conte\u00fado do feedback"
+      "description": "Conteúdo do feedback"
     },
     "action_plan": {
       "type": "string",
-      "description": "Plano de a\u00e7\u00e3o detalhado"
+      "description": "Plano de ação detalhado"
     },
     "action_plan_status": {
       "type": "string",
@@ -48,11 +48,11 @@
         "implemented"
       ],
       "default": "pending",
-      "description": "Status do plano de a\u00e7\u00e3o"
+      "description": "Status do plano de ação"
     },
     "audio_url": {
       "type": "string",
-      "description": "URL do \u00e1udio gravado"
+      "description": "URL do áudio gravado"
     },
     "email_sent": {
       "type": "boolean",
@@ -67,12 +67,12 @@
     "employee_acknowledged": {
       "type": "boolean",
       "default": false,
-      "description": "Se o colaborador deu ci\u00eancia"
+      "description": "Se o colaborador deu ciência"
     },
     "employee_acknowledged_at": {
       "type": "string",
       "format": "date-time",
-      "description": "Data/hora da ci\u00eancia"
+      "description": "Data/hora da ciência"
     }
   },
   "required": [
@@ -101,6 +101,18 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -116,6 +128,18 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -127,6 +151,18 @@
         {
           "user_condition": {
             "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
           }
         }
       ]

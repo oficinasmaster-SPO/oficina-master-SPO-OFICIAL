@@ -12,41 +12,41 @@
     },
     "assignee_id": {
       "type": "string",
-      "description": "ID do respons\u00e1vel/consultor atribu\u00eddo"
+      "description": "ID do responsável/consultor atribuído"
     },
     "assignee_name": {
       "type": "string",
-      "description": "Nome do respons\u00e1vel/consultor"
+      "description": "Nome do responsável/consultor"
     },
     "created_by_id": {
       "type": "string",
-      "description": "ID do usu\u00e1rio que criou a tarefa"
+      "description": "ID do usuário que criou a tarefa"
     },
     "requester_id": {
       "type": "string",
-      "description": "ID do usu\u00e1rio solicitante (quem pediu a tarefa)"
+      "description": "ID do usuário solicitante (quem pediu a tarefa)"
     },
     "assigned_to_id": {
       "type": "string",
-      "description": "ID do usu\u00e1rio ao qual a tarefa foi atribu\u00edda"
+      "description": "ID do usuário ao qual a tarefa foi atribuída"
     },
     "data_criacao": {
       "type": "string",
       "format": "date-time",
-      "description": "Data de cria\u00e7\u00e3o da tarefa"
+      "description": "Data de criação da tarefa"
     },
     "data_atribuicao": {
       "type": "string",
       "format": "date-time",
-      "description": "Data em que a tarefa foi atribu\u00edda ao respons\u00e1vel"
+      "description": "Data em que a tarefa foi atribuída ao responsável"
     },
     "titulo": {
       "type": "string",
-      "description": "T\u00edtulo da tarefa"
+      "description": "Título da tarefa"
     },
     "descricao": {
       "type": "string",
-      "description": "Descri\u00e7\u00e3o detalhada"
+      "description": "Descrição detalhada"
     },
     "origin_type": {
       "type": "string",
@@ -75,7 +75,7 @@
     },
     "origin_title": {
       "type": "string",
-      "description": "T\u00edtulo do atendimento de origem (cache para exibi\u00e7\u00e3o)"
+      "description": "Título do atendimento de origem (cache para exibição)"
     },
     "prazo": {
       "type": "string",
@@ -122,7 +122,7 @@
     "aguardando_cliente": {
       "type": "boolean",
       "default": false,
-      "description": "Se a tarefa est\u00e1 aguardando resposta/entrega do cliente"
+      "description": "Se a tarefa está aguardando resposta/entrega do cliente"
     },
     "aguardando_cliente_desde": {
       "type": "string",
@@ -135,16 +135,16 @@
     },
     "usuario_aguardo": {
       "type": "string",
-      "description": "ID do usu\u00e1rio que marcou a tarefa como aguardando cliente"
+      "description": "ID do usuário que marcou a tarefa como aguardando cliente"
     },
     "data_conclusao": {
       "type": "string",
       "format": "date-time",
-      "description": "Data de conclus\u00e3o"
+      "description": "Data de conclusão"
     },
     "tempo_estimado_horas": {
       "type": "number",
-      "description": "Tempo estimado em horas - OBRIGAT\u00d3RIO para c\u00e1lculo de satura\u00e7\u00e3o"
+      "description": "Tempo estimado em horas - OBRIGATÓRIO para cálculo de saturação"
     },
     "tempo_real_horas": {
       "type": "number",
@@ -153,12 +153,12 @@
     "checklist_total": {
       "type": "integer",
       "default": 0,
-      "description": "Total de itens no checklist (cache denormalizado para exibi\u00e7\u00e3o no card)"
+      "description": "Total de itens no checklist (cache denormalizado para exibição no card)"
     },
     "checklist_concluidos": {
       "type": "integer",
       "default": 0,
-      "description": "Itens conclu\u00eddos do checklist (cache denormalizado para exibi\u00e7\u00e3o no card)"
+      "description": "Itens concluídos do checklist (cache denormalizado para exibição no card)"
     },
     "notas": {
       "type": "string",
@@ -167,42 +167,42 @@
     "notificacao_criacao_enviada": {
       "type": "boolean",
       "default": false,
-      "description": "Se notifica\u00e7\u00e3o de cria\u00e7\u00e3o foi enviada ao respons\u00e1vel"
+      "description": "Se notificação de criação foi enviada ao responsável"
     },
     "notificacao_atribuicao_enviada": {
       "type": "boolean",
       "default": false,
-      "description": "Se notifica\u00e7\u00e3o de mudan\u00e7a de atribui\u00e7\u00e3o foi enviada"
+      "description": "Se notificação de mudança de atribuição foi enviada"
     },
     "notificacao_status_enviada": {
       "type": "boolean",
       "default": false,
-      "description": "Se notifica\u00e7\u00e3o de mudan\u00e7a de status foi enviada ao criador"
+      "description": "Se notificação de mudança de status foi enviada ao criador"
     },
     "notificacao_bloqueio_enviada": {
       "type": "boolean",
       "default": false,
-      "description": "Se notifica\u00e7\u00e3o de bloqueio foi enviada ao criador"
+      "description": "Se notificação de bloqueio foi enviada ao criador"
     },
     "notificacao_conclusao_enviada": {
       "type": "boolean",
       "default": false,
-      "description": "Se notifica\u00e7\u00e3o de conclus\u00e3o foi enviada ao criador"
+      "description": "Se notificação de conclusão foi enviada ao criador"
     },
     "notificacao_prazo_proximo_enviada": {
       "type": "boolean",
       "default": false,
-      "description": "Se notifica\u00e7\u00e3o de prazo pr\u00f3ximo foi enviada ao respons\u00e1vel"
+      "description": "Se notificação de prazo próximo foi enviada ao responsável"
     },
     "notificacao_vencimento_enviada": {
       "type": "boolean",
       "default": false,
-      "description": "Se notifica\u00e7\u00e3o de vencimento foi enviada ao respons\u00e1vel"
+      "description": "Se notificação de vencimento foi enviada ao responsável"
     },
     "ultima_notificacao_status_em": {
       "type": "string",
       "format": "date-time",
-      "description": "Data da \u00faltima notifica\u00e7\u00e3o de status para debounce"
+      "description": "Data da última notificação de status para debounce"
     }
   },
   "required": [
@@ -270,6 +270,18 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -297,13 +309,41 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     }
   }
 }

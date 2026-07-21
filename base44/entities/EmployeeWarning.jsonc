@@ -16,11 +16,11 @@
     },
     "evaluator_id": {
       "type": "string",
-      "description": "ID do gestor que aplicou a advert\u00eancia"
+      "description": "ID do gestor que aplicou a advertência"
     },
     "warning_number": {
       "type": "integer",
-      "description": "N\u00famero sequencial da advert\u00eancia do colaborador"
+      "description": "Número sequencial da advertência do colaborador"
     },
     "occurrence_date": {
       "type": "string",
@@ -33,7 +33,7 @@
     },
     "reason": {
       "type": "string",
-      "description": "Motivo da advert\u00eancia"
+      "description": "Motivo da advertência"
     },
     "severity": {
       "type": "string",
@@ -42,11 +42,11 @@
         "grave",
         "gravissima"
       ],
-      "description": "Gravidade da advert\u00eancia"
+      "description": "Gravidade da advertência"
     },
     "description": {
       "type": "string",
-      "description": "Descri\u00e7\u00e3o objetiva do ocorrido"
+      "description": "Descrição objetiva do ocorrido"
     },
     "rule_violated": {
       "type": "string",
@@ -76,16 +76,16 @@
     },
     "corrective_guidance": {
       "type": "string",
-      "description": "Orienta\u00e7\u00e3o clara de corre\u00e7\u00e3o"
+      "description": "Orientação clara de correção"
     },
     "audio_url": {
       "type": "string",
-      "description": "URL do \u00e1udio gravado (se houver)"
+      "description": "URL do áudio gravado (se houver)"
     },
     "employee_acknowledged": {
       "type": "boolean",
       "default": false,
-      "description": "Se o colaborador deu ci\u00eancia"
+      "description": "Se o colaborador deu ciência"
     },
     "employee_signature_url": {
       "type": "string",
@@ -94,7 +94,7 @@
     "employee_acknowledged_at": {
       "type": "string",
       "format": "date-time",
-      "description": "Data/hora da ci\u00eancia"
+      "description": "Data/hora da ciência"
     },
     "employee_refused": {
       "type": "boolean",
@@ -117,7 +117,7 @@
     },
     "notes": {
       "type": "string",
-      "description": "Observa\u00e7\u00f5es adicionais"
+      "description": "Observações adicionais"
     }
   },
   "required": [
@@ -150,6 +150,18 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -165,6 +177,18 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -176,6 +200,18 @@
         {
           "user_condition": {
             "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
           }
         }
       ]

@@ -8,11 +8,11 @@
     },
     "title": {
       "type": "string",
-      "description": "T\u00edtulo da conquista (ex: Placa 100k)"
+      "description": "Título da conquista (ex: Placa 100k)"
     },
     "description": {
       "type": "string",
-      "description": "Descri\u00e7\u00e3o detalhada"
+      "description": "Descrição detalhada"
     },
     "category": {
       "type": "string",
@@ -36,12 +36,12 @@
     },
     "icon_name": {
       "type": "string",
-      "description": "Nome do \u00edcone para exibi\u00e7\u00e3o"
+      "description": "Nome do ícone para exibição"
     },
     "is_physical_award": {
       "type": "boolean",
       "default": false,
-      "description": "Se existe pr\u00eamio f\u00edsico (Placa)"
+      "description": "Se existe prêmio físico (Placa)"
     }
   },
   "required": [
@@ -67,18 +67,62 @@
           "user_condition": {
             "role": "user"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
     "update": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     }
   }
 }

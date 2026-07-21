@@ -21,17 +21,17 @@
     },
     "mes_referencia": {
       "type": "string",
-      "description": "M\u00eas/ano de refer\u00eancia do indicador, formato YYYY-MM (permite registro retroativo)"
+      "description": "Mês/ano de referência do indicador, formato YYYY-MM (permite registro retroativo)"
     },
     "faturamento_mes": {
       "type": "number",
       "default": 0,
-      "description": "Faturamento do m\u00eas (R$)"
+      "description": "Faturamento do mês (R$)"
     },
     "ticket_medio": {
       "type": "number",
       "default": 0,
-      "description": "Ticket m\u00e9dio (R$)"
+      "description": "Ticket médio (R$)"
     },
     "clientes_atendidos": {
       "type": "number",
@@ -51,12 +51,12 @@
     "prospeccao_trafego_pago": {
       "type": "number",
       "default": 0,
-      "description": "Clientes prospectados via Tr\u00e1fego Pago (quantidade)"
+      "description": "Clientes prospectados via Tráfego Pago (quantidade)"
     },
     "faturado_trafego_pago": {
       "type": "number",
       "default": 0,
-      "description": "Valor faturado via Tr\u00e1fego Pago (R$)"
+      "description": "Valor faturado via Tráfego Pago (R$)"
     },
     "lucro_operacional": {
       "type": "number",
@@ -84,6 +84,18 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -101,6 +113,18 @@
         {
           "user_condition": {
             "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
           }
         }
       ]
@@ -120,13 +144,41 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     }
   }
 }

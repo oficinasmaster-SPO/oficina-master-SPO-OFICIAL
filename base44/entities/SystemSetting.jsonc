@@ -4,15 +4,15 @@
   "properties": {
     "key": {
       "type": "string",
-      "description": "Chave identificadora da configura\u00e7\u00e3o (ex: home_quick_tips)"
+      "description": "Chave identificadora da configuração (ex: home_quick_tips)"
     },
     "value": {
       "type": "string",
-      "description": "Valor da configura\u00e7\u00e3o"
+      "description": "Valor da configuração"
     },
     "description": {
       "type": "string",
-      "description": "Descri\u00e7\u00e3o do que essa configura\u00e7\u00e3o faz"
+      "description": "Descrição do que essa configuração faz"
     }
   },
   "required": [
@@ -21,20 +21,68 @@
   ],
   "rls": {
     "create": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     },
     "read": true,
     "update": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     }
   }
 }

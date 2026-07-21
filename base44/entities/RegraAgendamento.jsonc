@@ -4,7 +4,7 @@
   "properties": {
     "consulting_firm_id": {
       "type": "string",
-      "description": "ID do escrit\u00f3rio de consultoria"
+      "description": "ID do escritório de consultoria"
     },
     "plan_id": {
       "type": "string",
@@ -12,7 +12,7 @@
     },
     "nome": {
       "type": "string",
-      "description": "Nome da regra para identifica\u00e7\u00e3o"
+      "description": "Nome da regra para identificação"
     },
     "sequencia": {
       "type": "array",
@@ -21,32 +21,32 @@
         "properties": {
           "ordem": {
             "type": "integer",
-            "description": "Posi\u00e7\u00e3o na sequ\u00eancia (1, 2, 3...)"
+            "description": "Posição na sequência (1, 2, 3...)"
           },
           "tipo_atendimento_id": {
             "type": "string"
           },
           "nome": {
             "type": "string",
-            "description": "Nome leg\u00edvel do tipo"
+            "description": "Nome legível do tipo"
           },
           "prazo_dias_apos_inicio": {
             "type": "integer",
-            "description": "Deve ocorrer em at\u00e9 X dias ap\u00f3s o in\u00edcio do programa (0 = sem prazo)"
+            "description": "Deve ocorrer em até X dias após o início do programa (0 = sem prazo)"
           },
           "intervalo_minimo_dias": {
             "type": "integer",
             "default": 0,
-            "description": "M\u00ednimo de dias ap\u00f3s o item anterior antes de poder agendar este"
+            "description": "Mínimo de dias após o item anterior antes de poder agendar este"
           },
           "obrigatorio": {
             "type": "boolean",
             "default": true,
-            "description": "Se \u00e9 obrigat\u00f3rio concluir antes de avan\u00e7ar"
+            "description": "Se é obrigatório concluir antes de avançar"
           }
         }
       },
-      "description": "Sequ\u00eancia obrigat\u00f3ria de reuni\u00f5es"
+      "description": "Sequência obrigatória de reuniões"
     },
     "ativo": {
       "type": "boolean",
@@ -59,20 +59,68 @@
   ],
   "rls": {
     "create": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     },
     "read": true,
     "update": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     }
   }
 }

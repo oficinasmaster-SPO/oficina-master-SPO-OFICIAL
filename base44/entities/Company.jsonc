@@ -4,7 +4,7 @@
   "properties": {
     "consulting_firm_id": {
       "type": "string",
-      "description": "ID do escrit\u00f3rio de consultoria que gerencia esta empresa cliente."
+      "description": "ID do escritório de consultoria que gerencia esta empresa cliente."
     },
     "name": {
       "type": "string",
@@ -16,7 +16,7 @@
     },
     "description": {
       "type": "string",
-      "description": "Descri\u00e7\u00e3o da empresa"
+      "description": "Descrição da empresa"
     },
     "logo_url": {
       "type": "string",
@@ -24,7 +24,7 @@
     },
     "owner_user_id": {
       "type": "string",
-      "description": "ID do usu\u00e1rio principal (admin) do cliente."
+      "description": "ID do usuário principal (admin) do cliente."
     }
   },
   "required": [
@@ -51,6 +51,18 @@
               }
             }
           ]
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -75,6 +87,18 @@
         },
         {
           "owner_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -99,6 +123,18 @@
         },
         {
           "owner_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -120,6 +156,18 @@
               }
             }
           ]
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     }

@@ -4,7 +4,7 @@
   "properties": {
     "user_id": {
       "type": "string",
-      "description": "ID do usu\u00e1rio"
+      "description": "ID do usuário"
     },
     "workshop_id": {
       "type": "string",
@@ -21,11 +21,11 @@
     },
     "credits_used": {
       "type": "integer",
-      "description": "Cr\u00e9ditos usados no momento do alerta"
+      "description": "Créditos usados no momento do alerta"
     },
     "credits_limit": {
       "type": "integer",
-      "description": "Limite de cr\u00e9ditos do plano"
+      "description": "Limite de créditos do plano"
     },
     "percentage": {
       "type": "number",
@@ -33,7 +33,7 @@
     },
     "user_tier": {
       "type": "string",
-      "description": "Tier do usu\u00e1rio no momento"
+      "description": "Tier do usuário no momento"
     },
     "email_sent": {
       "type": "boolean",
@@ -43,11 +43,11 @@
     "in_app_sent": {
       "type": "boolean",
       "default": false,
-      "description": "Se notifica\u00e7\u00e3o in-app foi criada"
+      "description": "Se notificação in-app foi criada"
     },
     "month_year": {
       "type": "string",
-      "description": "M\u00eas/Ano do alerta (YYYY-MM)"
+      "description": "Mês/Ano do alerta (YYYY-MM)"
     }
   },
   "required": [
@@ -119,9 +119,25 @@
       ]
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     }
   }
 }

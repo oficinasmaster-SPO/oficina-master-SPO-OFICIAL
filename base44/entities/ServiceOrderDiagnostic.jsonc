@@ -20,20 +20,20 @@
     },
     "os_number": {
       "type": "string",
-      "description": "N\u00famero da Ordem de Servi\u00e7o"
+      "description": "Número da Ordem de Serviço"
     },
     "reference_month": {
       "type": "string",
-      "description": "M\u00eas de refer\u00eancia (YYYY-MM)"
+      "description": "Mês de referência (YYYY-MM)"
     },
     "productive_technicians": {
       "type": "integer",
-      "description": "Quantidade de t\u00e9cnicos produtivos (obtido do DRE)"
+      "description": "Quantidade de técnicos produtivos (obtido do DRE)"
     },
     "monthly_hours": {
       "type": "number",
       "default": 219,
-      "description": "Horas dispon\u00edveis no m\u00eas por t\u00e9cnico (obtido do DRE)"
+      "description": "Horas disponíveis no mês por técnico (obtido do DRE)"
     },
     "operational_costs": {
       "type": "number",
@@ -45,7 +45,7 @@
     },
     "prolabore": {
       "type": "number",
-      "description": "Pr\u00f3-labore dos s\u00f3cios (obtido do DRE)"
+      "description": "Pró-labore dos sócios (obtido do DRE)"
     },
     "parts": {
       "type": "array",
@@ -69,7 +69,7 @@
           }
         }
       },
-      "description": "Lista de pe\u00e7as da OS"
+      "description": "Lista de peças da OS"
     },
     "services": {
       "type": "array",
@@ -96,7 +96,7 @@
           }
         }
       },
-      "description": "Lista de servi\u00e7os da OS"
+      "description": "Lista de serviços da OS"
     },
     "third_party_services": {
       "type": "array",
@@ -111,23 +111,23 @@
           }
         }
       },
-      "description": "Servi\u00e7os de terceiros (ret\u00edfica, etc)"
+      "description": "Serviços de terceiros (retífica, etc)"
     },
     "total_parts_sale": {
       "type": "number",
-      "description": "Valor total de venda das pe\u00e7as"
+      "description": "Valor total de venda das peças"
     },
     "total_parts_cost": {
       "type": "number",
-      "description": "Custo total das pe\u00e7as"
+      "description": "Custo total das peças"
     },
     "total_services": {
       "type": "number",
-      "description": "Valor total dos servi\u00e7os"
+      "description": "Valor total dos serviços"
     },
     "total_third_party_costs": {
       "type": "number",
-      "description": "Custo total de servi\u00e7os de terceiros"
+      "description": "Custo total de serviços de terceiros"
     },
     "total_os": {
       "type": "number",
@@ -143,7 +143,7 @@
     },
     "ideal_hour_value": {
       "type": "number",
-      "description": "Valor hora ideal calculado (TCMP\u00b2 do DRE)"
+      "description": "Valor hora ideal calculado (TCMP² do DRE)"
     },
     "current_hour_value": {
       "type": "number",
@@ -151,11 +151,11 @@
     },
     "tcmp2_ideal_value": {
       "type": "number",
-      "description": "Valor ideal segundo TCMP\u00b2 (tempo \u00d7 2 \u00d7 valor hora)"
+      "description": "Valor ideal segundo TCMP² (tempo × 2 × valor hora)"
     },
     "tcmp2_difference": {
       "type": "number",
-      "description": "Diferen\u00e7a entre valor cobrado e ideal"
+      "description": "Diferença entre valor cobrado e ideal"
     },
     "classification": {
       "type": "string",
@@ -166,14 +166,14 @@
         "reprovada",
         "perfeita"
       ],
-      "description": "Classifica\u00e7\u00e3o da OS"
+      "description": "Classificação da OS"
     },
     "recommendations": {
       "type": "array",
       "items": {
         "type": "string"
       },
-      "description": "Recomenda\u00e7\u00f5es autom\u00e1ticas"
+      "description": "Recomendações automáticas"
     },
     "checklist": {
       "type": "object",
@@ -211,7 +211,7 @@
           "default": false
         }
       },
-      "description": "Checklist de execu\u00e7\u00e3o"
+      "description": "Checklist de execução"
     },
     "completed": {
       "type": "boolean",
@@ -270,6 +270,18 @@
         },
         {
           "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -309,6 +321,18 @@
         },
         {
           "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -348,6 +372,18 @@
         },
         {
           "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     }

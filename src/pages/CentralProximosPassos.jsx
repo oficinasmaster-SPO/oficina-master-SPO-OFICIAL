@@ -79,11 +79,12 @@ export default function CentralProximosPassos() {
 
   const consultingFirmId = user?.data?.consulting_firm_id;
   const isAdmin = user?.role === "admin";
+  const isInternal = user?.user_type === "internal" || user?.data?.user_type === "internal" || user?.is_internal === true;
 
   const { data: passos = [], isLoading, refetch } = useQuery({
     queryKey: ["central-proximos-passos", consultingFirmId, isAdmin],
     queryFn: async () => {
-      if (isAdmin) {
+      if (isAdmin || isInternal) {
         return base44.entities.ConsultoriaProximoPasso.filter({}, "-created_date", 500);
       }
       if (consultingFirmId) {
@@ -164,7 +165,7 @@ export default function CentralProximosPassos() {
     queryClient.invalidateQueries({ queryKey: ["central-proximos-passos"] });
   };
 
-  if (!isAdmin && !consultingFirmId) {
+  if (!isAdmin && !isInternal && !consultingFirmId) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-8">
         <Users className="w-12 h-12 text-gray-300 mb-3" />

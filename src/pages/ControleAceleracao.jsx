@@ -18,7 +18,8 @@ export default function ControleAceleracao() {
     queryFn: async () => {
       try {
         const user = await base44.auth.me();
-        if (!user || user.role !== 'admin') return [];
+        const isInternal = user?.user_type === 'internal' || user?.data?.user_type === 'internal';
+        if (!user || (user.role !== 'admin' && !isInternal)) return [];
         
         const allAtendimentos = await base44.entities.ConsultoriaAtendimento.filter({
           status: { $in: ['agendado', 'confirmado', 'reagendado'] }

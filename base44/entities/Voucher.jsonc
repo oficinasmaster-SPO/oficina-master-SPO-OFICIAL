@@ -4,7 +4,7 @@
   "properties": {
     "code": {
       "type": "string",
-      "description": "C\u00f3digo \u00fanico do voucher"
+      "description": "Código único do voucher"
     },
     "workshop_id": {
       "type": "string",
@@ -24,7 +24,7 @@
     },
     "seller_name": {
       "type": "string",
-      "description": "Nome do vendedor (cache para exibi\u00e7\u00e3o)"
+      "description": "Nome do vendedor (cache para exibição)"
     },
     "discount_percent": {
       "type": "number",
@@ -48,7 +48,7 @@
     "max_uses": {
       "type": "integer",
       "default": 1,
-      "description": "Quantidade m\u00e1xima de usos permitidos"
+      "description": "Quantidade máxima de usos permitidos"
     },
     "uses_count": {
       "type": "integer",
@@ -72,23 +72,23 @@
     "expiration_date": {
       "type": "string",
       "format": "date-time",
-      "description": "Data de expira\u00e7\u00e3o do voucher"
+      "description": "Data de expiração do voucher"
     },
     "description": {
       "type": "string",
-      "description": "Descri\u00e7\u00e3o ou motivo do voucher"
+      "description": "Descrição ou motivo do voucher"
     },
     "notes": {
       "type": "string",
-      "description": "Observa\u00e7\u00f5es internas"
+      "description": "Observações internas"
     },
     "cancelled_by": {
       "type": "string",
-      "description": "ID do usu\u00e1rio que cancelou"
+      "description": "ID do usuário que cancelou"
     },
     "cancelled_by_name": {
       "type": "string",
-      "description": "Nome do usu\u00e1rio que cancelou"
+      "description": "Nome do usuário que cancelou"
     },
     "cancelled_at": {
       "type": "string",
@@ -101,7 +101,7 @@
     },
     "metadata": {
       "type": "object",
-      "description": "Dados adicionais flex\u00edveis"
+      "description": "Dados adicionais flexíveis"
     }
   },
   "required": [
@@ -133,6 +133,18 @@
               }
             }
           ]
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -172,6 +184,18 @@
         },
         {
           "seller_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -193,6 +217,18 @@
               }
             }
           ]
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -214,6 +250,18 @@
               }
             }
           ]
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     }

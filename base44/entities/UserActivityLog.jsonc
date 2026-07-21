@@ -4,15 +4,15 @@
   "properties": {
     "user_id": {
       "type": "string",
-      "description": "ID do usu\u00e1rio"
+      "description": "ID do usuário"
     },
     "user_email": {
       "type": "string",
-      "description": "Email do usu\u00e1rio"
+      "description": "Email do usuário"
     },
     "user_name": {
       "type": "string",
-      "description": "Nome do usu\u00e1rio"
+      "description": "Nome do usuário"
     },
     "workshop_id": {
       "type": "string",
@@ -36,24 +36,24 @@
     },
     "page_url": {
       "type": "string",
-      "description": "URL da p\u00e1gina visitada"
+      "description": "URL da página visitada"
     },
     "page_name": {
       "type": "string",
-      "description": "Nome da p\u00e1gina"
+      "description": "Nome da página"
     },
     "action_description": {
       "type": "string",
-      "description": "Descri\u00e7\u00e3o da a\u00e7\u00e3o realizada"
+      "description": "Descrição da ação realizada"
     },
     "time_spent_seconds": {
       "type": "integer",
       "default": 0,
-      "description": "Tempo gasto na p\u00e1gina (segundos)"
+      "description": "Tempo gasto na página (segundos)"
     },
     "session_id": {
       "type": "string",
-      "description": "ID da sess\u00e3o do usu\u00e1rio"
+      "description": "ID da sessão do usuário"
     },
     "device_info": {
       "type": "object",
@@ -82,19 +82,67 @@
   "rls": {
     "create": true,
     "read": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     },
     "update": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     }
   }
 }

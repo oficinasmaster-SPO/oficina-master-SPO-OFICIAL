@@ -15,7 +15,7 @@
       "properties": {
         "leadership": {
           "type": "number",
-          "description": "Score Lideran\u00e7a (0-100)"
+          "description": "Score Liderança (0-100)"
         },
         "commitment": {
           "type": "number",
@@ -30,22 +30,22 @@
           "description": "Score Potencial de Crescimento (0-100)"
         }
       },
-      "description": "Pontua\u00e7\u00f5es geradas pela IA"
+      "description": "Pontuações geradas pela IA"
     },
     "analysis": {
       "type": "object",
       "properties": {
         "behavioral": {
           "type": "string",
-          "description": "An\u00e1lise comportamental"
+          "description": "Análise comportamental"
         },
         "leadership_potential": {
           "type": "string",
-          "description": "Indica\u00e7\u00e3o de potencial de lideran\u00e7a"
+          "description": "Indicação de potencial de liderança"
         },
         "commitment_level": {
           "type": "string",
-          "description": "N\u00edvel de comprometimento"
+          "description": "Nível de comprometimento"
         },
         "risk_alerts": {
           "type": "array",
@@ -63,7 +63,7 @@
             },
             "medium_term": {
               "type": "string",
-              "description": "M\u00e9dio prazo"
+              "description": "Médio prazo"
             },
             "long_term": {
               "type": "string",
@@ -77,7 +77,7 @@
           "description": "Mensagem personalizada"
         }
       },
-      "description": "An\u00e1lises textuais geradas pela IA"
+      "description": "Análises textuais geradas pela IA"
     }
   },
   "required": [
@@ -99,6 +99,18 @@
           "user_condition": {
             "role": "user"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -110,6 +122,18 @@
         {
           "user_condition": {
             "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
           }
         }
       ]
@@ -123,6 +147,18 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -134,6 +170,18 @@
         {
           "user_condition": {
             "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
           }
         }
       ]

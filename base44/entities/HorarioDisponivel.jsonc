@@ -4,11 +4,11 @@
   "properties": {
     "consulting_firm_id": {
       "type": "string",
-      "description": "ID do escrit\u00f3rio de consultoria (isolamento de tenant)"
+      "description": "ID do escritório de consultoria (isolamento de tenant)"
     },
     "consultor_id": {
       "type": "string",
-      "description": "ID do consultor respons\u00e1vel pelos hor\u00e1rios"
+      "description": "ID do consultor responsável pelos horários"
     },
     "consultor_nome": {
       "type": "string",
@@ -25,14 +25,14 @@
         5,
         6
       ],
-      "description": "Dia da semana: 0=Dom, 1=Seg, 2=Ter, 3=Qua, 4=Qui, 5=Sex, 6=S\u00e1b"
+      "description": "Dia da semana: 0=Dom, 1=Seg, 2=Ter, 3=Qua, 4=Qui, 5=Sex, 6=Sáb"
     },
     "tipos_permitidos": {
       "type": "array",
       "items": {
         "type": "string"
       },
-      "description": "Tipos de atendimento permitidos para TODOS os hor\u00e1rios deste dia (vazio = todos)",
+      "description": "Tipos de atendimento permitidos para TODOS os horários deste dia (vazio = todos)",
       "default": []
     },
     "horarios": {
@@ -42,11 +42,11 @@
         "properties": {
           "hora": {
             "type": "string",
-            "description": "Hor\u00e1rio no formato HH:MM (ex: 11:00)"
+            "description": "Horário no formato HH:MM (ex: 11:00)"
           },
           "prioridade": {
             "type": "integer",
-            "description": "Ordem de prefer\u00eancia no dia (1=primeiro a oferecer, 2=segundo, etc)"
+            "description": "Ordem de preferência no dia (1=primeiro a oferecer, 2=segundo, etc)"
           },
           "ativo": {
             "type": "boolean",
@@ -54,12 +54,12 @@
           }
         }
       },
-      "description": "Lista de slots de hor\u00e1rio para este dia da semana"
+      "description": "Lista de slots de horário para este dia da semana"
     },
     "ativo": {
       "type": "boolean",
       "default": true,
-      "description": "Se esta configura\u00e7\u00e3o de dia est\u00e1 ativa"
+      "description": "Se esta configuração de dia está ativa"
     }
   },
   "required": [
@@ -68,20 +68,68 @@
   ],
   "rls": {
     "create": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     },
     "read": true,
     "update": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     }
   }
 }

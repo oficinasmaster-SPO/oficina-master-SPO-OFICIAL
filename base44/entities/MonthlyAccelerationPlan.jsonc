@@ -8,7 +8,7 @@
     },
     "reference_month": {
       "type": "string",
-      "description": "M\u00eas de refer\u00eancia (YYYY-MM)"
+      "description": "Mês de referência (YYYY-MM)"
     },
     "phase": {
       "type": "integer",
@@ -18,31 +18,31 @@
         3,
         4
       ],
-      "description": "Fase da oficina no momento da gera\u00e7\u00e3o"
+      "description": "Fase da oficina no momento da geração"
     },
     "diagnostic_id": {
       "type": "string",
-      "description": "ID do diagn\u00f3stico que originou o plano"
+      "description": "ID do diagnóstico que originou o plano"
     },
     "version": {
       "type": "integer",
       "default": 1,
-      "description": "Vers\u00e3o do plano (1 = original, 2+ = refinado)"
+      "description": "Versão do plano (1 = original, 2+ = refinado)"
     },
     "previous_version_id": {
       "type": "string",
-      "description": "ID da vers\u00e3o anterior (se refinado)"
+      "description": "ID da versão anterior (se refinado)"
     },
     "plan_data": {
       "type": "object",
       "properties": {
         "diagnostic_summary": {
           "type": "string",
-          "description": "Resumo do diagn\u00f3stico"
+          "description": "Resumo do diagnóstico"
         },
         "main_objective_90_days": {
           "type": "string",
-          "description": "Objetivo principal dos pr\u00f3ximos 90 dias"
+          "description": "Objetivo principal dos próximos 90 dias"
         },
         "pillar_directions": {
           "type": "array",
@@ -75,21 +75,21 @@
               "items": {
                 "type": "string"
               },
-              "description": "A\u00e7\u00f5es de curto prazo (0-30 dias)"
+              "description": "Ações de curto prazo (0-30 dias)"
             },
             "medium_term": {
               "type": "array",
               "items": {
                 "type": "string"
               },
-              "description": "A\u00e7\u00f5es de m\u00e9dio prazo (30-60 dias)"
+              "description": "Ações de médio prazo (30-60 dias)"
             },
             "long_term": {
               "type": "array",
               "items": {
                 "type": "string"
               },
-              "description": "A\u00e7\u00f5es de longo prazo (60-90 dias)"
+              "description": "Ações de longo prazo (60-90 dias)"
             }
           }
         },
@@ -148,7 +148,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Pr\u00f3ximos passos para esta semana"
+          "description": "Próximos passos para esta semana"
         }
       }
     },
@@ -201,7 +201,7 @@
     "completion_percentage": {
       "type": "number",
       "default": 0,
-      "description": "Percentual de conclus\u00e3o do plano"
+      "description": "Percentual de conclusão do plano"
     },
     "generated_by_ai": {
       "type": "boolean",
@@ -226,6 +226,18 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -238,13 +250,41 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     }
   }
 }

@@ -8,15 +8,15 @@
     },
     "document_title": {
       "type": "string",
-      "description": "T\u00edtulo do documento (cache)"
+      "description": "Título do documento (cache)"
     },
     "user_id": {
       "type": "string",
-      "description": "ID do usu\u00e1rio que baixou"
+      "description": "ID do usuário que baixou"
     },
     "user_email": {
       "type": "string",
-      "description": "Email do usu\u00e1rio (cache)"
+      "description": "Email do usuário (cache)"
     },
     "workshop_id": {
       "type": "string",
@@ -89,14 +89,46 @@
       ]
     },
     "update": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     }
   }
 }

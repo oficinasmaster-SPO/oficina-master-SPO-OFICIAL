@@ -8,7 +8,7 @@
     },
     "dre_lancamento_id": {
       "type": "string",
-      "description": "ID do lan\u00e7amento DRE de origem"
+      "description": "ID do lançamento DRE de origem"
     },
     "cliente_id": {
       "type": "string",
@@ -32,11 +32,11 @@
     },
     "valor_aberto": {
       "type": "number",
-      "description": "Valor ainda n\u00e3o pago"
+      "description": "Valor ainda não pago"
     },
     "valor_pago": {
       "type": "number",
-      "description": "Valor j\u00e1 pago"
+      "description": "Valor já pago"
     },
     "status": {
       "type": "string",
@@ -71,7 +71,7 @@
     "data_emissao": {
       "type": "string",
       "format": "date",
-      "description": "Data de emiss\u00e3o"
+      "description": "Data de emissão"
     },
     "data_primeiro_pagamento": {
       "type": "string",
@@ -130,13 +130,13 @@
     },
     "historico_alteracoes": {
       "type": "array",
-      "description": "Hist\u00f3rico de altera\u00e7\u00f5es da conta",
+      "description": "Histórico de alterações da conta",
       "items": {
         "type": "object",
         "properties": {
           "tipo": {
             "type": "string",
-            "description": "Tipo da a\u00e7\u00e3o: criado, editado, recebimento_registrado, cancelado"
+            "description": "Tipo da ação: criado, editado, recebimento_registrado, cancelado"
           },
           "usuario_nome": {
             "type": "string"
@@ -150,7 +150,7 @@
           },
           "detalhes": {
             "type": "string",
-            "description": "Descri\u00e7\u00e3o da altera\u00e7\u00e3o"
+            "description": "Descrição da alteração"
           }
         }
       }
@@ -178,6 +178,18 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -195,6 +207,18 @@
         {
           "user_condition": {
             "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
           }
         }
       ]
@@ -214,13 +238,41 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     }
   }
 }

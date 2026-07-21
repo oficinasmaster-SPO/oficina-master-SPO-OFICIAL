@@ -47,7 +47,8 @@ export default function AgendaVisual({ atendimentos = [], workshops = [], user }
   const { data: followUpReminders = [] } = useQuery({
     queryKey: ['follow-up-reminders', user?.id],
     queryFn: async () => {
-      const query = user?.role === 'admin' ? {} : { consultor_id: user?.id };
+      const isInternal = user?.user_type === 'internal' || user?.data?.user_type === 'internal';
+    const query = (user?.role === 'admin' || isInternal) ? {} : { consultor_id: user?.id };
       return base44.entities.FollowUpReminder.filter(query, 'reminder_date', 5000);
     },
     enabled: !!user?.id,

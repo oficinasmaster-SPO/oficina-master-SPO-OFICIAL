@@ -16,7 +16,7 @@
     },
     "month_reference": {
       "type": "string",
-      "description": "M\u00eas de refer\u00eancia (YYYY-MM)"
+      "description": "Mês de referência (YYYY-MM)"
     },
     "feedback_text": {
       "type": "string",
@@ -26,7 +26,7 @@
       "type": "integer",
       "minimum": 1,
       "maximum": 5,
-      "description": "N\u00edvel de cumprimento (1-5)"
+      "description": "Nível de cumprimento (1-5)"
     },
     "feedback_date": {
       "type": "string",
@@ -45,9 +45,25 @@
     "read": true,
     "update": true,
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     }
   }
 }

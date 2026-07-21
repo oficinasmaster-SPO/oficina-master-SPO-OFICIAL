@@ -17,7 +17,7 @@ export default function AtasSection({ atas, workshop, user }) {
   const [sendingEmail, setSendingEmail] = useState(false);
   const [sendingWhatsapp, setSendingWhatsapp] = useState(false);
   const queryClient = useQueryClient();
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.role === 'admin' || user?.user_type === 'internal' || user?.data?.user_type === 'internal';
 
   const handleDeleteAta = async (ata) => {
     if (window.confirm("Tem certeza que deseja excluir esta ATA permanentemente?")) {

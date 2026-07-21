@@ -8,7 +8,7 @@
     },
     "evaluator_id": {
       "type": "string",
-      "description": "ID do usu\u00e1rio que fez a avalia\u00e7\u00e3o"
+      "description": "ID do usuário que fez a avaliação"
     },
     "workshop_id": {
       "type": "string",
@@ -24,7 +24,7 @@
     },
     "period_month": {
       "type": "string",
-      "description": "M\u00eas de refer\u00eancia (YYYY-MM)"
+      "description": "Mês de referência (YYYY-MM)"
     },
     "employee_role": {
       "type": "string",
@@ -35,16 +35,16 @@
         "comercial",
         "outros"
       ],
-      "description": "Fun\u00e7\u00e3o do colaborador"
+      "description": "Função do colaborador"
     },
     "salary_base": {
       "type": "number",
-      "description": "Sal\u00e1rio base"
+      "description": "Salário base"
     },
     "commission": {
       "type": "number",
       "default": 0,
-      "description": "Comiss\u00e3o do per\u00edodo"
+      "description": "Comissão do período"
     },
     "benefits": {
       "type": "object",
@@ -66,7 +66,7 @@
           "default": 0
         }
       },
-      "description": "Benef\u00edcios totais"
+      "description": "Benefícios totais"
     },
     "productivity_data": {
       "type": "object",
@@ -74,12 +74,12 @@
         "services_value": {
           "type": "number",
           "default": 0,
-          "description": "Valor de servi\u00e7os executados"
+          "description": "Valor de serviços executados"
         },
         "parts_value": {
           "type": "number",
           "default": 0,
-          "description": "Valor de pe\u00e7as utilizadas"
+          "description": "Valor de peças utilizadas"
         },
         "sales_value": {
           "type": "number",
@@ -111,18 +111,18 @@
         "total_workshop_costs": {
           "type": "number",
           "default": 0,
-          "description": "Soma de custos operacionais + pessoas + pr\u00f3-labore"
+          "description": "Soma de custos operacionais + pessoas + pró-labore"
         }
       },
-      "description": "Dados de TCMP2 usados no c\u00e1lculo (para refer\u00eancia)"
+      "description": "Dados de TCMP2 usados no cálculo (para referência)"
     },
     "total_cost": {
       "type": "number",
-      "description": "Custo total (sal\u00e1rio + comiss\u00f5es + benef\u00edcios)"
+      "description": "Custo total (salário + comissões + benefícios)"
     },
     "total_productivity": {
       "type": "number",
-      "description": "Produtividade total (para t\u00e9cnicos/vendas) ou Custo Total Oficina (para outros)"
+      "description": "Produtividade total (para técnicos/vendas) ou Custo Total Oficina (para outros)"
     },
     "cost_percentage": {
       "type": "number",
@@ -136,16 +136,16 @@
         "aceitavel",
         "acima_aceitavel"
       ],
-      "description": "Classifica\u00e7\u00e3o do resultado"
+      "description": "Classificação do resultado"
     },
     "recommendation": {
       "type": "string",
-      "description": "Recomenda\u00e7\u00e3o autom\u00e1tica"
+      "description": "Recomendação automática"
     },
     "completed": {
       "type": "boolean",
       "default": false,
-      "description": "Diagn\u00f3stico completo"
+      "description": "Diagnóstico completo"
     }
   },
   "required": [
@@ -201,6 +201,18 @@
         },
         {
           "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -240,6 +252,18 @@
         },
         {
           "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -279,6 +303,18 @@
         },
         {
           "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     }

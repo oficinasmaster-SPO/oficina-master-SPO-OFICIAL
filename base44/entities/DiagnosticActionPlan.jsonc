@@ -4,7 +4,7 @@
   "properties": {
     "diagnostic_id": {
       "type": "string",
-      "description": "ID do diagn\u00f3stico vinculado"
+      "description": "ID do diagnóstico vinculado"
     },
     "diagnostic_type": {
       "type": "string",
@@ -21,7 +21,7 @@
         "ManagementDiagnostic",
         "WorkloadDiagnostic"
       ],
-      "description": "Tipo de diagn\u00f3stico"
+      "description": "Tipo de diagnóstico"
     },
     "workshop_id": {
       "type": "string",
@@ -29,28 +29,28 @@
     },
     "employee_id": {
       "type": "string",
-      "description": "ID do colaborador (se aplic\u00e1vel)"
+      "description": "ID do colaborador (se aplicável)"
     },
     "version": {
       "type": "integer",
       "default": 1,
-      "description": "Vers\u00e3o do plano (1 = original, 2+ = refinado)"
+      "description": "Versão do plano (1 = original, 2+ = refinado)"
     },
     "previous_version_id": {
       "type": "string",
-      "description": "ID da vers\u00e3o anterior (se refinado)"
+      "description": "ID da versão anterior (se refinado)"
     },
     "generated_from_justifications": {
       "type": "boolean",
       "default": false,
-      "description": "Se foi gerado usando justificativas do usu\u00e1rio"
+      "description": "Se foi gerado usando justificativas do usuário"
     },
     "plan_data": {
       "type": "object",
       "properties": {
         "diagnostic_summary": {
           "type": "string",
-          "description": "Resumo do diagn\u00f3stico"
+          "description": "Resumo do diagnóstico"
         },
         "main_objective": {
           "type": "string",
@@ -77,7 +77,7 @@
               }
             }
           },
-          "description": "Direcionamentos por \u00e1rea"
+          "description": "Direcionamentos por área"
         },
         "timeline_plan": {
           "type": "object",
@@ -87,21 +87,21 @@
               "items": {
                 "type": "string"
               },
-              "description": "A\u00e7\u00f5es de curto prazo (0-30 dias)"
+              "description": "Ações de curto prazo (0-30 dias)"
             },
             "medium_term": {
               "type": "array",
               "items": {
                 "type": "string"
               },
-              "description": "A\u00e7\u00f5es de m\u00e9dio prazo (30-60 dias)"
+              "description": "Ações de médio prazo (30-60 dias)"
             },
             "long_term": {
               "type": "array",
               "items": {
                 "type": "string"
               },
-              "description": "A\u00e7\u00f5es de longo prazo (60-90 dias)"
+              "description": "Ações de longo prazo (60-90 dias)"
             }
           }
         },
@@ -160,7 +160,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Pr\u00f3ximos passos para esta semana"
+          "description": "Próximos passos para esta semana"
         }
       }
     },
@@ -213,7 +213,7 @@
     "completion_percentage": {
       "type": "number",
       "default": 0,
-      "description": "Percentual de conclus\u00e3o do plano"
+      "description": "Percentual de conclusão do plano"
     },
     "generated_by_ai": {
       "type": "boolean",
@@ -237,6 +237,18 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -249,13 +261,41 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     }
   }
 }

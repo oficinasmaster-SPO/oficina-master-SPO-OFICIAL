@@ -8,11 +8,11 @@
     },
     "voucher_use_id": {
       "type": "string",
-      "description": "ID do uso do voucher (se aplic\u00e1vel)"
+      "description": "ID do uso do voucher (se aplicável)"
     },
     "voucher_code": {
       "type": "string",
-      "description": "C\u00f3digo do voucher (cache)"
+      "description": "Código do voucher (cache)"
     },
     "workshop_id": {
       "type": "string",
@@ -37,23 +37,23 @@
         "expired",
         "approval_deadline_warning"
       ],
-      "description": "Tipo da notifica\u00e7\u00e3o"
+      "description": "Tipo da notificação"
     },
     "title": {
       "type": "string",
-      "description": "T\u00edtulo da notifica\u00e7\u00e3o"
+      "description": "Título da notificação"
     },
     "message": {
       "type": "string",
-      "description": "Mensagem da notifica\u00e7\u00e3o"
+      "description": "Mensagem da notificação"
     },
     "sent_to_user_id": {
       "type": "string",
-      "description": "ID do usu\u00e1rio destinat\u00e1rio"
+      "description": "ID do usuário destinatário"
     },
     "triggered_by_user_id": {
       "type": "string",
-      "description": "ID do usu\u00e1rio que disparou a a\u00e7\u00e3o"
+      "description": "ID do usuário que disparou a ação"
     },
     "is_read": {
       "type": "boolean",
@@ -94,6 +94,18 @@
               }
             }
           ]
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -118,6 +130,18 @@
               }
             }
           ]
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -130,6 +154,18 @@
         },
         {
           "sent_to_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -138,6 +174,18 @@
         {
           "user_condition": {
             "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
           }
         }
       ]

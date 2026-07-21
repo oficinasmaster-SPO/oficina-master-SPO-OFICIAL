@@ -20,7 +20,7 @@
         "financeiro",
         "geral"
       ],
-      "description": "\u00c1rea do colaborador"
+      "description": "Área do colaborador"
     },
     "goal_type": {
       "type": "string",
@@ -37,7 +37,7 @@
     },
     "period": {
       "type": "string",
-      "description": "Per\u00edodo (YYYY-MM)"
+      "description": "Período (YYYY-MM)"
     },
     "goal_value": {
       "type": "number",
@@ -52,7 +52,7 @@
     "daily_goal": {
       "type": "number",
       "default": 0,
-      "description": "Meta di\u00e1ria (goal_value / 22)"
+      "description": "Meta diária (goal_value / 22)"
     },
     "achievement_percentage": {
       "type": "number",
@@ -77,7 +77,7 @@
     },
     "area_goal_id": {
       "type": "string",
-      "description": "ID da meta de \u00e1rea relacionada (opcional)"
+      "description": "ID da meta de área relacionada (opcional)"
     },
     "central_goal_id": {
       "type": "string",
@@ -85,7 +85,7 @@
     },
     "notes": {
       "type": "string",
-      "description": "Observa\u00e7\u00f5es sobre a meta"
+      "description": "Observações sobre a meta"
     }
   },
   "required": [
@@ -113,6 +113,18 @@
           "user_condition": {
             "role": "user"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -125,6 +137,18 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -136,6 +160,18 @@
         {
           "user_condition": {
             "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
           }
         }
       ]

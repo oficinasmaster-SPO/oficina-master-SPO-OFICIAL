@@ -19,7 +19,7 @@
     },
     "context_id": {
       "type": "string",
-      "description": "ID do evento/atendimento espec\u00edfico (opcional)"
+      "description": "ID do evento/atendimento específico (opcional)"
     },
     "respondent_name": {
       "type": "string"
@@ -56,6 +56,18 @@
         },
         {
           "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -68,6 +80,18 @@
         },
         {
           "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -80,6 +104,18 @@
         },
         {
           "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     }

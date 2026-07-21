@@ -25,39 +25,39 @@
     "max_vouchers_per_month": {
       "type": "integer",
       "default": 5,
-      "description": "M\u00e1ximo de vouchers que pode gerar por m\u00eas"
+      "description": "Máximo de vouchers que pode gerar por mês"
     },
     "max_discount_percent": {
       "type": "number",
       "default": 20,
       "maximum": 100,
-      "description": "Desconto m\u00e1ximo permitido (%)"
+      "description": "Desconto máximo permitido (%)"
     },
     "max_discount_value": {
       "type": "number",
-      "description": "Valor m\u00e1ximo de desconto fixo permitido (R$)"
+      "description": "Valor máximo de desconto fixo permitido (R$)"
     },
     "max_sale_value": {
       "type": "number",
-      "description": "Valor m\u00e1ximo de venda permitido com voucher (R$)"
+      "description": "Valor máximo de venda permitido com voucher (R$)"
     },
     "vouchers_used_this_month": {
       "type": "integer",
       "default": 0,
-      "description": "Vouchers gerados no m\u00eas atual"
+      "description": "Vouchers gerados no mês atual"
     },
     "current_month": {
       "type": "string",
-      "description": "M\u00eas atual de refer\u00eancia (YYYY-MM)"
+      "description": "Mês atual de referência (YYYY-MM)"
     },
     "active": {
       "type": "boolean",
       "default": true,
-      "description": "Se o vendedor est\u00e1 autorizado a gerar vouchers"
+      "description": "Se o vendedor está autorizado a gerar vouchers"
     },
     "notes": {
       "type": "string",
-      "description": "Observa\u00e7\u00f5es sobre as regras"
+      "description": "Observações sobre as regras"
     }
   },
   "required": [
@@ -84,6 +84,18 @@
               }
             }
           ]
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -123,6 +135,18 @@
         },
         {
           "seller_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -144,6 +168,18 @@
               }
             }
           ]
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -165,6 +201,18 @@
               }
             }
           ]
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     }

@@ -16,7 +16,7 @@
     },
     "title": {
       "type": "string",
-      "description": "T\u00edtulo do cargo"
+      "description": "Título do cargo"
     },
     "level": {
       "type": "string",
@@ -27,7 +27,7 @@
         "tecnico",
         "auxiliar"
       ],
-      "description": "N\u00edvel hier\u00e1rquico"
+      "description": "Nível hierárquico"
     },
     "parent_position_id": {
       "type": "string",
@@ -88,6 +88,18 @@
               }
             }
           ]
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -124,6 +136,18 @@
               }
             }
           ]
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -160,6 +184,18 @@
               }
             }
           ]
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     }

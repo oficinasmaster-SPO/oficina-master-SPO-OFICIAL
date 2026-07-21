@@ -4,19 +4,19 @@
   "properties": {
     "page_name": {
       "type": "string",
-      "description": "Nome da p\u00e1gina"
+      "description": "Nome da página"
     },
     "title": {
       "type": "string",
-      "description": "T\u00edtulo da ajuda"
+      "description": "Título da ajuda"
     },
     "description": {
       "type": "string",
-      "description": "Descri\u00e7\u00e3o"
+      "description": "Descrição"
     },
     "video_url": {
       "type": "string",
-      "description": "URL do v\u00eddeo embed"
+      "description": "URL do vídeo embed"
     },
     "faqs": {
       "type": "array",
@@ -35,12 +35,12 @@
     },
     "full_video_url": {
       "type": "string",
-      "description": "URL do v\u00eddeo completo"
+      "description": "URL do vídeo completo"
     },
     "enabled": {
       "type": "boolean",
       "default": true,
-      "description": "V\u00eddeo ativo"
+      "description": "Vídeo ativo"
     }
   },
   "required": [
@@ -49,20 +49,68 @@
   ],
   "rls": {
     "create": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     },
     "read": {},
     "update": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     }
   }
 }

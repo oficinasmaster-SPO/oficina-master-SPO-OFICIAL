@@ -8,7 +8,7 @@
     },
     "gestor_id": {
       "type": "string",
-      "description": "ID do gestor respons\u00e1vel"
+      "description": "ID do gestor responsável"
     },
     "department": {
       "type": "string",
@@ -17,7 +17,7 @@
     "start_date": {
       "type": "string",
       "format": "date",
-      "description": "Data de in\u00edcio"
+      "description": "Data de início"
     },
     "end_date": {
       "type": "string",
@@ -29,7 +29,7 @@
       "items": {
         "type": "string"
       },
-      "description": "Entreg\u00e1veis e metas"
+      "description": "Entregáveis e metas"
     },
     "behavior_attitude": {
       "type": "array",
@@ -41,7 +41,7 @@
     "next_alignment_date": {
       "type": "string",
       "format": "date",
-      "description": "Data do pr\u00f3ximo alinhamento"
+      "description": "Data do próximo alinhamento"
     },
     "employee_signature": {
       "type": "string",
@@ -89,6 +89,18 @@
           "user_condition": {
             "role": "user"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -101,6 +113,18 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -112,6 +136,18 @@
         {
           "user_condition": {
             "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
           }
         }
       ]

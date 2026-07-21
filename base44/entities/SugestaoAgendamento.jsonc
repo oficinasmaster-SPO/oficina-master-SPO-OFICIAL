@@ -4,7 +4,7 @@
   "properties": {
     "consultor_id": {
       "type": "string",
-      "description": "ID do consultor respons\u00e1vel"
+      "description": "ID do consultor responsável"
     },
     "consultor_nome": {
       "type": "string",
@@ -27,11 +27,11 @@
       "items": {
         "type": "string"
       },
-      "description": "E-mails dos s\u00f3cios para notifica\u00e7\u00e3o"
+      "description": "E-mails dos sócios para notificação"
     },
     "tipo_atendimento_sugerido": {
       "type": "string",
-      "description": "Tipo sugerido pela IA baseado no hist\u00f3rico"
+      "description": "Tipo sugerido pela IA baseado no histórico"
     },
     "tipo_atendimento_final": {
       "type": "string",
@@ -57,7 +57,7 @@
     },
     "score_prioridade": {
       "type": "integer",
-      "description": "Score calculado pela engine de prioriza\u00e7\u00e3o"
+      "description": "Score calculado pela engine de priorização"
     },
     "nivel_criticidade": {
       "type": "string",
@@ -67,25 +67,25 @@
         "nunca",
         "ok"
       ],
-      "description": "N\u00edvel de criticidade do cliente"
+      "description": "Nível de criticidade do cliente"
     },
     "motivo_urgencia": {
       "type": "string",
-      "description": "Texto explicativo ex: '3 reuni\u00f5es atrasadas \u00b7 45d sem contato \u00b7 4 CAs pendentes'"
+      "description": "Texto explicativo ex: '3 reuniões atrasadas · 45d sem contato · 4 CAs pendentes'"
     },
     "reunioes_atrasadas": {
       "type": "integer",
       "default": 0,
-      "description": "N\u00famero de reuni\u00f5es atrasadas"
+      "description": "Número de reuniões atrasadas"
     },
     "reunioes_pendentes_plano": {
       "type": "integer",
       "default": 0,
-      "description": "N\u00famero de ContractAttendances pendentes"
+      "description": "Número de ContractAttendances pendentes"
     },
     "dias_sem_contato": {
       "type": "integer",
-      "description": "Dias desde o \u00faltimo contato/reuni\u00e3o"
+      "description": "Dias desde o último contato/reunião"
     },
     "contract_attendance_id": {
       "type": "string",
@@ -100,7 +100,7 @@
         "processando"
       ],
       "default": "pendente",
-      "description": "Status da sugest\u00e3o"
+      "description": "Status da sugestão"
     },
     "motivo_reprovacao": {
       "type": "string",
@@ -108,7 +108,7 @@
     },
     "atendimento_criado_id": {
       "type": "string",
-      "description": "ID do ConsultoriaAtendimento criado ap\u00f3s aprova\u00e7\u00e3o"
+      "description": "ID do ConsultoriaAtendimento criado após aprovação"
     },
     "google_event_id": {
       "type": "string",
@@ -121,7 +121,7 @@
     "email_enviado": {
       "type": "boolean",
       "default": false,
-      "description": "Se o e-mail de confirma\u00e7\u00e3o foi enviado"
+      "description": "Se o e-mail de confirmação foi enviado"
     },
     "periodo_geracao": {
       "type": "string",
@@ -140,9 +140,25 @@
   ],
   "rls": {
     "create": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     },
     "read": {
       "$or": [
@@ -162,6 +178,18 @@
         },
         {
           "data.consultor_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -183,13 +211,41 @@
         },
         {
           "data.consultor_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     }
   }
 }

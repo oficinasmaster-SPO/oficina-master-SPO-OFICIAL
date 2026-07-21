@@ -8,7 +8,7 @@
     },
     "evaluator_id": {
       "type": "string",
-      "description": "ID do usu\u00e1rio que fez a avalia\u00e7\u00e3o"
+      "description": "ID do usuário que fez a avaliação"
     },
     "workshop_id": {
       "type": "string",
@@ -29,7 +29,7 @@
         "self"
       ],
       "default": "manager",
-      "description": "Tipo de avalia\u00e7\u00e3o: Gestor ou Autoavalia\u00e7\u00e3o"
+      "description": "Tipo de avaliação: Gestor ou Autoavaliação"
     },
     "technical_scores": {
       "type": "object",
@@ -86,7 +86,7 @@
           "type": "number"
         }
       },
-      "description": "Notas dos 17 crit\u00e9rios t\u00e9cnicos (0-10)"
+      "description": "Notas dos 17 critérios técnicos (0-10)"
     },
     "emotional_scores": {
       "type": "object",
@@ -131,15 +131,15 @@
           "type": "number"
         }
       },
-      "description": "Notas dos 13 crit\u00e9rios emocionais (0-10)"
+      "description": "Notas dos 13 critérios emocionais (0-10)"
     },
     "technical_average": {
       "type": "number",
-      "description": "M\u00e9dia das compet\u00eancias t\u00e9cnicas"
+      "description": "Média das competências técnicas"
     },
     "emotional_average": {
       "type": "number",
-      "description": "M\u00e9dia das compet\u00eancias emocionais"
+      "description": "Média das competências emocionais"
     },
     "classification": {
       "type": "string",
@@ -151,16 +151,16 @@
         "reconhecimento",
         "investimento"
       ],
-      "description": "Classifica\u00e7\u00e3o na matriz"
+      "description": "Classificação na matriz"
     },
     "recommendation": {
       "type": "string",
-      "description": "Recomenda\u00e7\u00e3o autom\u00e1tica baseada na classifica\u00e7\u00e3o"
+      "description": "Recomendação automática baseada na classificação"
     },
     "completed": {
       "type": "boolean",
       "default": false,
-      "description": "Diagn\u00f3stico completo"
+      "description": "Diagnóstico completo"
     }
   },
   "required": [
@@ -216,6 +216,18 @@
         },
         {
           "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -255,6 +267,18 @@
         },
         {
           "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -294,6 +318,18 @@
         },
         {
           "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     }

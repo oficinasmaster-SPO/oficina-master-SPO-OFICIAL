@@ -32,7 +32,7 @@
     },
     "token": {
       "type": "string",
-      "description": "UUID do convite \u00fanico"
+      "description": "UUID do convite único"
     },
     "status": {
       "type": "string",
@@ -138,6 +138,18 @@
         },
         {
           "workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     }

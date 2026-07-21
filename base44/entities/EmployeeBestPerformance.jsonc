@@ -29,57 +29,57 @@
         "marketing",
         "financeiro"
       ],
-      "description": "\u00c1rea do colaborador"
+      "description": "Área do colaborador"
     },
     "date": {
       "type": "string",
       "format": "date",
-      "description": "Data do melhor m\u00eas (YYYY-MM-DD)"
+      "description": "Data do melhor mês (YYYY-MM-DD)"
     },
     "revenue_total": {
       "type": "number",
       "default": 0,
-      "description": "Faturamento total do melhor m\u00eas"
+      "description": "Faturamento total do melhor mês"
     },
     "revenue_parts": {
       "type": "number",
       "default": 0,
-      "description": "Faturamento de pe\u00e7as do melhor m\u00eas"
+      "description": "Faturamento de peças do melhor mês"
     },
     "revenue_services": {
       "type": "number",
       "default": 0,
-      "description": "Faturamento de servi\u00e7os do melhor m\u00eas"
+      "description": "Faturamento de serviços do melhor mês"
     },
     "profit_percentage": {
       "type": "number",
       "default": 0,
-      "description": "Percentual de lucro do melhor m\u00eas"
+      "description": "Percentual de lucro do melhor mês"
     },
     "rentability_percentage": {
       "type": "number",
       "default": 0,
-      "description": "Percentual de rentabilidade do melhor m\u00eas"
+      "description": "Percentual de rentabilidade do melhor mês"
     },
     "customer_volume": {
       "type": "number",
       "default": 0,
-      "description": "Volume de clientes do melhor m\u00eas"
+      "description": "Volume de clientes do melhor mês"
     },
     "average_ticket": {
       "type": "number",
       "default": 0,
-      "description": "Ticket m\u00e9dio do melhor m\u00eas (calculado)"
+      "description": "Ticket médio do melhor mês (calculado)"
     },
     "average_ticket_parts": {
       "type": "number",
       "default": 0,
-      "description": "Ticket m\u00e9dio de pe\u00e7as (calculado)"
+      "description": "Ticket médio de peças (calculado)"
     },
     "average_ticket_services": {
       "type": "number",
       "default": 0,
-      "description": "Ticket m\u00e9dio de servi\u00e7os (calculado)"
+      "description": "Ticket médio de serviços (calculado)"
     }
   },
   "required": [
@@ -111,6 +111,18 @@
         },
         {
           "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -150,6 +162,18 @@
         },
         {
           "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -177,6 +201,18 @@
         },
         {
           "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -204,6 +240,18 @@
         },
         {
           "workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     }

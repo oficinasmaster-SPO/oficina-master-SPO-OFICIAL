@@ -18,23 +18,23 @@
         "external"
       ],
       "default": "external",
-      "description": "Tipo can\u00f4nico do usu\u00e1rio: internal = equipe Oficinas Master | external = cliente/oficina. FONTE \u00daNICA DE VERDADE para l\u00f3gica de acesso."
+      "description": "Tipo canônico do usuário: internal = equipe Oficinas Master | external = cliente/oficina. FONTE ÚNICA DE VERDADE para lógica de acesso."
     },
     "consulting_firm_id": {
       "type": "string",
-      "description": "ID do escrit\u00f3rio de consultoria ao qual este usu\u00e1rio pertence. Preenchido apenas para user_type=internal."
+      "description": "ID do escritório de consultoria ao qual este usuário pertence. Preenchido apenas para user_type=internal."
     },
     "company_id": {
       "type": "string",
-      "description": "ID da empresa (matriz) a qual este usu\u00e1rio pertence."
+      "description": "ID da empresa (matriz) a qual este usuário pertence."
     },
     "workshop_id": {
       "type": "string",
-      "description": "ID da oficina principal do usu\u00e1rio. Preenchido apenas para user_type=external. [LEGADO \u2014 fonte prim\u00e1ria \u00e9 TenantMembership]"
+      "description": "ID da oficina principal do usuário. Preenchido apenas para user_type=external. [LEGADO — fonte primária é TenantMembership]"
     },
     "tenant_workshop_id": {
       "type": "string",
-      "description": "Workshop da TenantMembership ATIVA na sess\u00e3o. Denormalizado \u2014 mantido EXCLUSIVAMENTE pela function resolveTenant a partir de membership validada (nunca setado pelo frontend). Usado pelas policies RLS como fonte prim\u00e1ria de tenant."
+      "description": "Workshop da TenantMembership ATIVA na sessão. Denormalizado — mantido EXCLUSIVAMENTE pela function resolveTenant a partir de membership validada (nunca setado pelo frontend). Usado pelas policies RLS como fonte primária de tenant."
     },
     "job_role": {
       "type": "string",
@@ -61,11 +61,11 @@
         "outros"
       ],
       "default": "outros",
-      "description": "[DEPRECATED 2026-06-10] N\u00e3o usar para autoriza\u00e7\u00e3o. Fonte can\u00f4nica: Employee.job_role \u2192 Employee.profile_id \u2192 UserProfile.roles. Mantido apenas para retrocompatibilidade de campos de display/UX."
+      "description": "[DEPRECATED 2026-06-10] Não usar para autorização. Fonte canônica: Employee.job_role → Employee.profile_id → UserProfile.roles. Mantido apenas para retrocompatibilidade de campos de display/UX."
     },
     "profile_id": {
       "type": "string",
-      "description": "[DEPRECATED 2026-06-10] N\u00e3o usar para autoriza\u00e7\u00e3o. Fonte can\u00f4nica: Employee.profile_id \u2192 UserProfile.roles (PermissionsContext). Este campo no User \u00e9 ignorado pelo engine de permiss\u00f5es."
+      "description": "[DEPRECATED 2026-06-10] Não usar para autorização. Fonte canônica: Employee.profile_id → UserProfile.roles (PermissionsContext). Este campo no User é ignorado pelo engine de permissões."
     }
   },
   "rls": {
@@ -108,6 +108,18 @@
         },
         {
           "id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     }

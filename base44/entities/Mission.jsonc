@@ -4,24 +4,24 @@
   "properties": {
     "id": {
       "type": "string",
-      "description": "ID \u00fanico da miss\u00e3o (ex: agenda_cheia)"
+      "description": "ID único da missão (ex: agenda_cheia)"
     },
     "icon": {
       "type": "string",
-      "description": "Emoji ou \u00edcone da miss\u00e3o (ex: \ud83d\udcc5)"
+      "description": "Emoji ou ícone da missão (ex: 📅)"
     },
     "name": {
       "type": "string",
-      "description": "Nome exib\u00edvel da miss\u00e3o"
+      "description": "Nome exibível da missão"
     },
     "description": {
       "type": "string",
-      "description": "Descri\u00e7\u00e3o detalhada da miss\u00e3o"
+      "description": "Descrição detalhada da missão"
     },
     "is_default": {
       "type": "boolean",
       "default": false,
-      "description": "Se \u00e9 uma miss\u00e3o padr\u00e3o do sistema"
+      "description": "Se é uma missão padrão do sistema"
     }
   },
   "required": [
@@ -30,20 +30,68 @@
   ],
   "rls": {
     "create": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     },
     "read": true,
     "update": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     }
   }
 }

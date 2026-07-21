@@ -36,11 +36,11 @@
     },
     "spouse_name": {
       "type": "string",
-      "description": "Nome do c\u00f4njuge/namorado(a)"
+      "description": "Nome do cônjuge/namorado(a)"
     },
     "spouse_phone": {
       "type": "string",
-      "description": "Telefone do c\u00f4njuge/namorado(a)"
+      "description": "Telefone do cônjuge/namorado(a)"
     },
     "big_dream": {
       "type": "string"
@@ -105,6 +105,18 @@
           "user_condition": {
             "role": "user"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -119,6 +131,18 @@
           "user_condition": {
             "role": "user"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -131,6 +155,18 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -142,6 +178,18 @@
         {
           "user_condition": {
             "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
           }
         }
       ]

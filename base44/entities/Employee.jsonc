@@ -4,7 +4,7 @@
   "properties": {
     "workshop_id": {
       "type": "string",
-      "description": "ID da oficina (Rela\u00e7\u00e3o 1-N: Workshop \u2192 Employee)"
+      "description": "ID da oficina (Relação 1-N: Workshop → Employee)"
     },
     "company_id": {
       "type": "string",
@@ -12,27 +12,27 @@
     },
     "consulting_firm_id": {
       "type": "string",
-      "description": "ID do escrit\u00f3rio de consultoria que gerencia este colaborador (duplicado para otimiza\u00e7\u00e3o de consulta)."
+      "description": "ID do escritório de consultoria que gerencia este colaborador (duplicado para otimização de consulta)."
     },
     "user_id": {
       "type": "string",
-      "description": "ID do usu\u00e1rio (Rela\u00e7\u00e3o 1-1: User \u2194 Employee) - Cada colaborador tem um \u00fanico usu\u00e1rio"
+      "description": "ID do usuário (Relação 1-1: User ↔ Employee) - Cada colaborador tem um único usuário"
     },
     "owner_id": {
       "type": "string",
-      "description": "ID do propriet\u00e1rio/admin respons\u00e1vel"
+      "description": "ID do proprietário/admin responsável"
     },
     "profile_id": {
       "type": "string",
-      "description": "ID do perfil de acesso (Rela\u00e7\u00e3o 1-1: Employee \u2192 UserProfile) - Define permiss\u00f5es"
+      "description": "ID do perfil de acesso (Relação 1-1: Employee → UserProfile) - Define permissões"
     },
     "job_description_id": {
       "type": "string",
-      "description": "ID da descri\u00e7\u00e3o de cargo vinculada (Rela\u00e7\u00e3o N-1: Employee \u2192 JobDescription)"
+      "description": "ID da descrição de cargo vinculada (Relação N-1: Employee → JobDescription)"
     },
     "admin_responsavel_id": {
       "type": "string",
-      "description": "ID do administrador respons\u00e1vel (Rela\u00e7\u00e3o 1-N: Admin \u2192 Employee)"
+      "description": "ID do administrador responsável (Relação 1-N: Admin → Employee)"
     },
     "full_name": {
       "type": "string",
@@ -41,7 +41,7 @@
     "email": {
       "type": "string",
       "format": "email",
-      "description": "Email \u00fanico do colaborador"
+      "description": "Email único do colaborador"
     },
     "cpf": {
       "type": "string",
@@ -82,7 +82,7 @@
           "type": "string"
         }
       },
-      "description": "Endere\u00e7o completo"
+      "description": "Endereço completo"
     },
     "profile_picture_url": {
       "type": "string",
@@ -113,7 +113,7 @@
           }
         }
       },
-      "description": "Hist\u00f3rico de contratos anteriores"
+      "description": "Histórico de contratos anteriores"
     },
     "career_history": {
       "type": "array",
@@ -139,11 +139,11 @@
           }
         }
       },
-      "description": "Hist\u00f3rico de cargos ocupados"
+      "description": "Histórico de cargos ocupados"
     },
     "position": {
       "type": "string",
-      "description": "Cargo/posi\u00e7\u00e3o no workshop"
+      "description": "Cargo/posição no workshop"
     },
     "job_role": {
       "type": "string",
@@ -171,7 +171,7 @@
         "outros"
       ],
       "default": "outros",
-      "description": "Fun\u00e7\u00e3o espec\u00edfica no sistema"
+      "description": "Função específica no sistema"
     },
     "user_type": {
       "type": "string",
@@ -180,7 +180,7 @@
         "external"
       ],
       "default": "external",
-      "description": "Tipo can\u00f4nico do usu\u00e1rio: internal = equipe Oficinas Master | external = cliente/oficina. Fonte \u00fanica de verdade \u2014 populado no cadastro e no backfill."
+      "description": "Tipo canônico do usuário: internal = equipe Oficinas Master | external = cliente/oficina. Fonte única de verdade — populado no cadastro e no backfill."
     },
     "tipo_vinculo": {
       "type": "string",
@@ -189,7 +189,7 @@
         "cliente"
       ],
       "default": "cliente",
-      "description": "Tipo de v\u00ednculo: interno (funcion\u00e1rio) ou cliente (externo). Mantido para retrocompatibilidade \u2014 usar user_type como fonte can\u00f4nica."
+      "description": "Tipo de vínculo: interno (funcionário) ou cliente (externo). Mantido para retrocompatibilidade — usar user_type como fonte canônica."
     },
     "area": {
       "type": "string",
@@ -202,7 +202,7 @@
         "financeiro",
         "gerencia"
       ],
-      "description": "\u00c1rea de atua\u00e7\u00e3o"
+      "description": "Área de atuação"
     },
     "user_status": {
       "type": "string",
@@ -218,29 +218,29 @@
     "is_internal": {
       "type": "boolean",
       "default": false,
-      "description": "Indica se \u00e9 membro interno da empresa. Mantido para retrocompatibilidade \u2014 usar user_type como fonte can\u00f4nica."
+      "description": "Indica se é membro interno da empresa. Mantido para retrocompatibilidade — usar user_type como fonte canônica."
     },
     "is_partner": {
       "type": "boolean",
       "default": false,
-      "description": "Indica se \u00e9 s\u00f3cio"
+      "description": "Indica se é sócio"
     },
     "hire_date": {
       "type": "string",
       "format": "date",
-      "description": "Data de contrata\u00e7\u00e3o"
+      "description": "Data de contratação"
     },
     "salary": {
       "type": "number",
-      "description": "Sal\u00e1rio do colaborador"
+      "description": "Salário do colaborador"
     },
     "commission": {
       "type": "number",
-      "description": "Comiss\u00e3o mensal estimada"
+      "description": "Comissão mensal estimada"
     },
     "bonus": {
       "type": "number",
-      "description": "Bonifica\u00e7\u00e3o/Pr\u00eamio"
+      "description": "Bonificação/Prêmio"
     },
     "benefits": {
       "type": "array",
@@ -255,7 +255,7 @@
           }
         }
       },
-      "description": "Lista de benef\u00edcios"
+      "description": "Lista de benefícios"
     },
     "commission_rules": {
       "type": "array",
@@ -291,22 +291,22 @@
       "properties": {
         "lunch_start": {
           "type": "string",
-          "description": "Hor\u00e1rio in\u00edcio almo\u00e7o"
+          "description": "Horário início almoço"
         },
         "lunch_end": {
           "type": "string",
-          "description": "Hor\u00e1rio fim almo\u00e7o"
+          "description": "Horário fim almoço"
         },
         "work_start": {
           "type": "string",
-          "description": "Hor\u00e1rio in\u00edcio expediente"
+          "description": "Horário início expediente"
         },
         "work_end": {
           "type": "string",
-          "description": "Hor\u00e1rio fim expediente"
+          "description": "Horário fim expediente"
         }
       },
-      "description": "Configura\u00e7\u00f5es de turno"
+      "description": "Configurações de turno"
     },
     "first_login_at": {
       "type": "string",
@@ -316,7 +316,7 @@
     "last_login_at": {
       "type": "string",
       "format": "date-time",
-      "description": "Data do \u00faltimo login"
+      "description": "Data do último login"
     },
     "cdc_completed": {
       "type": "boolean",
@@ -325,7 +325,7 @@
     },
     "cdc_data": {
       "type": "object",
-      "description": "Dados do \u00faltimo CDC preenchido"
+      "description": "Dados do último CDC preenchido"
     },
     "audit_log": {
       "type": "array",
@@ -334,11 +334,11 @@
         "properties": {
           "changed_by": {
             "type": "string",
-            "description": "ID do usu\u00e1rio que fez a altera\u00e7\u00e3o"
+            "description": "ID do usuário que fez a alteração"
           },
           "changed_by_email": {
             "type": "string",
-            "description": "Email do usu\u00e1rio que fez a altera\u00e7\u00e3o"
+            "description": "Email do usuário que fez a alteração"
           },
           "changed_at": {
             "type": "string",
@@ -346,7 +346,7 @@
           },
           "action": {
             "type": "string",
-            "description": "Tipo de a\u00e7\u00e3o (create, update, delete)"
+            "description": "Tipo de ação (create, update, delete)"
           },
           "field_changed": {
             "type": "string",
@@ -360,7 +360,7 @@
           }
         }
       },
-      "description": "Log de auditoria (Rela\u00e7\u00e3o 1-N: Employee \u2192 AuditLog)"
+      "description": "Log de auditoria (Relação 1-N: Employee → AuditLog)"
     },
     "best_month_history": {
       "type": "object",
@@ -483,6 +483,18 @@
         },
         {
           "data.workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -516,6 +528,18 @@
         },
         {
           "data.workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -558,6 +582,18 @@
         },
         {
           "data.workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -594,6 +630,18 @@
         },
         {
           "data.workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     }

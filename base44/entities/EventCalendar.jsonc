@@ -12,7 +12,7 @@
     },
     "event_name": {
       "type": "string",
-      "description": "Nome do evento (ex: Imers\u00e3o 1\u00ba Semestre 2026)"
+      "description": "Nome do evento (ex: Imersão 1º Semestre 2026)"
     },
     "event_date": {
       "type": "string",
@@ -29,16 +29,16 @@
     },
     "max_participants": {
       "type": "integer",
-      "description": "M\u00e1ximo de participantes (opcional)"
+      "description": "Máximo de participantes (opcional)"
     },
     "description": {
       "type": "string",
-      "description": "Descri\u00e7\u00e3o do evento"
+      "description": "Descrição do evento"
     },
     "is_active": {
       "type": "boolean",
       "default": true,
-      "description": "Se o evento est\u00e1 ativo"
+      "description": "Se o evento está ativo"
     }
   },
   "required": [
@@ -49,20 +49,68 @@
   ],
   "rls": {
     "create": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     },
     "read": true,
     "update": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     }
   }
 }

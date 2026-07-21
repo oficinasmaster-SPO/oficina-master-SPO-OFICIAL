@@ -8,7 +8,7 @@
     },
     "voucher_code": {
       "type": "string",
-      "description": "C\u00f3digo do voucher (cache)"
+      "description": "Código do voucher (cache)"
     },
     "workshop_id": {
       "type": "string",
@@ -44,12 +44,12 @@
     },
     "final_value": {
       "type": "number",
-      "description": "Valor final ap\u00f3s desconto"
+      "description": "Valor final após desconto"
     },
     "used_at": {
       "type": "string",
       "format": "date-time",
-      "description": "Data/hora de utiliza\u00e7\u00e3o"
+      "description": "Data/hora de utilização"
     },
     "used_by_seller_id": {
       "type": "string",
@@ -67,7 +67,7 @@
         "rejected"
       ],
       "default": "pending",
-      "description": "Status de aprova\u00e7\u00e3o do uso"
+      "description": "Status de aprovação do uso"
     },
     "approved_by": {
       "type": "string",
@@ -80,24 +80,24 @@
     "approved_at": {
       "type": "string",
       "format": "date-time",
-      "description": "Data/hora da aprova\u00e7\u00e3o"
+      "description": "Data/hora da aprovação"
     },
     "approval_notes": {
       "type": "string",
-      "description": "Observa\u00e7\u00f5es da aprova\u00e7\u00e3o"
+      "description": "Observações da aprovação"
     },
     "rejection_reason": {
       "type": "string",
-      "description": "Motivo da rejei\u00e7\u00e3o"
+      "description": "Motivo da rejeição"
     },
     "negotiation_notes": {
       "type": "string",
-      "description": "Registro da negocia\u00e7\u00e3o com o cliente"
+      "description": "Registro da negociação com o cliente"
     },
     "approval_deadline": {
       "type": "string",
       "format": "date-time",
-      "description": "Prazo de 48h para aprova\u00e7\u00e3o"
+      "description": "Prazo de 48h para aprovação"
     }
   },
   "required": [
@@ -129,6 +129,18 @@
               }
             }
           ]
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -168,6 +180,18 @@
         },
         {
           "used_by_seller_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -189,6 +213,18 @@
               }
             }
           ]
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -210,6 +246,18 @@
               }
             }
           ]
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     }

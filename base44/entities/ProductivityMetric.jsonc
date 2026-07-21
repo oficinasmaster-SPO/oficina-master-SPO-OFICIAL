@@ -4,11 +4,11 @@
   "properties": {
     "code": {
       "type": "string",
-      "description": "C\u00f3digo \u00fanico da m\u00e9trica (ex: total_vendas)"
+      "description": "Código único da métrica (ex: total_vendas)"
     },
     "name": {
       "type": "string",
-      "description": "Nome vis\u00edvel (ex: Maior Vendedor)"
+      "description": "Nome visível (ex: Maior Vendedor)"
     },
     "category": {
       "type": "string",
@@ -46,7 +46,7 @@
         "min"
       ],
       "default": "sum",
-      "description": "Como consolidar os dados (Soma, M\u00e9dia, Contagem...)"
+      "description": "Como consolidar os dados (Soma, Média, Contagem...)"
     },
     "optimization_direction": {
       "type": "string",
@@ -55,11 +55,11 @@
         "lower_is_better"
       ],
       "default": "higher_is_better",
-      "description": "Dire\u00e7\u00e3o da meta (Mais \u00e9 melhor ou Menos \u00e9 melhor)"
+      "description": "Direção da meta (Mais é melhor ou Menos é melhor)"
     },
     "description": {
       "type": "string",
-      "description": "Instru\u00e7\u00f5es de preenchimento"
+      "description": "Instruções de preenchimento"
     },
     "requires_evidence": {
       "type": "boolean",
@@ -75,7 +75,7 @@
         "truck"
       ],
       "default": "all",
-      "description": "Filtro espec\u00edfico de ve\u00edculo (opcional)"
+      "description": "Filtro específico de veículo (opcional)"
     },
     "is_active": {
       "type": "boolean",
@@ -90,20 +90,68 @@
   ],
   "rls": {
     "create": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     },
     "read": true,
     "update": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     }
   }
 }

@@ -9,7 +9,7 @@
     "reference_month": {
       "type": "string",
       "format": "date",
-      "description": "M\u00eas de refer\u00eancia"
+      "description": "Mês de referência"
     },
     "total_revenue": {
       "type": "number",
@@ -42,7 +42,7 @@
           }
         }
       },
-      "description": "S\u00f3cios"
+      "description": "Sócios"
     },
     "managers": {
       "type": "object",
@@ -282,6 +282,18 @@
           "user_condition": {
             "role": "user"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -294,6 +306,18 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -305,6 +329,18 @@
         {
           "user_condition": {
             "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
           }
         }
       ]

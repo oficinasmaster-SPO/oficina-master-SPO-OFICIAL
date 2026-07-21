@@ -23,14 +23,14 @@
         "custom_role"
       ],
       "default": "job_role",
-      "description": "Tipo de vincula\u00e7\u00e3o de permiss\u00e3o"
+      "description": "Tipo de vinculação de permissão"
     },
     "custom_role_ids": {
       "type": "array",
       "items": {
         "type": "string"
       },
-      "description": "IDs das roles customizadas atribu\u00eddas a este perfil (Rela\u00e7\u00e3o 1-N: UserProfile \u2192 CustomRole)"
+      "description": "IDs das roles customizadas atribuídas a este perfil (Relação 1-N: UserProfile → CustomRole)"
     },
     "job_roles": {
       "type": "array",
@@ -59,7 +59,7 @@
           "outros"
         ]
       },
-      "description": "Fun\u00e7\u00f5es espec\u00edficas vinculadas a este perfil"
+      "description": "Funções específicas vinculadas a este perfil"
     },
     "status": {
       "type": "string",
@@ -72,7 +72,7 @@
     },
     "description": {
       "type": "string",
-      "description": "Descri\u00e7\u00e3o do perfil"
+      "description": "Descrição do perfil"
     },
     "roles": {
       "type": "array",
@@ -83,7 +83,7 @@
     },
     "sidebar_permissions": {
       "type": "object",
-      "description": "Permiss\u00f5es da sidebar",
+      "description": "Permissões da sidebar",
       "additionalProperties": {
         "type": "object",
         "properties": {
@@ -116,7 +116,7 @@
     },
     "module_permissions": {
       "type": "object",
-      "description": "Permiss\u00f5es por m\u00f3dulo",
+      "description": "Permissões por módulo",
       "properties": {
         "dashboard": {
           "type": "string",
@@ -242,21 +242,21 @@
       "items": {
         "type": "string"
       },
-      "description": "Lista de p\u00e1ginas/m\u00f3dulos que este perfil pode acessar"
+      "description": "Lista de páginas/módulos que este perfil pode acessar"
     },
     "users_count": {
       "type": "integer",
       "default": 0,
-      "description": "Quantidade de usu\u00e1rios vinculados (Rela\u00e7\u00e3o 1-N: UserProfile \u2192 User)"
+      "description": "Quantidade de usuários vinculados (Relação 1-N: UserProfile → User)"
     },
     "cloned_from": {
       "type": "string",
-      "description": "ID do perfil base usado para cria\u00e7\u00e3o"
+      "description": "ID do perfil base usado para criação"
     },
     "is_system": {
       "type": "boolean",
       "default": false,
-      "description": "Perfil do sistema (n\u00e3o edit\u00e1vel)"
+      "description": "Perfil do sistema (não editável)"
     },
     "audit_log": {
       "type": "array",
@@ -265,11 +265,11 @@
         "properties": {
           "changed_by": {
             "type": "string",
-            "description": "ID do usu\u00e1rio que fez a altera\u00e7\u00e3o"
+            "description": "ID do usuário que fez a alteração"
           },
           "changed_by_email": {
             "type": "string",
-            "description": "Email do usu\u00e1rio que fez a altera\u00e7\u00e3o"
+            "description": "Email do usuário que fez a alteração"
           },
           "changed_at": {
             "type": "string",
@@ -277,7 +277,7 @@
           },
           "action": {
             "type": "string",
-            "description": "Tipo de a\u00e7\u00e3o"
+            "description": "Tipo de ação"
           },
           "field_changed": {
             "type": "string",
@@ -291,11 +291,11 @@
           },
           "affected_users_count": {
             "type": "integer",
-            "description": "Quantidade de usu\u00e1rios afetados pela altera\u00e7\u00e3o"
+            "description": "Quantidade de usuários afetados pela alteração"
           }
         }
       },
-      "description": "Log de auditoria de altera\u00e7\u00f5es (Rela\u00e7\u00e3o 1-N: UserProfile \u2192 AuditLog)"
+      "description": "Log de auditoria de alterações (Relação 1-N: UserProfile → AuditLog)"
     }
   },
   "required": [
@@ -304,20 +304,68 @@
   ],
   "rls": {
     "create": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     },
     "read": true,
     "update": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     }
   }
 }

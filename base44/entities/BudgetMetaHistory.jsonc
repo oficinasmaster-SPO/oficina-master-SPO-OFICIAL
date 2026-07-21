@@ -12,28 +12,28 @@
     },
     "mes": {
       "type": "string",
-      "description": "M\u00eas de refer\u00eancia da meta (YYYY-MM)"
+      "description": "Mês de referência da meta (YYYY-MM)"
     },
     "version": {
       "type": "integer",
-      "description": "N\u00famero da vers\u00e3o (incremental: 1, 2, 3...)"
+      "description": "Número da versão (incremental: 1, 2, 3...)"
     },
     "changed_by": {
       "type": "string",
-      "description": "ID do usu\u00e1rio que fez a altera\u00e7\u00e3o"
+      "description": "ID do usuário que fez a alteração"
     },
     "changed_by_nome": {
       "type": "string",
-      "description": "Nome do usu\u00e1rio (cache)"
+      "description": "Nome do usuário (cache)"
     },
     "changed_by_email": {
       "type": "string",
-      "description": "Email do usu\u00e1rio (cache)"
+      "description": "Email do usuário (cache)"
     },
     "changed_at": {
       "type": "string",
       "format": "date-time",
-      "description": "Timestamp exato da altera\u00e7\u00e3o"
+      "description": "Timestamp exato da alteração"
     },
     "field_changed": {
       "type": "string",
@@ -49,11 +49,11 @@
     },
     "reason": {
       "type": "string",
-      "description": "Motivo/justificativa da altera\u00e7\u00e3o (obrigat\u00f3rio para meses fechados)"
+      "description": "Motivo/justificativa da alteração (obrigatório para meses fechados)"
     },
     "snapshot": {
       "type": "object",
-      "description": "Snapshot completo da meta ap\u00f3s altera\u00e7\u00e3o",
+      "description": "Snapshot completo da meta após alteração",
       "properties": {
         "faturamento_meta_rs": {
           "type": "number"
@@ -78,11 +78,11 @@
     "is_locked_change": {
       "type": "boolean",
       "default": false,
-      "description": "Se esta altera\u00e7\u00e3o foi em um m\u00eas j\u00e1 fechado (requer justificativa)"
+      "description": "Se esta alteração foi em um mês já fechado (requer justificativa)"
     },
     "ip_address": {
       "type": "string",
-      "description": "IP do usu\u00e1rio que fez a altera\u00e7\u00e3o (auditoria)"
+      "description": "IP do usuário que fez a alteração (auditoria)"
     },
     "user_agent": {
       "type": "string",
@@ -111,6 +111,18 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -126,18 +138,62 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
     "update": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     }
   }
 }

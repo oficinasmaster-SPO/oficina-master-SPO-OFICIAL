@@ -106,9 +106,11 @@ export default function BacklogDetailDrawer({ tarefa, user, onClose, onEdit }) {
     updateMutation.mutate({ status: newStatus, ...extra });
   };
 
+  const isInternal = user?.user_type === "internal" || user?.data?.user_type === "internal";
   const canEdit =
     !user ||
     user.role === "admin" ||
+    isInternal ||
     user.id === tarefa.created_by_id ||
     user.id === tarefa.assignee_id ||
     user.id === tarefa.assigned_to_id;

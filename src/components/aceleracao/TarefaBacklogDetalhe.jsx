@@ -58,7 +58,8 @@ export default function TarefaBacklogDetalhe({ tarefa, user, onVoltar, onEditar,
   }, [tarefa.created_by_id, tarefa.assigned_to_id, tarefa.requester_id]);
 
   // H1: ehCriador e ehExecutor usam campos corretos do schema
-  const ehCriador = !user || user.id === tarefa.created_by_id || user.role === 'admin';
+  const isInternal = user?.user_type === 'internal' || user?.data?.user_type === 'internal';
+  const ehCriador = !user || user.id === tarefa.created_by_id || user.role === 'admin' || isInternal;
   const ehExecutor = !ehCriador && (
     user?.id === tarefa.assignee_id || user?.id === tarefa.assigned_to_id
   );

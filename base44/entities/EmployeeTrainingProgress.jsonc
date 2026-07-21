@@ -8,11 +8,11 @@
     },
     "course_id": {
       "type": "string",
-      "description": "ID do curso (opcional para navega\u00e7\u00e3o)"
+      "description": "ID do curso (opcional para navegação)"
     },
     "module_id": {
       "type": "string",
-      "description": "ID do m\u00f3dulo"
+      "description": "ID do módulo"
     },
     "lesson_id": {
       "type": "string",
@@ -42,27 +42,27 @@
     "last_watched_position": {
       "type": "number",
       "default": 0,
-      "description": "Posi\u00e7\u00e3o onde parou (em segundos)"
+      "description": "Posição onde parou (em segundos)"
     },
     "completed_date": {
       "type": "string",
       "format": "date-time",
-      "description": "Data de conclus\u00e3o"
+      "description": "Data de conclusão"
     },
     "last_access_date": {
       "type": "string",
       "format": "date-time",
-      "description": "\u00daltimo acesso"
+      "description": "Último acesso"
     },
     "assessment_attempts": {
       "type": "integer",
       "default": 0,
-      "description": "N\u00famero de tentativas na avalia\u00e7\u00e3o"
+      "description": "Número de tentativas na avaliação"
     },
     "best_assessment_score": {
       "type": "number",
       "default": 0,
-      "description": "Melhor nota na avalia\u00e7\u00e3o"
+      "description": "Melhor nota na avaliação"
     }
   },
   "required": [
@@ -81,6 +81,18 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -93,13 +105,41 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     }
   }
 }

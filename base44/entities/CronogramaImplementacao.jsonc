@@ -22,11 +22,11 @@
     },
     "item_id": {
       "type": "string",
-      "description": "ID do item espec\u00edfico"
+      "description": "ID do item específico"
     },
     "item_nome": {
       "type": "string",
-      "description": "Nome do item para exibi\u00e7\u00e3o"
+      "description": "Nome do item para exibição"
     },
     "item_categoria": {
       "type": "string",
@@ -45,7 +45,7 @@
         "tracking_v1"
       ],
       "default": "legacy_v1",
-      "description": "Vers\u00e3o da engine que gerou este item"
+      "description": "Versão da engine que gerou este item"
     },
     "engine_source": {
       "type": "string",
@@ -58,7 +58,7 @@
         "unknown"
       ],
       "default": "unknown",
-      "description": "Fun\u00e7\u00e3o/processo que criou este item"
+      "description": "Função/processo que criou este item"
     },
     "created_by_flow": {
       "type": "string",
@@ -70,17 +70,17 @@
         "unknown"
       ],
       "default": "unknown",
-      "description": "Fluxo de neg\u00f3cio que originou a cria\u00e7\u00e3o"
+      "description": "Fluxo de negócio que originou a criação"
     },
     "data_ultimo_acesso": {
       "type": "string",
       "format": "date-time",
-      "description": "\u00daltima vez que o usu\u00e1rio acessou este item"
+      "description": "Última vez que o usuário acessou este item"
     },
     "ordem": {
       "type": "integer",
       "default": 0,
-      "description": "Ordem de exibi\u00e7\u00e3o dentro da fase"
+      "description": "Ordem de exibição dentro da fase"
     },
     "fase": {
       "type": "string",
@@ -89,32 +89,32 @@
     "obrigatorio": {
       "type": "boolean",
       "default": false,
-      "description": "Se o item \u00e9 obrigat\u00f3rio no plano"
+      "description": "Se o item é obrigatório no plano"
     },
     "sessoes_realizadas": {
       "type": "integer",
       "default": 0,
-      "description": "Sess\u00f5es j\u00e1 realizadas"
+      "description": "Sessões já realizadas"
     },
     "sessoes_total": {
       "type": "integer",
       "default": 0,
-      "description": "Total de sess\u00f5es previstas"
+      "description": "Total de sessões previstas"
     },
     "data_inicio_real": {
       "type": "string",
       "format": "date-time",
-      "description": "Data de in\u00edcio real"
+      "description": "Data de início real"
     },
     "data_termino_previsto": {
       "type": "string",
       "format": "date-time",
-      "description": "Data prevista de conclus\u00e3o"
+      "description": "Data prevista de conclusão"
     },
     "data_termino_real": {
       "type": "string",
       "format": "date-time",
-      "description": "Data real de conclus\u00e3o"
+      "description": "Data real de conclusão"
     },
     "status": {
       "type": "string",
@@ -164,16 +164,16 @@
           }
         }
       },
-      "description": "Hist\u00f3rico de altera\u00e7\u00f5es manuais"
+      "description": "Histórico de alterações manuais"
     },
     "observacoes": {
       "type": "string",
-      "description": "Observa\u00e7\u00f5es do cliente"
+      "description": "Observações do cliente"
     },
     "total_visualizacoes": {
       "type": "integer",
       "default": 0,
-      "description": "Contador de visualiza\u00e7\u00f5es"
+      "description": "Contador de visualizações"
     }
   },
   "required": [
@@ -274,9 +274,25 @@
       ]
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     }
   }
 }

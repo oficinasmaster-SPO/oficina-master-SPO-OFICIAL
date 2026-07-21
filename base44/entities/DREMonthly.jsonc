@@ -8,17 +8,17 @@
     },
     "month": {
       "type": "string",
-      "description": "M\u00eas de refer\u00eancia (YYYY-MM)"
+      "description": "Mês de referência (YYYY-MM)"
     },
     "productive_technicians": {
       "type": "integer",
       "default": 1,
-      "description": "Quantidade de t\u00e9cnicos produtivos"
+      "description": "Quantidade de técnicos produtivos"
     },
     "monthly_hours": {
       "type": "number",
       "default": 219,
-      "description": "Horas dispon\u00edveis no m\u00eas por t\u00e9cnico"
+      "description": "Horas disponíveis no mês por técnico"
     },
     "revenue": {
       "type": "object",
@@ -26,12 +26,12 @@
         "parts_applied": {
           "type": "number",
           "default": 0,
-          "description": "Faturamento pe\u00e7as aplicadas"
+          "description": "Faturamento peças aplicadas"
         },
         "services": {
           "type": "number",
           "default": 0,
-          "description": "Faturamento servi\u00e7os"
+          "description": "Faturamento serviços"
         },
         "other": {
           "type": "number",
@@ -47,17 +47,17 @@
         "operational": {
           "type": "number",
           "default": 0,
-          "description": "Custos operacionais (aluguel, energia, \u00e1gua, telefone)"
+          "description": "Custos operacionais (aluguel, energia, água, telefone)"
         },
         "people": {
           "type": "number",
           "default": 0,
-          "description": "Custos com pessoas (sal\u00e1rios, encargos, benef\u00edcios)"
+          "description": "Custos com pessoas (salários, encargos, benefícios)"
         },
         "prolabore": {
           "type": "number",
           "default": 0,
-          "description": "Pr\u00f3-labore dos s\u00f3cios"
+          "description": "Pró-labore dos sócios"
         },
         "marketing": {
           "type": "number",
@@ -67,12 +67,12 @@
         "maintenance": {
           "type": "number",
           "default": 0,
-          "description": "Manuten\u00e7\u00e3o predial e equipamentos"
+          "description": "Manutenção predial e equipamentos"
         },
         "third_party": {
           "type": "number",
           "default": 0,
-          "description": "Servi\u00e7os terceirizados"
+          "description": "Serviços terceirizados"
         },
         "administrative": {
           "type": "number",
@@ -80,7 +80,7 @@
           "description": "Despesas administrativas"
         }
       },
-      "description": "Custos que ENTRAM no TCMP\u00b2 (fixos e operacionais)"
+      "description": "Custos que ENTRAM no TCMP² (fixos e operacionais)"
     },
     "costs_not_tcmp2": {
       "type": "object",
@@ -93,7 +93,7 @@
         "consortium": {
           "type": "number",
           "default": 0,
-          "description": "Cons\u00f3rcios"
+          "description": "Consórcios"
         },
         "equipment_installments": {
           "type": "number",
@@ -103,7 +103,7 @@
         "parts_invoices": {
           "type": "number",
           "default": 0,
-          "description": "Boletos de pe\u00e7as (estoque)"
+          "description": "Boletos de peças (estoque)"
         },
         "legal_processes": {
           "type": "number",
@@ -113,7 +113,7 @@
         "land_purchase": {
           "type": "number",
           "default": 0,
-          "description": "Compra de terreno/im\u00f3vel"
+          "description": "Compra de terreno/imóvel"
         },
         "investments": {
           "type": "number",
@@ -121,7 +121,7 @@
           "description": "Investimentos diversos"
         }
       },
-      "description": "Custos que N\u00c3O ENTRAM no TCMP\u00b2 (financeiros/investimentos)"
+      "description": "Custos que NÃO ENTRAM no TCMP² (financeiros/investimentos)"
     },
     "parts_cost": {
       "type": "object",
@@ -129,15 +129,15 @@
         "parts_applied_cost": {
           "type": "number",
           "default": 0,
-          "description": "Custo das pe\u00e7as aplicadas no m\u00eas"
+          "description": "Custo das peças aplicadas no mês"
         },
         "parts_stock_purchase": {
           "type": "number",
           "default": 0,
-          "description": "Pe\u00e7as compradas para estoque"
+          "description": "Peças compradas para estoque"
         }
       },
-      "description": "Custos com pe\u00e7as"
+      "description": "Custos com peças"
     },
     "calculated": {
       "type": "object",
@@ -157,7 +157,7 @@
         "tcmp2_value": {
           "type": "number",
           "default": 0,
-          "description": "Valor hora TCMP\u00b2 calculado"
+          "description": "Valor hora TCMP² calculado"
         },
         "r70_percentage": {
           "type": "number",
@@ -182,7 +182,7 @@
     },
     "notes": {
       "type": "string",
-      "description": "Observa\u00e7\u00f5es"
+      "description": "Observações"
     }
   },
   "required": [
@@ -208,6 +208,18 @@
         },
         {
           "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -229,6 +241,18 @@
         },
         {
           "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -250,6 +274,18 @@
         },
         {
           "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -271,6 +307,18 @@
         },
         {
           "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     }

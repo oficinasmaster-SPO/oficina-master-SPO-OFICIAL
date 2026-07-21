@@ -32,11 +32,11 @@
           },
           "evidence_url": {
             "type": "string",
-            "description": "URL da evid\u00eancia (foto/print)"
+            "description": "URL da evidência (foto/print)"
           }
         }
       },
-      "description": "Entradas das m\u00e9tricas"
+      "description": "Entradas das métricas"
     },
     "status": {
       "type": "string",
@@ -51,7 +51,7 @@
     },
     "notes": {
       "type": "string",
-      "description": "Observa\u00e7\u00f5es gerais do dia"
+      "description": "Observações gerais do dia"
     }
   },
   "required": [
@@ -72,6 +72,18 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -84,6 +96,18 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -95,6 +119,18 @@
         {
           "user_condition": {
             "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
           }
         }
       ]

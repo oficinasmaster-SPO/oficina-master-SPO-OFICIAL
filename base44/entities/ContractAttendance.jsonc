@@ -24,7 +24,7 @@
     },
     "event_calendar_id": {
       "type": "string",
-      "description": "ID do evento vinculado (se baseado em calend\u00e1rio)"
+      "description": "ID do evento vinculado (se baseado em calendário)"
     },
     "scheduled_date": {
       "type": "string",
@@ -63,7 +63,7 @@
     },
     "sequence_number": {
       "type": "integer",
-      "description": "N\u00famero sequencial (1\u00ba, 2\u00ba, 3\u00ba...)"
+      "description": "Número sequencial (1º, 2º, 3º...)"
     }
   },
   "required": [
@@ -84,14 +84,42 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
     "update": true,
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     }
   }
 }

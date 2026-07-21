@@ -27,11 +27,11 @@
     },
     "foi_satisfatorio": {
       "type": "boolean",
-      "description": "Se o atendimento foi satisfat\u00f3rio"
+      "description": "Se o atendimento foi satisfatório"
     },
     "observacoes": {
       "type": "string",
-      "description": "Feedback e observa\u00e7\u00f5es do cliente"
+      "description": "Feedback e observações do cliente"
     },
     "aspectos_positivos": {
       "type": "array",
@@ -49,7 +49,7 @@
     },
     "recomendaria": {
       "type": "boolean",
-      "description": "Se recomendaria o servi\u00e7o"
+      "description": "Se recomendaria o serviço"
     }
   },
   "required": [
@@ -68,6 +68,18 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -75,9 +87,25 @@
       "created_by": "{{user.email}}"
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     }
   }
 }

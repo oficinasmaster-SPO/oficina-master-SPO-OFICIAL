@@ -4,15 +4,15 @@
   "properties": {
     "function_name": {
       "type": "string",
-      "description": "Nome da fun\u00e7\u00e3o executada"
+      "description": "Nome da função executada"
     },
     "executed_by": {
       "type": "string",
-      "description": "Email do usu\u00e1rio que executou"
+      "description": "Email do usuário que executou"
     },
     "executed_by_id": {
       "type": "string",
-      "description": "ID do usu\u00e1rio que executou"
+      "description": "ID do usuário que executou"
     },
     "trigger_type": {
       "type": "string",
@@ -27,16 +27,16 @@
     "started_at": {
       "type": "string",
       "format": "date-time",
-      "description": "In\u00edcio da execu\u00e7\u00e3o"
+      "description": "Início da execução"
     },
     "finished_at": {
       "type": "string",
       "format": "date-time",
-      "description": "Fim da execu\u00e7\u00e3o"
+      "description": "Fim da execução"
     },
     "duration_ms": {
       "type": "integer",
-      "description": "Dura\u00e7\u00e3o em milissegundos"
+      "description": "Duração em milissegundos"
     },
     "status": {
       "type": "string",
@@ -68,15 +68,47 @@
   "rls": {
     "create": true,
     "read": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     },
     "update": false,
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     }
   }
 }

@@ -14,12 +14,12 @@
         "mensal",
         "anual"
       ],
-      "description": "Per\u00edodo da meta"
+      "description": "Período da meta"
     },
     "data_inicio": {
       "type": "string",
       "format": "date",
-      "description": "Data de in\u00edcio"
+      "description": "Data de início"
     },
     "data_fim": {
       "type": "string",
@@ -38,11 +38,11 @@
         "lideranca",
         "geral"
       ],
-      "description": "\u00c1rea da meta"
+      "description": "Área da meta"
     },
     "responsavel_id": {
       "type": "string",
-      "description": "ID do funcion\u00e1rio respons\u00e1vel (opcional)"
+      "description": "ID do funcionário responsável (opcional)"
     },
     "metricas": {
       "type": "object",
@@ -132,11 +132,11 @@
           }
         }
       },
-      "description": "M\u00e9tricas da meta"
+      "description": "Métricas da meta"
     },
     "observacoes": {
       "type": "string",
-      "description": "Observa\u00e7\u00f5es sobre a meta"
+      "description": "Observações sobre a meta"
     },
     "status": {
       "type": "string",
@@ -180,6 +180,18 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -200,6 +212,18 @@
         {
           "user_condition": {
             "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
           }
         }
       ]
@@ -222,6 +246,18 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -242,6 +278,18 @@
         {
           "user_condition": {
             "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
           }
         }
       ]

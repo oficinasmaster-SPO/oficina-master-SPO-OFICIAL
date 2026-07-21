@@ -58,7 +58,7 @@
           "custo_previsto_pecas": {
             "type": "number",
             "default": 0,
-            "description": "Custo previsto com compra de pe\u00e7as"
+            "description": "Custo previsto com compra de peças"
           },
           "custo_previsto_administrativo": {
             "type": "number",
@@ -71,12 +71,12 @@
     },
     "endividamento_total_12m": {
       "type": "number",
-      "description": "Soma total das d\u00edvidas dos 12 meses"
+      "description": "Soma total das dívidas dos 12 meses"
     },
     "custo_total_pecas_12m": {
       "type": "number",
       "default": 0,
-      "description": "Custo total previsto com pe\u00e7as em 12 meses"
+      "description": "Custo total previsto com peças em 12 meses"
     },
     "custo_total_administrativo_12m": {
       "type": "number",
@@ -123,19 +123,19 @@
           }
         }
       },
-      "description": "Proje\u00e7\u00f5es de cen\u00e1rios futuros"
+      "description": "Projeções de cenários futuros"
     },
     "relatorio_ia": {
       "type": "string",
-      "description": "Relat\u00f3rio gerado por IA"
+      "description": "Relatório gerado por IA"
     },
     "ponto_equilibrio": {
       "type": "number",
-      "description": "Ponto de equil\u00edbrio calculado"
+      "description": "Ponto de equilíbrio calculado"
     },
     "feedback_vendas_pct": {
       "type": "number",
-      "description": "Porcentagem de aumento de vendas necess\u00e1ria"
+      "description": "Porcentagem de aumento de vendas necessária"
     },
     "caixa_liquido_projetado": {
       "type": "array",
@@ -179,6 +179,18 @@
           "user_condition": {
             "role": "user"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -191,6 +203,18 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -202,6 +226,18 @@
         {
           "user_condition": {
             "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
           }
         }
       ]

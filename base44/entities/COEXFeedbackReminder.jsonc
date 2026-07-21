@@ -21,7 +21,7 @@
     },
     "month_reference": {
       "type": "string",
-      "description": "M\u00eas de refer\u00eancia (YYYY-MM)"
+      "description": "Mês de referência (YYYY-MM)"
     },
     "status": {
       "type": "string",
@@ -38,7 +38,7 @@
       "items": {
         "type": "string"
       },
-      "description": "Pap\u00e9is que devem receber este lembrete (admin, rh, gestor)"
+      "description": "Papéis que devem receber este lembrete (admin, rh, gestor)"
     }
   },
   "required": [
@@ -114,9 +114,25 @@
       ]
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
+        }
+      ]
     }
   }
 }

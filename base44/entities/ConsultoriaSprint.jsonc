@@ -8,7 +8,7 @@
     },
     "consulting_firm_id": {
       "type": "string",
-      "description": "ID do escrit\u00f3rio de consultoria"
+      "description": "ID do escritório de consultoria"
     },
     "cronograma_template_id": {
       "type": "string",
@@ -16,29 +16,29 @@
     },
     "mission_id": {
       "type": "string",
-      "description": "ID da miss\u00e3o (ex: fechamento_imbativel) ou 'sprint0' para o fixo"
+      "description": "ID da missão (ex: fechamento_imbativel) ou 'sprint0' para o fixo"
     },
     "sprint_number": {
       "type": "integer",
-      "description": "N\u00famero do sprint (0=diagn\u00f3stico, 1, 2, ...)"
+      "description": "Número do sprint (0=diagnóstico, 1, 2, ...)"
     },
     "title": {
       "type": "string",
-      "description": "T\u00edtulo do sprint"
+      "description": "Título do sprint"
     },
     "objective": {
       "type": "string",
-      "description": "Objetivo mensur\u00e1vel do sprint"
+      "description": "Objetivo mensurável do sprint"
     },
     "start_date": {
       "type": "string",
       "format": "date",
-      "description": "Data de in\u00edcio"
+      "description": "Data de início"
     },
     "end_date": {
       "type": "string",
       "format": "date",
-      "description": "Data prevista de t\u00e9rmino"
+      "description": "Data prevista de término"
     },
     "status": {
       "type": "string",
@@ -59,15 +59,15 @@
     "last_activity_date": {
       "type": "string",
       "format": "date-time",
-      "description": "Data da \u00faltima atividade registrada"
+      "description": "Data da última atividade registrada"
     },
     "consultor_id": {
       "type": "string",
-      "description": "ID do consultor respons\u00e1vel"
+      "description": "ID do consultor responsável"
     },
     "phases": {
       "type": "array",
-      "description": "Fases do sprint com status, notas, m\u00e9tricas e tarefas",
+      "description": "Fases do sprint com status, notas, métricas e tarefas",
       "items": {
         "type": "object",
         "properties": {
@@ -102,11 +102,11 @@
           "submitted_for_review_at": {
             "type": "string",
             "format": "date-time",
-            "description": "Data em que a oficina submeteu para revis\u00e3o"
+            "description": "Data em que a oficina submeteu para revisão"
           },
           "submitted_for_review_by": {
             "type": "string",
-            "description": "ID do usu\u00e1rio que submeteu para revis\u00e3o"
+            "description": "ID do usuário que submeteu para revisão"
           },
           "reviewed_by": {
             "type": "string",
@@ -115,7 +115,7 @@
           "reviewed_at": {
             "type": "string",
             "format": "date-time",
-            "description": "Data da revis\u00e3o"
+            "description": "Data da revisão"
           },
           "review_feedback": {
             "type": "string",
@@ -123,7 +123,7 @@
           },
           "review_history": {
             "type": "array",
-            "description": "Hist\u00f3rico completo de submiss\u00f5es e revis\u00f5es da fase",
+            "description": "Histórico completo de submissões e revisões da fase",
             "items": {
               "type": "object",
               "properties": {
@@ -134,7 +134,7 @@
                     "approved",
                     "returned"
                   ],
-                  "description": "Tipo de a\u00e7\u00e3o"
+                  "description": "Tipo de ação"
                 },
                 "date": {
                   "type": "string",
@@ -146,11 +146,11 @@
                 },
                 "actor_id": {
                   "type": "string",
-                  "description": "ID do usu\u00e1rio que realizou a a\u00e7\u00e3o"
+                  "description": "ID do usuário que realizou a ação"
                 },
                 "feedback": {
                   "type": "string",
-                  "description": "Feedback associado \u00e0 a\u00e7\u00e3o"
+                  "description": "Feedback associado à ação"
                 }
               }
             }
@@ -196,7 +196,7 @@
                     "string",
                     "null"
                   ],
-                  "description": "Instru\u00e7\u00f5es para executar a tarefa (como fazer)"
+                  "description": "Instruções para executar a tarefa (como fazer)"
                 },
                 "link_url": {
                   "type": [
@@ -210,11 +210,11 @@
                     "string",
                     "null"
                   ],
-                  "description": "URL do v\u00eddeo de instru\u00e7\u00e3o (micro aula) vinculado \u00e0 tarefa"
+                  "description": "URL do vídeo de instrução (micro aula) vinculado à tarefa"
                 },
                 "completed_by": {
                   "type": "string",
-                  "description": "ID do usu\u00e1rio que completou a tarefa"
+                  "description": "ID do usuário que completou a tarefa"
                 },
                 "completed_by_role": {
                   "type": "string",
@@ -227,15 +227,15 @@
                 "completed_at": {
                   "type": "string",
                   "format": "date-time",
-                  "description": "Data/hora em que foi marcada como conclu\u00edda"
+                  "description": "Data/hora em que foi marcada como concluída"
                 },
                 "evidence_url": {
                   "type": "string",
-                  "description": "URL de arquivo de evid\u00eancia (foto, PDF, etc)"
+                  "description": "URL de arquivo de evidência (foto, PDF, etc)"
                 },
                 "evidence_note": {
                   "type": "string",
-                  "description": "Nota/observa\u00e7\u00e3o da oficina sobre a tarefa"
+                  "description": "Nota/observação da oficina sobre a tarefa"
                 }
               }
             }
@@ -277,6 +277,18 @@
         },
         {
           "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -313,6 +325,18 @@
         },
         {
           "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -349,6 +373,18 @@
         },
         {
           "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     },
@@ -373,6 +409,18 @@
         },
         {
           "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data": {
+              "user_type": "internal"
+            }
+          }
         }
       ]
     }
