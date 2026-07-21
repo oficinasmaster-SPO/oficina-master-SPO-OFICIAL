@@ -8,15 +8,15 @@
     },
     "razao_social": {
       "type": "string",
-      "description": "Razão social"
+      "description": "Raz\u00e3o social"
     },
     "company_id": {
       "type": "string",
-      "description": "ID da empresa matriz a qual esta oficina pertence (Relação N-1: Workshop → Company)"
+      "description": "ID da empresa matriz a qual esta oficina pertence (Rela\u00e7\u00e3o N-1: Workshop \u2192 Company)"
     },
     "consulting_firm_id": {
       "type": "string",
-      "description": "ID do escritório de consultoria que gerencia este workshop (duplicado para otimização de consulta)."
+      "description": "ID do escrit\u00f3rio de consultoria que gerencia este workshop (duplicado para otimiza\u00e7\u00e3o de consulta)."
     },
     "cnpj": {
       "type": "string"
@@ -32,7 +32,7 @@
     },
     "cep": {
       "type": "string",
-      "description": "CEP do endereço da oficina"
+      "description": "CEP do endere\u00e7o da oficina"
     },
     "city": {
       "type": "string"
@@ -50,7 +50,7 @@
     },
     "endereco_numero": {
       "type": "string",
-      "description": "Número do endereço"
+      "description": "N\u00famero do endere\u00e7o"
     },
     "endereco_bairro": {
       "type": "string",
@@ -58,18 +58,18 @@
     },
     "endereco_complemento": {
       "type": "string",
-      "description": "Complemento (Sala, Galpão, etc)"
+      "description": "Complemento (Sala, Galp\u00e3o, etc)"
     },
     "endereco_completo": {
       "type": "string"
     },
     "segment": {
       "type": "string",
-      "description": "Segmento livre definido pelo usuário"
+      "description": "Segmento livre definido pelo usu\u00e1rio"
     },
     "segment_auto": {
       "type": "string",
-      "description": "Segmento calculado automaticamente baseado nos serviços"
+      "description": "Segmento calculado automaticamente baseado nos servi\u00e7os"
     },
     "vehicle_types": {
       "type": "array",
@@ -86,7 +86,7 @@
           "trator"
         ]
       },
-      "description": "Tipos de veículos atendidos"
+      "description": "Tipos de ve\u00edculos atendidos"
     },
     "fuel_types": {
       "type": "array",
@@ -126,7 +126,7 @@
       "items": {
         "type": "string"
       },
-      "description": "Serviços oferecidos"
+      "description": "Servi\u00e7os oferecidos"
     },
     "tax_regime": {
       "type": "string",
@@ -136,7 +136,7 @@
         "lucro_presumido",
         "lucro_real"
       ],
-      "description": "Enquadramento tributário"
+      "description": "Enquadramento tribut\u00e1rio"
     },
     "monthly_revenue": {
       "type": "string",
@@ -167,17 +167,17 @@
     "employees_count": {
       "type": "integer",
       "default": 1,
-      "description": "Quantidade de funcionários (1 a 100+)"
+      "description": "Quantidade de funcion\u00e1rios (1 a 100+)"
     },
     "years_in_business": {
       "type": "integer",
       "default": 1,
-      "description": "Anos de atuação no mercado (1 a 100+)"
+      "description": "Anos de atua\u00e7\u00e3o no mercado (1 a 100+)"
     },
     "is_franchisee": {
       "type": "boolean",
       "default": false,
-      "description": "Se é franqueado"
+      "description": "Se \u00e9 franqueado"
     },
     "franchisor_name": {
       "type": "string",
@@ -186,7 +186,7 @@
     "operates_franchise": {
       "type": "boolean",
       "default": false,
-      "description": "Se atua com franquias (é franqueadora)"
+      "description": "Se atua com franquias (\u00e9 franqueadora)"
     },
     "units_count_category": {
       "type": "string",
@@ -203,22 +203,22 @@
       "properties": {
         "lunch_start": {
           "type": "string",
-          "description": "Horário início almoço (HH:MM)"
+          "description": "Hor\u00e1rio in\u00edcio almo\u00e7o (HH:MM)"
         },
         "lunch_end": {
           "type": "string",
-          "description": "Horário fim almoço (HH:MM)"
+          "description": "Hor\u00e1rio fim almo\u00e7o (HH:MM)"
         },
         "work_start": {
           "type": "string",
-          "description": "Horário início expediente"
+          "description": "Hor\u00e1rio in\u00edcio expediente"
         },
         "work_end": {
           "type": "string",
-          "description": "Horário fim expediente"
+          "description": "Hor\u00e1rio fim expediente"
         }
       },
-      "description": "Configurações operacionais para cálculo de QGP"
+      "description": "Configura\u00e7\u00f5es operacionais para c\u00e1lculo de QGP"
     },
     "notification_settings": {
       "type": "object",
@@ -255,7 +255,7 @@
           "default": true
         }
       },
-      "description": "Configurações de notificação da oficina"
+      "description": "Configura\u00e7\u00f5es de notifica\u00e7\u00e3o da oficina"
     },
     "equipment_list": {
       "type": "array",
@@ -412,11 +412,11 @@
     },
     "mission": {
       "type": "string",
-      "description": "Missão da empresa"
+      "description": "Miss\u00e3o da empresa"
     },
     "vision": {
       "type": "string",
-      "description": "Visão da empresa"
+      "description": "Vis\u00e3o da empresa"
     },
     "values": {
       "type": "array",
@@ -436,43 +436,43 @@
         "date": {
           "type": "string",
           "format": "date",
-          "description": "Data do melhor mês histórico"
+          "description": "Data do melhor m\u00eas hist\u00f3rico"
         },
         "revenue_total": {
           "type": "number",
-          "description": "Faturamento total do melhor mês (calculado)"
+          "description": "Faturamento total do melhor m\u00eas (calculado)"
         },
         "revenue_parts": {
           "type": "number",
-          "description": "Faturamento de peças do melhor mês"
+          "description": "Faturamento de pe\u00e7as do melhor m\u00eas"
         },
         "revenue_services": {
           "type": "number",
-          "description": "Faturamento de serviços do melhor mês"
+          "description": "Faturamento de servi\u00e7os do melhor m\u00eas"
         },
         "profit_percentage": {
           "type": "number",
-          "description": "Percentual de lucro do melhor mês"
+          "description": "Percentual de lucro do melhor m\u00eas"
         },
         "rentability_percentage": {
           "type": "number",
-          "description": "Percentual de rentabilidade do melhor mês"
+          "description": "Percentual de rentabilidade do melhor m\u00eas"
         },
         "customer_volume": {
           "type": "integer",
-          "description": "Volume de clientes do melhor mês"
+          "description": "Volume de clientes do melhor m\u00eas"
         },
         "average_ticket": {
           "type": "number",
-          "description": "Ticket médio do melhor mês (calculado)"
+          "description": "Ticket m\u00e9dio do melhor m\u00eas (calculado)"
         },
         "average_ticket_parts": {
           "type": "number",
-          "description": "Ticket médio de peças (calculado)"
+          "description": "Ticket m\u00e9dio de pe\u00e7as (calculado)"
         },
         "average_ticket_services": {
           "type": "number",
-          "description": "Ticket médio de serviços (calculado)"
+          "description": "Ticket m\u00e9dio de servi\u00e7os (calculado)"
         },
         "r70_i30": {
           "type": "object",
@@ -486,11 +486,11 @@
               "default": 30
             }
           },
-          "description": "Proporção R70/I30"
+          "description": "Propor\u00e7\u00e3o R70/I30"
         },
         "tcmp2": {
           "type": "number",
-          "description": "TCMP2 (puxado do DRE médio)"
+          "description": "TCMP2 (puxado do DRE m\u00e9dio)"
         },
         "pave_commercial": {
           "type": "number",
@@ -535,12 +535,12 @@
         "clients_scheduled_referral": {
           "type": "integer",
           "default": 0,
-          "description": "Clientes agendados Indicação (qtd)"
+          "description": "Clientes agendados Indica\u00e7\u00e3o (qtd)"
         },
         "clients_delivered_referral": {
           "type": "integer",
           "default": 0,
-          "description": "Clientes entregues Indicação (qtd)"
+          "description": "Clientes entregues Indica\u00e7\u00e3o (qtd)"
         },
         "clients_delivered": {
           "type": "integer",
@@ -577,15 +577,15 @@
             "invested_value": {
               "type": "number",
               "default": 0,
-              "description": "Valor investido (tráfego) R$"
+              "description": "Valor investido (tr\u00e1fego) R$"
             },
             "revenue_from_traffic": {
               "type": "number",
               "default": 0,
-              "description": "Valor faturado lead tráfego R$"
+              "description": "Valor faturado lead tr\u00e1fego R$"
             }
           },
-          "description": "Dados de marketing do melhor mês"
+          "description": "Dados de marketing do melhor m\u00eas"
         },
         "physical_person": {
           "type": "object",
@@ -606,7 +606,7 @@
               "type": "number"
             }
           },
-          "description": "Faturamento pessoa física"
+          "description": "Faturamento pessoa f\u00edsica"
         },
         "juridical_person": {
           "type": "object",
@@ -627,32 +627,32 @@
               "type": "number"
             }
           },
-          "description": "Faturamento pessoa jurídica (locadora/seguradora)"
+          "description": "Faturamento pessoa jur\u00eddica (locadora/seguradora)"
         }
       },
-      "description": "Registro do melhor mês histórico para dimensionamento de metas"
+      "description": "Registro do melhor m\u00eas hist\u00f3rico para dimensionamento de metas"
     },
     "monthly_goals": {
       "type": "object",
       "properties": {
         "month": {
           "type": "string",
-          "description": "Mês de referência (YYYY-MM)"
+          "description": "M\u00eas de refer\u00eancia (YYYY-MM)"
         },
         "growth_percentage": {
           "type": "number",
           "default": 10,
-          "description": "Porcentagem de crescimento geral aplicada à meta"
+          "description": "Porcentagem de crescimento geral aplicada \u00e0 meta"
         },
         "projected_revenue": {
           "type": "number",
           "default": 0,
-          "description": "Valor total projetado no mês (Melhor Mês + Crescimento)"
+          "description": "Valor total projetado no m\u00eas (Melhor M\u00eas + Crescimento)"
         },
         "actual_revenue_achieved": {
           "type": "number",
           "default": 0,
-          "description": "Valor total faturado no mês atual (Realizado)"
+          "description": "Valor total faturado no m\u00eas atual (Realizado)"
         },
         "revenue_parts": {
           "type": "number"
@@ -771,7 +771,7 @@
     "maturity_level": {
       "type": "integer",
       "default": 1,
-      "description": "Nível de maturidade 1-4"
+      "description": "N\u00edvel de maturidade 1-4"
     },
     "company_manual_url": {
       "type": "string"
@@ -788,7 +788,7 @@
     },
     "google_business_link": {
       "type": "string",
-      "description": "Link do Google Meu Negócio para avaliações"
+      "description": "Link do Google Meu Neg\u00f3cio para avalia\u00e7\u00f5es"
     },
     "brand_colors": {
       "type": "object",
@@ -803,14 +803,14 @@
     },
     "owner_id": {
       "type": "string",
-      "description": "ID do proprietário principal"
+      "description": "ID do propriet\u00e1rio principal"
     },
     "partner_ids": {
       "type": "array",
       "items": {
         "type": "string"
       },
-      "description": "IDs dos sócios com acesso total à empresa"
+      "description": "IDs dos s\u00f3cios com acesso total \u00e0 empresa"
     },
     "planoAtual": {
       "type": "string",
@@ -873,7 +873,7 @@
     "dataRenovacao": {
       "type": "string",
       "format": "date-time",
-      "description": "Data de renovação do plano"
+      "description": "Data de renova\u00e7\u00e3o do plano"
     },
     "limitesUtilizados": {
       "type": "object",
@@ -881,7 +881,7 @@
         "diagnosticosMes": {
           "type": "integer",
           "default": 0,
-          "description": "Quantidade de diagnósticos realizados no mês"
+          "description": "Quantidade de diagn\u00f3sticos realizados no m\u00eas"
         },
         "colaboradores": {
           "type": "integer",
@@ -898,23 +898,23 @@
     },
     "observacoes_gerais": {
       "type": "string",
-      "description": "Observações gerais sobre a oficina"
+      "description": "Observa\u00e7\u00f5es gerais sobre a oficina"
     },
     "sugestoes_ia": {
       "type": "array",
       "items": {
         "type": "string"
       },
-      "description": "Sugestões geradas pela IA baseadas no perfil"
+      "description": "Sugest\u00f5es geradas pela IA baseadas no perfil"
     },
     "notas_manuais": {
       "type": "string",
-      "description": "Anotações manuais do proprietário"
+      "description": "Anota\u00e7\u00f5es manuais do propriet\u00e1rio"
     },
     "is_autocenter": {
       "type": "boolean",
       "default": false,
-      "description": "Identifica se é auto center"
+      "description": "Identifica se \u00e9 auto center"
     },
     "status": {
       "type": "string",
@@ -943,7 +943,7 @@
           }
         }
       },
-      "description": "Vínculos com consultorias e programas"
+      "description": "V\u00ednculos com consultorias e programas"
     },
     "certificados": {
       "type": "array",
@@ -967,7 +967,7 @@
     "avaliacao_participante": {
       "type": "number",
       "default": 0,
-      "description": "Nota de avaliação do participante"
+      "description": "Nota de avalia\u00e7\u00e3o do participante"
     },
     "historico_interacoes": {
       "type": "array",
@@ -986,7 +986,7 @@
           }
         }
       },
-      "description": "Histórico de interações com a plataforma"
+      "description": "Hist\u00f3rico de intera\u00e7\u00f5es com a plataforma"
     },
     "capacidade_atendimento_dia": {
       "type": "integer",
@@ -1007,19 +1007,19 @@
         },
         "almoco_inicio": {
           "type": "string",
-          "description": "Início do horário de almoço"
+          "description": "In\u00edcio do hor\u00e1rio de almo\u00e7o"
         },
         "almoco_fim": {
           "type": "string",
-          "description": "Fim do horário de almoço"
+          "description": "Fim do hor\u00e1rio de almo\u00e7o"
         },
         "sabado_abertura": {
           "type": "string",
-          "description": "Horário de abertura no sábado"
+          "description": "Hor\u00e1rio de abertura no s\u00e1bado"
         },
         "sabado_fechamento": {
           "type": "string",
-          "description": "Horário de fechamento no sábado"
+          "description": "Hor\u00e1rio de fechamento no s\u00e1bado"
         },
         "dias_semana": {
           "type": "array",
@@ -1031,7 +1031,7 @@
     },
     "quick_tips": {
       "type": "string",
-      "description": "Dicas rápidas para a operação da oficina"
+      "description": "Dicas r\u00e1pidas para a opera\u00e7\u00e3o da oficina"
     },
     "custom_document_types": {
       "type": "array",
@@ -1066,7 +1066,7 @@
         {
           "$and": [
             {
-              "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+              "data.consulting_firm_id": "{{user.data.consulting_firm_id}}"
             },
             {
               "user_condition": {
@@ -1076,7 +1076,7 @@
           ]
         },
         {
-          "owner_id": "{{user.id}}"
+          "data.owner_id": "{{user.id}}"
         },
         {
           "user_condition": {
@@ -1085,9 +1085,7 @@
         },
         {
           "user_condition": {
-            "data": {
-              "user_type": "internal"
-            }
+            "data.user_type": "internal"
           }
         }
       ]
@@ -1102,7 +1100,7 @@
         {
           "$and": [
             {
-              "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+              "data.consulting_firm_id": "{{user.data.consulting_firm_id}}"
             },
             {
               "user_condition": {
@@ -1112,10 +1110,10 @@
           ]
         },
         {
-          "owner_id": "{{user.id}}"
+          "data.owner_id": "{{user.id}}"
         },
         {
-          "partner_ids": "{{user.id}}"
+          "data.partner_ids": "{{user.id}}"
         },
         {
           "id": "{{user.data.workshop_id}}"
@@ -1127,9 +1125,7 @@
         },
         {
           "user_condition": {
-            "data": {
-              "user_type": "internal"
-            }
+            "data.user_type": "internal"
           }
         }
       ]
@@ -1144,7 +1140,7 @@
         {
           "$and": [
             {
-              "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+              "data.consulting_firm_id": "{{user.data.consulting_firm_id}}"
             },
             {
               "user_condition": {
@@ -1154,10 +1150,10 @@
           ]
         },
         {
-          "owner_id": "{{user.id}}"
+          "data.owner_id": "{{user.id}}"
         },
         {
-          "partner_ids": "{{user.id}}"
+          "data.partner_ids": "{{user.id}}"
         },
         {
           "user_condition": {
@@ -1166,9 +1162,7 @@
         },
         {
           "user_condition": {
-            "data": {
-              "user_type": "internal"
-            }
+            "data.user_type": "internal"
           }
         }
       ]
@@ -1183,7 +1177,7 @@
         {
           "$and": [
             {
-              "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+              "data.consulting_firm_id": "{{user.data.consulting_firm_id}}"
             },
             {
               "user_condition": {
@@ -1199,9 +1193,7 @@
         },
         {
           "user_condition": {
-            "data": {
-              "user_type": "internal"
-            }
+            "data.user_type": "internal"
           }
         }
       ]
