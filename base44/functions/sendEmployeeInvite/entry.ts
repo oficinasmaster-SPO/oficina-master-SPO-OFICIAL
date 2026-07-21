@@ -1,5 +1,12 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
+// Workshop "placeholder" que representa a equipe interna da Oficinas Master.
+// Convites endereçados a ela não são colaboradores de cliente — são membros
+// da equipe interna (ex.: um consultor convidando outro consultor a partir
+// da tela de colaboradores dessa "oficina"). Achado na Fase D: um convite
+// assim ficava marcado invite_type='workshop' e o convidado virava external.
+const OFICINAS_MASTER_WORKSHOP_ID = '695408b3ed74bfeb60d708c0';
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
