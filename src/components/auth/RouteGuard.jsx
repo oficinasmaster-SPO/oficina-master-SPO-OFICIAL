@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { usePermissions } from "@/components/hooks/usePermissions";
+import { isInternalUser } from "@/components/hooks/useUserType";
 import { createPageUrl } from "@/utils";
 import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -35,8 +36,7 @@ export default function RouteGuard({ children, pageName, adminOnly = false }) {
 
   if (adminOnly) {
     // Para rotas admin-only estritas, validamos o perfil de acesso global
-    const isInternal = user.user_type === 'internal' || user.consulting_firm_id === '69bab264d7c3fe5d367c3959';
-    if (user.role !== 'admin' && !isInternal) {
+    if (user.role !== 'admin' && !isInternalUser(user)) {
       return <AccessDenied navigate={navigate} reason="apenas_admin" />;
     }
   }
