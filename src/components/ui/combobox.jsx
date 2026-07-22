@@ -25,9 +25,12 @@ export default function Combobox({
   const selected = options.find((o) => o.value === value);
 
   const filteredOptions = useMemo(() => {
-    if (!search.trim()) return options;
-    const q = search.toLowerCase();
-    return options.filter((o) => o.label.toLowerCase().includes(q));
+    const q = search.trim().toLowerCase();
+    const sorted = [...options].sort((a, b) =>
+      a.label.localeCompare(b.label, "pt-BR", { sensitivity: "base" })
+    );
+    if (!q) return sorted;
+    return sorted.filter((o) => o.label.toLowerCase().includes(q));
   }, [options, search]);
 
   useEffect(() => {
@@ -86,11 +89,19 @@ export default function Combobox({
                     onChange(option.value === value ? "" : option.value);
                     setOpen(false);
                   }}
+                  className="border-b border-border/40 justify-between [&:last-child]:border-b-0"
                 >
-                  <Check
-                    className={cn("h-4 w-4", option.value === value ? "opacity-100" : "opacity-0")}
-                  />
-                  {option.label}
+                  <span className="flex items-center gap-2">
+                    <Check
+                      className={cn("h-4 w-4", option.value === value ? "opacity-100" : "opacity-0")}
+                    />
+                    {option.label.replace(/\s*\([^)]*\)\s*$/, "")}
+                  </span>
+                  {(option.label.match(/\(([^)]+)\)/) || [])[1] && (
+                    <span className="text-xs text-muted-foreground font-normal">
+                      {(option.label.match(/\(([^)]+)\)/))[1]}
+                    </span>
+                  )}
                 </CommandItem>
               ))}
             </CommandGroup>
