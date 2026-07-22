@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { ATENDIMENTO_STATUS_COLORS as STATUS_COLORS, ATENDIMENTO_STATUS_LABELS as STATUS_LABELS } from "@/components/lib/ataConstants";
 import TipoAtendimentoManager from "@/components/aceleracao/TipoAtendimentoManager";
 import WorkshopSearchSelect from "@/components/aceleracao/WorkshopSearchSelect";
+import Combobox from "@/components/ui/combobox";
 
 export default function BasicInfoSection({
   formData, setFormData, user, workshops, consultores,
@@ -39,12 +40,12 @@ export default function BasicInfoSection({
               <Select
               value={formData.consultor_id || user.id}
               onValueChange={(value) => {
-                const consultor = consultores?.find((c) => c.id === value);
-                setFormData((prev) => ({
-                  ...prev,
-                  consultor_id: value,
-                  consultor_nome: consultor?.full_name || user.full_name
-                }));
+                 const consultor = consultores?.find((c) => c.id === value);
+                 setFormData((prev) => ({
+                   ...prev,
+                   consultor_id: value,
+                   consultor_nome: consultor?.full_name || user.full_name
+                 }));
               }}>
               
                 <SelectTrigger>
@@ -68,29 +69,21 @@ export default function BasicInfoSection({
               <Label>Tipo de Atendimento *</Label>
               <TipoAtendimentoManager customTipos={customTipos} onSave={setCustomTipos} />
             </div>
-            <Select
+            <Combobox
               value={formData.tipo_atendimento}
-              onValueChange={(value) => {
-                const tipo = todosOsTipos.find((t) => t.value === value || t.id === value);
+              onChange={(value) => {
+                const tipo = todosOsTipos.find((t) => (t.value || t.id) === value);
                 const duracao = tipo?.duracao || 60;
                 setFormData((prev) => ({ ...prev, tipo_atendimento: value, duracao_minutos: duracao }));
-              }}>
-              
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o tipo..." />
-              </SelectTrigger>
-              <SelectContent>
-                {todosOsTipos && todosOsTipos.length > 0 ?
-                todosOsTipos.map((tipo) =>
-                <SelectItem key={tipo.id} value={tipo.value || tipo.id}>
-                      {tipo.label} ({tipo.duracao}min)
-                    </SelectItem>
-                ) :
-
-                <div className="p-2 text-sm text-gray-500">Carregando tipos...</div>
-                }
-              </SelectContent>
-            </Select>
+              }}
+              options={(todosOsTipos || []).map((tipo) => ({
+                value: tipo.value || tipo.id,
+                label: `${tipo.label} (${tipo.duracao}min)`
+              }))}
+              placeholder="Selecione o tipo..."
+              searchPlaceholder="Pesquisar tipo..."
+              emptyText="Nenhum tipo encontrado."
+            />
           </div>
 
           <div className="flex flex-col justify-end">
@@ -263,12 +256,12 @@ function GoogleMeetSection({ formData, setFormData, user, consultores, workshops
               value={buildInviteMessage(formData, user, consultores)} />
             
               <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="absolute top-2 right-2 h-8 w-8 hover:bg-blue-100 hover:text-blue-600 transition-colors"
-              onClick={copyInviteMessage}
-              title="Copiar mensagem">
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute top-2 right-2 h-8 w-8 hover:bg-blue-100 hover:text-blue-600 transition-colors"
+                onClick={copyInviteMessage}
+                title="Copiar mensagem">
               
                 <Copy className="h-4 w-4" />
               </Button>
