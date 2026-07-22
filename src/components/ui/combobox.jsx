@@ -1,16 +1,14 @@
-import React, { useState } from "react";
-import { Check, ChevronsUpDown } from "lucide-react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
+import { Check, ChevronsUpDown, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import {
   Command,
   CommandEmpty,
   CommandGroup,
-  CommandInput,
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Popover, PopoverContent } from "@/components/ui/popover";
 
 export default function Combobox({
   options = [],
@@ -22,29 +20,65 @@ export default function Combobox({
   className,
 }) {
   const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const inputRef = useRef(null);
   const selected = options.find((o) => o.value === value);
+
+  const filteredOptions = useMemo(() => {
+    if (!search.trim()) return options;
+    const q = search.toLowerCase();
+    return options.filter((o) => o.label.toLowerCase().includes(q));
+  }, [options, search]);
+
+  useEffect(() => {
+    if (open && inputRef.current) {
+      inputRef.current.focus();
+    }
+    if (!open) {
+      setSearch("");
+    }
+  }, [open]);
+
+  const displayText = selected ? selected.label : "";
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
+      <div className="relative w-full">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
+        <input
+          ref={inputRef}
+          type="text"
+          value={open ? search : displayText}
+          placeholder={selected ? "" : searchPlaceholder}
+          onFocus={() => setOpen(true)}
+          onChange={(e) => setSearch(e.target.value)}
+          className={cn(
+            "w-full h-10 pl-9 pr-9 rounded-md border border-input bg-background text-sm",
+            "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-0",
+            "placeholder:text-muted-foreground cursor-pointer",
+            !selected && !open && "text-muted-foreground",
+            className
+          )}
+        />
+        <button
           type="button"
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className={cn("w-full justify-between font-normal", !selected && "text-muted-foreground", className)}
+          tabIndex={-1}
+          onClick={() => setOpen(!open)}
+          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-muted rounded-sm transition-colors"
         >
-          {selected ? selected.label : placeholder}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-        <Command>
-          <CommandInput placeholder={searchPlaceholder} />
+          <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+        </button>
+      </div>
+      <PopoverContent
+        className="w-[--radix-popover-trigger-width] p-0"
+        align="start"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
+        <Command filter={false}>
           <CommandList>
             <CommandEmpty>{emptyText}</CommandEmpty>
             <CommandGroup>
-              {options.map((option) => (
+              {filteredOptions.map((option) => (
                 <CommandItem
                   key={option.value}
                   value={option.label}
