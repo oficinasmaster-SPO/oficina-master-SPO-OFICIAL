@@ -77,7 +77,7 @@ export default function Combobox({
         align="start"
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
-        <Command filter={false}>
+        <Command shouldFilter={false}>
           <CommandList>
             <CommandEmpty>{emptyText}</CommandEmpty>
             <CommandGroup>
