@@ -35,9 +35,9 @@ async function handleAtendimentoAgendado(atendimento, workshopId, queryClient) {
     // Buscar ContractAttendance vinculado
     const contractAttendances = await base44.entities.ContractAttendance.filter({
       workshop_id: workshopId,
-      attendance_type_id: atendimento.tipo_atendimento,
+      attendance_type_name: atendimento.tipo_atendimento,
       status: 'pendente'
-    }, '-created_date', 1);
+    }, 'scheduled_date', 1);
 
     if (contractAttendances.length > 0) {
       const ca = contractAttendances[0];

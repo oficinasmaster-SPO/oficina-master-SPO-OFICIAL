@@ -48,7 +48,7 @@ export default function BucketPanel({ workshopId, followUp, onClose }) {
   const agendarMutation = useMutation({
     mutationFn: async ({ bucketItem, data, hora, consultor_id }) => {
       const consultor = consultores?.find(c => c.id === consultor_id);
-      const dataHora = `${data}T${hora}:00`;
+      const dataHora = new Date(`${data}T${hora}:00`).toISOString();
       
       // Create ConsultoriaAtendimento
       const atendimento = await base44.entities.ConsultoriaAtendimento.create({

@@ -26,7 +26,7 @@ export default function SugerirNovoHorarioModal({ isOpen, onClose, atendimento, 
   const [dataSugerida, setDataSugerida] = useState("");
   const [horaSugerida, setHoraSugerida] = useState("");
   const [mensagem, setMensagem] = useState("");
-  const [mostrarAlternativas, setMostrarAlternativas] = useState(false);
+  const [alternativas, setAlternativas] = useState(null);
 
   const modoReagendamento = isModoReagendamento(atendimento);
 
@@ -44,7 +44,7 @@ export default function SugerirNovoHorarioModal({ isOpen, onClose, atendimento, 
     },
     onSuccess: (data) => {
       if (data.alternativas && data.alternativas.length > 0) {
-        setMostrarAlternativas(true);
+        setAlternativas(data.alternativas);
       } else {
         toast.success(data.message || (modoReagendamento
           ? "Solicitação de reagendamento enviada! O consultor irá confirmar."
@@ -126,7 +126,7 @@ export default function SugerirNovoHorarioModal({ isOpen, onClose, atendimento, 
             </Alert>
           )}
 
-          {!mostrarAlternativas ? (
+          {!alternativas ? (
             <>
               <div>
                 <Label className="text-sm font-medium">Nova Data</Label>
@@ -170,18 +170,18 @@ export default function SugerirNovoHorarioModal({ isOpen, onClose, atendimento, 
               )}
             </>
           ) : (
-            <AlternativasPanel alternativas={mostrarAlternativas.alternativas} />
+            <AlternativasPanel alternativas={alternativas} />
           )}
         </div>
 
         <DialogFooter className="flex gap-2">
           <Button
             variant="outline"
-            onClick={() => mostrarAlternativas ? setMostrarAlternativas(false) : onClose()}
+            onClick={() => alternativas ? setAlternativas(null) : onClose()}
           >
-            {mostrarAlternativas ? "Voltar" : "Cancelar"}
+            {alternativas ? "Voltar" : "Cancelar"}
           </Button>
-          {!mostrarAlternativas && (
+          {!alternativas && (
             <Button
               className={modoReagendamento ? "bg-amber-600 hover:bg-amber-700" : "bg-indigo-600 hover:bg-indigo-700"}
               disabled={sugerirMutation.isPending || !dataSugerida || !horaSugerida || (modoReagendamento && !mensagem.trim())}

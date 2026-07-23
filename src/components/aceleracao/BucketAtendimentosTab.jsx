@@ -73,7 +73,7 @@ export default function BucketAtendimentosTab({ state }) {
   const agendarMutation = useMutation({
     mutationFn: async ({ bucketItem, data, hora, consultor_id }) => {
       const consultor = consultores?.find(c => c.id === consultor_id);
-      const dataHora = `${data}T${hora}:00`;
+      const dataHora = new Date(`${data}T${hora}:00`).toISOString();
       const atendimento = await base44.entities.ConsultoriaAtendimento.create({
         workshop_id: bucketItem.workshop_id,
         tipo_atendimento: bucketItem.attendance_type_name || 'acompanhamento_mensal',
