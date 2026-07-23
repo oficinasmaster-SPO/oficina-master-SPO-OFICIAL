@@ -27,7 +27,7 @@ export default function BucketAtendimentosTab({ state }) {
   const [selectedItems, setSelectedItems] = useState(new Set());
 
   const operationalSync = useOperationalSync(null, user?.id, user);
-  const invalidateAll = operationalSync?.invalidate || (() => {});
+  const invalidateAll = operationalSync?.invalidate?.all || (() => {});
 
   const { data: bucketItems = [], isLoading } = useQuery({
     queryKey: ['bucket-atendimentos'],
