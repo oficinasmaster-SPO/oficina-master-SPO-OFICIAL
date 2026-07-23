@@ -1,11 +1,11 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { TrendingUp, Loader2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 const FIELDS = [
@@ -64,7 +64,29 @@ export default function ClientIndicatorsSection({ workshopId, atendimentoId, fol
   const [values, setValues] = useState({});
   const [mesReferencia, setMesReferencia] = useState(new Date().toISOString().slice(0, 7));
 
+  const { data: existing, isLoading: loadingExisting } = useQuery({
+    queryKey: ["client-indicators", workshopId, mesReferencia],
+    queryFn: () => base44.entities.ClientIndicator.filter({ workshop_id: workshopId }, "data_registro", 200),
+    enabled: !!workshopId,
+    select: (records) => records.find((r) => r.mes_referencia === mesReferencia),
+  });
+
+  useEffect(() => {
+    if (existing) {
+      const loaded = {};
+      FIELDS.forEach((f) => {
+        if (existing[f.key] && Number(existing[f.key]) !== 0) {
+          loaded[f.key] = String(existing[f.key]);
+        }
+      });
+      setValues(loaded);
+    } else {
+      setValues({});
+    }
+  }, [existing]);
+
   const hasAnyValue = Object.values(values).some((v) => v && Number(v) > 0);
+  const isEditing = !!existing;
 
   const handleFieldChange = useCallback((key, val) => {
     setValues((prev) => ({ ...prev, [key]: val }));
@@ -72,7 +94,7 @@ export default function ClientIndicatorsSection({ workshopId, atendimentoId, fol
 
   const mutation = useMutation({
     mutationFn: async () => {
-      const payload = {
+      const data = {
         workshop_id: workshopId,
         mes_referencia: mesReferencia,
         data_registro: mesReferencia + "-01",
@@ -80,13 +102,16 @@ export default function ClientIndicatorsSection({ workshopId, atendimentoId, fol
           FIELDS.map((f) => [f.key, values[f.key] ? Number(values[f.key]) : 0])
         ),
       };
-      if (atendimentoId) payload.atendimento_id = atendimentoId;
-      if (followUpId) payload.followup_id = followUpId;
-      return base44.entities.ClientIndicator.create(payload);
+      if (atendimentoId) data.atendimento_id = atendimentoId;
+      if (followUpId) data.followup_id = followUpId;
+
+      if (existing?.id) {
+        return base44.entities.ClientIndicator.update(existing.id, data);
+      }
+      return base44.entities.ClientIndicator.create(data);
     },
     onSuccess: () => {
-      toast.success("Indicadores do cliente salvos!");
-      setValues({});
+      toast.success(isEditing ? "Indicadores atualizados!" : "Indicadores salvos!");
       queryClient.invalidateQueries({ queryKey: ["client-indicators", workshopId] });
     },
     onError: (err) => toast.error("Erro ao salvar indicadores: " + err.message),
@@ -108,13 +133,19 @@ export default function ClientIndicatorsSection({ workshopId, atendimentoId, fol
       <CardContent className="space-y-4">
         <div>
           <Label htmlFor="mes-ref" className="text-xs">Mês de referência</Label>
-          <Input
-            id="mes-ref"
-            type="month"
-            value={mesReferencia}
-            onChange={(e) => setMesReferencia(e.target.value)}
-            className="max-w-[200px]"
-          />
+          <div className="flex items-center gap-2">
+            <Input
+              id="mes-ref"
+              type="month"
+              value={mesReferencia}
+              onChange={(e) => setMesReferencia(e.target.value)}
+              className="max-w-[200px]"
+            />
+            {loadingExisting && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+            {isEditing && !loadingExisting && (
+              <span className="text-xs text-amber-600 font-medium">Editando existente</span>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -130,11 +161,13 @@ export default function ClientIndicatorsSection({ workshopId, atendimentoId, fol
               ) : (
                 <Input
                   id={f.key}
-                  type="number"
-                  min="0"
-                  step="1"
+                  type="text"
+                  inputMode="numeric"
                   value={values[f.key] ?? ""}
-                  onChange={(e) => handleFieldChange(f.key, e.target.value)}
+                  onChange={(e) => {
+                    const cleaned = e.target.value.replace(/\D/g, "");
+                    handleFieldChange(f.key, cleaned);
+                  }}
                   placeholder="0"
                 />
               )}
@@ -149,7 +182,7 @@ export default function ClientIndicatorsSection({ workshopId, atendimentoId, fol
           className="bg-green-600 hover:bg-green-700"
         >
           {mutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-          Salvar indicadores
+          {isEditing ? "Atualizar indicadores" : "Salvar indicadores"}
         </Button>
 
         {!hasAnyValue && (
