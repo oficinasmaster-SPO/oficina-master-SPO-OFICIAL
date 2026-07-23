@@ -1,184 +1,189 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Check, ChevronsUpDown, Search } from "lucide-react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Check, ChevronsUpDown, Search, X } from "lucide-react";
+import { Command as CommandPrimitive } from "cmdk";
 
 import { cn } from "@/lib/utils";
-
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-
-import { Popover, PopoverContent } from "@/components/ui/popover";
 
 export default function Combobox({
   options = [],
   value,
   onChange,
   placeholder = "Pesquisar...",
+  searchPlaceholder,
   emptyText = "Nenhum resultado encontrado.",
   className,
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
-
-  const wrapperRef = useRef(null);
+  const containerRef = useRef(null);
   const inputRef = useRef(null);
 
   const selected = useMemo(
     () => options.find((item) => item.value === value),
-    [options, value]
+    [options, value],
   );
-
-  useEffect(() => {
-    if (!open) {
-      setSearch(selected?.label ?? "");
-    }
-  }, [selected, open]);
-
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (
-        wrapperRef.current &&
-        !wrapperRef.current.contains(event.target)
-      ) {
-        setOpen(false);
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside);
-
-    return () =>
-      document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   const filteredOptions = useMemo(() => {
     const query = search.trim().toLowerCase();
-
-    return [...options]
-      .sort((a, b) =>
-        a.label.localeCompare(b.label, "pt-BR", {
-          sensitivity: "base",
-        })
-      )
-      .filter((item) =>
-        item.label.toLowerCase().includes(query)
-      );
+    const sorted = [...options].sort((a, b) =>
+      a.label.localeCompare(b.label, "pt-BR", { sensitivity: "base" }),
+    );
+    if (!query) return sorted;
+    return sorted.filter((item) => item.label.toLowerCase().includes(query));
   }, [options, search]);
 
-  function handleChange(e) {
-    const text = e.target.value;
+  const openDropdown = useCallback(() => {
+    setOpen(true);
+    setSearch("");
+  }, []);
 
-    setSearch(text);
+  const closeDropdown = useCallback(() => {
+    setOpen(false);
+    setSearch("");
+  }, []);
 
-    if (!open) {
-      setOpen(true);
+  useEffect(() => {
+    function onPointerDown(e) {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        closeDropdown();
+      }
     }
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, [closeDropdown]);
 
-    if (!text) {
-      onChange("");
-    }
+  function handleInputChange(e) {
+    setSearch(e.target.value);
+    if (!open) setOpen(true);
   }
 
   function handleSelect(option) {
-    onChange(option.value);
-    setSearch(option.label);
-    setOpen(false);
-
-    requestAnimationFrame(() => {
-      inputRef.current?.blur();
-    });
+    onChange(option.value === value ? "" : option.value);
+    closeDropdown();
+    inputRef.current?.blur();
   }
 
+  function handleClear(e) {
+    e.stopPropagation();
+    onChange("");
+    closeDropdown();
+    inputRef.current?.blur();
+  }
+
+  function handleKeyDown(e) {
+    if (e.key === "Escape") {
+      closeDropdown();
+      inputRef.current?.blur();
+    }
+    if (e.key === "ArrowDown" && !open) {
+      openDropdown();
+    }
+  }
+
+  const displayValue = open ? search : (selected?.label ?? "");
+
   return (
-    <Popover open={open}>
-      <div ref={wrapperRef} className="relative w-full">
+    <div ref={containerRef} className="relative w-full">
+      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
 
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+      <input
+        ref={inputRef}
+        type="text"
+        role="combobox"
+        aria-expanded={open}
+        aria-autocomplete="list"
+        value={displayValue}
+        placeholder={searchPlaceholder || placeholder}
+        onFocus={openDropdown}
+        onChange={handleInputChange}
+        onKeyDown={handleKeyDown}
+        className={cn(
+          "w-full h-10 rounded-md border border-input bg-background",
+          "pl-9 pr-16 text-sm",
+          "focus:outline-none focus:ring-2 focus:ring-ring",
+          "placeholder:text-muted-foreground",
+          className,
+        )}
+      />
 
-        <input
-          ref={inputRef}
-          value={search}
-          placeholder={placeholder}
-          onFocus={() => setOpen(true)}
-          onClick={() => setOpen(true)}
-          onChange={handleChange}
-          className={cn(
-            "w-full h-10 rounded-md border border-input bg-background",
-            "pl-9 pr-10 text-sm",
-            "focus:outline-none focus:ring-2 focus:ring-ring",
-            className
-          )}
-        />
-
+      <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
+        {selected && !open && (
+          <button
+            type="button"
+            tabIndex={-1}
+            onClick={handleClear}
+            className="rounded p-1 hover:bg-muted transition-colors"
+          >
+            <X className="h-3.5 w-3.5 text-muted-foreground" />
+          </button>
+        )}
         <button
           type="button"
+          tabIndex={-1}
           onClick={() => {
-            setOpen((o) => !o);
-
-            if (!open) {
-              requestAnimationFrame(() => {
-                inputRef.current?.focus();
-              });
+            if (open) {
+              closeDropdown();
+            } else {
+              openDropdown();
+              requestAnimationFrame(() => inputRef.current?.focus());
             }
           }}
-          className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 hover:bg-muted"
+          className="rounded p-1 hover:bg-muted transition-colors"
         >
           <ChevronsUpDown className="h-4 w-4 text-muted-foreground" />
         </button>
-
-        <PopoverContent
-          align="start"
-          sideOffset={4}
-          className="w-full p-0"
-          onOpenAutoFocus={(e) => e.preventDefault()}
-        >
-          <Command shouldFilter={false}>
-            <CommandList>
-              <CommandEmpty>{emptyText}</CommandEmpty>
-
-              <CommandGroup>
-                {filteredOptions.map((option) => {
-                  const match = option.label.match(/\(([^)]+)\)/);
-
-                  return (
-                    <CommandItem
-                      key={option.value}
-                      value={option.label}
-                      onSelect={() => handleSelect(option)}
-                      className="flex justify-between"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Check
-                          className={cn(
-                            "h-4 w-4",
-                            option.value === value
-                              ? "opacity-100"
-                              : "opacity-0"
-                          )}
-                        />
-
-                        <span>
-                          {option.label.replace(/\s*\([^)]*\)\s*$/, "")}
-                        </span>
-                      </div>
-
-                      {match && (
-                        <span className="text-xs text-muted-foreground">
-                          {match[1]}
-                        </span>
-                      )}
-                    </CommandItem>
-                  );
-                })}
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-
       </div>
-    </Popover>
+
+      {open && (
+        <div
+          className={cn(
+            "absolute z-[150] mt-1 w-full rounded-md border bg-popover text-popover-foreground shadow-md",
+            "animate-in fade-in-0 zoom-in-95 slide-in-from-top-2",
+          )}
+        >
+          <CommandPrimitive shouldFilter={false} loop>
+            <CommandPrimitive.List className="max-h-[250px] overflow-y-auto overflow-x-hidden p-1">
+              <CommandPrimitive.Empty className="py-6 text-center text-sm text-muted-foreground">
+                {emptyText}
+              </CommandPrimitive.Empty>
+
+              {filteredOptions.map((option) => {
+                const match = option.label.match(/\(([^)]+)\)/);
+                const isSelected = option.value === value;
+
+                return (
+                  <CommandPrimitive.Item
+                    key={option.value}
+                    value={option.label}
+                    onSelect={() => handleSelect(option)}
+                    className={cn(
+                      "relative flex cursor-pointer select-none items-center justify-between",
+                      "rounded-sm px-2 py-1.5 text-sm outline-none",
+                      "data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground",
+                    )}
+                  >
+                    <span className="flex items-center gap-2">
+                      <Check
+                        className={cn(
+                          "h-4 w-4 shrink-0",
+                          isSelected ? "opacity-100" : "opacity-0",
+                        )}
+                      />
+                      {option.label.replace(/\s*\([^)]*\)\s*$/, "")}
+                    </span>
+
+                    {match && (
+                      <span className="text-xs text-muted-foreground">
+                        {match[1]}
+                      </span>
+                    )}
+                  </CommandPrimitive.Item>
+                );
+              })}
+            </CommandPrimitive.List>
+          </CommandPrimitive>
+        </div>
+      )}
+    </div>
   );
 }
