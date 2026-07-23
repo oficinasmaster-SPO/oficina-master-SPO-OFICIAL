@@ -1,6 +1,7 @@
 import { format, subDays, startOfMonth, endOfMonth } from "date-fns";
 
 export const PRESETS_PERIODO = [
+  { label: "Todo período", value: "all" },
   { label: "Últimos 7 dias", value: "7d" },
   { label: "Últimos 15 dias", value: "15d" },
   { label: "Últimos 30 dias", value: "30d" },

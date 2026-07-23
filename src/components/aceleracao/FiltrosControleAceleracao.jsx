@@ -60,7 +60,7 @@ export default function FiltrosControleAceleracao({
               Período
             </Label>
             <Select
-              value={filtros.preset || "30d"}
+              value={filtros.preset || "all"}
               onValueChange={handlePresetChange}
             >
               <SelectTrigger>

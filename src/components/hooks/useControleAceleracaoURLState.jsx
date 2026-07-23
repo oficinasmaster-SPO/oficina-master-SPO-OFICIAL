@@ -43,7 +43,7 @@ export default function useControleAceleracaoURLState() {
   const atendimentoId = searchParams.get("atendimento_id") || null;
 
   const filtros = useMemo(() => {
-    const preset = VALID_PRESETS.includes(searchParams.get("preset")) ? searchParams.get("preset") : "mes_atual";
+    const preset = VALID_PRESETS.includes(searchParams.get("preset")) ? searchParams.get("preset") : "all";
     const consultorId = searchParams.get("consultor") || "todos";
 
     if (preset === "custom") {
@@ -89,7 +89,7 @@ export default function useControleAceleracaoURLState() {
     const { consultorId, preset, dataInicio, dataFim } = newFiltros;
     const updates = {
       consultor: consultorId === "todos" ? null : consultorId,
-      preset: preset === "mes_atual" ? null : preset
+      preset: preset === "all" ? null : preset
     };
     if (preset === "custom") {
       updates.de = dataInicio || null;
