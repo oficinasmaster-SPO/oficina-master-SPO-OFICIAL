@@ -4,15 +4,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { BarChart3 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
+import { CHART_INDICATORS } from "@/components/clientIndicators/indicatorConstants";
 
-export const INDICATOR_OPTIONS = [
-  { key: "faturamento_mes", label: "Faturamento do mês" },
-  { key: "ticket_medio", label: "Ticket médio" },
-  { key: "clientes_atendidos", label: "Clientes atendidos" },
-  { key: "faturado_kit_master", label: "Faturado Kit Master" },
-  { key: "faturado_trafego_pago", label: "Faturado Tráfego Pago" },
-  { key: "lucro_operacional", label: "Lucro operacional" },
-];
+export const INDICATOR_OPTIONS = CHART_INDICATORS.map((i) => ({
+  key: i.key,
+  label: i.label,
+}));
 
 export default function AtaIndicatorSelector({ atendimentoId, selected, onChange }) {
   const [saving, setSaving] = useState(false);

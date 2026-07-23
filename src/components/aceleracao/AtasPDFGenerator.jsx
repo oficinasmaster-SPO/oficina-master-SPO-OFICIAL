@@ -840,7 +840,21 @@ export const generateAtaPDF = async (rawAta, workshop) => {
       ? allColumns.filter((c) => selectedKeys.includes(c.key))
       : allColumns;
 
-    const rows = ata.client_indicators.map((ind) => [
+    // Deduplicar: agrupar por mês, manter o de maior faturamento
+    const byMonth = new Map();
+    for (const ind of ata.client_indicators) {
+      const mk = ind.mes_referencia || (ind.data_registro ? ind.data_registro.slice(0, 7) : null);
+      if (!mk) continue;
+      const cur = byMonth.get(mk);
+      if (!cur || Number(ind.faturamento_mes || 0) > Number(cur.faturamento_mes || 0)) {
+        byMonth.set(mk, ind);
+      }
+    }
+    const deduped = Array.from(byMonth.values()).sort((a, b) =>
+      (a.data_registro || '').localeCompare(b.data_registro || '')
+    );
+
+    const rows = deduped.map((ind) => [
       ind.data_registro ? format(new Date(ind.data_registro + 'T00:00:00'), 'dd/MM/yyyy') : '-',
       ...columns.map((c) => c.format(ind)),
     ]);
