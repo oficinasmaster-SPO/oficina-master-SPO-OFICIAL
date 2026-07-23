@@ -150,6 +150,7 @@ export default function Combobox({
               {filteredOptions.map((option) => {
                 const match = option.label.match(/\(([^)]+)\)/);
                 const isSelected = option.value === value;
+                const name = option.label.replace(/\s*\([^)]*\)\s*$/, "");
 
                 return (
                   <CommandPrimitive.Item
@@ -157,26 +158,27 @@ export default function Combobox({
                     value={option.label}
                     onSelect={() => handleSelect(option)}
                     className={cn(
-                      "relative flex cursor-pointer select-none items-center justify-between",
-                      "rounded-sm px-2 py-1.5 text-sm outline-none",
+                      "flex cursor-pointer select-none items-start gap-2",
+                      "rounded-sm px-2 py-2 text-sm outline-none",
+                      "border-b border-border/40 last:border-b-0",
+                      "transition-colors hover:bg-accent hover:text-accent-foreground",
                       "data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground",
                     )}
                   >
-                    <span className="flex items-center gap-2">
-                      <Check
-                        className={cn(
-                          "h-4 w-4 shrink-0",
-                          isSelected ? "opacity-100" : "opacity-0",
-                        )}
-                      />
-                      {option.label.replace(/\s*\([^)]*\)\s*$/, "")}
-                    </span>
-
-                    {match && (
-                      <span className="text-xs text-muted-foreground">
-                        {match[1]}
-                      </span>
-                    )}
+                    <Check
+                      className={cn(
+                        "mt-0.5 h-4 w-4 shrink-0",
+                        isSelected ? "opacity-100" : "opacity-0",
+                      )}
+                    />
+                    <div className="flex flex-col min-w-0">
+                      <span className="truncate font-medium">{name}</span>
+                      {match && (
+                        <span className="text-[11px] leading-tight text-muted-foreground">
+                          {match[1]}
+                        </span>
+                      )}
+                    </div>
                   </CommandPrimitive.Item>
                 );
               })}
