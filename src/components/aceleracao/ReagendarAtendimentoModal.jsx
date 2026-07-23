@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import Combobox from "@/components/ui/combobox";
 import { AlertCircle, Calendar, Loader2, Video, CheckCircle, Copy } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
@@ -36,6 +36,19 @@ export default function ReagendarAtendimentoModal({ atendimento, workshop, onClo
   const motivosFiltrados = responsabilidade === 'cliente' ? MOTIVOS_CLIENTE :
                            responsabilidade === 'empresa' ? MOTIVOS_EMPRESA :
                            responsabilidade === 'compartilhada' ? TODOS_MOTIVOS : {};
+
+  const statusPosVendaOptions = useMemo(
+    () => Object.entries(STATUS_POS_VENDA).map(([key, label]) => ({ value: key, label })),
+    []
+  );
+  const responsabilidadeOptions = useMemo(
+    () => Object.entries(RESPONSABILIDADE_OPTIONS).map(([key, label]) => ({ value: key, label })),
+    []
+  );
+  const motivoOptions = useMemo(
+    () => Object.entries(motivosFiltrados).map(([key, label]) => ({ value: key, label })),
+    [motivosFiltrados]
+  );
 
   const handleCriarMeet = async () => {
     if (!novaData || !novoHorario) {
@@ -329,34 +342,28 @@ export default function ReagendarAtendimentoModal({ atendimento, workshop, onClo
           {/* Status Pós-Venda */}
           <div>
             <Label>Status Pós-Venda *</Label>
-            <Select value={statusPosvenda} onValueChange={setStatusPosvenda}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o status" />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(STATUS_POS_VENDA).map(([key, label]) => (
-                  <SelectItem key={key} value={key}>{label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Combobox
+              options={statusPosVendaOptions}
+              value={statusPosvenda}
+              onChange={setStatusPosvenda}
+              placeholder="Selecione o status"
+              searchPlaceholder="Buscar status..."
+            />
           </div>
 
           {/* Responsabilidade */}
           <div>
             <Label>Responsabilidade *</Label>
-            <Select value={responsabilidade} onValueChange={(val) => {
-              setResponsabilidade(val);
-              setMotivoSelecionado(""); // Reset motivo ao mudar responsabilidade
-            }}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione a responsabilidade" />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(RESPONSABILIDADE_OPTIONS).map(([key, label]) => (
-                  <SelectItem key={key} value={key}>{label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Combobox
+              options={responsabilidadeOptions}
+              value={responsabilidade}
+              onChange={(val) => {
+                setResponsabilidade(val);
+                setMotivoSelecionado("");
+              }}
+              placeholder="Selecione a responsabilidade"
+              searchPlaceholder="Buscar responsabilidade..."
+            />
           </div>
 
           {/* Alerta para responsabilidade do cliente */}
@@ -378,16 +385,13 @@ export default function ReagendarAtendimentoModal({ atendimento, workshop, onClo
               <Label>
                 Motivo {responsabilidade === 'cliente' ? 'do Cliente' : responsabilidade === 'empresa' ? 'da Empresa' : 'do Reagendamento'} *
               </Label>
-              <Select value={motivoSelecionado} onValueChange={setMotivoSelecionado}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o motivo" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(motivosFiltrados).map(([key, label]) => (
-                    <SelectItem key={key} value={key}>{label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Combobox
+                options={motivoOptions}
+                value={motivoSelecionado}
+                onChange={setMotivoSelecionado}
+                placeholder="Selecione o motivo"
+                searchPlaceholder="Buscar motivo..."
+              />
             </div>
           )}
 
