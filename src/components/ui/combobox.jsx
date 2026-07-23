@@ -54,7 +54,6 @@ export default function Combobox({
             type="text"
             value={open ? search : displayText}
             placeholder={selected ? "" : searchPlaceholder}
-            onFocus={() => setOpen(true)}
             onChange={(e) => setSearch(e.target.value)}
             className={cn(
               "w-full h-10 pl-9 pr-9 rounded-md border border-input bg-background text-sm",
@@ -67,7 +66,6 @@ export default function Combobox({
           <button
             type="button"
             tabIndex={-1}
-            onClick={() => setOpen(!open)}
             className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-muted rounded-sm transition-colors"
           >
             <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
