@@ -14,6 +14,7 @@
  *  - Não bloqueia o formulário — position: fixed, fora do fluxo
  */
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { base44 } from "@/api/base44Client";
 import { X, Minus, Maximize2, Loader2, BarChart2 } from "lucide-react";
 
@@ -180,7 +181,7 @@ export default function ClientHistoryFloatingPanel({ workshopId, workshopName, p
   const totalTypes = bucketEntries.length;
   const completedTypes = bucketEntries.filter(([, v]) => v.done >= v.total && v.total > 0).length;
 
-  return (
+  return createPortal(
     <div
       ref={panelRef}
       style={{
@@ -317,6 +318,7 @@ export default function ClientHistoryFloatingPanel({ workshopId, workshopName, p
           )}
         </div>
       )}
-    </div>
+    </div>,
+    document.body
   );
 }
