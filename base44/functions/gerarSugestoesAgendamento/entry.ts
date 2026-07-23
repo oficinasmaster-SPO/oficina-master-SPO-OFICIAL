@@ -373,7 +373,7 @@ Deno.serve(async (req) => {
         const idxCompativel = filaWorkshops.findIndex(sw => {
           const compativel = diaAceitaTipo(diaSemanaNum, sw.tipoSugerido);
           if (!compativel) {
-            console.log(`     ❌ ${sw.workshop_name} (${sw.tipoSugerido}) ≠ tipos do dia`);
+            console.log(`     ❌ ${sw.workshop.name} (${sw.tipoSugerido}) ≠ tipos do dia`);
           }
           return compativel;
         });
@@ -384,7 +384,7 @@ Deno.serve(async (req) => {
         }
 
         const sw = filaWorkshops.splice(idxCompativel, 1)[0];
-        console.log(`  ✅ ${hora}: Alocado ${sw.workshop_name} (${sw.tipoSugerido})`);
+        console.log(`  ✅ ${hora}: Alocado ${sw.workshop.name} (${sw.tipoSugerido})`);
         sugestoes.push({
           consultor_id: resolvedConsultorId,
           consultor_nome: resolvedConsultorNome,

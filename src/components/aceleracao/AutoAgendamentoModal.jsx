@@ -13,8 +13,6 @@ export default function AutoAgendamentoModal({ open, onOpenChange, workshop, use
   const [step, setStep] = useState(1); // 1: tipo, 2: confirmação, 3: resultado
   const [tipoAtendimento, setTipoAtendimento] = useState('');
   const [tiposDisponiveis, setTiposDisponiveis] = useState([]);
-  const [horariosDisponiveis, setHorariosDisponiveis] = useState([]);
-  const [slotselecionado, setSlotSelecionado] = useState(null);
   const [loading, setLoading] = useState(false);
   const [resultado, setResultado] = useState(null);
 
@@ -40,30 +38,6 @@ export default function AutoAgendamentoModal({ open, onOpenChange, workshop, use
       }
     } catch (error) {
       toast.error('Erro ao carregar tipos de atendimento');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const carregarHorarios = async () => {
-    if (!tipoAtendimento) return;
-
-    try {
-      setLoading(true);
-      const response = await base44.functions.invoke('getHorariosDisponiveis', {
-        consultor_id: null, // Frontend não sabe os IDs dos consultores
-        tipo_atendimento_id: tipoAtendimento,
-        data_fim: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-      });
-
-      if (response.data?.slots) {
-        setHorariosDisponiveis(response.data.slots);
-      } else {
-        setHorariosDisponiveis([]);
-        toast.info('Nenhum horário disponível no período');
-      }
-    } catch (error) {
-      toast.error('Erro ao buscar horários');
     } finally {
       setLoading(false);
     }
@@ -99,8 +73,6 @@ export default function AutoAgendamentoModal({ open, onOpenChange, workshop, use
   const handleFechar = () => {
     setStep(1);
     setTipoAtendimento('');
-    setHorariosDisponiveis([]);
-    setSlotSelecionado(null);
     setResultado(null);
     onOpenChange(false);
   };
