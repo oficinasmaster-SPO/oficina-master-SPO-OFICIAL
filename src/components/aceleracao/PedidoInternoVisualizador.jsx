@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
@@ -10,6 +10,20 @@ export default function PedidoInternoVisualizador({ pedido }) {
   const imagens = medias.filter(m => m.type === 'imagem');
   const documentos = medias.filter(m => m.type !== 'imagem');
 
+  const irProxima = useCallback(() => {
+    if (currentImageIndex < imagens.length - 1) {
+      setCurrentImageIndex(currentImageIndex + 1);
+      setImagemExpandida(imagens[currentImageIndex + 1]);
+    }
+  }, [currentImageIndex, imagens]);
+
+  const irParaAnterior = useCallback(() => {
+    if (currentImageIndex > 0) {
+      setCurrentImageIndex(currentImageIndex - 1);
+      setImagemExpandida(imagens[currentImageIndex - 1]);
+    }
+  }, [currentImageIndex, imagens]);
+
   // Navegação com setas do teclado
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -20,23 +34,9 @@ export default function PedidoInternoVisualizador({ pedido }) {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [imagemExpandida, currentImageIndex]);
+  }, [imagemExpandida, irProxima, irParaAnterior]);
 
   if (!medias || medias.length === 0) return null;
-
-  const irProxima = () => {
-    if (currentImageIndex < imagens.length - 1) {
-      setCurrentImageIndex(currentImageIndex + 1);
-      setImagemExpandida(imagens[currentImageIndex + 1]);
-    }
-  };
-
-  const irParaAnterior = () => {
-    if (currentImageIndex > 0) {
-      setCurrentImageIndex(currentImageIndex - 1);
-      setImagemExpandida(imagens[currentImageIndex - 1]);
-    }
-  };
 
   return (
     <Card className="mt-6">

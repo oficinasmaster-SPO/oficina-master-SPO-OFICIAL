@@ -151,8 +151,8 @@ export default function PedidoInternoResponder({ pedido, user, onCancel, onSucce
               <div>
                 <Label className="mb-2 block">Evidências (opcional)</Label>
                 <PedidoInternoMediaUpload
-                  midias={midiasAnexas}
-                  onChange={setMidiasAnexas}
+                  medias={midiasAnexas}
+                  onMediasChange={setMidiasAnexas}
                 />
               </div>
 

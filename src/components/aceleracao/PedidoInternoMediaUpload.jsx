@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,20 @@ export default function PedidoInternoMediaUpload({ medias = [], onMediasChange }
 
   const imagens = medias.filter(m => m.type === 'imagem');
 
+  const irProxima = useCallback(() => {
+    if (currentImageIndex < imagens.length - 1) {
+      setCurrentImageIndex(currentImageIndex + 1);
+      setImagemExpandida(imagens[currentImageIndex + 1]);
+    }
+  }, [currentImageIndex, imagens]);
+
+  const irParaAnterior = useCallback(() => {
+    if (currentImageIndex > 0) {
+      setCurrentImageIndex(currentImageIndex - 1);
+      setImagemExpandida(imagens[currentImageIndex - 1]);
+    }
+  }, [currentImageIndex, imagens]);
+
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (!imagemExpandida) return;
@@ -25,21 +39,7 @@ export default function PedidoInternoMediaUpload({ medias = [], onMediasChange }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [imagemExpandida, currentImageIndex]);
-
-  const irProxima = () => {
-    if (currentImageIndex < imagens.length - 1) {
-      setCurrentImageIndex(currentImageIndex + 1);
-      setImagemExpandida(imagens[currentImageIndex + 1]);
-    }
-  };
-
-  const irParaAnterior = () => {
-    if (currentImageIndex > 0) {
-      setCurrentImageIndex(currentImageIndex - 1);
-      setImagemExpandida(imagens[currentImageIndex - 1]);
-    }
-  };
+  }, [imagemExpandida, irProxima, irParaAnterior]);
 
   const handleFileUpload = async (files) => {
     setUploading(true);

@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import React from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
   ArrowLeft, CheckCircle, XCircle, Printer, Trash2,
-  MessageSquare, FileText, ListChecks, Send,
+  MessageSquare, FileText, ListChecks,
   AlertTriangle, ArrowUp, Minus, ArrowDown,
   Clock, CalendarClock, Hash, Building2, Flag,
 } from "lucide-react";
@@ -67,76 +67,6 @@ function InfoField({ label, icon: Icon, children, className = "" }) {
       <div className="min-w-0 flex-1">
         <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">{label}</p>
         <div className="mt-0.5 text-sm text-gray-800">{children}</div>
-      </div>
-    </div>
-  );
-}
-
-// ── Composer ────────────────────────────────────────────────────────────────
-function ResponseComposer({ pedido, user, queryClient }) {
-  const [text, setText] = useState("");
-  const [mode, setMode] = useState("comentario");
-
-  const postMutation = useMutation({
-    mutationFn: async () => {
-      if (mode === "resposta") {
-        await base44.entities.PedidoInterno.update(pedido.id, {
-          resposta: text,
-          data_primeira_resposta: pedido.data_primeira_resposta || new Date().toISOString(),
-        });
-      } else {
-        await base44.entities.TaskComment.create({
-          entity_type: "pedido_interno",
-          entity_id:   pedido.id,
-          workshop_id: pedido.workshop_id,
-          usuario_id:  user?.id,
-          usuario_nome: user?.full_name || user?.email || "Usuário",
-          comentario:  text,
-          is_internal: false,
-          attachments: [],
-        });
-      }
-    },
-    onSuccess: () => {
-      setText("");
-      toast.success(mode === "resposta" ? "Resposta salva!" : "Comentário adicionado!");
-      queryClient.invalidateQueries({ queryKey: ["pedidos-internos"] });
-      queryClient.invalidateQueries({ queryKey: ["activity-timeline"] });
-      queryClient.invalidateQueries({ queryKey: ["task-comments"] });
-    },
-    onError: () => toast.error("Erro ao salvar"),
-  });
-
-  return (
-    <div className="rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden">
-      <div className="flex border-b border-gray-100">
-        <button onClick={() => setMode("comentario")}
-          className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium ${mode === "comentario" ? "border-b-2 border-blue-500 text-blue-600" : "text-gray-500"}`}>
-          <MessageSquare className="h-3 w-3" /> Comentário
-        </button>
-        {(user?.role === "admin" || user?.user_type === "internal" || user?.data?.user_type === "internal" || user?.id === pedido.assignee_id) && (
-          <button onClick={() => setMode("resposta")}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium ${mode === "resposta" ? "border-b-2 border-green-500 text-green-600" : "text-gray-500"}`}>
-            <CheckCircle className="h-3 w-3" /> Resposta Oficial
-          </button>
-        )}
-      </div>
-      <div className="p-2">
-        <textarea
-          value={text} onChange={(e) => setText(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && text.trim()) postMutation.mutate(); }}
-          placeholder={mode === "resposta" ? "Registre a decisão oficial..." : "Comentário... (Ctrl+Enter)"}
-          rows={2}
-          className="w-full resize-none border-0 bg-transparent p-1 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none"
-        />
-        <div className="flex items-center justify-end gap-2 border-t border-gray-100 pt-1">
-          <span className="text-[10px] text-gray-400">Ctrl+Enter</span>
-          <Button size="sm" onClick={() => postMutation.mutate()} disabled={!text.trim() || postMutation.isPending}
-            className={`h-6 gap-1 text-[11px] ${mode === "resposta" ? "bg-green-600 hover:bg-green-700" : "bg-blue-600 hover:bg-blue-700"}`}>
-            <Send className="h-2.5 w-2.5" />
-            {postMutation.isPending ? "..." : mode === "resposta" ? "Salvar" : "Comentar"}
-          </Button>
-        </div>
       </div>
     </div>
   );
@@ -263,8 +193,6 @@ export default function PedidoInternoDetail({ pedido, user, onCancel, onSuccess,
             </p>
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto px-5 py-3 space-y-3">
-            {/* Composer */}
-            {!isReadOnly && <ResponseComposer pedido={pedido} user={user} queryClient={queryClient} />}
             {/* Timeline */}
             <ActivityTimeline
               entityType="pedido_interno"
@@ -361,7 +289,7 @@ export default function PedidoInternoDetail({ pedido, user, onCancel, onSuccess,
             <Printer className="h-3 w-3" /> Imprimir
           </Button>
           {canDelete && (
-            <Button variant="ghost" size="sm" onClick={() => deleteMutation.mutate()} disabled={deleteMutation.isPending}
+            <Button variant="ghost" size="sm" onClick={() => { if (window.confirm("Tem certeza que deseja excluir este pedido?")) deleteMutation.mutate(); }} disabled={deleteMutation.isPending}
               className="h-7 gap-1 px-2 text-xs text-red-500 hover:bg-red-50">
               <Trash2 className="h-3 w-3" /> Excluir
             </Button>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import {
   MessageSquare, StickyNote, ListChecks, FileText,
   AlertTriangle, ArrowUp, Minus, ArrowDown,
   Clock, CalendarClock, ChevronLeft, ChevronRight,
-  Hash, Flag, Send, Building2,
+  Hash, Flag, Building2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format, formatDistanceToNow } from "date-fns";
@@ -101,115 +101,6 @@ function DetailField({ label, icon: Icon, children, className = "" }) {
       <div className="min-w-0 flex-1">
         <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">{label}</p>
         <div className="mt-0.5 text-sm text-gray-800">{children}</div>
-      </div>
-    </div>
-  );
-}
-
-// ── Composer de resposta ────────────────────────────────────────────────────
-function ResponseComposer({ pedido, user, onSaved }) {
-  const [text, setText]         = useState("");
-  const [mode, setMode]         = useState("comentario"); // "comentario" | "resposta"
-  const queryClient             = useQueryClient();
-  const textareaRef             = useRef(null);
-
-  const postMutation = useMutation({
-    mutationFn: async () => {
-      if (mode === "resposta") {
-        // Salva como resposta oficial no pedido
-        await base44.entities.PedidoInterno.update(pedido.id, {
-          resposta: text,
-          data_primeira_resposta: pedido.data_primeira_resposta || new Date().toISOString(),
-        });
-      } else {
-        // Salva como TaskComment na timeline
-        const u = user || {};
-        await base44.entities.TaskComment.create({
-          entity_type: "pedido_interno",
-          entity_id:   pedido.id,
-          workshop_id: pedido.workshop_id,
-          usuario_id:  u.id,
-          usuario_nome: u.full_name || u.email || "Usuário",
-          comentario:  text,
-          is_internal: false,
-          attachments: [],
-        });
-      }
-    },
-    onSuccess: () => {
-      setText("");
-      toast.success(mode === "resposta" ? "Resposta salva!" : "Comentário adicionado!");
-      queryClient.invalidateQueries({ queryKey: ["pedidos-internos"] });
-      queryClient.invalidateQueries({ queryKey: ["activity-timeline"] });
-      queryClient.invalidateQueries({ queryKey: ["task-comments"] });
-      onSaved?.();
-    },
-    onError: () => toast.error("Erro ao salvar"),
-  });
-
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && text.trim()) {
-      postMutation.mutate();
-    }
-  };
-
-  return (
-    <div className="border border-gray-200 rounded-xl bg-white shadow-sm overflow-hidden">
-      {/* Modo tabs */}
-      <div className="flex border-b border-gray-100">
-        <button
-          onClick={() => setMode("comentario")}
-          className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-colors
-            ${mode === "comentario"
-              ? "border-b-2 border-blue-500 text-blue-600"
-              : "text-gray-500 hover:text-gray-700"}`}
-        >
-          <MessageSquare className="h-3 w-3" /> Comentário
-        </button>
-        {(user?.role === "admin" || user?.user_type === "internal" || user?.data?.user_type === "internal" || user?.id === pedido.assignee_id) && (
-          <button
-            onClick={() => setMode("resposta")}
-            className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-colors
-              ${mode === "resposta"
-                ? "border-b-2 border-green-500 text-green-600"
-                : "text-gray-500 hover:text-gray-700"}`}
-          >
-            <CheckCircle className="h-3 w-3" /> Resposta Oficial
-          </button>
-        )}
-      </div>
-
-      {/* Input */}
-      <div className="p-2">
-        <textarea
-          ref={textareaRef}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder={
-            mode === "resposta"
-              ? "Registre a decisão ou encaminhamento oficial..."
-              : "Adicione um comentário... (Ctrl+Enter para enviar)"
-          }
-          rows={3}
-          className="w-full resize-none rounded-lg border-0 bg-transparent p-1 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none"
-        />
-        <div className="flex items-center justify-end gap-2 pt-1 border-t border-gray-100">
-          <span className="text-[10px] text-gray-400">Ctrl+Enter para enviar</span>
-          <Button
-            size="sm"
-            onClick={() => postMutation.mutate()}
-            disabled={!text.trim() || postMutation.isPending}
-            className={`h-7 gap-1.5 text-xs ${
-              mode === "resposta"
-                ? "bg-green-600 hover:bg-green-700"
-                : "bg-blue-600 hover:bg-blue-700"
-            }`}
-          >
-            <Send className="h-3 w-3" />
-            {postMutation.isPending ? "Enviando..." : mode === "resposta" ? "Salvar Resposta" : "Comentar"}
-          </Button>
-        </div>
       </div>
     </div>
   );
@@ -493,7 +384,7 @@ export default function PedidoInternoDrawer({
               {canDelete && (
                 <Button
                   variant="ghost" size="sm"
-                  onClick={() => deleteMutation.mutate()}
+                  onClick={() => { if (window.confirm("Tem certeza que deseja excluir este pedido?")) deleteMutation.mutate(); }}
                   disabled={deleteMutation.isPending}
                   className="h-7 gap-1 px-2 text-xs text-red-500 hover:bg-red-50"
                 >
@@ -600,10 +491,6 @@ export default function PedidoInternoDrawer({
           {/* ATIVIDADE */}
           {activeTab === "atividade" && (
             <div className="flex flex-col gap-4 px-5 py-4">
-              {/* Composer */}
-              {!isReadOnly && (
-                <ResponseComposer pedido={pedido} user={user} />
-              )}
               {/* Timeline */}
               <ActivityTimeline
                 entityType="pedido_interno"
