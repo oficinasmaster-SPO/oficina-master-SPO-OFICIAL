@@ -11,24 +11,20 @@ import {
   CommandList,
 } from "@/components/ui/command";
 
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent } from "@/components/ui/popover";
 
 export default function Combobox({
   options = [],
   value,
   onChange,
-  placeholder = "Selecione...",
-  searchPlaceholder = "Pesquisar...",
+  placeholder = "Pesquisar...",
   emptyText = "Nenhum resultado encontrado.",
   className,
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
 
+  const wrapperRef = useRef(null);
   const inputRef = useRef(null);
 
   const selected = useMemo(
@@ -37,39 +33,42 @@ export default function Combobox({
   );
 
   useEffect(() => {
-    if (selected && !open) {
-      setSearch(selected.label);
-    }
-
-    if (!selected && !open) {
-      setSearch("");
+    if (!open) {
+      setSearch(selected?.label ?? "");
     }
   }, [selected, open]);
 
   useEffect(() => {
-    if (open) {
-      requestAnimationFrame(() => {
-        inputRef.current?.focus();
-        inputRef.current?.select();
-      });
+    function handleClickOutside(event) {
+      if (
+        wrapperRef.current &&
+        !wrapperRef.current.contains(event.target)
+      ) {
+        setOpen(false);
+      }
     }
-  }, [open]);
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () =>
+      document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const filteredOptions = useMemo(() => {
-    const ordered = [...options].sort((a, b) =>
-      a.label.localeCompare(b.label, "pt-BR", {
-        sensitivity: "base",
-      })
-    );
+    const query = search.trim().toLowerCase();
 
-    if (!search.trim()) return ordered;
-
-    return ordered.filter((item) =>
-      item.label.toLowerCase().includes(search.toLowerCase())
-    );
+    return [...options]
+      .sort((a, b) =>
+        a.label.localeCompare(b.label, "pt-BR", {
+          sensitivity: "base",
+        })
+      )
+      .filter((item) =>
+        item.label.toLowerCase().includes(query)
+      );
   }, [options, search]);
 
-  function handleInputChange(e) {
+  function handleChange(e) {
     const text = e.target.value;
 
     setSearch(text);
@@ -87,93 +86,99 @@ export default function Combobox({
     onChange(option.value);
     setSearch(option.label);
     setOpen(false);
+
+    requestAnimationFrame(() => {
+      inputRef.current?.blur();
+    });
   }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <div className="relative w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+    <Popover open={open}>
+      <div ref={wrapperRef} className="relative w-full">
 
-          <input
-            ref={inputRef}
-            value={search}
-            placeholder={placeholder || searchPlaceholder}
-            onFocus={() => setOpen(true)}
-            onClick={() => setOpen(true)}
-            onChange={handleInputChange}
-            className={cn(
-              "w-full h-10 rounded-md border border-input bg-background",
-              "pl-9 pr-10 text-sm",
-              "focus:outline-none focus:ring-2 focus:ring-ring",
-              "placeholder:text-muted-foreground",
-              className
-            )}
-          />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
 
-          <button
-            type="button"
-            tabIndex={-1}
-            onClick={() => setOpen((v) => !v)}
-            className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 hover:bg-muted"
-          >
-            <ChevronsUpDown className="h-4 w-4 text-muted-foreground" />
-          </button>
-        </div>
-      </PopoverTrigger>
+        <input
+          ref={inputRef}
+          value={search}
+          placeholder={placeholder}
+          onFocus={() => setOpen(true)}
+          onClick={() => setOpen(true)}
+          onChange={handleChange}
+          className={cn(
+            "w-full h-10 rounded-md border border-input bg-background",
+            "pl-9 pr-10 text-sm",
+            "focus:outline-none focus:ring-2 focus:ring-ring",
+            className
+          )}
+        />
 
-      <PopoverContent
-        align="start"
-        className="w-[--radix-popover-trigger-width] p-0"
-        onOpenAutoFocus={(e) => e.preventDefault()}
-      >
-        <Command shouldFilter={false}>
-          <CommandList>
-            <CommandEmpty>{emptyText}</CommandEmpty>
+        <button
+          type="button"
+          onClick={() => {
+            setOpen((o) => !o);
 
-            <CommandGroup>
-              {filteredOptions.map((option) => {
-                const match = option.label.match(/\(([^)]+)\)/);
+            if (!open) {
+              requestAnimationFrame(() => {
+                inputRef.current?.focus();
+              });
+            }
+          }}
+          className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 hover:bg-muted"
+        >
+          <ChevronsUpDown className="h-4 w-4 text-muted-foreground" />
+        </button>
 
-                const secondary = match?.[1];
+        <PopoverContent
+          align="start"
+          sideOffset={4}
+          className="w-full p-0"
+          onOpenAutoFocus={(e) => e.preventDefault()}
+        >
+          <Command shouldFilter={false}>
+            <CommandList>
+              <CommandEmpty>{emptyText}</CommandEmpty>
 
-                const label = option.label.replace(
-                  /\s*\([^)]*\)\s*$/,
-                  ""
-                );
+              <CommandGroup>
+                {filteredOptions.map((option) => {
+                  const match = option.label.match(/\(([^)]+)\)/);
 
-                return (
-                  <CommandItem
-                    key={option.value}
-                    value={option.label}
-                    onSelect={() => handleSelect(option)}
-                    className="flex items-center justify-between"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Check
-                        className={cn(
-                          "h-4 w-4",
-                          option.value === value
-                            ? "opacity-100"
-                            : "opacity-0"
-                        )}
-                      />
+                  return (
+                    <CommandItem
+                      key={option.value}
+                      value={option.label}
+                      onSelect={() => handleSelect(option)}
+                      className="flex justify-between"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Check
+                          className={cn(
+                            "h-4 w-4",
+                            option.value === value
+                              ? "opacity-100"
+                              : "opacity-0"
+                          )}
+                        />
 
-                      <span>{label}</span>
-                    </div>
+                        <span>
+                          {option.label.replace(/\s*\([^)]*\)\s*$/, "")}
+                        </span>
+                      </div>
 
-                    {secondary && (
-                      <span className="text-xs text-muted-foreground">
-                        {secondary}
-                      </span>
-                    )}
-                  </CommandItem>
-                );
-              })}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
+                      {match && (
+                        <span className="text-xs text-muted-foreground">
+                          {match[1]}
+                        </span>
+                      )}
+                    </CommandItem>
+                  );
+                })}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+
+      </div>
     </Popover>
   );
 }
