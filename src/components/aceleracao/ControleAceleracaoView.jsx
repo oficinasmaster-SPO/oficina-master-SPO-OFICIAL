@@ -11,7 +11,6 @@ import ActiveFiltersBar from "@/components/aceleracao/ActiveFiltersBar";
 import TabSkeleton from "@/components/aceleracao/TabSkeleton";
 import TabErrorBoundary from "@/components/aceleracao/TabErrorBoundary";
 import RegistrarAtendimento from "@/pages/RegistrarAtendimento";
-import { format, startOfMonth, endOfMonth } from "date-fns";
 import { useAceleracaoObservability } from "@/components/hooks/useAceleracaoObservability";
 
 // Lazy tabs
@@ -126,7 +125,7 @@ export default function ControleAceleracaoView({ state }) {
   // Check if any filter is active (non-default)
   const hasActiveFilters =
     (filtros.consultorId && filtros.consultorId !== "todos") ||
-    (filtros.preset && filtros.preset !== "mes_atual");
+    (filtros.preset && filtros.preset !== "all");
 
   const handleClearFilter = useCallback((filterKey) => {
     const hoje = new Date();
@@ -135,20 +134,19 @@ export default function ControleAceleracaoView({ state }) {
     } else if (filterKey === "preset") {
       setFiltros({
         ...filtros,
-        preset: "mes_atual",
-        dataInicio: format(startOfMonth(hoje), "yyyy-MM-dd"),
-        dataFim: format(endOfMonth(hoje), "yyyy-MM-dd"),
+        preset: "all",
+        dataInicio: null,
+        dataFim: null,
       });
     }
   }, [filtros, setFiltros]);
 
   const handleClearAllFilters = useCallback(() => {
-    const hoje = new Date();
     setFiltros({
       consultorId: "todos",
-      preset: "mes_atual",
-      dataInicio: format(startOfMonth(hoje), "yyyy-MM-dd"),
-      dataFim: format(endOfMonth(hoje), "yyyy-MM-dd"),
+      preset: "all",
+      dataInicio: null,
+      dataFim: null,
     });
   }, [setFiltros]);
 
@@ -163,6 +161,11 @@ export default function ControleAceleracaoView({ state }) {
           onClose={handleCloseModal}
         />
       )}
+
+      {/* Tabs — sticky header region + scrollable content */}
+      <Tabs value={activeTab} onValueChange={handleTabChange} className={activeTab === "pedidos" ? "flex min-h-0 flex-1 flex-col gap-5" : "space-y-5"}>
+        {/* Sticky header: title + actions + filters + tab bar — stays pinned below app header */}
+        <div className="sticky top-16 z-20 bg-gray-50 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 pt-1 pb-3 border-b border-gray-200/60">
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -359,8 +362,7 @@ export default function ControleAceleracaoView({ state }) {
         />
       )}
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={handleTabChange} className={activeTab === "pedidos" ? "flex min-h-0 flex-1 flex-col gap-5" : "space-y-5"}>
+        {/* Tab bar */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-1.5">
           <TabsList className="flex w-full justify-start overflow-x-auto bg-transparent h-auto gap-1 scrollbar-hide">
             <TabsTrigger value="visao-geral" className={TAB_CLASS}>
@@ -407,6 +409,8 @@ export default function ControleAceleracaoView({ state }) {
             </TabsTrigger>
           </TabsList>
         </div>
+        </div>
+        {/* End sticky header region */}
 
         {/* Tab Content — forceMount + hidden on all tabs; lazy-mount on first visit */}
         <div className={activeTab === "pedidos" ? "flex min-h-0 flex-1 flex-col" : ""}>
