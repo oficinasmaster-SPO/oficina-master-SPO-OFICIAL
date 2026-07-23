@@ -10,7 +10,7 @@ import { toast } from "sonner";
 
 const FIELDS = [
   { key: "faturamento_mes", label: "Faturamento do mês", type: "currency" },
-  { key: "ticket_medio", label: "Ticket médio", type: "currency" },
+  { key: "ticket_medio", label: "Ticket médio", type: "currency", computed: true },
   { key: "clientes_atendidos", label: "Clientes atendidos", type: "number" },
   { key: "prospeccao_kit_master", label: "Prospecção Kit Master", type: "number" },
   { key: "faturado_kit_master", label: "Faturado Kit Master", type: "currency" },
@@ -75,6 +75,7 @@ export default function ClientIndicatorsSection({ workshopId, atendimentoId, fol
     if (existing) {
       const loaded = {};
       FIELDS.forEach((f) => {
+        if (f.computed) return; // calculado automaticamente
         if (existing[f.key] && Number(existing[f.key]) !== 0) {
           loaded[f.key] = String(existing[f.key]);
         }
@@ -84,6 +85,10 @@ export default function ClientIndicatorsSection({ workshopId, atendimentoId, fol
       setValues({});
     }
   }, [existing]);
+
+  const faturamentoMes = Number(values.faturamento_mes) || 0;
+  const clientesAtendidos = Number(values.clientes_atendidos) || 0;
+  const ticketMedio = clientesAtendidos > 0 ? faturamentoMes / clientesAtendidos : 0;
 
   const hasAnyValue = Object.values(values).some((v) => v && Number(v) > 0);
   const isEditing = !!existing;
@@ -99,7 +104,14 @@ export default function ClientIndicatorsSection({ workshopId, atendimentoId, fol
         mes_referencia: mesReferencia,
         data_registro: mesReferencia + "-01",
         ...Object.fromEntries(
-          FIELDS.map((f) => [f.key, values[f.key] ? Number(values[f.key]) : 0])
+          FIELDS.map((f) => [
+            f.key,
+            f.computed
+              ? (f.key === "ticket_medio" ? Number(ticketMedio.toFixed(2)) : 0)
+              : values[f.key]
+              ? Number(values[f.key])
+              : 0,
+          ])
         ),
       };
       if (atendimentoId) data.atendimento_id = atendimentoId;
@@ -151,8 +163,27 @@ export default function ClientIndicatorsSection({ workshopId, atendimentoId, fol
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {FIELDS.map((f) => (
             <div key={f.key}>
-              <Label htmlFor={f.key} className="text-xs">{f.label}</Label>
-              {f.type === "currency" ? (
+              <Label htmlFor={f.key} className="text-xs flex items-center gap-1">
+                {f.label}
+                {f.computed && (
+                  <span className="text-[10px] text-muted-foreground font-normal">(automático)</span>
+                )}
+              </Label>
+              {f.computed ? (
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
+                    R$
+                  </span>
+                  <Input
+                    id={f.key}
+                    type="text"
+                    value={ticketMedio ? formatCurrency(ticketMedio) : ""}
+                    readOnly
+                    placeholder="0,00"
+                    className="pl-9 bg-muted/40 text-muted-foreground cursor-not-allowed"
+                  />
+                </div>
+              ) : f.type === "currency" ? (
                 <CurrencyInput
                   id={f.key}
                   value={values[f.key] ?? ""}
